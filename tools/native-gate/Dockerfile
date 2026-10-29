@@ -1,7 +1,3 @@
-# D1 native gate: Linux compositors in a container (docs/docking.md,
-# "Required native gate and review"). The image carries compositors, input
-# injection, screenshot and accessibility tools only; HikariSub itself comes
-# from the host build tree, mounted read-only at its own path.
 FROM archlinux:latest
 
 RUN pacman -Syu --noconfirm --needed \
@@ -18,15 +14,12 @@ RUN pacman -Syu --noconfirm --needed \
         ibus ibus-hangul noto-fonts-cjk \
         xdg-desktop-portal xdg-desktop-portal-kde xdg-desktop-portal-gtk qt6-wayland dconf gsettings-desktop-schemas \
     && pacman -Scc --noconfirm
-# Docker's capability bounding set has no CAP_SYS_NICE: compositors that
-# carry it as a file capability would not start.
+# Docker's bounding set lacks CAP_SYS_NICE: compositors carrying it as a file capability would not start.
 RUN setcap -r /usr/bin/sway && setcap -r /usr/bin/kwin_wayland && (setcap -r /usr/bin/Hyprland 2>/dev/null || true)
 
-# A machine id, as every desktop has: libdbus aborts a client that opens a
-# private bus (Qt's ibus input context on ibus' own bus) without one.
+# libdbus aborts a client that opens a private bus without a machine id.
 RUN dbus-uuidgen --ensure=/etc/machine-id
 
-# The host user's uid, so evidence written to the mounted worktree is theirs.
 RUN useradd -m -u 1000 -s /bin/bash gate
 USER gate
 WORKDIR /home/gate

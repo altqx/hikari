@@ -1,10 +1,3 @@
-# W2: the winix task that runs the VSFilterMod tests must set every HIKARI_*
-# variable those tests read with getenv; a variable it leaves unset can turn
-# its tests into skips (HIKARI_VSFILTERMOD_CSRI skipped the VSFilterMod
-# overlay test until the task set it).
-#
-#   cmake -DTASKS=<winix.yaml> -DTASK=<task name> -DSOURCE=<test source>
-#         [-DDROP=<text removed from the script first, for the control>] -P vsfilter_task_environment.cmake
 foreach(var TASKS TASK SOURCE)
     if(NOT DEFINED ${var})
         message(FATAL_ERROR "vsfilter_task_environment: ${var} is required")
@@ -23,7 +16,6 @@ if(NOT names)
     message(FATAL_ERROR "FAIL: ${SOURCE} reads no HIKARI_* variable")
 endif()
 
-# The task's script: the first "script:" line after "  <TASK>:".
 file(STRINGS "${TASKS}" lines)
 set(in_task FALSE)
 set(script)
@@ -43,7 +35,6 @@ endif()
 if(DEFINED DROP)
     string(FIND "${script}" "${DROP}" at)
     if(at EQUAL -1)
-        # Exit 0, so the control (WILL_FAIL) fails rather than failing for the wrong reason.
         message(STATUS "the task ${TASK} no longer contains the text the control drops: ${DROP}")
         return()
     endif()

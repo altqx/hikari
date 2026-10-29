@@ -1,10 +1,5 @@
 #pragma once
 
-// A FontServicePort that answers like the renderer from a table of faces
-// (Y8 tests): the requested family's nearest face, a fallback face for the
-// characters it lacks, or a missing glyph. Whole Documents report the
-// configured `document` collection.
-
 #include "hikari/application/font_service.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/style.h"
@@ -28,27 +23,25 @@ inline std::vector<std::byte> bytes(const std::string &s)
     return out;
 }
 
-// A face the fake renderer can select.
 struct Face {
     std::string family;
     int weight = 400;
     bool italic = false;
     std::string path;
     std::u32string glyphs; // empty: every character
-    std::string postscript; // empty: "<family>-PS"
+    std::string postscript;
     bool stream = false;    // handed over as bytes with no path (DirectWrite)
     std::string postscriptName() const { return postscript.empty() ? family + "-PS" : postscript; }
 };
 
-// Answers like the renderer: the requested family's nearest face, a
-// fallback face for characters it lacks, or a missing glyph.
+// Answers like the renderer: the family's nearest face, a fallback face for missing characters, or a missing glyph.
 class FakeFonts final : public FontServicePort {
 public:
     std::vector<Face> faces;
     std::optional<Face> fallback;
     FontCollection document;          // what a whole Document reports
     bool reimportIdentical = true;
-    bool documentUnreadable = false;  // a whole Document fails (ass_read_memory)
+    bool documentUnreadable = false;  // a whole Document fails to read
     int collects = 0;
     std::vector<std::vector<std::string>> reimported; // the font names of each verifyReimport
 
@@ -109,7 +102,6 @@ public:
             c.frameHashes = {"frame"};
             return c;
         }
-        // A probe: one Style, one Line.
         const std::string family(styles[0].fontname.begin(), styles[0].fontname.end());
         const int weight = styles[0].bold ? 700 : 400;
         const bool italic = styles[0].italic;
@@ -161,4 +153,4 @@ public:
     }
 };
 
-} // namespace hikari::testing
+}

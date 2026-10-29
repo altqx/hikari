@@ -1,7 +1,3 @@
-// E1: the Line editor's font and colour commands against legacy
-// EditBox::OnFontClick/ChangeFont/GetColor/OnColorChange/PutinNonass and
-// TagFindReplace::PutTagInText at 20d647c4.
-
 #include "hikari/core/editor_font_colour.h"
 
 #include <gtest/gtest.h>
@@ -17,7 +13,7 @@ StepResult font(EditorText state, const FontValues &from, const FontValues &to)
     return applySteps(std::move(state), fontSteps(from, to, from, true), NonAssFormat::Srt, 0);
 }
 
-} // namespace
+}
 
 TEST(EditorFont, TheFontInEffectAtTheSelection)
 {
@@ -42,8 +38,6 @@ TEST(EditorFont, ASelectionGetsTheTagAndTheFontItOpenedWith)
 
 TEST(EditorFont, LaterChangesReplaceTheTagsInPlace)
 {
-    // The dialog reports each change against its previous state; the resets
-    // stay those of the font it opened with.
     FontValues a = arial, b = arial;
     a.size = u"30";
     auto first = applySteps({u"abc", 1, 1}, fontSteps(arial, a, arial, true), NonAssFormat::Srt, 0);
@@ -51,7 +45,6 @@ TEST(EditorFont, LaterChangesReplaceTheTagsInPlace)
     b.size = u"40";
     auto second = applySteps(first.state, fontSteps(a, b, arial, true), NonAssFormat::Srt, first.position);
     EXPECT_EQ(second.state.text, u"a{\\fs40}bc");
-    // OK puts the caret after the block.
     EXPECT_EQ(caretAfterDialog(second.state.text, second.position), 8);
 }
 
@@ -62,13 +55,9 @@ TEST(EditorFont, LineFormatsWriteTheFontValues)
     times.underline = true;
     const auto steps = fontSteps(defaultFontValues(), times, defaultFontValues(), false);
     ASSERT_EQ(steps.size(), 2u);
-    // Approved E1-nonass-font: the font is written (legacy wrote the regex text).
-    // MicroDVD has no underline form: the underline leaves the text alone.
     EXPECT_EQ(applySteps({u"abc", 0, 0}, steps, NonAssFormat::MicroDvd, 0).state.text, u"{F:Times}abc");
-    // SRT gets the editor buttons' markup for the flags.
     EXPECT_EQ(applySteps({u"abc", 0, 3}, steps, NonAssFormat::Srt, 0).state.text, u"<u>abc</u>");
     EXPECT_EQ(applySteps({u"{F:Arial}abc", 0, 0}, {steps[0]}, NonAssFormat::MicroDvd, 0).state.text, u"{F:Times}abc");
-    // A size change writes the size; SRT has no font markup and stays as it is.
     FontValues big = defaultFontValues();
     big.size = u"30";
     const auto size = fontSteps(defaultFontValues(), big, defaultFontValues(), false);
@@ -76,7 +65,7 @@ TEST(EditorFont, LineFormatsWriteTheFontValues)
     EXPECT_EQ(applySteps({u"abc", 1, 1}, size, NonAssFormat::Srt, 0).state.text, u"abc");
     std::u16string text = u"{F:Arial}abc", translation;
     applyStepsToLine(text, translation, {steps[0]}, NonAssFormat::MicroDvd);
-    EXPECT_EQ(text, u"{F:Times}abc"); // the old tag goes (the regex finds it)
+    EXPECT_EQ(text, u"{F:Times}abc");
 }
 
 TEST(EditorFont, SeveralLinesGetTheTagInTheirFirstBlock)
@@ -117,8 +106,6 @@ TEST(EditorColour, ColourAndAlphaTags)
     const TagColour white{255, 255, 255, 0};
     EXPECT_EQ(changeColour({u"abc", 0, 3}, 1, white, {255, 0, 0, 0}).state.text, u"{\\1c&H0000FF&}abc{\\1c&HFFFFFF&}");
     EXPECT_EQ(changeColour({u"abc", 1, 1}, 3, white, {255, 255, 255, 0x80}).state.text, u"a{\\3a&H80&}bc");
-    // An existing colour at the caret's block is replaced in place; after the
-    // block the caret gets a block of its own.
     EXPECT_EQ(changeColour({u"{\\1c&H00FF00&}abc", 16, 16}, 1, {0, 255, 0, 0}, {0, 0, 255, 0}).state.text,
               u"{\\1c&H00FF00&}ab{\\1c&HFF0000&}c");
     EXPECT_EQ(changeColour({u"{\\1c&H00FF00&}abc", 5, 5}, 1, {0, 255, 0, 0}, {0, 0, 255, 0}).state.text,
@@ -131,11 +118,8 @@ TEST(EditorColour, LineFormats)
 {
     const auto step = colourNonAssStep({255, 0, 0, 0});
     EXPECT_EQ(step.pattern, u"C:0000FF");
-    // One Line gets the colour too (approved E1-nonass-font; legacy wrote the
-    // regex text); SRT stays as it is.
     EXPECT_EQ(applySteps({u"abc", 1, 1}, {step}, NonAssFormat::MicroDvd, 0).state.text, u"{C:0000FF}abc");
     EXPECT_EQ(applySteps({u"abc", 1, 1}, {step}, NonAssFormat::Srt, 0).state.text, u"abc");
-    // Several Lines get the colour, replacing theirs.
     std::u16string text = u"{c:00FF00}abc", translation;
     applyStepsToLine(text, translation, {step}, NonAssFormat::MicroDvd);
     EXPECT_EQ(text, u"{C:0000FF}abc");

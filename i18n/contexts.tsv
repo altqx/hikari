@@ -1,10 +1,4 @@
-# O6: the translation contexts of the interface (docs/localisation.md, "Keys and migration").
-# A string is keyed by the surface it belongs to, not by the QML file or C++ class that holds it, so moving
-# code keeps its translations. QML: a file of one surface sets `pragma Translator: "<context>"` and calls qsTr;
-# a string of another surface in it calls qsTranslate("<context>", ...). C++: QCoreApplication::translate
-# and QT_TRANSLATE_NOOP("<context>", ...); never tr(), whose context is the class.
-# The lint (ctest hikari_i18n_contexts_are_semantic) fails on a context missing here.
-# HikariSub.Automation.Gettext (aegisub.gettext's catalog) is not listed: no interface string uses it.
+# Translation contexts by surface; ctest hikari_i18n_contexts_are_semantic fails on a context missing here.
 context	surface
 HikariSub.Audio	The audio panel: waveform and spectrum, playback, audio files and tracks
 HikariSub.Automation	Automation: the manager, script notices and dialogs, macros and their shortcuts

@@ -1,7 +1,3 @@
-// First core workloads for the performance harness: loading a generated
-// 50,000-Line ASS script (the contract's G fixture size) and frame lookups.
-// Observations on an uncalibrated host, not budget passes.
-
 #include "perf_harness.h"
 
 #include "hikari/core/ass_load.h"
@@ -36,7 +32,7 @@ std::vector<std::byte> generateScript(int lines)
     return out;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -55,8 +51,7 @@ int main(int argc, char **argv)
 
     const auto timeline = core::FrameTimeline::constantRate(*core::FrameRate::make(24000, 1001), core::DocumentTime(0));
     std::int64_t t = 0;
-    // One lookup is near the clock's resolution, so one timed operation is a
-    // batch of 1,000 lookups.
+    // One lookup is near the clock's resolution: time batches of 1,000.
     results.push_back(perf::run({"core.frame_lookup.ntsc.x1000", 5, 200, perf::kWarmWarmup, [&] {
         for (int i = 0; i < 1'000; ++i) {
             t = (t + 41'711) % 3'600'000'000;

@@ -1,21 +1,18 @@
-# Installer checks on the Winix VM (installers SPEC 8.3), run by the tasks in
-# tests/packaging/windows/winix.yaml. Every value comes from the environment:
-#
+# Every value comes from the environment:
 #   ACTION    run | check-installed | check-removed | user-file | icon-ids | start-app | stop-app | state | dir | open-file | update | cleanup | end-setups
 #   SETUP     run: the installer or uninstaller to start
 #   ARGS      run: its command line (NSIS rules: /D= last, unquoted)
 #   EXPECT    run: the exit code it must return (default 0)
 #   SCOPE     user | machine
 #   VERSION   check-installed: the version the install must record
-#   INSTDIR   the install folder (default: SPEC 1.4's folder for SCOPE)
+#   INSTDIR   the install folder (default: the folder for SCOPE)
 #   ORPHANS   check-installed: |-separated payload paths that must be gone
 #   KEEP      check-installed, check-removed: |-separated paths that must remain
-#   KEEP_USER check-removed: |-separated paths in the user folder (%APPDATA%\HikariSub, UD1) that must remain
+#   KEEP_USER check-removed: |-separated paths in the user folder (%APPDATA%\HikariSub) that must remain
 #   FILE      user-file: a file to write in the user folder
 #   LEGACY    check-installed: 1 when the install is legacy's (HikariSub_AVX.exe allowed)
-#
-# Every failed check is printed as "FAIL <what>"; the exit code is the number
-# of failures (capped at 100).
+#   CLOSE_APP update: 1 closes the running app so the waiting installer goes on
+# The exit code is the number of failed checks (capped at 100).
 $ErrorActionPreference = 'Stop'
 $failures = [System.Collections.Generic.List[string]]::new()
 function Fail([string]$what) { $failures.Add($what); Write-Output "FAIL $what" }
@@ -82,11 +79,8 @@ switch ($env:ACTION) {
         $sw = [Diagnostics.Stopwatch]::StartNew()
         $p = if ($env:ARGS) { Start-Process -FilePath $env:SETUP -ArgumentList $env:ARGS -PassThru } else { Start-Process -FilePath $env:SETUP -PassThru }
         $null = $p.Handle
-        # A setup that never ends is ended here: left running, its window
-        # stays on the desktop over the next tests' windows.
         if (-not $p.WaitForExit(600000)) { Fail 'installer still running after 10 minutes'; Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; break }
-        # The uninstaller copies itself to %TEMP%\~nsu*.tmp\Un_*.exe, starts the
-        # copy and returns at once; the copy's exit code is the result.
+        # The NSIS uninstaller runs a copy of itself from %TEMP%\~nsu*.tmp and returns at once.
         $code = $p.ExitCode
         $copy = $null
         $deadline = (Get-Date).AddSeconds($(if ($env:SETUP -like '*Uninstall*') { 10 } else { 0 }))
@@ -120,7 +114,6 @@ switch ($env:ACTION) {
         foreach ($o in ($env:ORPHANS -split '\|' | Where-Object { $_ })) { Check (-not (Test-Path -LiteralPath (Join-Path $instDir $o))) "orphan $o removed" }
         foreach ($k in ($env:KEEP -split '\|' | Where-Object { $_ })) { Check (Test-Path -LiteralPath (Join-Path $instDir $k)) "kept $k" }
 
-        # Uninstall key (SPEC 1.4).
         Check (Test-Path $uninstallKey) "$uninstallKey exists"
         Check ((Value $uninstallKey DisplayName) -eq 'HikariSub') 'DisplayName HikariSub'
         Check ((Value $uninstallKey DisplayVersion) -eq $env:VERSION) "DisplayVersion $env:VERSION (found '$(Value $uninstallKey DisplayVersion)')"
@@ -152,7 +145,6 @@ switch ($env:ACTION) {
         $wantDesktop = ($components -split ',') -contains 'desktop'
         Check ((Test-Path -LiteralPath (Join-Path $desktop 'HikariSub.lnk')) -eq $wantDesktop) "desktop shortcut present = $wantDesktop"
 
-        # Associations (SPEC 1.5), when the component is recorded.
         if (($components -split ',') -contains 'assoc') {
             foreach ($ext in $types.Keys) {
                 $progid = "HikariSub$ext"
@@ -189,7 +181,6 @@ switch ($env:ACTION) {
             Check ((Value "$classes\$ext" '(default)') -ne "HikariSub$ext") "$ext default no longer HikariSub$ext"
         }
         Check (-not (Test-Path "$classes\Applications\HikariSub.exe")) 'Applications\HikariSub.exe removed'
-        # UD1: uninstalling never deletes the user folder.
         foreach ($k in @($env:KEEP_USER -split '\|' | Where-Object { $_ })) {
             Check (Test-Path -LiteralPath (Join-Path $userFolder $k)) "user folder kept $k"
         }
@@ -229,7 +220,6 @@ switch ($env:ACTION) {
             ForEach-Object { "$($_.Name): $(Get-Content -Raw -LiteralPath $_.FullName)" }
     }
     'open-file' {
-        # The shell's open verb on a .ass file starts this install's program with it.
         $doc = Join-Path $env:TEMP 'hs-assoc-test.ass'
         Set-Content -LiteralPath $doc -Value "[Script Info]`r`nScriptType: v4.00+`r`n"
         Write-Output "     .ass default: '$(Value "$classes\.ass" '(default)')', UserChoice: '$(Value 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.ass\UserChoice' ProgId)'"
@@ -248,10 +238,6 @@ switch ($env:ACTION) {
         }
     }
     'update' {
-        # The updater's hand-off (SPEC 4.2) without the app's updater: the
-        # installer starts with /UPDATE /WAITPID=<the running app> while the
-        # app runs, must wait for it, and installs once it exits (CLOSE_APP=1)
-        # or gives up with 3 and last-result-<scope>.json (CLOSE_APP=0).
         $expect = if ($env:EXPECT) { [int]$env:EXPECT } else { 0 }
         $app = Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Select-Object -First 1
         if (-not $app) { Fail 'no running HikariSub to update'; break }
@@ -301,8 +287,6 @@ switch ($env:ACTION) {
         }
     }
     'cleanup' {
-        # Test residue: a removed install's left-over user files and the
-        # association test document. Refuses while the scope's install exists.
         if (Test-Path $uninstallKey) { Fail "an install is registered at $uninstallKey"; break }
         Remove-Item -Recurse -Force -LiteralPath $instDir -ErrorAction SilentlyContinue
         Remove-Item -Force -LiteralPath (Join-Path $env:TEMP 'hs-assoc-test.ass') -ErrorAction SilentlyContinue
@@ -315,9 +299,6 @@ switch ($env:ACTION) {
         } else { Write-Output "$instDir does not exist" }
     }
     'end-setups' {
-        # Every HikariSub setup and uninstaller still running, with its
-        # window, ended (tools/winix/end-setups.ps1): run-installer-tests.sh
-        # ends with it, and so does an interactive session (README).
         $out = & (Join-Path $PSScriptRoot '..\..\..\tools\winix\end-setups.ps1')
         $code = $LASTEXITCODE
         $out | ForEach-Object { Write-Output "     $_" }

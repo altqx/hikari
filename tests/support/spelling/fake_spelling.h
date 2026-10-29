@@ -1,10 +1,6 @@
 #pragma once
 
-// F3: an in-memory stand-in for the spelling backend (legacy Hunspell). It
-// reads a .dic file as a plain word list (the count line skipped, "/flags"
-// dropped, no affix rules), checks words exactly, and suggests dictionary
-// words within two edits, nearest first. It is a test double, not a
-// Hunspell emulation: suggestions and accepted forms differ from Hunspell's.
+// Not a Hunspell emulation: a .dic is a plain word list (no affixes), suggestions are words within two edits.
 
 #include "hikari/application/spell_checker.h"
 #include "hikari/core/text_projection.h"
@@ -52,8 +48,7 @@ public:
     std::vector<std::u16string> added;
     std::vector<std::u16string> removed;
 
-    // A loader reading <language>.dic as a word list; `last` sees the backend
-    // loaded on this thread (the primary, not one loading in the background).
+    // `last` sees the backend loaded on this thread, not one loading in the background.
     static application::SpellingBackendLoader loader(FakeSpelling **last = nullptr)
     {
         return [last, thread = std::this_thread::get_id()](const std::filesystem::path &, const std::filesystem::path &dic)
@@ -107,9 +102,7 @@ private:
     std::set<std::u16string> m_words;
 };
 
-// A stand-in for boost::locale's word segmentation: runs of ASCII letters
-// and digits are words (letters when one is a letter), every other character
-// is a segment of its own; and ASCII case functions.
+// Stands in for boost::locale: ASCII letter/digit runs are words, any other character its own segment.
 inline application::SpellingText asciiSpellingText()
 {
     auto letter = [](char16_t c) { return (c >= u'a' && c <= u'z') || (c >= u'A' && c <= u'Z'); };
@@ -141,4 +134,4 @@ inline application::SpellingText asciiSpellingText()
     return text;
 }
 
-} // namespace hikari::fakes
+}

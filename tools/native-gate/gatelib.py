@@ -1,10 +1,3 @@
-"""The parts of gate.py that need no session: finding a floating frame in a
-screenshot, the steps of a pointer drag, the test skips the gate accepts,
-the order of the default run and which application on the accessibility bus
-is HikariSub's. test_gatelib.py tests them."""
-
-# The UI test executables step "tests" runs, with the test functions it
-# runs of each (none: all of them).
 TEST_RUNS = [
     ("hikari_ui_shell_tests", [
         "f6AndShortcutsReachAFloatingPanel", "panelsFloatDockHideAndKeepTheirState",
@@ -12,24 +5,14 @@ TEST_RUNS = [
         "placementWindowShowsItsDefaultsAndKeyboardChanges", "fileDropAreaLeavesPanelDragsToTheDockingEngine",
         "dockingControlsAndTheGridAreAccessible", "floatingPanelsOffEveryScreenComeBack",
         "panelMenuMovesTabsWithinTheirGroup",
-        # D3
         "panelMenuHoldsMoveUndockAndClose", "keyboardReachesThePanelHeaderAndItsMenu",
         "doubleClickOnAHeaderFloatsAndDocks", "bottomPanelsKeepATabAndTheTrayToolbar",
         "panelsKeepTheirMinimumSizes"]),
     ("hikari_ui_docking_qualification_tests", []),
     ("hikari_ui_workspace_layout_tests", []),
-    ("hikari_ui_tab_layouts_tests", []),  # WS1
+    ("hikari_ui_tab_layouts_tests", []),
 ]
 
-# Skips the tests declare as platform limits, each observed for real by
-# another gate item: Wayland compositors place windows (outputs); a
-# synthetic drag between windows needs the offscreen platform (pointer); a
-# window manager's focus-stealing policy (the F6 items; on sway, the
-# sway-activate pass runs these tests again). Since D3's split header and
-# the scale settle: a live scale change (outputs' mixed DPI), a declined
-# system move (floating's moves) and the X11-only engine move (the x11
-# session's floating-move). Since the D3 screen-loss fix: a screen removed
-# with a floating panel on it (outputs' monitor removal).
 KNOWN_TEST_SKIPS = (
     "the compositor places windows",
     "a synthetic drag between windows needs the offscreen platform",
@@ -44,43 +27,28 @@ KNOWN_TEST_SKIPS = (
 )
 
 
-# Skips a gate session must not see: every session runs a window manager.
 FAILING_TEST_SKIPS = ("(no window manager)",)
 
 
 def unexpected_skips(skips, known=KNOWN_TEST_SKIPS):
-    """The SKIP lines that carry none of the known reasons."""
     return [s for s in skips if not any(reason in s for reason in known)]
 
 
-# A window-system move follows the pointer in steps of at most this many
-# pixels: openbox lagged one 44-pixel step behind the last motion.
+# openbox lagged one 44-pixel step behind the last motion of a window-system move.
 MAX_DRAG_STEP = 8
 
 
 def drag_steps(dx, dy, minimum=30, max_step=MAX_DRAG_STEP):
-    """How many motions a drag by (dx, dy) takes so that none is longer than
-    MAX_STEP pixels on either axis (at least MINIMUM)."""
     longest = max(abs(dx), abs(dy))
     return max(minimum, -(-longest // max_step))
 
 
 def drag_points(sx, sy, ex, ey, steps):
-    """The pointer positions after each of STEPS motions from (sx, sy) to
-    (ex, ey)."""
     return [(sx + (ex - sx) * i // steps, sy + (ey - sy) * i // steps) for i in range(1, steps + 1)]
 
 
 def find_frame(raw, iw, ih, fw, fh, scale=1, x_from=0):
-    """The top-left corner (x, y) of a floating panel's frame in an RGB
-    screenshot RAW of IW x IH pixels, or None. The frame is FW x FH image
-    pixels (the window less its shadow, at SCALE): its top edge is a run of
-    one colour as wide as the frame, less up to 10 SCALE pixels of rounded
-    corners, from image column X_FROM on. It is a line SCALE pixels thick
-    (a stretch of flat background is not), its left side has that colour
-    down the frame, and its bottom edge lies where FH puts it (a box of
-    another height, such as the Line editor's text box, has the same top
-    run but no bottom there)."""
+    """Top-left (x, y) of a floating panel's FW x FH frame in RGB screenshot RAW (IW x IH), or None."""
 
     def px(x, y):
         i = (y * iw + x) * 3
@@ -115,26 +83,17 @@ def find_frame(raw, iw, ih, fw, fh, scale=1, x_from=0):
     return None
 
 
-# The steps that must run after every other one of the default run:
-# "videofs" leaves the main window on sway's scale-2 output, half the size,
-# where the main window overflows it; "outputs" removes an output, after
-# which sway's virtual pointer still maps absolute positions over the old
-# layout.
+# videofs leaves the window on sway's scale-2 output; after outputs sway's virtual pointer maps over the old layout.
 LAST_STEPS = ("videofs", "outputs")
 
 
 def default_order(steps, sweep_steps):
-    """The default run: every step, the sweep's included, LAST_STEPS last."""
     return ([n for n in steps if n not in LAST_STEPS] + [n for n in sweep_steps if n not in LAST_STEPS]
             + [n for n in LAST_STEPS if n in steps or n in sweep_steps])
 
 
 def hikarisub_application(toolkits):
-    """A11Y1 (#298): of the applications on the accessibility bus named after
-    HikariSub, given by toolkit in the bus's order, the index of HikariSub's
-    own: Qt's. On GNOME Qt's GTK3 platform theme starts GTK, whose ATK bridge
-    registers the process a second time, ahead of Qt's, holding only GTK's
-    dialogs (the theme's file chooser). None when there is no application."""
+    """Index of Qt's HikariSub on the bus: on GNOME, GTK's ATK bridge registers the process a second time."""
     if "Qt" in toolkits:
         return toolkits.index("Qt")
     return 0 if toolkits else None

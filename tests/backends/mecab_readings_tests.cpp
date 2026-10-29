@@ -1,9 +1,3 @@
-// KA4 (#279): MeCab over the UniDic 2.1.2 the packages ship
-// (HIKARI_UNIDIC_DIR, ports/hikari-unidic-lite): words with their kana
-// form, the furigana suggestions for lyric lines, a dictionary folder with
-// a space and non-ASCII characters (wide paths on Windows, ports/mecab),
-// a folder that is no dictionary, and readings from two threads.
-
 #include "hikari/backends/mecab_readings.h"
 
 #include <gtest/gtest.h>
@@ -29,7 +23,6 @@ std::shared_ptr<const MecabReadings> unidic()
     return readings;
 }
 
-// "base|reading" for each run, space-separated.
 std::u16string suggested(std::u16string_view text)
 {
     std::u16string out;
@@ -41,14 +34,13 @@ std::u16string suggested(std::u16string_view text)
     return out;
 }
 
-} // namespace
+}
 
 TEST(MecabReadings, WordsWithTheirKanaForm)
 {
     ASSERT_TRUE(unidic());
     const auto words = unidic()->words(u"永遠に続く");
     ASSERT_EQ(words.size(), 3u);
-    // The kana form, not the pronunciation (エーエン, ツズク).
     EXPECT_EQ(words[0].surface, u"永遠");
     EXPECT_EQ(words[0].reading, u"エイエン");
     EXPECT_EQ(words[1].surface, u"に");
@@ -66,13 +58,11 @@ TEST(MecabReadings, LyricLines)
     EXPECT_EQ(suggested(u"二人で歩いた何処までも"), u"二人|ふたり 歩|ある 何処|どこ");
     EXPECT_EQ(suggested(u"一人きりの帰り道"), u"一人|ひとり 帰|かえ 道|みち");
     EXPECT_EQ(suggested(u"煌めく星が降る夜に"), u"煌|きら 星|ほし 降|ふ 夜|よる");
-    // Tags and line breaks are not read.
     EXPECT_EQ(suggested(u"{\\k20}永遠{\\k30}に\\N続く{\\k10}夢"), u"永遠|えいえん 続|つづ 夢|ゆめ");
 }
 
 TEST(MecabReadings, AFolderWithASpaceAndNonAsciiCharacters)
 {
-    // Linked (copied where links fail) beside the test, on the build's volume.
     const fs::path folder = fs::current_path() / u8"ふりがな dictionary ü";
     std::error_code ec;
     fs::remove_all(folder, ec);

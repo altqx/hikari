@@ -1,7 +1,3 @@
-// Hidden-tag projection (V2; docs/ux/ass-editor.md). Ports the accepted
-// prototype's mapping fixtures for the accepted defaults: insertion after
-// boundary tags, and replacements that keep intervening tags.
-
 #include "hikari/core/text_projection.h"
 
 #include <QString>
@@ -12,7 +8,6 @@ using namespace hikari::core;
 
 namespace {
 
-// Grapheme boundaries of the projection, as the UI computes them.
 std::vector<std::size_t> graphemes(const std::u16string &text)
 {
     const QString s = QString::fromUtf16(text.data(), static_cast<qsizetype>(text.size()));
@@ -46,7 +41,7 @@ void expectRefused(std::u16string_view raw, std::size_t start, std::size_t end, 
     EXPECT_EQ(r.error(), why);
 }
 
-} // namespace
+}
 
 TEST(Projection, ShowsTextAndEscapesAndHidesOverrides)
 {
@@ -54,23 +49,23 @@ TEST(Projection, ShowsTextAndEscapesAndHidesOverrides)
     EXPECT_EQ(p.text, u"A\nB C D");
     EXPECT_EQ(p.spans.front().kind, SpanKind::HiddenOverride);
     EXPECT_EQ(project(u"{\\p1}m 0 0 l 1 1{\\p0}x").text, std::u16string(1, kProtectedMarker) + u"x");
-    EXPECT_EQ(project(u"{\\pos(1,2)}x").text, u"x"); // \pos is not drawing mode
-    EXPECT_EQ(project(u"{\\t(\\p1)}x").text, u"x");  // not interpreted inside \t
+    EXPECT_EQ(project(u"{\\pos(1,2)}x").text, u"x");
+    EXPECT_EQ(project(u"{\\t(\\p1)}x").text, u"x");
 }
 
 TEST(Projection, BoundaryAndCrossingDefaults)
 {
-    expectEdit(u"A{\\i1}B{\\i0}C", 1, 1, u"X", u"A{\\i1}XB{\\i0}C");     // after the boundary tags
-    expectEdit(u"A{\\i1}B{\\i0}C", 0, 3, u"X", u"X{\\i1}{\\i0}");         // intervening tags kept
-    expectEdit(u"A{\\b1}B{\\b0}C", 0, 2, u"", u"{\\b1}{\\b0}C");          // deletion keeps tags
-    expectEdit(u"{\\an8\\bord2}AB", 0, 0, u"X", u"{\\an8\\bord2}XAB");    // leading tags
-    expectEdit(u"{\\i1}{\\i0}", 0, 0, u"X", u"{\\i1}{\\i0}X");            // all hidden
+    expectEdit(u"A{\\i1}B{\\i0}C", 1, 1, u"X", u"A{\\i1}XB{\\i0}C");
+    expectEdit(u"A{\\i1}B{\\i0}C", 0, 3, u"X", u"X{\\i1}{\\i0}");
+    expectEdit(u"A{\\b1}B{\\b0}C", 0, 2, u"", u"{\\b1}{\\b0}C");
+    expectEdit(u"{\\an8\\bord2}AB", 0, 0, u"X", u"{\\an8\\bord2}XAB");
+    expectEdit(u"{\\i1}{\\i0}", 0, 0, u"X", u"{\\i1}{\\i0}X");
 }
 
 TEST(Projection, EscapesAndPastedText)
 {
-    expectEdit(u"A\\NB\\nC\\hD", 1, 2, u"-", u"A-B\\nC\\hD");     // a hard break is one token
-    expectEdit(u"A\\NB\\nC\\hD", 0, 1, u"X", u"X\\NB\\nC\\hD");   // untouched escapes stay
+    expectEdit(u"A\\NB\\nC\\hD", 1, 2, u"-", u"A-B\\nC\\hD");
+    expectEdit(u"A\\NB\\nC\\hD", 0, 1, u"X", u"X\\NB\\nC\\hD");
     expectEdit(u"{\\i1}AB{\\i0}", 1, 1, u"X\nY", u"{\\i1}AX\\NYB{\\i0}");
     expectEdit(u"{\\i1}AB{\\i0}", 1, 1, u"X\r\nY", u"{\\i1}AX\\NYB{\\i0}");
     expectEdit(u"AB", 1, 1, u" ", u"A\\hB");
@@ -102,7 +97,7 @@ TEST(Projection, DrawingAndMalformedSpansAreProtected)
     const std::u16string drawing = u"{\\p1}m 0 0 l 20 30{\\p0}Text";
     expectEdit(drawing, 1, 5, u"字幕", u"{\\p1}m 0 0 l 20 30{\\p0}字幕");
     expectRefused(drawing, 0, 1, u"X", MapRefusal::Protected);
-    expectRefused(drawing, 0, 0, u"X", MapRefusal::Reinterpreted); // would become drawing payload
+    expectRefused(drawing, 0, 0, u"X", MapRefusal::Reinterpreted);
     expectEdit(u"Text {\\i1", 0, 4, u"Word", u"Word {\\i1");
     expectRefused(u"Text {\\i1", 5, 6, u"X", MapRefusal::Protected);
     expectEdit(u"A{\\i1{bad}B", 0, 1, u"X", u"X{\\i1{bad}B");
@@ -119,13 +114,12 @@ TEST(Projection, Utf8RoundTrip)
 TEST(Projection, OffsetMapping)
 {
     const auto p = project(u"A{\\i1}BC{\\i0}D");
-    // Display "ABCD". The boundary after A maps after or before {\i1}.
     EXPECT_EQ(rawOffset(p, 1, true), 6u);
     EXPECT_EQ(rawOffset(p, 1, false), 1u);
-    EXPECT_EQ(rawOffset(p, 2, true), 7u); // inside "BC"
-    EXPECT_EQ(rawOffset(p, 3, false), 8u); // end of "BC", before {\i0}
+    EXPECT_EQ(rawOffset(p, 2, true), 7u);
+    EXPECT_EQ(rawOffset(p, 3, false), 8u);
     EXPECT_EQ(rawOffset(p, 4, true), 14u);
     EXPECT_EQ(displayOffset(p, 7), 2u);
-    EXPECT_EQ(displayOffset(p, 3), 1u); // inside {\i1}
+    EXPECT_EQ(displayOffset(p, 3), 1u);
     EXPECT_EQ(displayOffset(p, 14), 4u);
 }

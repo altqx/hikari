@@ -1,20 +1,3 @@
-// L6 (A33-compat): representative third-party automation scripts, unchanged.
-//
-// The corpus is tests/fixtures/automation-thirdparty/manifest.json: projects
-// pinned to a commit with their licences and every file's sha256. Projects
-// that may be redistributed are committed there; the others are fetched at
-// test time. stage.cmake (the ctest fixture automation_thirdparty) verifies
-// and stages them as a user installs them: Autoload/<script>, and an Include
-// with the bundled modules (DependencyControl's native ones built) plus the
-// projects' own. Offline, a fetched project is unavailable and its scripts are
-// skipped with the reason.
-//
-// Each script loads in its own helper as Autoload loads it (registration,
-// script_* globals, load errors), and the macros in runs.json run on
-// fixture.ass through the host: snapshot, run (dialogs answered here),
-// apply as one undo step. What they did is written to artifacts and compared
-// with the reviewed results in expected.json. The capture probe then runs the
-// same corpus and macros in the helper the way it ran in the legacy app.
 #include "hikari/application/automation_services.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/backends/lua_script_host.h"
@@ -81,11 +64,7 @@ constexpr bool kWindows = true;
 constexpr bool kWindows = false;
 #endif
 
-// Paths in messages name this run's directories (dirs); the pinned form reads
-// <stage> for each. On Windows a message may name one with either separator,
-// a drive letter in either case and, when DependencyControl's logger rethrows
-// it (Logger.moon puts a space after every colon), "C: /..."; and a search
-// path built from a directory with a trailing separator doubles separators.
+// Windows messages mix separators and drive-letter case, double separators, and DependencyControl's Logger.moon turns "C:/" into "C: /".
 QString normalizedPaths(QString text, const QStringList &dirs, bool windows = kWindows)
 {
     const Qt::CaseSensitivity cs = windows ? Qt::CaseInsensitive : Qt::CaseSensitive;
@@ -98,8 +77,6 @@ QString normalizedPaths(QString text, const QStringList &dirs, bool windows = kW
         if (windows && dir.size() > 2 && dir.at(1) == QLatin1Char(':'))
             text.replace(dir.left(2) + QLatin1Char(' ') + dir.mid(2), QStringLiteral("<stage>"), cs);
     }
-    // On Windows, one separator between the parts of a path under <stage>;
-    // Linux messages keep theirs as they are.
     QString out = text;
     if (windows) {
         static const QRegularExpression staged(QStringLiteral(R"(<stage>[^"'\s()]*)"));
@@ -114,8 +91,7 @@ QString normalizedPaths(QString text, const QStringList &dirs, bool windows = kW
         }
         out += text.mid(at);
     }
-    // A chunk name (Lua shortens a long one to its start, so it depends
-    // on where the build is): [string "/home/..."].
+    // Lua truncates a long chunk name, so it depends on the build path.
     static const QRegularExpression chunk(QStringLiteral(R"(\[string "[^"]*"\])"));
     out.replace(chunk, QStringLiteral(R"([string "<chunk>"])"));
     return out;
@@ -124,10 +100,9 @@ QString normalizedPaths(QString text, const QStringList &dirs, bool windows = kW
 struct Script {
     QString project, file;
     bool available = true;
-    QString reason; // why the project is unavailable
+    QString reason;
 };
 
-// The manifest's scripts in order, with the staged projects' availability.
 std::vector<Script> corpus()
 {
     std::map<QString, QString> unavailable;
@@ -153,8 +128,6 @@ std::vector<Script> corpus()
     return out;
 }
 
-// A clipboard and a deterministic text measure (no fonts in this test):
-// width = size/2 per code point, height = size, descent = size/5.
 struct MemoryClipboard : app::ClipboardPort {
     std::string value;
     std::string text() const override { return value; }
@@ -188,9 +161,7 @@ protected:
         stageOnce();
     }
 
-    // The automation-thirdparty-stage test stages the corpus first when ctest
-    // honours its fixture; discovered gtest cases can start before it, so the
-    // first case to run stages it itself (one process at a time).
+    // Discovered gtest cases can start before the ctest stage fixture has run.
     static void stageOnce()
     {
         const QString status = stageDir() + QStringLiteral("/status.json");
@@ -215,9 +186,6 @@ protected:
         ASSERT_TRUE(QFile::exists(stageDir() + QStringLiteral("/status.json")))
             << "the corpus is not staged: run the automation-thirdparty-stage test (ctest fixture)";
         ASSERT_TRUE(work.isValid());
-        // ?user and ?data resolve to an Automation directory beside the
-        // scripts, as the package lays it out; DependencyControl's updater is
-        // off so nothing here depends on the network or on live feeds.
         automation = work.filePath(QStringLiteral("Automation"));
         for (const char *sub : {"log", "autosave", "temp", "config"})
             QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
@@ -267,12 +235,9 @@ protected:
     QString message;
 };
 
-// The pinned result for one entry, or nothing when this platform's result is
-// recorded but not pinned (not yet observed there).
 std::optional<QJsonValue> expected(const QJsonObject &all, const QString &section, const QString &key)
 {
 #ifdef _WIN32
-    // Results not yet observed on a platform are recorded there, not pinned.
     if (all.value(QStringLiteral("unobserved_platforms")).toArray().contains(QStringLiteral("windows")))
         return std::nullopt;
     const QJsonValue platform = all.value(section + QStringLiteral("_windows")).toObject().value(key);
@@ -293,14 +258,12 @@ QString compact(const QJsonValue &v)
 
 void compare(const QJsonObject &all, const QString &section, const QString &key, QJsonObject actual)
 {
-    actual.remove(QStringLiteral("run")); // the key itself
+    actual.remove(QStringLiteral("run"));
     const auto want = expected(all, section, key);
     if (!want) {
         std::fprintf(stderr, "%s %s: recorded, not pinned on this platform\n", qPrintable(section), qPrintable(key));
         return;
     }
-    // An entry whose details depend on the network (expected.json
-    // "loaded_only": the reason) pins only whether it loaded.
     const QJsonValue loadedOnly = all.value(QStringLiteral("loaded_only")).toObject().value(key);
     if (loadedOnly.isString()) {
         std::fprintf(stderr, "%s %s: only its load result is pinned: %s\n", qPrintable(section), qPrintable(key),
@@ -308,8 +271,6 @@ void compare(const QJsonObject &all, const QString &section, const QString &key,
         EXPECT_EQ(want->toObject().value("loaded"), actual.value("loaded")) << key.toStdString();
         return;
     }
-    // A script that registers macros in pairs() order (expected.json
-    // "macros_unordered": the reason) pins them by name, not by order.
     QJsonValue pinned = *want;
     if (all.value(QStringLiteral("macros_unordered")).toObject().value(key).isString()) {
         const auto byName = [](QJsonObject o) {
@@ -363,7 +324,6 @@ TEST_F(ThirdPartyCorpus, ScriptsLoadAsAutoloadDoes)
                                           {"is_active", m.hasIsActive}});
             record.insert("macros", macros);
         } else {
-            // The message up to its traceback.
             record.insert("error", normalized(host->lastError()).section(QStringLiteral("\nstack traceback:"), 0, 0));
         }
         std::fprintf(stderr, "corpus %s: %s\n", qPrintable(s.file),
@@ -395,7 +355,6 @@ hikari::application::EditSession fixtureSession()
 
 QString str(const std::string &s) { return QString::fromStdString(s); }
 
-// The Document's events as the probe dumps them (event ordinals from 1).
 QJsonArray events(const app::MacroSnapshot &s)
 {
     QJsonArray out;
@@ -407,9 +366,6 @@ QJsonArray events(const app::MacroSnapshot &s)
     return out;
 }
 
-// A dialog answered from the run's entry: the button by its label (OK and
-// Cancel for the default pair) and the named controls' values; the other
-// controls keep their initial values.
 app::DialogResult answer(const app::DialogRequest &request, const QJsonObject &entry)
 {
     app::DialogResult result = app::initialDialogResult(request);
@@ -470,7 +426,6 @@ TEST_F(ThirdPartyCorpus, MacrosApplyToTheFixtureDocument)
         auto session = fixtureSession();
         const auto before = app::snapshotForMacro(session);
         ASSERT_TRUE(before);
-        // Event ordinals to Lines.
         const auto lineAt = [&](int ordinal) { return hikari::core::LineId{before->dialogues.at(ordinal - 1).id}; };
         app::Selection selection;
         for (const auto &o : spec.value("selection").toArray())
@@ -525,7 +480,6 @@ TEST_F(ThirdPartyCorpus, MacrosApplyToTheFixtureDocument)
             const auto after = app::snapshotForMacro(session);
             ASSERT_TRUE(after);
             record.insert("events", events(*after));
-            // The selection afterwards, as event ordinals.
             QJsonArray selected;
             int active = 0;
             for (std::size_t i = 0; i < after->dialogues.size(); ++i) {
@@ -537,7 +491,6 @@ TEST_F(ThirdPartyCorpus, MacrosApplyToTheFixtureDocument)
             }
             record.insert("selected", selected);
             record.insert("active", active);
-            // One undo step brings the fixture back.
             if (session.historySize() > steps) {
                 EXPECT_TRUE(session.undo());
                 EXPECT_EQ(events(*app::snapshotForMacro(session)), events(*before)) << key.toStdString();
@@ -550,10 +503,6 @@ TEST_F(ThirdPartyCorpus, MacrosApplyToTheFixtureDocument)
     writeArtifact(QStringLiteral("automation-thirdparty-runs.json"), QJsonDocument(artifact));
 }
 
-// The capture probe (tests/fixtures/legacy-cases/automation) over the same
-// corpus and runs, as it ran in the legacy app: once while the host loads
-// the probe, then from its corpus macro on fixture.ass. Its records are kept
-// as artifacts.
 TEST_F(ThirdPartyCorpus, CaptureProbeRunsTheCorpus)
 {
     const QString list = work.filePath(QStringLiteral("corpus.txt"));
@@ -598,9 +547,6 @@ TEST_F(ThirdPartyCorpus, CaptureProbeRunsTheCorpus)
         EXPECT_EQ(record.value("scripts").toArray().size(), count);
         writeArtifact(QString::fromLatin1(name), QJsonDocument(record));
     }
-    // Every run the macro-time capture made, against the pinned result of the
-    // host's own run of that macro (the probe answers dialogs itself, the host
-    // run through the dialog handler): the same document afterwards.
     const QJsonObject all = expectations();
     for (const auto &script : QJsonDocument::fromJson(inMacro).object().value("scripts").toArray())
         for (const auto &r : script.toObject().value("runs").toArray()) {
@@ -615,9 +561,6 @@ TEST_F(ThirdPartyCorpus, CaptureProbeRunsTheCorpus)
         }
 }
 
-// The FFI search paths a corpus script names when clipper2 is missing, as
-// the Windows VM gave them: drive letter spaced by DependencyControl's logger,
-// separators doubled, either separator. They read as the Linux ones do.
 TEST(ThirdPartyMessages, WindowsPathsReadAsStagePaths)
 {
     const QStringList dirs{QStringLiteral("C:/Winix/work/b/stage"),
@@ -637,8 +580,6 @@ TEST(ThirdPartyMessages, WindowsPathsReadAsStagePaths)
               "  - \"clipper2\" (see https://example.org//clipper2)");
 }
 
-// On Linux the directories are replaced as they are, case and all, doubled
-// separators kept; text that only looks like a Windows path stays.
 TEST(ThirdPartyMessages, LinuxPathsReadAsStagePaths)
 {
     const QStringList dirs{QStringLiteral("/home/u/b/stage")};
@@ -652,4 +593,4 @@ TEST(ThirdPartyMessages, LinuxPathsReadAsStagePaths)
               "  - \"/HOME/u/b/stage/x.so\" C: \\Winix");
 }
 
-} // namespace
+}

@@ -1,7 +1,4 @@
-# D1 native gate on Windows (winix task gate-win-tests): the docking test
-# executables under the windows platform plugin (real windows on the
-# interactive desktop, not offscreen), each with QtTest's own output file,
-# printed in full after a "### EXE FUNCTIONS (exit N)" line.
+# winix task gate-win-tests: the docking tests on the windows platform plugin, each after a "### EXE FUNCTIONS (exit N)" line.
 $ErrorActionPreference = 'Stop'
 $root = $PWD.Path
 $build = Join-Path $root 'out\build\windows-x64-release'
@@ -9,7 +6,6 @@ $out = Join-Path $root 'out\native-gate-win\tests'
 New-Item -ItemType Directory -Force $out | Out-Null
 $env:QT_QPA_PLATFORM = 'windows'
 $env:PATH = "$root\out\sdk\qt-6.11.2-windows\6.11.2\msvc2022_64\bin;$env:PATH"
-# The D1 and D3 functions of hikari_ui_shell_tests (as tools/native-gate/gate.py runs them).
 $runs = @(
     @{ exe = 'hikari_ui_shell_tests'; fns = @('f6AndShortcutsReachAFloatingPanel', 'panelsFloatDockHideAndKeepTheirState',
             'placementWindowMovesTabsAndResizes', 'floatF6AndShowActivateTheFloatingPanelsWindow',
@@ -21,9 +17,7 @@ $runs = @(
     @{ exe = 'hikari_ui_line_grid_a11y_tests'; fns = @() },
     @{ exe = 'hikari_ui_docking_qualification_tests'; fns = @() },
     @{ exe = 'hikari_ui_workspace_layout_tests'; fns = @() },
-    # WS3: the layout presets and saved layouts; the retired View arrangements.
     @{ exe = 'hikari_ui_saved_layouts_tests'; fns = @() },
-    # WS1: each Document tab's arrangement.
     @{ exe = 'hikari_ui_tab_layouts_tests'; fns = @() }
 )
 foreach ($run in $runs) {

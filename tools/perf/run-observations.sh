@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the implemented performance-harness workloads (H3 #126) on this host and
+# Runs the implemented performance-harness workloads on this host and
 # stores raw results with the CPU contention seen during each run.
 #
 #   tools/perf/run-observations.sh [--build-dir DIR] [--out DIR] [--label NAME]
@@ -33,6 +33,7 @@ while [[ $# -gt 0 ]]; do
     --core-bin) CORE_BIN="$2"; shift ;;
     --ui-bin) UI_BIN="$2"; shift ;;
     --diagnostics) DIAGNOSTICS=1 ;;
+    # MUST KILL: --help prints this file's header lines 2-20
     -h | --help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
@@ -46,7 +47,7 @@ for b in "$CORE_BIN" "$UI_BIN"; do [[ -x "$b" ]] || { echo "missing $b" >&2; exi
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
 mkdir -p "$OUT/raw"
 
-snapshot() { # one JSON line: time, load, CPU pressure, temperature, the busiest processes
+snapshot() {
     local la psi temp top
     read -r la < /proc/loadavg
     psi="$(sed -n 's/^some avg10=\([0-9.]*\).*/\1/p' /proc/pressure/cpu 2>/dev/null)"
@@ -105,9 +106,7 @@ run_workload perf.core "$CORE_BIN"
 run_workload perf.ui "$UI_BIN" QT_QPA_PLATFORM=offscreen
 
 if ((DIAGNOSTICS)); then
-    # Single-shot timings printed by backend tests on the build's own fixtures.
-    # The PortAudio test stays skipped: it plays a loud ramp unless pointed at
-    # a null device, and HIKARI_TEST_AUDIO_DEVICE is cleared here.
+    # HIKARI_TEST_AUDIO_DEVICE is unset so the PortAudio test skips instead of playing a loud ramp.
     diag() { # <name> <binary> <gtest filter>
         local name="$1" bin="$2" filter="$3"
         [[ -x "$bin" ]] || { echo "skip $name: $bin missing"; return; }

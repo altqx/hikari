@@ -1,4 +1,3 @@
-# Probe: after floating the Line editor from the menu, where do F6 presses go?
 import os
 import sys
 import time

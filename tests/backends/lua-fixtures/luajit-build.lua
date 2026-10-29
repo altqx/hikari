@@ -1,6 +1,6 @@
 -- L6 fixture: the LuaJIT build's Lua 5.2 extensions and string.buffer. The
 -- legacy Windows build defines LUAJIT_ENABLE_LUA52COMPAT and
--- LUAJIT_DISABLE_BUFFER (Thirdparty/Build/LuaJit/LuaJit.vcxproj); the rewrite
+-- LUAJIT_DISABLE_BUFFER (Thirdparty/Build/LuaJit/LuaJit.vcxproj); HikariSub
 -- does on every platform (L6-lua52-linux; the legacy Linux package's
 -- distribution LuaJIT had neither).
 script_name = "LuaJIT build"

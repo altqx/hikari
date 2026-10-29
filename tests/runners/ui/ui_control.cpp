@@ -1,6 +1,3 @@
-// Spix clicks a real QML button and reads the resulting text back. Exits 0 only
-// when the observed text equals HIKARI_UI_EXPECTED and Spix reported no errors;
-// on failure it keeps a screenshot under HIKARI_TEST_ARTIFACT_DIR.
 #include <QDir>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>

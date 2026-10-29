@@ -1,5 +1,3 @@
-// C4-srt: SRT load and same-format save, reproducing legacy SubsLoader::LoadSRT.
-
 #include "hikari/core/srt.h"
 
 #include <QFile>
@@ -40,7 +38,7 @@ std::string s8(const std::u8string &s)
 constexpr std::string_view kLf = "1\n00:00:01,000 --> 00:00:02,500\nHello\nworld\n\n"
                                  "2\n00:00:03,000 --> 00:00:04,000\nSecond\n";
 
-} // namespace
+}
 
 TEST(SrtLoad, CuesNumbersTimesAndJoinedText)
 {
@@ -65,9 +63,6 @@ std::vector<std::byte> readFile(const QString &path)
 
 TEST(SrtLoad, BlankLinesAddNoBreakC82)
 {
-    // Legacy capture run 37011681370: the old app read a CRLF blank line as a
-    // "\r" token, so cue 1 became "Hello\N" and its save gained a blank line.
-    // Approved C82-srt-blank-break: blank lines add nothing to the cue text.
     const auto input = readFile(QStringLiteral(HIKARI_CAPTURE_INPUTS "/crlf-two-cues.srt"));
     auto r = loadSrt(input);
     const auto lines = r.document.lines();
@@ -75,8 +70,6 @@ TEST(SrtLoad, BlankLinesAddNoBreakC82)
     EXPECT_EQ(s8(lines[0]->text), "Hello");
     EXPECT_EQ(s8(lines[1]->text), "Bye");
 
-    // Regenerating cue 1 now gives back the input exactly. The old app's save
-    // differs by the extra line break (plus its BOM and final blank line).
     ASSERT_TRUE(r.document.setLineText(lines[0]->id, lines[0]->text));
     EXPECT_EQ(text(encodeSrt(r.document)), text(input));
     std::string legacy = text(readFile(QStringLiteral(HIKARI_CRLF_OBSERVATION)));
@@ -89,8 +82,6 @@ TEST(SrtLoad, BlankLinesAddNoBreakC82)
 
 TEST(SrtLoad, WhitespaceOnlyLinesAddNoBreakC82)
 {
-    // The same rule for LF files and whitespace-only lines, including the
-    // cue-number trimming of the following cue.
     const auto r = loadSrt(bytesOf("1\n00:00:01,000 --> 00:00:02,000\nA\n  \n\t\n"
                                    "2\n00:00:03,000 --> 00:00:04,000\nB\n \nC\n"));
     const auto lines = r.document.lines();
@@ -113,12 +104,10 @@ TEST(SrtLoad, PrecisionFixtureAndMillisecondFields)
 
 TEST(SrtLoad, CueWithoutNumberAndNumericTextQuirk)
 {
-    // No number line before the second cue: the first cue keeps all its text.
     auto r = loadSrt(bytesOf("00:00:01,000 --> 00:00:02,000\nA\n00:00:03,000 --> 00:00:04,000\nB\n"));
     ASSERT_EQ(r.document.lines().size(), 2u);
     EXPECT_EQ(s8(r.document.lines()[0]->text), "A");
     EXPECT_FALSE(r.document.lines()[1]->cueNumber);
-    // A digits-only last text line is taken as the next cue's number (legacy).
     r = loadSrt(bytesOf("00:00:01,000 --> 00:00:02,000\nThe answer\n42\n00:00:03,000 --> 00:00:04,000\nB\n"));
     EXPECT_EQ(s8(r.document.lines()[0]->text), "The answer");
     EXPECT_EQ(s8(*r.document.lines()[1]->cueNumber), "42");

@@ -6,7 +6,6 @@
 #   fresh  kill and set the private profile (settings, layout) aside
 #   alive  "yes" while this session's HikariSub runs
 cmd=$1; shift
-# This session's HikariSub processes only (sessions share the container).
 mine() {
     for p in $(pgrep -x hikarisub); do
         grep -qz "^XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR\$" /proc/$p/environ 2>/dev/null && \
@@ -24,7 +23,7 @@ start)
     sleep 1 ;;
 stop) for p in $(mine); do kill -TERM $p; done; for i in $(seq 1 20); do [ -z "$(mine)" ] && break; sleep 0.5; done ;;
 kill) for p in $(mine); do kill -KILL $p; done; sleep 0.5 ;;
-fresh) # the private profile is set aside, not deleted
+fresh)
     for p in $(mine); do kill -KILL $p; done; sleep 0.5
     stamp=$(date +%s%N)
     mkdir -p "$HOME/old-profiles/$stamp"

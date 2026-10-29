@@ -1,40 +1,18 @@
-; Whether an install folder is protected from the user who runs this process
-; (installers spec, 4.2 and 6.4): the rule the app applies before it asks for
-; elevation (IsProtectedFromUser in legacy's UpdateApply, isProtectedFromUser
-; in Qt's update_apply), for the uninstaller, which
-; must not start a copy of itself elevated from a folder the user could
-; change. A same-user process could replace that file between the check and
-; the UAC prompt, and get its own code run as administrator.
-;
-; Each right is asked for by opening the file or folder with it alone
-; (CreateFileW, the reparse point itself, not its target), so Windows makes
-; the access check with this process's own, unelevated token. Anything but
-; "access denied" counts as granted: a file that cannot be opened for
-; another reason cannot be shown to be protected.
-;
-; The folder must be a plain "X:\..." path, and:
-;   - the folder and everything under it grant none of HS_CHANGES, which
-;     includes FILE_WRITE_ATTRIBUTES because CreateFileW refuses writes to a
-;     read-only file whatever its rights, and contain no reparse point;
-;   - each folder above it grants none of HS_REPLACES, which would let the
-;     user delete or rename the folder, or rewrite its rights.
-;
-; The same file on the legacy and Qt branches.
+; Whether an install folder is protected from the user who runs this process: the uninstaller must not
+; relaunch itself elevated from a folder that user could change (they could swap the file before the UAC prompt).
+; Each right is probed by opening with it alone (CreateFileW on the reparse point itself), so Windows checks this
+; process's unelevated token; anything but "access denied" counts as granted.
+; Same bytes on the main and legacy branches.
 
+; FILE_WRITE_ATTRIBUTES counts: CreateFileW refuses writes to a read-only file whatever its rights.
 !define HS_CHANGES  0xD0146 ; FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_DELETE_CHILD|FILE_WRITE_ATTRIBUTES|DELETE|WRITE_DAC|WRITE_OWNER
 !define HS_REPLACES 0xD0040 ; FILE_DELETE_CHILD|DELETE|WRITE_DAC|WRITE_OWNER
 
-; A plain "X:\..." path, which the installer also asks of an all-users
-; folder (HS_PLAIN_PATH_FUNCTION); HS_PROTECTED_FUNCTIONS needs it inserted
-; with the same prefix.
+; HS_PROTECTED_FUNCTIONS needs this inserted with the same UN prefix.
 !macro HS_PLAIN_PATH_FUNCTION UN
 
-; $R0 = a folder. $R2 = 1 when it is a plain "X:\..." path: a drive letter,
-; one "\" between names, no "/", no "." or ".." name, no trailing "\", no
-; name that ends in a space or a dot (Windows drops those, so "C:\a\.. \b"
-; is "C:\b"), none of : * ? " < > | (":" names a stream), and Windows'
-; own full form of it (GetFullPathNameW) is the same string. A caller can
-; then compare it with a prefix and know where it points.
+; $R0 = a folder. $R2 = 1 when it is a plain "X:\..." path that GetFullPathNameW leaves unchanged; Windows drops
+; a trailing space or dot in a name and ":" names a stream, so those are refused.
 Function ${UN}HsPlainPath
   Push $0
   Push $1
@@ -60,7 +38,6 @@ Function ${UN}HsPlainPath
     ${Loop}
   ${EndIf}
   ${If} $R2 = 1
-    ; The rest, as "\name\name": each name non-empty and not "." or "..".
     StrCpy $0 $R0 "" 2
     StrCpy $0 "$0\"
     StrLen $2 $0
@@ -96,7 +73,6 @@ Function ${UN}HsPlainPath
     ${Loop}
   ${EndIf}
   ${If} $R2 = 1
-    ; What Windows makes of it must be it, case and all.
     System::Call 'kernel32::GetFullPathNameW(w R0, i ${NSIS_MAX_STRLEN}, w .r1, p 0) i .r2'
     ${If} $2 = 0
     ${OrIf} $2 >= ${NSIS_MAX_STRLEN}
@@ -115,8 +91,7 @@ FunctionEnd
 
 !macro HS_PROTECTED_FUNCTIONS UN
 
-; $R0 = a path, $R1 = rights. $R2 = 1 when this process could open $R0 with
-; any one of them, or cannot tell; else 0.
+; $R0 = a path, $R1 = rights. $R2 = 1 when this process could open $R0 with any one of them, or cannot tell.
 Function ${UN}HsMayOpen
   Push $0
   Push $1
@@ -127,8 +102,7 @@ Function ${UN}HsMayOpen
   ${Do}
     IntOp $3 $R1 & $2
     ${If} $3 <> 0
-      ; FILE_SHARE_READ|WRITE|DELETE, OPEN_EXISTING,
-      ; FILE_FLAG_BACKUP_SEMANTICS (folders) | FILE_FLAG_OPEN_REPARSE_POINT.
+      ; FILE_SHARE_READ|WRITE|DELETE, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS (folders) | FILE_FLAG_OPEN_REPARSE_POINT.
       System::Call 'kernel32::CreateFileW(w R0, i r3, i 7, p 0, i 3, i 0x02200000, p 0) p .r0 ?e'
       Pop $1
       ${If} $0 P<> -1
@@ -151,8 +125,7 @@ Function ${UN}HsMayOpen
   Pop $0
 FunctionEnd
 
-; $R0 = a folder. $R2 = 1 when the user could change it or anything under
-; it, or it holds a reparse point; else 0.
+; $R0 = a folder. $R2 = 1 when the user could change it or anything under it, or it holds a reparse point.
 Function ${UN}HsTreeChangeable
   Push $0
   Push $1
@@ -205,8 +178,7 @@ Function ${UN}HsTreeChangeable
   Pop $0
 FunctionEnd
 
-; $R0 = an install folder. $R2 = 1 when the user who runs this process
-; cannot change it (see the top of this file); else 0.
+; $R0 = an install folder. $R2 = 1 when the user who runs this process cannot change it.
 Function ${UN}HsProtectedFromUser
   Push $0
   Push $1
@@ -217,7 +189,6 @@ Function ${UN}HsProtectedFromUser
   ${If} $R2 = 1
     Call ${UN}HsTreeChangeable
     ${If} $R2 = 0
-      ; Each folder above it, up to the drive's root.
       StrCpy $0 $R0
       ${Do}
         StrLen $1 $0
@@ -229,7 +200,6 @@ Function ${UN}HsProtectedFromUser
           ${EndIf}
         ${Loop}
         ${If} $1 <= 2
-          ; "X:\": the root, the last one.
           StrCpy $0 $0 3
         ${Else}
           StrCpy $0 $0 $1
@@ -256,24 +226,14 @@ FunctionEnd
 
 ; Sets $HsSelfHold and $HsHeld, which the includer declares.
 !macro HS_HOLD_SELF_FUNCTIONS
-; The all-users relaunch hands $EXEPATH to UAC, which finds the file by
-; that path again. A same-user process could otherwise rename this running
-; setup, or a folder above it, and put its own program at that path before
-; the prompt (an unsigned setup shows no publisher to tell them apart).
-; From the start, this setup's file is held open with reads shared only,
-; and every folder above it, up to the drive's root, with deletes not
-; shared: until it exits, no other process can write, rename or delete the
-; file, or rename or delete a folder on the way, so the file UAC starts is
-; this one. A path through a junction or symbolic link (whose target its
-; owner could change), a network path, or anything that cannot be held,
-; and there is no relaunch: the user runs setup as administrator.
+; UAC reopens $EXEPATH by path, so this setup and every folder above it stay held (no write, rename or delete)
+; until exit; through a link, on a network path, or when a hold fails, there is no relaunch: run setup as administrator.
 Function HsHoldSelf
   Push $0
   Push $1
   Push $2
   StrCpy $HsHeld 0
   ; GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT.
-  ; Closed when setup exits.
   System::Call 'kernel32::CreateFileW(w "$EXEPATH", i 0x80000000, i 1, p 0, i 3, i 0x00200000, p 0) p .r0'
   StrCpy $HsSelfHold $0
   StrCpy $1 $EXEPATH 2
@@ -291,8 +251,7 @@ Function HsHoldSelf
         ${If} $2 <= 3
           ${Break}
         ${EndIf}
-        ; FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE, OPEN_EXISTING,
-        ; FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT. Kept open.
+        ; FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT.
         System::Call 'kernel32::CreateFileW(w "$1", i 1, i 3, p 0, i 3, i 0x02200000, p 0) p .r0'
         ${If} $0 P= -1
           StrCpy $HsHeld 0
@@ -313,8 +272,7 @@ Function HsHoldSelf
   Pop $0
 FunctionEnd
 
-; Whether the open handle on the stack is a junction or symbolic link (a
-; name-surrogate reparse point), or cannot be told: 1 or 0 on the stack.
+; Whether the open handle on the stack is a name-surrogate reparse point (junction, symlink), or cannot be told: 1 or 0 on the stack.
 Function HsIsLink
   Exch $0
   Push $1

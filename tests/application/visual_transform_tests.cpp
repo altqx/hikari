@@ -1,9 +1,3 @@
-// T3: Scale and the Z and X/Y rotations. The tools replay the legacy probe's
-// captures (tests/fixtures/legacy-cases/inputs/visual-t3-cases.txt; tests/fixtures/legacy-observations/
-// local-t3-visual-20261005): every Line's text and translation after each
-// step, the editor's text on the one-Line path and the tools' handles must
-// be legacy's exactly.
-
 #include "hikari/application/automation_services.h"
 #include "hikari/application/visual_rotation.h"
 #include "hikari/application/visual_scale.h"
@@ -65,9 +59,6 @@ const core::LineRecord *lineOf(const EditSession &s, core::LineId id)
     return nullptr;
 }
 
-// The probe's GetLineTextExtents (visual_t3_capture.cpp): a character half
-// the font size wide, the font size high, a descent of a fifth and a leading
-// of a tenth, times ScaleX / ScaleY. The fields are Styles::GetRaw's.
 class FixedMeasure : public TextMeasurePort {
 public:
     std::optional<TextExtents> measure(const std::vector<std::string> &style, const std::string &text) override
@@ -90,14 +81,8 @@ public:
     }
 };
 
-// Legacy's own GetLineTextExtents as the measure probe recorded it
-// (visual_t3_capture.cpp with PROBE_LEGACY_MEASURE; tests/fixtures/
-// legacy-observations/local-t3-measure-20261012): each call's answer for the
-// text and the measuring Style's fields it reads. The calls the rewrite makes
-// are kept, so that every state can compare them with legacy's.
 class CapturedMeasure : public TextMeasurePort {
 public:
-    // "text|font|size|bold|italic|scaleX|scaleY|spacing"
     static std::string key(const std::string &text, const std::string &font, const std::string &size, bool bold,
                            bool italic, const std::string &scaleX, const std::string &scaleY, const std::string &spacing)
     {
@@ -116,7 +101,6 @@ public:
 
     std::optional<TextExtents> measure(const std::vector<std::string> &style, const std::string &text) override
     {
-        // The fields are Styles::GetRaw's; Bold and Italic are -1 or 0.
         const std::string k = key(text, style[1], style[2], std::atoi(style[7].c_str()) != 0,
                                   std::atoi(style[8].c_str()) != 0, style[11], style[12], style[13]);
         calls.push_back(k);
@@ -140,18 +124,8 @@ public:
     mutable FixedMeasure measure;
     std::pair<long, long> caret{0, 0};
     std::vector<std::u16string> logged;
-    // Every history step as legacy recorded its commit: "dummy <action>" for
-    // the several-Line path's SetModified, "<action>" for the one-Line path's
-    // EditBox::Send (Visuals.cpp:791-796, 820-825); the action is the
-    // history's VISUAL_* number (SubsFile.h:67-69).
     std::vector<std::string> history, sent;
-    // A refusal for the next commit (a stale revision, a draft that cannot
-    // commit): nothing is written.
     std::optional<CommandRefusal> refuse;
-    // What the app does when a commit changed the Document, before the
-    // commit returns: VisualToolsController::commitGesture's m_edited reloads
-    // the Line editor and refresh() resets the tool on a new revision unless
-    // the tool keeps its state, as legacy's Scale and rotations did.
     std::function<void()> edited;
 
     const VideoView &view() const override { return v; }
@@ -202,7 +176,7 @@ public:
     std::int64_t videoTimeMs() const override { return time; }
     LegacyTimebase timebase() const override { return base; }
     TextMeasurePort *textMeasure() const override { return measurePort ? measurePort : &measure; }
-    TextMeasurePort *measurePort = nullptr; // the fixed measure when null
+    TextMeasurePort *measurePort = nullptr;
     std::pair<long, long> editorSelection() const override { return caret; }
     void setEditorSelection(long from, long to) override { caret = {from, to}; }
     void log(std::u16string_view text) override { logged.emplace_back(text); }
@@ -216,7 +190,6 @@ std::string assTime(int ms)
     return buf;
 }
 
-// One case of inputs/visual-t3-cases.txt.
 struct Case {
     std::string name;
     int clientW = 0, clientH = 0, panel = 0;
@@ -228,7 +201,6 @@ struct Case {
     int time = 0;
     double fps = 0;
     bool tl = false;
-    // Styles() but for these fields (styles.cpp:249-275).
     struct Style {
         std::string name, fontname = "Garamond", fontsize, scaleX, scaleY, spacing = "0", angle, outline, shadow,
                                      alignment, marginL, marginR, marginV;
@@ -247,7 +219,7 @@ struct Case {
     int active = 0;
     std::vector<int> select;
     long caretFrom = 0, caretTo = 0;
-    std::vector<std::string> ops; // tool and later
+    std::vector<std::string> ops;
 };
 
 std::vector<Case> readCases(const char *path = HIKARI_VISUAL_T3_CASES)
@@ -339,7 +311,7 @@ std::map<std::string, std::vector<QJsonObject>> readObservations(const char *pat
     return out;
 }
 
-// A number of the capture; the probe writes infinities as "inf".
+// JSON has no infinity: the probe writes it as "inf".
 float f(const QJsonValue &v)
 {
     if (v.isString())
@@ -432,8 +404,6 @@ Pointer pointerOf(const std::string &kind, std::istringstream &in)
     return p;
 }
 
-// The editor's text as legacy's TextEdit held it: the gesture's staged text
-// while one runs, else the Line's (the translation in TLMode unless empty).
 std::u8string editorText(const TestHost &host, const Case &c)
 {
     const core::LineId active = *host.s->selection().active;
@@ -445,9 +415,6 @@ std::u8string editorText(const TestHost &host, const Case &c)
     return tl ? line->translation : line->text;
 }
 
-// The approved departures (docs/compatibility-decisions.md, the T3 rows)
-// where the capture holds legacy's defect: the rewrite gives `expected`, and
-// legacy's text, kept as the old evidence, must still differ from it.
 struct Departure {
     const char *entry;
     const char *caseName;
@@ -459,20 +426,13 @@ struct Departure {
 const std::vector<Departure> &departures()
 {
     static const std::vector<Departure> table{
-        // Scale keeps the vector clip's scale and moves its points (in
-        // half pixels) about the position by 1.2, then 1.21 after D.
         {"T3-scale-vector-clip", "scale-several-preserve-proportions", 1, 2,
          u8"{\\fscy120\\fscx120\\pos(768,252)\\clip(2,m -384 -216 l -264 -216 -264 -96 -384 -96)}Third"},
         {"T3-scale-vector-clip", "scale-several-preserve-proportions", 2, 2,
          u8"{\\fscy121\\fscx121\\pos(766.4,249.6)\\clip(2,m -403 -226 l -282 -226 -282 -105 -403 -105)}Third"},
-        // The \org after \an7 is replaced, \frz30 kept.
         {"T3-change-org-end", "rotz-org-several", 0, 1, u8"{\\an7\\org(40,50)\\frz30}Second"},
-        // The rectangle turned without growing: its bottom corners are
-        // legacy's less 2 turned by the angle.
         {"T3-rotz-rect-clip", "rotz-several-preserve", 1, 1,
          u8"{\\pos(1050.922,777.889)\\clip(m 521 -265 l 667 -128 530 18 384 -119)\\frz1.941}Second"},
-        // A 10-pixel drag at 250% with the coefficient 3 moves the \org by
-        // 12; legacy added the zoom's offset (72, 48) times 3.
         {"T3-org-zoom", "rotz-zoom-org", 1, 0, u8"{\\org(972,552)\\pos(960,540)}Zoom"},
         {"T3-change-org-end, T3-org-zoom", "rotz-zoom-org", 1, 1, u8"{\\pos(30,40)\\org(112,112)}Other"},
     };
@@ -487,11 +447,10 @@ const Departure *departureFor(const std::string &caseName, std::size_t step, std
     return nullptr;
 }
 
-} // namespace
+}
 
 TEST(VisualTransformText, GetfloatAndNumbersFollowLegacy)
 {
-    // getfloat (config.cpp:1085-1101).
     EXPECT_EQ(transform::getfloat(150.f), u"150");
     EXPECT_EQ(transform::getfloat(98.9f), u"98.9");
     EXPECT_EQ(transform::getfloat(1.0006f), u"1.001");
@@ -510,8 +469,6 @@ TEST(VisualTransformText, GetfloatAndNumbersFollowLegacy)
 
 TEST(VisualTransformText, ReplaceAllAddsTheFirstBlocksTag)
 {
-    // TagFindReplace::ReplaceAll with returnPosWhenNoTags (TagFindReplace.cpp:290-302):
-    // a text that starts without a block gets one even when later blocks have the tag.
     transform::TagFind find;
     std::u16string text = u"Hello{\\fscx50}x";
     const int n = find.replaceAll(u"fscx([0-9.-]+)", u"fscx", text,
@@ -523,15 +480,10 @@ TEST(VisualTransformText, ReplaceAllAddsTheFirstBlocksTag)
     EXPECT_EQ(text, u"{\\fscx100}Hello{\\fscx200}x");
 }
 
-// T3-scale-vector-clip and T3-rotz-rect-clip: Scale keeps a vector clip's
-// scale and scales its points about the pivot in the vector's units (legacy
-// wrote `\clip(m ...)`); RotationZ's rewrite leaves a rectangle's size alone
-// (legacy added 2 to the bottom on every edit).
 TEST(VisualTransformText, ClipRewritesKeepTheScaleAndTheRectangle)
 {
     transform::TagFind find;
     std::u16string vector = u"{\\clip(2,m 0 0 l 200 0 200 100 0 100)}A";
-    // Twice the size about (50, 25) pixels: (100, 50) in half pixels.
     transform::changeClipScale(find, vector, {50, 25}, 2.f, 2.f);
     EXPECT_EQ(vector, u"{\\clip(2,m -100 -50 l 300 -50 300 150 -100 150)}A");
 
@@ -539,7 +491,6 @@ TEST(VisualTransformText, ClipRewritesKeepTheScaleAndTheRectangle)
     transform::changeClipScale(find, unscaled, {10, 10}, 2.f, 1.f);
     EXPECT_EQ(unscaled, u"{\\iclip(m 10 10 l 30 10 30 20)}A");
 
-    // No turn, twice: the rectangle (written as a vector) keeps its corners.
     std::u16string rect = u"{\\clip(100,50,300,150)}A";
     transform::changeClipRotationZ(find, rect, {0, 0}, 0.f, 1.f);
     EXPECT_EQ(rect, u"{\\clip(m 100 50 l 300 50 300 150 100 150)}A");
@@ -547,12 +498,6 @@ TEST(VisualTransformText, ClipRewritesKeepTheScaleAndTheRectangle)
     EXPECT_EQ(rect, u"{\\clip(m 100 50 l 300 50 300 150 100 150)}A");
 }
 
-// T3-rect-clip-extra-values: a rectangle clip's values past the fourth wrote
-// past legacy's `float xy[4]` (VisualScale.cpp:750-765,
-// VisualRotationZ.cpp:464-476); the first four make the rectangle and the
-// rest are dropped. A value that is not a number leaves the clip as it was,
-// with nothing logged (legacy's "Cannot read clip rectangle values." is not
-// kept).
 TEST(VisualTransformText, RectangleClipDropsValuesPastTheFourth)
 {
     transform::TagFind find;
@@ -575,8 +520,6 @@ TEST(VisualTransformText, RectangleClipDropsValuesPastTheFourth)
     }
 }
 
-// T3-change-org-end: ChangeOrg replaces an \org that is not the block's
-// first tag and keeps what follows it (legacy: `{\an7\org(40,50)30}`).
 TEST(VisualTransformText, ChangeOrgReplacesALaterOrgExactly)
 {
     const auto cases = readCases();
@@ -595,9 +538,6 @@ TEST(VisualTransformText, ChangeOrgReplacesALaterOrgExactly)
     }
 }
 
-// T3-two-points-change-all: choosing RotationZ with "two points" and
-// "change all" both on takes the two-point mode (legacy's ChangeTool did not
-// when "change all" changed in the same call, VisualRotationZ.cpp:422-441).
 TEST(VisualTransformEdit, TwoPointsHoldWithChangeAll)
 {
     const auto cases = readCases();
@@ -609,7 +549,6 @@ TEST(VisualTransformEdit, TwoPointsHoldWithChangeAll)
     tool.selected(host);
     tool.reset(host);
     EXPECT_TRUE(tool.hasTwoPoints());
-    // "Change all" off keeps it, "two points" off drops it, on takes it again.
     tool.setToggled(1, &host);
     EXPECT_TRUE(tool.hasTwoPoints());
     tool.setToggled(2, &host);
@@ -620,24 +559,17 @@ TEST(VisualTransformEdit, TwoPointsHoldWithChangeAll)
 
 namespace {
 
-// What a replay of a T3 capture adds up to.
 struct ReplayTotals {
     int states = 0;
-    std::size_t departed = 0;                    // Line states in departures()
-    std::vector<std::string> unchangedReleases; // legacy's commits left out
+    std::size_t departed = 0;
+    std::vector<std::string> unchangedReleases;
 };
 
-// What a capture's replay needs beyond the cases and the observations.
 struct ReplayHooks {
-    // The host's text measure (null: the probe's fixed one).
     TextMeasurePort *measure = nullptr;
-    // At every state, after the Lines, before the handles: true when the
-    // hook checked this step's handles itself (an approved departure).
     std::function<bool(const Case &, std::size_t step, const QJsonObject &, const VisualTool &)> atState;
 };
 
-// Replays the cases through the tools and compares every "state" with the
-// capture: the Lines, the editor, the commits, the log and the handles.
 void replay(const std::vector<Case> &cases, const std::map<std::string, std::vector<QJsonObject>> &observations,
             const ReplayHooks &hooks, ReplayTotals &totals)
 {
@@ -652,13 +584,12 @@ void replay(const std::vector<Case> &cases, const std::map<std::string, std::vec
         TestHost host;
         host.measurePort = hooks.measure;
         setUp(host, c);
-        // The view as legacy's renderer had it.
         ASSERT_EQ(host.v.videoRect(), c.rect);
         ASSERT_EQ(host.v.zoomMove(), c.zoomMove);
         ASSERT_EQ(host.v.zoomScale(), c.zoomScale);
         std::unique_ptr<VisualTool> tool;
         std::size_t step = 0;
-        std::size_t noStepSends = 0, noStepHistory = 0; // below
+        std::size_t noStepSends = 0, noStepHistory = 0;
         QJsonArray previousLines;
         std::size_t previousSent = 0, previousHistory = 0;
         host.edited = [&] {
@@ -700,14 +631,12 @@ void replay(const std::vector<Case> &cases, const std::map<std::string, std::vec
                 else
                     dynamic_cast<RotationXYTool *>(tool.get())->setToggled(bits, &host);
             } else if (kind == "active") {
-                // The editor takes another Line (the next setvisual reads it).
                 int i;
                 in >> i;
                 const core::LineId id = ids(*host.s)[static_cast<std::size_t>(i)];
                 host.s->setSelection({id, {id}, id, std::nullopt});
                 host.targets = {id};
             } else if (kind == "setvisual") {
-                // RendererVideo::SetVisual after the editor took the Line again.
                 host.caret = {c.caretFrom, c.caretTo};
                 tool->reset(host);
             } else if (kind == "select") {
@@ -741,7 +670,6 @@ void replay(const std::vector<Case> &cases, const std::map<std::string, std::vec
                 const QJsonObject &o = steps[step++];
                 ++states;
                 SCOPED_TRACE("step " + std::to_string(step - 1));
-                // Every Line as legacy's grid held it.
                 const QJsonArray lines = o[QStringLiteral("lines")].toArray();
                 const auto all = ids(*host.s);
                 ASSERT_EQ(static_cast<std::size_t>(lines.size()), all.size());
@@ -757,11 +685,6 @@ void replay(const std::vector<Case> &cases, const std::map<std::string, std::vec
                     EXPECT_EQ(lineOf(*host.s, all[i])->text, u8(l[0])) << "line " << i;
                     EXPECT_EQ(lineOf(*host.s, all[i])->translation, u8(l[1])) << "line " << i;
                 }
-                // The editor's text and caret, on the one-Line path. Legacy
-                // moved the caret to the tag on every sample (Visuals.cpp:
-                // 813-815); the rewrite's editor shows the Document, so the
-                // tool holds the caret while the gesture runs and the editor
-                // takes it with the written text on release.
                 const QJsonArray caret = o[QStringLiteral("caret")].toArray();
                 const std::pair<long, long> legacyCaret{caret[0].toInteger(), caret[1].toInteger()};
                 if (!several) {
@@ -777,29 +700,12 @@ void replay(const std::vector<Case> &cases, const std::map<std::string, std::vec
                 }
                 if (!host.g)
                     EXPECT_EQ(host.caret, legacyCaret) << "the editor's caret";
-                // The commits (SetModified, Send) and the log, in order.
                 const auto strings = [](const QJsonValue &v) {
                     std::vector<std::string> out;
                     for (const QJsonValue &e : v.toArray())
                         out.push_back(e.toString().toStdString());
                     return out;
                 };
-                // Legacy committed on every release (RotationZ::OnMouseEvent,
-                // VisualRotationZ.cpp:150-152; Scale's, VisualScale.cpp:
-                // 279-281), so a release that left every Line as it was (the
-                // two-point angle's first point and a click off both points
-                // in rotz-two-points, a drag inside Scale's rectangle in
-                // scale-rectangle) sent the unchanged text, and that made an
-                // undo step: CopyDialogue marks the file edited (SubsFile.cpp:
-                // 408-417) and SetModified saves the undo state
-                // (SubsGridBase.cpp:1125-1157). The rewrite cancels a gesture
-                // whose release changes no Line's text (T3-release-no-change):
-                // those commits are left out. On one Line the commit is a
-                // Send (`sent`); on several it is SetModified (`history`).
-                // This capture's three such releases (rotz-two-points steps
-                // 1 and 5, scale-rectangle step 4) are all on one Line, so
-                // noStepHistory stays 0 here; it is kept so a several-Line
-                // release that changes nothing is left out by the same rule.
                 auto legacySent = strings(o[QStringLiteral("sent")]);
                 auto legacyHistory = strings(o[QStringLiteral("history")]);
                 if (step > 1 && lines == previousLines) {
@@ -821,7 +727,6 @@ void replay(const std::vector<Case> &cases, const std::map<std::string, std::vec
                 for (const auto &l : host.logged)
                     logged.push_back(QString::fromStdU16String(l).toStdString());
                 EXPECT_EQ(logged, strings(o[QStringLiteral("log")]));
-                // The handles.
                 if (hooks.atState && hooks.atState(c, step - 1, o, *tool))
                     continue;
                 if (const auto *s = dynamic_cast<const ScaleTool *>(tool.get())) {
@@ -866,7 +771,7 @@ void replay(const std::vector<Case> &cases, const std::map<std::string, std::vec
     }
 }
 
-} // namespace
+}
 
 TEST(VisualCapture, ReplaysTheLegacyT3Probe)
 {
@@ -874,21 +779,10 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
     replay(readCases(), readObservations(), {}, totals);
     EXPECT_GT(totals.states, 70);
     EXPECT_EQ(totals.departed, departures().size());
-    // T3-release-no-change: the releases whose unchanged commit was left out.
     EXPECT_EQ(totals.unchangedReleases, (std::vector<std::string>{"scale-rectangle step 4", "rotz-two-points step 1",
                                                            "rotz-two-points step 5"}));
 }
 
-// Scale's rectangle mode on legacy's own text measure: the measure probe
-// (visual_t3_capture.cpp with PROBE_LEGACY_MEASURE, inputs/visual-t3-
-// measure-cases.txt) ran Scale over the Linux build's GetLineTextExtents
-// (wxGTK's memory DC) and Titillium Web. The replay answers each measure with
-// legacy's extents for the same text and measuring Style, so it compares
-// how the rewrite's GetTextSize walks the text (the pieces it measures, in
-// order, with the Style the tags made), the original rectangle drawn from
-// the size and border, and the scale written from a drawn rectangle. The
-// rewrite's own measure (QtTextMeasurePort) is compared with the same
-// extents in hikari_ui_automation_services_tests.
 TEST(VisualCapture, ReplaysTheLegacyT3MeasureProbe)
 {
     const auto observations = readObservations(HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS);
@@ -907,21 +801,12 @@ TEST(VisualCapture, ReplaysTheLegacyT3MeasureProbe)
     ReplayHooks hooks;
     hooks.measure = &measure;
     hooks.atState = [&](const Case &c, std::size_t step, const QJsonObject &o, const VisualTool &tool) {
-        // The pieces measured since the last state, in order. An empty piece
-        // never reaches the measure in the rewrite: legacy's
-        // GetLineTextExtents answers 0 for it before touching the font
-        // (UtilsWindows.cpp:241-250), and lineTextExtents does the same.
         std::vector<std::string> legacy;
         for (const QJsonValue &v : o[QStringLiteral("extents")].toArray())
             if (!v.toObject()[QStringLiteral("text")].toString().isEmpty())
                 legacy.push_back(CapturedMeasure::key(v.toObject()));
         EXPECT_EQ(measure.calls, legacy) << "the pieces measured";
         measure.calls.clear();
-        // T3-empty-line-border (User, 2026-10-12): GetTextSize returned at
-        // once for an empty Line without writing the border
-        // (Visuals.cpp:959-961), so Scale kept the previous Line's (13, 13
-        // from {\bord5\shad3}) and drew the original rectangle that much
-        // wider about the position; the rewrite's border is 0.
         if (c.name != "measure-empty-line" || step != 1)
             return false;
         ++borderDeparture;
@@ -948,11 +833,6 @@ TEST(VisualCapture, ReplaysTheLegacyT3MeasureProbe)
     EXPECT_TRUE(totals.unchangedReleases.empty());
 }
 
-// A commit the session refuses (a stale revision, a draft that cannot
-// commit) writes nothing, so the editor's caret stays where it was rather
-// than going to a tag that was never written, and the tool reads the
-// unchanged text again, as after Esc. Legacy had no refusal: its
-// SetVisual(false) always sent the editor (Visuals.cpp:817-829).
 TEST(VisualTransformEdit, ARefusedCommitLeavesTheCaretAndTheText)
 {
     for (const char *name : {"scale-width-left-drag", "rotz-drag", "rotxy-left-right-middle"}) {
@@ -961,7 +841,7 @@ TEST(VisualTransformEdit, ARefusedCommitLeavesTheCaretAndTheText)
         const auto it = std::find_if(cases.begin(), cases.end(), [&](const Case &c) { return c.name == name; });
         ASSERT_NE(it, cases.end());
         Case c = *it;
-        c.caretFrom = c.caretTo = 7; // in the first block
+        c.caretFrom = c.caretTo = 7;
         TestHost host;
         setUp(host, c);
         std::unique_ptr<VisualTool> tool;
@@ -993,33 +873,24 @@ TEST(VisualTransformEdit, ARefusedCommitLeavesTheCaretAndTheText)
             p.leftDown = down;
             return p;
         };
-        // The drags of the cases above: a press on the width arrow (Scale),
-        // off the \org (RotationZ), anywhere (RotationXY), then a move.
         const std::pair<int, int> press = c.name.starts_with("rotxy") ? std::pair{100, 100} : std::pair{420, 180};
         tool->pointer(at(press.first, press.second, Pointer::Kind::Press, true), host);
         Pointer move = at(press.first + 40, press.second + 30, Pointer::Kind::Move, true);
         move.button = Pointer::Button::None;
         tool->pointer(move, host);
         ASSERT_TRUE(host.g && host.g->hasChanges());
-        EXPECT_NE(handles().second, before.second); // the tool holds the caret at the tag
+        EXPECT_NE(handles().second, before.second);
         host.refuse = CommandRefusal::StaleRevision;
         tool->pointer(at(press.first + 40, press.second + 30, Pointer::Kind::Release, false), host);
         EXPECT_FALSE(host.g);
         EXPECT_EQ(host.s->historySize(), steps);
         EXPECT_EQ(lineOf(*host.s, *host.activeLine())->text, text);
         EXPECT_TRUE(host.sent.empty());
-        EXPECT_EQ(host.caret, (std::pair<long, long>{7, 7})); // not put at the unwritten tag
-        EXPECT_EQ(handles(), before);                         // the unchanged text read again
+        EXPECT_EQ(host.caret, (std::pair<long, long>{7, 7}));
+        EXPECT_EQ(handles(), before);
     }
 }
 
-// T3-release-no-change: a release that changes no Line's text records no
-// step and leaves the Document unmodified, on the several-Line path too,
-// where every target's text is staged on release (legacy's SetVisual(false)
-// ran SetModified on every release, Visuals.cpp:791-796, and that made an
-// undo step of the unchanged text; T6-no-change-no-step is the same rule).
-// Each several-Line case is played to its end and its last release repeated
-// as a click without a move, which writes every target's text as it is.
 TEST(VisualTransformEdit, AReleaseThatChangesNoLineRecordsNothing)
 {
     for (const char *name : {"scale-several-lines", "rotz-org-several", "rotxy-several"}) {
@@ -1061,7 +932,7 @@ TEST(VisualTransformEdit, AReleaseThatChangesNoLineRecordsNothing)
                     lastRelease = op.substr(op.find(' '));
             }
         }
-        ASSERT_FALSE(host.history.empty()); // the case's own release changed the Lines
+        ASSERT_FALSE(host.history.empty());
         const auto texts = [&] {
             std::vector<std::u8string> out;
             for (const auto id : ids(*host.s))
@@ -1086,7 +957,6 @@ TEST(VisualTransformEdit, AReleaseThatChangesNoLineRecordsNothing)
 
 namespace {
 
-// A case of the probe with its one Line's text replaced.
 Case caseWith(const char *name, const std::string &from, const std::string &to)
 {
     const auto cases = readCases();
@@ -1105,12 +975,8 @@ void expectNear(PointF a, PointF b, float tolerance = 1e-3f)
     EXPECT_NEAR(a.y, b.y, tolerance);
 }
 
-} // namespace
+}
 
-// RotationZ::DrawVisual (VisualRotationZ.cpp:34-137) with an \org away from
-// the position: the ring between the radius (the distance from the \org
-// to the position, plus 40) and the radius + 10, its two circles, the angle
-// handle, the cross and the line to `to`.
 TEST(VisualOverlay, RotationZDrawsLegacysRingAndHandle)
 {
     const Case c = caseWith("rotz-drag", "{\\pos(960,540)}Turn", "{\\pos(960,540)\\org(1200,600)\\frz30}Turn");
@@ -1120,16 +986,13 @@ TEST(VisualOverlay, RotationZDrawsLegacysRingAndHandle)
     tool.setToggled(0);
     tool.selected(host);
     tool.reset(host);
-    const PointF org{400, 200}, from{320, 180}; // the coefficient 3
+    const PointF org{400, 200}, from{320, 180};
     expectNear(tool.org(), org);
     expectNear(tool.from(), from);
     EXPECT_EQ(tool.lastmove().y, 30.f);
     const Overlay o = tool.overlay(host);
     const float rad = 0.01745329251994329576923690768489f;
     const float radius = std::sqrt(80.f * 80.f + 20.f * 20.f) + 40;
-    // The triangle strip v5[0..361] (lines 66-77): the outer and inner
-    // vertices at 2j degrees, x by sin and y by cos, as one polygon (outer
-    // forwards, inner backwards) that fills the same annulus.
     ASSERT_EQ(o.polygons.size(), 1u);
     const OverlayPolygon &ring = o.polygons[0];
     EXPECT_EQ(ring.fill, 0xAA121150u);
@@ -1141,8 +1004,6 @@ TEST(VisualOverlay, RotationZDrawsLegacysRingAndHandle)
                    {org.x + (radius + 10.f) * std::sin(a), org.y + (radius + 10.f) * std::cos(a)});
         expectNear(ring.points[static_cast<std::size_t>(361 - j)], {org.x + radius * std::sin(a), org.y + radius * std::cos(a)});
     }
-    // Its area is the annulus's (two 180-gons), so the inner circle is a hole
-    // whatever the fill rule: the outer and inner runs wind opposite ways.
     double area = 0;
     for (std::size_t i = 0; i < ring.points.size(); ++i) {
         const PointF a = ring.points[i], b = ring.points[(i + 1) % ring.points.size()];
@@ -1150,8 +1011,6 @@ TEST(VisualOverlay, RotationZDrawsLegacysRingAndHandle)
     }
     const double gon = 90.0 * std::sin(2.0 * 3.14159265358979323846 / 180.0);
     EXPECT_NEAR(std::fabs(area / 2), gon * ((radius + 10.0) * (radius + 10.0) - radius * radius), 0.5);
-    // The two circles (LINESTRIP over v5[364..544] and v5[545..725]), then
-    // the handle (lines 78-106), the cross and org to `to` (108-135).
     ASSERT_EQ(o.lines.size(), 360u + 3u + 3u);
     for (int j = 0; j < 180; ++j) {
         const OverlayLine &outer = o.lines[static_cast<std::size_t>(2 * j)];
@@ -1186,15 +1045,6 @@ TEST(VisualOverlay, RotationZDrawsLegacysRingAndHandle)
     }
 }
 
-// RotationXY::DrawVisual's grid (VisualRotationXY.cpp:37-181) against the
-// D3DX pipeline worked by hand: the world D3DXMatrixRotationYawPitchRoll
-// (-angle.x, angle.y, 0) (after the translation to the position when it is
-// not the \org), the view D3DXMatrixLookAtLH from (0, 0, -17.2) (a model
-// point at depth z + 17.2), the projection D3DXMatrixPerspectiveFovLH(120
-// degrees, the window's ratio) translated by the \org in clip space. So a
-// point (x, y, z) of the turned model lands at org + (x * xs, -y * ys) / d
-// * (W, H) / 2, with ys = 1 / tan(60 degrees), xs = ys / (W / H) and d its
-// depth.
 TEST(VisualOverlay, RotationXYGridProjectsAsD3DX)
 {
     const float W = 640, H = 360;
@@ -1208,14 +1058,10 @@ TEST(VisualOverlay, RotationXYGridProjectsAsD3DX)
     p.height = H;
     p.org = org;
     p.from = org;
-    // Unturned: the grid's lines (VERTEX 0-87) in legacy's order, each
-    // LINELIST pair cut in two at the middle, eleven each way 5 apart from
-    // 25 to -25; the alpha rises by 155 / 12 a line (`ster` never turns, g
-    // never reaching 1), the sixth orange.
     Overlay o;
     drawXYGrid(o, p, 2);
     ASSERT_EQ(o.lines.size(), 44u + 3u);
-    ASSERT_EQ(o.polygons.size(), 3u * 4u); // three TRIANGLEFANs of six vertices
+    ASSERT_EQ(o.polygons.size(), 3u * 4u);
     float g = 1.f / 12.f;
     for (int k = 0; k < 11; ++k) {
         SCOPED_TRACE(k);
@@ -1231,44 +1077,29 @@ TEST(VisualOverlay, RotationXYGridProjectsAsD3DX)
             EXPECT_EQ(l[i].argb, (static_cast<std::uint32_t>(static_cast<int>(g * 155)) << 24) | rgb);
         g += 1.f / 12.f;
     }
-    // The axes (VERTEX 176-180, lines 126-128): y up for an1-3 (else down),
-    // x right unless an3, an6 or an9 ...
     expectNear(o.lines[44].from, expected(0, 9, 17.2f));
     expectNear(o.lines[44].to, org);
     expectNear(o.lines[45].to, expected(9, 0, 17.2f));
     expectNear(o.lines[46].to, expected(0, 0, 17.2f + 9.f));
     for (int i = 44; i < 47; ++i)
         EXPECT_EQ(o.lines[static_cast<std::size_t>(i)].argb, 0xFFBB0000u);
-    // ... the y arrow's cone (181-186) from its tip at 10.
     expectNear(o.polygons[0].points[0], expected(0, 10, 17.2f));
-    // an9: y down, x left (addy, addx -9).
     Overlay o9;
     drawXYGrid(o9, p, 9);
     expectNear(o9.lines[44].from, expected(0, -9, 17.2f));
     expectNear(o9.lines[45].to, expected(-9, 0, 17.2f));
-    // \fry30 (angle.x 30, the yaw -30 degrees): x turns into depth, (10, 0, 0)
-    // to (10 cos 30, 0, 10 sin 30).
     p.angle = {30, 0};
     const float c30 = std::cos(30.f * 0.017453292519943295769f), s30 = std::sin(30.f * 0.017453292519943295769f);
     expectNear(*projectXY(p, 10, 0, 0), expected(10 * c30, 0, 17.2f + 10 * s30));
     expectNear(*projectXY(p, -10, 0, 0), expected(-10 * c30, 0, 17.2f - 10 * s30));
-    // \frx30 (angle.y 30, the pitch): (0, 10, 0) to (0, 10 cos 30, 10 sin 30).
     p.angle = {0, 30};
     expectNear(*projectXY(p, 0, 10, 0), expected(0, 10 * c30, 17.2f + 10 * s30));
-    // Behind the near plane (depth under 1) nothing is drawn.
     p.angle = {90, 0};
     EXPECT_FALSE(projectXY(p, -20, 0, 0));
-    // A position away from the \org: the model moves by (from - org) / W * 60
-    // and (org - from) / H * 60 before it turns.
     p.angle = {0, 0};
     p.from = {320, 180};
     expectNear(*projectXY(p, 0, 0, 0), expected((320 - org.x) / W * 60, (org.y - 180) / H * 60, 17.2f));
 }
-
-// The pointer's shapes (VideoBox::SetCursor from the Visuals; the user's
-// 2026-10-13 decision to port them). The probe's view: the coefficient 3,
-// the Line at (320, 180), Scale's arrows ending at (420, 280), the width's
-// at (420, 180) and the height's at (320, 280).
 
 namespace {
 
@@ -1281,7 +1112,6 @@ const Case &caseNamed(const char *name)
     return *it;
 }
 
-// "press 420 180 left", "move 500 50", "release 420 180 left shift".
 void send(VisualTool &tool, TestHost &host, const std::string &event)
 {
     std::istringstream in(event);
@@ -1290,13 +1120,10 @@ void send(VisualTool &tool, TestHost &host, const std::string &event)
     tool.pointer(pointerOf(kind, in), host);
 }
 
-} // namespace
+}
 
 TEST(VisualTransformPointer, ScaleArrowEndsShowTheirAxisShape)
 {
-    // Scale::OnMouseEvent (VisualScale.cpp:286-297): over the arrows' common
-    // end SIZING, the width's end SIZEWE, the height's SIZENS (11 pixels),
-    // each only from the arrow; leaving them all puts the arrow back.
     TestHost host;
     setUp(host, caseNamed("scale-width-left-drag"));
     ScaleTool tool;
@@ -1317,8 +1144,6 @@ TEST(VisualTransformPointer, ScaleArrowEndsShowTheirAxisShape)
         send(tool, host, "move 500 50");
         EXPECT_EQ(host.pointerShape(), PointerShape::Arrow) << at;
     }
-    // A shape set over one end stays over another until the pointer leaves
-    // them all (legacy's HasArrow test).
     send(tool, host, "move 420 280");
     send(tool, host, "move 420 185");
     EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
@@ -1328,10 +1153,6 @@ TEST(VisualTransformPointer, ScaleArrowEndsShowTheirAxisShape)
 
 TEST(VisualTransformPointer, ScaleDragsShowTheScaledAxis)
 {
-    // VisualScale.cpp:300-312: the left button's width SIZEWE, the right
-    // button's height SIZENS, the middle button's and Shift's both SIZING; a
-    // grabbed end its own axis; the release the arrow (:282), then the
-    // shape over the end the pointer is on.
     TestHost host;
     setUp(host, caseNamed("scale-width-left-drag"));
     ScaleTool tool;
@@ -1344,7 +1165,7 @@ TEST(VisualTransformPointer, ScaleDragsShowTheScaledAxis)
     EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
     send(tool, host, "release 470 185 left");
     EXPECT_EQ(tool.to().x, 470.f);
-    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE); // over the width's end it moved
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
     send(tool, host, "move 600 50");
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
     send(tool, host, "press 600 50 right");
@@ -1363,19 +1184,12 @@ TEST(VisualTransformPointer, ScaleDragsShowTheScaledAxis)
 
 TEST(VisualTransformPointer, ScaleShiftChangesTheShapeOnlyDuringADrag)
 {
-    // Departure T3-scale-shift-hover (User, 2026-10-13): legacy re-ran the
-    // press's shape code whenever Shift's state changed (VisualScale.cpp:
-    // 300-312), so a Shift press or release while hovering, or a release
-    // with Shift still held, put a drag's shape up over the hover rules'.
-    // Here Shift changes the shape only while a button is down.
     TestHost host;
     setUp(host, caseNamed("scale-width-left-drag"));
     ScaleTool tool;
     tool.setToggled(6);
     tool.selected(host);
     tool.reset(host);
-    // Hovering: Shift pressed and released keeps the hover rules' shape,
-    // away from the arrows' ends (the arrow) and over the width's end.
     for (const auto &[at, shape] : std::vector<std::pair<std::string, PointerShape>>{
              {"move 500 50", PointerShape::Arrow},
              {"move 501 50 shift", PointerShape::Arrow},
@@ -1388,8 +1202,6 @@ TEST(VisualTransformPointer, ScaleShiftChangesTheShapeOnlyDuringADrag)
         send(tool, host, at);
         EXPECT_EQ(host.pointerShape(), shape) << at;
     }
-    // A drag: Shift pressed during it shows both axes' shape, and the
-    // release with Shift still held puts the hover shape back at once.
     send(tool, host, "press 600 50 left");
     EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
     send(tool, host, "move 610 50 left shift");
@@ -1404,8 +1216,6 @@ TEST(VisualTransformPointer, ScaleShiftChangesTheShapeOnlyDuringADrag)
     send(tool, host, "move 642 70");
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
 
-    // A Shift drag released over the width's end with Shift still held
-    // puts that end's hover shape back, not the drag's.
     TestHost ends;
     setUp(ends, caseNamed("scale-width-left-drag"));
     ScaleTool grabbed;
@@ -1419,8 +1229,6 @@ TEST(VisualTransformPointer, ScaleShiftChangesTheShapeOnlyDuringADrag)
     send(grabbed, ends, "release 420 180 left shift");
     EXPECT_EQ(ends.pointerShape(), PointerShape::SizeWE);
 
-    // "Preserve proportions" scales both axes from any press (SIZING), but
-    // hovering over the width's end with Shift keeps the end's shape.
     TestHost linked;
     setUp(linked, caseNamed("scale-width-left-drag"));
     ScaleTool proportions;
@@ -1437,16 +1245,12 @@ TEST(VisualTransformPointer, ScaleShiftChangesTheShapeOnlyDuringADrag)
     EXPECT_EQ(linked.pointerShape(), PointerShape::Sizing);
     send(proportions, linked, "move 422 180 left shift");
     EXPECT_EQ(linked.pointerShape(), PointerShape::Sizing);
-    // Released there with Shift held: the width's end's shape, where legacy
-    // put the uniform drag's SIZING back up.
     send(proportions, linked, "release 422 180 left shift");
     EXPECT_EQ(linked.pointerShape(), PointerShape::SizeWE);
 }
 
 TEST(VisualTransformPointer, ScaleRectanglesEdgesAndCornersShowTheirResizeShapes)
 {
-    // "Scale to rectangle" (VisualScale.cpp:152-172): the scaled rectangle's
-    // and the original rectangle's edges and corners.
     TestHost host;
     setUp(host, caseNamed("scale-rectangle"));
     ScaleTool tool;
@@ -1457,7 +1261,7 @@ TEST(VisualTransformPointer, ScaleRectanglesEdgesAndCornersShowTheirResizeShapes
     send(tool, host, "move 400 200 left");
     send(tool, host, "release 400 200 left");
     ASSERT_TRUE(tool.rectangleVisible());
-    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNWSE); // released on its corner
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNWSE);
     for (const auto &[at, shape] : std::vector<std::pair<std::string, PointerShape>>{
              {"move 300 175", PointerShape::SizeWE},
              {"move 400 175", PointerShape::SizeWE},
@@ -1474,7 +1278,6 @@ TEST(VisualTransformPointer, ScaleRectanglesEdgesAndCornersShowTheirResizeShapes
         send(tool, host, "move 600 300");
         EXPECT_EQ(host.pointerShape(), PointerShape::Arrow) << at;
     }
-    // An edge's drag keeps its shape.
     send(tool, host, "move 400 175");
     send(tool, host, "press 400 175 left");
     send(tool, host, "move 450 100 left");
@@ -1503,9 +1306,6 @@ TEST(VisualTransformPointer, ScaleRectanglesEdgesAndCornersShowTheirResizeShapes
 
 TEST(VisualTransformPointer, RotationZDragsShowTheFourWayShape)
 {
-    // RotationZ::OnMouseEvent: nothing while hovering, SIZING from a press
-    // (the angle's or the \org's, VisualRotationZ.cpp:215), the arrow on the
-    // release (:158).
     TestHost host;
     setUp(host, caseNamed("rotz-drag"));
     RotationZTool tool;
@@ -1520,7 +1320,7 @@ TEST(VisualTransformPointer, RotationZDragsShowTheFourWayShape)
     EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
     send(tool, host, "release 380 250 left");
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
-    send(tool, host, "press 320 180 left"); // the \org
+    send(tool, host, "press 320 180 left");
     EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
     send(tool, host, "release 330 190 left");
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
@@ -1528,9 +1328,6 @@ TEST(VisualTransformPointer, RotationZDragsShowTheFourWayShape)
 
 TEST(VisualTransformPointer, RotationZTwoPointsShowTheFourWayShapeFromTheSecond)
 {
-    // VisualRotationZ.cpp:177-211: the first point's click and a click
-    // away from both points set nothing; the second point's and a point's
-    // drag SIZING.
     TestHost host;
     setUp(host, caseNamed("rotz-two-points"));
     RotationZTool tool;
@@ -1555,9 +1352,6 @@ TEST(VisualTransformPointer, RotationZTwoPointsShowTheFourWayShapeFromTheSecond)
 
 TEST(VisualTransformPointer, RotationXYDragsShowTheTurnedAxis)
 {
-    // RotationXY::OnMouseEvent (VisualRotationXY.cpp:215-217): the left
-    // button's \fry SIZEWE, the right's \frx SIZENS, the middle's both
-    // SIZING, the \org's drag too; the release the arrow (:199).
     TestHost host;
     setUp(host, caseNamed("rotxy-left-right-middle"));
     RotationXYTool tool;
@@ -1575,16 +1369,12 @@ TEST(VisualTransformPointer, RotationXYDragsShowTheTurnedAxis)
         send(tool, host, "release 130 120 " + button);
         EXPECT_EQ(host.pointerShape(), PointerShape::Arrow) << button;
     }
-    send(tool, host, "press 320 180 left"); // the \org
+    send(tool, host, "press 320 180 left");
     EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
     send(tool, host, "release 330 180 left");
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
 }
 
-// VT1: the inspector bar's values for Scale and the rotations. A typed value
-// is one step; a scrub's samples stage on one gesture its release commits as
-// one step; Esc (the host cancelling the gesture and resetting the tool)
-// drops them, and the values read the text again.
 TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
 {
     const auto cases = readCases();
@@ -1620,8 +1410,6 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
         EXPECT_EQ(x.unit, u"%");
         EXPECT_EQ(x.text, u"100");
         EXPECT_FALSE(tool.setValue("fscx", u"abc", host));
-        // Beyond a value's limit (an infinite scale otherwise), and below
-        // zero, refused without a gesture left open.
         EXPECT_FALSE(tool.setValue("fscx", u"1e100", host));
         EXPECT_FALSE(tool.setValue("fscx", u"-5", host, ValueEdit::Sample));
         EXPECT_FALSE(host.g);
@@ -1631,7 +1419,6 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
         EXPECT_EQ(host.s->historySize(), steps + 1);
         EXPECT_NE(textOf(host).find("\\fscx150"), std::string::npos) << textOf(host);
         EXPECT_EQ(valueOf(tool, host, "fscx").text, u"150");
-        // A scrub of Y.
         EXPECT_TRUE(tool.setValue("fscy", u"110", host, ValueEdit::Sample));
         ASSERT_TRUE(host.g);
         EXPECT_TRUE(tool.setValue("fscy", u"120", host, ValueEdit::Sample));
@@ -1642,7 +1429,6 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
         EXPECT_EQ(host.s->historySize(), steps + 2);
         EXPECT_NE(textOf(host).find("\\fscy120"), std::string::npos) << textOf(host);
         EXPECT_NE(textOf(host).find("\\fscx150"), std::string::npos) << textOf(host);
-        // Esc mid-scrub.
         const std::string before = textOf(host);
         EXPECT_TRUE(tool.setValue("fscx", u"10", host, ValueEdit::Sample));
         ASSERT_TRUE(host.g);
@@ -1666,14 +1452,12 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
         EXPECT_EQ(host.s->historySize(), steps + 1);
         EXPECT_NE(textOf(host).find("\\frz30"), std::string::npos) << textOf(host);
         EXPECT_EQ(valueOf(tool, host, "frz").text, u"30");
-        // A scrub of the angle, dropped: the angle the text has again.
         const std::string before = textOf(host);
         EXPECT_TRUE(tool.setValue("frz", u"45", host, ValueEdit::Sample));
         ASSERT_TRUE(host.g);
         escape(host, tool);
         EXPECT_EQ(textOf(host), before);
         EXPECT_EQ(valueOf(tool, host, "frz").text, u"30");
-        // The origin, in script coordinates.
         EXPECT_TRUE(tool.setValue("orgx", u"100", host));
         EXPECT_EQ(host.s->historySize(), steps + 2);
         EXPECT_NE(textOf(host).find("\\org(100,540)"), std::string::npos) << textOf(host);
@@ -1699,7 +1483,6 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
         ASSERT_TRUE(host.g);
         EXPECT_TRUE(tool.setValue("frx", u"-15", host, ValueEdit::Commit));
         EXPECT_EQ(host.s->historySize(), steps + 2);
-        // The tool keeps the angle in 0-360 as its drags do (-15 is 345).
         EXPECT_NE(textOf(host).find("\\frx345"), std::string::npos) << textOf(host);
         EXPECT_NE(textOf(host).find("\\fry20"), std::string::npos) << textOf(host);
         EXPECT_EQ(valueOf(tool, host, "frx").text, u"345");
@@ -1720,11 +1503,8 @@ std::u16string valueText(const VisualTool &tool, const VisualHost &host, const s
             return v.text;
     return {};
 }
-} // namespace
+}
 
-// VT1 (Codex on #293): with "Changing all" tags over several Lines, the
-// fields and the next edit start from the active Line's angle as written,
-// not the batch's first (Z) or last (X/Y) target's.
 TEST(VisualTransformValues, BatchAnglesStartFromTheActiveLine)
 {
     {
@@ -1732,7 +1512,7 @@ TEST(VisualTransformValues, BatchAnglesStartFromTheActiveLine)
         TestHost host;
         setUp(host, caseNamed("rotz-several-preserve"));
         const auto all = ids(*host.s);
-        host.targets = {all[1], all[0]}; // the active Line not the first
+        host.targets = {all[1], all[0]};
         RotationZTool tool;
         tool.setToggled(2);
         tool.selected(host);
@@ -1751,7 +1531,7 @@ TEST(VisualTransformValues, BatchAnglesStartFromTheActiveLine)
         TestHost host;
         setUp(host, caseNamed("rotxy-several"));
         const auto all = ids(*host.s);
-        host.targets = {all[0], all[1]}; // the active Line not the last
+        host.targets = {all[0], all[1]};
         RotationXYTool tool;
         tool.setToggled(0);
         tool.selected(host);
@@ -1767,8 +1547,6 @@ TEST(VisualTransformValues, BatchAnglesStartFromTheActiveLine)
     }
 }
 
-// VT1 (Codex on #293): a typed angle of several negative turns is held in
-// 0-360 as one turn's is.
 TEST(VisualTransformValues, AnglesOfSeveralTurnsAreInOneTurn)
 {
     {
@@ -1796,9 +1574,6 @@ TEST(VisualTransformValues, AnglesOfSeveralTurnsAreInOneTurn)
     }
 }
 
-// VT1 (Codex on #293): with "Change all scale tags" a scale is the tags'
-// multiple of the press's, so a value is refused on an axis at zero (no
-// ratio from it) rather than writing nan; a zero itself is written.
 TEST(VisualTransformValues, ChangeAllFromAZeroScaleIsRefused)
 {
     TestHost host;
@@ -1822,15 +1597,11 @@ TEST(VisualTransformValues, ChangeAllFromAZeroScaleIsRefused)
     EXPECT_FALSE(host.g);
     EXPECT_EQ(host.s->historySize(), steps + 1);
     EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
-    // Y, at its own scale, is still edited.
     EXPECT_TRUE(tool.setValue("fscy", u"120", host));
     EXPECT_EQ(host.s->historySize(), steps + 2);
     EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
 }
 
-// VT1 (Codex on #293): from a scale too small for the ratio (a tiny \fscx
-// in the text), "Change all scale tags" refuses a large value rather than
-// writing inf.
 TEST(VisualTransformValues, ChangeAllRefusesARatioThatOverflows)
 {
     TestHost host;
@@ -1857,9 +1628,6 @@ TEST(VisualTransformValues, ChangeAllRefusesARatioThatOverflows)
     EXPECT_EQ(textOf().find("inf"), std::string::npos) << textOf();
 }
 
-// VT1 (Codex on #293): with "change all" on and the active Line alone, each
-// scrub sample is written from the text the gesture started with, not the
-// last sample's, so the release writes the value it shows.
 TEST(VisualTransformValues, ChangeAllScrubsStartFromTheGesturesText)
 {
     const auto textOf = [](const TestHost &host) {
@@ -1919,10 +1687,6 @@ TEST(VisualTransformValues, ChangeAllScrubsStartFromTheGesturesText)
     }
 }
 
-// VT1 (Codex on #293): over several Lines with "Change all scale tags" a
-// typed or scrubbed value is written as given, each axis by its own ratio.
-// Legacy's drags take the larger ratio for both axes, so a value below the
-// press's would change nothing.
 TEST(VisualTransformValues, BatchScaleValuesTakeTheirOwnAxisRatio)
 {
     TestHost host;
@@ -1935,14 +1699,12 @@ TEST(VisualTransformValues, BatchScaleValuesTakeTheirOwnAxisRatio)
     tool.reset(host);
     ASSERT_EQ(valueText(tool, host, "fscx"), u"100");
     const std::size_t steps = host.s->historySize();
-    // X below the press's: halved in every picked Line, Y untouched.
     EXPECT_TRUE(tool.setValue("fscx", u"50", host));
     EXPECT_EQ(host.s->historySize(), steps + 1);
     EXPECT_EQ(rowText(host, 0), "{\\fscx50\\pos(960,540)}Active");
     EXPECT_EQ(rowText(host, 1), "{\\fscx75}Second{\\fscx20}x");
     EXPECT_EQ(rowText(host, 2), "{\\fscx50\\fscy70}Third");
     EXPECT_EQ(valueText(tool, host, "fscx"), u"50");
-    // Y scrubbed up: X stays where it was typed.
     EXPECT_TRUE(tool.setValue("fscy", u"120", host, ValueEdit::Sample));
     EXPECT_TRUE(tool.setValue("fscy", u"150", host, ValueEdit::Sample));
     EXPECT_TRUE(tool.setValue("fscy", u"150", host, ValueEdit::Commit));
@@ -1952,9 +1714,6 @@ TEST(VisualTransformValues, BatchScaleValuesTakeTheirOwnAxisRatio)
     EXPECT_NE(rowText(host, 2).find("\\fscx50\\fscy105"), std::string::npos) << rowText(host, 2);
 }
 
-// VT1 (Codex on #293): with "Preserve proportions" each sample is in
-// proportion to the press's scale, so a scrub through zero comes back with
-// both axes.
 TEST(VisualTransformValues, AProportionalScrubThroughZeroKeepsTheProportion)
 {
     TestHost host;
@@ -1975,8 +1734,6 @@ TEST(VisualTransformValues, AProportionalScrubThroughZeroKeepsTheProportion)
     EXPECT_NE(text.find("\\fscy10"), std::string::npos) << text;
 }
 
-// VT1 (Codex on #293): with "two points" on and its points not both placed,
-// a typed origin still writes \org (only the angle waits for the points).
 TEST(VisualTransformValues, TheOriginIsTypedWithTwoPointsOn)
 {
     TestHost host;

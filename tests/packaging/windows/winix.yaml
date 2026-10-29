@@ -1,6 +1,3 @@
-# Installer tests on the Winix VM (installers SPEC 8.3). A separate guest work
-# tree (workspace inst-qt-windows), so the main tree's sources and build stay
-# as they are; its out/sdk is reused read-only through HIKARI_SDK_DIR.
 #   winix --config tests/packaging/windows/winix.yaml --owner <you> sync .
 #   winix --config tests/packaging/windows/winix.yaml run probe --wait
 # The resources and vm keys repeat the root winix.yaml: the VM is shared.
@@ -20,24 +17,19 @@ tasks:
     visualStudio: false
     timeoutSeconds: 120
   package:
-    # The windows-x64-package preset against the main work tree's SDK, then
-    # the payload zipped for the host (out/build/windows-x64-package/payload.zip).
     script: $sdk = if ($env:HIKARI_SDK_DIR) { $env:HIKARI_SDK_DIR } else { 'C:/Winix/work/hikari-qt/out/sdk' }; ./tools/winix/msvc.ps1 cmake --preset windows-x64-package "-DHIKARI_SDK_DIR=$sdk" "-DHIKARI_VERSION_SUFFIX=$env:HIKARI_VERSION_SUFFIX"; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 cmake --build --preset windows-x64-package; if ($LASTEXITCODE) { exit $LASTEXITCODE }; $b = 'out/build/windows-x64-package'; Remove-Item "$b/payload.zip" -ErrorAction SilentlyContinue; Compress-Archive -Path "$b/payload/*" -DestinationPath "$b/payload.zip"; Get-Item "$b/payload.zip" | ForEach-Object { "payload.zip $($_.Length) bytes" }
     timeoutSeconds: 5400
     artifacts: [out/build/windows-x64-package/payload/payload-manifest.txt, out/build/windows-x64-package/payload/windeployqt.log]
   inst:
-    # installer.ps1 as the desktop user; ACTION and the rest from --env.
     script: ./tests/packaging/windows/installer.ps1
     visualStudio: false
     timeoutSeconds: 900
   inst-admin:
-    # installer.ps1 elevated, for all-users installs and their checks.
     script: ./tests/packaging/windows/installer.ps1
     visualStudio: false
     elevated: true
     timeoutSeconds: 900
-  # The uninstaller's elevation rule (protected-tests.ps1), with
-  # HS_PROTECTED_EXE the guest path of protected-test.exe.
+  # HS_PROTECTED_EXE: the guest path of protected-test.exe.
   protected-setup:
     script: ./tests/packaging/windows/protected-tests.ps1 -Phase setup
     visualStudio: false
@@ -52,27 +44,22 @@ tasks:
     visualStudio: false
     elevated: true
     timeoutSeconds: 300
-  # An all-users install only under Program Files, with HS_SETUP the guest
-  # path of a setup.exe (any payload).
+  # HS_SETUP: the guest path of a setup.exe (any payload).
   protected-machinedir:
     script: ./tests/packaging/windows/protected-tests.ps1 -Phase machinedir -Setup $env:HS_SETUP
     visualStudio: false
     elevated: true
     timeoutSeconds: 600
-  # A running setup's file is held against change, HS_SETUP as above.
   protected-selfhold:
     script: ./tests/packaging/windows/protected-tests.ps1 -Phase selfhold -Setup $env:HS_SETUP -Exe $env:HS_EXE
     visualStudio: false
     timeoutSeconds: 300
-  # tools/winix/end-setups.ps1 against stand-ins on the desktop, and with
-  # HS_SETUP (optional, the guest path of a setup.exe) a real setup's and
-  # uninstaller's first pages.
+  # HS_SETUP (optional): the guest path of a setup.exe.
   end-setups-test:
     script: if ($env:HS_SETUP) { ./tests/packaging/windows/end-setups-tests.ps1 -Setup $env:HS_SETUP } else { ./tests/packaging/windows/end-setups-tests.ps1 }
     visualStudio: false
     timeoutSeconds: 600
   inst-detach:
-    # installer.ps1 for start-app: the app keeps running after the task ends.
     script: ./tests/packaging/windows/installer.ps1
     visualStudio: false
     detach: true

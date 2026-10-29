@@ -1,9 +1,3 @@
-// O1: the settings registry against legacy config.h/config.cpp at 20d647c4:
-// every CONFIG option with its default (LoadDefaultConfig and
-// LoadDefaultAudioConfig), the AudioConfig.txt partition, typed round trips,
-// legacy "Set default" and the interim INI keys. The Options dialog is
-// options_dialog_tests.
-
 #include "hikari/application/settings.h"
 
 #include <gtest/gtest.h>
@@ -16,7 +10,6 @@ using namespace hikari::application;
 
 namespace {
 
-// config.h CONFIG, in order (configSize - 1 options; 0 is reserved).
 const char *const kLegacyOrder[] = {
     "AUDIO_AUTO_COMMIT", "AUDIO_AUTO_FOCUS", "AUDIO_AUTO_SCROLL", "AUDIO_CACHE_FILES_LIMIT", "AUDIO_DELAY",
     "AUDIO_DONT_PLAY_WHEN_LINE_CHANGES", "AUDIO_DRAW_KEYFRAMES", "AUDIO_DRAW_SECONDARY_LINES",
@@ -29,7 +22,6 @@ const char *const kLegacyOrder[] = {
     "AUDIO_VERTICAL_ZOOM", "AUDIO_VOLUME", "AUDIO_WHEEL_DEFAULT_TO_ZOOM",
 };
 
-// LoadDefaultConfig and LoadDefaultAudioConfig: every explicit assignment.
 const std::map<std::string, SettingValue> kExplicitDefaults{
     {"AUDIO_BOX_HEIGHT", std::int64_t{170}},
     {"SHIFT_TIMES_TIME", std::int64_t{2000}},
@@ -119,7 +111,6 @@ SettingValue emptyOf(SettingType type)
     return false;
 }
 
-// A value other than the default, for each type.
 SettingValue sampleFor(const SettingDefinition &setting)
 {
     switch (setting.type) {
@@ -135,7 +126,7 @@ SettingValue sampleFor(const SettingDefinition &setting)
     return false;
 }
 
-} // namespace
+}
 
 TEST(SettingsRegistry, EveryLegacyOptionHasAStableId)
 {
@@ -151,8 +142,6 @@ TEST(SettingsRegistry, EveryLegacyOptionHasAStableId)
         }
         EXPECT_EQ(findSetting(s.id), &s);
     }
-    // The 207 rows of the migration map (34 AudioConfig.txt, 173 Config.txt)
-    // less WS3's retired EDITOR_ON.
     EXPECT_EQ(legacyCount, 206u);
     EXPECT_EQ(findSetting("no.such"), nullptr);
     EXPECT_EQ(findLegacySetting(""), nullptr);
@@ -160,8 +149,6 @@ TEST(SettingsRegistry, EveryLegacyOptionHasAStableId)
 
 TEST(SettingsRegistry, AudioOptionsAreTheFirstOrdinals)
 {
-    // config::IsAudioOption: opt <= AUDIO_WHEEL_DEFAULT_TO_ZOOM, by ordinal, not
-    // by name (AUDIO_BOX_HEIGHT and AUDIO_RECENT_FILES are Config.txt options).
     const auto all = settingDefinitions();
     ASSERT_GE(all.size(), std::size(kLegacyOrder));
     for (std::size_t i = 0; i < std::size(kLegacyOrder); ++i) {
@@ -180,12 +167,10 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
         if (s.legacyKey.empty())
             continue;
         const auto it = kExplicitDefaults.find(std::string(s.legacyKey));
-        // Options without an assignment start as "": false, 0, "" or no entries.
         SettingValue expected = it != kExplicitDefaults.end() ? it->second : emptyOf(s.type);
-        // Approved departures from legacy's default.
         if (s.legacyKey == "AUTO_MOVE_TAGS_FROM_ORIGINAL")
-            expected = true; // TM1-original-keeps-tags: Tags from original starts on
-        if (s.legacyKey == "STYLE_PREVIEW_TEXT") // PV1-preview-text
+            expected = true;
+        if (s.legacyKey == "STYLE_PREVIEW_TEXT")
             expected = std::string(reinterpret_cast<const char *>(u8"光 Hikari 日本"));
         EXPECT_EQ(s.defaultValue, expected) << s.legacyKey;
     }
@@ -193,8 +178,6 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
     EXPECT_EQ(findSetting("subtitles.saveWithVideoName")->legacyKey, "SUBS_AUTONAMING");
 }
 
-// PV1 (#398): a stored "Podgląd", legacy's default, was never chosen and
-// reads as the new sample text; a text the user chose is kept.
 TEST(Settings, TheOldPreviewTextDefaultReadsAsTheNewOne)
 {
     const std::string fresh(reinterpret_cast<const char *>(u8"光 Hikari 日本"));
@@ -205,17 +188,10 @@ TEST(Settings, TheOldPreviewTextDefaultReadsAsTheNewOne)
     EXPECT_EQ(settings.text("styles.previewText"), fresh);
     settings.set("styles.previewText", std::string("Mine"));
     EXPECT_EQ(settings.text("styles.previewText"), "Mine");
-    // Only the preview text's old default.
     settings.set("styles.editFilterText", std::string(reinterpret_cast<const char *>(u8"Podgląd")));
     EXPECT_EQ(settings.text("styles.editFilterText"), std::string(reinterpret_cast<const char *>(u8"Podgląd")));
 }
 
-// K2 (the user's 2026-10-05 decision, superseding A2-theme-colours): no
-// per-colour setting outside high contrast. Every setting whose default is a
-// colour, or a text setting whose id names a colour, is one of the high-contrast themes'
-// pickers, or the colour picker's recent colours (COLORPICKER_RECENT_COLORS:
-// document colours, not the appearance). A2's spectrum colours and K1's icon
-// colours are gone from the registry.
 TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
 {
     const std::set<std::string_view> pickers{
@@ -239,7 +215,6 @@ TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
     std::set<std::string_view> expected(pickers);
     expected.insert(documentColours.begin(), documentColours.end());
     EXPECT_EQ(colourSettings, expected);
-    // The pickers are high-contrast settings of the rewrite's own.
     for (const auto id : pickers) {
         const auto *s = findSetting(id);
         ASSERT_NE(s, nullptr) << id;
@@ -247,11 +222,9 @@ TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
         EXPECT_EQ(s->scope, SettingScope::Profile);
         EXPECT_NE(id.find("highContrast"), std::string_view::npos);
     }
-    // The withdrawn ones are not settings any more (a profile's saved value
-    // is dropped by the INI store, settings_store_tests).
     MemorySettingsStorage storage;
     Settings settings(storage);
-    EXPECT_EQ(retiredSettings().size(), 16u); // and WS3's workspace.editorOn
+    EXPECT_EQ(retiredSettings().size(), 16u);
     EXPECT_EQ(findLegacySetting("EDITOR_ON"), nullptr);
     for (const auto id : retiredSettings()) {
         EXPECT_EQ(findSetting(id), nullptr) << id;
@@ -259,9 +232,6 @@ TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
     }
 }
 
-// K2: the appearance settings and their defaults: the theme (legacy's
-// default theme was dark, config.cpp:639), following the system on, each
-// mode's accent the spec's green, the high-contrast pickers' defaults.
 TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
 {
     MemorySettingsStorage storage;
@@ -273,7 +243,6 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
     EXPECT_EQ(settings.text("appearance.highContrastWhite.accent"), "#0037B3");
     EXPECT_EQ(settings.text("appearance.highContrastBlack.accent"), "#FFFF00");
     EXPECT_EQ(settings.text("appearance.highContrastBlack.text"), "#FFFFFF");
-    // SH1: the title bar by the desktop's default (auto, system or custom).
     EXPECT_EQ(settings.text("appearance.titleBar"), "auto");
     std::size_t count = 0;
     for (const auto &s : settingDefinitions())
@@ -294,7 +263,6 @@ TEST(SettingsRegistry, ThemesAreExcludedAndUnresolvedOnesKept)
     Settings settings(storage);
     EXPECT_FALSE(settings.set(theme->id, std::string("LightSentro")));
     EXPECT_FALSE(settings.isSet(theme->id));
-    // The worksheet's preserve-unresolved rows keep their values.
     for (const char *key : {"AUDIO_DRAW_TIME_CURSOR", "AUDIO_LOCK_SCROLL_ON_CURSOR", "COLORPICKER_RECENT_COLORS",
                             "FFMS2_VIDEO_SEEKING", "SHIFT_TIMES_BY_TIME", "SHIFT_TIMES_MOVE_FORWARD",
                             "SHIFT_TIMES_PROFILES", "VIDEO_GPU_CONVERSION", "VSFILTER_INSTANCE", "DONT_SHOW_CRASH_INFO"}) {
@@ -324,11 +292,9 @@ TEST(SettingsRegistry, EverySettingRoundTripsAndResets)
         ASSERT_FALSE(heard.empty());
         EXPECT_EQ(heard.back(), s.id);
     }
-    // Setting the same value again is not a change.
     heard.clear();
     settings.set("grid.hideColumns", settings.value("grid.hideColumns"));
     EXPECT_TRUE(heard.empty());
-    // Legacy ResetDefault: everything back to the defaults at once.
     settings.resetAll();
     for (const auto &s : settingDefinitions()) {
         EXPECT_FALSE(settings.isSet(s.id)) << s.id;
@@ -356,7 +322,6 @@ TEST(SettingsRegistry, ValuesAreConvertedToTheSettingsType)
     settings.set("recent.subtitles", std::string("a.ass"));
     EXPECT_EQ(settings.list("recent.subtitles"), std::vector<std::string>{"a.ass"});
     EXPECT_EQ(settings.integer("convert.resolutionWidth"), 1920);
-    // An unknown id reads as false and cannot be set.
     EXPECT_EQ(settings.value("no.such"), SettingValue(false));
     EXPECT_FALSE(settings.set("no.such", true));
 }
@@ -375,7 +340,6 @@ TEST(SettingsRegistry, InterimKeysNameSettingsOfTheirType)
     EXPECT_EQ(findSetting("grid.hideColumns")->legacyKey, "GRID_HIDE_COLUMNS");
     EXPECT_EQ(findSetting("convert.assTagsToInsertInLine")->legacyKey, "CONVERT_ASS_TAGS_TO_INSERT_IN_LINE");
     EXPECT_EQ(findSetting("updater.checkForStable")->legacyKey, "UPDATER_CHECK_FOR_STABLE");
-    // ShiftTimes::SaveOptions: the six switches are bits of SHIFT_TIMES_OPTIONS.
     std::int64_t all = 0;
     for (const auto &b : interimShiftOptionBits()) {
         EXPECT_FALSE(keys.contains(b.key));

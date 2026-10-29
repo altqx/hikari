@@ -1,38 +1,7 @@
 #!/usr/bin/env python3
-"""The images of the user's visual review page, rendered by the application.
+"""Renders the visual review page's images from a built tree's UI test hooks.
 
-Runs the UI tests' screenshot hooks in a built tree and gathers what they
-write into one folder, one PNG per review item, with a manifest.json listing
-each item as {id, card, title, file, note}:
-
-* K1: the four icons awaiting approval (copy-to-storage, copy-to-ass,
-  copy-to-all-ass, panel-menu) drawn by the Icon item in Light and Dark at
-  100, 150 and 200 %, one sheet (icon_tests contactSheets with
-  HIKARI_ICON_SHEET_ROLES: the four cells of each of its sheets, stacked
-  under captions this script adds);
-* K2: the seven accent presets of Light and Dark on each surface role
-  (theme_tests swatchSheet, HIKARI_THEME_SHEET_DIR) and the main window in
-  the four themes (shell_tests surfaceScreenshots, HIKARI_SURFACE_SHOT_DIR);
-* K2 focus (the user's 2026-10-13 decision): keyboard focus in the four
-  themes (shell_tests focusScreenshots): the focused panel's accent corner
-  mark on the Grid, a tabbed group and a floating panel, and the 1-wide
-  ring on a button, a text field, a check box and an accent swatch, with
-  the mark's contrast table (theme_tests panelFocusMarkContrast);
-* O5: the main window, the File menu and the Options dialog in Polish, Thai,
-  the accented pseudolocale and right-to-left (language_tests screenshots,
-  HIKARI_LANGUAGE_SHOT_DIR);
-* D3: the dock and panel chrome in the four themes (shell_tests
-  dockChromeScreenshots): the main window, the bottom panels' one-tab bars,
-  a tabbed group, its "..." menu, a floating panel and a drag.
-
-The tests run on Qt's offscreen platform, which draws with the system's
-fonts through fontconfig on Linux. Windows counterparts come from the
-Windows VM, not from this script.
-
-Run:  python3 tools/review/review_assets.py <build dir> <output dir> [part...]
-      (the build dir is a configured and built tree, e.g.
-      out/build/ubuntu-x64-release; the output dir is created; the parts,
-      k1, k2, k2-focus, o5 and d3, default to all of them)
+Run:  python3 tools/review/review_assets.py <build dir> <output dir> [k1|k2|k2-focus|o5|d3...]
 """
 
 import json
@@ -49,12 +18,10 @@ except ImportError:
     sys.exit("review_assets.py needs Pillow (python-pillow, or pip install pillow)")
 
 K1_ROLES = ["copy-to-storage", "copy-to-ass", "copy-to-all-ass", "panel-menu"]
-# icon_tests contactSheets lays the roles out in 8 columns of 168 x 44 cells
-# at 100 %; k1_sheet checks each sheet's size against these.
+# MUST KILL: copies icon_tests contactSheets' grid at 100 %
 K1_COLUMNS = 8
 K1_CELL_WIDTH = 168
 K1_CELL_HEIGHT = 44
-# A hung hook (the drag is the likeliest) ends the run instead of blocking it.
 TIMEOUT_SECONDS = 600
 SCALES = [(100, "1"), (150, "1.5"), (200, "2")]
 THEMES = [
@@ -74,8 +41,6 @@ LANGUAGE_VIEWS = [
     ("file-menu", "File menu", "The File menu, open over the main window."),
     ("options", "Options dialog", "The Options dialog as it opens, on its first page (Editor)."),
 ]
-# Polish and Thai carry legacy's translations; strings new in this
-# application have none yet, and Qt shows them in English.
 PARTIAL_CATALOG = {"polish", "thai"}
 FOCUS_VIEWS = [
     ("grid", "Grid focused",
@@ -110,8 +75,7 @@ DOCK_VIEWS = [
 
 
 def run(build, binary, functions, env):
-    """Runs the hooks `functions` of test `binary`; exits naming them when
-    the run fails, times out or skips one."""
+    """Runs the hooks `functions` of test `binary`; exits if one fails, times out or skips."""
     path = os.path.join(build, "tests", "ui", binary)
     if not os.path.exists(path):
         sys.exit("missing %s: build the tree first" % path)
@@ -154,8 +118,7 @@ def label_font(size):
 
 
 def k1_sheet(build, work, out):
-    """The four icons' sheets at each scale, cropped to the four cells and
-    stacked under a caption naming the theme and scale."""
+    """The four icons' sheets at each scale, cropped and captioned."""
     rows = []
     for percent, factor in SCALES:
         folder = os.path.join(work, "k1-%d" % percent)

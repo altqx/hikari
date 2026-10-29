@@ -1,11 +1,3 @@
-// T1: the visual tools' transform, crosshair, VIDEO_COPY_COORDS, gestures
-// and batch picker. The transform and crosshair replay the legacy probe's
-// captures (tests/fixtures/legacy-cases/inputs/visual-cases.txt; tests/fixtures/legacy-observations/
-// local-t1-visual-20261005) and must give legacy's numbers exactly, but for
-// the approved departures T1-copy-coords-view and T1-wheel-zoom-stale
-// (docs/compatibility-decisions.md), whose captures stay as the old
-// evidence.
-
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_tools.h"
@@ -69,8 +61,6 @@ const core::LineRecord *line(const EditSession &s, core::LineId id)
     return nullptr;
 }
 
-// A VisualHost over a VideoView and an EditSession, measuring labels as the
-// probe's stand-in does (7 pixels a character, 14 high).
 class TestHost : public VisualHost {
 public:
     VideoView v;
@@ -112,7 +102,6 @@ public:
     void toolChanged() override { ++changes; }
 };
 
-// One case of inputs/visual-cases.txt.
 struct Case {
     std::string name;
     int clientW = 0, clientH = 0, panel = 0;
@@ -172,7 +161,6 @@ std::map<std::string, QJsonObject> readObservations()
     return out;
 }
 
-// The probe prints floats with %.9g, which reads back to the same float.
 float f(const QJsonValue &v)
 {
     return static_cast<float>(v.toDouble());
@@ -195,7 +183,6 @@ std::u16string u16(const QJsonValue &v)
     return v.toString().toStdU16String();
 }
 
-// The entry of a capture array whose "at" is the given point.
 QJsonObject entryAt(const QJsonObject &o, const char *key, const QJsonValue &at)
 {
     for (const QJsonValue &v : o[QLatin1String(key)].toArray())
@@ -205,16 +192,11 @@ QJsonObject entryAt(const QJsonObject &o, const char *key, const QJsonValue &at)
     return {};
 }
 
-// Approved departure T1-copy-coords-view: VIDEO_COPY_COORDS copies the
-// crosshair's script position under the pointer (its label) in legacy's
-// "x,y" form.
 std::u16string copiedFromLabel(const QJsonValue &label)
 {
     return label.toString().replace(QStringLiteral(", "), QStringLiteral(",")).toStdU16String();
 }
 
-// Sets the case up through the rewrite's logical coordinates: the probe's
-// device pixels divided by the case's device pixel ratio, rounded back.
 void setUp(TestHost &host, const Case &c)
 {
     host.v.setDevicePixelRatio(c.dpr);
@@ -234,7 +216,7 @@ void setUp(TestHost &host, const Case &c)
             in >> percent >> x >> y;
             host.v.zoomAt(percent, x, y);
         } else if (kind == "zoomtoggle") {
-            host.v.toggleZoom(0); // VIDEO_ZOOM_PERCENT unset
+            host.v.toggleZoom(0);
         } else if (kind == "resetzoom") {
             host.v.resetZoom();
         } else if (kind == "setvisual") {
@@ -248,18 +230,17 @@ void setUp(TestHost &host, const Case &c)
     }
 }
 
-} // namespace
+}
 
 TEST(VisualFamilies, AreLegacysElevenRailItems)
 {
     for (int i = 0; i < kLegacyFamilyCount; ++i)
         EXPECT_EQ(static_cast<int>(families()[i].family), i);
-    EXPECT_EQ(familyInfo(Family::Crosshair).history, "Visual positioning tool"); // VisualCross.cpp:125
+    EXPECT_EQ(familyInfo(Family::Crosshair).history, "Visual positioning tool");
     EXPECT_EQ(familyInfo(Family::Hydra).history, "Visual Hydra tool");
     EXPECT_NE(makeVisualTool(Family::Crosshair), nullptr);
 }
 
-// VT2: each tool has a Video command, named as the rail names the tool.
 TEST(VisualFamilies, EachHasAVideoCommandNamedAsTheRail)
 {
     std::set<int> commands;
@@ -276,10 +257,6 @@ TEST(VisualFamilies, EachHasAVideoCommandNamedAsTheRail)
     EXPECT_EQ(familyOfHotkey(""), std::nullopt);
 }
 
-// VT2-arrow-nudge: the tools that nudge take the arrows, Shift too, ahead of
-// the Video and Global bindings (the host claims them); Ctrl+arrows stay the
-// Global bindings', Alt+arrows are Move's end point, and the letters legacy
-// nudged with are not taken.
 TEST(VisualFamilies, TheToolsThatNudgeTakeTheArrows)
 {
     const std::set<Family> nudging{Family::Position,      Family::Move,       Family::Scale,
@@ -321,8 +298,6 @@ TEST(VisualFamilies, TheToolsThatNudgeTakeTheArrows)
 
 TEST(VisualView, SourceAspectFollowsProviderFFMS2)
 {
-    // ProviderFFMS2.cpp:366-380: 720 * 32/27 = 853 (truncated) by 480 has no
-    // common factor up to 10.
     EXPECT_EQ(sourceAspectRatio({720, 480, 32, 27}), 480.f / 853.f);
     EXPECT_EQ(sourceAspectRatio({1280, 720, 0, 1}), 9.f / 16.f);
     EXPECT_EQ(sourceAspectRatio({0, 720, 0, 1}), 0.f);
@@ -337,11 +312,6 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
     for (const Case &c : cases) {
         SCOPED_TRACE(c.name);
         ASSERT_TRUE(observations.contains(c.name));
-        // Approved departure T1-wheel-zoom-stale: legacy's wheel zoom left
-        // the tools' transform unzoomed (the capture zoom-wheel-stale, kept
-        // as the old evidence); here the tools take the zoom at once, so the
-        // case gives what legacy gave once SetVisual ran: zoom-at-point, the
-        // same zoom followed by setvisual.
         const bool staleZoom = c.name == "zoom-wheel-stale";
         const QJsonObject &legacy = observations.at(c.name);
         const QJsonObject &o = staleZoom ? observations.at("zoom-at-point") : legacy;
@@ -355,7 +325,6 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
         host.s->setSelection({active, {active}, active, std::nullopt});
         setUp(host, c);
 
-        // The view.
         EXPECT_EQ(host.v.frameWidth(), o[QStringLiteral("width")].toInt());
         EXPECT_EQ(host.v.frameHeight(), o[QStringLiteral("height")].toInt());
         EXPECT_EQ(host.v.aspectRatio(), f(o[QStringLiteral("aspect")]));
@@ -370,7 +339,6 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
         EXPECT_EQ(host.v.zoomScale(), pair(o[QStringLiteral("zoomScale")]));
         EXPECT_EQ((PointF{host.v.coeffW(), host.v.coeffH()}), pair(o[QStringLiteral("coeff")]));
 
-        // The crosshair: SetCurVisual, then a move to each point.
         CrosshairTool cross;
         cross.reset(host);
         for (const QJsonValue &lv : legacy[QStringLiteral("points")].toArray()) {
@@ -378,23 +346,19 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
             const int x = p[QStringLiteral("at")].toArray()[0].toInt();
             const int y = p[QStringLiteral("at")].toArray()[1].toInt();
             SCOPED_TRACE(std::to_string(x) + "," + std::to_string(y));
-            // The pointer arrives in logical coordinates.
             const int dx = host.v.toDevice(x / c.dpr), dy = host.v.toDevice(y / c.dpr);
             ASSERT_EQ(dx, x);
             ASSERT_EQ(dy, y);
             cross.pointer({Pointer::Kind::Move, dx, dy}, host);
             EXPECT_EQ(host.v.viewToScript({static_cast<float>(x), static_cast<float>(y)}), pair(p[QStringLiteral("out")]));
             EXPECT_EQ(cross.label(), u16(p[QStringLiteral("label")]));
-            // Legacy drew the cross on the video rectangle's right and bottom
-            // edges too; with its fix (a8a428e4c, IsOnVideoFrame) they are
-            // outside the picture, as they are here (VideoView::onPicture).
             const IntRect &vr = host.v.videoRect();
             const bool onEdge = x == vr.right || y == vr.bottom;
             EXPECT_EQ(cross.onVideo(), p[QStringLiteral("onVideo")].toBool() && !onEdge);
             EXPECT_EQ(cross.onVideo(), host.v.onPicture(x, y));
             EXPECT_EQ(cross.crossOn(), p[QStringLiteral("shown")].toBool());
             EXPECT_EQ(cross.coefficients(), pair(p[QStringLiteral("crossCoeff")]));
-            if (cross.onVideo()) { // off the video legacy keeps (or never set) them
+            if (cross.onVideo()) {
                 EXPECT_EQ(cross.labelRect(), rect(p[QStringLiteral("labelRect")]));
                 const QJsonArray lines = p[QStringLiteral("lines")].toArray();
                 for (int i = 0; i < 4; ++i)
@@ -412,10 +376,8 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
             const QJsonObject p = entryAt(o, "scriptPoints", lv.toObject()[QStringLiteral("at")]);
             EXPECT_EQ(host.v.scriptToView(pair(p[QStringLiteral("at")])), pair(p[QStringLiteral("in")]));
         }
-        // Ctrl+click and middle click: \pos into the active Line, one step.
         for (const QJsonValue &kv : legacy[QStringLiteral("clicks")].toArray()) {
             const QJsonObject k = kv.toObject();
-            // The \pos written where SetVisual had run (T1-wheel-zoom-stale).
             const QJsonObject want = staleZoom ? entryAt(o, "clicks", k[QStringLiteral("at")]) : k;
             const int x = k[QStringLiteral("at")].toArray()[0].toInt();
             const int y = k[QStringLiteral("at")].toArray()[1].toInt();
@@ -450,21 +412,16 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
             EXPECT_EQ(host.s->historySize(), steps + 1);
             EXPECT_EQ(host.s->history().back().name, "Visual positioning tool");
         }
-        if (staleZoom) { // the old evidence: legacy's tools stayed unzoomed
+        if (staleZoom) {
             EXPECT_NE(host.v.zoomScale(), pair(legacy[QStringLiteral("zoomScale")]));
             EXPECT_NE(host.v.zoomMove(), pair(legacy[QStringLiteral("zoomMove")]));
         }
     }
-    // The old evidence of T1-copy-coords-view: legacy's text differs from the
-    // script position under the pointer with a bar or a zoom.
     EXPECT_GT(copyDepartures, 0);
 }
 
 TEST(VisualView, ForwardAndInverseRoundTrip)
 {
-    // Every case's view, at fractional device pixel ratios too: a script
-    // point drawn in the view maps back to itself, and a logical pointer
-    // position reaches the device pixel it came from.
     for (const Case &c0 : readCases()) {
         for (const double dpr : {1.0, 1.25, 1.5, 1.75, 2.0}) {
             Case c = c0;
@@ -494,7 +451,7 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     CrosshairTool cross;
     cross.reset(host);
     cross.pointer({Pointer::Kind::Enter, 10, 10}, host);
-    EXPECT_FALSE(cross.shown() && !cross.overlay(host).empty()); // DrawLines: no video, no lines
+    EXPECT_FALSE(cross.shown() && !cross.overlay(host).empty());
     host.v.open({1280, 720, 0, 1});
     cross.reset(host);
     cross.pointer({Pointer::Kind::Enter, 10, 10}, host);
@@ -505,9 +462,6 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     EXPECT_TRUE(cross.shown());
     cross.pointer({Pointer::Kind::Release, 20, 20, Pointer::Button::Right}, host);
     EXPECT_FALSE(cross.shown());
-    // VT1: the bar's readout and Copy keep the last position past the
-    // cross (the pointer leaves the video to reach them); a reset (a new
-    // view, video or Line) drops them with it (Codex on #293).
     EXPECT_FALSE(cross.values(host)[0].text.empty());
     EXPECT_TRUE(cross.options(host)[0].enabled);
     cross.reset(host);
@@ -515,17 +469,15 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     EXPECT_TRUE(cross.values(host)[1].text.empty());
     EXPECT_FALSE(cross.options(host)[0].enabled);
     EXPECT_TRUE(cross.copyText().empty());
-    // Only on the picture: its right and bottom edges, the bars and the
-    // panel are outside it (legacy IsOnVideoFrame, a8a428e4c).
-    host.v.setClient(640, 400, 40); // a 640x360 window area: the 16:9 frame fills it
+    host.v.setClient(640, 400, 40);
     EXPECT_EQ(host.v.videoRect(), (IntRect{0, 0, 640, 360}));
     EXPECT_TRUE(host.v.onPicture(0, 0));
     EXPECT_TRUE(host.v.onPicture(639, 359));
     EXPECT_FALSE(host.v.onPicture(640, 100));
     EXPECT_FALSE(host.v.onPicture(100, 360));
     EXPECT_FALSE(host.v.onPicture(-1, 100));
-    EXPECT_FALSE(host.v.onPicture(100, 380)); // the panel
-    host.v.setClient(840, 400, 40); // pillarbox bars of 100 on each side
+    EXPECT_FALSE(host.v.onPicture(100, 380));
+    host.v.setClient(840, 400, 40);
     EXPECT_EQ(host.v.videoRect(), (IntRect{100, 0, 740, 360}));
     EXPECT_FALSE(host.v.onPicture(50, 180));
     EXPECT_FALSE(host.v.onPicture(99, 180));
@@ -536,7 +488,7 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     cross.reset(host);
     cross.pointer({Pointer::Kind::Move, 400, 180}, host);
     EXPECT_TRUE(cross.shown());
-    cross.pointer({Pointer::Kind::Move, 50, 180}, host); // a bar: no cross
+    cross.pointer({Pointer::Kind::Move, 50, 180}, host);
     EXPECT_FALSE(cross.shown());
     EXPECT_TRUE(cross.overlay(host).empty());
     cross.pointer({Pointer::Kind::Move, 740, 180}, host);
@@ -544,20 +496,14 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     cross.pointer({Pointer::Kind::Move, 739, 180}, host);
     EXPECT_TRUE(cross.shown());
     host.v.close();
-    EXPECT_FALSE(host.v.onPicture(400, 180)); // no video
+    EXPECT_FALSE(host.v.onPicture(400, 180));
     host.v.open({1280, 720, 0, 1});
     host.v.setClient(640, 400, 40);
-    // A resize (SetCurVisual) hides it until the next move.
     cross.pointer({Pointer::Kind::Move, 20, 20}, host);
     cross.reset(host);
     EXPECT_FALSE(cross.shown());
 }
 
-// A departure by the approved rule "Commands commit the draft first"
-// (edit-transactions.md): legacy Cross wrote into tab->edit->line, which
-// lacks the typed text, and the following SetModified reloaded the editor
-// over it (SubsGridBase.cpp:1118), losing it. Here the draft is its own
-// step and \pos goes into the typed text.
 TEST(VisualCrosshair, ClickUsesThePendingDraftAndCommitsItFirst)
 {
     TestHost host;
@@ -575,7 +521,7 @@ TEST(VisualCrosshair, ClickUsesThePendingDraftAndCommitsItFirst)
     EXPECT_EQ(line(*host.s, id)->text, u8"{\\pos(961.502,541.504)\\b1}typed");
     const auto history = host.s->history();
     ASSERT_GE(history.size(), 3u);
-    EXPECT_EQ(history[history.size() - 2].name, "Edit Line"); // the draft, its own step
+    EXPECT_EQ(history[history.size() - 2].name, "Edit Line");
     EXPECT_EQ(history.back().name, "Visual positioning tool");
     EXPECT_FALSE(host.s->draftLine());
 }
@@ -587,7 +533,6 @@ TEST(VisualGesture, OneUndoStepPerGesture)
     const std::size_t steps = session.historySize();
     auto g = Gesture::begin(session, {all[0], all[2]}, "Visual positioning tool");
     ASSERT_TRUE(g);
-    // Many pointer samples stage; nothing reaches the Document meanwhile.
     for (int i = 0; i < 20; ++i) {
         g->stage(all[0], u8"{\\pos(" + std::u8string(1, char8_t(u8'0' + i % 10)) + u8",0)}first");
         g->stage(all[2], u8"{\\pos(1,1)}third");
@@ -601,7 +546,6 @@ TEST(VisualGesture, OneUndoStepPerGesture)
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(line(session, all[0])->text, u8"first");
     EXPECT_EQ(line(session, all[2])->text, u8"third");
-    // Nothing staged: no step.
     auto empty = Gesture::begin(session, {all[0]}, "Visual positioning tool");
     ASSERT_TRUE(empty);
     const std::size_t before = session.historySize();
@@ -609,12 +553,6 @@ TEST(VisualGesture, OneUndoStepPerGesture)
     EXPECT_EQ(session.historySize(), before);
 }
 
-// T2: the video's preview while a gesture is open holds only the Lines the
-// frame shows, as legacy's dummy rendering sent (Position::ChangeMultiline on
-// SubsGrid::GetVisible, SubsGridBase.cpp:1517-1593, VisualPosition.cpp:
-// 470-481): others within 5 ms of the time, or not yet over while playing;
-// the targets, staged, while the time is within their own (end included), or
-// always while playing.
 TEST(VisualGesture, PreviewHoldsOnlyTheShownLines)
 {
     EditSession session(load(kScript));
@@ -624,8 +562,7 @@ TEST(VisualGesture, PreviewHoldsOnlyTheShownLines)
     g->stage(all[0], u8"{\\pos(1,1)}first");
     g->stage(all[2], u8"{\\pos(3,3)}third");
     auto texts = [&](std::int64_t time, bool playing) {
-        // The preview Document is held: before C++23's P2718 (which MSVC
-        // lacks) a range-for over a temporary's lines() reads freed Lines.
+        // Held: without C++23's P2718 (MSVC lacks it) a range-for over a temporary's lines() reads freed Lines.
         const auto preview = g->preview(session.document(), time, playing);
         std::vector<std::u8string> out;
         for (const auto *l : preview.lines())
@@ -636,13 +573,12 @@ TEST(VisualGesture, PreviewHoldsOnlyTheShownLines)
     EXPECT_EQ(texts(1500, false), (V{u8"{\\pos(1,1)}first"}));
     EXPECT_EQ(texts(1994, false), (V{u8"{\\pos(1,1)}first"}));
     EXPECT_EQ(texts(1995, false), (V{u8"{\\pos(1,1)}first", u8"second"}));
-    EXPECT_EQ(texts(2000, false), (V{u8"{\\pos(1,1)}first", u8"second"})); // a target's end included
+    EXPECT_EQ(texts(2000, false), (V{u8"{\\pos(1,1)}first", u8"second"}));
     EXPECT_EQ(texts(2001, false), (V{u8"second"}));
     EXPECT_EQ(texts(3004, false), (V{u8"second", u8"{\\pos(3,3)}third"}));
     EXPECT_EQ(texts(4500, false), (V{u8"note"}));
     EXPECT_EQ(texts(1500, true), (V{u8"{\\pos(1,1)}first", u8"second", u8"{\\pos(3,3)}third", u8"note"}));
     EXPECT_EQ(texts(3500, true), (V{u8"{\\pos(1,1)}first", u8"{\\pos(3,3)}third", u8"note"}));
-    // The Document itself keeps every Line.
     EXPECT_EQ(session.document().lines().size(), 4u);
 }
 
@@ -657,9 +593,9 @@ TEST(VisualGesture, CancelLeavesThePreGestureDraft)
     auto begun = Gesture::begin(session, {all[1]}, "Visual positioning tool");
     ASSERT_TRUE(begun);
     std::optional<Gesture> g(std::move(*begun));
-    EXPECT_EQ(g->before(all[1]).text, u8"draft text"); // the draft as the gesture began
+    EXPECT_EQ(g->before(all[1]).text, u8"draft text");
     g->stage(all[1], u8"{\\pos(5,5)}draft text");
-    g.reset(); // Esc
+    g.reset();
     EXPECT_EQ(session.draftText(), u8"draft text");
     EXPECT_EQ(session.draftLine(), all[1]);
     EXPECT_EQ(session.historySize(), steps);
@@ -672,8 +608,6 @@ TEST(VisualGesture, ProtectedReferenceRefusesWrites)
     EditSession reference(load(kScript), true);
     const auto all = ids(reference);
     EXPECT_EQ(Gesture::begin(reference, {all[0]}, "x").error(), CommandRefusal::Protected);
-    // The crosshair over a reference: the label and lines work, a click
-    // writes nothing.
     TestHost host;
     host.s = std::make_unique<EditSession>(load(kScript), true);
     const core::LineId id = ids(*host.s)[0];
@@ -712,20 +646,17 @@ TEST(VisualGesture, TargetsAreFixedAndNeverRetargeted)
     picker.pick({all[2], all[0]});
     auto g = Gesture::begin(session, picker.targets(session), "Visual position adjustment tool");
     ASSERT_TRUE(g);
-    EXPECT_EQ(g->targets(), (std::vector<core::LineId>{all[0], all[2]})); // Document order
-    // The picker, selection and active Line change mid-gesture; a draft
-    // starts on another Line.
+    EXPECT_EQ(g->targets(), (std::vector<core::LineId>{all[0], all[2]}));
     picker.pick({all[1]});
     session.setSelection({all[1], {all[1]}, all[1], std::nullopt});
     g->stage(all[0], u8"A");
     g->stage(all[2], u8"C");
-    g->stage(all[1], u8"not a target"); // ignored
+    g->stage(all[1], u8"not a target");
     ASSERT_TRUE(g->commit(session));
     EXPECT_EQ(line(session, all[0])->text, u8"A");
     EXPECT_EQ(line(session, all[1])->text, u8"second");
     EXPECT_EQ(line(session, all[2])->text, u8"C");
 
-    // A draft on a Line outside the gesture stays a draft on that Line.
     ASSERT_TRUE(session.editDraftText(all[1], u8"pending"));
     auto h = Gesture::begin(session, {all[0]}, "Visual positioning tool");
     ASSERT_TRUE(h);
@@ -757,13 +688,12 @@ TEST(VisualBatchPicker, PickedLinesInDocumentOrderElseTheActiveLine)
     EditSession session(load(kScript));
     const auto all = ids(session);
     BatchPicker picker;
-    EXPECT_TRUE(picker.targets(session).empty()); // no active Line
+    EXPECT_TRUE(picker.targets(session).empty());
     session.setSelection({all[1], {all[1], all[2]}, all[1], std::nullopt});
     EXPECT_EQ(picker.targets(session), (std::vector<core::LineId>{all[1]}));
     picker.pick({all[3], all[0], all[3]});
     EXPECT_EQ(picker.picked(), (std::vector<core::LineId>{all[3], all[0]}));
     EXPECT_EQ(picker.targets(session), (std::vector<core::LineId>{all[0], all[3]}));
-    // A picked Line removed meanwhile is left out.
     ASSERT_TRUE(session.run({"delete", session.revision(), {all[0]}, [&](core::Document &d) {
                                  return d.removeLine(all[0]);
                              }}));
@@ -775,19 +705,18 @@ TEST(VisualBatchPicker, PickedLinesInDocumentOrderElseTheActiveLine)
 TEST(VisualWarnings, FollowVisualsDraw)
 {
     EditSession session(load(kScript));
-    const auto *dialogue = session.document().lines()[0]; // 1.00-2.00
-    const auto *comment = session.document().lines()[3];  // a comment, 4.00-5.00
+    const auto *dialogue = session.document().lines()[0];
+    const auto *comment = session.document().lines()[3];
     EXPECT_EQ(lineWarning(Family::Position, *dialogue, 1000), LineWarning::None);
     EXPECT_EQ(lineWarning(Family::Position, *dialogue, 1999), LineWarning::None);
-    EXPECT_EQ(lineWarning(Family::Position, *dialogue, 2000), LineWarning::NotVisible); // end excluded
+    EXPECT_EQ(lineWarning(Family::Position, *dialogue, 2000), LineWarning::NotVisible);
     EXPECT_EQ(lineWarning(Family::Position, *dialogue, 999), LineWarning::NotVisible);
     EXPECT_EQ(lineWarning(Family::Position, *comment, 4500), LineWarning::Comment);
     EXPECT_EQ(lineWarning(Family::VectorClip, *comment, 4500), LineWarning::None);
     EXPECT_EQ(lineWarning(Family::Drawing, *comment, 4500), LineWarning::None);
-    // Outside its time a comment shows the comment text, for every tool.
     EXPECT_EQ(lineWarning(Family::Drawing, *comment, 100), LineWarning::Comment);
     EXPECT_EQ(warningText(LineWarning::NotVisible), u"Line is not visible on video\nor has zero duration");
     EXPECT_EQ(warningText(LineWarning::Comment), u"Visual editing tools\ndo not work on comments");
     CrosshairTool cross;
-    EXPECT_FALSE(cross.warnsOutsideLine()); // Cross overrides Visuals::Draw
+    EXPECT_FALSE(cross.warnsOutsideLine());
 }

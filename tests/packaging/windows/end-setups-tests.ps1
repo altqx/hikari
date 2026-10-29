@@ -1,18 +1,4 @@
-# tools/winix/end-setups.ps1 on the Winix VM's desktop (task end-setups-test in
-# tests/packaging/windows/winix.yaml), as the desktop user:
-#
 #   end-setups-tests.ps1 [-Setup <setup.exe>]
-#
-# The rule, case by case; then stand-ins left running the way a stopped test
-# leaves a setup (a copy of PING.EXE named "Uninstall HikariSub.exe", a window
-# titled "Uninstall HikariSub " and one titled "HikariSub 0.1.0-test.1 Setup")
-# next to decoys that must survive (the same program under another name, a
-# window titled "s4.ass - HikariSub v0.1.0"). With -Setup, a real setup on its
-# first page and, once installed per user, the real uninstaller on its first
-# page (its %TEMP%\~nsu*.tmp copy owns that window) are ended too, and the
-# install is removed silently after.
-#
-# Prints PASS/FAIL per check and exits 1 if any check failed.
 param([string]$Setup = '')
 
 $ErrorActionPreference = 'Stop'
@@ -24,7 +10,6 @@ function Check([string]$what, [bool]$ok, [string]$detail = '') {
 $tool = Join-Path $PSScriptRoot '..\..\..\tools\winix\end-setups.ps1'
 . $tool -Load
 
-# The rule (path, FileDescription, main window title).
 $cases = @(
     @('C:\Users\winix\AppData\Local\Programs\HikariSub\Uninstall HikariSub.exe', '', '', $true),
     @('C:\Program Files\HikariSub\uninstall hikarisub.EXE', '', '', $true),
@@ -48,7 +33,6 @@ foreach ($c in $cases) {
     Check "rule: '$($c[0])' '$($c[1])' '$($c[2])' -> $($c[3])" ($got -eq $c[3]) "got $got"
 }
 
-# Stand-ins on the desktop.
 $dir = Join-Path $env:TEMP 'hs-end-setups-test'
 if (Test-Path -LiteralPath $dir) { Remove-Item -Recurse -Force -LiteralPath $dir }
 New-Item -ItemType Directory -Path $dir | Out-Null
@@ -59,7 +43,6 @@ function Start-Hidden([string]$exe) {
     Start-Process -FilePath $exe -ArgumentList '-n 600 127.0.0.1' -WindowStyle Hidden -PassThru
 }
 function Start-Window([string]$title) {
-    # A window with only that title, from a PowerShell of its own.
     $code = "Add-Type -AssemblyName System.Windows.Forms; `$f = New-Object Windows.Forms.Form; `$f.Text = '$title'; " +
         "`$f.StartPosition = 'Manual'; `$f.Left = 300; `$f.Top = 200; [Windows.Forms.Application]::Run(`$f)"
     $p = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile', '-WindowStyle', 'Hidden', '-Command', $code) -PassThru
@@ -68,7 +51,6 @@ function Start-Window([string]$title) {
         if ($p.MainWindowTitle -eq $title) { break }
         Start-Sleep -Milliseconds 250
     }
-    # Only the process goes to the pipeline; the caller checks the title.
     return $p
 }
 $ended = @(
@@ -104,7 +86,6 @@ Check 'a second run finds none' (($LASTEXITCODE -eq 0) -and ($again -contains 'n
 $kept | Stop-Process -Force -ErrorAction SilentlyContinue
 
 if ($Setup) {
-    # The real thing: setup's first page.
     $p = Start-Process -FilePath $Setup -PassThru
     foreach ($i in 1..60) { $p.Refresh(); if ($p.MainWindowHandle -ne [IntPtr]::Zero) { break }; Start-Sleep -Milliseconds 250 }
     Write-Output "     setup pid $($p.Id) window '$($p.MainWindowTitle)'"
@@ -113,8 +94,7 @@ if ($Setup) {
     $out | ForEach-Object { Write-Output "     $_" }
     Check 'setup ended' ($code -eq 0 -and $p.WaitForExit(5000))
 
-    # The real uninstaller: installed per user (silently), then started as
-    # Settings > Apps starts it; its %TEMP% copy shows the wizard.
+    # The NSIS uninstaller's %TEMP%\~nsu*.tmp copy shows the wizard.
     $instDir = Join-Path $env:LOCALAPPDATA 'Programs\HikariSubEndSetupsTest'
     $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub'
     if (Test-Path $key) {

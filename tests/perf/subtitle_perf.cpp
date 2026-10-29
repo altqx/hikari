@@ -1,8 +1,3 @@
-// SV1 (#365): drawing a heavy typesetting script with libass at the video's
-// size and at screen sizes (SV1-screen-size-subtitles). Each timed operation
-// draws one frame, a frame interval (23.976 fps) after the last, so every
-// one is drawn anew. Observations on an uncalibrated host, not budget passes.
-
 #include "perf_harness.h"
 
 #include "hikari/backends/libass_renderer.h"
@@ -21,8 +16,6 @@ using namespace hikari;
 
 namespace {
 
-// 1080p signs: 24 events on screen at once, each with \blur, a border and a
-// shadow, rotation, a fade, a moving position, a vector clip and a drawing.
 std::vector<std::byte> heavyScript()
 {
     std::string s = "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\nScaledBorderAndShadow: yes\n\n"
@@ -60,7 +53,7 @@ std::shared_ptr<const std::vector<std::byte>> testFont()
     return bytes;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -76,8 +69,6 @@ int main(int argc, char **argv)
         const char *name;
         int width, height, videoWidth, videoHeight;
     };
-    // A 1080p video at its own size, then drawn for 1080p and 4K screens;
-    // a 720p video drawn for a 1080p screen.
     for (const Size size : {Size{"video_1080p", 1920, 1080, 1920, 1080}, Size{"screen_1080p.video_720p", 1920, 1080, 1280, 720},
                             Size{"screen_4k.video_1080p", 3840, 2160, 1920, 1080}}) {
         std::int64_t us = 0;

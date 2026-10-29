@@ -1,17 +1,5 @@
 #!/bin/sh
-# Test-only native packages for the upgrade and update-helper tests
-# (installers spec 8.1.5, 8.1.7). Never released.
-#
 #   make-test-packages.sh --tools <dir> --out <dir> --version <V>
-#
-# writes into <out>:
-#   hikarisub-0.0.9-linux-{amd64.deb,x86_64.rpm}
-#       a stand-in for a legacy 0.0.x package: package hikarisub, a stub
-#       /opt/hikarisub/hikarisub and /opt/hikarisub/legacy-only.txt, a file
-#       the Qt payload does not have (the upgrade must remove it);
-#   hikarisub-wrongname-<V>-linux-{amd64.deb,x86_64.rpm}
-#       package hikarisub-other at version <V> (the helper must refuse it).
-# <tools> is the packaging tools directory (packaging/linux/fetch-tool.sh).
 set -eu
 
 tools='' out='' version=''

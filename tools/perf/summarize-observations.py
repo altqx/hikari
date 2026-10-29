@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-"""Summarizes performance observations (H3 #126) against docs/performance.md.
-
-    tools/perf/summarize-observations.py <date dir> [--host-inventory FILE]
-
-<date dir> holds one folder per run from tools/perf/run-observations.sh. Writes
-<date dir>/summary.json and summary.md: per-run statistics for every
-workload, the CPU contention seen during each run, and a verdict for every
-budget row. An uncalibrated host's results are observations; an implemented
-workload that measures only part of an endpoint stays inconclusive.
-"""
+"""Summarizes tools/perf/run-observations.sh results against docs/performance.md."""
 
 import argparse
 import glob
@@ -17,13 +8,11 @@ import os
 import statistics
 import sys
 
-# Contention: another process's CPU (percent of one core, from top's
-# one-second samples) or a load average beyond the workload's own thread.
+# Percent of one core, from top's one-second samples.
 OTHER_CPU_MEDIAN_LIMIT = 25.0
 OTHER_CPU_PEAK_LIMIT = 100.0
 LOAD1_START_LIMIT = 1.5
 
-# Implemented workloads and what they measure against the contract.
 WORKLOADS = {
     "core.ass_load.50k_lines": {
         "row": "G open → parsed, selectable visible grid, W",
@@ -44,7 +33,6 @@ WORKLOADS = {
     },
 }
 
-# Every budget row of docs/performance.md and what covers it today.
 ROWS = [
     ("Empty startup → input-ready workspace, C / W", "4 s / 1.5 s", "missing",
      "no harness workload (needs a cold-state method and 20 process launches)"),
@@ -133,8 +121,6 @@ def verdict(bench, spec, calibrated, contaminated):
         parts.append("uncalibrated host")
     if contaminated:
         parts.append("contaminated by other CPU work")
-    # A component of an endpoint never passes the endpoint; a component that
-    # alone exceeds the bound shows the endpoint would fail.
     return ("fail" if not within and not contaminated else "inconclusive"), "; ".join(parts)
 
 
@@ -193,7 +179,6 @@ def main():
         "missingWorkloads": [{"asked": a, "needs": n} for a, n in ASKED_MISSING],
         "diagnostics": diag,
     }
-    # A partial row takes the verdict of its latest clean run, else of its latest run.
     for row in summary["budgetRows"]:
         if row["coverage"] != "partial":
             continue

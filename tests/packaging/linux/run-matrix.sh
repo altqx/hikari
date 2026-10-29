@@ -1,13 +1,5 @@
 #!/bin/bash
-# Runs the package tests of installers spec 8.1 and 8.2 in docker, one fresh
-# container per image and test group, as the CI workflow
-# (.github/workflows/package-linux.yml) does with its job matrix.
-#
 #   run-matrix.sh --dist <dir> --old <dir> --version <V> [--expect-version-switch] [<image>...]
-#
-# <dist> holds the release packages, <old> the test-only ones
-# (make-test-packages.sh and an older Qt test version). Images default to
-# the spec's matrix. Logs go to <dist>/../test-logs/.
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -29,7 +21,7 @@ images=("$@")
 logs=$(dirname "$dist")/test-logs
 mkdir -p "$logs"
 
-groups_for() # <image>: the test groups, one container each
+groups_for() # <image>
 {
     case $1 in
         ubuntu:*) echo "appimage,tar native,helper,upgrade,remove" ;;

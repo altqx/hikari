@@ -1,22 +1,14 @@
-# O4: the QM the build compiles from the checked-in catalogs.
 hikari_add_gtest(hikari_i18n_qm_tests SOURCES qm_tests.cpp
     LIBRARIES hikari_i18n hikari_translations LABELS i18n)
 target_compile_definitions(hikari_i18n_qm_tests PRIVATE
     HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}" HIKARI_LRELEASE="$<TARGET_FILE:Qt6::lrelease>")
 
-# Ordinary builds compile TS and never write it: every catalog still has the
-# hash it had when the build was configured.
 add_test(NAME hikari_i18n_build_leaves_ts
     COMMAND "${CMAKE_COMMAND}" -DHASHES=${CMAKE_BINARY_DIR}/i18n/ts-at-configure.sha256
         -P "${CMAKE_CURRENT_SOURCE_DIR}/check_ts_hashes.cmake")
 set_tests_properties(hikari_i18n_build_leaves_ts PROPERTIES LABELS "i18n" TIMEOUT 60)
 
-# Extraction reads every source with a translation call (the targets in
-# HIKARI_I18N_SOURCE_TARGETS, top-level CMakeLists.txt), from the lupdate
-# project qt_add_lupdate configures. Only hikari_lupdate turns that project
-# into JSON, and it also rewrites the TS, so the test makes its own JSON from
-# the configured project as hikari_lupdate would; a fresh build dir has no
-# other copy.
+# Only hikari_lupdate turns qt_add_lupdate's project into JSON, and it also rewrites the TS, so make our own.
 add_test(NAME hikari_i18n_extraction_reads_every_caller
     COMMAND "${CMAKE_COMMAND}" -DPROJECT_IN=${CMAKE_BINARY_DIR}/.lupdate/hikari_lupdate_project.cmake
         -DPROJECT_JSON=${CMAKE_CURRENT_BINARY_DIR}/hikari_lupdate_project.json
@@ -24,12 +16,9 @@ add_test(NAME hikari_i18n_extraction_reads_every_caller
         -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/check_extraction_sources.cmake")
 set_tests_properties(hikari_i18n_extraction_reads_every_caller PROPERTIES LABELS "i18n" TIMEOUT 60)
 
-# O6: the semantic contexts' lint and the checked-in registry and catalogs.
 hikari_add_gtest(hikari_i18n_contexts_tests SOURCES contexts_tests.cpp LIBRARIES hikari_i18n LABELS i18n)
 target_compile_definitions(hikari_i18n_contexts_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 
-# O6: every translatable string has a semantic context. The lint reads the
-# same lupdate project, with locations, and i18n/contexts.tsv.
 add_test(NAME hikari_i18n_contexts_are_semantic
     COMMAND "${CMAKE_COMMAND}" -DPROJECT_IN=${CMAKE_BINARY_DIR}/.lupdate/hikari_lupdate_project.cmake
         -DPROJECT_JSON=${CMAKE_CURRENT_BINARY_DIR}/hikari_contexts_project.json
@@ -40,7 +29,6 @@ add_test(NAME hikari_i18n_contexts_are_semantic
 set_tests_properties(hikari_i18n_contexts_are_semantic PROPERTIES LABELS "i18n" TIMEOUT 300)
 
 if(WIN32)
-    # The lint's Qt DLLs.
     set_tests_properties(hikari_i18n_contexts_are_semantic PROPERTIES
         ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${HIKARI_QT_PREFIX}/bin")
 endif()

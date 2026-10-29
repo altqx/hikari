@@ -1,5 +1,3 @@
-# Performance runs are separate from ordinary tests: label "perf", excluded by
-# the *-verify presets and run by the *-perf test presets.
 add_executable(hikari_core_perf core_perf.cpp)
 target_link_libraries(hikari_core_perf PRIVATE hikari_perf_harness hikari_core)
 add_test(NAME perf.core
@@ -14,7 +12,6 @@ add_test(NAME perf.ui
             "${CMAKE_CURRENT_SOURCE_DIR}/reference-hosts.json")
 set_tests_properties(perf.ui PROPERTIES LABELS perf TIMEOUT 600 RUN_SERIAL TRUE ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# SV1: libass drawing a heavy script at the video's and at screen sizes.
 add_executable(hikari_subtitle_perf subtitle_perf.cpp)
 target_link_libraries(hikari_subtitle_perf PRIVATE hikari_perf_harness hikari_backends Qt6::Core)
 target_compile_definitions(hikari_subtitle_perf PRIVATE
@@ -24,13 +21,9 @@ add_test(NAME perf.subtitles
             "${CMAKE_CURRENT_SOURCE_DIR}/reference-hosts.json")
 set_tests_properties(perf.subtitles PROPERTIES LABELS perf TIMEOUT 600 RUN_SERIAL TRUE)
 
-# Ordinary (non-perf) self-checks for the harness itself.
 hikari_add_gtest(hikari_perf_harness_tests SOURCES harness_tests.cpp
     LIBRARIES hikari_perf_harness LABELS control)
 
-# SP1 (#474): spell checking a 5,000-Line mixed-language file as the Grid
-# does. The test uses the fixture dictionaries; give the binary a folder of
-# real ones as a third argument for numbers worth comparing.
 add_executable(hikari_spelling_perf spelling_perf.cpp)
 target_link_libraries(hikari_spelling_perf PRIVATE hikari_perf_harness hikari_backends)
 target_compile_definitions(hikari_spelling_perf PRIVATE

@@ -1,5 +1,3 @@
-// L1 (S44-macro-alias, A33-resources): the automation manager with real Lua
-// helpers, and macro identity through the registry.
 #include "hikari/application/automation_registry.h"
 #include "hikari/backends/automation_manager.h"
 #include "hikari/backends/process_metrics.h"
@@ -66,7 +64,7 @@ struct Manager : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST(AutomationRegistry, LegacyAliasesResolveOnlyWhenUnambiguous)
 {
@@ -82,14 +80,12 @@ TEST(AutomationRegistry, LegacyAliasesResolveOnlyWhenUnambiguous)
     EXPECT_EQ(registry.resolve("tools.lua").problem, AliasProblem::MalformedAlias);
     EXPECT_EQ(registry.resolve("tools.lua:x").problem, AliasProblem::MalformedAlias);
 
-    registry.setScript({"/c/tools.lua", "h3", {"Elsewhere"}}); // same file name, other folder
+    registry.setScript({"/c/tools.lua", "h3", {"Elsewhere"}});
     const auto collision = registry.resolve("tools.lua:0");
     EXPECT_EQ(collision.problem, AliasProblem::BasenameCollision);
     EXPECT_EQ(collision.candidates.size(), 2u);
     registry.removeScript("/c/tools.lua");
 
-    // What the binding recorded must still match: a reordered or edited
-    // script stays unresolved instead of binding to whatever is there now.
     const MacroIdentity recorded{"/a/tools.lua", "h1", 1, "Second"};
     EXPECT_TRUE(registry.resolve("tools.lua:1", recorded).identity);
     registry.setScript({"/a/tools.lua", "h1", {"Second", "First"}});
@@ -128,7 +124,7 @@ TEST_F(Manager, ReloadIsVisibleAndRunsTheTopLevelAgain)
     ASSERT_TRUE(settled(a));
     QStringList log;
     QObject::connect(manager.host(a), &LuaScriptHost::logged, [&](const QString &t) { log << t; });
-    ASSERT_TRUE(manager.run(a, 2)); // Count
+    ASSERT_TRUE(manager.run(a, 2));
     ASSERT_TRUE(waitFor([&] { return !manager.busy() && !log.isEmpty(); }));
     EXPECT_EQ(log.value(0), "runs=1");
     std::vector<ScriptStatus::State> seen;
@@ -161,7 +157,7 @@ TEST_F(Manager, OneMacroRunsApplicationWide)
     manager.load(a);
     manager.load(b);
     ASSERT_TRUE(settled(a) && settled(b));
-    ASSERT_TRUE(manager.run(a, 4)); // Wait for cancel
+    ASSERT_TRUE(manager.run(a, 4));
     EXPECT_TRUE(manager.busy());
     EXPECT_FALSE(manager.run(b, 0)) << "another script's macro waits its turn";
     EXPECT_FALSE(manager.run(a, 2));
@@ -185,7 +181,7 @@ TEST_F(Manager, ACrashIsolatesItsScript)
     QObject::connect(manager.host(b), &LuaScriptHost::logged, [&](const QString &t) { log << t; });
     ASSERT_TRUE(manager.run(b, 0));
     ASSERT_TRUE(waitFor([&] { return !manager.busy(); }));
-    ASSERT_TRUE(manager.run(a, 5)); // Crash
+    ASSERT_TRUE(manager.run(a, 5));
     ASSERT_TRUE(waitFor([&] { return status(a).state == ScriptStatus::State::Unavailable; }));
     EXPECT_EQ(status(b).state, ScriptStatus::State::Ready);
     ASSERT_TRUE(manager.run(b, 0));
@@ -193,8 +189,6 @@ TEST_F(Manager, ACrashIsolatesItsScript)
     EXPECT_EQ(log, (QStringList{"n=1", "n=2"})) << "the other script kept its state";
 }
 
-// #383: automation.traceLevel reaches the helper; a change reloads the
-// loaded scripts with it.
 TEST_F(Manager, TheTraceLevelFiltersDebugOutput)
 {
     QTemporaryDir dir;
@@ -245,12 +239,9 @@ TEST_F(Manager, PerScriptProcessCostIsMeasured)
                      h->loadMs(), rss / 1048576.0);
     }
     EXPECT_EQ(pids.size(), paths.size()) << "one process per script";
-    // An observation on an uncalibrated host (A33-resources), not a budget.
     std::fprintf(stderr, "6 loaded scripts: %.1f MiB resident in their helpers\n", total / 1048576.0);
 }
 
-// L5 (A33-cancel): grace period, Force stop, quit deadline and a stuck
-// native call. The fixture's grace is shortened from 3 s to keep tests quick.
 namespace {
 constexpr int kWaitForCancel = 4, kStuck = 10, kCount = 2;
 }
@@ -298,7 +289,7 @@ TEST_F(Manager, AStuckNativeCallIsOfferedForceStopButNeverKilledAutomatically)
     EXPECT_FALSE(manager.forceStop(a)) << "not before the grace period";
     ASSERT_TRUE(waitFor([&] { return status(a).forceStopOffered; }, 5'000));
     EXPECT_GE(t.elapsed(), 250);
-    waitFor([] { return false; }, 600); // twice the grace: still nobody kills it
+    waitFor([] { return false; }, 600);
     EXPECT_EQ(status(a).state, ScriptStatus::State::Running);
     EXPECT_FALSE(outcome.has_value());
 
@@ -312,7 +303,7 @@ TEST_F(Manager, AStuckNativeCallIsOfferedForceStopButNeverKilledAutomatically)
     ASSERT_TRUE(waitFor([&] { return !manager.busy() && log.size() == 2; }));
     EXPECT_EQ(log, (QStringList{"n=1", "n=2"}));
 
-    ASSERT_TRUE(manager.reload(a)); // the explicit restart
+    ASSERT_TRUE(manager.reload(a));
     ASSERT_TRUE(settled(a));
     EXPECT_EQ(status(a).state, ScriptStatus::State::Ready);
 }

@@ -21,7 +21,7 @@ The cases:
 - Extras: an empty text, no '}', a block never closed, "}{" alone and inside the text (removed, then no '}' is left), "}{" before a later '}', '}' first, '}' alone, an empty block, a block alone, a block then '}', nested blocks at the start and inside, three adjacent blocks, alternating blocks, a trailing block, characters outside the BMP around blocks, before the first '}', inside an inner block, two in a leading block, and `\N` with a trailing block.
 - The conditions (`EditBox.cpp:1811`): a translated Line, translation mode off, Moving tags off, a visual tool other than the crosshair (Position, then the all-tags tool, then the crosshair again); the toggle off and on again with the video open (OnAutoMoveTags runs `SetTextWithTags(true)`); a refresh without video.
 
-## Compared with the rewrite
+## Compared with HikariSub
 
 `MovingTagsCapture.ReplaysTheLegacyObservations` (`hikari_application_translation_mode_tests`) runs every call through `moveTagsFromOriginal` under the call's conditions (hasTLMode, Moving tags, Visual <= CROSS, no translation; `LineEditorController::evaluateSplit` checks them in the editor). For both builds: the text is split exactly when legacy split it, both fields hold legacy's text, the Translated field takes the focus, and the caret is legacy's: the character legacy's selection stands after, counted in UTF-16 units.
 
@@ -35,7 +35,7 @@ The capture confirms the hand-worked values of the seven texts and adds:
 
 ### Where the two legacy builds differ
 
-Only in the caret after a leading block holding a character outside the BMP (`leading-astral`, `leading-two-astral`). Both builds put the caret on the same character, after the block; wxGTK counts it in code points (6 for `{\fn𝐀}`), wxMSW in UTF-16 units (7). The fields' texts are the same in both, since the split falls only at '{' and '}'. The rewrite follows that place on every platform: its caret is the same character counted in UTF-16 units, the unit of Qt's text fields, so it is 7 on Linux and Windows alike (E5-tag-move-caret).
+Only in the caret after a leading block holding a character outside the BMP (`leading-astral`, `leading-two-astral`). Both builds put the caret on the same character, after the block; wxGTK counts it in code points (6 for `{\fn𝐀}`), wxMSW in UTF-16 units (7). The fields' texts are the same in both, since the split falls only at '{' and '}'. HikariSub follows that place on every platform: its caret is the same character counted in UTF-16 units, the unit of Qt's text fields, so it is 7 on Linux and Windows alike (E5-tag-move-caret).
 
 ## Not observed here
 

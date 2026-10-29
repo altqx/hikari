@@ -1,17 +1,12 @@
-# Resolve the provisioned dependencies. Each has exactly one owner: Qt from
-# the frozen official installation, everything else from the pinned vcpkg graph.
+# Qt comes from the frozen official installation, everything else from the pinned vcpkg graph.
 include_guard(GLOBAL)
 
-# FFmpeg first: Qt puts its own FindFFmpeg.cmake on CMAKE_MODULE_PATH, and
-# on a case-insensitive filesystem (Windows) find_package(FFMPEG) would load
-# it instead of vcpkg's FindFFMPEG.
+# FFmpeg before Qt: on a case-insensitive filesystem find_package(FFMPEG) would load Qt's FindFFmpeg.cmake.
 find_package(HikariFFMS2 5.1.0 EXACT CONFIG REQUIRED)
 find_package(FFMPEG REQUIRED)
 
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS Core Gui Qml Quick Multimedia Network Svg)
-# P9: "show in folder" asks the desktop's file manager over D-Bus
-# (org.freedesktop.FileManager1) on Linux, where Qt's platform plugins
-# already load QtDBus.
+# Linux "show in folder" uses org.freedesktop.FileManager1 over D-Bus; Qt's platform plugins load QtDBus anyway.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
 endif()
@@ -20,18 +15,14 @@ if(NOT _hikari_qt_owned)
     message(FATAL_ERROR "Qt6_DIR ${Qt6_DIR} is not the provisioned Qt at ${HIKARI_QT_PREFIX}")
 endif()
 
-# libass ships pkg-config metadata only. Static linking needs its full closure.
+# libass ships pkg-config metadata only; static linking needs its full closure.
 if(WIN32 AND NOT PKG_CONFIG_EXECUTABLE)
     find_program(PKG_CONFIG_EXECUTABLE pkgconf
         PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_HOST_TRIPLET}/tools/pkgconf" NO_DEFAULT_PATH REQUIRED)
 endif()
 find_package(PkgConfig REQUIRED)
 set(PKG_CONFIG_ARGN --static)
-# libass is the altqx/libass fork (ports/libass) on every platform. Its
-# pkg-config version is upstream's (0.17.5) and a distribution's libass can
-# carry the same number, so the version cannot prove the fork: the prefix must
-# be the vcpkg installation, and ass.h must define the fork's feature macros
-# (src/backends/libass_renderer.cpp checks them again with #error).
+# The altqx/libass fork reports upstream's pkg-config version, so the prefix and the fork's feature macros prove it.
 pkg_check_modules(HIKARI_LIBASS REQUIRED IMPORTED_TARGET GLOBAL libass>=0.17.5)
 if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
     file(TO_CMAKE_PATH "${VCPKG_INSTALLED_DIR}" _hikari_vcpkg_installed)
@@ -58,9 +49,7 @@ if(NOT TARGET Hikari::libass)
     add_library(Hikari::libass ALIAS PkgConfig::HIKARI_LIBASS)
 endif()
 
-# The media stack links statically. Qt loads the system FreeType, HarfBuzz and
-# fontconfig, so our static copies must not be exported from the executable or
-# Qt's font code would bind to them instead.
+# Qt loads the system FreeType, HarfBuzz and fontconfig, so our static copies must not be exported from the executable.
 add_library(hikari_media_deps INTERFACE)
 target_include_directories(hikari_media_deps INTERFACE ${FFMPEG_INCLUDE_DIRS})
 target_link_libraries(hikari_media_deps INTERFACE HikariFFMS2::ffms2 ${FFMPEG_LIBRARIES} Hikari::libass)
@@ -69,18 +58,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 add_library(Hikari::media_deps ALIAS hikari_media_deps)
 
-# Editor audio output (ADR 0010): the owned PortAudio overlay with pinned host
-# APIs. Static; ALSA is the system library on Linux.
+# ALSA is the system library on Linux.
 find_package(portaudio CONFIG REQUIRED)
-# R1-pcre2: legacy wxRegEx's PCRE2.
 find_package(PCRE2 CONFIG REQUIRED COMPONENTS 16BIT)
-# R4-uchardet: legacy OpenWrite::CheckCharSet's charset detection (static).
 find_package(uchardet CONFIG REQUIRED)
 if(NOT TARGET Hikari::uchardet)
     add_library(Hikari::uchardet ALIAS uchardet::libuchardet)
 endif()
-# R2-hunspell: the spell checker's Hunspell (the port ships pkg-config
-# metadata only), and legacy's word segmentation, Boost.Locale over ICU.
+# The hunspell port ships pkg-config metadata only.
 pkg_check_modules(HIKARI_HUNSPELL REQUIRED IMPORTED_TARGET GLOBAL hunspell=1.7.3)
 if(NOT TARGET Hikari::hunspell)
     add_library(Hikari::hunspell ALIAS PkgConfig::HIKARI_HUNSPELL)
@@ -90,15 +75,10 @@ find_package(ICU REQUIRED COMPONENTS uc i18n data)
 add_library(hikari_portaudio INTERFACE)
 target_link_libraries(hikari_portaudio INTERFACE portaudio_static)
 add_library(Hikari::portaudio ALIAS hikari_portaudio)
-# KA2-slowed-playback: SoundTouch (LGPL-2.1-or-later, static) keeps the pitch
-# while the audio box plays slowed.
 find_package(SoundTouch CONFIG REQUIRED)
 add_library(hikari_soundtouch INTERFACE)
 target_link_libraries(hikari_soundtouch INTERFACE SoundTouch::SoundTouch)
 add_library(Hikari::soundtouch ALIAS hikari_soundtouch)
-# KA4 (#279): the furigana suggestions' MeCab (ports/mecab, static, BSD) and
-# its dictionary, UniDic 2.1.2 (ports/hikari-unidic-lite, BSD), shipped as
-# Dictionary/unidic-lite.
 find_package(mecab CONFIG REQUIRED)
 add_library(hikari_mecab INTERFACE)
 target_link_libraries(hikari_mecab INTERFACE mecab::mecab)
@@ -106,22 +86,17 @@ add_library(Hikari::mecab ALIAS hikari_mecab)
 find_path(HIKARI_UNIDIC_DIR sys.dic PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/dicdir"
     NO_DEFAULT_PATH NO_CACHE REQUIRED)
 
-# CF1 (#488): toml++ (MIT, static) reads and writes the user folder's TOML
-# files (settings.toml, hotkeys.toml).
 find_package(tomlplusplus CONFIG REQUIRED)
 add_library(hikari_tomlplusplus INTERFACE)
 target_link_libraries(hikari_tomlplusplus INTERFACE tomlplusplus::tomlplusplus)
 add_library(Hikari::tomlplusplus ALIAS hikari_tomlplusplus)
 
-# LuaJIT for the isolated Lua helper only (ADR 0006). Its flags export the
-# executable's symbols (-Wl,-E), which Lua native modules need, so it must not
-# be linked into the application.
+# LuaJIT's flags export the executable's symbols (-Wl,-E) for Lua native modules: link it into the Lua helper only.
 pkg_check_modules(HIKARI_LUAJIT REQUIRED IMPORTED_TARGET GLOBAL luajit)
 if(NOT TARGET Hikari::luajit)
     add_library(Hikari::luajit ALIAS PkgConfig::HIKARI_LUAJIT)
 endif()
 
-# Where each dependency actually resolved from, for build evidence.
 file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
     "Qt6_DIR=${Qt6_DIR}\nQt6_VERSION=${Qt6_VERSION}\n"
     "HikariFFMS2_DIR=${HikariFFMS2_DIR}\n"
@@ -136,5 +111,4 @@ file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
     "toolchain=${CMAKE_TOOLCHAIN_FILE}\ntriplet=${VCPKG_TARGET_TRIPLET}\n"
     "compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}\n")
 
-# D1: the docking engine (ports/kddockwidgets: QtQuick frontend, built against the provisioned Qt).
 find_package(KDDockWidgets-qt6 CONFIG REQUIRED)

@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""A stand-in for the winix CLI's hot-plug commands (winix VmManager's
-DeviceAdd, DeviceRemove and DeviceList): QEMU's peripherals and Winix's
-records live in $FAKE_WINIX_STATE; each call is appended to $FAKE_WINIX_LOG."""
 import json
 import os
 import sys

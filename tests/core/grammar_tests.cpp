@@ -1,7 +1,3 @@
-// GR1 (#364): the text harper-ls is given for a Line (tags, \N, karaoke and
-// drawings taken out on the hidden-tag projection) and where each finding
-// goes back, and Harper's rules in their groups.
-
 #include "hikari/core/grammar.h"
 #include "hikari/core/text_projection.h"
 
@@ -18,7 +14,6 @@ namespace {
 
 using Range = std::pair<std::size_t, std::size_t>;
 
-// The raw text under the checked text's first occurrence of `word`.
 std::u16string rawUnder(std::u16string_view raw, const CheckedText &text, std::u16string_view word)
 {
     const auto at = text.text.find(word);
@@ -42,7 +37,7 @@ bool switchOf(const std::vector<std::pair<std::string_view, bool>> &switches, st
     return it != switches.end() && it->second;
 }
 
-} // namespace
+}
 
 TEST(Grammar, OverridesAreLeftOutAndFindingsMapBackUnderTheRawText)
 {
@@ -52,7 +47,6 @@ TEST(Grammar, OverridesAreLeftOutAndFindingsMapBackUnderTheRawText)
     ASSERT_EQ(text.raw.size(), text.text.size());
     EXPECT_EQ(rawRange(text, 0, 5), (Range{5, 10}));
     EXPECT_EQ(rawUnder(raw, text, u"has"), u"has");
-    // A finding across a closing block covers the block too.
     EXPECT_EQ(rawUnder(raw, text, u"Their going"), uR"(Their{\i0} going)");
 }
 
@@ -61,7 +55,6 @@ TEST(Grammar, LineBreaksAndHardSpacesAreSpaces)
     const std::u16string raw = uR"(I has\Na apple\hnow\nthen)";
     const auto text = checkedText(raw);
     EXPECT_EQ(text.text, u"I has a apple now then");
-    // A finding across the break covers both rows' words and the "\N".
     EXPECT_EQ(rawUnder(raw, text, u"has a"), uR"(has\Na)");
     EXPECT_EQ(rawUnder(raw, text, u"apple now"), uR"(apple\hnow)");
 }
@@ -99,8 +92,6 @@ TEST(Grammar, PositionsAreUtf16Units)
 
 TEST(Grammar, OffsetsAreTheHiddenTagProjections)
 {
-    // A finding is a projection range: the field with tags hidden marks it as
-    // it is, and mappedReplace applies a suggestion over it.
     const std::u16string raw = uR"({\i1}I has{\i0}\Na {\p1}m 0 0{\p0}apple)";
     const auto text = checkedText(raw);
     const auto projection = hikari::core::project(raw);
@@ -118,14 +109,13 @@ TEST(Grammar, AssSuggestionsKeepTheTagsAndReturnTheRawCaret)
     const auto replaced = replace(raw, hikari::core::SubtitleFormat::Ass, 2, 5, u"have");
     ASSERT_TRUE(replaced);
     EXPECT_EQ(replaced->raw, uR"(I {\i1}have{\i0} a apple)");
-    EXPECT_EQ(replaced->caret, 11u); // before the closing block
+    EXPECT_EQ(replaced->caret, 11u);
     EXPECT_FALSE(replace(raw, hikari::core::SubtitleFormat::Ass, 2, 2, u"x"));
     EXPECT_FALSE(replace(raw, hikari::core::SubtitleFormat::Ass, 2, 5, u"{x}"));
 }
 
 TEST(Grammar, SrtLeavesItsAngleTagsOutAndChecksBraces)
 {
-    // As spelling reads SRT: <...> are tags, {...} is text, \N a space.
     using hikari::core::SubtitleFormat;
     const std::u16string raw = uR"(<font face="tomorow">I has a apple.</font>\N{see you tomorow})";
     const auto text = checkedText(raw, SubtitleFormat::Srt);
@@ -137,14 +127,12 @@ TEST(Grammar, SrtLeavesItsAngleTagsOutAndChecksBraces)
     ASSERT_TRUE(replaced);
     EXPECT_EQ(replaced->raw, uR"(<font face="tomorow">I has an apple.</font>\N{see you tomorow})");
     EXPECT_EQ(replaced->caret, raw.find(u"a apple") + 2);
-    // Tags inside the range stay, after the replacement.
     const std::u16string italic = u"<i>Their</i> going";
     const auto both = checkedText(italic, SubtitleFormat::Srt);
     ASSERT_EQ(both.text, u"Their going");
     const auto joined = replace(italic, SubtitleFormat::Srt, 0, 11, u"They're going");
     ASSERT_TRUE(joined);
     EXPECT_EQ(joined->raw, u"<i>They're going</i>");
-    // Nothing that reads as a tag, and never an unclosed one.
     EXPECT_FALSE(replace(raw, SubtitleFormat::Srt, at, at + 1, u"<b>an"));
     const auto unclosed = checkedText(u"a <b", SubtitleFormat::Srt);
     EXPECT_EQ(unclosed.text, u"a  ");
@@ -196,10 +184,8 @@ TEST(Grammar, SwitchesFollowTheGroupsAndHarpersDefaults)
     EXPECT_EQ(switches.size(), rules().size());
     EXPECT_TRUE(switchOf(switches, "AnA"));
     EXPECT_TRUE(switchOf(switches, "SpellCheck"));
-    EXPECT_FALSE(switchOf(switches, "NoOxfordComma")); // Harper's default: off
+    EXPECT_FALSE(switchOf(switches, "NoOxfordComma"));
     EXPECT_TRUE(switchOf(switches, "OxfordComma"));
-    // Off by the owner's choice, whatever its group: a Line is often the
-    // middle of a sentence.
     EXPECT_FALSE(switchOf(switches, "SentenceCapitalization"));
     EXPECT_TRUE(switchOf(switches, "Spaces"));
 
@@ -208,7 +194,6 @@ TEST(Grammar, SwitchesFollowTheGroupsAndHarpersDefaults)
     EXPECT_FALSE(switchOf(switches, "AnA"));
     EXPECT_TRUE(switchOf(switches, "PronounVerbAgreement"));
 
-    // While Hunspell checks spelling, Harper's own spelling rule is off.
     switches = linterSwitches(allGroups(true), true);
     EXPECT_FALSE(switchOf(switches, "SpellCheck"));
     EXPECT_TRUE(switchOf(switches, "RepeatedWords"));
@@ -217,8 +202,6 @@ TEST(Grammar, SwitchesFollowTheGroupsAndHarpersDefaults)
     EXPECT_TRUE(std::ranges::none_of(switches, [](const auto &s) { return s.second; }));
 }
 
-// #409: Harper's Markdown `code` spans read as quotations in the panel and
-// the field's menu; a lone backtick is left out.
 TEST(Grammar, MessagesAreShownWithoutMarkdown)
 {
     EXPECT_EQ(plainMessage(u"Use `an` instead of `a`."), u"Use \u201Can\u201D instead of \u201Ca\u201D.");
@@ -227,18 +210,14 @@ TEST(Grammar, MessagesAreShownWithoutMarkdown)
     EXPECT_EQ(plainMessage(u"A lone ` mark"), u"A lone  mark");
 }
 
-// #409: the panel's context is cut at a word, with an ellipsis where text is
-// left out; text that fits is whole.
 TEST(Grammar, ContextIsCutAtAWord)
 {
     EXPECT_EQ(contextBefore(u"I have ", 40), u"I have ");
     EXPECT_EQ(contextAfter(u" apple.", 40), u" apple.");
     EXPECT_EQ(contextBefore(u"We went to the store and then I have ", 20), u"\u2026and then I have ");
     EXPECT_EQ(contextAfter(u" apple and a pear for the trip home.", 20), u" apple and a pear\u2026");
-    // Cut where a word ends: nothing more goes.
     EXPECT_EQ(contextBefore(u"one two three ", 10), u"\u2026two three ");
     EXPECT_EQ(contextAfter(u" one two three", 8), u" one two\u2026");
-    // A word longer than the context is cut inside.
     EXPECT_EQ(contextBefore(u"Supercalifragilistic ", 8), u"\u2026ilistic ");
     EXPECT_EQ(contextAfter(u" Supercalifragilistic", 8), u" Superca\u2026");
 }

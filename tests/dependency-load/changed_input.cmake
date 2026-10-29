@@ -1,10 +1,3 @@
-# B4: a changed pinned input fails provisioning explicitly. Copies one port,
-# alters one digit of its pinned SHA512, puts the genuine cached archive where
-# vcpkg looks for that digest, and requires the install to stop with vcpkg's
-# hash error. Runs offline (origin blocked) with private install, build and
-# package trees; only the downloads root (and its vcpkg tools) is shared, and
-# the one file staged there is removed afterwards.
-#
 #   cmake -DVCPKG=<vcpkg executable> -DPORT_DIR=<port> -DDOWNLOADS=<downloads>
 #         -DTRIPLETS=<overlay triplets> -DTRIPLET=<triplet> -DWORK=<dir>
 #         -P changed_input.cmake
@@ -47,8 +40,7 @@ set(genuine "${DOWNLOADS}/${archive_stem}.tar.gz")
 if(NOT EXISTS "${genuine}")
     message(FATAL_ERROR "changed_input: the provisioned archive ${genuine} is missing")
 endif()
-# vcpkg checks the plain name first; when that file has the wrong digest it
-# uses the digest-suffixed name, where the genuine archive is staged.
+# vcpkg falls back to the digest-suffixed name when the plain one has the wrong digest.
 string(SUBSTRING "${altered}" 0 8 digest8)
 set(staged "${DOWNLOADS}/${archive_stem}-${digest8}.tar.gz")
 file(COPY_FILE "${genuine}" "${staged}")

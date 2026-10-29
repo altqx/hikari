@@ -1,6 +1,3 @@
-// E3: translation operations in the Grid against legacy SubsGrid::OnPasteTextTl,
-// SetTlMode and MoveTextTL (TLDialog) at 20d647c4.
-
 #include "hikari/application/grid_translation.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -60,7 +57,6 @@ std::string saved(const EditSession &s)
     return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
 }
 
-// A, B, C, D translated a, b, c, d, in translation mode.
 struct Translated : ::testing::Test {
     EditSession session{load(kScript)};
     void SetUp() override { ASSERT_TRUE(pasteTranslation(session, u8"a\nb\nc\nd\n", u8"txt")); }
@@ -71,7 +67,7 @@ struct Translated : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST(PasteTranslation, FillsShownLinesThenAppendsAndTurnsOnTranslationMode)
 {
@@ -93,7 +89,6 @@ TEST(PasteTranslation, FillsShownLinesThenAppendsAndTurnsOnTranslationMode)
     ASSERT_EQ(styles.size(), 2u);
     EXPECT_EQ(styles[1].name, u8"TLmode");
     EXPECT_EQ(styles[1].alignment, u8"8");
-    // Saved as legacy writes it: the header, the TLmode Style and pairs.
     const std::string file = saved(session);
     EXPECT_NE(file.find("ScriptType: v4.00+\nTLMode Style: TLmode\nTLMode: Yes\nTLMode Showtl: Yes\n\n"), std::string::npos)
         << file;
@@ -107,7 +102,6 @@ TEST(PasteTranslation, FillsShownLinesThenAppendsAndTurnsOnTranslationMode)
     EXPECT_NE(file.find("Dialogue: 0,0:00:00.00,0:00:00.00,TLmode,,0,0,0,,\nDialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,five"),
               std::string::npos)
         << file;
-    // One step back restores the Lines, Script Info and Styles.
     ASSERT_TRUE(session.undo());
     EXPECT_FALSE(session.document().scriptInfo(u8"TLMode"));
     EXPECT_EQ(core::decodeStyles(session.document()).size(), 1u);
@@ -117,15 +111,10 @@ TEST(PasteTranslation, FillsShownLinesThenAppendsAndTurnsOnTranslationMode)
 TEST(PasteTranslation, SrtBlocksAndTheLegacyLastBlock)
 {
     EditSession session{load(kScript)};
-    // LF: blank lines are skipped, so the last block is never followed by a
-    // number and is not pasted.
     ASSERT_TRUE(pasteTranslation(session, u8"1\n00:00:01,000 --> 00:00:02,000\nHello\nthere\n\n2\n00:00:03,000 --> 00:00:04,000\nWorld\n",
                                  u8"srt"));
     EXPECT_EQ(texts(session)[0], "A/Hello\\Nthere");
     EXPECT_EQ(texts(session)[1], "B/");
-    // A CRLF file as the Linux build read it (R5-per-platform; Windows' text
-    // mode gave the LF text above): a blank line is "\r", which trims to an
-    // empty "number" and ends the block, so the last block is pasted too.
     EditSession crlf{load(kScript)};
     ASSERT_TRUE(pasteTranslation(crlf, u8"1\r\n00:00:01,000 --> 00:00:02,000\r\nHello\r\n\r\n2\r\n00:00:03,000 --> 00:00:04,000\r\nWorld\r\n\r\n",
                                  u8"srt"));
@@ -135,9 +124,6 @@ TEST(PasteTranslation, SrtBlocksAndTheLegacyLastBlock)
 
 TEST(PasteTranslation, LinuxCrlfTextKeepsItsBlankLinesAsEntries)
 {
-    // R5-per-platform: the Linux build kept "\r", so wxTOKEN_STRTOK did not
-    // skip a blank CRLF line; its "\r" is an entry with no text. (Windows
-    // read LF text, where the blank line is skipped.)
     EditSession session{load(kScript)};
     ASSERT_TRUE(pasteTranslation(session, u8"one\r\ntwo\r\n\r\nthree\r\n", u8"txt"));
     EXPECT_EQ(texts(session), (std::vector<std::string>{"A/one", "B/two", "C/", "D/three"}));
@@ -215,7 +201,6 @@ TEST_F(Translated, TheCountIsTheDistanceBetweenTheFirstTwoSelected)
     const auto lines = session.document().lines();
     session.setSelection(Selection{lines[0]->id, {lines[0]->id, lines[2]->id}, lines[0]->id, {}});
     ASSERT_TRUE(moveTranslation(session, TranslationMove::DeleteTranslationLine));
-    // Rows past the count without a partner keep their translation (legacy loop).
     EXPECT_EQ(texts(session), (std::vector<std::string>{"A/c", "B/d", "C/c", "D/d"}));
 }
 
@@ -230,7 +215,7 @@ TEST(MoveTranslation, OnlyInTranslationModeWithTheOriginalShown)
 TEST(TurnOffTranslationMode, TranslationsBecomeTheTextAndTheTlStyleGoes)
 {
     EditSession session{load(kScript)};
-    EXPECT_EQ(turnOffTranslationMode(session).error(), CommandRefusal::Invalid); // not in translation mode
+    EXPECT_EQ(turnOffTranslationMode(session).error(), CommandRefusal::Invalid);
     ASSERT_TRUE(pasteTranslation(session, u8"one\ntwo\n", u8"txt"));
     const auto third = session.document().lines()[2]->id;
     ASSERT_TRUE(session.run(Command{"x", session.revision(), {third}, [&](core::Document &d) {
@@ -245,7 +230,7 @@ TEST(TurnOffTranslationMode, TranslationsBecomeTheTextAndTheTlStyleGoes)
     const auto &d = session.document();
     EXPECT_FALSE(d.scriptInfo(u8"TLMode"));
     EXPECT_FALSE(d.scriptInfo(u8"TLMode Style"));
-    EXPECT_EQ(d.scriptInfo(u8"TLMode Showtl"), u8"Yes"); // legacy leaves it
+    EXPECT_EQ(d.scriptInfo(u8"TLMode Showtl"), u8"Yes");
     EXPECT_EQ(core::decodeStyles(d).size(), 1u);
     const std::string file = saved(session);
     EXPECT_EQ(file.find("TLmode"), std::string::npos) << file;

@@ -1,22 +1,3 @@
-// T2: Move's overlay against libass's render. A square drawing at \an5 (its
-// centre is the Line's anchor) is rendered by libass (the renderer the video
-// uses) at times before, inside and after the \move's interval, and
-// Move::DrawVisual's handles (VisualMove.cpp:36-93) must sit where libass
-// paints the anchor: the cross (the position at the frame's time) always,
-// the start's square until the \move begins and the end's circle once it is
-// over; a \pos holds all three on the anchor. The controller hands the tool
-// the shown frame's start (VideoBox::Tell, VisualToolsController::
-// videoTimeMs) and the video session renders that frame at the same start
-// (VideoSession::render, video_session.cpp:282-290), so one time serves both
-// here. Each case runs at three video / script ratios, the view at the
-// frame's size, at half of it and pillarboxed at about twice it. The
-// renders, with the overlay drawn over them, are written to the artifact
-// directory. A \move without times or with 0,0 moves over the whole Line in
-// libass (ass_parse.c: t1 <= 0 && t2 <= 0), and Move's cross follows it
-// there (approved departure T2-move-untimed: legacy's GetPosnScale gave
-// Move the Line's start as both times and added it again on each later
-// read, Visuals.cpp:648-675).
-
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_tools.h"
 #include "hikari/backends/libass_renderer.h"
@@ -39,13 +20,8 @@ using namespace hikari::application::visual;
 
 namespace {
 
-// Handles and the painted anchor agree within this many frame pixels (the
-// centroid of an antialiased square, libass's eighth-pixel placement and
-// the tool's float view coordinates; 0.07 measured on Linux).
 constexpr double kTolerance = 0.25;
 
-// A video's frame, the script's PlayRes and the video window's client size
-// (with the 40-pixel panel below it, as legacy's VideoBox has).
 struct Ratio {
     const char *name;
     int frameWidth, frameHeight;
@@ -54,13 +30,8 @@ struct Ratio {
 };
 
 constexpr Ratio kRatios[] = {
-    // The script twice the frame; the view the frame's size.
     {"half", 640, 360, 1280, 720, 640, 400},
-    // A 4:3 PlayRes on 16:9 video (2 and 1.5 script units a pixel); the view
-    // half the frame.
     {"wide", 1280, 720, 640, 480, 640, 400},
-    // A 1080p PlayRes on 4:3 video (6 and 4.5); the view pillarboxed at
-    // about twice the frame.
     {"pillarbox", 320, 240, 1920, 1080, 800, 540},
 };
 
@@ -81,7 +52,6 @@ std::vector<std::byte> bytesOf(const std::string &s)
     return out;
 }
 
-// One Line from 1 s to 3 s.
 std::string scriptOf(const Ratio &r, const std::string &text)
 {
     return std::format("[Script Info]\nScriptType: v4.00+\nPlayResX: {}\nPlayResY: {}\nScaledBorderAndShadow: yes\n\n",
@@ -95,14 +65,12 @@ std::string scriptOf(const Ratio &r, const std::string &text)
            text + "\n";
 }
 
-// The square, a twelfth of the script's height, centred on the anchor.
 std::string squareLine(const Ratio &r, const std::string &placement)
 {
     const int side = r.scriptHeight / 12;
     return "{\\an5\\bord0\\shad0" + placement + std::format("\\p1}}m 0 0 l {0} 0 {0} {0} 0 {0}", side);
 }
 
-// A host over the ratio's view with the one Line active.
 class Host : public VisualHost {
 public:
     VideoView v;
@@ -143,7 +111,6 @@ public:
     std::int64_t videoTimeMs() const override { return time; }
     LegacyTimebase timebase() const override { return LegacyTimebase({}, 25.0); }
 
-    // A view point in the frame's pixels.
     QPointF toFrame(PointF p) const
     {
         const IntRect &rect = v.videoRect();
@@ -151,8 +118,6 @@ public:
     }
 };
 
-// libass's render at `ms`: the image, and the painted square's centre (its
-// alpha-weighted centroid) in frame pixels.
 struct Ink {
     QImage image;
     std::optional<QPointF> centre;
@@ -185,9 +150,6 @@ Ink render(const Ratio &r, const std::string &text, std::int64_t ms)
     return ink;
 }
 
-// Move's handles in the overlay, in frame pixels: the start's square
-// (DrawRect), the end's circle (DrawCircle) and the cross (DrawCross: its
-// two 30-pixel lines).
 struct Handles {
     std::optional<QPointF> start, end, cross;
 };
@@ -201,7 +163,6 @@ Handles handlesOf(const Overlay &o, const Host &host)
     for (const auto &c : o.circles)
         if (c.filled)
             h.end = host.toFrame(c.centre);
-    // The horizontal line gives the cross's y, the vertical one its x.
     std::optional<float> crossX, crossY;
     for (const auto &l : o.lines) {
         if (l.from.y == l.to.y && std::abs(l.to.x - l.from.x - 30.f) < 0.01f)
@@ -221,7 +182,6 @@ void expectAt(const std::optional<QPointF> &handle, const QPointF &ink, const ch
     EXPECT_LE(std::abs(handle->y() - ink.y()), kTolerance) << what << " y " << handle->y() << ", libass " << ink.y();
 }
 
-// The render with the overlay over it (view points in frame pixels), for review.
 void save(QImage image, const Overlay &o, const Host &host, const QString &name)
 {
     QPainter painter(&image);
@@ -249,13 +209,10 @@ void save(QImage image, const Overlay &o, const Host &host, const QString &name)
     image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR) + QStringLiteral("/") + name + QStringLiteral(".png"));
 }
 
-} // namespace
+}
 
 TEST(VisualMoveRender, HandlesSitWhereLibassDrawsTheMovingAnchor)
 {
-    // \move(x1,y1,x2,y2,300,1500) on the Line from 1 s: the move runs from
-    // 1.3 s to 2.5 s. Times on the Line before the move, at its start,
-    // inside it, at its end and after it (to the Line's last millisecond).
     const std::int64_t times[] = {1000, 1150, 1300, 1450, 1777, 1900, 2333, 2500, 2700, 2999};
     for (const Ratio &r : kRatios) {
         SCOPED_TRACE(r.name);
@@ -280,8 +237,6 @@ TEST(VisualMoveRender, HandlesSitWhereLibassDrawsTheMovingAnchor)
                 expectAt(h.start, *ink.centre, "start");
             if (t >= tool.moveEnd())
                 expectAt(h.end, *ink.centre, "end");
-            // Inside the move the anchor has left the start and not reached
-            // the end.
             if (t > tool.moveStart() + 100 && t < tool.moveEnd() - 100) {
                 ASSERT_TRUE(h.start && h.end);
                 EXPECT_GT(std::hypot(h.start->x() - ink.centre->x(), h.start->y() - ink.centre->y()), 2.0);
@@ -295,8 +250,6 @@ TEST(VisualMoveRender, HandlesSitWhereLibassDrawsTheMovingAnchor)
 
 TEST(VisualMoveRender, APosHoldsEveryHandleOnTheAnchor)
 {
-    // \pos: Move's start, end and cross on the one point libass draws at,
-    // whatever the time (SetCurVisual: from and to the same point).
     for (const Ratio &r : kRatios) {
         SCOPED_TRACE(r.name);
         const std::string text =
@@ -323,12 +276,7 @@ TEST(VisualMoveRender, APosHoldsEveryHandleOnTheAnchor)
 
 TEST(VisualMoveRender, AMoveWithoutTimesOrWithZeroTimesFollowsLibassOverTheWholeLine)
 {
-    // T2-move-untimed: \move(x1,y1,x2,y2) and \move(x1,y1,x2,y2,0,0) on the
-    // Line from 1 s to 3 s move from its first to its last millisecond in
-    // libass. Move's cross on the painted square's centroid at its start,
-    // inside it and at its last millisecond, read twice (legacy added the
-    // Line's start again on the second read); the start's square on it at
-    // the Line's start.
+    // libass moves a \move without times, or with 0,0, over the whole Line (ass_parse.c: t1 <= 0 && t2 <= 0).
     const std::int64_t times[] = {1000, 1040, 1333, 1777, 2000, 2500, 2960, 2999};
     for (const Ratio &r : kRatios) {
         SCOPED_TRACE(r.name);

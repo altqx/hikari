@@ -1,6 +1,3 @@
-// S4-run-validation: the validations a macro run makes before its own are
-// those of the macros of the scripts it depends on (the loaded scripts whose
-// files its top level loaded), and nothing else.
 #include "hikari/application/macro_validation.h"
 
 #include <gtest/gtest.h>
@@ -29,7 +26,7 @@ ScriptStatus script(const char *name, std::vector<bool> validated, std::vector<s
     return s;
 }
 
-} // namespace
+}
 
 TEST(MacroValidation, OnlyTheScriptsItLoadedAndTheirValidatedMacros)
 {
@@ -38,9 +35,6 @@ TEST(MacroValidation, OnlyTheScriptsItLoadedAndTheirValidatedMacros)
         script("dep.lua", {true, false, true}),
         script("main.lua", {true, true}, {at("dep.lua"), at("module.lua")}),
     };
-    // dep.lua's validated macros, in registration order; not unrelated.lua's,
-    // not main.lua's own others (its own validation runs with it), not a
-    // module that is no loaded script.
     EXPECT_EQ(dependencyValidations(scripts, at("main.lua")),
               (std::vector<MacroRef>{{at("dep.lua"), 0}, {at("dep.lua"), 2}}));
     EXPECT_TRUE(dependencyValidations(scripts, at("dep.lua")).empty());
@@ -51,7 +45,7 @@ TEST(MacroValidation, OnlyTheScriptsItLoadedAndTheirValidatedMacros)
 TEST(MacroValidation, FirstLoadedFirstEachOnceNeverItself)
 {
     const auto spelled = at("b.lua");
-    const std::string roundabout = at("sub") + "/../b.lua"; // the same file, spelled otherwise
+    const std::string roundabout = at("sub") + "/../b.lua";
     const std::vector<ScriptStatus> scripts{
         script("a.lua", {true}),
         script("b.lua", {true}),

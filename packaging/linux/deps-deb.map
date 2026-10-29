@@ -1,8 +1,5 @@
-# deb dependencies of HikariSub's host libraries (installers spec 5.4).
-# "<soname> <dependency>"; read by resolve-deps.sh. Every soname the app tree
-# needs from the host must have a line, or the package build fails. The
-# alternatives cover the 64-bit time_t renames (t64) of Ubuntu 24.04 and
-# Debian 13; the plain names are Ubuntu 22.04's and Debian 12's.
+# deb dependencies of the host libraries: "<soname> <dependency>", read by resolve-deps.sh; a missing soname fails.
+# The alternatives cover the t64 renames of Ubuntu 24.04 and Debian 13; plain names are Ubuntu 22.04's and Debian 12's.
 ld-linux-x86-64.so.2 @glibc
 libc.so.6 @glibc
 libm.so.6 @glibc

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Renders one of the two AUR packages for one release (installers spec, 5.5):
+# Renders one of the two AUR packages for one release:
 #
 #   hikarisub-stable-bin  stable releases (X.Y.Z) only; channel "stable"
 #   hikarisub-beta-bin    every release, prereleases included; channel "beta"
@@ -8,33 +8,13 @@
 #   packaging/linux/aur/render-pkgbuild.sh --packages <version>
 #   packaging/linux/aur/render-pkgbuild.sh --pkgver <version>
 #
-# <version> is the release version without the "v": X.Y.Z or
-# X.Y.Z-{alpha,beta,rc}.N. <tar.gz> is the release's
-# hikarisub-<version>-linux-x86_64.tar.gz (the package's source). Writes
-# <out dir>/PKGBUILD from PKGBUILD.in, with the package name, the version,
-# the channel, the tarball's SHA-256 and the dependencies: the host libraries
-# the tree needs (tools/release/host-sonames.sh) mapped by
-# packaging/linux/deps-arch.map (or --deps-map), plus its runtime section.
-# Then writes <out dir>/.SRCINFO with makepkg --printsrcinfo, as a non-root
-# user; without a local makepkg that runs in the archlinux container pinned
-# in packaging/linux/tools.lock. <out dir> defaults to
-# packaging/linux/aur/<package>.
+# <version> is X.Y.Z or X.Y.Z-{alpha,beta,rc}.N, without the "v"; <out dir> defaults to packaging/linux/aur/<package>.
+# pkgver cannot hold a "-": 0.0.2-rc.1 is 0.0.2rc.1, which vercmp sorts below 0.0.2 and above 0.0.1.
 #
-# pkgver cannot hold a "-": it is the version without it, so 0.0.2-rc.1 is
-# 0.0.2rc.1, which vercmp sorts below 0.0.2 and above 0.0.1. The source URL
-# keeps the real version (_version in the PKGBUILD).
+# Exits 1 for a version the package does not carry, and 3 for one lower than the AUR's ($AUR_RPC or the AUR RPC),
+# so a late release cannot downgrade AUR users; --offline skips that check (test renders).
 #
-# --packages prints the packages a release goes to, one per line;
-# --pkgver prints the pkgver of a version.
-#
-# Exits 1 for a version the package does not carry (a prerelease for
-# hikarisub-stable-bin, or a version that is not of the form above), and 3
-# for a version lower than the package's version on the AUR (read from the
-# AUR RPC, $AUR_RPC or https://aur.archlinux.org/rpc/v5/info), so that a late
-# release cannot downgrade AUR users. --offline skips that AUR check, for
-# test renders only.
-#
-# This file has the same bytes on the legacy (main) and Qt (qt) branches.
+# Same bytes on the main and legacy branches.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -49,7 +29,6 @@ is_prerelease() {
 pkgver_of() {
     printf '%s\n' "$1" | sed 's/-//'
 }
-# vercmp <a> <b>: pacman's own comparison, here or in the archlinux container.
 run_vercmp() {
     if command -v vercmp >/dev/null 2>&1; then
         vercmp "$1" "$2"
@@ -111,7 +90,6 @@ fi
 [ -f "$map" ] || { echo "error: no such map file: $map" >&2; exit 2; }
 pkgver=$(pkgver_of "$version")
 
-# Lower than the AUR's version: refuse.
 if [ "$offline" = false ]; then
     reply=$(curl -fsSL --retry 3 "${AUR_RPC:-https://aur.archlinux.org/rpc/v5/info}?arg[]=$package")
     aur=$(printf '%s' "$reply" | python3 -c 'import json, sys

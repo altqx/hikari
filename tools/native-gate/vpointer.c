@@ -1,7 +1,4 @@
-// Real pointer input for wlroots compositors (sway) through
-// zwlr_virtual_pointer_v1: the compositor routes these events like a
-// physical mouse's, so window moves, drags and drops go through its own
-// pointer handling. Commands on stdin, one per line:
+// Pointer input for sway through zwlr_virtual_pointer_v1. Commands on stdin, one per line:
 //   move X Y      absolute position in layout coordinates (needs `extent W H` first)
 //   extent W H    the layout's bounding box (default 3200x1000)
 //   rel DX DY     relative motion

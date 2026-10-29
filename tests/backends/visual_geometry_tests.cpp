@@ -1,14 +1,3 @@
-// T3: the Scale and rotation tools' origin and anchor against libass's
-// renders. The tools write the tags (through their pointer gestures over a
-// 1:1 view: the 640x360 script fills a 640x360 video rectangle), libass
-// renders the Line before and after, and the ink's measured geometry must
-// turn about the \org the tool draws its cross at, and stay anchored at the
-// position its arrows start from. The images are compared too: the render
-// before, turned or scaled about the point the overlay draws (its cross, its
-// arrows' start), must cover the render after, and better than about that
-// point moved by a few pixels. The renders, with the tool's overlay drawn
-// over them, are written to the artifact directory for review.
-
 #include "hikari/application/visual_rotation.h"
 #include "hikari/application/visual_scale.h"
 #include "hikari/application/visual_tools.h"
@@ -64,7 +53,6 @@ std::vector<std::byte> bytesOf(const std::string &s)
     return out;
 }
 
-// A host over a 1:1 view and the one Line.
 class Host : public VisualHost {
 public:
     VideoView v;
@@ -124,13 +112,13 @@ void drag(VisualTool &tool, Host &host, Pointer::Button button, int x0, int y0, 
     tool.pointer(p, host);
     Pointer r{Pointer::Kind::Release, x1, y1, button};
     tool.pointer(r, host);
-    tool.reset(host); // the shell refreshes after the edit (RendererVideo::SetVisual)
+    tool.reset(host);
 }
 
 struct Ink {
     double minX = 1e9, minY = 1e9, maxX = -1, maxY = -1, cx = 0, cy = 0, weight = 0;
     QImage image;
-    QImage coverage; // libass's alpha, premultiplied white
+    QImage coverage;
 };
 
 Ink render(const std::u8string &text)
@@ -166,8 +154,6 @@ Ink render(const std::u8string &text)
     return ink;
 }
 
-// The render with the tool's overlay over it (device pixels are script
-// pixels here), for review.
 void save(const Ink &ink, const VisualTool &tool, const Host &host, const QString &name)
 {
     QImage image = ink.image;
@@ -191,8 +177,6 @@ void save(const Ink &ink, const VisualTool &tool, const Host &host, const QStrin
     image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR) + QStringLiteral("/") + name + QStringLiteral(".png"));
 }
 
-// The point the overlay's cross is drawn at: its 20-pixel horizontal and
-// vertical strokes (RotationZ's and RotationXY's \org).
 PointF crossOf(const Overlay &o)
 {
     for (const auto &h : o.lines)
@@ -205,7 +189,6 @@ PointF crossOf(const Overlay &o)
     return {};
 }
 
-// The point Scale's three arrows start from (its last three lines).
 PointF arrowsStartOf(const Overlay &o)
 {
     EXPECT_GE(o.lines.size(), 3u);
@@ -215,8 +198,6 @@ PointF arrowsStartOf(const Overlay &o)
     return start;
 }
 
-// How well `before`'s ink, mapped by `t`, covers `after`'s: pixels at least
-// half covered, intersection over union.
 double overlap(const Ink &before, const QTransform &t, const Ink &after)
 {
     QImage mapped(before.coverage.size(), QImage::Format_ARGB32_Premultiplied);
@@ -237,9 +218,6 @@ double overlap(const Ink &before, const QTransform &t, const Ink &after)
     return either ? static_cast<double>(both) / either : 0;
 }
 
-// `before` mapped about `pivot` covers `after`, and covers it better than
-// when mapped about the pivot moved 4 pixels along any axis the mapping
-// depends on: the image turns or scales about the point the overlay draws.
 void expectMappedAbout(const Ink &before, const Ink &after, PointF pivot,
                        const std::function<QTransform(double, double)> &about, double least)
 {
@@ -249,7 +227,7 @@ void expectMappedAbout(const Ink &before, const Ink &after, PointF pivot,
     for (const auto &[dx, dy] : {std::pair{4, 0}, {-4, 0}, {0, 4}, {0, -4}}) {
         const QTransform moved = about(pivot.x + dx, pivot.y + dy);
         if (moved == t)
-            continue; // a scale of 1 or a mirror along that axis
+            continue;
         EXPECT_LT(overlap(before, moved, after), at) << "about the pivot moved by (" << dx << ", " << dy << ")";
     }
 }
@@ -266,15 +244,14 @@ std::u8string without(std::u8string text, std::u8string_view tag)
     return text;
 }
 
-} // namespace
+}
 
 TEST(VisualGeometry, RotationZTurnsTheInkAboutTheToolsOrigin)
 {
     Host host(u8"{\\an5\\pos(320,180)}Turning text");
     RotationZTool tool;
     tool.reset(host);
-    EXPECT_EQ(tool.org(), (PointF{320, 180})); // no \org: the position
-    // Move the origin cross (RotationZ::OnMouseEvent's isOrg), then turn.
+    EXPECT_EQ(tool.org(), (PointF{320, 180}));
     drag(tool, host, Pointer::Button::Left, 320, 180, 400, 220);
     EXPECT_EQ(host.text(), u8"{\\org(400,220)\\an5\\pos(320,180)}Turning text");
     EXPECT_EQ(tool.org(), (PointF{400, 220}));
@@ -285,31 +262,24 @@ TEST(VisualGeometry, RotationZTurnsTheInkAboutTheToolsOrigin)
     save(after, tool, host, QStringLiteral("rotation-z-org"));
     ASSERT_GT(before.weight, 100);
     ASSERT_GT(after.weight, 100);
-    // The image turned by 270 degrees counter-clockwise about the cross the
-    // tool draws.
     const PointF cross = crossOf(tool.overlay(host));
     EXPECT_EQ(cross, (PointF{400, 220}));
     expectMappedAbout(before, after, cross, [](double x, double y) {
         return QTransform().translate(x, y).rotate(-270).translate(-x, -y);
     }, 0.9);
-    // libass turns the text counter-clockwise by \frz about \org: the ink's
-    // centre goes where the same turn about the tool's cross puts it.
+    // libass turns \frz counter-clockwise about \org.
     const double t = 270 * M_PI / 180;
     const double dx = before.cx - 400, dy = before.cy - 220;
     const double ex = 400 + dx * std::cos(t) + dy * std::sin(t);
     const double ey = 220 - dx * std::sin(t) + dy * std::cos(t);
     EXPECT_NEAR(after.cx, ex, 1.0);
     EXPECT_NEAR(after.cy, ey, 1.0);
-    // The bounds turn with it: width and height swap.
     EXPECT_NEAR(after.maxX - after.minX, before.maxY - before.minY, 2.0);
     EXPECT_NEAR(after.maxY - after.minY, before.maxX - before.minX, 2.0);
 }
 
 TEST(VisualGeometry, ScaleKeepsTheAnchorTheArrowsStartFrom)
 {
-    // Top-left anchored: the arrows start at \pos; a width drag of 50
-    // pixels from the width arrow's end makes \fscx150 and the ink grows
-    // to the right only.
     Host host(u8"{\\an7\\pos(100,100)}Scaled text");
     ScaleTool tool;
     tool.reset(host);
@@ -324,13 +294,10 @@ TEST(VisualGeometry, ScaleKeepsTheAnchorTheArrowsStartFrom)
     expectMappedAbout(before, after, anchor, [](double x, double y) {
         return QTransform().translate(x, y).scale(1.5, 1).translate(-x, -y);
     }, 0.8);
-    // Everything scales away from the anchor (100, 100), the line box's
-    // top-left: the ink's distances from it grow by half across, not down.
     EXPECT_NEAR(after.minX - 100, 1.5 * (before.minX - 100), 1.0);
     EXPECT_NEAR(after.minY, before.minY, 1.0);
     EXPECT_NEAR(after.maxY, before.maxY, 1.0);
     EXPECT_NEAR(after.maxX - 100, 1.5 * (before.maxX - 100), 1.5);
-    // Height by the right button: halved downwards from the anchor's top.
     drag(tool, host, Pointer::Button::Right, 100, 200, 100, 150);
     EXPECT_EQ(host.text(), u8"{\\fscy50\\fscx150\\an7\\pos(100,100)}Scaled text");
     const Ink flat = render(host.text());
@@ -349,7 +316,6 @@ TEST(VisualGeometry, ScaleAboutTheCentreForAn5)
     ScaleTool tool;
     tool.reset(host);
     EXPECT_EQ(tool.from(), (PointF{320, 180}));
-    // Middle drag: both axes (type 2).
     drag(tool, host, Pointer::Button::Middle, 420, 280, 470, 330);
     EXPECT_EQ(host.text(), u8"{\\fscy150\\fscx150\\an5\\pos(320,180)}Centred");
     const Ink before = render(u8"{\\an5\\pos(320,180)}Centred");
@@ -367,8 +333,6 @@ TEST(VisualGeometry, ScaleAboutTheCentreForAn5)
 
 TEST(VisualGeometry, RotationXYMirrorsAboutTheToolsOrigin)
 {
-    // A left drag of 180 pixels is \fry180: the text turned half way about
-    // the vertical through \org, its ink mirrored about org.x.
     Host host(u8"{\\an5\\pos(320,180)\\org(360,180)}Mirror");
     RotationXYTool tool;
     tool.reset(host);
@@ -378,7 +342,6 @@ TEST(VisualGeometry, RotationXYMirrorsAboutTheToolsOrigin)
     const Ink before = render(u8"{\\an5\\pos(320,180)\\org(360,180)}Mirror");
     const Ink after = render(host.text());
     save(after, tool, host, QStringLiteral("rotation-xy-org"));
-    // Mirrored about the vertical through the cross the tool draws.
     const PointF cross = crossOf(tool.overlay(host));
     EXPECT_EQ(cross, (PointF{360, 180}));
     expectMappedAbout(before, after, cross, [](double x, double y) {
@@ -387,8 +350,6 @@ TEST(VisualGeometry, RotationXYMirrorsAboutTheToolsOrigin)
     EXPECT_NEAR(after.cx, 2 * 360 - before.cx, 1.0);
     EXPECT_NEAR(after.cy, before.cy, 1.0);
     EXPECT_NEAR(after.maxX - after.minX, before.maxX - before.minX, 2.0);
-    // The overlay's grid is centred on the cross: the projected origin of the
-    // tool's model is the \org.
     XYProjection p;
     p.width = kWidth;
     p.height = kHeight;

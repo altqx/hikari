@@ -1,18 +1,5 @@
 #!/usr/bin/env python3
-"""Quiet H2 listening fixture (#125): distinct markers at about -24 dBFS peak.
-
-Writes into <out dir>:
-  h2-48k.wav, h2-44k1.wav      the soundtrack at 48 kHz and 44.1 kHz (stereo)
-  h2-48k.mkv, h2-44k1.mkv      the same audio (PCM) under a counting test video
-  h2-script.ass                three Lines timed to the markers, naming the video
-  h2-fixture.json              the timeline, level and hashes
-
-Timeline (20 s): 0.0-0.6 s start marker (three short 1 kHz beeps). For each
-Line [S, E): [S-1000, S) a steady low hum (300 Hz), [S, E) a rising whoop
-(500 -> 1500 Hz sweep), [E, E+1000) a run of eight fast ticks (2 kHz blips).
-Silence elsewhere. Every sound has 10 ms fades, so a click is never part of
-the fixture. Uses only the Python standard library plus the ffmpeg CLI.
-"""
+"""Quiet listening fixture: distinct markers at about -24 dBFS peak."""
 
 import argparse
 import hashlib
@@ -50,7 +37,7 @@ def render(rate):
         length = b - a
         fade = min(int(0.010 * rate), length // 2)
         if kind == "tick":
-            fade = length // 2  # a Hann-like blip
+            fade = length // 2
         phase = 0.0
         for i in range(length):
             if kind == "sweep":

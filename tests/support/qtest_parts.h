@@ -1,15 +1,7 @@
 #pragma once
 
-// A QtTest executable run as several parts, so that each process stays well
-// inside its CTest timeout: `-part FROM..BEFORE` runs the test functions from
-// FROM up to, not including, BEFORE, in declaration order. Either end may be
-// empty (the first function, past the last one). A function added anywhere
-// falls into the part around it, so parts cut at the same seams run every
-// function exactly once. With -functions, only the part's functions are
-// listed (hikari_add_qttest's PARTS check uses this).
-//
-// HIKARI_QTEST_MAIN_IN_PARTS(TestObject) replaces QTEST_MAIN(TestObject);
-// without -part the executable behaves as before.
+// `-part FROM..BEFORE` runs the test functions from FROM up to, not including, BEFORE (either end may be
+// empty); with -functions it lists only the part's functions.
 
 #include <QByteArray>
 #include <QMetaMethod>
@@ -23,9 +15,7 @@
 
 namespace hikari::testing {
 
-// The test functions as QtTest picks them (qtestcase.cpp isValidSlot): private
-// slots without parameters returning void, other than the four special ones
-// and the _data functions, in declaration order.
+// The test functions as QtTest picks them (qtestcase.cpp isValidSlot), in declaration order.
 inline QStringList testFunctions(const QMetaObject &meta)
 {
     QStringList out;
@@ -43,7 +33,6 @@ inline QStringList testFunctions(const QMetaObject &meta)
     return out;
 }
 
-// The functions of `spec` ("FROM..BEFORE") among `functions`, or an error.
 struct PartSelection {
     QStringList functions;
     QString error;
@@ -66,9 +55,7 @@ inline PartSelection selectPart(const QStringList &functions, const QString &spe
     return {functions.mid(first, end - first), {}};
 }
 
-// The command line after QApplication took its own options, with -part
-// replaced by its functions. done(): the part was listed or refused, and
-// main returns exitCode().
+// The command line with -part replaced by its functions; done() when the part was listed or refused.
 class QtTestPart
 {
 public:
@@ -114,10 +101,9 @@ private:
     int code = -1;
 };
 
-} // namespace hikari::testing
+}
 
-// QTEST_MAIN with -part (see above): the application object first, as
-// QTEST_MAIN makes it, so the command line is read after Qt's own options.
+// QTEST_MAIN with -part; the application object comes first so Qt takes its own options before -part is read.
 #define HIKARI_QTEST_MAIN_IN_PARTS(TestObject)                                                     \
     int main(int argc, char *argv[])                                                               \
     {                                                                                              \

@@ -1,5 +1,3 @@
-"""D1 probe: View > Panels > Line editor > Float from the keyboard, one key
-at a time, with the showing menus (AT-SPI) and a screenshot after each."""
 import json
 import os
 import sys

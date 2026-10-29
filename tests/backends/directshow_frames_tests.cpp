@@ -1,8 +1,3 @@
-// W1 / V1: DirectShow samples kept as Y'CbCr planes for the presenter's GPU
-// conversion give, converted, exactly the BGRA the CPU conversion (toBgra,
-// legacy's coefficients) gives: YV12 and NV12 at even, odd and one-pixel
-// sizes, either matrix. The conversion code has no Windows dependency, so
-// this runs on every platform.
 #include "directshow_frames.h"
 #include "hikari/application/ycbcr_frame.h"
 
@@ -25,7 +20,7 @@ std::vector<std::uint8_t> noise(std::size_t bytes, unsigned seed)
     return out;
 }
 
-} // namespace
+}
 
 TEST(DirectShowFrames, PlanesConvertToTheCpuPathsBytes)
 {

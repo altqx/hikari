@@ -1,8 +1,3 @@
-# W1: whether the DirectShow adapter is compiled into an executable: its
-# renderer filter's name ("HikariSub video Renderer", a wide literal) occurs
-# only in the adapter. Windows builds must contain it, others must not.
-#
-#   cmake -DEXECUTABLE=<file> -DEXPECT=present|absent -P directshow_presence.cmake
 foreach(var EXECUTABLE EXPECT)
     if(NOT DEFINED ${var})
         message(FATAL_ERROR "directshow_presence: ${var} is required")

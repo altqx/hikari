@@ -1,15 +1,4 @@
-// KE1: the bundled karaoke templater (Autoload/kara-templater.lua) against a
-// corpus of real templates (karaoke-corpus/: the Aegisub templater docs'
-// templates, Karaoke Mugen's, Kara Effector's ke4 functions, errors and
-// karaoke tag variants). Each corpus Document is templated in the isolated
-// Lua helper and saved; the saved bytes must equal both the committed
-// golden file and what the unchanged 2.1.7 script, as Aegisub 3.2.2 shipped
-// it (karaoke-corpus/kara-templater-aegisub-3.2.2.lua), produces in the same
-// host. Text extents come from a deterministic fake, so the goldens do not
-// depend on the fonts of the machine.
-//
-// HIKARI_UPDATE_KARAOKE_GOLDENS=1 rewrites the goldens from the unchanged
-// script (never from the bundled one).
+// HIKARI_UPDATE_KARAOKE_GOLDENS=1 rewrites the goldens from the unchanged 3.2.2 script.
 #include "hikari/application/automation.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/kanji_timer.h"
@@ -84,9 +73,6 @@ std::string textOf(const std::vector<std::byte> &bytes)
     return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
 }
 
-// Deterministic text_extents: 0.55 em per character below U+2E80 and 1 em
-// from there on (CJK), scaled by the style's ScaleX/ScaleY and Spacing
-// (positional style fields, Name first).
 HostServiceReply textExtents(const HostServiceRequest &r)
 {
     const auto number = [&](std::size_t i) { return i < r.style.size() ? std::stod(r.style[i]) : 0.0; };
@@ -147,8 +133,6 @@ protected:
         return -1;
     }
 
-    // Runs `macroName` of `script` on the session's Document and applies its
-    // result as the automation shell does.
     bool apply(hikari::application::EditSession &session, const QString &script, const std::string &macroName)
     {
         auto host = load(script);
@@ -175,7 +159,6 @@ protected:
         return hikari::application::applyMacroResult(session, *snapshot, *host->lastResult(), macroName).has_value();
     }
 
-    // Runs `macroName` without applying its result.
     std::optional<LuaScriptHost::RunOutcome> outcomeOf(hikari::application::EditSession &session,
                                                        const QString &script, const std::string &macroName)
     {
@@ -202,7 +185,7 @@ protected:
     }
 
     Outcome run;
-    QJsonObject report; // the last applied run's
+    QJsonObject report;
 };
 
 QStringList corpus()
@@ -226,7 +209,6 @@ std::vector<std::byte> bytesOf(const std::string &text)
     return out;
 }
 
-// A corpus file with each `from` replaced by its `to`, once each.
 std::vector<std::byte> editedCorpus(const QString &name, const std::vector<std::pair<std::string, std::string>> &edits)
 {
     std::string text = textOf(readBytes(corpusDir() + QLatin1Char('/') + name));
@@ -258,7 +240,6 @@ void select(hikari::application::EditSession &session, const std::vector<hikari:
     session.setSelection(hikari::application::Selection{lines.front(), {lines.begin(), lines.end()}});
 }
 
-// Commits new text for a Line, as the Line editor does.
 bool editText(hikari::application::EditSession &session, hikari::core::LineId line, std::u8string text)
 {
     select(session, {line});
@@ -278,7 +259,6 @@ TEST_F(KaraokeTemplater, CorpusCoversEveryKind)
         EXPECT_TRUE(files.contains(QLatin1String(name))) << name;
 }
 
-// The acceptance lock: byte-identical output before and after KE1.
 TEST_F(KaraokeTemplater, BundledTemplaterMatchesAegisub322ByteForByte)
 {
     const bool update = qEnvironmentVariableIsSet("HIKARI_UPDATE_KARAOKE_GOLDENS");
@@ -300,8 +280,6 @@ TEST_F(KaraokeTemplater, BundledTemplaterMatchesAegisub322ByteForByte)
 }
 
 
-// KE1-no-50-line-gate: stock 2.1.7 offers the macro only when a template is
-// among the first 50 dialogue lines; HikariSub looks at every Line.
 TEST_F(KaraokeTemplater, MacroIsOfferedWhereverTheTemplateIs)
 {
     const auto validates = [&](const QString &script) {
@@ -318,8 +296,6 @@ TEST_F(KaraokeTemplater, MacroIsOfferedWhereverTheTemplateIs)
     EXPECT_TRUE(validates(bundledScript()));
 }
 
-// Code Lines alone do not offer the macro, in 2.1.7 or now: without a
-// template a run generates nothing.
 TEST_F(KaraokeTemplater, CodeLinesAloneDoNotOfferTheMacro)
 {
     const std::string text =
@@ -342,7 +318,6 @@ TEST_F(KaraokeTemplater, CodeLinesAloneDoNotOfferTheMacro)
     }
 }
 
-// Without any template the macro is still not offered.
 TEST_F(KaraokeTemplater, MacroIsNotOfferedWithoutATemplate)
 {
     std::string text = textOf(readBytes(corpusDir() + QStringLiteral("/late-template.ass")));
@@ -361,9 +336,6 @@ TEST_F(KaraokeTemplater, MacroIsNotOfferedWithoutATemplate)
 }
 
 
-// KE1-template-problems: each problem with a template or code Line names the
-// Line (its Grid number) after 2.1.7's message, and the macro returns those
-// Lines as the selection, the first active. The output stays 3.2.2's.
 TEST_F(KaraokeTemplater, TemplateProblemsNameAndSelectTheirLines)
 {
     auto loaded = hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/errors.ass")));
@@ -372,8 +344,6 @@ TEST_F(KaraokeTemplater, TemplateProblemsNameAndSelectTheirLines)
     for (const auto *l : session.document().lines())
         ids.push_back(l->id);
     ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
-    // Lines 1-9 each have a problem; 10 and 11 (TT#141's 3.2-era code line
-    // and its template) have none.
     std::set<hikari::core::LineId> problems(ids.begin(), ids.begin() + 9);
     EXPECT_EQ(session.selection().selected, problems);
     EXPECT_EQ(session.selection().active, ids.front());
@@ -392,8 +362,6 @@ TEST_F(KaraokeTemplater, TemplateProblemsNameAndSelectTheirLines)
                                             "{\\pos($x,$nosuchvar)}\nTemplate Line: 5\n\n")));
 }
 
-// A named line template joins the text of all its Lines (2.1.7); a problem
-// names the Line whose text the variable or expression is in.
 TEST_F(KaraokeTemplater, NamedTemplateProblemsNameTheLineTheyAreIn)
 {
     const std::string text =
@@ -421,12 +389,9 @@ TEST_F(KaraokeTemplater, NamedTemplateProblemsNameTheLineTheyAreIn)
     EXPECT_FALSE(log.contains(QStringLiteral("Template Line: 1\n")));
     EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{ids[1], ids[2]}));
     EXPECT_EQ(session.selection().active, ids[1]);
-    // The output is 2.1.7's.
     EXPECT_EQ(saved(session), templatedBytes(bytesOf(text), pristineScript()));
 }
 
-// A commented fx line is not a generated line: a run keeps it, so it counts
-// in the numbers of the Lines after it.
 TEST_F(KaraokeTemplater, CommentedFxLinesStayAndCount)
 {
     const std::string text =
@@ -451,7 +416,6 @@ TEST_F(KaraokeTemplater, CommentedFxLinesStayAndCount)
     EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{templateLine}));
 }
 
-// Stock 2.1.7 names no Line and leaves the selection as it was.
 TEST_F(KaraokeTemplater, StockTemplaterNamesNoLine)
 {
     auto loaded = hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/errors.ass")));
@@ -463,7 +427,6 @@ TEST_F(KaraokeTemplater, StockTemplaterNamesNoLine)
     EXPECT_FALSE(run.log.join(QString()).contains(QStringLiteral("Line: ")));
 }
 
-// A Document without problems keeps its selection.
 TEST_F(KaraokeTemplater, CleanRunKeepsTheSelection)
 {
     auto loaded = hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass")));
@@ -476,8 +439,6 @@ TEST_F(KaraokeTemplater, CleanRunKeepsTheSelection)
     EXPECT_TRUE(run.log.isEmpty()) << run.log.join(QString()).toStdString();
 }
 
-// KE1-regenerate-selected: a whole run marks each generated Line with the
-// karaoke Line it came from (in memory only; the saved bytes stay 3.2.2's).
 TEST_F(KaraokeTemplater, WholeRunMarksGeneratedLinesWithTheirKaraokeLine)
 {
     hikari::application::EditSession session(
@@ -501,9 +462,6 @@ TEST_F(KaraokeTemplater, WholeRunMarksGeneratedLinesWithTheirKaraokeLine)
     EXPECT_EQ(generated.size(), 6u) << "every karaoke Line has output";
 }
 
-// With every Line selected, the selected-Lines macro gives the whole run's
-// Document (km-minimal's stale generated Line is replaced where it was
-// rather than at the end, so only its order differs).
 TEST_F(KaraokeTemplater, SelectingEveryLineGivesTheWholeRun)
 {
     for (const QString &name : corpus()) {
@@ -530,9 +488,6 @@ TEST_F(KaraokeTemplater, SelectingEveryLineGivesTheWholeRun)
     }
 }
 
-// Regenerating one edited karaoke Line replaces only its generated Lines, in
-// their place, as one undo step: the Document is the one a whole run on the
-// edited file gives, and every other Line keeps its identity.
 TEST_F(KaraokeTemplater, RegenerateSelectedReplacesOnlyItsOutputAsOneUndoStep)
 {
     hikari::application::EditSession session(
@@ -568,7 +523,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedReplacesOnlyItsOutputAsOneUndoStep)
     EXPECT_EQ(saved(session), before);
 }
 
-// Selecting one of a karaoke Line's generated Lines regenerates that Line.
 TEST_F(KaraokeTemplater, SelectingAGeneratedLineRegeneratesItsKaraokeLine)
 {
     hikari::application::EditSession session(
@@ -590,9 +544,6 @@ TEST_F(KaraokeTemplater, SelectingAGeneratedLineRegeneratesItsKaraokeLine)
                                              bundledScript()));
 }
 
-// Templates can carry state from one karaoke Line to the next (here a code
-// line counter): a selected Line's output is what a whole run gives it, as
-// the run goes through the Lines before it in order.
 TEST_F(KaraokeTemplater, RegenerateSelectedKeepsStateCarriedAcrossLines)
 {
     const std::string head = "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
@@ -622,9 +573,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedKeepsStateCarriedAcrossLines)
     EXPECT_NE(whole.find("{\\pos(320,120)}E{\\pos(320,120)}F"), std::string::npos) << whole;
 }
 
-// A Document opened from a file has no marks: the generated Lines the other
-// karaoke Lines' current output accounts for stay, the rest are replaced.
-// A second run then mixes marked and unmarked Lines.
 TEST_F(KaraokeTemplater, RegenerateSelectedWorksOnAnOpenedFile)
 {
     const std::pair<std::string, std::string> first{"T1a,,0,0,0,karaoke,{\\k32}ha", "T1a,,0,0,0,karaoke,{\\k32}HA"};
@@ -644,7 +592,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedWorksOnAnOpenedFile)
     EXPECT_EQ(saved(session),
               templatedBytes(editedCorpus(QStringLiteral("stock-tutorials.ass"), {input(first)}), bundledScript()));
 
-    // T2c's syl template gives one Line per syllable: one more now
     std::optional<hikari::core::LineId> t2cId;
     for (const auto *l : session.document().lines())
         if (l->style == u8"T2c" && l->effect == u8"karaoke")
@@ -660,9 +607,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedWorksOnAnOpenedFile)
                                              bundledScript()));
 }
 
-// When the other karaoke Lines' generated Lines are not what the templates
-// give now (here a template changed), the unmarked ones cannot be told
-// apart: the run is cancelled with an explanation and changes nothing.
 TEST_F(KaraokeTemplater, RegenerateSelectedRefusesWhenTheRestCannotBeMatched)
 {
     hikari::application::EditSession session(
@@ -680,9 +624,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedRefusesWhenTheRestCannotBeMatched)
     EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Cannot tell which generated lines")));
 }
 
-// Two karaoke Lines that generate the same lines: in a file, the identical
-// generated lines belong to the karaoke Lines in order, as a run made them,
-// so regenerating the second replaces the second's.
 TEST_F(KaraokeTemplater, RegenerateSelectedTellsIdenticalOutputsApartByOrder)
 {
     const std::string again =
@@ -710,11 +651,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedTellsIdenticalOutputsApartByOrder)
     EXPECT_EQ(saved(session), templatedBytes(bytesOf(input + edited), bundledScript()));
 }
 
-// In a file, a karaoke Line that now generates fewer lines (here none: it is
-// no longer a karaoke Line) leaves old generated lines nothing accounts for.
-// They are the selected Lines' only when they can be: of a selected Line's
-// style or its lines' now, and between the generated lines of the karaoke
-// Lines around it. Otherwise the run is refused rather than deleting them.
 TEST_F(KaraokeTemplater, RegenerateSelectedRefusesLinesLeftFromAnotherLine)
 {
     const auto notKaraoke = [](hikari::application::EditSession &session, hikari::core::LineId line) {
@@ -724,7 +660,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedRefusesLinesLeftFromAnotherLine)
         return session.editDraft(line, change) && session.commitDraft();
     };
     {
-        // T2c's old lines are not of T1a's style.
         hikari::application::EditSession session(
             hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass"))).document);
         std::optional<hikari::core::LineId> t2c;
@@ -738,8 +673,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedRefusesLinesLeftFromAnotherLine)
         EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Cannot tell which generated lines")));
     }
     {
-        // The first T1a Line's old lines are of the last one's style, but
-        // before the other karaoke Lines' generated lines, not after them.
         const std::string again =
             "Dialogue: 0,0:00:01.85,0:00:09.06,T1a,,0,0,0,,{\\k32}ha{\\k28}ru{\\k0} {\\k41}no{\\k0} {\\k25}ka{\\k30}ze"
             "{\\k0} {\\k45}ga{\\k0} {\\k22}fu{\\k60}ku\n";
@@ -757,10 +690,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedRefusesLinesLeftFromAnotherLine)
     }
 }
 
-// TLMode: a translated karaoke Line is templated from its translation, and
-// its generated lines carry its original text as theirs. When a karaoke
-// Line's original changed, its old generated lines are not what the
-// templates give it now, so a run for another Line is refused.
 TEST_F(KaraokeTemplater, RegenerateSelectedComparesTheOriginalToo)
 {
     const auto edit = [](hikari::application::EditSession &session, hikari::core::LineId line,
@@ -778,9 +707,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedComparesTheOriginalToo)
         EXPECT_TRUE(source);
         if (!source)
             return std::optional<LuaScriptHost::RunOutcome>();
-        // As a TLMode run leaves them: the karaoke Line translated with its
-        // karaoke, each generated line's translation the generated text and
-        // its original the karaoke Line's.
         std::vector<std::pair<hikari::core::LineId, std::u8string>> generated;
         std::optional<hikari::core::LineId> t2c;
         for (const auto *l : session.document().lines()) {
@@ -805,8 +731,6 @@ TEST_F(KaraokeTemplater, RegenerateSelectedComparesTheOriginalToo)
     EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Cannot tell which generated lines")));
 }
 
-// The selected-Lines macro is offered when a karaoke Line or a generated
-// Line is selected, not for a selection of template Lines alone.
 TEST_F(KaraokeTemplater, SelectedLinesMacroNeedsAKaraokeOrGeneratedLine)
 {
     hikari::application::EditSession session(
@@ -826,8 +750,6 @@ TEST_F(KaraokeTemplater, SelectedLinesMacroNeedsAKaraokeOrGeneratedLine)
     EXPECT_TRUE(validates(lines.back()->id)) << "a generated Line";
 }
 
-// Problems found in a selected-Lines run name the Lines by the numbers they
-// have once the generated Lines are replaced, and select them.
 TEST_F(KaraokeTemplater, SelectedRunNamesProblemLinesByTheirNumbersAfterTheRun)
 {
     std::string text = textOf(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass")));
@@ -854,8 +776,6 @@ TEST_F(KaraokeTemplater, SelectedRunNamesProblemLinesByTheirNumbersAfterTheRun)
     EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{broken}));
 }
 
-// KE1-template-timing: a run attaches a report: what it did, and per
-// template Line its time and the Lines it generated.
 TEST_F(KaraokeTemplater, WholeRunReportsWhatEachTemplateCost)
 {
     hikari::application::EditSession session(
@@ -887,7 +807,6 @@ TEST_F(KaraokeTemplater, WholeRunReportsWhatEachTemplateCost)
     EXPECT_EQ(templates[4].toObject()[QStringLiteral("generated")].toInt(), 13) << "one Line per syllable";
 }
 
-// The report counts the problems the run named.
 TEST_F(KaraokeTemplater, ReportCountsTheProblems)
 {
     hikari::application::EditSession session(
@@ -897,8 +816,6 @@ TEST_F(KaraokeTemplater, ReportCountsTheProblems)
     EXPECT_GT(report[QStringLiteral("problems")].toInt(), 9);
 }
 
-// A selected-Lines run reports the selected Lines' work only, its template
-// Lines numbered as they are after the run.
 TEST_F(KaraokeTemplater, SelectedRunReportsTheSelectedLinesWork)
 {
     std::string text = textOf(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass")));
@@ -928,8 +845,6 @@ TEST_F(KaraokeTemplater, SelectedRunReportsTheSelectedLinesWork)
     EXPECT_EQ(templates[0].toObject()[QStringLiteral("generated")].toInt(), 0) << "T1a's Lines were not run";
 }
 
-// The problems of a report's run, by Line number: each one's message and
-// where it is in that Line's text (start 0 for none).
 struct Issue {
     QString kind, message;
     int start = 0, length = 0;
@@ -947,9 +862,6 @@ std::multimap<int, Issue> issuesOf(const QJsonObject &report)
     return out;
 }
 
-// KE2: the report lists each problem once with its Line, 2.1.7's message
-// without the Line's number, and where the variable or expression is in the
-// Line's text (1-based bytes), so the template editor can mark it.
 TEST_F(KaraokeTemplater, ReportedProblemsSayWhereInTheLineTheyAre)
 {
     hikari::application::EditSession session(
@@ -962,16 +874,16 @@ TEST_F(KaraokeTemplater, ReportedProblemsSayWhereInTheLineTheyAre)
     EXPECT_TRUE(expression.message.startsWith(QStringLiteral("Runtime error in template expression: ")));
     EXPECT_TRUE(expression.message.endsWith(QStringLiteral("Template with expression: {\\pos(!nosuch.field!,$y)}")))
         << expression.message.toStdString();
-    EXPECT_EQ(expression.start, 7); // {\pos(!nosuch.field!,$y)}
+    EXPECT_EQ(expression.start, 7);
     EXPECT_EQ(expression.length, 14);
     ASSERT_EQ(issues.count(4), 1u);
     EXPECT_TRUE(issues.find(4)->second.message.startsWith(QStringLiteral("Error parsing expression: ")));
-    EXPECT_EQ(issues.find(4)->second.start, 7); // {\fscx!1 +!}
+    EXPECT_EQ(issues.find(4)->second.start, 7);
     EXPECT_EQ(issues.find(4)->second.length, 5);
     ASSERT_EQ(issues.count(5), 1u);
     EXPECT_EQ(issues.find(5)->second.message,
               QStringLiteral("Unknown variable name: nosuchvar\nIn karaoke template: {\\pos($x,$nosuchvar)}"));
-    EXPECT_EQ(issues.find(5)->second.start, 10); // {\pos($x,$nosuchvar)}
+    EXPECT_EQ(issues.find(5)->second.start, 10);
     EXPECT_EQ(issues.find(5)->second.length, 10);
     ASSERT_GE(issues.count(1), 1u);
     EXPECT_EQ(issues.find(1)->second.kind, QStringLiteral("code"));
@@ -981,8 +893,6 @@ TEST_F(KaraokeTemplater, ReportedProblemsSayWhereInTheLineTheyAre)
     EXPECT_EQ(issues.count(10) + issues.count(11), 0u);
 }
 
-// A named line template's problem is placed in the text of the Line it is
-// in, after the variables and expressions of the Lines before it.
 TEST_F(KaraokeTemplater, NamedTemplateProblemsArePlacedInTheirOwnLine)
 {
     const std::string text =
@@ -1001,15 +911,13 @@ TEST_F(KaraokeTemplater, NamedTemplateProblemsArePlacedInTheirOwnLine)
     const auto issues = issuesOf(report);
     EXPECT_EQ(issues.count(1), 0u);
     ASSERT_EQ(issues.count(2), 1u);
-    EXPECT_EQ(issues.find(2)->second.start, 10); // {\pos($x,$nosuchvar)}
+    EXPECT_EQ(issues.find(2)->second.start, 10);
     EXPECT_EQ(issues.find(2)->second.length, 10);
     ASSERT_EQ(issues.count(3), 1u);
-    EXPECT_EQ(issues.find(3)->second.start, 7); // {\fscy!nosuch.field!}
+    EXPECT_EQ(issues.find(3)->second.start, 7);
     EXPECT_EQ(issues.find(3)->second.length, 14);
 }
 
-// An expression a variable's value brings in is nowhere in the template's
-// text: its problem has no place, and the written one after it keeps its own.
 TEST_F(KaraokeTemplater, AnExpressionFromAVariableHasNoPlaceInTheText)
 {
     const std::string text =
@@ -1031,11 +939,10 @@ TEST_F(KaraokeTemplater, AnExpressionFromAVariableHasNoPlaceInTheText)
     const Issue injected = byExpression[QStringLiteral("Expression producing error: nosuch.actor")];
     EXPECT_EQ(injected.start, 0) << "not in the template's text";
     const Issue written = byExpression[QStringLiteral("Expression producing error: nosuch.field")];
-    EXPECT_EQ(written.start, 13); // {$actor\fscx!nosuch.field!}
+    EXPECT_EQ(written.start, 13);
     EXPECT_EQ(written.length, 14);
 }
 
-// A selected-Lines run numbers its problems' Lines as they are after it.
 TEST_F(KaraokeTemplater, SelectedRunPlacesProblemsInTheLinesAfterTheRun)
 {
     std::string text = textOf(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass")));
@@ -1055,7 +962,6 @@ TEST_F(KaraokeTemplater, SelectedRunPlacesProblemsInTheLinesAfterTheRun)
 }
 
 
-// The stock script attaches nothing.
 TEST_F(KaraokeTemplater, StockTemplaterAttachesNoReport)
 {
     hikari::application::EditSession session(
@@ -1064,11 +970,8 @@ TEST_F(KaraokeTemplater, StockTemplaterAttachesNoReport)
     EXPECT_TRUE(report.isEmpty());
 }
 
-} // namespace
+}
 
-// KA8 (#354): the Kanji timer's multi-highlight output through the bundled
-// templater. A `template syl multi` effect highlights a kanji group once per
-// romaji syllable sung over it; on the folded output (KA3's), once per group.
 TEST_F(KaraokeTemplater, KanjiTimerHashSyllablesHighlightOncePerSyllable)
 {
     using namespace hikari::application;
@@ -1079,7 +982,6 @@ TEST_F(KaraokeTemplater, KanjiTimerHashSyllablesHighlightOncePerSyllable)
         u16("{\\k15}ge{\\k16}dou {\\k13}kou{\\k9}ge{\\k7}ki, {\\k6}fu{\\k9}sho{\\k9}ku {\\k12}kou{\\k12}ge{\\k7}ki"), 0, 0);
     const auto kanji = kanjiText(u16("外道攻撃、腐蝕攻撃"));
     const std::vector<KanjiGroup> groups{{1, 1}, {1, 1}, {1, 1}, {2, 2}, {3, 1}, {1, 1}, {1, 1}, {1, 1}};
-    // each fx Line's highlight ($start-$end) and the text it highlights
     const auto highlights = [&](bool multi) {
         const auto line = hikari::core::toUtf8(kanjiOutput(syllables, kanji, groups, multi));
         const std::string text =
@@ -1104,7 +1006,7 @@ TEST_F(KaraokeTemplater, KanjiTimerHashSyllablesHighlightOncePerSyllable)
             const auto comma = fx.find(',', t);
             const std::string shown = fx.substr(fx.rfind('}') + 1);
             if (t == std::string::npos || shown.empty())
-                continue; // (the empty syllable before the first tag)
+                continue;
             out.push_back(fx.substr(t + 3, fx.find(',', comma + 1) - t - 3) + " " + shown);
         }
         return out;

@@ -1,15 +1,3 @@
-// A helper process for the H1 tests. Requests are text commands:
-//   echo:<text>   reply with <text>, then Ok
-//   progress      three progress events, then Ok
-//   crash         exit abruptly mid-request
-//   wait          loop until cancelled, then Cancelled
-//   duplicate     two Terminal frames (the second must be rejected by the host)
-//   service:<x>   a synchronous host call with <x>; reply with the answer, then
-//                 Ok, or end with the call's failure outcome
-//   noisy         write junk to stdout and stderr, then Ok (the protocol must
-//                 survive; the junk lands in the host's diagnostics)
-// "--version N" announces protocol version N instead of 1.
-
 #include "hikari/backends/helper_endpoint.h"
 
 #include <chrono>
@@ -43,7 +31,6 @@ int main(int argc, char **argv)
             r.terminal(Outcome::Cancelled);
         } else if (command == "duplicate") {
             r.terminal(Outcome::Ok);
-            // Bypass the responder's guard: a misbehaving helper.
             sendUncheckedFrame(Frame{Kind::Terminal, 0, request.session, request.run, request.request, {}});
         } else if (command.starts_with("service:")) {
             const auto answer = r.call(bytesOf(command.substr(8)));

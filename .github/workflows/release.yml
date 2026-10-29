@@ -1,20 +1,9 @@
 name: Release
 
-# Installers spec 7: a v* tag of main (0.1.0 or higher) builds the packages
-# with package-linux.yml and package-windows.yml, publishes the
-# release, then its update manifest, then the AUR packages that follow 0.1.0
-# and up (release-aur.sh).
-#
-# The manifest's offer_to is always ["qt"]: legacy 0.0.2-rc.1 and later
-# install a release that names legacy without asking. Legacy users get the
-# release as an opt-in offer, the manifest's `offer` (ADR-0021), whose pitch
-# the owner approves: packaging/offer/<version>.json unless a manual run
-# names another. A tag push offers a prerelease on the prerelease channel and
-# a stable release on the stable one. A missing or broken pitch fails the run
-# before anything is built; a manual run with offer_channel none publishes
-# without an offer. A dry run builds and publishes nothing (see dry-run).
-# Only the called workflows' provisioning steps receive the Qt installer
-# secret.
+# A v* tag of main (0.1.0 or higher) builds the packages, publishes the release, its update manifest, then the AUR packages.
+# offer_to stays ["qt"]: legacy 0.0.2-rc.1 and later install a release that names legacy without asking;
+# legacy users get an opt-in `offer` instead (ADR-0021).
+# Only the called workflows' provisioning steps receive the Qt installer secret.
 on:
   push:
     tags: ['v*']
@@ -51,11 +40,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Fails straight away when the tag does not match the source: SemVer, no
-  # build metadata, 0.1.0 or higher, and the part before the prerelease is
-  # the CMake project version (the prerelease is HIKARI_VERSION_SUFFIX).
-  # Then when the offer's pitch is missing or breaks the rules legacy reads
-  # it by (make-update-manifest.py --check-offer).
+  # The tag's prerelease part is HIKARI_VERSION_SUFFIX; the part before it must be the CMake project version.
   release-version:
     name: Release version
     if: startsWith(github.ref, 'refs/tags/v') || inputs.dry_run
@@ -148,9 +133,7 @@ jobs:
             echo "pitch=$pitch"
           } >> "$GITHUB_OUTPUT"
 
-      # ADR-0021: legacy 0.0.1 reads no manifest and shows the release notes,
-      # so they open by saying moving is optional, with the newest legacy
-      # release.
+      # Legacy 0.0.1 reads no manifest and shows these notes, so they open by saying moving is optional (ADR-0021).
       - name: Write the notes' first line
         id: notes
         env:
@@ -238,7 +221,6 @@ jobs:
           name: hikarisub-windows-installer
           path: artifacts/windows
 
-      # CR1 (#452): the debug symbols, for tools/crash/symbolize.py.
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: hikarisub-linux-symbols
@@ -279,9 +261,7 @@ jobs:
           done
           (cd release && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
 
-      # A test build reads its update feed from the environment; a release
-      # never does. The name is looked for as UTF-8, UTF-16 and UTF-32, the
-      # forms wide strings take on Windows and Linux.
+      # Wide strings are UTF-16 on Windows and UTF-32 on Linux, so the name is searched for in every encoding.
       - name: Check no test feed is built in
         run: |
           set -euo pipefail
@@ -318,9 +298,7 @@ jobs:
           sys.exit(1 if found else 0)
           PY
 
-      # A draft first: clients see the release only once its update manifest
-      # is there (published below). Without one they would fall back to the
-      # assets' digests, without the manifest's offer_to and requirements.
+      # Draft first: clients see the release only once its manifest is up; before that they fall back to the asset digests.
       - name: Create the release as a draft
         env:
           NOTES: ${{ needs.release-version.outputs.notes }}
@@ -355,12 +333,10 @@ jobs:
           python3 tools/release/make-update-manifest.py --tag "$GITHUB_REF_NAME" --dir release \
             "${offer[@]}" --output manifest/hikarisub-update.json --upload
 
-      # The release stays a draft unless the manifest names exactly ["qt"].
       - name: Refuse a manifest not offered to qt only
         run: python3 tools/release/make-update-manifest.py --tag "$GITHUB_REF_NAME" --verify manifest/hikarisub-update.json
 
-      # --latest only for the highest stable version published, so a later
-      # legacy release does not become Latest over a Qt one, nor the reverse.
+      # --latest only for the highest stable version, so HikariSub and HikariSub legacy releases don't take Latest from each other.
       - name: Publish the release
         run: |
           set -euo pipefail
@@ -379,15 +355,7 @@ jobs:
           echo "Publishing with $flag"
           gh release edit "$GITHUB_REF_NAME" --draft=false "$flag"
 
-      # The AUR packages (spec 5.5) that follow 0.1.0 and up (release-aur.sh,
-      # ADR-0021): hikarisub-beta-bin from 0.1.0-beta.1, hikarisub-stable-bin
-      # from the first stable release. Each is rendered from the published
-      # tar.gz, built and started in the pinned archlinux container from the
-      # published URL, then pushed to the AUR. A package that still follows
-      # legacy, a missing or refused key, a newer version on the AUR or a
-      # newer release of the channel is a warning: the release is out
-      # already, and the owner can publish it later with the AUR publish
-      # workflow (aur-publish.yml).
+      # A failure here is only a warning: the release is out, and aur-publish.yml can publish the AUR packages later.
       - name: Publish to the AUR
         env:
           AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
@@ -407,10 +375,6 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
 
-  # A dry run (dry_run, any ref): the release job's manifest steps on
-  # stand-in packages, GitHub's asset list given as a file, then the same
-  # manifest with a bad offer_to, which must be refused. Nothing is built,
-  # created or published; the manifest is the run's artifact.
   dry-run:
     name: Dry run
     needs: release-version
@@ -486,13 +450,7 @@ jobs:
           path: manifest/hikarisub-update.json
           if-no-files-found: error
 
-  # DX1 (#367): the site (altqx/hikari-site) rebuilds on a published release:
-  # its downloads from the update manifest, its hotkeys and settings pages
-  # from the docs zip. A job of its own that checks out and runs nothing of
-  # the repository, so the site's token is never in a job that ran the
-  # release's code (Codex security review on #377). Without the secret, or
-  # when the request fails, it is a warning: the release is out, and the
-  # site's daily build picks it up.
+  # A job of its own that runs nothing from the repository, so the site's token never meets the release's code.
   site:
     name: Tell the site
     needs: [release-version, release]

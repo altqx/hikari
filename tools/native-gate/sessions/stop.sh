@@ -1,6 +1,5 @@
 #!/bin/bash
-# stop.sh SESSION: end a session's processes (compositor, its session bus,
-# injectors, the app) so the session can start again on the same sockets.
+# stop.sh SESSION: end a session's processes so it can start again on the same sockets.
 s=$1
 rt=/tmp/gate-runtime-$s
 case $s in

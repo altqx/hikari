@@ -1,20 +1,5 @@
-# L6 third-party automation corpus: verify, fetch and stage (A33-compat).
-#
 #   cmake -D MANIFEST=<manifest.json> -D FETCH_DIR=<cache> -D OUT=<staged tree>
 #         [-D STAGE_INCLUDE=<bundled Include>] -P stage.cmake
-#
-# Projects whose licence allows it are committed next to the manifest
-# (<directory>/ with their licence file); the others are fetched here from the
-# pinned commit's raw URLs into FETCH_DIR. Every file, committed or fetched,
-# must match the manifest's sha256: a mismatch is an error, not a skip. When a
-# fetch fails (offline, no TLS), that project is marked unavailable in
-# OUT/status.json with the reason and the run continues; the tests then skip
-# its scripts with that message.
-#
-# OUT receives the corpus as a user installs it: OUT/Autoload/<script> and
-# OUT/Include = the bundled Include (STAGE_INCLUDE, with DependencyControl's
-# native modules) plus the projects' modules. Bundled modules are never
-# replaced by a project's copy.
 cmake_minimum_required(VERSION 3.25)
 
 foreach(var MANIFEST FETCH_DIR OUT)
@@ -55,7 +40,7 @@ foreach(i RANGE ${last})
         if(EXISTS "${file}")
             file(SHA256 "${file}" actual)
             if(NOT actual STREQUAL expected AND included STREQUAL "fetched")
-                file(REMOVE "${file}") # a stale cache entry: fetch it again
+                file(REMOVE "${file}")
             endif()
         endif()
         if(NOT EXISTS "${file}")

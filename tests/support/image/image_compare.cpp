@@ -76,4 +76,4 @@ bool matchesReference(const QImage &actual, const QString &name, const ImageTole
     return false;
 }
 
-} // namespace hikari::testing
+}

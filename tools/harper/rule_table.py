@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""GR1 (#364): src/core/grammar_rules.inc, Harper's rules in its 15 curated groups.
-
-    rule_table.py DEFAULT_CONFIG CLI_CONFIG > src/core/grammar_rules.inc
-
-DEFAULT_CONFIG is harper-core/default_config.json at the pinned tag (the grouping
-Harper's own settings use); CLI_CONFIG is `harper-cli config` of the same release
-(each rule's default). Every rule must be in exactly one group."""
+"""Writes src/core/grammar_rules.inc from Harper's default_config.json and `harper-cli config`."""
 import json
 import re
 import sys

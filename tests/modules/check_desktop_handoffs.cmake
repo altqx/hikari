@@ -1,23 +1,13 @@
-# 38e: every hand-off to a program on the desktop goes through
-# backends::desktop (src/backends/include/hikari/backends/desktop_handoff.h),
-# whose routes the tests replace, so no test can reach a real browser, file
-# manager or editor. This fails when a source under ${ROOT}/src opens a URL or
-# starts a program another way.
 #   cmake -DROOT=<tree> -P check_desktop_handoffs.cmake
-#
-# The exceptions, by file and count: the seam itself, and the application's
-# own relaunches and installer runs after an update (not hand-offs; the update
-# tests drive them with stand-in programs), and its start for the files a quit
-# left (WS5).
 if(NOT ROOT)
     message(FATAL_ERROR "ROOT is required")
 endif()
 
 set(pattern "QDesktopServices::openUrl|openUrlExternally|QProcess::startDetached|[.>]startDetached\\(|ShellExecute")
 set(allowed
-    "src/backends/desktop_handoff.cpp=2"   # QDesktopServices::openUrl, QProcess::startDetached
-    "src/app/update_installer.cpp=4"       # the relaunches (3 startDetached) and the NSIS run (ShellExecuteExW)
-    "src/app/composition.cpp=1")           # WS5: a start for the files a quit left (startForHandedOn)
+    "src/backends/desktop_handoff.cpp=2"
+    "src/app/update_installer.cpp=4"
+    "src/app/composition.cpp=1")
 
 file(GLOB_RECURSE sources RELATIVE "${ROOT}" "${ROOT}/src/*.cpp" "${ROOT}/src/*.h" "${ROOT}/src/*.qml"
     "${ROOT}/src/*.js" "${ROOT}/src/*.mjs")
@@ -29,7 +19,7 @@ foreach(source IN LISTS sources)
     foreach(line IN LISTS lines)
         string(STRIP "${line}" stripped)
         if(stripped MATCHES "^(//|\\*|/\\*)")
-            continue() # a comment
+            continue()
         endif()
         math(EXPR count "${count} + 1")
         string(APPEND found "\n    ${stripped}")

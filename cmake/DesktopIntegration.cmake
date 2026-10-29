@@ -1,17 +1,8 @@
-# Linux desktop integration files for the packages (installers spec 1.6):
-# the .desktop entry and the AppStream metainfo, generated into
-# <build>/packaging/ from packaging/linux/*.in. The MIME definition and the
-# hicolor icons are used from packaging/linux/ as they are.
-#
-# The packages lay these out themselves (HikariPackageLinux.cmake): under
-# share/ in the tar.gz, under /usr/share in the deb, rpm and AUR packages,
-# and at the AppDir root in the AppImage.
+# Generates the .desktop entry and the AppStream metainfo into <build>/packaging/ from packaging/linux/*.in.
 include_guard(GLOBAL)
 
 set(HIKARI_DESKTOP_EXEC "hikarisub" CACHE STRING "Exec= command written into the .desktop entry")
 
-# MimeType= lists the types the shared MIME definition attaches icons to
-# (packaging/linux/mime/hikarisub.xml).
 function(hikari_collect_mimetypes out_var)
     file(READ "${PROJECT_SOURCE_DIR}/packaging/linux/mime/hikarisub.xml" _xml)
     string(REGEX MATCHALL "<mime-type type=\"[a-z]+/[a-zA-Z0-9.+-]+\"" _tags "${_xml}")
@@ -29,10 +20,9 @@ function(hikari_collect_mimetypes out_var)
     set(${out_var} "${_joined};" PARENT_SCOPE)
 endfunction()
 
-# hikari_generate_desktop_files(<version>): writes
-# <build>/packaging/io.github.altqx.HikariSub.{desktop,metainfo.xml}.
+# hikari_generate_desktop_files(<version>): writes <build>/packaging/io.github.altqx.HikariSub.{desktop,metainfo.xml}.
 function(hikari_generate_desktop_files version)
-    # The templates are shared with legacy and use its variable names.
+    # The templates are shared with the legacy branch and use its variable names.
     set(HIKARISUB_VERSION "${version}")
     set(HIKARISUB_DESKTOP_EXEC "${HIKARI_DESKTOP_EXEC}")
     # A prerelease such as 0.1.0-beta.2 is a development release to AppStream.
@@ -41,8 +31,7 @@ function(hikari_generate_desktop_files version)
     else()
         set(HIKARISUB_RELEASE_TYPE "stable")
     endif()
-    # AppStream requires a date on every release entry; the commit date is
-    # the only deterministic one in the tree.
+    # AppStream requires a date on every release entry; the commit date is the only deterministic one.
     find_package(Git QUIET)
     set(HIKARISUB_RELEASE_DATE "")
     if(Git_FOUND)

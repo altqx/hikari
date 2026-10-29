@@ -1,5 +1,3 @@
-"""Y7 probe (KWin): the screenshot portal's PickColor answered by a click,
-outside HikariSub: is the portal and KWin's colour picker path working?"""
 import os
 import subprocess
 import sys

@@ -1,10 +1,5 @@
 #pragma once
 
-// Rendered-image comparison for tests (E2-img). References live under
-// tests/references/<name>.png. On a mismatch the actual image and a diff are
-// written to the test's artifact directory. HIKARI_UPDATE_REFERENCES=1 rewrites
-// references from the actual images (a reviewed developer action).
-
 #include <QImage>
 #include <QString>
 
@@ -25,10 +20,9 @@ struct ImageComparison {
 
 ImageComparison compareImages(const QImage &actual, const QImage &expected, const ImageTolerance &tolerance);
 
-// Compares against tests/references/<name>.png. Returns true on a match; on a
-// mismatch sets `message` and writes <name>-actual.png and <name>-diff.png to
-// artifactDir.
+// Compares with <referenceDir>/<name>.png; a mismatch sets `message` and writes <name>-actual/-diff.png to
+// artifactDir. HIKARI_UPDATE_REFERENCES=1 rewrites the reference from `actual` instead.
 bool matchesReference(const QImage &actual, const QString &name, const ImageTolerance &tolerance,
                       const QString &referenceDir, const QString &artifactDir, QString *message);
 
-} // namespace hikari::testing
+}

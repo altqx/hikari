@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
-# N6 / M50-device with a real device that goes away: runs the audio-hotplug
-# Winix task with a QEMU USB audio device on the VM's silent audiodev
-# (vm: { audio: none }, so nothing is ever heard), unplugs it when the test
-# prints HOTPLUG-READY and plugs it back after HOTPLUG-LOST. Approved by the
-# user on 2026-10-04 for the Winix VM only.
-#   tools/winix/hotplug.sh [usb device id] [task]
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 dev=${1:-hikariusbaudio}
 task=${2:-audio-hotplug}
 w() { winix --config winix.yaml "$@"; }
 
-# The device is plugged in when QEMU lists it among its peripherals. Winix's
-# own hot-plug record outlives a VM restart, which drops the device, so the
-# record alone does not count; adding the device again replaces the record.
+# Winix's hot-plug record outlives a VM restart that drops the device, so ask QEMU.
 plugged=$(w vm device list | python3 -c '
 import json, sys
 listing = json.load(sys.stdin)

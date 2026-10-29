@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Records a Linux performance host's inventory (H3 #126; docs/performance.md,
+# Records a Linux performance host's inventory (docs/performance.md,
 # "Reference class and binding"): CPU, cores/threads, RAM, storage, GPU and
 # driver, displays, OS/kernel, compositor and session type, graphics/audio
 # backend and devices, power profile/governor, and the pinned software build
@@ -20,6 +20,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
     --build-dir) BUILD_DIR="$2"; shift ;;
     --out-dir) OUT_DIR="$2"; shift ;;
+    # MUST KILL: --help prints this file's header lines 2-14
     -h | --help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
@@ -29,14 +30,12 @@ command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
 [[ "$(uname -s)" == Linux ]] || { echo "Linux only; record a Windows host by hand" >&2; exit 1; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
-# s <cmd...>: the command's trimmed output, or empty.
 s() { "$@" 2>/dev/null | sed -e 's/[[:space:]]*$//' || true; }
-j() { jq -R -s 'rtrimstr("\n") | if . == "" then null else . end'; } # text -> JSON string or null
+j() { jq -R -s 'rtrimstr("\n") | if . == "" then null else . end'; }
 num() { [[ "$1" =~ ^[0-9]+([.][0-9]+)?$ ]] && echo "$1" || echo null; }
 
 HOST="$(hostname)"
 
-# --- CPU
 lscpu_j='{}'
 have lscpu && lscpu_j="$(lscpu -J 2>/dev/null | jq '[.lscpu[] | {(.field | rtrimstr(":")): .data}] | add // {}')"
 cpu_model="$(jq -r '."Model name" // empty' <<<"$lscpu_j")"
@@ -52,17 +51,15 @@ cpu_json="$(jq -n --arg model "$cpu_model" --argjson physical "$physical" --argj
       maxMHz: $lscpu."CPU max MHz", minMHz: $lscpu."CPU min MHz", boost: $lscpu."Frequency boost",
       microcode: $lscpu."Microcode version", l3: $lscpu."L3 cache", virtualization: $lscpu."Virtualization"}')"
 
-# --- memory
 mem_kib="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
 swap_kib="$(awk '/^SwapTotal:/ {print $2}' /proc/meminfo)"
 mem_json="$(jq -n --argjson m "$mem_kib" --argjson s "$swap_kib" \
     '{totalGiB: ($m / 1048576 * 100 | round / 100), swapGiB: ($s / 1048576 * 100 | round / 100),
       speedAndModules: null, note: "module speed and layout need root (dmidecode); not read"}')"
 
-# --- storage: every disk, and the disk under the repository and build tree
 disks='[]'
 have lsblk && disks="$(lsblk -d -J -o NAME,MODEL,SIZE,ROTA,TRAN,TYPE 2>/dev/null | jq '[.blockdevices[] | select(.type == "disk") | {name, model, size, rotational: .rota, transport: .tran}]')"
-backing() { # <path>: filesystem and the physical disk(s) under it
+backing() { # <path>
     local src fstype disk
     read -r src fstype < <(df --output=source,fstype "$1" 2>/dev/null | tail -n 1)
     disk="$(lsblk -s -n -l -o NAME,TYPE,MODEL,TRAN "$src" 2>/dev/null | awk '$2 == "disk" {print $1 " " $3 " " $4 " " $5 " " $6}' | sed 's/ *$//' | paste -sd ';')"
@@ -72,7 +69,6 @@ backing() { # <path>: filesystem and the physical disk(s) under it
 storage_json="$(jq -n --argjson disks "$disks" --argjson repo "$(backing "$ROOT")" --argjson build "$(backing "$BUILD_DIR")" \
     '{disks: $disks, repository: $repo, buildTree: $build}')"
 
-# --- GPU and driver
 gpus='[]'
 if have lspci; then
     gpus="$(lspci -nnk 2>/dev/null | awk '
@@ -96,10 +92,9 @@ gpu_json="$(jq -n --argjson gpus "$gpus" --argjson nvidia "$nvidia" --argjson gl
     --argjson vk "$vulkan" --argjson integrated "$integrated" \
     '{devices: $gpus, nvidiaSmi: $nvidia, openglRenderer: $glr, openglVersion: $glv, vulkanDevices: $vk, integratedPresent: $integrated}')"
 
-# --- displays and compositor
 displays='[]' compositor=null
 if have hyprctl && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
-    displays="$(hyprctl monitors -j 2>/dev/null | jq '[.[] | {name, description: "\(.make) \(.model)", width, height, refreshRate, scale, transform, vrr}]')" # no serial numbers
+    displays="$(hyprctl monitors -j 2>/dev/null | jq '[.[] | {name, description: "\(.make) \(.model)", width, height, refreshRate, scale, transform, vrr}]')"
     compositor="$(hyprctl version -j 2>/dev/null | jq -c '{name: "Hyprland", version: .tag, commit: .commit}')"
 elif have wlr-randr && [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
     displays="$(wlr-randr --json 2>/dev/null || echo '[]')"
@@ -108,7 +103,6 @@ elif have xrandr && [[ -n "${DISPLAY:-}" ]]; then
 fi
 [[ "$compositor" != null ]] || compositor="$(jq -n --arg d "${XDG_CURRENT_DESKTOP:-}" '{name: (if $d == "" then null else $d end), version: null}')"
 
-# --- OS
 os_json="$(jq -n --arg pretty "$(. /etc/os-release 2>/dev/null; echo "${PRETTY_NAME:-}")" \
     --arg build "$(. /etc/os-release 2>/dev/null; echo "${BUILD_ID:-${VERSION_ID:-}}")" \
     --arg kernel "$(uname -r)" --arg arch "$(uname -m)" '{name: $pretty, build: $build, kernel: $kernel, arch: $arch}')"
@@ -116,7 +110,6 @@ session_json="$(jq -n --arg type "${XDG_SESSION_TYPE:-}" --arg desktop "${XDG_CU
     --arg wayland "${WAYLAND_DISPLAY:-}" --arg x11 "${DISPLAY:-}" --argjson compositor "$compositor" \
     '{type: $type, desktop: $desktop, waylandDisplay: $wayland, x11Display: $x11, compositor: $compositor}')"
 
-# --- graphics backend the application gets, and audio
 graphics_json="$(jq -n --arg qpa "${QT_QPA_PLATFORM:-}" --arg rhi "${QSG_RHI_BACKEND:-}" --arg wayland "${WAYLAND_DISPLAY:-}" \
     '{qtPlatform: (if $qpa != "" then $qpa elif $wayland != "" then "wayland (default)" else "xcb (default)" end),
       sceneGraphBackend: (if $rhi != "" then $rhi else "opengl (Qt default on Linux)" end),
@@ -131,7 +124,6 @@ audio_json="$(jq -n --argjson server "$pipewire" --argjson def "$default_sink" -
       editorOutput: "PortAudio, ALSA host API (the Linux build links libasound only)",
       generalPlayer: "Qt Multimedia (FFmpeg backend; PipeWire or PulseAudio audio sink)"}')"
 
-# --- power
 governors="$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | sort | uniq -c | awk '{print $2 " x" $1}' | paste -sd ',' | j)"
 epp="$(cat /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference 2>/dev/null | sort -u | paste -sd ',' | j)"
 driver="$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver 2>/dev/null | j)"
@@ -151,10 +143,8 @@ power_json="$(jq -n --argjson profile "$profile" --argjson gov "$governors" --ar
       acNote: (if $supplies == null then "no battery or mains supply reported: a desktop on mains power" else null end),
       cpuTemperatureAtInventory: $temp}')"
 
-# --- pinned software build
 cache="$BUILD_DIR/CMakeCache.txt"
 cachev() { sed -n "s/^$1:[A-Z]*=//p" "$cache" 2>/dev/null | head -n 1; }
-# The build tree's own source tree (it may be another worktree than this script's).
 SRC_DIR="$(cachev CMAKE_HOME_DIRECTORY)"
 [[ -n "$SRC_DIR" ]] || SRC_DIR="$ROOT"
 rev="$(git -C "$SRC_DIR" rev-parse HEAD 2>/dev/null)"
@@ -165,8 +155,6 @@ binaries="$(jq -n --arg app "$(built_at "$BUILD_DIR/src/app/hikarisub")" \
     --arg core "$(built_at "$BUILD_DIR/tests/perf/hikari_core_perf")" --arg ui "$(built_at "$BUILD_DIR/tests/perf/hikari_ui_perf")" \
     --arg head "$(git -C "$SRC_DIR" log -1 --format=%cI 2>/dev/null)" \
     '{hikarisub: $app, mediaHelper: $helper, coreperf: $core, uiPerf: $ui, sourceHeadCommitted: $head}')"
-# Commits the source tree gained after the oldest of those binaries was built:
-# the binaries cannot contain them, so the pinned revision is approximate.
 oldest="$(for f in src/app/hikarisub src/helpers/media/hikari-media-helper tests/perf/hikari_core_perf tests/perf/hikari_ui_perf; do
     [[ -e "$BUILD_DIR/$f" ]] && date -r "$BUILD_DIR/$f" +%s; done | sort -n | head -n 1)"
 after_build='[]'
@@ -212,7 +200,6 @@ build_json="$(jq -n --arg rev "$rev" --argjson dirty "${dirty:-0}" --arg dir "$B
       luajit: $ports.luajit, kddockwidgets: $ports.kddockwidgets,
       perfHarnessFingerprint: $fp}')"
 
-# --- against the accepted reference class (four physical cores, 8 GiB, SSD, integrated graphics, 60 Hz)
 class_json="$(jq -n --argjson cpu "$cpu_json" --argjson mem "$mem_json" --argjson st "$storage_json" --argjson gpu "$gpu_json" \
     --argjson disp "$displays" '
     {physicalCores: {reference: 4, host: $cpu.physicalCores, matches: ($cpu.physicalCores == 4)},

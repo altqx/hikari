@@ -1,24 +1,3 @@
-// H2 listening driver (#125): the real PortAudio editor output (N6) and Line
-// audition (I3) under a person's control, for listening on real devices. The
-// application does not offer Line audition yet (it arrives with the Audio
-// playback card), so the guided session drives the same backend objects here.
-//
-// Commands arrive one per line on stdin; every answer and event is one JSON
-// object per line on stdout:
-//   devices                     rescan and list the output devices
-//   open <device id>|default    open (or reopen) the output on a device
-//   close                       close the output
-//   media <path>                open a media file's first audio track
-//   play <startMs> <endMs>      audition the half-open range [start, end)
-//   stop                        logical stop of the running audition
-//   status                      output status and clock estimate
-//   gain <dB>                   software gain on everything written (<= 0)
-//   simulate-loss               the next callback aborts as a lost device does
-//                               (the session's dry run; real loss is unplugging)
-//   quit
-// A watcher reports device loss, underruns and discontinuities as they occur.
-// Nothing plays until a `play` command; there is no built-in test sound.
-
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/line_audition.h"
 #include "hikari/backends/portaudio_output.h"
@@ -78,8 +57,6 @@ std::string number(double v)
     return buf;
 }
 
-// One JSON line: the event name, monotonic and wall time, then `fields`
-// (already-serialized "key": value pairs).
 void emitEvent(const std::string &event, const std::string &fields = {})
 {
     std::cout << "{\"event\": " << quote(event) << ", \"t\": " << number(monotonicSeconds()) << ", \"wall\": "
@@ -100,8 +77,7 @@ const char *errorName(OutputError e)
     return "Unknown";
 }
 
-// Scales every written sample: a listening safety margin for devices whose
-// volume the desktop mixer does not control (raw ALSA hardware devices).
+// Raw ALSA hardware devices are outside the desktop mixer's volume.
 class GainOutput final : public AudioOutputPort {
 public:
     explicit GainOutput(backends::PortAudioOutput &inner) : m_inner(inner) {}
@@ -160,8 +136,6 @@ class Driver : public QObject {
 public:
     explicit Driver(const QString &helper) : m_source(helper), m_output(m_pa), m_audition(m_source, m_output)
     {
-        // One audition for the driver's lifetime: its pending source answers
-        // capture it, so it is never replaced while a request is in flight.
         QObject::connect(&m_audition, &backends::LineAudition::finished, this, [](const backends::AuditionReport &r) {
             std::ostringstream o;
             o << "\"sourceStart\": " << r.sourceStart << ", \"sourceCount\": " << r.sourceCount
@@ -329,7 +303,7 @@ private:
     {
         if (!m_audition.active())
             return false;
-        m_audition.stop(); // emits finished (not drained)
+        m_audition.stop();
         return true;
     }
 
@@ -358,7 +332,7 @@ private:
     QTimer m_watch;
 };
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -379,7 +353,6 @@ int main(int argc, char **argv)
     {
         Driver driver(helper);
         emitEvent("ready", "\"helper\": " + quote(helper.toStdString()));
-        // stdin is read on its own thread; each line runs on the event loop.
         std::thread([&app, &driver] {
             for (std::string line; std::getline(std::cin, line);)
                 QMetaObject::invokeMethod(&app, [&driver, line] { driver.command(line); }, Qt::QueuedConnection);

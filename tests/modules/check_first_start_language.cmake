@@ -1,10 +1,4 @@
-# O5-first-start-ui-languages: the real composition hands Application
-# QLocale::system().uiLanguages(), so a first start whose first system UI
-# language is Polish stores PROGRAM_LANGUAGE "pl" (hikarisubApp.cpp:319-325,
-# where legacy read GetSystemDefaultUILanguage on Windows and
-# wxLocale::GetSystemLanguage elsewhere). On Linux Qt reads the system UI
-# languages from LANGUAGE (then LC_ALL, LC_MESSAGES, LANG).
-#
+# On Linux Qt reads the system UI languages from LANGUAGE (then LC_ALL, LC_MESSAGES, LANG).
 #   cmake -DSTARTUP=<hikari_app_startup> -DWORK=<dir> -P check_first_start_language.cmake
 foreach(var STARTUP WORK)
     if(NOT DEFINED ${var})
@@ -28,9 +22,6 @@ function(first_start case languages expected)
     if(NOT ini)
         message(FATAL_ERROR "${case}: no settings file was written under ${home}/config")
     endif()
-    # The settings store's keys (O1, CF1's settings.toml): [program] language
-    # and the spell checker's [editor] dictionaryLanguage, both taken from the
-    # first start.
     file(STRINGS "${ini}" all)
     set(stored "")
     set(dictionary "")

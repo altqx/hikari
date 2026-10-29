@@ -1,6 +1,3 @@
-// F2: select lines against legacy SelectLines (SelectOnTab, SaveOptions,
-// AddRecent, OnChooseStyles) at 20d647c4.
-
 #include "hikari/application/select_lines.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/srt.h"
@@ -88,12 +85,12 @@ S find(std::u8string text, S::Field field = S::Field::Text)
     return s;
 }
 
-} // namespace
+}
 
 TEST_F(Select, TextIgnoresCaseUnlessAskedAndCountsDialoguesOnly)
 {
     select({3}, 3);
-    EXPECT_EQ(run(find(u8"HELLO")), 1); // the Comment is not a dialogue
+    EXPECT_EQ(run(find(u8"HELLO")), 1);
     EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0}));
     EXPECT_EQ(activeRow(), 0u);
     S s = find(u8"hello");
@@ -102,20 +99,19 @@ TEST_F(Select, TextIgnoresCaseUnlessAskedAndCountsDialoguesOnly)
     s.matchCase = true;
     s.find = u8"Hello";
     EXPECT_EQ(run(s), 1);
-    EXPECT_EQ(session.historySize(), 1u); // selection is no history step
+    EXPECT_EQ(session.historySize(), 1u);
 }
 
 TEST_F(Select, EmptySearchFindsOnlyEmptyFieldsAndWithoutInverts)
 {
     S s = find(u8"");
-    EXPECT_EQ(run(s), 1); // row 3's empty text
+    EXPECT_EQ(run(s), 1);
     EXPECT_EQ(selectedRows(), (std::set<std::size_t>{3}));
     s.field = S::Field::Actor;
-    EXPECT_EQ(run(s), 1); // the Comment's empty actor is not a dialogue
+    EXPECT_EQ(run(s), 1);
     EXPECT_EQ(selectedRows(), (std::set<std::size_t>{3}));
     s = find(u8"o", S::Field::Actor);
     s.with = false;
-    // Without "o": Anna and the empty actor of row 3 (Bob contains o).
     EXPECT_EQ(run(s), 2);
     EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0, 3}));
 }
@@ -136,7 +132,7 @@ TEST_F(Select, RegularExpressionsAndAnInvalidOne)
 {
     S s = find(u8"^h.*d$");
     s.regex = true;
-    EXPECT_EQ(run(s), 1); // icase: "Hello World"
+    EXPECT_EQ(run(s), 1);
     s.matchCase = true;
     EXPECT_EQ(run(s), 0);
     select({0, 2}, 2);
@@ -144,9 +140,9 @@ TEST_F(Select, RegularExpressionsAndAnInvalidOne)
     const auto invalid = selectLines(session, s);
     ASSERT_TRUE(invalid && invalid->invalidExpression);
     EXPECT_EQ(invalid->count, 0);
-    EXPECT_EQ(invalid->invalidExpression->first, u"("); // logged "Invalid regular expression '(': ..."
+    EXPECT_EQ(invalid->invalidExpression->first, u"(");
     EXPECT_FALSE(invalid->invalidExpression->second.empty());
-    EXPECT_TRUE(selectedRows().empty()); // Select cleared it before compiling
+    EXPECT_TRUE(selectedRows().empty());
     EXPECT_EQ(activeRow(), 2u);
     select({0, 2}, 2);
     s.mode = S::Mode::AddToSelection;
@@ -156,8 +152,7 @@ TEST_F(Select, RegularExpressionsAndAnInvalidOne)
 
 TEST_F(Select, RegexMatchErrorsCountAsNoMatchAndAreReported)
 {
-    // PCRE2's match limit (catastrophic backtracking): wx_regexec logs it and
-    // the Line does not match.
+    // The pattern backtracks past PCRE2's match limit.
     EditSession longLine{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,," +
                               std::string(40, 'a') + "b\n")};
     S s = find(u8"(a+)+$");
@@ -175,11 +170,11 @@ TEST_F(Select, AddAndDeselectCount)
     select({2}, 2);
     S s = find(u8"Default", S::Field::Style);
     s.mode = S::Mode::AddToSelection;
-    EXPECT_EQ(run(s), 2); // both Default Lines count, row 2 was already selected
+    EXPECT_EQ(run(s), 2);
     EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0, 2}));
     select({0, 3}, 3);
     s.mode = S::Mode::Deselect;
-    EXPECT_EQ(run(s), 1); // only row 0 was selected
+    EXPECT_EQ(run(s), 1);
     EXPECT_EQ(selectedRows(), (std::set<std::size_t>{3}));
     EXPECT_EQ(activeRow(), 3u);
 }
@@ -239,15 +234,13 @@ TEST_F(Select, MoveToBeginningAndEndKeepLineIds)
     EXPECT_EQ(activeRow(), 2u);
     s.action = S::Action::MoveToBeginning;
     s.find = u8"Sign";
-    EXPECT_EQ(run(s), 1); // the Comment is not a dialogue
+    EXPECT_EQ(run(s), 1);
     EXPECT_EQ(texts(), (std::vector<std::string>{"", "hello sign", "Hello World", "third"}));
     EXPECT_EQ(session.historySize(), 3u);
 }
 
 TEST_F(Select, MoveTakesHiddenSelectedLinesToo)
 {
-    // Approved F2-move-hidden: legacy deleted a hidden selected Line and
-    // inserted only the Lines its walk saw; every selected Line moves now.
     const auto hidden = row(3);
     const LineVisible visible = [&](core::LineId id) { return id != hidden; };
     select({3}, 0);
@@ -277,15 +270,12 @@ TEST_F(Select, SetAsCommentAndDelete)
     s = find(u8"");
     s.action = S::Action::Delete;
     EXPECT_EQ(run(s), 1);
-    // An empty Document gets the default Line.
     ASSERT_EQ(session.document().lines().size(), 1u);
     EXPECT_EQ(session.document().lines()[0]->end.value.microseconds(), 5'000'000);
 }
 
 TEST_F(Select, AnActionOnAnEarlierSelectionIsOneStepEvenWithoutMatches)
 {
-    // Departure: legacy records no step when nothing matched (the change
-    // joins the next step); here it is its own "Selecting lines" step.
     select({2}, 2);
     S s = find(u8"nothing");
     s.mode = S::Mode::AddToSelection;
@@ -336,9 +326,7 @@ TEST(SelectLinesOptions, LegacyBits)
     EXPECT_EQ(bits, 2 | 4 | 8 | 512 | 2048 | (1 << 14) | (1 << 21));
     const S back = selectLinesFromOptions(bits);
     EXPECT_EQ(selectLinesOptions(back), bits);
-    // Unset: With, Text, Dialogue on (no Comments bit), Select, Do nothing.
     EXPECT_EQ(selectLinesOptions(selectLinesFromOptions(0)), selectLinesOptions(S{}));
-    // The first field bit wins.
     EXPECT_EQ(selectLinesFromOptions(32 | 64).field, S::Field::Style);
 }
 
@@ -348,9 +336,9 @@ TEST(SelectLinesOptions, RecentListAndStylesPattern)
     for (int i = 0; i < 20; ++i)
         recent.push_back(std::u8string(1, static_cast<char8_t>(u8'a' + i)));
     recent = addRecentSelection(recent, u8"new");
-    EXPECT_EQ(recent.size(), 21u); // cut only when it had more than 20
+    EXPECT_EQ(recent.size(), 21u);
     EXPECT_EQ(recent.front(), u8"new");
-    recent = addRecentSelection(recent, u8"c"); // moves to the front, still 21
+    recent = addRecentSelection(recent, u8"c");
     EXPECT_EQ(recent.size(), 21u);
     EXPECT_EQ(recent[0], u8"c");
     EXPECT_EQ(recent[1], u8"new");

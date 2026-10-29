@@ -1,6 +1,3 @@
-// F1: destination and write coordination against a controllable file port.
-// These prove coordination only; filesystem durability is F2's evidence.
-
 #include "hikari/application/write_coordinator.h"
 
 #include <gtest/gtest.h>
@@ -36,7 +33,7 @@ struct Fixture : ::testing::Test {
     std::vector<std::byte> snapshot(std::size_t n = 4) { return std::vector<std::byte>(n, std::byte{'x'}); }
 };
 
-} // namespace
+}
 
 TEST_F(Fixture, SaveToOwnDestinationPublishesOneTerminalResult)
 {
@@ -46,9 +43,9 @@ TEST_F(Fixture, SaveToOwnDestinationPublishesOneTerminalResult)
     ASSERT_TRUE(coordinator.write(*permit, snapshot(10)));
     ASSERT_EQ(port.started.size(), 1u);
     EXPECT_EQ(port.started[0].bytes, 10u);
-    EXPECT_TRUE(results.empty()); // nothing is published before the adapter reports
+    EXPECT_TRUE(results.empty());
     coordinator.complete(*permit, WriteOutcome::Written);
-    coordinator.complete(*permit, WriteOutcome::Failed); // a second report is ignored
+    coordinator.complete(*permit, WriteOutcome::Failed);
     ASSERT_EQ(results.size(), 1u);
     EXPECT_EQ(results[0].outcome, WriteOutcome::Written);
     EXPECT_EQ(results[0].revision, 7u);
@@ -60,7 +57,7 @@ TEST_F(Fixture, SaveAsOntoAnotherOpenDocumentIsBlocked)
     coordinator.associate(a, fileA);
     coordinator.associate(b, fileB);
     EXPECT_EQ(coordinator.requestPermit(a, fileB, 1).error(), PermitRefusal::DestinationOwnedByOtherDocument);
-    EXPECT_TRUE(coordinator.requestPermit(a, fresh, 1)); // an unassociated destination is fine
+    EXPECT_TRUE(coordinator.requestPermit(a, fresh, 1));
 }
 
 TEST_F(Fixture, OverlappingWritesToOneDestinationAreRefused)
@@ -72,7 +69,7 @@ TEST_F(Fixture, OverlappingWritesToOneDestinationAreRefused)
     ASSERT_TRUE(coordinator.write(*first, snapshot()));
     EXPECT_EQ(coordinator.requestPermit(a, fileA, 2).error(), PermitRefusal::WriteInProgress);
     coordinator.complete(*first, WriteOutcome::Written);
-    EXPECT_TRUE(coordinator.requestPermit(a, fileA, 2)); // free again after the terminal result
+    EXPECT_TRUE(coordinator.requestPermit(a, fileA, 2));
 }
 
 TEST_F(Fixture, RevokedPermitNeverWrites)
@@ -87,11 +84,9 @@ TEST_F(Fixture, RevokedPermitNeverWrites)
 
 TEST_F(Fixture, StaleDestinationIsRefused)
 {
-    // Another Document becomes associated with the destination after the grant.
     const auto permit = coordinator.requestPermit(a, fresh, 1);
     coordinator.associate(b, fresh);
     EXPECT_EQ(coordinator.write(*permit, snapshot()).error(), WriteRefusal::StaleDestination);
-    // The requester's own association changes after the grant.
     coordinator.associate(a, fileA);
     const auto own = coordinator.requestPermit(a, fileA, 2);
     coordinator.associate(a, fileB);
@@ -109,13 +104,11 @@ TEST_F(Fixture, PermitWritesAtMostOnce)
 
 TEST_F(Fixture, CancelIsResolvedByTheAdapter)
 {
-    // Cancelled in time: the adapter acknowledges cancellation.
     const auto early = coordinator.requestPermit(a, fresh, 1);
     ASSERT_TRUE(coordinator.write(*early, snapshot()));
     coordinator.cancel(*early);
     ASSERT_EQ(port.cancelRequests.size(), 1u);
     coordinator.complete(*early, WriteOutcome::Cancelled);
-    // Cancelled too late: the write had already published, so it is Written.
     const auto late = coordinator.requestPermit(a, fileB, 1);
     ASSERT_TRUE(coordinator.write(*late, snapshot()));
     coordinator.cancel(*late);

@@ -1,7 +1,3 @@
-// G8: Grid filtering (legacy SubsGridFiltering and SubsFile::
-// CheckIfHasHiddenBlock at 20d647c4) on Line visibility, one undo step each,
-// keeping the selection (accepted contract).
-
 #include "hikari/application/grid_filtering.h"
 #include "hikari/core/ass_load.h"
 
@@ -50,7 +46,7 @@ struct FilterTest : ::testing::Test {
     void select(std::set<core::LineId> lines, core::LineId active) { session.setSelection(Selection{active, lines, active, {}}); }
 };
 
-} // namespace
+}
 
 TEST_F(FilterTest, StylesCommentsAndInversion)
 {
@@ -60,7 +56,6 @@ TEST_F(FilterTest, StylesCommentsAndInversion)
     EXPECT_EQ(session.history().back().name, "Filtering");
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_TRUE(isFiltered(session.document()));
-    // A new filter resets the previous one unless asked not to.
     ASSERT_TRUE(filterLines(session, {filter_by::Comments}));
     EXPECT_EQ(hidden(), "vhvv");
     ASSERT_TRUE(filterLines(session, {filter_by::Comments, {}, true}));
@@ -83,21 +78,19 @@ TEST_F(FilterTest, SelectionFilterAndHideSelectedKeepTheSelection)
     select({a, c}, a);
     ASSERT_TRUE(filterLines(session, {filter_by::Selections}));
     EXPECT_EQ(hidden(), "hvhv");
-    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{a, c})); // kept
-    EXPECT_EQ(session.selection().active, b); // the nearest shown Line
-    // The automatic filter after loading never filters by selection.
+    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{a, c}));
+    EXPECT_EQ(session.selection().active, b);
     ASSERT_TRUE(turnOffFiltering(session));
     EXPECT_EQ(session.history().back().name, "Removing filtering");
     EXPECT_EQ(hidden(), "vvvv");
     EXPECT_FALSE(isFiltered(session.document()));
     ASSERT_TRUE(filterLines(session, {filter_by::Selections | filter_by::Comments}, {}, true));
     EXPECT_EQ(hidden(), "vhvv");
-    // GRID_HIDE_SELECTED keeps earlier filtering.
     select({d}, d);
     ASSERT_TRUE(hideSelectedLines(session));
     EXPECT_EQ(hidden(), "vhvh");
     EXPECT_EQ(session.selection().active, c);
-    select({b}, b); // only hidden Lines selected: nothing to hide
+    select({b}, b);
     EXPECT_FALSE(hideSelectedLines(session));
 }
 
@@ -106,16 +99,14 @@ TEST_F(FilterTest, HiddenBlocksOpenAndCloseFromTheLineBeforeThem)
     select({b, c}, b);
     ASSERT_TRUE(hideSelectedLines(session));
     EXPECT_EQ(hidden(), "vhhv");
-    EXPECT_EQ(hiddenBlockAfter(session.document(), 0), 1); // + after a
+    EXPECT_EQ(hiddenBlockAfter(session.document(), 0), 1);
     EXPECT_EQ(hiddenBlockAfter(session.document(), 3), 0);
     ASSERT_TRUE(toggleHiddenBlock(session, 0));
     EXPECT_EQ(hidden(), "vbbv");
-    EXPECT_EQ(hiddenBlockAfter(session.document(), 0), 2); // - after a
+    EXPECT_EQ(hiddenBlockAfter(session.document(), 0), 2);
     EXPECT_TRUE(isFiltered(session.document()));
     ASSERT_TRUE(toggleHiddenBlock(session, 0));
     EXPECT_EQ(hidden(), "vhhv");
-    // Hiding a Line after a revealed block: legacy compares the visibility the
-    // Lines had before, so d is simply hidden and gets its own mark after c.
     ASSERT_TRUE(toggleHiddenBlock(session, 0));
     select({d}, d);
     ASSERT_TRUE(hideSelectedLines(session));
@@ -130,13 +121,11 @@ TEST_F(FilterTest, TranslationFiltersShowOnlyTheLinesLeftToDo)
     ASSERT_TRUE(document.editLine(a, [](core::LineRecord &l) { l.translation = u8"done"; }));
     ASSERT_TRUE(document.editLine(c, [](core::LineRecord &l) { l.translation = u8"draft"; }));
     EditSession tl{document};
-    // "Show unconfirmed": everything else is hidden.
     ASSERT_TRUE(filterLines(tl, {filter_by::Unconfirmed}));
     std::string out;
     for (const auto *l : tl.document().lines())
         out += l->visibility == core::LineVisibility::Hidden ? 'h' : 'v';
     EXPECT_EQ(out, "hhvh");
-    // With "Show untranslated" too, either keeps a Line shown.
     ASSERT_TRUE(filterLines(tl, {filter_by::Unconfirmed | filter_by::Untranslated}));
     out.clear();
     for (const auto *l : tl.document().lines())

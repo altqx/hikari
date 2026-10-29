@@ -24,15 +24,15 @@ Each case runs a fresh copy of the app with Autoload emptied, the scripts of [`a
 - **Load error.** A script that does not parse: "Error" box, "Error loading Lua script: broken.lua" and the Lua message, then "Select a script editor" (no editor set, `Automation::OnEdit`). Nothing is recorded (the script never ran).
 - **Script Info as scripts see it.** "Title", "ScriptType", "Automation Scripts", then "YCbCr Matrix" (added on load, `SubsLoader.cpp:167-168`) and "PlayResX", "PlayResY" (written by `SubsGrid::GetASSRes` when the status bar reads the resolution, `SubsGridBase.cpp:1653-1675`), none of which is in the file.
 
-## Compared with the rewrite
+## Compared with HikariSub
 
 `AutomationDocumentScriptsTests::replaysTheLegacyCapture` (`hikari_ui_automation_document_scripts_tests`) runs every case through the application with real Lua helpers and the same scripts, and compares each press with legacy's: the scripts loaded (as a set: each loads in its own helper), then every validation and run in order with the Document it saw, the box (title and text; validation-error's text is the one `HikariSubFrame.cpp:924` gives a validation that answers false, since the log window covers the box in its screenshot and a raising validation answers false, `Automation.cpp:952-956`), the log entry, the editor picker, and the modified state. Equal, with these differences, each named:
 
-- Legacy's menu-build validations are left out: the rewrite validates when it runs, and does not validate on the menu's build or on the hotkey (an open item in [S4](../../../../docs/coverage.md)).
-- "YCbCr Matrix" (C03-ycbcr-on-load) and "PlayResX"/"PlayResY" are not in the rewrite's Script Info. The PlayRes keys have no approved row: the rewrite reads the resolution without writing it, an open item in [Y4](../../../../docs/coverage.md) awaiting a decision.
-- The validation function's edits are dropped (S4-validation-edits): in validation-false the rewrite's validations see "Gate" and no "Validated" key.
+- Legacy's menu-build validations are left out: HikariSub validates when it runs, and does not validate on the menu's build or on the hotkey (an open item in [S4](../../../../docs/coverage.md)).
+- "YCbCr Matrix" (C03-ycbcr-on-load) and "PlayResX"/"PlayResY" are not in HikariSub's Script Info. The PlayRes keys have no approved row: HikariSub reads the resolution without writing it, an open item in [Y4](../../../../docs/coverage.md) awaiting a decision.
+- The validation function's edits are dropped (S4-validation-edits): in validation-false HikariSub's validations see "Gate" and no "Validated" key.
 
-These keys and edits are taken off legacy's records only (each of the three keys once; "Validated" and the edited text only in validation-false); the rewrite's records are compared whole, so a key it adds or drops on its own fails the comparison.
+These keys and edits are taken off legacy's records only (each of the three keys once; "Validated" and the edited text only in validation-false); HikariSub's records are compared whole, so a key it adds or drops on its own fails the comparison.
 
 ## The Windows capture
 
@@ -44,7 +44,7 @@ python3 tools/legacy-capture/drive_windows.py --plan tools/legacy-capture/plan.j
 
 which runs each case through the `legacy-win-s4-*` tasks. All seven cases were captured, and six are the same as on Linux. In runs-last the scripts see one more Script Info key, "Active Line", in step 3 (the third press), as in four earlier Windows runs of the same plan (2026-10-14, 01:28 to 02:32 UTC). That is legacy's autosave: `SubsGrid::OnBackupTimer` saves 20 s after the first change since the last autosave (`SubsGridBase.cpp:1085-1088`) through `SaveFile`, whose `GetAssHeader` writes the active Line's row as "Active Line" into the open Document's Script Info (`SubsGridBase.cpp:1470`). The Windows driver waits 8 s after each hotkey and runs a winix task for each record read and for the touch, so the timer that step 0's run started fired before step 3; the Linux route's steps all came within the 20 s. The title stays `3*s4.ass`: an autosave does not mark the file saved.
 
-`replaysTheLegacyCapture` replays both files. With the Windows one it autosaves (`Application::autosaveNow`) before the first step whose legacy records show the key, and the rewrite's scripts then see "Active Line" too (decision 49, 2026-10-15: legacy's write is ported, autosave included). Timed autosaves are off in the replay (`autosave.maxFiles` 0), so neither file depends on how long its steps take.
+`replaysTheLegacyCapture` replays both files. With the Windows one it autosaves (`Application::autosaveNow`) before the first step whose legacy records show the key, and HikariSub's scripts then see "Active Line" too (decision 49, 2026-10-15: legacy's write is ported, autosave included). Timed autosaves are off in the replay (`autosave.maxFiles` 0), so neither file depends on how long its steps take.
 
 ## Not observed here
 

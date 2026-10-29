@@ -1,7 +1,5 @@
 #!/bin/bash
-# kwin_windows.sh: KWin's window list (caption, frame geometry, output,
-# active, fullscreen), printed by a KWin script through a D-Bus call back
-# into this bus (dbus-monitor captures it).
+# kwin_windows.sh: KWin's window list; a KWin script prints only through a D-Bus call back, which dbus-monitor captures.
 js=$(mktemp --suffix=.js)
 cat > "$js" <<'EOF'
 const out = [];

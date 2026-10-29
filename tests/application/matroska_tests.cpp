@@ -1,9 +1,3 @@
-// Y9: MKV extraction's application rules against legacy Demux (Demux.cpp at
-// 20d647c4), SubsGrid::OnMkvSubs and its menu check (SubsGrid.cpp:289,
-// 879-881, 1134-1194) and FontCollector::CopyMKVFonts/CopyMKVFontsFromTab
-// (FontCollector.cpp:182, 549, 913-982), over a port that answers like the
-// media helper. The helper itself is tested in tests/backends/matroska_tests.cpp.
-
 #include "hikari/application/matroska.h"
 #include "hikari/core/ass_save.h"
 
@@ -30,8 +24,6 @@ std::shared_ptr<const std::vector<std::byte>> data(std::string_view s)
     return out;
 }
 
-// Answers when the test says so; cancel() resolves the running request
-// Cancelled at once, as backends::FfmsMatroska does.
 class FakePort final : public MatroskaPort {
 public:
     Tracks tracks;
@@ -100,7 +92,6 @@ struct Recorder {
 
 std::vector<MatroskaTrack> fixtureTracks()
 {
-    // What the helper reads from tests/support/media's "subs" fixture.
     return {{0, "Signs", "eng", "ass"}, {1, "", "jpn", "ass"},       {2, "Full", "eng", "srt"},
             {3, "", "eng", "text"},     {4, "Bitmap", "eng", "pgssub"}, {5, "Web", "fre", ""}};
 }
@@ -110,16 +101,14 @@ std::string ended(MatroskaFailure f)
     return "ended " + std::to_string(int(f));
 }
 
-} // namespace
+}
 
 TEST(MatroskaTracks, OfferedTracksAndTheirLabels)
 {
-    // Demux.cpp:72-81: ass, ssa, subrip, srt and text tracks, "%i " then the
-    // name, " (", the language, ", ", the codec and ")".
     auto tracks = fixtureTracks();
     tracks.push_back({7, "Sub", "pol", "subrip"});
     tracks.push_back({8, "X", "eng", "ssa"});
-    tracks.push_back({9, "\xff", "\xfe", "text"}); // not UTF-8: empty
+    tracks.push_back({9, "\xff", "\xfe", "text"});
     const auto offered = offeredTracks(tracks);
     std::vector<std::u8string> labels;
     for (const auto &o : offered)
@@ -133,10 +122,6 @@ TEST(MatroskaTracks, OfferedTracksAndTheirLabels)
 
 TEST(MatroskaFonts, FontAttachmentsAndTheirNames)
 {
-    // GetFontList (Demux.cpp:210-227) with AttachmentName (188-208): the four
-    // font MIME types; UTF-8 names, Latin-1 when they are not; the last path
-    // component; "." and ".." and empty names become attachment_<track> with
-    // .otf for the OpenType types.
     const std::vector<MatroskaAttachment> attachments{
         {6, true, "Fixture Sans.ttf", "font/ttf", data("a")},
         {7, true, "dir/sub\\Nested.otf", "application/vnd.ms-opentype", data("b")},
@@ -167,8 +152,6 @@ TEST(MatroskaFonts, FontAttachmentsAndTheirNames)
 
 TEST(MatroskaChecks, MenuAndCollectorChecks)
 {
-    // GRID_SUBS_FROM_MKV: VideoName ends with ".mkv" or ".ogm" in any case
-    // (Y9-mkv-case; legacy's EndsWith was case-sensitive).
     EXPECT_TRUE(subtitlesFromMkvEnabled(u"a.mkv"));
     EXPECT_TRUE(subtitlesFromMkvEnabled(u"a.ogm"));
     EXPECT_TRUE(subtitlesFromMkvEnabled(u"a.MKV"));
@@ -176,11 +159,8 @@ TEST(MatroskaChecks, MenuAndCollectorChecks)
     EXPECT_FALSE(subtitlesFromMkvEnabled(u"a.mkv.mp4"));
     EXPECT_FALSE(subtitlesFromMkvEnabled(u"a.mp4"));
     EXPECT_FALSE(subtitlesFromMkvEnabled(u""));
-    // The collector's checkbox: VideoPath.Lower().EndsWith(".mkv").
     EXPECT_TRUE(fontsFromMkvEnabled(u"/v/A.MKV"));
     EXPECT_FALSE(fontsFromMkvEnabled(u"/v/a.ogm"));
-    // CopyMKVFontsFromTab: AfterLast('.').Lower() == "mkv"; without a dot,
-    // the whole path.
     EXPECT_TRUE(isMkvExtension(u"/v/a.Mkv"));
     EXPECT_TRUE(isMkvExtension(u"mkv"));
     EXPECT_FALSE(isMkvExtension(u""));
@@ -189,7 +169,6 @@ TEST(MatroskaChecks, MenuAndCollectorChecks)
 
 TEST(MatroskaChecks, SubtitlePathBesideTheVideo)
 {
-    // OnMkvSubs: mkvpath.BeforeLast('.') + "." + ext (SubsGrid.cpp:1157, 1168).
     EXPECT_EQ(matroskaSubtitlePath("/v/ep 01.mkv", core::SubtitleFormat::Ass), "/v/ep 01.ass");
     EXPECT_EQ(matroskaSubtitlePath("/v/ep.01.mkv", core::SubtitleFormat::Srt), "/v/ep.01.srt");
     EXPECT_EQ(matroskaSubtitlePath("noext", core::SubtitleFormat::Ass), ".ass");
@@ -208,8 +187,7 @@ TEST(MatroskaSubtitleLoad, SeveralTracksAskThenReadTheChosenOne)
                                                     u8"3  (eng, text)"}));
     load.choose(2);
     EXPECT_EQ(port.calls.back(), "subtitles /v/ep.mkv 2");
-    // (Start / Total) * 100 as int; FFmpeg's AV_NOPTS_VALUE total gives 0.
-    // A zero total (legacy's int of infinity, undefined) shows 0.
+    // INT64_MIN is FFmpeg's AV_NOPTS_VALUE (an unknown total).
     port.progress(500, 2000);
     port.progress(1999, 2000);
     port.progress(1001, std::numeric_limits<std::int64_t>::min());
@@ -231,7 +209,6 @@ TEST(MatroskaSubtitleLoad, SeveralTracksAskThenReadTheChosenOne)
 
 TEST(MatroskaSubtitleLoad, OneTrackIsReadWithoutAsking)
 {
-    // Demux.cpp:92-94; an ASS track's private data and packets.
     FakePort port;
     Recorder r;
     MatroskaSubtitleLoad load(port, r.hooks());
@@ -255,16 +232,13 @@ TEST(MatroskaSubtitleLoad, NoTracksAndFilesThatCannotBeOpened)
     FakePort port;
     Recorder r;
     MatroskaSubtitleLoad load(port, r.hooks());
-    // "The file does not contain any subtitle tracks." (Demux.cpp:85-89).
     load.start("/v/none.mkv");
     port.tracks(std::vector<MatroskaTrack>{{0, "", "eng", "pgssub"}, {1, "", "eng", ""}});
     EXPECT_EQ(r.events, (std::vector<std::string>{"noTracks", ended(MatroskaFailure::Failed)}));
-    // Demux::Open: only logged ("Indexing error occurred: %s").
     r.events.clear();
     load.start("/v/bad.mkv");
     port.tracks(std::unexpected(MatroskaError{MatroskaFailure::CannotOpen, "Can't open '/v/bad.mkv'"}));
     EXPECT_EQ(r.events, (std::vector<std::string>{"cannotOpen Can't open '/v/bad.mkv'", ended(MatroskaFailure::CannotOpen)}));
-    // The helper lost while listing.
     r.events.clear();
     load.start("/v/lost.mkv");
     port.tracks(std::unexpected(MatroskaError{MatroskaFailure::HelperLost, {}}));
@@ -277,7 +251,6 @@ TEST(MatroskaSubtitleLoad, CancelAndLossLoadNothing)
     FakePort port;
     Recorder r;
     MatroskaSubtitleLoad load(port, r.hooks());
-    // The chooser's Cancel (Demux.cpp:100-103): nothing is read.
     load.start("/v/ep.mkv");
     port.tracks(fixtureTracks());
     load.cancel();
@@ -285,30 +258,26 @@ TEST(MatroskaSubtitleLoad, CancelAndLossLoadNothing)
     EXPECT_EQ(r.events, (std::vector<std::string>{"choose", ended(MatroskaFailure::Cancelled)}));
     load.choose(0);
     EXPECT_EQ(port.calls.size(), 1u) << "a choice after Cancel reads nothing";
-    // The progress dialog's Cancel (Demux.cpp:122-125): ended once.
     r.events.clear();
     load.start("/v/ep.mkv");
     port.tracks(fixtureTracks());
     load.choose(0);
-    auto late = port.read; // the helper's answer, still on its way
+    auto late = port.read;
     load.cancel();
     EXPECT_EQ(port.cancels, 1);
     EXPECT_EQ(r.events, (std::vector<std::string>{"choose", "reading", ended(MatroskaFailure::Cancelled)}));
     late(MatroskaSubtitles{});
     EXPECT_FALSE(r.loaded) << "a late answer is dropped";
-    // Cancel while listing.
     r.events.clear();
     load.start("/v/ep.mkv");
     load.cancel();
     EXPECT_EQ(r.events, (std::vector<std::string>{ended(MatroskaFailure::Cancelled)}));
-    // The helper lost while reading.
     r.events.clear();
     load.start("/v/ep.mkv");
     port.tracks(std::vector<MatroskaTrack>{{2, "", "eng", "srt"}});
     port.read(std::unexpected(MatroskaError{MatroskaFailure::HelperLost, {}}));
     EXPECT_EQ(r.events, (std::vector<std::string>{"reading", ended(MatroskaFailure::HelperLost)}));
     EXPECT_FALSE(r.loaded);
-    // A new start drops the previous run's answers.
     r.events.clear();
     load.start("/v/a.mkv");
     auto first = port.tracks;
@@ -357,12 +326,10 @@ MatroskaFontTab tab(std::u16string video, MatroskaFontTab::Status status, std::v
     return {std::move(video), status, std::move(fonts)};
 }
 
-} // namespace
+}
 
 TEST(MatroskaFontsSave, EveryTabIntoOneOutput)
 {
-    // CopyMKVFonts (FontCollector.cpp:913-929): one output for every tab,
-    // opened at the first tab with fonts (MakeDirectory), closed at the end.
     MemoryOutput output;
     output.failing = {u"bad.ttf"};
     const std::vector<MatroskaFontTab> tabs{
@@ -379,7 +346,6 @@ TEST(MatroskaFontsSave, EveryTabIntoOneOutput)
     EXPECT_EQ(saved[4].saved, (std::vector<bool>{true}));
     EXPECT_EQ(output.opens, 1);
     EXPECT_TRUE(output.committed);
-    // The bytes as they are; a later font of the same name is written again.
     EXPECT_EQ(output.written, (std::vector<std::pair<std::u16string, std::string>>{{u"one.ttf", "1"}, {u"one.ttf", "3"}}));
 }
 
@@ -394,8 +360,6 @@ TEST(MatroskaFontsSave, NothingToWriteOpensNothing)
 
 TEST(MatroskaFontsSave, AnOutputThatCannotBeOpenedSkipsTheTab)
 {
-    // MakeDirectory fails: "Cannot create folder." and that tab returns;
-    // the next tab with fonts tries again (FontCollector.cpp:953-958, 1000-1015).
     MemoryOutput output;
     output.openOk = false;
     output.failFolder = true;

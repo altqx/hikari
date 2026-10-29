@@ -1,14 +1,3 @@
-# The Windows counterparts of the review images (tools/review/review_assets.py
-# renders the Linux ones offscreen): the same screenshot hooks on the
-# interactive desktop (the windows platform, the system's fonts), each part
-# into out/build/windows-x64-release/review-window/<part> (winix task
-# review-window, its artifact).
-#   PARTS  comma-separated, default all: k1 (icon_tests contactSheets, every
-#          role), k2 (theme_tests swatchSheet, shell_tests surfaceScreenshots:
-#          the main surfaces in the four themes), k2-focus (theme_tests
-#          panelFocusMarkContrast, shell_tests focusScreenshots), o5
-#          (language_tests screenshots), d3 (shell_tests dockChromeScreenshots)
-# A hook that skips (its variable unset, no desktop) or writes nothing fails the part.
 $ErrorActionPreference = 'Stop'
 $root = $PWD.Path
 $build = Join-Path $root 'out/build/windows-x64-release'

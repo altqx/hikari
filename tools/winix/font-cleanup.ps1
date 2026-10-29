@@ -1,8 +1,3 @@
-# Y8W: the Windows font fixture (tests/support/fonts/windows_user_fonts.h)
-# leaves nothing installed. What a run that never reached its TearDown leaves
-# (base.ttf and legacy.ttf in the user's font folder, base.ttf's HKCU Fonts
-# value) is planted first; the fonts tests then run, and afterwards the
-# folder must hold none of the fixtures and HKCU no value of the tests'.
 $ErrorActionPreference = 'Stop'
 $folder = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
 $key = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts'

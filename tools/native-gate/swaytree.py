@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Windows in sway's tree: type, app_id, title, layout rect, output, focus."""
 import json
 import subprocess
 import sys

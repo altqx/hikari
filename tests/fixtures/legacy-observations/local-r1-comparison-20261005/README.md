@@ -21,7 +21,7 @@ The cases:
 - `translation`: hasTLMode on neither grid, CG1, CG2 and both, with Lines whose translation is empty, equal to the other text, or different.
 - `texts`: 25 text pairs with no criterion (equal, contained, empty, reordered, repeated letters, accents and a combining mark, CJK, tags and `\N`, characters outside the BMP); `rand-ascii` and `rand-astral`: 200 random pairs each over `ab {` and over `a`, U+1F600, U+1F601 and a space (drawn once, fixed in the case file).
 
-## Compared with the rewrite
+## Compared with HikariSub
 
 `LegacyComparisonCapture.ReplaysTheLegacyObservations` (`hikari_application_subtitle_comparison_tests`) builds each case's two Documents (times through the ASS loader, the style, text, translation and visibility as the probe set them, the selection as the selected Line ids) and runs every run through `compareSubtitles` with the run's SUBS_COMPARISON_TYPE, compareStyles and translation modes, once counting UTF-16 units and once counting code points. Both tables are legacy's `windows` tables in every run of the first and its `linux` tables in every run of the second, on whichever platform the test runs: the pairs (secondComparedLine, -1 for none), `differences`, the leading 1 and every range; the Grid's colour state per row follows (`mismatch()` where the legacy array is not empty, `match()` where `differences` is false; SubsGridWindow.cpp:419-426). A second call gives the same tables, and the Documents are unchanged. No approved departure changes these results: R1-stale-table and R1-session-off concern which grids keep a table, not what SubsComparison computes.
 
@@ -36,7 +36,7 @@ The capture confirms, as the R1 tests had worked out by hand:
 
 ### Where the two legacy builds differ
 
-Only in the cases with characters outside the BMP (`texts` rows 18-23 and 192 of the 200 `rand-astral` pairs) do `linux` and `windows` differ. The legacy Linux build counts each such character as one position, the Windows build as two, and it compares surrogates on their own. For example, U+1F600 against U+1F601 gives `[1,0,0]` on Linux and `[1,1,1]` on Windows: the high surrogate is shared and only the low one is outlined. Under R5-per-platform the rewrite counts as each build did: code points on Linux and UTF-16 code units on Windows (`kLegacyTextUnits`), and the Grid outlines a range of the shown text in the same units.
+Only in the cases with characters outside the BMP (`texts` rows 18-23 and 192 of the 200 `rand-astral` pairs) do `linux` and `windows` differ. The legacy Linux build counts each such character as one position, the Windows build as two, and it compares surrogates on their own. For example, U+1F600 against U+1F601 gives `[1,0,0]` on Linux and `[1,1,1]` on Windows: the high surrogate is shared and only the low one is outlined. Under R5-per-platform HikariSub counts as each build did: code points on Linux and UTF-16 code units on Windows (`kLegacyTextUnits`), and the Grid outlines a range of the shown text in the same units.
 
 ## Not observed here
 

@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Opens a libei connection to the session's compositor and keeps
-eiinject running on it, fed from $XDG_RUNTIME_DIR/ei.in (a FIFO).
-
-  eidaemon.py kwin     org.kde.KWin.EIS.RemoteDesktop.connectToEIS
-  eidaemon.py mutter   org.gnome.Mutter.RemoteDesktop session (+ a ScreenCast
-                       of every monitor so the absolute pointer has regions)
-"""
+"""eidaemon.py kwin|mutter: eiinject on a libei connection, fed from $XDG_RUNTIME_DIR/ei.in; mutter needs a ScreenCast of every monitor for absolute pointer regions."""
 import os
 import subprocess
 import sys

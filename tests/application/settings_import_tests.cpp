@@ -1,13 +1,3 @@
-// O3: the one-shot settings importer's readers and review plan against the
-// legacy loaders at 20d647c4 (config.cpp SetRawOptions / LoadOptions /
-// LoadAudioOpts, Hotkeys.cpp LoadHkeys, ConfigConverter.cpp) and the
-// migration worksheet (docs/proposals/settings-migration-map): every
-// option and action row reaches a destination or an explicit disposition,
-// C04-short-file, S44-import's no-op repeat and kept user edits,
-// S44-macro-alias, foreign-platform paths, the theme exclusion and the
-// wave-5 retirements. The generations (snapshot, activation, rollback) are
-// hikari_ui_settings_import_tests.
-
 #include "hikari/application/settings_import.h"
 
 #include "hikari/application/hotkeys.h"
@@ -36,7 +26,6 @@ std::string readFile(const std::string &path)
     return s.str();
 }
 
-// A CSV line of quoted fields ("" inside a field is a quote).
 std::vector<std::string> csvFields(const std::string &line)
 {
     std::vector<std::string> out;
@@ -70,7 +59,7 @@ std::vector<std::vector<std::string>> csvRows(const std::string &path)
 {
     std::istringstream csv(readFile(path));
     std::string line;
-    std::getline(csv, line); // header
+    std::getline(csv, line);
     std::vector<std::vector<std::string>> rows;
     while (std::getline(csv, line))
         if (!line.empty())
@@ -93,10 +82,7 @@ SourceFile source(SourceKind kind, std::string path, std::string bytes)
     return s;
 }
 
-// The running legacy build's header (config.cpp:67; VersionHikariSub.h:35).
 constexpr std::string_view kHeader = "[HikariSub v0.0.1-rc.1]\r\n";
-// A header of the four-part builds LoadHkeys accepts ("0.8.0.build" past
-// 487, Hotkeys.cpp:257-268) and ConfigNeedToConvert leaves alone (>= 1142).
 constexpr std::string_view kBuildHeader = "[Kainote v0.9.0.1500]\r\n";
 
 SourceFile config(std::string_view body, std::string_view header = kHeader)
@@ -119,7 +105,6 @@ SourceFile audioHotkeys(std::string_view body, std::string_view header = kBuildH
     return source(SourceKind::AudioHotkeys, "Config/AudioHotkeys.txt", std::string(header) + std::string(body));
 }
 
-// Eleven records of padding: more than SetRawOptions' ten (config.cpp:150).
 std::string padding()
 {
     std::string out;
@@ -128,8 +113,6 @@ std::string padding()
     return out;
 }
 
-// CF2 (#489): Rules.txt is imported as rules.toml (the app converts it; a
-// stand-in here).
 std::string convertedRules(std::string_view legacy)
 {
     return "converted: " + std::string(legacy);
@@ -167,7 +150,6 @@ std::vector<const PlanRow *> rowsKeyed(const Plan &plan, std::string_view key)
     return out;
 }
 
-// A raw Config.txt token other than the default, per type.
 std::string sampleRaw(const SettingDefinition &def)
 {
     switch (def.type) {
@@ -183,7 +165,6 @@ std::string sampleRaw(const SettingDefinition &def)
     return {};
 }
 
-// A destination profile after an import (its values and files).
 Destination destinationOf(const Profile &profile, Destination base = linuxHost())
 {
     base.values = profile.values;
@@ -193,9 +174,7 @@ Destination destinationOf(const Profile &profile, Destination base = linuxHost()
     return base;
 }
 
-} // namespace
-
-// ---- The tables against the legacy sources and the worksheet
+}
 
 TEST(SettingsImport, KnownSourcesAreLegacysFiles)
 {
@@ -206,8 +185,6 @@ TEST(SettingsImport, KnownSourcesAreLegacysFiles)
                                                "Config/AudioHotkeys.txt", "Config/Rules.txt",
                                                "Dictionary/UserDic.udic"}));
 }
-
-// ---- The migration worksheet: every row reaches a destination or a disposition
 
 TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
 {
@@ -227,9 +204,6 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
         audio += csv.at(2) == "AudioConfig.txt";
         const SettingDefinition *def = findLegacySetting(key);
         if (key == "EDITOR_ON") {
-            // WS3 retired the editor switch with its setting: no definition
-            // writes it here, the importer retires the record
-            // (RetiredViewArrangementsAndEditorSwitchAreDroppedWithANotice).
             EXPECT_EQ(def, nullptr);
             EXPECT_TRUE(isRetiredOption(key));
             continue;
@@ -258,8 +232,6 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
     }
     EXPECT_EQ(audio, 34);
 
-    // Importing writes each value to its setting, typed; the excluded and
-    // retired ones write nothing.
     const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
     for (const auto &def : settingDefinitions()) {
         if (def.legacyKey.empty())
@@ -281,9 +253,6 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
             EXPECT_EQ(it->second, SettingValue(std::get<std::string>(def.defaultValue) + "x")) << def.id;
             break;
         case SettingType::StringList:
-            // GetTable (config.cpp:753-765): the entry "\t" is a token in
-            // either mode, read as "" (SetRawOptions never keeps an empty
-            // line in a block, so the modes read a file's tables alike).
             EXPECT_EQ(it->second, SettingValue(std::vector<std::string>{"a", "", "b"})) << def.id;
             break;
         }
@@ -298,7 +267,6 @@ TEST(SettingsImport, OptionsTheFilesLeaveOutAreMissingWithTheCurrentValueKept)
         buildPlan({config(padding() + "GRID_FONT=Arial\r\n")}, linuxHost(), readBy(ReadBy::Windows));
     const PlanRow &font = rowOf(plan, "setting:grid.font");
     EXPECT_EQ(font.disposition, Disposition::Change);
-    // Every other registry option has its row, missing, with nothing to write.
     for (const auto &def : settingDefinitions()) {
         if (def.legacyKey.empty() || def.legacyKey == "GRID_FONT" || def.legacyKey.starts_with("EDITBOX_TAG_BUTTON_VALUE"))
             continue;
@@ -306,8 +274,6 @@ TEST(SettingsImport, OptionsTheFilesLeaveOutAreMissingWithTheCurrentValueKept)
             EXPECT_EQ(plan.row("setting:" + std::string(def.id)), nullptr) << def.id;
             continue;
         }
-        // Without AudioConfig.txt legacy loads the audio defaults
-        // (config.cpp:868-870): missing as well.
         const PlanRow &row = rowOf(plan, "setting:" + std::string(def.id));
         EXPECT_EQ(row.disposition, Disposition::Missing) << def.id;
         EXPECT_FALSE(row.selectable) << def.id;
@@ -315,8 +281,6 @@ TEST(SettingsImport, OptionsTheFilesLeaveOutAreMissingWithTheCurrentValueKept)
     }
 }
 
-// SP1 (#474): legacy's one dictionary (DICTIONARY_LANGUAGE) imports as the
-// primary spelling language, the setting the multilingual check starts with.
 TEST(SettingsImport, DictionaryLanguageBecomesThePrimaryLanguage)
 {
     const Plan plan = buildPlan({config(padding() + "DICTIONARY_LANGUAGE=pl\r\n")}, linuxHost(), readBy(ReadBy::Windows));
@@ -328,8 +292,6 @@ TEST(SettingsImport, DictionaryLanguageBecomesThePrimaryLanguage)
 
 TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
 {
-    // One binding per action in its own window (GetType), to a chord no
-    // default has.
     std::string mainBody, audioBody;
     for (const auto &a : hotkeyActions()) {
         const int type = hotkeyType(a.id);
@@ -348,7 +310,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         const PlanRow &row = rowOf(plan, rowId);
         EXPECT_EQ(row.binding, (HotkeyId{id, type})) << symbol;
         EXPECT_EQ(row.destination, symbol + " (" + std::string(hotkeyWindowName(type)) + ")");
-        if (isRetiredHotkey(id)) { // V3, AM1, AV3 and WS3
+        if (isRetiredHotkey(id)) {
             EXPECT_EQ(row.disposition, Disposition::Retired) << symbol;
             EXPECT_FALSE(row.selectable);
         } else {
@@ -357,8 +319,6 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
             EXPECT_TRUE(row.selectable) << symbol;
         }
     }
-    // Imported, the bindings are SaveHkeys lines in the registry; the retired
-    // actions keep no binding from the file.
     const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
     HotkeyMap map;
     readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kHotkeysSetting))));
@@ -373,16 +333,11 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 269); // 243 less V3's GLOBAL_VIDEO_INDEXING, AM1's GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AV3's GLOBAL_OPEN_DUMMY_AUDIO and WS3's five View arrangements and editor switch, plus LE3's GLOBAL_EDITOR_HIDE_TAGS, KE1's GLOBAL_VIDEO_RENDER_COST, FS1's VIDEO_FULLSCREEN_BAR, TM1's GLOBAL_TRANSLATION_MODE, nine run keys, EDITBOX_PLACE_NEXT_RUN, VT2's eleven VIDEO_TOOL_* commands, KA2's three Audio commands, VT3's VIDEO_TOOL_PERSPECTIVE, KA7's GLOBAL_CHECK_KARAOKE and KA1's AUDIO_KARAOKE_SPLIT and AUDIO_KARAOKE_KF and AD2's GLOBAL_AUTOMATION_REPEAT_LAST_RUN and KA3's GLOBAL_KANJI_TIMER and FR1's GLOBAL_GETTING_STARTED
+    EXPECT_EQ(bound, 269);
 }
-
-// ---- Config.txt / AudioConfig.txt readings
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
 {
-    // Lines trimmed, a label's trailing blanks dropped, the value as it is
-    // after '=' (CatchValsLabs, config.cpp:259-268); blocks from "...{" to a
-    // line "}" (config.cpp:129-145); empty lines skipped.
     const ConfigFile f = readConfigFile("[HikariSub v0.0.1]\n  GRID_FONT  = Arial \n\nSUBS_RECENT_FILES={\n\ta\n\tb\n}\n"
                                         "NO_EQUALS\n___Program Crashed___");
     EXPECT_EQ(f.header, "HikariSub v0.0.1");
@@ -399,7 +354,6 @@ TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
     EXPECT_EQ(f.records[2].value, "");
     EXPECT_EQ(f.count, 3);
 
-    // A block whose "}" never comes is dropped.
     const ConfigFile open = readConfigFile("[x v0.0.1]\nSUBS_RECENT_FILES={\n\ta\n");
     EXPECT_TRUE(open.records.empty());
     EXPECT_EQ(open.unterminatedBlock, "SUBS_RECENT_FILES={\n\ta\n");
@@ -407,10 +361,6 @@ TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
 
 TEST(SettingsImport, CrlfIsAcceptedOnEveryPlatform)
 {
-    // O3-linux-crlf-blocks (approved 2026-10-05): the Linux build kept each
-    // '\r', so a brace table's "}\r" was no closing line and SetRawOptions
-    // dropped the block (config.cpp:129-145). The importer folds CRLF on
-    // every platform, as the Windows build's text mode did.
     const std::string body = padding() + "SUBS_RECENT_FILES={\r\n\ta.ass\r\n\tb.ass\r\n}\r\nGRID_FONT=Arial\r\n";
     for (const ReadBy by : {ReadBy::Windows, ReadBy::Linux}) {
         SCOPED_TRACE(by == ReadBy::Windows ? "Windows" : "Linux");
@@ -427,7 +377,6 @@ TEST(SettingsImport, CrlfIsAcceptedOnEveryPlatform)
         const ConfigFile file = readConfigFile(*text.text);
         EXPECT_TRUE(file.unterminatedBlock.empty());
 
-        // The same in UTF-16, folded after decoding.
         std::string utf16 = "\xFF\xFE";
         for (const char c : std::string(kHeader) + body) {
             utf16 += c;
@@ -437,12 +386,10 @@ TEST(SettingsImport, CrlfIsAcceptedOnEveryPlatform)
         ASSERT_TRUE(wide.text);
         EXPECT_EQ(wide.text->find('\r'), std::string::npos);
 
-        // Hotkey lines too: the header and each binding without the '\r'.
         const Plan keys = buildPlan({hotkeys("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n")}, linuxHost(), readBy(by));
         EXPECT_EQ(rowOf(keys, "file:Config/Hotkeys.txt").raw, "[Kainote v0.9.0.1500]");
         EXPECT_EQ(rowOf(keys, "shortcut:GLOBAL_SAVE_SUBS:G").value, SettingValue(std::string("Ctrl-Alt-S")));
     }
-    // Where the Linux build read the file otherwise, the file row says so.
     const Plan linux = buildPlan({config(body)}, linuxHost(), readBy(ReadBy::Linux));
     EXPECT_NE(rowOf(linux, "file:Config/Config.txt").reason.find("O3-linux-crlf-blocks"), std::string::npos);
     const Plan windows = buildPlan({config(body)}, linuxHost(), readBy(ReadBy::Windows));
@@ -452,8 +399,6 @@ TEST(SettingsImport, CrlfIsAcceptedOnEveryPlatform)
     const Plan lf = buildPlan({config(lfBody, "[HikariSub v0.0.1-rc.1]\n")}, linuxHost(), readBy(ReadBy::Linux));
     EXPECT_EQ(rowOf(lf, "file:Config/Config.txt").reason.find("O3-linux-crlf-blocks"), std::string::npos);
 
-    // Only CR LF pairs fold; a lone '\r' stays. Ctrl+Z still ends the text
-    // only where the Windows build's text mode stopped at it.
     const auto lone = decodeSettingsText("a\rb\r\nc\x1A" "d", ReadBy::Linux);
     ASSERT_TRUE(lone.text);
     EXPECT_EQ(*lone.text, "a\rb\nc\x1A" "d");
@@ -465,17 +410,12 @@ TEST(SettingsImport, CrlfIsAcceptedOnEveryPlatform)
 TEST(SettingsImport, ShortConfigFileIsWhatEachBuildPutInEffect)
 {
     const std::string body = "GRID_FONT=Arial\r\nSPELLCHECKER_ON=false\r\nGRID_HIDE_COLUMNS=4\r\n";
-    // Linux: LoadDefaultConfig over a file of ten records or fewer
-    // (config.cpp:569-574): the defaulted options lose their values, the
-    // others keep them.
     const Plan linux = buildPlan({config(body)}, linuxHost(), readBy(ReadBy::Linux));
     EXPECT_EQ(rowOf(linux, "superseded:Config/Config.txt:2").disposition, Disposition::Superseded);
     EXPECT_EQ(rowOf(linux, "superseded:Config/Config.txt:3").disposition, Disposition::Superseded);
     EXPECT_EQ(linux.row("setting:grid.font"), nullptr);
     EXPECT_EQ(rowOf(linux, "setting:grid.hideColumns").disposition, Disposition::Change);
     EXPECT_NE(rowOf(linux, "file:Config/Config.txt").reason.find("10 or fewer"), std::string::npos);
-    // Windows: legacy refused to start (config.cpp:575-577,
-    // hikarisubApp.cpp:320): nothing from it was in effect.
     const Plan windows = buildPlan({config(body)}, linuxHost(), readBy(ReadBy::Windows));
     for (const int line : {2, 3, 4})
         EXPECT_EQ(rowOf(windows, "superseded:Config/Config.txt:" + std::to_string(line)).disposition,
@@ -486,14 +426,11 @@ TEST(SettingsImport, ShortConfigFileIsWhatEachBuildPutInEffect)
 
 TEST(SettingsImport, LaterRecordsAndTheAudioResetSupersede)
 {
-    // The last record of a label is the one in effect.
     const Plan plan = buildPlan({config(padding() + "GRID_FONT=Arial\r\nGRID_FONT=Verdana\r\n")}, linuxHost(),
                                 readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(plan, "setting:grid.font").value, SettingValue(std::string("Verdana")));
     EXPECT_EQ(rowOf(plan, "superseded:Config/Config.txt:13").disposition, Disposition::Superseded);
 
-    // LoadAudioOpts: AudioConfig.txt of another build resets the audio
-    // options (config.cpp:875), Config.txt's among them.
     const Plan reset = buildPlan({config(padding() + "AUDIO_DELAY=40\r\n"),
                                   audioConfig(padding() + "AUDIO_VOLUME=20\r\n", "[HikariSub v0.0.0]\r\n")},
                                  linuxHost(), readBy(ReadBy::Windows));
@@ -513,9 +450,8 @@ TEST(SettingsImport, MalformedValuesStayUnresolvedWithLegacysReading)
     EXPECT_NE(spell.reason.find("GetBool"), std::string::npos);
     const PlanRow &size = rowOf(plan, "setting:grid.fontSize");
     EXPECT_EQ(size.disposition, Disposition::Unresolved);
-    EXPECT_EQ(size.value, SettingValue(std::int64_t{12})); // wxAtoi
+    EXPECT_EQ(size.value, SettingValue(std::int64_t{12}));
     EXPECT_EQ(rowOf(plan, "setting:recent.subtitles").disposition, Disposition::Unresolved);
-    // hikarisubApp.cpp:331-336: "1" is read as no language.
     const PlanRow &language = rowOf(plan, "setting:program.language");
     EXPECT_EQ(language.value, SettingValue(std::string()));
     EXPECT_NE(language.reason.find("hikarisubApp.cpp:331-336"), std::string::npos);
@@ -523,8 +459,6 @@ TEST(SettingsImport, MalformedValuesStayUnresolvedWithLegacysReading)
 
 TEST(SettingsImport, OldHeadersAreReadThroughConfigConvertersRenames)
 {
-    // A build before 1142 (config.cpp:852-862): ConvertConfig's renames, its
-    // delimiter tables and the header line it adds, with the file unchanged.
     EXPECT_TRUE(configNeedsConversion("Kainote v0.8.0.1100"));
     EXPECT_FALSE(configNeedsConversion("Kainote v0.9.0.1142"));
     EXPECT_FALSE(configNeedsConversion("HikariSub v0.0.1-rc.1"));
@@ -536,29 +470,22 @@ TEST(SettingsImport, OldHeadersAreReadThroughConfigConvertersRenames)
     const PlanRow &font = rowOf(plan, "setting:grid.font");
     EXPECT_EQ(font.value, SettingValue(std::string("Arial")));
     EXPECT_NE(font.reason.find("renamed from GridFontName"), std::string::npos);
-    // The '\f' delimiter becomes the brace table's entries.
     EXPECT_EQ(rowOf(plan, "setting:editor.tagButton1").raw, "{\n\t\\i1\n\tItalic\n}");
-    // An audio option in Config.txt: without AudioConfig.txt legacy loads
-    // the audio defaults over it (config.cpp:868-870).
     const auto commit = rowsKeyed(plan, "AUDIO_AUTO_COMMIT");
     ASSERT_EQ(commit.size(), 1u);
     EXPECT_EQ(commit.front()->disposition, Disposition::Superseded);
-    // ToolbarIDs is converted through the hotkey names, then retired.
     const auto toolbar = rowsKeyed(plan, "TOOLBAR_IDS");
     ASSERT_EQ(toolbar.size(), 1u);
     EXPECT_EQ(toolbar.front()->raw, "{\n\tVIDEO_PLAY_PAUSE\n\tNotAName\n}");
     EXPECT_EQ(toolbar.front()->disposition, Disposition::Retired);
     EXPECT_NE(rowOf(plan, "file:Config/Config.txt").reason.find("ConfigConverter"), std::string::npos);
 
-    // Under a current header an old name is unknown, not renamed.
     const Plan current = buildPlan({config(padding() + "AudioAutoCommit=false\r\n")}, linuxHost(),
                                    readBy(ReadBy::Windows));
     const auto old = rowsKeyed(current, "AudioAutoCommit");
     ASSERT_EQ(old.size(), 1u);
     EXPECT_EQ(old.front()->disposition, Disposition::Unresolved);
 }
-
-// ---- Themes, unknown keys and the wave-5 retirements
 
 TEST(SettingsImport, ThemesAndColourKeysAreExcludedWithANotice)
 {
@@ -585,7 +512,6 @@ TEST(SettingsImport, ThemesAndColourKeysAreExcludedWithANotice)
     ASSERT_EQ(unknown.size(), 1u);
     EXPECT_EQ(unknown.front()->disposition, Disposition::Unresolved);
     EXPECT_EQ(unknown.front()->raw, "1");
-    // Nothing of them is written.
     const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
     EXPECT_FALSE(profile.values.contains("program.theme"));
 }
@@ -602,13 +528,11 @@ TEST(SettingsImport, RetiredOptionsAndActionsAreDroppedWithANotice)
         EXPECT_EQ(row.disposition, Disposition::Retired) << key;
         EXPECT_FALSE(row.selectable);
     }
-    // By symbol and by number (Hotkeys.cpp:300-301).
     for (const auto *id : {"shortcut:GLOBAL_VIDEO_INDEXING:G", "shortcut:GLOBAL_VIDEO_INDEXING:S",
                            "shortcut:GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW:G"}) {
         EXPECT_EQ(rowOf(plan, id).disposition, Disposition::Retired) << id;
         EXPECT_NE(rowOf(plan, id).reason.find("retired"), std::string::npos);
     }
-    // AV3 (owner 2026-10-18): "Open blank 2h30m audio" is retired too.
     const PlanRow &blank = rowOf(plan, "shortcut:GLOBAL_OPEN_DUMMY_AUDIO:G");
     EXPECT_EQ(blank.disposition, Disposition::Retired);
     EXPECT_NE(blank.reason.find("dummy video"), std::string::npos) << blank.reason;
@@ -618,10 +542,6 @@ TEST(SettingsImport, RetiredOptionsAndActionsAreDroppedWithANotice)
     EXPECT_FALSE(profile.values.contains(std::string(kHotkeysSetting)));
 }
 
-// WS3-view-arrangements-retired (owner decision, 2026-10-18): layout presets
-// and saved layouts replace the View arrangements, and the editor is always
-// shown: their bindings and EDITOR_ON are retired, each with its reason, and
-// nothing of them is written.
 TEST(SettingsImport, RetiredViewArrangementsAndEditorSwitchAreDroppedWithANotice)
 {
     const Plan plan = buildPlan({config(padding() + "EDITOR_ON=0\r\n"),
@@ -653,13 +573,8 @@ TEST(SettingsImport, RetiredViewArrangementsAndEditorSwitchAreDroppedWithANotice
         EXPECT_FALSE(map.contains(HotkeyId{hotkeyIdOf(symbol), GlobalHotkey})) << symbol;
 }
 
-// ---- Hotkeys.txt / AudioHotkeys.txt
-
 TEST(SettingsImport, ShortHotkeyFileImportsItsValidBindings)
 {
-    // C04-short-file (approved 2026-09-27): four records, legacy loaded its
-    // defaults over them (Hotkeys.cpp:309-315); the importer reads the valid
-    // ones and keeps the others visibly unresolved.
     const Plan plan = buildPlan({hotkeys("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\nGRID_DUPLICATE_LINES S=Ctrl-D\r\n"
                                          "NOT_AN_ACTION G=Ctrl-K\r\nGLOBAL_UNDO G=\r\n")},
                                 linuxHost(), readBy(ReadBy::Windows));
@@ -674,12 +589,9 @@ TEST(SettingsImport, ShortHotkeyFileImportsItsValidBindings)
     const PlanRow &unknown = rowOf(plan, "record:Config/Hotkeys.txt:4");
     EXPECT_EQ(unknown.disposition, Disposition::Unresolved);
     EXPECT_EQ(unknown.raw, "NOT_AN_ACTION G=Ctrl-K");
-    // A blank record is no proof of unbinding.
     const PlanRow &blank = rowOf(plan, "record:Config/Hotkeys.txt:5");
     EXPECT_EQ(blank.disposition, Disposition::Unresolved);
     EXPECT_NE(blank.reason.find("no proof of unbinding"), std::string::npos);
-    // The defaults the short file leaves out are offered to unbind, not
-    // proposed: legacy added them.
     const PlanRow &undo = rowOf(plan, "shortcut:GLOBAL_UNDO:G");
     EXPECT_EQ(undo.disposition, Disposition::Missing);
     EXPECT_TRUE(undo.selectable);
@@ -696,20 +608,16 @@ TEST(SettingsImport, ShortHotkeyFileImportsItsValidBindings)
 
 TEST(SettingsImport, EmptyAndMalformedHotkeyFiles)
 {
-    // Only the header: read, nothing in it.
     const Plan empty = buildPlan({hotkeys("")}, linuxHost(), readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(empty, "file:Config/Hotkeys.txt").disposition, Disposition::Read);
     EXPECT_TRUE(proposedRows(empty).empty());
 
-    // No "[" header: LoadHkeys found it outdated and replaced it with its
-    // defaults (Hotkeys.cpp:250-277); every record stays unresolved.
     const Plan noHeader = buildPlan({hotkeys("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n", "")}, linuxHost(),
                                     readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(noHeader, "file:Config/Hotkeys.txt").disposition, Disposition::Unresolved);
     EXPECT_EQ(rowOf(noHeader, "record:Config/Hotkeys.txt:1").disposition, Disposition::Unresolved);
     EXPECT_TRUE(proposedRows(noHeader).empty());
 
-    // Mixed: a record without a window letter, an invalid key, a number.
     const Plan mixed = buildPlan({hotkeys("GLOBAL_SAVE_SUBS X=Ctrl-Alt-S\r\nGLOBAL_UNDO G=Ctrl-Bogus\r\n"
                                           "5000 S=Ctrl-Alt-W\r\n")},
                                  linuxHost(), readBy(ReadBy::Windows));
@@ -722,16 +630,11 @@ TEST(SettingsImport, EmptyAndMalformedHotkeyFiles)
 
 TEST(SettingsImport, SemanticVersionHotkeyHeaderIsRead)
 {
-    // O3-hotkeys-semver-header (approved 2026-10-05): LoadHkeys reads the
-    // build number five characters past the header's first '.'
-    // (Hotkeys.cpp:257-276), so the running legacy build's own header
-    // "[HikariSub v0.0.1-rc.1]" read as 0 and the file as outdated. The
-    // importer reads a semantic version header as current and its bindings.
     const HotkeyFile own = readHotkeyFile("[HikariSub v0.0.1-rc.1]\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\n");
     EXPECT_TRUE(own.semanticVersion);
     EXPECT_TRUE(own.accepted);
     EXPECT_FALSE(own.converted);
-    EXPECT_EQ(own.version, 0); // what legacy read, kept as evidence
+    EXPECT_EQ(own.version, 0);
     ASSERT_EQ(own.records.size(), 1u);
     for (const std::string_view header : {"[HikariSub v1.2.3]\n", "[HikariSub v0.0.1-rc.1+build.7] \n"}) {
         const HotkeyFile f = readHotkeyFile(std::string(header) + "GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\n");
@@ -756,8 +659,6 @@ TEST(SettingsImport, SemanticVersionHotkeyHeaderIsRead)
         EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("GLOBAL_SAVE_SUBS"), GlobalHotkey}).accel, "Ctrl-Alt-S");
     }
 
-    // Four-part headers keep LoadHkeys' rule: past 487 accepted, before 1141
-    // converted, 487 or less (and a header that is neither) outdated.
     const HotkeyFile current = readHotkeyFile("[Kainote v0.9.0.1500]\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\n");
     EXPECT_FALSE(current.semanticVersion);
     EXPECT_EQ(current.version, 1500);
@@ -780,16 +681,12 @@ TEST(SettingsImport, SemanticVersionHotkeyHeaderIsRead)
 
 TEST(SettingsImport, OldHotkeyNamesAreConvertedAndAbsentTargetsStayUnresolved)
 {
-    // version < 1141: ConvertHotkeys' renames, N -> S, W -> V
-    // (ConfigConverter.cpp:579-608).
     const Plan plan = buildPlan({hotkeys("PlayPause W=Space\r\nPlus5SecondG G=Ctrl-Alt-Right\r\n",
                                          "[Kainote v0.8.0.1100]\r\n")},
                                 linuxHost(), readBy(ReadBy::Windows));
     const PlanRow &play = rowOf(plan, "shortcut:VIDEO_PLAY_PAUSE:V");
     EXPECT_NE(play.reason.find("renamed from PlayPause"), std::string::npos);
-    EXPECT_EQ(play.disposition, Disposition::Unchanged); // Space is its default
-    // Plus5SecondG -> GLOBAL_5_SECONDS_FORWARD, which is no action: no
-    // guessed Video substitute (settings-migration-map.md).
+    EXPECT_EQ(play.disposition, Disposition::Unchanged);
     const PlanRow &absent = rowOf(plan, "record:Config/Hotkeys.txt:3");
     EXPECT_EQ(absent.disposition, Disposition::Unresolved);
     EXPECT_NE(absent.reason.find("GLOBAL_5_SECONDS_FORWARD"), std::string::npos);
@@ -797,18 +694,14 @@ TEST(SettingsImport, OldHotkeyNamesAreConvertedAndAbsentTargetsStayUnresolved)
 
 TEST(SettingsImport, LaterBindingsSupersedeAndConflictsAreShown)
 {
-    // GLOBAL_SAVE_SUBS twice: the last is in effect. GLOBAL_OPEN_SUBS takes
-    // Ctrl-S, which the default Save holds: legacy gave it Ctrl-S, so the
-    // full file's missing Save default is proposed for unbinding.
     std::string body = "GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-Q\r\nGLOBAL_UNDO G=Ctrl-S\r\n";
     const Plan plan = buildPlan({hotkeys(body)}, linuxHost(), readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(plan, "record:Config/Hotkeys.txt:2").disposition, Disposition::Superseded);
     EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_SAVE_SUBS:G").value, SettingValue(std::string("Ctrl-Alt-Q")));
     const PlanRow &undo = rowOf(plan, "shortcut:GLOBAL_UNDO:G");
     EXPECT_EQ(undo.disposition, Disposition::Change);
-    EXPECT_EQ(undo.reason.find("the default binding of"), std::string::npos); // Save's own row moves it
+    EXPECT_EQ(undo.reason.find("the default binding of"), std::string::npos);
 
-    // Against a user's binding of the same keys: shown and not proposed.
     Destination users = linuxHost();
     HotkeyMap mine;
     loadDefaultHotkeys(mine, false);
@@ -823,8 +716,6 @@ TEST(SettingsImport, LaterBindingsSupersedeAndConflictsAreShown)
 
 TEST(SettingsImport, MacroBindingsUseTheFileNameAndOrdinalAlias)
 {
-    // S44-macro-alias: "Script <file>-<k>" (Hotkeys.cpp:281-289), the
-    // scripts not run; a problem the loaded scripts have stays visible.
     Destination d = linuxHost();
     d.macroProblem = [](std::string_view alias) {
         return alias == "dup.lua:1" ? std::string("two scripts are named dup.lua") : std::string();
@@ -845,13 +736,10 @@ TEST(SettingsImport, MacroBindingsUseTheFileNameAndOrdinalAlias)
     EXPECT_EQ(profile.values.at(std::string(kAutomationHotkeysSetting)),
               SettingValue(std::vector<std::string>{"Script tools.lua-2\tCtrl+Shift+A\t\t"}));
 
-    // A macro bound here already keeps its keys unless chosen.
     Destination bound = destinationOf(profile, d);
     const Plan again = buildPlan({hotkeys("Script tools.lua-2=Ctrl-Shift-Z\r\n")}, bound, readBy(ReadBy::Windows));
     EXPECT_FALSE(rowOf(again, "macro:Script tools.lua-2").proposedImport);
 }
-
-// ---- Paths
 
 TEST(SettingsImport, ForeignAndMissingPathsAreReportedNotRepaired)
 {
@@ -869,7 +757,6 @@ TEST(SettingsImport, ForeignAndMissingPathsAreReportedNotRepaired)
     const PlanRow &recent = rowOf(plan, "setting:recent.subtitles");
     EXPECT_EQ(recent.disposition, Disposition::Change);
     EXPECT_EQ(recent.unresolvedPaths, (std::vector<std::string>{"D:\\media\\a.ass", "/gone/b.ass"}));
-    // The list keeps every entry as it was, in order.
     EXPECT_EQ(recent.value,
               SettingValue(std::vector<std::string>{"D:\\media\\a.ass", "/gone/b.ass", "/here/c.ass"}));
     const auto fonts = rowsKeyed(plan, "EXTERNAL_FONTS_DIRECTORY");
@@ -878,20 +765,12 @@ TEST(SettingsImport, ForeignAndMissingPathsAreReportedNotRepaired)
     EXPECT_FALSE(fonts.front()->selectable);
     EXPECT_EQ(fonts.front()->unresolvedPaths, (std::vector<std::string>{"D:\\fonts"}));
 
-    // A second import of the same files neither duplicates the recents nor
-    // repairs the missing one.
     const Profile first = applyPlan(plan, proposedRows(plan), d);
     const Plan second = buildPlan({config(body)}, destinationOf(first, d), readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(second, "setting:recent.subtitles").disposition, Disposition::Unchanged);
     EXPECT_EQ(applyPlan(second, proposedRows(second), destinationOf(first, d)), first);
 }
 
-// W2-missing-renderer-libass: a Windows profile's VSFILTER_INSTANCE names a
-// CSRI renderer; where it is not installed (Linux, a build without the Csri
-// folder, or legacy's xy-VSFilter, which is not shipped: W2-no-xy-vsfilter)
-// the row stays unresolved and is not proposed, so the profile keeps drawing
-// through libass. Where it is installed (VSFilterMod in the Windows package)
-// it is imported.
 TEST(SettingsImport, ARendererThatIsNotInstalledStaysUnresolved)
 {
     const std::string body = padding() + "VSFILTER_INSTANCE=vsfiltermod_textsub\r\n";
@@ -905,7 +784,6 @@ TEST(SettingsImport, ARendererThatIsNotInstalledStaysUnresolved)
     EXPECT_NE(row.reason.find("not installed here"), std::string::npos) << row.reason;
     EXPECT_FALSE(proposedRows(plan).contains("setting:video.subtitleProvider"));
     EXPECT_FALSE(applyPlan(plan, {"setting:video.subtitleProvider"}, noCsri).values.contains("video.subtitleProvider"));
-    // libass itself is installed everywhere.
     const Plan libass = buildPlan({config(padding() + "VSFILTER_INSTANCE=libass\r\n")}, noCsri, readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(libass, "setting:video.subtitleProvider").disposition, Disposition::Change);
     EXPECT_TRUE(rowOf(libass, "setting:video.subtitleProvider").proposedImport);
@@ -918,16 +796,12 @@ TEST(SettingsImport, ARendererThatIsNotInstalledStaysUnresolved)
     EXPECT_TRUE(rowOf(installed, "setting:video.subtitleProvider").proposedImport);
     EXPECT_EQ(applyPlan(installed, proposedRows(installed), package).values.at("video.subtitleProvider"),
               SettingValue(std::string("vsfiltermod_textsub")));
-    // Legacy's default renderer, in most legacy Windows profiles: not
-    // installed in the package either, so it is not imported.
     const Plan xy = buildPlan({config(padding() + "VSFILTER_INSTANCE=xy-vsfilter_textsub\r\n")}, package,
                               readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(xy, "setting:video.subtitleProvider").disposition, Disposition::Unresolved);
     EXPECT_FALSE(rowOf(xy, "setting:video.subtitleProvider").proposedImport);
     EXPECT_FALSE(applyPlan(xy, proposedRows(xy), package).values.contains("video.subtitleProvider"));
 }
-
-// ---- Keeping the destination, repeat import and later edits (S44-import)
 
 TEST(SettingsImport, CurrentChoicesAreKeptUnlessChosen)
 {
@@ -939,16 +813,13 @@ TEST(SettingsImport, CurrentChoicesAreKeptUnlessChosen)
     EXPECT_EQ(font.disposition, Disposition::Change);
     EXPECT_EQ(font.current, SettingValue(std::string("Mine")));
     EXPECT_FALSE(font.proposedImport);
-    EXPECT_TRUE(rowOf(plan, "setting:grid.fontSize").proposedImport); // over the default
-    // Chosen anyway, it is imported.
+    EXPECT_TRUE(rowOf(plan, "setting:grid.fontSize").proposedImport);
     auto chosen = proposedRows(plan);
     chosen.insert("setting:grid.font");
     EXPECT_EQ(applyPlan(plan, chosen, d).values.at("grid.font"), SettingValue(std::string("Arial")));
     EXPECT_EQ(applyPlan(plan, proposedRows(plan), d).values.at("grid.font"), SettingValue(std::string("Mine")));
 }
 
-// PV1 (#398): a Config.txt holding legacy's default sample text imports
-// as the new one (nothing to change); a text the user chose comes over.
 TEST(SettingsImport, TheOldPreviewTextDefaultImportsAsTheNewOne)
 {
     const SettingValue fresh(std::string(reinterpret_cast<const char *>(u8"光 Hikari 日本")));
@@ -963,9 +834,6 @@ TEST(SettingsImport, TheOldPreviewTextDefaultImportsAsTheNewOne)
     EXPECT_TRUE(chosen.proposedImport);
 }
 
-// AU2 (#268): the audio panel's Customise choice is the rewrite's own
-// (no legacy key): an import, even of an AudioConfig.txt that resets the
-// audio options, has no row for it and leaves it as it is.
 TEST(SettingsImport, TheAudioPanelArrangementIsLeftAsItIs)
 {
     Destination d = linuxHost();
@@ -992,14 +860,13 @@ TEST(SettingsImport, RepeatedImportIsANoOpAndLaterEditsAreKept)
     const Destination start = linuxHost();
     const Plan plan = buildPlan(sources, start, readBy(ReadBy::Windows));
     auto chosen = proposedRows(plan);
-    chosen.erase("setting:grid.fontSize"); // the user keeps this one
+    chosen.erase("setting:grid.fontSize");
     const Profile imported = applyPlan(plan, chosen, start);
     EXPECT_EQ(imported.files.at("rules.toml"), convertedRules("1\ta\tb\n"));
     EXPECT_EQ(imported.files.at("Dictionary/UserDic.udic"), "słowo\n");
     const Receipt receipt = receiptOf(plan, chosen, "default");
     EXPECT_TRUE(receipt.kept.contains("setting:grid.fontSize"));
 
-    // The same sources again: the same choices, nothing new.
     PlanOptions o = readBy(ReadBy::Windows);
     o.previous = &receipt;
     const Destination after = destinationOf(imported);
@@ -1010,7 +877,6 @@ TEST(SettingsImport, RepeatedImportIsANoOpAndLaterEditsAreKept)
     EXPECT_EQ(applyPlan(again, proposedRows(again), after), imported);
     EXPECT_TRUE(receiptOf(again, proposedRows(again), "default").sameIdentity(receipt));
 
-    // A later edit is not overwritten by importing again.
     Destination edited = after;
     edited.values["grid.font"] = std::string("Edited");
     const Plan third = buildPlan(sources, edited, o);
@@ -1019,17 +885,14 @@ TEST(SettingsImport, RepeatedImportIsANoOpAndLaterEditsAreKept)
     EXPECT_FALSE(font.proposedImport);
     EXPECT_NE(font.reason.find("changed since the last import"), std::string::npos);
 
-    // Changed sources: a fresh diff whose identity differs.
     std::vector<SourceFile> changed = sources;
     changed[0] = config(padding() + "GRID_FONT=Verdana\r\nGRID_FONT_SIZE=12\r\n");
     const Plan fresh = buildPlan(changed, after, o);
     const PlanRow &verdana = rowOf(fresh, "setting:grid.font");
     EXPECT_EQ(verdana.disposition, Disposition::Change);
-    EXPECT_TRUE(verdana.proposedImport); // not edited since the import
+    EXPECT_TRUE(verdana.proposedImport);
     EXPECT_FALSE(receiptOf(fresh, proposedRows(fresh), "default").sameIdentity(receipt));
 }
-
-// ---- Authored collections and encodings
 
 TEST(SettingsImport, CollectionsAreCarriedOverByteForByte)
 {
@@ -1043,7 +906,7 @@ TEST(SettingsImport, CollectionsAreCarriedOverByteForByte)
                                 d, readBy(ReadBy::Windows));
     const PlanRow &rules = rowOf(plan, "collection:rules.toml");
     EXPECT_EQ(rules.disposition, Disposition::Change);
-    EXPECT_FALSE(rules.proposedImport); // the user's rules.toml is kept
+    EXPECT_FALSE(rules.proposedImport);
     EXPECT_EQ(rules.files, std::vector<std::string>{"rules.toml"});
     EXPECT_NE(rules.reason.find("converted to rules.toml"), std::string::npos);
     const PlanRow &en = rowOf(plan, "collection:Dictionary/en_US");
@@ -1058,7 +921,6 @@ TEST(SettingsImport, CollectionsAreCarriedOverByteForByte)
     EXPECT_FALSE(p.files.contains("Dictionary/pl_PL.dic"));
 }
 
-// Without the conversion the rules are only reported.
 TEST(SettingsImport, RulesWithoutAConversionAreNotImported)
 {
     Destination d = linuxHost();
@@ -1071,7 +933,6 @@ TEST(SettingsImport, RulesWithoutAConversionAreNotImported)
 
 TEST(SettingsImport, AmbiguousEncodingNeedsAnExplicitInterpretation)
 {
-    // Not UTF-8 and no BOM: nothing is read until an interpretation is chosen.
     const SourceFile latin = config(padding() + "GRID_FONT=Caf\xE9\r\n");
     const Plan plan = buildPlan({latin}, linuxHost(), readBy(ReadBy::Windows));
     EXPECT_TRUE(plan.ambiguousEncoding);
@@ -1084,7 +945,6 @@ TEST(SettingsImport, AmbiguousEncodingNeedsAnExplicitInterpretation)
     EXPECT_EQ(rowOf(chosen, "setting:grid.font").value, SettingValue(std::string("Café")));
     EXPECT_NE(rowOf(chosen, "file:Config/Config.txt").reason.find("Windows-1252"), std::string::npos);
 
-    // A UTF-16LE BOM is read as legacy's wxConvAuto read it.
     std::string utf16 = "\xFF\xFE";
     for (const char c : std::string(kHeader) + padding() + "GRID_FONT=Arial\r\n") {
         utf16 += c;

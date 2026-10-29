@@ -1,6 +1,3 @@
-// I4: general <-> indexed handoff with the real Qt player and media helper.
-// Frames carry their index as a barcode, so "the same frame" is checked by
-// pixels on both sides of a switch.
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/qt_general_player.h"
 #include "hikari/backends/transport_coordinator.h"
@@ -48,7 +45,6 @@ int barcode(const IndexedFrame &f)
     return barcode(image);
 }
 
-// Accepts every presentation and remembers what it was shown.
 class RecordingPresenter : public PresenterPort {
 public:
     void present(Presentation p, Done done) override
@@ -61,7 +57,6 @@ public:
     std::vector<int> shown;
 };
 
-// The editor output, counting stops; nothing plays in these tests.
 class SilentOutput : public AudioOutputPort {
 public:
     std::vector<OutputDevice> devices() override { return {}; }
@@ -76,7 +71,7 @@ public:
     int starts = 0, stops = 0;
 };
 
-} // namespace
+}
 
 class TransportTests : public QObject {
     Q_OBJECT
@@ -131,10 +126,9 @@ private slots:
         QVERIFY(ack && ack->has_value());
         QCOMPARE(rig.general.playbackState(), PlaybackState::Stopped);
         QCOMPARE(rig.coordinator.mode(), TransportMode::Indexed);
-        // The frame resolved by timestamp lookup is the one the player showed.
         QCOMPARE((*ack)->indexedFrame, showing);
         QCOMPARE(rig.presenter.shown, std::vector<int>{showing});
-        QCOMPARE(rig.output.starts, 0); // the new owner has not started anything
+        QCOMPARE(rig.output.starts, 0);
         std::fprintf(stderr, "%s: player showed frame %d at %lld us; indexed frame %d at %lld us\n",
                      qPrintable(kind), showing, static_cast<long long>((*ack)->carriedUs), (*ack)->indexedFrame,
                      static_cast<long long>((*ack)->indexedFrameUs));
@@ -153,11 +147,11 @@ private slots:
         const auto ack = run([&](auto done) { rig.coordinator.toGeneral(std::move(done)); });
         QVERIFY(ack && ack->has_value());
         QCOMPARE(rig.coordinator.mode(), TransportMode::General);
-        QVERIFY(rig.output.stops > stopsBefore); // the editor output stopped and flushed first
+        QVERIFY(rig.output.stops > stopsBefore);
         QVERIFY((*ack)->delivered.has_value());
         QCOMPARE((*ack)->carriedUs, rig.coordinator.frameStartUs(indexed));
         QVERIFY(QTest::qWaitFor([&] { return rig.lastGeneralFrame >= 0; }, 5'000));
-        // General playback promises no exact frame: report what it delivered.
+        // The Qt player promises no exact frame, hence the one-frame tolerance.
         std::fprintf(stderr, "to general from indexed frame %d: player delivered frame %d at %lld us\n", indexed,
                      rig.lastGeneralFrame, static_cast<long long>((*ack)->delivered->deliveredStartUs));
         QVERIFY(std::abs(rig.lastGeneralFrame - indexed) <= 1);
@@ -176,7 +170,7 @@ private slots:
         QCOMPARE(first->error(), HandoffError::Superseded);
         QVERIFY(second->has_value());
         QCOMPARE(rig.coordinator.mode(), TransportMode::General);
-        QVERIFY(rig.presenter.shown.empty()); // the superseded frame was never presented
+        QVERIFY(rig.presenter.shown.empty());
     }
 
     void tracksAreMatchedAndPlayerSubtitlesSuppressed()
@@ -191,7 +185,6 @@ private slots:
         rig.indexed.audio(48000, 4, [&](auto r) { block = std::move(r); });
         QVERIFY(QTest::qWaitFor([&] { return block.has_value(); }, 10'000));
         QVERIFY(block->has_value());
-        // The second track is silence; the first is the ramp.
         for (std::byte b : (*block)->samples)
             QCOMPARE(std::to_integer<int>(b), 0);
     }

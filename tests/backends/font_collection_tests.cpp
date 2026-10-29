@@ -1,15 +1,3 @@
-// I5 (F47-corpus, F47-refresh): whole-document font collection from the
-// renderer's own selections, reimport into a clean environment, refresh after
-// font changes, concurrent documents and cancellation. Fixtures are the
-// generated CC0 fonts; on Linux FONTCONFIG_FILE lists only them, the Qt OFL
-// fonts and an initially empty refresh directory.
-//
-// Y6: the font picker's faces (the provider's and EXTERNAL_FONTS_DIRECTORY's),
-// their character coverage for the font filter, and refresh() for the
-// listing (F47-refresh). The installed-font listing runs on both providers:
-// a fixture installed into the private fontconfig configuration on Linux,
-// and on Windows installed for the current user while the test runs (Y8W,
-// windows_user_fonts.h), where DirectWrite lists it beside the system's.
 #include "hikari/application/font_families.h"
 #include "hikari/backends/libass_font_service.h"
 
@@ -39,8 +27,7 @@ using hikari::backends::LibassFontService;
 namespace {
 
 #ifndef _WIN32
-// The private configuration, set before fontconfig first initializes: the
-// ctest ENVIRONMENT property did not reach these tests on the Fedora runner.
+// Set before fontconfig initializes: ctest's ENVIRONMENT did not reach these tests on the Fedora runner.
 [[maybe_unused]] const bool kPrivateFontconfig = setenv("FONTCONFIG_FILE", HIKARI_FONTCONFIG_FILE, 1) == 0;
 #endif
 
@@ -68,7 +55,6 @@ std::string sha256Of(const std::string &path)
     return QCryptographicHash::hash(f.readAll(), QCryptographicHash::Sha256).toHex().toStdString();
 }
 
-// A document: styles "<name>,<family>,<bold>,<italic>" and events "<style>,<text>".
 std::vector<std::byte> document(std::initializer_list<std::string> styles, std::initializer_list<std::string> events)
 {
     std::string s = "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\nFormat: Name, "
@@ -118,8 +104,6 @@ const CollectedFont *font(const FontCollection &c, const std::string &name)
     return nullptr;
 }
 
-// A path as listed, for comparison: native separators, no trailing one, and
-// on Windows without regard to case.
 QString comparable(const QString &path)
 {
     QString out = QDir::toNativeSeparators(path);
@@ -136,7 +120,6 @@ bool samePath(const std::string &listed, const std::filesystem::path &file)
     return comparable(QString::fromStdString(listed)) == comparable(QString::fromStdU16String(file.u16string()));
 }
 
-// The installed face the provider lists from `file`.
 std::optional<SystemFace> listedFace(const std::vector<SystemFace> &faces, const std::filesystem::path &file,
                                      int index = 0)
 {
@@ -146,7 +129,6 @@ std::optional<SystemFace> listedFace(const std::vector<SystemFace> &faces, const
     return std::nullopt;
 }
 
-// The families the font picker lists over `service` (FontEnumerator).
 std::vector<std::u16string> pickerFamilies(FontServicePort &service)
 {
     FontFamilies families(service, [](char16_t c) { return c >= u'A' && c <= u'Z' ? char16_t(c + 32) : c; });
@@ -163,8 +145,7 @@ bool hasFamily(const SystemFace &face, const std::string &name)
     return std::find(face.families.begin(), face.families.end(), name) != face.families.end();
 }
 
-// Asks until `condition` holds, for up to 30 s: DirectWrite's font cache
-// takes a moment to let go of a removed font, fontconfig answers at once.
+// DirectWrite's font cache takes a moment to let go of a removed font.
 template <typename Condition> bool eventually(Condition condition)
 {
     const auto start = std::chrono::steady_clock::now();
@@ -176,11 +157,6 @@ template <typename Condition> bool eventually(Condition condition)
     return true;
 }
 
-// One fixture installed as a system font while a test runs: on Linux copied
-// into the private configuration's refresh folder (as installed-<file>, apart
-// from the other refresh tests' files), on Windows installed for the current
-// user. remove() takes it away again, as the destructor does when a failed
-// assertion ended the test first.
 class InstalledFont {
 public:
     InstalledFont(const char *directory, const char *file, [[maybe_unused]] const char *family)
@@ -231,8 +207,7 @@ private:
 #ifdef _WIN32
     hikari::testing::WindowsUserFonts m_fonts;
 #else
-    // fontconfig trusts a folder's cache while the folder's modification
-    // time (whole seconds) is one it has cached; move it past every earlier one.
+    // fontconfig trusts a folder's cache while its mtime (whole seconds) is one it has cached.
     void changed(std::filesystem::file_time_type before)
     {
         const auto now = std::filesystem::file_time_type::clock::now();
@@ -244,11 +219,8 @@ private:
     bool m_installed = false;
 };
 
-} // namespace
+}
 
-// Y6: the external fonts (EXTERNAL_FONTS_DIRECTORY) are listed from their
-// bytes, every face of a collection, and named by their file; legacy
-// registered them for the process (FontEnumerator.cpp:637).
 TEST(FontPickerFaces, ExternalFontsAreListedFromTheirBytes)
 {
     const std::string refresh = std::string(HIKARI_FONT_REFRESH_SOURCE) + "/refresh.ttf";
@@ -264,13 +236,10 @@ TEST(FontPickerFaces, ExternalFontsAreListedFromTheirBytes)
     EXPECT_EQ(faces[2].families.front(), "HikariProbeCollectionB");
     EXPECT_EQ(faces[2].index, 1);
     EXPECT_EQ(faces[2].externalFile, fixture("collection.ttc"));
-    // Bytes no face is read from list nothing.
     env.externalFonts = {{"/x/broken.ttf", std::make_shared<std::vector<std::byte>>(16, std::byte{1})}};
     EXPECT_TRUE(service.pickerFaces(env).empty());
 }
 
-// VT3: the names libass matches a leased font by (family, full and
-// PostScript), read from its bytes: every face of a collection.
 TEST(FontPickerFaces, ALeasesNamesAreReadFromItsBytes)
 {
     const auto names = hikari::backends::fontNames(*load(fixture("collection.ttc")));
@@ -279,13 +248,8 @@ TEST(FontPickerFaces, ALeasesNamesAreReadFromItsBytes)
     EXPECT_TRUE(hikari::backends::fontNames(std::vector<std::byte>(16, std::byte{1})).empty());
 }
 
-// A Script's attachment can be a hostile collection: many faces, each of
-// many names. Its names are read in linear time and bounded (Codex security,
-// VT3 round 7: 32 faces of 5000 names took 31 s).
 namespace {
 
-// A name table: `records` Windows UTF-16BE family-name records, record i
-// naming `text(i)`, or every record naming the one string `text(0)`.
 std::vector<std::byte> nameTable(unsigned records, const std::function<std::string(unsigned)> &text, bool shared)
 {
     std::vector<std::byte> out, strings;
@@ -314,7 +278,6 @@ std::vector<std::byte> nameTable(unsigned records, const std::function<std::stri
     return out;
 }
 
-// A collection of `faces` faces, all base.ttf with the name table `names`.
 std::vector<std::byte> collectionOf(unsigned faces, const std::vector<std::byte> &names)
 {
     const auto base = load(fixture("base.ttf"));
@@ -363,11 +326,10 @@ std::vector<std::byte> collectionOf(unsigned faces, const std::vector<std::byte>
     return out;
 }
 
-} // namespace
+}
 
 TEST(FontPickerFaces, AHostileCollectionsNamesAreBounded)
 {
-    // 32 faces, each of 5000 distinct family names.
     const auto out = collectionOf(32, nameTable(
                                           5000,
                                           [](unsigned i) {
@@ -387,11 +349,8 @@ TEST(FontPickerFaces, AHostileCollectionsNamesAreBounded)
     EXPECT_LT(ms, 3000);
 }
 
-// Names that repeat add nothing kept, but each is still read: the bytes
-// read are bounded, not only the names kept.
 TEST(FontPickerFaces, AHostileCollectionsRepeatedLongNamesAreBounded)
 {
-    // 256 faces, each of 2730 records sharing one name of 16380 characters.
     const auto out =
         collectionOf(256, nameTable(2730, [](unsigned) { return std::string(16380, 'A'); }, true));
     ASSERT_FALSE(out.empty());
@@ -404,8 +363,6 @@ TEST(FontPickerFaces, AHostileCollectionsRepeatedLongNamesAreBounded)
     EXPECT_LT(ms, 3000);
 }
 
-// The font filter's check (FontEnumerator::CheckGlyphsExists): a face
-// covers the filter when it maps every character.
 TEST(FontPickerFaces, CoverageIsEveryCharacter)
 {
     FontEnvironment env;
@@ -421,8 +378,6 @@ TEST(FontPickerFaces, CoverageIsEveryCharacter)
     EXPECT_EQ(service.facesCover(faces, env, std::u32string(1, U'\0')), (std::vector<bool>{false, false}));
 }
 
-// An external font renders as an installed one, and the renderer's
-// selection names its file (the substituted face the font dialog reports).
 TEST(FontPickerFaces, ExternalFontsRenderAndAreNamedByTheirFile)
 {
     const std::string refresh = std::string(HIKARI_FONT_REFRESH_SOURCE) + "/refresh.ttf";
@@ -457,9 +412,7 @@ TEST(FontCollection, EveryStyleAndInlineChangeIsCollectedAndReimportsIdentically
     for (const auto &f : c->fonts)
         names.push_back(f.name);
     std::sort(names.begin(), names.end());
-    // What libass selected: style W's own face is loaded before \b1 switches
-    // to the real bold, so weighted.ttf is collected too; the unused collision
-    // font is not.
+    // libass loads style W's own face before \b1 switches to the real bold, so weighted.ttf is collected too.
     EXPECT_EQ(names, (std::vector<std::string>{"base-bold.ttf", "base.ttf", "collection.ttc", "legacy.ttf",
                                                "weighted.ttf"}));
     EXPECT_EQ(font(*c, "collection.ttc")->faces, std::vector<long>{1});
@@ -517,7 +470,7 @@ TEST(FontCollection, AnAttachmentEditMakesANewGeneration)
     env.generation = 1;
     LibassFontService service;
     const auto before = service.collect(script, env);
-    env.attachments = {{"collision-a.ttf", load(fixture("collision-b.ttf"))}}; // same name, new bytes
+    env.attachments = {{"collision-a.ttf", load(fixture("collision-b.ttf"))}};
     env.generation = 2;
     const auto after = service.collect(script, env);
     ASSERT_TRUE(before && after);
@@ -537,9 +490,6 @@ TEST(FontCollection, CancellationEndsTheWork)
     EXPECT_EQ(c.error(), FontError::Cancelled);
 }
 
-// The multilingual corpus: Latin, Arabic, combining marks, CJK, a drawing and
-// an emoji no fixture has. Characters outside the requested face are fallback
-// dependent; the collection says so instead of claiming completeness.
 TEST(FontCollection, MultilingualCorpusReportsWhatIsIncomplete)
 {
     const auto script = document({"L,HikariProbeBase,0,0", "F,HikariProbeFallback,0,0"},
@@ -554,20 +504,11 @@ TEST(FontCollection, MultilingualCorpusReportsWhatIsIncomplete)
     EXPECT_NE(std::find(c->missingGlyphs.begin(), c->missingGlyphs.end(), 0x1f600u), c->missingGlyphs.end());
     ASSERT_NE(font(*c, "fallback.ttf"), nullptr);
     EXPECT_NE(font(*c, "base.ttf"), nullptr);
-    // The attachments-only corpus replays identically: no host fallback was used.
     const auto reimport = service.verifyReimport(script, *c, env.defaultFamily);
     ASSERT_TRUE(reimport);
     EXPECT_TRUE(reimport->identical);
 }
 
-// Y6 (F47-refresh) on both providers: an installed font is listed from its
-// file under its family name, with its coverage, in the picker's families
-// and from a folder a font change re-lists; once it is removed, the listing
-// after refresh() drops it. On Windows it is installed for the current user
-// (HKCU Fonts and %LOCALAPPDATA%\Microsoft\Windows\Fonts), the second of
-// FontEnumerator's folders (FontEnumerator.cpp:362-374); on Linux into a
-// folder of the fontconfig configuration. The service lists before the
-// install, so the listing that names the font is one read after it.
 TEST(FontPickerFacesInstalled, AnInstalledFontIsListedUntilItIsRemoved)
 {
     LibassFontService service;
@@ -613,8 +554,6 @@ TEST(FontCollectionFontconfig, ProviderFallbackIsReportedAndDoesNotReplay)
     ASSERT_NE(fallback, nullptr);
     EXPECT_EQ(fallback->path, fixture("fallback.ttf"));
     EXPECT_EQ(fallback->roles, std::vector<std::string>{"fallback U+4E2D"});
-    // The accepted promise: report, do not promise replay. Without the host
-    // resolver the fallback frame differs; the Latin-only frame does not.
     const auto reimport = service.verifyReimport(script, *c);
     ASSERT_TRUE(reimport);
     EXPECT_FALSE(reimport->identical);
@@ -623,8 +562,6 @@ TEST(FontCollectionFontconfig, ProviderFallbackIsReportedAndDoesNotReplay)
 
 TEST(FontCollectionFontconfig, InstallingAFontIsSeenByTheNextGeneration)
 {
-    // Installed and removed with the folder's modification time moved on, so
-    // the cache fontconfig keeps for the folder does not outlive the font.
     InstalledFont font(HIKARI_FONT_REFRESH_SOURCE, "refresh.ttf", "HikariProbeRefresh");
     const auto script = document({"A,HikariProbeRefresh,0,0"}, {"A,Refresh"});
     FontEnvironment env;
@@ -632,8 +569,7 @@ TEST(FontCollectionFontconfig, InstallingAFontIsSeenByTheNextGeneration)
     LibassFontService service;
     const auto before = service.collect(script, env);
     ASSERT_TRUE(before);
-    // Absent: fontconfig answers with its best match under other names, at
-    // the request (Arch) or as a substitution (Ubuntu's fontconfig rules).
+    // fontconfig answers an absent family with its best match, at the request (Arch) or as a substitution (Ubuntu).
     const auto listed = [](const std::vector<std::string> &l) {
         return std::find(l.begin(), l.end(), "HikariProbeRefresh") != l.end();
     };
@@ -650,9 +586,6 @@ TEST(FontCollectionFontconfig, InstallingAFontIsSeenByTheNextGeneration)
     EXPECT_EQ(after->generation, 2u);
 }
 
-// Y6: installed faces are listed by fontconfig's first family name (the
-// Linux build's EnumFontFamiliesEx, platform.h:1133) and their coverage is
-// fontconfig's charset of the face (its GetGlyphIndicesW, platform.h:1106).
 TEST(FontPickerFacesFontconfig, InstalledFacesCoverWhatTheirCharsetHolds)
 {
     LibassFontService service;
@@ -668,14 +601,11 @@ TEST(FontPickerFacesFontconfig, InstalledFacesCoverWhatTheirCharsetHolds)
     EXPECT_EQ(listedFamily(chosen[1]), u"HikariProbeFallback");
     EXPECT_EQ(service.facesCover(chosen, env, U"A"), (std::vector<bool>{true, false}));
     EXPECT_EQ(service.facesCover(chosen, env, U"中"), (std::vector<bool>{false, true}));
-    // The folders a font change re-lists (hikarisub_linux_font_directories).
     const auto dirs = service.fontDirectories();
     EXPECT_NE(std::find(dirs.begin(), dirs.end(), std::string(HIKARI_FONT_FIXTURES)), dirs.end());
     EXPECT_NE(std::find(dirs.begin(), dirs.end(), std::string(HIKARI_FONT_REFRESH_DIR)), dirs.end());
 }
 
-// F47-refresh for the picker: the listing keeps what it read until
-// refresh(), which reads the installed fonts again.
 TEST(FontPickerFacesFontconfig, RefreshReadsTheInstalledFontsAgain)
 {
     namespace fs = std::filesystem;
@@ -687,8 +617,7 @@ TEST(FontPickerFacesFontconfig, RefreshReadsTheInstalledFontsAgain)
         const auto faces = service.pickerFaces(FontEnvironment{});
         return std::any_of(faces.begin(), faces.end(), [&](const SystemFace &f) { return f.path == installed.string(); });
     };
-    // fontconfig trusts a folder's cache while the folder's modification
-    // time (whole seconds) is unchanged; each change here moves it on.
+    // fontconfig trusts a folder's cache while its mtime (whole seconds) is unchanged.
     int seconds = 0;
     const auto touch = [&] {
         fs::last_write_time(installed.parent_path(), fs::file_time_type::clock::now() + std::chrono::seconds(++seconds * 2));
@@ -709,12 +638,6 @@ TEST(FontPickerFacesFontconfig, RefreshReadsTheInstalledFontsAgain)
 
 #ifdef _WIN32
 
-// Y6 on Windows: DirectWrite lists the fonts installed for every user and
-// for the current one, under the GDI family name legacy's EnumFontFamiliesEx
-// listed (FontEnumerator.cpp:155), and coverage reads each installed file's
-// character map as GetGlyphIndicesW did (FontEnumerator::CheckGlyphsExists).
-// The fixtures are installed for the current user while each test runs and
-// removed again afterwards.
 class FontPickerFacesDirectWrite : public ::testing::Test {
 protected:
     void SetUp() override { m_fonts.SetUp(); }
@@ -739,7 +662,6 @@ TEST_F(FontPickerFacesDirectWrite, SystemAndUserFontsAreListedByTheirGdiFamilyNa
     const auto faces = service.pickerFaces(FontEnvironment{});
     const std::filesystem::path windows = qEnvironmentVariable("WINDIR").toStdWString();
     ASSERT_FALSE(windows.empty()) << "WINDIR";
-    // Arial where the image has it, else any face listed from the system folder.
     const std::filesystem::path systemFolder = windows / L"Fonts";
     auto systemFont = listedFace(faces, systemFolder / L"arial.ttf");
     for (auto f = faces.begin(); !systemFont && f != faces.end(); ++f) {
@@ -764,7 +686,6 @@ TEST_F(FontPickerFacesDirectWrite, SystemAndUserFontsAreListedByTheirGdiFamilyNa
     EXPECT_EQ(fallback->listedFamily, "HikariProbeFallback");
     EXPECT_EQ(first->listedFamily, "HikariProbeCollectionA");
     EXPECT_EQ(second->listedFamily, "HikariProbeCollectionB");
-    // Listed under its GDI name; the typographic family is answered to too.
     EXPECT_EQ(legacy->listedFamily, "HikariProbeLegacy");
     EXPECT_TRUE(hasFamily(*legacy, "HikariProbeLegacy"));
     EXPECT_TRUE(hasFamily(*legacy, "HikariProbeModern"));

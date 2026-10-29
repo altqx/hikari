@@ -1,7 +1,3 @@
-// C1: typed time values and frame lookup (docs/time-semantics.md).
-// Fixture-driven cases read the approved-departure inputs and the recorded
-// legacy observations, so each approved change keeps its old result beside it.
-
 #include "hikari/core/frame_timeline.h"
 #include "hikari/core/time.h"
 
@@ -46,9 +42,7 @@ FrameTimeline vfr(std::initializer_list<std::int64_t> startsMs)
     return FrameTimeline::indexed(std::move(starts));
 }
 
-} // namespace
-
-// ---- checked arithmetic -------------------------------------------------
+}
 
 TEST(Checked, AdditionAndSubtractionNeverWrap)
 {
@@ -70,11 +64,11 @@ TEST(Checked, MulDivRoundsAsRequested)
 {
     EXPECT_EQ(*mulDiv(7, 1, 2, 1, Rounding::Floor), 3);
     EXPECT_EQ(*mulDiv(7, 1, 2, 1, Rounding::Ceil), 4);
-    EXPECT_EQ(*mulDiv(7, 1, 2, 1, Rounding::NearestTiesAway), 4);   // 3.5 -> 4
-    EXPECT_EQ(*mulDiv(-7, 1, 2, 1, Rounding::NearestTiesAway), -4); // -3.5 -> -4
+    EXPECT_EQ(*mulDiv(7, 1, 2, 1, Rounding::NearestTiesAway), 4);
+    EXPECT_EQ(*mulDiv(-7, 1, 2, 1, Rounding::NearestTiesAway), -4);
     EXPECT_EQ(*mulDiv(-7, 1, 2, 1, Rounding::Floor), -4);
     EXPECT_EQ(*mulDiv(-7, 1, 2, 1, Rounding::Ceil), -3);
-    EXPECT_EQ(*mulDiv(kMax, kMax, kMax, 1, Rounding::Floor), kMax);  // 128-bit intermediate
+    EXPECT_EQ(*mulDiv(kMax, kMax, kMax, 1, Rounding::Floor), kMax);
     EXPECT_EQ(mulDiv(kMax, 2, 1, 1, Rounding::Floor).error(), ArithmeticError::Overflow);
     EXPECT_EQ(*mulDiv(kMin, 1, 1, 1, Rounding::Floor), kMin);
     EXPECT_EQ(mulDiv(1, 1, 0, 1, Rounding::Floor).error(), ArithmeticError::DivisionByZero);
@@ -98,8 +92,6 @@ TEST(Checked, PortablePathMatchesNative)
     }
 }
 
-// ---- C01-equality ------------------------------------------------------
-
 TEST(C01Equality, EqualTimesSatisfyBothComparisons)
 {
     const auto fx = loadJson(fixture("equality.json"));
@@ -120,7 +112,6 @@ TEST(C01Equality, EqualTimesSatisfyBothComparisons)
 
 TEST(C01Equality, LegacyObservationIsTheDepartedBehavior)
 {
-    // Recorded legacy result (run 36591631319): equal times gave >= and <= false.
     const auto obs = loadJson(QStringLiteral(HIKARI_LEGACY_OBSERVATIONS));
     int checked = 0;
     for (const auto &cv : obs["cases"].toArray()) {
@@ -136,10 +127,8 @@ TEST(C01Equality, LegacyObservationIsTheDepartedBehavior)
         }
     }
     EXPECT_EQ(checked, 3);
-    EXPECT_TRUE(DocumentTime(1000) >= DocumentTime(1000)); // approved, differs from the above
+    EXPECT_TRUE(DocumentTime(1000) >= DocumentTime(1000));
 }
-
-// ---- intervals ---------------------------------------------------------
 
 TEST(TimeRange, HalfOpenEmptyAndReversed)
 {
@@ -151,17 +140,14 @@ TEST(TimeRange, HalfOpenEmptyAndReversed)
     const TimeRange reversed{ms(30), ms(10)};
     EXPECT_TRUE(reversed.isReversed());
     EXPECT_FALSE(reversed.contains(ms(20)));
-    EXPECT_EQ(reversed.start, ms(30)); // kept as authored, not swapped
+    EXPECT_EQ(reversed.start, ms(30));
 }
-
-// ---- rationals, rates and media timestamps -------------------------------
 
 TEST(Rational, NormalizedAndExactlyCompared)
 {
     EXPECT_EQ(*Rational::make(2, -4), *Rational::make(-1, 2));
     EXPECT_EQ(Rational::make(1, 0).error(), ArithmeticError::DivisionByZero);
     EXPECT_LT(*Rational::make(1, 3), *Rational::make(333333333, 999999998));
-    // n/(n-1) shrinks as n grows; the cross products need all 128 bits.
     EXPECT_LT(*Rational::make(kMax, kMax - 1), *Rational::make(kMax - 1, kMax - 2));
     EXPECT_EQ(*Rational::make(kMax, kMax - 1) <=> *Rational::make(kMax, kMax - 1), std::strong_ordering::equal);
     EXPECT_LT(*Rational::make(-kMax, 1), *Rational::make(-kMax + 1, 1));
@@ -174,28 +160,22 @@ TEST(FrameRate, KeepsTheExactFraction)
     EXPECT_EQ(ntsc.framesPerSecond().denominator(), 1001);
     EXPECT_EQ(FrameRate::make(0, 1).error(), ArithmeticError::InvalidRate);
     EXPECT_EQ(FrameRate::make(-24, 1).error(), ArithmeticError::InvalidRate);
-    // Frame 1 starts at 1001/24 ms = 1001/24000 s, retained as that fraction.
     EXPECT_EQ(*ntsc.secondsAt(VideoFrameIndex(1)), *Rational::make(1001, 24000));
 }
 
 TEST(MediaTimestamp, NearestMicrosecondTiesAwayAndReportsLoss)
 {
-    // 1/3 s -> 333333.33 µs -> 333333, inexact.
     auto third = toDocumentTime({1, *Rational::make(1, 3)});
     ASSERT_TRUE(third);
     EXPECT_EQ(third->time.microseconds(), 333'333);
     EXPECT_FALSE(third->exact);
-    // 1 tick of 1/2000000 s = 0.5 µs -> ties away from zero -> 1 and -1.
     EXPECT_EQ(toDocumentTime({1, *Rational::make(1, 2'000'000)})->time.microseconds(), 1);
     EXPECT_EQ(toDocumentTime({-1, *Rational::make(1, 2'000'000)})->time.microseconds(), -1);
-    // 90 kHz ticks are exact at whole milliseconds.
     auto exact = toDocumentTime({90'000, *Rational::make(1, 90'000)});
     EXPECT_EQ(exact->time.microseconds(), 1'000'000);
     EXPECT_TRUE(exact->exact);
     EXPECT_EQ(toDocumentTime({kMax, Rational::integer(1)}).error(), ArithmeticError::Overflow);
 }
-
-// ---- frame lookup ------------------------------------------------------
 
 TEST(FrameLookup, SpecExampleVariableRate)
 {
@@ -203,8 +183,7 @@ TEST(FrameLookup, SpecExampleVariableRate)
     EXPECT_EQ(tl.provenance(), Provenance::Exact);
     EXPECT_EQ(tl.frameAtOrAfter(ms(41))->value(), 2);
     EXPECT_EQ(tl.frameContaining(ms(41))->value(), 1);
-    EXPECT_EQ(tl.frameContaining(ms(81))->value(), 2); // exactly 81 ms shows frame 2
-    // [40,81) covers frame 1 only.
+    EXPECT_EQ(tl.frameContaining(ms(81))->value(), 2);
     EXPECT_EQ(tl.frameAtOrAfter(ms(40))->value(), 1);
     EXPECT_EQ(tl.lastFrameStartingBefore(ms(81))->value(), 1);
 }
@@ -214,7 +193,6 @@ TEST(FrameLookup, OutOfRangeIsAnErrorNotAClamp)
     const auto tl = vfr({0, 40, 81, 120});
     EXPECT_EQ(tl.frameAtOrAfter(ms(121)).error(), ArithmeticError::OutOfRange);
     EXPECT_EQ(tl.frameContaining(ms(-1)).error(), ArithmeticError::OutOfRange);
-    // Final frame without a known end: only its exact start is inside.
     EXPECT_EQ(tl.frameContaining(ms(120))->value(), 3);
     EXPECT_EQ(tl.frameContaining(ms(130)).error(), ArithmeticError::OutOfRange);
     const auto ended = FrameTimeline::indexed({ms(0), ms(40)}, ms(80));
@@ -229,14 +207,13 @@ TEST(FrameLookup, DisorderedStartsKeepIdentityAndAreEstimated)
     ASSERT_EQ(tl.diagnostics().size(), 2u);
     EXPECT_EQ(tl.diagnostics()[0].frame.value(), 2);
     EXPECT_EQ(tl.diagnostics()[1].frame.value(), 3);
-    EXPECT_EQ(tl.frameAtOrAfter(ms(35))->value(), 1); // first start >= 35 in presentation order
-    EXPECT_EQ(tl.frameStartMicroseconds(VideoFrameIndex(3))->numerator(), 30'000); // not renumbered
+    EXPECT_EQ(tl.frameAtOrAfter(ms(35))->value(), 1);
+    EXPECT_EQ(tl.frameStartMicroseconds(VideoFrameIndex(3))->numerator(), 30'000);
 }
 
 TEST(FrameLookup, ConstantRateIsExactAtNtscBoundaries)
 {
     const auto tl = FrameTimeline::constantRate(*FrameRate::make(24000, 1001), DocumentTime(0));
-    // Frame 1 starts at 1001/24 ms = 41708.33.. µs.
     EXPECT_EQ(*tl.frameStartMicroseconds(VideoFrameIndex(1)), *Rational::make(1'001'000'000, 24'000));
     EXPECT_EQ(tl.frameAtOrAfter(DocumentTime(41'708))->value(), 1);
     EXPECT_EQ(tl.frameAtOrAfter(DocumentTime(41'709))->value(), 2);
@@ -252,11 +229,9 @@ TEST(FrameLookup, ConstantRateOriginAndBounds)
     EXPECT_EQ(tl.frameAtOrAfter(ms(0))->value(), 0);
     EXPECT_EQ(tl.frameContaining(ms(999)).error(), ArithmeticError::OutOfRange);
     EXPECT_EQ(tl.frameContaining(ms(1040))->value(), 1);
-    EXPECT_EQ(tl.frameContaining(ms(1400)).error(), ArithmeticError::OutOfRange); // frame 10 does not exist
+    EXPECT_EQ(tl.frameContaining(ms(1400)).error(), ArithmeticError::OutOfRange);
     EXPECT_EQ(tl.lastFrameStartingBefore(ms(5000))->value(), 9);
 }
-
-// ---- C01-fps-isolation -------------------------------------------------
 
 TEST(C01FpsIsolation, EachDocumentRateIsIndependentAndExact)
 {
@@ -269,7 +244,7 @@ TEST(C01FpsIsolation, EachDocumentRateIsIndependentAndExact)
         const auto s = sv.toObject();
         auto &rate = s["document"].toString() == "A" ? rateA : rateB;
         if (s["rate"].isNull()) {
-            rate.reset(); // B's time is unresolved; its raw frames stay 24/48
+            rate.reset();
             EXPECT_FALSE(rateB.has_value());
             EXPECT_EQ(start.value(), 24);
             EXPECT_EQ(end.value(), 48);
@@ -286,12 +261,10 @@ TEST(C01FpsIsolation, EachDocumentRateIsIndependentAndExact)
         if (rateA) {
             if (!aStart)
                 aStart = *rateA->secondsAt(start);
-            EXPECT_EQ(*rateA->secondsAt(start), *aStart); // A never changes with B
+            EXPECT_EQ(*rateA->secondsAt(start), *aStart);
         }
     }
 }
-
-// ---- T42-A -------------------------------------------------------------
 
 TEST(T42A, OffsetIsTheDifferenceOfFrameIndices)
 {
@@ -317,6 +290,5 @@ TEST(T42A, OffsetIsTheDifferenceOfFrameIndices)
         if (*offset != legacy[static_cast<std::size_t>(i)])
             ++departures;
     }
-    // Recorded legacy offsets 2,0,0,1,1 vs approved 1,-1,1,1,0: all but the fourth change.
     EXPECT_EQ(departures, 4);
 }

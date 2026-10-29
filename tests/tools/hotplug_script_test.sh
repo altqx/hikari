@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
-# N6 harness: tools/winix/hotplug.sh against a fake winix (fake_winix.py).
-# The device must be plugged in before the task starts whether Winix has no
-# record of it, a record QEMU no longer backs (a VM restart drops hot-plugged
-# devices; the defect behind job-4ba4f63d and job-7a12695f), or it is plugged
-# in already; then the unplug and replug follow the task's markers.
+# A VM restart drops hot-plugged devices but Winix keeps their records.
 #   hotplug_script_test.sh SOURCE_DIR WORK_DIR
 set -uo pipefail
 source_dir=$1

@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""tools/release/make-update-manifest.py without GitHub: stand-in packages
-and an asset list given with --assets-json.
+"""Tests tools/release/make-update-manifest.py with stand-in packages and --assets-json.
 
   python3 -B tests/tools/make_update_manifest_tests.py
-
-Checks the rewrite's offer_to (exactly ["qt"]), the offer member and its
-pitch rules as legacy reads them (ADR-0021), --check-offer, --verify, and
-every pitch under packaging/offer."""
+"""
 import glob
 import hashlib
 import json
@@ -70,7 +66,7 @@ class ManifestTest(unittest.TestCase):
         return self.make("0.1.0-beta.1", "--offer-channel", "prerelease",
                          "--offer-pitch", self.write_json("pitch.json", pitch), *extra)
 
-    def test_rewrite_manifest_names_qt_only_and_carries_the_offer(self):
+    def test_hikarisub_manifest_names_qt_only_and_carries_the_offer(self):
         manifest = self.made("0.1.0-beta.1", "--offer-channel", "prerelease",
                              "--offer-pitch", self.write_json("pitch.json", PITCH))
         self.assertEqual(manifest["codebase"], "qt")
@@ -79,7 +75,7 @@ class ManifestTest(unittest.TestCase):
                                              "legacy_support": "continues", "pitch": PITCH})
         self.assertNotIn("offer", self.made("0.1.0-beta.1"))
 
-    def test_rewrite_offer_to_must_be_exactly_qt(self):
+    def test_hikarisub_offer_to_must_be_exactly_qt(self):
         for offer_to in ("qt,legacy", "legacy,qt", "legacy", "qt,qt"):
             self.refused(self.make("0.1.0-beta.1", "--offer-to", offer_to), "must be exactly ['qt']")
         self.assertEqual(self.made("0.1.0", "--offer-to", "qt")["offer_to"], ["qt"])
@@ -88,7 +84,7 @@ class ManifestTest(unittest.TestCase):
         self.assertEqual(self.made("0.0.3", "--offer-to", "legacy,qt")["offer_to"], ["legacy", "qt"])
         self.refused(self.make("0.0.3", "--offer-to", "qt"), "name legacy")
         self.refused(self.make("0.0.3", "--offer-channel", "stable",
-                               "--offer-pitch", self.write_json("pitch.json", PITCH)), "only a rewrite release")
+                               "--offer-pitch", self.write_json("pitch.json", PITCH)), "only a HikariSub release")
 
     def test_channel_and_legacy_support(self):
         manifest = self.made("0.1.0", "--offer-channel", "stable", "--offer-legacy-support", "ended",

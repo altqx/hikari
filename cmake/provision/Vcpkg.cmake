@@ -1,6 +1,4 @@
-# Pinned vcpkg: an exact registry checkout plus the official, digest-verified
-# tool executable. Supplying the executable means vcpkg's bootstrap scripts
-# never run. Must complete before project() sets the toolchain.
+# Pinned vcpkg: an exact registry checkout plus the digest-verified tool, so vcpkg's bootstrap scripts never run.
 include_guard(GLOBAL)
 
 function(_hikari_git label)
@@ -20,11 +18,8 @@ function(_hikari_git_output out_var)
     set(${out_var} "${out}" PARENT_SCOPE)
 endfunction()
 
-# The baseline is the checked-out commit, so only overridden ports need
-# historic port trees, which the partial clone fetches on demand. Fetch them
-# here, with retries, so a transient network failure is retried during
-# provisioning instead of failing inside vcpkg install. Reading the tree as
-# an archive makes git fetch every missing blob it contains.
+# Only overridden ports need historic port trees, which the partial clone fetches lazily: fetch them here with retries,
+# reading each tree as an archive so git fetches every missing blob.
 function(_hikari_prefetch_overrides root)
     file(READ "${CMAKE_SOURCE_DIR}/vcpkg.json" manifest)
     string(JSON n ERROR_VARIABLE none LENGTH "${manifest}" overrides)
@@ -144,14 +139,12 @@ function(hikari_provision_vcpkg platform)
         file(CHMOD "${tool}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     endif()
 
-    # Built packages are cached with the rest of the reconstructible SDK
-    # state, not in the user profile, so one directory makes a run warm.
+    # Built packages are cached with the SDK, not in the user profile, so one directory makes a run warm.
     file(MAKE_DIRECTORY "${HIKARI_SDK_DIR}/vcpkg-archives")
     set(ENV{VCPKG_DEFAULT_BINARY_CACHE} "${HIKARI_SDK_DIR}/vcpkg-archives")
     set(ENV{VCPKG_DISABLE_METRICS} "1")
     set(ENV{VCPKG_ROOT} "${root}")
-    # GNU downloads fall back to other mirrors when gnu.org does not answer
-    # (GnuMirrors.cmake); asset sources the caller set are asked first.
+    # Asset sources the caller set are asked before GnuMirrors.cmake.
     set(mirrors "x-script,\"${CMAKE_COMMAND}\" -DHIKARI_ASSET_URL={url} -DHIKARI_ASSET_SHA512={sha512} -DHIKARI_ASSET_DST={dst} -P \"${CMAKE_CURRENT_FUNCTION_LIST_DIR}/GnuMirrors.cmake\"")
     if(DEFINED ENV{X_VCPKG_ASSET_SOURCES} AND NOT "$ENV{X_VCPKG_ASSET_SOURCES}" STREQUAL "")
         set(ENV{X_VCPKG_ASSET_SOURCES} "$ENV{X_VCPKG_ASSET_SOURCES};${mirrors}")

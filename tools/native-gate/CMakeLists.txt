@@ -1,5 +1,3 @@
-# The native gate runs outside the build (run.sh). Its session-free parts,
-# gatelib.py, have tests that need only Python.
 find_package(Python3 3.9 COMPONENTS Interpreter)
 if(Python3_Interpreter_FOUND)
     add_test(NAME native_gate_lib

@@ -1,6 +1,4 @@
-# CR1 (#452): HikariSub's Help › Report an issue and its crash window fill
-# this form through a link (?template=bug.yml&title=…&<id>=…); keep the ids
-# in step with src/app/crash_report.cpp (tests/ui/crash_report_tests.cpp checks them).
+# Help › Report an issue fills this form through a link; keep the ids in step with src/app/crash_report.cpp (crash_report_tests checks).
 name: Bug
 description: Something in HikariSub does not work as it should.
 labels: ["bug", "needs-triage"]

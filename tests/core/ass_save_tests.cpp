@@ -1,5 +1,3 @@
-// C3: one-Line ASS save preserving unrelated content (C03-preservation).
-
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 
@@ -41,7 +39,7 @@ std::vector<std::byte> bytesOf(std::string_view s)
     return out;
 }
 
-} // namespace
+}
 
 TEST(AssSave, UnchangedDocumentsEncodeToTheirExactInput)
 {
@@ -60,7 +58,6 @@ TEST(AssSave, C03EditingOneLineKeepsEverythingElse)
     ASSERT_TRUE(loaded.document.setLineText(first, u8"Gate edited"));
     const std::string out = text(encodeAss(loaded.document));
 
-    // Only the edited Line differs; its CRLF terminator is kept.
     std::string expected = text(input);
     const std::string before = "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Gate\r\n";
     const auto at = expected.find(before);
@@ -68,16 +65,13 @@ TEST(AssSave, C03EditingOneLineKeepsEverythingElse)
     expected.replace(at, before.size(), "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Gate edited\r\n");
     EXPECT_EQ(out, expected);
 
-    // Unknown sections and their records survive (approved C03-preservation).
     EXPECT_NE(out.find("[Hikari Synthetic Opaque]\r\n; Preserve order and exact whitespace"), std::string::npos);
     EXPECT_NE(out.find("[Hikari Synthetic Opaque]\r\nToken: repeated-section\r\n[Events]"), std::string::npos);
-    EXPECT_NE(out.find("Token:  first:second  \r\n"), std::string::npos); // exact whitespace
+    EXPECT_NE(out.find("Token:  first:second  \r\n"), std::string::npos);
 }
 
 TEST(AssSave, C03LegacyObservationDroppedWhatWeKeep)
 {
-    // Legacy run 36591631319 saved the unchanged fixture without either
-    // unknown section and with their Token record moved into Script Info.
     const std::string legacy = text(readFile(QStringLiteral(HIKARI_LEGACY_OUTPUTS "/C03-preservation/saved-unknown-sections.ass")));
     EXPECT_EQ(legacy.find("[Hikari Synthetic Opaque]"), std::string::npos);
     const std::string ours = text(encodeAss(loadAss(fixture("unknown-sections.ass")).document));
@@ -93,8 +87,6 @@ TEST(AssSave, EditedLinesUseTheLegacySerialization)
     const auto lines = loaded.document.lines();
     ASSERT_EQ(lines.size(), 2u);
     loaded.document.setLineText(lines[0]->id, u8"new");
-    // Layer, times and margins are written as the legacy writer prints them:
-    // integer layer, truncated centiseconds, plain integer margins.
     EXPECT_EQ(text(encodeAss(loaded.document)),
               "[Events]\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,Narrator,10,20,30,fx,new\n"
@@ -104,7 +96,7 @@ TEST(AssSave, EditedLinesUseTheLegacySerialization)
 TEST(AssSave, LegacyTimeText)
 {
     EXPECT_EQ(legacy::assTimeText(0), u8"0:00:00.00");
-    EXPECT_EQ(legacy::assTimeText(1009), u8"0:00:01.00"); // truncates to 10 ms
+    EXPECT_EQ(legacy::assTimeText(1009), u8"0:00:01.00");
     EXPECT_EQ(legacy::assTimeText(3'723'450), u8"1:02:03.45");
     EXPECT_EQ(legacy::assTimeText(36'000'000), u8"10:00:00.00");
 }
@@ -124,8 +116,6 @@ TEST(AssSave, EditedLinesRewriteMarkersInLegacyOrder)
                              "Dial: x\n"));
     for (const auto *line : r.document.lines())
         ASSERT_TRUE(r.document.setLineText(line->id, line->text));
-    // The legacy save writes [bookmark] after any group or visibility marker,
-    // so a reload reads the bookmark and keeps "[hidden]" as actor text.
     EXPECT_EQ(text(encodeAss(r.document)),
               "[Events]\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,D,[bookmark][hidden]Bob,0,0,0,,a\n"
@@ -140,21 +130,16 @@ TEST(AssLoad, TLModePairsReadAsOneLine)
     ASSERT_EQ(lines.size(), 2u);
     EXPECT_EQ(lines[0]->text, u8"Gate");
     EXPECT_EQ(lines[0]->translation, u8"");
-    EXPECT_EQ(lines[0]->style, u8"Default"); // fields from the translation line
+    EXPECT_EQ(lines[0]->style, u8"Default");
     EXPECT_FALSE(lines[0]->comment);
     EXPECT_TRUE(lines[0]->originalSpan);
     EXPECT_EQ(lines[1]->text, u8"Harbor");
     EXPECT_EQ(lines[1]->translation, u8"港");
-    EXPECT_EQ(text(encodeAss(r.document)), text(fixture("tlmode-pairs.ass"))); // unchanged: exact
+    EXPECT_EQ(text(encodeAss(r.document)), text(fixture("tlmode-pairs.ass")));
 }
 
 TEST(AssSave, EditedTLModePairsMatchTheLegacySave)
 {
-    // Legacy run 36591631319 saved tlmode-pairs.ass. Regenerating both pairs
-    // gives its Events lines: the untranslated pair collapses to one line in
-    // the translation line's fields, the translated one becomes original
-    // (TLMode Style, Dialogue) plus translation. The legacy save writes CRLF;
-    // regenerated lines keep this file's LF.
     auto r = loadAss(fixture("tlmode-pairs.ass"));
     for (const auto *line : r.document.lines())
         ASSERT_TRUE(r.document.setLineText(line->id, line->text));
@@ -177,18 +162,11 @@ TEST(AssSave, EditedUnconfirmedPairWritesTheOriginalWithFormFeedD)
               "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,orig\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,\n");
-    // With the legacy "hide original on video" option the original is a Comment.
     EXPECT_NE(text(encodeAss(r.document, AssSaveOptions{.hideOriginalOnVideo = true}))
                   .find("Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,orig\n"),
               std::string::npos);
 }
 
-// E5: TL_MODE_HIDE_ORIGINAL_ON_VIDEO in SubsGrid::SaveFile
-// (SubsGridBase.cpp:358-367): every original with a translation or
-// Unconfirmed is written as a Comment (GetRaw's hideOriginalOnVideo), so an
-// unchanged pair's original line is written again; its translation line keeps
-// its bytes. An original that already is a Comment, and an untranslated pair,
-// stay as they are.
 TEST(AssSave, HideOriginalOnVideoCommentsUnchangedOriginals)
 {
     const std::string input = "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
@@ -202,7 +180,7 @@ TEST(AssSave, HideOriginalOnVideoCommentsUnchangedOriginals)
                               "Dialogue: 0,0:00:07.00,0:00:08.00,T,,0,0,0,,\n";
     const auto r = loadAss(bytesOf(input));
     ASSERT_EQ(r.document.lines().size(), 4u);
-    EXPECT_EQ(text(encodeAss(r.document)), input); // the option off: unchanged
+    EXPECT_EQ(text(encodeAss(r.document)), input);
     EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.hideOriginalOnVideo = true})),
               "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
               "Comment: 0,0:00:01.00,0:00:02.00,O,,1,2,3,fx,one\r\n"
@@ -213,17 +191,12 @@ TEST(AssSave, HideOriginalOnVideoCommentsUnchangedOriginals)
               "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,\n"
               "Dialogue: 0,0:00:07.00,0:00:08.00,O,,0,0,0,,four\n"
               "Dialogue: 0,0:00:07.00,0:00:08.00,T,,0,0,0,,\n");
-    // "TLMode: Translated" writes no original (SaveFile's `translated`).
     const auto translated = loadAss(bytesOf("[Script Info]\nTLMode: Translated\n[Events]\n"
                                             "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,uno\n"));
     EXPECT_EQ(text(encodeAss(translated.document, AssSaveOptions{.hideOriginalOnVideo = true})),
               "[Script Info]\nTLMode: Translated\n[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,uno\n");
 }
 
-// E5: the script the video renderer reads, as SubsGrid::GetVisible builds it
-// (SubsGridBase.cpp:1564-1573): with a translation, the original line in the
-// TLMode Style (left out with TL_MODE_HIDE_ORIGINAL_ON_VIDEO) then the
-// translation line; otherwise the Line's text alone in its own Style.
 TEST(AssSave, RendererScriptFollowsGetVisible)
 {
     const std::string input = "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
@@ -238,7 +211,6 @@ TEST(AssSave, RendererScriptFollowsGetVisible)
               "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,fx,one\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,uno\n"
-              // Unconfirmed without a translation: GetRaw(txt), its own Style and effect.
               "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,fx,two\n"
               "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,plain\n");
     EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.hideOriginalOnVideo = true, .renderer = true})),
@@ -246,27 +218,18 @@ TEST(AssSave, RendererScriptFollowsGetVisible)
               "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,uno\n"
               "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,fx,two\n"
               "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,plain\n");
-    // An Unconfirmed translated Line: the original takes "\fD" (GetRaw with
-    // the TLMode Style).
     const auto first = r.document.lines()[0]->id;
     ASSERT_TRUE(r.document.setLineUnconfirmed(first, true));
     EXPECT_NE(text(encodeAss(r.document, AssSaveOptions{.renderer = true}))
                   .find("Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,one\n"
                         "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,uno\n"),
               std::string::npos);
-    // Without translation mode nothing changes.
     const std::string plain = "[Script Info]\n[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,x\n";
     EXPECT_EQ(text(encodeAss(loadAss(bytesOf(plain)).document,
                              AssSaveOptions{.hideOriginalOnVideo = true, .renderer = true})),
               plain);
 }
 
-// LoadASS reads a Dialogue or Comment in any section as a Line, which the
-// Grid shows; the renderers read events only under [Events]. The renderer
-// script writes such Lines into the next [Events] section after its Format
-// line, in the Grid's order (GetVisible writes every Line under [Events]),
-// or into an [Events] section of their own at the end. The saved file keeps
-// every byte where it was.
 TEST(AssSave, RendererScriptPutsEveryLineUnderEvents)
 {
     const std::string input = "[Script Info]\r\nTitle: t\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
@@ -289,8 +252,6 @@ TEST(AssSave, RendererScriptPutsEveryLineUnderEvents)
 
 TEST(AssSave, RendererScriptPutsHeldLinesAfterTheEventsFormat)
 {
-    // A comment or blank before the Format line: the held Lines wait for it,
-    // as the fields they are read by come from it.
     const std::string input = "[Script Info]\r\nTitle: t\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
                               "\r\n[Events]\r\n; made by hand\r\n\r\n"
                               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
@@ -304,7 +265,6 @@ TEST(AssSave, RendererScriptPutsHeldLinesAfterTheEventsFormat)
               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n");
-    // No Format line: before the section's first Line.
     const std::string unformatted = "[Script Info]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\n"
                                     "[Events]\n; made by hand\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\n";
     r = loadAss(bytesOf(unformatted));
@@ -317,9 +277,6 @@ TEST(AssSave, RendererScriptPutsHeldLinesAfterTheEventsFormat)
 
 TEST(AssSave, RendererScriptKeepsTheOrderOfLinesBeforeTheEventsFormat)
 {
-    // A Line of [Events] before its Format line, with Lines held from before
-    // [Events]: it waits with them, after the Format line in the
-    // Document's order, as legacy LoadASS reads every Line in file order.
     const std::string input = "[Script Info]\nTitle: t\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\n"
                               "\n[Events]\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n"
                               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
@@ -334,7 +291,6 @@ TEST(AssSave, RendererScriptKeepsTheOrderOfLinesBeforeTheEventsFormat)
               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\n"
               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n"
               "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,C\n");
-    // Nothing held: a Line before the Format line stays where it is.
     const std::string own = "[Script Info]\nTitle: t\n\n[Events]\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n"
                             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
     r = loadAss(bytesOf(own));
@@ -345,7 +301,7 @@ TEST(AssLoad, TLModePairingEdges)
 {
     const auto r = loadAss(bytesOf("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
                                    "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,one\n"
-                                   "\n" // zero-length: not a token, skipped
+                                   "\n"
                                    "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,uno\n"
                                    "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,,unpaired\n"
                                    "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,,last\n"));
@@ -355,8 +311,6 @@ TEST(AssLoad, TLModePairingEdges)
     EXPECT_EQ(lines[0]->span.length, std::string_view("Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,one\n\n"
                                                       "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,uno").size());
     EXPECT_FALSE(lines[1]->originalSpan);
-    // No line after the last original: legacy pairs it with an empty plain
-    // line, so it keeps its text but takes zero times and the Default style.
     EXPECT_EQ(lines[2]->text, u8"last");
     EXPECT_EQ(lines[2]->style, u8"Default");
     EXPECT_EQ(lines[2]->start.value, DocumentTime(0));
@@ -369,8 +323,6 @@ TEST(AssLoad, TLModePairingEdges)
 
 TEST(AssLoad, UnconfirmedRoundTripsC87)
 {
-    // Approved C87-unconfirmed-roundtrip: the form-feed+D the save writes is
-    // read back. A bare "D" (or form feed with spaces) is not the marker.
     auto r = loadAss(bytesOf("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
                              "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a\n"
                              "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,A\n"
@@ -384,7 +336,7 @@ TEST(AssLoad, UnconfirmedRoundTripsC87)
     EXPECT_FALSE(lines[2]->unconfirmed);
     ASSERT_TRUE(r.document.setLineUnconfirmed(lines[0]->id, true));
     const auto saved = encodeAss(r.document);
-    const auto reloadedDocument = loadAss(saved).document; // keep it alive: lines() points into it
+    const auto reloadedDocument = loadAss(saved).document;
     const auto reloaded = reloadedDocument.lines();
     ASSERT_EQ(reloaded.size(), 3u);
     EXPECT_TRUE(reloaded[0]->unconfirmed);
@@ -393,8 +345,6 @@ TEST(AssLoad, UnconfirmedRoundTripsC87)
 
 TEST(AssLoad, CommentAfterAnOriginalIsNotItsTranslationC87)
 {
-    // Approved C87-nondialogue-partner, for ';' and lone '{...}' lines in LF
-    // and CRLF files: the original stays unpaired, the comment stays put.
     for (const std::string nl : {"\n", "\r\n"}) {
         const std::string input = "[Script Info]" + nl + "TLMode: Yes" + nl + "TLMode Style: O" + nl + "[Events]" + nl +
                                   "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,first" + nl + "; note" + nl +
@@ -406,7 +356,6 @@ TEST(AssLoad, CommentAfterAnOriginalIsNotItsTranslationC87)
         EXPECT_EQ(lines[0]->style, u8"O");
         EXPECT_EQ(lines[0]->start.value, DocumentTime(1'000'000));
         EXPECT_EQ(lines[1]->text, u8"second");
-        // Editing keeps the comment lines and reloads the same way.
         for (const auto *line : lines)
             ASSERT_TRUE(r.document.setLineText(line->id, line->text));
         const auto saved = encodeAss(r.document);
@@ -427,7 +376,6 @@ TEST(AssSave, InsertedLinesTakeTheNewlineStyleAroundThem)
         ASSERT_EQ(r.document.lines().size(), 2u);
         EXPECT_TRUE(r.document.lines()[1]->inserted);
     }
-    // At an open end (no final newline) the new Line starts on its own line.
     auto r = loadAss(bytesOf("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,a"));
     LineRecord added = *r.document.lines()[0];
     added.text = u8"b";
@@ -436,16 +384,14 @@ TEST(AssSave, InsertedLinesTakeTheNewlineStyleAroundThem)
                                            "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,b");
 }
 
-// E3: Script Info and Style edits (legacy AddSInfo, DeleteSInfo, AddStyle,
-// DeleteStyle) keep every other byte.
 TEST(AssSave, ScriptInfoAndStyleEdits)
 {
     const std::string input = "[Script Info]\r\nTitle: t\r\nPlayResX: 640\r\n\r\n[V4+ Styles]\r\n"
                               "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\r\n"
                               "\r\n[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x";
     auto doc = loadAss(bytesOf(input)).document;
-    ASSERT_TRUE(doc.setScriptInfo(u8"Title", u8"new"));     // replaced where it is
-    ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes"));    // added after the last property
+    ASSERT_TRUE(doc.setScriptInfo(u8"Title", u8"new"));
+    ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes"));
     ASSERT_TRUE(doc.removeScriptInfo(u8"PlayResX"));
     EXPECT_FALSE(doc.removeScriptInfo(u8"Missing"));
     ASSERT_TRUE(doc.appendStyle({u8"TL", u8"Arial", u8"20"}));
@@ -458,10 +404,6 @@ TEST(AssSave, ScriptInfoAndStyleEdits)
     EXPECT_EQ(text(encodeAss(doc)).find("Style: Default"), std::string::npos);
 }
 
-// E5-tlmode-needs-script-info: a key set on an ASS Document without a Script
-// Info section adds the section at the top (after a byte-order mark), written
-// as legacy's header is (SubsGridBase.cpp:1490-1503) in the source's line
-// ends, with a blank line before the next section; every other byte stays.
 TEST(AssSave, ScriptInfoAddedToADocumentWithoutTheSection)
 {
     for (const std::string nl : {"\n", "\r\n"}) {
@@ -471,11 +413,10 @@ TEST(AssSave, ScriptInfoAddedToADocumentWithoutTheSection)
         ASSERT_FALSE(doc.scriptInfo(u8"TLMode"));
         ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes"));
         ASSERT_TRUE(doc.setScriptInfo(u8"TLMode Style", u8"TLmode"));
-        ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes")); // the same section, replaced in place
+        ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes"));
         EXPECT_EQ(doc.scriptInfo(u8"TLMode Style"), u8"TLmode");
         EXPECT_EQ(doc.sections().front().kind, SectionKind::ScriptInfo);
         EXPECT_EQ(text(encodeAss(doc)), "[Script Info]" + nl + "TLMode: Yes" + nl + "TLMode Style: TLmode" + nl + nl + input);
-        // Every key removed: the header stays, as legacy writes it on every save.
         ASSERT_TRUE(doc.removeScriptInfo(u8"TLMode"));
         ASSERT_TRUE(doc.removeScriptInfo(u8"TLMode Style"));
         EXPECT_EQ(text(encodeAss(doc)), "[Script Info]" + nl + nl + input);

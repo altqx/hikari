@@ -1,7 +1,3 @@
-// N6 / M50-device: the PortAudio owner against a real stream. Device tests run
-// on HIKARI_TEST_AUDIO_DEVICE (a substring of the device name or id) when set, else
-// the host default, and skip with the reason when the host has no output
-// device. Only silence is written.
 #include "hikari/backends/portaudio_output.h"
 
 #include <gtest/gtest.h>
@@ -32,7 +28,6 @@ bool waitFor(const std::function<bool()> &condition, std::chrono::milliseconds l
     return true;
 }
 
-// Keeps the queue topped up with silence until `condition` holds.
 bool feedUntil(PortAudioOutput &out, const std::function<bool()> &condition, std::chrono::milliseconds limit = 5s)
 {
     const std::vector<float> silence(4096, 0.0f);
@@ -85,8 +80,6 @@ TEST(PortAudioOutput, EnumeratesScopedDeviceIds)
     EXPECT_LE(defaults, 1);
 }
 
-// A4-wasapi-default: the default device is the preferred host API's default
-// output (WASAPI on Windows), else PortAudio's own.
 TEST(PortAudioOutput, PreferredHostApiNamesTheDefaultDevice)
 {
 #ifdef _WIN32
@@ -193,20 +186,18 @@ TEST_F(PortAudioDevice, NegotiatesTheRateOrRefuses)
 
 TEST_F(PortAudioDevice, ReopensByIdAfterARescan)
 {
-    // A rescan can renumber the host's devices (desktop ALSA lists come and
-    // go), so the reopened stream is compared by host API and name.
+    // A rescan can renumber the host's devices (ALSA), so compare by host API and name.
     const auto sameDevice = [](const std::string &a, const std::string &b) {
         const auto ka = a.find('/'), kb = b.find('/');
         return a.substr(0, ka) == b.substr(0, kb) && a.substr(a.find('/', ka + 1)) == b.substr(b.find('/', kb + 1));
     };
     ASSERT_TRUE(out.open(id, {48000, 2}));
     out.close();
-    const auto devices = out.devices(); // idle: rescans the host
+    const auto devices = out.devices();
     ASSERT_FALSE(devices.empty());
     ASSERT_TRUE(out.open(id, {48000, 2}));
     EXPECT_TRUE(sameDevice(out.openDeviceId(), id)) << out.openDeviceId() << " vs " << id;
     out.close();
-    // An id whose index moved still names the device by host API and name.
     const auto first = id.find('/'), second = id.find('/', first + 1);
     const std::string moved = id.substr(0, first) + "/9999/" + id.substr(second + 1);
     ASSERT_TRUE(out.open(moved, {48000, 2}));
@@ -230,13 +221,7 @@ TEST_F(PortAudioDevice, LostStreamInvalidatesAndReopenRecovers)
     ASSERT_TRUE(feedUntil(out, [&] { return out.status().framesConsumed > 0 && out.clock().valid; }));
 }
 
-// M50-device with a real device that goes away and comes back: runs only with
-// HIKARI_TEST_AUDIO_HOTPLUG (a regular expression found in the device's name) and optionally
-// HIKARI_TEST_AUDIO_HOTPLUG_API (its host API). The test prints HOTPLUG-READY
-// once the stream runs; whoever drives it (tools/winix/hotplug.sh unplugs a
-// QEMU USB audio device) then removes the device, the test prints
-// HOTPLUG-LOST once the loss is seen and the device is gone, and waits for the
-// device to come back. Only silence is written.
+// Driven by tools/winix/hotplug.sh, which unplugs a QEMU USB audio device on HOTPLUG-READY.
 TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
 {
     const char *wanted = std::getenv("HIKARI_TEST_AUDIO_HOTPLUG");
@@ -264,8 +249,7 @@ TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
     ASSERT_TRUE(feedUntil(out, [&] { return out.clock().valid; }));
     say("HOTPLUG-READY " + id);
 
-    // The host reports the loss as an unrequested stream end, or its
-    // callbacks stop: either way the estimate goes.
+    // Hosts report a loss as an unrequested stream end or by stopping callbacks.
     ASSERT_TRUE(feedUntil(out, [&] { return out.status().deviceLost || !out.clock().valid; }, 120s))
         << "the device was not lost within 120 s";
     // Some hosts report the endpoint gone a little after its callbacks stop.
@@ -279,8 +263,7 @@ TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
     say(std::string("loss seen: deviceLost ") + (lost.deviceLost ? "1" : "0") + ", running " +
         (lost.running ? "1" : "0") + ", callbacks " + std::to_string(lost.callbacks));
     EXPECT_FALSE(out.clock().valid);
-    // DirectSound keeps an unplugged device's stream active with no error:
-    // there the loss is only the stall (HIKARI_TEST_AUDIO_HOTPLUG_STALL_ONLY).
+    // DirectSound keeps an unplugged device's stream active with no error.
     const char *stallOnly = std::getenv("HIKARI_TEST_AUDIO_HOTPLUG_STALL_ONLY");
     if (!stallOnly || !*stallOnly) {
         EXPECT_TRUE(lost.deviceLost) << "the owner reports the loss as DeviceLost";
@@ -289,8 +272,7 @@ TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
     out.close();
     ASSERT_TRUE(waitFor([&] { return find(out).empty(); }, 30s)) << "the device is still listed";
     EXPECT_EQ(out.open(id, {48000, 2}).error(), application::OutputError::DeviceUnavailable);
-    // Windows may name the returning device differently ("2- ..."): it is the
-    // output of that host API that was not listed while it was gone.
+    // Windows may rename the returning device ("2- ...").
     std::set<std::string> without;
     for (const auto &device : out.devices())
         without.insert(device.name);
@@ -326,5 +308,5 @@ TEST_F(PortAudioDevice, RescanWaitsWhileAStreamIsOpen)
     EXPECT_FALSE(out.status().deviceLost);
 }
 
-} // namespace
-} // namespace hikari::backends
+}
+}

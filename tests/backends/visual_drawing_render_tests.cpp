@@ -1,10 +1,3 @@
-// T5: the drawings the drawing tool reads and writes, rendered by libass (the
-// renderer the video uses), against the tool's own points. A drawing's
-// points are drawn over the video where libass paints the drawing, for
-// every alignment, the \p scale and \fscx / \fscy; a shape drawn with a
-// preset (legacy's five defaults and one taken from a Line) is painted in
-// the rectangle the tool showed while it was dragged.
-
 #include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_drawing.h"
 #include "hikari/application/visual_tools.h"
@@ -35,9 +28,7 @@ std::vector<std::byte> bytesOf(const std::string &s)
     return out;
 }
 
-// The renderer has no system font provider (N3): a drawing needs a font
-// leased in memory, the locked Qt install's OFL Titillium Web, as T4's
-// clip renders do.
+// libass needs a font even for a drawing, and the renderer has no system font provider.
 std::shared_ptr<const std::vector<std::byte>> testFont()
 {
     QFile f(QStringLiteral(HIKARI_TEST_FONT));
@@ -71,7 +62,6 @@ struct Frame {
     OverlayFrame f;
     int alpha(int x, int y) const { return f.pixels[static_cast<std::size_t>(y) * f.stride + x * 4 + 3]; }
     bool painted(int x, int y) const { return alpha(x, y) > 127; }
-    // The painted pixels' box: left, top, right, bottom (inclusive), or none.
     std::optional<IntRect> box() const
     {
         std::optional<IntRect> out;
@@ -109,8 +99,6 @@ Frame render(const std::u8string &lineText)
     return out;
 }
 
-// A host over a 96x64 video showing a 96x64 script (one script unit a
-// pixel) with one Line, gestures committed to its session.
 class Host : public VisualHost {
 public:
     VideoView v;
@@ -157,8 +145,6 @@ public:
     const std::vector<ShapePreset> *shapePresets() const override { return &presets; }
 };
 
-// The tool's path in view pixels: its points joined (lines, the flattened
-// Béziers), split at each "m" (the closing line returns to it).
 std::vector<std::vector<PointF>> pathOf(const DrawingTool &tool, const Host &host)
 {
     const auto &pts = tool.editor().points;
@@ -214,8 +200,6 @@ double distanceToPath(const std::vector<std::vector<PointF>> &path, double x, do
     return best;
 }
 
-// Every pixel more than a pixel from the tool's path is painted exactly when
-// its centre is inside it.
 void expectPaintFollowsPath(const Frame &frame, const std::vector<std::vector<PointF>> &path)
 {
     int checked = 0, in = 0;
@@ -230,7 +214,7 @@ void expectPaintFollowsPath(const Frame &frame, const std::vector<std::vector<Po
             EXPECT_EQ(frame.painted(x, y), expected) << "pixel " << x << "," << y;
         }
     EXPECT_GT(checked, kW * kH / 2);
-    EXPECT_GT(in, 20); // the drawing is on screen
+    EXPECT_GT(in, 20);
 }
 
 std::u8string drawn(const std::u16string &tags, const std::u16string &body)
@@ -249,8 +233,6 @@ Pointer at(Pointer::Kind kind, int x, int y, bool left = false, Pointer::Button 
     return p;
 }
 
-// A shape preset dragged from (x1, y1) to (x2, y2) over the Line, committed.
-// Returns the rectangle the tool showed (view pixels).
 std::pair<PointF, PointF> dragShape(Host &host, DrawingTool &tool, int preset, int x1, int y1, int x2, int y2)
 {
     tool.reset(host);
@@ -266,12 +248,10 @@ std::pair<PointF, PointF> dragShape(Host &host, DrawingTool &tool, int preset, i
     return {o.lines[0].from, o.lines[2].from};
 }
 
-} // namespace
+}
 
 TEST(DrawingRender, PointsAreDrawnWhereLibassPaintsTheDrawing)
 {
-    // SetCurVisual's reading of the position, the alignment's offset
-    // (CalcDrawingSize), the \p scale and \fscx / \fscy, against libass.
     const std::u16string body = u"m 0 0 l 40 0 40 20 b 30 30 10 30 0 20";
     const std::u16string cases[] = {
         u"\\an7\\pos(10,8)\\p1",
@@ -299,8 +279,6 @@ TEST(DrawingRender, PointsAreDrawnWhereLibassPaintsTheDrawing)
 
 TEST(DrawingRender, AnEditedPointIsPaintedWhereTheToolMovedIt)
 {
-    // A drag of the second point commits a drawing libass paints where the
-    // tool now shows it (the written offsets undo the alignment's).
     Host host(core::toUtf16(drawn(u"\\an5\\pos(48,32)\\p1", u"m 0 0 l 40 0 40 20 0 20")));
     DrawingTool tool;
     tool.editor().mode = VectorEditor::Drag;
@@ -311,21 +289,12 @@ TEST(DrawingRender, AnEditedPointIsPaintedWhereTheToolMovedIt)
     tool.pointer(at(Pointer::Kind::Move, x + 10, y - 6, true), host);
     tool.pointer(at(Pointer::Kind::Release, x + 10, y - 6, false, Pointer::Button::Left), host);
     ASSERT_NE(host.text(), drawn(u"\\an5\\pos(48,32)\\p1", u"m 0 0 l 40 0 40 20 0 20"));
-    tool.reset(host); // the committed Line read again
+    tool.reset(host);
     expectPaintFollowsPath(render(host.text()), pathOf(tool, host));
 }
 
 TEST(DrawingRender, ShapesFillTheRectangleTheToolShows)
 {
-    // Each of legacy's five presets dragged over a Line: libass paints the
-    // shape inside the rectangle the tool drew while dragging, filling it
-    // (legacy writes the shape one unit right and down of it:
-    // Shapes::GetVisual's "- 1"). The rectangle spans the shape's points,
-    // control points included (Shapes::SetShape's bounds): the circle's
-    // control points reach 155 where its curves reach 141.25 (a cubic's
-    // middle: (100 + 3 * 155) / 4), so libass paints it inset by 13.75 of
-    // 310 on each side. The drag keeps the square presets (Preserve aspect
-    // ratio) inside the 96x64 frame.
     for (int preset = 1; preset <= 5; ++preset) {
         SCOPED_TRACE("preset " + std::to_string(preset));
         Host host(u"{\\an7\\pos(0,0)\\bord0\\shad0}");
@@ -340,7 +309,6 @@ TEST(DrawingRender, ShapesFillTheRectangleTheToolShows)
         EXPECT_NEAR(box->top, from.y + 1 + insetY, 1.0);
         EXPECT_NEAR(box->right + 1, to.x + 1 - insetX, 1.0);
         EXPECT_NEAR(box->bottom + 1, to.y + 1 - insetY, 1.0);
-        // And the tool, back on free drawing, shows the points libass paints.
         tool.setOption("shape", 0, host);
         expectPaintFollowsPath(render(host.text()), pathOf(tool, host));
     }
@@ -348,8 +316,6 @@ TEST(DrawingRender, ShapesFillTheRectangleTheToolShows)
 
 TEST(DrawingRender, AShapeTakenFromALineIsPaintedInTheRectangle)
 {
-    // "Take from the active line": a Line's drawing becomes a preset, and a
-    // drag draws it scaled into the rectangle.
     const std::u16string line = u"{\\an7\\pos(0,0)\\p1}m 0 0 l 30 0 30 10 10 10 10 30 0 30";
     ShapesEdition edition(defaultShapePresets(), 0);
     edition.addShape({});
@@ -365,7 +331,6 @@ TEST(DrawingRender, AShapeTakenFromALineIsPaintedInTheRectangle)
     EXPECT_NEAR(box->top, from.y + 1, 1.0);
     EXPECT_NEAR(box->right + 1, to.x + 1, 1.0);
     EXPECT_NEAR(box->bottom + 1, to.y + 1, 1.0);
-    // The L's inner corner is empty, its arms painted.
     EXPECT_TRUE(frame.painted(static_cast<int>(from.x) + 4, static_cast<int>(from.y) + 4));
     EXPECT_FALSE(frame.painted(static_cast<int>(to.x) - 4, static_cast<int>(to.y) - 4));
 }

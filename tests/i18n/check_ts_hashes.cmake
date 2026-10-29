@@ -1,5 +1,3 @@
-# Compares each TS catalog with the SHA-256 recorded when the build was
-# configured (i18n/CMakeLists.txt).
 file(STRINGS "${HASHES}" lines)
 if(NOT lines)
     message(FATAL_ERROR "no catalog hashes in ${HASHES}")

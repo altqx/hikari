@@ -1,14 +1,5 @@
-# The Qt deployment manifest (packaging/qt-deployment.json): the Qt plugins a
-# package carries, per platform. Checks, for every platform it names:
-# - the plugins every package must carry (K1's Qt SVG image plugin and icon
-#   engine, named here and not in the manifest, so the data under check
-#   cannot drop them) are listed;
-# - each plugin's Qt module archive is in that platform's Qt lock
-#   (cmake/locks/qt-<platform>.lock.json), so the provisioned Qt has it;
-# and, for the platform this runs on, that each plugin file is in the
-# provisioned Qt's plugin folder. Writes the resolved files to OUT. Nothing
-# here shows that a package carries them: no package is built from the
-# manifest yet (Phase 5). Script mode:
+# Checks packaging/qt-deployment.json: every platform lists the required plugins, each plugin's Qt module archive is
+# in that platform's Qt lock, and here each plugin file is in the provisioned Qt. Writes the resolved files to OUT.
 #
 #   cmake -DMANIFEST=<qt-deployment.json> -DLOCKS=<cmake/locks> -DPLUGINS=<Qt plugins dir>
 #         -DPLATFORM=linux|windows -DOUT=<resolved.json> -P QtDeploymentManifest.cmake
@@ -21,7 +12,7 @@ endforeach()
 set(problems "")
 file(READ "${MANIFEST}" manifest)
 
-# The plugins every platform's package must carry (K1).
+# Named here, not in the manifest, so the data under check cannot drop them.
 set(required imageformats/qsvg iconengines/qsvgicon)
 
 # The members of a JSON object or the length of an array at PATH..., 0 when

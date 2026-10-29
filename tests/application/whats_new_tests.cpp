@@ -1,7 +1,3 @@
-// SH3 (#223): which releases' notes What's new shows (owner-approved
-// 2026-10-21): the ones after the version run before, up to the installed
-// one, on the update checker's channel (ADR 0019), at most ten.
-
 #include "hikari/application/update_check.h"
 
 #include <gtest/gtest.h>
@@ -29,8 +25,6 @@ std::vector<std::string> tags(const std::vector<ReleaseEntry> &releases)
     return out;
 }
 
-// GitHub's order (newest published first), with a draft, the legacy app's
-// releases and a tag that is no version, as the real list has.
 std::vector<ReleaseEntry> feed()
 {
     return {release("v0.1.4", false, true), release("v0.1.3"),         release("v0.1.3-beta.2", true),
@@ -39,16 +33,14 @@ std::vector<ReleaseEntry> feed()
             release("v0.0.2-rc.4", true)};
 }
 
-} // namespace
+}
 
 TEST(WhatsNew, TheReleasesAfterTheVersionRunBeforeUpToTheInstalledOne)
 {
-    // Every channel's, highest first; no draft, nothing past the installed one.
     EXPECT_EQ(tags(whatsNewReleases(feed(), "0.1.1", "0.1.3")),
               (std::vector<std::string>{"v0.1.3", "v0.1.3-beta.2", "v0.1.2", "v0.1.2-rc.1"}));
     EXPECT_EQ(tags(whatsNewReleases(feed(), "0.1.0", "0.1.2")),
               (std::vector<std::string>{"v0.1.2", "v0.1.2-rc.1", "v0.1.1"}));
-    // The notes and names go along.
     const auto releases = whatsNewReleases(feed(), "0.1.2", "0.1.3");
     ASSERT_EQ(releases.size(), 2u);
     EXPECT_EQ(releases[0].notes, "Notes v0.1.3");
@@ -61,9 +53,7 @@ TEST(WhatsNew, AFirstStartOrADowngradeShowsTheInstalledVersionAlone)
     EXPECT_EQ(tags(whatsNewReleases(feed(), "0.1.3", "0.1.3")), (std::vector<std::string>{"v0.1.3"}));
     EXPECT_EQ(tags(whatsNewReleases(feed(), "0.2.0", "0.1.3")), (std::vector<std::string>{"v0.1.3"}));
     EXPECT_EQ(tags(whatsNewReleases(feed(), "not a version", "0.1.3")), (std::vector<std::string>{"v0.1.3"}));
-    // Coming from the legacy app: its releases never show.
     EXPECT_EQ(tags(whatsNewReleases(feed(), "0.0.2", "0.1.3")), (std::vector<std::string>{"v0.1.3"}));
-    // An installed version without a release (a local build): nothing.
     EXPECT_EQ(whatsNewReleases(feed(), "0.1.1", "0.1.5").size(), 4u);
     EXPECT_TRUE(whatsNewReleases(feed(), "", "0.1.5").empty());
     EXPECT_TRUE(whatsNewReleases(feed(), "0.1.1", "dev").empty());
@@ -83,20 +73,14 @@ TEST(WhatsNew, OneEntryPerVersionTheFirstListedWins)
 TEST(WhatsNew, TheChannelPicksWhatShows)
 {
     const auto releases = whatsNewReleases(feed(), "0.1.1", "0.1.3");
-    // Stable: the stable releases.
     auto shown = whatsNewShown(releases, "0.1.3", true);
     EXPECT_EQ(tags(shown.releases), (std::vector<std::string>{"v0.1.3", "v0.1.2"}));
     EXPECT_EQ(shown.more, 0u);
-    // Beta: the pre-releases too.
     shown = whatsNewShown(releases, "0.1.3", false);
     EXPECT_EQ(tags(shown.releases), (std::vector<std::string>{"v0.1.3", "v0.1.3-beta.2", "v0.1.2", "v0.1.2-rc.1"}));
-    // A pre-release build takes pre-releases whatever the option says, as
-    // the update check offers it the next one (installers spec 2.4); its
-    // own notes always show.
     const auto toBeta = whatsNewReleases(feed(), "0.1.1", "0.1.3-beta.2");
     EXPECT_EQ(tags(whatsNewShown(toBeta, "0.1.3-beta.2", true).releases),
               (std::vector<std::string>{"v0.1.3-beta.2", "v0.1.2", "v0.1.2-rc.1"}));
-    // A pre-release flagged only by its tag counts as one.
     std::vector<ReleaseEntry> tagged{release("v0.1.3"), release("v0.1.3-rc.1")};
     EXPECT_EQ(tags(whatsNewShown(tagged, "0.1.3", true).releases), (std::vector<std::string>{"v0.1.3"}));
 }
@@ -117,15 +101,10 @@ TEST(WhatsNew, AtMostTenVersionsThenHowManyMore)
 
 TEST(WhatsNew, TheVersionRunBeforeIsKeptUntilTheNextUpdate)
 {
-    // The first start ever: none.
     EXPECT_EQ(whatsNewSince("", "", "0.1.1"), "");
-    // An update: the version that ran last.
     EXPECT_EQ(whatsNewSince("0.1.1", "", "0.1.3"), "0.1.1");
     EXPECT_EQ(whatsNewSince("0.1.1", "0.1.0", "0.1.3"), "0.1.1");
-    // A later start of the same version keeps it.
     EXPECT_EQ(whatsNewSince("0.1.3", "0.1.1", "0.1.3"), "0.1.1");
-    // None where the installed version shows alone: a downgrade, the legacy
-    // app, a version that does not read.
     EXPECT_EQ(whatsNewSince("0.2.0", "0.1.1", "0.1.3"), "");
     EXPECT_EQ(whatsNewSince("0.1.3", "0.2.0", "0.1.3"), "");
     EXPECT_EQ(whatsNewSince("0.0.2", "", "0.1.3"), "");

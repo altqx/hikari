@@ -1,6 +1,3 @@
-// I1: the video session over the real media helper and libass: Line seeks
-// and frame steps decode the frames they name (barcode identity), with the
-// overlay rendered at each frame's start.
 #include "hikari/application/video_session.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
@@ -59,7 +56,6 @@ std::vector<std::byte> bytes(const char *text)
     return out;
 }
 
-// A box over the bottom of the frame from 1.0 s to 2.0 s.
 constexpr char kBox[] =
     "[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[V4+ Styles]\n"
     "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
@@ -88,13 +84,12 @@ TEST_F(VideoSessionMedia, SeeksAndStepsShowTheNamedFrames)
     RecordingPresenter presenter;
     VideoSession video(source, renderer);
     video.setPresenter(&presenter);
-    // A box from 1.0 s to 2.0 s.
     video.setSubtitles(bytes(kBox));
     video.open(HIKARI_MEDIA_FIXTURES "/cfr.mkv");
     ASSERT_TRUE(waitFor([&] { return video.state() == VideoSession::State::Ready; }));
     ASSERT_TRUE(waitFor([&] { return presenter.shown.size() == 1; }));
     EXPECT_EQ(presenter.shown[0], 0);
-    video.seekTo(core::DocumentTime(1'000'000)); // 24000/1001: frame 24 starts at 1.001 s
+    video.seekTo(core::DocumentTime(1'000'000));
     ASSERT_TRUE(waitFor([&] { return presenter.shown.size() == 2; }));
     EXPECT_EQ(presenter.shown[1], 24);
     ASSERT_TRUE(video.step(1));
@@ -117,4 +112,4 @@ TEST_F(VideoSessionMedia, AnUnreadableFileFails)
     EXPECT_TRUE(video.error().has_value());
 }
 
-} // namespace
+}

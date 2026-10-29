@@ -1,7 +1,4 @@
-// Real compositor input for mutter and KWin through libei (the protocol both
-// compositors expose for remote input). The EIS connection is handed in as
-// an inherited file descriptor (eiinject <fd>); commands come on stdin, one
-// per line:
+// eiinject <EIS fd>: libei input for mutter and KWin. Commands on stdin, one per line:
 //   move X Y        absolute pointer motion, compositor logical coordinates
 //   rel DX DY       relative pointer motion
 //   down / up       left button press / release (right: rdown / rup)
@@ -47,8 +44,7 @@ static void handle_events(int timeout_ms)
                     ei_device_has_capability(d, EI_DEVICE_CAP_POINTER) ? " rel" : "",
                     ei_device_has_capability(d, EI_DEVICE_CAP_BUTTON) ? " button" : "",
                     ei_device_has_capability(d, EI_DEVICE_CAP_KEYBOARD) ? " keyboard" : "");
-            // A compositor may replace a device (mutter does when its monitors
-            // change): the newest one is used.
+            // mutter replaces a device when its monitors change: use the newest one.
             if (ei_device_has_capability(d, EI_DEVICE_CAP_POINTER_ABSOLUTE))
                 absdev = ei_device_ref(d);
             if (ei_device_has_capability(d, EI_DEVICE_CAP_POINTER))

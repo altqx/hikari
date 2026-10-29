@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-# WS2 (#216): the fixtures with and without [Hikari] through libass (FFmpeg's
-# ass filter, which reads the file itself, [Fonts] included): every frame of
-# 4 s at 10 fps on a gray 640x360 picture. Each pair's frames must be the
-# same. With an output folder, the frame at 1.5 s of each fixture is kept as
-# a PNG there.
 #   probe/libass.sh [out-dir]
 set -u
 here=$(cd "$(dirname "$0")/.." && pwd)

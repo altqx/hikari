@@ -1,9 +1,5 @@
-; HikariSub installer and uninstaller (NSIS 3.13, built by build-makensis.sh).
-;
-; This file is the same on the legacy (main) and Qt (qt) branches. What
-; differs per codebase and per build comes from payload.nsh, which
-; make-payload-nsh.py writes. The contract (paths, keys, switches, exit
-; codes) is the installers spec, section 6.
+; HikariSub installer and uninstaller (NSIS 3.13, built by build-makensis.sh). Per-codebase parts come from
+; payload.nsh, which make-payload-nsh.py writes.
 ;
 ; makensis -DHS_PAYLOAD_NSH=<payload.nsh> -DHS_STDUTILS=<StdUtils folder>
 ;          -DHS_OUTFILE=<setup.exe> hikarisub.nsi
@@ -49,9 +45,6 @@ SetCompressorDictSize 64
 !include "${__FILEDIR__}/protected.nsh"
 !include StdUtils.nsh
 
-; ---------------------------------------------------------------------------
-; Identity (spec 1.1, 1.4)
-
 !define HS_NAME          "HikariSub"
 !define HS_PUBLISHER     "altqx"
 !define HS_AUMID         "io.github.altqx.HikariSub"
@@ -66,12 +59,10 @@ SetCompressorDictSize 64
 !define HS_REGAPPS_KEY   "Software\RegisteredApplications"
 !define HS_CLASSES       "Software\Classes"
 !define HS_MUTEX         "Global\io.github.altqx.HikariSub.Running"
-; Held by an /UPDATE run until it exits: an app started meanwhile leaves
-; and sets HS_START_EVENT, and HikariSub starts afterwards (HsTakeStartRequest).
+; Held by an /UPDATE run until it exits; an app started meanwhile sets HS_START_EVENT and quits.
 !define HS_SETUP_MUTEX   "Global\io.github.altqx.HikariSub.Installing"
 !define HS_START_EVENT   "Global\io.github.altqx.HikariSub.StartAfterUpdate"
 !define HS_URL           "https://github.com/altqx/hikari"
-; DX1 (#367): the homepage Apps & features links to; GitHub stays the issue tracker.
 !define HS_HOMEPAGE      "https://hikarisub.altqx.com"
 
 Name "${HS_NAME}"
@@ -92,9 +83,6 @@ VIAddVersionKey "FileVersion" "${HS_VERSION}"
 VIAddVersionKey "ProductVersion" "${HS_VERSION}"
 VIAddVersionKey "LegalCopyright" "GPL-3.0-or-later"
 
-; ---------------------------------------------------------------------------
-; State
-
 Var HsScope           ; user | machine
 Var HsCmdScope        ; scope from /CURRENTUSER or /ALLUSERS, else empty
 Var HsExistScope      ; scope of an existing install, else empty
@@ -113,14 +101,11 @@ Var HsHasCmdComponents
 Var HsUserLocalAppData
 Var HsRadioUser
 Var HsRadioMachine
-Var HsSelfHold        ; this setup's own file, held against change (HsHoldSelf)
-Var HsHeld            ; 1 when the file and every folder above it are held (HsHoldSelf)
+Var HsSelfHold        ; this setup's own file, held against change
+Var HsHeld            ; 1 when the file and every folder above it are held
 Var HsNewMachineDir   ; the new all-users folder HsMachineDirOk accepted
 Var HsSetupMutex      ; HS_SETUP_MUTEX, held until exit (/UPDATE)
 Var HsStartEvent      ; HS_START_EVENT, or 0
-
-; ---------------------------------------------------------------------------
-; Pages
 
 !ifdef HS_INSTALLER_ICON
   !define MUI_ICON "${HS_INSTALLER_ICON}"
@@ -145,13 +130,9 @@ Page custom HsScopePageCreate HsScopePageLeave
 
 !insertmacro MUI_LANGUAGE "English"
 
-; ---------------------------------------------------------------------------
-; Functions shared by the installer and the uninstaller
-
 !macro HS_SHARED_FUNCTIONS UN
 
-; $HsIsAdmin = 1 when this process runs elevated. UserInfo reports "Admin"
-; only for a full token, not for a UAC-filtered one.
+; UserInfo reports "Admin" only for a full token, not a UAC-filtered one.
 Function ${UN}HsCheckAdmin
   Push $0
   StrCpy $HsIsAdmin 0
@@ -163,9 +144,7 @@ Function ${UN}HsCheckAdmin
   Pop $0
 FunctionEnd
 
-; Is HikariSub running? $R9 = 1 or 0. The app holds the named mutex (spec 4.2);
-; a running HikariSub.exe in $INSTDIR also counts, which covers builds that
-; predate the mutex.
+; $R9 = 1 when HikariSub runs: its named mutex exists, or a HikariSub.exe in $INSTDIR runs.
 Function ${UN}HsAppRunning
   Push $0
   Push $1
@@ -283,8 +262,7 @@ Function ${UN}HsCleanLine
   Pop $0
 FunctionEnd
 
-; $R0: a relative file path. Removes each parent folder below $INSTDIR that
-; is now empty, deepest first.
+; $R0: a relative file path. Removes each now-empty parent folder below $INSTDIR, deepest first.
 Function ${UN}HsRemoveEmptyParents
   Push $0
   Push $1
@@ -313,9 +291,8 @@ Function ${UN}HsRemoveEmptyParents
   Pop $0
 FunctionEnd
 
-; Removes this install's associations from SHCTX (spec 1.5): only keys and
-; values that still point at $INSTDIR, and an extension's default only when it
-; still names our ProgID and that ProgID is gone.
+; Removes this install's associations from SHCTX: only keys and values that still point at $INSTDIR, and an
+; extension's default only when it names our ProgID and that ProgID is gone.
 Function ${UN}HsRemoveAssociations
   Push $0
   !insertmacro HS_ASSOC_REMOVE ass
@@ -374,11 +351,7 @@ FunctionEnd
 !insertmacro HS_PROTECTED_FUNCTIONS "un."
 !insertmacro HS_PAYLOAD_PATH_FUNCTION ""
 
-; ---------------------------------------------------------------------------
-; Installer-only helpers
-
-; Start HikariSub from $INSTDIR, never elevated: an elevated installer goes
-; through the shell of the desktop user.
+; Starts HikariSub from $INSTDIR unelevated, through the desktop user's shell.
 Function HsLaunchApp
   Push $0
   ${If} ${FileExists} "$INSTDIR\${HS_EXE}"
@@ -392,10 +365,8 @@ Function HsLaunchApp
   Pop $0
 FunctionEnd
 
-; HS_START_EVENT: a manual-reset event, not set, that any signed-in user
-; may set (EVENT_MODIFY_STATE and SYNCHRONIZE for Authenticated Users),
-; held until exit. An event, not a file: an all-users setup that another
-; administrator approved runs in that account's profile, not the user's.
+; HS_START_EVENT: a manual-reset event any signed-in user may set, held until exit. Not a file: an all-users
+; setup that another administrator approved runs in that account's profile.
 !if ${NSIS_PTR_SIZE} != 4
   !error "HsMakeStartEvent lays out a 32-bit SECURITY_ATTRIBUTES"
 !endif
@@ -417,8 +388,7 @@ Function HsMakeStartEvent
   Pop $0
 FunctionEnd
 
-; An app started while this /UPDATE ran left at once and set HS_START_EVENT:
-; HikariSub starts when this ends, as with /RELAUNCH (as the desktop user).
+; An app started during this /UPDATE set HS_START_EVENT: start HikariSub, as the desktop user.
 Function HsTakeStartRequest
   Push $0
   ${If} $HsUpdate = 1
@@ -435,8 +405,7 @@ FunctionEnd
 Function HsFail
   Push $0
   ${If} $HsUpdate = 1
-    ; Under the copy's key (the app's CopyKey): another copy that shares
-    ; this cache does not take this result for its own.
+    ; Under the app's CopyKey, so another copy sharing this cache doesn't take the result for its own.
     StrCpy $0 $HsScope
     ${If} $0 == ""
       StrCpy $0 $HsCmdScope
@@ -538,7 +507,6 @@ Function HsSemverCompare
   Push $7
   Push $8
   Push $9
-  ; Drop build metadata, then split core and prerelease.
   StrCpy $9 $R0
   StrCpy $8 "+"
   Call HsSplitFirst
@@ -564,7 +532,6 @@ Function HsSemverCompare
   ${EndIf}
   StrCpy $R1 $7         ; b core
   StrCpy $R2 0
-  ; Core: MAJOR.MINOR.PATCH, numerically.
   StrCpy $8 "."
   ${ForEach} $R3 1 3 + 1
     StrCpy $9 $0
@@ -590,7 +557,6 @@ Function HsSemverCompare
     ${AndIf} $5 = 0
       StrCpy $R2 -1
     ${ElseIf} $2 = 1
-      ; Both prereleases: identifier by identifier.
       ${Do}
         ${If} $1 == ""
           ${If} $3 != ""
@@ -732,7 +698,7 @@ Function HsParseArgs
   Pop $R0
 FunctionEnd
 
-; Reads an existing install of either scope (spec 6.2).
+; Reads an existing install of either scope.
 Function HsFindExisting
   Push $0
   Push $1
@@ -745,9 +711,7 @@ Function HsFindExisting
   ${EndIf}
   SetShellVarContext current
   ClearErrors
-  ; The elevated relaunch for all users, and an all-users update, run as
-  ; whichever administrator approved UAC: their HKCU is not the user's, and
-  ; a per-user install of theirs has nothing to do with this one.
+  ; An elevated run is whichever administrator approved UAC: their HKCU and per-user install aren't the user's.
   ${If} $HsElevated = 1
   ${OrIf} $HsUpdate = 1
   ${AndIf} $HsCmdScope == "machine"
@@ -796,7 +760,7 @@ Function HsCheckMachineDir
   ${EndIf}
 FunctionEnd
 
-; Sets the shell context and the default folder for $HsScope (spec 6.2).
+; Sets the shell context and the default folder for $HsScope.
 Function HsApplyScope
   ${If} $HsScope == "machine"
     SetShellVarContext all
@@ -815,15 +779,10 @@ Function HsApplyScope
   ${EndIf}
 FunctionEnd
 
-; $R2 = 1 when $INSTDIR may hold an all-users install (spec 6.2): a new
-; folder directly in Program Files, as a plain path, which only
-; administrators can create there and which takes Program Files' rights; or
-; the folder of the all-users install already there, which an administrator
-; chose. A folder elsewhere, or one that is already there (another program's
-; folder may let users change it, or hold a junction), could be the user's
-; to change, who could then replace the program that every user, and
-; administrators, start from the shortcuts and file types. A new folder this
-; setup has already accepted ($HsNewMachineDir) stays accepted once made.
+; $R2 = 1 when $INSTDIR may hold an all-users install: a new folder directly in Program Files (only
+; administrators can create it, and it takes Program Files' rights), or the existing all-users install's folder.
+; Any other folder could be a user's to change, and every user and administrator runs what it holds.
+; A new folder this setup accepted ($HsNewMachineDir) stays accepted once made.
 Function HsMachineDirOk
   Push $0
   Push $1
@@ -846,7 +805,6 @@ Function HsMachineDirOk
         StrCpy $R2 0
       ${EndIf}
     ${EndIf}
-    ; Directly in Program Files: one name, no "\".
     ${If} $R2 = 1
       StrLen $1 $R0
       StrCpy $0 0
@@ -879,7 +837,7 @@ Function HsMachineDirOk
   Pop $0
 FunctionEnd
 
-; Waits for HikariSub to exit before files are replaced (spec 4.2, 6.4).
+; Waits for HikariSub to exit before files are replaced.
 Function HsWaitForApp
   Push $0
   Push $1
@@ -926,8 +884,7 @@ Function HsWaitForApp
   Pop $0
 FunctionEnd
 
-; Deletes the files of the previous install that this payload no longer has
-; (spec 6.6): only paths listed in the old install-manifest.txt.
+; Deletes the previous install's files that this payload no longer has: only paths in the old install-manifest.txt.
 Function HsDeleteOrphans
   Push $0
   Push $R0
@@ -1008,7 +965,6 @@ Section "-Program files" SecCore
   SetOutPath "$INSTDIR"
   Call HsWaitForApp
 
-  ; The previous payload's file list, for the orphan sweep below.
   InitPluginsDir
   Delete "$PLUGINSDIR\old-manifest.txt"
   ${If} ${FileExists} "$INSTDIR\install-manifest.txt"
@@ -1025,7 +981,7 @@ Section "-Program files" SecCore
   ${EndIf}
   Call HsDeleteOrphans
 
-  ; The package kind the app reads beside its executable (spec 3).
+  ; The package kind the app reads beside its executable.
   FileOpen $0 "$INSTDIR\package-kind.txt" w
   ${If} $HsScope == "machine"
     FileWrite $0 "nsis-machine"
@@ -1135,7 +1091,6 @@ Function HsSelectComponents
   Pop $7
 FunctionEnd
 
-; HsHoldSelf (protected.nsh): this setup's file and the folders above it.
 !insertmacro HS_HOLD_SELF_FUNCTIONS
 
 Function .onInit
@@ -1147,8 +1102,7 @@ Function .onInit
   Call HsParseArgs
   ${If} $HsUpdate = 1
     SetSilent silent
-    ; Taken first, before the wait for the app: the app's own handoff
-    ; waits for it, so a start after the app's quit finds it.
+    ; Before the wait for the app: the app's own handoff waits for this event.
     Call HsMakeStartEvent
     System::Call 'kernel32::CreateMutexW(p 0, i 1, w "${HS_SETUP_MUTEX}") p .r0'
     StrCpy $HsSetupMutex $0
@@ -1292,7 +1246,7 @@ Function HsScopePageLeave
   ${EndIf}
   ${If} $HsScope == "machine"
   ${AndIf} $HsIsAdmin <> 1
-    ; Start an elevated copy for all users and leave (spec 6.2).
+    ; Start an elevated copy for all users and leave.
     ${GetParameters} $R1
     StrCpy $R1 "/ALLUSERS /ELEVATED $R1"
     ${If} $HsDirArg != ""
@@ -1392,10 +1346,8 @@ Function un.onInit
       SetErrorLevel 4
       Quit
     ${EndIf}
-    ; Only from a folder the user cannot change: package-kind.txt, which
-    ; says all users, and the uninstaller started elevated would otherwise
-    ; be the user's to rewrite, and a same-user process could have its own
-    ; code run as administrator (spec 6.4).
+    ; Only from a folder the user cannot change: otherwise a same-user process could replace the elevated
+    ; uninstaller and run its own code as administrator.
     StrCpy $R0 $INSTDIR
     Call un.HsProtectedFromUser
     ${If} $R2 <> 1
@@ -1423,7 +1375,7 @@ Function un.onInit
 FunctionEnd
 
 Section "Uninstall"
-  ; Never while HikariSub runs (spec 6.4).
+  ; Never while HikariSub runs.
   ${If} ${Silent}
     Call un.HsWaitAppGone
     ${If} $R9 = 1

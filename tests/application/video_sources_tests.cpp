@@ -1,11 +1,3 @@
-// V3: video sources, tracks and chapters without Qt, against legacy
-// VideoBox::NextFile/NextChap/PrevChap/ContextMenu/OpenKeyframes, DummyVideo,
-// ProviderDummy, colorspace.cpp and AudioDisplay::GetBoundarySnap at
-// 20d647c4. The dummy's expected pixels and counts were printed by legacy's
-// own functions (colorspace.cpp:44-142 and 253-290, ProviderDummy.cpp:98-142,
-// DummyVideo.cpp:94-97 and 118-140) copied verbatim into a standalone
-// program, built without floating-point contraction as this library is.
-
 #include "hikari/application/video_session.h"
 #include "hikari/application/video_sources.h"
 
@@ -27,33 +19,27 @@ std::array<int, 4> pixel(const std::vector<std::byte> &bgra, int width, int x, i
     return {int(bgra[k]), int(bgra[k + 1]), int(bgra[k + 2]), int(bgra[k + 3])};
 }
 
-} // namespace
+}
 
-// VideoBox.cpp:719-723: lower-cased extension, avs left out.
 TEST(NextFile, LegacyVideoExtensions)
 {
     for (const char *p : {"a.avi", "a.MP4", "a.mkv", "a.ogm", "a.wmv", "a.asf", "a.rmvb", "a.rm", "a.3gp", "a.ts",
                           "a.M2TS", "a.mpg", "a.mpeg", "dir.v/a.Mkv",
-                          "mkv"}) // AfterLast('.') without a dot is the whole name
+                          "mkv"})
         EXPECT_TRUE(isNextFileVideo(p)) << p;
     for (const char *p : {"a.avs", "a.ass", "a.mov", "a.webm", "a.mkv.txt", "a.", "/v/mkv/notes"})
         EXPECT_FALSE(isNextFileVideo(p)) << p;
 }
 
-// VideoBox::NextFile (VideoBox.cpp:682-739) over the folder's listing, put in
-// natural name order (V3-next-file-natural-order; legacy walked
-// wxDir::GetAllFiles' own unsorted order).
 TEST(NextFile, WalksTheListingInNameOrderSkippingOtherFiles)
 {
     const std::vector<std::string> files{"/v/c.mkv", "/v/notes.txt", "/v/a.mkv", "/v/b.ass", "/v/b.MP4", "/v/z.avs"};
     NextFileWalker walker;
-    // a.mkv, b.ass, b.MP4, c.mkv, notes.txt, z.avs
     auto step = walker.step(files, "/v/a.mkv", true);
     EXPECT_EQ(step.kind, NextFileStep::Kind::Open);
-    EXPECT_EQ(step.path, "/v/b.MP4"); // b.ass skipped
+    EXPECT_EQ(step.path, "/v/b.MP4");
     step = walker.step(files, "/v/b.MP4", true);
     EXPECT_EQ(step.path, "/v/c.mkv");
-    // after the last video only files legacy does not open (avs): back to the start, play toggled
     step = walker.step(files, "/v/c.mkv", true);
     EXPECT_EQ(step.kind, NextFileStep::Kind::Restart);
     step = walker.step(files, "/v/c.mkv", false);
@@ -63,9 +49,6 @@ TEST(NextFile, WalksTheListingInNameOrderSkippingOtherFiles)
     EXPECT_EQ(walker.step(files, "/v/a.mkv", false).kind, NextFileStep::Kind::Restart);
 }
 
-// V3-next-file-natural-order: episode 2 before episode 10 and case left
-// out, whatever order the folder lists them in; the listing kept for a folder
-// that cannot be opened stays in that order.
 TEST(NextFile, EpisodesInNaturalOrderWhateverTheListing)
 {
     const std::vector<std::string> files{"/v/Ep 10.mkv", "/v/Ep 2.mkv", "/v/ep 1.mkv", "/v/Ep 3.MKV", "/v/Ep 9.mkv"};
@@ -100,7 +83,6 @@ int sign(int v)
     return v < 0 ? -1 : v > 0 ? 1 : 0;
 }
 
-// A-Z and the non-ASCII capitals the tests use, as QChar::toLower maps them.
 char32_t testLower(char32_t c)
 {
     if (c >= U'A' && c <= U'Z')
@@ -110,9 +92,8 @@ char32_t testLower(char32_t c)
     return c;
 }
 
-} // namespace
+}
 
-// Digit runs compare as numbers, of any length; each run of a name on its own.
 TEST(NaturalNameOrder, DigitRunsAsNumbers)
 {
     EXPECT_LT(naturalNameCompare("Ep 2.mkv", "Ep 10.mkv"), 0);
@@ -125,13 +106,10 @@ TEST(NaturalNameOrder, DigitRunsAsNumbers)
     EXPECT_EQ(naturallySorted({"S2E1.mkv", "S10E1.mkv", "S1E10.mkv", "S1E2.mkv"}),
               (std::vector<std::string>{"S1E2.mkv", "S1E10.mkv", "S2E1.mkv", "S10E1.mkv"}));
     EXPECT_LT(naturalNameCompare("x99999999999999999999999.mkv", "x100000000000000000000000.mkv"), 0);
-    // a digit against a letter compares as characters ('0'-'9' before letters)
     EXPECT_LT(naturalNameCompare("a1.mkv", "ab.mkv"), 0);
     EXPECT_LT(naturalNameCompare("a.mkv", "a1.mkv"), 0);
 }
 
-// Letters without case (A-Z by default, the caller's mapping otherwise);
-// names equal that way or as numbers are ordered by their plain bytes.
 TEST(NaturalNameOrder, CaseLeftOutThenThePlainName)
 {
     EXPECT_EQ(naturallySorted({"c.MKV", "B.mkv", "a.mkv", "D.mkv"}),
@@ -147,16 +125,12 @@ TEST(NaturalNameOrder, CaseLeftOutThenThePlainName)
     EXPECT_LT(naturalNameCompare("", "a"), 0);
     EXPECT_EQ(naturallySorted({"ep 1.mkv", "Ep 1.mkv", "Ep 01.mkv", "EP 001.mkv"}),
               (std::vector<std::string>{"EP 001.mkv", "Ep 01.mkv", "Ep 1.mkv", "ep 1.mkv"}));
-    // non-ASCII letters: by code point, lowered by the caller's mapping
     EXPECT_LT(naturalNameCompare("\u00c4rger.mkv", "\u00e9.mkv"), 0);
-    EXPECT_LT(naturalNameCompare("\u00c4b.mkv", "\u00e4a.mkv"), 0); // A-Z only: U+00C4 before U+00E4
-    EXPECT_GT(naturalNameCompare("\u00c4b.mkv", "\u00e4a.mkv", testLower), 0); // lowered alike: 'b' after 'a'
-    // bytes that are not UTF-8 compare as their own value, after ASCII
+    EXPECT_LT(naturalNameCompare("\u00c4b.mkv", "\u00e4a.mkv"), 0);
+    EXPECT_GT(naturalNameCompare("\u00c4b.mkv", "\u00e4a.mkv", testLower), 0);
     EXPECT_GT(naturalNameCompare("\xff.mkv", "z.mkv"), 0);
 }
 
-// The capture folder's names (tests/fixtures/legacy-observations/local-v3-next-file-20261013)
-// in natural order: a strict weak order from any starting order.
 TEST(NaturalNameOrder, TheCaptureFolderInOrder)
 {
     const std::vector<std::string> created{"ep10.mkv", "B.mkv", "notes.txt", "ep2.mkv", ".dotted.mkv", "a.b.mkv",
@@ -176,8 +150,6 @@ TEST(NaturalNameOrder, TheCaptureFolderInOrder)
         }
 }
 
-// The folder NextFile lists, wxFileName(path).GetPath() (VideoBox.cpp:692-697):
-// as written, "." and ".." kept, doubled separators dropped.
 TEST(NextFile, TheFolderAsWxFileNameGivesIt)
 {
     EXPECT_EQ(nextFileFolder("/v/a.mkv", PathFormat::Unix), "/v");
@@ -188,7 +160,7 @@ TEST(NextFile, TheFolderAsWxFileNameGivesIt)
     EXPECT_EQ(nextFileFolder("v/a.mkv", PathFormat::Unix), "v");
     EXPECT_EQ(nextFileFolder("../v/a.mkv", PathFormat::Unix), "../v");
     EXPECT_EQ(nextFileFolder("a.mkv", PathFormat::Unix), "");
-    EXPECT_EQ(nextFileFolder("/v\\w/a.mkv", PathFormat::Unix), "/v\\w"); // a backslash is a name's
+    EXPECT_EQ(nextFileFolder("/v\\w/a.mkv", PathFormat::Unix), "/v\\w");
     EXPECT_EQ(nextFileFolder(R"(C:\v\a.mkv)", PathFormat::Dos), R"(C:\v)");
     EXPECT_EQ(nextFileFolder(R"(C:\v\sub\..\a.mkv)", PathFormat::Dos), R"(C:\v\sub\..)");
     EXPECT_EQ(nextFileFolder(R"(C:\v\\w/a.mkv)", PathFormat::Dos), R"(C:\v\w)");
@@ -203,57 +175,45 @@ TEST(NextFile, EndsRestartAndAMissingFileUsesTheRememberedPosition)
 {
     const std::vector<std::string> files{"/v/a.mkv", "/v/b.mkv", "/v/c.mkv"};
     NextFileWalker walker;
-    // first and last: Seek(0); Pause(false), the position clamped
     EXPECT_EQ(walker.step(files, "/v/a.mkv", false).kind, NextFileStep::Kind::Restart);
     EXPECT_EQ(walker.position(), 0);
     EXPECT_EQ(walker.step(files, "/v/c.mkv", true).kind, NextFileStep::Kind::Restart);
     EXPECT_EQ(walker.position(), 2);
-    // the current file is not in the folder (renamed meanwhile): actualFile as left
     auto step = walker.step(files, "/v/gone.mkv", false);
     EXPECT_EQ(step.path, "/v/b.mkv");
     step = walker.step(files, "/v/gone.mkv", true);
     EXPECT_EQ(step.path, "/v/c.mkv");
-    // an empty folder: next restarts (actualFile >= count - 1)
     NextFileWalker empty;
     EXPECT_EQ(empty.step(std::vector<std::string>{}, "/v/a.mkv", true).kind, NextFileStep::Kind::Restart);
     EXPECT_EQ(empty.step(std::vector<std::string>{}, "/v/a.mkv", false).kind, NextFileStep::Kind::Restart);
-    // a folder that could not be opened (wxDir not opened: `files` is not
-    // cleared): the last listing is walked again
     step = walker.step(std::nullopt, "/v/a.mkv", true);
     EXPECT_EQ(step.path, "/v/b.mkv");
     EXPECT_EQ(empty.step(std::nullopt, "?dummy:25:10:8:4:0:0:0:", true).kind, NextFileStep::Kind::Restart);
 }
 
-// DummyVideo::GetDummyText (DummyVideo.cpp:118-140).
 TEST(DummyVideo, DialogTextAsLegacyWritesIt)
 {
-    // the defaults: 23.976, 0:25:00.00, 1920x1080, &HFEA32F&
     auto text = dummyVideoText("23.976", 1500000, 1920, 1080, 0x2F, 0xA3, 0xFE, false);
     ASSERT_TRUE(text);
     EXPECT_EQ(*text, "?dummy:23.976000:35964:1920:1080:47:163:254:");
     text = dummyVideoText("29.97", 60000, 640, 480, 0, 0, 0, true);
     ASSERT_TRUE(text);
-    EXPECT_EQ(*text, "?dummy:29.969999:1798:640:480:0:0:0:c"); // (float)29.97 printed with %f
-    // PU4-dummy-video: "This gives %i frames" follows the rate and the
-    // duration, with the text's own arithmetic (legacy: the defaults' once)
+    EXPECT_EQ(*text, "?dummy:29.969999:1798:640:480:0:0:0:c");
     EXPECT_EQ(dummyVideoFrames("23.976", 1500000), 35964);
     EXPECT_EQ(dummyVideoFrames("25", 1500000), 37500);
     EXPECT_EQ(dummyVideoFrames("29.97", 60000), 1798);
     EXPECT_EQ(dummyVideoFrames("25", 30), 0);
     for (const char *fps : {"14.99", "120.5", "1.2.3", "", "."})
         EXPECT_EQ(dummyVideoFrames(fps, 60000).error(), DummyVideoError::InvalidFps) << fps;
-    // "Invalid FPS value.": below 15, above 120, or not one number
     for (const char *fps : {"14.99", "120.5", "1.2.3", "", "."})
         EXPECT_EQ(dummyVideoText(fps, 60000, 640, 480, 0, 0, 0, false).error(), DummyVideoError::InvalidFps) << fps;
     EXPECT_TRUE(dummyVideoText("15", 60000, 640, 480, 0, 0, 0, false));
     EXPECT_TRUE(dummyVideoText("120", 60000, 640, 480, 0, 0, 0, false));
-    // a duration shorter than a frame gives 0 frames, which the provider refuses
     text = dummyVideoText("25", 30, 640, 480, 0, 0, 0, false);
     ASSERT_TRUE(text);
     EXPECT_FALSE(parseDummyVideo(*text));
 }
 
-// ProviderDummy::ParseDummyData (ProviderDummy.cpp:144-223).
 TEST(DummyVideo, ParsesWhatTheProviderAccepts)
 {
     const auto video = parseDummyVideo("?dummy:23.976000:35964:1920:1080:47:163:254:c");
@@ -266,13 +226,10 @@ TEST(DummyVideo, ParsesWhatTheProviderAccepts)
     EXPECT_EQ(video->green, 163);
     EXPECT_EQ(video->blue, 254);
     EXPECT_TRUE(video->pattern);
-    EXPECT_FALSE(parseDummyVideo("?dummy:25:10:640:480:0:0:0")); // a field missing
-    EXPECT_FALSE(parseDummyVideo("?dummy:x:10:640:480:0:0:0:"));  // fps not a number
-    EXPECT_FALSE(parseDummyVideo("?dummy:25:0:640:480:0:0:0:"));  // no frames
-    EXPECT_FALSE(parseDummyVideo("?dummy:25:10:0:480:0:0:0:"));   // no width
-    // V3-dummy-negative-size: legacy let a negative size through (only 0 was
-    // refused, ProviderDummy.cpp:198-201) and then could not make the frame
-    // buffer (m_framePlane = height * width * 4 < 0)
+    EXPECT_FALSE(parseDummyVideo("?dummy:25:10:640:480:0:0:0"));
+    EXPECT_FALSE(parseDummyVideo("?dummy:x:10:640:480:0:0:0:"));
+    EXPECT_FALSE(parseDummyVideo("?dummy:25:0:640:480:0:0:0:"));
+    EXPECT_FALSE(parseDummyVideo("?dummy:25:10:0:480:0:0:0:"));
     EXPECT_FALSE(parseDummyVideo("?dummy:25:10:-8:4:0:0:0:"));
     EXPECT_FALSE(parseDummyVideo("?dummy:25:10:8:-4:0:0:0:"));
     EXPECT_FALSE(parseDummyVideo("?dummy:25:10:-8:-4:0:0:0:"));
@@ -281,7 +238,6 @@ TEST(DummyVideo, ParsesWhatTheProviderAccepts)
     EXPECT_FALSE(isDummyVideo("/v/a.mkv"));
 }
 
-// ProviderDummy::GenerateFrame and Timebase::FromFps.
 TEST(DummyVideo, FramesAndTimecodesAsLegacyMakesThem)
 {
     DummyVideo plain{25.f, 3, 4, 2, 47, 163, 254, false};
@@ -290,8 +246,6 @@ TEST(DummyVideo, FramesAndTimecodesAsLegacyMakesThem)
     for (int y = 0; y < 2; ++y)
         for (int x = 0; x < 4; ++x)
             EXPECT_EQ(pixel(frame, 4, x, y), (std::array<int, 4>{254, 163, 47, 255}));
-    // the checkerboard: 10 px squares, the first in the colour, the other 24
-    // lighter through legacy's HSL with blue and green swapped (93, 184, 254)
     DummyVideo board{25.f, 1, 25, 25, 47, 163, 254, true};
     const auto b = dummyVideoFrame(board);
     const std::array<int, 4> colour{254, 163, 47, 255}, lighter{254, 184, 93, 255};
@@ -302,13 +256,11 @@ TEST(DummyVideo, FramesAndTimecodesAsLegacyMakesThem)
     EXPECT_EQ(pixel(b, 25, 10, 10), colour);
     EXPECT_EQ(pixel(b, 25, 20, 0), colour);
     EXPECT_EQ(pixel(b, 25, 24, 24), colour);
-    // black and white wrap the byte lightness as legacy does
     DummyVideo black{25.f, 1, 11, 1, 0, 0, 0, true}, white{25.f, 1, 11, 1, 255, 255, 255, true};
     EXPECT_EQ(pixel(dummyVideoFrame(black), 11, 10, 0), (std::array<int, 4>{24, 24, 24, 255}));
     EXPECT_EQ(pixel(dummyVideoFrame(white), 11, 10, 0), (std::array<int, 4>{231, 231, 231, 255}));
     DummyVideo red{25.f, 1, 11, 1, 128, 0, 0, true};
     EXPECT_EQ(pixel(dummyVideoFrame(red), 11, 10, 0), (std::array<int, 4>{0, 0, 176, 255}));
-    // frame n at n * (1000.f / fps) ms, truncated: the duration is frames * that
     DummyVideo film{23.976f, 35964, 2, 2, 0, 0, 0, false};
     const auto times = dummyVideoTimecodes(film);
     ASSERT_EQ(times.size(), 35964u);
@@ -319,14 +271,11 @@ TEST(DummyVideo, FramesAndTimecodesAsLegacyMakesThem)
     EXPECT_EQ(times[24], 1001);
     EXPECT_EQ(times[1000], 41708);
     EXPECT_EQ(times[35963], 1499958);
-    // AV3: its own silent audio lasts the frames' whole duration
     EXPECT_EQ(dummyVideoAudioFrames(film, 44100), std::llround(35964 * double(1000.f / 23.976f) * 44.1));
-    EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{25.f, 50, 2, 2, 0, 0, 0, false}, 44100), 88200); // 2 s
+    EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{25.f, 50, 2, 2, 0, 0, 0, false}, 44100), 88200);
     EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{0.f, 50, 2, 2, 0, 0, 0, false}, 44100), 0);
 }
 
-// The dummy goes through the session as any video: its frames, its legacy
-// timebase and no audio; other paths reach the media helper's port.
 TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
 {
     struct Media : IndexedSourcePort {
@@ -362,13 +311,11 @@ TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
     EXPECT_EQ(session.lastFrame()->width, 8);
     EXPECT_EQ(pixel(session.lastFrame()->bgra, 8, 7, 3), (std::array<int, 4>{3, 2, 1, 255}));
     EXPECT_EQ(session.sourceGeometry().width, 8);
-    EXPECT_FALSE(session.play()); // no file for the general player
+    EXPECT_FALSE(session.play());
     session.seekToMs(1000);
     EXPECT_EQ(session.shownFrame(), 25);
-    // a text the provider refuses fails the open
     session.open("?dummy:25:0:8:4:1:2:3:");
     EXPECT_EQ(session.state(), VideoSession::State::Failed);
-    // a negative size is refused as the open (V3-dummy-negative-size)
     session.open("?dummy:25.000000:50:8:4:1:2:3:");
     ASSERT_EQ(session.state(), VideoSession::State::Ready);
     session.open("?dummy:25:10:-8:4:1:2:3:");
@@ -376,17 +323,12 @@ TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
     EXPECT_FALSE(session.lastFrame());
     session.open("?dummy:25:10:8:-4:1:2:3:");
     EXPECT_EQ(session.state(), VideoSession::State::Failed);
-    // a file goes to the media helper
     session.open("/v/a.mkv");
     EXPECT_EQ(media.opens, 1);
     EXPECT_EQ(source.generation(), 7u);
     EXPECT_FALSE(session.dummy());
 }
 
-// A dummy's text, refused or not, reports no failure of the helper's: an
-// earlier file's failure (FFMS2's stage and text) stays with that file.
-// Legacy ProviderDummy logs nothing when its text is refused
-// (ProviderDummy.cpp:98-142), so the session gives its own status.
 TEST(DummyVideo, ARefusedTextDoesNotReportTheLastFilesFailure)
 {
     struct Media : IndexedSourcePort {
@@ -421,42 +363,34 @@ TEST(DummyVideo, ARefusedTextDoesNotReportTheLastFilesFailure)
     ASSERT_EQ(session.state(), VideoSession::State::Failed);
     ASSERT_TRUE(session.openFailure());
     EXPECT_EQ(session.openFailure()->stage, OpenStage::Source);
-    session.open("?dummy:25:0:8:4:1:2:3:"); // 0 frames: refused
+    session.open("?dummy:25:0:8:4:1:2:3:");
     ASSERT_EQ(session.state(), VideoSession::State::Failed);
     EXPECT_FALSE(source.openFailure());
     EXPECT_FALSE(session.openFailure());
     session.open("?dummy:25:10:8:4:1:2:3:");
     ASSERT_EQ(session.state(), VideoSession::State::Ready);
     EXPECT_FALSE(source.openFailure());
-    session.open("/v/a.mkv"); // the file again: its own failure
+    session.open("/v/a.mkv");
     ASSERT_TRUE(session.openFailure());
     EXPECT_EQ(session.openFailure()->message, "no source");
 }
 
-// VideoBox::NextChap / PrevChap (VideoBox.cpp:1420-1468) with prevchap.
 TEST(Chapters, NextAndPreviousAsLegacyWalksThem)
 {
     const std::vector<int> c{0, 60000, 120000};
     int prev = -1;
-    // inside chapter 0: the next is 1
     EXPECT_EQ(nextChapter(c, 1000, prev), 1);
     EXPECT_EQ(prev, 1);
-    // at chapter 1's start (after jumping there): j = 1, jj = 2
     EXPECT_EQ(nextChapter(c, 60000, prev), 2);
-    // in the last chapter: wraps to 0
     EXPECT_EQ(nextChapter(c, 125000, prev), 0);
-    // before the first chapter starts (chapters[0] >= time): the first
     const std::vector<int> late{5000, 60000};
     prev = -1;
     EXPECT_EQ(nextChapter(late, 1000, prev), 0);
-    // again at the same time: jj == prevchap moves on
     EXPECT_EQ(nextChapter(late, 1000, prev), 1);
-    // previous: the chapter holding the time, or the one before when that
-    // was the last jumped to
     prev = -1;
     EXPECT_EQ(previousChapter(c, 70000, prev), 1);
     EXPECT_EQ(previousChapter(c, 60000, prev), 0);
-    EXPECT_EQ(previousChapter(c, 0, prev), 2); // jj 0 == prevchap: wraps to the last
+    EXPECT_EQ(previousChapter(c, 0, prev), 2);
     prev = -1;
     EXPECT_EQ(previousChapter(c, 125000, prev), 2);
     int none = -1;
@@ -464,19 +398,16 @@ TEST(Chapters, NextAndPreviousAsLegacyWalksThem)
     EXPECT_FALSE(previousChapter({}, 0, none));
 }
 
-// VideoBox.cpp:1010-1016 with Menu.cpp:764-767: the first radio item gets
-// the dot.
 TEST(Chapters, TheMenuMarksTheFirstChapterNotYetLeft)
 {
     const std::vector<int> c{5000, 60000, 120000};
-    EXPECT_EQ(currentChapter(c, 0), 0); // before the first: the first
+    EXPECT_EQ(currentChapter(c, 0), 0);
     EXPECT_EQ(currentChapter(c, 59999), 0);
     EXPECT_EQ(currentChapter(c, 60000), 1);
     EXPECT_EQ(currentChapter(c, INT_MAX - 1), 2);
     EXPECT_EQ(currentChapter({}, 0), -1);
 }
 
-// ProviderFFMS2::Init's track description (ProviderFFMS2.cpp:213-247).
 TEST(Streams, AudioLabelsAsLegacyDescribesTracks)
 {
     AudioTrack t;
@@ -488,7 +419,6 @@ TEST(Streams, AudioLabelsAsLegacyDescribesTracks)
     t.hasName = true;
     t.name = "Main";
     EXPECT_EQ(audioStreamLabel(t), "A: Main [jpn] (aac)");
-    // "Name [code]" in the language field: the code, and the name when none
     AudioTrack l;
     l.codec = "flac";
     l.hasLanguage = true;
@@ -499,14 +429,10 @@ TEST(Streams, AudioLabelsAsLegacyDescribesTracks)
     EXPECT_EQ(audioStreamLabel(l), "A: English  [eng] (flac)");
 }
 
-// VideoBox::OpenKeyframes without video (VideoBox.cpp:1730-1731) and
-// AudioDisplay::GetBoundarySnap without video (AudioDisplay.cpp:2506-2509).
 TEST(Keyframes, WithoutVideoAtFilmRate)
 {
-    // Timebase::FromFps(24000.f / 1001.f): frame * (double)(1000.f / fps), truncated
-    // (41.708332 ms a frame: 24 frames are 999.99997 ms)
     EXPECT_EQ(keyframesWithoutVideo({24, 0, 48, 24, 1}), (std::vector<int>{0, 41, 1000, 2001}));
-    EXPECT_EQ(keyframeSnapWithoutVideo(1000), 970); // ZEROIT(1000 - 21)
+    EXPECT_EQ(keyframeSnapWithoutVideo(1000), 970);
     EXPECT_EQ(keyframeSnapWithoutVideo(41), 20);
-    EXPECT_EQ(keyframeSnapWithoutVideo(0), -20); // ZEROIT(-21): C division truncates
+    EXPECT_EQ(keyframeSnapWithoutVideo(0), -20);
 }

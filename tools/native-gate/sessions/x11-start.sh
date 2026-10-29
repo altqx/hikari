@@ -1,6 +1,4 @@
 #!/bin/bash
-# X11 session: Xvfb (one 3200x1000 screen; RandR monitors are set by the
-# scenario) with openbox as the window manager and a private session bus.
 export GATE_SESSION=x11
 "$(dirname "$0")/stop.sh" x11
 . "$(cd "$(dirname "$0")/.." && pwd)/env.sh"

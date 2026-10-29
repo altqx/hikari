@@ -1,6 +1,3 @@
-// S2: automation hotkeys stored by the legacy name and read from a legacy
-// Hotkeys.txt (Hotkeys::SaveHkeys at 20d647c4).
-
 #include "hikari/application/automation_hotkeys.h"
 
 #include <gtest/gtest.h>
@@ -35,7 +32,7 @@ TEST(AutomationHotkeys, OnlyScriptLinesAreRead)
     ASSERT_EQ(bindings.size(), 2u);
     EXPECT_EQ(bindings[0].legacyName, "Script blur.lua-0");
     EXPECT_EQ(bindings[0].keys, "Ctrl+Shift+B");
-    EXPECT_TRUE(bindings[0].macroName.empty()); // imported: no recorded registration
+    EXPECT_TRUE(bindings[0].macroName.empty());
     EXPECT_EQ(bindings[1].legacyName, "Script karaoke.moon-3");
     EXPECT_EQ(bindings[1].keys, "F9");
 }

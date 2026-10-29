@@ -1,6 +1,6 @@
 # Legacy observations: run 36591631319
 
-Captured by [legacy-capture](https://github.com/altqx/hikari/blob/350c1152a3560230913ce89d163ebd52766cc5ce/.github/workflows/legacy-capture.yml) [run 36591631319](https://github.com/altqx/hikari/actions/runs/36591631319) from the legacy wx app at `20d647c4` (pinned wxWidgets 3.3.3, Ubuntu 24.04). `observations.json` holds the raw record, including package and probe SHA-256s. `outputs/` holds the exact bytes the old app wrote; `.gitattributes` keeps them unnormalized. These are observations of the old app, not expectations for the rewrite.
+Captured by [legacy-capture](https://github.com/altqx/hikari/blob/350c1152a3560230913ce89d163ebd52766cc5ce/.github/workflows/legacy-capture.yml) [run 36591631319](https://github.com/altqx/hikari/actions/runs/36591631319) from the legacy wx app at `20d647c4` (pinned wxWidgets 3.3.3, Ubuntu 24.04). `observations.json` holds the raw record, including package and probe SHA-256s. `outputs/` holds the exact bytes the old app wrote; `.gitattributes` keeps them unnormalized. These are observations of the old app, not expectations for HikariSub.
 
 | Case | Route | Old app observed | Approved expectation (ledger) |
 | --- | --- | --- | --- |

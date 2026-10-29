@@ -1,14 +1,7 @@
 #pragma once
 
-// W1: whether this Windows host can build legacy's DirectShow graph for the
-// test fixtures. Legacy's graph (DShowPlayer::OpenFile, which the adapter
-// keeps) adds DirectShow's audio renderer to every video, so a host without
-// an audio output device opens no file with it (the open fails as legacy's
-// did, "Cannot create audio renderer instance"); and each fixture needs a
-// system decoder for its codec. The GitHub Windows runners (Windows Server,
-// no sound card) may lack either; the Winix VM has both. A test that needs
-// the graph skips naming what it needs and is missing, instead of failing or
-// running into its timeout; one whose fixtures need nothing missing runs.
+// DirectShow's audio renderer needs an audio output device and each codec a system decoder;
+// GitHub's Windows runners (no sound card) may lack either.
 
 #ifdef _WIN32
 
@@ -48,16 +41,12 @@ inline constexpr DWORD fourcc(char a, char b, char c, char d)
     return DWORD(BYTE(a)) | (DWORD(BYTE(b)) << 8) | (DWORD(BYTE(c)) << 16) | (DWORD(BYTE(d)) << 24);
 }
 
-// What this host lacks for legacy's graph, each piece recorded on its own:
-// the audio renderer every graph adds, the filter mapper the decoder lookup
-// uses, and a decoder for each FOURCC asked about. A test skips only for the
-// pieces its fixtures need.
 struct DirectShowGaps {
     std::string audioRenderer;                               // empty: it can be created
     std::string filterMapper;                                // empty: it can be created
     std::vector<std::pair<std::string, std::string>> codecs; // (name, what is missing), missing ones only
 
-    // What a graph over video in the named codecs lacks here (empty: nothing).
+    // What a graph over video in `codecNames` lacks here; empty when nothing.
     std::string missing(const std::vector<std::string> &codecNames) const
     {
         std::string out;
@@ -73,7 +62,6 @@ struct DirectShowGaps {
                     add(what);
         return out;
     }
-    // Everything missing (empty: nothing).
     std::string all() const
     {
         std::vector<std::string> names;
@@ -128,13 +116,12 @@ inline DirectShowGaps directShowGaps(const std::vector<std::pair<DWORD, const ch
     return gaps;
 }
 
-// What this host lacks for legacy's graph over video in `codecs` (FOURCC,
-// name); empty when nothing is missing.
+// What this host lacks for a graph over video in `codecs` (FOURCC, name); empty when nothing.
 inline std::string directShowGraphMissing(const std::vector<std::pair<DWORD, const char *>> &codecs)
 {
     return directShowGaps(codecs).all();
 }
 
-} // namespace hikari::testing
+}
 
 #endif

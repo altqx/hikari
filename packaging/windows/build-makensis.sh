@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
-# Builds the makensis that tools.lock names, for Linux, and prints its path
-# (installers spec, 6.1). The same file on the legacy and Qt branches.
+# Builds the makensis that tools.lock names, for Linux, and prints its path.
+# Same bytes on the main and legacy branches.
 #
 #   build-makensis.sh <work dir>
 #
-# Distributions ship older NSIS releases (Ubuntu 24.04 has 3.09); 3.11
-# fixed CVE-2025-43715, the race in which a local user creates the plug-ins
-# folder of an elevated installer first and plants a DLL in it. The
-# compiler is built from the release's source with scons, the way NSIS
-# documents for POSIX; the stubs, plug-ins and headers it packs come from
-# the release's own zip. Both downloads are checked against tools.lock.
-# Set HS_NSIS_ZIP and HS_NSIS_SRC to use local copies of the same files.
-# Needs curl, unzip, bzip2, scons, g++ and zlib's headers. A build is kept
-# in <work dir>/nsis-<version> and reused.
+# Distributions ship NSIS before 3.11, which has CVE-2025-43715. The compiler is built from source with scons (NSIS's
+# POSIX route); stubs, plug-ins and headers come from the release zip. HS_NSIS_ZIP and HS_NSIS_SRC name local copies.
 set -euo pipefail
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# MUST KILL: the usage text is read from line 5 of this file's header.
 [[ $# -eq 1 ]] || { sed -n '5p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 mkdir -p "$1"
 work=$(cd "$1" && pwd)
@@ -28,8 +22,7 @@ lock_value() {
 
 version=$(lock_value MAKENSIS_VERSION)
 dest="$work/nsis-$version"
-# makensis finds Stubs, Plugins and Include in the folder above its own,
-# as in the zip, whose Bin holds the Windows tools.
+# makensis finds Stubs, Plugins and Include in the folder above its own, as in the release zip.
 makensis="$dest/Bin/makensis"
 if [[ -x $makensis && "$("$makensis" -VERSION 2>/dev/null)" == "v$version" ]]; then
   echo "$makensis"

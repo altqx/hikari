@@ -1,11 +1,3 @@
-// VT3: the Perspective tool's tags rendered by libass (the renderer the video
-// uses), against the quad the tool draws. A drawing's box with the tags the
-// maths gives for a quad is painted onto that quad within a pixel, at the
-// script's size and at twice it (libass lays out at the rendered frame's
-// size, so its camera distance in script units halves), for each alignment,
-// a drawing not at its origin, a baseline offset, and quads the tags were
-// found for.
-
 #include "hikari/application/visual_perspective.h"
 #include "hikari/backends/libass_renderer.h"
 
@@ -33,8 +25,7 @@ std::vector<std::byte> bytesOf(const std::string &s)
     return out;
 }
 
-// The renderer has no system font provider (N3): a drawing needs a font
-// leased in memory, the locked Qt install's OFL Titillium Web.
+// libass needs a font even for a drawing, and the renderer has no system font provider.
 std::shared_ptr<const std::vector<std::byte>> testFont()
 {
     QFile f(QStringLiteral(HIKARI_TEST_FONT));
@@ -104,7 +95,6 @@ double segmentDistance(PointF p, PointF a, PointF b)
     return std::hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
 }
 
-// How far `p` is outside the convex quad (0 inside), and how far inside.
 double outside(const Quad &q, PointF p)
 {
     const double turn = cross(q[0], q[1], q[2]) > 0 ? 1 : -1;
@@ -128,10 +118,6 @@ double inside(const Quad &q, PointF p)
     return d;
 }
 
-// The ink of `text` rendered at w x h lies on `quad` (script units) within a
-// pixel: no solid ink (a pixel at least half covered) a pixel outside it and
-// no faint ink a pixel and a half outside it, every pixel a pixel inside it
-// inked, and ink within a pixel of each corner.
 void expectInkOnQuad(const std::u16string &text, const Quad &scriptQuad, int w, int h)
 {
     std::string where = std::string(text.begin(), text.end()) + " at " + std::to_string(w) + "x" + std::to_string(h) +
@@ -176,7 +162,6 @@ void expectInkOnQuad(const std::u16string &text, const Quad &scriptQuad, int w, 
         EXPECT_LE(nearest[static_cast<std::size_t>(i)], 1.0) << "corner " << i;
 }
 
-// The tags as the tool writes them.
 std::u16string lineWith(const Transform &t, std::u16string_view drawing)
 {
     return writeTransform(u"{\\an" + std::u16string(1, char16_t(u'0' + t.an)) + u"\\p1}" + std::u16string(drawing), t,
@@ -212,13 +197,13 @@ TEST(PerspectiveRender, TheTagsPaintTheQuad)
         t.pos = c.pos;
         t.org = c.org;
         const std::u16string text = lineWith(t, drawing);
+        // libass lays out at the rendered size, so at twice the script's size its camera distance in script units halves.
         for (const auto [w, h] : {std::pair{kScriptW, kScriptH}, std::pair{2 * kScriptW, 2 * kScriptH}})
             expectInkOnQuad(text, textToQuad(t, box, screenZ(kScriptH, h)), w, h);
     }
 }
 
-// A drawing whose points do not start at its origin: libass aligns its
-// bounding box, so the tool's box is the points' box.
+// libass aligns a drawing by its bounding box, not its origin.
 TEST(PerspectiveRender, ADrawingAwayFromItsOrigin)
 {
     const std::u16string drawing = u"m 30 20 l 130 20 130 70 30 70";
@@ -235,9 +220,7 @@ TEST(PerspectiveRender, ADrawingAwayFromItsOrigin)
     }
 }
 
-// \pbo: libass takes a drawing's ascent as its height less \pbo and its
-// descent as \pbo, neither below 0 on the line, so an offset past the height
-// drops the ink and one outside 0..height grows the line the alignment uses.
+// libass: a drawing's ascent is its height less \pbo and its descent \pbo, neither below 0.
 TEST(PerspectiveRender, ABaselineOffsetMovesTheBox)
 {
     const std::u16string drawing = u"m 0 0 l 100 0 100 40 0 40";
@@ -257,7 +240,6 @@ TEST(PerspectiveRender, ABaselineOffsetMovesTheBox)
             const std::u16string text = writeTransform(
                 u"{\\an" + std::u16string(1, char16_t(u'0' + an)) + u"\\p1\\pbo" + pbo + u"}" + drawing, t, style());
             expectInkOnQuad(text, textToQuad(t, box, screenZ(kScriptH, kScriptH)), kScriptW, kScriptH);
-            // And the tags found for that quad paint it.
             Transform from;
             from.an = an;
             const Quad quad = textToQuad(t, box, screenZ(kScriptH, kScriptH));
@@ -270,7 +252,6 @@ TEST(PerspectiveRender, ABaselineOffsetMovesTheBox)
         }
 }
 
-// What a drag writes: the tags found for a quad paint that quad.
 TEST(PerspectiveRender, TheTagsFoundForAQuadPaintIt)
 {
     const std::u16string drawing = u"m 0 0 l 100 0 100 40 0 40";
@@ -291,4 +272,4 @@ TEST(PerspectiveRender, TheTagsFoundForAQuadPaintIt)
             }
 }
 
-} // namespace
+}

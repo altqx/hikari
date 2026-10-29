@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AT-SPI views of HikariSub for the D1 native gate.
+"""AT-SPI views of HikariSub.
 
   atspi_tool.py dump [--app hikarisub] [--depth N]     the accessible tree
   atspi_tool.py focus                                  the focused object and its path
@@ -13,20 +13,17 @@
   atspi_tool.py where ROLE NAME                        showing objects with that role and name, window coordinates (JSON)
   atspi_tool.py menu                                   the showing popup menus' items, in order, with
                                                        whether each is enabled and focused (JSON)
-  atspi_tool.py fsjson                                 V5: each showing frame, whether it holds the
+  atspi_tool.py fsjson                                 each showing frame, whether it holds the
                                                        full screen video, its buttons, times and focus
-  atspi_tool.py controls                               K1: every showing control of every window (role,
+  atspi_tool.py controls                               every showing control of every window (role,
                                                        name, description, path) as JSON, the unnamed ones
                                                        listed apart
-  atspi_tool.py announcements SECONDS                  E6: object:announcement events (the text and the
+  atspi_tool.py announcements SECONDS                  object:announcement events (the text and the
                                                        object announcing it), one per line
-  atspi_tool.py statusbar                              P10: the showing status bar's children (role,
+  atspi_tool.py statusbar                              the showing status bar's children (role,
                                                        name, description) as JSON
-  atspi_tool.py apps PID                               A11Y1: every application process PID registered
+  atspi_tool.py apps PID                               every application process PID registered
                                                        (bus name, toolkit, windows) as JSON
-
-Every line names the role, the accessible name, the states that matter for
-the gate (focused, active, showing, visible) and the screen extents.
 """
 import os
 import sys
@@ -40,7 +37,7 @@ import gi
 gi.require_version("Atspi", "2.0")
 from gi.repository import Atspi, GLib  # noqa: E402
 
-# gate.py also runs this file's functions from a python3 -c elsewhere.
+# MUST KILL: gate.py runs this file's functions through python3 -c, where argv[0] names no directory.
 sys.path.insert(0, os.environ.get("GATE_DIR", os.path.dirname(os.path.abspath(sys.argv[0]))))
 from gatelib import hikarisub_application  # noqa: E402
 
@@ -57,7 +54,6 @@ INTERESTING = [
 
 
 def app(name="hikarisub"):
-    """HikariSub's application on the bus (gatelib.hikarisub_application)."""
     desktop = Atspi.get_desktop(0)
     named = []
     for i in range(desktop.get_child_count()):
@@ -76,8 +72,6 @@ def app(name="hikarisub"):
 
 
 def apps(pid):
-    """A11Y1: every application on the bus that process PID registered (one
-    per toolkit bridge), with its bus name, toolkit and top-level windows."""
     desktop = Atspi.get_desktop(0)
     out = []
     for i in range(desktop.get_child_count()):
@@ -133,13 +127,10 @@ def describe(o):
 
 
 def frame_id(name):
-    """The main window is titled "<document> - HikariSub" once a Document is open."""
     return "HikariSub" if name == "HikariSub" or name.endswith(" - HikariSub") else name
 
 
 def panel_id(name):
-    """Panels are named after their role, followed by ": <document>" while one is
-    open; the Grid's panel carries the editing-target label instead."""
     if name.startswith("Editing:") or name == "No document open":
         return "Grid"
     return name.split(":")[0]
@@ -306,9 +297,7 @@ def main():
             out["focusPath"] = path_of(fo)
         print(json.dumps(out, indent=1))
     elif cmd == "where":
-        # Showing objects with that role and name, in their window's
-        # coordinates (Wayland clients know no screen position), with the
-        # window they are in.
+        # Window coordinates: Wayland clients know no screen position.
         import json
         role, name = sys.argv[2], sys.argv[3]
         out = []
@@ -326,8 +315,7 @@ def main():
                             "states": states(o)})
         print(json.dumps(out))
     elif cmd == "menu":
-        # D2: the keyboard skips disabled items, so a path through a menu
-        # counts the enabled ones (AT-SPI does not follow the highlight).
+        # The keyboard skips disabled items and AT-SPI does not follow the highlight: count the enabled ones.
         import json
         menus = []
         for o in all_objects(a):
@@ -347,8 +335,6 @@ def main():
                 pass
         print(json.dumps(menus))
     elif cmd == "fsjson":
-        # V5 (#184): the fullscreen video window carries the main window's
-        # title, so frames are told apart by the pane named "Full screen video".
         import json
         out = {"frames": [], "focusPath": None}
         for i in range(a.get_child_count()):
@@ -388,8 +374,6 @@ def main():
             out["focusPath"] = path_of(fo)
         print(json.dumps(out, indent=1))
     elif cmd == "controls":
-        # K1 (#204): what a screen reader finds of every control, icon-only
-        # ones included: each showing one with its role, name and description.
         import json
         roles = ("button", "push button", "toggle button", "check box", "radio button", "combo box", "slider",
                  "spin button", "page tab", "menu item", "check menu item", "radio menu item", "entry", "text",
@@ -416,9 +400,6 @@ def main():
                 row = {"window": f.get_name(), "role": role, "name": name, "description": desc,
                        "box": [e.x, e.y, e.width, e.height], "path": path_of(o)}
                 out["controls"].append(row)
-                # A text field or list item is named by its content or label
-                # elsewhere; the controls a pointer user knows by an icon are
-                # the buttons.
                 if not name.strip() and role in ("button", "push button", "toggle button", "check box",
                                                  "radio button", "combo box", "slider", "spin button",
                                                  "page tab", "menu item", "check menu item", "radio menu item"):

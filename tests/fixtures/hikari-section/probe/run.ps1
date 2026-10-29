@@ -1,10 +1,4 @@
-# WS2 (#216): the fixtures with and without [Hikari] through each CSRI
-# renderer at hand, read from the file as a player reads it (csri-probe.cpp).
-# Renderers: the legacy release's Csri folder (xy-VSFilter_hikarisub.dll and
-# VSFiltermod.dll), when extracted into out\legacy-win\bundled, and the pinned
-# VSFilterMod a windows-x64-vsfiltermod build fetched, when there is one.
-# Each pair's frames must hash the same. Run inside the MSVC environment
-# (tools/winix/msvc.ps1); OUT (default out\ws2-csri) takes the build and log.
+# Run inside the MSVC environment (tools/winix/msvc.ps1); OUT (default out\ws2-csri) takes the build and log.
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $fixtures = Split-Path -Parent $here

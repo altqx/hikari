@@ -1,12 +1,3 @@
-// T4: the rectangle and vector clips and the vector point editor T5 shares.
-// The clips replay the legacy probe's captures (tests/fixtures/
-// legacy-cases/inputs/clip-cases.txt; tests/fixtures/
-// legacy-observations/local-t4-clip-20261005), which ran the legacy
-// VisualClipRect.cpp and VisualClips.cpp unchanged: every committed text,
-// the editor's text during a gesture, the corners, points, selection, mode,
-// written body, mask, clip scale and coefficients must be legacy's, float
-// for float, but where the rewrite's rules differ (listed in kDepartures).
-
 #include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_vector.h"
@@ -67,7 +58,6 @@ std::u16string u(std::u8string_view s)
     return core::toUtf16(s);
 }
 
-// A VisualHost over a VideoView and an EditSession (as T1's tests).
 class TestHost : public VisualHost {
 public:
     VideoView v;
@@ -77,7 +67,7 @@ public:
     int changes = 0;
     int bells = 0;
     std::vector<std::u16string> notices;
-    VisualTool *tool = nullptr; // reset after a cancel, as the controller does
+    VisualTool *tool = nullptr;
 
     const VideoView &view() const override { return v; }
     const EditSession *session() const override { return s.get(); }
@@ -115,8 +105,6 @@ public:
     void notice(std::u16string_view text) override { notices.emplace_back(text); }
 };
 
-// --- The legacy probe's cases ------------------------------------------------
-
 struct Case {
     std::string name;
     int scriptW = 0, scriptH = 0;
@@ -125,7 +113,7 @@ struct Case {
     std::optional<std::tuple<float, int, int>> zoomAt;
     IntRect video;
     std::optional<std::pair<PointF, PointF>> zoom;
-    std::vector<std::pair<std::string, std::optional<std::string>>> lines; // text, translation
+    std::vector<std::pair<std::string, std::optional<std::string>>> lines;
     std::vector<int> select;
     bool rect = true;
     int mode = 1;
@@ -219,17 +207,9 @@ std::string str(const QJsonValue &v)
     return v.toString().toStdString();
 }
 
-// Where the rewrite's rules give another result than the capture, by case
-// and dump: what differs and why. Each is checked for its own outcome below.
 enum class Departure {
-    // Approved T4-clip-read-start: legacy's ClipRect read the clip from the
-    // Line editor's caret (FindTag mode 0); the tools read from the start.
     ReadFromStart,
-    // Approved T4-zero-rect-preview: a rectangle without width or height
-    // left its preview in legacy's editor, unsent; the rewrite drops it.
     ZeroRectangle,
-    // Approved T4-wheel-invert-slot: legacy inverted the clip on every reset
-    // with the mode on the Invert clip button, recursing until it crashed.
     WheelInvertSlot,
 };
 const std::map<std::pair<std::string, int>, Departure> kDepartures = {
@@ -240,7 +220,6 @@ const std::map<std::pair<std::string, int>, Departure> kDepartures = {
 
 const char *historyName(const std::string &legacy)
 {
-    // SubsFile.cpp:228-238.
     return legacy == "VISUAL_RECT_CLIP" ? "Visual rectangular clipping tool" : "Visual vector clipping tool";
 }
 
@@ -275,7 +254,6 @@ struct Replay {
             return out;
         }();
         for (std::size_t i = 0; i < c.lines.size(); ++i) {
-            // The script's text keeps the case's spacing (legacy trims none here).
             document.editLine(all[i], [&](core::LineRecord &r) {
                 r.text = std::u8string(c.lines[i].first.begin(), c.lines[i].first.end());
                 if (c.lines[i].second)
@@ -295,7 +273,7 @@ struct Replay {
             selected.insert(lineIds[0]);
         host.s->setSelection({lineIds[0], selected, lineIds[0], std::nullopt});
         if (picked.size() > 1)
-            host.picker.pick(picked); // legacy: several Lines selected
+            host.picker.pick(picked);
         host.v.setClient(c.clientW, c.clientH, c.panel);
         host.v.setScript(c.scriptW, c.scriptH);
         host.v.open({c.frameW, c.frameH, 0, 1});
@@ -362,7 +340,7 @@ struct Replay {
                                          flags.find("ctrl") != std::string::npos,
                                          flags.find("alt") != std::string::npos, tool().family());
             tool().key(key, host);
-            key.release = true; // the nudge commits on the key's release
+            key.release = true;
             tool().key(key, host);
         } else if (op == "invert") {
             tool().setOption("invert", 1, host);
@@ -375,8 +353,6 @@ struct Replay {
         }
     }
 
-    // The active Line's text as legacy's editor showed it: the staged text
-    // during a gesture with one target, else the Line's.
     std::u8string editorText() const
     {
         const auto active = *host.s->selection().active;
@@ -390,7 +366,6 @@ struct Replay {
 
     int steps() const
     {
-        // The history entries since the case began (each changed a text).
         return static_cast<int>(host.s->historySize() - historyStart);
     }
 };
@@ -405,18 +380,14 @@ void compareDump(Replay &r, const QJsonObject &o, std::optional<Departure> depar
 {
     const EditSession &s = *r.host.s;
     const bool multi = r.host.g && r.host.g->targets().size() > 1;
-    // The committed texts.
     const QJsonArray texts = o[QStringLiteral("texts")].toArray();
     for (int i = 0; i < texts.size(); ++i) {
         const auto *l = line(s, r.lineIds[i]);
         EXPECT_EQ(l->text, u8(texts[i].toArray()[0])) << "line " << i;
         EXPECT_EQ(l->translation, u8(texts[i].toArray()[1])) << "line " << i;
     }
-    // Legacy's Line editor during a gesture with one Line (several Lines are
-    // only rendered until the release).
     if (!multi && departure != Departure::ZeroRectangle)
         EXPECT_EQ(r.editorText(), u8(o[QStringLiteral("editor")]));
-    // One history step per edit that changed a text, named for the tool.
     if (departure != Departure::WheelInvertSlot) {
         EXPECT_EQ(r.steps(), o[QStringLiteral("steps")].toInt());
         const QJsonArray history = o[QStringLiteral("history")].toArray();
@@ -457,21 +428,20 @@ void compareDump(Replay &r, const QJsonObject &o, std::optional<Departure> depar
     const VectorFrame frame = r.vector.frame(r.host);
     EXPECT_EQ(frame.coeffW, fl(coeff[0]));
     EXPECT_EQ(frame.coeffH, fl(coeff[1]));
-    // The mask: legacy's raw Line ("layer|text\r\n").
     QString mask = o[QStringLiteral("mask")].toString();
     const auto lines = r.vector.previewLines(r.host);
     if (mask.isEmpty()) {
         EXPECT_TRUE(lines.empty());
     } else {
         ASSERT_EQ(lines.size(), 1u);
-        mask.chop(2); // the record's own line break
+        mask.chop(2);
         const QString layer = mask.section(QLatin1Char('|'), 0, 0);
         EXPECT_EQ(lines[0].layer.value, layer.toLongLong());
         EXPECT_EQ(lines[0].text, u8(mask.section(QLatin1Char('|'), 1)));
     }
 }
 
-} // namespace
+}
 
 TEST(ClipCapture, ReplaysTheLegacyProbe)
 {
@@ -486,7 +456,6 @@ TEST(ClipCapture, ReplaysTheLegacyProbe)
         SCOPED_TRACE(c.name);
         ASSERT_TRUE(byCase.contains(c.name));
         Replay r(c);
-        // The view the probe ran with.
         EXPECT_EQ(r.host.v.videoRect(), c.video);
         const auto [zoomMove, zoomScale] = c.zoom.value_or(std::pair(PointF{0, 0}, PointF{1, 1}));
         EXPECT_EQ(r.host.v.zoomMove(), zoomMove);
@@ -506,17 +475,13 @@ TEST(ClipCapture, ReplaysTheLegacyProbe)
             if (departure)
                 departuresSeen.insert(key);
             compareDump(r, byCase[c.name].at(dump), departure);
-            // Each departure's own outcome.
             if (departure == Departure::ReadFromStart) {
-                // The clip in the second block is not read from the start.
                 EXPECT_FALSE(r.rect.shown());
             } else if (departure == Departure::ZeroRectangle) {
-                // Nothing staged or committed; legacy's editor kept the preview.
                 EXPECT_FALSE(r.host.g);
                 EXPECT_EQ(r.editorText(), u8"{\\b1}Text");
                 EXPECT_EQ(u8(byCase[c.name].at(dump)[QStringLiteral("editor")]), u8"{\\clip(300,300,300,450)\\b1}Text");
             } else if (departure == Departure::WheelInvertSlot) {
-                // Legacy inverted on each reset until the recursion; nothing here.
                 EXPECT_TRUE(byCase[c.name].at(dump)[QStringLiteral("recursion")].toBool());
                 EXPECT_EQ(r.steps(), 0);
             }
@@ -527,13 +492,8 @@ TEST(ClipCapture, ReplaysTheLegacyProbe)
     EXPECT_EQ(departuresSeen.size(), kDepartures.size());
 }
 
-// --- The vector editor's reading and writing --------------------------------
-
 TEST(VectorPoints, ParseLikeGetVectorPoints)
 {
-    // Visuals::GetVectorPoints: "p" reads as "s", "c" only starts a command,
-    // a number without its pair or with a bad second number is dropped.
-    // A pending x survives a command letter: "5" pairs with the "1" after "b".
     const auto pts = parseVectorPoints(u"m 0 0 l 10 x 5 b 1 2 3 4 5 6 s 7 8 9 10 11 12 p 13 14 c l 15 16");
     const std::vector<VectorPoint> expected = {
         {0, 0, u'm', true},   {5, 1, u'b', true},    {2, 3, u'b', false},   {4, 5, u'b', false}, {6, 7, u's', true},
@@ -547,8 +507,7 @@ TEST(VectorPoints, SerializeLikeGetVisual)
                                     {1, 1, u'b', true},          {2, 2, u'b', false},     {3, 3, u'b', false},
                                     {4, 4, u's', true},          {5, 5, u's', false},     {6, 6, u's', false},
                                     {7, 7, u'm', true}};
-    // printf's rounding (half to even), "-0" kept; letters only when they
-    // change; the spline closes with "c"; a lone last "m" gets an "l".
+    // printf rounds half to even and keeps "-0".
     EXPECT_EQ(serializeVectorPoints(pts, "6.0f"), u"m 0 -0 l 100 0 102 2 b 1 1 2 2 3 3 s 4 4 5 5 6 6 c m 7 7 l 7 7");
     EXPECT_EQ(serializeVectorPoints({{1.25f, 2.5f, u'm', true}}, "6.2f", {1, 1}), u"m 2.25 3.5");
 }
@@ -579,19 +538,15 @@ TEST(VectorPoints, LegacyNumbers)
 
 TEST(ClipText, TagOrderAndPlaces)
 {
-    // ClipRect::ChangeVisual: the first clip (any kind) is replaced in place;
-    // without one the tag goes first in the first block, or a new block.
     EXPECT_EQ(clip::putRectangle(u"{\\an8\\clip(1,2,3,4)\\bord2}T", 5, 6, 7, 8, false), u"{\\an8\\clip(5,6,7,8)\\bord2}T");
     EXPECT_EQ(clip::putRectangle(u"{\\an8}T", 5, 6, 7, 8, true), u"{\\iclip(5,6,7,8)\\an8}T");
     EXPECT_EQ(clip::putRectangle(u"T", 5, 6, 7, 8, false), u"{\\clip(5,6,7,8)}T");
     EXPECT_EQ(clip::putRectangle(u"", 5, 6, 7, 8, false), u"{\\clip(5,6,7,8)}");
-    // The vector clip keeps \clip or \iclip; an empty body removes it.
     EXPECT_EQ(clip::putVector(u"{\\b1\\iclip(m 0 0 l 1 1)}T", u"m 5 5 l 6 6"), u"{\\b1\\iclip(m 5 5 l 6 6)}T");
     EXPECT_EQ(clip::putVector(u"{\\iclip(m 0 0 l 1 1)}T", u""), u"T");
     std::u16string tag;
     EXPECT_EQ(clip::putVector(u"T", u"m 1 1", &tag), u"{\\clip(m 1 1)}T");
     EXPECT_EQ(tag, u"iclip(");
-    // Several subpaths and the scale prefix are one body.
     EXPECT_EQ(clip::readVector(u"{\\clip(2,m 0 0 l 1 1 m 5 5 l 6 6)}").body, u"m 0 0 l 1 1 m 5 5 l 6 6");
     EXPECT_EQ(clip::readVector(u"{\\clip(2,m 0 0 l 1 1 m 5 5 l 6 6)}").divisor, 2);
     EXPECT_EQ(clip::readVector(u"{\\clip(4,m 0 0)}").divisor, 8);
@@ -602,13 +557,10 @@ TEST(ClipText, InvertFollowsTheActiveLinesLastClip)
     EXPECT_EQ(clip::invertedName(u"{\\iclip(1,2,3,4)\\clip(m 0 0)}T", false), u"clip");
     EXPECT_EQ(clip::invertedName(u"{\\iclip(1,2,3,4)\\clip(m 0 0)}T", true), u"iclip");
     EXPECT_EQ(clip::invertedName(u"T", true), u"");
-    // Every clip of the kind gets the name, whatever it was.
     EXPECT_EQ(clip::renameClips(u"{\\clip(m 0 0)\\iclip(m 1 1)\\clip(1,2,3,4)}", u"iclip", true),
               u"{\\iclip(m 0 0)\\iclip(m 1 1)\\clip(1,2,3,4)}");
     EXPECT_FALSE(clip::renameClips(u"{\\clip(1,2,3,4)}", u"iclip", true));
 }
-
-// --- Gestures, the overlay and the mask --------------------------------------
 
 namespace {
 
@@ -638,7 +590,7 @@ Pointer at(Pointer::Kind kind, int x, int y, bool left = false, Pointer::Button 
     return p;
 }
 
-} // namespace
+}
 
 TEST(ClipGesture, ADragIsOneStepAndEscRestores)
 {
@@ -653,12 +605,11 @@ TEST(ClipGesture, ADragIsOneStepAndEscRestores)
     tool.pointer(at(Pointer::Kind::Press, 100, 0, true, Pointer::Button::Left), host);
     for (int i = 1; i <= 10; ++i)
         tool.pointer(at(Pointer::Kind::Move, 100 + i, i, true), host);
-    EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 0 0 l 300 0 300 300)}first"); // nothing reaches the Document
+    EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 0 0 l 300 0 300 300)}first");
     tool.pointer(at(Pointer::Kind::Release, 110, 10, false, Pointer::Button::Left), host);
     EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 0 0 l 330 30 300 300)}first");
     EXPECT_EQ(host.s->historySize(), steps + 1);
     EXPECT_EQ(host.s->history().back().name, "Visual vector clipping tool");
-    // Esc during a drag: the Document and the points as before it.
     tool.pointer(at(Pointer::Kind::Press, 110, 10, true, Pointer::Button::Left), host);
     tool.pointer(at(Pointer::Kind::Move, 150, 50, true), host);
     ASSERT_TRUE(host.g);
@@ -681,9 +632,9 @@ TEST(ClipGesture, KeyNudgeCommitsOnReleaseOncePerPress)
     tool.reset(host);
     const std::size_t steps = host.s->historySize();
     Key d;
-    d.key = keys::Right; // VT2-arrow-nudge: legacy's D
+    d.key = keys::Right;
     EXPECT_TRUE(tool.key(d, host));
-    // Qt's auto-repeat: a release and a press each time, both auto-repeat.
+    // Qt auto-repeat: a release and a press per repeat, both flagged auto-repeat.
     for (int i = 0; i < 2; ++i) {
         Key repeat = d;
         repeat.autoRepeat = true;
@@ -696,15 +647,10 @@ TEST(ClipGesture, KeyNudgeCommitsOnReleaseOncePerPress)
     d.release = true;
     EXPECT_TRUE(tool.key(d, host));
     EXPECT_FALSE(host.g);
-    // The pending draft first (its own step), then the nudge as one step.
     EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(30,30,303,300)}first");
     EXPECT_EQ(host.s->historySize(), steps + 2);
 }
 
-// VT2-arrow-nudge: the arrows move the selected points (legacy W/A/S/D).
-// The clip is written in whole units, so Shift moves them a whole unit too
-// (VisualClips.cpp:1173, a tenth only in a drawing). Ctrl+arrows and
-// Alt+arrows are not the tool's.
 TEST(ClipGesture, TheArrowsMoveTheSelectedPoints)
 {
     TestHost host;
@@ -740,11 +686,6 @@ TEST(ClipGesture, TheArrowsMoveTheSelectedPoints)
     EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 1 1 l 301 1 301 301)}first");
 }
 
-// Removing the last point in an add mode (1-3). Legacy's RemovePoints ends in
-// SetClip(true), whose empty-clip branch sends the edit at once
-// (VisualClips.cpp:444-455, edit->Send). Its hover block then returns before
-// the MiddleUp (VisualClips.cpp:906-907: psize < 1), so no later release
-// commits anything. The removal is its own step and no gesture stays open.
 TEST(ClipGesture, RemovingTheLastPointCommitsAtOnce)
 {
     for (const int mode : {VectorEditor::Line, VectorEditor::Bezier, VectorEditor::Spline}) {
@@ -774,7 +715,6 @@ TEST(ClipGesture, RemovingTheLastPointCommitsAtOnce)
         EXPECT_FALSE(host.g);
         EXPECT_EQ(line(*host.s, id)->text, u8"second");
         EXPECT_EQ(host.s->historySize(), steps + 2);
-        // The next click starts a new clip on the Document's text.
         tool.pointer(at(Pointer::Kind::Press, 200, 120, true, Pointer::Button::Left), host);
         tool.pointer(at(Pointer::Kind::Release, 200, 120, false, Pointer::Button::Left), host);
         EXPECT_FALSE(host.g);
@@ -783,8 +723,6 @@ TEST(ClipGesture, RemovingTheLastPointCommitsAtOnce)
     }
 }
 
-// The same through Delete: the removal is sent at once, and the key's release
-// finds nothing left to commit.
 TEST(ClipGesture, DeletingEveryPointCommitsAtOnce)
 {
     TestHost host;
@@ -827,11 +765,8 @@ TEST(ClipGesture, ProtectedReferenceRefusesWrites)
     EXPECT_EQ(line(*host.s, ids(*host.s)[0])->text, u8"{\\clip(m 0 0 l 300 0 300 300)}first");
 }
 
-// --- Approved departures (User, 2026-10-05, wave-5 batch-3 review) ---------
-
 namespace {
 
-// setUp over two Lines with the given texts, the first active.
 void setUpLines(TestHost &host, std::string_view first, std::string_view second)
 {
     std::string script = "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n[Events]\n";
@@ -848,13 +783,8 @@ void setUpLines(TestHost &host, std::string_view first, std::string_view second)
     host.v.open({1280, 720, 0, 1});
 }
 
-} // namespace
+}
 
-// T4-wheel-invert-slot: legacy's ChangeTool inverted the clip on every reset
-// while the wheel had left the mode on the Invert clip button (6), and the
-// inversion's SetModified reset the tool again, recursing until the stack
-// overflowed (VisualClips.cpp:1499-1504; capture vector-wheel-to-invert).
-// Here a reset never inverts; only the button does, once.
 TEST(ClipDeparture, OnlyTheInvertButtonInverts)
 {
     TestHost host;
@@ -867,10 +797,9 @@ TEST(ClipDeparture, OnlyTheInvertButtonInverts)
     tool.reset(host);
     Pointer wheel = at(Pointer::Kind::Wheel, 10, 10);
     wheel.wheelSteps = 1;
-    tool.pointer(wheel, host); // 0 - 1 wraps to the Invert clip button
+    tool.pointer(wheel, host);
     ASSERT_EQ(tool.editor().mode, VectorEditor::InvertSlot);
     const std::size_t steps = host.s->historySize();
-    // Resets: the same Line, then another active Line, then back.
     tool.reset(host);
     host.s->setSelection({second, {second}, second, std::nullopt});
     tool.reset(host);
@@ -880,7 +809,6 @@ TEST(ClipDeparture, OnlyTheInvertButtonInverts)
     EXPECT_EQ(host.s->historySize(), steps);
     EXPECT_EQ(line(*host.s, first)->text, u8"{\\clip(m 0 0 l 300 0 300 300)}first");
     EXPECT_EQ(line(*host.s, second)->text, u8"{\\clip(m 0 0 l 600 0 600 600)}second");
-    // The button inverts once, as one step, and its own reset adds nothing.
     EXPECT_TRUE(tool.setOption("invert", 1, host));
     EXPECT_EQ(line(*host.s, first)->text, u8"{\\iclip(m 0 0 l 300 0 300 300)}first");
     EXPECT_EQ(host.s->historySize(), steps + 1);
@@ -889,15 +817,8 @@ TEST(ClipDeparture, OnlyTheInvertButtonInverts)
     EXPECT_EQ(host.s->historySize(), steps + 1);
 }
 
-// T4-bezier-past-end: a Bézier missing its points (a "b" with fewer than
-// three points before the end). Legacy's DrawCurve read its controls past
-// the last point (VisualClips.cpp:806-808), and RemovePoints set the point two
-// after the Bézier's start to "l" past the end (VisualClips.cpp:1398-1410). Here the incomplete Bézier
-// is drawn as its points only (no arms, no curve) and its removal touches
-// nothing past the end.
 TEST(ClipDeparture, AnIncompleteBezierStopsAtTheLastPoint)
 {
-    // The clip, and where its last point is on the view (3 script units a pixel).
     for (const auto &[clipText, lastAt] : {std::pair("{\\clip(m 0 0 b 300 300 600 600)}first", 200),
                                            std::pair("{\\clip(m 0 0 b 300 300)}first", 100)}) {
         SCOPED_TRACE(clipText);
@@ -908,11 +829,9 @@ TEST(ClipDeparture, AnIncompleteBezierStopsAtTheLastPoint)
         host.tool = &tool;
         tool.editor().mode = VectorEditor::Drag;
         tool.reset(host);
-        // Drawn: no arms or curve from controls that are not there, and
-        // nothing outside the points' own box (0,0 to 200,200 on the view).
         const Overlay o = tool.overlay(host);
         for (const auto &l : o.lines) {
-            EXPECT_NE(l.argb, 0xFF0000FFu); // a Bézier's arms
+            EXPECT_NE(l.argb, 0xFF0000FFu);
             for (const PointF p : {l.from, l.to}) {
                 EXPECT_GE(p.x, -10.f);
                 EXPECT_GE(p.y, -10.f);
@@ -920,7 +839,6 @@ TEST(ClipDeparture, AnIncompleteBezierStopsAtTheLastPoint)
                 EXPECT_LE(p.y, 210.f);
             }
         }
-        // Removed: a middle click on the last "b" point takes the Bézier.
         const std::size_t steps = host.s->historySize();
         tool.pointer(at(Pointer::Kind::Press, lastAt, lastAt, false, Pointer::Button::Middle), host);
         tool.pointer(at(Pointer::Kind::Release, lastAt, lastAt, false, Pointer::Button::Middle), host);
@@ -932,10 +850,6 @@ TEST(ClipDeparture, AnIncompleteBezierStopsAtTheLastPoint)
     }
 }
 
-// T4-zero-rect-preview: a rectangle released with no width or height. Legacy
-// wrote nothing on the release and left the rectangle's preview in the Line
-// editor, unsent (VisualClipRect.cpp:129-147; capture rect-zero-width). Here
-// the gesture is dropped: nothing staged, committed or shown.
 TEST(ClipDeparture, AZeroRectangleLeavesNoPreview)
 {
     for (const auto &[toX, toY] : {std::pair(100, 150), std::pair(150, 100), std::pair(100, 100)}) {
@@ -950,12 +864,11 @@ TEST(ClipDeparture, AZeroRectangleLeavesNoPreview)
         tool.pointer(at(Pointer::Kind::Press, 100, 100, true, Pointer::Button::Left), host);
         tool.pointer(at(Pointer::Kind::Move, toX, toY, true), host);
         tool.pointer(at(Pointer::Kind::Release, toX, toY, false, Pointer::Button::Left), host);
-        EXPECT_FALSE(host.g); // nothing staged: the Line editor shows the Line
+        EXPECT_FALSE(host.g);
         EXPECT_FALSE(tool.shown());
         EXPECT_TRUE(tool.overlay(host).polygons.empty());
         EXPECT_EQ(line(*host.s, id)->text, u8"{\\b1}first");
         EXPECT_EQ(host.s->historySize(), steps);
-        // The next drag draws a rectangle as one step.
         tool.pointer(at(Pointer::Kind::Press, 10, 10, true, Pointer::Button::Left), host);
         tool.pointer(at(Pointer::Kind::Move, 110, 60, true), host);
         tool.pointer(at(Pointer::Kind::Release, 110, 60, false, Pointer::Button::Left), host);
@@ -965,12 +878,6 @@ TEST(ClipDeparture, AZeroRectangleLeavesNoPreview)
     }
 }
 
-// T4-clip-read-start: legacy's ClipRect read the clip with FindTag from the
-// Line editor's caret (VisualClipRect.cpp:229), so a caret in the second
-// block found the clip there (capture rect-second-block-caret: shown, 30,30
-// to 300,300); with the caret at the start it did not
-// (rect-second-block-start). The tools do not follow the editor's caret: the
-// clip is read from the Line's start, and a drag writes its own clip there.
 TEST(ClipDeparture, TheClipIsReadFromTheLineStart)
 {
     TestHost host;
@@ -989,8 +896,6 @@ TEST(ClipDeparture, TheClipIsReadFromTheLineStart)
 
 TEST(ClipOverlay, RectangleMaskAndOutline)
 {
-    // ClipRect::DrawVisual: the outside darkened by two fans filled as one
-    // path, the outline one pixel inside the right and bottom edges.
     TestHost host;
     setUp(host);
     const auto id = ids(*host.s)[0];
@@ -1009,7 +914,6 @@ TEST(ClipOverlay, RectangleMaskAndOutline)
     EXPECT_EQ(o.lines[1].from, (PointF{100, 199}));
     EXPECT_EQ(o.lines[2].from, (PointF{299, 199}));
     EXPECT_EQ(o.lines[0].argb, 0xFFBB0000u);
-    // \iclip: the inside.
     ASSERT_TRUE(host.s->editDraftText(id, u8"{\\iclip(300,150,900,600)}first"));
     tool.reset(host);
     const Overlay inv = tool.overlay(host);
@@ -1019,8 +923,6 @@ TEST(ClipOverlay, RectangleMaskAndOutline)
 
 TEST(ClipOverlay, VectorHandlesAndPath)
 {
-    // DrawingAndClip::DrawVisual: the path's lines, then a square on each
-    // point (the "m"s and the last line's), the closing line back to the "m".
     TestHost host;
     setUp(host);
     VectorClipTool tool;
@@ -1029,13 +931,12 @@ TEST(ClipOverlay, VectorHandlesAndPath)
     ASSERT_EQ(o.lines.size(), 3u);
     EXPECT_EQ(o.lines[0].from, (PointF{0, 0}));
     EXPECT_EQ(o.lines[0].to, (PointF{100, 0}));
-    EXPECT_EQ(o.lines[2].from, (PointF{100, 100})); // closing
+    EXPECT_EQ(o.lines[2].from, (PointF{100, 100}));
     EXPECT_EQ(o.lines[2].to, (PointF{0, 0}));
     int handles = 0;
     for (const auto &p : o.polygons)
         handles += p.above && p.border == 0xFFBB0000u;
-    EXPECT_EQ(handles, 3); // DrawLine's previous point, then lastM and g - 1
-    // A Bézier: its arms, its flattened curve and circles on its controls.
+    EXPECT_EQ(handles, 3);
     ASSERT_TRUE(host.s->editDraftText(ids(*host.s)[0], u8"{\\clip(m 0 0 b 300 0 300 300 0 300)}first"));
     tool.reset(host);
     const Overlay b = tool.overlay(host);
@@ -1057,7 +958,6 @@ TEST(ClipMask, PreviewLineAboveEverything)
     EXPECT_EQ(lines[0].layer.value, 2147483647);
     EXPECT_EQ(lines[0].text, u8"{\\p1\\bord0\\shad0\\fscx100\\fscy100\\frz0\\1c&H000000&\\1a&H77&\\pos(0,0)\\an7\\"
                              u8"iclip(m 0 0 l 300 0 300 300)}m 0 0 l 1920 0 1920 1080 0 1080");
-    // The rectangle clip has none (its mask is the overlay's).
     RectangleClipTool rect;
     rect.reset(host);
     EXPECT_TRUE(rect.previewLines(host).empty());
@@ -1080,18 +980,16 @@ TEST(ClipOptions, LegacyToolbarItems)
         EXPECT_EQ(options[i].tooltip, tips[i]);
         EXPECT_EQ(options[i].kind, i < 6 ? ToolOption::Kind::Toggle : ToolOption::Kind::Action);
     }
-    EXPECT_TRUE(options[1].checked); // VectorItem::toggled = 1
+    EXPECT_TRUE(options[1].checked);
     EXPECT_TRUE(tool.setOption("mode3", 1, host));
     EXPECT_EQ(tool.editor().mode, 3);
     EXPECT_TRUE(tool.options(host)[3].checked);
-    // The wheel's way onto the Invert clip button (legacy's seven buttons).
     Pointer wheel;
     wheel.kind = Pointer::Kind::Wheel;
     wheel.wheelSteps = 4;
     tool.pointer(wheel, host);
     EXPECT_EQ(tool.editor().mode, 6);
     EXPECT_TRUE(tool.options(host)[6].checked);
-    // Ctrl+wheel never reaches the tool (VideoBox resizes the window).
     wheel.control = true;
     tool.pointer(wheel, host);
     EXPECT_EQ(tool.editor().mode, 6);
@@ -1106,8 +1004,6 @@ TEST(ClipMakeTool, OneLinePerFamily)
     EXPECT_EQ(makeVisualTool(Family::VectorClip)->family(), Family::VectorClip);
 }
 
-// The pointer's shapes (VideoBox::SetCursor from ClipRect::OnMouseEvent,
-// VisualClipRect.cpp:149-163; the user's 2026-10-13 decision to port them).
 TEST(ClipPointer, RectangleEdgesAndCornersShowTheirResizeShapes)
 {
     TestHost host;
@@ -1116,7 +1012,7 @@ TEST(ClipPointer, RectangleEdgesAndCornersShowTheirResizeShapes)
     ASSERT_TRUE(host.s->editDraftText(id, u8"{\\clip(300,150,900,600)}first"));
     RectangleClipTool tool;
     host.tool = &tool;
-    tool.reset(host); // the view's (100, 50) to (300, 200)
+    tool.reset(host);
     const struct {
         int x, y;
         PointerShape shape;
@@ -1132,21 +1028,18 @@ TEST(ClipPointer, RectangleEdgesAndCornersShowTheirResizeShapes)
         tool.pointer(at(Pointer::Kind::Move, 200, 125), host);
         EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
     }
-    // A drag keeps the edge's shape; the release puts the arrow back, then
-    // the shape of the edge the pointer is on.
     tool.pointer(at(Pointer::Kind::Move, 200, 200), host);
     tool.pointer(at(Pointer::Kind::Press, 200, 200, true, Pointer::Button::Left), host);
     tool.pointer(at(Pointer::Kind::Move, 260, 250, true), host);
     EXPECT_EQ(host.pointerShape(), PointerShape::SizeNS);
     tool.pointer(at(Pointer::Kind::Release, 260, 250, false, Pointer::Button::Left), host);
-    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNS); // the bottom edge followed the pointer
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNS);
     tool.pointer(at(Pointer::Kind::Move, 200, 125), host);
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
 }
 
 TEST(ClipPointer, TheVectorClipSetsNoShape)
 {
-    // DrawingAndClip::OnMouseEvent (VisualClips.cpp) never calls SetCursor.
     TestHost host;
     setUp(host);
     VectorClipTool tool;

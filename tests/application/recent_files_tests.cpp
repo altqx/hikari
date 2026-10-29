@@ -1,6 +1,3 @@
-// P2: the recent subtitles list (legacy SetRecent/AppendRecent) and the
-// extension rules for opened and dropped files (legacy OpenFile/OpenFiles).
-
 #include "hikari/application/recent_files.h"
 
 #include <gtest/gtest.h>
@@ -45,8 +42,6 @@ TEST(RecentFiles, PruningDropsWhatIsMissing)
     EXPECT_FALSE(recent.prune([](const std::string &) { return false; }));
 }
 
-// SH2: the Home page shows when each file was last opened and removes
-// entries one by one; legacy kept paths only.
 TEST(RecentFiles, RemembersWhenEachWasLastOpened)
 {
     RecentFiles recent;
@@ -56,7 +51,6 @@ TEST(RecentFiles, RemembersWhenEachWasLastOpened)
     EXPECT_EQ(recent.entries(), (std::vector<std::string>{"a.ass", "b.ass"}));
     EXPECT_EQ(recent.opened("a.ass"), std::optional<std::int64_t>(3000));
     EXPECT_EQ(recent.opened("b.ass"), std::optional<std::int64_t>(2000));
-    // Added again without a time (another list's way): the old one goes.
     recent.add("b.ass");
     EXPECT_EQ(recent.opened("b.ass"), std::nullopt);
     EXPECT_EQ(recent.opened("c.ass"), std::nullopt);
@@ -68,8 +62,6 @@ TEST(RecentFiles, OpenedTimesAreStoredBesideTheList)
     recent.add("/subs/with space.ass", 1700000000000);
     recent.add("legacy.ass");
     recent.add("C:\\subs\\b.ass", 1700000001000);
-    // One record per entry with a time, in the list's order; a path keeps
-    // its spaces (only the first one separates).
     const auto records = recent.openedRecords();
     EXPECT_EQ(records, (std::vector<std::string>{"1700000001000 C:\\subs\\b.ass", "1700000000000 /subs/with space.ass"}));
 
@@ -79,7 +71,7 @@ TEST(RecentFiles, OpenedTimesAreStoredBesideTheList)
                              "1700000001000 C:\\subs\\b.ass"});
     EXPECT_EQ(loaded.opened("/subs/with space.ass"), std::optional<std::int64_t>(1700000000000));
     EXPECT_EQ(loaded.opened("C:\\subs\\b.ass"), std::optional<std::int64_t>(1700000001000));
-    EXPECT_EQ(loaded.opened("legacy.ass"), std::nullopt); // carried over from legacy
+    EXPECT_EQ(loaded.opened("legacy.ass"), std::nullopt);
     EXPECT_EQ(loaded.opened("/not/listed.ass"), std::nullopt);
     EXPECT_EQ(loaded.openedRecords(), records);
 }
@@ -124,7 +116,6 @@ TEST(OpenKind, FollowsTheLegacyExtensions)
     for (const bool single : {true, false}) {
         for (const char *s : {"a.ass", "a.SSA", "a.srt", "a.sub", "a.txt"})
             EXPECT_EQ(openKindOf(s, single), OpenKind::Subtitles) << s;
-        // KA6: lyrics are imported as karaoke Lines.
         for (const char *s : {"a.lrc", "a.TTML"})
             EXPECT_EQ(openKindOf(s, single), OpenKind::Subtitles) << s;
         for (const char *s : {"a.lua", "a.Moon"})
@@ -136,7 +127,6 @@ TEST(OpenKind, FollowsTheLegacyExtensions)
     }
 }
 
-// CF3: one session file loads as a session; among several it is refused.
 TEST(OpenKind, ASessionFileOpensAloneAsASession)
 {
     for (const char *s : {"a.hksession", "a.HKSession", "a.kls"}) {
@@ -149,9 +139,7 @@ TEST(OpenKind, KeyframesOnlyWhenOpeningOneFile)
 {
     for (const char *s : {"a.pass", "a.stats", "a.log", "a_keyframes.txt"})
         EXPECT_EQ(openKindOf(s, true), OpenKind::Keyframes) << s;
-    // OpenFiles has no keyframes rule: they open as video, the text file as subtitles.
     EXPECT_EQ(openKindOf("a.pass", false), OpenKind::Video);
     EXPECT_EQ(openKindOf("a_keyframes.txt", false), OpenKind::Subtitles);
-    // EndsWith is case-sensitive in legacy.
     EXPECT_EQ(openKindOf("a_KEYFRAMES.txt", true), OpenKind::Subtitles);
 }

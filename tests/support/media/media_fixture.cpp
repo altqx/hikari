@@ -1,52 +1,5 @@
-// Writes synthetic video fixtures whose frames identify themselves (M50-seek,
-// N1). Each frame shows its index as a 4x4 barcode of 16 large blocks (white
-// = 1), which survives MPEG-4 quantization; decoders read it back by
-// sampling block centres.
-//
-//   hikari_media_fixture <out> <kind>
-//   kinds: cfr       24000/1001, 48 frames, I/P only, GOP 12
-//          vfr       48 frames with irregular timestamps (1 ms timebase)
-//          bframes   24000/1001, 48 frames, 2 B-frames per anchor, GOP 12
-//          longgop   24000/1001, 300 frames, one keyframe
-//          long      24000/1001, 24000 frames (about 17 minutes) at 64x48
-//                    and a low bit rate: a small file whose index takes
-//                    as many packets as a long episode's (AV4)
-//          audio     the cfr video plus 2 s of 48 kHz stereo PCM whose left
-//                    channel is the sample index modulo 32768
-//          tracks    the audio fixture with a second audio track (languages
-//                    eng and jpn, titled), a SubRip track with one cue
-//                    "Hello" from 0.5 s to 1.5 s, and two chapters (N5)
-//          audiodelay the audio fixture with its audio starting 0.5 s after
-//                    the video (A1: legacy's FFMS_DELAY_FIRST_VIDEO_TRACK)
-//          audioonly 2 s of 48 kHz stereo PCM and no video: left is
-//                    audioOnlySample(i), right half of it (A1)
-//          unknown   the cfr video written as a live stream: no duration
-//          mkvextract the cfr video with an ASS track ("Signs", eng, with
-//                    kMkvExtractHeader as its codec-private data), a SubRip
-//                    track ("Full", pol) and the font attachments of
-//                    mkvExtractFonts() (Y9)
-//          color601, color709, color709full
-//                    12 frames of four flat Y'CbCr quadrants (kColorPatches),
-//                    tagged BT.601 limited, BT.709 limited and BT.709 full
-//                    range (I2: the decoder must convert with the tags)
-//          dshow-cfr the cfr video in AVI (W1: what stock DirectShow plays,
-//                    the AVI splitter and the MPEG-4 decoder DMO)
-//          dshow-vfr the vfr video as WMV2 in ASF (W1: the WM ASF reader and
-//                    the WMV decoder DMO)
-//          dshow-mpg the cfr video as MPEG-1 in a program stream (W1: the
-//                    MPEG-I splitter and the MPEG video decoder, a stock
-//                    filter with property pages)
-//          probe-<container>-<codec>  W1 experiments (not built by default)
-//          colorhd   the same patches at 1280x720 with no matrix or range
-//                    tags (V4: legacy's guess for an untagged frame)
-//          yuv10     the cfr video as lossless FFV1 in 10-bit 4:2:0
-//                    (yuv420p10le; V1: a high bit depth player frame)
-//          subs-mp4, subs-mov, subs-ts
-//                    one subtitle stream and nothing else: mov_text in MP4 at
-//                    1/600 and in MOV at 1/90000, DVB teletext in MPEG-TS at
-//                    1/90000, the packets of mkv_fixture.h's kMp4Packets,
-//                    kMovPackets and kTsPackets (decision 38d: subtitle times
-//                    in time bases other than 1/1000)
+// Each frame shows its index as a 4x4 barcode of large blocks, which survives MPEG-4 quantization.
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -66,14 +19,12 @@ extern "C" {
 
 namespace {
 
-// The frame size: 320x240, but V4's untagged HD colour fixture is 1280x720
-// (legacy took an untagged frame wider than 1024 or at least 600 high as BT.709).
 int kWidth = 320, kHeight = 240;
 constexpr int kBlocks = 4;
 
 void drawIndex(AVFrame *f, int index)
 {
-    if (f->format == AV_PIX_FMT_YUV420P10LE) { // the same levels in 10 bits
+    if (f->format == AV_PIX_FMT_YUV420P10LE) {
         for (int y = 0; y < kHeight; ++y)
             for (int x = 0; x < kWidth; ++x) {
                 const int bit = (y * kBlocks / kHeight) * kBlocks + (x * kBlocks / kWidth);
@@ -96,8 +47,7 @@ void drawIndex(AVFrame *f, int index)
             std::memset(f->data[p] + y * f->linesize[p], 128, kWidth / 2);
 }
 
-// Y', Cb, Cr per quadrant (top-left, top-right, bottom-left, bottom-right),
-// in the 8-bit code values of the tagged range.
+// Y'CbCr per quadrant (TL, TR, BL, BR), in 8-bit code values of the tagged range.
 constexpr int kColorPatches[4][3] = {{180, 60, 200}, {81, 90, 240}, {145, 54, 34}, {41, 240, 110}};
 
 void drawColor(AVFrame *f)
@@ -112,7 +62,6 @@ void drawColor(AVFrame *f)
                     std::uint8_t(kColorPatches[(y >= kHeight / 4) * 2 + (x >= kWidth / 4)][p]);
 }
 
-// A sawtooth over the whole 16-bit range (A1's audio-only fixture).
 std::int16_t audioOnlySample(std::int64_t i)
 {
     return static_cast<std::int16_t>(((i * 37) % 65536) - 32768);
@@ -124,7 +73,6 @@ int fail(const char *what)
     return 1;
 }
 
-// A1: audio without video.
 int writeAudioOnly(const std::string &out)
 {
     AVFormatContext *fmt = nullptr;
@@ -182,9 +130,6 @@ int writeAudioOnly(const std::string &out)
     return 0;
 }
 
-// Decision 38d: one subtitle stream at a given time base, the packets as
-// given. Fails when the muxer does not keep the time base, so a fixture
-// cannot quietly lose the shape it is named for.
 int writeTimedSubtitles(const std::string &out, const std::string &kind)
 {
     const char *container = nullptr;
@@ -203,7 +148,7 @@ int writeTimedSubtitles(const std::string &out, const std::string &kind)
         container = "mpegts";
         codec = AV_CODEC_ID_DVB_TELETEXT;
         packets = &mkvfixture::kTsPackets;
-        av_dict_set(&options, "mpegts_copyts", "1", 0); // the times as written
+        av_dict_set(&options, "mpegts_copyts", "1", 0);
     }
     AVFormatContext *fmt = nullptr;
     if (avformat_alloc_output_context2(&fmt, nullptr, container, out.c_str()) < 0)
@@ -237,7 +182,7 @@ int writeTimedSubtitles(const std::string &out, const std::string &kind)
     return 0;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -251,7 +196,7 @@ int main(int argc, char **argv)
         return writeTimedSubtitles(out, kind);
     const bool delayed = kind == "audiodelay";
     const bool vfr = kind == "vfr" || kind == "dshow-vfr" || kind.ends_with("-vfr");
-    // W1: containers and codecs stock DirectShow plays.
+    // dshow-*: containers and codecs stock DirectShow plays.
     const char *container = "matroska";
     AVCodecID codecId = AV_CODEC_ID_MPEG4;
     const char *codecTag = nullptr;
@@ -328,10 +273,10 @@ int main(int argc, char **argv)
         enc->time_base = AVRational{1001, 24000};
     enc->max_b_frames = kind == "bframes" ? 2 : 0;
     enc->bit_rate = longVideo ? 32'000 : 2'000'000;
-    if (kind == "sar") // T1: an anamorphic frame
+    if (kind == "sar")
         enc->sample_aspect_ratio = AVRational{32, 27};
     if (untagged) {
-        enc->bit_rate = 8'000'000; // flat patches survive quantization; no tags
+        enc->bit_rate = 8'000'000; // flat patches survive quantization
     } else if (color) {
         enc->colorspace = kind == "color601" ? AVCOL_SPC_SMPTE170M : AVCOL_SPC_BT709;
         enc->color_primaries = kind == "color601" ? AVCOL_PRI_SMPTE170M : AVCOL_PRI_BT709;
@@ -392,7 +337,6 @@ int main(int argc, char **argv)
     }
     AVStream *assTrack = nullptr, *srtTrack = nullptr;
     if (extract) {
-        // Y9: two text tracks and font attachments beside the video.
         assTrack = avformat_new_stream(fmt, nullptr);
         assTrack->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
         assTrack->codecpar->codec_id = AV_CODEC_ID_ASS;
@@ -451,7 +395,6 @@ int main(int argc, char **argv)
             drawColor(frame);
         else
             drawIndex(frame, i);
-        // VFR: durations cycle 30, 50, 70 ms, so frame boundaries are irregular.
         frame->pts = vfr ? pts : i;
         pts += 30 + 20 * (i % 3);
         if (!drain(enc, vs, frame))
@@ -480,7 +423,6 @@ int main(int argc, char **argv)
         }
         drain(aenc, as, nullptr);
         if (as2) {
-            // The same PCM, packet for packet, on the second track.
             avcodec_free_context(&aenc);
             const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
             aenc = avcodec_alloc_context3(acodec);
@@ -514,7 +456,6 @@ int main(int argc, char **argv)
         av_packet_free(&sp);
     }
     if (extract) {
-        // Interleaved with nothing else: the video is already written.
         const auto writeText = [&](AVStream *st, const mkvfixture::Packet &p) {
             AVPacket *sp = av_packet_alloc();
             av_new_packet(sp, int(p.data.size()));

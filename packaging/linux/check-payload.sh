@@ -1,12 +1,6 @@
 #!/bin/sh
-# Release checks over a payload: an app tree, an AppDir or an extracted
-# package (installers spec 5.1, 5.2). It fails when
-#
-#   - any ELF file needs a glibc symbol version above --min-glibc,
-#   - any ELF file has an RPATH or RUNPATH entry that is not $ORIGIN-relative
-#     (a build path leaked into a shipped file), or
-#   - any file name matches a glob of the host list
-#     (packaging/linux/appimage/host-libs.txt): those are never bundled.
+# Fails when an ELF file needs glibc above --min-glibc or has a run path that is not $ORIGIN-relative, or a file
+# matches a glob of packaging/linux/appimage/host-libs.txt (never bundled).
 #
 #   check-payload.sh --min-glibc <version> <dir>...
 set -euf
@@ -34,7 +28,6 @@ for dir in "$@"; do
 done > "$elves"
 [ -s "$elves" ] || { echo "error: no ELF files under $*" >&2; exit 1; }
 
-# 1. The glibc ceiling.
 top=$(tr '\n' '\0' < "$elves" | xargs -0 objdump -T 2>/dev/null | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' |
     sort -uV | tail -1)
 if [ -n "$top" ] && [ "$(printf '%s\n%s\n' "$top" "$min_glibc" | sort -V | tail -1)" != "$min_glibc" ]; then
@@ -46,7 +39,6 @@ if [ -n "$top" ] && [ "$(printf '%s\n%s\n' "$top" "$min_glibc" | sort -V | tail 
 fi
 echo "glibc ceiling: GLIBC_${top:-none} (floor $min_glibc)"
 
-# 2. $ORIGIN-only run paths.
 while IFS= read -r f; do
     readelf -dW "$f" 2>/dev/null | sed -n 's/.*(R\(UN\)\{0,1\}PATH).*\[\(.*\)\]/\2/p' | tr ':' '\n' |
     while IFS= read -r entry; do
@@ -57,7 +49,6 @@ while IFS= read -r f; do
     done
 done < "$elves" | grep -q bad && status=1
 
-# 3. Nothing from the host list.
 globs=$(grep -v '^[[:space:]]*#' "$host_list" | grep -v '^[[:space:]]*$')
 for dir in "$@"; do
     find "$dir" \( -type f -o -type l \) -name '*.so*'

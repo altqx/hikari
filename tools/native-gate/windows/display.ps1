@@ -1,6 +1,4 @@
-# D1 native gate on Windows (winix tasks display-layout and gate-win-display):
-# the guest's desktop over the VM's two QXL monitors, in the user session,
-# without admin rights. One output line: DISPLAY_RESULT <JSON>.
+# winix tasks display-layout and gate-win-display: the VM's two QXL monitors, no admin rights. One output line: DISPLAY_RESULT <JSON>.
 #   GATE_DISPLAY=extend   SetDisplayConfig(SDC_TOPOLOGY_EXTEND | SDC_APPLY), then every
 #                         monitor at GATE_WIDTH x GATE_HEIGHT (default 1024x768, the VM's mode), the
 #                         second to the right of the primary (ChangeDisplaySettingsEx)
@@ -10,8 +8,7 @@
 #   GATE_SCALE2=PERCENT   (optional, after the above) the second monitor's scale through
 #                         DisplayConfigSetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_SET_DPI_SCALE),
 #                         the per-monitor call Settings > Display uses; applies live
-# The result lists every monitor (EnumDisplayMonitors/GetMonitorInfo, physical
-# pixels: the thread is per-monitor DPI aware) with its effective DPI.
+# Monitors in physical pixels (the thread is per-monitor DPI aware), each with its effective DPI.
 $ErrorActionPreference = 'Stop'
 trap { Write-Output ('DISPLAY_RESULT ' + (@{ error = "$($_.Exception.Message) (line $($_.InvocationInfo.ScriptLineNumber))" } | ConvertTo-Json -Compress)); exit 1 }
 Add-Type -TypeDefinition @'
@@ -156,8 +153,7 @@ public static class GateDisplay {
 $scales = 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500
 $width = if ($env:GATE_WIDTH) { [int]$env:GATE_WIDTH } else { 1024 }
 $height = if ($env:GATE_HEIGHT) { [int]$env:GATE_HEIGHT } else { 768 }
-# The second monitor's mode (default the same): Windows offers 150 % only
-# from about 1920x1200 (at 1280x800 the most is 125 %).
+# Windows offers 150 % only from about 1920x1200 (at 1280x800 the most is 125 %).
 $width2 = if ($env:GATE_WIDTH2) { [int]$env:GATE_WIDTH2 } else { $width }
 $height2 = if ($env:GATE_HEIGHT2) { [int]$env:GATE_HEIGHT2 } else { $height }
 $mode = if ($env:GATE_DISPLAY) { $env:GATE_DISPLAY } else { 'status' }

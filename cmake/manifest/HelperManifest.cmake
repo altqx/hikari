@@ -1,6 +1,5 @@
-# Package manifest of a helper executable (I6, M50-helper): its static vcpkg
-# closure with reviewed licences and copyright files, and its dynamic
-# dependencies, which must all be operating-system libraries. Script mode:
+# A helper's package manifest: its static vcpkg closure with reviewed licences, and its dynamic dependencies,
+# which must all be operating-system libraries.
 #
 #   cmake -DHELPER=<exe> -DNAME=<component> -DROOTS=<pkg;...> -DSTATUS=<vcpkg status>
 #         -DINSTALLED=<vcpkg_installed/<triplet>> -DTRIPLET=<triplet> -DLICENCES=<json>
@@ -13,7 +12,6 @@ foreach(var HELPER NAME ROOTS STATUS INSTALLED TRIPLET LICENCES OUT)
 endforeach()
 set(problems "")
 
-# Installed packages of the target triplet: version and same-triplet dependencies.
 file(READ "${STATUS}" status)
 string(REPLACE "\r" "" status "${status}")
 string(REPLACE ";" "," status "${status}")
@@ -49,7 +47,6 @@ foreach(p IN LISTS paragraphs)
     list(APPEND installed "${pkg}")
 endforeach()
 
-# Static closure from the roots.
 set(closure "")
 set(queue ${ROOTS})
 while(queue)
@@ -104,9 +101,7 @@ foreach(name IN LISTS reviewed)
 endforeach()
 string(REGEX REPLACE ",\n$" "\n" static_json "${static_json}")
 
-# Dynamic dependencies: operating-system libraries, plus the compiler runtime,
-# which is listed apart because shipping it is a packaging decision. Anything
-# else would have to be shipped and licensed, and fails the manifest.
+# The compiler runtime is listed apart: shipping it is a packaging decision.
 set(os_libs "")
 set(runtime_libs "")
 if(CMAKE_HOST_WIN32)

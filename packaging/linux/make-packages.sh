@@ -1,18 +1,10 @@
 #!/bin/bash
-# Builds HikariSub's Linux release packages from a configured and built
-# build tree (installers spec 2.1, 5.2 to 5.4):
-#
-#   hikarisub-<V>-linux-x86_64.tar.gz      the portable tree; also the AUR source
-#   HikariSub-<V>-linux-x86_64.AppImage    (+ .zsync)
-#   hikarisub-<V>-linux-amd64.deb
-#   hikarisub-<V>-linux-x86_64.rpm
+# Builds the Linux release packages (tar.gz, AppImage with .zsync, deb, rpm) from a configured and built tree:
 #
 #   make-packages.sh --build-dir <dir> --version <V> --out <dir> --tools <dir>
 #                    [--formats tar,appimage,native] [--allow-missing-update-helper]
 #
-# Run it on the build floor (packaging/linux/floor/almalinux9.sh): the
-# AppImage collects its extra libraries from the build host. --tools is
-# where fetch-tool.sh keeps the tools pinned in tools.lock.
+# Run it on the build floor (floor/almalinux9.sh): the AppImage collects its extra libraries from the build host.
 # --version may differ from the build's own version only for test packages.
 set -euo pipefail
 LC_ALL=C
@@ -38,7 +30,6 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$build_dir" ] && [ -n "$version" ] && [ -n "$out_dir" ] && [ -n "$tools_dir" ] ||
     { echo "usage: $0 --build-dir <dir> --version <V> --out <dir> --tools <dir> [--formats ...]" >&2; exit 2; }
-# SemVer 2.0.0 without build metadata (spec 1.2).
 if ! [[ $version =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
     echo "error: $version is not a SemVer release version without build metadata" >&2
     exit 2
@@ -58,22 +49,18 @@ appimagetool=$("$here/fetch-tool.sh" appimagetool "$tools_dir")
 runtime_file=$("$here/fetch-tool.sh" type2-runtime "$tools_dir")
 nfpm=$("$here/fetch-tool.sh" nfpm "$tools_dir")
 
-# 1. The host-profile app tree (spec 5.2), from the install rules.
 rm -rf "$stage"
 mkdir -p "$stage"
 tree=$stage/tree
 cmake --install "$build_dir" --prefix "$tree" --component hikari_app
 [ -x "$tree/hikarisub" ] || { echo "error: the install produced no hikarisub" >&2; exit 1; }
-# GR1 (#364): the grammar checker's helper.
 [ -x "$tree/harper-ls" ] || { echo "error: the install produced no harper-ls" >&2; exit 1; }
-# KA4 (#279): the furigana suggestions' dictionary and the BSD notices.
 for f in Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin Dictionary/unidic-lite/char.bin \
     Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc Dictionary/unidic-lite/mecabrc \
     Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE \
     licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt; do
     [ -f "$tree/$f" ] || { echo "error: the install produced no $f" >&2; exit 1; }
 done
-# DK1 (#473): the pinned spell-check dictionaries and their notices.
 for name in en_US pl th_TH ko_KR ta_IN; do
     for f in "Dictionary/$name.aff" "Dictionary/$name.dic"; do
         [ -f "$tree/$f" ] || { echo "error: the install produced no $f" >&2; exit 1; }
@@ -83,15 +70,11 @@ for name in en_US pl th_TH ko_KR ta_IN; do
 done
 "$here/check-payload.sh" --min-glibc "$min_glibc" "$tree"
 
-# CR1 (#452): debug info a build carries (HIKARI_DEBUG_SYMBOLS) leaves the
-# packages: each ELF file's goes to package-stage/symbols/<path>.debug, and
-# under .build-id/ for debuggers, linked back by .gnu_debuglink. Release CI
-# keeps that folder as the version's symbols (tools/crash/symbolize.py).
+# Debug info moves to package-stage/symbols, linked back by .gnu_debuglink; release CI keeps it for tools/crash/symbolize.py.
 symbols=$stage/symbols
 while IFS= read -r -d '' f; do
     [ "$(od -An -tx1 -N4 "$f" | tr -d ' \n')" = 7f454c46 ] || continue
-    # Not `readelf | grep -q`: grep leaving early can kill readelf by
-    # SIGPIPE, and pipefail then skips a file that has debug info.
+    # Not `readelf | grep -q`: grep exiting early can SIGPIPE readelf, and pipefail then skips a file with debug info.
     [[ $(readelf -S --wide "$f" 2>/dev/null) == *' .debug_info '* ]] || continue
     rel=${f#"$tree"/}
     mkdir -p "$symbols/$(dirname "$rel")"
@@ -114,7 +97,6 @@ normalize_modes() # <dir>: directories and executables 0755, other files 0644
             chmod 0755 "$f"; else chmod 0644 "$f"; fi; done' sh {} +
 }
 normalize_modes "$tree"
-# Shared libraries and plugins need no execute bit; executables keep it.
 find "$tree" -type f \( -name '*.so' -o -name '*.so.*' \) -exec chmod 0644 {} +
 
 reproducible_tar() # <archive> <dir> <top>: a deterministic .tar.gz of <dir>/<top>
@@ -123,7 +105,7 @@ reproducible_tar() # <archive> <dir> <top>: a deterministic .tar.gz of <dir>/<to
         -C "$2" -cf - "$3" | gzip -n -9 > "$1"
 }
 
-# 2. The portable tar.gz, in the layout the AUR PKGBUILD relies on (spec 5.5).
+# The AUR PKGBUILD relies on this tar.gz layout.
 if want tar; then
     top=hikarisub-linux-x86_64
     root=$stage/tar/$top
@@ -143,15 +125,12 @@ if want tar; then
     echo "built hikarisub-$version-linux-x86_64.tar.gz"
 fi
 
-# 3. The AppImage: the same tree plus the full-profile libraries (spec 5.3).
 if want appimage; then
     appdir=$stage/AppDir
     mkdir -p "$appdir/usr/lib/hikarisub" "$appdir/usr/lib/hikarisub-runtime/lib" "$appdir/usr/share/metainfo"
     cp -a "$tree/." "$appdir/usr/lib/hikarisub/"
     printf 'appimage\n' > "$appdir/usr/lib/hikarisub/package-kind.txt"
-    # host-libraries.txt records what is left to the host: the host list's
-    # matches and everything they need (the closure rule); the package
-    # tests read it.
+    # The package tests read host-libraries.txt, what is left to the host.
     python3 "$here/appimage/collect-runtime.py" "$tree" "$appdir/usr/lib/hikarisub-runtime/lib" \
         "$here/appimage/host-libs.txt" "$appdir/usr/lib/hikarisub-runtime/host-libraries.txt"
     install -m 0755 "$here/appimage/AppRun" "$appdir/AppRun"
@@ -172,7 +151,6 @@ if want appimage; then
     echo "built $name"
 fi
 
-# 4. deb and rpm with nFPM (spec 5.4).
 if want native; then
     helper=$source_dir/packaging/linux/update-helper/hikarisub-update-helper
     policy=$source_dir/packaging/linux/update-helper/io.github.altqx.HikariSub.update.policy

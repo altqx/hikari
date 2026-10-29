@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""kwin_shot.py OUT.png [OUTPUT]: the whole KWin workspace through org.kde.KWin.ScreenShot2
-(allowed by KWIN_WAYLAND_NO_PERMISSION_CHECKS in the gate session)."""
+"""kwin_shot.py OUT.png [OUTPUT]: KWin's workspace through ScreenShot2 (allowed by KWIN_WAYLAND_NO_PERMISSION_CHECKS)."""
 import os
 import subprocess
 import sys
@@ -21,7 +20,7 @@ tmp = tempfile.NamedTemporaryFile(delete=False)
 reader = subprocess.Popen(["cat"], stdin=r, stdout=tmp)
 os.close(r)
 opts = {"native-resolution": GLib.Variant("b", True)}
-if len(sys.argv) > 2:  # one output by name (CaptureWorkspace needs the OpenGL compositor)
+if len(sys.argv) > 2:  # CaptureWorkspace needs the OpenGL compositor
     method, args = "CaptureScreen", GLib.Variant("(sa{sv}h)", (sys.argv[2], opts, idx))
 else:
     method, args = "CaptureWorkspace", GLib.Variant("(a{sv}h)", (opts, idx))

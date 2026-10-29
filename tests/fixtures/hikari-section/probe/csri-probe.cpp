@@ -1,12 +1,5 @@
-// WS2 (#216): what a CSRI renderer (xy-VSFilter, VSFilterMod) draws for a
-// script file read as a player reads it (csri_open_file), so the fixtures
-// with and without [Hikari] can be compared frame by frame.
 //   csri-probe <renderer.dll> <script.ass>...
-// For each script: "<script> open failed", or one line per time with the
-// frame's FNV-1a hash and how many bytes the renderer changed, drawn onto
-// a gradient at 640x360, BGRA asked for first and BGR_ after.
-// Built in the Winix VM by run.ps1 (cl /EHa: a renderer's exception on open
-// is reported, not fatal).
+// Built with cl /EHa so a renderer's exception on open is reported, not fatal.
 
 #include <windows.h>
 
@@ -44,7 +37,7 @@ void *open(OpenFileFn openFile, void *rend, const char *path)
     }
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

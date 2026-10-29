@@ -23,7 +23,7 @@ cmake --build <dir> --target legacy_video_timing_capture
 
 `observations.jsonl` holds one line per case; each op ran on a fresh copy of the case and records the Lines' times, the selection (keys), the edit box's Line (`current`) and time fields (`edit`), `GetFrameTime`'s start and end for `frametime`, and the calls. sha256 `aaff657070e4b68cb9ead549860c9d1fe13ecf1b235e900c4263aa798e5bbad8` (44 cases, 1197 ops; the last three cases, `insert-times-unchanged`, `select-from-video-all-hidden` and `snap-end-blocked-start`, were added on 2026-10-05 as old evidence for the V6 departures, and the earlier 41 cases' lines are unchanged).
 
-## Compared with the rewrite
+## Compared with HikariSub
 
 `VideoTimingCapture.ReplaysTheLegacyObservations` (`hikari_application_video_timing_tests`) replays every op through `hikari/application/video_timing.h` and compares the times, selections and the video and audio calls (`VideoFollow`). All are the same apart from the ops of four approved departures ([compatibility decisions](../../../../docs/compatibility-decisions.md), user 2026-10-05), where the replay needs legacy's result with exactly that change and the legacy observation stays as the old evidence:
 

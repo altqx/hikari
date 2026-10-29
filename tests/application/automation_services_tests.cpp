@@ -1,6 +1,3 @@
-// L3: host service routing through platform ports, and legacy decode_path
-// (HikariSub/Automation.cpp decode_path at 20d647c4).
-
 #include "hikari/application/audio_spectrum.h"
 #include "hikari/application/automation_services.h"
 
@@ -35,13 +32,10 @@ TEST(DecodePath, PrefixesBecomeTheLegacyDirectories)
 TEST(DecodePath, LegacyQuirksArePinned)
 {
     const auto c = linuxContext();
-    // Only the 2nd and 5th characters are compared.
     EXPECT_EQ(decodeAutomationPath("?axxix/f", c), "/media/show/f");
-    // Unknown prefixes, short paths and plain paths stay; backslashes become '/'.
     EXPECT_EQ(decodeAutomationPath("?other/f", c), "?other/f");
     EXPECT_EQ(decodeAutomationPath("?a", c), "?a");
     EXPECT_EQ(decodeAutomationPath("C:\\x\\y", c), "C:/x/y");
-    // Without a Document file the directory is empty.
     AutomationPathContext none = c;
     none.subtitlePath.clear();
     EXPECT_EQ(decodeAutomationPath("?script/out.ass", none), "/out.ass");
@@ -55,8 +49,6 @@ TEST(DecodePath, WindowsSeparators)
     EXPECT_EQ(decodeAutomationPath("?temp/x", c), "C:\\Hikari\\Automation\\temp\\x");
 }
 
-// Installers spec 1.7: an installed copy's scripts write to the user's
-// Automation folder; ?data stays the shipped one.
 TEST(DecodePath, InstalledCopyWritesToTheUsersFolder)
 {
     auto c = linuxContext();
@@ -83,7 +75,7 @@ TEST(AutomationFolders, PortableCopyHasTheShippedFolderOnly)
         EXPECT_EQ(f.include, include);
         EXPECT_TRUE(f.made.empty());
     }
-    // One folder spelt in another case on Windows.
+    // Windows paths compare case-insensitively.
     const auto w = automationFolders("C:\\Hikari\\Automation", "c:\\hikari\\automation", true);
     EXPECT_EQ(w.autoload.size(), 1u);
     EXPECT_TRUE(w.made.empty());
@@ -91,8 +83,6 @@ TEST(AutomationFolders, PortableCopyHasTheShippedFolderOnly)
 
 TEST(AutomationFolders, InstalledCopyAddsTheUsersFolders)
 {
-    // UD1: the user folder is `?user`; the start makes its lower-case
-    // automation/autoload and include.
     const auto f = automationFolders("/opt/hikarisub/Automation", "/home/a/.config/hikarisub", false);
     const std::string u = "/home/a/.config/hikarisub";
     EXPECT_EQ(f.autoload, (std::vector<std::string>{"/opt/hikarisub/Automation/automation/Autoload",
@@ -102,7 +92,6 @@ TEST(AutomationFolders, InstalledCopyAddsTheUsersFolders)
     EXPECT_EQ(f.made, (std::vector<std::string>{u + "/log", u + "/temp", u + "/autosave", u + "/automation/autoload",
                                                  u + "/automation/include"}));
 
-    // Windows has one autoload and one include folder per root.
     const auto w = automationFolders("C:\\Program Files\\HikariSub\\Automation", "C:\\Users\\a\\Automation\\", true);
     EXPECT_EQ(w.autoload, (std::vector<std::string>{"C:\\Program Files\\HikariSub\\Automation\\automation\\Autoload",
                                                      "C:\\Users\\a\\Automation\\automation\\Autoload"}));
@@ -201,15 +190,13 @@ TEST_F(RouterTest, UnattachedPortsAnswerUnavailable)
         EXPECT_EQ(r.status, HostServiceReply::Status::Unavailable);
 }
 
-// O5: aegisub.gettext goes to the application's lookup; without one it is
-// Unavailable and the helper keeps the source.
 TEST_F(RouterTest, GettextAnswersThroughTheTranslation)
 {
     router.handle(request(HostService::Gettext, {}, {"Search bar"}), collect());
     router.setTranslation([](const std::string &s) { return s == "Search bar" ? std::string("Pasek szukania") : s; });
     router.handle(request(HostService::Gettext, {}, {"Search bar"}), collect());
     router.handle(request(HostService::Gettext, {}, {"no such key"}), collect());
-    router.handle(request(HostService::Gettext), collect()); // no string: the empty source
+    router.handle(request(HostService::Gettext), collect());
     ASSERT_EQ(replies.size(), 4u);
     EXPECT_EQ(replies[0].status, HostServiceReply::Status::Unavailable);
     EXPECT_EQ(replies[1].strings, std::vector<std::string>{"Pasek szukania"});
@@ -260,7 +247,7 @@ TEST_F(RouterTest, OnePickerAtATimeAndAWithdrawnAnswerIsDropped)
     EXPECT_EQ(picker.last.file, "f.txt");
     EXPECT_EQ(picker.last.script, "/scripts/s.lua");
     router.handle(request(HostService::SaveFile, {1}, {"Save", "", "", ""}), collect());
-    ASSERT_EQ(replies.size(), 1u); // the second picker is refused while one is open
+    ASSERT_EQ(replies.size(), 1u);
     EXPECT_EQ(replies[0].status, HostServiceReply::Status::Unavailable);
     router.withdraw();
     EXPECT_EQ(picker.withdrawn, 1);
@@ -270,13 +257,11 @@ TEST_F(RouterTest, OnePickerAtATimeAndAWithdrawnAnswerIsDropped)
     router.handle(request(HostService::SaveFile, {0}, {"Save", "", "", ""}), collect());
     EXPECT_EQ(picker.last.mode, FilePickerRequest::Mode::Save);
     EXPECT_FALSE(picker.last.promptOverwrite);
-    picker.reply(std::nullopt); // cancelled: the legacy nil
+    picker.reply(std::nullopt);
     ASSERT_EQ(replies.size(), 2u);
     EXPECT_EQ(replies[1].status, HostServiceReply::Status::Unavailable);
 }
 
-// Y4-playres-ask: the resolution question goes to its port; without one
-// (or declined to answer) it is Unavailable and the helper writes nothing.
 struct FakeResolution : ScriptResolutionPort {
     ScriptResolutionRequest last;
     std::function<void(std::optional<Resolution>)> reply;
@@ -299,16 +284,14 @@ TEST_F(RouterTest, TheScriptResolutionQuestionGoesToItsPort)
     router.handle(request(HostService::ScriptResolution, {0, 480}), collect());
     EXPECT_EQ(port.last.script, "/scripts/s.lua");
     EXPECT_EQ(port.last.written, (Resolution{0, 480}));
-    EXPECT_EQ(replies.size(), 1u); // waits for the answer
+    EXPECT_EQ(replies.size(), 1u);
     port.reply(Resolution{1920, 1080});
     ASSERT_EQ(replies.size(), 2u);
     EXPECT_EQ(replies[1].integers, (std::vector<std::int64_t>{1920, 1080}));
-    // No values: Unavailable.
     router.handle(request(HostService::ScriptResolution, {0, 0}), collect());
     port.reply(std::nullopt);
     ASSERT_EQ(replies.size(), 3u);
     EXPECT_EQ(replies[2].status, HostServiceReply::Status::Unavailable);
-    // The run ends while it is asked: withdrawn, the late answer dropped.
     router.handle(request(HostService::ScriptResolution, {0, 0}), collect());
     router.withdraw();
     EXPECT_EQ(port.withdrawn, 1);
@@ -324,10 +307,6 @@ TEST_F(RouterTest, DecodePathUsesTheCurrentContext)
     EXPECT_EQ(replies[0].strings, std::vector<std::string>{"/opt/hikari/Automation/x"});
 }
 
-// L6: aegisub.get_frequency_peaks over legacy AudioSpectrum::CreateRange
-// (HikariSub/AudioSpectrum.cpp and GFFT at 20d647c4).
-
-// Mono audio at 48 kHz: `level` for the first `levelSamples` samples, then silence.
 std::unique_ptr<DisplayAudio> levelAudio(std::int64_t samples, std::int16_t level, std::int64_t levelSamples)
 {
     auto audio = std::make_unique<DisplayAudio>(48000, samples);
@@ -340,7 +319,6 @@ std::unique_ptr<DisplayAudio> levelAudio(std::int64_t samples, std::int16_t leve
 
 TEST(FrequencyPeaks, ALineIsTheMagnitudeOfLegacysFft)
 {
-    // Against a plain DFT: bins 0..1023 of 2048 samples.
     std::vector<std::int16_t> samples(kSpectrumDoubleLength);
     std::uint32_t seed = 12345;
     for (auto &s : samples) {
@@ -361,9 +339,8 @@ TEST(FrequencyPeaks, ALineIsTheMagnitudeOfLegacysFft)
         largest = std::max(largest, magnitude);
         worst = std::max(worst, std::abs(magnitude - line[k]));
     }
-    EXPECT_LT(worst, largest * 1e-3); // float, with legacy's twiddle recurrence
+    EXPECT_LT(worst, largest * 1e-3);
 
-    // A constant is exact: everything in the first bin.
     std::fill(samples.begin(), samples.end(), std::int16_t{50});
     const SpectrumLine flat = legacySpectrumLine(samples.data());
     EXPECT_EQ(flat[0], 2048.f * 50);
@@ -373,32 +350,23 @@ TEST(FrequencyPeaks, ALineIsTheMagnitudeOfLegacysFft)
 
 TEST(FrequencyPeaks, IntensitiesPerLineAndPeakRunsFollowCreateRange)
 {
-    // Ten lines (2048 samples each) at level 50: the first bin's intensity
-    // is 100 * (2048 * 50 * 16) / (32768 * 100) = 50.
     const auto audio = levelAudio(48000, 50, 10 * 2048);
-    // 900 ms: lines 0 (0 ms) to 21 (43200 / 2048), each at line * 2048000 / 48000 ms;
-    // bands 0 / (48000 / 2048) = 0 to 100 / 23 = 4, the strongest of them.
     auto peaks = legacyFrequencyPeaks(*audio, 0, 900, 0, 100, 0);
     EXPECT_EQ(peaks.times, (std::vector<int>{0, 42, 85, 128, 170, 213, 256, 298, 341, 384, 426, 469, 512, 554, 597,
                                              640, 682, 725, 768, 810, 853, 896}));
     std::vector<int> expected(22, 0);
     std::fill_n(expected.begin(), 10, 50);
     EXPECT_EQ(peaks.intensities, expected);
-    // From the line holding the start time.
     peaks = legacyFrequencyPeaks(*audio, 400, 500, 0, 0, 0);
     EXPECT_EQ(peaks.times, (std::vector<int>{384, 426, 469}));
     EXPECT_EQ(peaks.intensities, (std::vector<int>{50, 0, 0}));
-    // An end band below the start band is the start band (band 4: nothing).
     peaks = legacyFrequencyPeaks(*audio, 0, 100, 100, 0, 0);
     EXPECT_EQ(peaks.intensities, (std::vector<int>{0, 0, 0}));
 
-    // With a peek: the time where each run of lines reaching it was
-    // strongest (its first line at equal intensities), once the run ends.
     peaks = legacyFrequencyPeaks(*audio, 0, 900, 0, 0, 40);
     EXPECT_EQ(peaks.times, std::vector<int>{0});
     EXPECT_TRUE(peaks.intensities.empty());
     EXPECT_TRUE(legacyFrequencyPeaks(*audio, 0, 900, 0, 0, 60).times.empty());
-    // A run still going at the last line is never reported (legacy).
     EXPECT_TRUE(legacyFrequencyPeaks(*audio, 0, 300, 0, 0, 40).times.empty());
 }
 
@@ -406,15 +374,15 @@ TEST_F(RouterTest, FrequencyPeaksReadTheAudioBox)
 {
     FakeMedia media;
     router.setMedia(&media);
-    router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 0}), collect()); // no audio
-    media.audio = nullptr;                                                           // a box without audio yet
+    router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 0}), collect());
+    media.audio = nullptr;
     router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 0}), collect());
     const auto audio = levelAudio(48000, 50, 2048);
     media.audio = audio.get();
     router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 0}), collect());
     router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 40}), collect());
-    router.handle(request(HostService::FrequencyPeaks, {-5, 100, 0, 0, 0}), collect()); // the helper raises
-    router.handle(request(HostService::FrequencyPeaks, {100, 100, 0, 0, 0}), collect()); // the helper answers {}
+    router.handle(request(HostService::FrequencyPeaks, {-5, 100, 0, 0, 0}), collect());
+    router.handle(request(HostService::FrequencyPeaks, {100, 100, 0, 0, 0}), collect());
     ASSERT_EQ(replies.size(), 6u);
     EXPECT_EQ(replies[0].status, HostServiceReply::Status::Unavailable);
     EXPECT_EQ(replies[1].integers, std::vector<std::int64_t>{1});
@@ -426,4 +394,4 @@ TEST_F(RouterTest, FrequencyPeaksReadTheAudioBox)
     EXPECT_EQ(replies[5].integers, std::vector<std::int64_t>{0});
 }
 
-} // namespace
+}

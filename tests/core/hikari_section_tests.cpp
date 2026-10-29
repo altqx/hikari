@@ -1,9 +1,3 @@
-// WS2 (#216): the [Hikari] section, where an ASS file keeps its Document
-// tab's panel arrangement. Read as "key=value" lines; written in place outside
-// embedded data, or as a new section at the end of the file (before embedded
-// data that ends it);
-// unknown keys and malformed lines round-trip byte for byte (ADR 0013).
-
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/subtitle_load.h"
@@ -44,19 +38,18 @@ std::string setLayout(const std::string &input, std::u8string_view value = u8"QU
     return text(encodeAss(loaded.document));
 }
 
-} // namespace
+}
 
 TEST(HikariSection, ReadsKeyValueLinesAndKeepsEveryByte)
 {
     const std::string input = kHead + "\n[Hikari]\r\nLayout=QUJD\r\nFuture = later; value\r\n"
                                       "Spaced: colon line\r\n; a comment=not a key\r\n\r\nLayout=TEFTVA==\r\n";
     const auto loaded = loadAss(bytesOf(input));
-    // The last value wins, as in Script Info; values and keys are trimmed.
     EXPECT_EQ(loaded.document.hikariProperty(u8"Layout"), std::optional<std::u8string>(u8"TEFTVA=="));
     EXPECT_EQ(loaded.document.hikariProperty(u8"Future"), std::optional<std::u8string>(u8"later; value"));
-    EXPECT_FALSE(loaded.document.hikariProperty(u8"Spaced")); // no '=': kept as it is
+    EXPECT_FALSE(loaded.document.hikariProperty(u8"Spaced"));
     EXPECT_FALSE(loaded.document.hikariProperty(u8"; a comment"));
-    EXPECT_FALSE(loaded.document.scriptInfo(u8"Layout")); // never Script Info
+    EXPECT_FALSE(loaded.document.scriptInfo(u8"Layout"));
     EXPECT_EQ(loaded.document.sections().back().kind, SectionKind::Hikari);
     for (const auto &d : loaded.diagnostics)
         EXPECT_NE(d.kind, Diagnostic::Kind::UnknownSection);
@@ -89,7 +82,6 @@ TEST(HikariSection, AddsTheKeyAfterTheLastPropertyOfTheSection)
 
 TEST(HikariSection, ANewSectionGoesAtTheEndAfterABlankLine)
 {
-    // LF, CRLF, a file without a final line end and one ending in a blank line.
     EXPECT_EQ(setLayout(kHead), kHead + "\n[Hikari]\nLayout=QUJD\n");
     std::string crlf = kHead;
     for (std::size_t at = 0; (at = crlf.find('\n', at)) != std::string::npos; at += 2)
@@ -98,44 +90,34 @@ TEST(HikariSection, ANewSectionGoesAtTheEndAfterABlankLine)
     const std::string open = kHead.substr(0, kHead.size() - 1);
     EXPECT_EQ(setLayout(open), open + "\n\n[Hikari]\nLayout=QUJD\n");
     EXPECT_EQ(setLayout(kHead + "\n"), kHead + "\n[Hikari]\nLayout=QUJD\n");
-    // Another tool's section after the Events stays before it.
     const std::string garbage = kHead + "\n[Aegisub Extradata]\nData: 1,x,y\n";
     EXPECT_EQ(setLayout(garbage), garbage + "\n[Hikari]\nLayout=QUJD\n");
 }
 
 TEST(HikariSection, ANewSectionGoesBeforeEmbeddedDataEndingTheFile)
 {
-    // libass reads every line after [Fonts] as font data until a header it
-    // knows; VSFilter until a blank line. The section goes before them.
+    // libass reads the lines after [Fonts] as data until a header it knows; VSFilter until a blank line.
     const std::string fonts = "[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n";
     const std::string input = kHead + "\n" + fonts;
     EXPECT_EQ(setLayout(input), kHead + "\n[Hikari]\nLayout=QUJD\n\n" + fonts);
-    // The loader reads the continuation as an attachment's ('[' plus encoding characters).
     const auto saved = loadAss(bytesOf(setLayout(input)));
     EXPECT_EQ(saved.document.hikariProperty(u8"Layout"), std::optional<std::u8string>(u8"QUJD"));
 }
 
 TEST(HikariSection, AValueInsideEmbeddedDataMovesBeforeIt)
 {
-    // libass reads every line after [Fonts] or [Graphics] as embedded data
-    // until a header it knows, so a [Hikari] section there is part of the
-    // data: the value leaves it, with the section when nothing else is in it,
-    // and goes where a new section would.
+    // libass reads the lines after [Fonts] or [Graphics] as data until a header it knows.
     const std::string fonts = "[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n";
     const std::string layout = "\n[Hikari]\nLayout=QUJD\n\n";
     EXPECT_EQ(setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\n"), kHead + layout + fonts + "\n");
-    // Its other lines stay where they are.
     EXPECT_EQ(setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\nOther=1\n"),
               kHead + layout + fonts + "\n[Hikari]\nOther=1\n");
-    // Data a known header ends: the new section goes at the end.
     const std::string events = "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
     EXPECT_EQ(setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\n" + events),
               kHead + "\n" + fonts + events + "\n[Hikari]\nLayout=QUJD\n");
-    // A section before the data takes the value; the one inside loses its line.
     EXPECT_EQ(setLayout(kHead + "\n[Hikari]\nLayout=a\n\n" + fonts + "\n[Hikari]\nLayout=b\nOther=1\n"),
               kHead + layout + fonts + "\n[Hikari]\nOther=1\n");
-    // A section libass does not know continues the data: a new section goes
-    // before the [Fonts] it continues.
+    // A header libass does not know continues the data.
     const std::string garbage = "\n[Aegisub Project Garbage]\nLast Style Storage: Default\n";
     EXPECT_EQ(setLayout(kHead + "\n" + fonts + garbage), kHead + layout + fonts + garbage);
     for (const std::string &input : {kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\nOther=1\n", kHead + "\n" + fonts + garbage}) {
@@ -146,18 +128,15 @@ TEST(HikariSection, AValueInsideEmbeddedDataMovesBeforeIt)
 
 TEST(HikariSection, MalformedContentRoundTrips)
 {
-    // A header with text after it, a line without '=', an empty key, invalid
-    // UTF-8 and a Dialogue line (a Line, as legacy LoadASS reads it anywhere).
     std::string input = kHead + "\n[Hikari] extra\nLayout\n=nothing\nBad=\xff\xfe\n"
                                 "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\nLayout=%%%\n";
     const auto loaded = loadAss(bytesOf(input));
     EXPECT_EQ(loaded.document.sections().back().kind, SectionKind::Hikari);
     EXPECT_EQ(loaded.document.hikariProperty(u8"Layout"), std::optional<std::u8string>(u8"%%%"));
     EXPECT_EQ(loaded.document.hikariProperty(u8""), std::optional<std::u8string>(u8"nothing"));
-    EXPECT_FALSE(loaded.document.hikariProperty(u8"Bad")); // invalid UTF-8 stays bytes
+    EXPECT_FALSE(loaded.document.hikariProperty(u8"Bad"));
     EXPECT_EQ(loaded.document.lines().size(), 2u);
     EXPECT_EQ(text(encodeAss(loaded.document)), input);
-    // Replacing the value touches only its line.
     const std::string out = setLayout(input);
     input.replace(input.find("Layout=%%%"), 10, "Layout=QUJD");
     EXPECT_EQ(out, input);
@@ -165,9 +144,7 @@ TEST(HikariSection, MalformedContentRoundTrips)
 
 TEST(HikariSection, WhatItWritesLegacyReadersPassOver)
 {
-    // Legacy LoadASS takes a line with ':' into Script Info and any line
-    // starting "Dial", "Comm" or "Style:" as a record; VSFilter reads
-    // "key: value" lines in any section. Base64 has no ':'.
+    // VSFilter reads "key: value" lines in any section; base64 has no ':'.
     const std::string out = setLayout(kHead, u8"eyJzY2hlbWEiOjF9+/=");
     const std::string section = out.substr(out.find("[Hikari]"));
     for (std::size_t at = 0, next; at < section.size(); at = next + 1) {
@@ -204,8 +181,6 @@ TEST(HikariSection, TheRendererScriptLeavesItOut)
     EXPECT_EQ(script, kHead + "\n");
 }
 
-// A Dialogue or Comment in the section is a Line (LoadASS reads events in
-// any section), shown in the Grid: the renderers draw it as the others.
 TEST(HikariSection, TheRendererScriptKeepsItsLines)
 {
     const std::string lines = "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
@@ -218,8 +193,7 @@ TEST(HikariSection, TheRendererScriptKeepsItsLines)
     EXPECT_EQ(text(encodeAss(loaded.document)), input);
 }
 
-// The same for a [Hikari] section before [Events]: its Lines go under
-// [Events], after the Format line, as the renderers read events only there.
+// The renderers read events only under [Events].
 TEST(HikariSection, TheRendererScriptPutsItsLinesUnderEvents)
 {
     const std::string info = "[Script Info]\nScriptType: v4.00+\n";
@@ -251,10 +225,8 @@ std::string fixture(const char *name)
     return out;
 }
 
-} // namespace
+}
 
-// The compatibility fixtures' -hikari files are what the rewrite writes
-// from the others (tests/fixtures/hikari-section/make-fixtures.py).
 TEST(HikariSection, TheCompatibilityFixturesAreWhatItWrites)
 {
     std::string layout = fixture("layout.txt");
@@ -264,7 +236,6 @@ TEST(HikariSection, TheCompatibilityFixturesAreWhatItWrites)
     const std::u8string value(layout.begin(), layout.end());
     EXPECT_EQ(setLayout(fixture("plain.ass"), value), fixture("plain-hikari.ass"));
     EXPECT_EQ(setLayout(fixture("fonts.ass"), value), fixture("fonts-hikari.ass"));
-    // Read back, the value is the one written; nothing else changed.
     const auto loaded = loadAss(bytesOf(fixture("fonts-hikari.ass")));
     EXPECT_EQ(loaded.document.hikariProperty(u8"Layout"), std::optional<std::u8string>(value));
     EXPECT_EQ(text(encodeAss(loaded.document)), fixture("fonts-hikari.ass"));

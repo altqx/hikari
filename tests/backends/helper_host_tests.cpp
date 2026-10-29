@@ -1,5 +1,3 @@
-// H1: the helper-process framework, against a real helper executable.
-
 #include "hikari/backends/helper_host.h"
 
 #include <QCoreApplication>
@@ -40,7 +38,7 @@ std::unique_ptr<HelperHost> startHelper(QStringList args = {}, HelperHost::Limit
     return host;
 }
 
-} // namespace
+}
 
 class HelperHostTest : public ::testing::Test {
 protected:
@@ -125,7 +123,7 @@ TEST_F(HelperHostTest, DuplicateTerminalIsRejectedAndCounted)
     Results r;
     ASSERT_TRUE(host->request(1, bytesOf("duplicate"), r.handler()));
     ASSERT_TRUE(waitFor([&] { return host->rejectedFrames() == 1; }));
-    EXPECT_EQ(r.events.size(), 1u); // resolved once
+    EXPECT_EQ(r.events.size(), 1u);
 }
 
 TEST_F(HelperHostTest, OutstandingWorkIsBounded)
@@ -178,7 +176,7 @@ TEST_F(HelperHostTest, ServiceCallIsAnsweredOnceWithinItsRequest)
     EXPECT_TRUE(host->answer(*id, call, Outcome::Ok, bytesOf("answer")));
     EXPECT_FALSE(host->answer(*id, call, Outcome::Ok, bytesOf("again"))) << "answered once";
     ASSERT_TRUE(waitFor([&] { return r.resolved(); }));
-    ASSERT_EQ(r.events.size(), 3u); // Service, Reply, Terminal
+    ASSERT_EQ(r.events.size(), 3u);
     EXPECT_EQ(textOf(r.events[1]->payload), "answer");
     EXPECT_EQ(r.events[2]->outcome, Outcome::Ok);
     EXPECT_FALSE(host->answer(*id, call, Outcome::Ok, {})) << "the request has ended";
@@ -215,7 +213,6 @@ TEST_F(HelperHostTest, CancelReleasesAHelperWaitingOnAService)
     ASSERT_TRUE(waitFor([&] { return r.resolved(); }));
     EXPECT_EQ(r.events.back()->outcome, Outcome::Cancelled);
     EXPECT_FALSE(host->answer(*id, call, Outcome::Ok, {})) << "a late answer is dropped";
-    // The helper is still usable.
     Results next;
     ASSERT_TRUE(host->request(1, bytesOf("echo:after"), next.handler()));
     ASSERT_TRUE(waitFor([&] { return next.resolved(); }));

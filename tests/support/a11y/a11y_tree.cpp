@@ -35,7 +35,7 @@ QString accessibleName(QQuickItem *item)
     return iface ? iface->text(QAccessible::Name) : QString();
 }
 
-} // namespace
+}
 
 void enableAccessibility()
 {
@@ -82,4 +82,4 @@ QStringList tabOrder(QQuickWindow *window)
     return names;
 }
 
-} // namespace hikari::testing
+}

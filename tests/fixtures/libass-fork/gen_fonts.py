@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
 """Generate the synthetic test fonts in this directory (requires fontTools).
 
-Each glyph draws a bar on the baseline and a 3x4 grid of squares showing the
-low 12 bits of its code, so a glyph rendered from the wrong code is visible.
-Combining marks are drawn above the x-height with zero advance.
-
-  forktest-bits.ttf      ASCII, combining marks, Arabic prepend characters
-                         (U+0600, U+06DD) and Arabic-Indic digits
-  forktest-emoji.ttf     emoji with a ZWJ sequence ligature and regional
-                         indicator flag ligatures (GSUB ccmp)
-  forktest-symf020.ttf   (3,0) symbol cmap at U+F020..F07E (the usual layout)
-  forktest-symf120.ttf   (3,0) symbol cmap at U+F120..F17E
-  forktest-sym0020.ttf   (3,0) symbol cmap at U+0020..007E, PANOSE pictorial
-  forktest-arabic.ttf    (3,1) Unicode cmap with legacy simplified Arabic
-                         glyphs (and space) at their PUA codes, charset 178
-                         in the high byte of OS/2 fsSelection
-
 usage: gen_fonts.py [output-dir]
 """
 import os
@@ -41,7 +26,6 @@ def rect(pen, x0, y0, x1, y1):
 def bits_glyph(code, mark=False):
     pen = TTGlyphPen(None)
     if mark:
-        # small pattern above the base, to the left of the pen position
         x, y, s = -ADVANCE + 80, 760, 50
         rect(pen, x, y, x + 4 * s, y + 12)
         for i in range(8):
@@ -62,11 +46,10 @@ def empty_glyph():
 
 
 def build(path, family, glyphs, cmaps, advances, fea=None, os2=None, panose_family=2):
-    """glyphs: name -> glyph; cmaps: list of (platformID, platEncID, format, {code: name})."""
     order = ['.notdef'] + [g for g in glyphs if g != '.notdef']
     fb = FontBuilder(UPEM, isTTF=True)
     fb.setupGlyphOrder(order)
-    # setupCharacterMap needs a mapping; the real tables are replaced below
+    # fontTools' setupCharacterMap needs a mapping; the real tables replace it below.
     fb.setupCharacterMap({})
     allg = dict(glyphs)
     allg['.notdef'] = empty_glyph()
@@ -103,11 +86,10 @@ def gname(code):
 
 
 def main():
-    # fixed head.created/modified, so regenerating gives identical files
+    # fontTools stamps head.created/modified from SOURCE_DATE_EPOCH.
     os.environ.setdefault('SOURCE_DATE_EPOCH', '1767225600')
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.abspath(__file__))
 
-    # Bits: ASCII, NBSP, combining marks, Arabic prepend characters and digits
     marks = [0x0300, 0x0301, 0x0302, 0x0303, 0x0308]
     codes = list(range(0x20, 0x7F)) + [0xA0, 0x0600, 0x06DD] + list(range(0x0660, 0x066A)) + marks
     glyphs = {gname(c): bits_glyph(c, c in marks) for c in codes}
@@ -116,7 +98,6 @@ def main():
     build(os.path.join(out, 'forktest-bits.ttf'), 'ForkTest Bits', glyphs,
           [(0, 3, 4, mapping), (3, 1, 4, mapping)], advances)
 
-    # Emoji: ZWJ family sequence and two flags as ligatures
     emoji = [0x1F468, 0x1F469, 0x1F467, 0x1F3FB, 0x1F1EF, 0x1F1F5, 0x1F1FA, 0x1F1F8]
     glyphs = {gname(c): bits_glyph(c) for c in emoji}
     glyphs.update({gname(0x200D): empty_glyph(), gname(0xFE0F): empty_glyph(),
@@ -135,7 +116,6 @@ feature ccmp {
     build(os.path.join(out, 'forktest-emoji.ttf'), 'ForkTest Emoji', glyphs,
           [(0, 4, 12, mapping), (3, 10, 12, mapping)], advances, fea=fea)
 
-    # Symbol fonts: (3,0) cmap only, glyphs for 0x20..0x7E at a base offset
     for name, family, base, panose in [('symf020', 'ForkTest SymF020', 0xF000, 5),
                                        ('symf120', 'ForkTest SymF120', 0xF100, 5),
                                        ('sym0020', 'ForkTest Sym0020', 0x0000, 5)]:
@@ -145,14 +125,12 @@ feature ccmp {
               [(3, 0, 4, mapping)], {}, panose_family=panose,
               os2={'fsSelection': 0x00, 'ulCodePageRange1': 1 << 31})
 
-    # Legacy simplified Arabic on a Unicode cmap: glyphs at the PUA codes
     pua = {0x0627: 0xF141, 0x0628: 0xF14A, 0x0633: 0xF162, 0x0644: 0xF17C, 0x0645: 0xF17E}
     glyphs = {'p%04X' % p: bits_glyph(p) for p in pua.values()}
     glyphs['space'] = empty_glyph()
     mapping = {p: 'p%04X' % p for p in pua.values()}
-    mapping[0xF120] = 'space'  # legacy simplified Arabic SPACE
-    # only a (3,1) cmap: libass keeps the charmap of the last successful
-    # lookup when it tries all charmaps, and a (0,3) cmap is never remapped
+    mapping[0xF120] = 'space'
+    # Only (3,1): libass keeps the last successful lookup's charmap and never remaps a (0,3) one.
     build(os.path.join(out, 'forktest-arabic.ttf'), 'ForkTest Arabic', glyphs,
           [(3, 1, 4, mapping)], {},
           os2={'fsSelection': (178 << 8) | 0x40})

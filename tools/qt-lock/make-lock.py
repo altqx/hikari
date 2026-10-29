@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
-"""Maintainer tool: compute a frozen official-Qt repository lock (cmake/locks/).
-
-Not part of the build. The CMake provisioner only reads the lock this writes.
-Reads public repository metadata, resolves the component closure for the
-requested package IDs, and records every object the local mirror may serve.
-
-Qt publishes SHA-1 sidecars only. With --hash-dir, each object is streamed,
-checked against its publisher SHA-1, and its SHA-256 recorded (trust on first
-acquisition over HTTPS). Without it, sha256 fields stay null and the lock is
-marked incomplete; the provisioner refuses an incomplete lock.
-"""
+"""Computes a frozen official-Qt repository lock for cmake/locks/; Qt publishes SHA-1 sidecars only."""
 import argparse, hashlib, io, json, os, re, subprocess, sys, tempfile, urllib.request
 import xml.etree.ElementTree as ET
 
@@ -29,9 +19,7 @@ PLATFORMS = {
         ],
         "packages": [
             "qt.qt6.6112.linux_gcc_64",
-            # The linux_gcc_64 add-on leaves are virtual: the CLI refuses them
-            # ("Component is virtual") yet exits 0. Request the parents; the
-            # leaves follow through AutoDependOn (parent + base selected).
+            # Qt's add-on leaves are virtual (refused, yet exit 0); their parents pull them in via AutoDependOn.
             "qt.qt6.6112.addons.qtmultimedia",
             "qt.qt6.6112.addons.qtshadertools",
         ],
@@ -41,8 +29,7 @@ PLATFORMS = {
         },
     },
     "windows": {
-        # tools_vcredist is not a locked root: SDKTool adds its nodes only when
-        # that repository is offered, so they record as absent-optional.
+        # SDKTool adds tools_vcredist nodes only when that repository is offered.
         "roots": [
             "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/",
             "all_os/qt/qt6_6112_windows_line_endings_src/",
@@ -142,8 +129,7 @@ def main():
                      "script": p.findtext("Script")}
             if n in index:
                 old = index[n]
-                # The installer keeps the newer version. Accept that only for
-                # empty grouping nodes, where nothing else can differ.
+                # Qt's installer keeps the newer duplicate.
                 empty = lambda e: not (e["deps"] or e["auto"] or e["archives"] or e["script"])
                 if empty(old) and empty(entry):
                     keep = max(old, entry, key=lambda e: e["version"])
@@ -157,8 +143,7 @@ def main():
             root["package_count"] += 1
         roots.append(root)
 
-    # Installer scripts add dependencies at runtime (licenses, patchers). Read
-    # them from each root's metadata archive; XML alone under-states closure.
+    # Qt installer scripts add dependencies at runtime that Updates.xml does not list.
     script_deps, guarded = {}, {}
     with tempfile.TemporaryDirectory() as td:
         for r in roots:
@@ -181,7 +166,6 @@ def main():
                         guarded.setdefault(pkg, set()).add(m.group(1))
             subprocess.run(["rm", "-rf", out], check=True)
 
-    # Closure: hard and script dependencies, then AutoDependOn fixed point.
     selected, stack, absent_optional = set(), [], set()
     def add(n):
         stack.append(n)
@@ -196,7 +180,7 @@ def main():
             stack.extend(index[x]["deps"])
             for d in sorted(script_deps.get(x, ())):
                 if d not in index and d in guarded.get(x, ()):
-                    absent_optional.add(f"{x} -> {d}")  # script adds it only if present
+                    absent_optional.add(f"{x} -> {d}")
                 else:
                     stack.append(d)
     for n in plat["packages"]:
@@ -209,7 +193,6 @@ def main():
                 add(n); changed = True
     reasons = {n: ("requested" if n in plat["packages"] else "dependency/auto") for n in selected}
 
-    # Ancestor nodes the controller may also select; locked, marked conditional.
     conditional = set()
     for n in list(selected):
         parts = n.split(".")
@@ -244,8 +227,6 @@ def main():
         o["length"] = head_length(o["url"]); total += o["length"]
     installer["length"] = head_length(installer["url"])
 
-    # Reuse verified digests from a previous lock object by object; hash only
-    # what is new or changed (a republished support node, say).
     prev = json.load(open(a.previous)) if a.previous else None
     if prev and not prev.get("complete"):
         sys.exit("previous lock is incomplete")
@@ -296,7 +277,6 @@ def main():
         if installer["sha256"] != installer["declared_sha256"]:
             problems.append("installer SHA-256 differs from declared value")
         if lock_licenses is None:
-            # License texts: changed bytes require fresh owner review.
             with tempfile.TemporaryDirectory() as td:
                 subprocess.run(["7z", "x", "-y", f"-o{td}", os.path.join(a.hash_dir, lic_meta["path"].replace("/", "__"))],
                                check=True, stdout=subprocess.DEVNULL)
@@ -309,8 +289,6 @@ def main():
                                              "sha256": hashlib.sha256(open(full, "rb").read()).hexdigest()})
             lock_licenses = sorted(licenses, key=lambda x: x["file"])
 
-    # Mutable repository metadata is served from a retained copy (GitHub
-    # release assets); versioned payload archives still come from Qt.
     if a.retention_base:
         for r in roots:
             path = r["updates_xml"]["url"][len(BASE):]

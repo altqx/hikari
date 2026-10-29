@@ -1,13 +1,4 @@
-// KE3: the built-in karaoke effect presets (src/application/karaoke-presets)
-// through the bundled karaoke templater. Each preset's Lines go above the
-// first karaoke Line of a fixture Document, with its Style, as the Template
-// editor inserts them; a whole run must give the committed golden, and the
-// same bytes with the unchanged 2.1.7 script Aegisub 3.2.2 shipped, so the
-// presets stay portable. Text extents come from the same deterministic fake
-// as karaoke_templater_tests.
-//
-// HIKARI_UPDATE_KARAOKE_GOLDENS=1 rewrites the goldens from the unchanged
-// script (never from the bundled one).
+// HIKARI_UPDATE_KARAOKE_GOLDENS=1 rewrites the goldens from the unchanged 3.2.2 script.
 #include "hikari/application/automation.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_presets.h"
@@ -99,8 +90,7 @@ std::string narrow(const std::u8string &s)
     return std::string(s.begin(), s.end());
 }
 
-// karaoke_templater_tests' fake: 0.55 em per character below U+2E80 and
-// 1 em from there on, scaled by the style's ScaleX/ScaleY and Spacing.
+// MUST KILL: a copy of karaoke_templater_tests' textExtents fake.
 HostServiceReply textExtents(const HostServiceRequest &r)
 {
     const auto number = [&](std::size_t i) { return i < r.style.size() ? std::stod(r.style[i]) : 0.0; };
@@ -134,8 +124,6 @@ std::vector<Preset> presets()
     return out;
 }
 
-// The fixture with the preset's Lines above its first karaoke Line, in the
-// karaoke Lines' Style "Romaji".
 std::vector<std::byte> fixtureWith(const KaraokePreset &preset)
 {
     std::string text = textOf(readBytes(fixtureDir() + QStringLiteral("/fixture.ass")));
@@ -183,8 +171,6 @@ protected:
         return host;
     }
 
-    // Runs `macroName` on the session's Document and applies its result as
-    // the automation shell does.
     bool apply(hikari::application::EditSession &session, const QString &script, const std::string &macroName)
     {
         auto host = load(script);
@@ -220,7 +206,7 @@ protected:
 
     std::optional<LuaScriptHost::RunOutcome> outcome;
     QStringList log;
-    QJsonObject report; // the last applied run's
+    QJsonObject report;
 };
 
 TEST_F(KaraokePresets, TenPresetsReadWithTitlesAndDescriptions)
@@ -236,7 +222,6 @@ TEST_F(KaraokePresets, TenPresetsReadWithTitlesAndDescriptions)
     }
 }
 
-// A preset file is read only when every Line is a template or code Comment.
 TEST_F(KaraokePresets, OnlyTemplateAndCodeCommentsMakeAPreset)
 {
     const std::string head = "[Script Info]\nTitle: T\nDescription: D\n\n[Events]\nFormat: Layer, Start, End, Style, "
@@ -263,9 +248,6 @@ TEST_F(KaraokePresets, OnlyTemplateAndCodeCommentsMakeAPreset)
                 "MarginV, Effect, Text\nComment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl,x\n")));
 }
 
-// Each preset on the fixture: the golden, byte for byte, from the bundled
-// script and from Aegisub 3.2.2's; no problems, every generated Line in the
-// karaoke Lines' Style and with each variable and expression filled in.
 TEST_F(KaraokePresets, EachPresetGeneratesItsGolden)
 {
     const bool update = qEnvironmentVariableIsSet("HIKARI_UPDATE_KARAOKE_GOLDENS");
@@ -300,14 +282,11 @@ TEST_F(KaraokePresets, EachPresetGeneratesItsGolden)
     }
 }
 
-// Scale pop and Echo grow each syllable from its Style's own scale (and
-// Scale pop back to it), so on a Style scaled to 80 x 120 they still grow
-// and Scale pop keeps that size between pops.
 TEST_F(KaraokePresets, ScaledStylesKeepTheirScale)
 {
     const struct {
         QString file;
-        std::vector<std::u8string> scales; // in every generated Line
+        std::vector<std::u8string> scales;
     } cases[] = {
         {QStringLiteral("04-scale-pop.ass"), {u8"\\fscx104\\fscy156\\1c", u8"\\fscx80\\fscy120)"}},
         {QStringLiteral("08-echo.ass"), {u8"\\fscx144\\fscy216\\alpha"}},
@@ -339,9 +318,6 @@ TEST_F(KaraokePresets, ScaledStylesKeepTheirScale)
     }
 }
 
-// The presets use no random values, so KE1 can regenerate one karaoke Line
-// on its own and KE2's preview matches what Apply writes: regenerating each
-// karaoke Line after a whole run changes nothing.
 TEST_F(KaraokePresets, RegeneratingOneLineChangesNothing)
 {
     for (const auto &[file, preset] : presets()) {
@@ -363,4 +339,4 @@ TEST_F(KaraokePresets, RegeneratingOneLineChangesNothing)
     }
 }
 
-} // namespace
+}

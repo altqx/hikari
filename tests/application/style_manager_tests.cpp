@@ -1,6 +1,3 @@
-// Y1/Y2: the Style manager against legacy StyleStore, StyleChange, Styles
-// and the catalog code of config.cpp at 20d647c4.
-
 #include "hikari/application/style_manager.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -58,14 +55,14 @@ constexpr std::string_view kScript =
     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
     "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,b\n";
 
-} // namespace
+}
 
 TEST(StyleLists, CompareAndCopyChanges)
 {
     auto a = named(u8"A"), b = named(u8"B", u8"Times");
     b.bold = true;
     b.marginLeft = u8"40";
-    EXPECT_EQ(compareStyles(a, b), style_field::FontName | style_field::Bold | style_field::MarginLeft); // names don't count
+    EXPECT_EQ(compareStyles(a, b), style_field::FontName | style_field::Bold | style_field::MarginLeft);
     const auto c = copyStyleChanges(a, b, style_field::Bold);
     EXPECT_TRUE(c.bold);
     EXPECT_EQ(c.fontname, u8"Arial");
@@ -77,7 +74,6 @@ TEST(StyleLists, NewNamesTransferMoveAndSort)
     StyleList list{named(u8"New Style"), named(u8"New Style1"), named(u8"B")};
     EXPECT_EQ(newStyleName(list), u8"New Style2");
     EXPECT_EQ(newStyleName({}), u8"New Style");
-    // Replace? Yes for the first conflict, then No: B replaced, A added.
     StyleList into{named(u8"B"), named(u8"C")};
     std::vector<std::u8string> asked;
     auto rows = transferStyles(into, {named(u8"B", u8"Times"), named(u8"A"), named(u8"C", u8"Times")},
@@ -89,13 +85,11 @@ TEST(StyleLists, NewNamesTransferMoveAndSort)
     EXPECT_EQ(rows, (std::vector<std::size_t>{0, 2}));
     EXPECT_EQ(into[0].fontname, u8"Times");
     EXPECT_EQ(into[1].fontname, u8"Arial");
-    // Cancel stops the buttons' transfer; Load goes on adding new names.
     StyleList stop{named(u8"B")}, load{named(u8"B")};
     transferStyles(stop, {named(u8"B"), named(u8"D")}, [](auto &) { return Replace::Cancel; });
     transferStyles(load, {named(u8"B"), named(u8"D")}, [](auto &) { return Replace::Cancel; }, false);
     EXPECT_EQ(names(stop), (std::vector<std::u8string>{u8"B"}));
     EXPECT_EQ(names(load), (std::vector<std::u8string>{u8"B", u8"D"}));
-    // Move: selected rows travel together and stop at the ends.
     StyleList m{named(u8"a"), named(u8"b"), named(u8"c"), named(u8"d")};
     EXPECT_EQ(moveStyles(m, {1, 3}, StyleMove::ToStart), (std::vector<std::size_t>{0, 1}));
     EXPECT_EQ(names(m), (std::vector<std::u8string>{u8"b", u8"d", u8"a", u8"c"}));
@@ -104,7 +98,6 @@ TEST(StyleLists, NewNamesTransferMoveAndSort)
     EXPECT_EQ(names(m), (std::vector<std::u8string>{u8"d", u8"b", u8"c", u8"a"}));
     sortStyles(m);
     EXPECT_EQ(names(m), (std::vector<std::u8string>{u8"a", u8"b", u8"c", u8"d"}));
-    // Rows clamped at an end stack in order behind each other.
     StyleList e{named(u8"a"), named(u8"b"), named(u8"c"), named(u8"d"), named(u8"e")};
     EXPECT_EQ(moveStyles(e, {0, 2, 3}, StyleMove::Up), (std::vector<std::size_t>{0, 1, 2}));
     EXPECT_EQ(names(e), (std::vector<std::u8string>{u8"a", u8"c", u8"d", u8"b", u8"e"}));
@@ -112,8 +105,6 @@ TEST(StyleLists, NewNamesTransferMoveAndSort)
     EXPECT_EQ(names(e), (std::vector<std::u8string>{u8"a", u8"d", u8"b", u8"c", u8"e"}));
 }
 
-// SY1 (#247): every Style of a large file selected and moved is one pass,
-// not an erase and an insert per row (Codex security review).
 TEST(StyleLists, MovingAllOfALargeListIsLinear)
 {
     StyleList big(200000);
@@ -130,7 +121,6 @@ TEST(StyleLists, MovingAllOfALargeListIsLinear)
     EXPECT_EQ(big.back().name, u8"s199999");
 }
 
-// PK1 (#301): the clash review's answers, one per clashing name.
 TEST(StyleLists, TransferWithClashChoices)
 {
     StyleList into{named(u8"A"), named(u8"B"), named(u8"C"), named(u8"B (2)")};
@@ -141,22 +131,15 @@ TEST(StyleLists, TransferWithClashChoices)
         into, {named(u8"A", u8"Times"), named(u8"B", u8"Times"), named(u8"C", u8"Times"), named(u8"D"),
                named(u8"E", u8"Times")},
         choices);
-    // A replaced; B added under the first free name from its new one (B (2)
-    // is taken too); C skipped; D new; E has no choice (none listed: same
-    // both sides or not asked) but is new here, so added.
     EXPECT_EQ(names(into), (std::vector<std::u8string>{u8"A", u8"B", u8"C", u8"B (2)", u8"B (2) (2)", u8"D", u8"E"}));
     EXPECT_EQ(rows, (std::vector<std::size_t>{0, 4, 5, 6}));
     EXPECT_EQ(into[0].fontname, u8"Times");
     EXPECT_EQ(into[2].fontname, u8"Arial");
     EXPECT_EQ(into[4].fontname, u8"Times");
-    // A clash without a choice is left out.
     StyleList kept{named(u8"A")};
     EXPECT_TRUE(transferStyles(kept, {named(u8"A", u8"Times")}, ClashChoices{}).empty());
     EXPECT_EQ(kept[0].fontname, u8"Arial");
     EXPECT_EQ(freeStyleName(StyleList{named(u8"X"), named(u8"X (2)")}, u8"X"), u8"X (3)");
-    // Several Styles of one name are answered apart, by which clash of the
-    // name each is (Codex review): the first renamed, the second left out,
-    // the third replacing.
     StyleList apart{named(u8"X")};
     const auto apartRows = transferStyles(apart, {named(u8"X", u8"One"), named(u8"X", u8"Two"), named(u8"X", u8"Three")},
                                           ClashChoices{{{u8"X", 0}, {ClashAction::Rename, u8"Y"}},
@@ -166,15 +149,10 @@ TEST(StyleLists, TransferWithClashChoices)
     EXPECT_EQ(apart[0].fontname, u8"Three");
     EXPECT_EQ(apart[1].fontname, u8"One");
     EXPECT_EQ(apartRows, (std::vector<std::size_t>{1, 0}));
-    // A clash renamed onto a later new Style's name takes a free one, and
-    // the new Style is still copied (Codex review).
     StyleList onto{named(u8"A")};
     transferStyles(onto, {named(u8"A", u8"Times"), named(u8"B")},
                    ClashChoices{{{u8"A", 0}, {ClashAction::Rename, u8"B"}}});
     EXPECT_EQ(names(onto), (std::vector<std::u8string>{u8"A", u8"B (2)", u8"B"}));
-    // A choice belongs to its source row (Codex review): the review made
-    // where A is taken lists both A rows; where A is new the first is
-    // added and the second still takes its own answer, not the first's.
     const ClashChoices pair{{{u8"A", 0}, {ClashAction::Replace, {}}}, {{u8"A", 1}, {ClashAction::Rename, u8"A2"}}};
     StyleList without{named(u8"Z")};
     transferStyles(without, {named(u8"A", u8"One"), named(u8"A", u8"Two")}, pair);
@@ -183,9 +161,6 @@ TEST(StyleLists, TransferWithClashChoices)
     EXPECT_EQ(without[2].fontname, u8"Two");
 }
 
-// PK1 (#301, Codex security review): a file with X, X (2)... X (n) and many
-// more X rows renamed onto X takes one pass over the names, not a scan of
-// the list for every suffix of every row (n * n * list size, a freeze).
 TEST(StyleLists, FreeNamesForAHostileListAreFound)
 {
     constexpr int kCount = 3000;
@@ -205,21 +180,17 @@ TEST(StyleLists, FreeNamesForAHostileListAreFound)
     const auto rows = transferStyles(into, styles, renames);
     ASSERT_EQ(rows.size(), std::size_t(kCount));
     EXPECT_EQ(into.back().name, u8"X (6000)");
-    EXPECT_EQ(namesOf(into).size(), into.size()); // every name once
+    EXPECT_EQ(namesOf(into).size(), into.size());
 }
 
 TEST(StyleLists, CommitRefusesTakenNamesAndAppliesMultiEdit)
 {
     StyleList l{named(u8"A"), named(u8"B"), named(u8"C")};
-    // A new Style with a taken name, or a rename onto one, is refused.
     EXPECT_EQ(commitStyle(l, {std::nullopt, named(u8"B"), u8"B"}).error(), u8"B");
     EXPECT_EQ(commitStyle(l, {0, named(u8"B"), u8"A"}).error(), u8"B");
-    // A rename to a free name edits the row in place.
     EXPECT_EQ(*commitStyle(l, {0, named(u8"Z"), u8"A"}), 0u);
     EXPECT_EQ(names(l), (std::vector<std::u8string>{u8"Z", u8"B", u8"C"}));
-    // A new Style goes to the end.
     EXPECT_EQ(*commitStyle(l, {std::nullopt, named(u8"New"), u8"New"}), 3u);
-    // Multi-edit: the other selected rows take the changed fields only.
     auto bold = named(u8"B");
     bold.bold = true;
     bold.fontname = u8"Times";
@@ -235,7 +206,6 @@ TEST(StyleLists, CommitEditsTheOpenedCopyOfARepeatedName)
     EXPECT_EQ(*commitStyle(l, {0, named(u8"Dup", u8"Edited"), u8"Dup"}), 0u);
     EXPECT_EQ(l[0].fontname, u8"Edited");
     EXPECT_EQ(l[2].fontname, u8"Last");
-    // A row that no longer holds the opened name falls back to the name.
     EXPECT_EQ(*commitStyle(l, {1, named(u8"Dup", u8"Again"), u8"Dup"}), 2u);
     EXPECT_EQ(l[1].name, u8"Mid");
     EXPECT_EQ(l[2].fontname, u8"Again");
@@ -246,7 +216,6 @@ TEST(DocumentStyles, EditsKeepUntouchedStylesAndRenameLines)
     EditSession session{load(kScript)};
     auto styles = *documentStyles(session);
     ASSERT_EQ(styles.size(), 4u);
-    // Edit Sign (renamed) and move it first; the others keep their bytes.
     styles[1].name = u8"Title";
     styles[1].fontsize = u8"36";
     std::rotate(styles.begin(), styles.begin() + 1, styles.begin() + 2);
@@ -258,11 +227,9 @@ TEST(DocumentStyles, EditsKeepUntouchedStylesAndRenameLines)
                         "Style: Default,Arial,20,"),
               std::string::npos)
         << file;
-    // Nothing changed: no step.
     const auto steps = session.historySize();
     ASSERT_TRUE(setDocumentStyles(session, *documentStyles(session), {0, 1, 2, 3}));
     EXPECT_EQ(session.historySize(), steps);
-    // A new Style goes after the last one; removing drops it.
     auto more = *documentStyles(session);
     more.push_back(named(u8"Extra"));
     ASSERT_TRUE(setDocumentStyles(session, more, {0, 1, 2, 3, std::nullopt}));
@@ -292,18 +259,16 @@ TEST(StyleCatalogFiles, LegacyFormatAndCatalogs)
     std::filesystem::remove_all(dir);
     {
         StyleCatalogs catalogs(dir);
-        // Legacy writes a Default catalog when there is none.
         EXPECT_EQ(catalogs.names(), (std::vector<std::u8string>{u8"Default"}));
         ASSERT_EQ(catalogs.styles().size(), 1u);
         EXPECT_EQ(catalogs.styles()[0].fontsize, u8"30");
         ASSERT_TRUE(catalogs.create(u8"Show"));
         catalogs.styles().push_back(named(u8"Title"));
-        ASSERT_TRUE(catalogs.choose(u8"Default")); // saves Show first
+        ASSERT_TRUE(catalogs.choose(u8"Default"));
         EXPECT_FALSE(catalogs.remove(u8"Default"));
     }
     StyleCatalogs again(dir);
     EXPECT_EQ(again.names(), (std::vector<std::u8string>{u8"Default", u8"Show"}));
-    // GetConversionStyle reads another catalog without making it current.
     EXPECT_EQ(again.find(u8"Show", u8"Title")->name, u8"Title");
     EXPECT_FALSE(again.find(u8"Show", u8"Missing"));
     EXPECT_FALSE(again.find(u8"Nope", u8"Title"));

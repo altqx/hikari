@@ -1,15 +1,3 @@
-// T5: the drawing tool and its shape presets. The tool replays the legacy
-// probe's captures (legacy_drawing_capture over
-// tests/fixtures/legacy-cases/inputs/drawing-cases.txt; tests/fixtures/
-// legacy-observations/local-t5-drawing-20261005), which ran the legacy
-// VisualClips.cpp and VisualDrawingShapes.cpp's Shapes unchanged: every
-// committed text, the editor's text during a gesture, the points, the
-// drawing's position, scale, alignment and rotation, the shape rectangle,
-// its scale and the presets read and written must be legacy's, float for
-// float. No case differs but those of the approved departure
-// T5-change-scale-garble (departureFor), which keep legacy's text as the old
-// evidence.
-
 #include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_drawing.h"
 #include "hikari/application/visual_tools.h"
@@ -66,10 +54,6 @@ const core::LineRecord *line(const EditSession &s, core::LineId id)
     return nullptr;
 }
 
-// A VisualHost over a VideoView and an EditSession (as T1's and T4's
-// tests), with the video's time and the presets VideoToolbar keeps
-// (loaded from the case's ShapesSettings.txt, else legacy's defaults, at
-// the first use; reloaded while empty, as GetShapesSettings).
 class TestHost : public VisualHost {
 public:
     VideoView v;
@@ -79,7 +63,7 @@ public:
     int changes = 0;
     int bells = 0;
     std::vector<std::u16string> notices;
-    VisualTool *tool = nullptr; // reset after a cancel, as the controller does
+    VisualTool *tool = nullptr;
     std::int64_t timeMs = 1500;
     std::optional<std::u16string> shapesFile;
     mutable std::vector<ShapePreset> presets;
@@ -127,8 +111,6 @@ public:
     }
 };
 
-// --- The legacy probe's cases ------------------------------------------------
-
 struct Case {
     std::string name;
     int scriptW = 0, scriptH = 0;
@@ -143,7 +125,7 @@ struct Case {
         int marginL = 0, marginR = 0, marginV = 0;
     };
     std::vector<Line> lines;
-    std::map<std::string, std::string> style; // the probe's Styles stand-in
+    std::map<std::string, std::string> style;
     std::vector<int> select;
     int mode = 1;
     std::optional<std::string> shapesFile;
@@ -262,7 +244,6 @@ struct Replay {
         const auto field = [&](const char *name, const char *fallback) {
             return c.style.contains(name) ? c.style.at(name) : std::string(fallback);
         };
-        // The probe's Styles stand-in: alignment 2, margins 0, angle 0, scale 100.
         std::string script = "[Script Info]\nScriptType: v4.00+\nPlayResX: " + std::to_string(c.scriptW) +
                              "\nPlayResY: " + std::to_string(c.scriptH) + "\n";
         bool tl = false;
@@ -289,7 +270,6 @@ struct Replay {
             return out;
         }();
         for (std::size_t i = 0; i < c.lines.size(); ++i) {
-            // The script's text keeps the case's spacing (legacy trims none here).
             document.editLine(all[i], [&](core::LineRecord &r) {
                 r.text = std::u8string(c.lines[i].text.begin(), c.lines[i].text.end());
                 if (c.lines[i].translation)
@@ -309,7 +289,7 @@ struct Replay {
             selected.insert(lineIds[0]);
         host.s->setSelection({lineIds[0], selected, lineIds[0], std::nullopt});
         if (picked.size() > 1)
-            host.picker.pick(picked); // legacy: several Lines selected
+            host.picker.pick(picked);
         host.v.setClient(c.clientW, c.clientH, c.panel);
         host.v.setScript(c.scriptW, c.scriptH);
         host.v.open({c.frameW, c.frameH, 0, 1});
@@ -321,7 +301,6 @@ struct Replay {
         pendingMode = c.mode;
     }
 
-    // Legacy rendered after every event (Draw -> DrawVisual).
     void render() { (void)tool.overlay(host); }
 
     void run(const std::string &op, std::istringstream &in)
@@ -392,7 +371,7 @@ struct Replay {
                                          flags.find("ctrl") != std::string::npos,
                                          flags.find("alt") != std::string::npos, tool.family());
             tool.key(key, host);
-            key.release = true; // the nudge commits on the key's release
+            key.release = true;
             tool.key(key, host);
             render();
         } else if (op == "activate") {
@@ -421,20 +400,15 @@ struct Replay {
     int steps() const { return static_cast<int>(host.s->historySize() - historyStart); }
 };
 
-// Approved departures (docs/compatibility-decisions.md) where a dump's
-// legacy text is kept as the old evidence and the rewrite expects another.
 struct Departure {
     std::string caseName;
     int dump = 0;
-    std::u8string text;   // the first Line's committed text
-    std::u8string editor; // the Line editor's text
+    std::u8string text;
+    std::u8string editor;
 };
 
 const Departure *departureFor(const std::string &caseName, int dump)
 {
-    // T5-change-scale-garble: the drawing's place moves by what \fscx and
-    // \fscy added, so the next sample replaces the drawing, not the tags
-    // (legacy: "{\fscy12m 1 1 l 301 ...", "{\fscx9300\fscy9300\an7\pos(m 1 1 ...").
     static const std::vector<Departure> list{
         {"shapes-change-scale-new-tags", 1, u8"{\\an7\\pos(300,300)}Text",
          u8"{\\fscy120\\fscx150\\p1\\an7\\pos(300,300)}m 1 1 l 301 1 301 181 1 181{\\p0}{Text}"},
@@ -475,7 +449,7 @@ void compareDump(Replay &r, const QJsonObject &o, const Departure *departure)
     const QJsonArray history = o[QStringLiteral("history")].toArray();
     if (r.steps() > 0 && !history.isEmpty()) {
         EXPECT_EQ(str(history.last()), "VISUAL_DRAWING");
-        EXPECT_EQ(s.history().back().name, "Visual vector drawing tool"); // SubsFile.cpp:236
+        EXPECT_EQ(s.history().back().name, "Visual vector drawing tool");
     }
     EXPECT_EQ(r.host.bells, o[QStringLiteral("bells")].toInt());
     EXPECT_EQ(static_cast<int>(r.host.notices.size()), o[QStringLiteral("messages")].toArray().size());
@@ -513,13 +487,9 @@ void compareDump(Replay &r, const QJsonObject &o, const Departure *departure)
     const QJsonArray move = d[QStringLiteral("move")].toArray();
     const auto &mv = r.tool.moveValues();
     EXPECT_EQ(mv[6], move[6].toDouble());
-    // Only the values GetPosnScale read (tbl[6] of them): legacy's
-    // moveValues is never initialised (Visuals.h:160, Visuals::Visuals), so
-    // the others are what the probe's previous case left in that memory.
+    // The capture's move values past tbl[6] are uninitialised memory.
     for (int i = 0; i < 4 && i < move[6].toInt(); ++i)
         EXPECT_EQ(mv[static_cast<std::size_t>(i)], move[i].toDouble()) << "move " << i;
-    // The \move times are read only for a \move (GetMoveTimes, which the
-    // probe stubs, gives the others; CalcMovePos never reads them).
     if (mv[6] > 2) {
         EXPECT_EQ(mv[4], move[4].toDouble());
         EXPECT_EQ(mv[5], move[5].toDouble());
@@ -546,7 +516,6 @@ void compareDump(Replay &r, const QJsonObject &o, const Departure *departure)
         EXPECT_EQ(std::u16string(1, r.tool.shapePoints()[i].type), p[2].toString().toStdU16String());
     }
 
-    // The presets VideoToolbar holds, and the file SaveSettings wrote.
     const QJsonArray presets = o[QStringLiteral("presets")].toArray();
     const auto &held = r.host.presets;
     ASSERT_EQ(held.size(), static_cast<std::size_t>(presets.size()));
@@ -561,7 +530,7 @@ void compareDump(Replay &r, const QJsonObject &o, const Departure *departure)
         EXPECT_EQ(r.savedFile, o[QStringLiteral("file")].toString().toStdU16String());
 }
 
-} // namespace
+}
 
 TEST(DrawingCapture, ReplaysTheLegacyProbe)
 {
@@ -596,11 +565,8 @@ TEST(DrawingCapture, ReplaysTheLegacyProbe)
     }
 }
 
-// --- The presets: legacy's defaults, its reader and writer -------------------
-
 TEST(ShapePresets, LegacyDefaults)
 {
-    // LoadSettings without the file (VisualDrawingShapes.cpp:299-303).
     const auto presets = defaultShapePresets();
     ASSERT_EQ(presets.size(), 5u);
     EXPECT_EQ(presets[0], (ShapePreset{u"rectangle", u"m 0 0 l 100 0 100 100 0 100", 0, 0}));
@@ -612,7 +578,6 @@ TEST(ShapePresets, LegacyDefaults)
     for (const auto &p : presets)
         EXPECT_EQ(p.scalingMode, ShapePreset::ChangePoints);
     EXPECT_EQ(writeShapePresets(presets), defaultShapePresetsText());
-    // The toolbar's list: "Choose", the names, "Edit".
     const auto list = shapeListChoices(presets);
     ASSERT_EQ(list.size(), 7u);
     EXPECT_EQ(list.front(), u"Choose");
@@ -622,17 +587,14 @@ TEST(ShapePresets, LegacyDefaults)
 
 TEST(ShapePresets, ReadAndWriteLikeLegacy)
 {
-    // wxStringTokenizer's STRTOK: empty lines and runs of ";" are skipped;
-    // the modes read as whole numbers (blanks before them only), wrapping
-    // at 256 as legacy's unsigned char.
     const auto presets = parseShapePresets(u"Shape: a; m 0 0 l 1 1; 1; 0\n\n"
                                            u"Shape: b;;m 0 0;;2;;1\n"
-                                           u"Shape: spaced ;  m 1 1 ;  2 ;  1\n" // "2 " does not read
+                                           u"Shape: spaced ;  m 1 1 ;  2 ;  1\n"
                                            u"Shape: c; m 0 0; x; 0\n"
                                            u"Shape: d; m 0 0\n"
                                            u"Not: e; m 0 0; 0; 0\n"
                                            u"Shape: f; m 0 0; 7; 300\n"
-                                           u"Shape: g; m 0 0; 1; 0\r\n"); // the Linux build kept "\r"
+                                           u"Shape: g; m 0 0; 1; 0\r\n");
     ASSERT_EQ(presets.size(), 3u);
     EXPECT_EQ(presets[0], (ShapePreset{u"a", u"m 0 0 l 1 1", 1, 0}));
     EXPECT_EQ(presets[1], (ShapePreset{u"b", u"m 0 0", 2, 1}));
@@ -641,12 +603,8 @@ TEST(ShapePresets, ReadAndWriteLikeLegacy)
     EXPECT_TRUE(parseShapePresets(u"").empty());
 }
 
-// --- The "Edit shapes" window (PU5) -----------------------------------------
-
 TEST(ShapesEdition, OpensOnThePresetsIndex)
 {
-    // A preset's index (the controller gives the shape list's selection
-    // less its "Choose", T5-editor-opens-next); out of range the first.
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), 2).current().name, u"rounded square 1");
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), 5).current().name, u"rectangle");
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), -1).selection(), 0);
@@ -658,15 +616,14 @@ TEST(ShapesEdition, OpensOnThePresetsIndex)
 TEST(ShapesEdition, EachChangeIsKeptAndUndoneInSteps)
 {
     ShapesEdition e(defaultShapePresets(), 2);
-    // Typing a name is one step however many keys it takes.
     EXPECT_EQ(e.setName(u"r"), ShapesEdition::NameCheck::Ok);
     EXPECT_EQ(e.setName(u"ro"), ShapesEdition::NameCheck::Ok);
     EXPECT_EQ(e.setName(u"round"), ShapesEdition::NameCheck::Ok);
-    EXPECT_EQ(e.presets()[2].name, u"round"); // kept at once
+    EXPECT_EQ(e.presets()[2].name, u"round");
     EXPECT_EQ(e.undoStep(), ShapesEdition::Rename);
     e.endTyping();
     EXPECT_TRUE(e.setShape(u"m 0 0 l 10 0\n10 10"));
-    EXPECT_EQ(e.current().shape, u"m 0 0 l 10 0 10 10"); // a line break is a space in the file's one line
+    EXPECT_EQ(e.current().shape, u"m 0 0 l 10 0 10 10");
     e.setMode(ShapePreset::OnlyScaleX);
     EXPECT_EQ(e.current().mode, ShapePreset::OnlyScaleX);
     EXPECT_EQ(e.undoStep(), ShapesEdition::ChangeScaling);
@@ -681,10 +638,8 @@ TEST(ShapesEdition, EachChangeIsKeptAndUndoneInSteps)
     EXPECT_FALSE(e.canUndo());
     EXPECT_TRUE(e.redo());
     EXPECT_EQ(e.current().name, u"round");
-    // A change after an undo drops what Redo had.
     e.setMode(ShapePreset::SeparateScaleXY);
     EXPECT_FALSE(e.canRedo());
-    // Another preset chosen ends the typing: its name is a step of its own.
     e.select(0);
     EXPECT_EQ(e.setName(u"square"), ShapesEdition::NameCheck::Ok);
     EXPECT_TRUE(e.undo());
@@ -698,23 +653,22 @@ TEST(ShapesEdition, AValueTheToolCannotUseIsRefusedAndTheLastKept)
     std::u16string taken;
     EXPECT_EQ(e.setName(u""), ShapesEdition::NameCheck::Empty);
     EXPECT_EQ(e.setName(u"  "), ShapesEdition::NameCheck::Empty);
-    EXPECT_EQ(e.setName(u"a;b"), ShapesEdition::NameCheck::Separator); // the file's separator
-    EXPECT_EQ(e.setName(u"RECTANGLE", &taken), ShapesEdition::NameCheck::Taken); // ignoring case
+    EXPECT_EQ(e.setName(u"a;b"), ShapesEdition::NameCheck::Separator);
+    EXPECT_EQ(e.setName(u"RECTANGLE", &taken), ShapesEdition::NameCheck::Taken);
     EXPECT_EQ(taken, u"rectangle");
-    EXPECT_EQ(e.setName(u"Circle"), ShapesEdition::NameCheck::Ok); // its own name, another case
+    EXPECT_EQ(e.setName(u"Circle"), ShapesEdition::NameCheck::Ok);
     EXPECT_FALSE(e.setShape(u""));
     EXPECT_FALSE(e.setShape(u" \n "));
     EXPECT_FALSE(e.setShape(u"m 0 0; l 1 1"));
     EXPECT_EQ(e.current().shape, defaultShapePresets()[1].shape);
     e.setMode(7);
     EXPECT_EQ(e.current().mode, ShapePreset::BothScaleX);
-    EXPECT_EQ(e.undoStep(), ShapesEdition::Rename); // only the rename was a step
+    EXPECT_EQ(e.undoStep(), ShapesEdition::Rename);
 }
 
 TEST(ShapesEdition, NewDuplicateAndDelete)
 {
     ShapesEdition e(defaultShapePresets(), 0);
-    // New shape: from the active Line's drawing, else a square.
     e.addShape(u"{\\p1}m 0 0 l 5 5{\\p0}");
     EXPECT_EQ(e.selection(), 5);
     EXPECT_EQ(e.current().name, u"New shape");
@@ -723,16 +677,14 @@ TEST(ShapesEdition, NewDuplicateAndDelete)
     EXPECT_EQ(e.current().name, u"New shape 2");
     EXPECT_EQ(e.current().shape, u"m 0 0 l 100 0 100 100 0 100");
     EXPECT_EQ(e.undoStep(), ShapesEdition::NewShape);
-    // Duplicate: after it, "copy", cut to the 20 characters.
     e.select(2);
     e.duplicate();
     EXPECT_EQ(e.selection(), 3);
-    EXPECT_EQ(e.current().name, u"rounded square copy"); // its blank end dropped
+    EXPECT_EQ(e.current().name, u"rounded square copy");
     EXPECT_EQ(e.current().shape, e.presets()[2].shape);
     e.select(2);
     e.duplicate();
     EXPECT_EQ(e.current().name, u"rounded squar copy 2");
-    // Delete: no question, the next one selected; never the last one.
     EXPECT_TRUE(e.remove());
     EXPECT_EQ(e.current().name, u"rounded square copy");
     EXPECT_EQ(e.undoStep(), ShapesEdition::DeleteShape);
@@ -751,7 +703,7 @@ TEST(ShapesEdition, ATakenNameIsReplacedInOneStep)
     EXPECT_EQ(e.setName(u"Circle", &taken), ShapesEdition::NameCheck::Taken);
     e.replaceNamed(u"Circle");
     ASSERT_EQ(e.presets().size(), 4u);
-    EXPECT_EQ(e.selection(), 2); // the removed one was before it
+    EXPECT_EQ(e.selection(), 2);
     EXPECT_EQ(e.current().name, u"Circle");
     EXPECT_EQ(e.current().shape, defaultShapePresets()[3].shape);
     EXPECT_EQ(e.undoStep(), ShapesEdition::ReplaceShape);
@@ -762,8 +714,6 @@ TEST(ShapesEdition, ATakenNameIsReplacedInOneStep)
 
 TEST(ShapesEdition, RenamesFollowUndoRedoAndUndoAll)
 {
-    // The toolbar's chosen preset follows the history's renames (Codex on
-    // #349): a name goes through each in turn.
     const auto through = [](std::u16string name, const Renames &renames) {
         for (const Renamed &r : renames)
             if (name == r.from)
@@ -778,12 +728,10 @@ TEST(ShapesEdition, RenamesFollowUndoRedoAndUndoAll)
     EXPECT_EQ(through(u"Circle", e.renamed()), opened[3].name);
     ASSERT_TRUE(e.redo());
     EXPECT_EQ(through(opened[3].name, e.renamed()), u"Circle");
-    // Undo all after the Replace and another change to the same preset.
     ASSERT_TRUE(e.setShape(u"m 0 0 l 9 9"));
     EXPECT_TRUE(e.renamed().empty());
     ASSERT_TRUE(e.undoAll());
     EXPECT_EQ(through(u"Circle", e.renamed()), opened[3].name);
-    // Typing a name is one step: its Undo goes back through every key.
     ASSERT_TRUE(e.undo());
     e.select(1);
     const std::u16string before = e.current().name;
@@ -792,19 +740,14 @@ TEST(ShapesEdition, RenamesFollowUndoRedoAndUndoAll)
     EXPECT_EQ(through(u"r", e.renamed()), u"ring");
     ASSERT_TRUE(e.undo());
     EXPECT_EQ(through(u"ring", e.renamed()), before);
-    // Other steps rename nothing.
     ASSERT_TRUE(e.remove());
     EXPECT_TRUE(e.renamed().empty());
-    // An action that changes nothing is no step: the revision the editor
-    // hands changes on stays, so the last renames are not handed on again.
     ShapesEdition same(opened, 3);
     same.replaceNamed(u"Circle");
     ASSERT_TRUE(same.undo());
     const auto revision = same.revision();
     same.restoreDefaults(opened);
     EXPECT_EQ(same.revision(), revision);
-    // Delete selects the next one, the last when it was the last (Codex on
-    // #349: worked out before the list moves).
     same.select(static_cast<int>(opened.size()) - 1);
     ASSERT_TRUE(same.remove());
     EXPECT_EQ(same.selection(), static_cast<int>(opened.size()) - 2);
@@ -812,8 +755,6 @@ TEST(ShapesEdition, RenamesFollowUndoRedoAndUndoAll)
 
 TEST(ShapesEdition, RedoBringsBackTheStepsOwnSelection)
 {
-    // Another preset chosen after a step does not change what Redo selects
-    // (Codex on #349).
     ShapesEdition e(defaultShapePresets(), 2);
     e.duplicate();
     ASSERT_EQ(e.selection(), 3);
@@ -834,7 +775,6 @@ TEST(ShapesEdition, TakeFromTheActiveLineReplacesTheDrawing)
     ShapesEdition e(defaultShapePresets(), 0);
     EXPECT_FALSE(e.takeFromLine(u"no drawing"));
     EXPECT_FALSE(e.canUndo());
-    // The last drawing in the Line (legacy's loop left the field with it).
     EXPECT_TRUE(e.takeFromLine(u"{\\p1}m 0 0 l 1 1{\\p0}x{\\p2}m 5 5 l 6 6"));
     EXPECT_EQ(e.presets().size(), 5u);
     EXPECT_EQ(e.current().name, u"rectangle");
@@ -846,34 +786,28 @@ TEST(ShapesEdition, RestoreDefaultsAndUndoAllAreOneStep)
 {
     std::vector<ShapePreset> mine = defaultShapePresets();
     mine.insert(mine.begin(), {u"star", u"m 0 0 l 1 1", 1, 0});
-    ShapesEdition e(mine, 2); // circle
+    ShapesEdition e(mine, 2);
     e.setName(u"ring");
     e.endTyping();
     e.select(0);
     e.setMode(ShapePreset::OnlyScaleX);
-    e.select(3); // rounded square 1
-    // Restore: legacy's five, the selected name's place where the list has
-    // it, else where it is, else the first.
+    e.select(3);
     e.restoreDefaults(defaultShapePresets());
     EXPECT_EQ(e.presets(), defaultShapePresets());
     EXPECT_EQ(e.current().name, u"rounded square 1");
     EXPECT_EQ(e.undoStep(), ShapesEdition::RestoreDefaults);
     EXPECT_TRUE(e.undo());
     EXPECT_EQ(e.presets()[0].name, u"star");
-    // Undo all changes: the presets the window opened with, one step.
     EXPECT_TRUE(e.undoAll());
     EXPECT_EQ(e.presets(), mine);
     EXPECT_EQ(e.undoStep(), ShapesEdition::UndoAll);
-    EXPECT_FALSE(e.undoAll()); // nothing differs
+    EXPECT_FALSE(e.undoAll());
     EXPECT_TRUE(e.undo());
     EXPECT_EQ(e.presets()[2].name, u"ring");
-    // Defaults the same as the presets: no step.
     ShapesEdition same(defaultShapePresets(), 0);
     same.restoreDefaults(defaultShapePresets());
     EXPECT_FALSE(same.canUndo());
 }
-
-// --- The tool: gestures, options, the overlay --------------------------------
 
 namespace {
 
@@ -903,7 +837,7 @@ Pointer at(Pointer::Kind kind, int x, int y, bool left = false, Pointer::Button 
     return p;
 }
 
-} // namespace
+}
 
 TEST(DrawingGesture, ADragIsOneStepAndEscRestores)
 {
@@ -918,14 +852,13 @@ TEST(DrawingGesture, ADragIsOneStepAndEscRestores)
     tool.pointer(at(Pointer::Kind::Press, 150, 50, true, Pointer::Button::Left), host);
     for (int i = 1; i <= 10; ++i)
         tool.pointer(at(Pointer::Kind::Move, 150 + i, 50 + i, true), host);
-    EXPECT_EQ(line(*host.s, id)->text, u8"{\\an7\\pos(150,150)\\p1}m 0 0 l 300 0 300 300"); // nothing reaches the Document
+    EXPECT_EQ(line(*host.s, id)->text, u8"{\\an7\\pos(150,150)\\p1}m 0 0 l 300 0 300 300");
     ASSERT_TRUE(host.g);
     EXPECT_EQ(host.g->staged(id), std::optional<std::u8string>(u8"{\\an7\\pos(150,150)\\p1}m 0 0 l 330 30 300 300{\\p0}"));
     tool.pointer(at(Pointer::Kind::Release, 160, 60, false, Pointer::Button::Left), host);
     EXPECT_EQ(line(*host.s, id)->text, u8"{\\an7\\pos(150,150)\\p1}m 0 0 l 330 30 300 300{\\p0}");
     EXPECT_EQ(host.s->historySize(), steps + 1);
     EXPECT_EQ(host.s->history().back().name, "Visual vector drawing tool");
-    // Esc during a drag: the Document and the points as before it.
     tool.pointer(at(Pointer::Kind::Press, 160, 60, true, Pointer::Button::Left), host);
     tool.pointer(at(Pointer::Kind::Move, 200, 100, true), host);
     ASSERT_TRUE(host.g);
@@ -946,7 +879,7 @@ TEST(DrawingGesture, AShapeDragIsOneStepAndAProtectedSessionRefusesIt)
     const auto ids_ = ids(*host.s);
     host.s->setSelection({ids_[1], {ids_[1]}, ids_[1], std::nullopt});
     tool.reset(host);
-    EXPECT_TRUE(tool.setOption("shape", 1, host)); // rectangle
+    EXPECT_TRUE(tool.setOption("shape", 1, host));
     EXPECT_EQ(tool.shape(), 0);
     const std::size_t steps = host.s->historySize();
     tool.pointer(at(Pointer::Kind::Press, 100, 100, true, Pointer::Button::Left), host);
@@ -954,15 +887,12 @@ TEST(DrawingGesture, AShapeDragIsOneStepAndAProtectedSessionRefusesIt)
     tool.pointer(at(Pointer::Kind::Release, 200, 150, false, Pointer::Button::Left), host);
     EXPECT_EQ(line(*host.s, ids_[1])->text, u8"{\\p1\\an7\\pos(300,300)}m 1 1 l 301 1 301 151 1 151{\\p0}");
     EXPECT_EQ(host.s->historySize(), steps + 1);
-    // The rectangle drawn over the video (Shapes::DrawVisual).
     const Overlay o = tool.overlay(host);
     ASSERT_EQ(o.lines.size(), 4u);
     EXPECT_EQ(o.lines[0].from, (PointF{100, 100}));
     EXPECT_EQ(o.lines[1].from, (PointF{200, 100}));
     EXPECT_EQ(o.lines[2].from, (PointF{200, 150}));
     EXPECT_EQ(o.lines[0].argb, 0xFFBB0000u);
-    // A rectangle released without width or height writes nothing and
-    // leaves no preview.
     tool.pointer(at(Pointer::Kind::Press, 400, 300, true, Pointer::Button::Left), host);
     tool.pointer(at(Pointer::Kind::Move, 400, 320, true), host);
     EXPECT_TRUE(host.g);
@@ -997,14 +927,12 @@ TEST(DrawingOptions, SixModesAndTheShapeList)
     for (int i = 0; i < 6; ++i) {
         EXPECT_EQ(options[i].iconRole, roles[i]);
         EXPECT_TRUE(options[i].enabled);
-        EXPECT_EQ(options[i].checked, i == 1); // Add line (VectorItem::toggled = 1)
+        EXPECT_EQ(options[i].checked, i == 1);
     }
     EXPECT_EQ(options[6].kind, ToolOption::Kind::Choice);
-    EXPECT_EQ(options[6].iconRole, "shape-presets"); // the row shows it as an icon with its menu
+    EXPECT_EQ(options[6].iconRole, "shape-presets");
     EXPECT_EQ(options[6].choices.size(), 7u);
     EXPECT_EQ(options[6].index, 0);
-    // A shape chosen: the modes take no click and show none pushed
-    // (VectorItem::OnMouseEvent / OnPaint with shapeListSelection).
     EXPECT_TRUE(tool.setOption("shape", 2, host));
     options = tool.options(host);
     for (int i = 0; i < 6; ++i) {
@@ -1013,7 +941,6 @@ TEST(DrawingOptions, SixModesAndTheShapeList)
     }
     EXPECT_EQ(options[6].index, 2);
     EXPECT_FALSE(tool.setOption("mode0", 1, host));
-    // The wheel cycles the six modes (no Invert clip button).
     tool.setOption("shape", 0, host);
     tool.editor().mode = 0;
     Pointer wheel;
@@ -1023,20 +950,17 @@ TEST(DrawingOptions, SixModesAndTheShapeList)
     EXPECT_EQ(tool.editor().mode, 5);
 }
 
-// PU5: "Edit shapes" keeps each change at once, so the tool reads the
-// chosen preset again even at the place chosen before (legacy's SetShape
-// kept the one it had; its edits came only at OK).
 TEST(DrawingOptions, ChangedPresetsAreReadAgain)
 {
     TestHost host;
     setUp(host);
     DrawingTool tool;
     tool.reset(host);
-    ASSERT_TRUE(tool.setOption("shape", 1, host)); // rectangle
+    ASSERT_TRUE(tool.setOption("shape", 1, host));
     const std::size_t rectangle = tool.shapePoints().size();
     ASSERT_NE(rectangle, 3u);
     host.presets[0].shape = u"m 0 0 l 100 0 0 100";
-    tool.setOption("shape", 1, host); // legacy's SetShape: the same place, nothing read
+    tool.setOption("shape", 1, host);
     EXPECT_EQ(tool.shapePoints().size(), rectangle);
     const int changes = host.changes;
     tool.presetsChanged(1, host);
@@ -1044,12 +968,9 @@ TEST(DrawingOptions, ChangedPresetsAreReadAgain)
     EXPECT_EQ(tool.shapeSelection(), 1);
     EXPECT_EQ(tool.shapePoints().size(), 3u);
     EXPECT_EQ(host.changes, changes + 1);
-    // Free drawing stays so.
     tool.setOption("shape", 0, host);
     tool.presetsChanged(0, host);
     EXPECT_EQ(tool.shape(), -1);
-    // A hidden tool (another family shown) takes them too, quietly; it
-    // reads its Line when it comes back (Codex on #349).
     ASSERT_TRUE(tool.setOption("shape", 1, host));
     host.presets[0].shape = u"m 0 0 l 100 0 100 100 0 100 0 50";
     const int hidden = host.changes;
@@ -1083,10 +1004,6 @@ TEST(DrawingTool, MoveFollowsTheVideosTime)
 
 TEST(DrawingDeparture, ChangingScaleKeepsTheDrawingInPlace)
 {
-    // T5-change-scale-garble (compatibility-decisions.md): when "Changing
-    // scale" adds \fscx / \fscy, legacy's Shapes::SetScale diff moved the
-    // drawing's place the wrong way and the next sample wrote the drawing
-    // into the tags ("{\fscy12m 1 1 l 301 1 301 181 1 1810)}m 1 1 ...").
     TestHost host;
     host.s = std::make_unique<EditSession>(
         load("[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n[Events]\n"
@@ -1114,9 +1031,6 @@ TEST(DrawingDeparture, ChangingScaleKeepsTheDrawingInPlace)
     EXPECT_EQ(host.s->historySize(), steps + 1);
 }
 
-// The pointer's shapes (VideoBox::SetCursor from Shapes::OnMouseEvent,
-// VisualDrawingShapes.cpp:384-398; the user's 2026-10-13 decision to port
-// them). The drawing's points set none (DrawingAndClip never calls it).
 TEST(DrawingPointer, TheShapesRectangleEdgesAndCornersShowTheirResizeShapes)
 {
     TestHost host;
@@ -1126,15 +1040,15 @@ TEST(DrawingPointer, TheShapesRectangleEdgesAndCornersShowTheirResizeShapes)
     const auto rows = ids(*host.s);
     host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
     tool.reset(host);
-    ASSERT_TRUE(tool.setOption("shape", 1, host)); // rectangle
+    ASSERT_TRUE(tool.setOption("shape", 1, host));
     tool.pointer(at(Pointer::Kind::Move, 100, 100), host);
-    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow); // nothing drawn yet
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
     tool.pointer(at(Pointer::Kind::Press, 100, 100, true, Pointer::Button::Left), host);
     tool.pointer(at(Pointer::Kind::Move, 200, 150, true), host);
-    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow); // a new rectangle's drag sets none
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
     tool.pointer(at(Pointer::Kind::Release, 200, 150, false, Pointer::Button::Left), host);
     ASSERT_TRUE(tool.rectangleVisible());
-    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNWSE); // released on its corner
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNWSE);
     const struct {
         int x, y;
         PointerShape shape;
@@ -1150,7 +1064,6 @@ TEST(DrawingPointer, TheShapesRectangleEdgesAndCornersShowTheirResizeShapes)
         tool.pointer(at(Pointer::Kind::Move, 150, 125), host);
         EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
     }
-    // The right edge's drag keeps west-east.
     tool.pointer(at(Pointer::Kind::Move, 200, 125), host);
     tool.pointer(at(Pointer::Kind::Press, 200, 125, true, Pointer::Button::Left), host);
     tool.pointer(at(Pointer::Kind::Move, 260, 40, true), host);

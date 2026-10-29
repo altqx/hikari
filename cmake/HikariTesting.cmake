@@ -1,5 +1,3 @@
-# Test runner integration (E2 cards). Each runner family gets a CTest label so
-# `ctest -L <label>` selects it; every test has a bounded run time.
 include_guard(GLOBAL)
 
 find_package(GTest 1.18.0 CONFIG REQUIRED)
@@ -19,38 +17,32 @@ endfunction()
 find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)
 find_program(HIKARI_XVFB_RUN xvfb-run)
 
-# TP1 (#462): the suites that also run on a real X server (xvfb-run), for
-# window-system behaviour offscreen cannot show: windowing, focus, hover,
-# popups, timers and fullscreen. Every other suite runs offscreen only. A
-# suite joins with the bug that only its xvfb run caught.
+# Suites that also run under xvfb-run, for window-system behaviour offscreen cannot show.
 set(HIKARI_XVFB_SUITES
-    # TP1 12dd265e4: an arrangement built at the first frame upset the X11
-    # window (a tab's cursor); KB3 fa5dacc6d: xcb's Redo key let Ctrl+Y skip
-    # the Line text's draft.
+    # xcb: a first-frame arrangement upset a tab's cursor, and xcb's Redo key let Ctrl+Y skip the draft.
     hikari_ui_shell_tests.documents
-    # TP1 12dd265e4: the Timing panel's sections and a floating panel's focus.
+    # The Timing panel's sections and a floating panel's focus.
     hikari_ui_shell_tests.panels
-    # TP1 12dd265e4: the audio holds.
     hikari_ui_shell_tests.hotkeys
-    # FS1 3c1a1ebd8: on xcb the fullscreen rail took the hover from the picture.
+    # On xcb the fullscreen rail took the hover from the picture.
     hikari_ui_shell_tests.video
-    # GR1 (#364): a restart after Cancel stalled harper-ls under xcb.
+    # A restart after Cancel stalled harper-ls under xcb.
     hikari_ui_grammar_tests
-    # AD3 (#312): the progress card's timer fired only under X11.
+    # The progress card's timer fired only under X11.
     hikari_ui_automation_progress_tests
     hikari_ui_automation_workflow
-    hikari_ui_video_fullscreen_workflow # fullscreen
-    hikari_ui_popup_kit_tests # popups (PK1)
-    hikari_ui_dialog_frame_tests # popups (DG1's frame)
-    hikari_ui_theme_startup_tests # the popups' palette at start (K2, W1)
-    hikari_ui_window_frame_tests # the window frame (SH1)
-    hikari_ui_title_bar_tests # the title bar (SH1)
+    hikari_ui_video_fullscreen_workflow
+    hikari_ui_popup_kit_tests
+    hikari_ui_dialog_frame_tests
+    hikari_ui_theme_startup_tests # the popups' palette at start
+    hikari_ui_window_frame_tests
+    hikari_ui_title_bar_tests
     hikari_ui_docking_qualification_tests # floating panels' windows
     hikari_ui_workspace_layout_tests # floating panels' windows
     hikari_ui_single_instance_tests # raising and activating the running window
     hikari_ui_tabs_workflow # focus and keys through the window
     hikari_ui_shortcuts_workflow # focus and keys through the window
-    hikari_ui_colour_picker_tests # the picker's pointer grab (Y7 9d8cd0d95)
+    hikari_ui_colour_picker_tests # the picker's pointer grab
     hikari_ui_automation_submenus_tests # submenus opened by hover
     # The runners' controls: the xvfb runner still reports a failure.
     hikari_qttest_controls hikari_qttest_failing_control
@@ -58,8 +50,6 @@ set(HIKARI_XVFB_SUITES
     hikari_ui_controls hikari_ui_failing_control
     hikari_a11y_controls hikari_a11y_failing_control)
 
-# A listed name no suite registers (a rename, a removed suite) fails the
-# configure, so no suite leaves the xvfb run unnoticed.
 function(_hikari_check_xvfb_suites)
     get_property(registered GLOBAL PROPERTY HIKARI_QT_MODE_NAMES)
     foreach(name IN LISTS HIKARI_XVFB_SUITES)
@@ -70,11 +60,7 @@ function(_hikari_check_xvfb_suites)
 endfunction()
 cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL _hikari_check_xvfb_suites)
 
-# Register one command in the platform modes available on this host: always
-# offscreen, plus a real X server through xvfb-run when it is installed and
-# the name is in HIKARI_XVFB_SUITES.
-# 120 s: several UI suites take 40-51 s on the shared Windows MSVC runners,
-# and a slow runner took them past 60 s.
+# 120 s: UI suites take 40-51 s on the shared Windows MSVC runners.
 function(_hikari_add_qt_modes name label)
     cmake_parse_arguments(mode "OFFSCREEN_ONLY" "" "" ${ARGN})
     set(ARGN ${mode_UNPARSED_ARGUMENTS})
@@ -91,14 +77,9 @@ endfunction()
 
 # hikari_add_qttest(<target> SOURCES <src>... [LIBRARIES <lib>...] [OFFSCREEN_ONLY]
 #                   [PARTS <name> <name>=<first function>... PART_TIMEOUT <s>]) — C++ QtTest.
-# OFFSCREEN_ONLY suits rendered-image comparisons: a reference belongs to one
-# renderer, and offscreen uses the deterministic software rasterizer.
-# PARTS runs a long suite as several processes, one CTest entry per part and
-# mode (<target>.<name>.offscreen, ...), each with its own timeout: a part
-# runs its functions from its first function up to the next part's
-# (tests/support/qtest_parts.h; the source uses HIKARI_QTEST_MAIN_IN_PARTS).
-# The first part starts at the first function. <target>.parts checks that
-# the parts run every function exactly once.
+# OFFSCREEN_ONLY for rendered-image comparisons (offscreen is the deterministic software rasterizer).
+# PARTS: one process and CTest entry per part, each running from its first function to the next part's
+# (tests/support/qtest_parts.h, HIKARI_QTEST_MAIN_IN_PARTS); <target>.parts checks every function runs once.
 function(hikari_add_qttest target)
     cmake_parse_arguments(arg "OFFSCREEN_ONLY" "PART_TIMEOUT" "SOURCES;LIBRARIES;PARTS" ${ARGN})
     add_executable(${target} ${arg_SOURCES})
@@ -112,7 +93,6 @@ function(hikari_add_qttest target)
         _hikari_add_qttest_run(${target} ${target} "${modes}")
         return()
     endif()
-    # Each part's -part FROM..BEFORE, BEFORE being the next part's first function.
     set(names)
     set(firsts)
     foreach(part IN LISTS arg_PARTS)
@@ -125,7 +105,6 @@ function(hikari_add_qttest target)
             math(EXPR at "${at} + 1")
             string(SUBSTRING "${part}" ${at} -1 first)
         endif()
-        # Only the first part starts without a function.
         list(LENGTH names count)
         if(count EQUAL 0 AND NOT first STREQUAL "")
             message(FATAL_ERROR "${target} PARTS: the first part starts at the first function (${part})")
@@ -167,11 +146,8 @@ function(hikari_add_qttest target)
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen" LABELS "qttest;offscreen" TIMEOUT 60)
 endfunction()
 
-# One run of a QtTest executable, as <name>.<mode>, with the extra arguments
-# before the output options.
 function(_hikari_add_qttest_run name target modes)
-    # ctest keeps no QtTest output on Windows: also write it to a file beside
-    # the build (CI collects qttest-*.txt).
+    # ctest keeps no QtTest output on Windows, so it also goes to a file (CI collects qttest-*.txt).
     set(output)
     if(WIN32)
         set(output -o "${CMAKE_BINARY_DIR}/qttest-${name}.txt,txt" -o "-,txt")
@@ -191,8 +167,6 @@ endfunction()
 find_package(Spix CONFIG REQUIRED)
 
 # hikari_add_spix_test(<target> SOURCES <src>... [LIBRARIES <lib>...] [DEFINITIONS <def>...])
-# In-process UI automation driving real Qt Quick items. Test hooks never ship:
-# these targets exist only under BUILD_TESTING.
 function(hikari_add_spix_test target)
     cmake_parse_arguments(arg "" "" "SOURCES;LIBRARIES;DEFINITIONS" ${ARGN})
     add_executable(${target} ${arg_SOURCES})
@@ -202,11 +176,6 @@ function(hikari_add_spix_test target)
     _hikari_add_qt_modes(${target} ui $<TARGET_FILE:${target}>)
 endfunction()
 
-# W2: VSFilterMod, the CSRI renderer the Windows package ships, for the tests
-# that need a real CSRI renderer (the windows-x64-vsfiltermod preset turns it
-# on): the configure fetches the pinned release (HikariVsfilterMod.cmake) and
-# HIKARI_TEST_VSFILTERMOD_DLL is its DLL. Off by default, so the default
-# build downloads nothing and has no CSRI renderer.
 option(HIKARI_TEST_VSFILTERMOD "Fetch the pinned VSFilterMod for the CSRI tests (Windows)" OFF)
 set(HIKARI_TEST_VSFILTERMOD_DLL "")
 if(HIKARI_TEST_VSFILTERMOD)

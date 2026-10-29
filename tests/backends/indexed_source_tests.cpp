@@ -1,7 +1,3 @@
-// N1: exact indexed frames from the isolated FFMS2 media helper (M50-seek).
-// Fixtures are generated at test time; each frame carries its index as a
-// barcode, so a decoded frame proves its own identity.
-
 #include "hikari/backends/ffms_indexed_source.h"
 #include "open_files.h"
 
@@ -38,7 +34,6 @@ std::string fixture(const char *kind)
     return std::string(HIKARI_MEDIA_FIXTURES) + "/" + kind + ".mkv";
 }
 
-// Reads the 4x4 block barcode (white = 1) the fixture generator drew.
 int barcode(const IndexedFrame &f)
 {
     int value = 0;
@@ -79,8 +74,6 @@ struct Fixture : ::testing::Test {
         EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
         return result.value_or(std::unexpected(SourceError::BackendFailure));
     }
-    // Every frame, in a shuffled order (forward and backward seeks), decodes
-    // to exactly the requested frame.
     void expectExactFrames(int count)
     {
         std::vector<int> order(static_cast<std::size_t>(count));
@@ -94,7 +87,7 @@ struct Fixture : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST_F(Fixture, ConstantRateFramesAreExact)
 {
@@ -108,7 +101,6 @@ TEST_F(Fixture, ConstantRateFramesAreExact)
     EXPECT_LT(t->keyframes.back(), 48);
     EXPECT_EQ(t->fpsNumerator * 1001, t->fpsDenominator * 24000);
     EXPECT_TRUE(std::ranges::is_sorted(t->pts));
-    // T1: frame 0's encoded size; no SAR is written, so none (or 1:1) is read.
     EXPECT_EQ(t->width, 320);
     EXPECT_EQ(t->height, 240);
     EXPECT_TRUE(t->sarNum == 0 || t->sarNum == t->sarDen) << t->sarNum << ":" << t->sarDen;
@@ -117,8 +109,6 @@ TEST_F(Fixture, ConstantRateFramesAreExact)
 
 TEST_F(Fixture, OpenGivesTheFramesSizeAndSampleAspect)
 {
-    // T1: legacy ProviderFFMS2::Init's EncodedWidth/EncodedHeight and SAR
-    // (ProviderFFMS2.cpp:362-366), for the visual tools' aspect.
     const auto t = open("sar");
     ASSERT_TRUE(t);
     EXPECT_EQ(t->width, 320);
@@ -132,7 +122,6 @@ TEST_F(Fixture, VariableRateTimelineAndFramesAreExact)
     const auto t = open("vfr");
     ASSERT_TRUE(t);
     ASSERT_EQ(t->pts.size(), 48u);
-    // Durations cycle 30, 50, 70 ms (the generator's pattern), in the time base.
     for (std::size_t i = 1; i < t->pts.size(); ++i) {
         const auto ms = (t->pts[i] - t->pts[i - 1]) * 1000 * t->timeBaseNumerator / t->timeBaseDenominator;
         EXPECT_EQ(ms, 30 + 20 * static_cast<std::int64_t>((i - 1) % 3)) << i;
@@ -154,9 +143,7 @@ TEST_F(Fixture, LongGopSeeksAreExact)
     const auto t = open("longgop");
     ASSERT_TRUE(t);
     ASSERT_EQ(t->pts.size(), 300u);
-    // V2: FFMS2's keyframe flags come with the timeline; one GOP, one keyframe.
     EXPECT_EQ(t->keyframes, std::vector<int>{0});
-    // A sample across the single 300-frame GOP, including far backward seeks.
     for (int i : {299, 0, 150, 1, 298, 75, 200, 2})
         EXPECT_EQ(barcode(*frame(i)), i) << i;
 }
@@ -175,7 +162,7 @@ TEST_F(Fixture, ResultsFromAReplacedSourceAreStale)
     std::optional<std::expected<IndexedFrame, SourceError>> old;
     source.frame(10, [&](auto r) { old = std::move(r); });
     std::optional<std::expected<SourceTimeline, SourceError>> reopened;
-    source.open(fixture("bframes"), {}, [&](auto r) { reopened = std::move(r); }); // before the frame arrives
+    source.open(fixture("bframes"), {}, [&](auto r) { reopened = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return old.has_value() && reopened.has_value(); }));
     EXPECT_EQ(old->error(), SourceError::Stale);
     ASSERT_TRUE(*reopened);
@@ -189,7 +176,6 @@ TEST_F(Fixture, IndexingReportsProgressAndCanBeCancelled)
     EXPECT_FALSE(progress.empty()) << "indexing reports progress";
     EXPECT_TRUE(std::ranges::is_sorted(progress));
 
-    // Cancel before the event loop runs: the Cancel follows the request.
     std::optional<std::expected<SourceTimeline, SourceError>> result;
     source.open(fixture("longgop"), {}, [&](auto r) { result = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return source.helperHost() && source.helperHost()->outstanding() > 0; }));
@@ -201,9 +187,6 @@ TEST_F(Fixture, IndexingReportsProgressAndCanBeCancelled)
     ASSERT_TRUE(open("cfr")) << "the helper still serves the next open";
 }
 
-// AV4: FFMS2 reports every packet (24000 in the long fixture); the helper
-// sends a report only when it moves the progress by a thousandth, so the UI
-// thread gets at most 1001 of them however long the video.
 TEST_F(Fixture, IndexingProgressComesOnceAThousandth)
 {
     std::vector<std::pair<std::int64_t, std::int64_t>> reports;
@@ -242,7 +225,7 @@ TEST_F(Fixture, CancelledReadsResolveOnceAndLateResultsAreDropped)
     ASSERT_EQ(results.size(), 2u) << "resolved at once";
     EXPECT_EQ(results[0].error(), SourceError::Cancelled);
     EXPECT_EQ(results[1].error(), SourceError::Cancelled);
-    const auto next = frame(5); // the helper's late answers arrive first
+    const auto next = frame(5);
     ASSERT_TRUE(next);
     EXPECT_EQ(barcode(*next), 5);
     EXPECT_EQ(results.size(), 2u) << "late results are dropped";
@@ -258,13 +241,13 @@ TEST_F(Fixture, HelperLossIsReportedAndAReopenRecovers)
         pending = std::move(r);
     });
     calls.push_back("stop");
-    source.helperHost()->stop(); // the helper crashes
+    source.helperHost()->stop();
     std::string trace;
     for (const auto &c : calls)
         trace += c + "; ";
     ASSERT_TRUE(pending.has_value()) << trace;
     EXPECT_EQ(pending->error(), SourceError::HelperLost) << trace;
-    ASSERT_TRUE(open("cfr")); // a fresh helper process
+    ASSERT_TRUE(open("cfr"));
     EXPECT_EQ(barcode(*frame(5)), 5);
 }
 
@@ -278,7 +261,7 @@ TEST_F(Fixture, HelperLossClosesTheGenerationUntilAnExplicitRestart)
     QObject::connect(&source, &backends::FfmsIndexedSource::helperLost, [&](quint64 g) { lost.push_back(g); });
     std::optional<std::expected<IndexedFrame, SourceError>> pending;
     source.frame(5, [&](auto r) { pending = std::move(r); });
-    source.helperHost()->stop(); // the helper dies mid-request
+    source.helperHost()->stop();
     ASSERT_TRUE(waitFor([&] { return pending.has_value(); }));
     EXPECT_EQ(pending->error(), SourceError::HelperLost);
     EXPECT_TRUE(source.isHelperLost());
@@ -303,9 +286,6 @@ TEST_F(Fixture, RestartBeforeAnyOpenIsRefused)
     EXPECT_EQ(result->error(), SourceError::NotOpen);
 }
 
-// V3: legacy deleted its provider when the video closed, and the file was
-// closed with it; the closed source's helper holds the file no longer, its
-// reads answer NotOpen, nothing restarts, and the file opens again.
 TEST_F(Fixture, CloseLetsGoOfTheFile)
 {
     QTemporaryDir folder;
@@ -320,7 +300,7 @@ TEST_F(Fixture, CloseLetsGoOfTheFile)
     };
     ASSERT_TRUE(openClip());
     EXPECT_EQ(barcode(*frame(3)), 3);
-    EXPECT_FALSE(openfiles::nothingHolds(clip)); // the open source holds it
+    EXPECT_FALSE(openfiles::nothingHolds(clip));
     std::optional<std::expected<IndexedFrame, SourceError>> pending;
     source.frame(7, [&](auto r) { pending = std::move(r); });
     source.close();
@@ -336,8 +316,6 @@ TEST_F(Fixture, CloseLetsGoOfTheFile)
     EXPECT_EQ(barcode(*frame(5)), 5);
 }
 
-// An open still indexing when the source closes resolves Stale, and its
-// file is let go once the helper has ended it.
 TEST_F(Fixture, CloseDuringAnOpenLetsGoOfTheFile)
 {
     QTemporaryDir folder;
@@ -365,20 +343,15 @@ TEST_F(Fixture, FrameTransferObservation)
         bytes += f->bgra.size();
     }
     const double ms = timer.nsecsElapsed() / 1e6;
-    // An observation on an uncalibrated host, not a budget (M50-perf).
     std::fprintf(stderr, "frame transfer: 48 frames, %zu bytes, %.1f ms (%.2f ms per frame)\n", bytes, ms, ms / 48);
 }
 
-// I2: the helper converts Y'CbCr to BGRA with the stream's own matrix and
-// range. Expected values follow the BT.601/BT.709 equations.
 struct ColorCase {
     const char *kind;
     double kr, kb;
     bool full;
 };
 
-// The largest channel error of a decoded colour fixture frame against the
-// case's equations.
 int frameColorError(const IndexedFrame &frame, const ColorCase &c)
 {
     static constexpr int kPatches[4][3] = {{180, 60, 200}, {81, 90, 240}, {145, 54, 34}, {41, 240, 110}};
@@ -429,19 +402,10 @@ TEST_F(Fixture, Bt709FullRangeIsConvertedWithItsTags)
 
 TEST_F(Fixture, ColorControlsDetectAWrongMatrixOrRange)
 {
-    // Controls: the same comparisons fail by a wide margin when the
-    // expectation uses the other matrix or range.
     EXPECT_GT(colorError(*this, {"color709", 0.299, 0.114, false}), 20) << "BT.709 read as BT.601";
-    // Saturated patches clip, so a range error shows less than a matrix error;
-    // both stay well beyond the comparisons' tolerance of 3.
     EXPECT_GT(colorError(*this, {"color709full", 0.2126, 0.0722, false}), 10) << "full range read as limited";
 }
 
-// V4: the Open reply carries frame 0's matrix and range (legacy
-// ProviderFFMS2::Init's m_CS and m_CR), and InputMatrix sets the converter's
-// input matrix (legacy FFMS_SetInputFormatV for the Script properties
-// matrix): the frames that follow, the one shown again among them, are
-// converted with it.
 TEST_F(Fixture, OpenReportsTheFramesMatrixAndRange)
 {
     auto t = open("color709");
@@ -456,7 +420,7 @@ TEST_F(Fixture, OpenReportsTheFramesMatrixAndRange)
     EXPECT_EQ(t->colorSpace, 6); // FFMS_CS_SMPTE170M
     t = open("colorhd");
     ASSERT_TRUE(t);
-    EXPECT_EQ(t->colorSpace, 2); // unspecified
+    EXPECT_EQ(t->colorSpace, 2); // FFMS_CS_UNSPECIFIED
     EXPECT_EQ(t->width, 1280);
 }
 
@@ -467,15 +431,13 @@ TEST_F(Fixture, InputMatrixConvertsTheFollowingFrames)
     ASSERT_TRUE(before);
     EXPECT_LE(frameColorError(*before, {"color709", 0.2126, 0.0722, false}), 3);
     std::optional<std::expected<void, SourceError>> set;
-    // legacy's "TV.601": BT470BG in the source's range
     source.setInputMatrix(5, 1, [&](auto r) { set = r; });
     ASSERT_TRUE(waitFor([&] { return set.has_value(); }));
     ASSERT_TRUE(set->has_value());
-    const auto as601 = frame(5); // the same frame again
+    const auto as601 = frame(5);
     ASSERT_TRUE(as601);
     EXPECT_LE(frameColorError(*as601, {"color709 as BT.601", 0.299, 0.114, false}), 3);
     EXPECT_GT(frameColorError(*as601, {"color709 as BT.601, BT.709 control", 0.2126, 0.0722, false}), 20);
-    // back to the source's own
     set.reset();
     source.setInputMatrix(1, 1, [&](auto r) { set = r; });
     ASSERT_TRUE(waitFor([&] { return set.has_value(); }));
@@ -484,9 +446,6 @@ TEST_F(Fixture, InputMatrixConvertsTheFollowingFrames)
     EXPECT_LE(frameColorError(*again, {"color709 again", 0.2126, 0.0722, false}), 3);
 }
 
-// An untagged HD source: the converter's default is BT.601 (I2's
-// characterization), which legacy left as it was unless the Document said
-// "TV.709"; then its guess, BT.709, was set.
 TEST_F(Fixture, UntaggedHdTakesTheGuessedMatrixOnlyWhenSet)
 {
     ASSERT_TRUE(open("colorhd"));
@@ -516,8 +475,6 @@ TEST_F(Fixture, UnreadableFilesFailExplicitly)
     source.open(std::string(HIKARI_MEDIA_FIXTURES) + "/missing.mkv", {}, [&](auto r) { result = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
     EXPECT_EQ(result->error(), SourceError::InvalidInput);
-    // V3 (protocol 8): FFMS_CreateIndexer's stage and FFMS2's text, which
-    // legacy logged as a debug message only (ProviderFFMS2.cpp:164)
     const auto failure = source.openFailure();
     ASSERT_TRUE(failure);
     EXPECT_EQ(failure->stage, OpenStage::Indexer);
@@ -526,11 +483,6 @@ TEST_F(Fixture, UnreadableFilesFailExplicitly)
     EXPECT_FALSE(source.openFailure()) << "a later open that succeeds has no failure";
 }
 
-// V3: each stage of a failed open reaches the port with the helper's text
-// (protocol 8), from a helper that fails where FFMS2 rarely does on a real
-// file. Legacy ProviderFFMS2::Init logs "Indexing error occurred: %s"
-// (ProviderFFMS2.cpp:310), "Cannot create VideoSource." (:349) and "Cannot
-// convert video to RGBA" (:388) for them.
 struct FailingHelperFixture : Fixture {
     backends::FfmsIndexedSource failing{QStringLiteral(HIKARI_FAILING_MEDIA_HELPER)};
 };
@@ -549,7 +501,7 @@ TEST_F(FailingHelperFixture, EachStageAndItsTextReachThePort)
                  {"/clips/other.mkv", OpenStage::Host, SourceError::BackendFailure, "no such stage"}};
     for (const auto &c : cases) {
         std::optional<std::expected<SourceTimeline, SourceError>> result;
-        std::optional<OpenFailure> seen; // as the Opened callback reads it (VideoSession::open)
+        std::optional<OpenFailure> seen;
         failing.open(c.file, {}, [&](auto r) {
             seen = failing.openFailure();
             result = std::move(r);
@@ -562,10 +514,6 @@ TEST_F(FailingHelperFixture, EachStageAndItsTextReachThePort)
         EXPECT_EQ(seen->message, c.text) << c.file;
     }
 }
-
-// N2: source PCM ranges. The audio fixture's left channel is the sample index
-// modulo 32768 and the right channel its negation; the generator writes 94
-// blocks of 1024 sample frames (96256 in total).
 
 namespace {
 
@@ -583,7 +531,7 @@ std::int16_t right(const AudioBlock &b, std::int64_t i)
     return v;
 }
 
-} // namespace
+}
 
 struct AudioFixture : Fixture {
     std::expected<AudioInfo, SourceError> openAudio(int track)
@@ -629,11 +577,11 @@ TEST_F(AudioFixture, PcmRangesAreExact)
 TEST_F(AudioFixture, RangesEndAtTheSource)
 {
     ASSERT_TRUE(open("audio"));
-    EXPECT_EQ(audio(0, 4).error(), SourceError::NotOpen); // audio not opened yet
+    EXPECT_EQ(audio(0, 4).error(), SourceError::NotOpen);
     ASSERT_TRUE(openAudio(open("audio")->firstAudioTrack));
     const auto tail = audio(96250, 100);
     ASSERT_TRUE(tail);
-    EXPECT_EQ(tail->count, 6); // shortened at the end
+    EXPECT_EQ(tail->count, 6);
     EXPECT_EQ(left(*tail, 5), static_cast<std::int16_t>(96255 % 32768));
     EXPECT_EQ(audio(96256, 10).error(), SourceError::EndOfStream);
     const auto empty = audio(10, 0);
@@ -671,7 +619,6 @@ struct PcmFixture : AudioFixture {
             return std::nullopt;
         return **result;
     }
-    // The whole stream in chunks of `chunk` frames.
     std::vector<float> readAll(std::int64_t chunk, int *chunks = nullptr)
     {
         std::vector<float> all;
@@ -719,8 +666,6 @@ TEST_F(PcmFixture, ResamplingKeepsTheExactLengthAndTheTimeline)
     EXPECT_EQ(stream->totalFrames, 4410) << "0.1 s at 44.1 kHz";
     const auto pcm = readAll(4410);
     ASSERT_EQ(pcm.size(), 4410u * 2);
-    // Away from the edges (the resampler's filter has no history there), the
-    // output samples the ramp at source position start + k * 48000 / 44100.
     double worst = 0;
     for (std::size_t k = 64; k < 4410 - 64; ++k) {
         const double expected = (1000 + k * 48000.0 / 44100.0) / 32768.0;
@@ -746,7 +691,6 @@ TEST_F(PcmFixture, ChannelsAreMappedByLayout)
     ASSERT_TRUE(begin(1000, 4800, 48000, 1));
     const auto mono = readAll(4800);
     ASSERT_EQ(mono.size(), 4800u);
-    // The fixture's right channel is the negated left: a downmix cancels.
     for (float v : mono)
         ASSERT_LT(std::abs(v), 1e-6f);
 }
@@ -782,12 +726,9 @@ TEST_F(AudioFixture, SourcesWithoutAudioReportIt)
     const auto t = open("cfr");
     ASSERT_TRUE(t);
     EXPECT_EQ(t->firstAudioTrack, -1);
-    EXPECT_EQ(openAudio(0).error(), SourceError::Unsupported); // track 0 is video
+    EXPECT_EQ(openAudio(0).error(), SourceError::Unsupported);
 }
 
-// A1: the audio box's audio in legacy's decode format (ProviderFFMS2: S16,
-// stereo or mono, FFMS_DELAY_FIRST_VIDEO_TRACK), from files with or without
-// video, or from the open video's index.
 struct DisplayAudioFixture : AudioFixture {
     std::expected<MediaProbe, AudioFailure> probe(const std::string &path)
     {
@@ -814,7 +755,7 @@ struct DisplayAudioFixture : AudioFixture {
         const auto opened = openDisplayPath(source, fixture(kind), track, {}, progress);
         if (!opened)
             return std::unexpected(opened.error());
-        EXPECT_TRUE(opened->newIndex); // no index file: indexed now
+        EXPECT_TRUE(opened->newIndex);
         return opened->info;
     }
     std::expected<SourceTimeline, SourceError> openIndexed(const std::string &path, int track,
@@ -867,7 +808,6 @@ TEST_F(DisplayAudioFixture, AudioWithoutVideoOpensInTheLegacyFormat)
             ASSERT_EQ(right(*b, i), static_cast<std::int16_t>(v / 2)) << start + i;
         }
     }
-    // there is no video to read, and general playback's audio is not this one
     EXPECT_EQ(frame(0).error(), SourceError::NotOpen);
     EXPECT_EQ(audio(0, 4).error(), SourceError::NotOpen);
     EXPECT_EQ(display(96256, 4).error().error, SourceError::EndOfStream);
@@ -875,8 +815,6 @@ TEST_F(DisplayAudioFixture, AudioWithoutVideoOpensInTheLegacyFormat)
 
 TEST_F(DisplayAudioFixture, SampleZeroIsTheFirstVideoFrame)
 {
-    // The audio starts 0.5 s after the video: legacy's delay mode pads 24000
-    // silent frames before it (the N2 source range would start at the audio).
     const auto info = openDisplay("audiodelay");
     ASSERT_TRUE(info);
     EXPECT_EQ(info->sampleCount, 96256 + 24000);
@@ -892,8 +830,6 @@ TEST_F(DisplayAudioFixture, SampleZeroIsTheFirstVideoFrame)
     }
 }
 
-// Legacy ProviderFFMS2::Init lists tracks from the indexer: name, language
-// and codec, before any indexing; the chosen track alone is indexed.
 TEST_F(DisplayAudioFixture, ProbeListsTheAudioTracks)
 {
     const auto tracks = probe(fixture("tracks"));
@@ -912,16 +848,12 @@ TEST_F(DisplayAudioFixture, ProbeListsTheAudioTracks)
     ASSERT_TRUE(second);
     const auto b = display(1000, 8);
     ASSERT_TRUE(b);
-    EXPECT_EQ(left(*b, 0), 0); // the second track is silence
+    EXPECT_EQ(left(*b, 0), 0);
     EXPECT_TRUE(openDisplay("tracks", 1));
     EXPECT_EQ(left(*display(1000, 8), 0), 1000);
 }
 
-// A copy of a fixture in a folder of its own, with an Indices folder beside
-// it, so modification times can be changed. The folder outlives the test's
-// own sources but not the fixture's, whose helper still has a copy open when
-// the test ends: that helper ends first, as Windows does not remove a file a
-// process has open.
+// The helper stops first: Windows does not remove a file a process has open.
 struct IndexFolder {
     std::filesystem::path dir;
     backends::FfmsIndexedSource &holder;
@@ -935,7 +867,7 @@ struct IndexFolder {
     {
         if (auto *host = holder.helperHost())
             host->stop();
-        std::error_code ec; // a destructor must not throw
+        std::error_code ec;
         std::filesystem::remove_all(dir, ec);
         if (ec)
             ADD_FAILURE() << "cannot remove " << dir << ": " << ec.message();
@@ -949,9 +881,6 @@ struct IndexFolder {
     std::string index(const char *name) const { return (dir / "Indices" / name).string(); }
 };
 
-// Legacy ProviderFFMS2::Init's index cache: the video is indexed with the
-// chosen audio track alone and the index written to Indices/<name>_<track>
-// .ffindex (the folder made); the next open reads it instead of indexing.
 TEST_F(DisplayAudioFixture, TheVideosIndexFileIsWrittenAndReadBack)
 {
     IndexFolder folder("video", source);
@@ -963,24 +892,20 @@ TEST_F(DisplayAudioFixture, TheVideosIndexFileIsWrittenAndReadBack)
     EXPECT_TRUE(first->newIndex);
     EXPECT_FALSE(progress.empty());
     EXPECT_TRUE(std::filesystem::exists(file));
-    EXPECT_TRUE(first->handoffIndexFile.empty()); // written: nothing handed over
-    EXPECT_EQ(first->firstAudioTrack, 1); // every audio track is still listed
+    EXPECT_TRUE(first->handoffIndexFile.empty());
+    EXPECT_EQ(first->firstAudioTrack, 1);
     EXPECT_EQ(first->audioTracks, (std::vector<int>{1, 2}));
-    // the chosen track was indexed and opens
     ASSERT_TRUE(openAudio(2));
     progress.clear();
     const auto again = openIndexed(path, 2, file, &progress);
     ASSERT_TRUE(again);
     EXPECT_FALSE(again->newIndex);
-    EXPECT_TRUE(progress.empty()); // nothing indexed
+    EXPECT_TRUE(progress.empty());
     EXPECT_EQ(again->pts, first->pts);
     ASSERT_TRUE(frame(3));
     EXPECT_EQ(barcode(*frame(3)), 3);
 }
 
-// The box opens the video's audio in a helper of its own, from the index file
-// the video wrote: nothing is indexed again, and the video's helper keeps
-// serving frames while the box reads.
 TEST_F(DisplayAudioFixture, TheBoxReadsTheVideosIndexInItsOwnHelper)
 {
     IndexFolder folder("box", source);
@@ -1004,15 +929,12 @@ TEST_F(DisplayAudioFixture, TheBoxReadsTheVideosIndexInItsOwnHelper)
     ASSERT_TRUE(*shown);
     EXPECT_EQ(barcode(**shown), 5);
     EXPECT_NE(box.helperHost(), source.helperHost());
-    // another track has an index file of its own, made by the box
     const auto other = openDisplayPath(box, path, 2, folder.index("tracks_2.ffindex"));
     ASSERT_TRUE(other);
     EXPECT_TRUE(other->newIndex);
     EXPECT_TRUE(std::filesystem::exists(folder.index("tracks_2.ffindex")));
 }
 
-// An index file older than its file, or one FFMS2 says belongs to another
-// file, is not used: the file is indexed again and the index rewritten.
 TEST_F(DisplayAudioFixture, AStaleOrForeignIndexFileIsIndexedAgain)
 {
     IndexFolder folder("stale", source);
@@ -1023,7 +945,6 @@ TEST_F(DisplayAudioFixture, AStaleOrForeignIndexFileIsIndexedAgain)
     const auto stale = openIndexed(path, 1, file);
     ASSERT_TRUE(stale);
     EXPECT_TRUE(stale->newIndex);
-    // a newer index of another file under this name
     const auto otherPath = folder.copy("audio");
     ASSERT_TRUE(openIndexed(otherPath, 1, file));
     std::filesystem::last_write_time(file, std::filesystem::last_write_time(path) + std::chrono::seconds(5));
@@ -1031,7 +952,6 @@ TEST_F(DisplayAudioFixture, AStaleOrForeignIndexFileIsIndexedAgain)
     ASSERT_TRUE(foreign);
     EXPECT_TRUE(foreign->newIndex);
     EXPECT_EQ(foreign->audioTracks, (std::vector<int>{1, 2}));
-    // without an index file nothing is read or written (and every audio track is indexed)
     const auto plain = open("tracks");
     ASSERT_TRUE(plain);
     EXPECT_TRUE(plain->newIndex);
@@ -1039,13 +959,6 @@ TEST_F(DisplayAudioFixture, AStaleOrForeignIndexFileIsIndexedAgain)
     EXPECT_TRUE(openAudio(2));
 }
 
-// A1: legacy ProviderFFMS2::GetAudio into a cache's buffer. The helper keeps
-// one block buffer for the box's source (legacy DiskCache's `data`): a read
-// sets S16 samples [decode, frames) to zero (legacy's fill beyond counts
-// samples, not frames) and decodes frames [0, decode), so past both the
-// buffer keeps the previous read's frames; a fresh read (RAMCache's new
-// block) starts from zeros. A read FFMS2 fails sends the buffer as FFMS2
-// left it with the error.
 TEST_F(DisplayAudioFixture, BlocksAreReadIntoTheBlockBufferAsLegacyReadThem)
 {
     const auto tracks = probe(fixture("audioonly"));
@@ -1061,9 +974,9 @@ TEST_F(DisplayAudioFixture, BlocksAreReadIntoTheBlockBufferAsLegacyReadThem)
     ASSERT_EQ(second->count, 56);
     for (std::int64_t i = 0; i < 10; ++i)
         EXPECT_EQ(left(*second, i), value(1000 + i)) << i;
-    for (std::int64_t i = 10; i < 28; ++i) // samples 10..55: frames 5..27, the first 10 decoded over
+    for (std::int64_t i = 10; i < 28; ++i)
         EXPECT_EQ(left(*second, i), 0) << i;
-    for (std::int64_t i = 28; i < 56; ++i) { // the previous read's frames
+    for (std::int64_t i = 28; i < 56; ++i) {
         EXPECT_EQ(left(*second, i), value(i)) << i;
         EXPECT_EQ(right(*second, i), static_cast<std::int16_t>(value(i) / 2)) << i;
     }
@@ -1072,34 +985,23 @@ TEST_F(DisplayAudioFixture, BlocksAreReadIntoTheBlockBufferAsLegacyReadThem)
     EXPECT_EQ(left(*fresh, 0), value(1000));
     for (std::int64_t i = 28; i < 56; ++i)
         EXPECT_EQ(left(*fresh, i), 0) << i;
-    // a fresh read leaves the block buffer as it was: past the cleared
-    // samples it still holds the first read's frames
     const auto nothing = displayBlock({0, 56, 4, false});
     ASSERT_TRUE(nothing);
     EXPECT_EQ(left(*nothing, 3), value(3));
     EXPECT_EQ(left(*nothing, 4), 0);
     EXPECT_EQ(right(*nothing, 27), 0);
     EXPECT_EQ(left(*nothing, 40), value(40));
-    // FFMS2 refuses a range past the end before writing anything: the error
-    // brings the buffer back as it was
     const auto failed = displayBlock({96250, 56, 56, false});
     ASSERT_FALSE(failed);
     EXPECT_EQ(failed.error().stage, AudioStage::Read);
     EXPECT_FALSE(failed.error().message.empty());
     EXPECT_EQ(failed.error().samples, nothing->samples);
-    // a new open starts from a zeroed buffer
     ASSERT_TRUE(openDisplay("audioonly", track));
     const auto reopened = displayBlock({0, 56, 0, false});
     ASSERT_TRUE(reopened);
     EXPECT_TRUE(std::all_of(reopened->samples.begin(), reopened->samples.end(), [](std::byte b) { return b == std::byte{0}; }));
 }
 
-// When the video's index file cannot be written (FFMS_WriteIndex fails, here
-// in an Indices folder that cannot be written), the video's helper hands the
-// new index over in a temporary file, and the box's own helper opens the
-// video's audio from it without indexing again (legacy's box shared the
-// video's index). The file goes once released, when the source opens again
-// and when the source ends.
 TEST_F(DisplayAudioFixture, TheIndexIsHandedOverWhenItsFileCannotBeWritten)
 {
     IndexFolder folder("handoff", source);
@@ -1108,8 +1010,7 @@ TEST_F(DisplayAudioFixture, TheIndexIsHandedOverWhenItsFileCannotBeWritten)
     std::filesystem::create_directories(indices);
     const auto file = folder.index("tracks_1.ffindex");
 #ifdef _WIN32
-    // a read-only folder still takes new files on Windows: the index file's
-    // name is taken by a folder instead
+    // A read-only folder still takes new files on Windows, so a folder takes the index file's name.
     std::filesystem::create_directories(file);
 #else
     std::filesystem::permissions(indices, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec);
@@ -1138,19 +1039,17 @@ TEST_F(DisplayAudioFixture, TheIndexIsHandedOverWhenItsFileCannotBeWritten)
     const auto opened = openDisplayPath(box, path, 1, handoff, &progress);
     ASSERT_TRUE(opened) << opened.error().message;
     EXPECT_FALSE(opened->newIndex);
-    EXPECT_TRUE(progress.empty()); // nothing indexed again
+    EXPECT_TRUE(progress.empty());
     std::optional<std::expected<AudioBlock, AudioFailure>> block;
     box.displayAudio({1000, 4, 4, false}, [&](auto r) { block = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return block.has_value(); }));
     ASSERT_TRUE(*block);
     EXPECT_EQ(left(**block, 0), 1000);
 
-    // released once the box has read it (another file's name is ignored)
     source.releaseIndexHandoff(handoff + ".other");
     EXPECT_TRUE(std::filesystem::exists(handoff));
     source.releaseIndexHandoff(handoff);
     EXPECT_FALSE(std::filesystem::exists(handoff));
-    // opening again removes the previous one; reading the index makes none
     const auto again = openIndexed(path, 1, file);
     ASSERT_TRUE(again);
     ASSERT_FALSE(again->handoffIndexFile.empty());
@@ -1158,7 +1057,7 @@ TEST_F(DisplayAudioFixture, TheIndexIsHandedOverWhenItsFileCannotBeWritten)
     EXPECT_TRUE(std::filesystem::exists(again->handoffIndexFile));
     const auto plain = openIndexed(folder.copy("cfr"), -1, (folder.dir / "elsewhere" / "cfr_-1.ffindex").string());
     ASSERT_TRUE(plain);
-    EXPECT_TRUE(plain->handoffIndexFile.empty()); // no audio track: nothing for the box
+    EXPECT_TRUE(plain->handoffIndexFile.empty());
     EXPECT_FALSE(std::filesystem::exists(again->handoffIndexFile));
     std::optional<backends::FfmsIndexedSource> ending;
     ending.emplace(QStringLiteral(HIKARI_MEDIA_HELPER));
@@ -1173,22 +1072,18 @@ TEST_F(DisplayAudioFixture, TheIndexIsHandedOverWhenItsFileCannotBeWritten)
     EXPECT_FALSE(std::filesystem::exists(last));
 }
 
-// FFMS2's error text and the failing stage reach the box (legacy messages).
 TEST_F(DisplayAudioFixture, FailuresCarryTheStageAndFfms2sText)
 {
     const auto missing = probe("/nonexistent/missing.wav");
     ASSERT_FALSE(missing);
     EXPECT_EQ(missing.error().stage, AudioStage::Indexer);
     EXPECT_FALSE(missing.error().message.empty());
-    const auto noAudio = openDisplay("cfr", 0); // track 0 is video
+    const auto noAudio = openDisplay("cfr", 0);
     ASSERT_FALSE(noAudio);
     EXPECT_EQ(noAudio.error().error, SourceError::Unsupported);
-    // a later open of the same source still works
     EXPECT_TRUE(openDisplay("audio"));
 }
 
-// V3: legacy deleted the audio box's provider when the audio closed, and the
-// file was closed with it; the box's helper holds the file no longer.
 TEST_F(DisplayAudioFixture, ClosingTheBoxLetsGoOfTheFile)
 {
     QTemporaryDir folder;
@@ -1206,5 +1101,5 @@ TEST_F(DisplayAudioFixture, ClosingTheBoxLetsGoOfTheFile)
     source.closeDisplay();
     EXPECT_TRUE(waitFor([&] { return openfiles::nothingHolds(clip); }, 5000)) << openfiles::under(folder.path()).join(u'\n').toStdString();
     EXPECT_EQ(display(0, 56).error().error, SourceError::NotOpen);
-    EXPECT_TRUE(openDisplayPath(source, clip.toStdString(), track, {})); // and it opens again
+    EXPECT_TRUE(openDisplayPath(source, clip.toStdString(), track, {}));
 }

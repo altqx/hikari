@@ -1,8 +1,3 @@
-// P9: the legacy Subs/ autosaves offered read only in Open auto save, listed
-// as legacy AutoSaveOpen::GenerateList lists them (AutoSaveOpen.cpp:123-184,
-// DateCompare in AutoSaveOpen.h:27-53, the names SubsGrid::OnBackupTimer
-// writes in SubsGridBase.cpp:1636-1651, at 20d647c4).
-
 #include "hikari/application/legacy_autosaves.h"
 
 #include <gtest/gtest.h>
@@ -29,8 +24,6 @@ protected:
         std::error_code ec;
         fs::remove_all(folder, ec);
     }
-    // A file written with `text` whose local time is `when` (the fake clock
-    // below maps each file's modification time to it).
     void write(const std::string &name, const std::string &text, LocalTime when)
     {
         std::ofstream(folder / name, std::ios::binary) << text;
@@ -51,7 +44,7 @@ std::string utf8(const std::u16string &s)
     return fs::path(s).string();
 }
 
-} // namespace
+}
 
 TEST_F(LegacyAutosaves, GroupsByNameNewestFirst)
 {
@@ -59,8 +52,8 @@ TEST_F(LegacyAutosaves, GroupsByNameNewestFirst)
     write("ep01_0_2.ass", "b", {2026, 10, 1, 9, 0, 0});
     write("ep01_1_1.ass", "c", {2025, 12, 31, 23, 59, 59});
     write("Untitled_2_1.srt", "d", {2026, 1, 2, 3, 4, 5});
-    write("ep01_0_3.srt", "e", {2026, 1, 1, 0, 0, 0}); // another extension: another file
-    write("empty_0_1.ass", "", {2026, 1, 1, 0, 0, 0}); // nFileSizeLow == 0
+    write("ep01_0_3.srt", "e", {2026, 1, 1, 0, 0, 0});
+    write("empty_0_1.ass", "", {2026, 1, 1, 0, 0, 0});
     fs::create_directories(folder / "folder_0_1.ass");
     const auto files = listLegacyAutosaves(folder, u"Untitled", clock());
     std::map<std::string, std::vector<std::string>> byName;
@@ -77,9 +70,6 @@ TEST_F(LegacyAutosaves, GroupsByNameNewestFirst)
             EXPECT_EQ(v.file.parent_path(), folder);
 }
 
-// The names as wxString::BeforeLast leaves them: nothing left before
-// "_<tab>_<number>" is "Untitled" (DummySubs* skipped); no '.' takes the whole
-// name as the extension.
 TEST_F(LegacyAutosaves, NamesAsBeforeLastLeavesThem)
 {
     write("_0_1.ass", "a", {2026, 1, 1, 0, 0, 1});
@@ -92,16 +82,13 @@ TEST_F(LegacyAutosaves, NamesAsBeforeLastLeavesThem)
     std::map<std::string, std::size_t> versions;
     for (const auto &f : files)
         versions[utf8(f.name)] = f.versions.size();
-    // "_0_1.ass", "one_1.ass" (tab "one") and "noextension" leave nothing.
     EXPECT_EQ(versions["Bez nazwy.ass"], 2u);
     EXPECT_EQ(versions["Bez nazwy.noextension"], 1u);
-    // "DummySubs_0_1.ass" leaves "DummySubs" and is listed; "DummySubs.ass" leaves nothing and is skipped.
     EXPECT_EQ(versions["DummySubs.ass"], 1u);
     EXPECT_EQ(versions["a_b_c.ass"], 1u);
     EXPECT_FALSE(versions.contains("DummySubs_0_1.ass"));
 }
 
-// Two versions written in the same second: the map keeps the first listed.
 TEST_F(LegacyAutosaves, OneVersionPerSecond)
 {
     write("ep_0_1.ass", "a", {2026, 3, 4, 5, 6, 7});
@@ -109,8 +96,7 @@ TEST_F(LegacyAutosaves, OneVersionPerSecond)
     const auto files = listLegacyAutosaves(folder, u"Untitled", clock());
     ASSERT_EQ(files.size(), 1u);
     ASSERT_EQ(files[0].versions.size(), 1u);
-    // The first of the two in the folder's own listing order (readdir on
-    // Linux, FindNextFileW on Windows, as directory_iterator lists it).
+    // The OS listing order (readdir, FindNextFileW) decides which version wins.
     fs::path first;
     for (const auto &entry : fs::directory_iterator(folder))
         if (first.empty())
@@ -119,7 +105,6 @@ TEST_F(LegacyAutosaves, OneVersionPerSecond)
     EXPECT_EQ(files[0].versions[0].file.filename(), first);
 }
 
-// Reading only: the folder and its files stay exactly as they were.
 TEST_F(LegacyAutosaves, NothingIsWritten)
 {
     write("ep_0_1.ass", "content", {2026, 3, 4, 5, 6, 7});

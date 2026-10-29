@@ -1,6 +1,3 @@
-// Y3: Script properties against legacy HikariSubFrame::OnAssProps and
-// SubsGrid::GetASSRes/GetLayoutRes at 20d647c4.
-
 #include "hikari/application/script_properties.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -35,7 +32,7 @@ constexpr std::string_view kFull =
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n";
 
-} // namespace
+}
 
 TEST(ScriptProperties, WhatTheDialogShows)
 {
@@ -48,7 +45,6 @@ TEST(ScriptProperties, WhatTheDialogShows)
     EXPECT_EQ(p.wrapStyle, 2);
     EXPECT_FALSE(p.reverseCollisions);
     EXPECT_TRUE(p.scaledBorderAndShadow);
-    // Missing PlayRes is filled as legacy GetASSRes does.
     const auto bare = scriptProperties(load("[Script Info]\nPlayResY: 480\n\n[Events]\n"));
     EXPECT_EQ(bare.playResX, 853);
     EXPECT_EQ(bare.playResY, 480);
@@ -59,14 +55,13 @@ TEST(ScriptProperties, OnlyChangedFieldsAreWrittenAsOneStep)
     EditSession session{load(kFull)};
     auto p = scriptProperties(session.document());
     const auto steps = session.historySize();
-    // OK without changes adds nothing.
     ASSERT_TRUE(applyScriptProperties(session, p, {}, false));
     EXPECT_EQ(session.historySize(), steps);
     p.originalTranslation = u8"Someone";
     p.playResX = 1920;
     p.playResY = 1080;
     p.wrapStyle = 0;
-    p.matrix = 0; // None
+    p.matrix = 0;
     ScriptPropertiesEdits edits;
     edits.originalTranslation = edits.playResX = edits.playResY = true;
     ASSERT_TRUE(applyScriptProperties(session, p, edits, false));
@@ -81,8 +76,6 @@ TEST(ScriptProperties, OnlyChangedFieldsAreWrittenAsOneStep)
 
 TEST(ScriptProperties, LegacyDefaultsOnOk)
 {
-    // A bare header: OK adds the PlayRes fallbacks, the default title and the
-    // Collisions / ScaledBorderAndShadow values the dialog shows.
     EditSession session{load("[Script Info]\nScriptType: v4.00+\n\n[Events]\n")};
     const auto p = scriptProperties(session.document());
     ASSERT_TRUE(applyScriptProperties(session, p, {}, false));
@@ -92,12 +85,11 @@ TEST(ScriptProperties, LegacyDefaultsOnOk)
     EXPECT_EQ(d.scriptInfo(u8"Title"), u8"HikariSub Ass File");
     EXPECT_EQ(d.scriptInfo(u8"Collisions"), u8"Normal");
     EXPECT_EQ(d.scriptInfo(u8"ScaledBorderAndShadow"), u8"yes");
-    EXPECT_FALSE(d.scriptInfo(u8"YCbCr Matrix")); // unchanged index: not written
+    EXPECT_FALSE(d.scriptInfo(u8"YCbCr Matrix"));
 }
 
 TEST(ScriptProperties, LayoutResolutionRules)
 {
-    // Edited layout width only: the height is not written.
     EditSession a{load(kFull)};
     auto p = scriptProperties(a.document());
     p.layoutResX = 1280;
@@ -105,8 +97,7 @@ TEST(ScriptProperties, LayoutResolutionRules)
     edits.layoutResX = true;
     ASSERT_TRUE(applyScriptProperties(a, p, edits, false));
     EXPECT_EQ(a.document().scriptInfo(u8"LayoutResX"), u8"1280");
-    EXPECT_FALSE(a.document().scriptInfo(u8"LayoutResY")); // height not edited
-    // Linked with a LayoutResX present: the layout follows the subtitle resolution.
+    EXPECT_FALSE(a.document().scriptInfo(u8"LayoutResY"));
     p = scriptProperties(a.document());
     p.playResX = 1920;
     p.playResY = 1080;
@@ -115,8 +106,6 @@ TEST(ScriptProperties, LayoutResolutionRules)
     ASSERT_TRUE(applyScriptProperties(a, p, edits, true));
     EXPECT_EQ(a.document().scriptInfo(u8"LayoutResX"), u8"1920");
     EXPECT_EQ(a.document().scriptInfo(u8"LayoutResY"), u8"1080");
-    // Edited layout height only, width absent: written as edited (legacy
-    // "completes" the missing width from itself, which leaves it 0, unwritten).
     EditSession b{load(kFull)};
     p = scriptProperties(b.document());
     p.layoutResY = 720;

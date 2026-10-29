@@ -1,8 +1,3 @@
-// The subtitle adapters' pixel work (overlay_blend.h): blendAssBitmap on
-// every path this machine has against the plain path, byte for byte; the
-// clearing boxes; the shared buffers; the CSRI premultiply pass against the
-// per-pixel formula it replaced.
-
 #include "hikari/backends/overlay_blend.h"
 
 #include <gtest/gtest.h>
@@ -38,7 +33,7 @@ const char *nameOf(BlendPath p)
     return "?";
 }
 
-} // namespace
+}
 
 TEST(OverlayBlend, ThePathIsOneThisMachineHas)
 {
@@ -50,7 +45,6 @@ TEST(OverlayBlend, ThePathIsOneThisMachineHas)
     std::printf("blend path: %s\n", nameOf(blendPath()));
 }
 
-// Every coverage at every opacity over a sweep of destination pixels.
 TEST(OverlayBlend, EveryCoverageAndOpacityMatchesThePlainPath)
 {
     constexpr int kW = 256;
@@ -73,8 +67,6 @@ TEST(OverlayBlend, EveryCoverageAndOpacityMatchesThePlainPath)
     }
 }
 
-// Sample bitmaps: odd sizes and offsets (every vector width and tail), runs
-// of empty coverage, strides wider than the bitmap, blended one over another.
 TEST(OverlayBlend, SampleBitmapsMatchThePlainPath)
 {
     std::mt19937 rng(20261013);
@@ -92,17 +84,17 @@ TEST(OverlayBlend, SampleBitmapsMatchThePlainPath)
             const unsigned kind = rng() % 4;
             for (auto &b : bitmap) {
                 switch (kind) {
-                case 0: b = byte(); break;                           // noise
-                case 1: b = (rng() % 3) ? 0 : byte(); break;         // mostly empty
-                case 2: b = (rng() % 2) ? 255 : 0; break;            // hard edges
-                default: b = static_cast<std::uint8_t>(rng() % 8); // faint
+                case 0: b = byte(); break;
+                case 1: b = (rng() % 3) ? 0 : byte(); break;
+                case 2: b = (rng() % 2) ? 255 : 0; break;
+                default: b = static_cast<std::uint8_t>(rng() % 8);
                 }
             }
             std::uint32_t color = rng();
             if (n % 7 == 0)
-                color &= 0xffffff00u; // opaque
+                color &= 0xffffff00u;
             if (n % 11 == 0)
-                color |= 0xffu; // transparent: nothing
+                color |= 0xffu;
             const std::size_t at = static_cast<std::size_t>(y) * kPitch + static_cast<std::size_t>(x) * 4;
             blendAssBitmap(BlendPath::Plain, plain.data() + at, kPitch, bitmap.data(), stride, w, h, color);
             blendAssBitmap(path, ours.data() + at, kPitch, bitmap.data(), stride, w, h, color);
@@ -111,14 +103,11 @@ TEST(OverlayBlend, SampleBitmapsMatchThePlainPath)
     }
 }
 
-// The rounding is legacy's: the truncating blend the adapter had before
-// gives other results, up to tens of levels after a few layers.
 TEST(OverlayBlend, DivisionsRoundAsLegacy)
 {
     const std::uint8_t cover = 200;
     std::uint8_t pixel[4] = {0, 0, 0, 0};
-    blendAssBitmap(pixel, 4, &cover, 1, 1, 1, 0xFFFFFF40u); // white, transparency 0x40
-    // alpha = round(200 * 191 / 255) = round(149.80) = 150 (truncated: 149)
+    blendAssBitmap(pixel, 4, &cover, 1, 1, 1, 0xFFFFFF40u); // libass RGBT: white, transparency 0x40
     EXPECT_EQ(pixel[3], 150);
     EXPECT_EQ(pixel[0], 150);
 }
@@ -127,13 +116,12 @@ TEST(OverlayBlend, DrawnBoxesMergeOverlapsAndClearOnlyThem)
 {
     DrawnBoxes boxes;
     boxes.add({10, 10, 20, 10});
-    boxes.add({12, 11, 20, 10}); // mostly the same area: merged
-    boxes.add({0, 0, 0, 5});     // empty: nothing
-    boxes.add({60, 30, 4, 4});   // apart: its own box
+    boxes.add({12, 11, 20, 10});
+    boxes.add({0, 0, 0, 5});
+    boxes.add({60, 30, 4, 4});
     ASSERT_EQ(boxes.boxes().size(), 2u);
     EXPECT_EQ(boxes.boxes()[0], (PixelRect{10, 10, 22, 11}));
     EXPECT_EQ(boxes.boxes()[1], (PixelRect{60, 30, 4, 4}));
-    // Far corners of one bounding box are not merged: that would clear more.
     DrawnBoxes corners;
     corners.add({0, 0, 4, 4});
     corners.add({90, 50, 4, 4});
@@ -161,23 +149,20 @@ TEST(OverlayBlend, BuffersAreReusedOnlyWhenNobodyHoldsThem)
     ASSERT_EQ(first.bytes->size(), 32u);
     (*first.bytes)[0] = 9;
     first.drawn.add({0, 0, 1, 1});
-    OverlayPixels held(first.bytes); // a frame still holds it
+    OverlayPixels held(first.bytes);
     const std::uint8_t *firstBytes = held.data();
     auto &second = buffers.acquire();
-    EXPECT_NE(second.bytes->data(), firstBytes); // another buffer
+    EXPECT_NE(second.bytes->data(), firstBytes);
     (*second.bytes)[4] = 5;
-    EXPECT_EQ(held[0], 9); // untouched
+    EXPECT_EQ(held[0], 9);
     EXPECT_EQ(buffers.count(), 2u);
     EXPECT_EQ(buffers.shown()->bytes->data(), second.bytes->data());
-    // Released, the first is the first free one again, cleared where it was
-    // drawn; the second (not held either) was not drawn by this test's boxes.
     held = OverlayPixels();
     auto &third = buffers.acquire();
     EXPECT_EQ(third.bytes->data(), firstBytes);
     EXPECT_EQ(buffers.count(), 2u);
     EXPECT_TRUE(std::ranges::all_of(*third.bytes, [](std::uint8_t b) { return b == 0; }));
     EXPECT_EQ(buffers.shown()->bytes->data(), firstBytes);
-    // Every buffer held: new ones, at most four kept.
     std::vector<OverlayPixels> holders;
     for (int i = 0; i < 6; ++i)
         holders.emplace_back(buffers.acquire().bytes);
@@ -185,7 +170,6 @@ TEST(OverlayBlend, BuffersAreReusedOnlyWhenNobodyHoldsThem)
     for (std::size_t i = 0; i < holders.size(); ++i)
         for (std::size_t j = i + 1; j < holders.size(); ++j)
             EXPECT_FALSE(holders[i].sameBuffer(holders[j]));
-    // A new size drops them all.
     EXPECT_TRUE(buffers.setSize(2, 2));
     EXPECT_EQ(buffers.count(), 0u);
     EXPECT_EQ(buffers.acquire().bytes->size(), 16u);
@@ -204,21 +188,19 @@ TEST(OverlayBlend, PixelsAreSharedAndCompareByContent)
     EXPECT_EQ(d.size(), 6u);
     EXPECT_EQ(d[3], 4);
     EXPECT_EQ(d[5], 0);
-    EXPECT_EQ(a.size(), 4u); // the shared one is untouched
+    EXPECT_EQ(a.size(), 4u);
     d.assign(2, 7);
     EXPECT_EQ(d, (OverlayPixels{7, 7}));
     EXPECT_TRUE(OverlayPixels().empty());
     EXPECT_FALSE(OverlayPixels().sameBuffer(OverlayPixels()));
 }
 
-// The CSRI pass against the per-pixel loop it replaced, with its bounds.
 TEST(OverlayBlend, PremultiplyMatchesThePerPixelPassAndBoundsWhatIsDrawn)
 {
     std::mt19937 rng(7);
     for (const auto [w, h] : {std::pair{37, 9}, std::pair{64, 16}, std::pair{1, 1}, std::pair{2, 3}}) {
         const int stride = w * 4;
         std::vector<std::uint8_t> frame(static_cast<std::size_t>(stride) * h, 0);
-        // A few drawn pixels, straight alpha, some with colour but alpha 0.
         int x0 = w, y0 = h, x1 = 0, y1 = 0;
         for (int n = 0; n < (w * h) / 6 + 1; ++n) {
             const int x = static_cast<int>(rng() % static_cast<unsigned>(w));

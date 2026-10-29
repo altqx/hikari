@@ -1,5 +1,4 @@
-# CR1 (#452): filled by HikariSub's Help › Report an issue (Question); keep
-# the ids in step with src/app/crash_reports.cpp.
+# Help › Report an issue fills this form through a link; keep the ids in step with src/app/crash_reports.cpp (crash_report_tests checks).
 name: Question
 description: Ask how something in HikariSub works.
 labels: ["question", "needs-triage"]

@@ -1,24 +1,5 @@
 #!/usr/bin/env python3
-# CR1 (#452): turns a crash or freeze report's module + offset frames into
-# functions and lines, with the debug symbols release CI keeps for each
-# version (docs/crash-reports.md).
-#
-#   symbolize.py REPORT [--symbols DIR] [--version V] [--repo altqx/hikari]
-#
-# REPORT is any of: a crash record (crash-record.txt, hang-record.txt), a
-# report as HikariSub's window shows it or a GitHub issue carries it, or the
-# $exception event from PostHog (JSON). The version is read from the report
-# unless --version is given.
-#
-# --symbols is a folder with the symbols: on Linux the split debug files
-# (<module>.debug), on Windows each module beside its PDB. Without it, the
-# release's symbol archive is downloaded with gh into
-# ~/.cache/hikari-symbols/<version>/ and unpacked there:
-#   hikarisub-symbols-<V>-linux-x86_64.tar.xz
-#   HikariSub-<V>-windows-x64-symbols.zip
-#
-# Uses llvm-symbolizer when it is on PATH (both platforms; Windows modules
-# need it), else addr2line (Linux only).
+# Windows modules need llvm-symbolizer; addr2line reads ELF only.
 
 import argparse
 import json
@@ -76,15 +57,12 @@ def download(version, platform, repo):
         return cache
     name = (f"HikariSub-{version}-windows-x64-symbols.zip" if platform == "windows"
             else f"hikarisub-symbols-{version}-linux-x86_64.tar.xz")
-    # Downloaded and unpacked beside it, then renamed into place: a cache
-    # folder is only ever a whole one.
     cache.parent.mkdir(parents=True, exist_ok=True)
     partial = Path(tempfile.mkdtemp(prefix=f".{platform}-", dir=cache.parent))
     try:
         subprocess.run(["gh", "release", "download", f"v{version}", "--repo", repo, "--pattern", name,
                         "--dir", str(partial), "--clobber"], check=True)
         archive = partial / name
-        # Unpacked into the cache only, members kept inside it.
         if name.endswith(".zip"):
             with zipfile.ZipFile(archive) as z:
                 for member in z.namelist():
@@ -109,8 +87,7 @@ def find(symbols, name):
 
 
 def first_load_vaddr(path):
-    """The page-aligned vaddr of an ELF file's first PT_LOAD: a module's
-    offset from its load base plus this is the address in its symbols."""
+    """Page-aligned vaddr of the first PT_LOAD; a load-base offset plus this is the symbol address."""
     with open(path, "rb") as f:
         head = f.read(64)
         if head[:4] != b"\x7fELF" or head[4] != 2:
