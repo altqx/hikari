@@ -13069,6 +13069,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13679,6 +13683,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Warning</source>
         <translation type="vanished">Uwaga</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>
