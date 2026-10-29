@@ -20,8 +20,6 @@ bool isBlank(char16_t c)
     return c == u' ' || (c >= u'\t' && c <= u'\r');
 }
 
-// wxStringTokenizer(text, delimiters, wxTOKEN_STRTOK): the non-empty runs
-// between delimiters.
 std::vector<u16> strtok(u16v text, char16_t delimiter)
 {
     std::vector<u16> out;
@@ -39,7 +37,6 @@ std::vector<u16> strtok(u16v text, char16_t delimiter)
     return out;
 }
 
-// wxString::Trim(false): blanks off the start.
 u16 trimStart(u16v text)
 {
     std::size_t i = 0;
@@ -48,10 +45,8 @@ u16 trimStart(u16v text)
     return u16(text.substr(i));
 }
 
-// wxString::ToLong(&value) (base 10, wcstol): leading blanks and a sign,
-// then digits to the end; false for nothing read, anything left over or a
-// value out of `long`'s range (32 bits on Windows, 64 on Linux, as each
-// legacy build's long).
+// False for nothing read, anything left over, or a value outside `long`
+// (32 bits on Windows, 64 on Linux).
 bool toLong(u16v text, long &value)
 {
     std::size_t i = 0;
@@ -105,7 +100,6 @@ bool sameNameIgnoringCase(u16v a, u16v b)
 
 u16v defaultShapePresetsText()
 {
-    // LoadSettings (VisualDrawingShapes.cpp:299-303).
     return u"Shape: rectangle; m 0 0 l 100 0 100 100 0 100; 0; 0\n"
            u"Shape: circle; m -100 -100 b -45 -155 45 -155 100 -100 b 155 -45 155 45 100 100 b 46 155 -45 155 -100 "
            u"100 b -155 45 -155 -45 -100 -100; 1; 0\n"
@@ -131,7 +125,6 @@ std::vector<ShapePreset> parseShapePresets(u16v text)
             continue;
         const std::vector<u16> parts = strtok(u16v(token).substr(prefix.size()), u';');
         ShapePreset tmp;
-        // GetNextToken past the end gives "".
         tmp.name = parts.size() > 0 ? parts[0] : u16();
         if (parts.size() < 2)
             continue;
@@ -170,9 +163,6 @@ std::vector<u16> shapeListChoices(const std::vector<ShapePreset> &presets)
     return list;
 }
 
-// ---------------------------------------------------------------------------
-// ShapesEdition: PU5's "Edit shapes" (legacy VisualDrawingShapes.cpp:43-288).
-
 namespace {
 
 int clampedSelection(int selection, std::size_t size)
@@ -180,8 +170,6 @@ int clampedSelection(int selection, std::size_t size)
     return selection < 0 || selection >= static_cast<int>(size) ? 0 : selection;
 }
 
-// The last drawing in a Line's text (OnGetShapeFromLine's loop left the
-// field with the last), or none.
 std::optional<u16> lastDrawing(u16v lineText)
 {
     std::optional<u16> out;
@@ -322,8 +310,7 @@ bool ShapesEdition::remove()
     std::vector<ShapePreset> items = presets();
     const int at = selection();
     items.erase(items.begin() + at);
-    // The next one selected, worked out before the list moves (the
-    // arguments' order is unspecified).
+    // Before the move below: argument evaluation order is unspecified.
     const int next = std::min(at, static_cast<int>(items.size()) - 1);
     m_history.change(std::move(items), next, DeleteShape);
     return true;
@@ -361,9 +348,6 @@ void ShapesEdition::replaceNamed(u16v name)
 
 void ShapesEdition::restoreDefaults(std::vector<ShapePreset> defaults)
 {
-    // HikariChoice::PutArray (ListControls.cpp:498-520): the selected name's
-    // place when the new list has it there, else where the list has it
-    // (case-sensitive), else the first.
     const u16 name = current().name;
     int choice = selection() < static_cast<int>(defaults.size()) ? selection() : 0;
     if (!defaults.empty() && defaults[static_cast<std::size_t>(choice)].name != name) {

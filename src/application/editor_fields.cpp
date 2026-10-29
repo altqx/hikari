@@ -29,13 +29,12 @@ std::u8string number(std::int64_t n)
     return std::u8string(s.begin(), s.end());
 }
 
-// SubsDialogue.h:20 ZEROIT: down to whole centiseconds.
+// MUST KILL: zeroIt truncates to whole centiseconds
 std::int64_t zeroIt(std::int64_t ms)
 {
     return (ms / 10) * 10;
 }
 
-// SubsTime::raw (SubsTime.cpp:85-116) for a time and its frame.
 std::u8string raw(core::SubtitleFormat format, std::int64_t ms, std::int64_t frame)
 {
     switch (format) {
@@ -123,9 +122,6 @@ EditorTimeTexts editorTimeTexts(const core::LineRecord &line, core::SubtitleForm
     const std::int64_t startMs = msOf(line.start.value), endMs = msOf(line.end.value);
     EditorTimeTexts out;
     if (exact(frames)) {
-        // TimeCtrl::SetTime (TimeCtrl.cpp:247-266): Start FrameAt, End FrameAt - 1;
-        // SetLine's Duration is their difference (clamped at 0, SubsTime::operator-)
-        // plus one (EditBox.cpp:416-419).
         const std::int64_t startFrame = frames->frameAt(clampInt(startMs));
         const std::int64_t endFrame = frames->frameAt(clampInt(endMs)) - 1;
         out.start = number(startFrame);
@@ -136,7 +132,6 @@ EditorTimeTexts editorTimeTexts(const core::LineRecord &line, core::SubtitleForm
     const std::int64_t startFrame = line.startFrame.value_or(0), endFrame = line.endFrame.value_or(0);
     out.start = raw(format, startMs, startFrame);
     out.end = raw(format, endMs, endFrame);
-    // line->End - line->Start: both clamped at 0 (SubsTime.cpp:214-222).
     out.duration = raw(format, std::max<std::int64_t>(0, endMs - startMs), std::max<std::int64_t>(0, endFrame - startFrame));
     return out;
 }
@@ -145,7 +140,7 @@ std::u8string editedDurationText(const core::LineRecord &line, core::SubtitleFor
 {
     const std::int64_t ms = std::max<std::int64_t>(0, msOf(line.end.value) - msOf(line.start.value));
     if (exact(frames))
-        return number(frames->frameAt(clampInt(ms))); // SetTime(durTime, false, 1)
+        return number(frames->frameAt(clampInt(ms)));
     const std::int64_t frame = std::max<std::int64_t>(0, line.endFrame.value_or(0) - line.startFrame.value_or(0));
     return raw(format, ms, frame);
 }
@@ -155,9 +150,8 @@ std::optional<TypedTime> typedTime(std::u8string_view text, TimeFieldRole role, 
 {
     TypedTime out;
     if (text.empty() && timeFieldForm(format, frames) == TimeFieldForm::Number)
-        text = u8"0"; // SubsTime::ParseMS (SubsTime.cpp:48): an empty field is 0
+        text = u8"0";
     if (exact(frames)) {
-        // TimeCtrl::GetTime (TimeCtrl.cpp:268-286): the frame's time, ZEROIT.
         const auto frame = digits(text);
         if (!frame || *frame > INT_MAX)
             return std::nullopt;
@@ -167,7 +161,7 @@ std::optional<TypedTime> typedTime(std::u8string_view text, TimeFieldRole role, 
                                                     : frames->msAt(f);
         out.ms = zeroIt(ms);
         if (format == core::SubtitleFormat::MicroDvd)
-            out.frame = *frame; // the SubsTime keeps the typed frame (ChangeFormat skips FRAME)
+            out.frame = *frame;
         return out;
     }
     switch (format) {
@@ -186,8 +180,6 @@ std::optional<TypedTime> typedTime(std::u8string_view text, TimeFieldRole role, 
         return out;
     }
     case core::SubtitleFormat::MicroDvd: {
-        // SubsTime::ParseMS (SubsTime.cpp:74-78): the frame; its time from
-        // the Document's rate (C01-fps-isolation) or unresolved.
         const auto frame = digits(text);
         if (!frame)
             return std::nullopt;
@@ -201,7 +193,7 @@ std::optional<TypedTime> typedTime(std::u8string_view text, TimeFieldRole role, 
         const auto tenths = digits(text);
         if (!tenths)
             return std::nullopt;
-        out.ms = *tenths * 100; // ParseMS: result * 100
+        out.ms = *tenths * 100;
         return out;
     }
     default:
@@ -260,7 +252,6 @@ TimeFieldEdit edited(std::u16string text, std::size_t start, std::size_t end)
     return TimeFieldEdit{TimeFieldState{std::move(text), start, end}, true, false};
 }
 
-// The selection in order and within the text.
 std::pair<std::size_t, std::size_t> span(const TimeFieldState &field)
 {
     const std::size_t n = field.text.size();
@@ -268,7 +259,6 @@ std::pair<std::size_t, std::size_t> span(const TimeFieldState &field)
     return {std::min(a, b), std::max(a, b)};
 }
 
-// The number forms: the selection replaced, at most kTimeFieldDigits.
 TimeFieldEdit replaceInNumber(const TimeFieldState &field, std::u16string_view digits, bool cut)
 {
     const auto [from, to] = span(field);
@@ -292,15 +282,12 @@ TimeFieldEdit typeIntoTimeField(TimeFieldForm form, const TimeFieldState &field,
         return replaceInNumber(field, std::u16string_view(&c, 1), false);
     auto [from, to] = span(field);
     std::u16string txt = field.text;
-    if (from != to) // OnKeyEvent: the selected digits become 0, the caret goes to their start
+    if (from != to)
         for (std::size_t i = from; i < to; ++i)
             if (isDigit(txt[i]))
                 txt[i] = u'0';
     if (from >= txt.size())
         return refused(field);
-    // HikariTextCtrl inserts the digit at the caret, then OnTimeWrite takes
-    // out the character after it, or moves the digit past a separator in
-    // place of the digit after that one.
     std::size_t caret = from + 1;
     if (isSeparator(txt[from])) {
         txt[from + 1] = c;
@@ -327,7 +314,7 @@ TimeFieldEdit backspaceTimeField(const TimeFieldState &field)
             txt[i] = u'0';
     if (from > 0 && isSeparator(txt[from - 1]))
         --from;
-    const bool changed = txt != field.text; // over a separator only the caret moves
+    const bool changed = txt != field.text;
     return TimeFieldEdit{TimeFieldState{std::move(txt), from, from}, changed, false};
 }
 
@@ -338,8 +325,7 @@ TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field
             return refused(field);
         return replaceInNumber(field, pasted, true);
     }
-    // The format's regex (TimeCtrl.cpp:89-91): digit and separator positions,
-    // the minutes' and seconds' tens at most 5.
+    // MUST KILL: mask chars: '0' any digit, '5' a digit up to 5, else a literal separator
     const std::u16string_view mask = form == TimeFieldForm::Ass   ? u"0:50:50.00"
                                      : form == TimeFieldForm::Srt ? u"00:50:50,000"
                                                                   : u"00:50:50";
@@ -355,9 +341,8 @@ TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field
 
 namespace {
 
-// SubsTime::ParseMS of a clock form's text (SubsTime.cpp:43-66): the hours
-// before the first ':', two digits each of minutes and seconds after it, and
-// ASS's centiseconds or SRT's milliseconds.
+// Hours before the first ':', then two digits each of minutes and seconds,
+// then ASS centiseconds or SRT milliseconds.
 std::int64_t clockMs(TimeFieldForm form, std::u16string_view text)
 {
     const std::size_t colon = text.find(u':');
@@ -380,7 +365,6 @@ std::int64_t clockMs(TimeFieldForm form, std::u16string_view text)
     return ms;
 }
 
-// SubsTime::raw in a clock form.
 std::u16string clockText(TimeFieldForm form, std::int64_t ms)
 {
     const std::u8string t = form == TimeFieldForm::Srt        ? core::legacy::srtTimeText(ms)
@@ -425,8 +409,6 @@ TimeFieldForm clockForm(TimeCtrlForm form)
                                             : TimeFieldForm::Ass;
 }
 
-// The field shows a number: MicroDVD's frame, MPL2's deciseconds, or the
-// frame of the Time/Frames switch.
 bool shownAsNumber(TimeFieldMouse mouse)
 {
     return mouse.frames || mouse.form == TimeCtrlForm::MicroDvd || mouse.form == TimeCtrlForm::Mpl2;
@@ -437,7 +419,6 @@ bool blank(std::u16string_view text)
     return std::ranges::all_of(text, [](char16_t c) { return c == u' ' || c == u'\t'; });
 }
 
-// wxAtoi of a number field's text (its digits; the mask holds nothing else).
 std::int64_t fieldNumber(std::u16string_view text)
 {
     std::int64_t n = 0;
@@ -453,10 +434,9 @@ std::u16string numberText(std::int64_t n)
     return std::u16string(t.begin(), t.end());
 }
 
-constexpr std::int64_t kMaxFieldNumber = 999999999; // kTimeFieldDigits
+// MUST KILL: kMaxFieldNumber hard-codes kTimeFieldDigits nines
+constexpr std::int64_t kMaxFieldNumber = 999999999;
 
-// The largest value the mouse reaches: TimeCtrl's top time in a clock form,
-// in deciseconds for MPL2, and a frame of nine digits.
 std::int64_t mouseMax(TimeFieldMouse mouse)
 {
     if (!shownAsNumber(mouse))
@@ -464,8 +444,6 @@ std::int64_t mouseMax(TimeFieldMouse mouse)
     return !mouse.frames && mouse.form == TimeCtrlForm::Mpl2 ? kTimeFieldMaxMs / 100 : kMaxFieldNumber;
 }
 
-// What the mouse steps from: a clock form's milliseconds (SubsTime::ParseMS,
-// nothing read as 0), a number form's number.
 std::int64_t mouseValue(TimeFieldMouse mouse, std::u16string_view text)
 {
     if (shownAsNumber(mouse))
@@ -492,7 +470,6 @@ std::optional<std::u16string> wheelTimeField(TimeFieldMouse mouse, std::u16strin
 {
     if (notches == 0)
         return std::nullopt;
-    // TimeCtrl.cpp:363-385: refused when the step leaves the range.
     const std::int64_t value =
         mouseValue(mouse, text) + static_cast<std::int64_t>(notches) * timeFieldStep(mouse, column);
     if (value < 0 || value > mouseMax(mouse))
@@ -527,8 +504,6 @@ std::optional<std::u16string> dragTimeField(TimeFieldMouse mouse, TimeFieldDrag 
         changed = true;
     }
     drag.value = std::clamp<std::int64_t>(drag.value, 0, mouseMax(mouse));
-    // A clock form shows the time again at a limit (TimeCtrl.cpp:321-336);
-    // a number at its limit is no step.
     if (!changed || (shownAsNumber(mouse) && drag.value == from))
         return std::nullopt;
     return mouseText(mouse, drag.value);
@@ -537,7 +512,6 @@ std::optional<std::u16string> dragTimeField(TimeFieldMouse mouse, TimeFieldDrag 
 
 std::optional<std::int64_t> numberFieldValue(std::u16string_view text)
 {
-    // OnNumWrite (NumCtrl.cpp:226-241): "," read as ".", ToCDouble.
     std::string t;
     for (const char16_t c : text)
         t.push_back(c == u',' ? '.' : c < 0x80 ? static_cast<char>(c) : '?');
@@ -549,13 +523,11 @@ std::optional<std::int64_t> numberFieldValue(std::u16string_view text)
         return std::nullopt;
     if (value >= 9.2e18 || value <= -9.2e18)
         return std::nullopt;
-    return static_cast<std::int64_t>(value); // NumCtrl::GetInt truncates
+    return static_cast<std::int64_t>(value);
 }
 
 namespace {
 
-// E4-numctrl-clamp: the value moved by `delta` and kept within the range;
-// nothing when that leaves it where it was.
 std::optional<std::u16string> stepNumber(std::int64_t &value, std::int64_t delta, NumberFieldRange range)
 {
     const std::int64_t next = std::clamp(value + delta, range.from, range.to);
@@ -576,8 +548,6 @@ std::optional<std::u16string> wheelNumberField(std::int64_t &value, int notches,
 
 std::optional<std::u16string> dragNumberField(NumberFieldDrag &drag, int x, int y, NumberFieldRange range)
 {
-    // NumCtrl.cpp:255-283: one every 8 pixels up or down, ten every 10
-    // pixels across; each step restarts both distances.
     const int absY = std::abs(y - drag.y), absX = std::abs(x - drag.x);
     std::int64_t delta = 0;
     if (absY >= absX) {
@@ -601,7 +571,6 @@ std::optional<std::int64_t> layerValue(std::u8string_view text)
 {
     constexpr std::int64_t kMin = -10000000, kMax = 10000000;
     std::string t(text.begin(), text.end());
-    // NumCtrl::GetString (NumCtrl.cpp): "," as ".", a lone "-" keeps the old value.
     std::replace(t.begin(), t.end(), ',', '.');
     if (t.empty() || t == "-")
         return std::nullopt;
@@ -616,7 +585,7 @@ std::optional<std::int64_t> layerValue(std::u8string_view text)
     else if (ec != std::errc() || end != t.data() + t.size())
         return std::nullopt;
     value = std::clamp<double>(value, kMin, kMax);
-    return static_cast<std::int64_t>(value); // NumCtrl::GetInt truncates
+    return static_cast<std::int64_t>(value);
 }
 
 int legacyAlignment(const core::LineRecord &line, int styleAlignment)
@@ -624,9 +593,7 @@ int legacyAlignment(const core::LineRecord &line, int styleAlignment)
     const std::u8string &text = !line.translation.empty() ? line.translation : line.text;
     const std::string t(text.begin(), text.end());
     std::smatch m;
-    // wxRegEx "\\\\an([0-9]+)" (ADVANCED): the first match in the text.
     if (std::regex_search(t, m, std::regex(R"(\\an([0-9]+))"))) {
-        // wxAtoi of the digits (an int; very long numbers are out of the list anyway)
         const std::string d = m[1].str();
         return d.size() > 9 ? INT_MAX : std::stoi(d);
     }

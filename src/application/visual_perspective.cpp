@@ -1,6 +1,4 @@
-// VT3: the Perspective tool. The quad's maths port arch1t3cht's Aegisub
-// perspective tool (src/visual_tool_perspective.cpp, feature branch), under
-// its licence:
+// The quad's maths port arch1t3cht's Aegisub perspective tool, under its licence:
 //
 // Copyright (c) 2022, arch1t3cht <arch1t3cht@gmail.com>
 //
@@ -63,8 +61,7 @@ V3 operator-(V3 a, V3 b) { return {a.x - b.x, a.y - b.y, a.z - b.z}; }
 V3 operator*(double k, V3 a) { return {k * a.x, k * a.y, k * a.z}; }
 V3 cross(V3 a, V3 b) { return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x}; }
 
-// libass's turns (calc_transform_matrix): \frz with sz = -sin, \frx with
-// sx = -sin, \fry with sy = sin, each about the origin.
+// libass's turns (calc_transform_matrix): \frz and \frx with -sin, \fry with sin, about the origin.
 V3 turnZ(V3 p, double frz)
 {
     const double c = std::cos(frz), s = -std::sin(frz);
@@ -81,7 +78,7 @@ V3 turnY(V3 p, double fry)
     return {p.x * c - p.z * s, p.y, p.x * s + p.z * c};
 }
 
-// Solve2x2: a11 x1 + a12 x2 = b1, a21 x1 + a22 x2 = b2.
+// a11 x1 + a12 x2 = b1, a21 x1 + a22 x2 = b2.
 void solve2x2(double a11, double a12, double a21, double a22, double b1, double b2, double &x1, double &x2)
 {
     if (std::abs(a11) < std::abs(a21)) {
@@ -97,7 +94,6 @@ void solve2x2(double a11, double a12, double a21, double a22, double b1, double 
     x1 = (z1 - a12 * x2) / a11;
 }
 
-// The projective map of the unit square onto a quad, and its inverse.
 using M3 = std::array<std::array<double, 3>, 3>;
 M3 unitToQuad(const Quad &q)
 {
@@ -128,8 +124,6 @@ M3 inverse(const M3 &m)
 
 bool finite(double v) { return std::isfinite(v); }
 
-// --------------------------------------------------------------- tags
-
 std::string ascii(u16v s)
 {
     std::string out;
@@ -155,7 +149,7 @@ std::optional<double> number(u16v s)
 
 bool blank(char16_t c) { return c == u' ' || c == u'\t'; }
 
-// libass's argument ends: the spaces and tabs after it are not its.
+// libass drops the blanks after an argument.
 u16v trimEnd(u16v s)
 {
     while (!s.empty() && blank(s.back()))
@@ -165,9 +159,7 @@ u16v trimEnd(u16v s)
 
 std::vector<double> arguments(u16v value)
 {
-    // "(a,b,...)" or "(a,b,...": the numbers in order, split as libass
-    // splits them: each without the spaces and tabs around it, an empty one
-    // left out (\pos(100,) has one), a backslash taking the rest as one.
+    // Split as libass splits: each trimmed, an empty one left out, a backslash taking the rest as one.
     std::vector<double> out;
     if (value.empty() || value.front() != u'(')
         return out;
@@ -191,8 +183,7 @@ std::vector<double> arguments(u16v value)
 
 bool letter(char16_t c) { return (c >= u'a' && c <= u'z') || (c >= u'A' && c <= u'Z'); }
 
-// One tag of a block: its name (one of kNames, or empty for another) and
-// its value, with its place in the block (from its backslash).
+// `name` is one of kNames, or empty for another; `from` is its backslash.
 struct Tag {
     u16v name, value;
     std::size_t from = 0, to = 0;
@@ -203,7 +194,6 @@ constexpr u16v kNames[] = {u"xbord", u"ybord", u"xshad", u"yshad", u"fscx", u"fs
                            u"an",    u"fr",    u"fs",    u"fn",    u"p",    u"a",    u"t",    u"r",
                            u"q",     u"fsp",   u"b",     u"i",     u"pbo",  u"fsc"};
 
-// The outline and shadow, which the tool scales in the leading blocks.
 constexpr u16v kOutlineTags[] = {u"bord", u"xbord", u"ybord", u"shad", u"xshad", u"yshad"};
 
 u16v nameOf(u16v token)
@@ -225,9 +215,8 @@ u16v nameOf(u16v token)
     return {};
 }
 
-// The tags of a block's text (between its braces), at its top level: a
-// backslash inside \t(...) or \clip(...) does not start one. As libass,
-// spaces and tabs may come between the backslash and the name.
+// Top level only: a backslash inside \t(...) or \clip(...) starts no tag. As in libass, blanks may follow
+// the backslash.
 std::vector<Tag> tagsOf(u16v block)
 {
     std::vector<Tag> out;
@@ -255,14 +244,13 @@ std::vector<Tag> tagsOf(u16v block)
     return out;
 }
 
-// Whether text[i] starts libass's escape of a brace (\{ or \}, shown).
+// libass shows \{ and \} as braces.
 bool braceEscape(u16v text, std::size_t i)
 {
     return text[i] == u'\\' && i + 1 < text.size() && (text[i + 1] == u'{' || text[i + 1] == u'}');
 }
 
-// The text's blocks: where each opens and closes. As libass, \{ shows a
-// brace and a { with no } after it is text.
+// As in libass, a { with no } after it is text.
 std::vector<std::pair<std::size_t, std::size_t>> blocksOf(u16v text)
 {
     std::vector<std::pair<std::size_t, std::size_t>> out;
@@ -283,8 +271,7 @@ std::vector<std::pair<std::size_t, std::size_t>> blocksOf(u16v text)
     return out;
 }
 
-// A positional tag's numbers as libass reads them (a word is 0), when it
-// has as many as the tag takes: \pos and \org 2, \move 4 or 6.
+// As libass reads them (a word is 0), when the count fits: \pos and \org 2, \move 4 or 6.
 std::optional<std::vector<double>> positional(const Tag &tag)
 {
     std::vector<double> a = arguments(tag.value);
@@ -297,8 +284,7 @@ std::optional<std::vector<double>> positional(const Tag &tag)
     return a;
 }
 
-// What follows a tag's value up to the next tag: an override block's
-// comment (libass reads \frx10 note as \frx10), kept when the tag goes.
+// The comment after a tag's value (libass reads \frx10 note as \frx10), kept when the tag goes.
 u16v tailOf(const Tag &tag)
 {
     u16v v = tag.value;
@@ -333,8 +319,7 @@ std::u16string fmt(double v, int precision)
 
 int alignmentOfA(int a)
 {
-    // \a's legacy numbering: 1-3 bottom, +4 top, +8 middle; libass takes
-    // VSFilter's \a4 and \a8 as \a5.
+    // \a: 1-3 bottom, +4 top, +8 middle; libass takes VSFilter's \a4 and \a8 as \a5.
     if ((a & 3) == 0)
         a = 5;
     const int h = a & 3;
@@ -347,7 +332,6 @@ int alignmentOfA(int a)
 
 PointF anchorShift(int an)
 {
-    // The alignment point's place in the box: 0, 0.5 or 1 across and down.
     const float h = an % 3 == 0 ? 1.f : (an % 3 == 2 ? 0.5f : 0.f);
     const float v = an <= 3 ? 1.f : (an <= 6 ? 0.5f : 0.f);
     return {h, v};
@@ -364,10 +348,8 @@ double screenZ(int scriptHeight, int layoutHeight)
 
 Quad textToQuad(const Transform &t, const Box &box, double z)
 {
-    // TextToPersp: the box sheared about its top, moved to the alignment
-    // point, scaled, put at \pos, turned about \org and projected.
     const PointF shift = anchorShift(t.an);
-    const double w = box.width(), h = box.layoutHeight(); // its own size, however small
+    const double w = box.width(), h = box.layoutHeight();
     const V2 corners[4] = {{box.topLeft.x, box.topLeft.y},
                            {box.bottomRight.x, box.topLeft.y},
                            {box.bottomRight.x, box.bottomRight.y},
@@ -391,7 +373,6 @@ Quad textToQuad(const Transform &t, const Box &box, double z)
 
 PointF centre(const Quad &q)
 {
-    // QuadMidpoint: where the diagonals cross.
     const V2 d1 = v2(q[2]) - v2(q[0]), d2 = v2(q[1]) - v2(q[3]), b = v2(q[3]) - v2(q[0]);
     double la1 = 0, la2 = 0;
     solve2x2(d1.x, d2.x, d1.y, d2.y, b.x, b.y, la1, la2);
@@ -400,7 +381,6 @@ PointF centre(const Quad &q)
 
 bool convex(const Quad &q)
 {
-    // The diagonals cross inside both (arch1t3cht's UpdateDrag check).
     const V2 d1 = v2(q[2]) - v2(q[0]), d2 = v2(q[1]) - v2(q[3]), b = v2(q[3]) - v2(q[0]);
     double la1 = 0, la2 = 0;
     solve2x2(d1.x, d2.x, d1.y, d2.y, b.x, b.y, la1, la2);
@@ -431,9 +411,7 @@ bool planeHolds(const Quad &inner, PointF c1, PointF c2)
         return false;
     const PointF a{-c1.x / (c2.x - c1.x), -c1.y / (c2.y - c1.y)};
     const PointF b{(1 - c1.x) / (c2.x - c1.x), (1 - c1.y) / (c2.y - c1.y)};
-    // The map's divisor keeps the inner quad's sign over the whole outer
-    // rectangle (it is affine, so at its corners), and does not come near
-    // 0: past it the outer quad wraps through infinity.
+    // MUST KILL: magic 0.01 floor on the projective divisor at the outer corners
     const M3 m = unitToQuad(inner);
     const auto w = [&m](double u, double v) { return m[2][0] * u + m[2][1] * v + m[2][2]; };
     const double mid = w(0.5, 0.5);
@@ -450,10 +428,8 @@ bool planeHolds(const Quad &inner, PointF c1, PointF c2)
 std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMode mode, const Transform &from,
                                          double f)
 {
-    // InnerToText.
     V2 q0 = v2(quad[0]), q1 = v2(quad[1]), q2 = v2(quad[2]), q3 = v2(quad[3]);
 
-    // A parallelogram projecting to the quad, whatever its place.
     double z1 = 0, z3 = 0;
     const V2 diag = q2 - q0, side2 = q1 - q2, side3 = q3 - q2;
     solve2x2(side2.x, side3.x, side2.y, side3.y, -diag.x, -diag.y, z1, z3);
@@ -463,9 +439,6 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
     if (mode == OrgMode::Center) {
         org = midpoint;
     } else if (mode == OrgMode::NoFax) {
-        // A translation t of q0 after which the quad unprojects to a
-        // rectangle: a (x^2 + y^2) - b.t + c = 0; the one nearest the
-        // centre's.
         const V2 v1 = q1 - q0, v3 = q3 - q0;
         const double a = (1 - z1) * (1 - z3);
         const V2 b = z1 * v1 + z3 * v3 - z1 * z3 * (v1 + v3);
@@ -478,8 +451,6 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
             const V2 circleCentre = (1 / (2 * a)) * b;
             const double sqradius = (dot(b, b) / (4 * a) - c) / a;
             if (sqradius <= 0) {
-                // arch1t3cht's tool set \org here and then overwrote it
-                // with the centre's; the circle's centre is the nearest.
                 t = circleCentre;
             } else {
                 const double radius = std::sqrt(sqradius);
@@ -498,7 +469,6 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
     std::array<V3, 4> r{V3{q0.x, q0.y, f}, z1 * V3{q1.x, q1.y, f}, (z1 + z3 - 1) * V3{q2.x, q2.y, f},
                         z3 * V3{q3.x, q3.y, f}};
 
-    // The depth of the plane's point that projects to \org.
     double la0 = 0, la1 = 0;
     const V3 side0 = r[1] - r[0], side1 = r[3] - r[0];
     solve2x2(side0.x, side1.x, side0.y, side1.y, -r[0].x, -r[0].y, la0, la1);
@@ -506,7 +476,6 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
     for (V3 &p : r)
         p = (f / orgz) * p - V3{0, 0, f};
 
-    // The turns that bring the plane to the screen's: \fry, then \frx.
     V3 n = cross(r[1] - r[0], r[3] - r[0]);
     double fry = std::atan(-n.x / n.z);
     if (n.z < 0)
@@ -522,14 +491,11 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
     for (V3 &p : r)
         p = turnZ(p, -frz);
 
-    // A parallelogram with a level top: its shear and size.
     ab = r[1] - r[0];
     const V3 ad = r[3] - r[0];
     const double rawfax = ad.x / ad.y;
     const double quadwidth = std::sqrt(ab.x * ab.x + ab.y * ab.y);
     const double quadheight = std::abs(ad.y);
-    // The box's own size, however small (a \p4 drawing's is a fraction of
-    // a unit): one with no width or height has no scale to recover.
     if (!(box.width() > 0) || !(box.height() > 0))
         return std::nullopt;
     const double scalex = quadwidth / box.width();
@@ -548,7 +514,6 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
     const V2 start{box.topLeft.x + box.topLeft.y * t.fax, box.topLeft.y};
     t.pos = pf(org + V2{r[0].x, r[0].y} - V2{scalex * start.x, scaley * start.y} +
                V2{quadwidth * shift.x, scaley * box.layoutHeight() * shift.y});
-    // The outline and shadow keep their proportion to the text.
     const double kx = from.fscx != 0 ? t.fscx / from.fscx : 1, ky = from.fscy != 0 ? t.fscy / from.fscy : 1;
     t.bord = pf(V2{from.bord.x * kx, from.bord.y * ky});
     t.shad = pf(V2{from.shad.x * kx, from.shad.y * ky});
@@ -565,10 +530,10 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
 namespace {
 
 struct Leading {
-    std::vector<Tag> tags; // of the blocks before the text
+    std::vector<Tag> tags;
     std::u16string drawing;
     int p = 0;
-    double pbo = 0; // the drawing's baseline offset, in its points
+    double pbo = 0; // in drawing points
     bool more = false; // something shown after the drawing
 };
 
@@ -591,8 +556,7 @@ Leading leadingOf(u16v text)
             out.pbo = number(tag.value).value_or(0);
     }
     if (out.p > 0) {
-        // libass's drawing runs to the next {. Text or another drawing
-        // after it is laid out beside it, which the box does not hold.
+        // libass's drawing runs to the next {; anything shown after it lies beside it, outside the box.
         const std::size_t end = text.find(u'{', i);
         out.drawing = std::u16string(text.substr(i, end == u16v::npos ? u16v::npos : end - i));
         if (end != u16v::npos) {
@@ -611,8 +575,6 @@ Leading leadingOf(u16v text)
 
 } // namespace
 
-// Past this many bytes of its fields a Style is not read: each read takes
-// its values, and a Script's Style can be anything.
 constexpr std::size_t kMaxStyleBytes = 64 * 1024;
 
 std::size_t styleBytes(const core::StyleValues &s)
@@ -627,9 +589,8 @@ std::size_t styleBytes(const core::StyleValues &s)
 
 struct StyleCache::Decoded {
     std::vector<core::StyleValues> all;
-    std::unordered_set<const core::StyleValues *> oversized; // past kMaxStyleBytes
-    // The last Style of each name, as libass looks a Line's and a \r's up
-    // (a Style without a name is Default to libass).
+    std::unordered_set<const core::StyleValues *> oversized;
+    // The last Style of each name, as libass looks Styles up; a nameless Style is Default.
     std::unordered_map<std::u8string_view, const core::StyleValues *> last;
 };
 
@@ -658,16 +619,13 @@ std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const VisualHost &hos
 
 namespace {
 
-// The context (read without its Styles) with the Styles of a cache.
 struct StyleIndex {
     StyleIndex(const transform::Context &context, const StyleCache::Decoded &decoded)
         : ctx(context), last(decoded.last), oversized(decoded.oversized)
     {
     }
-    // A Line's Style as libass's ass_lookup_style finds it: without its
-    // leading *s, "default" in any case being Default, the last of the
-    // name, else the last Default. Null: libass's own Default, which no
-    // Style of the Script holds.
+    // As libass's ass_lookup_style: leading *s dropped, "default" in any case is Default, the last of the
+    // name, else the last Default. Null: libass's own Default.
     const core::StyleValues *find(std::u8string_view name) const
     {
         while (name.starts_with(u8'*'))
@@ -695,8 +653,7 @@ struct StyleIndex {
         return s ? *s : builtin();
     }
     bool tooLarge(const core::StyleValues &s) const { return oversized.contains(&s); }
-    // libass's own Default (set_default_style): Arial 18 at weight 200,
-    // outline 2, shadow 3, margins 20.
+    // libass's own Default (set_default_style), weight 200.
     static const core::StyleValues &builtin()
     {
         static const core::StyleValues s = [] {
@@ -720,9 +677,8 @@ struct StyleIndex {
     const std::unordered_set<const core::StyleValues *> &oversized;
 };
 
-// The Style a \r resets to: the one it names (without the spaces after
-// it; Default without a Default Style is libass's own), else the Line's
-// (libass's reset_render_context with a Style it cannot find).
+// The Style a \r names (a missing Default is libass's own); null for the Line's, as libass's
+// reset_render_context does with a Style it cannot find.
 const core::StyleValues *resetTarget(const StyleIndex &styles, u16v name)
 {
     name = trimEnd(name);
@@ -740,8 +696,7 @@ const core::StyleValues &resetStyle(const StyleIndex &styles, const core::StyleV
     return s ? *s : lineStyle;
 }
 
-// Where the leading tags that count start: after the last \r, which resets
-// the ones before it (0 without one).
+// After the last \r, which resets the tags before it; 0 without one.
 std::size_t afterLastReset(const std::vector<Tag> &tags)
 {
     std::size_t from = tags.size();
@@ -750,13 +705,10 @@ std::size_t afterLastReset(const std::vector<Tag> &tags)
     return from;
 }
 
-// Whether a \t animates what the box or its transform is read from
-// (libass evaluates it at the frame; one box does not hold its frames).
+// libass runs every tag in a \t, animatable ones over time and others at once; only colours, alphas, blurs
+// and clips leave the box alone.
 bool animatesTheQuad(const Tag &tag)
 {
-    // libass runs every tag in a \t: an animatable one with the time, any
-    // other at once (a \pos, an \an, a \fn, a \r ...). Only colours,
-    // alphas, blurs and clips leave the box where the quad has it.
     static constexpr u16v kStill[] = {u"1c", u"2c",   u"3c", u"4c", u"1a", u"2a",    u"3a",
                                       u"4a", u"alpha", u"blur", u"be", u"clip", u"iclip", u"c"};
     if (tag.name != u"t")
@@ -765,7 +717,7 @@ bool animatesTheQuad(const Tag &tag)
     if (first == u16v::npos)
         return false;
     for (const Tag &inner : tagsOf(tag.value.substr(first))) {
-        // Known names are the quad's own; the still ones are not among them.
+        // MUST KILL: relies on kNames holding none of kStill
         const bool still = inner.name.empty() && std::any_of(std::begin(kStill), std::end(kStill), [&inner](u16v n) {
                                return inner.value.starts_with(n);
                            });
@@ -775,7 +727,6 @@ bool animatesTheQuad(const Tag &tag)
     return false;
 }
 
-// Whether a \t anywhere in the text animates the box (see animatesTheQuad).
 bool animatesTheBox(u16v text)
 {
     for (const auto &[open, close] : blocksOf(text))
@@ -785,22 +736,15 @@ bool animatesTheBox(u16v text)
     return false;
 }
 
-// What one read may do on the UI thread: the Line and every Line it
-// stacks on draw from it, their text parsed, rows and characters measured
-// through the font and the code of drawings read point by point. libass
-// shows any number of rows and points, but a box of more than these is no
-// sign the tool places, and a hostile script (a comment of \N, a block of
-// megabytes of tags, a drawing of megabytes, or many Lines shown at once)
-// gets no quad rather than unbounded work.
+// MUST KILL: magic caps on one read's UI-thread work, so a hostile script gets no quad
 constexpr std::size_t kMaxParsed = 512 * 1024; // bytes of Line text
-// The bytes of the text the tool reads: in translation mode the translation.
 std::size_t renderedSize(const core::LineRecord &line)
 {
     return (line.translation.empty() ? line.text : line.translation).size();
 }
 struct MeasureBudget {
     std::size_t rows = 64, shown = 4096, drawn = 256 * 1024, parsed = kMaxParsed;
-    // Whether `line`'s text may be parsed, charging it.
+    // Charges `line`'s text; false past the budget.
     bool parse(const core::LineRecord &line)
     {
         const std::size_t size = renderedSize(line);
@@ -811,8 +755,7 @@ struct MeasureBudget {
     }
 };
 
-// libass's ass_strtod at code[i]: blanks, a sign, digits with one point,
-// an exponent; false, and `i` kept, when no digit is read.
+// libass's ass_strtod at code[i]; false, and `i` kept, when no digit is read.
 bool drawingNumber(u16v code, std::size_t &i, double &out)
 {
     std::size_t k = i;
@@ -842,7 +785,7 @@ bool drawingNumber(u16v code, std::size_t &i, double &out)
             k = e;
         }
     }
-    // ASCII by now; from_chars takes no '+' and no locale's point.
+    // from_chars takes no '+'.
     std::string ascii;
     for (std::size_t j = numberStart + (code[numberStart] == u'+' ? 1 : 0); j < k; ++j)
         ascii += static_cast<char>(code[j]);
@@ -852,10 +795,8 @@ bool drawingNumber(u16v code, std::size_t &i, double &out)
     return true;
 }
 
-// The points libass draws a drawing through (ass_drawing.c
-// drawing_tokenize, whose cbox they make): nothing before the first m with
-// a point, all of it rejected by an n before any m, a b's points in threes,
-// an s's three then a p's only once there are three. Nullopt: no ink.
+// The bounds of the points libass's drawing_tokenize takes: none before the first m with a point, all
+// rejected by an n before any m, b in threes, s's three, p only after three. nullopt: no ink.
 std::optional<std::array<double, 4>> drawingBounds(u16v code)
 {
     std::optional<std::array<double, 4>> box;
@@ -874,8 +815,7 @@ std::optional<std::array<double, 4>> drawingBounds(u16v code)
         i = k;
         return true;
     };
-    // Points in batches of `batch` until one cannot be read; a partial
-    // batch is read but not drawn.
+    // As in libass, a partial batch is read but not drawn.
     std::size_t points = 0;
     const auto many = [&](std::size_t &i, std::size_t batch) {
         double buf[3][2];
@@ -952,8 +892,7 @@ std::optional<std::array<double, 4>> drawingBounds(u16v code)
     return root ? box : std::nullopt;
 }
 
-// `edited`: the Line the tool writes, whose outline and shadow are scaled
-// in its leading blocks only, so a later change of them is not taken.
+// `edited`: the Line the tool writes; an outline or shadow change after its leading blocks is not taken.
 std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
                               u16v text, const core::StyleValues &style, const Leading &lead, bool edited,
                               MeasureBudget &budget)
@@ -963,7 +902,6 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     if (lead.p > 0) {
         if (lead.more)
             return std::nullopt;
-        // A drawing's points at its \p scale.
         if (lead.drawing.size() > budget.drawn)
             return std::nullopt;
         budget.drawn -= lead.drawing.size();
@@ -973,9 +911,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
             return std::nullopt;
         const double minx = (*bounds)[0] * k, miny = (*bounds)[1] * k, maxx = (*bounds)[2] * k,
                      maxy = (*bounds)[3] * k;
-        // libass sets the drawing's ascent to its height less \pbo and its
-        // descent to \pbo; the line holds neither below 0, so a \pbo past
-        // the height drops the ink and one outside 0..height grows the line.
+        // libass: ascent is the height less \pbo, descent is \pbo, neither below 0.
         const double height = maxy - miny, pbo = lead.pbo * k;
         const double dy = std::max(0., pbo - height);
         Box box{{static_cast<float>(minx), static_cast<float>(miny + dy)},
@@ -987,15 +923,10 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     TextMeasurePort *measure = host.textMeasure();
     if (!measure)
         return std::nullopt;
-    // The Style at a scale of 100 with the leading \fs, \fn, \fsp, \b and
-    // \i, as libass applies them: a signed \fs is relative; one at 0 or
-    // below, and any of them without a value it takes, go back to the
-    // current Style's (whose spacing is not below 0). \fscx is kept for
-    // the wrap.
+    // The leading \fs, \fn, \fsp, \b and \i as libass applies them: one at 0 or below, or without a value
+    // it takes, reverts to the current Style's.
     const std::size_t from = afterLastReset(lead.tags);
-    // On libass's own Default (the Line's, or a \rDefault's without a
-    // Default Style) the weight is 200, which only a \b the measure takes
-    // replaces.
+    // libass's own Default weighs 200, which only a \b the measure takes replaces.
     bool builtin = !styles.find(line.style);
     if (from > 0)
         if (const core::StyleValues *reset = resetTarget(styles, lead.tags[from - 1].value))
@@ -1015,8 +946,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         if (tag.name == u"fsp") {
             s.spacing = n ? core::toUtf8(fmt(*n, 4)) : styleSpacing();
         } else if (tag.name == u"b") {
-            // libass takes 0 or 400 as normal, 1 or 700 as bold and another
-            // weight from 100 as that weight, which the measure cannot.
+            // libass: 0 or 400 normal, 1 or 700 bold, another weight from 100 as is, which the measure cannot.
             const int w = n ? static_cast<int>(*n) : -1;
             if (w == 0 || w == 1 || w == 400 || w == 700) {
                 s.bold = w == 1 || w == 700;
@@ -1034,8 +964,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         } else if (tag.name == u"fsc") {
             scaleX = styleScaleX;
         } else if (tag.name == u"fs") {
-            // Relative only with the sign first: libass reads \fs +10 as
-            // 10, its number past the space.
+            // Relative only with the sign first: libass reads "\fs +10" as 10.
             u16v v = tag.value;
             const bool relative = !v.empty() && (v.front() == u'+' || v.front() == u'-');
             while (!v.empty() && v.front() == u' ')
@@ -1045,17 +974,14 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
                 val = size * (1 + val / 10);
             size = val > 0 ? val : transform::styleNumber(current.fontsize, 0);
         } else if (tag.name == u"fn") {
-            // As libass: without the spaces around it; none, or 0, is the
-            // current Style's.
+            // As libass: trimmed; none or 0 is the current Style's.
             u16v name = trimEnd(tag.value);
             while (!name.empty() && blank(name.front()))
                 name.remove_prefix(1);
             s.fontname = name.empty() || name == u"0" ? current.fontname : core::toUtf8(u16(name));
         }
     }
-    // A vertical font (@name) lays the text out down, which the measure
-    // does not; a font the renderer is given (an attachment, an external
-    // font) the measure cannot see, and would measure another in its place.
+    // The measure cannot lay out a vertical (@) font or see a font only the renderer is given.
     if (builtin || s.fontname.starts_with(u8"@") || host.fontLeased(std::string(s.fontname.begin(), s.fontname.end())))
         return std::nullopt;
     s.fontsize = core::toUtf8(fmt(size, 4));
@@ -1064,13 +990,8 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     std::vector<std::string> fields;
     for (const auto &f : core::legacy::styleRawFields(s))
         fields.emplace_back(f.begin(), f.end());
-    // The shown text, line by line, in one pass as libass reads it: \N
-    // breaks a line, \n too under wrap style 2 (the script's WrapStyle, or
-    // the last \q before it) and is a space otherwise, \h a hard space,
-    // \{ and \} braces, a tab a space. A drawing within the text, or a tag
-    // changing the glyphs after some (their size, font, scale, spacing,
-    // weight, slant or angles, or a \r), is not measured: one Style's run
-    // does not hold it.
+    // As libass reads it: \N breaks, \n too under wrap style 2 and is a space otherwise, \h a hard space.
+    // A drawing within the text, or a glyph-changing tag after some, is not measured.
     const transform::Context &ctx = styles.ctx;
     const auto wrapOf = [&ctx] {
         const auto v = ctx.document ? ctx.document->scriptInfo(u8"WrapStyle") : std::nullopt;
@@ -1135,16 +1056,13 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     }
     budget.rows -= lines.size();
     budget.shown -= shown;
-    // libass drops the spaces at either end of a row (trim_whitespace: a
-    // tab and a soft \n are spaces by then, \h is not one), so a row of
-    // them shows nothing and a Line of them no rectangle.
+    // libass's trim_whitespace drops the spaces at either end of a row (\h is not one).
     for (u16 &piece : lines) {
         const std::size_t first = piece.find_first_not_of(u' ');
         piece.erase(0, first == u16::npos ? piece.size() : first);
         piece.erase(piece.find_last_not_of(u' ') + 1);
     }
-    // The measure spaces each UTF-16 unit as legacy's text_extents does,
-    // libass each character: a pair of surrogates is spaced twice.
+    // The measure spaces each UTF-16 unit, libass each character: a surrogate pair would be spaced twice.
     const bool spaced = transform::styleNumber(s.spacing, 0) != 0;
     u16 all;
     for (const u16 &piece : lines) {
@@ -1152,8 +1070,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
             return std::nullopt;
         all += piece;
     }
-    // A character the font lacks libass may take from a font only it is
-    // given, where the measure takes one of the system's.
+    // libass may fall back to a font only it is given, the measure to a system one.
     if (host.fallsBackToLeased(std::string(s.fontname.begin(), s.fontname.end()), s.bold, s.italic, all))
         return std::nullopt;
     double width = 0, height = 0;
@@ -1166,9 +1083,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
             width = std::max(width, e->width);
         height += e->height;
     }
-    // Wider than the room between its margins, libass wraps it (but under
-    // wrap style 2): rows this box does not hold. The margins are the
-    // Line's, else its own Style's (a \r does not move the Line).
+    // libass wraps a Line wider than its margins (but under wrap style 2); a \r does not change the margins.
     if (wrap != 2) {
         const auto margin = [](std::int64_t own, const std::u8string &styleMargin) {
             return own != 0 ? static_cast<double>(own) : transform::styleNumber(styleMargin, 0);
@@ -1181,8 +1096,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     return Box{{0, 0}, {static_cast<float>(width), static_cast<float>(height)}};
 }
 
-// Whether one of `tags` comes after the leading blocks: an outline or
-// shadow the tool does not scale, a border libass takes the largest of.
+// Whether one of `tags` comes after the leading blocks.
 template <std::size_t N>
 bool afterText(u16v text, const u16v (&tags)[N])
 {
@@ -1205,9 +1119,7 @@ bool outlineAfterText(u16v text)
     return afterText(text, kOutlineTags);
 }
 
-// libass's scrolling effects: Banner;, and Scroll up; or Scroll down; with
-// their three values (fewer and libass ignores it). The event moves with the
-// time and takes no part in collisions.
+// libass's scrolling effects (Banner;, or Scroll up;/down; with three values) move with time and skip collisions.
 bool scrolls(const core::LineRecord &line)
 {
     const std::u8string &e = line.effect;
@@ -1220,29 +1132,20 @@ bool scrolls(const core::LineRecord &line)
 
 LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line);
 
-// Whether `line`'s Style, or the one its leading \r resets to, is past the
-// bytes a read takes.
 bool stylesTooLarge(const StyleIndex &styles, const core::LineRecord &line)
 {
     const core::StyleValues &style = styles.line(line.style);
     if (styles.tooLarge(style))
         return true;
-    // Held while the tags (views into it) are read (#382).
+    // MUST KILL: lead's Tag views point into this local, which must outlive them
     const u16 text = transform::lineText(line);
     const Leading lead = leadingOf(text);
     const std::size_t from = afterLastReset(lead.tags);
     return from > 0 && styles.tooLarge(resetStyle(styles, style, lead.tags[from - 1].value));
 }
 
-// How far an unpositioned Line is moved clear of the Lines before it shown
-// with it: legacy's GetDialogueAdditionalPosition (Visuals.cpp:143-215),
-// the rule the other tools place such a Line by, over this tool's own
-// reading, which takes linear time (legacy's tag parse does not), and with
-// libass's collisions (ass_render.c finish_frame, fix_collisions): only
-// Lines of its Layer that collide (no \pos, \move, \org, \t or scrolling
-// effect) count, each a rectangle of its box at its leading scale with its
-// outline (not its shadow); one with nothing shown is no obstacle. Nullopt
-// when one in its band cannot be measured: where it is placed is not known.
+// As libass's fix_collisions: only colliding Lines of its Layer count, each its box at its leading scale with
+// its outline (not its shadow). nullopt when one before it cannot be measured.
 std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
                                   const Transform &t, const Box &box, MeasureBudget &budget)
 {
@@ -1253,7 +1156,6 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
     };
     if (!ctx.document || !shown(line))
         return 0.0;
-    // Its rectangle at its default position.
     const auto rect = [&ctx](const core::LineRecord &l, const core::StyleValues &st, const Transform &lt,
                              const Box &b) {
         const double w = b.width() * lt.fscx / 100 + 2 * lt.bord.x;
@@ -1274,10 +1176,8 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
     const auto mine = rect(line, styles.line(line.style), t, box);
     if (mine[2] <= mine[0] || mine[3] <= mine[1])
         return 0.0; // no area: libass does not move it
-    // libass's fit_rect on a track without placement history: each earlier
-    // Line that collides is placed in its turn clear of those placed before
-    // it (`used`, by top), and this one last; a bottom-aligned Line moves
-    // up, another down.
+    // libass's fit_rect without placement history: earlier colliding Lines placed in turn, this one last;
+    // bottom-aligned Lines move up, others down.
     std::vector<std::array<double, 4>> used;
     const auto fit = [&used](const std::array<double, 4> &r, int an) {
         double shift = 0;
@@ -1299,8 +1199,6 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
                     placed);
         return shift;
     };
-    // Past this many obstacles the stack is off the frame, but where is not
-    // known (the work of reading them is the budget's).
     constexpr int kMaxMeasured = 256, kMaxCandidates = 4096;
     int measured = 0, candidates = 0;
     for (const core::LineRecord *dial : ctx.document->lines()) {
@@ -1310,7 +1208,6 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             break;
         if (dial->comment || !shown(*dial) || dial->layer.value != line.layer.value)
             continue; // libass renders no Comment
-        // Every Line shown with it is looked at, however little it shows.
         if (++candidates > kMaxCandidates || !budget.parse(*dial) || stylesTooLarge(styles, *dial))
             return std::nullopt;
         const LineState other = readTagsIn(host, styles, *dial);
@@ -1318,14 +1215,13 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             continue;
         const u16 text = transform::lineText(*dial);
         const core::StyleValues &style = styles.line(dial->style);
-        // libass's rectangle takes the largest border of its glyphs, which
-        // one box at one border does not hold.
+        // libass's rectangle takes its glyphs' largest border.
         static constexpr u16v kBorderTags[] = {u"bord", u"xbord", u"ybord"};
         const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text), false, budget);
         if (!otherBox || afterText(text, kBorderTags))
             return std::nullopt;
         if (otherBox->width() <= 0)
-            continue; // nothing shown
+            continue;
         const auto r = rect(*dial, style, other.transform, *otherBox);
         if (r[2] <= r[0] || r[3] <= r[1])
             continue; // no area: libass does not move others for it
@@ -1346,8 +1242,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
     t.an = static_cast<int>(transform::styleNumber(style.alignment, 2));
     if (t.an < 1 || t.an > 9)
         t.an = 2;
-    // A Style's values (the Line's, or one a \r resets to); libass holds
-    // its scales, outline and shadow at 0 and above.
+    // libass holds scales, outline and shadow at 0 and above.
     const auto styleValues = [&t](const core::StyleValues &st) {
         t.frx = t.fry = t.fax = t.fay = 0;
         t.frz = transform::styleNumber(st.angle, 0);
@@ -1360,15 +1255,13 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
     };
     styleValues(style);
 
-    // The first \pos or \move, \org and \an or \a anywhere, as libass
-    // takes them: one with the wrong number of values is skipped, the first
-    // \an or \a decides even when out of range (the Style's then).
+    // As libass: a \pos, \move or \org with the wrong count is skipped; the first \an or \a decides even when
+    // out of range.
     std::optional<V2> pos, org;
     bool haveAn = false, timed = false;
     for (const auto &[open, close] : blocksOf(text)) {
         for (const Tag &tag : tagsOf(u16v(text).substr(open + 1, close - open - 1))) {
-            // libass takes any tag from t (\t, with its times or not) as a
-            // \t, which keeps the Line out of collisions.
+            // libass takes any tag starting with t as a \t, which keeps the Line out of collisions.
             timed = timed || tag.name == u"t" || (tag.name.empty() && tag.value.starts_with(u't'));
             if ((tag.name == u"pos" || tag.name == u"move") && !pos) {
                 const auto a = positional(tag);
@@ -1382,9 +1275,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
                 out.move = {(*a)[0], (*a)[1], (*a)[2], (*a)[3]};
                 if (a->size() == 6)
                     out.moveTimes = u"," + fmt(std::trunc((*a)[4]), 0) + u"," + fmt(std::trunc((*a)[5]), 0);
-                // The position at the video's time (libass: linear between
-                // t1 and t2, the Line's span without them or when neither
-                // is above 0).
+                // libass: linear between t1 and t2; the Line's span without them or when neither is above 0.
                 double t1 = 0, t2 = 0;
                 if (a->size() == 6) {
                     t1 = std::trunc((*a)[4]);
@@ -1411,8 +1302,6 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
         }
     }
 
-    // The leading blocks' values, the last of each; the last \r resets the
-    // ones before it.
     const Leading lead = leadingOf(text);
     const std::size_t from = afterLastReset(lead.tags);
     const core::StyleValues &current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
@@ -1427,8 +1316,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
         }
         auto v = number(tag.value);
         if (!v) {
-            // Without a value libass resets it: the angles X and Y and the
-            // shears to 0, the rest to the current Style's.
+            // Without a value libass resets: X and Y angles and shears to 0, the rest to the current Style's.
             if (tag.name == u"frx" || tag.name == u"fry" || tag.name == u"fax" || tag.name == u"fay")
                 v = 0.0;
             else if (tag.name == u"frz" || tag.name == u"fr")
@@ -1444,8 +1332,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
             else
                 continue;
         }
-        // libass holds the scales, the outlines and \shad at 0 and above
-        // (not \xshad or \yshad).
+        // libass holds scales, outlines and \shad at 0 and above (not \xshad or \yshad).
         if (tag.name == u"fscx" || tag.name == u"fscy" || tag.name == u"bord" || tag.name == u"xbord" ||
             tag.name == u"ybord" || tag.name == u"shad")
             v = std::max(0.0, *v);
@@ -1479,7 +1366,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
 
     if (!pos) {
         pos = v2(transform::defaultPosition(line, style, t.an, ctx.width, ctx.height));
-        out.stacks = !org && !timed && !scrolls(line); // readLine stacks it, knowing its box
+        out.stacks = !org && !timed && !scrolls(line);
     }
     t.pos = pf(*pos);
     t.org = org ? pf(*org) : t.pos;
@@ -1505,7 +1392,6 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
 
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line, StyleCache &cache)
 {
-    // A scrolling Line moves with the time, which the quad does not.
     MeasureBudget budget;
     if (scrolls(line) || !budget.parse(line))
         return std::nullopt;
@@ -1538,8 +1424,6 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     if (out.empty() || out.front() != u'{' || out.find(u'}') == u16::npos)
         out.insert(0, u"{}");
 
-    // The Line's first \pos or \move decides, as readTags reads it: a \move
-    // is moved, a \pos (or none) is written again.
     bool moved = false, ownOrg = false;
     for (const auto &[open, close] : blocksOf(out))
         for (const Tag &tag : tagsOf(u16v(out).substr(open + 1, close - open - 1)))
@@ -1570,7 +1454,6 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
             break;
     }
 
-    // The leading blocks (those before the text, which readTags reads).
     std::vector<std::pair<std::size_t, std::size_t>> leading;
     for (std::size_t i = 0; i < out.size() && out[i] == u'{';) {
         const std::size_t close = out.find(u'}', i);
@@ -1579,8 +1462,7 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
         leading.emplace_back(i, close);
         i = close + 1;
     }
-    // The tags go after the last \r among them (which would reset them),
-    // else into the first block before its first \t.
+    // After the last \r (which would reset them), else before the first block's first \t.
     std::size_t target = 0;
     bool afterReset = false;
     for (std::size_t b = 0; b < leading.size(); ++b) {
@@ -1593,8 +1475,7 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     }
 
     u16 tags;
-    // After a \r the base is the Style it names, so every tag is written;
-    // otherwise one at the Line's Style's value is left out.
+    // After a \r every tag is written; otherwise one at the Line's Style's value is left out.
     const auto put = [&tags, afterReset](u16v name, double value, int precision, double initial) {
         const u16 v = fmt(value, precision);
         if (afterReset || v != fmt(initial, precision))
@@ -1602,9 +1483,7 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     };
     if (!moved)
         tags += u"\\pos(" + fmt(t.pos.x, 2) + u"," + fmt(t.pos.y, 2) + u")";
-    // libass turns a \move Line without an \org about its moving position:
-    // kept when `t` does not turn it (the origin then does nothing) or
-    // turns it about its position, unless the origin is the one edited.
+    // libass turns a \move Line without \org about its moving position; kept unless the origin was edited.
     const bool turns = fmt(t.frx, 4) != u"0" || fmt(t.fry, 4) != u"0" || fmt(t.frz, 4) != u"0";
     const bool aboutPosition = fmt(t.org.x, 2) == fmt(t.pos.x, 2) && fmt(t.org.y, 2) == fmt(t.pos.y, 2);
     if (explicitOrg || !(moved && !ownOrg && (!turns || aboutPosition)))
@@ -1622,10 +1501,6 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     put(u"xshad", t.shad.x, 2, shad);
     put(u"yshad", t.shad.y, 2, shad);
 
-    // The leading blocks again, in one pass: each loses the tags written
-    // (what follows one's value, a comment, goes to the block's start) and,
-    // when a \pos is written, any \move (which would come first); the
-    // target takes the new ones; a block left empty goes.
     static constexpr u16v kWritten[] = {u"fax",  u"fay",  u"fscx", u"fscy",  u"fsc",   u"frx",   u"fry",
                                         u"frz",  u"fr",   u"bord", u"xbord", u"ybord", u"shad",  u"xshad",
                                         u"yshad", u"pos", u"org"};
@@ -1633,7 +1508,6 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     for (std::size_t b = 0; b < leading.size(); ++b) {
         const auto [open, close] = leading[b];
         const u16v block = u16v(out).substr(open + 1, close - open - 1);
-        // Text before the block's first backslash (a comment) stays first.
         const std::size_t firstTag = block.find(u'\\');
         u16 lead(block.substr(0, firstTag == u16v::npos ? block.size() : firstTag));
         u16 kept;
@@ -1648,7 +1522,7 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
                 insertAt = kept.size();
             kept += block.substr(tag.from, tag.to - tag.from);
             if (afterReset && tag.name == u"r")
-                insertAt = kept.size(); // after the last one
+                insertAt = kept.size();
         }
         if (b == target) {
             if (insertAt == u16::npos)
@@ -1657,7 +1531,7 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
                 kept.insert(insertAt, tags);
         }
         if (b != target && lead.empty() && kept.empty())
-            continue; // emptied
+            continue;
         head += u'{';
         head += lead;
         head += kept;
@@ -1669,8 +1543,6 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
 
 } // namespace perspective
 
-// --------------------------------------------------------------- the tool
-
 using namespace perspective;
 
 namespace {
@@ -1679,7 +1551,7 @@ constexpr std::uint32_t kInnerColour = 0xFFBB0000;
 constexpr std::uint32_t kOuterColour = 0xAAFF0000;
 constexpr std::uint32_t kGridColour = 0x55FF0000;
 constexpr std::uint32_t kOrgColour = 0xFFFF8800;
-constexpr float kHit = 8.f; // legacy pixels, as the other tools' handles; times unitOf
+constexpr float kHit = 8.f; // times unitOf
 
 PointF add(PointF a, PointF b) { return {a.x + b.x, a.y + b.y}; }
 PointF sub(PointF a, PointF b) { return {a.x - b.x, a.y - b.y}; }
@@ -1705,7 +1577,7 @@ int layoutHeight(const VisualHost &host)
                 return n;
         }
     }
-    // libass lays out at the size the frame is rendered at, the video's.
+    // libass lays out at the rendered frame's size.
     if (host.view().frameHeight() > 0)
         return host.view().frameHeight();
     return host.view().scriptHeight();
@@ -1716,8 +1588,7 @@ std::u8string u8(const std::u16string &text)
     return core::toUtf8(text);
 }
 
-// The part of a to b the view shows (Liang–Barsky), so a dashed edge is
-// dashed only across the view however far off it its corners are.
+// Liang–Barsky clip of a to b to the view.
 std::optional<std::array<PointF, 2>> inView(PointF a, PointF b, const VideoView &view)
 {
     if (!std::isfinite(a.x) || !std::isfinite(a.y) || !std::isfinite(b.x) || !std::isfinite(b.y))
@@ -1751,7 +1622,6 @@ std::optional<std::array<PointF, 2>> inView(PointF a, PointF b, const VideoView 
 
 Quad PerspectiveTool::outer() const
 {
-    // The inner quad is c1 .. c2 of the outer one's plane.
     const PointF a{-m_c1.x / (m_c2.x - m_c1.x), -m_c1.y / (m_c2.y - m_c1.y)};
     const PointF b{(1 - m_c1.x) / (m_c2.x - m_c1.x), (1 - m_c1.y) / (m_c2.y - m_c1.y)};
     return subQuad(m_inner, a, b);
@@ -1785,7 +1655,7 @@ void PerspectiveTool::reset(VisualHost &host)
         host.toolChanged();
         return;
     }
-    // LineIds are a Document's: another session's planes are not this one's.
+    // LineIds are per Document.
     const std::uint64_t session = host.session() ? host.session()->serial() : 0;
     if (session != m_session) {
         m_session = session;
@@ -1807,8 +1677,6 @@ void PerspectiveTool::reset(VisualHost &host)
         m_valid = convex(m_inner);
         m_read = readAt(host);
     }
-    // A saved plane holds on any reading again (an edit, an Undo, a new
-    // Style), not only on another Line's; an edit open keeps its own.
     if (newLine || (m_drag == Drag::None && !m_valueEdit && !m_keyEdit && !host.gesture()))
         restorePlane();
     if (m_plane && !host.gesture())
@@ -1818,8 +1686,6 @@ void PerspectiveTool::reset(VisualHost &host)
 
 void PerspectiveTool::restorePlane()
 {
-    // arch1t3cht's: the inner quad's corners in the saved quad's plane, so
-    // the plane stays where it was set when the inner quad changed since.
     if (!m_line || !m_valid)
         return;
     const auto saved = m_planes.find(*m_line);
@@ -1836,8 +1702,6 @@ void PerspectiveTool::fitPlane() const
 {
     if (!m_valid || planeHolds(m_inner, m_c1, m_c2))
         return;
-    // The default (the plane twice the inner quad), else a smaller one: a
-    // strongly turned quad's plane meets its horizon close by.
     for (const float m : {0.25f, 0.2f, 0.15f, 0.1f, 0.05f, 0.02f, 0.f}) {
         m_c1 = {m, m};
         m_c2 = {1 - m, 1 - m};
@@ -1848,16 +1712,9 @@ void PerspectiveTool::fitPlane() const
 
 void PerspectiveTool::follow(const VisualHost &host) const
 {
-    // The controller only redraws when the time changes; a \move's position
-    // and an unpositioned Line's stacking are the time's, so the Line is read
-    // again (not during an edit, which works from where it began). Where it
-    // cannot be read (an obstacle the stacking cannot measure, say) or would
-    // fold, it has no quad until it can be again.
     if (!m_line || host.videoTimeMs() == m_time || m_drag != Drag::None || m_valueEdit || m_keyEdit)
         return;
     m_time = host.videoTimeMs();
-    // A Line neither moving nor stacked is where it was until the script
-    // changes: it is not parsed again every frame.
     if (m_valid && !m_state.hasMove && !m_state.stacks && m_read && m_read == readAt(host))
         return;
     const transform::Context ctx = transform::context(host, false);
@@ -1867,12 +1724,10 @@ void PerspectiveTool::follow(const VisualHost &host) const
     const Quad inner = state ? textToQuad(state->transform, state->box, m_screenZ) : Quad{};
     if (!state || !convex(inner)) {
         if (m_plane && m_valid)
-            m_planes[*m_line] = outer(); // where it was, for when it is read again
+            m_planes[*m_line] = outer();
         m_valid = false;
         return;
     }
-    // A plane shown stays where it is matched to the shot, and one dropped
-    // with its quad comes back where it was.
     std::optional<Quad> plane;
     if (m_plane && m_valid)
         plane = outer();
@@ -1911,8 +1766,6 @@ bool PerspectiveTool::beginEdit(VisualHost &host)
     if (!host.beginGesture(targets, std::string(familyInfo(Family::Perspective).history)).has_value())
         return false;
     m_orgEdited = false;
-    // Each step parses every target again: their text is bounded as a
-    // read's is.
     std::size_t parsed = 0;
     for (const core::LineId &id : host.gesture()->targets())
         parsed += perspective::renderedSize(host.gesture()->before(id));
@@ -1920,7 +1773,6 @@ bool PerspectiveTool::beginEdit(VisualHost &host)
         host.cancelGesture();
         return false;
     }
-    // ... and their Styles as a read's are.
     const transform::Context ctx = transform::context(host, false);
     const auto decoded = m_styles.get(host);
     const perspective::StyleIndex styles(ctx, *decoded);
@@ -1939,11 +1791,9 @@ void PerspectiveTool::stageAll(VisualHost &host)
         return;
     const transform::Context ctx = transform::context(host, false);
     const auto decoded = m_styles.get(host);
-    const StyleIndex styles(ctx, *decoded); // once: the targets can be many, the Styles too
+    const StyleIndex styles(ctx, *decoded);
     for (const core::LineId &id : g->targets()) {
         const core::LineRecord &line = g->before(id);
-        // Each target's own outline and shadow, scaled as the active
-        // Line's; its \move moved by the active Line's change of position.
         Transform t = m_state.transform;
         const LineState own = readTagsIn(host, styles, line);
         const double kx = m_startTransform.fscx != 0 ? t.fscx / m_startTransform.fscx : 1;
@@ -1973,9 +1823,7 @@ bool PerspectiveTool::finish(VisualHost &host)
     m_valueEdit = m_keyEdit = false;
     if (!host.gesture())
         return false;
-    // A locked outer quad's resize changes no Line: kept all the same.
     rememberPlane(host);
-    // A release that changes no Line records nothing (T3-release-no-change).
     if (!host.gesture()->changesAnyLine()) {
         host.cancelGesture();
         reset(host);
@@ -1996,9 +1844,7 @@ bool PerspectiveTool::applyInner(const Quad &inner, VisualHost &host, bool expli
     auto t = explicitOrg ? quadToTransform(inner, m_state.box, OrgMode::Keep, from, m_screenZ)
                          : quadToTransform(inner, m_state.box, m_orgMode, from, m_screenZ);
     if (t && !explicitOrg && m_state.hasMove && !m_state.ownOrg && !keepsMovingOrigins(*t, host, false)) {
-        // libass turns it about its moving position: the turn about the
-        // position itself, found by moving a kept \org onto the position
-        // the quad then gives until they meet.
+        // libass turns it about its moving position: walk a kept \org onto the position the quad gives.
         std::optional<Transform> about;
         Transform f = from;
         PointF guess = m_state.transform.pos;
@@ -2026,15 +1872,12 @@ bool PerspectiveTool::applyInner(const Quad &inner, VisualHost &host, bool expli
 bool PerspectiveTool::keepsMovingOrigins(const Transform &t, VisualHost &host, bool explicitOrg) const
 {
     if (std::abs(t.frx) < 5e-5 && std::abs(t.fry) < 5e-5 && std::abs(t.frz) < 5e-5)
-        return true; // no turn: the origin does nothing
+        return true;
     const auto about = [&t](PointF pos) {
         return std::abs(t.org.x - pos.x) < 0.005 && std::abs(t.org.y - pos.y) < 0.005;
     };
     if (m_state.hasMove && !m_state.ownOrg && !explicitOrg && !about(t.pos))
         return false;
-    // The other targets' \move moves with the active Line's position; each
-    // keeps its origin only about its own, which the active Line's \org is
-    // not.
     const Gesture *g = host.gesture();
     if (!g || g->targets().size() < 2)
         return true;
@@ -2054,13 +1897,11 @@ bool PerspectiveTool::keepsMovingOrigins(const Transform &t, VisualHost &host, b
 bool PerspectiveTool::scalesEveryOutline(const Transform &t, VisualHost &host) const
 {
     if (t.fscx == m_startTransform.fscx && t.fscy == m_startTransform.fscy)
-        return true; // nothing to scale
+        return true;
     const Gesture *g = host.gesture();
     if (!g)
         return true;
-    // A later scale or \r sets the rest of the text back to its own size
-    // and outline, which the leading blocks' rescale does not reach; a \t
-    // of the box ends at its own, unscaled.
+    // A later scale or \r resets the rest of the text, which the leading blocks' rescale cannot reach.
     static constexpr u16v kRescaled[] = {u"fscx", u"fscy", u"fsc", u"r"};
     for (const core::LineId &id : g->targets()) {
         const u16 text = transform::lineText(g->before(id));
@@ -2083,7 +1924,6 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
     Quad changed = start;
     changed[static_cast<std::size_t>(i)] = to;
     if (fromCentre) {
-        // The opposite corner mirrors the drag in the plane.
         const PointF rel = sub(toUV(start, to), {0.5f, 0.5f});
         for (int j = 0; j < 4; ++j) {
             const float fx = ((i == 1 || i == 2) ? -1.f : 1.f) * ((j == 1 || j == 2) ? -1.f : 1.f);
@@ -2096,7 +1936,6 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
     PointF c1 = m_startC1, c2 = m_startC2;
     Quad inner = changed;
     if (m_plane && !isOuter && !m_lock) {
-        // The plane holds: the inner quad stays a rectangle of it.
         const Quad plane = startQuad(true);
         if (fromCentre) {
             c1 = toUV(plane, changed[0]);
@@ -2108,7 +1947,6 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
         }
         inner = subQuad(plane, c1, c2);
     } else if (m_plane && isOuter && m_lock) {
-        // The inner quad holds: the outer one is resized in its plane.
         PointF d1{-c1.x / (c2.x - c1.x), -c1.y / (c2.y - c1.y)};
         PointF d2{(1 - c1.x) / (c2.x - c1.x), (1 - c1.y) / (c2.y - c1.y)};
         if (fromCentre) {
@@ -2121,7 +1959,6 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
         }
         c1 = {-d1.x / (d2.x - d1.x), -d1.y / (d2.y - d1.y)};
         c2 = {(1 - d1.x) / (d2.x - d1.x), (1 - d1.y) / (d2.y - d1.y)};
-        // No Line changes (planeOnly): the transform is not rewritten.
         if (!(c1.x < c2.x && c1.y < c2.y) || !std::isfinite(c1.x) || !std::isfinite(c1.y) ||
             !std::isfinite(c2.x) || !std::isfinite(c2.y) || !planeHolds(m_inner, c1, c2))
             return false;
@@ -2129,7 +1966,6 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
         m_c2 = c2;
         return true;
     } else if (m_plane && isOuter) {
-        // The outer quad is the plane: the inner one follows it.
         inner = subQuad(changed, c1, c2);
     }
     if (!(c1.x < c2.x && c1.y < c2.y) || !std::isfinite(c1.x) || !std::isfinite(c1.y) || !std::isfinite(c2.x) ||
@@ -2149,7 +1985,6 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
 bool PerspectiveTool::move(PointF delta, VisualHost &host)
 {
     if (m_drag == Drag::Body && m_plane && !m_lock) {
-        // Within the plane.
         const Quad plane = startQuad(true);
         const PointF from = toUV(plane, centre(m_startInner));
         const PointF to = toUV(plane, add(centre(m_startInner), delta));
@@ -2172,8 +2007,6 @@ bool PerspectiveTool::move(PointF delta, VisualHost &host)
 
 PointF PerspectiveTool::snap(PointF p, int skip) const
 {
-    // DrawingAndClip::FindSnapPoint's rule: within ten units of another
-    // handle's x or y, the first such handle's.
     std::vector<PointF> handles;
     const Quad o = startQuad(true);
     for (int i = 0; i < 4; ++i) {
@@ -2200,7 +2033,6 @@ PointF PerspectiveTool::snap(PointF p, int skip) const
 
 PointF PerspectiveTool::axisLock(int corner, PointF d) const
 {
-    // The nearer of the two edges through the corner (the plane's axes there).
     const Quad q = startQuad(corner >= 4);
     const int i = corner % 4;
     const PointF u = (i < 2) ? sub(q[1], q[0]) : sub(q[2], q[3]);
@@ -2274,7 +2106,6 @@ void PerspectiveTool::pointer(const Pointer &event, VisualHost &host)
     }
 
     if (event.kind == Pointer::Kind::DoubleClick && event.button == Pointer::Button::Left) {
-        // The nearest corner of the quad that leads goes to the pointer.
         if (!host.gesture()) {
             capture();
             if (!beginEdit(host))
@@ -2298,7 +2129,6 @@ void PerspectiveTool::pointer(const Pointer &event, VisualHost &host)
         m_press = q[static_cast<std::size_t>(best)];
         if (applyCorner(m_corner, at, false, host) && !planeOnly(m_corner))
             stageAll(host);
-        // Its release commits; no drag follows.
         m_drag = Drag::None;
         return;
     }
@@ -2384,7 +2214,6 @@ bool PerspectiveTool::key(const Key &event, VisualHost &host)
             return false;
         m_keyEdit = true;
     }
-    // Each step from where the last left the quad.
     m_startInner = m_inner;
     m_startC1 = m_c1;
     m_startC2 = m_c2;
@@ -2401,8 +2230,6 @@ bool PerspectiveTool::key(const Key &event, VisualHost &host)
         moved = move(delta, host);
         m_drag = Drag::None;
     }
-    // A step that would fold the quad changes nothing (the key is still
-    // the tool's: the release ends the edit, which records nothing then).
     if (moved)
         stageAll(host);
     return true;
@@ -2425,8 +2252,6 @@ Overlay PerspectiveTool::overlay(const VisualHost &host) const
     const Quad inner = toView(m_inner);
     const Quad o = m_plane ? toView(outer()) : Quad{};
     if (m_grid) {
-        // The plane's grid: eighths of the outer quad, or quarters of the
-        // inner one without the plane.
         const Quad &g = m_plane ? outer() : m_inner;
         const int n = m_plane ? 8 : 4;
         for (int k = 1; k < n; ++k) {
@@ -2494,15 +2319,12 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
         if (!beginEdit(host))
             return false;
     }
-    // A refused value leaves no gesture of its own open (the controller
-    // cancels a scrub's only once one of its values is taken).
     const auto refuse = [&host, opened] {
         if (opened)
             host.cancelGesture();
         return false;
     };
     if (org) {
-        // Keep: the quad stays and the tags follow the new \org.
         PointF o = m_startOrg;
         (name == "orgx" ? o.x : o.y) = static_cast<float>(value);
         m_state.transform.org = o;
@@ -2511,10 +2333,9 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
             return refuse();
         }
     } else {
-        // An angle or the shear: the quad follows the tags.
         Transform t = m_startTransform;
         (name == "frx" ? t.frx : name == "fry" ? t.fry : name == "frz" ? t.frz : t.fax) = value;
-        t.fay = 0; // the tool writes no \fay, as a corner's edit
+        t.fay = 0;
 
         const Quad q = textToQuad(t, m_state.box, m_screenZ);
         if (!convex(q) || (m_plane && !planeHolds(q, m_c1, m_c2)) || !keepsMovingOrigins(t, host, false))
@@ -2573,10 +2394,8 @@ bool PerspectiveTool::setOption(const std::string &name, int value, VisualHost &
         if (m_plane == (value != 0))
             return false;
         if (m_plane && m_line && m_valid)
-            m_planes[*m_line] = outer(); // where it was when hidden
+            m_planes[*m_line] = outer();
         if (value != 0 && m_valid) {
-            // Shown only where it holds (its outer quad short of the
-            // horizon), the saved one else the largest default that does.
             const PointF keepC1 = m_c1, keepC2 = m_c2;
             restorePlane();
             fitPlane();
@@ -2588,7 +2407,7 @@ bool PerspectiveTool::setOption(const std::string &name, int value, VisualHost &
         }
         m_plane = value != 0;
         if (m_plane && m_line && m_valid)
-            m_planes[*m_line] = outer(); // absolute from now on
+            m_planes[*m_line] = outer();
         if (!m_plane && (m_selected >= 4))
             m_selected = -1;
     } else if (name == "lockOuter") {

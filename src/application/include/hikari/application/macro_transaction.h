@@ -1,12 +1,5 @@
 #pragma once
 
-// A macro's staged edits against one Document (L4, A33-transaction; the
-// accepted policy in docs/automation.md). The macro starts from a snapshot
-// with the Document's revision, explicit target, selection and active Line;
-// its result is validated against that revision and applied atomically as
-// one undo step through the EditSession, or rejected without changing
-// anything (stale revision, protected reference, a Line gone meanwhile).
-
 #include "hikari/application/automation.h"
 #include "hikari/application/edit_session.h"
 
@@ -14,19 +7,17 @@
 
 namespace hikari::application {
 
-// A pending draft on the target is committed first (T43-reconcile); false
-// when it cannot be. The snapshot then reflects the committed Document.
+// Commits a pending draft on the target first; refused when it cannot.
 std::expected<MacroSnapshot, CommandRefusal> snapshotForMacro(EditSession &session);
-// The same snapshot of any Document, with that selection and revision 0.
+// Revision 0.
 MacroSnapshot macroSnapshotOf(const core::Document &doc, const Selection &selection);
 
-// A Line as a script sees it (legacy LineToLua), and a new Line from a
-// script's (LuaToLine). In TLMode the script's text is the translation.
+// In TLMode the script's text is the translation.
 MacroDialogueLine macroLineOf(const core::LineRecord &line);
 core::LineRecord lineOfMacro(const MacroDialogueLine &line);
 
 enum class MacroApplyError {
-    Refused,           // the EditSession refused the command (see refusal)
+    Refused,
 };
 
 struct MacroApplyFailure {
@@ -34,15 +25,9 @@ struct MacroApplyFailure {
     std::optional<CommandRefusal> refusal;
 };
 
-// Applies `result` as one history step named "Automation: <name>": its
-// Script Info, Styles and Lines together (S4). Styles change through the
-// Document operation the Style manager (Y1) uses, Script Info through the
-// property records Script properties (Y3) edits; unchanged entries keep
-// their bytes. A result identical to the snapshot changes nothing and adds
-// no step. The returned
-// selection (script indices, legacy rules) becomes the session's selection.
-// A result whose validation answered false (MacroResult::valid) is refused
-// as Invalid and changes nothing (S4-validation-edits).
+// One history step named "Automation: <name>", or refused without changes
+// (stale revision, Line gone, MacroResult::valid false). Unchanged entries
+// keep their bytes; a result equal to the snapshot adds no step.
 std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
                                                         const MacroResult &result, const std::string &name);
 

@@ -22,8 +22,7 @@ namespace fs = std::filesystem;
 
 bool matchWild(std::u32string_view pat, std::u32string_view text, bool dotSpecial)
 {
-    // A direct port of wxMatchWild (src/common/filefn.cpp); positions past
-    // the end read as the terminating NUL.
+    // positions past the end read as NUL
     if (text.empty())
         return pat.empty();
     const auto at = [](std::u32string_view s, std::size_t i) { return i < s.size() ? s[i] : U'\0'; };
@@ -47,7 +46,7 @@ bool matchWild(std::u32string_view pat, std::u32string_view text, bool dotSpecia
             if (at(pat, m) == U'\\') {
                 m++;
                 if (!at(pat, m))
-                    return false; // quoting nothing
+                    return false;
             }
             if (!at(pat, m)) {
                 if (!at(text, n))
@@ -65,7 +64,6 @@ bool matchWild(std::u32string_view pat, std::u32string_view text, bool dotSpecia
                     continue;
                 }
             }
-            // not_matched:
             if (!at(text, n))
                 return false;
             if (!haveMa)
@@ -80,7 +78,6 @@ bool matchWild(std::u32string_view pat, std::u32string_view text, bool dotSpecia
 
 std::optional<std::vector<fs::path>> entries(const fs::path &folder, std::u16string_view filespec, int flags)
 {
-    // wxDir::Open: wxDirExists.
     const DWORD folderAttributes = GetFileAttributesW(folder.c_str());
     if (folderAttributes == INVALID_FILE_ATTRIBUTES || !(folderAttributes & FILE_ATTRIBUTE_DIRECTORY))
         return std::nullopt;
@@ -94,10 +91,9 @@ std::optional<std::vector<fs::path>> entries(const fs::path &folder, std::u16str
     WIN32_FIND_DATAW data{};
     const HANDLE find = FindFirstFileW(spec.c_str(), &data);
     if (find == INVALID_HANDLE_VALUE)
-        return out; // ERROR_FILE_NOT_FOUND / ERROR_NO_MORE_FILES: no such files
+        return out;
     do {
-        // CheckFoundMatch: the system matched the long or the 8.3 name; wx
-        // keeps only a long name PathMatchSpec matches.
+        // FindFirstFileW also matches 8.3 short names
         if (!filter.empty() && !PathMatchSpecW(data.cFileName, filter.c_str()))
             continue;
         const wchar_t *name = data.cFileName;
@@ -121,7 +117,7 @@ std::optional<std::vector<fs::path>> entries(const fs::path &folder, std::u16str
 
 namespace {
 
-// wxConvFileName (wxConvWhateverWorks): UTF-8, else byte by byte.
+// UTF-8, else Latin-1.
 std::u32string decodeName(std::string_view bytes)
 {
     const auto latin1 = [&] {

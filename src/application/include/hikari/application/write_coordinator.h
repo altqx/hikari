@@ -1,9 +1,6 @@
 #pragma once
 
-// Destination and write coordination (F1; docs/proposals/application-lifecycle.md).
-// Owns write permits, destination associations and terminal results. It never
-// touches the filesystem itself: a FilePort adapter performs writes (F2), and
-// it never mutates Document content or decides to commit drafts.
+// Never touches the filesystem (a FilePort writes) nor Document content.
 
 #include <cstddef>
 #include <cstdint>
@@ -40,7 +37,7 @@ enum class WriteOutcome {
 };
 
 enum class PermitRefusal {
-    DestinationOwnedByOtherDocument, // accepted policy: block Save As/export collisions
+    DestinationOwnedByOtherDocument, // another open Document is associated with it
     WriteInProgress,                 // another permit for this destination is still active
 };
 
@@ -75,7 +72,6 @@ public:
 
     WriteCoordinator(FilePort &port, ResultListener onResult);
 
-    // Records that an open Document is associated with a destination (its path).
     void associate(DocumentId document, const DestinationKey &destination);
     void dissociate(DocumentId document);
     std::optional<DestinationKey> association(DocumentId document) const;
@@ -85,7 +81,6 @@ public:
                                                          std::uint64_t revision);
     // Revokes an unstarted permit (Document closed, destination changed).
     void revoke(PermitId permit);
-    // Starts the write of the permit's snapshot through the port.
     std::expected<void, WriteRefusal> write(PermitId permit, std::vector<std::byte> snapshot);
     void cancel(PermitId permit);
 
@@ -101,7 +96,7 @@ private:
         DocumentId document;
         DestinationKey destination;
         std::uint64_t revision = 0;
-        std::optional<DestinationKey> associationAtGrant; // the requester's own association then
+        std::optional<DestinationKey> associationAtGrant;
         bool revoked = false;
         bool started = false;
         bool finished = false;

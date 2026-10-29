@@ -74,7 +74,6 @@ u16 number(long long v)
     return u16(s.begin(), s.end());
 }
 
-// wxString::Lower (towlower per character).
 u16 lower(const u16 &text)
 {
     u16 out = text;
@@ -88,7 +87,6 @@ bool isDigit(char32_t c)
     return c >= U'0' && c <= U'9';
 }
 
-// wxString::ToCDouble: the whole value as a C-locale number.
 bool toCDouble(const u32 &text)
 {
     std::string ascii;
@@ -104,7 +102,6 @@ bool toCDouble(const u32 &text)
     return end != ascii.c_str() && *end == '\0';
 }
 
-// wxAtoi.
 int atoi32(const u32 &text)
 {
     std::string ascii;
@@ -154,7 +151,6 @@ std::u16string variantKey(const std::u16string &family, int bold, int italic)
 
 std::vector<Tag> parseTags(const std::u32string &txt)
 {
-    // SubsDialogue.cpp:1086-1158, with tags {"fn", "b", "i", "p"} and plainText.
     static const std::vector<u32> names{U"fn", U"b", U"i", U"p"};
     return parseTags(txt, names);
 }
@@ -176,7 +172,6 @@ std::vector<Tag> parseTags(const std::u32string &txt, const std::vector<std::u32
             tagsBlock = true;
             if (pos >= len - 1)
                 ++pos;
-            // SubString(plainStart, pos - 1)
             if (plainStart + 1 <= pos)
                 out.push_back({hasDrawing ? U"pvector" : U"plain", txt.substr(plainStart, pos - plainStart)});
         } else if (tagsBlock && ch == U'\\') {
@@ -200,7 +195,7 @@ std::vector<Tag> parseTags(const std::u32string &txt, const std::vector<std::u32
                     continue;
                 u32 value = tag.substr(tagLen);
                 if (name == U"p") {
-                    value = trimmed(value); // Trim().Trim(false) changes the value too
+                    value = trimmed(value);
                     hasDrawing = value != U"0";
                 } else if (first == U'(') {
                     value = value.substr(value.find(U'(') + 1);
@@ -231,8 +226,6 @@ Scan scan(const std::vector<CollectorDocument> &documents, const std::function<b
         if (std::find(s.families.begin(), s.families.end(), family) == s.families.end())
             s.families.push_back(family);
     };
-    // SubsFont (FontCollector.cpp:45-54): 1 -> 700, 0 -> 400; the first use
-    // of a key names it.
     auto variant = [&](const u16 &fn, int bold, int italic) {
         const u16 key = variantKey(fn, bold, italic);
         if (!s.variants.contains(key))
@@ -242,7 +235,6 @@ Scan scan(const std::vector<CollectorDocument> &documents, const std::function<b
         if (!doc.document)
             continue;
         const int tab = doc.tab;
-        // The Style table (FontCollector.cpp:578-609).
         std::map<u16, core::StyleValues> styles;
         for (const auto &style : core::decodeStyles(*doc.document)) {
             const u16 fn = toU16(style.fontname);
@@ -256,13 +248,11 @@ Scan scan(const std::vector<CollectorDocument> &documents, const std::function<b
             }
             styles[name] = style;
         }
-        // The Lines (FontCollector.cpp:613-693).
         const auto lines = doc.document->lines();
         for (std::size_t i = 0; i < lines.size(); ++i) {
             const auto &line = *lines[i];
             if (line.comment)
                 continue;
-            // GetTextNoCopy: the translation when there is one.
             const u32 text = toU32(toU16(line.translation.empty() ? line.text : line.translation));
             const auto tags = parseTags(text);
             const auto st = styles.find(toU16(line.style));
@@ -293,8 +283,6 @@ Scan scan(const std::vector<CollectorDocument> &documents, const std::function<b
                             newFont = false;
                         }
                     }
-                    // Every text is kept, so a font that is not found is
-                    // known to be needed.
                     replaceAll(textHavingFont, U"\\N", U"");
                     replaceAll(textHavingFont, U"\\n", U"");
                     replaceAll(textHavingFont, U"\\h", U" ");
@@ -324,10 +312,8 @@ Scan scan(const std::vector<CollectorDocument> &documents, const std::function<b
 
 namespace {
 
-constexpr char32_t kByteOrderMark = 65279; // not checked (CheckPathAndGlyphs)
+constexpr char32_t kByteOrderMark = 65279;
 
-// A one-Line script that renders `text` in the family, as the probe of one
-// legacy SubsFont.
 std::vector<std::byte> probeScript(const u16 &family, bool bold, bool italic, const std::set<char32_t> &chars)
 {
     u32 text;
@@ -336,9 +322,7 @@ std::vector<std::byte> probeScript(const u16 &family, bool bold, bool italic, co
             text += c;
     if (text.empty())
         text = U"a";
-    // A family the Style line cannot carry (a \fn value with a comma) is
-    // asked for as the Document asks for it, by an override tag before the
-    // text; the Style's own family is then never drawn.
+    // An ASS Style line cannot carry a family with a comma: ask for it by \fn instead.
     const bool inStyle = family.find_first_of(u",\r\n") == u16::npos;
     std::string fn = toUtf8(family);
     std::erase_if(fn, [](char c) { return c == '\r' || c == '\n'; });
@@ -356,8 +340,6 @@ std::vector<std::byte> probeScript(const u16 &family, bool bold, bool italic, co
     return out;
 }
 
-// The face the renderer opened for the request itself (not a fallback, not a
-// face of other names).
 const ResolvedFace *baseFace(const FontCollection &c)
 {
     for (const auto &f : c.selections)
@@ -394,8 +376,6 @@ struct Probe {
     std::expected<FontCollection, FontError> result = std::unexpected(FontError::RendererUnavailable);
 };
 
-// The legacy GetLogFont flags (FontCollector.cpp:56-93): the family's faces,
-// as the provider lists them, against the requested weight and slant.
 struct Fake {
     bool normal = false, boldItalic = false, bold = false, italic = false;
 };
@@ -430,17 +410,13 @@ Fake fakeFlags(const Variant &v, const std::vector<SystemFace> &faces)
 
 FontEnvironment systemEnvironment()
 {
-    FontEnvironment env; // the system provider, as the video's subtitles render
+    FontEnvironment env;
     env.systemFonts = true;
     return env;
 }
 
-// A file name for a collected font: the provider's file, or for stream bytes
-// (DirectWrite) the installed file of the same face. Two installed files can
-// hold a face of one PostScript name (a per-user arial.ttf beside the
-// system's); legacy found the file by the face's size and bytes
-// (FontCollector.cpp:1144-1196), so the file whose bytes are the renderer's
-// names it, and the first of that name only when no file can be compared.
+// DirectWrite hands over stream bytes: name the installed file whose bytes match, else the
+// first file of that PostScript name.
 void nameFile(CollectedFile &file, const CollectedFont &font, const FontCollection &from,
               const std::vector<SystemFace> &faces, const FontCollector::FileReader &read)
 {
@@ -497,15 +473,13 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
     const FontEnvironment env = systemEnvironment();
     const std::vector<SystemFace> faces = m_fonts.systemFaces();
 
-    // CheckOrCopyFonts (FontCollector.cpp:708-790): the copy modes first
-    // list the installed font files, once for the collector's lifetime.
     if (copyFonts && !m_retrieved) {
         std::set<std::string> files;
         for (const auto &f : faces)
             if (!f.path.empty())
                 files.insert(f.path);
         if (files.empty()) {
-            review.retrieveFailed = true; // and nothing else is done
+            review.retrieveFailed = true;
             return review;
         }
         review.retrievedFonts = files.size();
@@ -513,10 +487,8 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
         m_retrieved = true;
     }
 
-    // Which families the renderer finds (legacy facenames.Index): one probe
-    // per family, regular, over the characters it is used for.
     const Scan names = collector::scan(documents, [](const u16 &) { return true; });
-    std::map<u16, Probe> familyProbe; // by lower-case name
+    std::map<u16, Probe> familyProbe;
     for (const auto &family : names.families) {
         if (cancelled())
             return std::unexpected(FontError::Cancelled);
@@ -539,8 +511,6 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
     review.found = s.found;
     review.notFound = s.notFound;
 
-    // The whole Documents, as the renderer draws them, and the collected set
-    // re-rendered without the system provider (F47-corpus).
     std::vector<std::pair<int, FontCollection>> rendered;
     std::vector<const CollectorDocument *> renderedDocs;
     for (const auto &doc : documents) {
@@ -552,8 +522,6 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
         if (!c) {
             if (c.error() == FontError::Cancelled || c.error() == FontError::RendererUnavailable)
                 return std::unexpected(c.error());
-            // A Document the renderer cannot read is not verified, so the
-            // collection is incomplete (fonts.md), never passed by default.
             review.unrendered.push_back(doc.tab);
             continue;
         }
@@ -579,9 +547,8 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
                 unionFrom.push_back(&c);
             }
 
-    // CheckPathAndGlyphs (FontCollector.cpp:1068-1244) over foundFonts.
     std::map<u16, Probe> variantProbe;
-    std::set<std::string> fontnames; // files already found (by their bytes)
+    std::set<std::string> fontnames;
     u16 lastfn;
     for (const auto &[key, v] : s.variants) {
         if (cancelled())
@@ -611,9 +578,6 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
         if (!probe.result && probe.result.error() == FontError::Cancelled)
             return std::unexpected(FontError::Cancelled);
         if (isNewFont) {
-            // CheckGlyphsExists, answered by the renderer: a character the
-            // requested face does not draw is missing from the font, whether
-            // a fallback drew it or nothing did.
             if (!probe.result) {
                 flc.warnings.push_back({Note::Kind::CannotCheckCharacters, fn});
             } else {
@@ -658,9 +622,6 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
         }
         if (!base) {
             flc.warnings.push_back({Note::Kind::CannotFindInFolder, fn});
-            // Legacy also decremented `found`, which nothing had counted for
-            // this font, so the count could go below the fonts written
-            // (FontCollector.cpp:1228-1232; FC-found-negative).
             ++review.notFoundCount;
             continue;
         }
@@ -685,10 +646,6 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
             const u16 ext = lower(file.shown.size() > 3 ? file.shown.substr(file.shown.size() - 3) : u16());
             review.files.push_back(file);
             if (ext == u"pfm" || ext == u"pfb") {
-                // The Type 1 pair (FontCollector.cpp:1206-1219): the other
-                // file is named and copied too. Legacy's RemoveLast(3) cut
-                // the path in place, so it copied the cut path, which failed
-                // (FC-type1-pair).
                 u16 repl = ext == u"pfm" ? u"pfb" : u"pfm";
                 if (file.shown.back() < u'Z')
                     for (auto &c : repl)
@@ -699,16 +656,13 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
                 pair.family = fn;
                 pair.shown = partner;
                 pair.name = fileName(partner);
-                pair.bytes = m_read ? m_read(partner) : nullptr; // null: "Cannot copy"
+                pair.bytes = m_read ? m_read(partner) : nullptr;
                 pair.sha256 = "type1:" + toUtf8(partner);
                 review.files.push_back(pair);
             }
         }
     }
 
-    // Files the renderer used for the Documents beyond the variants' own
-    // faces: fallbacks, substitutes, the default family. They are reported
-    // with their role, never collected as the requested font (fonts.md).
     if (copyFonts) {
         for (std::size_t i = 0; i < union_.size(); ++i) {
             const CollectedFont &font = *union_[i];
@@ -745,11 +699,8 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
             review.rendererFiles.push_back(std::move(file));
         }
     }
-    // Two different fonts under one file name: the output does not hold the
-    // set verified below (a folder keeps the last, as wxCopyFile overwrote
-    // it; an archive holds both entries, as PutNextEntry added them).
     {
-        std::map<u16, std::string> seen; // lower-case name -> bytes
+        std::map<u16, std::string> seen;
         for (const auto &file : review.files) {
             if (!file.bytes || file.bytes->empty())
                 continue;
@@ -760,16 +711,12 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
         }
     }
 
-    // The faces each file was opened with, from the Documents' rendering.
     for (auto &file : review.files)
         for (const auto *f : union_)
             if (f->sha256 == file.sha256)
                 for (const long face : f->faces)
                     addUnique(file.faces, face);
 
-    // The collected set alone, in a clean environment, against the frames
-    // the Documents rendered with the system provider (F47-corpus): what
-    // the output would reproduce.
     if (copyFonts) {
         for (std::size_t i = 0; i < rendered.size(); ++i) {
             if (cancelled())
@@ -798,8 +745,6 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
         }
     }
 
-    // CheckOrCopyFonts (FontCollector.cpp:826-840): a family that is not
-    // found counts unless no text uses it.
     review.notFoundCount += int(review.notFound.size());
     for (auto &[family, block] : review.notFound) {
         const auto it = s.chars.find(family);
@@ -829,25 +774,21 @@ CollectorResult FontCollector::apply(const CollectorReview &review, CollectorOut
     CollectorResult r = result(review);
     if (review.action == CollectorAction::Check || review.retrieveFailed)
         return r;
-    // Partial output only after explicit acknowledgment (routing #54).
     if (!review.complete() && !acknowledgedIncomplete) {
         r.refused = true;
         r.complete = false;
         return r;
     }
-    if (review.files.empty()) // MakeDirectory waits for the first file found (FontCollector.cpp:1190)
+    if (review.files.empty())
         return r;
     if (!output.open()) {
-        // MakeDirectory failed: "Path is not available" and nothing more
-        // (FontCollector.cpp:821-824).
         r.pathNotAvailable = true;
         r.cannotCreateFolder = output.folderFailed();
         r.complete = false;
         return r;
     }
     const bool zip = review.action == CollectorAction::Zip;
-    // Until the last file is written, a folder carries the label: a run that
-    // ends early (cancelled, or the process gone) leaves nothing unlabelled.
+    // MUST KILL: a folder is labelled incomplete before writing, unlabelled only once complete
     if (!zip)
         r.labelled = output.label(labelText(review, nullptr) + "Writing was not finished.\n");
     for (const auto &file : review.files) {
@@ -855,7 +796,6 @@ CollectorResult FontCollector::apply(const CollectorReview &review, CollectorOut
             r.cancelled = true;
             break;
         }
-        // SaveFont (FontCollector.cpp:877-911).
         const bool ok = file.bytes && output.put(file.name, *file.bytes);
         auto it = r.found.find(file.family);
         Block &b = it != r.found.end() ? it->second : r.notFound[file.family];
@@ -870,7 +810,6 @@ CollectorResult FontCollector::apply(const CollectorReview &review, CollectorOut
     r.complete = !r.cancelled && review.complete() && r.notCopiedCount == 0;
     if (zip) {
         if (r.cancelled) {
-            // The archive is published only when it is closed: nothing is left.
             output.discard();
             return r;
         }

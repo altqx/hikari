@@ -1,18 +1,6 @@
 #pragma once
 
-// T5: the drawing tool (legacy Shapes over DrawingAndClip as VECTORDRAW,
-// HikariSub/VisualDrawingShapes.cpp and VisualClips.cpp at 20d647c4;
-// docs/visual-tools.md, "Drawing and shape presets"). With the toolbar's
-// shape list on "Choose" the tool edits the Line's \p drawing with T4's
-// vector point editor (visual_vector.h): the drawing's position, \p scale,
-// \fscx / \fscy and \frz place its points. With a shape chosen a drag draws
-// a rectangle and the shape preset (shape_presets.h) is written scaled into
-// it, replacing the Line's drawing.
-//
-// A Line's text is read and written as legacy did, through the ported
-// TagFindReplace::FindTag (core::legacy::TagEditor), from the start of the
-// text (approved T4-clip-read-start: the visual tools do not follow the
-// Line editor's caret).
+// Line text is searched from its start, not from the Line editor's caret.
 
 #include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_tools.h"
@@ -29,63 +17,49 @@ namespace hikari::application::visual {
 
 namespace drawing {
 
-// Dialogue::ParseTags(tags, n, plainText) (SubsDialogue.cpp:1086-1158): the
-// named tags in override blocks (name, value, where the value starts) and,
-// with plainText or while a \p other than \p0 is on, the text between
-// blocks ("plain" / "pvector").
+// Named tags in override blocks; with plainText or inside a drawing, the text between blocks as
+// "plain" / "pvector".
 struct Tag {
     std::u16string name;
     std::u16string value;
-    std::size_t start = 0;
+    std::size_t start = 0; // value offset in the text
 };
 std::vector<Tag> parseTags(std::u16string_view text, const std::vector<std::u16string_view> &names,
                            bool plainText = false);
 
-// Visuals::CalcDrawingSize (Visuals.cpp:1206-1243): the offset the
-// alignment gives a drawing's points (an7: none), or with
-// withoutAlignment the points' width and height.
+// The offset the alignment gives the points (\an7: none), or with withoutAlignment their size.
 PointF drawingSize(int alignment, const std::vector<VectorPoint> &points, bool withoutAlignment = false);
-// Visuals::RotateDrawing (Visuals.cpp:1197-1204).
 void rotate(VectorPoint &point, float sinOfAngle, float cosOfAngle, PointF orgpivot);
 
-// What DrawingAndClip::SetCurVisual reads for VECTORDRAW (VisualClips.cpp:
-// 182-296) with Visuals::GetPosnScale (Visuals.cpp:624-722), from the
-// active Line's text as the Line editor shows it.
 struct LineDrawing {
-    PointF position;         // GetPosnScale's \pos / \move start, or the default position
+    PointF position;         // \pos / \move start, or the default position
     PointF scale{1, 1};      // \fscx, \fscy (or the Style's) / 2^(\p-1)
-    int alignment = 2;       // \an or the Style's (legacy byte)
-    std::optional<int> vectorScale; // the \p scale read (else the tool keeps its own)
-    std::array<double, 7> move{};   // moveValues: x1 y1 x2 y2 t1 t2, the count read
-    std::u16string body;     // the drawing: ParseTags' first "pvector" after the first tag
+    int alignment = 2;       // truncated to a byte
+    std::optional<int> vectorScale; // nullopt: the tool keeps its own
+    std::array<double, 7> move{};   // x1 y1 x2 y2 t1 t2, then the count read
+    std::u16string body;
     float frz = 0;           // \frz / \fr, else the Style's Angle
-    std::optional<PointF> org; // \org as GetTwoValueDouble reads it (never, legacy)
-    int start = 0, end = 0;  // the Line's times in ms (Visuals::start / end)
+    std::optional<PointF> org;
+    int start = 0, end = 0;  // ms
 };
-// `editorText`: the text the Line editor shows (GetPosnScale, \frz, \org);
-// `lineText`: the Line's text (ParseTags on tab->edit->line). `moveTable`
-// is legacy's moveValues member, kept by the tool between calls.
+// `editorText` gives position, scale, \frz and \org; `lineText` the drawing. `moveTable` is the
+// tool's table from the previous call.
 LineDrawing readLine(const core::Document &document, const core::LineRecord &line, std::u16string_view editorText,
                      std::u16string_view lineText, int scriptWidth, int scriptHeight,
                      const std::array<double, 7> &moveTable);
 
-// Visuals::CalcMovePos (Visuals.cpp:547-564): a \move's position at `time`
-// (the table's times are made the Line's when it has fewer than six values,
-// as legacy did to its member).
+// MUST KILL: writes the Line's times into `move` when it has fewer than six values
 PointF movePosition(std::array<double, 7> &move, int start, int end, int time);
 
-// DrawingAndClip::ChangeVectorVisual for VECTORDRAW (VisualClips.cpp:574-649):
-// the drawing `body` replaces the Line's first one (a \p1, a \pos at
-// `position` and an \an are added when missing, plain text after a block is
-// put in a block of its own, and a "{\p0}" follows a drawing that ends the
-// text). `start` and `end` are where the body went (ChangeVectorVisual's
-// changePos: x the start, y legacy's end count). `setScale` runs with a
-// shape chosen (Shapes::SetScale).
+// `body` replaces the Line's first drawing; a missing \p1, \pos at `position` and \an are added,
+// plain text after a block gets its own block, and "{\p0}" closes a drawing that ends the text.
 struct PutResult {
     std::u16string text;
-    std::size_t start = 0;
+    std::size_t start = 0; // where the body went
+    // MUST KILL: `end` is the replaced length, not an end position
     int end = 0;
 };
+// `diff`: the length the scale tags added before the drawing.
 using SetScale = std::function<void(std::u16string &text, std::size_t position, int *diff)>;
 PutResult putDrawing(std::u16string text, std::u16string_view body, PointF position, int alignment,
                      const SetScale &setScale = {});
@@ -103,27 +77,21 @@ public:
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
-    // PU5: the presets changed in "Edit shapes" (each change kept at once):
-    // the list's entry `listSelection` chosen and read again, even at the
-    // place chosen before (legacy's SetShape kept the preset it had). A
-    // hidden tool (another family shown) only takes them: it reads its Line
-    // when it comes back (reset).
+    // Rereads the preset at `listSelection`, even if unchanged. Hidden, the tool reads its Line on reset.
     void presetsChanged(int listSelection, VisualHost &host, bool shown = true);
 
-    // Legacy's state, for the tests.
+    // For the tests.
     VectorEditor &editor() { return m_editor; }
     const VectorEditor &editor() const { return m_editor; }
     VectorFrame frame(const VisualHost &host) const;
-    PointF position() const { return {m_x, m_y}; } // _x, _y
+    PointF position() const { return {m_x, m_y}; }
     PointF scale() const { return m_scale; }
     int alignment() const { return m_alignment; }
     float frz() const { return m_frz; }
     PointF org() const { return m_org; }
     int vectorScale() const { return m_vectorScale; }
     const std::array<double, 7> &moveValues() const { return m_move; }
-    // The shape list's selection (VectorItem::shapeListSelection; 0
-    // "Choose") and Shapes' own state.
-    int shapeSelection() const { return m_shapeSelection; }
+    int shapeSelection() const { return m_shapeSelection; } // 0: "Choose"
     int shape() const { return m_shape; } // -1: none
     const std::vector<VectorPoint> &shapePoints() const { return m_shapePoints; }
     PointF shapeSize() const { return m_shapeSize; }
@@ -131,20 +99,17 @@ public:
     PointF rectangle(int i) const { return m_rect[i]; }
     bool rectangleVisible() const { return m_rectVisible; }
     int shapeGrabbed() const { return m_shapeGrabbed; }
-    // GetVisual: the drawing's text as it would be written now.
+    // The drawing as it would be written now.
     std::u16string body() const;
 
-    // ChangeTool's shape part (DrawingAndClip::ChangeTool, VisualClips.cpp:
-    // 1477-1497, and Shapes::SetShape): the list's selection; `fromToolbar`
-    // false when SetVisual calls it (blockSetCurVisual).
+    // Only `fromToolbar` rereads the Line on a return to "Choose".
     void changeShape(int listSelection, bool fromToolbar, VisualHost &host);
 
 private:
-    void readActive(VisualHost &host); // SetCurVisual
-    void apply(VisualHost &host, bool commit); // SetClip(!commit)
+    void readActive(VisualHost &host);
+    void apply(VisualHost &host, bool commit);
     VectorEditor::Callbacks callbacks(VisualHost &host);
-    void syncMove(const VisualHost &host) const; // DrawVisual's \move position
-    // Shapes (VisualDrawingShapes.cpp:355-776).
+    void syncMove(const VisualHost &host) const;
     void shapePointer(const Pointer &event, VisualHost &host);
     std::u16string shapeBody() const;
     std::u16string drawingBody() const;
@@ -155,21 +120,22 @@ private:
     void setSquareShape(bool axisX);
     PointF pointToVideo(PointF point, const VisualHost &host) const;
     PointF pointToSubtitles(float x, float y, const VisualHost &host) const;
-    PointF drawingAnchor() const; // CalcDrawingAnchor
+    PointF drawingAnchor() const;
 
     VectorEditor m_editor;
     PointF m_scale{1, 1};
     int m_alignment = 0;
-    mutable float m_x = 0, m_y = 0; // _x, _y (DrawVisual moves a \move drawing's)
+    // MUST KILL: const overlay() moves these for a \move drawing
+    mutable float m_x = 0, m_y = 0;
     float m_frz = 0;
     PointF m_org{0, 0};
     int m_vectorScale = 1;
-    mutable std::array<double, 7> m_move{}; // moveValues
+    mutable std::array<double, 7> m_move{};
     int m_start = 0, m_end = 0;
     int m_shapeSelection = 0;
 
     int m_shape = -1;
-    static constexpr int kNoPresetRead = -2; // presetsChanged: none read yet
+    static constexpr int kNoPresetRead = -2;
     ShapePreset m_current;
     std::vector<VectorPoint> m_shapePoints;
     PointF m_shapeSize{0, 0};
@@ -177,10 +143,9 @@ private:
     PointF m_rect[2]{};
     bool m_rectVisible = false;
     int m_shapeGrabbed = -1;
-    int m_diffX = 0, m_diffY = 0; // DrawingAndClip::diffs as Shapes uses it
+    int m_diffX = 0, m_diffY = 0;
 
-    // The single-Line preview's place (legacy dummytext / dumplaced): set by
-    // the first sample after a reset, then only the drawing is replaced.
+    // Set by the first sample after a reset; later samples replace only the drawing.
     bool m_placed = false;
     std::size_t m_placedStart = 0, m_placedEnd = 0;
     bool m_began = false;

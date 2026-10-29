@@ -1,17 +1,5 @@
 #pragma once
 
-// T3: the Scale family (legacy Scale, VisualScale.cpp at 20d647c4, and its
-// toolbar item ScaleItem, VideoToolbar.cpp:900-992). Dragging the arrows
-// writes \fscx and \fscy (left: width, right: height, middle or Shift+left
-// or "Preserve proportions": both, linked); the rectangle mode scales the
-// text to a drawn rectangle on one or both axes, against the text's measured
-// size or a second rectangle drawn with the right button ("Set a custom
-// rectangle for the current scale"); "Change all scale tags" multiplies
-// every \fscx/\fscy of the Line; "Preserve proportions" also moves the
-// several targets' positions and clips about the active Line's position.
-// The arrow keys nudge the arrows (Shift: a tenth; VT2-arrow-nudge, legacy's
-// W/A/S/D), each press its own step.
-
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_transform.h"
 
@@ -36,15 +24,13 @@ public:
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
 
-    // ScaleItem::GetItemToggled: bit 1 rectangle, 2 width, 4 aspect ratio,
-    // 8 height, 16 custom rectangle, 32 change all tags, 64 preserve
-    // proportions (default 2 | 4).
+    // Bits: 1 rectangle, 2 width, 4 aspect ratio, 8 height, 16 custom rectangle, 32 change all tags,
+    // 64 preserve proportions.
     int toggled() const;
-    // The toolbar's toggles as they are (tests and the probe's replay); with
-    // a host the tool takes them as a toolbar click does (ChangeTool).
+    // With a host the tool takes them as a toolbar click does.
     void setToggled(int bits, VisualHost *host = nullptr);
 
-    // Legacy state, as the probe records it.
+    // MUST KILL: legacy-state accessors kept for the probe and tests
     PointF from() const { return m_from; }
     PointF to() const { return m_to; }
     PointF scale() const { return m_scale; }
@@ -54,12 +40,10 @@ public:
     PointF border() const { return m_border; }
     bool rectangleVisible() const { return m_rectangleVisible; }
     bool originalRectangleVisible() const { return m_originalRectangleVisible; }
-    // Legacy's editor caret (TextEdit's selection): FindTag's, moved to the
-    // tag while a one-Line gesture runs and given to the editor on release.
+    // Moves to the tag while a one-Line gesture runs; given to the editor on release.
     std::pair<long, long> editorCaret() const { return m_find.selection(); }
 
 private:
-    // Scale::ChangeTool / SetCurVisual / SetVisual (Visuals::SetVisual).
     void changeTool(int tool, bool blockSetCurVisual, VisualHost &host);
     void setCurVisual(VisualHost &host);
     void setVisual(bool dummy, VisualHost &host);
@@ -75,8 +59,6 @@ private:
 
     std::array<bool, 7> m_toggle{false, true, true, false, false, false, false};
 
-    // Visuals members: the coefficients and zoom of the last SizeChanged and
-    // SetZoom (the view's, refreshed on every event).
     void takeView(const VideoView &view);
     float m_coeffW = 1, m_coeffH = 1;
     PointF m_viewZoomMove{0.f, 0.f}, m_viewZoomScale{1.f, 1.f};
@@ -87,13 +69,11 @@ private:
     bool m_replaceTagsInCursorPosition = true;
     std::u16string m_currentLineText;
     transform::TagFind m_find;
-    // The editor's text and caret while a one-Line gesture runs (legacy's
-    // dummy edits go into the editor).
+    // The editor's text while a one-Line gesture runs.
     std::u16string m_editorText;
     bool m_editorIsTranslation = false;
     std::optional<core::LineId> m_editing;
 
-    // Scale members (Visuals.h:362-403).
     int m_type = 0;
     int m_grabbed = -1;
     int m_an = 2;
@@ -116,8 +96,8 @@ private:
     bool m_rightHolding = false;
     bool m_preserveProportions = false;
     bool m_changeAllTags = false;
-    bool m_valueEdit = false; // the open gesture is a scrubbed value's (VT1)
-    bool m_valueRatios = false; // a value is being written: each axis' own ratio (VT1)
+    bool m_valueEdit = false; // the open gesture is a scrubbed value's
+    bool m_valueRatios = false; // a value is being written: each axis' own ratio
 };
 
 } // namespace hikari::application::visual

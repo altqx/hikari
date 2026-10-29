@@ -8,7 +8,6 @@ using namespace ffms_colour;
 
 std::string colourMatrixName(int colorSpace, int colorRange)
 {
-    // ProviderFFMS2::ColorMatrixDescription: "Assuming TV for unspecified".
     const std::string range = colorRange == kRangeJpeg ? "PC" : "TV";
     switch (colorSpace) {
     case kBt709: return range + ".709";
@@ -16,7 +15,7 @@ std::string colourMatrixName(int colorSpace, int colorRange)
     case kBt470bg:
     case kSmpte170m: return range + ".601";
     case kSmpte240m: return range + ".240M";
-    default: return "None"; // FFMS_CS_RGB and anything else
+    default: return "None";
     }
 }
 
@@ -45,7 +44,6 @@ std::string sessionVideoMatrix(const EditSession &session)
 std::optional<LegacyColourMatrix::Input> LegacyColourMatrix::open(int colorSpace, int colorRange, int width, int height,
                                                                   std::string_view matrix)
 {
-    // ProviderFFMS2.cpp:368-369 and 393-414.
     m_colorSpace = colorSpace;
     m_colorRange = colorRange;
     const bool untagged = m_colorSpace == kUnspecified;
@@ -53,11 +51,6 @@ std::optional<LegacyColourMatrix::Input> LegacyColourMatrix::open(int colorSpace
         m_colorSpace = width > 1024 || height >= 600 ? kBt709 : kBt470bg;
     m_applied = m_source = colourMatrixName(m_colorSpace, m_colorRange);
     std::optional<Input> input;
-    // Approved departure V4-untagged-matrix: an untagged source is always
-    // converted as its guess, the matrix it is named by. Legacy set it only
-    // for a BT.709 guess with "TV.709" (ProviderFFMS2.cpp:396-412) and
-    // otherwise left the converter's default BT.601 under the name TV.709, so
-    // a later "TV.709" changed nothing (ProviderFFMS2.cpp:955-962).
     if (untagged || (m_colorSpace == kBt709 && matrix == "TV.709"))
         input = Input{m_colorSpace, m_colorRange};
     if (matrix == "TV.601") {
@@ -71,7 +64,6 @@ std::optional<LegacyColourMatrix::Input> LegacyColourMatrix::open(int colorSpace
 
 std::optional<LegacyColourMatrix::Change> LegacyColourMatrix::set(std::string_view matrix)
 {
-    // ProviderFFMS2.cpp:950-982.
     if (matrix == m_applied)
         return std::nullopt;
     Change change;
@@ -81,7 +73,7 @@ std::optional<LegacyColourMatrix::Change> LegacyColourMatrix::set(std::string_vi
     else if (matrix == "TV.601")
         change.input = Input{kBt470bg, m_colorRange};
     else
-        return std::nullopt; // "TV.709" on a source that is not BT.709
+        return std::nullopt; // "TV.709" on a non-BT.709 source
     m_applied = std::string(matrix);
     return change;
 }

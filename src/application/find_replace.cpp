@@ -20,7 +20,7 @@ using Settings = FindReplaceSettings;
 using Field = FindReplaceSettings::Field;
 using Tab = FindReplaceSettings::Tab;
 
-// FindReplace.h option bits.
+// FIND_REPLACE_OPTIONS bits, as HikariSub legacy stores them.
 enum : int {
     kCaseSensitive = 1,
     kRegEx = 2,
@@ -67,7 +67,7 @@ std::u16string asciiFold(std::u16string_view s)
     return out;
 }
 
-// wxString::Trim (wxSafeIsspace: ASCII white space only).
+// ASCII white space only.
 bool isSpace(char16_t c)
 {
     return c == u' ' || c == u'\t' || c == u'\n' || c == u'\v' || c == u'\f' || c == u'\r';
@@ -89,13 +89,11 @@ std::u16string trimBoth(std::u16string s)
     return s.substr(i);
 }
 
-// wxString::Mid: an offset past the end gives "".
 std::u16string mid(std::u16string_view s, std::size_t from, std::size_t count = npos)
 {
     return from >= s.size() ? std::u16string() : std::u16string(s.substr(from, count));
 }
 
-// wxStringTokenizer(text, "\n", wxTOKEN_STRTOK): no empty tokens.
 std::vector<std::u16string> lineTokens(std::u16string_view text)
 {
     std::vector<std::u16string> out;
@@ -110,8 +108,6 @@ std::vector<std::u16string> lineTokens(std::u16string_view text)
     return out;
 }
 
-// wxStringTokenizer(filters, ";") (wxTOKEN_RET_EMPTY: empty tokens inside,
-// none after a trailing delimiter).
 std::vector<std::u8string> filterTokens(std::u8string_view filters)
 {
     std::vector<std::u8string> out;
@@ -126,13 +122,12 @@ std::vector<std::u8string> filterTokens(std::u8string_view filters)
     return out;
 }
 
-// IsNumber (config.cpp): digits only; "" is a number.
+// MUST KILL: isNumber("") is true
 bool isNumber(std::u16string_view s)
 {
     return std::ranges::all_of(s, [](char16_t c) { return c >= u'0' && c <= u'9'; });
 }
 
-// AfterLast('.') lowered.
 std::u16string extension(std::u8string_view path)
 {
     std::u16string s = u16(path);
@@ -153,7 +148,6 @@ int columnOf(Field field)
     return core::column::Text;
 }
 
-// Dialogue::GetTextElement on a file's line (no translation mode).
 std::u16string rawElement(const core::RawDialogueFields &d, Field field)
 {
     switch (field) {
@@ -165,7 +159,6 @@ std::u16string rawElement(const core::RawDialogueFields &d, Field field)
     return u16(d.text);
 }
 
-// Dialogue::SetTextElement(column, value, appendTextTL).
 void setElement(core::LineRecord &line, Field field, const std::u16string &value, bool translationMode)
 {
     switch (field) {
@@ -192,10 +185,6 @@ int rowOf(const EditSession &session, std::optional<core::LineId> id)
     return 0;
 }
 
-// SubsFile::FirstSelection: the first selected shown row, or -1. Legacy
-// gave -1 when only hidden Lines were selected, so "From selected" searched
-// from row 0, before the selection; S57-from-selected starts at the first
-// selected Line then (it is skipped, being hidden).
 int firstSelection(const EditSession &session)
 {
     const auto lines = session.document().lines();
@@ -211,7 +200,6 @@ int firstSelection(const EditSession &session)
     return hidden;
 }
 
-// SubsFile::GetElementByKey: the shown row of a row.
 int shownRow(const EditSession &session, int row)
 {
     const auto lines = session.document().lines();
@@ -235,7 +223,6 @@ std::u8string replaced(std::u8string text, std::u8string_view from, std::u8strin
     return text;
 }
 
-// A line without the CR of its CR LF end (the Linux build read the CR).
 std::u16string withoutCr(std::u16string_view line)
 {
     if (!line.empty() && line.back() == u'\r')
@@ -243,17 +230,12 @@ std::u16string withoutCr(std::u16string_view line)
     return std::u16string(line);
 }
 
-// One line of a file on disk as the legacy loops take it. Legacy tokenized
-// with wxTOKEN_STRTOK, which drops empty lines; they are kept here as blank
-// pieces, written back as they were (R3-hang-crash-loss) and not counted.
-// The Linux build read the CR of each CR LF (R5-per-platform), so there a
-// CRLF file's blank line is "\r": not empty, so a counted Line, as legacy.
-// An SRT piece is a whole cue (legacy collects lines until the next number;
-// "1\r" is no number, so on Linux a CRLF file is one piece, as legacy read it).
+// One line of a file, or a whole cue for SRT. Blank pieces are written back
+// but not counted; on Linux a CRLF file's blank line is "\r" and counts.
 struct FilePiece {
     bool blank = false;
-    std::u16string token; // legacy's token: trimmed (Trim()); an SRT cue's lines each with CRLF appended
-    std::u16string raw;   // as read, without CRs of CR LF ends (an SRT cue's lines joined by CRLF, trimmed)
+    std::u16string token; // trimmed; an SRT cue's lines each with CRLF appended
+    std::u16string raw;   // as read, without the CRs of CR LF ends
 };
 
 std::vector<FilePiece> filePieces(std::u16string_view text, bool srt)
@@ -296,13 +278,8 @@ std::vector<FilePiece> filePieces(std::u16string_view text, bool srt)
     return out;
 }
 
-// SetTextElement + GetRaw of a changed piece. Legacy parsed an SRT cue's
-// Start from the start of the piece, so lines before its " --> " line went
-// into the hours (atoi("1\r\r\n00") is 1: on Linux every CRLF file's first
-// cue moved by an hour) and were lost. Here (R3-hang-crash-loss,
-// F1-srt-leading-lines) the times come from the " --> " line; a leading cue
-// number gives way to the count legacy writes in its place, other leading
-// lines stay as they were.
+// SRT times come from the " --> " line; a leading cue number is dropped (the
+// count is written in its place), other leading lines are kept.
 std::u16string changedPiece(const FilePiece &piece, bool srt, int column, const std::u16string &value)
 {
     if (srt) {
@@ -330,8 +307,7 @@ std::u16string changedPiece(const FilePiece &piece, bool srt, int column, const 
     return u16(core::rawDialogueWithField(u8(piece.token), column, u8(value)));
 }
 
-// The text before the first Dialogue/Comment line of an .ass file (written
-// back with CRLF), or nullopt without dialogues.
+// Where the first Dialogue/Comment line starts; nullopt without dialogues.
 std::optional<std::size_t> assEventsStart(std::u16string_view text)
 {
     auto result = text.find(u"Dialogue:");
@@ -343,10 +319,7 @@ std::optional<std::size_t> assEventsStart(std::u16string_view text)
     return result;
 }
 
-// The header with CRLF (legacy Replace("\n", "\r\n")). A line that ends
-// with CR LF as read (the Linux build kept the CR) keeps one CR: legacy
-// wrote "\r\r\n", changing every header line of a file it only replaced
-// Line text in (R3-hang-crash-loss, F1-file-header-cr).
+// LF to CR LF; a CR LF already there keeps its one CR.
 std::u16string crlf(std::u16string_view text)
 {
     std::u16string out;
@@ -362,8 +335,6 @@ std::u16string crlf(std::u16string_view text)
 
 namespace {
 
-// The radio buttons set in order (HikariRadioButton::SetValue(true) clears
-// the rest of its group): the last bit set wins.
 void readOptions(Settings &s, int options)
 {
     s.matchCase = options & kCaseSensitive;
@@ -397,8 +368,6 @@ FindReplaceSettings findReplaceFromOptions(int options)
     s.field = Field::Text;
     s.lines = Settings::Lines::All;
     readOptions(s, options);
-    // TabWindow's constructor reads the subfolders box from the hidden bit
-    // and never sets the hidden box (kept legacy quirk).
     s.subfolders = options & kSearchHiddenFolders;
     s.hiddenFolders = false;
     return s;
@@ -407,8 +376,6 @@ FindReplaceSettings findReplaceFromOptions(int options)
 FindReplaceSettings findReplaceSetValues(int options, const FindReplaceSettings &current)
 {
     Settings s = current;
-    // SetValue(false) clears a button without checking another; UpdateValues
-    // reads no field as Text.
     s.field = Field::Text;
     s.lines = Settings::Lines::None;
     readOptions(s, options);
@@ -418,7 +385,6 @@ FindReplaceSettings findReplaceSetValues(int options, const FindReplaceSettings 
 int findReplaceOptions(const FindReplaceSettings &s, int previous)
 {
     const bool files = s.tab == Tab::FindInFiles;
-    // Only the Find in subtitles tab has no Lines box: it keeps the bits from 512 up.
     int options = files ? (previous >> 9) << 9 : 0;
     if (s.matchCase)
         options |= kCaseSensitive;
@@ -462,7 +428,6 @@ FindReplace::FindReplace(FindReplaceHost &host, CaseFold fold) : m_host(host), m
 
 void FindReplace::setRecent(Recent recent)
 {
-    // The constructor keeps 20 of each.
     for (auto *list : {&recent.finds, &recent.replacements, &recent.filters, &recent.paths})
         if (list->size() > 20)
             list->resize(20);
@@ -488,11 +453,8 @@ std::u16string FindReplace::element(const core::LineRecord &line, bool translati
     return out;
 }
 
-// --- Operations and questions -------------------------------------------
-
 bool FindReplace::begin(const FindReplaceSettings *window)
 {
-    // Legacy's message boxes are modal: nothing else runs until they close.
     if (m_waiting)
         return false;
     if (window)
@@ -533,14 +495,12 @@ std::optional<FindTab> FindReplace::tabById(DocumentId id)
 
 bool FindReplace::compile(std::u16string_view pattern)
 {
-    // wxRegEx(pattern, wxRE_ADVANCED [| wxRE_ICASE]) (R1-pcre2).
     int flags = core::LegacyRegex::Advanced;
     if (!m_matchCase)
         flags |= core::LegacyRegex::IgnoreCase;
     m_regex.emplace();
     if (m_regex->compile(pattern, flags))
         return true;
-    // wxRegEx::Compile's wxLogError.
     m_host.logLine({FindLog::Kind::InvalidRegex,
                     replaced(replaced(u8"Invalid regular expression '%1': %2", u8"%1", u8(pattern)), u8"%2",
                              u8(m_regex->errorMessage())),
@@ -549,8 +509,6 @@ bool FindReplace::compile(std::u16string_view pattern)
     return false;
 }
 
-// wxRegEx::Matches then GetMatch(0); a match error (PCRE2's match or heap
-// limit) is logged as wx_regexec does and counts as no match.
 bool FindReplace::search(std::u16string_view text, int &start, int &length) const
 {
     if (!m_regex)
@@ -568,8 +526,6 @@ bool FindReplace::search(std::u16string_view text, int &start, int &length) cons
     return true;
 }
 
-// wxRegEx::Replace; an empty match moves on by one character
-// (F1-empty-match, R3-hang-crash-loss: legacy repeated it forever).
 int FindReplace::regexReplace(std::u16string &text, std::u16string_view replacement, std::size_t maxMatches) const
 {
     if (!m_regex)
@@ -607,7 +563,7 @@ bool FindReplace::updateValues(const FindReplaceSettings &w)
     return m_regEx && !compile(m_findString);
 }
 
-// CheckStyles: the missing-styles questions, then `then(cancelled)`.
+// Asks about missing styles, then calls `then(cancelled)`.
 void FindReplace::checkStyles(DocumentId document, Then then)
 {
     const auto tab = tabById(document);
@@ -619,7 +575,6 @@ void FindReplace::checkStyles(DocumentId document, Then then)
         return then(false);
     std::u8string notFound, found;
     std::vector<std::u8string> missing;
-    // wxStringTokenizer(styles, ",", wxTOKEN_STRTOK) and SubsFile::FindStyle.
     const std::u8string all = window.styles;
     for (std::size_t from = 0; from < all.size();) {
         std::size_t to = all.find(u8',', from);
@@ -644,7 +599,7 @@ void FindReplace::checkStyles(DocumentId document, Then then)
     if ((notFound.empty() || m_wasIgnored) && !found.empty())
         return done();
     if (!notFound.empty())
-        notFound.pop_back(); // RemoveLast: "a, b,"
+        notFound.pop_back();
     FindQuestion question;
     if (found.empty()) {
         question = {FindQuestion::Kind::NoStyles,
@@ -721,8 +676,6 @@ void FindReplace::selectionAdopted()
     m_textPosition = m_linePosition = 0;
 }
 
-// --- Find ------------------------------------------------------------------
-
 void FindReplace::find(const FindReplaceSettings &window)
 {
     if (!begin(&window))
@@ -758,7 +711,6 @@ void FindReplace::runFind(bool withWindow, Found done)
     seekFromStart(tab->id, withWindow, std::move(done));
 }
 
-// Legacy's seekFromStart label.
 void FindReplace::seekFromStart(DocumentId document, bool withWindow, Found done)
 {
     const auto tab = tabById(document);
@@ -773,7 +725,7 @@ void FindReplace::seekFromStart(DocumentId document, bool withWindow, Found done
         return seekLines(document, withWindow, std::move(done));
     checkStyles(document, [this, document, withWindow, done](bool cancelled) {
         if (cancelled)
-            return done(false); // legacy returns before the AddRecent tail
+            return done(false);
         seekLines(document, withWindow, done);
     });
 }
@@ -833,8 +785,7 @@ void FindReplace::seekLines(DocumentId document, bool withWindow, Found done)
                 foundPosition = 0;
                 m_textPosition = 0;
             }
-            // Legacy's else belongs to "End of text": with "Beginning of
-            // text" the plain search below runs too (kept legacy quirk).
+            // MUST KILL: with Beginning of text the plain search below runs too
             if (m_endLine) {
                 if (ltext.ends_with(lfind) || lfind.empty()) {
                     foundPosition = static_cast<int>(txt.size()) - static_cast<int>(lfind.size());
@@ -855,8 +806,6 @@ void FindReplace::seekLines(DocumentId document, bool withWindow, Found done)
             m_matchDocument = document;
             m_matchLine = line.id;
             m_matchText = txt;
-            // The editor that shows the match: TextEdit (1), the
-            // translation mode original TextEditOrig (0), Actor (2), Effect (3).
             int role = -1, start = m_findstart, end = m_findend;
             if (m_field == Field::Text) {
                 const auto newline = txt.find(u'\n');
@@ -996,9 +945,7 @@ void FindReplace::findInLine(const std::u16string &text, std::u16string_view lin
         m_results.push_back(std::move(r));
         if (tabTextPosition >= static_cast<int>(text.size()) || m_startLine)
             break;
-        // Legacy never leaves a Line whose text ends with a plain "End of
-        // text" search (it records it forever); here it is recorded once and
-        // the search goes on (F1-end-of-text, R3-hang-crash-loss).
+        // a plain End of text search matches once per Line
         if (m_endLine && !m_regEx)
             break;
         tabTextPosition = foundPosition + 1;
@@ -1027,7 +974,6 @@ void FindReplace::findAllInTab(const FindTab &tab, bool allLines, bool selectedO
         }
         if ((!styles && !selectedOnly) || (styles && m_stylesAsText.find(u"," + u16(line.style) + u",") != npos) ||
             (selectedOnly && session.selection().selected.contains(line.id))) {
-            // GetTextNoCopy: the translation when there is one.
             const std::u16string shown = u16(line.translation.empty() ? line.text : line.translation);
             findInLine(element(line, tl), shown, tab.id, &isFirst, row, positionId, tab.name, tl);
         }
@@ -1082,8 +1028,6 @@ void FindReplace::findInAllOpened(const FindReplaceSettings &window)
     });
 }
 
-// --- Replace ---------------------------------------------------------------
-
 int FindReplace::replaceInLine(std::u16string &text) const
 {
     if (!(m_startLine || m_endLine) && (m_findString.empty() || text.empty())) {
@@ -1094,8 +1038,7 @@ int FindReplace::replaceInLine(std::u16string &text) const
         return 0;
     }
     if (m_startLine || m_endLine) {
-        // A plain comparison, with a regular expression too (kept legacy
-        // defect: "^x" and "x$" are looked for literally).
+        // MUST KILL: compared literally even with a regular expression ("^x", "x$")
         const std::u16string ltext = m_matchCase ? text : lower(text);
         const std::u16string lfind = m_matchCase ? m_findString : lower(m_findString);
         const bool startsTagBlock = ltext.starts_with(u"{");
@@ -1134,11 +1077,9 @@ int FindReplace::replaceInLine(std::u16string &text) const
         } else {
             textPos = ltext.find(lfind, newpos);
         }
-        // The next search starts after the pattern's length, also for a
-        // regular expression (kept legacy quirk).
+        // MUST KILL: advances by the pattern's length, also for a regular expression
         newpos = textPos + lfind.size();
-        // size_t arithmetic as legacy's: a position moved before the start
-        // by shorter replacements wraps around and ends the loop.
+        // MUST KILL: relies on size_t wraparound to end the loop
         const std::size_t at = textPos + static_cast<std::size_t>(repsDiff);
         if (textPos == npos || at >= text.size())
             break;
@@ -1215,13 +1156,7 @@ int FindReplace::replaceAllInTab(const FindTab &tab, bool allLines, bool selecte
     return total;
 }
 
-// The last match is still where Find left it: not replaced yet, and its
-// Line's text unchanged since. Legacy replaced [findstart, findend) of the
-// last matched row whatever it held then: after Replace next had replaced the
-// last match and its search found nothing more, or after an edit, the next
-// Replace next overwrote text that did not match (F1-stale-replace,
-// R3-hang-crash-loss). A match still there is replaced as legacy did, also
-// when the search that ran first found nothing (kept quirk).
+// Not replaced yet, and its Line's text unchanged since Find.
 bool FindReplace::matchStillThere(const EditSession &session)
 {
     if (!m_matchValid || m_findstart < 0 || m_findend < m_findstart)
@@ -1246,7 +1181,7 @@ void FindReplace::replace(const FindReplaceSettings &window)
     const auto tab = m_host.current();
     if (!tab || !tab->session)
         return finish();
-    // `searched`: Find already ran for this click (the active Line moved).
+    // `searched`: Find already ran for this click.
     const auto second = [this](bool searched) {
         const auto tab = m_host.current();
         if (!tab || !tab->session)
@@ -1257,7 +1192,7 @@ void FindReplace::replace(const FindReplaceSettings &window)
             m_oldfind = find1;
             return runFind(true, [this](bool found) { replaceFound(found); });
         }
-        // A match that is gone is searched for again, once (F1-stale-replace).
+        // A match that is gone is searched for again, once.
         if (!matchStillThere(*tab->session) && !searched)
             return runFind(true, [this](bool found) { replaceFound(found); });
         replaceFound(true);
@@ -1267,7 +1202,6 @@ void FindReplace::replace(const FindReplaceSettings &window)
     second(false);
 }
 
-// Replace's second half, with the match Find left.
 void FindReplace::replaceFound(bool)
 {
     const auto tab = m_host.current();
@@ -1288,8 +1222,6 @@ void FindReplace::replaceFound(bool)
     m_field = searched;
     const auto start = static_cast<std::size_t>(m_findstart);
     const auto length = static_cast<std::size_t>(m_findend - m_findstart);
-    // Legacy's wxString::replace threw std::out_of_range past the end
-    // (R3-hang-crash-loss: bounds-checked).
     if (start > replacedText.size())
         return finish();
     if (m_window.regex && m_regex) {
@@ -1306,7 +1238,7 @@ void FindReplace::replaceFound(bool)
                                          }});
     if (ran)
         m_host.changed(tab->id);
-    m_matchValid = false; // replaced: Find gives the next one
+    m_matchValid = false;
     m_textPosition = m_findstart + static_cast<int>(rep.size());
     runFind(true, [this](bool) { finish(); });
 }
@@ -1348,8 +1280,7 @@ void FindReplace::replaceInAllOpened(const FindReplaceSettings &window)
             return finish();
         int all = 0;
         for (const auto &tab : m_host.tabs()) {
-            // The protected reference is never written (R2-reference-tray);
-            // legacy replaced in the previewed tab too.
+            // The protected reference is never written.
             if (!tab.session || tab.session->isProtected())
                 continue;
             if (updateValues(m_window))
@@ -1364,8 +1295,6 @@ void FindReplace::replaceInAllOpened(const FindReplaceSettings &window)
         finish();
     });
 }
-
-// --- Files on disk ------------------------------------------------------------
 
 void FindReplace::findInFiles(const FindReplaceSettings &window)
 {
@@ -1398,7 +1327,6 @@ void FindReplace::findReplaceInFiles(bool find)
         filters = u8"*.ass;*.srt;*.sub;*.txt;*.mpl2";
     if (window.field != Field::Text)
         filters = u8"*.ass";
-    // GetFolderFiles: each filter in turn.
     std::vector<std::u8string> paths;
     const auto tokens = filterTokens(filters);
     for (std::size_t i = 0; i < tokens.size(); ++i) {
@@ -1422,16 +1350,7 @@ void FindReplace::findReplaceInFiles(bool find)
         m_resultsInFiles = true;
         clearResults();
     }
-    // Legacy ran one thread per processor over consecutive slices of the
-    // paths (the first n % processors one longer). Each thread's
-    // SubsAllReplacements was never reset between its files, so after its
-    // first replacement every later file of the slice that reached the write
-    // was copied to ReplaceBackup and rewritten (unchanged files too, as
-    // UTF-8 with a BOM, CRLF and trimmed lines), and the running total was
-    // added again for each. Only files with a replacement are written here
-    // (R3-hang-crash-loss, F1-file-untouched); the total shown is legacy's.
-    // The results are the threads' lists in thread order, which is the path
-    // order the serial walk gives.
+    // MUST KILL: the total re-adds each slice's running total per written file
     const int processors = std::max(1, m_host.processorCount());
     const std::size_t count = paths.size();
     const std::size_t perThread = count / static_cast<std::size_t>(processors);
@@ -1464,8 +1383,7 @@ FindReplace::FileOutcome FindReplace::findReplaceInFile(const std::u8string &pat
 {
     const auto ext = extension(path);
     const auto read = m_host.readFile(path);
-    // Legacy FileOpen gave "" and nothing matched: an .ass file has no
-    // dialogues, any other reaches the write with nothing replaced.
+    // unreadable: as if empty
     if (!read)
         return {ext != u"ass", 0};
     std::u16string subsText = *read;
@@ -1486,7 +1404,7 @@ FindReplace::FileOutcome FindReplace::findReplaceInFile(const std::u8string &pat
         }
         const auto events = assEventsStart(subsText);
         if (!events)
-            return {false, 0}; // no dialogues: legacy went on to the next file
+            return {false, 0};
         if (!find)
             replacedText = crlf(subsText.substr(0, *events));
         subsText = subsText.substr(*events);
@@ -1497,7 +1415,7 @@ FindReplace::FileOutcome FindReplace::findReplaceInFile(const std::u8string &pat
     for (const FilePiece &piece : filePieces(subsText, isSRT)) {
         if (piece.blank) {
             if (!find)
-                replacedText += u"\r\n"; // kept (legacy dropped blank lines)
+                replacedText += u"\r\n";
             continue;
         }
         const std::u16string &token = piece.token;
@@ -1510,8 +1428,6 @@ FindReplace::FileOutcome FindReplace::findReplaceInFile(const std::u8string &pat
                 ++positionId;
             }
             if (notTlStyle) {
-                // A skipped comment is written back as it was (legacy left it
-                // out of the file: R3-hang-crash-loss).
                 if (!find)
                     replacedText += (isSRT ? token : piece.raw) + u"\r\n";
                 continue;
@@ -1527,7 +1443,6 @@ FindReplace::FileOutcome FindReplace::findReplaceInFile(const std::u8string &pat
                 replacedText += changedPiece(piece, isSRT, column, dialtxt);
                 fileReplacements += reps;
             } else {
-                // An unchanged line is written as it was read (legacy wrote it trimmed).
                 replacedText += (isSRT ? token : piece.raw) + u"\r\n";
                 if (isSRT)
                     replacedText += u"\r\n";
@@ -1541,14 +1456,11 @@ FindReplace::FileOutcome FindReplace::findReplaceInFile(const std::u8string &pat
     if (fileReplacements) {
         if (!m_host.backupFile(path))
             m_host.logLine({FindLog::Kind::CannotBackUp, u8"Cannot back up " + path + u8".", path, {}});
-        // Legacy counted the replacements whether or not the write worked
-        // (FileWrite reports nothing); the host logs a failed write.
+        // Counted whether or not the write works; the host logs a failure.
         m_host.writeFile(path, replacedText);
     }
     return {true, fileReplacements};
 }
-
-// --- The results dialog -----------------------------------------------------
 
 void FindReplace::checkAll(bool check)
 {
@@ -1567,7 +1479,6 @@ void FindReplace::toggleChecked(std::size_t row)
             m_results[i].checked = item.checked;
         return;
     }
-    // The header is checked while anything in its group is.
     std::size_t header = row;
     while (header > 0 && !m_results[header].header)
         --header;
@@ -1600,8 +1511,6 @@ void FindReplace::showResult(std::size_t row)
     }
     if (!m_host.fileExists(r.path))
         return;
-    // OpenFile's save question is modal in legacy: nothing else runs until
-    // it is answered.
     m_waiting = true;
     auto answered = std::make_shared<bool>(false);
     m_host.openFile(r.path, [this, answered, r](std::optional<DocumentId> id) {
@@ -1622,7 +1531,6 @@ void FindReplace::showResultIn(const FindTab &tab, const FindResult &r)
     const auto lines = tab.session->document().lines();
     if (r.keyLine < 0 || r.keyLine >= static_cast<int>(lines.size()))
         return;
-    // EditBox::GetEditor(text): the original's editor when it shows this text.
     const core::LineRecord &line = *lines[static_cast<std::size_t>(r.keyLine)];
     const bool tl = translationMode(*tab.session);
     int role = 1;
@@ -1635,7 +1543,6 @@ void FindReplace::showResultIn(const FindTab &tab, const FindResult &r)
 
 int FindReplace::replaceCheckedLine(std::u16string &line, int position, int length, int *diff) const
 {
-    // Legacy read outside the text here (R3-hang-crash-loss: bounds-checked).
     const long long at = static_cast<long long>(position) - *diff;
     if (at < 0 || at > static_cast<long long>(line.size()) || length < 0)
         return 0;
@@ -1679,7 +1586,6 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
     int numOfChanges = 0;
     int lineNum = 0;
     const int column = columnOf(m_field);
-    // The results of this Line are used up (replaced or skipped).
     const auto skipLine = [&] {
         while (numOfResult < results.size() && results[numOfResult]->keyLine == lineNum)
             ++numOfResult;
@@ -1689,14 +1595,13 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
     const auto unchanged = [&](const FilePiece &piece) {
         if (isSRT)
             replacedText += number(lineNum + 1) + u"\r\n";
-        // As it was read (legacy wrote it trimmed).
         replacedText += (isSRT ? piece.token : piece.raw) + u"\r\n";
         if (isSRT)
             replacedText += u"\r\n";
     };
     for (const FilePiece &piece : filePieces(subsText, isSRT)) {
         if (piece.blank) {
-            replacedText += u"\r\n"; // kept (legacy dropped blank lines)
+            replacedText += u"\r\n";
             continue;
         }
         if (numOfResult >= results.size() || seek->keyLine != lineNum) {
@@ -1707,8 +1612,6 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
         std::u16string dialtxt = rawElement(core::rawDialogueFields(u8(piece.token)), m_field);
         int replacementDiff = 0;
         if (dialtxt != seek->text) {
-            // Legacy left this Line out of the file and, never moving on,
-            // every later one too (R3-hang-crash-loss): it stays as it is.
             m_host.logLine({FindLog::Kind::LineEdited,
                             u8"Line " + u8(number(seek->idLine)) + u8" cannot be replaced,\ncause it was edited.",
                             u8(number(seek->idLine)), {}});
@@ -1742,7 +1645,6 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
     if (!m_resultsShown)
         return finish();
     m_replaceCheckedEnabled = false;
-    // The options of the last search in the tabs go into FindReplace's own.
     m_replaceString = u16(replacement);
     m_regEx = m_resultsRegEx;
     m_matchCase = m_resultsMatchCase;
@@ -1769,15 +1671,13 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         replaceCheckedInFile(group);
         return finish();
     }
-    // Each Document's checked matches, applied in order to its Lines' texts.
     struct Pending {
         DocumentId id;
         EditSession *session = nullptr;
         int changes = 0;
-        // Working texts (text, translation) of the Lines the results reach.
+        // (text, translation)
         std::map<std::uint64_t, std::pair<std::u16string, std::u16string>> lines;
-        // The Lines a replacement changed: only these are edited, so a
-        // skipped or unreplaced Line keeps its saved bytes.
+        // Only these are edited, so other Lines keep their saved bytes.
         std::set<std::uint64_t> changed;
     };
     std::vector<Pending> pending;
@@ -1791,7 +1691,7 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         if (r.header || !r.checked || !r.document)
             continue;
         const auto tab = std::ranges::find_if(tabs, [&](const FindTab &t) { return t.id == *r.document; });
-        if (tab == tabs.end() || !tab->session || tab->session->isProtected()) // R2-reference-tray
+        if (tab == tabs.end() || !tab->session || tab->session->isProtected())
             continue;
         if (*r.document != oldTab) {
             oldKeyLine = -1;
@@ -1829,10 +1729,6 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         oldKeyLine = r.keyLine;
         lastIsTextTl = r.translation;
     }
-    // One "Replace all" step per changed Document (F1-checked-step,
-    // R3-hang-crash-loss: legacy recorded each Document's step only when the
-    // next one started, on that tab, so the last Document's change could get
-    // no step and an empty step could land on another Document).
     for (auto &p : pending) {
         if (!p.changes)
             continue;

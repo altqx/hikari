@@ -17,9 +17,6 @@ std::string utf8(std::u8string_view s)
     return {reinterpret_cast<const char *>(s.data()), s.size()};
 }
 
-// Generated from docs/proposals/settings-migration-map/options.csv (ids
-// chosen here; types, scopes, dispositions and defaults from the worksheet,
-// which agrees with legacy config.cpp at 20d647c4).
 const std::vector<SettingDefinition> &definitions()
 {
     static const std::vector<SettingDefinition> table{
@@ -78,7 +75,6 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.lastScript", "AUTOMATION_RECENT_FILES", String, Profile, Mapped, false, std::string()},
         {"automation.scriptEditor", "AUTOMATION_SCRIPT_EDITOR", String, Profile, Mapped, false, std::string()},
         {"automation.traceLevel", "AUTOMATION_TRACE_LEVEL", Int, Profile, Mapped, false, std::int64_t{3}},
-        // TM1 (#232): "Tags from original", on by default (TM1-original-keeps-tags).
         {"translation.autoMoveTagsFromOriginal", "AUTO_MOVE_TAGS_FROM_ORIGINAL", Bool, Profile, Mapped, false, true},
         {"autosave.maxFiles", "AUTOSAVE_MAX_FILES", Int, Profile, Mapped, false, std::int64_t{3}},
         {"grid.autoSelectLinesFromLastTab", "AUTO_SELECT_LINES_FROM_LAST_TAB", Bool, Profile, Mapped, false, false},
@@ -159,7 +155,6 @@ const std::vector<SettingDefinition> &definitions()
         {"postprocessor.leadOut", "POSTPROCESSOR_LEAD_OUT", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.thresholdStart", "POSTPROCESSOR_THRESHOLD_START", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.thresholdEnd", "POSTPROCESSOR_THRESHOLD_END", Int, Profile, Mapped, false, std::int64_t{0}},
-        // PV1 (#398): the style and font samples' text, legacy "Podgląd".
         {"styles.previewText", "STYLE_PREVIEW_TEXT", String, Profile, Mapped, false, utf8(u8"光 Hikari 日本")},
         {"program.font", "PROGRAM_FONT", String, Profile, Mapped, false, std::string("Tahoma")},
         {"program.fontSize", "PROGRAM_FONT_SIZE", Int, Profile, Mapped, false, std::int64_t{10}},
@@ -231,18 +226,12 @@ const std::vector<SettingDefinition> &definitions()
         {"editor.tagButton18", "EDITBOX_TAG_BUTTON_VALUE18", String, Collection, Mapped, false, std::string()},
         {"editor.tagButton19", "EDITBOX_TAG_BUTTON_VALUE19", String, Collection, Mapped, false, std::string()},
         {"editor.tagButton20", "EDITBOX_TAG_BUTTON_VALUE20", String, Collection, Mapped, false, std::string()},
-        // The rewrite's own: automation hotkeys (S2), one "name\tkeys\tmacro\tsha256" row each.
+        // One "name\tkeys\tmacro\tsha256" row per automation hotkey.
         {kAutomationHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // O2: Hotkeys.txt's and AudioHotkeys.txt's lines (legacy SaveHkeys);
-        // unset, LoadDefault's.
+        // Hotkeys.txt / AudioHotkeys.txt lines; unset: the defaults.
         {kHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {kAudioHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // K2: the appearance (docs/ux/visual-language.md, the user's
-        // 2026-10-05 decision superseding A2-theme-colours): the theme
-        // ("light", "dark", "highContrastWhite", "highContrastBlack"; legacy's
-        // default theme was dark), following the system's light or dark scheme
-        // (on by default), each mode's accent preset by key, and the high-contrast
-        // themes' pickers ("#RRGGBB"), the only colour settings.
+        // theme: "light", "dark", "highContrastWhite" or "highContrastBlack"; colours "#RRGGBB".
         {"appearance.theme", "", String, Profile, Mapped, false, std::string("dark")},
         {"appearance.followSystem", "", Bool, Profile, Mapped, false, true},
         {"appearance.lightAccent", "", String, Profile, Mapped, false, std::string("green")},
@@ -253,162 +242,74 @@ const std::vector<SettingDefinition> &definitions()
         {"appearance.highContrastBlack.accent", "", String, Profile, Mapped, false, std::string("#FFFF00")},
         {"appearance.highContrastBlack.text", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
         {"appearance.highContrastBlack.border", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
-        // SH1 (#220): "Use system title bar" ("system" or "custom"; "auto"
-        // is the desktop's default, the system's on tiling window managers).
+        // "system", "custom" or "auto" (the system's on tiling window managers).
         {"appearance.titleBar", "", String, Profile, Mapped, false, std::string("auto")},
-        // DG1 (#222): where each dialog was left and how big, one
-        // "<id>\t<x>,<y>,<width>,<height>" row per dialog (dialog_placement.h).
+        // One "<id>\t<x>,<y>,<width>,<height>" row per dialog.
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
-        // PU1 (#303): the folder each file picker of the file and session
-        // popups was last left in, one "<picker>\t<folder URL>" row per picker.
+        // One "<picker>\t<folder URL>" row per picker.
         {"workspace.pickerFolders", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
-        // PF1 (#225): the Settings page shown last (its id), where the
-        // window opens next, also after a restart.
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
-        // FR1 (#363): Getting started opens by itself while this is "due"
-        // (the first start writes it) and never again once "done" (Finish,
-        // Skip setup, Close or Esc). Empty: a profile older than FR1.
+        // "due" until Getting started is closed, then "done"; empty: a profile older than it.
         {"workspace.gettingStarted", "", String, Workspace, Mapped, false, std::string()},
-        // PK1 (#301): "Show notices as toasts" (off: notices go only to the
-        // Log), and the questions hidden by "Don't ask again" that have no
-        // setting of their own (Settings > General > Ask again clears them).
         {"notices.toasts", "", Bool, Profile, Mapped, false, true},
         {"notices.hiddenQuestions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // SY1 (#247): the style catalog chosen last, the Style manager's at
-        // the next start (legacy started on "Default").
         {"styles.lastCatalog", "", String, Profile, Mapped, false, std::string()},
-        // The audio output's host API on Windows: 0 WASAPI (default; reports
-        // an unplugged device as lost), 1 DirectSound (legacy's player). The
-        // user's choice, 2026-10-04 (A4-wasapi-default).
+        // Windows only: 0 WASAPI, 1 DirectSound.
         {"audio.outputHostApi", "", Int, Profile, Mapped, false, std::int64_t{0}},
-        // H2-output-device (decision 60, 2026-10-16): the output device both
-        // audio paths play through, by its stable id (QAudioDevice::id: the
-        // endpoint id on Windows, the sink name on Linux); empty follows the
-        // system default. Its name is kept beside it to show it while it is
-        // not connected and to find it in PortAudio's list.
+        // QAudioDevice::id (endpoint id on Windows, sink name on Linux); empty: the
+        // system default. The name finds the device in PortAudio's list.
         {"audio.outputDevice", "", String, Profile, Mapped, false, std::string()},
         {"audio.outputDeviceName", "", String, Profile, Mapped, false, std::string()},
-        // AV2 (#239): the audio panel's sync toggle: the audio cursor follows
-        // the playing video and the video the playing audio box. On by default.
         {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
-        // AU1 (#267): the audio panel's Play around button: the play its face
-        // shows and a click repeats, the last one chosen from its menu (an
-        // AUDIO_HOTKEY symbol). Starts on 500 ms before the start.
+        // An AUDIO_HOTKEY symbol.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
-        // AU2 (#268): the audio panel's Customise menu: the controls AU1
-        // folded that the row shows ("playAround", the plays, "autoCommit",
-        // "nextCommit", "goto", "sliders"). Starts on AU1's row; legacy has
-        // no such option, so an import leaves it as it is.
+        // Controls the row shows: "playAround", the plays, "autoCommit", "nextCommit",
+        // "goto", "sliders".
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
-        // KA1 (#276): Karaoke's Auto split gives a double consonant a
-        // syllable of its own (so|ma|t|ta; off: so|mat|ta, KM's script).
+        // On: so|ma|t|ta; off: so|mat|ta.
         {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
-        // KA1: how long a syllable is (in centiseconds) for the \k and \kf
-        // switch to take it (owner 2026-10-21: KM's 100).
+        // Centiseconds.
         {"audio.karaokeKfThreshold", "", Int, Profile, Mapped, false, std::int64_t{100}},
-        // KA2 (#277): the audio box's playback speed in percent (25, 33, 50,
-        // 75 or 100), pitch kept (KA2-slowed-playback); tap-to-time's Hold or
-        // Press and the calibrated latency in ms (KA2-tap-to-time).
+        // speedPercent: 25, 33, 50, 75 or 100; tapLatency in ms.
         {"audio.speedPercent", "", Int, Profile, Mapped, false, std::int64_t{100}},
         {"audio.tapHold", "", Bool, Profile, Mapped, false, true},
         {"audio.tapLatency", "", Int, Profile, Mapped, false, std::int64_t{0}},
-        // KA5 (#280): Karaoke mode's syllable boundaries snap to vocal onsets
-        // (KA5-onset-snap), off by default.
         {"audio.onsetSnap", "", Bool, Profile, Mapped, false, false},
-        // KA3 (#278): the Kanji timer's Suggest groupings (Aegisub's "Attempt
-        // to interpolate kanji", Tool/Kanji Timer/Interpolation), on by default.
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
-        // AN1 (#404): "Send anonymous usage data" (on by default; legacy sent
-        // nothing and has no such option, so an import leaves it), and the
-        // random install id the data goes under, made when something is
-        // first sent and cleared when the option is turned off.
+        // usageDataId: random, made at the first send, cleared when usage data is turned off.
         {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
         {"privacy.usageDataId", "", String, Profile, Mapped, false, std::string()},
-        // CR1 (#452): "Always send crash reports": the report of a crash or
-        // a freeze goes at the next start without its window (off by default).
         {"privacy.alwaysSendCrashReports", "", Bool, Profile, Mapped, false, false},
-        // KA8 (#354): the Kanji timer writes # syllables (KA8-multi-highlight),
-        // off by default.
         {"audio.kanjiTimerMulti", "", Bool, Profile, Mapped, false, false},
-        // KA4 (#279): the Kanji timer writes furigana (KA4-furigana), off by
-        // default.
         {"audio.kanjiTimerFurigana", "", Bool, Profile, Mapped, false, false},
-        // W1: the player that plays video (Windows): 0 the built-in general
-        // player, 1 the optional DirectShow adapter (legacy's player when
-        // indexing was off). Chosen here only, never as a fallback; other
-        // platforms ignore it.
+        // Windows only: 0 the built-in player, 1 the DirectShow adapter; never a fallback.
         {"video.playbackPlayer", "", Int, Profile, Mapped, false, std::int64_t{0}},
-        // SH2: when each recent subtitles file was last opened, for the Home
-        // page: "<ms since the epoch> <path>" per entry of recent.subtitles
-        // (RecentFiles::openedRecords). Legacy kept the paths only.
+        // "<ms since the epoch> <path>" per entry of recent.subtitles.
         {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // ADR 0019: "Install updates automatically": an installer, AppImage,
-        // deb or rpm copy downloads an update and installs it at the next
-        // quit; off, it only says that one exists. Legacy keeps it as
-        // UPDATER_AUTO_INSTALL from 0.0.2 on, which the importer does not read.
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
-        // PU7 (#309): the version "Skip this version" hid from the automatic
-        // check (no "v"); empty: none. A newer release is offered again.
+        // Without a "v"; empty: none.
         {"updater.skippedVersion", "", String, Profile, Mapped, false, std::string()},
-        // TS1: the Shift times panel's collapsed sections, by section id
-        // ("amount", "lines", "videoAudio", "leadInOut", "continuous", "snap");
-        // all are open by default.
+        // Section ids: "amount", "lines", "videoAudio", "leadInOut", "continuous", "snap".
         {"shiftTimes.collapsedSections", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
-        // Y4-playres-ask (user decision 2026-10-13): a macro reading the
-        // resolution of a Document without PlayResX/PlayResY sets it from the
-        // open video's size without asking, both keys (the question's
-        // "Always set it from the video"; Settings > Editor).
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
-        // AD3 (#312): the Automation panel's run log shows each line's time
-        // since the run started (its clock button), for every run.
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
-        // #397: the autoload scripts turned off in the Automation panel, by
-        // file name, so a reseeded or updated copy stays off.
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // GR3 (wave 6, Aegisub's convention): Grid columns that carry nothing
-        // in the whole Document hide themselves, on top of grid.hideColumns;
-        // the Grid's Hide columns menu and Settings > Editor.
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
-        // KP1 (#286): the Grid folds each run of generated Lines (Effect fx
-        // or "Effector [fx]") into one row; the Grid's Fold generated lines,
-        // turned on by choosing the Karaoke layout.
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
-        // #400: what choosing the Karaoke layout turned on and nobody changed
-        // since ("audio.karaoke", "grid.foldGenerated"), so leaving it after a
-        // restart puts back the same as without one.
+        // Setting ids the Karaoke layout turned on and nobody changed since.
         {"workspace.karaokeTurnedOn", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
-        // LE3-tags-shown (owner, 2026-10-18): the Line editor shows ASS
-        // override tags unless this is on (Settings > Editor, and the
-        // EDITBOX_HIDE_TAGS command); legacy hid them on every start.
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
-        // FS1-bar-mode (owner, 2026-10-20): the fullscreen bar's mode, 0 Auto
-        // (default), 1 Always (legacy's "Show toolbar", never saved there),
-        // 2 Never; VIDEO_FULLSCREEN_BAR and the bar's mode menu set it.
+        // 0 Auto, 1 Always, 2 Never.
         {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
-        // WS2 (owner decision 2026-10-18, #216): "Save panel layout in
-        // subtitle files": an ASS file keeps its Document tab's panel
-        // arrangement in a [Hikari] section, written at each save and taken
-        // when the file opens. Off, the section is neither read nor written
-        // (an existing one is kept as it is).
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
-        // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
-        // over the video (GLOBAL_VIDEO_RENDER_COST).
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
-        // SV1-screen-size-subtitles (#365): "Preview subtitles at", 0 Video
-        // resolution (as encoded, decision 5 of 2026-10-15), 1 Screen size
-        // (sharp; libass only).
+        // 0 video resolution, 1 screen size (libass only).
         {"video.previewSubtitlesAt", "", Int, Profile, Mapped, false, std::int64_t{0}},
-        // AD2 (#311): "Fill in my last answers" (AD2-fill-last-answers, off
-        // by default); script dialogs' last answers, one "<key>\t<JSON>" row
-        // per dialog, the one used last first, at most 200; and their
-        // presets, one row per dialog (ScriptDialogMemory).
+        // dialogAnswers: one "<key>\t<JSON>" row per dialog, last used first, at most 200.
         {"automation.fillLastAnswers", "", Bool, Profile, Mapped, false, false},
         {"automation.dialogAnswers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // GR1 (#364): grammar check with Harper, Off (0, the default) or
-        // English (US) 1, (UK) 2, (Canada) 3, (Australia) 4; and Harper's 15
-        // rule groups (core::grammar::groupIds), each on unless switched off
-        // on the Spelling & grammar page or by "Ignore this rule".
+        // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},
@@ -425,9 +326,6 @@ const std::vector<SettingDefinition> &definitions()
         {"grammar.group.wordChoiceAndUsage", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.regionalismsAndDialect", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.miscellaneous", "", Bool, Profile, Mapped, false, true},
-        // SH3 (#223): What's new. The version that ran last, recorded at each
-        // start, and the one that ran before the installed version: the notes
-        // of the releases after it show, until the next update.
     };
     return table;
 }
@@ -473,8 +371,6 @@ std::optional<std::uint32_t> parseSettingColour(std::string_view text)
 
 std::span<const std::string_view> retiredSettings()
 {
-    // A2's spectrum colours and K1's icon colours, withdrawn by K2; the
-    // editor switch (legacy EDITOR_ON), retired by WS3.
     static const std::string_view ids[] = {
         "audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner",
         "icons.light.normal", "icons.light.accent", "icons.light.active", "icons.light.disabled",
@@ -530,7 +426,7 @@ SettingValue convertSetting(const SettingValue &value, SettingType type)
                 else if constexpr (std::is_same_v<T, std::int64_t>)
                     return v != 0;
                 else if constexpr (std::is_same_v<T, std::string>) {
-                    // QVariant::toBool on text: anything but "", "0" and "false".
+                    // as QVariant::toBool: anything but "", "0" and "false"
                     std::string lower = v;
                     std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return char(std::tolower(c)); });
                     return !(lower.empty() || lower == "0" || lower == "false");
@@ -553,7 +449,7 @@ SettingValue convertSetting(const SettingValue &value, SettingType type)
                 else if constexpr (std::is_same_v<T, std::string>)
                     return v;
                 else {
-                    // QVariant::toString joins nothing: a list of one gives it, else empty.
+                    // as QVariant::toString: a list of one gives it, else empty
                     return v.size() == 1 ? v.front() : std::string();
                 }
             case StringList:
@@ -592,7 +488,7 @@ void MemorySettingsStorage::remove(const SettingDefinition &setting)
 
 SettingValue storedValue(const SettingDefinition &setting, SettingValue value)
 {
-    // PV1 (#398): Kainote's Polish "Podgląd" ("preview").
+    // HikariSub legacy's old default (Polish "preview").
     if (setting.id == "styles.previewText" && value == SettingValue(utf8(u8"Podgląd")))
         return setting.defaultValue;
     return value;
@@ -740,8 +636,6 @@ std::span<const InterimKey> interimKeys()
 
 std::span<const InterimBit> interimShiftOptionBits()
 {
-    // Legacy ShiftTimes::SaveOptions: 1 forward, 2 start time for video/audio,
-    // 4 move to video time, 8 move to audio time, 16 frames, 32 tag times.
     static constexpr InterimBit bits[] = {
         {"ShiftTimes/forward", 1},          {"ShiftTimes/fromStartTime", 2}, {"ShiftTimes/moveToVideoTime", 4},
         {"ShiftTimes/moveToAudioTime", 8}, {"ShiftTimes/byFrames", 16},    {"ShiftTimes/tagTimes", 32},

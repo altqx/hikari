@@ -37,19 +37,16 @@ u16 lowered(u16v text, const FontNameLower &lower)
 
 bool hasNoCase(const std::vector<u16> &list, u16v name, const FontNameLower &lower)
 {
-    // wxArrayString::Index(name, false).
     return std::any_of(list.begin(), list.end(), [&](const u16 &f) { return sameNoCase(f, name, lower); });
 }
 
 void sortNoCase(std::vector<u16> &list, const FontNameLower &lower)
 {
-    // FontsTmp->Sort(CmpNoCase); the names differ ignoring case.
     std::stable_sort(list.begin(), list.end(), [&](const u16 &a, const u16 &b) { return compareNoCase(a, b, lower) < 0; });
 }
 
-// The search both partial-name selections share (FontDialog.cpp:276-300,
-// FontCatalogList.cpp:273-301): `k` carries over from font to font.
-// Returns the chosen index, or -1 to take `lastMatch`.
+// -1: take `lastMatch`.
+// MUST KILL: `k` is not reset between fonts
 int partialSearch(const std::vector<u16> &fonts, const u16 &partial, const FontNameLower &lower, int &lastMatch)
 {
     std::size_t k = 0;
@@ -86,7 +83,7 @@ std::u32string filterCharacters(u16v filter, FontListPlatform platform)
         const bool high = c >= 0xD800 && c < 0xDC00, surrogate = c >= 0xD800 && c < 0xE000;
         if (platform == FontListPlatform::Windows) {
             if (!surrogate)
-                out += char32_t(c); // U16_IS_SURROGATE units are skipped
+                out += char32_t(c);
             continue;
         }
         if (high && i + 1 < filter.size() && filter[i + 1] >= 0xDC00 && filter[i + 1] < 0xE000) {
@@ -113,9 +110,6 @@ FontFamilies::FontFamilies(FontServicePort &fonts, FontNameLower lower, FontList
 
 void FontFamilies::enumerate()
 {
-    // EnumerateFontsLocked: each face the provider lists, once per name
-    // ignoring case; the filtered list checks a face only while its name is
-    // not in it yet.
     const std::vector<SystemFace> faces = m_fonts.pickerFaces(m_environment);
     std::vector<bool> covers;
     if (m_filtered)
@@ -157,8 +151,6 @@ const std::vector<u16> &FontFamilies::filteredFonts(u16v filter)
 
 void FontFamilies::refilter(u16v filter)
 {
-    // m_filter may already hold it (filteredFonts remembers the last text
-    // without listing): the list is made again all the same.
     m_filter = u16(filter);
     if (m_filtered)
         enumerate();
@@ -180,7 +172,6 @@ std::vector<std::string> FontFamilies::unreadableExternalFonts()
 
 std::vector<u16> catalogChoices(const std::vector<u16> &names, const u16 &allFonts, const u16 &withoutCatalog)
 {
-    // HikariChoice::Insert: pos = MID(0, position, size - 1).
     std::vector<u16> list = names;
     const auto insert = [&](const u16 &what, int position) {
         const int pos = std::max(0, std::min(position, int(list.size()) - 1));
@@ -207,14 +198,13 @@ std::vector<u16> catalogView(int selection, u16v value, const std::vector<u16> &
     std::vector<u16> list;
     if (const auto *cfonts = catalogs.sortedFonts(value))
         for (const auto &font : *cfonts)
-            if (std::find(fonts.begin(), fonts.end(), font) != fonts.end()) // fonts->Index(font)
+            if (std::find(fonts.begin(), fonts.end(), font) != fonts.end())
                 list.push_back(font);
     return list;
 }
 
 int fontListPartialIndex(const std::vector<u16> &fonts, u16v partial, const FontNameLower &lower)
 {
-    // SetSelection(pos): below 0 is none (-1), past the end the last font.
     const auto select = [&](int pos) { return pos < 0 ? -1 : pos >= int(fonts.size()) ? int(fonts.size()) - 1 : pos; };
     if (partial.empty())
         return select(0);
@@ -234,7 +224,7 @@ int fontListNameIndex(const std::vector<u16> &fonts, u16v name, const FontNameLo
 int catalogListPartialIndex(const std::vector<u16> &fonts, u16v partial, const FontNameLower &lower)
 {
     if (partial.empty())
-        return 0; // goto done: lastMatch
+        return 0;
     int lastMatch = 0;
     const int found = partialSearch(fonts, lowered(partial, lower), lower, lastMatch);
     return found < 0 ? lastMatch : found;
@@ -253,7 +243,7 @@ PickerResolution pickerResolution(const FontReport &report)
             break;
         }
     if (!base)
-        return r; // Missing
+        return r;
     r.kind = request.requestedFamilyFound ? PickerResolution::Kind::Requested
              : base->stage == SelectionStage::Requested ? PickerResolution::Kind::Substituted
                                                          : PickerResolution::Kind::Fallback;
@@ -269,23 +259,20 @@ PickerResolution pickerResolution(const FontReport &report)
 ExternalFontsLoad loadExternalFonts(u16v path, const FontNameLower &lower, FontListPlatform platform)
 {
     ExternalFontsLoad out;
-    // FindFirstFileW(path + "*"): the folder before the last separator,
-    // the name pattern after it.
     const u16 pattern = u16(path) + u"*";
     const std::size_t slash = platform == FontListPlatform::Windows ? pattern.find_last_of(u"\\/") : pattern.rfind(u'/');
     const u16 folder = slash == u16::npos ? u16(u".") : pattern.substr(0, slash == 0 ? 1 : slash);
     const u16 filespec = slash == u16::npos ? pattern : pattern.substr(slash + 1);
     using namespace legacy_dir;
     const auto entries = legacy_dir::entries(std::filesystem::path(folder), filespec, Files | Dirs | Hidden);
-    // Windows lists "." and ".." in any folder; the Linux shim found nothing
-    // in an empty one and failed (platform.h:523-538).
+    // FindFirstFileW always finds "." on Windows; an empty folder fails on Linux
     if (!entries || (platform == FontListPlatform::Linux && entries->empty()))
         return out;
     out.opened = true;
     for (const auto &entry : *entries) {
         std::error_code ec;
         if (std::filesystem::is_directory(entry, ec))
-            continue; // nFileSizeLow is 0
+            continue;
         const auto size = std::filesystem::file_size(entry, ec);
         if (ec || (size & 0xFFFFFFFFu) == 0)
             continue;

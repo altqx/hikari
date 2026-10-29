@@ -1,15 +1,5 @@
 #pragma once
 
-// O1: the settings registry. Every legacy option (config.h CONFIG, the 207
-// rows of docs/proposals/settings-migration-map/options.csv) has a stable,
-// untranslated SettingId with its type, scope, default and legacy name; the
-// rewrite's own settings join it. Settings reads and writes typed values
-// through a storage port, so the Qt INI file stays an adapter.
-//
-// Defaults are legacy config::LoadDefaultConfig / LoadDefaultAudioConfig; an
-// option those do not assign starts as legacy's empty string, read as false,
-// 0 or empty (GetBool, wxAtoi, GetString, GetTable).
-
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -24,26 +14,24 @@ namespace hikari::application {
 
 enum class SettingType { Bool, Int, String, StringList };
 
-// Who owns the value (settings-import.md "Ownership and records").
 enum class SettingScope { Profile, Collection, Workspace };
 
-// The migration map's disposition: Unresolved keeps the value without a
-// consumer decision yet; Excluded (legacy themes) is never stored.
+// Unresolved keeps the value without a consumer yet; Excluded is never stored.
 enum class SettingDisposition { Mapped, Unresolved, Excluded };
 
 using SettingValue = std::variant<bool, std::int64_t, std::string, std::vector<std::string>>;
 
 struct SettingDefinition {
     std::string_view id;        // stable persisted identity, e.g. "grid.hideColumns"
-    std::string_view legacyKey; // the Config.txt / AudioConfig.txt name; empty for rewrite settings
+    std::string_view legacyKey; // the Config.txt / AudioConfig.txt name; empty for HikariSub's own settings
     SettingType type;
     SettingScope scope;
     SettingDisposition disposition;
-    bool legacyAudioFile; // AudioConfig.txt (config::IsAudioOption)
+    bool legacyAudioFile;       // kept in AudioConfig.txt
     SettingValue defaultValue;
 };
 
-// All settings, legacy ones in config.h order, then the rewrite's own.
+// HikariSub legacy's settings first, then HikariSub's own.
 std::span<const SettingDefinition> settingDefinitions();
 const SettingDefinition *findSetting(std::string_view id);
 const SettingDefinition *findLegacySetting(std::string_view legacyKey);
@@ -85,7 +73,6 @@ public:
     // or excluded id. The observer hears of each value that changes.
     bool set(std::string_view id, const SettingValue &value);
     void reset(std::string_view id);
-    // Legacy config::ResetDefault: every setting back to its default.
     void resetAll();
 
     using Observer = std::function<void(const SettingDefinition &)>;
@@ -101,38 +88,33 @@ private:
 // from one string as one entry.
 SettingValue convertSetting(const SettingValue &value, SettingType type);
 
-// A stored value as it reads: one equal to a default the rewrite replaced
-// was never chosen (a profile or legacy Config.txt holding it), and reads as
-// the new default (PV1 #398: styles.previewText's "Podgląd").
+// A stored value equal to a default HikariSub replaced was never chosen and
+// reads as the new default.
 SettingValue storedValue(const SettingDefinition &setting, SettingValue value);
 
-// The INI keys the rewrite used before the registry (hikari.ini), migrated
-// once onto their settings.
+// The INI keys HikariSub used before the registry (hikari.ini), migrated once
+// onto their settings.
 struct InterimKey {
     std::string_view key;     // QSettings key, "Group/Name"
     std::string_view setting; // registry id
 };
 std::span<const InterimKey> interimKeys();
-// The ShiftTimes panel's booleans, packed as legacy SHIFT_TIMES_OPTIONS.
+// The ShiftTimes panel's booleans, as bits of one setting.
 struct InterimBit {
     std::string_view key;
     std::int64_t bit;
 };
 std::span<const InterimBit> interimShiftOptionBits();
-// The group the automation hotkeys used ("AutomationHotkeys/<legacy name>").
+// The group the automation hotkeys used ("AutomationHotkeys/<name>").
 inline constexpr std::string_view kInterimAutomationHotkeysGroup = "AutomationHotkeys";
 inline constexpr std::string_view kAutomationHotkeysSetting = "shortcuts.automationMacros";
-// O2: the hotkeys' (legacy SaveHkeys lines; see hotkeys.h).
+// Values are hotkey lines; see hotkeys.h.
 inline constexpr std::string_view kHotkeysSetting = "shortcuts.hotkeys";
 inline constexpr std::string_view kAudioHotkeysSetting = "shortcuts.audioHotkeys";
 
-// K2 withdrew the per-colour settings (A2's audio.spectrum* colours, K1's
-// icons.<appearance>.<state> colours) for the theme layer's fixed colours,
-// and WS3 the editor switch (workspace.editorOn): their ids, which a profile
-// may still hold (the INI store drops them).
+// Withdrawn setting ids a profile may still hold (the INI store drops them).
 std::span<const std::string_view> retiredSettings();
-// wxColour::Set's "#RRGGBB" (and "#RRGGBBAA") as 0xAARRGGBB; nothing when it
-// is not one.
+// "#RRGGBB" or "#RRGGBBAA" as 0xAARRGGBB; nullopt otherwise.
 std::optional<std::uint32_t> parseSettingColour(std::string_view text);
 
 } // namespace hikari::application

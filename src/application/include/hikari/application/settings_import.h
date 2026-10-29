@@ -1,42 +1,5 @@
 #pragma once
 
-// O3: the one-shot legacy settings importer's readers and review plan
-// (docs/proposals/settings-import.md, accepted 2026-09-27 and 2026-09-29:
-// S44-import, S44-macro-alias and C04-short-file; the migration worksheet
-// docs/proposals/settings-migration-map.md). No file system and no Qt:
-// the caller (app::SettingsImportController) discovers the legacy root, hashes
-// and snapshots its files, and stages, activates and rolls back generations.
-//
-// The legacy loaders are never run: config::LoadOptions / LoadAudioOpts /
-// SetRawOptions and Hotkeys::LoadHkeys rewrite their inputs (ConfigConverter,
-// "The shortcuts file is outdated") and install defaults. The readers here
-// reproduce what those loaders put in effect at 20d647c4 (citing them), on a
-// snapshot, and say what they found:
-// - Config.txt / AudioConfig.txt: SetRawOptions' lines and brace blocks, the
-//   ConfigConverter renames for old headers (ConfigNeedToConvert), the
-//   record-count rule, AudioConfig's reset of the audio options, and each
-//   option's typed reading (GetBool, wxAtoi, GetTable).
-// - Hotkeys.txt / AudioHotkeys.txt: LoadHkeys' header rule for four-part
-//   build headers (a semantic version header is current:
-//   O3-hotkeys-semver-header, approved 2026-10-05), the ConvertHotkeys renames, "<SYMBOL or id> <G|S|E|V|A>=<accel>" and the
-//   "Script <file>-<k>=<accel>" automation lines. A short file's valid
-//   bindings are read (C04-short-file, approved 2026-09-27).
-// - Rules.txt, Dictionary/UserDic.udic and Dictionary/*.dic/.aff pairs are
-//   authored collections. The dictionaries are carried over byte for byte
-//   (R6-dictionary-location); Rules.txt is read the legacy way and written as
-//   rules.toml (CF2, #489).
-//
-// The plan has a row for every record found and for every registry option
-// and default binding the files leave out, with its destination or an explicit
-// disposition. Legacy themes are excluded (PROGRAM_THEME, Themes/*.txt and any
-// colour key: per-colour theme settings are gone, the theme layer owns
-// appearance). The wave-5 retirements (user decisions, 2026-10-05) are dropped
-// with a notice: GLOBAL_VIDEO_INDEXING bindings, and TOOLBAR_IDS /
-// TOOLBAR_ALIGNMENT (no main toolbar); so are GLOBAL_OPEN_DUMMY_AUDIO
-// bindings (AV3, owner 2026-10-18) and WS3's (owner 2026-10-18): the
-// GLOBAL_VIEW_* and GLOBAL_EDITOR bindings and EDITOR_ON. Unknown and invalid
-// records stay visible as unresolved.
-
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/settings.h"
 
@@ -54,10 +17,7 @@ namespace hikari::application::settings_import {
 // The mapping's version: a receipt made with another one is a fresh diff.
 inline constexpr int kMappingVersion = 1;
 
-// Whose reading of the text files (R5-per-platform): the Windows build read in
-// text mode, stopping at Ctrl+Z. CRLF reads as LF on every platform
-// (O3-linux-crlf-blocks, approved 2026-10-05), where the Linux build kept
-// every '\r' and so never closed a brace table.
+// Windows reads stop at Ctrl+Z (text mode); CRLF reads as LF on both.
 enum class ReadBy { Windows, Linux };
 #ifdef _WIN32
 inline constexpr ReadBy kReadBy = ReadBy::Windows;
@@ -67,34 +27,29 @@ inline constexpr ReadBy kReadBy = ReadBy::Linux;
 
 enum class SourceKind { Config, AudioConfig, Hotkeys, AudioHotkeys, Rules, UserDictionary, Dictionary };
 
-// A legacy root's file (legacy pathfull: the folder of the executable).
+// A file under a HikariSub legacy root, the folder of its executable.
 struct KnownSource {
     SourceKind kind;
     std::string_view path; // relative to the root, '/' separated
 };
-// Config/Config.txt, Config/AudioConfig.txt, Config/Hotkeys.txt,
-// Config/AudioHotkeys.txt, Config/Rules.txt, Dictionary/UserDic.udic
-// (config.cpp:542-545, 868; Hotkeys.cpp:241; MisspellReplacer.cpp:262;
-// SpellChecker.cpp:49-50). Dictionary/*.dic and *.aff are found by listing.
+// Dictionary/*.dic and *.aff are not listed; they are found by listing the folder.
 std::span<const KnownSource> knownSources();
 
 struct SourceFile {
     SourceKind kind = SourceKind::Config;
     std::string path;   // relative to the root ("Config/Config.txt")
-    std::string bytes;  // the snapshot's bytes
-    std::string sha256; // hex, the caller's
+    std::string bytes;
+    std::string sha256; // hex
 };
 
-// How text bytes were read. Legacy's wxConvAuto read a BOM or valid UTF-8;
-// anything else is ambiguous here: the plan offers an explicit
-// interpretation rather than a silent guess.
+// For text with no BOM that is not valid UTF-8.
 enum class Interpretation { Latin1, Windows1252 };
 struct TextEvidence {
     bool utf8Bom = false;
     bool utf16Bom = false;
     bool validUtf8 = false;
     bool decoded = false;
-    bool crlf = false; // CR LF pairs were read as LF (O3-linux-crlf-blocks on Linux)
+    bool crlf = false; // CR LF pairs were read as LF
     std::string interpretation; // "UTF-8", "UTF-16LE", "Latin-1", ...; empty when not decoded
 };
 struct DecodedText {
@@ -104,39 +59,30 @@ struct DecodedText {
 DecodedText decodeSettingsText(std::string_view bytes, ReadBy readBy,
                                std::optional<Interpretation> interpretation = std::nullopt);
 
-// ---- Config.txt / AudioConfig.txt
-
 struct ConfigRecord {
     int line = 0;           // 1-based line in the file (the block's first line)
-    std::string label;      // CatchValsLabs' label, after a ConfigConverter rename
-    std::string value;      // its value (a block's whole "{\n\t...\n}")
-    std::string renamedFrom; // the old name ConfigConverter replaced, if any
+    std::string label;      // after any rename
+    std::string value;      // a block's whole "{\n\t...\n}"
+    std::string renamedFrom; // the old name, if renamed
 };
 struct ConfigFile {
-    std::string header;     // the first line's "[...]" name (txt.BeforeFirst(']').Mid(1))
-    bool converted = false; // ConfigNeedToConvert: the old names were renamed
+    std::string header;     // the first line's "[...]" name
+    bool converted = false; // old names were renamed
     bool crashed = false;   // ended with "___Program Crashed___"
-    int count = 0;          // SetRawOptions' g
+    int count = 0;          // non-blank lines and blocks
     std::vector<ConfigRecord> records;
     std::string unterminatedBlock; // a block whose "}" never came (dropped)
 };
-// config::ConfigNeedToConvert (config.cpp:852-862).
 bool configNeedsConversion(std::string_view header);
-// ConfigConverter::ConvertConfig's text (ConfigConverter.cpp:503-551), with
-// the header line it writes ("[<progname>]"); `renames` gets each renamed
-// line's old name, by the converted text's line.
+// Writes the header "[<progname>]"; `renames` gets each renamed line's old
+// name, by line of the converted text.
 std::string convertConfigText(std::string_view text, std::string_view progname,
                               std::map<int, std::string> *renames = nullptr);
-// LoadOptions / LoadAudioOpts up to SetRawOptions (config.cpp:538-577,
-// 864-884, 120-153): text as FileOpen gave it.
 ConfigFile readConfigFile(std::string_view text);
 
-// GetTable's reading of a brace table (config.cpp:753-765): the text between
-// "{\n" and "\n}" split at '\n', each entry without its first character.
+// The text between "{\n" and "\n}" split at '\n', each entry without its first character.
 enum class TableMode { Strtok, ReturnEmptyAll };
 std::vector<std::string> legacyTable(std::string_view value, TableMode mode);
-
-// ---- Hotkeys.txt / AudioHotkeys.txt
 
 struct HotkeyRecord {
     int line = 0;
@@ -145,49 +91,41 @@ struct HotkeyRecord {
     std::string label;       // the symbol, number or script name
     int window = -1;         // "GSEVA".find(letter), -1 when not one
     std::string accel;       // the binding, "" for a blank record
-    std::string renamedFrom; // the old name ConfigConverter replaced, if any
+    std::string renamedFrom; // the old name, if renamed
 };
 struct HotkeyFile {
     std::string header;     // the first line when it starts with '['
-    int version = 0;        // wxAtoi of the build number LoadHkeys reads
-    bool semanticVersion = false; // "[<name> v<semver>]": read as current (O3-hotkeys-semver-header)
-    bool accepted = false;  // read: checkVer, or a semantic version header
-    bool converted = false; // version < 1141: ConvertHotkeys renames
-    int count = 0;          // LoadHkeys' g
+    int version = 0;        // the header's build number
+    bool semanticVersion = false; // "[<name> v<semver>]": read as current
+    bool accepted = false;  // a current build, or a semantic version header
+    bool converted = false; // version < 1141: old names renamed
+    int count = 0;          // records with a binding
     std::vector<HotkeyRecord> records;
 };
-// Hotkeys::LoadHkeys (Hotkeys.cpp:236-311) and ConvertHotkeys
-// (ConfigConverter.cpp:579-608).
-// wxAtoi reads the build number each build's way (hotkeyLabelNumber).
+// `windows`: read the build number as the Windows build did (hotkeyLabelNumber).
 HotkeyFile readHotkeyFile(std::string_view text, bool windows = kReadBy == ReadBy::Windows);
-
-// ---- Migration tables (ConfigConverter::CreateTable, theme exclusions)
 
 struct ConfigAlias {
     std::string_view from;
     std::string_view to;
     std::string_view delimiter; // "", "\f", "|" or ","
 };
-std::span<const ConfigAlias> configAliases();  // 179
+std::span<const ConfigAlias> configAliases();
 struct NameAlias {
     std::string_view from;
     std::string_view to;
 };
-std::span<const NameAlias> colourAliases();    // 133 (theme files only)
-std::span<const NameAlias> hotkeyAliases();    // 162
-// config.h COLOR: the 139 theme colour keys (theme-exclusions.csv).
+std::span<const NameAlias> colourAliases();    // theme files only
+std::span<const NameAlias> hotkeyAliases();
 std::span<const std::string_view> themeColourKeys();
-// The options LoadDefaultConfig and LoadDefaultAudioConfig assign.
+// The options HikariSub legacy assigns defaults to.
 std::span<const std::string_view> mainDefaultKeys();
 std::span<const std::string_view> audioDefaultKeys();
-// Retired by the wave-5 user decisions (2026-10-05) and by WS3 (#217, owner
-// 2026-10-18); the reason is the plan row's notice (empty: not retired).
+// The reason is the plan row's notice; empty: not retired.
 bool isRetiredOption(std::string_view legacyKey);
 bool isRetiredAction(int id);
 std::string_view retiredOptionReason(std::string_view legacyKey);
 std::string_view retiredActionReason(int id);
-
-// ---- The plan
 
 enum class RowKind { File, Setting, Shortcut, Macro, Collection };
 enum class Disposition {
@@ -197,7 +135,7 @@ enum class Disposition {
     Missing,    // the legacy file leaves it out (no change; a default binding may be unbound)
     Superseded, // legacy did not keep it in effect (a later record, the audio reset...)
     Unresolved, // unknown, invalid, foreign-platform or undecodable: report only
-    Excluded,   // legacy themes (accepted exclusion)
+    Excluded,   // legacy themes
     Retired,    // retired action or option: dropped with a notice
 };
 std::string_view dispositionName(Disposition d);
@@ -226,9 +164,8 @@ struct DestinationFile {
     std::string bytes;
     std::string sha256;
 };
-// The destination profile the plan compares with.
 struct Destination {
-    // Registry values that are set (Settings::isSet).
+    // Only values that are set.
     std::map<std::string, SettingValue, std::less<>> values;
     // Authored collection files present, by path in the settings folder
     // ("rules.toml", "Dictionary/UserDic.udic").
@@ -241,17 +178,14 @@ struct Destination {
     // An imported macro binding's problem with the scripts loaded now
     // (missing, basename collision); "" when it resolves. Optional.
     std::function<std::string(std::string_view alias)> macroProblem;
-    // W2: whether a subtitle renderer is installed here (among
-    // SubtitleRendererSelection::providers); VSFILTER_INSTANCE naming one
-    // that is not stays unresolved. Unset: not checked.
+    // A VSFILTER_INSTANCE naming a renderer not installed stays unresolved.
+    // Unset: not checked.
     std::function<bool(std::string_view name)> rendererInstalled;
-    // CF2 (#489): rules.toml's text for Rules.txt's bytes, read as legacy's
-    // FillRulesList read them. Unset: the rules are not imported.
+    // rules.toml's text for Rules.txt's bytes. Unset: the rules are not imported.
     std::function<std::string(std::string_view legacy)> convertRules;
 };
 
-// What an activated import recorded (its identity: the source hashes, the
-// mapping version and the destination profile) and the rows it imported.
+// Identity: the source hashes, the mapping version and the destination profile.
 struct Receipt {
     std::vector<std::pair<std::string, std::string>> sources; // path, sha256
     int mappingVersion = kMappingVersion;
@@ -259,8 +193,7 @@ struct Receipt {
     // Row id -> the value it wrote; kept rows are absent.
     std::map<std::string, SettingValue, std::less<>> imported;
     std::set<std::string, std::less<>> kept;
-    // The legacy root it was read from (#401: its autosaves); not part of
-    // the identity.
+    // The legacy root it was read from; not part of the identity.
     std::string root;
     bool sameIdentity(const Receipt &other) const;
 };
@@ -294,12 +227,10 @@ struct Profile {
 };
 Profile profileOf(const Destination &destination);
 Profile applyPlan(const Plan &plan, const std::set<std::string, std::less<>> &chosen, const Destination &destination);
-// The rows the user's choice imports by default.
 std::set<std::string, std::less<>> proposedRows(const Plan &plan);
 Receipt receiptOf(const Plan &plan, const std::set<std::string, std::less<>> &chosen, std::string destinationProfile);
 
-// The registry settings whose values are paths (foreign and missing ones are
-// reported) and the brace-table options' GetTable mode.
+// Foreign and missing paths in these settings are reported.
 bool isPathSetting(std::string_view id);
 bool isPathListSetting(std::string_view id);
 // A path written for the other platform: a drive or UNC path on Linux, a

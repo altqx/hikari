@@ -19,7 +19,7 @@ std::optional<std::string> scriptInfo(const core::Document &document, std::u8str
 bool isAbsolute(const std::string &path, bool windows)
 {
     if (windows)
-        return path.size() > 1 && path[1] == ':'; // legacy: find(':') == 1
+        return path.size() > 1 && path[1] == ':';
     return !path.empty() && path[0] == '/';
 }
 
@@ -37,7 +37,7 @@ std::optional<MediaReference> resolve(const core::Document &document, std::u8str
     if (!value || value->empty())
         return std::nullopt;
     MediaReference ref{*value, std::nullopt};
-    // V3: a dummy video is no file (Notebook::LoadVideo, Notebook.cpp:1174-1175)
+    // a "?dummy" video is not a file
     if (key == u8"Video File" && value->starts_with("?dummy")) {
         ref.resolved = *value;
         return ref;

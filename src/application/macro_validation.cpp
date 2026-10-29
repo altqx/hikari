@@ -14,8 +14,6 @@ std::filesystem::path normalized(const std::string &utf8)
     fs::path p(std::u8string(utf8.begin(), utf8.end()));
     std::error_code ec;
     if (p.is_relative()) {
-        // A relative Document script resolves against the working directory
-        // (legacy wxFileExists), as the manager loaded it.
         const fs::path absolute = fs::absolute(p, ec);
         if (!ec)
             p = absolute;

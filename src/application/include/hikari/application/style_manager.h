@@ -1,9 +1,5 @@
 #pragma once
 
-// Y1/Y2: the Style manager (legacy GLOBAL_OPEN_STYLE_MANAGER: StyleStore,
-// StyleChange, Styles and the style catalogs of config.cpp at 20d647c4).
-// The same list operations serve the Document's Styles and a catalog's.
-
 #include "hikari/application/edit_session.h"
 #include "hikari/core/style.h"
 
@@ -23,7 +19,6 @@ namespace hikari::application {
 
 using StyleList = std::vector<core::StyleValues>;
 
-// Styles::Compare / CopyChanges field bits (styles.h).
 namespace style_field {
 inline constexpr int FontName = 1, FontSize = 2, Bold = 4, Italic = 8, Underline = 16, StrikeOut = 32,
                      Primary = 64, Secondary = 128, Outline = 1 << 8, Shadow = 1 << 9, OutlineWidth = 1 << 10,
@@ -31,125 +26,92 @@ inline constexpr int FontName = 1, FontSize = 2, Bold = 4, Italic = 8, Underline
                      BorderStyle = 1 << 16, Alignment = 1 << 17, MarginLeft = 1 << 18, MarginRight = 1 << 19,
                      MarginVertical = 1 << 20, Encoding = 1 << 21;
 } // namespace style_field
-// The fields that differ (Styles::Compare).
+// The style_field bits that differ.
 int compareStyles(const core::StyleValues &a, const core::StyleValues &b);
-// `target` takes the `fields` of `changed` (Styles::CopyChanges).
 core::StyleValues copyStyleChanges(core::StyleValues target, const core::StyleValues &changed, int fields);
 
-// Legacy Styles(): Default, Garamond 40, white, outline blue, 2/2, alignment 2, margins 20.
 core::StyleValues defaultStyle(std::u8string name = u8"Default");
-// "New Style", "New Style1", ... the first free name (OnAssNew / OnStoreNew).
+// "New Style", "New Style1", ...: the first free name.
 std::u8string newStyleName(const StyleList &styles, std::u8string_view base = u8"New Style");
 
-// Answers to "Style named \"%s\" already exists. Replace?".
 enum class Replace { Yes, YesToAll, No, Cancel };
 using AskReplace = std::function<Replace(const std::u8string &name)>;
-// OnAddToStore / OnAddToAss / LoadStylesS: each Style is added, or replaces
-// the first of its name when the answer says so. With `cancelStops` (the
-// Add to storage / Add to ASS buttons) Cancel ends the transfer; otherwise
-// (Load, Add to all open ASS files) it answers No for every later name.
-// Returns the rows of the Styles added or replaced (the legacy selection).
+// Adds each Style, or replaces the first of its name when `ask` says so. Cancel ends the transfer
+// with `cancelStops`, else answers No for every later name. Returns the rows added or replaced.
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const AskReplace &ask,
                                         bool cancelStops = true);
 
-// PK1 (#301): the clash review's answer for each name already present.
 enum class ClashAction { Replace, Rename, Skip };
 struct ClashChoice {
     ClashAction action = ClashAction::Skip;
     std::u8string newName;
 };
-// The clash review's answers, per clash: its name and which Style of that
-// name it is among the Styles transferred (0 the first, clash or not), so
-// that several Styles of one name are answered apart, and one review holds
-// for Documents with other names (every ASS Document).
+// Name and its 0-based occurrence among the incoming Styles, clash or not.
 using ClashKey = std::pair<std::u8string, int>;
 using ClashChoices = std::map<ClashKey, ClashChoice>;
-// Each Style is added; one whose name is taken (in `into`, or earlier in
-// `styles`) replaces the first of that name, is added under its new name
-// (the first free one from it, "<new> (2)"..., when that is taken too) or is
-// left out, as its clash's choice says; without a choice it is left out.
-// Returns the rows of the Styles added or replaced.
+// A Style whose name is taken (in `into` or earlier in `styles`) follows its clash's choice; without
+// one it is left out. A taken new name gets "<new> (2)"... Returns the rows added or replaced.
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices);
-// "<name> (2)", "<name> (3)"... the first that names no Style of `styles`.
+// "<name> (2)", "<name> (3)"...: the first that names no Style.
 std::u8string freeStyleName(const StyleList &styles, std::u8string_view name);
-// The same against a set of names made once (namesOf), for many names:
-// each candidate is a lookup, not a scan of the list.
 using StyleNames = std::unordered_set<std::u8string>;
 StyleNames namesOf(const StyleList &styles);
 std::u8string freeStyleName(const StyleNames &names, std::u8string_view name);
 
 enum class StyleMove { ToStart, Up, Down, ToEnd };
-// OnStyleMove: the selected rows (ascending) move together, clamped at the
-// ends; returns their new rows.
+// `rows` ascending; they move together, clamped at the ends. Returns their new rows.
 std::vector<std::size_t> moveStyles(StyleList &styles, std::vector<std::size_t> rows, StyleMove move);
-// Sort by name (locale collation; bytes when empty). Legacy std::sort is
-// not stable; equal names keep their order here.
+// Stable; `compare` empty: byte order.
 using NameCompare = std::function<int(std::u8string_view, std::u8string_view)>;
 void sortStyles(StyleList &styles, const NameCompare &compare = {});
 
-// StyleStore::ChangeStyle for an editor commit. `row` is the edited Style
-// (nullopt: a new or copied Style, added at the end). Refused, with the
-// legacy "Style named \"%s\" already exists.", when a new Style's name is
-// taken or an edit renames to a taken name. With `fields` (the multi-edit
-// "Change all selected styles?" answered Yes) the other `selected` rows
-// take those fields too. Returns the row of the committed Style.
+// `row` nullopt: a new Style, added at the end. Refused with the name when a new Style's name is
+// taken or an edit renames to a taken name. With `fields` the other `selected` rows take those
+// fields too. Returns the committed Style's row.
 struct StyleEdit {
     std::optional<std::size_t> row;
     core::StyleValues style;
-    std::u8string oldName; // the name the editor opened with
+    std::u8string oldName; // as the editor opened it
     std::vector<std::size_t> selected;
     int fields = 0;        // 0: no multi-edit
 };
 std::expected<std::size_t, std::u8string> commitStyle(StyleList &styles, const StyleEdit &edit);
 
-// --- The Document's Styles ("Style editing" steps) ---------------------
-
-// Refused for a Document without ASS Styles (line formats, SSA layouts).
+// nullopt for a Document without ASS Styles.
 std::optional<StyleList> documentStyles(const EditSession &session);
-// Replaces the Document's Styles with `styles`; `origin[i]` is the row a
-// Style had before (nullopt for a new one), so unchanged ones keep their
-// bytes. With `rename` the Lines in `rename->first` take `rename->second`
-// (legacy "Style name modified. Do you want to change all instances to the
-// new name?"). Nothing happens when nothing changes.
+// `origin[i]` is a Style's previous row (nullopt: new), so unchanged ones keep their bytes. With
+// `rename` the Lines in `rename->first` take `rename->second`. No step when nothing changes.
 std::expected<void, CommandRefusal>
 setDocumentStyles(EditSession &session, const StyleList &styles, const std::vector<std::optional<std::size_t>> &origin,
                   std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt);
 
-// OnCleanStyles: removes the Styles no Line uses (never TLMode Style).
+// Removes Styles no Line uses, never the TLMode Style.
 struct CleanResult {
     std::vector<std::u8string> used, deleted;
 };
 std::expected<CleanResult, CommandRefusal> cleanDocumentStyles(EditSession &session);
 
-// --- Style catalogs (Y2) -------------------------------------------------
-
-// A catalog file (<settings>/Catalog/<name>.sty): "Style: " lines; written
-// UTF-8 with a BOM, each Style as Styles::GetRaw with CRLF.
+// .sty catalog: "Style: " lines; written UTF-8 with a BOM and CRLF.
 StyleList readCatalog(std::string_view bytes);
 std::string writeCatalog(const StyleList &styles);
 
 class StyleCatalogs {
 public:
     explicit StyleCatalogs(std::filesystem::path directory);
-    // The catalog names (the .sty files; legacy creates Default when none).
+    // A Default catalog is created when there is none.
     const std::vector<std::u8string> &names() const { return m_names; }
     const std::u8string &current() const { return m_current; }
     StyleList &styles() { return m_styles; }
     const StyleList &styles() const { return m_styles; }
     // Saves the current catalog first when changed, then loads another.
     bool choose(const std::u8string &name);
-    // NewCatalog: an empty catalog, made current (written on the next save).
+    // Made current; written on the next save.
     bool create(const std::u8string &name);
     // Deletes a catalog other than Default; the one before it becomes current.
     bool remove(const std::u8string &name);
     void markChanged() { m_changed = true; }
-    // config::GetConversionStyle: the Style `style` of catalog `catalog` (the
-    // current list for the current catalog, else read from its file), or
-    // nullopt when either is missing. Legacy loaded that catalog as the
-    // current one on the way; the current catalog is left alone here.
+    // Reads another catalog from its file without making it current; nullopt when either is missing.
     std::optional<core::StyleValues> find(const std::u8string &catalog, const std::u8string &style) const;
-    // The Styles of catalog `catalog` (PU6: the conversion's Style choice);
-    // nullopt for a catalog that is not there.
     std::optional<StyleList> list(const std::u8string &catalog) const;
     bool save();
 

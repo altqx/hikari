@@ -19,7 +19,6 @@ namespace {
 
 using u16 = std::u16string;
 
-// wxString::Mid: past the end gives "", the count is clamped.
 u16 wxMid(const u16 &s, std::size_t first, std::size_t count = u16::npos)
 {
     if (first > s.size())
@@ -27,7 +26,7 @@ u16 wxMid(const u16 &s, std::size_t first, std::size_t count = u16::npos)
     return s.substr(first, std::min(count, s.size() - first));
 }
 
-// wxString::SubString(from, to): from..to inclusive.
+// from..to inclusive.
 u16 wxSubString(const u16 &s, std::size_t from, std::size_t to)
 {
     return wxMid(s, from, to - from + 1);
@@ -38,8 +37,6 @@ char16_t lowerAscii(char16_t c)
     return c >= u'A' && c <= u'Z' ? static_cast<char16_t>(c - u'A' + u'a') : c;
 }
 
-// wxString::Lower, one UTF-16 unit to one (U1-unicode-case: by Unicode, the
-// classes' lower case; ASCII without one).
 u16 lowered(u16 s, const KaraokeCharClass &classes)
 {
     for (auto &c : s)
@@ -47,13 +44,9 @@ u16 lowered(u16 s, const KaraokeCharClass &classes)
     return s;
 }
 
-// Legacy's regex {([^}]*)\\kf?o?[0-9]([^}]*)} (wxRE_ADVANCED) on the
-// lower-cased text: a \k, \kf, \ko or \kfo followed by a digit, inside a
-// block that opens before it (any "{" with no "}" between) and closes after.
+// A \k, \kf, \ko or \kfo and a digit inside a block that closes after it.
 bool hasKaraokeTag(const u16 &low)
 {
-    // one pass (KA1: a long unclosed block made the backward searches
-    // quadratic): whether a "{" is open here, and where the last "}" is
     const std::size_t lastClose = low.find_last_of(u'}');
     if (lastClose == u16::npos)
         return false;
@@ -76,9 +69,7 @@ bool hasKaraokeTag(const u16 &low)
     return false;
 }
 
-// Legacy Karaoke::GetNextChar: the next character outside {} blocks from
-// `j` (a block counts from a "{" seen on the way), `j` past it; at the end
-// '\t' with `j` at the end.
+// The next character outside {} blocks, `j` past it; '\t' at the end.
 char16_t nextChar(std::size_t &j, const u16 &text)
 {
     bool block = false;
@@ -103,39 +94,29 @@ std::u16string number(int value)
     return u16(text.begin(), text.end());
 }
 
-// KA1-grapheme-letters: where the letter at `at` ends: a whole grapheme, or
-// \N \n \h as one. The grapheme is read without the blocks in it, so one
-// that goes on after a block (a{\b1}\u0301) takes the block in and no split
-// comes between a letter and its marks.
+// The grapheme is read without the blocks in it, so a{\b1}\u0301 is one letter.
 std::size_t letterEnd(std::u16string_view text, std::size_t at)
 {
     if (text[at] == u'\\' && at + 1 < text.size() && (text[at + 1] == u'N' || text[at + 1] == u'n' || text[at + 1] == u'h'))
         return at + 2;
-    // the grapheme up to a block (searched for only within it: long Lines stay linear)
     const auto begin = text.begin();
     std::size_t end = static_cast<std::size_t>(
         std::find(begin + static_cast<std::ptrdiff_t>(at) + 1, begin + static_cast<std::ptrdiff_t>(core::graphemeEnd(text, at)), u'{') -
         begin);
     if (end == text.size() || text[end] != u'{')
         return end;
-    // it goes on past the block when the text after it continues it, across
-    // a few blocks at most (Codex: each block reads the grapheme again, so a
-    // letter cut by thousands of blocks would take quadratic time; past the
-    // limit the next letter goes on from the block)
     constexpr int kBlocks = 16;
-    u16 seen(text.substr(at, end - at)); // the grapheme so far, without its blocks
+    u16 seen(text.substr(at, end - at));
     std::size_t window = 64;
     int blocks = 0;
     while (end < text.size() && text[end] == u'{') {
-        std::size_t from = end; // past the block, and any right after it
+        std::size_t from = end;
         while (from < text.size() && text[from] == u'{') {
             const auto shut = text.find(u'}', from + 1);
             if (shut == u16::npos || ++blocks > kBlocks)
-                return end; // (an unclosed "{" is text, and no mark)
+                return end; // an unclosed "{" is text
             from = shut + 1;
         }
-        // the text after them up to the next block, a window of it at a time,
-        // wider while the grapheme comes too near its end to be sure of it
         u16 probe;
         std::size_t length = 0;
         for (;; window *= 2) {
@@ -148,17 +129,16 @@ std::size_t letterEnd(std::u16string_view text, std::size_t at)
                 break;
         }
         if (length <= seen.size())
-            return end; // it ends at the block
+            return end;
         end = from + (length - seen.size());
         if (length < probe.size())
             return end;
-        seen = std::move(probe); // on to the next block
+        seen = std::move(probe);
     }
     return end;
 }
 
-// KA8-multi-highlight: where a # syllable's # is (its only character outside
-// blocks is "#" or "＃"); none for any other syllable.
+// The lone "#" or "＃" outside blocks; none for any other syllable.
 std::optional<std::size_t> hashIn(const u16 &syl)
 {
     std::optional<std::size_t> at;
@@ -181,7 +161,7 @@ std::optional<std::size_t> hashIn(const u16 &syl)
 
 AudioKaraoke::Place AudioKaraoke::newPlace(const std::u16string &syl)
 {
-    // legacy GetText: into a block the syllable starts with, else a block of its own
+    // into a block the syllable starts with, else a block of its own
     Place place;
     place.at = !syl.empty() && syl[0] == u'{' && syl.find(u'}', 1) != u16::npos ? 1 : 0;
     return place;
@@ -238,7 +218,7 @@ int legacyAtoi(std::u16string_view text)
         value = std::min<std::int64_t>(value * 10 + (text[i] - u'0'), std::int64_t(INT_MAX) + 1);
     if (negative)
         value = -value;
-    // _wtoi saturates at the int range
+    // saturates like _wtoi
     return static_cast<int>(std::clamp<std::int64_t>(value, INT_MIN, INT_MAX));
 }
 
@@ -255,7 +235,6 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, const KaraokeSplitRul
 {
     clear();
     m_classes = classes;
-    // the hovered letter was another reading's: none until the pointer moves (Codex)
     hover = -1;
     character = -1;
     const u16 &Text = line.text;
@@ -266,15 +245,14 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, const KaraokeSplitRul
         return;
     }
 
-    // KA1-auto-split-language (KA1-auto-split-most: past its bound, as without it)
     const auto starts = autoSplit ? karaokeAutoSplit(Text, rules, classes) : std::vector<std::size_t>();
     if (!starts.empty()) {
         for (std::size_t s = 0; s < starts.size(); s++)
             m_syls.push_back(Text.substr(starts[s], s + 1 < starts.size() ? starts[s + 1] - starts[s] : u16::npos));
     } else {
         const auto space = [&](char16_t c) { return classes.space && classes.space(c); };
+        // MUST KILL: sentinel " X" appended only to force the last split
         const u16 low = textlow + u" X";
-        // the X is never reached: it only makes the last split
         const std::size_t end = low.size() - 1;
         std::size_t start = 0, i = 0;
         while (i < end) {
@@ -286,15 +264,11 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, const KaraokeSplitRul
                 start = i;
             }
         }
-        // A5-auto-unclosed (approved): inside an unclosed "{" the closing split
-        // never comes and legacy lost the rest; it is the last syllable instead
         if (!m_syls.empty() && start < Text.size())
             m_syls.push_back(Text.substr(start));
         if (m_syls.empty())
             m_syls.push_back(Text);
     }
-    // KA1-time-by-character: the Line's duration shared out by the
-    // syllables' characters (legacy: an equal share each)
     std::vector<std::int64_t> weights;
     std::int64_t total = 0;
     for (const auto &syl : m_syls) {
@@ -324,10 +298,6 @@ void AudioKaraoke::splitTags(const Line &line, std::vector<std::u16string> *carr
     const int len = static_cast<int>(Text.size());
     int stime = line.startMs;
 
-    // A5-kara-unclosed (R3, approved): a text ending inside a \k tag left
-    // legacy with fewer times (and tags) than syllables, which GetText, the
-    // drawing and the mouse then read past; the missing ones end at the
-    // Line's end, as a \k.
     auto pad = [&] {
         while (m_times.size() < m_syls.size())
             m_times.push_back(line.endMs);
@@ -345,11 +315,12 @@ void AudioKaraoke::splitTags(const Line &line, std::vector<std::u16string> *carr
         }
     };
 
-    Text += u'{'; // the last character's next one
+    // MUST KILL: sentinel "{" appended so Text[i + 1] stays in range
+    Text += u'{';
     bool inBrackets = false;
     std::size_t lastStartBracket = 0;
     bool kpart = false;
-    bool tagged = false; // a tag read (legacy: tags read; some may be carried in)
+    bool tagged = false;
     u16 res, kres;
     for (int i = 0; i < len; i++) {
         const char16_t ch = Text[static_cast<std::size_t>(i)];
@@ -370,19 +341,16 @@ void AudioKaraoke::splitTags(const Line &line, std::vector<std::u16string> *carr
         else if (ch == u'}')
             inBrackets = false;
 
-        // KA1-kt-tag: \kt (an absolute start) is no syllable; legacy read it as \k0
+        // \kt sets an absolute start; it is no syllable
         const bool kt = nch == u'k' && static_cast<std::size_t>(i) + 2 < Text.size() &&
                         Text[static_cast<std::size_t>(i) + 2] == u't';
         if (inBrackets && ch == u'\\' && (nch == u'k' || nch == u'K') && !kt) {
             if (tagged) {
                 m_syls.push_back(wxMid(res, 0, lastStartBracket));
-                // what is left, in place (Codex security: a copy of it for
-                // each tag of one block after a long text was quadratic)
                 res.erase(0, std::min(lastStartBracket, res.size()));
                 lastStartBracket = 0;
             }
             tagged = true;
-            // KA1-k-round-trip: the tag goes back here
             Place place;
             place.at = res.size();
             m_places.push_back(std::move(place));
@@ -396,7 +364,7 @@ void AudioKaraoke::splitTags(const Line &line, std::vector<std::u16string> *carr
                 m_tags.push_back(u16(1, ch));
             }
             if (nch == u'}' || nch == u'\\') {
-                // legacy int arithmetic (wraps like the 32-bit original)
+                // MUST KILL: unsigned casts emulate 32-bit int wraparound
                 stime = static_cast<int>(static_cast<std::uint32_t>(stime) +
                                          static_cast<std::uint32_t>(legacyAtoi(kres)) * 10u);
                 m_times.push_back(stime);
@@ -425,8 +393,6 @@ void AudioKaraoke::assign(std::vector<std::u16string> syllables, std::vector<std
     m_syls = std::move(syllables);
     m_tags = std::move(tags);
     m_times = std::move(times);
-    // KA1-k-round-trip: new syllables, each tag in its own place (the read
-    // ones' places are another text's)
     m_places.clear();
     for (const auto &syl : m_syls)
         m_places.push_back(newPlace(syl));
@@ -437,8 +403,6 @@ void AudioKaraoke::assign(std::vector<std::u16string> syllables, std::vector<std
 
 std::u16string AudioKaraoke::text(int curStartMs) const
 {
-    // KA1-k-round-trip: the syllables' texts in a row, each tag put back
-    // where it was read (legacy: always first in the syllable's first block)
     const auto placeOf = [&](std::size_t i) {
         return i < m_places.size() ? m_places[i] : newPlace(m_syls[i]);
     };
@@ -449,9 +413,6 @@ std::u16string AudioKaraoke::text(int curStartMs) const
         const Place place = placeOf(i);
         return u"\\" + m_tags[i] + (place.cs == time && !place.number.empty() ? place.number : number(time));
     };
-    // the tags in their places' order (Codex security: made one at a time,
-    // and no list of them when the places are in order, as they are but
-    // for a legacy read of a few tags in one block)
     u16 all;
     std::vector<std::pair<std::size_t, std::size_t>> order; // place, syllable
     bool ordered = true;
@@ -466,8 +427,6 @@ std::u16string AudioKaraoke::text(int curStartMs) const
             order.emplace_back(base + placeAt(i), i);
         std::ranges::stable_sort(order, {}, &std::pair<std::size_t, std::size_t>::first);
     }
-    // the last "{" and "}" before a place, read once as the places go on
-    // (Codex: a search for each tag made long blocks of tags quadratic)
     std::size_t scanned = 0, open = u16::npos, shut = u16::npos;
     const auto scanTo = [&](std::size_t at) {
         for (; scanned < at; scanned++)
@@ -485,11 +444,10 @@ std::u16string AudioKaraoke::text(int curStartMs) const
         base += m_syls[k].size();
         const u16 tag = tagOf(i);
         std::size_t at = std::clamp(wanted, from, all.size());
-        // into the block it is in, else a block of its own
         scanTo(at);
         bool inside = open != u16::npos && (shut == u16::npos || shut < open);
         if (inside && (lastShut == u16::npos || lastShut < at)) {
-            inside = false; // an unclosed "{" is text: the tag goes before it (A5-kara-unclosed)
+            inside = false; // an unclosed "{" is text
             at = std::max(open, from);
         }
         text.append(all, from, at - from);
@@ -505,15 +463,11 @@ std::u16string AudioKaraoke::text(int curStartMs) const
 
 bool AudioKaraoke::join(int i)
 {
-    // A5-join-last (R3, approved): legacy joined the last syllable with the
-    // one past the end (an out-of-range read); nothing happens instead.
     if (i < 0 || static_cast<std::size_t>(i) + 1 >= m_syls.size())
         return false;
     const auto at = static_cast<std::size_t>(i);
     u16 joined = m_syls[at] + m_syls[at + 1];
     std::size_t place = m_places[at].at, removed = 0;
-    // KA8-join-multi-highlight: a # syllable joined with another folds back
-    // into it (its # dropped); two # syllables make one
     const auto second = hashIn(m_syls[at + 1]);
     const auto first = second ? std::nullopt : hashIn(m_syls[at]);
     if (const auto drop = second ? std::optional(m_syls[at].size() + *second) : first) {
@@ -521,8 +475,6 @@ bool AudioKaraoke::join(int i)
         if (place > *drop)
             --place;
     }
-    // every "{}" removed (wxString::Replace); the tag's place moves with the
-    // text before it, and to where an emptied block was when it was in it
     u16 out;
     std::optional<std::size_t> moved;
     for (std::size_t c = 0; c < joined.size();) {
@@ -563,14 +515,11 @@ std::pair<std::u16string, std::u16string> AudioKaraoke::letters(int i, int nlett
             block = false;
         } else if (!block) {
             counter++;
-            c = letterEnd(syl, c); // KA1-grapheme-letters
+            c = letterEnd(syl, c);
             continue;
         }
         ++c;
     }
-    // A5-split-last-letter (approved): legacy split at the raw position here,
-    // inside the tags; the split is right after the last letter instead (all
-    // the syllable before it when it has none)
     std::size_t after = syl.size();
     block = false;
     for (std::size_t c = 0; c < syl.size(); c++) {
@@ -592,20 +541,19 @@ std::u16string AudioKaraoke::stripped(int i) const
     u16 out;
     for (const char16_t ch : syl) {
         if (ch == u'{')
-            block = true; // (legacy meant to remember where; it never does)
+            block = true;
         else if (ch == u'}')
             block = false;
         else if (!block)
             out += ch;
     }
-    // "made for { without }": the whole syllable again, from its start
+    // MUST KILL: an unclosed "{" appends the whole syllable again
     if (block && !syl.empty() && 0 < syl.size() - 1)
         out += syl;
     return out;
 }
 
-// Syllable `i` cut into `first` (ending at `boundary`) and `second`. A tag
-// read after leading text the cut passes goes to the front, as legacy's.
+// A tag read after the leading text the cut passes goes to the front.
 void AudioKaraoke::cutSyllable(int i, u16 first, u16 second, int boundary)
 {
     const auto at = static_cast<std::size_t>(i);
@@ -622,7 +570,6 @@ bool AudioKaraoke::splitSyllable(int i, int nletters, int curStartMs)
         return false;
     auto [first, second] = letters(i, nletters);
     const auto [start, end] = syllableTimes(i, curStartMs);
-    // KA1-time-by-character (legacy: half way)
     const std::int64_t w1 = std::max(1, karaokeWeight(first, m_classes));
     const std::int64_t w2 = std::max(1, karaokeWeight(second, m_classes));
     const int boundary = legacyZeroIt(start + static_cast<int>((std::int64_t(end) - start) * w1 / (w1 + w2)));
@@ -638,12 +585,9 @@ bool AudioKaraoke::splitAt(int i, int ms, int curStartMs)
     const int boundary = legacyZeroIt(ms);
     if (boundary <= start || boundary >= end)
         return false;
-    // the letter: the share of its characters (spaces and punctuation stay
-    // with the letter before them)
-    // (the letters read twice, none kept: Codex security)
     const u16 text = stripped(i);
     std::size_t at = 0, next = 0;
-    const auto weighs = [&] { // the letter at `at`, ending at `next`
+    const auto weighs = [&] {
         next = letterEnd(text, at);
         return karaokeWeight(std::u16string_view(text).substr(at, next - at), m_classes) > 0 ? 1 : 0;
     };
@@ -652,7 +596,7 @@ bool AudioKaraoke::splitAt(int i, int ms, int curStartMs)
         total += weighs();
     const auto target =
         static_cast<int>((std::int64_t(total) * (boundary - start) * 2 + (std::int64_t(end) - start)) /
-                         ((std::int64_t(end) - start) * 2)); // rounded
+                         ((std::int64_t(end) - start) * 2));
     int nletters = 0;
     if (target >= total) {
         nletters = count;
@@ -674,7 +618,7 @@ void AudioKaraoke::moveStart(int oldStartMs, int newStartMs)
         return;
     const auto lead = [&](int i) { return stripped(i).empty(); };
     if (newStartMs < oldStartMs) {
-        if (!lead(0)) { // an empty lead syllable before the first one; one there grows
+        if (!lead(0)) {
             insertSyllable(0, u16(), oldStartMs);
             ++current;
         }
@@ -749,8 +693,6 @@ std::optional<std::pair<int, int>> AudioKaraoke::letterAt(int x, const AudioView
     start = static_cast<int>(view.xAtMs(start));
     end = static_cast<int>(view.xAtMs(end));
     int center = start + (((end - start) - tw) / 2);
-    // KA1-grapheme-letters: legacy measured each UTF-16 unit (read up to the
-    // pointer's, none kept: Codex security)
     int letter = 0;
     for (std::size_t at = 0; at < text.size(); letter++) {
         const std::size_t end = letterEnd(text, at);
@@ -779,14 +721,10 @@ std::size_t karaokeGraphemePrefix(std::u16string_view text, int graphemes)
 
 namespace {
 
-// Where a piece of a Line's text from `from` ends: past `tags` \k tags,
-// at the next "{" outside blocks that a \k tag opens, where splitTags parts
-// the syllables (the tag read as it does); else at the text's end. None when
-// the piece would hold more than `most` tags (one block of them: a piece
-// cannot end inside a block).
+// Past `tags` \k tags, at the next "{" a \k tag opens; nullopt past `most` tags.
 std::optional<std::size_t> karaokePieceEnd(std::u16string_view text, std::size_t from, int tags, std::int64_t most)
 {
-    const auto tagAt = [&](std::size_t i) { // a "\k" or "\K", not "\kt"
+    const auto tagAt = [&](std::size_t i) {
         return i + 1 < text.size() && text[i] == u'\\' && (text[i + 1] == u'k' || text[i + 1] == u'K') &&
                !(text[i + 1] == u'k' && i + 2 < text.size() && text[i + 2] == u't');
     };
@@ -814,27 +752,19 @@ std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int
 {
     if (oldStartMs == newStartMs || !hasKaraokeTag(lowered(u16(text), KaraokeCharClass::ascii())))
         return std::nullopt;
-    // a last block never closed with a \k tag in it (`{\k20}ka{\k30`) is
-    // read half as a tag: its text stays as it is (Codex)
     if (const auto open = text.rfind(u'{'); open != std::u16string_view::npos && text.find(u'}', open) == text.npos) {
         const std::u16string_view rest = text.substr(open);
         for (std::size_t i = rest.find(u'\\'); i != rest.npos; i = rest.find(u'\\', i + 1))
             if (i + 1 < rest.size() && (rest[i + 1] == u'k' || rest[i + 1] == u'K'))
                 return std::nullopt;
     }
-    // Codex: the text is read a few syllables at a time, each piece's model
-    // dropped before the next, so a Line of millions of \k tags takes about
-    // its text's memory. The syllables part where the pieces do, and each
-    // syllable's \k is its time less the one before it, so the pieces'
-    // texts in a row are the whole Line's.
-    pieceTags = std::max(pieceTags, 2); // the first piece's lead syllable is never its only one
-    // Codex: a block of more tags than this (no karaoke has one) leaves the
-    // text as it is, the start moving as legacy's did
+    // MUST KILL: at least 2 tags so the first piece's lead syllable is never its only one
+    pieceTags = std::max(pieceTags, 2);
     const std::int64_t most = std::int64_t(std::max(pieceTags, 1024)) * 16;
     std::u16string out;
     out.reserve(text.size());
-    int read = oldStartMs;     // where the piece's syllables start, as read
-    int written = newStartMs;  // and as written
+    int read = oldStartMs;
+    int written = newStartMs;
     std::vector<u16> carried;
     for (std::size_t from = 0; from < text.size();) {
         const auto end = karaokePieceEnd(text, from, pieceTags, most);
@@ -845,7 +775,7 @@ std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int
         karaoke.splitTags({u16(text.substr(from, to - from)), read, endMs}, &carried);
         read = karaoke.times().back();
         if (from == 0)
-            karaoke.moveStart(oldStartMs, newStartMs); // the lead syllable is the first piece's
+            karaoke.moveStart(oldStartMs, newStartMs);
         else
             for (auto &time : karaoke.times())
                 time = std::max(time, newStartMs);
@@ -923,7 +853,6 @@ void karaokeShapes(std::vector<AudioShape> &out, const AudioView &view, std::int
             label.font = AudioShape::Font::Label;
             label.align = AudioShape::Align::TopLeft;
             out.push_back(std::move(label));
-            // the hovered letter's mark
             if (marks.character >= 0 && marks.hover >= 0 && static_cast<std::size_t>(marks.hover) == j) {
                 const int fwl = marks.character == 0
                                     ? 0
@@ -935,7 +864,6 @@ void karaokeShapes(std::vector<AudioShape> &out, const AudioView &view, std::int
                 line(float(c + fwl), 1, float(c + fwl), float(fh), textColour, 1);
             }
         }
-        // the current syllable's frame
         if (static_cast<int>(j) == marks.current) {
             const float l = float(karstart + 2), r = XX - 2, t = 1, b = float(h - 2);
             line(l, t, l, b, textColour, 1);

@@ -3,15 +3,12 @@
 #include <cmath>
 #include <cstdlib>
 
-// Built without floating-point contraction (see CMakeLists.txt): legacy's
-// float steps must round as they did in its build.
+// Built without floating-point contraction so float steps round as in HikariSub legacy.
 
 namespace hikari::application::visual {
 
 namespace {
 
-// config.h:552-560: MID(a,b,c) is MAX((a),MIN((b),(c))), int and float
-// mixed as written.
 float mid(float a, float b, float c)
 {
     const float lowest = (b < c) ? b : c;
@@ -22,14 +19,12 @@ float mid(float a, float b, float c)
 
 AspectPair sourceAspect(const SourceGeometry &source)
 {
-    // ProviderFFMS2.cpp:364-380.
     int arwidth = (source.sarNum == 0)
                       ? source.width
                       : static_cast<int>(static_cast<float>(source.width) *
                                          (static_cast<float>(source.sarNum) / static_cast<float>(source.sarDen)));
     int arheight = source.height;
-    // Without a frame size (no video) there is no ratio: both sides 0 would
-    // divide forever (legacy always had a decoded frame here).
+    // Both sides 0 would divide forever.
     if (arwidth == 0 && arheight == 0)
         return {};
     while (true) {
@@ -51,7 +46,6 @@ AspectPair sourceAspect(const SourceGeometry &source)
 float sourceAspectRatio(const SourceGeometry &source)
 {
     const AspectPair a = sourceAspect(source);
-    // RendererFFMS2.cpp:488-489.
     if (a.height == 0 || a.width == 0)
         return 0.0f;
     return static_cast<float>(a.height) / static_cast<float>(a.width);
@@ -59,7 +53,6 @@ float sourceAspectRatio(const SourceGeometry &source)
 
 void VideoView::open(const SourceGeometry &source)
 {
-    // RendererFFMS2::OpenFile (RendererFFMS2.cpp:460-491).
     m_open = true;
     m_width = source.width;
     m_height = source.height;
@@ -82,12 +75,11 @@ void VideoView::setClient(int width, int height, int panelHeight)
     m_clientHeight = height;
     m_panelHeight = panelHeight;
     if (m_open)
-        updateRects(); // RendererVideo::UpdateVideoWindow on a resize
+        updateRects();
 }
 
 void VideoView::setAspectRatio(float ratio)
 {
-    // VideoBox::SetAspectRatio (VideoBox.cpp:1285-1299): nothing without a renderer.
     if (!m_open)
         return;
     m_aspect = ratio;
@@ -102,13 +94,11 @@ void VideoView::setScript(int width, int height)
 
 bool VideoView::updateRects(bool changeZoom)
 {
-    // RendererVideo::UpdateRects (RendererVideo.cpp:213-280), out of fullscreen.
     const int rtWidth = m_clientWidth;
     const int rtHeight = m_clientHeight - m_panelHeight;
     if (!rtHeight || !rtWidth)
         return false;
     m_windowRect = {0, 0, rtWidth, rtHeight};
-    // A zero aspect divides by zero in legacy (no source has one).
     if (m_aspect == 0.0f) {
         m_videoRect = m_windowRect;
     } else {
@@ -125,7 +115,7 @@ bool VideoView::updateRects(bool changeZoom)
         }
     }
     if (changeZoom) {
-        // The right and bottom edges, not the size, as legacy wrote it.
+        // MUST KILL: scales by the rect's right and bottom edges, not its size
         const float videoToScreenX = static_cast<float>(m_videoRect.right) / static_cast<float>(m_width);
         const float videoToScreenY = static_cast<float>(m_videoRect.bottom) / static_cast<float>(m_height);
         m_zoomRect.x = (m_sourceRect.left * videoToScreenX) + m_videoRect.left;
@@ -149,7 +139,6 @@ void VideoView::sourceFromZoomRect(float screenWidth, float screenHeight)
 
 void VideoView::zoomAt(float percent, int mouseX, int mouseY)
 {
-    // RendererVideo::SetZoom(percent, mousePos) (RendererVideo.cpp:709-740).
     if (!m_open)
         return;
     m_zoomPercent = percent;
@@ -170,15 +159,11 @@ void VideoView::zoomAt(float percent, int mouseX, int mouseY)
     m_zoomRect = {left, top, xpar + left, ypar + top};
     sourceFromZoomRect(x, y);
     m_zoomPercent = x / (m_zoomRect.width - m_zoomRect.x);
-    // Legacy SetZoom left the tools' transform unzoomed until the next
-    // resize, tool change or edit. Approved departure T1-wheel-zoom-stale
-    // (docs/compatibility-decisions.md): the tools follow every zoom.
     refreshToolTransform();
 }
 
 void VideoView::toggleZoom(int zoomPercentOption)
 {
-    // RendererVideo::SetZoom() (RendererVideo.cpp:741-765).
     if (!m_open)
         return;
     m_hasZoom = !m_hasZoom;
@@ -194,22 +179,17 @@ void VideoView::toggleZoom(int zoomPercentOption)
         m_zoomRect = {left, top, xpar + left, ypar + top};
         sourceFromZoomRect(x, y);
         m_zoomPercent = x / (m_zoomRect.width - m_zoomRect.x);
-        refreshToolTransform(); // T1-wheel-zoom-stale, as zoomAt
+        refreshToolTransform();
     }
 }
 
 void VideoView::resetZoom()
 {
-    // RendererVideo::ResetZoom (RendererVideo.cpp:768-793).
     if (!m_open)
         return;
     m_zoomRect = {static_cast<float>(m_videoRect.left), static_cast<float>(m_videoRect.top),
                   static_cast<float>(m_videoRect.right), static_cast<float>(m_videoRect.bottom)};
     const int sizeX = m_videoRect.right - m_videoRect.left;
-    // Approved departure V4-reset-zoom-rows: the whole frame exactly. Legacy
-    // divided the panel's size by its float scale and truncated
-    // (RendererVideo.cpp:771-778), which at some panel sizes left the last
-    // row or column out (719 of 720).
     m_sourceRect = {0, 0, m_width, m_height};
     m_zoomPercent = sizeX / (m_zoomRect.width - m_zoomRect.x);
     refreshToolTransform();
@@ -217,10 +197,8 @@ void VideoView::resetZoom()
 
 void VideoView::zoomPress(int x, int y)
 {
-    // ZoomMouseHandle's LeftDown (RendererVideo.cpp:916-938); m_ZoomDiff is a
-    // wxPoint, so each difference is truncated.
     m_grabbed = -1;
-    const double grab = 5 * m_dpr; // SV1-hidpi-tool-sizes
+    const double grab = 5 * m_dpr;
     if (std::abs(x - m_zoomRect.x) < grab) {
         m_zoomDiffX = static_cast<int>(m_zoomRect.x - x);
         m_grabbed = 0;
@@ -241,7 +219,6 @@ void VideoView::zoomPress(int x, int y)
 
 void VideoView::zoomDrag(int x, int y)
 {
-    // ZoomMouseHandle with the left button held (RendererVideo.cpp:940-1032).
     if (!m_open)
         return;
     const int sx = m_videoRect.right, sy = m_videoRect.bottom;
@@ -251,7 +228,6 @@ void VideoView::zoomDrag(int x, int y)
     const int minx = m_videoRect.left;
     const int miny = m_videoRect.top;
     if (m_grabbed < 0) {
-        // The pan: no clamps after it, Zoom only when it moved.
         const float oldzx = m_zoomRect.x;
         const float oldzy = m_zoomRect.y;
         if ((m_zoomRect.x >= minx && m_zoomRect.width < sx) ||
@@ -300,7 +276,6 @@ void VideoView::zoomDrag(int x, int y)
 
 void VideoView::zoomWheel(int steps)
 {
-    // ZoomMouseHandle's wheel (RendererVideo.cpp:947-952): five pixels a step.
     if (!m_open || steps == 0)
         return;
     const int s1x = m_videoRect.right - m_videoRect.left, s1y = m_videoRect.bottom - m_videoRect.top;
@@ -316,8 +291,7 @@ void VideoView::zoomWheel(int steps)
 
 void VideoView::clampZoomRect(const EdgeRect &before)
 {
-    // RendererVideo.cpp:1009-1031: kept inside the video, at least 100x56,
-    // then Zoom(s1).
+    // Kept inside the video, at least 100x56.
     const int sx = m_videoRect.right, sy = m_videoRect.bottom;
     const int minx = m_videoRect.left;
     const int miny = m_videoRect.top;
@@ -348,7 +322,6 @@ void VideoView::clampZoomRect(const EdgeRect &before)
 
 void VideoView::zoom()
 {
-    // RendererVideo::Zoom(s1) (RendererVideo.cpp:795-816).
     const int s1x = m_videoRect.right - m_videoRect.left, s1y = m_videoRect.bottom - m_videoRect.top;
     m_hasZoom = true;
     sourceFromZoomRect(static_cast<float>(s1x), static_cast<float>(s1y));
@@ -358,7 +331,6 @@ void VideoView::zoom()
 
 void VideoView::refreshToolTransform()
 {
-    // RendererVideo::SetVisualZoom (RendererVideo.cpp:818-829).
     if (!m_open || m_width == 0 || m_height == 0)
         return;
     const float videoToScreenX =
@@ -374,7 +346,6 @@ void VideoView::refreshToolTransform()
 
 float VideoView::coeffW() const
 {
-    // Visuals::SizeChanged (Visuals.cpp:285-300) on the video rectangle.
     const int videoWidth = m_videoRect.right - m_videoRect.left;
     const int videoHeight = m_videoRect.bottom - m_videoRect.top;
     if (videoWidth <= 0 || videoHeight <= 0 || m_scriptWidth <= 0 || m_scriptHeight <= 0)
@@ -393,14 +364,12 @@ float VideoView::coeffH() const
 
 PointF VideoView::scriptToView(PointF script) const
 {
-    // Visuals::GetCalculatedInPosX/Y (Visuals.h:139-146).
     return {((script.x / coeffW()) - m_zoomMove.x) * m_zoomScale.x,
             ((script.y / coeffH()) - m_zoomMove.y) * m_zoomScale.y};
 }
 
 PointF VideoView::viewToScript(PointF view) const
 {
-    // Visuals::GetCalculatedOutPosX/Y (Visuals.h:147-154).
     return {((view.x / m_zoomScale.x) + m_zoomMove.x) * coeffW(),
             ((view.y / m_zoomScale.y) + m_zoomMove.y) * coeffH()};
 }

@@ -21,8 +21,6 @@ bool isBlank(char16_t c)
     return c == u' ' || (c >= u'\t' && c <= u'\r');
 }
 
-// wxStringTokenizer(text, delimiters, wxTOKEN_STRTOK): the non-empty runs
-// between delimiters.
 std::vector<u16> strtok(u16v text, char16_t delimiter)
 {
     std::vector<u16> out;
@@ -40,7 +38,6 @@ std::vector<u16> strtok(u16v text, char16_t delimiter)
     return out;
 }
 
-// wxString::Trim(false): blanks off the start.
 u16 trimStart(u16v text)
 {
     std::size_t i = 0;
@@ -54,7 +51,6 @@ u16 ascii(const std::string &s)
     return u16(s.begin(), s.end());
 }
 
-// wxString << float (wx 3.2: Format("%f")).
 u16 streamed(float value)
 {
     char buffer[64];
@@ -76,7 +72,6 @@ AllTagsSetting AllTagsSetting::named(std::u16string name)
 
 std::u16string_view defaultAllTagsText()
 {
-    // VisualAllTagsEdition.cpp:338-360, unchanged.
     return u"HYDRA2.0\n"
            u"Tag: blur, blur,       0, 100,  0,  0.5,  1, 0, 1\n"
            u"Tag: border, bord,     0, 50,   0,  1,    1, 0, 0\n"
@@ -109,7 +104,6 @@ std::vector<AllTagsSetting> defaultAllTags()
 
 std::vector<AllTagsSetting> parseAllTags(std::u16string_view text, bool *writeDefaults)
 {
-    // LoadSettings (VisualAllTagsEdition.cpp:328-417).
     u16v settings = text;
     if (writeDefaults)
         *writeDefaults = false;
@@ -120,7 +114,7 @@ std::vector<AllTagsSetting> parseAllTags(std::u16string_view text, bool *writeDe
     }
     std::vector<AllTagsSetting> tags;
     const std::vector<u16> lines = strtok(settings, u'\n');
-    // The first line (the version) is skipped without another look.
+    // Skip the version line.
     for (std::size_t l = 1; l < lines.size(); ++l) {
         const u16 &line = lines[l];
         if (!line.starts_with(u"Tag: "))
@@ -159,9 +153,7 @@ std::vector<AllTagsSetting> parseAllTags(std::u16string_view text, bool *writeDe
         if (!more())
             continue;
         tmp.tagMode = transform::atoi(trimStart(fields[f++]));
-        // Legacy wrote a fourth and later additional value past the four it
-        // holds (VisualAllTagsEdition.cpp:409-414); they are not read here
-        // (T6-tags-extra-values).
+        // Values past the fourth, which HikariSub legacy files can hold, are dropped.
         for (int i = 1; more(); i++) {
             float value = 0;
             if (number(value) && i < 4) {
@@ -176,7 +168,6 @@ std::vector<AllTagsSetting> parseAllTags(std::u16string_view text, bool *writeDe
 
 std::u16string writeAllTags(const std::vector<AllTagsSetting> &tags)
 {
-    // SaveSettings (VisualAllTagsEdition.cpp:428-446).
     u16 out;
     for (std::size_t i = 0; i < tags.size(); i++) {
         const AllTagsSetting &tag = tags[i];
@@ -203,7 +194,6 @@ std::vector<std::u16string> allTagsNames(const std::vector<AllTagsSetting> &tags
 
 std::u16string numCtrlText(double value)
 {
-    // getdouble (NumCtrl.cpp:22-35).
     char buffer[400];
     std::snprintf(buffer, sizeof buffer, "%f", value);
     std::string s(buffer);
@@ -254,9 +244,6 @@ void NumberField::setInt(int value)
 
 void NumberField::setText(std::u16string text)
 {
-    // NumCtrl::OnNumWrite (NumCtrl.cpp): a text that reads as a number in
-    // range is the one to fall back to; a second point after or before is
-    // refused (the old text comes back).
     m_text = std::move(text);
     u16 val = m_text;
     std::replace(val.begin(), val.end(), u',', u'.');
@@ -275,7 +262,6 @@ void NumberField::setText(std::u16string text)
 
 double NumberField::getDouble() const
 {
-    // NumCtrl::GetString / GetDouble (NumCtrl.cpp).
     u16 val = m_text;
     std::replace(val.begin(), val.end(), u',', u'.');
     if (val == u"-")
@@ -376,9 +362,6 @@ u16 allTagsSetText(const AllTagsSetting &tag)
     return u"\\" + tag.tag + value;
 }
 
-// ---------------------------------------------------------------------------
-// AllTagsEdition: PU5's "Edit tags" (legacy VisualAllTagsEdition.cpp:155-455).
-
 namespace {
 
 int clampedSelection(int selection, std::size_t size)
@@ -391,8 +374,6 @@ bool blank(u16v text)
     return std::ranges::all_of(text, isBlank);
 }
 
-// A number field's text: the whole text a C-locale number (a comma for the
-// point), finite.
 std::optional<double> readNumber(u16v text)
 {
     u16 t = trimStart(text);
@@ -407,8 +388,6 @@ std::optional<double> readNumber(u16v text)
 
 AllTagsEdition::Check checkRange(const AllTagsSetting &t, AllTagsEdition::Number edited)
 {
-    // Legacy Save's checks (VisualAllTagsEdition.cpp:427-437), said for the
-    // field being typed.
     using Check = AllTagsEdition::Check;
     using Number = AllTagsEdition::Number;
     if (t.rangeMax <= t.rangeMin)
@@ -483,8 +462,6 @@ AllTagsEdition::Check AllTagsEdition::setName(u16v name, u16 *taken)
 
 AllTagsEdition::Check AllTagsEdition::setTag(u16v tag)
 {
-    // As typed or pasted: the blanks around it and its leading backslashes
-    // go (" \\bord" is "bord").
     while (!tag.empty() && (tag.front() == u'\\' || isBlank(tag.front())))
         tag.remove_prefix(1);
     while (!tag.empty() && isBlank(tag.back()))
@@ -584,7 +561,7 @@ u16 AllTagsEdition::freeName(u16 base, bool copy) const
 void AllTagsEdition::addTag()
 {
     AllTagsSetting t = AllTagsSetting::named(freeName(u"New tag", false));
-    t.tag.clear(); // typed next; the tool takes it once it has one
+    t.tag.clear();
     std::vector<AllTagsSetting> items = tags();
     items.push_back(std::move(t));
     const int at = static_cast<int>(items.size()) - 1;
@@ -617,8 +594,7 @@ bool AllTagsEdition::remove()
     std::vector<AllTagsSetting> items = tags();
     const int at = selection();
     items.erase(items.begin() + at);
-    // The next one selected, worked out before the list moves (the
-    // arguments' order is unspecified).
+    // Before the move below: argument evaluation order is unspecified.
     const int next = std::min(at, static_cast<int>(items.size()) - 1);
     m_history.change(std::move(items), next, DeleteTag);
     return true;
@@ -626,8 +602,6 @@ bool AllTagsEdition::remove()
 
 bool AllTagsEdition::replacesLastUsable(std::size_t other) const
 {
-    // The definition replaced is the last with a tag and the selected one
-    // has none yet: the tool and the file would have none (as remove()).
     return !tags()[other].tag.empty() && current().tag.empty() && usable().size() <= 1;
 }
 
@@ -654,9 +628,6 @@ void AllTagsEdition::replaceNamed(u16v name)
 
 void AllTagsEdition::restoreDefaults()
 {
-    // HikariChoice::PutArray (ListControls.cpp:498-520): the selected name's
-    // place when the new list has it there, else where the list has it
-    // (case-sensitive), else the first.
     std::vector<AllTagsSetting> defaults = defaultAllTags();
     if (defaults == tags())
         return;
@@ -688,7 +659,6 @@ const std::array<std::u16string_view, 8> &allTagsChangeOptions()
 
 std::u16string_view allTagsChangeOptionsHelp()
 {
-    // AllTagsItem::ShowContols (VideoToolbar.cpp:759-767).
     return u"Tag change options:\nAdd - changes all tags by adding the slider value.\n"
            u"Insert - inserts the tag at the cursor position for one line,\n"
            u"or at the start for multiple lines.\n"

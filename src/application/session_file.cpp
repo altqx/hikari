@@ -57,7 +57,6 @@ bool validUtf8(std::string_view s)
                 return false;
             c = (c << 6) | (t & 0x3F);
         }
-        // Overlong forms, surrogates and values past U+10FFFF are invalid.
         if ((n == 1 && c < 0x80) || (n == 2 && c < 0x800) || (n == 3 && c < 0x10000) || c > 0x10FFFF ||
             (c >= 0xD800 && c <= 0xDFFF))
             return false;
@@ -119,7 +118,6 @@ bool startsWith(std::string_view s, std::string_view prefix, std::string *rest)
     return true;
 }
 
-// wxAtoi: wxStrtol(text, nullptr, 10) as an int.
 int atoi(const std::string &text)
 {
     return static_cast<int>(std::strtol(text.c_str(), nullptr, 10));
@@ -142,8 +140,6 @@ std::optional<std::string> decodeSessionBytes(std::string_view bytes)
         text = utf16(bytes.substr(2), false);
     } else {
         std::string raw(bytes);
-        // The Windows build's text-mode read folded CRLF before converting;
-        // Linux folds too (P6-session-crlf; legacy Linux kept the '\r').
         std::string folded;
         folded.reserve(raw.size());
         for (std::size_t i = 0; i < raw.size(); ++i)
@@ -155,7 +151,7 @@ std::optional<std::string> decodeSessionBytes(std::string_view bytes)
         else if (validUtf8(raw))
             text = std::move(raw);
         else
-            text = latin1(raw); // wxConvAuto's fallback encoding
+            text = latin1(raw);
     }
     if (text.empty())
         return std::nullopt;
@@ -164,7 +160,6 @@ std::optional<std::string> decodeSessionBytes(std::string_view bytes)
 
 std::optional<Session> parseSession(std::string_view text)
 {
-    // wxStringTokenizer(text, "\n", wxTOKEN_STRTOK): no empty tokens.
     std::vector<std::string> tokens;
     for (std::size_t start = 0; start <= text.size();) {
         const std::size_t end = std::min(text.find('\n', start), text.size());
@@ -202,13 +197,11 @@ std::optional<Session> parseSession(std::string_view text)
             tab.keyframes = rest;
         else if (startsWith(token, "Layout: ", &rest))
             tab.layout = rest;
-        // Checked after every token, as legacy did; `rest` keeps the last
-        // field's value when this token is not a "Tab: " line.
         const bool last = !hasMoreTokens();
+        // MUST KILL: rest can still hold the previous field's value here
         if (startsWith(token, "Tab: ", &rest) || last) {
             if (rest != "0" || last) {
                 session.tabs.push_back(tab);
-                // C05-audio-association: legacy reset every field here but Audio.
                 tab = SessionTab{};
             }
         }

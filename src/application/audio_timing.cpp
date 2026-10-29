@@ -48,7 +48,6 @@ int legacyBoundarySnap(const AudioSnapContext &context, int ms, int rangeX, bool
         return ms;
     const AudioView &view = *context.view;
     const int w = view.width();
-    // the range in milliseconds
     const int rangeMS = rangeX * view.samples() * 1000 / view.sampleRate();
     std::vector<int> boundaries;
 
@@ -66,7 +65,6 @@ int legacyBoundarySnap(const AudioSnapContext &context, int ms, int rangeX, bool
         }
     }
 
-    // Other Lines' boundaries
     bool snapLines = context.snapToOtherLines;
     if (shiftHeld)
         snapLines = !snapLines;
@@ -80,8 +78,6 @@ int legacyBoundarySnap(const AudioSnapContext &context, int ms, int rangeX, bool
             shadeFrom = legacyKeyFromPosition(context.lines, context.active, -1);
             shadeTo = legacyKeyFromPosition(context.lines, context.active, 1);
         }
-        // A3-snap-bounds (R3, proposed): legacy read the Line before the first
-        // (GetDialogue(-1)) when no Line is shown; the walk stays in the file.
         shadeFrom = std::max(shadeFrom, 0);
         shadeTo = std::min(shadeTo, count - 1);
         for (int j = shadeFrom; j <= shadeTo; j++) {
@@ -99,7 +95,6 @@ int legacyBoundarySnap(const AudioSnapContext &context, int ms, int rangeX, bool
         }
     }
 
-    // the nearest within range
     int minDist = rangeMS + 1;
     int bestMS = ms;
     for (const int boundary : boundaries) {
@@ -128,7 +123,6 @@ std::pair<int, int> legacyAddLead(int startMs, int endMs, bool in, bool out, int
 
 void AudioTiming::drawn(const AudioView &view, const Selection &selection)
 {
-    // DoUpdateImage: selStart and selEnd are the Line's columns again (GetDialoguePos)
     m_selStart = static_cast<std::int64_t>(view.xAtMs(selection.startMs));
     m_selEnd = static_cast<std::int64_t>(view.xAtMs(selection.endMs));
     if (m_hasMark)
@@ -162,15 +156,11 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
     AudioMouseResult result;
     const std::int64_t x = event.x, y = event.y;
     const int w = view.width(), h = view.height();
-    AudioKaraoke *karaoke = kara.karaoke; // legacy hasKara
+    AudioKaraoke *karaoke = kara.karaoke;
     const bool hasKara = karaoke != nullptr;
-    // A5-stale-syllable (R3, approved): Grabbed can be left from a Line with
-    // more syllables; legacy then read and wrote past the syllable times.
-    // Such an index reads and moves nothing.
     auto validGrab = [&] { return hasKara && m_grabbed >= 0 && m_grabbed < karaoke->count(); };
     const auto fieldTime = [&](int ms) { return kara.fieldTime ? kara.fieldTime(ms) : ms; };
 
-    // Is inside? (AUDIO_AUTO_FOCUS and the cursor are the display's)
     bool onScale = false;
     if (x >= 0 && y >= 0 && x < w) {
         if (y < h)
@@ -185,7 +175,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
         m_inside = false;
     }
 
-    // wx's LeftDown/LeftDClick, RightDown/RightDClick, MiddleDown, LeftUp/RightUp
     const bool press = event.type == Type::Press;
     const bool leftDown = press && event.button == Button::Left;
     const bool rightDown = press && event.button == Button::Right;
@@ -193,22 +182,20 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
     const bool buttonDown = leftDown || rightDown;
     const bool buttonUP =
         event.type == Type::Release && (event.button == Button::Left || event.button == Button::Right);
-    const bool controlOnly = event.ctrl && !event.alt && !event.shift; // GetModifiers() == wxMOD_CONTROL
+    const bool controlOnly = event.ctrl && !event.alt && !event.shift;
     if (buttonDown || middleDown)
         result.focus = true;
     if (karaoke)
-        karaoke->hover = -1; // syllableHover
+        karaoke->hover = -1;
 
     if (buttonUP && m_holding)
         m_holding = false;
-    // Ctrl+left or middle click seeks the video
     if (((leftDown && controlOnly) || middleDown) && !onScale) {
         result.seekVideoMs = view.msAtX(x);
         result.redraw = true;
     }
     if (buttonDown && !m_holding)
         m_holding = true;
-    // KA5-onset-snap: a boundary snaps once it is dragged, not on a click
     if (buttonDown) {
         m_pressX = x;
         m_dragged = false;
@@ -222,7 +209,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
         return snapToOnset(kara.onsetsMs, ms, std::min(kOnsetSnapWindowMs, columns), low, high);
     };
 
-    // Scale dragging
     if ((m_hold == 0 && onScale) || m_draggingScale) {
         result.sizeCursor = false;
         if (rightDown) {
@@ -244,15 +230,13 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
         }
     }
 
-    // Outside
     if (!m_inside && m_hold == 0)
         return result;
 
-    // Timing (hasSel: the selection is drawn)
     if (!(event.ctrl && !event.alt && m_hold == 0)) {
         bool updated = false;
         if (karaoke)
-            karaoke->character = -1; // currentCharacter
+            karaoke->character = -1;
         if (m_hold == 0) {
             if (m_hasMark && std::abs(x - m_selMark) < 6) {
                 result.sizeCursor = true;
@@ -268,7 +252,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                     m_startCarries = rightDown;
                 }
             } else if (hasKara && y > 20) {
-                // A5: the syllables' boundaries (legacy's "yellow lines of karaoke")
                 m_grabbed = karaoke->boundaryAt(static_cast<int>(x), view);
                 if (m_grabbed < 0) {
                     const int tmpsyl = karaoke->syllableAt(static_cast<int>(x), view, selection.startMs);
@@ -276,7 +259,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                     int &current = karaoke->current;
                     if (kara.moveOnClick && hasSyl && !(tmpsyl < current - 1 || tmpsyl > current + 1) &&
                         (leftDown || rightDown)) {
-                        // AUDIO_KARAOKE_MOVE_ON_CLICK: the nearer boundary of the current syllable moves here
                         m_grabbed = tmpsyl < current ? current - 1 : current;
                         m_hold = 5;
                     } else if (leftDown && tmpsyl >= 0) {
@@ -302,9 +284,8 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                     result.sizeCursor = true;
                     m_defCursor = false;
                     if (middleDown || (event.shift && leftDown)) {
-                        // a boundary's middle click or Shift+click joins its syllables
                         if (karaoke->join(m_grabbed))
-                            result.commit = false; // Commit()
+                            result.commit = false;
                         result.redraw = true;
                         result.keepCursor = true;
                         return result;
@@ -313,18 +294,14 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                         m_hold = 5;
                 }
             } else if (hasKara) {
-                // A5: the syllables' letters (the top 20 rows)
                 if (const auto letter =
                         karaoke->letterAt(static_cast<int>(x), view, selection.startMs, kara.measure)) {
                     std::tie(karaoke->hover, karaoke->character) = *letter;
-                    // the time measured from the start the commit writes, as
-                    // the text is written (Codex)
                     if (leftDown &&
                         karaoke->splitSyllable(karaoke->hover, karaoke->character, fieldTime(selection.startMs))) {
-                        // a click splits the syllable before the letter
                         karaoke->current = karaoke->hover;
-                        result.commit = false; // Commit()
-                        result.keepView = true; // KA1-split-keeps-view
+                        result.commit = false;
+                        result.keepView = true;
                     }
                     if (!m_defCursor) {
                         result.sizeCursor = false;
@@ -349,7 +326,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 if (buttonDown)
                     m_hold = 2;
             } else if (buttonDown) {
-                // Dragging nothing, time from scratch
                 m_hold = leftDown ? 3 : 2;
                 m_lastX = x;
             } else if (!m_defCursor) {
@@ -361,18 +337,15 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
         if (m_hold != 0) {
             if (buttonUP) {
                 if (m_grabbed == -1) {
-                    // Prevent negative times
                     selection.startMs = legacyZeroIt(std::max(0, selection.startMs));
                     selection.endMs = legacyZeroIt(std::max(0, selection.endMs));
                     m_selStart = std::max<std::int64_t>(0, m_selStart);
                     m_selEnd = std::max<std::int64_t>(0, m_selEnd);
-                    // Alt: the next Line starts at the end, the previous one ends at the start
                     if (m_hold == 2 && event.alt)
                         result.adjacent = AudioAdjacent::Next;
                     else if ((m_hold == 1 || m_hold == 3) && event.alt)
                         result.adjacent = AudioAdjacent::Previous;
                 }
-                // A5: the grabbed boundary lands between its neighbours
                 if (validGrab()) {
                     auto &times = karaoke->times();
                     const int last = karaoke->count() - 1;
@@ -382,8 +355,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                     times[static_cast<std::size_t>(m_grabbed)] = std::max(prev, std::min(newpos, next));
                     karaoke->current = m_grabbed;
                 }
-                // KA1-lead-in-keeps-syllables: the start dragged with the left
-                // button leaves the syllables at their times
                 if (m_hold == 1 && hasKara && !m_startCarries)
                     karaoke->moveStart(fieldTime(m_startOrigin), fieldTime(selection.startMs));
                 if (m_hold != 4)
@@ -391,12 +362,10 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 m_hold = 0;
                 return result;
             }
-            // the mark
             if (m_hold == 4) {
                 m_markMs = view.msAtX(x);
                 updated = true;
             }
-            // from nothing, or straight timing
             if (m_hold == 3) {
                 if (leftDown)
                     selection.startMs = legacyBoundarySnap(snap, view.msAtX(x), 16, event.shift, false, !event.alt);
@@ -413,17 +382,13 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                     m_hold = 2;
                 }
             }
-            // the start
             if (m_hold == 1 && x != m_selStart) {
                 const int snapped = legacyBoundarySnap(snap, view.msAtX(x), 16, event.shift, false, !event.alt);
                 m_selStart = static_cast<std::int64_t>(view.xAtMs(snapped));
-                // A5: with the right button the syllables (all but the last) move with the start
                 if (hasKara && (event.rightHeld || rightDown)) {
                     auto &times = karaoke->times();
                     const int sizes = karaoke->count() - 1;
                     const int addtime = fieldTime(snapped) - fieldTime(selection.startMs);
-                    // by the committed difference alone: a start off the 10 ms
-                    // grid (a MicroDVD frame's) keeps the syllables' lengths
                     for (int i = 0; i < sizes; i++) {
                         auto &t = times[static_cast<std::size_t>(i)];
                         t += addtime;
@@ -435,7 +400,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 updated = true;
                 selection.modified = true;
             }
-            // the end
             if (m_hold == 2 && x != m_selEnd) {
                 const int snapped = legacyBoundarySnap(snap, view.msAtX(x), 16, event.shift, false, !event.alt);
                 m_selEnd = static_cast<std::int64_t>(view.xAtMs(snapped));
@@ -443,7 +407,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 updated = true;
                 selection.modified = true;
             }
-            // A5: a syllable boundary dragged
             if (m_hold == 5 && validGrab()) {
                 auto &times = karaoke->times();
                 const int sizes = karaoke->count() - 1;
@@ -454,10 +417,8 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 const int prevpos = times[g];
                 times[g] = std::max(prev, std::min(newpos, next));
                 if (m_grabbed == sizes && (leftDown || event.leftHeld)) {
-                    // the last one takes the end with it
                     selection.endMs = times[g];
                 } else if ((rightDown || event.rightHeld) && m_grabbed != sizes) {
-                    // with the right button the later ones (all but the last) move with it
                     const int addtime = times[g] - prevpos;
                     for (int i = m_grabbed + 1; i < karaoke->count() - 1; i++) {
                         auto &t = times[static_cast<std::size_t>(i)];
@@ -480,7 +441,6 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
         m_hold = 0;
     }
 
-    // A5: a right click plays the syllable under it, which becomes the current one
     if (rightDown && hasKara) {
         result.focus = true;
         const int syl = karaoke->syllableAt(static_cast<int>(x), view, selection.startMs);
@@ -491,12 +451,10 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
         }
     }
 
-    // Middle double click plays the selection
     if (event.type == Type::DoubleClick && event.button == Button::Middle) {
         result.focus = true;
         result.playSelection = true;
     }
-    // the cursor is not drawn over the syllables' letters
     if (hasKara && karaoke->character != -1)
         result.hideCursor = true;
     return result;
@@ -504,7 +462,7 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
 
 int legacyFieldTime(core::SubtitleFormat format, int ms)
 {
-    // E4: MPL2 keeps deciseconds rounded up (SubsTime::raw), as the editor's field does.
+    // MPL2 keeps deciseconds, rounded up.
     return static_cast<int>(fieldPrecisionTime(format, ms));
 }
 
@@ -551,15 +509,12 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         spans.push_back({static_cast<int>(timeMs(line->start)), static_cast<int>(timeMs(line->end)),
                          !shown || shown(line->id)});
 
-    // StartEdit/EndEdit->SetTime(time, true): a field already showing the time stays unmodified
     const auto format = session.document().format();
     core::DocumentTime start = msTime(legacyFieldTime(format, request.startMs));
     core::DocumentTime end = msTime(legacyFieldTime(format, request.endMs));
     const core::LineRecord current = session.draftLine() == active ? *session.draftRecord() : **at;
     DraftChange fields;
-    // E4: a MicroDVD field shows the frame (SubsTime::raw rounds the time up
-    // at the rate) and reads back that frame's time; at the Document's rate
-    // (C01-fps-isolation), the times stay as they were without one.
+    // MicroDVD keeps frames: each time becomes its frame's start at the Document's rate.
     std::optional<std::int64_t> startFrame = current.startFrame, endFrame = current.endFrame;
     if (format == core::SubtitleFormat::MicroDvd) {
         const auto &rate = session.document().frameRate();
@@ -580,8 +535,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         fields.startFrame = startFrame;
     if (endFrame != current.endFrame)
         fields.endFrame = endFrame;
-    // A5: Commit's karaoke text goes into the text field first (TextEdit:
-    // the translation's in a TLMode file), always marked modified
     const bool tlMode = session.document().scriptInfo(u8"TLMode") == u8"Yes";
     if (request.karaokeText) {
         if (tlMode)
@@ -589,10 +542,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         else
             fields.text = core::toUtf8(*request.karaokeText);
     } else if (fields.start && session.selection().selected.size() < 2) {
-        // KA1-lead-in-keeps-syllables: a start the panel moves (Line mode,
-        // or Add lead-in) leaves the \k syllables at their audio times; with
-        // several Lines selected each would take this one's text, so they
-        // keep theirs (legacy)
         const auto from = static_cast<int>(current.start.value.microseconds() / 1000);
         const auto to = static_cast<int>(start.microseconds() / 1000);
         const auto endMs = static_cast<int>(current.end.value.microseconds() / 1000);
@@ -604,15 +553,9 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     if ((fields.start || fields.end || fields.startFrame || fields.endFrame || fields.text || fields.translation) &&
         !session.editDraft(*active, fields))
         return std::unexpected(session.isReadOnly() ? CommandRefusal::ReadOnly : CommandRefusal::Protected);
-    // KA1: what an active-only request writes into the draft (no
-    // AUDIO_AUTO_COMMIT) stays the active Line's when Commit sends it later:
-    // its text, and the times the draft did not hold (`current` is the
-    // draft's); a pending edit's other fields still go to every selected
-    // Line (Codex)
     if (request.activeOnly && session.draftLine() == *active)
         session.keepDraftFieldsToItsLine(fields);
 
-    // The Line the Alt release moves (CopyDialogueWithOffset with the grid's active Line)
     std::optional<core::LineId> adjacent;
     if (request.adjacent != AudioAdjacent::None) {
         const int key =
@@ -637,8 +580,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     };
 
     if (!request.save) {
-        // A3-adjacent-step (proposed): legacy moved the other Line without a
-        // step of its own (it joined the next one); here it is its own step.
         if (adjacent) {
             const auto ran = session.run(Command{"Changing time on audio spectrum", session.revision(), {*adjacent},
                                                  [&](core::Document &d) {
@@ -652,7 +593,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         return outcome;
     }
 
-    // EditBox::Send: the draft's modified fields (E63-invalid-commit blocks an invalid draft)
     const auto draft = session.draftChange();
     std::optional<core::LineRecord> record;
     if (draft && draft->first == *active) {
@@ -668,7 +608,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     const bool marginLChanged = record && record->marginLeft.value != line.marginLeft.value;
     const bool marginRChanged = record && record->marginRight.value != line.marginRight.value;
     const bool marginVChanged = record && record->marginVertical.value != line.marginVertical.value;
-    // E4: the editor's other cells (EditBox::Send: COMMENT, LAYER, STYLE, ACTOR, EFFECT)
     const bool commentChanged = record && record->comment != line.comment;
     const bool layerChanged = record && record->layer.value != line.layer.value;
     const bool styleChanged = record && record->style != line.style;
@@ -679,10 +618,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                        marginRChanged || marginVChanged || commentChanged || layerChanged || styleChanged ||
                        actorChanged || effectChanged || framesChanged;
 
-    // SubsGrid::ChangeLine: one Line, or every selected Line with several
-    // selected; an active-only request's own fields go to the active Line
-    // alone (KA1: keepDraftFieldsToItsLine above), a pending edit's others
-    // to every selected Line (Codex)
     std::vector<core::LineId> targets;
     const auto &selected = session.selection().selected;
     if (selected.size() < 2) {
@@ -693,7 +628,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                 targets.push_back(l->id);
     }
 
-    // SubsGrid::NextLine (nothing while the display holds a boundary)
     bool append = false;
     std::optional<core::LineId> next;
     if (request.nextLine && !request.holding) {
@@ -715,7 +649,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     if (append)
         touches.insert(lines.back()->id);
     const auto saved = draft;
-    // KA1: the draft's fields kept to the active Line (keepDraftFieldsToItsLine)
     const DraftChange own = record && session.draftOwnFields() ? *session.draftOwnFields() : DraftChange{};
     if (draft && draft->first == *active)
         session.discardDraft();
@@ -763,15 +696,12 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                     }
                 });
             if (append) {
-                // NextLine on the last shown Line: a copy of the Line at the
-                // key the last Line's row number gives (GetElementByKey(size
-                // - 1): the shown Lines before the last one), starting at its
-                // end, five seconds long, without text, added at the end.
                 const auto now = d.lines();
                 int shownBefore = 0;
                 for (std::size_t i = 0; i + 1 < spans.size(); i++)
                     if (spans[i].visible)
                         shownBefore++;
+                // MUST KILL: NextLine copies the Line at index shownBefore, not the last shown Line
                 core::LineRecord copy = *now[static_cast<std::size_t>(shownBefore)];
                 const auto eend = copy.end.value;
                 copy.start.value = eend;
@@ -779,7 +709,6 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                 copy.text.clear();
                 copy.translation.clear();
                 if (d.format() == core::SubtitleFormat::MicroDvd) {
-                    // frames as the editor's NextLine gives them (C01-fps-isolation)
                     copy.startFrame = copy.endFrame;
                     copy.endFrame.reset();
                     if (const auto &rate = d.frameRate()) {
@@ -796,7 +725,7 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         }});
     if (!ran) {
         if (saved && saved->first == *active)
-            session.editDraft(saved->first, saved->second); // the draft stays
+            session.editDraft(saved->first, saved->second);
         return std::unexpected(ran.error());
     }
     outcome.stepped = true;

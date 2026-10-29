@@ -1,11 +1,5 @@
 #pragma once
 
-// KE3 (#285): the built-in karaoke effect presets (docs/karaoke-presets.md).
-// Each preset is a small ASS file in src/application/karaoke-presets: Script
-// Info carries its Title and Description, and its Lines are template and code
-// Comments in the stock templater's syntax, so they stay portable to Aegisub.
-// Qt-free.
-
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -24,7 +18,7 @@ struct KaraokePresetLine {
 struct KaraokePreset {
     std::u8string title;
     std::u8string description;
-    std::vector<KaraokePresetLine> lines; // in file order
+    std::vector<KaraokePresetLine> lines;
 };
 
 // The preset of a preset file: nullopt unless it has a Title and a

@@ -1,8 +1,5 @@
 #pragma once
 
-// F2: select lines (legacy GLOBAL_OPEN_SELECT_LINES, the SelectLines dialog
-// and SelectLines::SelectOnTab at 20d647c4).
-
 #include "hikari/application/edit_session.h"
 #include "hikari/application/grid_commands.h"
 
@@ -22,7 +19,7 @@ struct SelectLinesSettings {
     enum class Action { None, Copy, Cut, MoveToBeginning, MoveToEnd, SetAsComment, Delete };
 
     std::u8string find;
-    bool with = true;         // "With"; false is "Without"
+    bool with = true;         // false: "Without"
     bool matchCase = false;
     bool regex = false;
     Field field = Field::Text;
@@ -32,30 +29,27 @@ struct SelectLinesSettings {
     Action action = Action::None;
 };
 
-// Legacy SELECT_LINES_OPTIONS, read as the dialog does and written as
-// SelectLines::SaveOptions does (SelectLines.h bits).
+// Option bits as HikariSub legacy stores them.
 SelectLinesSettings selectLinesFromOptions(int options);
 int selectLinesOptions(const SelectLinesSettings &settings);
 
-// Legacy SELECT_LINES_RECENT_SELECTIONS after SelectLines::AddRecent: the
-// text moves to the front; the list is cut to 20 only when it already had
-// more than 20 before (so a full list grows to 21 until the dialog reopens).
+// Moves `text` to the front.
+// MUST KILL: cut to 20 only when it already had more, so a full list grows to 21
 std::vector<std::u8string> addRecentSelection(std::vector<std::u8string> recent, const std::u8string &text);
 
-// The "+" button (SelectLines::OnChooseStyles): the checked styles as an
-// anchored alternation, escaped the legacy way (\ | [ ] ( ) * + . only).
+// An anchored alternation; escapes only \ | [ ] ( ) * + .
 std::u8string stylesPattern(const std::vector<std::u8string> &styles);
 
-// Case folding for searches without "Match case" (legacy wxString::MakeLower).
+// For searches without "Match case".
 using TextFold = std::function<std::u16string(std::u16string_view)>;
 
 struct SelectLinesResult {
-    int count = 0;                          // legacy allSelections: the message's number
+    int count = 0;                          // the number the message shows
     std::optional<std::u8string> clipboard; // Copy and Cut: what goes on the clipboard
-    // wxRegEx::Compile's wxLogError: the expression and PCRE2's message.
+    // The expression and PCRE2's message.
     std::optional<std::pair<std::u16string, std::u16string>> invalidExpression;
-    // wx_regexec's wxLogError, one per Matches that failed with a PCRE2 error
-    // (the match or heap limit); that Line counts as not matching.
+    // One per match that failed on a PCRE2 match or heap limit; that Line
+    // counts as not matching.
     std::vector<std::u16string> matchErrors;
 };
 

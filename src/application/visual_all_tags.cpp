@@ -12,8 +12,6 @@
 #include <cstdlib>
 #include <map>
 
-// Built without floating-point contraction, as visual_view.cpp.
-
 namespace hikari::application::visual {
 
 using namespace transform;
@@ -43,7 +41,6 @@ bool isBlank(char16_t c)
     return c == u' ' || (c >= u'\t' && c <= u'\r');
 }
 
-// wxString::Trim(false).Trim(): blanks off both ends.
 u16 trim(u16v text)
 {
     std::size_t a = 0, b = text.size();
@@ -54,7 +51,6 @@ u16 trim(u16v text)
     return u16(text.substr(a, b - a));
 }
 
-// wxStringTokenizer(text, delimiter, wxTOKEN_STRTOK).
 std::vector<u16> strtok(u16v text, char16_t delimiter)
 {
     std::vector<u16> out;
@@ -72,7 +68,6 @@ std::vector<u16> strtok(u16v text, char16_t delimiter)
     return out;
 }
 
-// wxString::Mid(first, count).
 u16 midText(u16v text, std::size_t first, std::size_t count = u16::npos)
 {
     if (first >= text.size())
@@ -80,7 +75,6 @@ u16 midText(u16v text, std::size_t first, std::size_t count = u16::npos)
     return u16(text.substr(first, count));
 }
 
-// config.h's MID(a, b, c): MAX(a, MIN(b, c)).
 template <typename T>
 T mid3(T a, T b, T c)
 {
@@ -88,9 +82,6 @@ T mid3(T a, T b, T c)
     return a > m ? a : m;
 }
 
-// AssColor (styles.cpp:23-77): an ASS colour's red, green and blue
-// (SetAss), and SetAlphaString's alpha (a base-16 ToLong of the text without
-// '&' and 'H'; one that does not read leaves the alpha it had).
 struct Rgb {
     long r = 0, g = 0, b = 0;
 };
@@ -128,11 +119,8 @@ u16 hexByte(int value)
 
 const u16 kValuePattern = u"([-0-9.,\\(\\) &A-FH]+)";
 
-// HY1: the outline of the Lines Hydra changes (the batch picker's colour in
-// the mockup approved on #271).
 constexpr std::uint32_t kOutline = 0xFF6FD3FF;
 
-// TagFindReplace::ReplaceValue (TagFindReplace.cpp:494-508).
 int replaceValue(u16 &txt, const u16 &what, const FindData &fdata)
 {
     u16 changedValue = what;
@@ -145,9 +133,8 @@ int replaceValue(u16 &txt, const u16 &what, const FindData &fdata)
     return static_cast<int>(changedValue.size()) - static_cast<int>(fdata.y);
 }
 
-// TagFindReplace::ReplaceAllByChar (TagFindReplace.cpp:306-421): the tag
-// before every visible character (a block's own tag replaced), `func`
-// giving each value with the number of characters counted first.
+// The tag before every visible character (a block's own tag replaced);
+// `func` gives each value and gets the visible character count.
 void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
                       const std::function<void(const FindData &, u16 &, std::size_t)> &func)
 {
@@ -155,7 +142,6 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
     bool block = false;
     std::size_t numOfChars = 0;
     std::size_t i = 0;
-    // Count the characters.
     while (i < len) {
         const char16_t ch = text[i];
         if (ch == u'{') {
@@ -166,7 +152,6 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
             if (i < len - 1) {
                 const char16_t nch = text[i + 1];
                 if (nch == u'h') {
-                    // \h is one character, not counted at the start.
                     i++;
                 } else if (nch == u'N' || nch == u'n') {
                     i++;
@@ -179,7 +164,6 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
         }
         i++;
     }
-    // Every character.
     i = 0;
     std::size_t lastTagBlockStart = 0;
     const auto put = [&](const FindData &res) {
@@ -205,12 +189,7 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
                 res = FindData{{}, static_cast<long>(i), 0, true};
             }
             i = static_cast<std::size_t>(static_cast<long>(i) + put(res));
-            // Not taken as a normal character.
             i++;
-            // A \h or \N after the block takes the next visible character
-            // too, as a \h at the start (T6-gradient-hard-space,
-            // T6-gradient-line-break: legacy stepped onto its letter and put
-            // a tag inside it); a block or tag after it is read.
             if (i + 1 < text.size() && text[i] == u'\\' &&
                 (text[i + 1] == u'h' || text[i + 1] == u'N' || text[i + 1] == u'n')) {
                 i++;
@@ -222,7 +201,6 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
                 const char16_t nch = text[i + 1];
                 if (nch == u'h') {
                     if (i == 0) {
-                        // \h at the start takes the next visible character.
                         i = static_cast<std::size_t>(static_cast<long>(i) + put(FindData{{}, static_cast<long>(i), 0, false}));
                         i++;
                     }
@@ -246,8 +224,6 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
 
 bool keyMatchesAccelerator(const Key &key, std::string_view accel)
 {
-    // Hotkeys::GetHKey (Hotkeys.cpp:340-380): the modifiers found in the
-    // text and the key after the last '-'; GetModifiers() must equal them.
     if (accel.empty())
         return false;
     const bool alt = accel.find("Alt-") != std::string_view::npos;
@@ -268,12 +244,8 @@ bool keyMatchesAccelerator(const Key &key, std::string_view accel)
 
 void AllTagsTool::selected(VisualHost &host)
 {
-    // Visuals::Get made a new AllTags (VisualAllTags.cpp:22-32): its state
-    // starts over; the toolbar's list and change option stay.
     (void)host;
     const int selection = m_listSelection, mode = m_listMode;
-    // HY1: the strip's values and its mark stay for the session, as the
-    // list's choices do.
     const bool legacy = m_legacySliders;
     Fields fields = m_fields;
     std::string marked = m_marked;
@@ -287,7 +259,6 @@ void AllTagsTool::selected(VisualHost &host)
 
 const std::vector<AllTagsSetting> &AllTagsTool::tags(const VisualHost &host) const
 {
-    // VideoToolbar::GetTagsSettings: the host's, else legacy's defaults.
     if (const auto *t = host.allTagsSettings(); t && !t->empty())
         return *t;
     if (m_ownTags.empty())
@@ -304,8 +275,6 @@ void AllTagsTool::takeView(const VideoView &view)
 
 void AllTagsTool::reset(VisualHost &host)
 {
-    // Visuals::SetVisual(dial, tool) (Visuals.cpp:256-283): the editor's
-    // text kept for the dummy edits, ChangeTool(tool, true), SetCurVisual.
     const Context ctx = context(host);
     if (ctx.active) {
         m_start = transform::startMs(*ctx.active);
@@ -318,9 +287,6 @@ void AllTagsTool::reset(VisualHost &host)
         return;
     }
     m_currentLineText = ctx.editorText;
-    // HY1: a reset ends a drag or a scrub (Esc, another active Line); the
-    // last change card goes once anything else changed the Document or a
-    // draft is pending on it.
     m_drag.reset();
     m_sample.reset();
     if (m_last) {
@@ -329,8 +295,6 @@ void AllTagsTool::reset(VisualHost &host)
             session->draftLine() || host.activeLine() != m_last->active)
             m_last.reset();
     }
-    // A reset drops a held thumb (Esc, another active Line: the gesture
-    // rule); legacy reset the tool only outside a drag.
     for (Slider &slider : m_slider) {
         if (slider.holding) {
             slider.holding = false;
@@ -355,10 +319,6 @@ void AllTagsTool::setToggled(int tool, VisualHost *host)
 
 void AllTagsTool::definitionsChanged(const std::vector<std::u16string> &oldNames, VisualHost &host, bool shown)
 {
-    // The Edit button's OK (VideoToolbar.cpp:779-791): the list takes the
-    // new names (HikariChoice::PutArray, ListControls.cpp:498-520: the
-    // selection kept by its name where the list still has it, else the
-    // first) and the tool its GetItemToggled.
     const auto names = allTagsNames(tags(host));
     const u16 ce = (m_listSelection >= 0 && m_listSelection < static_cast<int>(oldNames.size()))
                        ? oldNames[static_cast<std::size_t>(m_listSelection)]
@@ -374,8 +334,6 @@ void AllTagsTool::definitionsChanged(const std::vector<std::u16string> &oldNames
             choice = at == names.end() ? 0 : static_cast<int>(at - names.begin());
         }
     }
-    // HY1: another definition chosen starts from its own values; the card's
-    // tag may be gone or another.
     if (choice != m_listSelection || choice < 0 || ce != names[static_cast<std::size_t>(choice)])
         forgetValues();
     m_last.reset();
@@ -401,9 +359,6 @@ AllTagsTool::Change AllTagsTool::changeOf(int pasteMode)
 
 std::vector<int> AllTagsTool::sectionsOf(const VisualHost &host) const
 {
-    // HY1: the built-in definitions (legacy's default names) everyday ones
-    // first (0, Common), the rest of them under More (1), the user's own
-    // last (2); Edit tags lists them the same way (PU5).
     return allTagsSections(tags(host));
 }
 
@@ -420,12 +375,6 @@ std::vector<int> AllTagsTool::listOrder(const VisualHost &host) const
 
 std::vector<ToolOption> AllTagsTool::options(const VisualHost &host) const
 {
-    // AllTagsItem::ShowContols (VideoToolbar.cpp:737-799): the tag list, the
-    // change options and the Edit button. HY1: the list is searchable, each
-    // tag under its section with its tag beside it, and "Edit tags…" at its
-    // end (the host's); the change option is the switch and, beside it,
-    // Set's placing (greyed for several Lines, which always take the tag at
-    // their text's start), Multiply's two ways or the four gradients.
     std::vector<ToolOption> out;
     ToolOption list;
     list.name = "tag";
@@ -440,7 +389,7 @@ std::vector<ToolOption> AllTagsTool::options(const VisualHost &host) const
     list.sectionNames = {u"Common", u"More", u"Your tags"};
     list.searchable = true;
     list.index = m_listSelection;
-    list.group = u"Tag"; // VT1: the bar shows the chosen entry as text
+    list.group = u"Tag";
     out.push_back(std::move(list));
     ToolOption change;
     change.name = "change";
@@ -486,11 +435,6 @@ std::vector<ToolOption> AllTagsTool::options(const VisualHost &host) const
 
 bool AllTagsTool::setOption(const std::string &name, int value, VisualHost &host)
 {
-    // The lists' choice (sendItemToggled, VideoToolbar.cpp:770-781): a tag
-    // brings its own change option; then the tool takes GetItemToggled. The
-    // Edit button is the host's (the "Tag editing" dialog). HY1: another tag
-    // or change option starts the strip's values over and closes the last
-    // change card; Set's placing is the definition's (the host saves it).
     const auto count = static_cast<int>(tags(host).size());
     const int before = m_listMode, beforeTag = m_listSelection;
     if (name == "tag") {
@@ -514,13 +458,10 @@ bool AllTagsTool::setOption(const std::string &name, int value, VisualHost &host
     } else if (name == "variant") {
         switch (changeOf(m_listMode)) {
         case Change::Set:
-            // The definition's placing: the host's definitions are changed
-            // and saved by the host, legacy's defaults here.
             if (value < 0 || value > 2)
                 return false;
             if (const auto *own = host.allTagsSettings(); (!own || own->empty()) && beforeTag < count)
                 m_ownTags[static_cast<std::size_t>(beforeTag)].mode = static_cast<unsigned char>(value);
-            // The card redoes its change with its own placing only.
             m_last.reset();
             break;
         case Change::Multiply:
@@ -549,8 +490,7 @@ bool AllTagsTool::setOption(const std::string &name, int value, VisualHost &host
 
 void AllTagsTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host)
 {
-    // AllTags::ChangeTool (VisualAllTags.cpp:302-314); lastTool is never
-    // set, so every change is taken.
+    // MUST KILL: m_lastTool is never assigned
     if (m_lastTool == tool)
         return;
     m_mode = tool >> 20;
@@ -563,7 +503,6 @@ void AllTagsTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host)
 
 void AllTagsTool::checkTag()
 {
-    // AllTags::CheckTag (VisualAllTags.cpp:158-183).
     const u16 &t = m_actualTag.tag;
     if (t == u"1a" || t == u"2a" || t == u"3a" || t == u"4a" || t == u"alpha")
         m_tagMode = IsHexAlpha;
@@ -579,7 +518,6 @@ void AllTagsTool::checkTag()
 
 void AllTagsTool::setupSlidersPosition(int position)
 {
-    // AllTags::SetupSlidersPosition (VisualAllTags.cpp:185-200).
     if (m_sliderPositionY == position && m_sliderPositionY != -1)
         return;
     m_sliderPositionY = m_sliderPositionY == -1 ? 40 : position;
@@ -599,7 +537,6 @@ void AllTagsTool::setupSlidersPosition(int position)
 
 void AllTagsTool::setCurVisual(VisualHost &host)
 {
-    // AllTags::SetCurVisual (VisualAllTags.cpp:202-224).
     const auto &definitions = tags(host);
     if (m_currentTag < 0 || m_currentTag >= static_cast<int>(definitions.size()))
         m_currentTag = 0;
@@ -622,7 +559,6 @@ void AllTagsTool::setCurVisual(VisualHost &host)
     if (m_mode < PasteMultiply || m_mode > PasteMultiplyPlus)
         for (int i = 0; i < m_actualTag.numOfValues && i < 4; i++)
             m_slider[static_cast<std::size_t>(i)].thumbValue = m_actualTag.values[static_cast<std::size_t>(i)];
-    // HY1: the active Line's values, which the strip's follow.
     m_base = m_actualTag.values;
     host.toolChanged();
 }
@@ -637,8 +573,6 @@ void AllTagsTool::checkRange(float val)
 
 void AllTagsTool::findTagValues(const Context &ctx)
 {
-    // AllTags::FindTagValues (VisualAllTags.cpp:226-300): the Style's value,
-    // then the tag's in the editor's text.
     if (!ctx.active)
         return;
     const core::StyleValues style = lineStyle(ctx, ctx.active->style);
@@ -664,7 +598,6 @@ void AllTagsTool::findTagValues(const Context &ctx)
     if (m_find.findTag(m_actualTag.tag + kValuePattern, ctx.editorText, m_mode == PasteInsert ? m_actualTag.mode : 1)) {
         const u16 finding = m_find.result().finding;
         if (finding.starts_with(u"(")) {
-            // The brackets cut.
             int i = 0;
             for (const u16 &raw : strtok(midText(finding, 1, finding.size() - 2), u',')) {
                 const u16 token = trim(raw);
@@ -701,14 +634,11 @@ void AllTagsTool::findTagValues(const Context &ctx)
 
 bool AllTagsTool::several(const VisualHost &host) const
 {
-    // EditBox::IsCursorOnStart: more than one Line selected (hidden ones
-    // counted).
     return severalLines(targetsFor(host), host.activeLine());
 }
 
 std::vector<core::LineId> AllTagsTool::targetsFor(const VisualHost &host) const
 {
-    // HY1: the last change done again edits the Lines it edited.
     return m_forcedTargets ? *m_forcedTargets : host.batchTargets();
 }
 
@@ -735,14 +665,11 @@ bool AllTagsTool::blocked(const VisualHost &host) const
 
 float AllTagsTool::diffValue(const Slider &slider) const
 {
-    // AllTagsSlider::GetDiffValue (VisualAllTagsControls.cpp:346-349).
     return slider.holding || m_mode == 2 ? slider.thumbValue - slider.firstThumbValue : 0;
 }
 
 u16 AllTagsTool::selectedTagIn(FindData *result) const
 {
-    // AllTags::GetSelectedTag (VisualAllTags.cpp:124-156): a selected tag
-    // ("\..." with one backslash) in the editor, taken to its end.
     const auto [start, end] = m_find.selection();
     if (start != end) {
         const u16 &txt = m_editorText;
@@ -773,7 +700,6 @@ u16 AllTagsTool::selectedTagIn(FindData *result) const
 
 u16 AllTagsTool::visualValue(const u16 &curValue) const
 {
-    // AllTags::GetVisualValue (VisualAllTags.cpp:316-440).
     const float value = m_slider[0].thumbValue;
     const float value2 = m_slider[1].thumbValue;
     const float value3 = m_slider[2].thumbValue;
@@ -785,15 +711,13 @@ u16 AllTagsTool::visualValue(const u16 &curValue) const
     const auto &values = m_actualTag.values;
     u16 strval;
     if (curValue.empty() || m_mode == PasteMultiply || m_mode == PasteInsert) {
-        // One value pasted, or (multiply) the definition's value moved by
-        // the counter.
         const float val1 = (m_mode >= PasteMultiply) ? values[0] + (m_multiplyCounter * valuediff) : value;
         const float val2 = (m_mode >= PasteMultiply) ? values[1] + (m_multiplyCounter * valuediff2) : value2;
         const float val3 = (m_mode >= PasteMultiply) ? values[2] + (m_multiplyCounter * valuediff3) : value3;
         if (m_tagMode & IsHexAlpha) {
             strval = u"&H" + hexByte(mid3(0, static_cast<int>(val1 + 0.5), 255)) + u"&";
         } else if (m_tagMode & IsHexColour) {
-            // BGR, the sliders RGB.
+            // ASS colours are BGR.
             strval = u"&H" + hexByte(mid3(0, static_cast<int>(val3 + 0.5), 255)) +
                      hexByte(mid3(0, static_cast<int>(val2 + 0.5), 255)) +
                      hexByte(mid3(0, static_cast<int>(val1 + 0.5), 255)) + u"&";
@@ -813,7 +737,6 @@ u16 AllTagsTool::visualValue(const u16 &curValue) const
         }
     } else if (curValue.starts_with(u"(")) {
         const bool hasLastBracket = curValue.ends_with(u")");
-        // The brackets cut.
         const u16 inner = midText(curValue, 1, hasLastBracket ? curValue.size() - 2 : curValue.size() - 1);
         strval = u"(";
         int counter = 0;
@@ -821,8 +744,7 @@ u16 AllTagsTool::visualValue(const u16 &curValue) const
             const u16 token = trim(raw);
             double val = 0;
             if (toDouble(token, val)) {
-                // counter % 2 is never 2: the third and fourth take the
-                // first two's differences (legacy).
+                // MUST KILL: counter % 2 is never 2, so valuediff3 is dead
                 float valdiff = (counter % 2 == 0) ? valuediff : (counter % 2 == 1) ? valuediff2 : valuediff3;
                 (void)valuediff4;
                 if (m_mode > PasteMultiply)
@@ -860,7 +782,6 @@ u16 AllTagsTool::visualValue(const u16 &curValue) const
             val += (m_mode > PasteMultiply) ? (valuediff * m_multiplyCounter) : valuediff;
             strval = getfloat(static_cast<float>(val), m_floatFormat);
         } else {
-            // No bracket when no value was set.
             hasEndBracked = false;
         }
         if (hasEndBracked)
@@ -871,8 +792,7 @@ u16 AllTagsTool::visualValue(const u16 &curValue) const
 
 long AllTagsTool::changeVisualEditor(u16 &txt)
 {
-    // AllTags::ChangeVisual(txt) (VisualAllTags.cpp:442-482): the one-Line
-    // path; returns where the editor's caret goes.
+    // One-Line path; returns the editor's new caret position.
     const u16 pattern = m_actualTag.tag + kValuePattern;
     if (m_mode == PasteGradientTextIncrease || m_mode == PasteGradientTextDecrease) {
         replaceAllByChar(m_find, pattern, m_actualTag.tag, txt, [this](const FindData &data, u16 &result, std::size_t n) {
@@ -907,8 +827,7 @@ long AllTagsTool::changeVisualEditor(u16 &txt)
 
 void AllTagsTool::changeVisualLine(u16 &txt, std::size_t numOfSelections)
 {
-    // AllTags::ChangeVisual(txt, dial, n) (VisualAllTags.cpp:484-529): the
-    // several-Line path, each Line's text from its start.
+    // Several-Line path.
     const u16 pattern = m_actualTag.tag + kValuePattern;
     if (m_mode == PasteGradientTextIncrease || m_mode == PasteGradientTextDecrease) {
         replaceAllByChar(m_find, pattern, m_actualTag.tag, txt, [this](const FindData &data, u16 &result, std::size_t n) {
@@ -948,9 +867,6 @@ void AllTagsTool::changeVisualLine(u16 &txt, std::size_t numOfSelections)
 
 bool AllTagsTool::beginEdit(VisualHost &host)
 {
-    // The gesture's targets are fixed when it begins (edit-transactions.md);
-    // legacy's SetVisual read the selection each time. Several Lines: the
-    // selected Lines the Grid shows (SubsFile::GetSelections).
     if (host.gesture())
         return true;
     const auto targets = targetsFor(host);
@@ -976,10 +892,6 @@ bool AllTagsTool::beginEdit(VisualHost &host)
 
 bool AllTagsTool::finishEdit(VisualHost &host)
 {
-    // A refused commit wrote nothing: the tool reads the unchanged text
-    // again, as after Esc.
-    // A commit that changes no Line records nothing (legacy's Send and
-    // SetModified made an undo step of it).
     if (host.gesture() && !host.gesture()->changesAnyLine())
         host.cancelGesture();
     const bool committed = !host.gesture() || host.commitGesture().has_value();
@@ -991,7 +903,6 @@ bool AllTagsTool::finishEdit(VisualHost &host)
 
 bool AllTagsTool::setVisual(bool dummy, VisualHost &host)
 {
-    // Visuals::SetVisual(dummy) (Visuals.cpp:726-832).
     if (!beginEdit(host))
         return false;
     Gesture *g = host.gesture();
@@ -1013,9 +924,7 @@ bool AllTagsTool::setVisual(bool dummy, VisualHost &host)
         m_find.setSelection(pos, pos);
         g->stage(*m_editing, u8(txt), m_editorIsTranslation);
     } else {
-        // The caret goes to the tag only in the text that was written; it
-        // and the text are taken first, as the host may reload the editor
-        // while it commits.
+        // MUST KILL: text and caret copied before the commit, which may reload the editor
         const u16 written = m_editorText;
         const auto [selFrom, selTo] = m_find.selection();
         done = finishEdit(host);
@@ -1031,16 +940,14 @@ bool AllTagsTool::setVisual(bool dummy, VisualHost &host)
 
 void AllTagsTool::legacyPointer(const Pointer &event, VisualHost &host)
 {
-    // AllTags::OnMouseEvent (VisualAllTags.cpp:41-82).
     takeView(host.view());
     if (event.kind == Pointer::Kind::DoubleClick || event.kind == Pointer::Kind::Enter)
-        return; // the press before it was the double click's (Qt sends both)
+        return; // Qt sends a press before the double click
     if (m_mode >= PasteMultiply)
         m_multiplyCounter = (m_mode == PasteGradientTextDecrease || m_mode == PasteGradientLineDecrease) ? 1.f : 0.f;
     const float y = static_cast<float>(event.y);
     const bool rightDown = event.kind == Pointer::Kind::Press && event.button == Pointer::Button::Right;
     const bool rightUp = event.kind == Pointer::Kind::Release && event.button == Pointer::Button::Right;
-    // Right holding moves the sliders.
     if (m_rholding) {
         setupSlidersPosition(static_cast<int>(y + m_sliderPositionDiff));
         host.toolChanged();
@@ -1055,13 +962,10 @@ void AllTagsTool::legacyPointer(const Pointer &event, VisualHost &host)
     }
     if (rightUp)
         m_rholding = false;
-    // The count is read again for each slider: a tag changed by the first
-    // (Shift and the wheel) changes it.
+    // MUST KILL: numOfValues re-read per slider; the first one's Shift+wheel can change the tag
     std::array<bool, 4> wheeled{};
     for (int i = 0; i < m_actualTag.numOfValues && i < 4; i++)
         wheeled[static_cast<std::size_t>(i)] = sliderMouse(i, event, host);
-    // Every slider takes the wheel's step, written as one step
-    // (T6-wheel-one-step: legacy's sliders each wrote their own).
     if (std::find(wheeled.begin(), wheeled.end(), true) != wheeled.end()) {
         if (several(host)) {
             setVisual(false, host);
@@ -1077,7 +981,6 @@ void AllTagsTool::legacyPointer(const Pointer &event, VisualHost &host)
 
 bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
 {
-    // AllTagsSlider::OnMouseEvent (VisualAllTagsControls.cpp:87-246).
     Slider &s = m_slider[static_cast<std::size_t>(index)];
     const float range = m_actualTag.rangeMax - m_actualTag.rangeMin;
     if (range <= 0) {
@@ -1093,10 +996,8 @@ bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
     const bool leftDown = event.kind == Pointer::Kind::Press && event.button == Pointer::Button::Left;
     const bool leftUp = event.kind == Pointer::Kind::Release && event.button == Pointer::Button::Left;
 
-    // The wheel.
     if (event.kind == Pointer::Kind::Wheel && event.wheelSteps != 0) {
         if (shift) {
-            // The next or previous definition (the toolbar's list too).
             const int step = event.wheelSteps;
             const int count = static_cast<int>(tags(host).size());
             m_currentTag -= step;
@@ -1106,7 +1007,6 @@ bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
                 m_currentTag = 0;
             int tool = m_mode << 20;
             tool += m_currentTag;
-            // AllTagsItem::SetItemToggled (VideoToolbar.cpp:700-716).
             int selection = (tool << 12) >> 12;
             if (selection < 0)
                 selection = count - 1;
@@ -1124,7 +1024,7 @@ bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
         if (s.firstThumbValue != s.thumbValue) {
             s.onThumb = true;
             s.onSlider = false;
-            // Holding set first, so the value is used (pointer writes it).
+            // MUST KILL: holding doubles as "use this slider's value" in diffValue
             s.holding = true;
             return true;
         }
@@ -1137,13 +1037,11 @@ bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
     const float thumbtop = s.top - 10;
     const float thumbbottom = s.bottom + 10;
     const float x = s.x, y = s.y;
-    // Leaving the window.
     if (event.kind == Pointer::Kind::Leave && s.thumbState != 0) {
         s.thumbState = 0;
         host.toolChanged();
     }
     if (!s.holding) {
-        // Outside the slider, nothing to do.
         if ((x < s.left - 5 || y < thumbtop || x > s.right + 5 || y > thumbbottom)) {
             if (s.thumbState != 0 || s.onSlider || s.onThumb) {
                 s.thumbState = 0;
@@ -1170,7 +1068,6 @@ bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
         }
     }
     if (s.holding) {
-        // The thumb follows the pointer.
         s.thumbValue = ((x - s.left) / coeff) - thumbposdiff;
         s.thumbValue = mid3(m_actualTag.rangeMin, s.thumbValue, m_actualTag.rangeMax);
         if (s.lastThumbValue != s.thumbValue) {
@@ -1192,7 +1089,6 @@ bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
             s.thumbState = 1;
             s.thumbValue = ((x - s.left) / coeff) - thumbposdiff;
             s.thumbValue = mid3(m_actualTag.rangeMin, s.thumbValue, m_actualTag.rangeMax);
-            // Holding set first, so the value is used.
             s.holding = true;
             if (several(host)) {
                 setVisual(false, host);
@@ -1213,16 +1109,13 @@ bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
 
 bool AllTagsTool::legacyKey(const Key &event, VisualHost &host)
 {
-    // AllTags::OnKeyPress (VisualAllTags.cpp:84-122): for \fad or \t the
-    // Line editor's "Insert difference from the start" / "to the end" keys
-    // set the first or second slider to the video's time from the Line's
-    // start (or to its end), as EditBox::OnPasteDifferents does.
     if (event.release)
         return false;
     if (!(m_actualTag.tag == u"fad" || m_tagMode & IsTAnimation))
         return false;
-    const bool hkeystart = keyMatchesAccelerator(event, host.editorHotkey(3015)); // EDITBOX_START_DIFFERENCE
-    const bool hkeyend = keyMatchesAccelerator(event, host.editorHotkey(3016));   // EDITBOX_END_DIFFERENCE
+    // MUST KILL: raw Line editor hotkey ids 3015/3016, no named constants
+    const bool hkeystart = keyMatchesAccelerator(event, host.editorHotkey(3015));
+    const bool hkeyend = keyMatchesAccelerator(event, host.editorHotkey(3016));
     if (!(hkeystart || hkeyend))
         return false;
     const Context ctx = context(host);
@@ -1249,8 +1142,6 @@ bool AllTagsTool::legacyKey(const Key &event, VisualHost &host)
     s.holding = false;
     return true;
 }
-
-// HY1: the inspector strip.
 
 int AllTagsTool::valueCount() const
 {
@@ -1281,8 +1172,6 @@ void AllTagsTool::remember(const Fields &f, const std::array<float, 4> &base, st
 
 void AllTagsTool::readBase(VisualHost &host)
 {
-    // The active Line's values after the tool's own step (its text as the
-    // Document now has it, the tag where the step left the caret).
     const auto &definitions = tags(host);
     if (m_currentTag < 0 || m_currentTag >= static_cast<int>(definitions.size()))
         return;
@@ -1296,8 +1185,7 @@ void AllTagsTool::readBase(VisualHost &host)
 
 namespace {
 
-// A strip value's name: its role ("value", "by", "start", "perLine",
-// "from", "to") and the tag value's index.
+// A value name is its role ("value", "by", "start", "perLine", "from", "to") plus the index.
 bool splitName(const std::string &name, std::string &role, int &index)
 {
     if (name.empty() || name.back() < '0' || name.back() > '3')
@@ -1307,7 +1195,6 @@ bool splitName(const std::string &name, std::string &role, int &index)
     return true;
 }
 
-// The roles each change option shows, in the strip's order.
 std::vector<std::string> rolesOf(int mode)
 {
     switch (AllTagsTool::changeOf(mode)) {
@@ -1349,8 +1236,6 @@ float AllTagsTool::field(const Fields &f, const std::string &name, int mode) con
 
 bool AllTagsTool::putField(Fields &f, const std::string &name, float value) const
 {
-    // Set's, Start/From's and To's values stay in the tag's range (legacy's
-    // sliders never left it); By and Per line are moves.
     std::string role;
     int i = 0;
     if (!splitName(name, role, i) || i >= valueCount())
@@ -1376,15 +1261,11 @@ bool AllTagsTool::putField(Fields &f, const std::string &name, float value) cons
 
 bool AllTagsTool::isMove(const std::string &name) const
 {
-    // Add's By and Multiply+'s Per line move the Lines' values from theirs:
-    // a drag or a wheel step starts them at 0.
     return name.starts_with("by") || (name.starts_with("perLine") && m_mode == PasteMultiplyPlus);
 }
 
 std::string AllTagsTool::markedName() const
 {
-    // The marked value while the change option shows it, else the one a
-    // drag changes first: Set's Value, By, Per line, To.
     std::string role;
     int i = 0;
     const auto roles = rolesOf(m_mode);
@@ -1396,9 +1277,6 @@ std::string AllTagsTool::markedName() const
 std::vector<ToolValue> AllTagsTool::valuesOf(const Fields &f, int mode, const std::array<float, 4> &base,
                                               const std::string &marked, bool editable) const
 {
-    // Each value of the tag under its role: one value is named by its role
-    // (Value, By, Start, Per line, From, To), several by what they are (R G
-    // B, X Y, In Out, Start End) after their role's label.
     const int n = valueCount();
     std::vector<u16> labels;
     u16 unit;
@@ -1459,10 +1337,6 @@ std::vector<ToolValue> AllTagsTool::values(const VisualHost &host) const
 
 void AllTagsTool::load(const Fields &f)
 {
-    // The values on legacy's sliders as GetVisualValue reads them: the thumb
-    // (Set; Add: past the Line's value by By), or the thumb's move from 0
-    // (Per line; To - From) on the base the Lines without the tag take
-    // (Start or From; else the active Line's value).
     for (int i = 0; i < valueCount(); ++i) {
         const auto at = static_cast<std::size_t>(i);
         Slider &s = m_slider[at];
@@ -1499,8 +1373,6 @@ void AllTagsTool::load(const Fields &f)
 
 bool AllTagsTool::run(const Fields &f, bool commit, VisualHost &host)
 {
-    // The change as legacy's slider release made it (or a drag's sample):
-    // one Line through the Line editor's text, several from their start.
     const auto *session = host.session();
     const std::uint64_t before = session ? session->revision() : 0;
     load(f);
@@ -1530,9 +1402,6 @@ bool AllTagsTool::run(const Fields &f, bool commit, VisualHost &host)
 
 bool AllTagsTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
-    // VT1: a typed value (Enter) or a scrub's release applies the change as
-    // one step; a scrub's samples preview it.
-    // Without video the tool has not read the active Line (reset).
     if (m_legacySliders || host.gesture() && !m_sample || !host.view().hasVideo() || blocked(host))
         return false;
     double parsed = 0;
@@ -1558,7 +1427,7 @@ bool AllTagsTool::setValue(const std::string &name, const std::u16string &text, 
     if (done) {
         m_fields = f;
         for (auto &v : m_fields.set)
-            v.reset(); // the Lines have it now
+            v.reset();
         readBase(host);
         remember(f, base, caret, host);
     }
@@ -1580,7 +1449,6 @@ bool AllTagsTool::markValue(const std::string &name, VisualHost &host)
 
 void AllTagsTool::targetsChanged(VisualHost &host)
 {
-    // Several Lines put the tag at their text's start: Set's placing greys.
     m_outlines.reset();
     host.toolChanged();
 }
@@ -1609,9 +1477,6 @@ std::optional<LastChange> AllTagsTool::lastChange(const VisualHost &host) const
 
 bool AllTagsTool::editLastChange(const std::string &name, const std::u16string &text, VisualHost &host)
 {
-    // The card's value: the last step undone and the change done again with
-    // it, on the Lines it changed, so it is still one step. Anything else
-    // that changed the Document since (or an open gesture) closes the card.
     if (!m_last || m_last->tag != m_currentTag || m_last->mode != m_mode || !host.view().hasVideo() || blocked(host))
         return false;
     if (host.session() != m_last->session) {
@@ -1659,14 +1524,9 @@ void AllTagsTool::pointer(const Pointer &event, VisualHost &host)
         legacyPointer(event, host);
         return;
     }
-    // HY1: a drag sideways anywhere on the video changes the marked value
-    // by its step a pixel (Shift: a tenth), the Lines previewing it, and
-    // applies it on release; the wheel steps it, Shift and the wheel the
-    // tag in the list's order.
     takeView(host.view());
     if (event.kind == Pointer::Kind::Leave || event.kind == Pointer::Kind::DoubleClick)
         return;
-    // The sideways pointer over the picture only (the bars keep the arrow).
     host.setPointerShape(host.view().videoRect().contains(event.x, event.y) || m_drag ? PointerShape::SizeWE
                                                                                      : PointerShape::Arrow);
     if (event.kind == Pointer::Kind::Wheel && event.wheelSteps != 0) {
@@ -1683,8 +1543,6 @@ void AllTagsTool::pointer(const Pointer &event, VisualHost &host)
             (void)setOption("tag", order[static_cast<std::size_t>(pos)], host);
             return;
         }
-        // A move (By, Add by line number's Per line) is one step's; a value
-        // steps from what the strip shows.
         const std::string name = markedName();
         const bool move = isMove(name);
         Fields f = move ? Fields() : m_fields;
@@ -1765,16 +1623,12 @@ bool AllTagsTool::key(const Key &event, VisualHost &host)
 {
     if (m_legacySliders)
         return legacyKey(event, host);
-    // AllTags::OnKeyPress (VisualAllTags.cpp:84-122): for \fad or \t the
-    // Line editor's "Insert difference" keys put the video's time from the
-    // Line's start (or to its end) in the first or second value. HY1: the
-    // value is set (as Set does), whatever the switch shows.
     if (event.release)
         return false;
     if (!(m_actualTag.tag == u"fad" || m_tagMode & IsTAnimation))
         return false;
-    const bool hkeystart = keyMatchesAccelerator(event, host.editorHotkey(3015)); // EDITBOX_START_DIFFERENCE
-    const bool hkeyend = keyMatchesAccelerator(event, host.editorHotkey(3016));   // EDITBOX_END_DIFFERENCE
+    const bool hkeystart = keyMatchesAccelerator(event, host.editorHotkey(3015));
+    const bool hkeyend = keyMatchesAccelerator(event, host.editorHotkey(3016));
     if (!(hkeystart || hkeyend))
         return false;
     const Context ctx = context(host);
@@ -1802,7 +1656,7 @@ bool AllTagsTool::key(const Key &event, VisualHost &host)
     m_replaceTagsInCursorPosition = inCursor;
     if (done) {
         readBase(host);
-        m_last.reset(); // the card's step is no longer the last
+        m_last.reset();
     }
     host.toolChanged();
     return true;
@@ -1810,9 +1664,6 @@ bool AllTagsTool::key(const Key &event, VisualHost &host)
 
 void AllTagsTool::drawSlider(Overlay &out, const VisualHost &host, const Slider &s) const
 {
-    // AllTagsSlider::OnDraw (VisualAllTagsControls.cpp:248-339): the track,
-    // its ticks with a value at every second, the thumb (hovered, held) and
-    // the value under the pointer, in legacy's fixed colours.
     const float range = m_actualTag.rangeMax - m_actualTag.rangeMin;
     const float sliderRange = s.right - s.left;
     if (range <= 0 || sliderRange <= 0 || m_actualTag.step <= 0)
@@ -1826,8 +1677,6 @@ void AllTagsTool::drawSlider(Overlay &out, const VisualHost &host, const Slider 
     const float thumbbottom = s.bottom + 7;
     const std::uint32_t fill = 0xAA121150, border = 0xFFBB0000;
     out.polygons.push_back({{{s.left, s.top}, {s.right, s.top}, {s.right, s.bottom}, {s.left, s.bottom}}, fill, border});
-    // DRAWOUTTEXT: centred in its rectangle, at its top or (DT_BOTTOM) its
-    // bottom, outlined.
     const auto text = [&](const u16 &label, long left, long top, long right, long bottom, bool atBottom) {
         const auto [w, h] = host.measureLabel(label);
         const int x = static_cast<int>(left + ((right - left) - w) / 2);
@@ -1876,7 +1725,6 @@ void AllTagsTool::drawSlider(Overlay &out, const VisualHost &host, const Slider 
 
 Overlay AllTagsTool::overlay(const VisualHost &host) const
 {
-    // AllTags::DrawVisual (VisualAllTags.cpp:34-39): a slider per value.
     Overlay out;
     out.unit = unitOf(host);
     if (m_legacySliders) {
@@ -1884,9 +1732,6 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
             drawSlider(out, host, m_slider[static_cast<std::size_t>(i)]);
         return out;
     }
-    // HY1: the Lines the change edits, those shown at the video's time,
-    // outlined (numbered in the order Multiply and the line gradients count
-    // them when there are several), and a drag's value by the pointer.
     const auto targets = editedTargets(host);
     const auto *session = host.session();
     const VideoView &view = host.view();
@@ -1899,8 +1744,8 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
                                            &draft->layer.lexeme, &draft->marginLeft.lexeme, &draft->marginRight.lexeme,
                                            &draft->marginVertical.lexeme})
             draftKey += *field + u8'\x01';
-    // A drag's or a scrub's samples move the Lines: outlined as staged, not kept.
-    const Gesture *gesture = const_cast<VisualHost &>(host).gesture(); // read only: the host has no const accessor
+    // MUST KILL: const_cast because VisualHost has no const gesture()
+    const Gesture *gesture = const_cast<VisualHost &>(host).gesture();
     const bool fresh = !gesture && m_outlines && session && m_outlines->revision == session->revision() &&
                        m_outlines->time == time && m_outlines->targets == targets && m_outlines->draft == draftKey &&
                        m_outlines->coeffW == view.coeffW() && m_outlines->coeffH == view.coeffH() &&
@@ -1920,8 +1765,6 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
             return PointF{((p.x / o.coeffW) - o.zoomMove.x) * o.zoomScale.x,
                           ((p.y / o.coeffH) - o.zoomMove.y) * o.zoomScale.y};
         };
-        // The targets' records in one pass over the Document (a batch can
-        // hold every Line; this runs for each shown frame while playing).
         std::map<core::LineId, std::size_t> at;
         for (std::size_t i = 0; i < targets.size(); ++i)
             at.emplace(targets[i], i);
@@ -1932,7 +1775,6 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
         constexpr std::size_t kMostOutlined = 64;
         std::size_t outlined = 0;
         for (std::size_t i = 0; i < targets.size() && outlined < kMostOutlined; ++i) {
-            // The active Line's draft is what the video shows.
             const core::LineRecord *found = draft && draft->id == targets[i] ? &*draft : records[i];
             if (!found)
                 continue;
@@ -1974,7 +1816,7 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
         const u16 text = m_actualTag.name + u"  " + valueText(m_drag->from) + u" \u2192 " +
                          valueText(field(*m_sample, m_drag->name, m_mode));
         const auto [w, h] = host.measureLabel(text);
-        const float u = unitOf(host); // SV1-hidpi-tool-sizes
+        const float u = unitOf(host);
         const int x = m_drag->atX + static_cast<int>(14 * u), y = m_drag->atY - h - static_cast<int>(10 * u);
         out.texts.push_back({IntRect{x, y, x + w, y + h}, text, 0xFFFFFFFF, true, 0});
     }
@@ -1989,7 +1831,6 @@ AllTagsSetPreview allTagsSetPreview(const AllTagsSetting &tag, std::u16string_vi
     const FindData &found = find.result();
     const auto x = static_cast<std::size_t>(std::clamp<long>(found.x, 0, static_cast<long>(line.size())));
     if (line.empty() || !found.inBracket) {
-        // TagFind::replace: a block of its own at the place.
         out.before = u16(line.substr(0, x)) + u"{";
         out.after = u"}" + u16(line.substr(x));
         return out;

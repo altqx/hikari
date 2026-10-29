@@ -1,11 +1,6 @@
 #pragma once
 
-// General (unindexed) playback port (N5; docs/backends.md GeneralPlayer,
-// docs/media.md). While general playback is active its player owns audio
-// output and A/V scheduling; editor PortAudio output is stopped. A time seek
-// is acknowledged only by a delivered video frame, never by a position
-// notification, and its result reports both positions and the accuracy.
-// Chapters come from a companion metadata port.
+// A time seek is acknowledged only by a delivered video frame, never by a position notification.
 
 #include <cstdint>
 #include <expected>
@@ -19,7 +14,7 @@ namespace hikari::application {
 enum class PlayerError {
     NotOpen,
     InvalidInput,
-    Unsupported,  // e.g. seeking a stream that is not seekable
+    Unsupported,
     Stale,        // a newer open or seek replaced the request
     ResourceError,
     FormatError,
@@ -45,8 +40,7 @@ struct MediaDescription {
     int activeVideo = -1, activeAudio = -1, activeSubtitle = -1; // -1: none (subtitles suppressed)
 };
 
-// The first video frame delivered after a time seek. Accuracy is whatever the
-// player achieved; general playback promises no exact frame.
+// The first video frame delivered after a time seek; no exact frame is promised.
 struct SeekResult {
     std::uint64_t generation = 0;
     std::int64_t requestedUs = 0;
@@ -55,9 +49,8 @@ struct SeekResult {
     std::int64_t errorUs() const { return deliveredStartUs - requestedUs; }
 };
 
-// From the latest delivered frame: its start time and when it arrived.
-// An estimate with its uncertainty; a seek, stop or rate change starts a new
-// epoch, and the estimate is invalid unless playing.
+// From the latest delivered frame. A seek, stop or rate change starts a new
+// epoch; invalid unless playing.
 struct PlayerClock {
     bool valid = false;
     std::uint64_t epoch = 0;
@@ -88,8 +81,7 @@ public:
     virtual PlayerClock clock() const = 0;
     virtual MediaDescription description() const = 0;
     virtual std::uint64_t generation() const = 0;
-    // V4: the player's output gain, linear (legacy VIDEO_VOLUME through
-    // videoVolumeGain). A player without an output ignores it.
+    // Linear; a player without an output ignores it.
     virtual void setVolume(double linear) { (void)linear; }
 };
 

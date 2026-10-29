@@ -8,7 +8,6 @@ namespace hikari::application {
 
 std::vector<int> parseKeyframes(std::string_view text)
 {
-    // wxStringTokenizer(text, "\n", wxTOKEN_STRTOK); legacy reads the file in text mode (CRLF as LF).
     std::vector<std::string> lines;
     for (std::size_t p = 0; p < text.size();) {
         const auto nl = std::min(text.find('\n', p), text.size());

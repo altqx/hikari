@@ -1,13 +1,5 @@
 #pragma once
 
-// Y6: the font picker's family lists over the FontService (legacy
-// FontEnumerator, FontDialog's FontList and the catalog choice of FontDialog
-// and StyleChange, at 20d647c4). Legacy asked GDI (and on Linux its
-// fontconfig shim, platform.h:1133) for the installed families; here the
-// FontService answers through the provider the renderer uses (fonts.md,
-// ADR 0007), with the EXTERNAL_FONTS_DIRECTORY files added as the renderer
-// gets them.
-
 #include "hikari/application/font_catalogs.h"
 #include "hikari/application/font_service.h"
 
@@ -28,36 +20,26 @@ inline constexpr FontListPlatform kFontListPlatform = FontListPlatform::Windows;
 inline constexpr FontListPlatform kFontListPlatform = FontListPlatform::Linux;
 #endif
 
-// The characters FontEnumerator::CheckGlyphsExists checks: on Windows each
-// UTF-16 unit that is not a surrogate (GetGlyphIndicesW; a character outside
-// the BMP is never checked); on Linux every character (wchar_t is UTF-32;
-// FcCharSetHasChar), U+0000 included and never present.
+// Windows checks UTF-16 units, skipping surrogates (GetGlyphIndicesW); Linux
+// every code point, U+0000 never present.
 std::u32string filterCharacters(std::u16string_view filter, FontListPlatform platform = kFontListPlatform);
 
-// FontEnumerator: Fonts and FilteredFonts.
 class FontFamilies {
 public:
     FontFamilies(FontServicePort &fonts, FontNameLower lower, FontListPlatform platform = kFontListPlatform);
 
-    // The fonts listed with the system's: the environment's external fonts.
     void setEnvironment(FontEnvironment environment) { m_environment = std::move(environment); }
     const FontEnvironment &environment() const { return m_environment; }
 
-    // GetFonts: every family, enumerated when the list is empty.
+    // Enumerated when the list is empty.
     const std::vector<std::u16string> &fonts();
-    // GetFilteredFonts(filter): the families with a glyph for every filter
-    // character. The first call enumerates both lists with `filter`; later
-    // calls only remember `filter` for the next enumeration (legacy keeps
-    // the list it has).
+    // Families with a glyph for every filter character. Only the first call
+    // enumerates; later ones keep `filter` for the next enumeration.
     const std::vector<std::u16string> &filteredFonts(std::u16string_view filter);
-    // EnumerateFonts(true) after a font change: both lists again (the
-    // filtered one only once it exists), with the last filter given.
+    // After a font change: both lists again, with the last filter.
     void enumerate();
-    // PU3's characters chip: `filter` applies now (the filtered list made
-    // again when it exists; else at its first use).
+    // Unlike filteredFonts, `filter` applies now.
     void refilter(std::u16string_view filter);
-    // The external font files no face was read from (legacy
-    // AddFontResourceExW failed: "Cannot add external font file %s.").
     std::vector<std::string> unreadableExternalFonts();
 
 private:
@@ -70,64 +52,43 @@ private:
     std::u16string m_filter;
 };
 
-// The family a face is listed under (SystemFace::listedFamily, else its
-// first family name).
+// SystemFace::listedFamily, else its first family name.
 std::u16string listedFamily(const SystemFace &face);
 
-// The catalog choice of FontDialog and StyleChange: the catalog names with
-// "All fonts" inserted at 0 and "Without catalog" at 1 through
-// HikariChoice::Insert, which clamps the position to the last index: with
-// no catalog "Without catalog" comes first (ListControls.cpp:685-688).
+// MUST KILL: with no catalog, "Without catalog" comes before "All fonts"
 std::vector<std::u16string> catalogChoices(const std::vector<std::u16string> &names, const std::u16string &allFonts,
                                            const std::u16string &withoutCatalog);
 
-// ChangeCatalog's list for the choice's selection `selection` (the
-// choice's value `value`): 0 every font of `fonts`; 1 those fonts without
-// the catalogs', each catalog font removed where `fonts` has it exactly
-// (StyleChange's HikariChoice::FindString(font, true); the font dialog too,
-// Y6-without-catalog: legacy's FontList::FindString answered 0 there and
-// removed the list's first font per catalog entry, FontDialog.cpp:351-354,
-// 668-679); otherwise the catalog named `value`, sorted (GetCatalogFonts)
-// and kept where `fonts` has it exactly.
+// 0: every font; 1: fonts in no catalog; else the catalog named `value`,
+// sorted. Catalog fonts match `fonts` exactly.
 std::vector<std::u16string> catalogView(int selection, std::u16string_view value,
                                         const std::vector<std::u16string> &fonts, FontCatalogs &catalogs);
 
-// FontList::SetSelectionByPartialName (FontDialog.cpp:267-311): the index
-// selected for `partial` (0 for an empty text; -1 for an empty list).
+// 0 for an empty text; -1 for an empty list.
 int fontListPartialIndex(const std::vector<std::u16string> &fonts, std::u16string_view partial,
                          const FontNameLower &lower);
-// FontList::SetSelectionByName: the font equal ignoring case, else the
-// partial-name selection.
+// The font equal ignoring case, else the partial-name index.
 int fontListNameIndex(const std::vector<std::u16string> &fonts, std::u16string_view name, const FontNameLower &lower);
-// FontCatalogList::SetSelectionByPartialName (FontCatalogList.cpp:262-311):
-// as the font dialog's, but an empty text selects the first row too and
-// nothing is clamped.
+// As fontListPartialIndex, but nothing is clamped.
 int catalogListPartialIndex(const std::vector<std::u16string> &fonts, std::u16string_view partial,
                             const FontNameLower &lower);
 
-// What the renderer selected for the font dialog's family (the
-// "substituted face the font dialog reports"): the requested family's own
-// face, a face of other names the provider substituted, a later stage
-// (default family, fallback) or nothing.
+// What the renderer selected for the font dialog's family.
 struct PickerResolution {
     enum class Kind { Requested, Substituted, Fallback, Missing };
     Kind kind = Kind::Missing;
     std::string family;  // the selected face's first family name
-    std::string file;    // its file name, or the attachment / external file
+    std::string file;    // file name, attachment or external file
     long faceIndex = 0;
     bool emboldened = false, italicized = false;
 };
 PickerResolution pickerResolution(const FontReport &report);
 
-// EXTERNAL_FONTS_DIRECTORY (FontEnumerator::LoadExternalFontsToProcess,
-// FontEnumerator.cpp:621-665): FindFirstFileW(path + "*"), every entry in
-// the platform's listing order (legacy_dir.h) whose size is not zero (its
-// low 32 bits; folders have none) and whose extension (the text after the
-// last '.', or the whole name without one) is ttf, otf, ttc or pfb ignoring
-// case. Each file's full path is the setting's text followed by its name.
+// Non-empty ttf, otf, ttc or pfb files in listing order; each full path is
+// `path` followed by the name, no separator added.
 struct ExternalFontsLoad {
-    bool opened = false; // false: "Cannot load external font folder"
-    std::vector<FontAttachment> fonts; // name: the full path; bytes read
+    bool opened = false;
+    std::vector<FontAttachment> fonts; // name: the full path
 };
 ExternalFontsLoad loadExternalFonts(std::u16string_view path, const FontNameLower &lower,
                                     FontListPlatform platform = kFontListPlatform);

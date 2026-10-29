@@ -12,7 +12,6 @@
 
 namespace hikari::application {
 
-// Legacy WaveformPeaks::Append.
 void WaveformPeaks::append(const std::int16_t *samples, std::int64_t count)
 {
     for (std::int64_t i = 0; i < count; i++, m_samples++) {
@@ -27,7 +26,6 @@ void WaveformPeaks::append(const std::int16_t *samples, std::int64_t count)
     }
 }
 
-// Legacy WaveformPeaks::Range.
 bool WaveformPeaks::range(std::int64_t first, std::int64_t count, std::int16_t *lo, std::int16_t *hi) const
 {
     if (first < 0)
@@ -43,7 +41,6 @@ bool WaveformPeaks::range(std::int64_t first, std::int64_t count, std::int16_t *
 
 namespace {
 
-// Legacy RAMCache's blocks: 1 << 22 bytes each.
 class RamStore : public AudioStore {
 public:
     explicit RamStore(int channels) : m_channels(channels) {}
@@ -108,21 +105,14 @@ std::FILE *openFile(const std::filesystem::path &path, bool write)
 #endif
 }
 
-// Legacy DiskCache: raw interleaved frames (no header, despite the .w64 name).
-// V1: the frames are written on a writer thread of the store's own, so a
-// slow disk never holds up the thread that appends them (the GUI's, as
-// blocks arrive from the media helper); legacy wrote each block in its
-// loading dialog. Frames not written yet are read from memory; at most
-// kMaxPendingBytes wait before append waits for the disk. A failed write
-// fails the next append (legacy's "Cannot write the audio cache") and keeps
-// the file from being named complete.
+// Raw interleaved frames, no header despite the .w64 name. A writer thread
+// writes them; frames not written yet are read from memory.
 class DiskStore : public AudioStore {
 public:
     DiskStore(std::filesystem::path path, std::FILE *file, int channels)
         : m_path(std::move(path)), m_file(file), m_channels(channels)
     {
     }
-    // A complete cache file read back as it is (legacy DiskCache opening it "rb").
     DiskStore(std::filesystem::path path, std::FILE *file, int channels, std::int64_t frames)
         : m_path(std::move(path)), m_file(file), m_channels(channels), m_frames(frames), m_written(frames),
           m_reused(true)
@@ -132,8 +122,7 @@ public:
     {
         {
             std::unique_lock lock(m_mutex);
-            // A complete cache is written out to be named; an incomplete
-            // one is removed, so the writer stops after the piece it is on.
+            // An incomplete cache is removed, so the writer stops after its current piece.
             if (m_complete)
                 m_drained.wait(lock, [this] { return m_pending.empty() || m_failed; });
             m_stop = true;
@@ -143,7 +132,7 @@ public:
             m_writer.join();
         std::fclose(m_file);
         if (m_reused)
-            return; // neither renamed nor removed
+            return;
         std::error_code ec;
         std::filesystem::path part = m_path;
         part += ".part";
@@ -179,7 +168,6 @@ public:
     {
         std::int64_t written = 0;
         {
-            // What waits for the disk, from memory.
             std::lock_guard lock(m_mutex);
             written = m_written;
             for (const Piece &p : m_pending) {
@@ -200,7 +188,7 @@ public:
             if (seekTo(m_file, start * 2 * m_channels) == 0)
                 got = std::fread(out, sizeof(std::int16_t), n, m_file);
         }
-        std::fill(out + got, out + n, std::int16_t(0)); // a short read is silence, not stale memory
+        std::fill(out + got, out + n, std::int16_t(0)); // a short read is silence
     }
     std::int64_t frames() const override
     {
@@ -211,7 +199,7 @@ public:
     void complete() override
     {
         std::lock_guard lock(m_mutex);
-        m_complete = true; // flushed once written (the writer, then the destructor)
+        m_complete = true;
     }
 
 private:
@@ -220,8 +208,6 @@ private:
         std::int64_t start = 0;
         std::vector<std::int16_t> samples;
     };
-    // The writer thread: the pieces in order, each left readable from
-    // memory until it is in the file.
     void write()
     {
         for (;;) {
@@ -261,8 +247,8 @@ private:
     std::filesystem::path m_path;
     std::FILE *m_file;
     int m_channels;
-    mutable std::mutex m_mutex; // the fields below
-    mutable std::mutex m_io;    // the file's position and buffer
+    mutable std::mutex m_mutex; // guards the fields below
+    mutable std::mutex m_io;    // guards the file's position and buffer
     std::condition_variable m_wake, m_drained;
     std::deque<Piece> m_pending;
     std::size_t m_pendingBytes = 0;
@@ -286,7 +272,7 @@ std::unique_ptr<AudioStore> diskAudioStore(const std::filesystem::path &path, in
 {
     std::error_code ec;
     std::filesystem::create_directories(path.parent_path(), ec);
-    std::filesystem::remove(path, ec); // legacy: a new index makes a new cache
+    std::filesystem::remove(path, ec);
     std::filesystem::path part = path;
     part += ".part";
     std::FILE *file = openFile(part, true);
@@ -342,8 +328,7 @@ bool DisplayAudio::appendFrames(const std::int16_t *interleaved, std::int64_t fr
         if (!m_store->append(interleaved, frames))
             return false;
     }
-    // The peak table covers the samples the display reads (legacy BuildPeaks
-    // over GetNumSamples), not frames a positive delay pushed past the end.
+    // Frames a positive delay pushed past the end stay out of the peak table.
     const std::int64_t keep = std::clamp<std::int64_t>(m_count - at, 0, frames);
     std::vector<std::int16_t> mono(static_cast<std::size_t>(keep));
     for (std::int64_t i = 0; i < keep; i++) {
@@ -383,7 +368,6 @@ bool DisplayAudio::scanStored(std::int64_t frames)
     if (keep > 0) {
         m_frames.resize(static_cast<std::size_t>(keep * channels));
         std::fill(m_frames.begin(), m_frames.end(), std::int16_t(0));
-        // past the end of a short file the frames stay zero
         const std::int64_t stored = std::clamp<std::int64_t>(m_store->frames() - m_scanned, 0, keep);
         if (stored > 0)
             m_store->read(m_scanned, stored, m_frames.data());
@@ -445,8 +429,6 @@ void DisplayAudio::read(std::int64_t start, std::int64_t count, std::int16_t *ou
     }
 }
 
-// A4: legacy ReadCache (ProviderDummy's playback is silence). Frames not
-// yet decoded read as silence; legacy read whatever its cache held there.
 void DisplayAudio::readFrames(std::int64_t start, std::int64_t count, std::int16_t *out) const
 {
     if (count <= 0)
@@ -461,7 +443,6 @@ void DisplayAudio::readFrames(std::int64_t start, std::int64_t count, std::int16
         m_store->read(first, last - first, out + (first - start) * channels);
 }
 
-// Legacy Provider::GetWaveForm.
 WaveformColumns legacyWaveform(const DisplayAudio &audio, std::int64_t start, int w, int h, int samples, float scale)
 {
     WaveformColumns out;
@@ -476,7 +457,7 @@ WaveformColumns legacyWaveform(const DisplayAudio &audio, std::int64_t start, in
         return y > h ? h : y < 0 ? 0 : y;
     };
 
-    // zoomed out, whole blocks of the peak table are close enough
+    // zoomed out, whole peak blocks are close enough
     if (const WaveformPeaks *peaks = audio.peaks(); peaks && samples >= peaks->blockSamples() * 4) {
         for (int i = 0; i < w; i++) {
             std::int16_t lo = 0, hi = 0;
@@ -519,9 +500,9 @@ void AudioView::setSource(int sampleRate, std::int64_t sampleCount)
     m_hasSource = true;
 }
 
-// Legacy OnSize (its early return compares the new width with the height).
 void AudioView::resize(int clientWidth, int clientHeight, int timelineHeight, int scrollbarThickness)
 {
+    // MUST KILL: the early return compares the new width with the height
     if (clientWidth == m_w && clientWidth == m_h && timelineHeight == m_timeline)
         return;
     m_w = clientWidth;
@@ -530,12 +511,11 @@ void AudioView::resize(int clientWidth, int clientHeight, int timelineHeight, in
     updateSamples();
     if (m_samples && m_hasSource)
         updatePosition(m_positionSample / m_samples, false, scrollbarThickness);
-    updateSamples(); // legacy UpdateImage
+    updateSamples();
     if (m_hasSource)
         updateScrollbar(scrollbarThickness);
 }
 
-// Legacy SetSamplesPercent (the horizontal zoom).
 void AudioView::setSamplesPercent(int percent, bool update, float pivot, int scrollbarThickness)
 {
     if (percent < 1)
@@ -556,7 +536,6 @@ void AudioView::setSamplesPercent(int percent, bool update, float pivot, int scr
     }
 }
 
-// Legacy UpdateSamples.
 void AudioView::updateSamples()
 {
     if (!m_hasSource)
@@ -578,7 +557,6 @@ void AudioView::updateSamples()
     }
 }
 
-// Legacy UpdatePosition (an int position).
 void AudioView::updatePosition(std::int64_t pos64, bool isSample, int scrollbarThickness)
 {
     if (!m_hasSource || m_samples <= 0)
@@ -602,7 +580,6 @@ void AudioView::setPosition(int pos)
     m_positionSample = static_cast<std::int64_t>(pos) * m_samples;
 }
 
-// Legacy UpdateScrollbar.
 AudioView::Scrollbar AudioView::updateScrollbar(int scrollbarThickness)
 {
     if (!m_hasSource || m_samples <= 0)
@@ -618,7 +595,6 @@ AudioView::Scrollbar AudioView::updateScrollbar(int scrollbarThickness)
     return m_bar;
 }
 
-// Legacy MakeDialogueVisible, without karaoke.
 void AudioView::makeVisible(int startShow, int endShow, bool force, bool moveToEnd, int scrollbarThickness)
 {
     if (!m_hasSource || m_samples <= 0)
@@ -631,20 +607,16 @@ void AudioView::makeVisible(int startShow, int endShow, bool force, bool moveToE
     if (force || (startX < 50 && endX < w) || (endX > w - 50 && startX > 0)) {
         if ((startX < 50) || (endX >= w - 50)) {
             if (moveToEnd && (endX >= w - 50 || endX < 50))
-                // the right edge of the selection at least 50 pixels from the edge
                 updatePosition(endPos - ((w - 50) * samples), true, scrollbarThickness);
             else if (!moveToEnd)
-                // the left edge of the selection at least 50 pixels from the edge
                 updatePosition(startPos - 50 * samples, true, scrollbarThickness);
         } else {
-            // otherwise the selection centred in the display
             updatePosition((startPos + endPos - w * samples) / 2, true, scrollbarThickness);
         }
     }
-    updateSamples(); // legacy UpdateImage
+    updateSamples();
 }
 
-// Legacy MakeDialogueVisible with hasKara: force and moveToEnd are not read.
 void AudioView::makeVisibleKaraoke(int startShow, int endShow, int scrollbarThickness)
 {
     if (!m_hasSource || m_samples <= 0)
@@ -655,7 +627,7 @@ void AudioView::makeVisibleKaraoke(int startShow, int endShow, int scrollbarThic
     const int endX = static_cast<int>(xAtMs(endShow));
     if (startX < 50 || endX > (m_w - 100))
         updatePosition((startPos + endPos - m_w * m_samples) / 2, true, scrollbarThickness);
-    updateSamples(); // legacy UpdateImage
+    updateSamples();
 }
 
 float AudioView::xAtMs(std::int64_t ms) const
@@ -735,7 +707,6 @@ AudioShape text(std::string value, float left, float top, float right, float bot
     return s;
 }
 
-// A vertical dashed line (legacy DrawDashedLine on (x, 0) to (x, h)).
 void dashedVertical(std::vector<AudioShape> &out, float x, float top, float bottom, std::uint32_t colour, float width,
                     int dash = 3)
 {
@@ -750,7 +721,6 @@ std::string format(const char *pattern, int a, int b = 0, int c = 0)
     return buffer;
 }
 
-// Legacy DrawTimescale.
 void timescale(std::vector<AudioShape> &out, const AudioView &view, const AudioDisplayOptions &options,
                const AudioTextWidth &textWidth)
 {
@@ -759,7 +729,6 @@ void timescale(std::vector<AudioShape> &out, const AudioView &view, const AudioD
     out.push_back(fill(0, float(h), float(w), float(h + timelineHeight), options.timescaleBackground));
     out.push_back(line(0, float(h), float(w), float(h), options.timescaleText));
 
-    // Timescale ticks
     const std::int64_t start = view.position() * samples;
     const int rate = view.sampleRate();
     if (rate <= 0 || samples <= 0)
@@ -769,10 +738,8 @@ void timescale(std::vector<AudioShape> &out, const AudioView &view, const AudioD
     int linesModulo = 1;
     for (int x = 0;; x++) {
         const std::int64_t pos = (std::int64_t(x) * samples) + start;
-        // Second boundary
         if (pos % rate < samples) {
             if (lineStart) {
-                // from the second boundary found, the longest time text's extent
                 const int lineDist = x - lineStart;
                 const int s = static_cast<int>(pos / rate);
                 const int hr = s / 3600;
@@ -809,10 +776,9 @@ void timescale(std::vector<AudioShape> &out, const AudioView &view, const AudioD
         out.push_back(text(std::move(label), float(x - 50), float(h + 8), float(x + 50), float(h + 48),
                            AudioShape::Font::Scale, AudioShape::Align::TopCenter, options.timescaleText, false));
     };
-    // legacy loops over i = 1, 2, 4... but leaves after the first
+    // MUST KILL: i is a leftover loop variable, always 1
     const int i = 1;
     int pixBounds = rate / (samples * 10 / i);
-    // a pixBounds of 1 cannot take the else branch, it would make it 0
     if (pixBounds <= 1)
         pixBounds = 1;
     else if (pixBounds > 10)
@@ -821,14 +787,12 @@ void timescale(std::vector<AudioShape> &out, const AudioView &view, const AudioD
         pixBounds = (pixBounds / 2) * 2;
     for (int x = 0; x < w; x++) {
         const std::int64_t pos = (std::int64_t(x) * samples) + start;
-        // Second boundary
         if (pos % rate < samples) {
             out.push_back(line(float(x), float(h + 2), float(x), float(h + 8), options.timescaleText));
             const int s = static_cast<int>(pos / rate);
             if (s % linesModulo == 0)
                 drawTime(x, pos, false);
         }
-        // Other
         else if (pos % (rate / pixBounds * i) < samples) {
             out.push_back(line(float(x), float(h + 2), float(x), float(h + 5), options.timescaleText));
             const int ms = static_cast<int>((pos / (rate / pixBounds)) % pixBounds);
@@ -838,7 +802,6 @@ void timescale(std::vector<AudioShape> &out, const AudioView &view, const AudioD
     }
 }
 
-// Legacy GetDialoguePos: the selection's x, truncated, optionally kept in the view.
 std::pair<std::int64_t, std::int64_t> dialoguePos(const AudioView &view, const AudioMarks &marks, bool cap)
 {
     auto selStart = static_cast<std::int64_t>(view.xAtMs(marks.startMs));
@@ -861,7 +824,6 @@ std::pair<std::int64_t, std::int64_t> dialoguePos(const AudioView &view, const A
 
 std::vector<std::pair<float, float>> legacyDashes(float from, float to, int dash)
 {
-    // DrawDashedLine walks from `from` towards `to` in float steps.
     std::vector<std::pair<float, float>> out;
     const float diff = from - to;
     const float len = std::sqrt(diff * diff);
@@ -899,15 +861,14 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
     const int w = view.width(), h = view.height(), displayH = h + view.timelineHeight();
     if (w < 1 || displayH < 1)
         return out;
-    // Background
     out.push_back(fill(0, 0, float(w), float(displayH), options.background));
 
     const auto [lineStart, lineEnd] = dialoguePos(view, marks, false);
     const auto [selStartCap, selEndCap] = dialoguePos(view, marks, true);
     const std::int64_t selStart = lineStart, selEnd = lineEnd;
-    const bool hasSel = true; // legacy sets it before every draw
+    // MUST KILL: hasSel is always true
+    const bool hasSel = true;
 
-    // A2: legacy DrawSpectrum copies the rendered spectrum over the background
     if (spectrum) {
         AudioShape picture;
         picture.kind = AudioShape::Kind::Image;
@@ -916,14 +877,12 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
         picture.image = std::move(spectrum);
         out.push_back(std::move(picture));
     }
-    const bool waveform = !out.back().image; // legacy: no waveform in spectrum mode
+    const bool waveform = !out.back().image;
 
-    // Selection background
     if (hasSel && lineStart < lineEnd && options.drawSelectionBackground)
         out.push_back(fill(float(lineStart), 0, float(lineEnd + 1), float(h),
                            marks.modified ? options.selectionModified : options.selectionBackground));
 
-    // Waveform: one line per column, from below its lowest sample to above its highest
     std::uint32_t waveformSel = options.waveform;
     if (hasSel && options.drawSelectionBackground)
         waveformSel = marks.modified ? options.waveformModified : options.waveformSelected;
@@ -936,17 +895,14 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
                            selected ? waveformSel : options.waveform));
     }
 
-    // Inactive Lines (legacy DrawInactiveLines)
     if (options.inactiveLines != 0) {
         for (const auto &[startMs, endMs] : marks.inactive) {
             const int shadeX1 = static_cast<int>(view.xAtMs(startMs));
             const int shadeX2 = static_cast<int>(view.xAtMs(endMs));
             if (shadeX2 < 0 || shadeX1 > w)
                 continue;
-            // the selection
             const int selX1 = static_cast<int>(std::max(0.f, view.xAtMs(marks.startMs)));
             const int selX2 = static_cast<int>(std::min(float(w), view.xAtMs(marks.endMs)));
-            // the ranges x1..x2 and x3..x4 outside it
             int x1 = std::max(0, shadeX1);
             int x2 = std::min(w, shadeX2);
             const int x3 = std::max(x1, selX2);
@@ -965,7 +921,6 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
                 inactiveColumn(i);
             for (int i = x3; i < x4; i++)
                 inactiveColumn(i);
-            // their boundaries
             const float half = float(options.lineBoundaryWidth / 2);
             out.push_back(line(shadeX1 + half, 0, shadeX1 + half, float(h), options.inactiveBoundary,
                                float(options.lineBoundaryWidth)));
@@ -974,7 +929,6 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
         }
     }
 
-    // Seconds boundaries
     const int samples = view.samples();
     if (options.drawSecondBoundaries && samples > 0 && view.sampleRate() > 0) {
         const std::int64_t start = view.position() * samples;
@@ -987,7 +941,6 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
     }
 
     if (hasSel) {
-        // the start boundary, with its flags at the top and the bottom
         const float boundary = float(options.lineBoundaryWidth);
         int startDraw = static_cast<int>(lineStart + (options.lineBoundaryWidth / 2));
         const std::uint32_t colour = options.lineStart;
@@ -999,18 +952,16 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
             out.push_back(line(x, float(h - 10), x + dx, float(h), colour));
         };
         flags(float(startDraw), 10);
-        // the end boundary; its flags take the start boundary's colour
         startDraw = static_cast<int>(lineEnd + (options.lineBoundaryWidth / 2));
         out.push_back(line(float(startDraw), 0, float(startDraw), float(h), options.lineEnd, boundary));
+        // MUST KILL: the end boundary's flags take the start colour
         flags(float(startDraw), -10);
 
-        // A5: karaoke (legacy draws it with the boundaries)
         if (marks.karaoke)
             karaokeShapes(out, view, lineStart, *marks.karaoke, karaokeLabelMeasure(textWidth), marks.markTextHeight,
                           options.syllableBoundaries, options.syllableText);
     }
 
-    // Keyframes (legacy DrawKeyframes)
     if (options.drawKeyframes && !marks.keyframesMs.empty()) {
         const int mintime = view.msAtX(0);
         const int maxtime = view.msAtX(w);
@@ -1025,14 +976,12 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
         }
     }
 
-    // Modified text
     if (marks.modified || selStart > selEnd)
         out.push_back(text(selStart <= selEnd ? "Modified" : "Negative time", 4, 4, 304, 104,
                            AudioShape::Font::Label, AudioShape::Align::TopLeft, 0xFFFF0000, true));
 
     timescale(out, view, options, textWidth);
 
-    // A3: the mark, two pixels wide, with its time centred above the bottom
     if (marks.markMs) {
         const auto selMark = static_cast<std::int64_t>(view.xAtMs(*marks.markMs));
         if (selMark >= 0 && selMark < w) {
@@ -1044,11 +993,9 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
         }
     }
 
-    // The paused video's frame
     if (options.drawVideoPosition && marks.videoMs)
         dashedVertical(out, view.xAtMs(*marks.videoMs), 0, float(h), options.cursor, 2);
 
-    // Focus border
     if (marks.focused) {
         const float r = float(w - 1), b = float(h - 1);
         out.push_back(line(0, 0, r, 0, options.waveform));
@@ -1067,7 +1014,6 @@ std::vector<AudioShape> audioProgressScene(const AudioView &view, float progress
         return out;
     out.push_back(fill(0, 0, float(w), float(displayH), options.background));
     const float halfY = float((h + 20) / 2);
-    // the outer frame (cyan) and the inner one (white)
     const float outer[] = {20, halfY - 20, float(w - 20), halfY + 20};
     const float inner[] = {21, halfY - 19, float(w - 21), halfY + 19};
     for (const float *f : {outer, inner}) {
@@ -1077,7 +1023,6 @@ std::vector<AudioShape> audioProgressScene(const AudioView &view, float progress
         out.push_back(line(f[2], f[3], f[0], f[3], colour));
         out.push_back(line(f[0], f[3], f[0], f[1], colour));
     }
-    // the bar
     const int rw = 22;
     out.push_back(line(float(rw), halfY, (progress / 1.f) * (w - 44) + rw, halfY, 0xFFFFFFFF, 37));
     out.push_back(text(format("%d%%", static_cast<int>(progress * 100.f)), 20, halfY - 20, float(w - 20), halfY + 20,
@@ -1095,7 +1040,7 @@ std::vector<AudioShape> audioCursor(const AudioView &view, float x, bool playing
     if (!playing && options.drawTimeCursor) {
         const int ms = view.msAtX(static_cast<std::int64_t>(x));
         const float top = karaoke ? 20 : 5;
-        const float left = float(static_cast<long>(x - 150)); // a RECT holds integers
+        const float left = float(static_cast<long>(x - 150)); // truncated to whole pixels
         out.push_back(text(legacyAssTime(ms), left, top, left + 300, top + 100, AudioShape::Font::Cursor,
                            AudioShape::Align::TopCenter, 0xFFFFFFFF, true));
     }
@@ -1124,7 +1069,6 @@ int legacyKeyFromPosition(std::span<const AudioLineSpan> lines, int position, in
             if (delta == visibleLines)
                 return i;
         }
-        // legacy GetElementById(0): the first shown Line (-1 without one)
         for (int i = 0; i < count; i++)
             if (lines[static_cast<std::size_t>(i)].visible)
                 return i;
@@ -1158,7 +1102,6 @@ std::vector<std::pair<int, int>> legacyInactiveLines(int mode, std::span<const A
 std::pair<int, int> legacyLineSelection(std::span<const AudioLineSpan> lines, int active, int previousActive)
 {
     const auto &line = lines[static_cast<std::size_t>(active)];
-    // never for 0:00:00.00 -> 0:00:00.00 Lines
     if (line.startMs != 0 || line.endMs != 0)
         return {line.startMs, line.endMs};
     const bool isNextLine = previousActive + 1 == active;

@@ -5,7 +5,7 @@
 #include "hikari/core/legacy_regex.h"
 #include "hikari/core/text_projection.h"
 
-// Built without floating-point contraction, as visual_view.cpp.
+// Built without floating-point contraction (see CMakeLists.txt).
 
 namespace hikari::application::visual {
 
@@ -31,10 +31,9 @@ std::u8string toU8(const std::u16string &text)
 
 CrossCoefficients crossCoefficients(const VideoView &view)
 {
-    // Cross::SetCurVisual / OnMouseEvent's Entering (VisualCross.cpp:67-93,
-    // 260-281): a side without a bar divides by one pixel less.
     CrossCoefficients out;
     int w = 0, h = 0;
+    // MUST KILL: a side without a bar divides by one pixel less
     int diffW = 1, diffH = 1;
     if (view.hasVideo()) {
         const IntRect videoRect = view.videoRect();
@@ -57,7 +56,6 @@ CrossCoefficients crossCoefficients(const VideoView &view)
 
 PointF crossScriptPoint(const VideoView &view, float coeffX, float coeffY, int x, int y)
 {
-    // Cross::OnMouseEvent (VisualCross.cpp:94-97, 112-113).
     const float zx = (x / view.zoomScale().x) + view.zoomMove().x;
     const float zy = (y / view.zoomScale().y) + view.zoomMove().y;
     return {zx * coeffX, zy * coeffY};
@@ -65,12 +63,6 @@ PointF crossScriptPoint(const VideoView &view, float coeffX, float coeffY, int x
 
 std::u16string copyCoordinatesText(const VideoView &view, int x, int y)
 {
-    // VideoBox::OnCopyCoords (VideoBox.cpp:1395-1412) wrote "x,y" from the
-    // pointer scaled by the whole client less one pixel, so the letterbox,
-    // pillarbox and zoom were ignored. Approved departure
-    // T1-copy-coords-view (docs/compatibility-decisions.md): the
-    // crosshair's own conversion, truncated as its label is, so the text is
-    // the script coordinate under the pointer.
     const CrossCoefficients coeff = crossCoefficients(view);
     const PointF script = crossScriptPoint(view, coeff.x, coeff.y, x, y);
     return number(static_cast<int>(script.x)) + u"," + number(static_cast<int>(script.y));
@@ -87,9 +79,6 @@ void CrosshairTool::computeCoefficients(const VisualHost &host)
 
 void CrosshairTool::reset(VisualHost &host)
 {
-    // Cross::SetCurVisual (VisualCross.cpp:244-282): hidden until the next
-    // move. VT1: the bar's readout and Copy with it, as the view the
-    // position was taken in may be gone (leaving the video keeps them).
     m_cross = false;
     m_x.clear();
     m_y.clear();
@@ -100,8 +89,6 @@ void CrosshairTool::reset(VisualHost &host)
 
 void CrosshairTool::pointer(const Pointer &event, VisualHost &host)
 {
-    // Cross::OnMouseEvent (VisualCross.cpp:43-127). A right button release
-    // hides it (and opens the context menu, V4).
     if (event.kind == Pointer::Kind::Release && event.button == Pointer::Button::Right) {
         if (m_cross) {
             m_cross = false;
@@ -138,18 +125,16 @@ void CrosshairTool::pointer(const Pointer &event, VisualHost &host)
 
 void CrosshairTool::drawLines(int x, int y, const VisualHost &host)
 {
-    // Cross::DrawLines (VisualCross.cpp:188-242).
     const VideoView &view = host.view();
     if (!view.hasVideo())
         return;
     const IntRect videoRect = view.videoRect();
-    // The picture alone, where the pointer is hidden (VideoView::onPicture).
     if (!view.onPicture(x, y)) {
         m_onVideo = false;
         return;
     }
     m_onVideo = true;
-    // GetWindowSize(withTabPanel = true): the whole client, its panel included.
+    // MUST KILL: the label's side uses the whole client, panel included
     int w = view.clientWidth(), h = view.clientHeight();
     const auto [fw, fh] = host.measureLabel(m_coords);
     const int margin = static_cast<int>(fh * 0.25f);
@@ -168,9 +153,6 @@ void CrosshairTool::drawLines(int x, int y, const VisualHost &host)
 
 void CrosshairTool::putPosition(int x, int y, VisualHost &host)
 {
-    // Middle click or Ctrl+left click (VisualCross.cpp:102-126): \pos at the
-    // pointer into the active Line, its other \pos and \move removed, one
-    // history step ("Visual positioning tool", VISUAL_POSITION).
     const EditSession *session = host.session();
     const auto active = host.activeLine();
     if (!session || !active)
@@ -178,14 +160,7 @@ void CrosshairTool::putPosition(int x, int y, VisualHost &host)
     auto gesture = host.beginGesture({*active}, std::string(familyInfo(Family::Crosshair).history));
     if (!gesture)
         return;
-    // Departure by the approved rule "Commands commit the draft first"
-    // (edit-transactions.md): legacy read tab->edit->line, the Line without
-    // the typed text (EditBox::Send copies the editor into it), and the
-    // SetModified that follows reloaded the editor over that text
-    // (SubsGrid::ShowEditedLine, SubsGridBase.cpp:1118). Here the pending
-    // draft commits first as its own step and \pos goes into the typed text.
     const core::LineRecord &line = (*gesture)->before(*active);
-    // The translation in TLMode, unless it is empty.
     const bool istl = translationMode(*session) && !line.translation.empty();
     std::u16string ltext = toU16(istl ? line.translation : line.text);
     static const core::LegacyRegex posmov(u"\\\\(pos|move)([^\\\\}]+)", core::LegacyRegex::Advanced);
@@ -206,9 +181,6 @@ void CrosshairTool::putPosition(int x, int y, VisualHost &host)
 
 Overlay CrosshairTool::overlay(const VisualHost &host) const
 {
-    // Cross::Draw (VisualCross.cpp:129-160): the label outlined in black,
-    // then two black three-pixel lines with one-pixel white lines over them,
-    // half a pixel across.
     Overlay out;
     if (!shown() || !host.view().hasVideo())
         return out;
@@ -224,15 +196,12 @@ Overlay CrosshairTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> CrosshairTool::values(const VisualHost &host) const
 {
-    // The label's position, read-only (VT1: one value per axis).
     (void)host;
     return {{"x", u"X", m_x, false}, {"y", u"Y", m_y, false}};
 }
 
 std::vector<ToolOption> CrosshairTool::options(const VisualHost &host) const
 {
-    // VT1: VIDEO_COPY_COORDS for the shown position (the context menu and
-    // the hotkey copy the one under the pointer).
     (void)host;
     ToolOption copy;
     copy.name = "copyPosition";

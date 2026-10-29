@@ -8,7 +8,7 @@
 #include <climits>
 #include <cmath>
 
-// Built without floating-point contraction, as visual_view.cpp.
+// Built without floating-point contraction so float results match MSVC x64.
 
 namespace hikari::application::visual {
 
@@ -17,7 +17,6 @@ namespace {
 using u16 = std::u16string;
 using u16v = std::u16string_view;
 
-// The pattern legacy's vector clip reads and writes (VisualClips.cpp:188, 552).
 constexpr u16v kVectorClip = u"(i?clip\\(.*m[^)]*)\\)";
 
 u16 number(long long value)
@@ -34,7 +33,6 @@ std::size_t count(u16v text, char16_t c)
     return n;
 }
 
-// wxString::BeforeFirst / AfterFirst.
 u16 beforeFirst(u16v text, char16_t c, u16 *rest = nullptr)
 {
     const auto at = text.find(c);
@@ -63,7 +61,6 @@ void replaceAll(u16 &text, u16v what, u16v with)
     }
 }
 
-// TagFindReplace::Replace (TagFindReplace.cpp:423-442).
 void replaceFound(const core::legacy::TagEditor &found, u16v replaceTxt, u16 &text)
 {
     const auto [x, y] = found.position();
@@ -93,7 +90,6 @@ core::legacy::TagEditor find(u16v text, u16v pattern, bool *found = nullptr)
     return editor;
 }
 
-// The active Line as the Line editor shows it (the pending draft applied).
 std::optional<core::LineRecord> activeRecord(const VisualHost &host)
 {
     const EditSession *session = host.session();
@@ -108,8 +104,6 @@ std::optional<core::LineRecord> activeRecord(const VisualHost &host)
     return std::nullopt;
 }
 
-// The text a visual tool edits: the translation in TLMode unless it is
-// empty (legacy's TextEdit / TextEditOrig and Dialogue::GetTextNoCopy).
 bool editsTranslation(const VisualHost &host, const core::LineRecord &line)
 {
     return host.session() && translationMode(*host.session()) && !line.translation.empty();
@@ -120,9 +114,7 @@ u16 editedText(const VisualHost &host, const core::LineRecord &line)
     return core::toUtf16(editsTranslation(host, line) ? line.translation : line.text);
 }
 
-// The open gesture, or a new one on the batch picker's targets. A press
-// that began a gesture which is no longer open was cancelled (Esc): nothing
-// more is staged until the next press.
+// MUST KILL: `began` with no open gesture means Esc cancelled it; nullptr until the next press
 Gesture *ensureGesture(VisualHost &host, Family family, bool &began)
 {
     if (Gesture *g = host.gesture())
@@ -136,17 +128,12 @@ Gesture *ensureGesture(VisualHost &host, Family family, bool &began)
     return *begun;
 }
 
-// Stages a target's new text; one equal to the text before is not staged
-// (a gesture without changes records nothing).
 void stage(Gesture &g, core::LineId id, bool tl, const u16 &before, const u16 &after)
 {
     if (after != before || g.staged(id, tl))
         g.stage(id, core::toUtf8(after), tl);
 }
 
-// The current text of a target in a gesture: what it staged, else the text
-// as the gesture began (legacy's single-Line path edits the editor's text,
-// which its previews changed).
 u16 currentText(const VisualHost &host, const Gesture &g, core::LineId id, bool *tl)
 {
     const core::LineRecord &before = g.before(id);
@@ -158,16 +145,13 @@ u16 currentText(const VisualHost &host, const Gesture &g, core::LineId id, bool 
 
 void commitInvert(VisualHost &host, bool vector)
 {
-    // InvertClip: every target's clips get the opposite of the active Line's
-    // last one, as one step. Legacy recorded both tools' inversions as
-    // VISUAL_VECTOR_CLIP (VisualClipRect.cpp:450), so the rectangle's is
-    // named "Visual vector clipping tool" too.
     const auto active = activeRecord(host);
     if (!active || host.gesture())
         return;
     const u16 name = clip::invertedName(editedText(host, *active), vector);
     if (name.empty())
         return;
+    // MUST KILL: rectangle inversions record under the vector clip's history name
     auto begun = host.beginGesture(host.batchTargets(), std::string(familyInfo(Family::VectorClip).history));
     if (!begun)
         return;
@@ -187,8 +171,6 @@ namespace clip {
 
 u16 maskTag(u16v text)
 {
-    // CreateClipMask: the opposite of the Line's first clip found from the
-    // start (FindTag "(i?clip.)[^)]*\\)", mode 1), rectangular ones included.
     bool found = false;
     const auto tagged = find(text, u"(i?clip.)[^)]*\\)", &found);
     if (!found || tagged.finding().empty())
@@ -205,8 +187,6 @@ u16 replaceTag(u16 text, u16v pattern, u16v tag)
 
 RectangleRead readRectangle(u16v text, int scriptWidth, int scriptHeight)
 {
-    // ClipRect::SetCurVisual. Legacy read from the Line editor's caret
-    // (FindTag mode 0); the tools read from the start (approved T4-clip-read-start).
     RectangleRead out;
     out.x2 = scriptWidth;
     out.y2 = scriptHeight;
@@ -316,7 +296,6 @@ std::optional<u16> renameClips(u16v source, u16v name, bool vector)
 VectorRead readVector(u16v text)
 {
     VectorRead out;
-    // Visuals::GetPosnScale for VECTORCLIP (Visuals.cpp:688-708).
     static const core::LegacyRegex drawscale(u"\\\\i?clip\\(([0-9]+)[, ]*m", core::LegacyRegex::Advanced);
     int dscale = 1;
     if (drawscale.matches(text)) {
@@ -329,7 +308,6 @@ VectorRead readVector(u16v text)
     else
         dscale = 1;
     out.divisor = dscale;
-    // DrawingAndClip::SetCurVisual (VisualClips.cpp:187-220).
     bool found = false;
     const auto editor = find(text, kVectorClip, &found);
     u16 body = editor.finding();
@@ -368,16 +346,11 @@ VectorRead readVector(u16v text)
 
 u16 maskText(u16v tag, u16v body, int nx, int ny)
 {
-    // Legacy ended the text with "\r\n" before writing the Line; the Line
-    // here is a record, so the break is the record's own.
     return u"{\\p1\\bord0\\shad0\\fscx100\\fscy100\\frz0\\1c&H000000&\\1a&H77&\\pos(0,0)\\an7\\" + u16(tag) +
            u16(body) + u")}m 0 0 l " + number(nx) + u" 0 " + number(nx) + u" " + number(ny) + u" 0 " + number(ny);
 }
 
 } // namespace clip
-
-// ---------------------------------------------------------------------------
-// The rectangle clip (legacy ClipRect).
 
 namespace {
 
@@ -390,9 +363,6 @@ constexpr std::uint32_t kOutline = 0xFFBB0000;
 
 void RectangleClipTool::reset(VisualHost &host)
 {
-    // A reset during a drag (Esc, a resize) ends it: the next press starts
-    // anew. (Legacy kept `grabbed`, which only a drag entering the video
-    // with the button held could reuse; Qt's pointer grab never gives one.)
     m_grabbed = -1;
     m_keyCommit = false;
     const auto active = activeRecord(host);
@@ -409,14 +379,13 @@ void RectangleClipTool::reset(VisualHost &host)
 
 int RectangleClipTool::hitTest(PointF pos, bool diff, const VisualHost &host)
 {
-    // ClipRect::HitTest (VisualClipRect.cpp:254-294), its x/y mix-up kept.
     const VideoView &v = host.view();
     const float coeffW = v.coeffW(), coeffH = v.coeffH();
     int resultX = 0, resultY = 0, resultInside = 0, resultFinal = 0, oldpointx = 0, oldpointy = 0;
     for (int i = 0; i < 2; i++) {
         const int pointx = legacy::toInt(((m_corner[i].x / coeffW) - v.zoomMove().x) * v.zoomScale().x);
         const int pointy = legacy::toInt(((m_corner[i].y / coeffH) - v.zoomMove().y) * v.zoomScale().y);
-        if (std::fabs(pos.x - pointx) < 5 * unitOf(host)) { // SV1-hidpi-tool-sizes
+        if (std::fabs(pos.x - pointx) < 5 * unitOf(host)) {
             if (diff)
                 m_diffs.x = (pointx)-pos.x;
             resultX |= (i + 1);
@@ -431,6 +400,7 @@ int RectangleClipTool::hitTest(PointF pos, bool diff, const VisualHost &host)
                              (oldpointx >= pointx && oldpointx >= pos.x && pointx <= pos.x))
                                 ? INSIDE
                                 : OUTSIDE;
+            // MUST KILL: the y inside test compares oldpointx, not oldpointy
             resultInside |= (resultY || (oldpointx <= pointx && oldpointy <= pos.y && pointy >= pos.y) ||
                              (oldpointx >= pointx && oldpointy >= pos.y && pointy <= pos.y))
                                 ? INSIDE
@@ -452,7 +422,6 @@ int RectangleClipTool::hitTest(PointF pos, bool diff, const VisualHost &host)
 
 u16 RectangleClipTool::change(u16 text) const
 {
-    // ClipRect::ChangeVisual: the corners truncated and ordered.
     int x1, x2, y1, y2;
     if (m_corner[0].x < m_corner[1].x) {
         x1 = legacy::toInt(m_corner[0].x);
@@ -473,11 +442,6 @@ u16 RectangleClipTool::change(u16 text) const
 
 void RectangleClipTool::apply(VisualHost &host, bool commit)
 {
-    // Visuals::SetVisual(dummy) (Visuals.cpp:722-810). With several targets
-    // (legacy: several Lines selected) every target is rewritten from its
-    // text, on each sample and again on release; with one, each sample
-    // rewrites the text the previous one left (legacy's editor) and the
-    // release keeps it.
     Gesture *g = ensureGesture(host, Family::RectangleClip, m_began);
     if (!g) {
         if (commit)
@@ -490,6 +454,7 @@ void RectangleClipTool::apply(VisualHost &host, bool commit)
             const core::LineRecord &before = g->before(id);
             bool tl = editsTranslation(host, before);
             const u16 original = editedText(host, before);
+            // MUST KILL: one target builds on its staged text, several on their originals
             const u16 base = multi ? original : currentText(host, *g, id, &tl);
             stage(*g, id, tl, original, change(base));
         }
@@ -502,7 +467,6 @@ void RectangleClipTool::apply(VisualHost &host, bool commit)
 
 void RectangleClipTool::pointer(const Pointer &event, VisualHost &host)
 {
-    // ClipRect::OnMouseEvent (VisualClipRect.cpp:120-224).
     const VideoView &v = host.view();
     const bool click = event.kind == Pointer::Kind::Press && event.button == Pointer::Button::Left;
     const bool holding = event.leftDown;
@@ -524,10 +488,7 @@ void RectangleClipTool::pointer(const Pointer &event, VisualHost &host)
         if (m_showClip) {
             apply(host, true);
         } else if (host.gesture() && m_began) {
-            // A rectangle without width or height: legacy wrote nothing on
-            // release (with several Lines its previews were only rendered;
-            // with one they stayed in the Line editor unsent). The gesture is
-            // dropped (approved T4-zero-rect-preview).
+            // A rectangle without width or height drops the gesture.
             m_began = false;
             host.cancelGesture();
         }
@@ -535,8 +496,6 @@ void RectangleClipTool::pointer(const Pointer &event, VisualHost &host)
             host.setPointerShape(PointerShape::Arrow);
     }
     if (!holding && m_showClip) {
-        // Over an edge or a corner its resize shape, elsewhere the arrow
-        // (VisualClipRect.cpp:152-163); a drag keeps the shape it began with.
         const int test = hitTest({static_cast<float>(x), static_cast<float>(y)}, false, host);
         host.setPointerShape(test < INSIDE ? edgePointerShape(test) : PointerShape::Arrow);
     }
@@ -564,7 +523,7 @@ void RectangleClipTool::pointer(const Pointer &event, VisualHost &host)
         const IntRect &video = v.videoRect();
         if (m_grabbed < 16) {
             if (m_grabbed & LEFT || m_grabbed & RIGHT) {
-                x = std::max(video.left, std::min(x, video.right)); // MID(VideoSize.x, x, VideoSize.width)
+                x = std::max(video.left, std::min(x, video.right));
                 m_corner[(m_grabbed & RIGHT) ? 1 : 0].x = ((((x + m_diffs.x) / zs.x) + zm.x) * coeffW);
                 if (m_grabbed & LEFT && m_corner[0].x > m_corner[1].x)
                     m_corner[0].x = m_corner[1].x;
@@ -605,17 +564,13 @@ bool RectangleClipTool::takesKey(const Key &event) const
 
 bool RectangleClipTool::key(const Key &event, VisualHost &host)
 {
-    // ClipRect::OnKeyPress (VisualClipRect.cpp:347-379): a nudge moves the
-    // second corner a pixel (Shift: a tenth); VT2-arrow-nudge: the arrows,
-    // for legacy's A/D/W/S. The nudge commits on the key's release (the
-    // accepted transaction rule).
     if (event.release) {
         if (!isArrowKey(event.key))
             return false;
         if (!m_keyCommit)
             return false;
         if (event.autoRepeat)
-            return true; // Qt's auto-repeat releases: the key is still held
+            return true; // Qt sends auto-repeat releases while the key is held
         m_keyCommit = false;
         if (host.gesture() && m_began) {
             m_began = false;
@@ -638,15 +593,13 @@ bool RectangleClipTool::key(const Key &event, VisualHost &host)
     m_corner[1].x += directionX;
     m_corner[1].y += directionY;
     apply(host, false);
-    m_keyCommit = true; // SetVisual(false) on the release
+    m_keyCommit = true;
     host.toolChanged();
     return true;
 }
 
 Overlay RectangleClipTool::overlay(const VisualHost &host) const
 {
-    // ClipRect::DrawVisual (VisualClipRect.cpp:45-118): the darkened outside
-    // (inside for \iclip) and the one-pixel outline.
     Overlay out;
     out.unit = unitOf(host);
     if (!m_showClip)
@@ -670,7 +623,6 @@ Overlay RectangleClipTool::overlay(const VisualHost &host) const
         y2 = legacy::toInt(m_corner[0].y);
     }
     PointF v2[5];
-    // s: VideoSize.GetSize(), the video rectangle's right and bottom edges.
     const float sx = static_cast<float>(v.videoRect().right);
     const float sy = static_cast<float>(v.videoRect().bottom);
     v2[0].x = ((x1 / coeffW) - zm.x) * zs.x;
@@ -691,7 +643,6 @@ Overlay RectangleClipTool::overlay(const VisualHost &host) const
     mask.fill = kMask;
     mask.border = 0;
     if (!m_invClip) {
-        // The two triangle fans around the rectangle, filled as one path.
         mask.points = {{0, 0}, {sx, 0}, {v2[2].x, v2[0].y}, {v2[0].x, v2[0].y}, {v2[0].x, v2[2].y}, {0, sy}};
         mask.more.push_back({{sx, sy}, {0, sy}, {v2[0].x, v2[2].y}, {v2[2].x, v2[2].y}, {v2[2].x, v2[0].y}, {sx, 0}});
     } else {
@@ -705,7 +656,6 @@ Overlay RectangleClipTool::overlay(const VisualHost &host) const
 
 std::vector<ToolOption> RectangleClipTool::options(const VisualHost &host) const
 {
-    // ClipRectangleItem: the one button (VideoToolbar.cpp:67, icon 18).
     (void)host;
     ToolOption invert;
     invert.name = "invert";
@@ -726,14 +676,9 @@ bool RectangleClipTool::setOption(const std::string &name, int value, VisualHost
 
 void RectangleClipTool::invert(VisualHost &host)
 {
-    // ClipRect::ChangeTool(_, false) -> InvertClip; the edit's
-    // SetModified then reset the tool (ShowEditOnVideo -> SetVisual).
     commitInvert(host, false);
     reset(host);
 }
-
-// ---------------------------------------------------------------------------
-// The vector clip (legacy DrawingAndClip as VECTORCLIP).
 
 VectorFrame VectorClipTool::frame(const VisualHost &host) const
 {
@@ -742,7 +687,7 @@ VectorFrame VectorClipTool::frame(const VisualHost &host) const
     f.unit = unitOf(host);
     f.coeffW = v.coeffW();
     f.coeffH = v.coeffH();
-    f.coeffW /= m_scale; // SetCurVisual: coeffW /= scale.x
+    f.coeffW /= m_scale;
     f.coeffH /= m_scale;
     f.zoomMove = v.zoomMove();
     f.zoomScale = v.zoomScale();
@@ -752,15 +697,11 @@ VectorFrame VectorClipTool::frame(const VisualHost &host) const
 
 void VectorClipTool::reset(VisualHost &host)
 {
-    // Visuals::SetVisual -> ChangeTool(tool, true) -> SetCurVisual. Legacy's
-    // ChangeTool inverted the clip again on every reset while the wheel had
-    // left the mode on the Invert clip button (6); the inversion is the
-    // button's only (approved T4-wheel-invert-slot).
-    m_editor.endDrag(); // as RectangleClipTool::reset
+    m_editor.endDrag();
     m_inKey = m_keyCommit = false;
     const auto active = activeRecord(host);
     const clip::VectorRead read = clip::readVector(active ? editedText(host, *active) : u16());
-    // A clip without its own scale keeps the previous one (legacy's member).
+    // MUST KILL: m_vectorScale carries over from the previous Line when a clip has no scale
     if (read.vectorScale)
         m_vectorScale = *read.vectorScale;
     m_scale = 1.f;
@@ -768,8 +709,6 @@ void VectorClipTool::reset(VisualHost &host)
     m_maskTag = read.maskTag;
     m_maskBody = read.maskBody;
     m_editor.points = parseVectorPoints(read.body);
-    // Legacy rendered right after SetVisual, and DrawVisual makes the first
-    // point an "m".
     m_editor.normaliseFirst();
     host.toolChanged();
 }
@@ -793,9 +732,8 @@ VectorEditor::Callbacks VectorClipTool::callbacks(VisualHost &host)
 
 void VectorClipTool::apply(VisualHost &host, bool commit)
 {
-    // DrawingAndClip::SetClip(!commit) (VisualClips.cpp:365-543).
     if (commit && m_inKey) {
-        m_keyCommit = true; // the nudge or Delete commits on its key's release
+        m_keyCommit = true;
         return;
     }
     Gesture *g = ensureGesture(host, Family::VectorClip, m_began);
@@ -807,8 +745,6 @@ void VectorClipTool::apply(VisualHost &host, bool commit)
     const u16 clip = body();
     const bool multi = g->targets().size() > 1;
     if (multi) {
-        // Several Lines: each one's clip gets the body, on every sample and
-        // again on release.
         for (const auto &id : g->targets()) {
             const core::LineRecord &before = g->before(id);
             const bool tl = editsTranslation(host, before);
@@ -816,7 +752,6 @@ void VectorClipTool::apply(VisualHost &host, bool commit)
             stage(*g, id, tl, text, clip::putVector(text, clip));
         }
         if (!commit) {
-            // CreateClipMask(clip): the tag from the active Line's text.
             const auto active = activeRecord(host);
             m_maskTag = clip.empty() || !active ? u16() : clip::maskTag(editedText(host, *active));
             m_maskBody = m_maskTag.empty() ? u16() : clip;
@@ -826,14 +761,8 @@ void VectorClipTool::apply(VisualHost &host, bool commit)
         bool tl = false;
         const u16 current = currentText(host, *g, id, &tl);
         const u16 original = editedText(host, g->before(id));
+        // MUST KILL: an emptied clip commits mid-gesture and m_began stays set
         if (clip.empty()) {
-            // All points gone: the clip leaves the text at once, as legacy's
-            // empty-clip branch sent it then (VisualClips.cpp:444-455,
-            // edit->Send) whether or not the edit was a preview; without one,
-            // nothing changes. The commit cannot wait for the release: in the
-            // add modes the hover block returns before it once no point is
-            // left (VisualClips.cpp:906-907). m_began stays set, so a release
-            // that does arrive opens no new gesture.
             m_maskTag.clear();
             m_maskBody.clear();
             bool found = false;
@@ -859,8 +788,7 @@ void VectorClipTool::apply(VisualHost &host, bool commit)
 void VectorClipTool::pointer(const Pointer &event, VisualHost &host)
 {
     if (event.kind == Pointer::Kind::Wheel) {
-        // Ctrl+wheel resizes the video window (VideoBox::OnMouseEvent) and
-        // never reaches the tool.
+        // Ctrl+wheel resizes the video window.
         if (event.control || event.wheelSteps == 0)
             return;
         m_editor.wheel(event.wheelSteps);
@@ -887,7 +815,7 @@ bool VectorClipTool::key(const Key &event, VisualHost &host)
         if (!nudge || !m_keyCommit)
             return false;
         if (event.autoRepeat)
-            return true; // Qt's auto-repeat releases: the key is still held
+            return true; // Qt sends auto-repeat releases while the key is held
         m_keyCommit = false;
         m_inKey = false;
         if (host.gesture() && m_began) {
@@ -918,8 +846,6 @@ Overlay VectorClipTool::overlay(const VisualHost &host) const
 
 std::vector<ToolOption> VectorClipTool::options(const VisualHost &host) const
 {
-    // VectorItem for the clip (VideoToolbar.cpp:61-67): the six modes and
-    // the Invert clip button, shown checked when the wheel left the mode on it.
     (void)host;
     static const struct {
         const char *icon;
@@ -934,7 +860,7 @@ std::vector<ToolOption> VectorClipTool::options(const VisualHost &host) const
         mode.iconRole = modes[i].icon;
         mode.tooltip = modes[i].label;
         mode.checked = m_editor.mode == i;
-        mode.group = u"Points"; // VT1: the bar's group
+        mode.group = u"Points";
         out.push_back(std::move(mode));
     }
     ToolOption invert;
@@ -949,7 +875,6 @@ std::vector<ToolOption> VectorClipTool::options(const VisualHost &host) const
 
 bool VectorClipTool::setOption(const std::string &name, int value, VisualHost &host)
 {
-    // A mode's button selects it whatever its state (VectorItem: toggled = elem).
     (void)value;
     if (name == "invert") {
         invert(host);
@@ -965,8 +890,6 @@ bool VectorClipTool::setOption(const std::string &name, int value, VisualHost &h
 
 void VectorClipTool::invert(VisualHost &host)
 {
-    // The Invert clip button: ChangeTool(6) -> InvertClip, and the edit's
-    // SetModified resets the tool.
     commitInvert(host, true);
     reset(host);
 }
@@ -980,8 +903,6 @@ std::u16string VectorClipTool::mask(const VisualHost &host) const
 
 std::vector<core::LineRecord> VectorClipTool::previewLines(const VisualHost &host) const
 {
-    // Visuals::AppendClipMask: a copy of the active Line with the mask's
-    // text on the highest layer (MAXINT), after every other Line.
     const u16 text = mask(host);
     const auto active = activeRecord(host);
     if (text.empty() || !active)

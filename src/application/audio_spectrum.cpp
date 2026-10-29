@@ -1,8 +1,6 @@
 #include "hikari/application/audio_spectrum.h"
 
-// No floating-point contraction in this file (see audio_spectrum.h): the
-// build flags say so per compiler, and these pragmas keep it that way if the
-// flags are lost. GCC has no such pragma and follows -ffp-contract=off.
+// No floating-point contraction here; GCC has no pragma and relies on -ffp-contract=off.
 #if defined(_MSC_VER) && !defined(__clang__)
 #pragma fp_contract(off)
 #elif defined(__clang__)
@@ -18,10 +16,7 @@ namespace hikari::application {
 
 namespace {
 
-// Legacy GFFT.cpp (after the Dr. Dobb's "simple and efficient FFT"): the
-// sines come from a Taylor series evaluated with legacy's mix of float and
-// double, and the butterflies run in float. Ported unchanged, so the
-// magnitudes are legacy's to the bit.
+// MUST KILL: float/double mix kept so magnitudes match HikariSub legacy to the bit
 constexpr float kPi = 3.1415926535897932384626433832795f;
 
 template <unsigned M, unsigned N, unsigned B, unsigned A> struct SinCosSeries {
@@ -97,7 +92,7 @@ public:
     }
 };
 
-// Legacy GFFT::scramble: reverse-binary reindexing of `nn` complex values.
+// Reverse-binary reindexing of `nn` complex values.
 void scramble(float *data, unsigned long nn)
 {
     unsigned long n, m, j, i;
@@ -150,7 +145,6 @@ SpectrumLine legacySpectrumLine(const std::int16_t *samples)
     return line;
 }
 
-// Legacy AudioSpectrum::ChangeColours.
 std::array<std::uint8_t, 256 * 3> legacySpectrumPalette(std::uint32_t background, std::uint32_t echo,
                                                         std::uint32_t inner)
 {
@@ -167,7 +161,6 @@ std::array<std::uint8_t, 256 * 3> legacySpectrumPalette(std::uint32_t background
         palette[std::size_t(j) * 3] = static_cast<std::uint8_t>(pointr);
         palette[std::size_t(j) * 3 + 1] = static_cast<std::uint8_t>(pointg);
         palette[std::size_t(j) * 3 + 2] = static_cast<std::uint8_t>(pointb);
-        // legacy stops at 1.0 halfway: the upper half is the inner colour
         if (j < 128)
             i += div;
     }
@@ -176,7 +169,6 @@ std::array<std::uint8_t, 256 * 3> legacySpectrumPalette(std::uint32_t background
 
 AudioSpectrum::AudioSpectrum(int threads)
 {
-    // legacy AudioSpectrumMultiThreading: the processors, 2 when unknown
     m_threads = threads > 0 ? threads : static_cast<int>(std::thread::hardware_concurrency());
     if (m_threads < 1)
         m_threads = 2;
@@ -197,8 +189,6 @@ std::size_t AudioSpectrum::cacheBytes() const
     return bytes;
 }
 
-// Legacy RenderRange's newOverlaps: more transforms per line the closer the
-// zoom, from 1 at 100% to at most 24.
 int AudioSpectrum::overlapsFor(int imgwidth, std::int64_t rangeStart, std::int64_t rangeEnd, int percent)
 {
     int newOverlaps = static_cast<int>(
@@ -212,10 +202,7 @@ int AudioSpectrum::overlapsFor(int imgwidth, std::int64_t rangeStart, std::int64
     return newOverlaps;
 }
 
-// Legacy SpectrumCache::CreateCache: a sub-cache's first line starts at its
-// own multiple of 16 x 2048 samples and the next ones follow 2048 / overlaps
-// (truncated) apart, so with overlaps that do not divide 2048 the lines are
-// not evenly spaced across sub-caches.
+// MUST KILL: lines are unevenly spaced when overlaps do not divide 2048
 std::int64_t AudioSpectrum::lineSample(std::uint64_t line, int overlaps)
 {
     const std::uint64_t subcachelen = std::uint64_t(kSubCacheLength) * overlaps;
@@ -242,7 +229,6 @@ void AudioSpectrum::reserveSlots(std::uint64_t startCache, std::uint64_t endCach
         m_slots.resize(neededsize * 3);
 }
 
-// Legacy SpectrumCache::GetLine: a line no sub-cache holds is all zero.
 const float *AudioSpectrum::line(std::uint64_t i) const
 {
     const std::uint64_t subcachelen = std::uint64_t(kSubCacheLength) * m_overlaps;
@@ -252,10 +238,6 @@ const float *AudioSpectrum::line(std::uint64_t i) const
     return m_slots[found->second].lines.data() + (i % subcachelen) * kSpectrumLineLength;
 }
 
-// Legacy AudioSpectrumMultiThreading::CreateCache: every sub-cache from
-// startCache to endCache is transformed unless a slot already holds it. The
-// samples are read here (legacy FFT::SetAudio, Provider::GetBuffer), then
-// the workers transform the lines.
 void AudioSpectrum::fill(const DisplayAudio &audio, std::uint64_t startCache, std::uint64_t endCache)
 {
     const int overlaps = m_overlaps;
@@ -271,7 +253,6 @@ void AudioSpectrum::fill(const DisplayAudio &audio, std::uint64_t startCache, st
     if (missing.empty())
         return;
 
-    // the least recently used slots that this render does not need
     std::vector<std::size_t> free;
     for (std::size_t s = 0; s < m_slots.size(); ++s)
         if (m_slots[s].used != m_clock)
@@ -284,7 +265,6 @@ void AudioSpectrum::fill(const DisplayAudio &audio, std::uint64_t startCache, st
             m_byIndex.erase(slot.index);
         slot.index = missing[n];
         slot.used = m_clock;
-        // legacy data.resize(subcachelen) only when it is smaller
         if (slot.lines.size() < subcachelen * kSpectrumLineLength)
             slot.lines.resize(subcachelen * kSpectrumLineLength);
         m_byIndex[slot.index] = free[n];
@@ -332,7 +312,6 @@ void AudioSpectrum::render(const DisplayAudio &audio, std::int64_t range_start, 
     reserveSlots(startcache, endcache);
 
     const float factor = std::pow(static_cast<unsigned long>(kSpectrumLineLength), 1.f / (imgheight - 1));
-    // Some scaling constants
     const int maxpower = (1 << (16 - 1)) * 256;
     const double upscale = m_powerScale * 16384 / static_cast<unsigned long>(kSpectrumLineLength);
     const int maxband = kSpectrumLineLength, minband = 0;
@@ -349,26 +328,19 @@ void AudioSpectrum::render(const DisplayAudio &audio, std::int64_t range_start, 
         pixel[1] = m_palette[std::size_t(intensity) * 3 + 1];
         pixel[0] = m_palette[std::size_t(intensity) * 3 + 2];
     };
-    // R3 (proposed A2-tall-spectrum): legacy's expansion reads band 1024 of
-    // a 1024-band line for the top row of a display 1024 rows or taller, past
-    // the line's end; that band reads as zero.
     auto band = [&](const float *line, int index) { return index < lineLength ? line[index] : 0.f; };
 
-    // Note that here "lines" are actually bands of power data
     const std::uint64_t sampleRange = (last_line - first_line + 1);
     for (std::uint64_t i = first_line, k = 0; i <= last_line; ++i, ++k) {
-        // legacy never records the last column it drew, so every line paints
-        // its columns and a later line overwrites a shared one
         const int imgcol = static_cast<int>(std::uint64_t(imgwidth) * k / sampleRange);
         const float *line = this->line(i);
-        // Handle horizontal expansion
         int next_line_imgcol = static_cast<int>(std::uint64_t(imgwidth) * (k + 1) / sampleRange);
         if (next_line_imgcol >= imgpitch)
             next_line_imgcol = imgpitch - 1;
 
+        // MUST KILL: neighbouring lines both paint their shared column; the later wins
         for (int x = imgcol; x <= next_line_imgcol; ++x) {
             if (maxband - minband > imgheight) {
-                // more than one frequency sample per pixel: the largest per pixel
                 int sample2 = 0;
                 int sample1 = 0;
                 float samplecounter = 1.f;
@@ -396,7 +368,6 @@ void AudioSpectrum::render(const DisplayAudio &audio, std::int64_t range_start, 
                     writePixel(x, y, intensity);
                 }
             } else {
-                // less than one frequency sample per pixel: interpolate
                 for (int y = 0; y < imgheight; ++y) {
                     const float ideal = (float)(y + 1.) / imgheight * maxband;
                     const float sample1 = band(line, (int)std::floor(ideal) + minband);
@@ -413,8 +384,7 @@ void AudioSpectrum::render(const DisplayAudio &audio, std::int64_t range_start, 
 
 namespace {
 
-// Legacy config.h MID(0, value, line_length - 1): the comparison is made in
-// unsigned long, so a negative value becomes the last band.
+// MUST KILL: an unsigned compare clamps a negative value to the last band
 int bandIndex(int value)
 {
     const unsigned long last = static_cast<unsigned long>(kSpectrumLineLength) - 1;
@@ -423,19 +393,16 @@ int bandIndex(int value)
 
 } // namespace
 
-// Legacy CreateRange. Legacy set the shared overlaps to 1 without resetting
-// the sub-caches; here the overlaps change resets them as a render's does,
-// so a line is never read from a cache made at other overlaps.
 FrequencyPeaks AudioSpectrum::createRange(const DisplayAudio &audio, long long timeStart, long long timeEnd,
                                           int freqStart, int freqEnd, int peek)
 {
-    // legacy GFFT.h's types: the divisions below are made in unsigned long
+    // MUST KILL: unsigned long arithmetic, so results differ by platform
     const unsigned long doublelen = static_cast<unsigned long>(kSpectrumDoubleLength);
     const unsigned long line_length = static_cast<unsigned long>(kSpectrumLineLength);
     FrequencyPeaks out;
     const int sampleRate = audio.sampleRate();
     if (sampleRate / doublelen == 0)
-        return out; // legacy divided by zero here (R3): no peaks
+        return out;
     setOverlaps(1);
     const unsigned long subcachelen = kSubCacheLength;
     const long long range_start = timeStart * sampleRate / 1000;
@@ -452,9 +419,6 @@ FrequencyPeaks AudioSpectrum::createRange(const DisplayAudio &audio, long long t
 
     const int maxpower = (1 << (16 - 1)) * 100;
     const double upscale = 16384 / line_length;
-    // Legacy transformed the whole range up front; here at most
-    // kRangeChunk sub-caches at a time, so a range far past the audio's end
-    // does not hold every line at once. The lines and results are the same.
     constexpr unsigned long kRangeChunk = 64;
     unsigned long filledEnd = 0;
     bool filled = false;
@@ -500,7 +464,7 @@ FrequencyPeaks AudioSpectrum::createRange(const DisplayAudio &audio, long long t
         }
         lasttime = time;
         if (i == last_line)
-            break; // i <= last_line never ends when last_line is the largest value
+            break; // i <= last_line never ends when last_line is ULONG_MAX
     }
     return out;
 }

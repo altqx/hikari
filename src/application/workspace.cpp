@@ -38,11 +38,9 @@ bool Workspace::remove(DocumentId id)
     if (m_reference == id)
         m_reference.reset();
     if (m_target == id) {
-        // Legacy DeletePage: the tab now at the closed one's index, else the last.
         m_target.reset();
         if (const auto after = tabs(); !after.empty())
             m_target = after[std::min(position, after.size() - 1)];
-        // R2: a tab reference taking its place stops being the reference.
         if (m_target && m_target == m_reference)
             m_reference.reset();
     }
@@ -104,7 +102,7 @@ bool Workspace::setEditingTarget(DocumentId id)
     if (!find(id) || (m_reference == id && !m_referenceIsTab))
         return false;
     if (m_reference == id)
-        m_reference.reset(); // R2: its tab was chosen
+        m_reference.reset();
     m_target = id;
     return true;
 }

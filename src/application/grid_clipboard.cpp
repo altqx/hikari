@@ -17,7 +17,6 @@ std::vector<const core::LineRecord *> shownSelected(const EditSession &session, 
 
 bool inGroup(core::GroupMarker marker)
 {
-    // Legacy treeState > TREE_DESCRIPTION: a group member, opened or closed.
     return marker == core::GroupMarker::Opened || marker == core::GroupMarker::Closed;
 }
 
@@ -55,8 +54,6 @@ std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8strin
     auto pasted = core::parseClipboardRows(text, session.document().format(), conversion);
     if (pasted.empty())
         return {};
-    // The Line at the paste position and the one before it decide the group
-    // and visibility of the pasted Lines.
     const auto lines = session.document().lines();
     std::size_t row = 0;
     while (lines[row]->id != selected.front()->id)
@@ -66,8 +63,7 @@ std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8strin
     const core::GroupMarker group = before && inGroup(before->group) && inGroup(after->group) ? before->group
                                     : inGroup(after->group)                                   ? after->group
                                                                                               : core::GroupMarker::None;
-    // Legacy reads the visibility before the position from the wrong variable,
-    // so only the Line after it counts (characterized).
+    // MUST KILL: only the Line after the paste position sets visibility
     const core::LineVisibility visibility = after->visibility;
     for (auto &line : pasted) {
         if (group != core::GroupMarker::None)
@@ -107,7 +103,6 @@ std::expected<void, CommandRefusal> pasteColumns(EditSession &session, std::u8st
     std::vector<std::pair<core::LineId, const core::LineRecord *>> changes;
     for (std::size_t i = 0; i < pasted.size() && i < selected.size(); ++i)
         changes.emplace_back(selected[i]->id, &pasted[i]);
-    // Legacy ChangeCell: only the chosen fields.
     auto apply = [columns](core::LineRecord &l, const core::LineRecord &from) {
         using namespace core::column;
         if (columns & Layer)

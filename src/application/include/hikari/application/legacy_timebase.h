@@ -1,9 +1,6 @@
 #pragma once
 
-// Legacy Timebase (Timebase.cpp at 20d647c4) over an indexed video's frame
-// starts in whole milliseconds, for commands whose results legacy computes
-// from it: MsAt, FrameAt (the frame at or after a time), FrameShownAt, and
-// the midpoint StartTimeFor/EndTimeFor that legacy gives Lines timed to frames.
+// Frame starts in whole milliseconds; frameAt is the frame at or after a time.
 
 #include <cstdint>
 #include <vector>

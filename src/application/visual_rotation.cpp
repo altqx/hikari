@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-// Built without floating-point contraction, as visual_view.cpp.
+// Built without floating-point contraction.
 
 namespace hikari::application::visual {
 
@@ -12,18 +12,16 @@ using namespace transform;
 
 namespace {
 
-constexpr float kRad = 0.01745329251994329576923690768489f; // VisualRotationZ.cpp:61
-constexpr float kDegrees = 180.f / 3.1415926536f;           // VisualRotationZ.cpp:154
+// MUST KILL: kRad and kDegrees use different digits of pi
+constexpr float kRad = 0.01745329251994329576923690768489f;
+constexpr float kDegrees = 180.f / 3.1415926536f;
 
 std::u8string u8(const std::u16string &text)
 {
     return core::toUtf8(text);
 }
 
-// The legacy tools' In and Out conversions with the coefficients and zoom of
-// their last SizeChanged / SetZoom (Visuals.h:139-154).
-// VT1: a typed angle as the tools hold one, in 0-360 for any number of
-// turns (legacy's +360 then fmod covers one negative turn).
+// 0-360 for any number of turns.
 float turn(double degrees)
 {
     const double t = std::fmod(degrees, 360.);
@@ -40,10 +38,7 @@ PointF outPos(PointF p, float coeffW, float coeffH, PointF zm, PointF zs)
     return {((p.x / zs.x) + zm.x) * coeffW, ((p.y / zs.y) + zm.y) * coeffH};
 }
 
-// ChangeOrg's offsets: the \org's move in script coordinates. Legacy added
-// the zoom's offset to the move (VisualRotationZ.cpp:302-303,
-// VisualRotationXY.cpp:268-269), so a zoomed drag jumped by it; the offset is
-// a difference of two points and takes only the zoom's scale (T3-org-zoom).
+// The \org's move in script coordinates; only the zoom's scale applies.
 PointF orgOffset(PointF org, PointF lastOrg, float coeffW, float coeffH, PointF zs)
 {
     return {((org.x - lastOrg.x) / zs.x) * coeffW, ((org.y - lastOrg.y) / zs.y) * coeffH};
@@ -55,7 +50,6 @@ struct ItemInfo {
     const char16_t *tooltip;
 };
 
-// RotationZItem's icons (VideoToolbar.cpp:78-80).
 const std::array<ItemInfo, 3> &zItems()
 {
     static const std::array<ItemInfo, 3> table{{
@@ -70,11 +64,8 @@ const std::array<ItemInfo, 3> &zItems()
 
 } // namespace
 
-// ---------------------------------------------------------------- RotationZ
-
 int RotationZTool::toggled() const
 {
-    // RotationZItem::GetItemToggled (VideoToolbar.h:183-189).
     int result = 0;
     for (int i = 0; i < 3; i++)
         if (m_toggle[static_cast<std::size_t>(i)])
@@ -93,8 +84,6 @@ void RotationZTool::setToggled(int bits, VisualHost *host)
 std::vector<ToolOption> RotationZTool::options(const VisualHost &host) const
 {
     (void)host;
-    // RotationZItem::OnMouseEvent: "change all" stays on with "preserve
-    // proportions" (VideoToolbar.cpp:833).
     std::vector<ToolOption> out;
     for (int elem = 0; elem < 3; ++elem) {
         const ItemInfo &info = zItems()[static_cast<std::size_t>(elem)];
@@ -105,7 +94,7 @@ std::vector<ToolOption> RotationZTool::options(const VisualHost &host) const
         o.checked = m_toggle[static_cast<std::size_t>(elem)];
         o.enabled = !(elem == 1 && m_toggle[2]);
         if (elem > 0)
-            o.group = u"Tags"; // VT1: the bar's groups
+            o.group = u"Tags";
         out.push_back(std::move(o));
     }
     return out;
@@ -113,7 +102,6 @@ std::vector<ToolOption> RotationZTool::options(const VisualHost &host) const
 
 bool RotationZTool::setOption(const std::string &name, int value, VisualHost &host)
 {
-    // RotationZItem::OnMouseEvent (VideoToolbar.cpp:827-865).
     int elem = -1;
     for (int i = 0; i < 3; ++i)
         if (name == zItems()[static_cast<std::size_t>(i)].name)
@@ -149,14 +137,11 @@ void RotationZTool::takeView(const VideoView &view)
 
 void RotationZTool::reset(VisualHost &host)
 {
-    // VT1: Esc dropped a scrubbed value's gesture: the origin it moved is
-    // not held by a drag.
     if (m_valueEdit) {
         m_valueEdit = false;
         m_isOrg = false;
     }
     m_typedAngle.reset();
-    // Visuals::SetVisual(dial, tool) (Visuals.cpp:256-283).
     takeView(host.view());
     const Context ctx = context(host);
     if (ctx.active) {
@@ -174,10 +159,6 @@ void RotationZTool::reset(VisualHost &host)
 
 void RotationZTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host)
 {
-    // RotationZ::ChangeTool (VisualRotationZ.cpp:422-441). Legacy took the
-    // two-point mode only when "change all" did not change in the same call,
-    // so choosing the family with both on lost the two-point mode; both are
-    // taken here (T3-two-points-change-all).
     const bool twoPointsTool = (tool & 1) != 0;
     const bool oldChangeAllTags = m_changeAllTags;
     m_changeAllTags = (tool & 2) != 0;
@@ -200,7 +181,6 @@ void RotationZTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &hos
 
 void RotationZTool::setCurVisual(VisualHost &host)
 {
-    // RotationZ::SetCurVisual (VisualRotationZ.cpp:256-294).
     const Context ctx = context(host);
     PointF linepos = posnScale(ctx, m_find, !m_replaceTagsInCursorPosition, nullptr, nullptr, m_moveValues);
     if (m_moveValues[6] > 3)
@@ -262,10 +242,6 @@ bool RotationZTool::beginEdit(VisualHost &host)
 
 bool RotationZTool::finishEdit(VisualHost &host)
 {
-    // A refused commit (a stale revision, a draft that cannot commit) wrote
-    // nothing: the tool reads the unchanged text again, as after Esc.
-    // A release that changes no Line records nothing (T3-release-no-change;
-    // legacy's SetVisual(false) made an undo step of it, Visuals.cpp:822-826).
     if (host.gesture() && !host.gesture()->changesAnyLine())
         host.cancelGesture();
     const bool committed = !host.gesture() || host.commitGesture().has_value();
@@ -277,7 +253,6 @@ bool RotationZTool::finishEdit(VisualHost &host)
 
 void RotationZTool::setVisual(bool dummy, VisualHost &host)
 {
-    // Visuals::SetVisual(dummy) (Visuals.cpp:726-832), as ScaleTool's.
     Gesture *g = host.gesture();
     if (!g)
         return;
@@ -298,9 +273,7 @@ void RotationZTool::setVisual(bool dummy, VisualHost &host)
         m_find.setSelection(pos.first, pos.first);
         g->stage(*m_editing, u8(txt), m_editorIsTranslation);
     } else {
-        // The caret goes to the tag only in the text that was written; it
-        // and the text are taken first, as the host may reload the editor
-        // while it commits.
+        // MUST KILL: text and caret are copied before the commit, which may reload the editor
         const std::u16string written = m_editorText;
         const auto [selFrom, selTo] = m_find.selection();
         if (finishEdit(host)) {
@@ -314,10 +287,9 @@ void RotationZTool::setVisual(bool dummy, VisualHost &host)
 
 float RotationZTool::currentAngle() const
 {
-    // VisualRotationZ.cpp:307-315.
     float angle;
     if (m_typedAngle) {
-        angle = *m_typedAngle; // VT1: a typed or scrubbed angle
+        angle = *m_typedAngle;
     } else if (m_hasTwoPoints) {
         angle = std::atan2((m_twoPoints[0].y - m_twoPoints[1].y), (m_twoPoints[0].x - m_twoPoints[1].x)) * kDegrees;
         angle = -angle + 180;
@@ -329,7 +301,6 @@ float RotationZTool::currentAngle() const
 
 void RotationZTool::changeVisualLine(std::u16string &text, const core::LineRecord &dial, const Context &ctx)
 {
-    // RotationZ::ChangeVisual(txt, dial, numOfSelections) (VisualRotationZ.cpp:296-370).
     if (m_hasTwoPoints && !m_typedAngle && !m_isOrg && (!m_visibility[0] || !m_visibility[1]))
         return;
     if (m_isOrg) {
@@ -344,7 +315,6 @@ void RotationZTool::changeVisualLine(std::u16string &text, const core::LineRecor
             const LinePosition lp = linePosition(ctx, dial);
             PointF pos = lp.pos;
             PointF orgpivot = outPos(m_org, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
-            // FindTag without a text reads the editor's (TagFindReplace.cpp:37-38).
             if (m_find.findTag(u"org\\(([^\\)]+)", ctx.editorText)) {
                 double orx = 0, ory = 0;
                 if (m_find.getTwoValueDouble(orx, ory))
@@ -386,7 +356,6 @@ void RotationZTool::changeVisualLine(std::u16string &text, const core::LineRecor
 
 std::pair<long, long> RotationZTool::changeVisualEditor(std::u16string &text)
 {
-    // RotationZ::ChangeVisual(txt) (VisualRotationZ.cpp:372-420).
     if (m_hasTwoPoints && !m_typedAngle && !m_isOrg && (!m_visibility[0] || !m_visibility[1]))
         return {0, 0};
     if (m_isOrg) {
@@ -424,13 +393,12 @@ std::pair<long, long> RotationZTool::changeVisualEditor(std::u16string &text)
 
 void RotationZTool::pointer(const Pointer &event, VisualHost &host)
 {
-    // RotationZ::OnMouseEvent (VisualRotationZ.cpp:139-254).
     if (event.kind == Pointer::Kind::Wheel)
         return;
     takeView(host.view());
     const Mouse e = mouse(event);
     const float x = static_cast<float>(e.x), y = static_cast<float>(e.y);
-    const float pointCatch = 5 * unitOf(host); // SV1-hidpi-tool-sizes
+    const float pointCatch = 5 * unitOf(host);
     if (e.click)
         (void)beginEdit(host);
 
@@ -481,10 +449,10 @@ void RotationZTool::pointer(const Pointer &event, VisualHost &host)
             if (m_changeAllTags)
                 m_lastAngle = m_lastmove.y;
             m_isfirst = true;
-            host.setPointerShape(PointerShape::Sizing); // VisualRotationZ.cpp:211
+            host.setPointerShape(PointerShape::Sizing);
             setVisual(true, host);
         } else {
-            host.setPointerShape(PointerShape::Sizing); // VisualRotationZ.cpp:215
+            host.setPointerShape(PointerShape::Sizing);
             if (std::fabs(m_org.x - x) < pointCatch && std::fabs(m_org.y - y) < pointCatch) {
                 m_isOrg = true;
                 m_lastOrg = m_org;
@@ -522,9 +490,6 @@ bool RotationZTool::hasPending() const
 
 bool RotationZTool::cancelPending(VisualHost &host)
 {
-    // The card's Esc (T3, #178): the first of the two points, placed and
-    // waiting for the second, is dropped. Legacy had no key for it
-    // (RotationZ::OnKeyPress is empty, VisualRotationZ.cpp:443-453).
     if (!hasPending())
         return false;
     m_visibility[0] = false;
@@ -535,10 +500,9 @@ bool RotationZTool::cancelPending(VisualHost &host)
 
 Overlay RotationZTool::overlay(const VisualHost &host) const
 {
-    // RotationZ::DrawVisual (VisualRotationZ.cpp:34-137).
     Overlay out;
     out.unit = unitOf(host);
-    const float u = out.unit; // SV1-hidpi-tool-sizes: the ring, its band and the crosses
+    const float u = out.unit;
     if (m_hasTwoPoints) {
         if (m_visibility[1]) {
             out.lines.push_back({m_twoPoints[0], m_twoPoints[1], 2.f, kHandleBorder});
@@ -564,8 +528,6 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
     m_oldtime = time;
     const PointF org = m_org, from = m_from;
     const float radius = std::sqrt(std::pow(std::fabs(org.x - from.x), 2.f) + std::pow(std::fabs(org.y - from.y), 2.f)) + 40 * u;
-    // The ring: a triangle strip between the circles of radius and radius +
-    // 10 (0xAA121150), the two circles in 0xAAFF0000.
     OverlayPolygon ring;
     ring.fill = 0xAA121150;
     ring.border = 0;
@@ -601,7 +563,7 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> RotationZTool::values(const VisualHost &host) const
 {
-    // VT1: editable, the angle in degrees and \org in script coordinates.
+    // The angle in degrees, \org in script coordinates.
     (void)host;
     const PointF o = outPos(m_org, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
     return {{"frz", u"Z", getfloat(m_lastmove.y), true, {}, u"\u00b0"},
@@ -611,10 +573,7 @@ std::vector<ToolValue> RotationZTool::values(const VisualHost &host) const
 
 bool RotationZTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
-    // VT1: a typed or scrubbed angle, written as a drag around the ring
-    // writes it (with "Changing all Z-rotation tags" each tag turned by the
-    // difference), or \org moved as a drag of its cross moves it. The first
-    // sample is the press.
+    // Written as a drag writes it; the first sample is the press.
     double value = 0;
     if (!host.gesture()) {
         m_valueEdit = false;
@@ -647,15 +606,12 @@ bool RotationZTool::setValue(const std::string &name, const std::u16string &text
     setVisual(true, host);
     if (edit == ValueEdit::Sample)
         return m_valueEdit = host.gesture() != nullptr;
-    // The release (OnMouseEvent's buttonUp): the angle handle back on \org.
     m_valueEdit = false;
     const std::uint64_t before = host.session() ? host.session()->revision() : 0;
     setVisual(false, host);
     m_typedAngle.reset();
     m_to = m_org;
     m_isOrg = false;
-    // Several Lines: the batch's first target set the angle the tool holds;
-    // the fields and the next edit start from the active Line's as written.
     if (host.batchTargets().size() > 1) {
         const auto points = m_visibility;
         reset(host);
@@ -664,8 +620,6 @@ bool RotationZTool::setValue(const std::string &name, const std::u16string &text
     host.toolChanged();
     return host.session() && host.session()->revision() != before;
 }
-
-// --------------------------------------------------------------- RotationXY
 
 void RotationXYTool::setToggled(int toggled, VisualHost *host)
 {
@@ -677,7 +631,6 @@ void RotationXYTool::setToggled(int toggled, VisualHost *host)
 std::vector<ToolOption> RotationXYTool::options(const VisualHost &host) const
 {
     (void)host;
-    // RotationXYItem (VideoToolbar.cpp:100, 1197-1262).
     ToolOption o;
     o.name = "changeAll";
     o.iconRole = "tool-scale-rotation";
@@ -714,8 +667,6 @@ void RotationXYTool::takeView(const VideoView &view)
 
 void RotationXYTool::reset(VisualHost &host)
 {
-    // VT1: Esc dropped a scrubbed value's gesture: the origin it moved is
-    // not held by a drag.
     if (m_valueEdit) {
         m_valueEdit = false;
         m_isOrg = false;
@@ -737,7 +688,6 @@ void RotationXYTool::reset(VisualHost &host)
 
 void RotationXYTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host)
 {
-    // RotationXY::ChangeTool (VisualRotationXY.cpp:379-390).
     const bool oldChangeAllTags = m_changeAllTags;
     m_changeAllTags = tool == 0;
     m_replaceTagsInCursorPosition = !m_changeAllTags;
@@ -750,7 +700,6 @@ void RotationXYTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &ho
 
 void RotationXYTool::setCurVisual(VisualHost &host)
 {
-    // RotationXY::SetCurVisual (VisualRotationXY.cpp:232-263).
     const Context ctx = context(host);
     PointF linepos = posnScale(ctx, m_find, !m_replaceTagsInCursorPosition, nullptr, &m_an, m_moveValues);
     if (m_moveValues[6] > 3)
@@ -809,10 +758,6 @@ bool RotationXYTool::beginEdit(VisualHost &host)
 
 bool RotationXYTool::finishEdit(VisualHost &host)
 {
-    // A refused commit (a stale revision, a draft that cannot commit) wrote
-    // nothing: the tool reads the unchanged text again, as after Esc.
-    // A release that changes no Line records nothing (T3-release-no-change;
-    // legacy's SetVisual(false) made an undo step of it, Visuals.cpp:822-826).
     if (host.gesture() && !host.gesture()->changesAnyLine())
         host.cancelGesture();
     const bool committed = !host.gesture() || host.commitGesture().has_value();
@@ -844,9 +789,7 @@ void RotationXYTool::setVisual(bool dummy, VisualHost &host)
         m_find.setSelection(pos.first, pos.first);
         g->stage(*m_editing, u8(txt), m_editorIsTranslation);
     } else {
-        // The caret goes to the tag only in the text that was written; it
-        // and the text are taken first, as the host may reload the editor
-        // while it commits.
+        // MUST KILL: text and caret are copied before the commit, which may reload the editor
         const std::u16string written = m_editorText;
         const auto [selFrom, selTo] = m_find.selection();
         if (finishEdit(host)) {
@@ -860,7 +803,6 @@ void RotationXYTool::setVisual(bool dummy, VisualHost &host)
 
 void RotationXYTool::changeVisualLine(std::u16string &text, const core::LineRecord &dial, const Context &ctx)
 {
-    // RotationXY::ChangeVisual(txt, dial, numOfSelections) (VisualRotationXY.cpp:265-313).
     if (m_isOrg) {
         const PointF d = orgOffset(m_org, m_lastOrg, m_coeffW, m_coeffH, m_zoomScale);
         changeOrg(ctx, m_find, text, dial, d.x, d.y);
@@ -908,7 +850,6 @@ void RotationXYTool::changeVisualLine(std::u16string &text, const core::LineReco
 
 std::pair<long, long> RotationXYTool::changeVisualEditor(std::u16string &text)
 {
-    // RotationXY::ChangeVisual(txt) (VisualRotationXY.cpp:315-371).
     if (m_isOrg) {
         m_find.findTag(u"org\\(([^\\)]+)\\)", text, 1);
         const PointF o = outPos(m_org, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
@@ -960,7 +901,6 @@ std::pair<long, long> RotationXYTool::changeVisualEditor(std::u16string &text)
 
 void RotationXYTool::pointer(const Pointer &event, VisualHost &host)
 {
-    // RotationXY::OnMouseEvent (VisualRotationXY.cpp:183-230).
     if (event.kind == Pointer::Kind::Wheel)
         return;
     takeView(host.view());
@@ -978,12 +918,12 @@ void RotationXYTool::pointer(const Pointer &event, VisualHost &host)
     }
     if (e.click) {
         if (e.leftc)
-            m_type = 0; // fry
+            m_type = 0;
         if (e.rightc)
-            m_type = 1; // frx
+            m_type = 1;
         if (e.middlec)
-            m_type = 2; // frx + fry
-        const float grab = 8 * unitOf(host); // SV1-hidpi-tool-sizes
+            m_type = 2;
+        const float grab = 8 * unitOf(host);
         if (std::abs(m_org.x - x) < grab && std::abs(m_org.y - y) < grab) {
             m_isOrg = true;
             m_lastOrg = m_org;
@@ -991,8 +931,6 @@ void RotationXYTool::pointer(const Pointer &event, VisualHost &host)
             m_diffsY = static_cast<int>(m_org.y - y);
         }
         m_firstmove = {static_cast<float>(x), static_cast<float>(y)};
-        // VisualRotationXY.cpp:215-217: \fry's west-east, \frx's
-        // north-south, both together's four-way, the origin's drag too.
         if (m_type == 0)
             host.setPointerShape(PointerShape::SizeWE);
         if (m_type == 1)
@@ -1012,7 +950,6 @@ void RotationXYTool::pointer(const Pointer &event, VisualHost &host)
 
 Overlay RotationXYTool::overlay(const VisualHost &host) const
 {
-    // RotationXY::DrawVisual (VisualRotationXY.cpp:37-181).
     Overlay out;
     out.unit = unitOf(host);
     const VideoView &view = host.view();
@@ -1030,7 +967,6 @@ Overlay RotationXYTool::overlay(const VisualHost &host) const
             m_to = m_org;
     }
     m_oldtime = time;
-    // GetWindowSize(withTabPanel = false): the client without the panel.
     XYProjection p;
     p.width = static_cast<float>(view.clientWidth());
     p.height = static_cast<float>(view.clientHeight() - view.panelHeight());
@@ -1040,7 +976,7 @@ Overlay RotationXYTool::overlay(const VisualHost &host) const
     if (p.width > 0 && p.height > 0)
         drawXYGrid(out, p, m_an);
     const PointF org = m_org;
-    const float arm = 10.0f * unitOf(host); // SV1-hidpi-tool-sizes
+    const float arm = 10.0f * unitOf(host);
     out.lines.push_back({{org.x - arm, org.y}, {org.x + arm, org.y}, 2.f, kHandleBorder});
     out.lines.push_back({{org.x, org.y - arm}, {org.x, org.y + arm}, 2.f, kHandleBorder});
     return out;
@@ -1048,7 +984,7 @@ Overlay RotationXYTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> RotationXYTool::values(const VisualHost &host) const
 {
-    // VT1: editable, the angles in degrees and \org in script coordinates.
+    // Angles in degrees, \org in script coordinates.
     (void)host;
     const PointF o = outPos(m_org, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
     return {{"frx", u"X", getfloat(m_angle.y), true, {}, u"\u00b0"},
@@ -1059,11 +995,7 @@ std::vector<ToolValue> RotationXYTool::values(const VisualHost &host) const
 
 bool RotationXYTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
-    // VT1: a typed or scrubbed angle, written as a drag writes it (the
-    // pointer's offset from the press is the angle's change: \fry from the
-    // left button's horizontal drag, \frx from the right's vertical one), or
-    // \org moved as a drag of its cross moves it. The first sample is the
-    // press.
+    // Written as a drag writes it; the first sample is the press.
     double value = 0;
     if (!host.gesture())
         m_valueEdit = false;
@@ -1100,14 +1032,11 @@ bool RotationXYTool::setValue(const std::string &name, const std::u16string &tex
     setVisual(true, host);
     if (edit == ValueEdit::Sample)
         return m_valueEdit = host.gesture() != nullptr;
-    // The release (OnMouseEvent's buttonUp).
     m_valueEdit = false;
     const std::uint64_t before = host.session() ? host.session()->revision() : 0;
     setVisual(false, host);
     m_oldAngle = m_angle;
     m_isOrg = false;
-    // Several Lines: m_angle is the last target's; the fields and the next
-    // edit start from the active Line's as written.
     if (host.batchTargets().size() > 1)
         reset(host);
     host.toolChanged();
@@ -1142,8 +1071,8 @@ Mat mul(const Mat &a, const Mat &b)
     return r;
 }
 
-// D3DXMatrixRotationYawPitchRoll: roll about z, then pitch about x, then yaw
-// about y (left-handed, row vectors).
+// Roll about z, then pitch about x, then yaw about y (left-handed, row
+// vectors), as D3DXMatrixRotationYawPitchRoll.
 Mat yawPitchRoll(float yaw, float pitch, float roll)
 {
     Mat rz = Mat::identity(), rx = Mat::identity(), ry = Mat::identity();
@@ -1175,9 +1104,9 @@ struct Clip {
     float x, y, z, w;
 };
 
-// The world, view (D3DXMatrixLookAtLH from (0, 0, -17.2) at the origin, y up)
-// and projection (D3DXMatrixPerspectiveFovLH, 120 degrees, the window's
-// ratio, near 1, far 10000, then translated by the \org in clip space).
+// View: D3DXMatrixLookAtLH from (0, 0, -17.2) at the origin, y up.
+// Projection: D3DXMatrixPerspectiveFovLH, 120 degrees, the window's ratio,
+// near 1, far 10000, then translated by the \org in clip space.
 struct Pipeline {
     Mat world, projection;
     float width = 0, height = 0;
@@ -1220,7 +1149,6 @@ struct Pipeline {
                 c[j] += wv[k] * projection.m[k][j];
         return {c[0], c[1], c[2], c[3]};
     }
-    // The viewport (0, 0, width, height) (RendererVideo::SetProjection).
     PointF screen(const Clip &c) const
     {
         return {(c.x / c.w + 1.f) * width / 2.f, (1.f - c.y / c.w) * height / 2.f};
@@ -1254,7 +1182,7 @@ void line3(Overlay &out, const Pipeline &p, const float *a, const float *b, std:
 
 void fan(Overlay &out, const Pipeline &p, const std::vector<std::array<float, 3>> &v, std::uint32_t colour)
 {
-    // D3DPT_TRIANGLEFAN: the first vertex with each next pair.
+    // D3DPT_TRIANGLEFAN order: the first vertex with each next pair.
     for (std::size_t i = 1; i + 1 < v.size(); ++i) {
         const Clip c0 = p.clip(v[0][0], v[0][1], v[0][2]);
         const Clip c1 = p.clip(v[i][0], v[i][1], v[i][2]);
@@ -1279,8 +1207,6 @@ std::optional<PointF> projectXY(const XYProjection &p, float x, float y, float z
 void drawXYGrid(Overlay &out, const XYProjection &p, int an)
 {
     const Pipeline pipe(p);
-    // The grid (VisualRotationXY.cpp:94-125): eleven lines each way, 5 units
-    // apart, more opaque towards the middle, the middle ones orange.
     const float mm = 60.0f / 12.0f;
     float j = 30 - mm;
     const float gg = 1.0f / 12.f;
@@ -1308,7 +1234,6 @@ void drawXYGrid(Overlay &out, const XYProjection &p, int an)
         else
             g -= gg;
     }
-    // The axes and their arrows (VisualRotationXY.cpp:126-156).
     const float addy = (an < 4) ? 9.f : -9.f, addx = (an % 3 == 0) ? -9.f : 9.f;
     const float add1y = (an < 4) ? 10.f : -10.f, add1x = (an % 3 == 0) ? -10.f : 10.f;
     const std::uint32_t colour = kHandleBorder;

@@ -70,8 +70,6 @@ std::expected<void, WriteRefusal> WriteCoordinator::write(PermitId permit, std::
         return std::unexpected(WriteRefusal::Revoked);
     if (p.started)
         return std::unexpected(WriteRefusal::AlreadyStarted);
-    // The destination must still be free of other Documents, and the requester's
-    // own association must be what it was when the permit was granted.
     if (const auto owner = ownerOf(p.destination); owner && *owner != p.document)
         return std::unexpected(WriteRefusal::StaleDestination);
     if (association(p.document) != p.associationAtGrant)
@@ -90,7 +88,6 @@ void WriteCoordinator::cancel(PermitId permit)
         it->second.revoked = true;
         return;
     }
-    // Only the adapter knows whether the write already published; it reports.
     m_port.requestCancel(permit);
 }
 

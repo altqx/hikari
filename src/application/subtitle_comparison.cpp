@@ -12,7 +12,6 @@ namespace hikari::application {
 
 namespace {
 
-// SubsTime::operator!= compares mstime (SubsTime.cpp:209-212).
 std::int64_t milliseconds(const core::TimeField &time)
 {
     return time.value.microseconds() / 1000;
@@ -23,14 +22,11 @@ bool contains(const std::vector<std::u8string> &list, const std::u8string &name)
     return std::ranges::find(list, name) != list.end();
 }
 
-// Whether a UTF-16 unit at `i` begins a surrogate pair.
 bool pairAt(std::u16string_view s, std::size_t i)
 {
     return s[i] >= 0xD800 && s[i] < 0xDC00 && i + 1 < s.size() && s[i + 1] >= 0xDC00 && s[i + 1] < 0xE000;
 }
 
-// The text as wxGTK's wxString holds it: a code point per element (a lone
-// surrogate, which valid UTF-8 never gives, stays one element).
 std::u32string codePoints(std::u16string_view s)
 {
     std::u32string out;
@@ -46,8 +42,6 @@ std::u32string codePoints(std::u16string_view s)
     return out;
 }
 
-// SubsGrid::CompareTexts over the texts' wxString elements (`Char` is the
-// platform's wchar_t width).
 template <typename Char>
 void compareElements(LineComparison &firstCompare, LineComparison &secondCompare, std::basic_string_view<Char> first,
                      std::basic_string_view<Char> second);
@@ -56,15 +50,12 @@ void compareElements(LineComparison &firstCompare, LineComparison &secondCompare
 
 std::u16string comparedText(const core::LineRecord &line, bool translationMode)
 {
-    // (CCG1->hasTLMode && dial1->TextTl != emptyString) ? dial1->TextTl : dial1->Text
     return core::toUtf16(translationMode && !line.translation.empty() ? line.translation : line.text);
 }
 
 ComparisonResult compareSubtitles(const ComparedDocument &first, const ComparedDocument &second, int compareBy,
                                   const std::vector<std::u8string> &chosenStyles, TextUnits units)
 {
-    // SubsGridBase.cpp:1739-1744: the chosen styles are read from the list
-    // itself, not from the ChosenStyles bit.
     const bool byVisible = (compareBy & compare_by::Visible) != 0;
     const bool byTimes = (compareBy & compare_by::Times) != 0;
     const bool byStyles = (compareBy & compare_by::Styles) != 0;
@@ -77,13 +68,8 @@ ComparisonResult compareSubtitles(const ComparedDocument &first, const ComparedD
     result.first.resize(lines1.size());
     result.second.resize(lines2.size());
 
-    // Hidden (NOT_VISIBLE, SubsDialogue.h:45) is the only invisible state;
-    // a revealed block (VISIBLE_BLOCK) counts as visible.
     auto hidden = [](const core::LineRecord *line) { return line->visibility == core::LineVisibility::Hidden; };
 
-    // SubsGridBase.cpp:1757-1790: each Line of the first is paired with the
-    // first Line of the second, from just after the last pair, that passes
-    // every criterion; a Line with no partner leaves the search where it was.
     std::size_t lastJ = 0;
     for (std::size_t i = 0; i < lines1.size(); ++i) {
         const core::LineRecord *dial1 = lines1[i];
@@ -139,7 +125,6 @@ std::optional<MarkedRun> markedRun(std::u16string_view shown, int start, int end
             return std::nullopt;
         return MarkedRun{from, std::min(static_cast<std::size_t>(end) + 1, shown.size()) - from};
     }
-    // Code point `start` and the one after `end`, as UTF-16 offsets.
     std::size_t from = shown.size(), to = shown.size();
     const long long after = static_cast<long long>(end) + 1;
     long long index = 0;
@@ -172,9 +157,6 @@ void compareElements(LineComparison &firstCompare, LineComparison &secondCompare
     firstCompare.marks.push_back(1);
     secondCompare.marks.push_back(1);
 
-    // SubsGridBase.cpp:1807-1826: a table too large to allocate leaves just
-    // the leading 1 (legacy logs "text comparison is too large" or "memory
-    // allocation failed").
     const std::size_t l1 = first.size(), l2 = second.size();
     if ((l1 + 1) > std::numeric_limits<std::size_t>::max() / (l2 + 1))
         return;
@@ -188,7 +170,6 @@ void compareElements(LineComparison &firstCompare, LineComparison &secondCompare
         return;
     }
 
-    // SubsGridBase.cpp:1828-1845: the LCS table over the reversed texts.
     for (std::size_t i1 = 1; i1 <= l1; ++i1)
         for (std::size_t i2 = 1; i2 <= l2; ++i2) {
             if (first[l1 - i1] == second[l2 - i2])
@@ -199,8 +180,6 @@ void compareElements(LineComparison &firstCompare, LineComparison &secondCompare
                 dpt[w * i1 + i2] = dpt[w * i1 + (i2 - 1)];
         }
 
-    // SubsGridBase.cpp:1847-1883: walking from the start of both texts, a run
-    // of characters not in the subsequence becomes one [start, end] range.
     int sfirst = -1, ssecond = -1;
     std::size_t i1 = l1, i2 = l2;
     for (;;) {
@@ -258,9 +237,6 @@ std::vector<std::u8string> commonStyles(const core::Document &first, const core:
 std::vector<SubtitleComparison::MenuStyle> SubtitleComparison::openMenu(const std::vector<std::u8string> &common,
                                                                         const std::vector<std::u8string> &optionStyles)
 {
-    // Notebook.cpp:922-928, which appended each checked style again at every
-    // opening, so after two openings an uncheck removed one copy and the
-    // style stayed chosen (R1-stuck-style): a style is listed once here.
     std::vector<MenuStyle> items;
     for (const auto &name : common) {
         const bool checked = contains(optionStyles, name);
@@ -273,10 +249,8 @@ std::vector<SubtitleComparison::MenuStyle> SubtitleComparison::openMenu(const st
 
 int SubtitleComparison::toggleStyle(int compareBy, const std::u8string &name, bool checked)
 {
-    // Notebook.cpp:97-123.
     if (m_chosenStyles.empty() && (compareBy & compare_by::ChosenStyles))
         compareBy ^= compare_by::ChosenStyles;
-    // Only the first occurrence is removed (the loop breaks at it).
     const auto it = std::ranges::find(m_chosenStyles, name);
     if (it != m_chosenStyles.end()) {
         if (!checked)
@@ -293,9 +267,6 @@ int SubtitleComparison::toggleStyle(int compareBy, const std::u8string &name, bo
 void SubtitleComparison::compare(DocumentId first, DocumentId second, const ComparedDocument &a,
                                  const ComparedDocument &b, int compareBy)
 {
-    // Notebook.cpp:948-951: CG1, CG2, SubsComparison, hasCompare. Legacy
-    // left the previous pair's tables on their grids, where no later
-    // comparison updated them (R1-stale-table): only the new pair has one.
     m_tables.clear();
     m_first = first;
     m_second = second;
@@ -308,15 +279,12 @@ void SubtitleComparison::recompare(const ComparedDocument &a, const ComparedDocu
     if (!m_first || !m_second)
         return;
     auto result = compareSubtitles(a, b, compareBy, m_chosenStyles);
-    // SubsGridBase.cpp:1750-1755: each table is cleared and sized anew.
     m_tables[m_first->value] = std::move(result.first);
     m_tables[m_second->value] = std::move(result.second);
 }
 
 void SubtitleComparison::remove()
 {
-    // SubsGridBase.cpp:1888-1902 removes CG1's and CG2's tables. Every table
-    // goes (R1-stale-table): none outlives the comparison.
     m_tables.clear();
     m_first.reset();
     m_second.reset();

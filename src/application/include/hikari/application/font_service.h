@@ -1,12 +1,7 @@
 #pragma once
 
-// Subtitle font identity (N4; docs/fonts.md, ADR 0007). Resolution asks
-// the renderer itself: the pinned libass, with the document's attachments and
-// the platform provider it would use (fontconfig on Linux, DirectWrite on
-// Windows), reports which bytes, collection faces, instances, fallbacks and
-// simulations it actually used. A family-name lookup is never the answer.
-// Authored names stay as written; requested and resolved identities are kept
-// apart, and anything unresolved is reported, never counted as complete.
+// Font identity is what libass actually used, never a family-name lookup;
+// anything unresolved is reported, never counted as complete.
 
 #include <atomic>
 #include <cstdint>
@@ -22,17 +17,13 @@ struct FontAttachment {
     std::shared_ptr<const std::vector<std::byte>> bytes;
 };
 
-// A document's font environment. Each document has its own, so equal
-// attachment names never leak between documents.
+// One per document, so equal attachment names never leak between documents.
 struct FontEnvironment {
     std::uint64_t generation = 0;
     std::vector<FontAttachment> attachments;
     bool systemFonts = true;   // use the platform provider
     std::string defaultFamily; // libass's default family; empty for none
-    // Y6: EXTERNAL_FONTS_DIRECTORY's files (name: the file's full path),
-    // given to the renderer after the attachments. Legacy loaded them into
-    // the process (AddFontResourceExW FR_PRIVATE, or the application fonts
-    // of its fontconfig shim), so they render and list as installed fonts.
+    // Name: the file's full path. Given to the renderer after the attachments.
     std::vector<FontAttachment> externalFonts;
 };
 
@@ -108,18 +99,15 @@ struct SystemFace {
     int index = 0;
     int weight = 400;
     bool italic = false;
-    // Y6: the name legacy's picker listed for this face: fontconfig's first
-    // family name (the Linux build's EnumFontFamiliesEx, platform.h:1133);
-    // on Windows the GDI family name (DirectWrite's Win32 family name in the
-    // user's language, else English, else the first).
+    // fontconfig's first family name; on Windows DirectWrite's Win32 family
+    // name in the user's language, else English, else the first.
     std::string listedFamily;
-    std::string externalFile; // Y6: set for a face of an external font (its full path)
+    std::string externalFile; // set for a face of an external font (its full path)
 };
 
-// The fonts a whole document actually used (I5, F47-corpus), gathered from the
-// renderer's own selections across every style and inline change. Fallback-
-// dependent characters are reported, not promised: a clean reimport cannot
-// recreate the host's fallback resolver.
+// Gathered from the renderer's own selections. Fallback-dependent characters
+// are reported, not promised: a clean reimport cannot recreate the host's
+// fallback resolver.
 struct CollectedFont {
     std::string sha256;
     std::shared_ptr<const std::vector<std::byte>> bytes;
@@ -174,16 +162,14 @@ public:
                                                                    const FontCollection &collection,
                                                                    const std::string &defaultFamily = {}) = 0;
 
-    // Y6: the faces the font picker lists: the platform provider's (when
-    // the environment uses it), then each external font's faces read from
-    // its bytes, in the files' order.
+    // The platform provider's faces (when the environment uses it), then each
+    // external font's faces, in the files' order.
     virtual std::vector<SystemFace> pickerFaces(const FontEnvironment &environment)
     {
         return environment.systemFonts ? systemFaces() : std::vector<SystemFace>();
     }
-    // Y6: for each face of `faces` (from pickerFaces with `environment`),
-    // whether it has a glyph for every one of `characters` (legacy
-    // FontEnumerator::CheckGlyphsExists with the face selected).
+    // Per face of `faces` (from pickerFaces with `environment`): whether it
+    // has a glyph for every one of `characters`.
     virtual std::vector<bool> facesCover(const std::vector<SystemFace> &faces, const FontEnvironment &environment,
                                          const std::u32string &characters)
     {
@@ -191,13 +177,10 @@ public:
         (void)characters;
         return std::vector<bool>(faces.size(), true);
     }
-    // Y6 (F47-refresh): forget what the provider listed, so the next
-    // listing reads the installed fonts again. Renderer contexts made after
-    // it see them too (each resolve, collection and render context makes
-    // its own provider).
+    // The next listing, and renderer contexts made after, read the installed
+    // fonts again.
     virtual void refresh() {}
-    // Y6: the folders whose changes re-list the fonts (legacy watched the
-    // Windows font folders and fontconfig's directories).
+    // The folders whose changes re-list the fonts.
     virtual std::vector<std::string> fontDirectories() { return {}; }
 };
 

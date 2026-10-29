@@ -1,24 +1,7 @@
 #pragma once
 
-// O2: legacy hotkeys (Hotkeys.h/.cpp, HotkeysNaming.cpp and the Options
-// dialog's Hotkeys page in OptionsDialog.cpp at 20d647c4) without Qt.
-// - The action table: every IDS symbol with its numeric id, the names table
-//   the Options list shows (HotkeysNaming), GetType and the defaults
-//   (LoadDefault for the main and the audio file).
-// - A binding is keyed by (id, window): the window it was mapped for, which
-//   may differ from the id's own (GetType). Bindings are legacy accelerator
-//   text ("Ctrl-Shift-O", "Num 0", "Enter").
-// - The stored form is legacy SaveHkeys' lines ("GLOBAL_SAVE_SUBS G=Ctrl-S"),
-//   one list for Hotkeys.txt's bindings and one for AudioHotkeys.txt's; the
-//   script bindings (ids from 30100) are the automation hotkeys (S2).
-// - HkeysDialog::OnKeyPress (the "Hotkey mapping" window) turns a key press
-//   into accelerator text or one of its refusals.
-// - HotkeyList is the Options page: its list (AddHotkeysOnList), filter,
-//   selection and undo history (HikariListCtrl), and Map hotkey, Restore
-//   default hotkey and Delete hotkey (ItemHotkey) over legacy's static
-//   hotkeysCopy, which outlives the dialog.
-// - mapHotkeyNow is Hotkeys::OnMapHkey, the Shift+click gesture on a menu
-//   item or a mapped button: it changes the live bindings at once.
+// A binding is keyed by (id, window), the window it was mapped for, which may
+// differ from the id's own; its keys are accelerator text ("Ctrl-Shift-O").
 
 #include <cstdint>
 #include <functional>
@@ -32,7 +15,6 @@
 
 namespace hikari::application {
 
-// The window a binding belongs to (legacy GLOBAL_HOTKEY ... AUDIO_HOTKEY).
 enum HotkeyWindow : int { GlobalHotkey = 0, GridHotkey, EditorHotkey, VideoHotkey, AudioHotkey };
 inline constexpr int kHotkeyWindows = 5;
 
@@ -40,14 +22,12 @@ struct HotkeyId {
     int id = 0;
     int type = GlobalHotkey;
     friend bool operator==(const HotkeyId &, const HotkeyId &) = default;
-    // Legacy operator<: by window, then id.
     friend bool operator<(const HotkeyId &a, const HotkeyId &b)
     {
         return a.type != b.type ? a.type < b.type : a.id < b.id;
     }
 };
 
-// Legacy hdata.
 struct Hotkey {
     std::string name;
     std::string accel;
@@ -55,7 +35,6 @@ struct Hotkey {
 };
 using HotkeyMap = std::map<HotkeyId, Hotkey>;
 
-// Ids the legacy logic names.
 inline constexpr int kAudioCommitAlt = 1000;
 inline constexpr int kAudioCommit = 1010;
 inline constexpr int kAudioNext = 1014;
@@ -75,94 +54,64 @@ struct HotkeyAction {
     std::string_view symbol;
     int id;
 };
-// IDS in declaration order (243 symbols, kLegacyHotkeyActions), then the
-// rewrite's own commands on ids legacy left unused: GLOBAL_EDITOR_HIDE_TAGS
-// (LE3, 5169), GLOBAL_VIDEO_RENDER_COST (KE1, 5170), VIDEO_FULLSCREEN_BAR
-// (FS1, 2021, Tab in the Video window), GLOBAL_TRANSLATION_MODE (TM1, 5171),
-// TM1's EDITBOX_PLACE_RUN_1 to _9 (3020-3028, Alt-1 to Alt-9) and
-// EDITBOX_PLACE_NEXT_RUN (3029, unbound), the VIDEO_TOOL_* commands (VT2,
-// 2022-2032, and VT3, 2033, a single key each in the Video window), AUDIO_TAP,
-// AUDIO_SPEED_DOWN and AUDIO_SPEED_UP (KA2, 1030 to 1032),
-// GLOBAL_CHECK_KARAOKE (KA7, 5172), GLOBAL_AUTOMATION_REPEAT_LAST_RUN
-// (AD2, 5173), GLOBAL_KANJI_TIMER (KA3, 5174) and GLOBAL_GETTING_STARTED
-// (FR1, 5176).
+// HikariSub legacy's kLegacyHotkeyActions symbols first, then HikariSub's own
+// commands on ids HikariSub legacy left unused.
 std::span<const HotkeyAction> hotkeyActions();
-// GetIdValue: 0 for an unknown symbol.
+// 0 for an unknown symbol.
 int hotkeyIdOf(std::string_view symbol);
-// GetString: "" for an id without a symbol.
+// "" for an id without a symbol.
 std::string_view hotkeySymbol(int id);
-// HotkeysNaming (English): the names the Options list shows, by id, and the
-// rewrite's own commands' names.
+// The English names the Options list shows, by id.
 const std::map<int, std::string> &hotkeyNames();
-// HotkeysNaming::GetName: "" when the id has no name (scripts, GLOBAL_QUIT...).
+// "" when the id has no name (scripts, GLOBAL_QUIT...).
 std::string hotkeyName(int id);
-// V3: GLOBAL_VIDEO_INDEXING ("Open video with FFMS2") is retired (wave-5
-// decision 2026-10-05): the rewrite always indexes. It keeps its IDS symbol,
-// so stored lines naming it are recognised, but has no name (never listed in
-// the Options page) and its bindings are dropped as the lists are read.
-// AM1: GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW ("Open shortcut mapping window")
-// is retired the same way with its window: each macro's shortcut is in the
-// Automation panel. AV3 (#240, owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO
-// ("Open blank 2h30m audio") is retired the same way: a dummy video brings
-// its own silent audio. WS3 (#217, owner 2026-10-18): the View arrangements
-// (GLOBAL_VIEW_ALL, GLOBAL_VIEW_VIDEO, GLOBAL_VIEW_AUDIO,
-// GLOBAL_VIEW_ONLY_VIDEO, GLOBAL_VIEW_SUBS) and the editor switch
-// (GLOBAL_EDITOR) are retired the same way: layout presets and saved layouts
-// take their place.
+// A retired action keeps its symbol, so stored lines naming it are
+// recognised, but has no name and its bindings are dropped as lists are read.
 bool isRetiredHotkey(int id);
 // Removes the retired actions' bindings from `map` and returns them, for the
 // notice the reader gives.
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map);
-// Hotkeys::GetType: the window an id's range belongs to.
+// The window an id's range belongs to.
 int hotkeyType(int id);
 // The window names the Options list prefixes ("Global", "Subtitles",
 // "Editor", "Video", "Audio").
 std::string_view hotkeyWindowName(int type);
 
-// LoadDefault: assigns the defaults of the main (or audio) file over `map`.
+// Assigns the defaults of the main (or audio) file over `map`.
 void loadDefaultHotkeys(HotkeyMap &map, bool audio);
-// Hotkeys::ResetDefaults: both defaults and nothing else.
+// Both defaults and nothing else.
 HotkeyMap defaultHotkeys();
-// GetDefaultKey: the default accelerator of exactly (id, window), or "".
+// The default accelerator of exactly (id, window), or "".
 std::string defaultHotkey(const HotkeyId &key);
 
-// SaveHkeys' lines for the main (or audio) file, without its "[version]"
+// The lines for the main (or audio) file, without its "[version]"
 // header: AUDIO_HOTKEY bindings go to the audio file, the others to the main
 // one; empty bindings, ids under 100 and script ids are not written (the
 // script bindings are the automation hotkeys').
 std::vector<std::string> hotkeyLines(const HotkeyMap &map, bool audio);
-// LoadHkeys' reading of those lines into `map`: "<SYMBOL or id> <G|S|E|V|A>=<accel>";
-// a symbol it does not know becomes id 0 (GetIdValue), a window letter it
-// does not know window -1, and an empty binding is skipped. A numeric label
-// (an optional sign and digits, wxString::IsNumber) is read with that
-// platform's legacy wxAtoi (hotkeyLabelNumber), which never fails. Script lines
-// ("Script ...") belong to the automation hotkeys and are skipped. The
-// version header and the record count rule are the importer's (C04).
+// "<SYMBOL or id> <G|S|E|V|A>=<accel>": an unknown symbol becomes id 0, an
+// unknown window letter window -1, and an empty binding is skipped. A numeric
+// label is read with hotkeyLabelNumber, which never fails. "Script ..." lines
+// are skipped. The version header and record count are the importer's.
 void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines);
 void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines, bool windows);
-// wxAtoi of a numeric label per legacy build (R5-per-platform): the Windows
-// build's _wtoi clamps past the int range to INT_MAX / INT_MIN; the Linux
-// build's atoi is strtol on a 64-bit long truncated to int
-// (core::legacy::atoi).
+// Windows' _wtoi clamps past the int range to INT_MAX / INT_MIN; Linux's
+// atoi truncates a 64-bit long to int.
 int hotkeyLabelNumber(std::string_view label, bool windows);
 
-// Hotkeys::GetHKey's reading of accelerator text: the modifiers found
-// anywhere in it ("Alt-", "Ctrl-", "Shift-") and the key after the last '-'
-// (or '-' itself when it ends with one), named by FillTable or one character.
-// Returns the key as a Qt portable sequence ("Ctrl+Shift+O", "Num+0",
-// "Return"), or "" when the key is invalid (legacy logs "Shortcut ... is
-// invalid" and installs nothing).
+// The modifiers found anywhere ("Alt-", "Ctrl-", "Shift-") and the key after
+// the last '-' (or '-' itself when it ends with one), a key name or one
+// character. Returns a Qt portable sequence ("Ctrl+Shift+O", "Num+0",
+// "Return"), or "" when the key is invalid.
 std::string qtKeysOfAccel(std::string_view accel);
-// The key text GetHKey logs as invalid ('Shortcut "%s" is invalid',
-// Hotkeys.cpp:372-374): neither a FillTable name nor one character (UTF-16
-// units, as wxString counts on Windows); "" when legacy logs nothing. A key
-// of one non-ASCII character is valid for legacy but has no Qt sequence here.
+// The key text when it is neither a key name nor one UTF-16 unit; "" when
+// valid. A key of one non-ASCII character is valid but has no Qt sequence.
 std::string invalidHotkeyKey(std::string_view accel);
 // The other way, for bindings captured as Qt portable sequences (the
-// automation hotkeys'): legacy names and modifier order ("Alt-Ctrl-Shift-").
+// automation hotkeys'): accelerator names and modifier order ("Alt-Ctrl-Shift-").
 std::string accelOfQtKeys(std::string_view keys);
 
-// wx key codes HkeysDialog::OnKeyPress reads (wxWidgets defs.h).
+// wxWidgets key codes.
 namespace wxk {
 inline constexpr int Back = 8, Tab = 9, Return = 13, Escape = 27, Space = 32, Delete = 127;
 inline constexpr int Shift = 306, Alt = 307, Control = 308, Pause = 310, End = 312, Home = 313, Left = 314, Up = 315,
@@ -172,7 +121,7 @@ inline constexpr int Shift = 306, Alt = 307, Control = 308, Pause = 310, End = 3
                      NumpadDecimal = 391, NumpadDivide = 392, WindowsLeft = 393;
 } // namespace wxk
 
-// FillTable's key names, by wx key code.
+// Key names by wx key code.
 const std::map<int, std::string> &hotkeyKeyNames();
 
 struct HotkeyPress {
@@ -188,41 +137,36 @@ struct HotkeyCapture {
     std::string accel;   // Accepted: the binding
     std::string message; // Refused: the message box shown; the window stays open
 };
-// HkeysDialog::OnKeyPress for the window chosen (`type`).
 HotkeyCapture captureHotkey(const HotkeyPress &press, int type);
 
-// The accelerators legacy's text editor (DialogueTextEditor) installs for
-// itself: they act in the Line editor's text fields whatever a binding says
+// The accelerators the Line editor's text fields keep whatever a binding says
 // (numpad digits only when TEXT_FIELD_ALLOW_NUMPAD_HOTKEYS is off).
 bool textFieldOwnsKey(std::string_view accel, bool allowNumpadHotkeys);
 
 // A "This hotkey already exists" / "This shortcut already exists in ..."
-// question (HikariMessageDialog) before a binding is set.
+// question before a binding is set.
 struct HotkeyConflict {
-    bool doubled = false;     // the same window (or a window legacy treats as the same)
+    bool doubled = false;     // the same window, or one treated as the same
     std::size_t count = 0;    // bindings holding the keys
     std::string message;
-    bool canSwitch = false;   // "Switch hotkeys" (wxOK)
-    bool canSetAnyway = false; // "Set anyway" (wxNO)
+    bool canSwitch = false;   // "Switch hotkeys"
+    bool canSetAnyway = false; // "Set anyway"
     std::vector<std::string> commands; // the names of the commands holding the keys
 };
 enum class HotkeyAnswer { Switch, Delete, SetAnyway, Cancel };
 
-// The Options dialog's Hotkeys page. `copy` is legacy's static
-// OptionsDialog::hotkeysCopy: it is filled from the live bindings at the
-// first edit while it is empty and is never cleared, so it outlives the
-// dialog (and "Set default").
+// `copy` is filled from the live bindings at the first edit while it is
+// empty and is never cleared, so it outlives the page.
 class HotkeyList {
 public:
     struct Row {
         std::string text;  // the Function column: "<window> <name>"
         bool textModified = false;
-        std::string name;  // ItemHotkey::name
+        std::string name;
         std::string accel; // the Hotkey column
         bool keyModified = false;
         HotkeyId key;
-        // ItemRow::isVisible: NOT_VISIBLE 0, VISIBLE 1, VISIBLE_BLOCK 2 (a
-        // filtered-out row shown again from the gutter).
+        // MUST KILL: raw visibility, 0 hidden, 1 shown, 2 shown again from the gutter
         int visible = 1;
     };
 
@@ -230,11 +174,10 @@ public:
     HotkeyList(const HotkeyList &) = delete;
     HotkeyList &operator=(const HotkeyList &) = delete;
 
-    // AddHotkeysOnList, StartEdition and SetSelection(0). Clearing first is
-    // ClearList (the list's own history and modified flag are not reset).
+    // Selects the first row. clear() keeps the history and the modified flag.
     void build(const HotkeyMap &live);
     void clear();
-    // AM1: rows added while the page is open (a macro registered meanwhile),
+    // Rows added while the page is open (a macro registered meanwhile),
     // at the end and in every step of the history, shown as the filter shows
     // them; the edits, the history and the selection stay.
     void addRows(const HotkeyMap &more);
@@ -249,29 +192,25 @@ public:
     std::vector<int> shown() const;
     bool modified() const { return m_modified; }
     int filterMode() const { return m_filterMode; }
-    // FilterList(1, mode): 0 All, 1 Set shortcuts, 2 Global, 3 Subtitles,
-    // 4 Editor, 5 Video, 6 Audio; AM1: 7 Automation (the macros' rows). The
-    // selection goes to the first shown row.
+    // 0 All, 1 Set shortcuts, 2 Global, 3 Subtitles, 4 Editor, 5 Video,
+    // 6 Audio, 7 Automation (the macros' rows). The selection goes to the
+    // first shown row.
     void filter(int mode);
-    // PF1 (#225): the Hotkeys page's search, with the filter: only the rows
-    // whose Function or Hotkey column holds `text` (ASCII letters in any
-    // case; the macros' rows also by their script and macro, `also`) show.
-    // Empty shows every row the filter shows. The selection goes to the
-    // first shown row. Edits, Undo and Redo search again.
+    // Within the filter, only rows whose Function or Hotkey column holds `text`
+    // (ASCII case-insensitive; macros' rows also by `also`) show. Empty shows
+    // every row the filter shows. The selection goes to the first shown row.
+    // Edits, Undo and Redo search again.
     void search(std::string text, const std::function<std::string(const Row &)> &also = {});
     const std::string &searchText() const { return m_search; }
-    // GetSelection: the selected row, or -1.
+    // The selected row, or -1.
     int selection() const;
-    // SetSelection of a shown position.
     void selectShown(int position);
-    // The row whose Function column reads `text` (FindItem), or -1.
+    // The row whose Function column reads `text`, or -1.
     int find(const std::string &text) const;
-    // HikariListCtrl's gutter while the list is filtered (isFiltered: some
-    // row is not VISIBLE). CheckIfHasHiddenBlock for the gap after the shown
-    // position (-1: above the first): 0 none, 1 hidden rows ("+"), 2 rows
-    // shown from a block ("-"). ShowOrHideBlock: the rows after that shown
-    // position switch between NOT_VISIBLE and VISIBLE_BLOCK up to the next
-    // VISIBLE one.
+    // The gutter while some row is hidden. hiddenBlock, for the gap after a
+    // shown position (-1: above the first): 0 none, 1 hidden rows ("+"), 2 rows
+    // shown from a block ("-"). toggleBlock switches the rows after that
+    // position between hidden and shown from a block, up to the next shown one.
     bool filtered() const { return m_isFiltered; }
     int hiddenBlock(int position) const;
     void toggleBlock(int position);
@@ -280,36 +219,32 @@ public:
     // window choice (not for scripts).
     std::string mapName(int index) const { return row(index).name; }
     bool mapOffersWindows(int index) const { return !row(index).name.starts_with("Script"); }
-    // ItemHotkey::OnMapHotkey after the window gave `accel` for `type`: the
-    // question to ask first, if any (the copy is filled before it).
+    // After the mapping window gave `accel` for `type`: the question to ask
+    // first, if any (the copy is filled before it).
     std::optional<HotkeyConflict> mapConflict(int row, const std::string &accel, int type, const HotkeyMap &live);
     // ...and the binding set after the answer (ignored without a question).
     void map(int row, const std::string &accel, int type, HotkeyAnswer answer, const HotkeyMap &live);
-    // OnResetHotkey / OnDeleteHotkey.
     void reset(int row, const HotkeyMap &live);
-    // PF1-staged-reset: every row back to its default binding, one step of
-    // the history ("Reset page" on the Hotkeys page); nothing when every
-    // row has it already.
+    // Every row back to its default binding as one history step; nothing when
+    // every row has it already.
     void resetAll(const HotkeyMap &live);
     void remove(int row, const HotkeyMap &live);
-    // Ctrl+Z / Ctrl+Y in the list.
     void undo();
     void redo();
-    // SetOptions: with the list modified and the copy filled, the new live
-    // bindings (the copy) after SaveAll; nothing otherwise.
+    // With the list modified and the copy filled, the new live bindings (the
+    // copy); nothing otherwise.
     std::optional<HotkeyMap> commit();
 
 private:
-    // Rows are shared by the history's snapshots, as legacy's ItemRow
-    // pointers are; CopyRow makes a new one.
+    // Rows are shared by the history's snapshots; copyRow makes a new one.
     using RowPtr = std::shared_ptr<Row>;
     void ensureCopy(const HotkeyMap &live);
     void append(std::string text, std::string name, std::string accel, HotkeyId key);
-    // CopyRow: row `y` becomes a new row (pushBack: a new row at the end).
+    // Row `y` becomes a new row (pushBack: a new row at the end).
     Row &copyRow(int y, bool pushBack = false);
     void pushHistory();
     void rebuildFiltered();
-    int findShown(int row) const; // FindId
+    int findShown(int row) const;
     void moveInHistory(int to);
     // After an edit, while searching: the rows matching their bindings now,
     // the selected row kept if it still matches.
@@ -317,9 +252,9 @@ private:
     std::vector<HotkeyId> conflicts(int row, const std::string &accel) const;
 
     HotkeyMap &m_copy;
-    std::vector<RowPtr> m_rows;               // itemList
-    std::vector<RowPtr> m_filtered;           // filteredList
-    std::vector<std::vector<RowPtr>> m_history; // historyList
+    std::vector<RowPtr> m_rows;
+    std::vector<RowPtr> m_filtered;
+    std::vector<std::vector<RowPtr>> m_history;
     int m_iter = 0;
     bool m_modified = false;
     int m_sel = 0; // a position in m_filtered; -1 for none
@@ -328,11 +263,11 @@ private:
     std::function<std::string(const Row &)> m_searchAlso;
     bool m_isFiltered = false;
     bool shownNow(const Row &r) const;
-    int findKey(int position) const; // FindKey: the row at a shown position, or -1
+    int findKey(int position) const; // the row at a shown position, or -1
 };
 
-// Hotkeys::OnMapHkey (the Shift+click gesture): `id` gets `accel` for `type`
-// in the live bindings. The question to ask first, if any:
+// Shift+click on a menu item or mapped button: `id` gets `accel` for `type`
+// in the live bindings at once. The question to ask first, if any:
 std::optional<HotkeyConflict> mapHotkeyNowConflict(const HotkeyMap &live, int id, const std::string &accel, int type);
 // ...and the change after the answer (Cancel changes nothing). Returns
 // whether the audio file is saved too (a binding for the Audio window, or an

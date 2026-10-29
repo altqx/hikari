@@ -7,7 +7,6 @@
 namespace hikari::application {
 namespace {
 
-// The code point at `i` and how many UTF-16 units it takes.
 std::pair<char32_t, std::size_t> codePointAt(std::u16string_view s, std::size_t i)
 {
     const char16_t c = s[i];
@@ -38,7 +37,6 @@ bool isSmallKana(char16_t c)
     }
 }
 
-// A word's characters as runs of kanji and the text between them.
 struct Segment {
     std::size_t begin = 0, end = 0;
     bool kanji = false;
@@ -58,11 +56,7 @@ std::vector<Segment> segments(std::u16string_view s)
     return out;
 }
 
-// The earliest split of `reading` (hiragana) over the segments: each kanji
-// run one kana or more, the text between spelt as it is. A place (segment,
-// kana) that found none is not tried again, and a split that takes more than
-// kSplitSteps steps is none, so no text makes this slow; no recursion, so no
-// text runs the stack out either.
+// MUST KILL: step cap, past which a split that exists still reports none
 constexpr std::size_t kSplitSteps = 1u << 22;
 
 bool split(std::u16string_view surface, const std::vector<Segment> &segs, std::u16string_view reading,
@@ -72,12 +66,12 @@ bool split(std::u16string_view surface, const std::vector<Segment> &segs, std::u
     for (std::size_t k = 0; k < segs.size(); ++k)
         if (!segs[k].kanji)
             kana[k] = hiragana(surface.substr(segs[k].begin, segs[k].end - segs[k].begin));
-    // at[k]: where segment k starts in the reading; taken[k]: what a kanji one takes
+    // at[k]: segment k's start in the reading; taken[k]: kana a kanji run takes
     std::vector<std::size_t> at(segs.size() + 1, 0), taken(segs.size(), 0);
     std::unordered_set<std::uint64_t> failed;
     const auto place = [&](std::size_t k) { return std::uint64_t(k) * (reading.size() + 1) + at[k]; };
     std::size_t k = 0;
-    bool again = false; // segment k is tried again, a kanji run taking one kana more
+    bool again = false; // retry segment k with its kanji run one kana longer
     for (std::size_t steps = 0;; ++steps) {
         if (steps == kSplitSteps)
             return false;
@@ -117,8 +111,7 @@ bool split(std::u16string_view surface, const std::vector<Segment> &segs, std::u
     return true;
 }
 
-// The pieces of a Line's text the analyser reads: outside override blocks,
-// between \N \n \h.
+// Split at override blocks and \N \n \h.
 std::vector<std::pair<std::size_t, std::size_t>> plainPieces(std::u16string_view text)
 {
     std::vector<std::pair<std::size_t, std::size_t>> out;
@@ -147,7 +140,6 @@ std::vector<std::pair<std::size_t, std::size_t>> plainPieces(std::u16string_view
     return out;
 }
 
-// One word's runs, at `at` in the text.
 void wordRuns(std::u16string_view surface, std::u16string_view reading, std::size_t at, std::vector<FuriganaRun> &out)
 {
     const auto segs = segments(surface);
@@ -164,8 +156,6 @@ void wordRuns(std::u16string_view surface, std::u16string_view reading, std::siz
                 run(seg.begin, seg.end, kana.empty() ? std::u16string() : std::move(parts[part++]));
         return;
     }
-    // No split fits: one run from the first kanji to the last, less the kana
-    // before and after it where the reading spells them.
     const std::size_t first = segs.front().kanji ? 0 : 1, last = segs.back().kanji ? segs.size() - 1 : segs.size() - 2;
     std::u16string_view rest = kana;
     if (first == 1)

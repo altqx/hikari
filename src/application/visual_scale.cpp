@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-// Built without floating-point contraction, as visual_view.cpp.
+// Built without floating-point contraction (src/application/CMakeLists.txt).
 
 namespace hikari::application::visual {
 
@@ -12,21 +12,19 @@ using namespace transform;
 
 namespace {
 
-enum { LEFT = 1, RIGHT, TOP = 4, BOTTOM = 8, INSIDE = 16, OUTSIDE = 32 }; // VisualScale.cpp:28-35
+enum { LEFT = 1, RIGHT, TOP = 4, BOTTOM = 8, INSIDE = 16, OUTSIDE = 32 };
 
 std::u8string u8(const std::u16string &text)
 {
     return core::toUtf8(text);
 }
 
-// config.h's MID(a, b, c): MAX(a, MIN(b, c)).
 int mid(int a, int b, int c)
 {
     const int m = b < c ? b : c;
     return a > m ? a : m;
 }
 
-// The toolbar item's icons in order (VideoToolbar.cpp:83-89).
 struct ItemInfo {
     const char *name;
     const char *icon;
@@ -54,7 +52,6 @@ const std::array<ItemInfo, 7> &items()
 
 int ScaleTool::toggled() const
 {
-    // ScaleItem::GetItemToggled (VideoToolbar.h:208-214).
     int result = 0;
     for (int i = 0; i < 7; i++)
         if (m_toggle[static_cast<std::size_t>(i)])
@@ -73,10 +70,6 @@ void ScaleTool::setToggled(int bits, VisualHost *host)
 std::vector<ToolOption> ScaleTool::options(const VisualHost &host) const
 {
     (void)host;
-    // ScaleItem::OnMouseEvent's greying (VideoToolbar.cpp:906-913): the
-    // rectangle's four options need the rectangle, the axes stay while the
-    // aspect ratio links them, and "change all" stays on with the rectangle
-    // or "preserve proportions".
     std::vector<ToolOption> out;
     const auto &t = m_toggle;
     for (int elem = 0; elem < 7; ++elem) {
@@ -89,7 +82,7 @@ std::vector<ToolOption> ScaleTool::options(const VisualHost &host) const
         o.tooltip = info.tooltip;
         o.checked = t[static_cast<std::size_t>(elem)];
         o.enabled = !grayed;
-        o.group = elem < 5 ? u"Rectangle" : u"Tags"; // VT1: the bar's groups
+        o.group = elem < 5 ? u"Rectangle" : u"Tags";
         out.push_back(std::move(o));
     }
     return out;
@@ -97,9 +90,6 @@ std::vector<ToolOption> ScaleTool::options(const VisualHost &host) const
 
 bool ScaleTool::setOption(const std::string &name, int value, VisualHost &host)
 {
-    // ScaleItem::OnMouseEvent (VideoToolbar.cpp:900-958): a click toggles
-    // the icon unless it is greyed, with the item's own links, then the tool
-    // takes GetItemToggled (ID_MOVE_TOOLBAR_EVENT, VideoBox.cpp:179-181).
     int elem = -1;
     for (int i = 0; i < 7; ++i)
         if (name == items()[static_cast<std::size_t>(i)].name)
@@ -127,8 +117,6 @@ bool ScaleTool::setOption(const std::string &name, int value, VisualHost &host)
 
 void ScaleTool::selected(VisualHost &host)
 {
-    // Visuals::Get made a new Scale (VisualScale.cpp:37-42, Visuals.h:384-402):
-    // the tool's state starts over, the toolbar's toggles stay.
     (void)host;
     const auto keep = m_toggle;
     *this = ScaleTool();
@@ -146,8 +134,6 @@ void ScaleTool::takeView(const VideoView &view)
 void ScaleTool::reset(VisualHost &host)
 {
     takeView(host.view());
-    // Visuals::SetVisual(dial, tool) (Visuals.cpp:256-283): the editor's text
-    // kept for the dummy edits, ChangeTool(tool, true), SetCurVisual.
     const Context ctx = context(host);
     if (ctx.active) {
         m_start = startMs(*ctx.active);
@@ -164,7 +150,6 @@ void ScaleTool::reset(VisualHost &host)
 
 void ScaleTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host)
 {
-    // Scale::ChangeTool (VisualScale.cpp:393-423).
     m_hasScaleToRectangle = tool & 1;
     m_hasScaleX = tool & 2;
     m_preserveAspectRatio = tool & 4;
@@ -199,7 +184,6 @@ void ScaleTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host)
 
 void ScaleTool::setCurVisual(VisualHost &host)
 {
-    // Scale::SetCurVisual (VisualScale.cpp:373-391).
     const Context ctx = context(host);
     const VideoView &view = host.view();
     PointF linepos = posnScale(ctx, m_find, !m_replaceTagsInCursorPosition, &m_scale, &m_an, m_moveValues);
@@ -209,7 +193,6 @@ void ScaleTool::setCurVisual(VisualHost &host)
     const float coeffW = view.coeffW(), coeffH = view.coeffH();
     const PointF zm = view.zoomMove(), zs = view.zoomScale();
     m_from = {((linepos.x / coeffW) - zm.x) * zs.x, ((linepos.y / coeffH) - zm.y) * zs.y};
-    // SV1-hidpi-tool-sizes: legacy's 100-pixel arrows at any scale.
     const float length = 100.f * unitOf(host);
     m_arrowLengths.y = (linepos.y > ctx.height / 2) ? -length : length;
     m_arrowLengths.x = (linepos.x > ctx.width / 2) ? -length : length;
@@ -224,8 +207,6 @@ void ScaleTool::setCurVisual(VisualHost &host)
 
 bool ScaleTool::beginEdit(VisualHost &host)
 {
-    // The gesture's targets are fixed when it begins (edit-transactions.md);
-    // legacy's SetVisual read the selection on every sample.
     if (host.gesture())
         return true;
     const auto targets = host.batchTargets();
@@ -250,10 +231,6 @@ bool ScaleTool::beginEdit(VisualHost &host)
 
 bool ScaleTool::finishEdit(VisualHost &host)
 {
-    // A refused commit (a stale revision, a draft that cannot commit) wrote
-    // nothing: the tool reads the unchanged text again, as after Esc.
-    // A release that changes no Line records nothing (T3-release-no-change;
-    // legacy's SetVisual(false) made an undo step of it, Visuals.cpp:822-826).
     if (host.gesture() && !host.gesture()->changesAnyLine())
         host.cancelGesture();
     const bool committed = !host.gesture() || host.commitGesture().has_value();
@@ -263,13 +240,9 @@ bool ScaleTool::finishEdit(VisualHost &host)
     return committed;
 }
 
+// MUST KILL: `dummy` means preview (true) or commit (false)
 void ScaleTool::setVisual(bool dummy, VisualHost &host)
 {
-    // Visuals::SetVisual(dummy) (Visuals.cpp:726-832). Several Lines: each
-    // target's text through ChangeVisual(txt, dial, n), previewed while
-    // dummy and recomputed for the commit. One Line: the editor's text
-    // through ChangeVisual(txt), the caret put at the tag; the release
-    // commits what the editor holds.
     Gesture *g = host.gesture();
     if (!g)
         return;
@@ -290,9 +263,7 @@ void ScaleTool::setVisual(bool dummy, VisualHost &host)
         m_find.setSelection(pos.first, pos.first);
         g->stage(*m_editing, u8(txt), m_editorIsTranslation);
     } else {
-        // The caret goes to the tag only in the text that was written; it
-        // and the text are taken first, as the host may reload the editor
-        // while it commits.
+        // MUST KILL: copied before finishEdit because the host may reload the editor while it commits
         const std::u16string written = m_editorText;
         const auto [selFrom, selTo] = m_find.selection();
         if (finishEdit(host)) {
@@ -306,10 +277,7 @@ void ScaleTool::setVisual(bool dummy, VisualHost &host)
 
 void ScaleTool::changeVisualLine(std::u16string &text, const core::LineRecord &dial, const Context &ctx)
 {
-    // Scale::ChangeVisual(txt, dial, numOfSelections) (VisualScale.cpp:425-516).
-    // Legacy's drags take the larger ratio for both axes. A typed or
-    // scrubbed value (VT1) is written as given: each axis takes its own
-    // ratio, so a value below the press's applies (Codex on #293).
+    // MUST KILL: drags force both axes to the larger ratio unless m_valueRatios
     float Scalex = m_scale.x / m_lastScale.x;
     float Scaley = m_scale.y / m_lastScale.y;
     if (!m_valueRatios && Scalex > Scaley)
@@ -376,7 +344,6 @@ void ScaleTool::changeVisualLine(std::u16string &text, const core::LineRecord &d
 
 std::pair<long, long> ScaleTool::changeVisualEditor(std::u16string &text)
 {
-    // Scale::ChangeVisual(txt) (VisualScale.cpp:518-562).
     if (m_type != 1) {
         if (m_changeAllTags) {
             m_find.replaceAll(u"fscx([0-9.-]+)", u"fscx", text,
@@ -416,7 +383,6 @@ std::pair<long, long> ScaleTool::changeVisualEditor(std::u16string &text)
 
 void ScaleTool::pointer(const Pointer &event, VisualHost &host)
 {
-    // Scale::OnMouseEvent (VisualScale.cpp:116-371).
     if (event.kind == Pointer::Kind::Wheel)
         return;
     const VideoView &view = host.view();
@@ -452,9 +418,6 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
                 host.setPointerShape(PointerShape::Arrow);
         }
         if (!e.holding && (m_rectangleVisible || m_originalRectangleVisible)) {
-            // Over either rectangle's edge or corner its resize shape,
-            // elsewhere the arrow (VisualScale.cpp:152-172); legacy tested
-            // the scaled rectangle even while only the original showed.
             const PointF at{static_cast<float>(x), static_cast<float>(y)};
             bool setarrow = false;
             if (const int test = hitTest(at, false, false, unitOf(host)); test < INSIDE) {
@@ -563,12 +526,8 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
         m_wasUsedShift = false;
     }
     if (!e.holding) {
-        // VisualScale.cpp:286-297: the arrows' common end, the X arrow's
-        // and the Y arrow's ends (11 pixels), each only from the arrow
-        // shape, so a shape set over one end stays until the pointer leaves
-        // them all.
         const float fx = static_cast<float>(x), fy = static_cast<float>(y);
-        const float grab = 11 * unitOf(host); // SV1-hidpi-tool-sizes
+        const float grab = 11 * unitOf(host);
         if (std::abs(m_to.x - fx) < grab && std::abs(m_to.y - fy) < grab) {
             if (host.hasArrow())
                 host.setPointerShape(PointerShape::Sizing);
@@ -590,7 +549,7 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
             m_type = 1;
         if (e.middlec || (e.leftc && e.shift) || m_preserveProportions)
             m_type = 2;
-        const float grab = 11 * unitOf(host); // SV1-hidpi-tool-sizes
+        const float grab = 11 * unitOf(host);
         if (std::abs(m_to.x - fx) < grab && std::abs(m_from.y - fy) < grab) {
             m_grabbed = 0;
             m_type = 0;
@@ -603,12 +562,6 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
         }
         m_diffs.x = m_to.x - fx;
         m_diffs.y = m_to.y - fy;
-        // VisualScale.cpp:307-311: the scaled axis' shape, both axes' with
-        // Shift's or "Preserve proportions"' uniform scaling, only while a
-        // button is down (T3-scale-shift-hover, User 2026-10-13). Legacy
-        // also ran this on a Shift press or release while hovering and on a
-        // release with Shift held, putting a drag's shape up over the hover
-        // rules'; the state below is still set as legacy set it.
         const bool dragShape = e.holding;
         if (dragShape && m_type == 0)
             host.setPointerShape(PointerShape::SizeWE);
@@ -675,9 +628,6 @@ bool ScaleTool::takesKey(const Key &event) const
 
 bool ScaleTool::key(const Key &event, VisualHost &host)
 {
-    // Scale::OnKeyPress (VisualScale.cpp:564-607): a nudge moves the arrows'
-    // end by one percent (Shift: a tenth); VT2-arrow-nudge: the arrows, for
-    // legacy's W/A/S/D. Each press is its own edit.
     if (event.release)
         return false;
     const auto direction = nudgeDirection(event);
@@ -719,8 +669,7 @@ bool ScaleTool::key(const Key &event, VisualHost &host)
 
 int ScaleTool::hitTest(PointF pos, bool originalRect, bool diff, float unit)
 {
-    // Scale::HitTest (VisualScale.cpp:609-650); the previous corner is kept
-    // in ints and the vertical inside test reads the x corners, as legacy.
+    // MUST KILL: the vertical inside test reads the x corners
     int resultX = 0, resultY = 0, resultInside = 0, resultFinal = 0, oldpointx = 0, oldpointy = 0;
     const std::size_t tablediff = originalRect ? 2 : 0;
     for (int i = 0; i < 2; i++) {
@@ -763,7 +712,6 @@ int ScaleTool::hitTest(PointF pos, bool originalRect, bool diff, float unit)
 
 void ScaleTool::sortPoints()
 {
-    // Scale::SortPoints (VisualScale.cpp:652-676).
     auto &r = m_sizingRectangle;
     if (r[1].y < r[0].y)
         std::swap(r[0].y, r[1].y);
@@ -779,7 +727,6 @@ void ScaleTool::sortPoints()
 
 void ScaleTool::setScale()
 {
-    // Scale::SetScale (VisualScale.cpp:678-700).
     const auto &r = m_sizingRectangle;
     if (m_originalRectangleVisible) {
         m_scale.x = m_originalScale.x *
@@ -804,14 +751,12 @@ void ScaleTool::setScale()
 
 PointF ScaleTool::scaleToVideo(PointF point, const VideoView &view) const
 {
-    // Scale::ScaleToVideo (VisualScale.cpp:702-707).
     const PointF zm = view.zoomMove(), zs = view.zoomScale();
     return {((point.x / view.coeffW()) - zm.x) * zs.x, ((point.y / view.coeffH()) - zm.y) * zs.y};
 }
 
 void ScaleTool::setSecondRectScale(const VideoView &view)
 {
-    // Scale::SetSecondRectScale (VisualScale.cpp:709-739).
     const PointF zm = view.zoomMove(), zs = view.zoomScale();
     const PointF activeLinePos{((m_from.x / zs.x) + zm.x) * view.coeffW(), ((m_from.y / zs.y) + zm.y) * view.coeffH()};
     const float borderx = m_border.x / 2;
@@ -842,8 +787,6 @@ void ScaleTool::setSecondRectScale(const VideoView &view)
 
 Overlay ScaleTool::overlay(const VisualHost &host) const
 {
-    // Scale::DrawVisual (VisualScale.cpp:44-114), lines 2 pixels wide
-    // (Visuals::Draw).
     Overlay out;
     out.unit = unitOf(host);
     const VideoView &view = host.view();
@@ -862,7 +805,7 @@ Overlay ScaleTool::overlay(const VisualHost &host) const
     }
     const int time = static_cast<int>(host.videoTimeMs());
     if (time != m_oldtime && m_moveValues[6] > 3) {
-        // The \move's position at the shown frame.
+        // MUST KILL: the const overlay() moves the arrows to the \move's position at the shown frame
         const Context ctx = context(host);
         PointF f = calcMovePos(ctx, m_moveValues, m_start, m_end);
         const PointF zm = view.zoomMove(), zs = view.zoomScale();
@@ -890,7 +833,6 @@ Overlay ScaleTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> ScaleTool::values(const VisualHost &host) const
 {
-    // VT1: editable, in percent as the tags hold them.
     (void)host;
     return {{"fscx", u"X", getfloat(m_scale.x * 100), true, {}, u"%"},
             {"fscy", u"Y", getfloat(m_scale.y * 100), true, {}, u"%"}};
@@ -898,10 +840,6 @@ std::vector<ToolValue> ScaleTool::values(const VisualHost &host) const
 
 bool ScaleTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
-    // VT1: a typed or scrubbed scale, written as a drag of that axis' arrow
-    // writes it (its end follows): both axes in proportion with "Preserve
-    // proportions", as its drags. The first sample is the press (the scale
-    // the tags are changed from).
     double value = 0;
     if (!host.gesture())
         m_valueEdit = false;
@@ -915,18 +853,12 @@ bool ScaleTool::setValue(const std::string &name, const std::u16string &text, Vi
     const float scale = static_cast<float>(value / 100);
     PointF next = m_scale;
     if (m_preserveProportions) {
-        // In proportion to the press's scale, not the last sample's: a scrub
-        // through zero comes back in proportion (Codex on #293).
         const float pressed = x ? baseline.x : baseline.y;
         const float ratio = pressed != 0 ? scale / pressed : 1.f;
         next = x ? PointF{scale, baseline.y * ratio} : PointF{baseline.x * ratio, scale};
     } else {
         (x ? next.x : next.y) = scale;
     }
-    // A scale that is no number is refused: "Change all scale tags"
-    // multiplies each tag by the new scale over the press's, and from a zero
-    // scale there is no ratio (legacy's would write nan), from a tiny one it
-    // overflows (Codex on #293: inf).
     const bool changesX = m_preserveProportions || x, changesY = m_preserveProportions || !x;
     if (!std::isfinite(next.x) || !std::isfinite(next.y) ||
         (m_changeAllTags && ((changesX && !std::isfinite(next.x / baseline.x)) ||

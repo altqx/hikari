@@ -10,9 +10,6 @@
 #include <cstdlib>
 #include <tuple>
 
-// Built without floating-point contraction, as visual_view.cpp: legacy's
-// float steps must round as its build did.
-
 namespace hikari::application::visual {
 
 namespace {
@@ -20,13 +17,11 @@ namespace {
 using u16 = std::u16string;
 using u16v = std::u16string_view;
 
-// Visuals.h:56-68's families' rail options use these icons (K1's set).
 constexpr std::string_view kTwoPoints = "two-points";
 constexpr std::string_view kFrameToScale = "frame-to-scale";
 constexpr std::string_view kScaleX = "scale-x";
 constexpr std::string_view kScaleY = "scale-y";
 
-// HitTest's results (VisualPosition.cpp:31-38).
 enum { LEFT = 1, RIGHT, TOP = 4, BOTTOM = 8, INSIDE = 16, OUTSIDE = 32 };
 
 u16 ft(float value)
@@ -40,8 +35,7 @@ u16 number(int value)
     return u16(s.begin(), s.end());
 }
 
-// A \move time: whole milliseconds exactly (a float rounds them past 2^24,
-// Codex on #293), anything else as legacy getfloat wrote it.
+// Whole milliseconds written exactly; a float would round them past 2^24.
 u16 timeText(double value)
 {
     if (std::nearbyint(value) == value && std::fabs(value) < 1e15) {
@@ -62,15 +56,12 @@ PointF sub(PointF a, PointF b)
     return {a.x - b.x, a.y - b.y};
 }
 
-// Visuals::IsInPos (Visuals.h:117-119) on wxPoints; SV1: `diff` in device
-// pixels (legacy's times unitOf).
+// `diff` is in device pixels.
 bool isInPos(int x, int y, int x2, int y2, float diff)
 {
     return std::abs(x - x2) < diff && std::abs(y - y2) < diff;
 }
 
-// The record a target has for the gesture: its text as the gesture began, or
-// as staged (legacy committed each step and read the Line back).
 core::LineRecord stagedRecord(const Gesture &gesture, core::LineId id)
 {
     core::LineRecord rec = gesture.before(id);
@@ -92,11 +83,8 @@ const std::array<std::u16string_view, 21> &positionAlignments()
     return list;
 }
 
-// ---------------------------------------------------------------- Position
-
 int PositionTool::toolValue() const
 {
-    // PositionItem::GetItemToggled (VideoToolbar.h:229-236).
     int result = m_an + 1;
     for (int i = 0; i < 3; i++)
         if (m_toggled[static_cast<std::size_t>(i)])
@@ -106,9 +94,6 @@ int PositionTool::toolValue() const
 
 void PositionTool::selected(VisualHost &host)
 {
-    // Visuals::Get made a new Position (VisualPosition.cpp:57-60, Visuals.h:
-    // 264-300's initial values) and SetVisual handed it the toolbar's state
-    // (ChangeTool(tool, true), Visuals.cpp:281).
     m_data.clear();
     m_helperX = m_helperY = 0;
     m_hasHelperLine = m_movingHelperLine = false;
@@ -133,9 +118,6 @@ void PositionTool::selected(VisualHost &host)
 
 void PositionTool::reset(VisualHost &host)
 {
-    // Visuals::SetVisual(dial, tool) (Visuals.cpp:256-283): ChangeTool with
-    // the toolbar's state, then SetCurVisual. A gesture the host dropped
-    // (Esc) leaves the rest of its drag ignored.
     if (m_inGesture && !host.gesture()) {
         m_cancelled = true;
         m_keyNudge = false;
@@ -154,7 +136,6 @@ void PositionTool::reset(VisualHost &host)
 
 void PositionTool::setCurVisual(VisualHost &host, bool fromGesture)
 {
-    // Position::SetCurVisual (VisualPosition.cpp:414-453).
     const ScriptState state = scriptState(host);
     const int oldalignment = m_curLineAlignment;
     const Gesture *gesture = fromGesture ? host.gesture() : nullptr;
@@ -170,8 +151,6 @@ void PositionTool::setCurVisual(VisualHost &host, bool fromGesture)
     m_data.clear();
     const std::vector<core::LineId> targets = gesture ? gesture->targets() : host.batchTargets();
     for (const auto id : targets) {
-        // "fix to work with editbox changes": the active Line as the editor
-        // has it (its pending draft), the others as committed.
         std::optional<core::LineRecord> rec;
         if (gesture)
             rec = stagedRecord(*gesture, id);
@@ -191,7 +170,6 @@ void PositionTool::setCurVisual(VisualHost &host, bool fromGesture)
             std::array<double, 4> table = lp.move->values;
             const PointF end = host.view().scriptToView(
                 {static_cast<float>(table[0]), static_cast<float>(table[1])});
-            // GetCalculatedInPosX/Y take floats; the table keeps doubles.
             table[0] = end.x;
             table[1] = end.y;
             d.move = table;
@@ -200,15 +178,10 @@ void PositionTool::setCurVisual(VisualHost &host, bool fromGesture)
     }
     if (m_hasRectangle) {
         getPositioningData(host);
-        // `oldalignment != -1` compares the byte with -1, so it always holds.
+        // MUST KILL: oldalignment comes from an unsigned char, so != -1 always holds
         if (m_rectangleVisible && oldalignment != m_curLineAlignment && oldalignment != -1) {
             sortPoints();
             setPosition(host);
-            // ChangeMultiline(true, true): SetModified's dummy commit, after
-            // which legacy did not set the tool again (no ShowEditOnVideo),
-            // so its next drag replaced the old tag's span in the new text
-            // (`pos-rect-other-line`). T2-rect-reread: the Lines are read
-            // back here; the alignment now matches, so this does not repeat.
             if (!host.gesture()) {
                 m_dummyCommit = true;
                 const bool committed = commitAll(host);
@@ -227,7 +200,6 @@ void PositionTool::setCurVisual(VisualHost &host, bool fromGesture)
 
 void PositionTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host)
 {
-    // Position::ChangeTool (VisualPosition.cpp:188-210).
     if (!m_hasRectangle && (tool & 32)) {
         if (!blockSetCurVisual)
             getPositioningData(host);
@@ -243,7 +215,7 @@ void PositionTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host
         m_alignment = static_cast<unsigned char>(newalignment);
         sortPoints();
         setPosition(host);
-        (void)commitAll(host); // ChangeMultiline(true)
+        (void)commitAll(host);
     } else {
         host.toolChanged();
     }
@@ -261,9 +233,6 @@ bool PositionTool::ensureGesture(VisualHost &host)
 
 bool PositionTool::stageAll(VisualHost &host)
 {
-    // Position::ChangeMultiline (VisualPosition.cpp:455-521) for the Lines
-    // the gesture targets: each Line's \pos(x,y) at getfloat's precision in
-    // the tag's place (TextPos), in a new block when the Line had none.
     if (m_data.empty() || !ensureGesture(host))
         return false;
     Gesture *gesture = host.gesture();
@@ -271,8 +240,6 @@ bool PositionTool::stageAll(VisualHost &host)
     for (const Data &d : m_data) {
         if (!std::ranges::count(targets, d.line))
             continue;
-        // The text the positions were read from: as the gesture began, or as
-        // a nudge staged it (legacy had committed it and read it back).
         const core::LineRecord base = m_dataFromStaged ? stagedRecord(*gesture, d.line) : gesture->before(d.line);
         const PointF out = host.view().viewToScript(d.pos);
         u16 visual = u"\\pos(" + ft(out.x) + u"," + ft(out.y) + u")";
@@ -298,7 +265,6 @@ bool PositionTool::commitAll(VisualHost &host)
 
 void PositionTool::setMovePosition(Data &data, int time) const
 {
-    // Position::SetMovePosition (VisualPosition.cpp:762-771).
     if (!data.move)
         return;
     data.pos = calcMovePosition(data.pos, data.move->data(), time);
@@ -308,8 +274,6 @@ void PositionTool::setMovePosition(Data &data, int time) const
 
 void PositionTool::savePosition(VisualHost &host)
 {
-    // Position::SavePosition (VisualPosition.cpp:717-727): commit, then the
-    // positions become the start of the next drag.
     (void)commitAll(host);
     const int time = static_cast<int>(host.videoTimeMs());
     for (Data &d : m_data) {
@@ -323,8 +287,6 @@ void PositionTool::savePosition(VisualHost &host)
 
 void PositionTool::setPointFor(core::LineId active, PointF point)
 {
-    // The active Line's position, the others moved by the same distance, all
-    // \move tables dropped (VisualPosition.cpp:331-349, 690-710).
     for (std::size_t i = 0; i < m_data.size(); i++) {
         Data &pos = m_data[i];
         if (pos.line != active)
@@ -357,8 +319,6 @@ bool PositionTool::cancelledByHost(VisualHost &host)
 
 void PositionTool::pointer(const Pointer &evt, VisualHost &host)
 {
-    // Position::OnMouseEvent (VisualPosition.cpp:212-404). The host blocks
-    // events while nothing is shown (blockevents).
     if (evt.kind == Pointer::Kind::Press || evt.kind == Pointer::Kind::DoubleClick)
         m_cancelled = false;
     else if (cancelledByHost(host))
@@ -374,8 +334,6 @@ void PositionTool::pointer(const Pointer &evt, VisualHost &host)
     }
     const bool rightDown = evt.kind == Pointer::Kind::Press && evt.button == Pointer::Button::Right;
     if (rightDown || dclick) {
-        // A right click puts the active Line at the pointer and commits; a
-        // double click shows it and the button's release commits.
         if (const auto active = host.activeLine()) {
             setPointFor(*active, {static_cast<float>(x), static_cast<float>(y)});
             if (rightDown)
@@ -399,7 +357,7 @@ void PositionTool::pointer(const Pointer &evt, VisualHost &host)
             m_movingHelperLine = true;
             return;
         }
-        host.setPointerShape(PointerShape::Sizing); // VisualPosition.cpp:369
+        host.setPointerShape(PointerShape::Sizing);
         if (host.batchTargets().size() != m_data.size())
             setCurVisual(host, false);
         m_firstmove = {static_cast<float>(x), static_cast<float>(y)};
@@ -436,8 +394,6 @@ void PositionTool::pointer(const Pointer &evt, VisualHost &host)
 
 void PositionTool::rectanglePointer(const Pointer &evt, VisualHost &host)
 {
-    // Position::OnMouseEvent's "Set position by rectangle" (VisualPosition.
-    // cpp:222-328).
     const bool click = evt.kind == Pointer::Kind::Press && evt.button == Pointer::Button::Left;
     const bool dclick = evt.kind == Pointer::Kind::DoubleClick && evt.button == Pointer::Button::Left;
     const bool holding = evt.leftDown;
@@ -456,14 +412,12 @@ void PositionTool::rectanglePointer(const Pointer &evt, VisualHost &host)
             (void)commitAll(host);
         } else if (m_inGesture && host.gesture()) {
             m_inGesture = false;
-            host.cancelGesture(); // nothing placed: nothing to write
+            host.cancelGesture();
         }
         if (!host.hasArrow())
             host.setPointerShape(PointerShape::Arrow);
     }
     if (!holding && m_rectangleVisible) {
-        // Over an edge or a corner its resize shape, elsewhere the arrow
-        // (VisualPosition.cpp:240-251); a drag keeps the shape it began with.
         const int test = hitTest({static_cast<float>(x), static_cast<float>(y)}, false, host);
         host.setPointerShape(test < INSIDE ? edgePointerShape(test) : PointerShape::Arrow);
     }
@@ -493,7 +447,7 @@ void PositionTool::rectanglePointer(const Pointer &evt, VisualHost &host)
         const IntRect video = view.videoRect();
         if (m_grabbed < INSIDE) {
             if ((m_grabbed & LEFT) || (m_grabbed & RIGHT)) {
-                x = std::max(video.left, std::min(x, video.right)); // MID(VideoSize.x, x, VideoSize.width)
+                x = std::max(video.left, std::min(x, video.right));
                 const int posInTable = (m_grabbed & RIGHT) ? 1 : 0;
                 m_rectangle[static_cast<std::size_t>(posInTable)].x =
                     ((((x + m_diffs.x) / zoomScale.x) + zoomMove.x) * coeffW);
@@ -534,13 +488,11 @@ void PositionTool::rectanglePointer(const Pointer &evt, VisualHost &host)
 
 int PositionTool::hitTest(PointF pos, bool diff, const VisualHost &host)
 {
-    // Position::HitTest (VisualPosition.cpp:560-600), its int truncations
-    // and its use of the first corner's x in the y test kept.
     int resultX = 0, resultY = 0, resultInside = 0, resultFinal = 0, oldpointx = 0, oldpointy = 0;
     for (int i = 0; i < 2; i++) {
         const PointF point = host.view().scriptToView(m_rectangle[static_cast<std::size_t>(i)]);
         const float pointx = point.x, pointy = point.y;
-        if (std::abs(pos.x - pointx) < 5 * unitOf(host)) { // SV1-hidpi-tool-sizes
+        if (std::abs(pos.x - pointx) < 5 * unitOf(host)) {
             if (diff)
                 m_diffs.x = pointx - pos.x;
             resultX |= (i + 1);
@@ -555,6 +507,7 @@ int PositionTool::hitTest(PointF pos, bool diff, const VisualHost &host)
                              (oldpointx >= pointx && oldpointx >= pos.x && pointx <= pos.x))
                                 ? INSIDE
                                 : OUTSIDE;
+            // MUST KILL: the y test compares oldpointx with pointx, not the y values
             resultInside |= (resultY || (oldpointx <= pointx && oldpointy <= pos.y && pointy >= pos.y) ||
                              (oldpointx >= pointx && oldpointy >= pos.y && pointy <= pos.y))
                                 ? INSIDE
@@ -576,7 +529,6 @@ int PositionTool::hitTest(PointF pos, bool diff, const VisualHost &host)
 
 void PositionTool::sortPoints()
 {
-    // Position::SortPoints (VisualPosition.cpp:602-614).
     if (m_rectangle[1].y < m_rectangle[0].y)
         std::swap(m_rectangle[0].y, m_rectangle[1].y);
     if (m_rectangle[1].x < m_rectangle[0].x)
@@ -585,9 +537,6 @@ void PositionTool::sortPoints()
 
 void PositionTool::setPosition(VisualHost &host)
 {
-    // Position::SetPosition (VisualPosition.cpp:616-715): the text placed in
-    // the rectangle for the chosen alignment, then the active Line put there
-    // and the other Lines moved by the same distance.
     if (!(m_hasRectangle && m_rectangleVisible))
         return;
     const int an = m_alignment;
@@ -657,15 +606,12 @@ void PositionTool::setPosition(VisualHost &host)
 
 PointF PositionTool::positionToVideo(PointF point, bool changeX, bool changeY, const VisualHost &host) const
 {
-    // Position::PositionToVideo (VisualPosition.cpp:729-734).
     const PointF in = host.view().scriptToView(point);
     return {changeX ? in.x : point.x, changeY ? in.y : point.y};
 }
 
 void PositionTool::getPositioningData(VisualHost &host)
 {
-    // Position::GetPositioningData (VisualPosition.cpp:736-760). The byte
-    // curLineAlingment is never -1, so it is not read again here.
     const ScriptState state = scriptState(host);
     if (!state.active)
         return;
@@ -694,11 +640,6 @@ bool PositionTool::takesKey(const Key &evt) const
 
 bool PositionTool::key(const Key &evt, VisualHost &host)
 {
-    // Position::OnKeyPress (VisualPosition.cpp:523-558): a nudge moves every
-    // Line one script pixel (a tenth with Shift); VT2-arrow-nudge: the
-    // arrows, for legacy's A/D/W/S. Legacy committed each press; here the
-    // presses while the key is held make one gesture committed on its
-    // release (the transaction rule, #55).
     if (evt.release) {
         if (!isArrowKey(evt.key))
             return false;
@@ -731,15 +672,12 @@ bool PositionTool::key(const Key &evt, VisualHost &host)
     }
     (void)stageAll(host);
     m_keyNudge = true;
-    // Legacy's commit read the Lines back (SetCurVisual), so the next press
-    // starts from the written text.
     setCurVisual(host, true);
     return true;
 }
 
 Overlay PositionTool::overlay(const VisualHost &host) const
 {
-    // Position::Draw (VisualPosition.cpp:63-134).
     Overlay out;
     out.unit = unitOf(host);
     const EditSession *session = host.session();
@@ -777,9 +715,6 @@ Overlay PositionTool::overlay(const VisualHost &host) const
 
 std::optional<LineWarning> PositionTool::warning(const VisualHost &host) const
 {
-    // Position::Draw's nothintoshow: the warning (and blocked events) only
-    // while none of its Lines is visible; the comment text when the active
-    // Line is a comment (notDialogue).
     const EditSession *session = host.session();
     if (!session)
         return LineWarning::None;
@@ -803,17 +738,12 @@ std::optional<LineWarning> PositionTool::warning(const VisualHost &host) const
 
 void PositionTool::blocked(VisualHost &host)
 {
-    // Position::Draw's nothintoshow ends a helper-cross drag
-    // (VisualPosition.cpp:107-113, DrawWx 162-168: movingHelperLine =
-    // false), so the next event after the Line shows again does not move it.
     (void)host;
     m_movingHelperLine = false;
 }
 
 std::vector<ToolValue> PositionTool::values(const VisualHost &host) const
 {
-    // The numeric alternative (media.md): the active Line's position in
-    // script coordinates, as GetVisual writes it.
     const auto active = host.activeLine();
     for (const Data &d : m_data)
         if (active && d.line == *active) {
@@ -825,9 +755,6 @@ std::vector<ToolValue> PositionTool::values(const VisualHost &host) const
 
 bool PositionTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
-    // The active Line's \pos at the typed point, the other Lines moved with
-    // it, as a right click there would (VisualPosition.cpp:330-352). VT1: a
-    // scrub's samples are staged on one gesture, committed by its release.
     double value = 0;
     const auto active = host.activeLine();
     if (!host.gesture())
@@ -850,7 +777,6 @@ bool PositionTool::setValue(const std::string &name, const std::u16string &text,
 
 std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
 {
-    // PositionItem (VideoToolbar.cpp:995-1129; help texts 82-86, 1113).
     (void)host;
     std::vector<ToolOption> out;
     ToolOption rect;
@@ -859,7 +785,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     rect.tooltip = u"Set position by rectangle.\nAfter drawing a rectangle, the line will be\npositioned on one or "
                    u"both axes\nfor the selected alignment.";
     rect.checked = m_toggled[0];
-    rect.group = u"Rectangle"; // VT1: the bar's group
+    rect.group = u"Rectangle";
     out.push_back(rect);
     ToolOption x;
     x.name = "x";
@@ -891,9 +817,6 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
 
 bool PositionTool::setOption(const std::string &name, int value, VisualHost &host)
 {
-    // PositionItem::OnMouseEvent / the alignment choice (VideoToolbar.cpp:
-    // 995-1042, 1104-1110): X and Y are greyed without the rectangle, one of
-    // them stays on, and the toolbar hands the tool its state (ChangeTool).
     if (host.gesture())
         return false;
     if (name == "alignment") {
@@ -925,11 +848,8 @@ void PositionTool::applyToolValue(int value, VisualHost &host)
     host.toolChanged();
 }
 
-// -------------------------------------------------------------------- Move
-
 void MoveTool::selected(VisualHost &host)
 {
-    // Visuals::Get made a new Move (VisualMove.cpp:27-34, Visuals.h:302-339).
     m_from = m_to = m_lastFrom = m_lastTo = m_firstmove = m_lastmove = m_moveDistance = {0, 0};
     m_moveStart = m_moveEnd = 0;
     m_type = 0;
@@ -950,16 +870,12 @@ void MoveTool::selected(VisualHost &host)
 void MoveTool::reset(VisualHost &host)
 {
     if (!host.gesture())
-        m_typedTimes = {}; // a value edit ended (committed or dropped)
+        m_typedTimes = {};
     if (m_inGesture && !host.gesture()) {
         m_cancelled = true;
         m_keyNudge = false;
     }
     m_inGesture = host.gesture() != nullptr && m_inGesture;
-    // Legacy's commit did not set the tool again (EditBox::Send and the
-    // batch's SetModified pass visualdummy/dummy: no ShowEditOnVideo,
-    // SubsGridBase.cpp:154, Visuals.cpp:792-797), so the refresh that follows
-    // this tool's own commit leaves its state as the drag left it.
     if (m_committing)
         return;
     if (m_skipReset && host.session() && host.session()->revision() == m_committedRevision &&
@@ -988,9 +904,6 @@ void MoveTool::commit(VisualHost &host)
 
 void MoveTool::setCurVisual(VisualHost &host)
 {
-    // Move::SetCurVisual (VisualMove.cpp:355-371) on the Line editor's text:
-    // the staged text while a nudge's gesture is open (legacy had committed
-    // and read it back).
     const ScriptState state = scriptState(host);
     if (!state.active)
         return;
@@ -1003,11 +916,7 @@ void MoveTool::setCurVisual(VisualHost &host)
     if (m_moveValues[6] > 3)
         m_to = view.scriptToView({static_cast<float>(m_moveValues[2]), static_cast<float>(m_moveValues[3])});
     m_moveDistance = sub(m_to, m_from);
-    // The \move's times, the earlier first, as libass moves the text: over
-    // the whole Line for a \move without times or with both 0 or less
-    // (T2-move-untimed; legacy had the Line's start as both). The cross,
-    // the two-point extrapolation and the end's arrival read these; the
-    // written \move keeps the text's own times (m_moveValues).
+    // As libass: times ordered, the whole Line when \move has no times or both are <= 0.
     std::tie(m_moveStart, m_moveEnd) = moveInterval(m_moveValues, edit);
     host.toolChanged();
 }
@@ -1016,16 +925,12 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
                                            const ScriptState &state, const core::LineRecord &editLine,
                                            const VisualHost &host) const
 {
-    // Move::ChangeVisual(txt, dial, n) (VisualMove.cpp:373-403): each Line's
-    // own start moved by the active Line's drag, its end by the same \move
-    // distance, its own times when its \move has six values, else the active
-    // Line's (GetMoveTimes).
     u16 txt = text;
     const LinePosition lp = linePosition(state, line, false);
     const PointF moveFrom = sub(m_lastFrom, m_from);
     const PointF moveTo = sub(m_lastTo, m_to);
     int moveStartTime = 0, moveEndTime = 0;
-    u16 tagStart, tagEnd; // the \move's own times, as written
+    u16 tagStart, tagEnd;
     u16 tagBefore;
     if (!lp.putInBracket && lp.textStart < txt.size())
         tagBefore = txt.substr(lp.textStart, lp.textLength);
@@ -1050,15 +955,12 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
         u16 t2 = values[5];
         const u16 &t1 = values[4];
         std::erase(t2, u')');
-        moveStartTime = atoi16(t1); // wxAtoi
+        moveStartTime = atoi16(t1);
         moveEndTime = atoi16(t2);
         tagStart = t1;
         tagEnd = t2;
     }
     u16 startText = number(moveStartTime), endText = number(moveEndTime);
-    // VT1: a typed time goes into every target, from its own start; the
-    // other keeps its text (Codex on #293: not wxAtoi's whole part, as a
-    // drag writes it).
     if (m_typedTimes[0] || m_typedTimes[1]) {
         startText = m_typedTimes[0] ? number(*m_typedTimes[0]) : tagStart.empty() ? startText : tagStart;
         endText = m_typedTimes[1] ? number(*m_typedTimes[1]) : tagEnd.empty() ? endText : tagEnd;
@@ -1079,9 +981,6 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
 
 void MoveTool::setVisual(bool dummy, VisualHost &host)
 {
-    // Visuals::SetVisual(dummy) (Visuals.cpp:725-832): with several Lines
-    // (EditBox::IsCursorOnStart: more than one selected; here picked) each
-    // Line's own text, else the Line editor's text of the one target.
     if (!host.gesture()) {
         auto begun = host.beginGesture(host.batchTargets(), std::string(familyInfo(Family::Move).history));
         m_inGesture = begun.has_value();
@@ -1102,9 +1001,6 @@ void MoveTool::setVisual(bool dummy, VisualHost &host)
             gesture->stage(id, core::toUtf8(txt), editsTranslation(before));
         }
     } else if (!targets.empty() && !dummy) {
-        // The editor path's commit sends the Line editor's text as the last
-        // preview left it (EditBox::Send after SetModified, Visuals.cpp:821-
-        // 830): unchanged when nothing was shown, still one step.
         const core::LineRecord &before = gesture->before(targets.front());
         if (!gesture->staged(before.id, editsTranslation(before)))
             gesture->stage(before.id, editsTranslation(before) ? before.translation : before.text,
@@ -1134,15 +1030,13 @@ void MoveTool::setVisual(bool dummy, VisualHost &host)
 
 bool MoveTool::setMove(VisualHost &host)
 {
-    // Move::SetMove (VisualMove.cpp:460-479): the end point extrapolated from
-    // the two points over the \move's time. lastVideoTime is kept from the
-    // first time it is set, as legacy did.
     const int time = static_cast<int>(host.videoTimeMs());
     if (!m_lineToMoveVisibility[1] || time == m_lineStartTime || m_lineStartTime == -1) {
         if (time == m_lineStartTime)
             host.log(u"Video must be set at least one frame after the line's start time");
         return false;
     }
+    // MUST KILL: m_lastVideoTime is set once and never updated
     if (m_lastVideoTime == -1)
         m_lastVideoTime = time;
     const float t1 = static_cast<float>(m_lastVideoTime - m_moveStart);
@@ -1165,7 +1059,6 @@ bool MoveTool::cancelledByHost(VisualHost &host)
 
 void MoveTool::pointer(const Pointer &evt, VisualHost &host)
 {
-    // Move::OnMouseEvent (VisualMove.cpp:144-353).
     if (evt.kind == Pointer::Kind::Press || evt.kind == Pointer::Kind::DoubleClick)
         m_cancelled = false;
     else if (cancelledByHost(host))
@@ -1178,7 +1071,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
     const bool shift = evt.shift;
     const bool buttonUp = evt.kind == Pointer::Kind::Release;
     const int x = evt.x, y = evt.y;
-    const float grab = 8 * unitOf(host); // SV1-hidpi-tool-sizes
+    const float grab = 8 * unitOf(host);
     const auto near8 = [grab](PointF p, int px, int py) { return std::abs(p.x - px) < grab && std::abs(p.y - py) < grab; };
 
     if (m_hasLineToMove) {
@@ -1213,7 +1106,6 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
             if (!m_lineToMoveVisibility[0]) {
                 m_lineToMoveVisibility[0] = true;
                 m_lineToMoveStart = {static_cast<float>(x), static_cast<float>(y)};
-                // DrawVisual takes the time the first point is drawn at.
                 if (m_lineStartTime == -1)
                     m_lineStartTime = static_cast<int>(host.videoTimeMs());
                 host.toolChanged();
@@ -1243,7 +1135,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
             }
             m_lastmove = m_lastTo = m_to;
             m_firstmove = m_lastFrom = m_from;
-            host.setPointerShape(PointerShape::Sizing); // VisualMove.cpp:227
+            host.setPointerShape(PointerShape::Sizing);
             if (setMove(host))
                 setVisual(true, host);
             else
@@ -1290,7 +1182,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
             m_movingHelperLine = true;
             return;
         }
-        host.setPointerShape(PointerShape::Sizing); // VisualMove.cpp:282
+        host.setPointerShape(PointerShape::Sizing);
         if (leftc)
             m_type = 0;
         if (rightc)
@@ -1357,12 +1249,6 @@ bool MoveTool::takesKey(const Key &evt) const
 
 bool MoveTool::key(const Key &evt, VisualHost &host)
 {
-    // Move::OnKeyPress (VisualMove.cpp:421-458): a nudge moves the start or
-    // the end one script pixel unzoomed (a tenth with Shift);
-    // VT2-arrow-nudge: the arrows the start and Alt+arrows the end, for
-    // legacy's A/D/W/S and J/L/I/K. Legacy committed each press and read the
-    // Line back; here the presses while the key is held make one gesture
-    // committed on its release (#55).
     if (evt.release) {
         if (!isArrowKey(evt.key))
             return false;
@@ -1392,8 +1278,6 @@ bool MoveTool::key(const Key &evt, VisualHost &host)
         m_from.x += directionX;
         m_from.y += directionY;
     }
-    // Legacy staged and committed on each press (SetVisual(true), then
-    // SetVisual(false)); the commit is the key's release here (#55).
     setVisual(true, host);
     if (host.gesture())
         m_keyNudge = true;
@@ -1402,9 +1286,6 @@ bool MoveTool::key(const Key &evt, VisualHost &host)
 
 Overlay MoveTool::overlay(const VisualHost &host) const
 {
-    // Move::DrawVisual (VisualMove.cpp:36-93); the cross along the \move
-    // stays at its start when the \move has no duration (DrawWx's guard,
-    // VisualMove.cpp:128; the Direct3D path divided by zero).
     Overlay out;
     out.unit = unitOf(host);
     const int time = static_cast<int>(host.videoTimeMs());
@@ -1438,9 +1319,6 @@ Overlay MoveTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> MoveTool::values(const VisualHost &host) const
 {
-    // The numeric alternative: the \move's points in script coordinates and
-    // its times from the Line's start, as the tool writes them; VT1: the
-    // times are editable too (whole milliseconds, as the tag takes them).
     const PointF from = host.view().viewToScript(m_from);
     const PointF to = host.view().viewToScript(m_to);
     const int startTime = activeStart(host);
@@ -1454,25 +1332,18 @@ std::vector<ToolValue> MoveTool::values(const VisualHost &host) const
 
 int MoveTool::activeStart(const VisualHost &host) const
 {
-    // The active Line as the Line editor holds it (its pending draft's
-    // start), as setVisual and the gesture read it.
     const ScriptState state = scriptState(host);
     return state.active ? zeroit(startMs(*state.active)) : 0;
 }
 
 bool MoveTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
-    // A typed point written as a key's nudge writes it (SetVisual). VT1: the
-    // times are set from the Line's start as the tag holds them, and a
-    // scrub's samples are staged on one gesture its release commits.
     double value = 0;
     if (!host.gesture())
         m_valueEdit = false;
     if (name.size() != 2 || (name[0] != 'x' && name[0] != 'y' && name[0] != 't') || (name[1] != '1' && name[1] != '2') ||
         !parseValue(text, value) || (host.gesture() && !m_valueEdit) || !host.activeLine())
         return false;
-    // The first sample is the press: the handles' places the several-Line
-    // path moves every target's \move from (Move::OnMouseEvent's click).
     if (!host.gesture()) {
         m_lastmove = m_lastTo = m_to;
         m_firstmove = m_lastFrom = m_from;
@@ -1501,7 +1372,6 @@ bool MoveTool::setValue(const std::string &name, const std::u16string &text, Vis
 
 std::vector<ToolOption> MoveTool::options(const VisualHost &host) const
 {
-    // MoveItem (VideoToolbar.cpp:1131-1197; help text 88).
     (void)host;
     ToolOption two;
     two.name = "twoPoints";
@@ -1515,8 +1385,6 @@ std::vector<ToolOption> MoveTool::options(const VisualHost &host) const
 
 bool MoveTool::setOption(const std::string &name, int value, VisualHost &host)
 {
-    // MoveItem::OnMouseEvent then Move::ChangeTool (VisualMove.cpp:481-484):
-    // only whether the two points are used; the points stay.
     if (name != "twoPoints" || host.gesture())
         return false;
     m_hasLineToMove = value != 0;

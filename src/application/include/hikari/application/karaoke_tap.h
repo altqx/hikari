@@ -1,14 +1,6 @@
 #pragma once
 
-// KA2 (#277) tap-to-time karaoke timing (KA2-tap-to-time). Qt-free: the tap
-// state machine over one Line's syllables, the song time a key stands for,
-// and the latency calibration's maths. While the audio plays, Hold mode
-// starts the next syllable at key-down and ends it at key-up, so the time
-// between a release and the next press becomes a gap (an empty syllable);
-// Press mode starts the next syllable at each press and ends the one before,
-// with no gaps. The first press sets the Line's start and the end of its last
-// syllable the Line's end. Times are song times in ms (the audio's own, not
-// the wall clock's, so slowed playback changes nothing here).
+// Times are song times in ms, not wall-clock ones.
 
 #include "hikari/application/audio_karaoke.h"
 
@@ -19,28 +11,22 @@
 
 namespace hikari::application {
 
-// The song time a key stands for: the playback position at the key event
-// less the calibrated latency. The latency is wall-clock time, so at a slowed
-// `speed` it is that much less of the song. Rounded to the nearest 10 ms, not
-// before 0.
+// `positionMs` less the wall-clock latency scaled by `speed`, rounded to the
+// nearest 10 ms, not below 0.
 int tapSongMs(double positionMs, int latencyMs, double speed);
 
-// Latency calibration: beeps every kCalibrationIntervalMs, the first
-// kCalibrationPractice of them not counted. Each press counts for the beep
-// nearest it (within half the interval, one press per beep). The latency is
-// the median of the counted delays left after dropping those further than
-// three times their median absolute deviation (at least 5 ms) from their
-// median; the spread is the median absolute deviation of what is left.
+// Latency: median press delay after dropping outliers past 3 MADs (at least
+// 5 ms); spread: the MAD of the rest.
 inline constexpr int kCalibrationBeats = 16;
 inline constexpr int kCalibrationPractice = 4;
-inline constexpr int kCalibrationIntervalMs = 600; // 100 BPM
+inline constexpr int kCalibrationIntervalMs = 600;
 inline constexpr int kCalibrationMinCounted = 6;
 
 struct LatencyCalibration {
     int latencyMs = 0;
     int spreadMs = 0;
     int counted = 0;     // presses left after the outliers
-    bool enough = false; // at least kCalibrationMinCounted of them
+    bool enough = false;
     bool operator==(const LatencyCalibration &) const = default;
 };
 LatencyCalibration calibrateLatency(std::span<const double> beatsMs, std::span<const double> pressesMs,
@@ -48,13 +34,14 @@ LatencyCalibration calibrateLatency(std::span<const double> beatsMs, std::span<c
 
 class KaraokeTap {
 public:
+    // Hold: key-down starts a syllable and key-up ends it, leaving gaps;
+    // Press: each press starts the next and ends the one before.
     enum class Mode { Hold, Press };
-    // A syllable to tap: its text and tag as the karaoke model holds them.
     struct Syllable {
         std::u16string text, tag;
         bool operator==(const Syllable &) const = default;
     };
-    // The tapped Line: its new times and syllables (gaps with empty text).
+    // A gap has empty text.
     struct Timed {
         std::u16string text, tag;
         int endMs = 0;
@@ -65,7 +52,6 @@ public:
         std::vector<Timed> syllables;
         bool operator==(const Result &) const = default;
     };
-    // A tapped syllable's span; the held one ends where the playback is.
     struct Span {
         int startMs = 0, endMs = 0;
         bool operator==(const Span &) const = default;
@@ -78,56 +64,43 @@ public:
     static constexpr int kPrerollMs = 1000; // a Line plays from this far before its start
     static constexpr int kMinSyllableMs = 10;
 
-    // The syllables to tap from the karaoke model: those with something to
-    // sing. Empty ones (gaps an earlier tap made) are dropped, and a blank
-    // one's text joins the syllable before it (the first one's the next).
+    // Empty syllables are dropped; a blank one's text joins the one before
+    // (the first one's the next).
     static std::vector<Syllable> targets(const AudioKaraoke &karaoke);
 
-    // A Line to tap, starting at `lineStartMs` before any tap.
     void begin(std::vector<Syllable> syllables, int lineStartMs);
-    // Changing the mode drops a held syllable: the key that would end it
-    // means something else in the other mode.
+    // Drops a held syllable.
     void setMode(Mode mode);
     Mode mode() const { return m_mode; }
 
-    // Key events at song times (tapSongMs). A tap before the last boundary
-    // kept lands on it, so a rewound replay never runs time backwards.
-    // `key` tells a release from another key's; the caller drops a key's
-    // auto-repeat.
+    // A tap before lastBoundary() lands on it. The caller drops auto-repeat.
     Event press(int key, int songMs);
     Event release(int key, int songMs);
-    // Backspace: the held syllable and the last tapped one before it are taken
-    // back; answers the song time to play again from (kRewindMs before the
-    // earliest taken back, or before the Line when nothing was tapped).
+    // Takes back the held syllable and the last tapped one; answers the song
+    // time to play again from.
     int undo();
-    // Shift+Backspace: every tap on the Line; answers where to play from.
+    // Takes back every tap; answers where to play from.
     int undoLine();
-    // Esc: a held syllable is dropped, the tapped ones kept.
+    // Drops a held syllable, keeps the tapped ones.
     void stop();
-    // The playing reached its end at `songMs`: a held syllable (the last
-    // press's in Press mode) ends there.
+    // Playback ended: a held syllable ends at `songMs`.
     Event finish(int songMs);
-    // Where Resume plays from: kRewindMs before the end of the last tapped
-    // syllable, or kPrerollMs before the Line.
+    // kRewindMs before the last tapped end, or kPrerollMs before the Line.
     int resumeMs() const;
-    // Revert Line: no taps.
     void revert();
 
     int count() const { return static_cast<int>(m_syllables.size()); }
     int tapped() const { return static_cast<int>(m_spans.size()); }
     bool holding() const { return m_held.has_value(); }
     bool done() const { return m_done; }
-    // The Line needs splitting first: with one syllable a tap would only set
-    // its start and end.
     bool needsSplit() const { return m_syllables.size() < 2; }
     const std::vector<Syllable> &syllables() const { return m_syllables; }
     std::vector<SyllableState> states() const;
     // The tapped spans, and the held one up to `nowMs`.
     std::vector<Span> spans(int nowMs) const;
-    // The finished Line (done()).
+    // Valid once done().
     Result result() const;
-    // The last boundary kept (the held syllable's start, else the last tapped
-    // one's end; 0 before any): a press lands there or later.
+    // The held syllable's start, else the last tapped end; 0 before any.
     int lastBoundary() const;
 
 private:

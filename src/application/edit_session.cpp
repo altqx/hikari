@@ -28,7 +28,6 @@ void merge(DraftChange &into, const DraftChange &change)
     if (change.text)
         into.text = change.text;
     if (change.translation) {
-        // A translation once typed stays the typed one, but for a step's own put back.
         into.translationCarried = change.restoresProvenance
                                       ? change.translationCarried
                                       : change.translationCarried && (!into.translation || into.translationCarried);
@@ -60,8 +59,7 @@ void merge(DraftChange &into, const DraftChange &change)
         into.endFrame = change.endFrame;
 }
 
-// KA1: the fields `change` gives a new value (one the draft did not hold)
-// are no longer kept to the draft's Line.
+// Fields `change` gives a new value are no longer kept to the draft's Line.
 void unmark(DraftChange &own, const DraftChange &change, const DraftChange &before)
 {
     if (change.text && change.text != before.text)
@@ -135,7 +133,7 @@ bool sameFields(const core::LineRecord &a, const core::LineRecord &b)
            a.startFrame == b.startFrame && a.endFrame == b.endFrame;
 }
 
-constexpr std::int64_t kMarginMax = 9999; // the legacy NumCtrl range is 0..9999
+constexpr std::int64_t kMarginMax = 9999;
 
 std::optional<DraftProblem> problemOf(const core::LineRecord &line)
 {
@@ -154,7 +152,7 @@ EditSession::EditSession(core::Document document, bool protectedReference) : m_p
     static std::atomic<std::uint64_t> nextSerial{1};
     m_serial = nextSerial++;
     m_states.push_back(State{std::move(document), ContentId{m_nextContent++}, {}, "Open"});
-    m_saved = m_states.front().content; // a freshly loaded Document is saved as opened
+    m_saved = m_states.front().content;
 }
 
 void EditSession::setSelection(Selection selection)
@@ -179,13 +177,13 @@ bool EditSession::editDraft(core::LineId line, const DraftChange &change)
     if (m_draft && m_draft->line != line) {
         if (draftProblem() && m_policy == InvalidCommitPolicy::Block)
             return false;
-        commit(true); // commit on leave
+        commit(true);
     }
     if (!m_draft)
         m_draft = Draft{line, {}};
     const DraftChange before = m_draft->change;
     merge(m_draft->change, change);
-    unmark(m_draft->own, change, before); // KA1: a kept field edited anew goes to every selected Line again
+    unmark(m_draft->own, change, before);
     m_selection.active = line;
     return true;
 }
@@ -230,12 +228,11 @@ std::optional<DraftProblem> EditSession::draftProblem() const
 
 void EditSession::pushState(core::Document document, std::string name)
 {
-    // A new commit after Undo drops the redo branch.
     while (m_states.size() > m_cursor + 1)
         m_states.pop_back();
     m_states.push_back(State{std::move(document), ContentId{m_nextContent++}, m_selection, std::move(name)});
     if (m_states.size() > kHistoryCapacity)
-        m_states.pop_front(); // the saved identity is kept even when its entry goes (C43)
+        m_states.pop_front(); // the saved identity survives its entry
     m_cursor = m_states.size() - 1;
     ++m_revision;
 }
@@ -256,12 +253,12 @@ bool EditSession::commit(bool leaving, std::string name)
         return false;
     auto record = draftRecord();
     if (!record) {
-        m_draft.reset(); // the Line is gone
+        m_draft.reset();
         return false;
     }
     if (problemOf(*record)) {
         if (m_policy == InvalidCommitPolicy::Block)
-            return false; // the draft and its reason stay
+            return false;
         record->marginLeft.value = std::clamp<std::int64_t>(record->marginLeft.value, 0, kMarginMax);
         record->marginRight.value = std::clamp<std::int64_t>(record->marginRight.value, 0, kMarginMax);
         record->marginVertical.value = std::clamp<std::int64_t>(record->marginVertical.value, 0, kMarginMax);
@@ -272,7 +269,7 @@ bool EditSession::commit(bool leaving, std::string name)
     m_draft.reset();
     const auto *current = findLine(document(), id);
     if (sameFields(*current, *record))
-        return false; // nothing changed
+        return false;
     core::Document next = document();
     next.editLine(id, [&](core::LineRecord &line) {
         line.text = record->text;
@@ -298,8 +295,6 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Co
 {
     if (!m_draft)
         return false;
-    // SubsGrid::ChangeLine (SubsGridBase.cpp:133-155): fewer than two
-    // selected Lines change the edited Line only.
     if (m_selection.selected.size() < 2)
         return commit(leaving, std::move(name));
     auto record = draftRecord();
@@ -314,10 +309,9 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Co
         record->marginRight.value = std::clamp<std::int64_t>(record->marginRight.value, 0, kMarginMax);
         record->marginVertical.value = std::clamp<std::int64_t>(record->marginVertical.value, 0, kMarginMax);
     }
-    // Send's cells are the fields the editor marked modified: those the draft
-    // holds, even where a value went back to the committed one.
+    // Every field the draft holds, even one back at its committed value.
     const DraftChange cells = m_draft->change;
-    const DraftChange own = m_draft->own; // KA1: the fields kept to the edited Line
+    const DraftChange own = m_draft->own;
     const core::LineId edited = m_draft->line;
     m_draft.reset();
     core::Document next = document();
@@ -355,14 +349,9 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Co
             updated.startFrame = record->startFrame;
         if (cells.endFrame && !(other && own.endFrame))
             updated.endFrame = record->endFrame;
-        // TM1: another Line's own translation follows its new text or Style,
-        // the edited Line's carried or untranslated (a translation typed goes
-        // to every Line, as above).
         if (line->id != edited && companion &&
             (cells.translationCarried || (!cells.translation && (cells.text || cells.style))))
             companion(*line, updated);
-        // Leaving under the legacy preference: SetLine sets the edited Line's
-        // End before its Start to the Start.
         if (leaving && line->id == edited && m_policy == InvalidCommitPolicy::Legacy &&
             updated.end.value < updated.start.value)
             updated.end.value = updated.start.value;
@@ -423,12 +412,12 @@ std::expected<void, CommandRefusal> EditSession::run(const Command &command)
             return std::unexpected(CommandRefusal::UnknownLine);
     core::Document working = document();
     if (!command.apply || !command.apply(working))
-        return std::unexpected(CommandRefusal::Invalid); // C07: content, selection, dirty, history untouched
+        return std::unexpected(CommandRefusal::Invalid);
     if (command.keepGroups) {
         m_lastGroupBreak = core::groupBreaks(document(), working);
         if (!m_lastGroupBreak.empty()) {
             ++m_groupBreakCount;
-            return std::unexpected(CommandRefusal::GroupBreak); // C07 as above
+            return std::unexpected(CommandRefusal::GroupBreak);
         }
     }
     pushState(std::move(working), command.name);
@@ -454,7 +443,6 @@ bool EditSession::undo()
     commitDraft();
     if (m_cursor == 0)
         return false;
-    // Restore the content before the step and the selection recorded with it.
     m_selection = m_states[m_cursor].selection;
     --m_cursor;
     ++m_revision;
@@ -508,8 +496,6 @@ bool EditSession::goTo(std::size_t step)
         return false;
     if (step == m_cursor)
         return true;
-    // As a run of Undo (the selection recorded with the step after the
-    // target) or of Redo (the target's own).
     m_selection = step < m_cursor ? m_states[step + 1].selection : m_states[step].selection;
     m_cursor = step;
     ++m_revision;
@@ -519,7 +505,7 @@ bool EditSession::goTo(std::size_t step)
 std::expected<EditSession::SaveSnapshot, DraftProblem> EditSession::prepareSave()
 {
     if (auto problem = draftProblem(); problem && m_policy == InvalidCommitPolicy::Block)
-        return std::unexpected(*problem); // an invalid draft blocks the save, with its reason
+        return std::unexpected(*problem);
     commitDraft();
     auto &versions = m_preparedVersions[contentId().value];
     versions.clear();

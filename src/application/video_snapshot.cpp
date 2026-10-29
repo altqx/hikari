@@ -36,22 +36,18 @@ SnapshotImage snapshotImage(const IndexedFrame &frame, const OverlayFrame *overl
 
 namespace {
 
-// wxString::BeforeLast: empty when the character is not there.
 std::string_view beforeLast(std::string_view text, char c)
 {
     const auto at = text.rfind(c);
     return at == std::string_view::npos ? std::string_view() : text.substr(0, at);
 }
 
-// The name after the last separator ('/' or '\\').
 std::string_view fileName(std::string_view path)
 {
     const auto slash = path.find_last_of("/\\");
     return slash == std::string_view::npos ? path : path.substr(slash + 1);
 }
 
-// The number a snapshot's file name holds: the digits between "<stem>_" and
-// the next '_', or 0 when the name does not continue the stem that way.
 int snapshotNumberOf(std::string_view name, std::string_view stem)
 {
     if (name.size() <= stem.size() + 1 || name.substr(0, stem.size()) != stem || name[stem.size()] != '_')
@@ -60,7 +56,6 @@ int snapshotNumberOf(std::string_view name, std::string_view stem)
     const auto end = rest.find_first_not_of("0123456789");
     if (end == 0 || end == std::string_view::npos || rest[end] != '_')
         return 0;
-    // wxAtoi: strtol's int, as legacy read it.
     return static_cast<int>(std::strtol(std::string(rest.substr(0, end)).c_str(), nullptr, 10));
 }
 
@@ -68,9 +63,6 @@ int snapshotNumberOf(std::string_view name, std::string_view stem)
 
 int nextSnapshotNumber(std::string_view videoPath, const std::vector<std::string> &paths)
 {
-    // RendererVideo.cpp:1238-1258 took the first "_<digits>_" of each whole
-    // path; V4-snapshot-number reads it from the file name after the video's
-    // name. Then the smallest number from 1 that the sorted list does not hold.
     const std::string_view stem = beforeLast(fileName(videoPath), '.');
     std::vector<int> nums;
     for (const std::string &file : paths) {
@@ -90,7 +82,6 @@ int nextSnapshotNumber(std::string_view videoPath, const std::vector<std::string
 
 std::string snapshotPath(std::string_view videoPath, int number, int ms)
 {
-    // RendererVideo.cpp:1259-1266.
     char time[32];
     const int sec = ms / 1000, min = ms / 60000, hours = ms / 3600000;
     std::snprintf(time, sizeof time, "%02i;%02i;%02i,%03i", hours, min % 60, sec % 60, ms % 1000);
@@ -101,16 +92,12 @@ std::string snapshotPath(std::string_view videoPath, int number, int ms)
 
 std::string snapshotPattern(std::string_view videoPath)
 {
-    // HikariPathName: the name after the last separator (backslashes are
-    // separators on Windows; elsewhere HikariNormalizePath makes them '/').
     return std::string(beforeLast(fileName(videoPath), '.')) + "_*_*.png";
 }
 
 std::string nextSnapshotPath(std::string_view videoPath, const std::vector<std::string> &paths, int ms,
                              const std::function<bool(const std::string &)> &exists)
 {
-    // V4-snapshot-number: a taken path (a file the listing missed) raises
-    // the number rather than being replaced.
     for (int number = nextSnapshotNumber(videoPath, paths);; ++number) {
         std::string path = snapshotPath(videoPath, number, ms);
         if (!exists || !exists(path))

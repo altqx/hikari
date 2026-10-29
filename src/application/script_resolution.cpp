@@ -6,7 +6,6 @@ namespace hikari::application {
 
 namespace {
 
-// wxAtoi.
 int atoiOf(const std::string &text)
 {
     return std::atoi(text.c_str());

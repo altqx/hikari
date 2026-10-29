@@ -38,9 +38,6 @@ const core::LineRecord *findLine(const core::Document &document, core::LineId id
 
 } // namespace
 
-// A typed or scrubbed value (VT1, T2's typed point): a plain decimal number,
-// spaces around it and a leading '+' allowed. The limit keeps it a float
-// coordinate and an int of milliseconds (1e100 would be an infinite one).
 bool parseValue(const std::u16string &text, double &out)
 {
     std::string s;
@@ -64,10 +61,6 @@ bool parseValue(const std::u16string &text, double &out)
 
 const std::array<FamilyInfo, kFamilyCount> &families()
 {
-    // VideoToolbar.cpp:44-54 (icons and tooltips) and SubsFile.cpp:228-238
-    // (the history names of VISUAL_POSITION .. VISUAL_ALL_TAGS; the
-    // crosshair's Ctrl+click records VISUAL_POSITION, VisualCross.cpp:125).
-    // VT2: the Video command choosing each (legacy had none).
     static const std::array<FamilyInfo, kFamilyCount> table{{
         {Family::Crosshair, "cross", "Position pointer", "Visual positioning tool", "VIDEO_TOOL_CROSSHAIR"},
         {Family::Position, "position", "Text positioning", "Visual positioning tool", "VIDEO_TOOL_POSITION"},
@@ -82,7 +75,6 @@ const std::array<FamilyInfo, kFamilyCount> &families()
         {Family::PositionShifter, "MOVEAll", "Position shifter", "Visual position adjustment tool",
          "VIDEO_TOOL_POSITION_SHIFTER"},
         {Family::Hydra, "ALL_TAGS", "Hydra", "Visual Hydra tool", "VIDEO_TOOL_HYDRA"},
-        // VT3: no legacy family; its icon is K1's tool-perspective.
         {Family::Perspective, "perspective", "Perspective", "Visual perspective tool", "VIDEO_TOOL_PERSPECTIVE"},
     }};
     return table;
@@ -136,8 +128,6 @@ std::optional<PointF> nudgeDirection(const Key &key, bool alt)
 std::expected<Gesture, CommandRefusal> Gesture::begin(const EditSession &session, std::vector<core::LineId> targets,
                                                       std::string history)
 {
-    // Refused up front with the reasons EditSession::run would give, so a
-    // protected reference never shows a gesture it cannot keep.
     if (session.isProtected())
         return std::unexpected(CommandRefusal::Protected);
     if (session.isReadOnly())
@@ -202,10 +192,7 @@ core::Document Gesture::preview(const core::Document &document, std::int64_t tim
     out.removeLinesIf([&](const core::LineRecord &line) {
         const std::int64_t start = ms(line.start), end = ms(line.end);
         if (std::find(m_targets.begin(), m_targets.end(), line.id) != m_targets.end())
-            // ChangeMultiline's skipInvisible: a target shows while the video's
-            // time is within its own, or always while playing.
             return !playing && !(timeMs >= start && timeMs <= end);
-        // GetVisible's window (toEnd while playing).
         return !((playing && timeMs <= start - 5) || (timeMs >= start - 5 && timeMs < end + 5));
     });
     applyTo(out);
@@ -221,10 +208,8 @@ std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
     if (session.isReadOnly())
         return std::unexpected(CommandRefusal::ReadOnly);
     if (session.revision() != m_revision)
-        return std::unexpected(CommandRefusal::StaleRevision); // never retargeted onto newer content
+        return std::unexpected(CommandRefusal::StaleRevision);
     std::set<core::LineId> touches(m_targets.begin(), m_targets.end());
-    // The staged texts were made from the draft's text: commit it first, as
-    // EditSession::run would, then the gesture on top of it.
     if (const auto draftLine = session.draftLine(); draftLine && touches.contains(*draftLine)) {
         if (session.draftProblem() && session.invalidCommitPolicy() == InvalidCommitPolicy::Block)
             return std::unexpected(CommandRefusal::InvalidDraft);
@@ -277,8 +262,6 @@ std::string VisualHost::editorHotkey(int id) const
 
 std::unique_ptr<VisualTool> makeVisualTool(Family family)
 {
-    // One line per tool. T2-T6 add theirs here; until then a family has no
-    // tool and its rail button selects nothing to draw.
     switch (family) {
     case Family::Crosshair:
         return std::make_unique<CrosshairTool>();
@@ -293,17 +276,17 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
     case Family::RotationXY:
         return std::make_unique<RotationXYTool>();
     case Family::RectangleClip:
-        return std::make_unique<RectangleClipTool>(); // T4
+        return std::make_unique<RectangleClipTool>();
     case Family::VectorClip:
-        return std::make_unique<VectorClipTool>(); // T4
+        return std::make_unique<VectorClipTool>();
     case Family::Drawing:
-        return std::make_unique<DrawingTool>(); // T5
+        return std::make_unique<DrawingTool>();
     case Family::PositionShifter:
-        return std::make_unique<PositionShifterTool>(); // T6
+        return std::make_unique<PositionShifterTool>();
     case Family::Hydra:
-        return std::make_unique<AllTagsTool>(); // T6
+        return std::make_unique<AllTagsTool>();
     case Family::Perspective:
-        return std::make_unique<PerspectiveTool>(); // VT3
+        return std::make_unique<PerspectiveTool>();
     default:
         return nullptr;
     }
@@ -311,8 +294,6 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
 
 LineWarning lineWarning(Family family, const core::LineRecord &line, std::int64_t videoMs)
 {
-    // Visuals::Draw (Visuals.cpp:503-516): the comment text whenever the Line
-    // is a comment, even for the tools that work on comments.
     const std::int64_t start = line.start.value.microseconds() / 1000;
     const std::int64_t end = line.end.value.microseconds() / 1000;
     const bool visible = videoMs >= start && videoMs < end;
@@ -324,8 +305,6 @@ LineWarning lineWarning(Family family, const core::LineRecord &line, std::int64_
 
 PointerShape edgePointerShape(int hit)
 {
-    // (test < 4) ? SIZEWE : (test >= 4 && test % 4 == 0) ? SIZENS :
-    // (TOP + LEFT or BOTTOM + RIGHT) ? SIZENWSE : SIZENESW.
     constexpr int left = 1, right = 2, top = 4, bottom = 8;
     if (hit < 4)
         return PointerShape::SizeWE;

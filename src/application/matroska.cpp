@@ -15,13 +15,11 @@ std::u16string utf16(const std::u8string &text)
     return core::toUtf16(text);
 }
 
-// wxString(bytes, wxConvUTF8).
 std::u8string decoded(const std::string &bytes)
 {
     return core::legacy::utf8OrEmpty(bytes);
 }
 
-// wxString(bytes, wxConvISO8859_1): every byte is its own code point.
 std::u16string latin1(const std::string &bytes)
 {
     std::u16string out;
@@ -44,7 +42,6 @@ bool isFontMimetype(const std::string &mimetype)
            mimetype == "application/vnd.ms-opentype";
 }
 
-// AttachmentName (Demux.cpp:188-208).
 std::u16string attachmentName(const MatroskaAttachment &a)
 {
     std::u16string name;
@@ -75,7 +72,7 @@ std::vector<OfferedTrack> offeredTracks(const std::vector<MatroskaTrack> &tracks
         const std::u8string codec = decoded(t.codec);
         if (codec != u8"ass" && codec != u8"ssa" && codec != u8"subrip" && codec != u8"srt" && codec != u8"text")
             continue;
-        const std::string number = std::to_string(t.track) + " "; // "%i "
+        const std::string number = std::to_string(t.track) + " ";
         std::u8string label(number.begin(), number.end());
         label += decoded(t.name) + u8" (" + decoded(t.language) + u8", " + codec + u8")";
         out.push_back({t.track, std::move(label), codec});
@@ -94,7 +91,6 @@ std::vector<MatroskaFont> matroskaFonts(const std::vector<MatroskaAttachment> &a
 
 std::string matroskaSubtitlePath(const std::string &mkvPath, core::SubtitleFormat format)
 {
-    // wxString::BeforeLast('.'): empty without a dot.
     const auto dot = mkvPath.rfind('.');
     const std::string base = dot == std::string::npos ? std::string() : mkvPath.substr(0, dot);
     return base + (format == core::SubtitleFormat::Srt ? ".srt" : ".ass");
@@ -102,8 +98,6 @@ std::string matroskaSubtitlePath(const std::string &mkvPath, core::SubtitleForma
 
 bool subtitlesFromMkvEnabled(const std::u16string &videoName)
 {
-    // Legacy's EndsWith was case-sensitive (Y9-mkv-case): any case here, as
-    // the collector's check.
     const std::u16string lower = asciiLower(videoName);
     return lower.ends_with(u".mkv") || lower.ends_with(u".ogm");
 }
@@ -115,7 +109,6 @@ bool fontsFromMkvEnabled(const std::u16string &videoPath)
 
 bool isMkvExtension(const std::u16string &videoPath)
 {
-    // AfterLast('.'): the whole path when it has no dot.
     const auto dot = videoPath.rfind(u'.');
     return asciiLower(dot == std::u16string::npos ? videoPath : videoPath.substr(dot + 1)) == u"mkv";
 }
@@ -130,7 +123,6 @@ void MatroskaSubtitleLoad::start(const std::string &mkvPath)
         if (run != m_run || m_state != State::Listing)
             return;
         if (!tracks) {
-            // Demux::Open (Demux.cpp:44-47): logged, nothing else.
             if (tracks.error().failure == MatroskaFailure::CannotOpen && m_hooks.cannotOpen)
                 m_hooks.cannotOpen(tracks.error().text);
             return finish(tracks.error().failure);
@@ -165,7 +157,7 @@ void MatroskaSubtitleLoad::cancel()
     if (m_state == State::Idle)
         return;
     const bool running = m_state != State::Choosing;
-    ++m_run; // a result already on its way, or the port's own Cancelled, is dropped
+    ++m_run;
     if (running)
         m_port.cancel();
     finish(MatroskaFailure::Cancelled);
@@ -187,7 +179,6 @@ void MatroskaSubtitleLoad::read(int track, std::u8string label)
         [this, run](std::int64_t start, std::int64_t total) {
             if (run != m_run || !m_hooks.progress)
                 return;
-            // int prog = ((double(Start)) / double(Total)) * 100 (Demux.cpp:312).
             const double p = (double(start) / double(total)) * 100;
             m_hooks.progress(std::isfinite(p) ? int(std::clamp(p, 0.0, 100.0)) : 0);
         },
@@ -229,7 +220,6 @@ std::vector<MatroskaFontsSaved> saveMatroskaFonts(const std::vector<MatroskaFont
         auto &saved = out[t];
         if (tab.status != MatroskaFontTab::Status::Fonts || tab.fonts.empty())
             continue;
-        // MakeDirectory(operation & AS_ZIP) once a tab has fonts (FontCollector.cpp:953-958).
         if (!opened) {
             if (!output.open()) {
                 saved.outputFailed = true;
@@ -244,12 +234,11 @@ std::vector<MatroskaFontsSaved> saveMatroskaFonts(const std::vector<MatroskaFont
                 output.discard();
                 return out;
             }
-            // Demux::SaveFont (Demux.cpp:229-260): the attachment's bytes as they are.
             saved.saved.push_back(font.data && output.put(font.name, *font.data));
         }
     }
     if (opened)
-        output.commit(); // CloseZip (FontCollector.cpp:928)
+        output.commit();
     return out;
 }
 

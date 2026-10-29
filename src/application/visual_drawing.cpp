@@ -11,8 +11,7 @@
 #include <climits>
 #include <cmath>
 
-// Built without floating-point contraction, as visual_view.cpp: every step
-// keeps legacy's float arithmetic and int truncations.
+// Built without floating-point contraction: results depend on each float step and int truncation.
 
 namespace hikari::application::visual {
 
@@ -21,9 +20,7 @@ namespace {
 using u16 = std::u16string;
 using u16v = std::u16string_view;
 
-// The Shapes rectangle's hit-test results (VisualDrawingShapes.cpp:34-41).
 enum { LEFT = 1, RIGHT, TOP = 4, BOTTOM = 8, INSIDE = 16, OUTSIDE = 32 };
-// Shapes::DrawVisual's rectangle (VisualDrawingShapes.cpp:494).
 constexpr std::uint32_t kShapeRectangle = 0xFFBB0000;
 
 bool isSpace(char16_t c)
@@ -36,7 +33,7 @@ bool isDigit(char16_t c)
     return c >= u'0' && c <= u'9';
 }
 
-// wxString::Mid(first): empty past the end.
+// Empty past the end.
 u16 mid(u16v text, std::size_t first, std::size_t count = u16v::npos)
 {
     if (first > text.size())
@@ -44,7 +41,7 @@ u16 mid(u16v text, std::size_t first, std::size_t count = u16v::npos)
     return u16(text.substr(first, count));
 }
 
-// The legacy "find" a size_t result put into an int (npos is -1).
+// npos becomes -1.
 int asInt(std::size_t value)
 {
     return static_cast<int>(value);
@@ -59,7 +56,6 @@ core::legacy::TagEditor find(u16v text, u16v pattern, bool *found = nullptr)
     return editor;
 }
 
-// TagFindReplace::Replace (TagFindReplace.cpp:423-442).
 int replaceFound(const core::legacy::TagEditor &found, u16v replaceTxt, u16 &text)
 {
     const auto [x, y] = found.position();
@@ -81,14 +77,12 @@ int replaceFound(const core::legacy::TagEditor &found, u16v replaceTxt, u16 &tex
     return 0;
 }
 
-// wxString::ToDouble in the C locale (the reading of \pos values and of a
-// Style's scale, as the other ports read them).
+// C locale.
 bool toDouble(u16v text, double &out)
 {
     return legacy::cDouble(text, out);
 }
 
-// Styles::GetScaleXDouble / GetScaleYDouble (styles.cpp:176-192).
 double styleScale(const std::u8string &value)
 {
     const u16 text = core::toUtf16(value);
@@ -98,8 +92,6 @@ double styleScale(const std::u8string &value)
     return scale;
 }
 
-// SubsFile::GetStyle(0, name): the first Style of that name, else the first
-// Style, else Styles() (styles.cpp:249-275).
 core::StyleValues lineStyle(const core::Document &document, const std::u8string &name)
 {
     const auto styles = core::decodeStyles(document);
@@ -127,7 +119,6 @@ int marginOr(const core::IntField &field, const std::u8string &styleValue)
     return field.value != 0 ? static_cast<int>(field.value) : legacy::atoi(core::toUtf16(styleValue));
 }
 
-// Dialogue::GetDefaultPosition (SubsDialogue.cpp:609-634).
 PointF defaultPosition(const core::LineRecord &line, const core::StyleValues &style, int an, int width, int height)
 {
     PointF pos;
@@ -152,8 +143,7 @@ PointF defaultPosition(const core::LineRecord &line, const core::StyleValues &st
     return pos;
 }
 
-// wxStringTokenizer(text, ",") in its default mode for a non-blank
-// delimiter: every token, empty ones too.
+// Keeps empty tokens, but a trailing delimiter adds none.
 std::vector<u16> tokens(u16v text, char16_t delimiter)
 {
     std::vector<u16> out;
@@ -169,7 +159,7 @@ std::vector<u16> tokens(u16v text, char16_t delimiter)
         out.emplace_back(text.substr(start, at - start));
         start = at + 1;
         if (start == text.size())
-            break; // wx: a trailing delimiter ends the tokens
+            break;
     }
     return out;
 }
@@ -184,7 +174,7 @@ int endMs(const core::LineRecord &line)
     return static_cast<int>(line.end.value.microseconds() / 1000);
 }
 
-// The active Line as the Line editor shows it (the pending draft applied).
+// With the pending draft applied.
 std::optional<core::LineRecord> activeRecord(const VisualHost &host)
 {
     const EditSession *session = host.session();
@@ -199,8 +189,7 @@ std::optional<core::LineRecord> activeRecord(const VisualHost &host)
     return std::nullopt;
 }
 
-// The text a visual tool edits: the translation in TLMode unless it is
-// empty (legacy's TextEdit / TextEditOrig and Dialogue::GetTextNoCopy).
+// The translation in TLMode unless it is empty.
 bool editsTranslation(const VisualHost &host, const core::LineRecord &line)
 {
     return host.session() && translationMode(*host.session()) && !line.translation.empty();
@@ -284,7 +273,6 @@ std::vector<Tag> parseTags(u16v txt, const std::vector<u16v> &names, bool plainT
                         Tag newTag{u16(tagName), {}, pos + tagLen};
                         u16 tagValue = tag.substr(tagLen);
                         if (tagName == u"p") {
-                            // Trim().Trim(false), in place.
                             std::size_t b = 0, e = tagValue.size();
                             while (e > 0 && isSpace(tagValue[e - 1]))
                                 --e;
@@ -371,7 +359,6 @@ LineDrawing readLine(const core::Document &document, const core::LineRecord &lin
     double *tbl = out.move.data();
     const core::StyleValues currentStyle = lineStyle(document, line.style);
 
-    // Visuals::GetPosnScale (Visuals.cpp:624-722) for VECTORDRAW.
     PointF ppos{0.0f, 0.0f};
     bool foundpos = false;
     static const core::LegacyRegex pos(u"\\\\(pos|move)\\(([^\\)]+)\\)", core::LegacyRegex::Advanced);
@@ -396,13 +383,9 @@ LineDrawing readLine(const core::Document &document, const core::LineRecord &lin
         }
     } else {
         tbl[6] = 0;
-        // The margins and GetDialogueAdditionalPosition's stacking: the
-        // default position below replaces them for the drawing.
     }
     if (tbl[6] < 4) {
-        // GetMoveTimes: the \move times from the Line's frames. Only a
-        // \move with six values keeps its own (CalcMovePos replaces the
-        // others' with the Line's times), so these are never read.
+        // MUST KILL: dead stores, movePosition replaces these times
         tbl[4] = (out.start / 10) * 10;
         tbl[5] = (out.start / 10) * 10;
     }
@@ -441,11 +424,10 @@ LineDrawing readLine(const core::Document &document, const core::LineRecord &lin
         const auto m = an.match(1);
         tmpan = m ? legacy::atoi(txt.substr(m->first, m->second)) : 0;
     }
-    out.alignment = static_cast<unsigned char>(tmpan); // legacy's byte
+    out.alignment = static_cast<unsigned char>(tmpan);
     out.position = foundpos ? ppos : defaultPosition(line, currentStyle, tmpan, scriptWidth, scriptHeight);
 
-    // DrawingAndClip::SetCurVisual (VisualClips.cpp:221-268): the drawing
-    // from the Line's \p tags, the first one skipped.
+    // The first \p tag is skipped.
     const auto tags = parseTags(lineText, {u"p"});
     if (tags.size() >= 2) {
         for (std::size_t i = 1; i < tags.size(); i++) {
@@ -464,7 +446,7 @@ LineDrawing readLine(const core::Document &document, const core::LineRecord &lin
         const auto f = find(txt, u"frz?([0-9.-]+)", &found);
         double frzd = 0.;
         if (found) {
-            (void)toDouble(f.finding(), frzd); // GetDouble
+            (void)toDouble(f.finding(), frzd);
             out.frz = static_cast<float>(frzd);
         } else {
             double result = 0.;
@@ -476,8 +458,7 @@ LineDrawing readLine(const core::Document &document, const core::LineRecord &lin
         bool found = false;
         const auto f = find(txt, u"org(\\([^\\)]+)", &found);
         if (found) {
-            // GetTwoValueDouble (TagFindReplace.cpp): it splits the finding
-            // itself, "(" included, so the first value never reads.
+            // MUST KILL: \org never parses, the finding keeps its "("
             const u16 &finding = f.finding();
             const auto comma = finding.find(u',');
             const u16 fval = finding.substr(0, comma);
@@ -551,7 +532,7 @@ PutResult putDrawing(u16 text, u16v clip, PointF position, int alignment, const 
         }
     }
 
-    // GetPositionInText(): the last FindTag's (\an's) place.
+    // The \an search's place.
     const std::size_t positionY = static_cast<std::size_t>(found.position().second);
     const u16 afterP1 = mid(txt, positionY);
     const int afterBracket = asInt(afterP1.find(u"}") + 1);
@@ -589,13 +570,10 @@ PutResult putDrawing(u16 text, u16v clip, PointF position, int alignment, const 
 
 } // namespace drawing
 
-// ---------------------------------------------------------------------------
-// The drawing tool.
-
 DrawingTool::DrawingTool()
 {
     m_editor.drawing = true;
-    m_editor.modeCount = 6; // VectorItem(false): no Invert clip button
+    m_editor.modeCount = 6; // no Invert clip mode
 }
 
 VectorFrame DrawingTool::frame(const VisualHost &host) const
@@ -605,7 +583,7 @@ VectorFrame DrawingTool::frame(const VisualHost &host) const
     f.unit = unitOf(host);
     f.coeffW = v.coeffW();
     f.coeffH = v.coeffH();
-    f.coeffW /= m_scale.x; // SetCurVisual: coeffW /= scale.x
+    f.coeffW /= m_scale.x;
     f.coeffH /= m_scale.y;
     f.offsetX = m_x;
     f.offsetY = m_y;
@@ -617,8 +595,7 @@ VectorFrame DrawingTool::frame(const VisualHost &host) const
 
 void DrawingTool::syncMove(const VisualHost &host) const
 {
-    // DrawingAndClip::DrawVisual (VisualClips.cpp:117-121): a drawing that
-    // moves (\move with three values or more) follows the video's time.
+    // A \move drawing follows the video time.
     if (m_shape < 0 && m_move[6] > 2) {
         const PointF movePos = drawing::movePosition(m_move, m_start, m_end, static_cast<int>(host.videoTimeMs()));
         m_x = movePos.x / m_scale.x;
@@ -628,7 +605,6 @@ void DrawingTool::syncMove(const VisualHost &host) const
 
 void DrawingTool::readActive(VisualHost &host)
 {
-    // DrawingAndClip::SetCurVisual for VECTORDRAW (VisualClips.cpp:182-296).
     const auto active = activeRecord(host);
     const EditSession *session = host.session();
     m_editor.points.clear();
@@ -641,8 +617,6 @@ void DrawingTool::readActive(VisualHost &host)
                           host.view().scriptHeight(), m_move);
     m_scale = line.scale;
     m_alignment = line.alignment;
-    // GetPosnScale set vectorScale to any \p it matched, \p0 included
-    // (Visuals.cpp:699); SetCurVisual's loop only to a later positive one.
     if (line.vectorScale)
         m_vectorScale = *line.vectorScale;
     m_move = line.move;
@@ -675,26 +649,21 @@ void DrawingTool::readActive(VisualHost &host)
 
 void DrawingTool::reset(VisualHost &host)
 {
-    // Visuals::SetVisual: ChangeTool(the toolbar's, blockSetCurVisual) then
-    // SetCurVisual; the renderer drops its cached Line (dummytext).
     m_editor.endDrag();
     m_inKey = m_keyCommit = false;
     m_placed = false;
     changeShape(m_shapeSelection, false, host);
     readActive(host);
     if (m_shape < 0)
-        m_editor.normaliseFirst(); // DrawVisual's, as legacy rendered after SetVisual
+        m_editor.normaliseFirst();
     syncMove(host);
     host.toolChanged();
 }
 
 void DrawingTool::changeShape(int listSelection, bool fromToolbar, VisualHost &host)
 {
-    // DrawingAndClip::ChangeTool for VECTORDRAW: Shapes::SetShape, then a
-    // return to free drawing from the toolbar reads the Line again.
     const int shapeSelectionNew = listSelection;
     {
-        // Shapes::SetShape (VisualDrawingShapes.cpp:499-520).
         const std::vector<ShapePreset> *shapes = host.shapePresets();
         const int curshape = shapeSelectionNew;
         if (shapes && !shapes->empty() && curshape - 1 != m_shape) {
@@ -732,7 +701,6 @@ void DrawingTool::presetsChanged(int listSelection, VisualHost &host, bool shown
 
 std::u16string DrawingTool::drawingBody() const
 {
-    // DrawingAndClip::GetVisual for VECTORDRAW (VisualClips.cpp:298-363).
     std::vector<VectorPoint> points = m_editor.points;
     if (m_frz) {
         const float rad = 0.01745329251994329576923690768489f;
@@ -753,7 +721,6 @@ std::u16string DrawingTool::drawingBody() const
 
 PointF DrawingTool::drawingAnchor() const
 {
-    // Shapes::CalcDrawingAnchor (VisualDrawingShapes.cpp:760-776).
     if (m_shapePoints.size() < 1)
         return {0, 0};
     float minx = FLT_MAX, miny = FLT_MAX;
@@ -770,7 +737,6 @@ PointF DrawingTool::drawingAnchor() const
 
 std::u16string DrawingTool::shapeBody() const
 {
-    // Shapes::GetVisual (VisualDrawingShapes.cpp:522-602).
     if (!(m_shapeScale.x > 0.f && m_rectVisible))
         return {};
     PointF offsetxy = drawingAnchor();
@@ -798,17 +764,12 @@ std::u16string DrawingTool::shapeBody() const
 
 std::u16string DrawingTool::body() const
 {
-    // GetVisual is virtual: Shapes' while a shape is chosen.
     return m_shape >= 0 ? shapeBody() : drawingBody();
 }
 
 void DrawingTool::setScaleTags(u16 &txt, std::size_t position, int *diff) const
 {
-    // Shapes::SetScale (VisualDrawingShapes.cpp:604-625): FindTag from the
-    // start (SetFromTo(0, position), mode 3). `diff` is what the tags added
-    // to the text before the drawing, which ChangeVectorVisual adds to the
-    // drawing's place (T5-change-scale-garble: legacy's, the old tag's
-    // length less the new one's, moved it the wrong way).
+    // MUST KILL: `position` unused, the tags are found from the start
     (void)position;
     const std::size_t oldLength = txt.size();
     if (m_current.scalingMode == ShapePreset::ChangeScale && m_shapeScale.x > 0.f) {
@@ -836,7 +797,6 @@ VectorEditor::Callbacks DrawingTool::callbacks(VisualHost &host)
 
 void DrawingTool::apply(VisualHost &host, bool commit)
 {
-    // DrawingAndClip::SetClip(!commit) for VECTORDRAW (VisualClips.cpp:365-543).
     if (commit && m_inKey) {
         m_keyCommit = true; // a nudge or Delete commits on its key's release
         return;
@@ -848,13 +808,11 @@ void DrawingTool::apply(VisualHost &host, bool commit)
         return;
     }
     const u16 clip = body();
-    const PointF position{m_x * m_scale.x, m_y * m_scale.y}; // ChangeVectorVisual's \pos
+    const PointF position{m_x * m_scale.x, m_y * m_scale.y};
     const drawing::SetScale setScale =
         m_shapeSelection ? drawing::SetScale([this](u16 &t, std::size_t p, int *d) { setScaleTags(t, p, d); })
                          : drawing::SetScale();
     if (g->targets().size() > 1) {
-        // Several Lines (legacy several selected): each one's drawing is
-        // replaced from its own text, on every sample and again on release.
         for (const auto &id : g->targets()) {
             const core::LineRecord &before = g->before(id);
             const bool tl = editsTranslation(host, before);
@@ -862,9 +820,6 @@ void DrawingTool::apply(VisualHost &host, bool commit)
             stage(*g, id, tl, text, drawing::putDrawing(text, clip, position, m_alignment, setScale).text);
         }
     } else if (!commit) {
-        // One Line: the first sample after a reset rewrites the editor's
-        // text; the next ones replace only the drawing where it went
-        // (legacy's dummytext and dumplaced).
         const core::LineId id = g->targets().front();
         bool tl = false;
         u16 current = currentText(host, *g, id, &tl);
@@ -896,7 +851,7 @@ void DrawingTool::pointer(const Pointer &event, VisualHost &host)
         return;
     }
     if (event.kind == Pointer::Kind::Wheel) {
-        // Ctrl+wheel resizes the video window and never reaches the tool.
+        // MUST KILL: Ctrl+wheel is left to the video window's resize
         if (event.control || event.wheelSteps == 0)
             return;
         m_editor.wheel(event.wheelSteps);
@@ -918,9 +873,7 @@ bool DrawingTool::takesKey(const Key &event) const
 
 bool DrawingTool::key(const Key &event, VisualHost &host)
 {
-    // DrawingAndClip::OnKeyPress (Shapes does not override it: the keys move
-    // the Line's points, and the edit writes GetVisual, the shape's while
-    // one is chosen).
+    // MUST KILL: with a shape chosen, keys move the Line's points but write the shape
     syncMove(host);
     const bool nudge = isArrowKey(event.key) || event.key == keys::Delete;
     if (event.release) {
@@ -948,8 +901,6 @@ bool DrawingTool::key(const Key &event, VisualHost &host)
     return used;
 }
 
-// --- Shapes ------------------------------------------------------------------
-
 PointF DrawingTool::pointToVideo(PointF point, const VisualHost &host) const
 {
     const VectorFrame f = frame(host);
@@ -968,10 +919,8 @@ PointF DrawingTool::pointToSubtitles(float x, float y, const VisualHost &host) c
 
 int DrawingTool::hitTest(PointF pos, bool diff, const VisualHost &host)
 {
-    // Shapes::HitTest (VisualDrawingShapes.cpp:627-665), its x/y mix-up and
-    // int truncations kept.
     int resultX = 0, resultY = 0, resultInside = 0, resultFinal = 0, oldpointx = 0, oldpointy = 0;
-    const float grab = 5 * unitOf(host); // SV1-hidpi-tool-sizes
+    const float grab = 5 * unitOf(host);
     for (int i = 0; i < 2; i++) {
         const PointF point = pointToVideo(m_rect[i], host);
         if (std::fabs(pos.x - point.x) < grab) {
@@ -989,6 +938,7 @@ int DrawingTool::hitTest(PointF pos, bool diff, const VisualHost &host)
                              (oldpointx >= point.x && oldpointx >= pos.x && point.x <= pos.x))
                                 ? INSIDE
                                 : OUTSIDE;
+            // MUST KILL: the y test compares oldpointx with point.x
             resultInside |= (resultY || (oldpointx <= point.x && oldpointy <= pos.y && point.y >= pos.y) ||
                              (oldpointx >= point.x && oldpointy >= pos.y && point.y <= pos.y))
                                 ? INSIDE
@@ -1024,8 +974,7 @@ void DrawingTool::sortPoints()
 
 void DrawingTool::setDrawingScale()
 {
-    // Shapes::SetDrawingScale (VisualDrawingShapes.cpp:681-713): under ten
-    // units wide or high the shape is not written.
+    // Scale 0 (under ten units) means the shape is not written.
     if (m_rectVisible) {
         const float rectx = m_rect[0].x < m_rect[1].x ? m_rect[0].x : m_rect[1].x;
         const float recty = m_rect[0].y < m_rect[1].y ? m_rect[0].y : m_rect[1].y;
@@ -1046,10 +995,9 @@ void DrawingTool::setDrawingScale()
     }
 }
 
+// MUST KILL: keeps the preset's proportions, not a square
 void DrawingTool::setSquareShape(bool axisX)
 {
-    // Shapes::SetSquareShape (VisualDrawingShapes.cpp:715-744): the shape's
-    // proportions along the axis dragged.
     const float rectx = m_rect[0].x < m_rect[1].x ? m_rect[0].x : m_rect[1].x;
     const float rectx1 = m_rect[0].x > m_rect[1].x ? m_rect[0].x : m_rect[1].x;
     const float recty = m_rect[0].y < m_rect[1].y ? m_rect[0].y : m_rect[1].y;
@@ -1072,7 +1020,6 @@ void DrawingTool::setSquareShape(bool axisX)
 
 void DrawingTool::shapePointer(const Pointer &event, VisualHost &host)
 {
-    // Shapes::OnMouseEvent (VisualDrawingShapes.cpp:359-474).
     const bool click = event.kind == Pointer::Kind::Press && event.button == Pointer::Button::Left;
     const bool holding = event.leftDown && event.kind != Pointer::Kind::Release;
     int x = event.x, y = event.y;
@@ -1087,9 +1034,6 @@ void DrawingTool::shapePointer(const Pointer &event, VisualHost &host)
             setDrawingScale();
             apply(host, true);
         } else if (host.gesture() && m_began) {
-            // A rectangle without width or height is not written: its
-            // preview goes (legacy left it in the Line editor, unsent; as
-            // the approved T4-zero-rect-preview for the rectangle clip).
             m_began = false;
             host.cancelGesture();
         }
@@ -1097,9 +1041,6 @@ void DrawingTool::shapePointer(const Pointer &event, VisualHost &host)
             host.setPointerShape(PointerShape::Arrow);
     }
     if (!event.leftDown && m_rectVisible) {
-        // Over an edge or a corner its resize shape, elsewhere the arrow
-        // (VisualDrawingShapes.cpp:387-398); a drag keeps the shape it began
-        // with.
         const int test = hitTest({static_cast<float>(x), static_cast<float>(y)}, false, host);
         host.setPointerShape(test < INSIDE ? edgePointerShape(test) : PointerShape::Arrow);
     }
@@ -1171,12 +1112,10 @@ Overlay DrawingTool::overlay(const VisualHost &host) const
     Overlay out;
     out.unit = unitOf(host);
     if (m_shape < 0) {
-        // DrawingAndClip::DrawVisual: the \move position first.
         syncMove(host);
         m_editor.draw(out, frame(host));
         return out;
     }
-    // Shapes::DrawVisual (VisualDrawingShapes.cpp:476-497): the rectangle.
     if (m_rectVisible) {
         const PointF point1 = pointToVideo(m_rect[0], host);
         const PointF point2 = pointToVideo(m_rect[1], host);
@@ -1189,9 +1128,6 @@ Overlay DrawingTool::overlay(const VisualHost &host) const
 
 std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
 {
-    // VectorItem for the drawing (VideoToolbar.cpp:56-66, 414-466, 503-559):
-    // the six point modes, none of them usable or shown pushed while a shape
-    // is chosen, and the shape list.
     static const struct {
         const char *icon;
         const char16_t *label;
@@ -1206,7 +1142,7 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
         mode.tooltip = modes[i].label;
         mode.checked = m_shapeSelection == 0 && m_editor.mode == i;
         mode.enabled = m_shapeSelection == 0;
-        mode.group = u"Points"; // VT1: the bar's groups
+        mode.group = u"Points";
         out.push_back(std::move(mode));
     }
     ToolOption shapes;
@@ -1214,7 +1150,7 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
     shapes.kind = ToolOption::Kind::Choice;
     shapes.iconRole = "shape-presets";
     shapes.listEnds = true;
-    shapes.group = u"Shape"; // VT1: the bar shows the chosen entry as text
+    shapes.group = u"Shape";
     shapes.tooltip = u"List of ASS drawings with edit option.\nAfter choose drawing from list just set cursor i n "
                      u"place\nof start of drawing and click left mouse button and drag.";
     static const std::vector<ShapePreset> none;
@@ -1228,14 +1164,13 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
 bool DrawingTool::setOption(const std::string &name, int value, VisualHost &host)
 {
     if (name == "shape") {
-        // A preset (or "Choose"); the list's "Edit" is the host's (it opens
-        // the editor).
+        // The list's "Edit" entry is handled by the host.
         changeShape(value, true, host);
         host.toolChanged();
         return true;
     }
     if (m_shapeSelection != 0)
-        return false; // VectorItem::OnMouseEvent: the modes take no click with a shape chosen
+        return false;
     if (name.size() == 5 && name.starts_with("mode") && name[4] >= '0' && name[4] <= '5') {
         m_editor.mode = name[4] - '0';
         host.toolChanged();

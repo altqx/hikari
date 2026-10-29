@@ -16,8 +16,7 @@ namespace legacy {
 std::u8string changeTagTimes(std::u8string_view text8, int start, int end)
 {
     std::u16string text = core::toUtf16(text8);
-    // ParseTags over {move, t, fad}: the value inside the parentheses, up to
-    // the next '\' or '}' (so \t's value stops before its inner tags).
+    // A value runs to the next '\' or '}', so \t's stops before its inner tags.
     struct Found {
         std::u16string name;
         std::size_t valueStart;
@@ -51,14 +50,12 @@ std::u8string changeTagTimes(std::u8string_view text8, int start, int end)
             i = end_ - 1;
         }
     }
-    // Dialogue::ChangeTimes: replace "t1,t2" by the shifted pair; later
-    // positions move by the length difference (legacy replaceMismatch).
     long mismatch = 0;
     for (const auto &f : found) {
         struct Token {
             std::size_t pos, len;
         };
-        std::vector<Token> tokens; // wxTOKEN_STRTOK: empty tokens are skipped
+        std::vector<Token> tokens;
         for (std::size_t p = 0; p < f.value.size();) {
             const auto comma = std::min(f.value.find(u',', p), f.value.size());
             if (comma > p)
@@ -68,7 +65,7 @@ std::u8string changeTagTimes(std::u8string_view text8, int start, int end)
         const std::size_t first = f.name == u"move" ? 4 : 0;
         const std::size_t needed = f.name == u"move" ? 5 : f.name == u"t" ? 2 : 1;
         if (tokens.size() < needed || tokens.size() < first + 2)
-            continue; // a lone \fad value has no second time to pair (legacy reads past it)
+            continue;
         auto atoi16 = [&](const Token &t) {
             std::string s;
             for (std::size_t k = 0; k < t.len; ++k)
@@ -118,11 +115,9 @@ std::optional<double> microDvdFps(const core::Document &d)
 struct Shifted {
     core::LineId id;
     int start, end;
-    std::u8string text;        // the field the tag times live in (translation if any)
+    std::u8string text;
     bool textChanged = false;
-    std::size_t textLength = 0; // legacy Text.Len(): UTF-16 units of the text
-    // E6: legacy copies each shifted Line with keepstate (SubsGridBase.cpp:562)
-    // and marks it changed (ChangeDialogueState(1)) only where it says so.
+    std::size_t textLength = 0; // UTF-16 units
     bool marked = false;
 };
 
@@ -140,9 +135,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
         return std::unexpected(Fail{ShiftProblem::NoExactTimebase});
     const auto fps = microDvdFps(doc);
     if (fps && *fps <= 0)
-        return std::unexpected(Fail{CommandRefusal::Invalid}); // C01-fps-isolation
-    // The postprocessor is on only as the panel shown (16) with a feature;
-    // snapping needs an exact timebase.
+        return std::unexpected(Fail{CommandRefusal::Invalid});
     int pp = s.postprocessor;
     if (pp) {
         if (doc.format() == core::SubtitleFormat::TMPlayer || pp < 16)
@@ -169,8 +162,8 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
         if (session.selection().selected.contains(lines[i]->id))
             firstSelection = i;
     if (!firstSelection && whichLines != 0)
-        return std::unexpected(Fail{ShiftProblem::NoLinesSelected}); // legacy reads outside the Lines for 4
-    // The marked Line (the active one) for moving to video or audio time.
+        return std::unexpected(Fail{ShiftProblem::NoLinesSelected});
+    // MUST KILL: `marked` is the active Line, unrelated to Shifted::marked
     const core::LineRecord *marked = nullptr;
     for (const auto *l : lines)
         if (session.selection().active == l->id)
@@ -200,14 +193,13 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
     const int firsttime = firstSelection ? msOf(lines[*firstSelection]->start.value) : 0;
     int correctEndTimes = s.correctEndTimes;
     if (pp) {
-        // ChangeTimes: the postprocessor replaces the shift.
         time = 0;
         frame = 0;
         whichTimes = 0;
         correctEndTimes = 0;
     }
     if (pp > 16 && !exact)
-        return std::unexpected(Fail{ShiftProblem::NoExactTimebase}); // legacy logs and changes nothing
+        return std::unexpected(Fail{ShiftProblem::NoExactTimebase});
     auto startEndDelay = [&](int start, int end) {
         if (timebase.empty())
             return std::pair{0, 0};
@@ -237,9 +229,9 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                 l.start = std::max(0, l.start + time);
             if (whichTimes != 1)
                 l.end = std::max(0, l.end + time);
-            l.marked = true; // SubsGridBase.cpp:570
+            l.marked = true;
         } else if (frame != 0) {
-            l.marked = true; // SubsGridBase.cpp:584
+            l.marked = true;
             if (whichTimes == 0)
                 duration = l.end - l.start;
             if (whichTimes != 2)
@@ -260,9 +252,8 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
     ShiftOutcome outcome;
     if (correctEndTimes > 0) {
         if (!exact) {
-            outcome.endCorrectionSkipped = true; // legacy logs it and stops before correcting
+            outcome.endCorrectionSkipped = true;
         } else {
-            // In start, then end order (a stable multimap in legacy).
             std::vector<Shifted *> order;
             for (auto &l : shifted)
                 order.push_back(&l);
@@ -280,17 +271,16 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                     if (newEnd < 1000)
                         newEnd = 1000;
                     cur.end = std::max(0, newEnd + cur.start);
-                    cur.marked = true; // SubsGridBase.cpp:639
+                    cur.marked = true;
                 }
                 if (cur.end > next.start) {
                     cur.end = next.start;
-                    cur.marked = true; // SubsGridBase.cpp:643
+                    cur.marked = true;
                 }
             }
         }
     }
     if (pp > 16) {
-        // The postprocessor loop (SubsGrid::ChangeTimes after "postprocessor:").
         std::vector<Shifted *> order;
         for (auto &l : shifted)
             order.push_back(&l);
@@ -304,7 +294,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
         bool isPreviousEndGreater = false, isEndGreater = false, previousIsKeyFrame = true, isPreviousEndEdited = false;
         for (std::size_t k = 0; k < order.size(); ++k) {
             Shifted &cur = *order[k];
-            // The other Line: the next one for the first, the previous one after.
+            // MUST KILL: `it` is the next Line for the first, the previous Line after
             Shifted *it = k + 1 < order.size() ? order[k + 1] : &cur;
             if (k + 1 < order.size())
                 isEndGreater = cur.end > it->start || cur.end == it->end || k == 0;
@@ -378,7 +368,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                                                        static_cast<float>(s.thresholdEnd));
                     it->end = std::max(0, it->end + zeroIt(coeff));
                     newstarttime = it->end;
-                    it->marked = true; // SubsGridBase.cpp:754
+                    it->marked = true;
                 }
                 if (!foundStartKeyframe && newstarttime != -1) {
                     cur.start = std::max(0, newstarttime);
@@ -387,7 +377,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                 }
             }
             if (startMods > 0 || endMods > 0)
-                cur.marked = true; // SubsGridBase.cpp:765-766
+                cur.marked = true;
             previousIsKeyFrame = foundEndKeyframe;
             isPreviousEndGreater = isEndGreater;
             isPreviousEndEdited = endMods > 0;
@@ -421,7 +411,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
 std::string shiftProfileText(const std::string &name, const ShiftTimesSettings &s)
 {
     auto flag = [](bool b) { return b ? std::string("1") : std::string("0"); };
-    // Legacy GetProfileString: the audio flag is written under the video label too.
+    // Profiles on disk carry the audio flag under a second "MoveToVideoTime" label.
     return name + ": Time: " + std::to_string(s.timeMs) + " Forward: " + flag(s.forward) + " Frames: " + flag(s.byFrames) +
            " MoveTagTimes: " + flag(s.tagTimes) + " MoveToStartTimes: " + flag(s.fromStartTime) +
            " MoveToVideoTime: " + flag(s.moveToVideoTime) + " MoveToVideoTime: " + flag(s.moveToAudioTime) +
@@ -436,8 +426,6 @@ std::string shiftProfileName(const std::string &text)
 
 ShiftTimesSettings applyShiftProfile(const std::string &text, ShiftTimesSettings s)
 {
-    // AfterFirst(':') with the first character removed, split on single spaces
-    // (empty tokens kept); every other token is a label.
     const auto colon = text.find(':');
     std::string rest = colon == std::string::npos ? std::string() : text.substr(colon + 1);
     if (!rest.empty())
@@ -450,12 +438,12 @@ ShiftTimesSettings applyShiftProfile(const std::string &text, ShiftTimesSettings
             break;
         p = space + 1;
     }
-    std::size_t k = 1; // the first label
+    std::size_t k = 1;
     auto next = [&]() -> std::optional<std::string> {
         if (k >= tokens.size())
             return std::nullopt;
         std::string v = tokens[k];
-        k += 2; // the value and the following label
+        k += 2;
         return v;
     };
     if (auto v = next())

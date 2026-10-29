@@ -1,14 +1,5 @@
 #pragma once
 
-// V3: the Video panel's sources, tracks and chapters without Qt (legacy
-// VideoBox, DummyVideo, ProviderDummy and KeyframeLoader at 20d647c4):
-// - the folder walk of VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE,
-// - the dummy video (GLOBAL_OPEN_DUMMY_VIDEO): the dialog's text, its
-//   parsing, frames and timecodes, and a source port serving it,
-// - VIDEO_PREVIOUS_CHAPTER / VIDEO_NEXT_CHAPTER and the chapter menu's mark,
-// - the stream menu's audio entries,
-// - keyframes opened without a video.
-
 #include "hikari/application/display_audio_port.h"
 #include "hikari/application/indexed_source.h"
 
@@ -23,55 +14,36 @@
 
 namespace hikari::application {
 
-// VideoBox::NextFile's extensions (VideoBox.cpp:719-723), compared
-// lower-cased: avi, mp4, mkv, ogm, wmv, asf, rmvb, rm, 3gp, ts, m2ts, mpg,
-// mpeg (avs left out, as legacy's comment says).
+// The extension is compared lower-cased.
 bool isNextFileVideo(std::string_view path);
 
-// What VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE do (VideoBox::NextFile,
-// VideoBox.cpp:682-739).
 struct NextFileStep {
     enum class Kind {
-        Open,    // open `path` (legacy Hikari->OpenFile); a failed open ends the walk
-        Restart, // no file that way: Seek(0) then Pause(false), which toggles play
+        Open,    // open `path`; a failed open ends the walk
+        Restart, // no file that way: seek to 0, then toggle play
     };
     Kind kind = Kind::Restart;
     std::string path;
 };
 
-// The folder NextFile lists (VideoBox.cpp:692-697: wxFileName(path).GetPath(),
-// wxPATH_GET_VOLUME): `path`'s folder as written, not cleaned. The volume
-// (Dos: "C:", "\\server", "\\?\C:"), the root separator when the path is
-// absolute, then the folder's names joined by the separator ('/' or '\'),
-// empty ones (doubled separators) dropped and "." and ".." kept; "" when
-// `path` names no folder. wxDir lists each file as that folder, a separator
-// and the name, so NextFile finds the current file when `path` is written
-// that way.
+// `path`'s folder as written, not cleaned: the volume (Dos: "C:", "\\server",
+// "\\?\C:"), the root separator when absolute, then the names joined by the
+// separator, empty ones dropped, "." and ".." kept; "" when `path` names no
+// folder.
 enum class PathFormat { Unix, Dos };
 std::string nextFileFolder(std::string_view path, PathFormat format);
 
-// One Unicode code point lowered (the caller's case mapping; QChar::toLower
-// in the application). Empty: A-Z only.
+// One code point lowered. Empty: A-Z only.
 using NameLower = std::function<char32_t(char32_t)>;
 
-// V3-next-file-natural-order: the previous / next file's order. The UTF-8
-// names are compared by code point, letters through `lower`, and a run of
-// ASCII digits as one number (any length), so "Ep 2" comes before "Ep 10"
-// and "ep 3" before "Ep 4". Names equal that way ("a" and "A", "Ep 01" and
-// "Ep 1") are ordered by their plain bytes, so the order is total. <0, 0 or
-// >0; 0 only for equal strings. (Legacy NaturalCompare, HikariSub/NaturalOrder.cpp.)
+// UTF-8 code points compared through `lower`, a run of ASCII digits as one
+// number ("Ep 2" before "Ep 10"); ties broken by the plain bytes, so 0 only
+// for equal strings.
 int naturalNameCompare(std::string_view a, std::string_view b, const NameLower &lower = {});
 
-// VideoBox::NextFile over `files`, the folder's files (wxDir::GetAllFiles with
-// wxDIR_FILES: hidden files left out) as full paths, walked in natural name
-// order (naturalNameCompare; legacy walked the platform's own listing order,
-// unsorted, before V3-next-file-natural-order), or nullopt when the folder
-// could not be opened: the last listing is walked again (legacy's member
-// `files`, cleared only when wxDir opened the folder). Every path has the
-// same folder in front, so the paths sort as their names do. The current
-// file is found by exact comparison; when it is not there the walk starts
-// from the position the last step remembered (legacy's member actualFile, 0
-// at first).
+// `files`: full paths in one folder, walked in natural name order; nullopt
+// (folder not opened) walks the last listing again. A current file not found
+// by exact comparison starts from the position the last step remembered.
 class NextFileWalker {
 public:
     explicit NextFileWalker(NameLower lower = {}) : m_lower(std::move(lower)) {}
@@ -84,7 +56,7 @@ private:
     int m_actualFile = 0;
 };
 
-// The dummy video (legacy "?dummy:fps:frames:width:height:r:g:b:c").
+// "?dummy:fps:frames:width:height:r:g:b:c"
 struct DummyVideo {
     float fps = 0;
     int frames = 0;
@@ -94,48 +66,35 @@ struct DummyVideo {
 };
 
 inline constexpr char kDummyVideoPrefix[] = "?dummy";
-// Legacy treats any video path starting "?" as the dummy (VideoBox::LoadVideo,
-// VideoBox.cpp:303-304; Notebook.cpp:1175 accepts "?dummy" as Video File).
+// Any path starting "?".
 bool isDummyVideo(std::string_view path);
 
-// DummyVideo::GetDummyText (DummyVideo.cpp:118-140): the frame rate typed or
-// chosen (15 to 120, else "Invalid FPS value."), the duration in ms, the
-// size and colour; the text names "%f" frames per second and
-// duration / (1000 / fps) frames (truncated).
+// `fps` 15 to 120, else InvalidFps; the text holds duration / (1000 / fps)
+// frames, truncated.
 enum class DummyVideoError { InvalidFps };
 std::expected<std::string, DummyVideoError> dummyVideoText(std::string_view fps, int durationMs, int width, int height,
                                                            std::uint8_t red, std::uint8_t green, std::uint8_t blue,
                                                            bool pattern);
-// The frames of that text: duration / (1000 / fps), truncated, for a frame
-// rate from 15 to 120 (else InvalidFps). The dialog's "This gives %i frames"
-// (DummyVideo.cpp:94-97) shows it as the rate and duration are typed
-// (PU4-dummy-video; legacy computed it once, for the defaults).
+// duration / (1000 / fps), truncated; `fps` 15 to 120, else InvalidFps.
 std::expected<int, DummyVideoError> dummyVideoFrames(std::string_view fps, int durationMs);
 
-// ProviderDummy::ParseDummyData (ProviderDummy.cpp:144-223): nullopt for a
-// text it refuses (too few fields, a frame rate that does not parse, fewer
-// than one frame, a zero size) and for a negative size (V3-dummy-negative-size).
+// nullopt for too few fields, an unreadable frame rate, fewer than one frame,
+// or a size not above zero.
 std::optional<DummyVideo> parseDummyVideo(std::string_view text);
 
-// ProviderDummy::GenerateFrame (ProviderDummy.cpp:98-142): one BGRA frame,
-// top-down, every frame the same: the colour, or the checkerboard of 10 px
-// squares in the colour and the colour 24 lighter (HSL, Aegisub's swapped
-// blue and green kept).
+// One top-down BGRA frame: the colour, or a checkerboard of 10 px squares in
+// the colour and the colour 24 lighter (HSL with Aegisub's swapped blue and
+// green).
 std::vector<std::byte> dummyVideoFrame(const DummyVideo &video);
 
-// Timebase::FromFps(fps, frames) (ProviderDummy::GenerateTimecodes): frame n
-// at n * (1000 / fps) ms, truncated.
+// Frame n at n * (1000 / fps) ms, truncated.
 std::vector<int> dummyVideoTimecodes(const DummyVideo &video);
 
-// AV3 (#240): the frames at `sampleRate` of a dummy video's own silent audio,
-// as long as the video: its frames times the frame duration of its
-// timecodes, rounded.
+// The frames at `sampleRate` of silent audio as long as the video, rounded.
 std::int64_t dummyVideoAudioFrames(const DummyVideo &video, int sampleRate);
 
-// An IndexedSourcePort that serves dummy videos and passes every other path
-// to the media helper's port (legacy's RendererFFMS2 made a ProviderDummy for
-// a "?" path, ProviderFFMS2 otherwise). Its results arrive at once; it has no
-// audio (ProviderDummy::GetBuffer writes silence the box never asks for).
+// Serves dummy videos and passes every other path to `media`. A dummy's
+// results arrive at once; it has no audio.
 class DummyVideoSource : public IndexedSourcePort {
 public:
     explicit DummyVideoSource(IndexedSourcePort &media) : m_media(media) {}
@@ -149,8 +108,7 @@ public:
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) override;
     void nextPcm(std::int64_t maxFrames, PcmReady done) override;
-    // V4: the helper's converter; a dummy has none to set and takes any
-    // matrix (legacy ProviderDummy::SetColorSpace does nothing).
+    // A dummy takes any matrix.
     void setInputMatrix(int colorSpace, int colorRange, MatrixSet done) override;
     void cancelReads() override;
     void close() override;
@@ -162,37 +120,26 @@ public:
 private:
     IndexedSourcePort &m_media;
     std::optional<DummyVideo> m_dummy;
-    // the latest open was a dummy's text, refused or not: a refused text has
-    // no failure of the helper's to report (legacy ProviderDummy logs nothing)
+    // the latest open was a dummy's text, refused or not
     bool m_dummyText = false;
     std::vector<std::byte> m_frame;
     std::uint64_t m_generation = 0; // the dummy's; above the helper's while a dummy is open
 };
 
-// VideoBox::NextChap (VideoBox.cpp:1420-1444) over the chapters' start times
-// in ms (legacy chapter.time) at `nowMs` (Tell()); `previous` is legacy's
-// prevchap (-1 after a video loads, VideoBox.cpp:287) and becomes the chapter
-// jumped to. nullopt without chapters.
+// `startsMs`: the chapters' starts; `previous` (-1 after a video loads)
+// becomes the chapter jumped to. nullopt without chapters.
 std::optional<int> nextChapter(const std::vector<int> &startsMs, int nowMs, int &previous);
-// VideoBox::PrevChap (VideoBox.cpp:1446-1468).
 std::optional<int> previousChapter(const std::vector<int> &startsMs, int nowMs, int &previous);
-// The chapter menu's dot (VideoBox.cpp:1010-1016 with Menu.cpp:764-767): the
-// first chapter whose next chapter starts after `nowMs` (the last's next is
-// INT_MAX), so the first chapter before playback reaches it; -1 without.
+// The first chapter whose next one starts after `nowMs`; -1 without chapters.
 int currentChapter(const std::vector<int> &startsMs, int nowMs);
 
-// The stream menu's audio entries: the audio tracks of the open video (the
-// helper's probe), "A: " and legacy's track description (ProviderFFMS2::Init,
-// ProviderFFMS2.cpp:213-247: the name, " [language]" after a name, the
-// language alone, else "Untitled", then " (codec)").
+// "A: ", the name, " [language]" after a name or the language alone, else
+// "Untitled", then " (codec)".
 std::string audioStreamLabel(const AudioTrack &track);
 
-// VideoBox::OpenKeyframes with an audio box and no video
-// (VideoBox.cpp:1730-1731): the file's frames counted at 24000/1001 fps,
-// in ms, sorted without duplicates (Timebase::SetKeyframes).
+// The frames counted at 24000/1001 fps, in ms, sorted without duplicates.
 std::vector<int> keyframesWithoutVideo(const std::vector<int> &frames);
-// AudioDisplay::GetBoundarySnap without video (AudioDisplay.cpp:2506-2509):
-// half of a 23.976 fps frame earlier, ZEROIT.
+// Half a 23.976 fps frame earlier, truncated to 10 ms.
 int keyframeSnapWithoutVideo(int keyMs);
 
 } // namespace hikari::application

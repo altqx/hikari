@@ -5,9 +5,9 @@
 
 namespace hikari::application {
 
+// MUST KILL: keys reach -90, past the slider's -86 floor
 std::optional<int> videoVolumeKeyStep(int volume, bool up)
 {
-    // OnSPlus: pos < 1; OnSMinus: pos > -91.
     const int pos = volume + (up ? 2 : -2);
     if (up ? pos < 1 : pos > -91)
         return pos;
@@ -51,7 +51,6 @@ std::string aspectLabelNumber(float aspectRatio)
 
 float wheelZoomPercent(float zoomPercent, int steps)
 {
-    // config.h MID(a,b,c): MAX(a, MIN(b, c)).
     const float step = static_cast<float>(steps);
     const float wanted = zoomPercent + (step / 10.f);
     const float lowest = wanted < 10.f ? wanted : 10.f;

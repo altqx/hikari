@@ -141,19 +141,13 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices)
 {
     std::vector<std::size_t> rows;
-    // The first row of each name, and the free names' next suffix to try:
-    // a list of many clashes is one pass, not a scan per row and suffix.
     std::unordered_map<u8, std::size_t> first;
     for (std::size_t i = into.size(); i-- > 0;)
         first[into[i].name] = i;
-    // The incoming names are reserved too: a clash renamed onto a later
-    // new Style's name would make that one a clash nobody answered.
     StyleNames taken = namesOf(into);
     for (const auto &style : styles)
         taken.insert(style.name);
     std::unordered_map<u8, int> next;
-    // Per name, the incoming rows so far: a choice belongs to its source
-    // row, so the same answers fit Documents that hold other names.
     std::unordered_map<u8, int> seen;
     const auto add = [&](core::StyleValues style) {
         first.try_emplace(style.name, into.size());
@@ -179,7 +173,6 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
         auto renamed = style;
         const u8 &wanted = choice->second.newName;
         if (taken.contains(wanted)) {
-            // The suffixes below `next` are taken already.
             int &count = next.try_emplace(wanted, 2).first->second;
             for (;; ++count) {
                 u8 candidate = wanted + u8" (" + fromString(std::to_string(count)) + u8")";
@@ -226,10 +219,6 @@ std::vector<std::size_t> moveStyles(StyleList &styles, std::vector<std::size_t> 
         return rows;
     const long step = move == StyleMove::ToStart ? -size : move == StyleMove::Up ? -1 : move == StyleMove::Down ? 1 : size;
     const bool up = move == StyleMove::ToStart || move == StyleMove::Up;
-    // Legacy moves the rows one by one (an erase and an insert each), each
-    // clamped behind the ones moved before it. That leaves each at its own
-    // place below, the rest in their order around them: built in one pass
-    // (SY1: a file may hold tens of thousands of Styles).
     const std::vector<std::size_t> from = rows;
     long lastUp = 0, lastDown = size - 1;
     const long count = static_cast<long>(rows.size());
@@ -278,7 +267,6 @@ std::expected<std::size_t, std::u8string> commitStyle(StyleList &styles, const S
     const auto found = lastNamed(styles, edit.style.name);
     if ((found && dummy) || (found && edit.oldName != edit.style.name && !dummy))
         return std::unexpected(edit.style.name);
-    // A repeated name is edited where it was opened, not at its last copy.
     std::optional<std::size_t> row;
     if (!dummy && styles[*edit.row].name == edit.oldName)
         row = edit.row;
@@ -426,7 +414,6 @@ StyleCatalogs::StyleCatalogs(std::filesystem::path directory) : m_dir(std::move(
             m_names.push_back(entry.path().stem().u8string());
     std::sort(m_names.begin(), m_names.end());
     if (m_names.empty()) {
-        // Legacy writes this Default catalog when there is none.
         std::ofstream(m_dir / "Default.sty", std::ios::binary)
             << "\xEF\xBB\xBFStyle: Default,Garamond,30,&H00FFFFFF,&H000000FF,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,0,2,2,2,10,10,10,1";
         m_names.push_back(u8"Default");

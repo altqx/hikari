@@ -73,7 +73,7 @@ bool ycbcrToBgra(const IndexedFrame &f, IndexedFrame &out)
     out.stride = f.width * 4;
     out.ycbcr.reset();
     out.bgra.resize(static_cast<std::size_t>(out.stride) * static_cast<std::size_t>(f.height));
-    // The rows yuv::row reads 8 chroma samples at a time.
+    // MUST KILL: +8 padding because yuv::row reads 8 chroma samples at a time
     std::vector<std::uint8_t> u(static_cast<std::size_t>(p.chromaWidth) + 8), v(u.size());
     int chromaRow = -1;
     for (int y = 0; y < f.height; ++y) {
