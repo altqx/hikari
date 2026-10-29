@@ -18,7 +18,7 @@ execute_process(COMMAND "${LUPDATE}" -project "${PROJECT_JSON}" -locations absol
 if(NOT extracted EQUAL 0 OR NOT EXISTS "${EXTRACTED}")
     message(FATAL_ERROR "lupdate could not extract the sources: ${extract_errors}")
 endif()
-execute_process(COMMAND "${TOOL}" lint --contexts "${SOURCE_DIR}/i18n/contexts.tsv" --extracted "${EXTRACTED}"
+execute_process(COMMAND "${TOOL}" --contexts "${SOURCE_DIR}/i18n/contexts.tsv" --extracted "${EXTRACTED}"
     --sources "${SOURCE_DIR}/src" RESULT_VARIABLE linted OUTPUT_VARIABLE summary ERROR_VARIABLE problems)
 if(NOT linted EQUAL 0)
     message(FATAL_ERROR "${problems}")
