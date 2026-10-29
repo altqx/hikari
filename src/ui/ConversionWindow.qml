@@ -1,12 +1,3 @@
-// Y5, PU6 (#308): Subtitles > Conversion > Convert to …, with the approved
-// loss preview (C02-loss-preview), on DG1's frame, modal to the main window
-// and titled with its command. The legacy CONVERT_* options in sections,
-// a short label and a hint each, only the sections that act on this
-// conversion shown (the others keep their values): Style and Resolution to
-// ASS, Frame rate to MicroDVD (or while the rate is invalid), End times
-// except to TMPlayer. "What changes" follows every keystroke, tick and
-// choice, a row new since the last change marked for a moment; Convert
-// applies exactly the previewed plan, off while there is none.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Conversion"
 import QtQuick
@@ -18,20 +9,15 @@ DialogWindow {
     id: dialog
     objectName: "conversionDialog"
     required property var app
-    // The Style catalogs (StyleManagerController.catalogs).
     property var catalogs: []
     dialogId: "conversion"
     modal: true
     defaultButton: acceptButton
     property string target: ""
     property var preview: ({})
-    // The losses before the last change, to mark the new rows (null at
-    // the opening).
     property var previous: null
     readonly property bool toAss: target === "ass"
     readonly property bool frameRate: target === "mdvd" || preview.fpsInvalid === true
-    // A number being typed that is not one yet (an empty resolution, a time
-    // per character under 30 ms) is not stored; Convert waits for it.
     readonly property bool inputsValid: (!toAss || (resWidth.acceptableInput && resHeight.acceptableInput))
                                         && (!perLetter.visible || !newEnds.checked || perLetter.acceptableInput)
 
@@ -41,13 +27,12 @@ DialogWindow {
         const o = app.conversionOptions()
         fps.text = o.fps
         fpsFromVideo.checked = o.fpsFromVideo
-        // The catalog shown is the one converted with: a stored name that
-        // differs only by case, or a deleted catalog's, becomes the shown one.
         let shown = catalogs.indexOf(o.styleCatalog)
         if (shown < 0)
             shown = catalogs.findIndex(c => c.toLowerCase() === String(o.styleCatalog).toLowerCase())
         shown = Math.max(0, shown)
         catalog.currentIndex = shown
+        // MUST KILL: opening the dialog rewrites the stored styleCatalog when it differs from the shown one
         if (catalogs.length > 0 && catalogs[shown] !== o.styleCatalog)
             app.setConversionOptions({styleCatalog: catalogs[shown]})
         styleBox.editText = o.style
@@ -70,7 +55,7 @@ DialogWindow {
     }
     function convert() {
         if (!app.acceptConversion())
-            refresh() // stale: show the new preview
+            refresh()
         else
             close()
     }
@@ -82,7 +67,6 @@ DialogWindow {
         color: Theme.muted
         font: dialog.fontAt(12)
     }
-    // `invalid`: outlined in the danger colour.
     component NumberBox: TextField {
         id: box
         property bool invalid: false
@@ -121,7 +105,6 @@ DialogWindow {
                         model: dialog.catalogs
                         Layout.preferredWidth: 200
                         Accessible.name: qsTr("Catalog")
-                        // The Style list follows; the Style name stays.
                         onActivated: i => {
                             dialog.set("styleCatalog", dialog.catalogs[i])
                             styleBox.editText = dialog.app.conversionOptions().style
@@ -265,7 +248,6 @@ DialogWindow {
                 }
             }
         }
-        // What the conversion removes (warning) or changes (info).
         Rectangle {
             Layout.alignment: Qt.AlignTop
             Layout.fillWidth: true
@@ -306,7 +288,6 @@ DialogWindow {
                         required property string modelData
                         required property int index
                         readonly property bool removes: (dialog.preview.kinds ?? [])[index] === "warning"
-                        // New since the last change: marked for a moment.
                         readonly property bool fresh: dialog.previous !== null && dialog.previous.indexOf(modelData) < 0
                         width: ListView.view.width
                         implicitHeight: text.implicitHeight + 6

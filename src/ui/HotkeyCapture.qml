@@ -1,22 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Hotkeys"
-// PK1 (#301): the hotkey capture, one for the two copies (legacy
-// HkeysDialog "Hotkey mapping" and the HikariMessageDialog question after
-// it; Main.qml's automation copy had no caller left after AM1). By the
-// small forms rule a popover under the control that asked for it (the
-// Hotkeys page's row), else a compact window (Shift+click on a command).
-//
-// capture(name, window, windows, done, options): waits for keys as
-// HkeysDialog::OnKeyPress reads them (hotkeys.capture): a refused key says
-// why on the form and it keeps waiting; plain Esc cancels, so Esc alone is
-// never a hotkey. With `windows` the window the hotkey works in is chosen
-// ("In"). done(accel, window) takes the keys; options.anchor places it,
-// options.clear (a function) adds Clear.
-// ask(conflict, done), from inside done: the keys are taken, and the
-// choice is made on the form, the buttons named for it (legacy's "Switch
-// hotkeys / Delete hotkey / Set anyway" warning): Swap ("switch"), Take it
-// ("delete"), Keep both ("anyway"), or Cancel ("cancel"). Other keys start
-// again.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -32,17 +15,13 @@ Item {
     property int window: 0
     property var done: null
     property var clear: null
-    // The keys shown, and why the last ones were refused.
     property string keys: ""
     property string refusal: ""
-    // The question when the keys are taken ({message, canSwitch,
-    // canSetAnyway, commands}) and its answer's callback.
     property var conflict: null
     property var answerDone: null
+    // MUST KILL: asking is set by ask() re-entering from the done callback, which finish() then checks
     property bool asking: false
     readonly property bool opened: popover.visible || (compactWindow !== null && compactWindow.visible)
-    // The compact window, made at its first opening (null till then), as
-    // ListChooser's: a window made at the start costs the start.
     readonly property DialogWindow compactWindow: compactLoader.item
     readonly property string title: qsTr("Keys for \"%1\"").arg(name)
     readonly property var windowNames: [qsTr("Global hotkey"), qsTr("Subtitle grid hotkey"), qsTr("Edit box hotkey"),
@@ -64,7 +43,6 @@ Item {
         if (o.anchor && o.anchor.visible) {
             if (compactWindow && compactWindow.visible)
                 compactWindow.close()
-            // The form is made before the popover measures it.
             popoverForm.active = true
             popover.openAt(o.anchor)
             popoverForm.item.focusKeys()
@@ -87,7 +65,6 @@ Item {
         answerDone = null
         if (callback)
             callback(accel, win)
-        // The callback asked (the keys are taken): the form stays, with the question.
         if (asking)
             done = callback
         else
@@ -103,7 +80,6 @@ Item {
         if (callback)
             callback(a)
     }
-    // `closing`: the compact window is closing already.
     function cancel(closing) {
         const callback = answerDone
         answerDone = null
@@ -120,8 +96,6 @@ Item {
         if (compactWindow && compactWindow.visible && closing !== true)
             compactWindow.close()
     }
-    // The key caps of a portable key text: its modifiers, then the key.
-    // "+" both joins them and is a key ("Ctrl++", "Num++").
     function keyParts(text) {
         const modifiers = ["Ctrl", "Shift", "Alt", "Meta", "Num"]
         const parts = []
@@ -143,7 +117,6 @@ Item {
             cancel()
             return
         }
-        // Other keys while the question shows start again.
         answerDone = null
         conflict = null
         const r = hotkeys.capture(event.key, event.modifiers, window)
@@ -163,9 +136,7 @@ Item {
         title: capture.title
         showTitle: true
         onReverted: capture.cancel()
-        // A press outside cancels too.
         onKept: if (capture.done !== null || capture.answerDone !== null) capture.cancel()
-        // Made at the first opening, as the compact window.
         Loader {
             id: popoverForm
             active: false
@@ -210,10 +181,7 @@ Item {
             Accessible.role: Accessible.EditableText
             Accessible.name: form.host.title
             Accessible.description: form.host.keys.length > 0 ? form.host.keys : qsTr("Press the keys")
-            // Every key is the capture's, the application's shortcuts included.
             Keys.onShortcutOverride: event => event.accepted = true
-            // Tab is a hotkey too (legacy took every key but Esc); it
-            // moves to the question's buttons only while they show.
             Keys.onPressed: event => {
                 if ((event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) && form.host.conflict !== null) {
                     event.accepted = false
@@ -269,13 +237,11 @@ Item {
             ComboBox {
                 objectName: "hotkeyWindowChoice"
                 Layout.fillWidth: true
-                // Choosing keeps the keyboard on the keys (legacy forwards key
-                // presses on the choice to the mapping).
                 focusPolicy: Qt.NoFocus
                 model: form.host.windowNames
                 currentIndex: form.host.window
                 Accessible.name: qsTr("Window")
-                // Set by assistive technology too, without activated().
+                // Assistive technology sets currentIndex without activated().
                 onCurrentIndexChanged: form.host.window = currentIndex
                 onActivated: form.focusKeys()
             }

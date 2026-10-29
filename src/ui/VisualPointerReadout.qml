@@ -3,10 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import Hikari.Ui
 
-// VB1 (#481): the crosshair's position under the pointer and Copy video
-// position, at the end of the video times line while the crosshair is the
-// tool (it has no inspector bar line). The values keep their width while
-// the pointer is off the video, so the times do not move.
 RowLayout {
     id: readout
     objectName: "visualPointerReadout"
@@ -21,7 +17,6 @@ RowLayout {
                 return v
         return { name: name, label: "", text: "", editable: false, group: "", unit: "", step: 1 }
     }
-    // The option's shape (CrosshairTool::options), its state read live.
     readonly property var copyShape: ({ name: "copyPosition", kind: "action", iconRole: "copy-position", tooltip: "",
                                         group: "", checked: false, enabled: false, choices: [], index: 0,
                                         listEnds: false, searchable: false, afterValues: false })
@@ -44,7 +39,7 @@ RowLayout {
             accessibleName: [readout.tools.families[0]?.name ?? "", value.label].filter(s => s.length > 0).join(" ")
         }
     }
-    // No taller than the times line (24), so it does not grow as it shows.
+    // MUST KILL: VisualToolOption's 24 is the times line's height, copied by hand
     VisualToolOption {
         Layout.preferredWidth: 24
         Layout.preferredHeight: 24

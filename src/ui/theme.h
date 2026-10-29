@@ -1,22 +1,5 @@
 #pragma once
 
-// K2: the Hikari theme layer (docs/ux/visual-language.md, "Hikari theme
-// and metrics layer"): one set of semantic colour roles resolved from the
-// chosen appearance and exposed once to every QML surface (the Theme
-// singleton, the application palette the controls draw with, the icons) and
-// to the owner-drawn items (the audio display, the Grid).
-//
-// The appearance follows MuseScore 4's model (docs/research/musescore-appearance.md,
-// the user's 2026-10-05 decision): four themes (Light, Dark, High contrast
-// white, High contrast black); "Follow system theme" (on by default) takes
-// Light or Dark from the platform's colour scheme and never turns high
-// contrast on or off; seven accent presets per mode, Light and Dark each
-// remembering its own; in high contrast the accent, text-and-icons and border
-// colours are freely pickable and every other role is fixed. Content colours
-// (the audio display, the Grid's comparison colours, spelling marks) are
-// fixed per theme; selection-type marks use the accent. Document colours
-// (ASS styles, rendered subtitles) never change with the appearance.
-
 #include "hikari/application/audio_display.h"
 
 #include <QColor>
@@ -44,117 +27,89 @@ namespace theme {
 enum class Code { Light, Dark, HighContrastWhite, HighContrastBlack };
 inline constexpr std::array kCodes{Code::Light, Code::Dark, Code::HighContrastWhite, Code::HighContrastBlack};
 
-// "light", "dark", "highContrastWhite", "highContrastBlack" (the setting's values).
 QString codeName(Code code);
 std::optional<Code> codeFromName(const QString &name);
 bool isDark(Code code);
 bool isHighContrast(Code code);
-// The theme on the other side (Light <-> Dark, white <-> black), keeping high contrast.
 Code withDark(Code code, bool dark);
 
-// The settings (the rewrite's own, registry ids).
 inline constexpr const char *kThemeSetting = "appearance.theme";
 inline constexpr const char *kFollowSystemSetting = "appearance.followSystem";
 inline constexpr const char *kLightAccentSetting = "appearance.lightAccent";
 inline constexpr const char *kDarkAccentSetting = "appearance.darkAccent";
 
-// The semantic roles (visual-language.md's tokens).
 struct Roles {
-    QColor background; // bg: application background
-    QColor panel;      // panel and popup surface
-    QColor raised;     // raised control / table-header surface
-    QColor field;      // input / recessed surface
-    QColor text;       // primary text (and icons)
-    QColor muted;      // secondary text
-    QColor line;       // boundary
-    QColor accent;     // action / active accent
-    QColor onAccent;   // text on an accent fill
-    QColor select;     // selected background
-    QColor focus;      // keyboard focus: the text colour (K2, MuseScore's focus ring; 1 wide and
-                       // tight, the user's 2026-10-13 decision; a focused panel's mark is the accent)
-    QColor danger;     // error emphasis
-    QColor warning;    // warning emphasis (legacy WINDOW_WARNING_ELEMENTS)
-    QColor success;    // success text (legacy FontCollectorDialog's "#008000"; K2-dark-success)
-    QColor disabled;   // disabled text and icons
-    QColor control;    // an enabled control's boundary, at least 3:1 (K2-control-boundary;
-                       // `line` stays for separators and frames; in high contrast the border pick)
+    QColor background;
+    QColor panel;
+    QColor raised;
+    QColor field;
+    QColor text;
+    QColor muted;
+    QColor line;
+    QColor accent;
+    QColor onAccent;
+    QColor select;
+    QColor focus;
+    QColor danger;
+    QColor warning;
+    QColor success;
+    QColor disabled;
+    QColor control;
     bool operator==(const Roles &) const = default;
 };
-// The roles by name, in Roles' order (the QML property names).
+// MUST KILL: kRoleNames must stay in Roles' member order
 inline constexpr std::array kRoleNames{"background", "panel", "raised", "field", "text", "muted", "line", "accent",
                                        "onAccent", "select", "focus", "danger", "warning", "success", "disabled",
                                        "control"};
 QColor role(const Roles &roles, std::size_t index);
 
-// An accent preset of a mode: the accent with the roles drawn for it.
 struct Accent {
-    const char *key; // stored in appearance.lightAccent / darkAccent
+    const char *key;
     const char *name;
     QColor accent, onAccent, select;
 };
 inline constexpr const char *kDefaultAccent = "green";
-// Seven per mode, by hue; the default (the spec's green) is the fourth.
 std::span<const Accent> accents(bool dark);
-const Accent &accent(bool dark, const QString &key); // the default for an unknown key
+const Accent &accent(bool dark, const QString &key);
 
-// The high-contrast pickers.
 enum class Pick { Accent, Text, Border };
 inline constexpr std::array kPicks{Pick::Accent, Pick::Text, Pick::Border};
-// "appearance.highContrastWhite.accent", ...
 const char *pickSetting(Code code, Pick pick);
 QColor pickDefault(Code code, Pick pick);
 
-// What the user chose.
 struct Choice {
     Code theme = Code::Dark;
     bool followSystem = true;
     QString lightAccent = QString::fromLatin1(kDefaultAccent);
     QString darkAccent = QString::fromLatin1(kDefaultAccent);
-    // [white, black][accent, text, border]
+    // MUST KILL: picks is indexed [white, black][accent, text, border] by bare ints
     std::array<std::array<QColor, 3>, 2> picks{};
     bool operator==(const Choice &) const = default;
 };
-// The choice from settings values by id (the store's, or the Options
-// dialog's staged values); a missing or unreadable value is the default.
 Choice choiceFrom(const std::function<QVariant(const char *id)> &value);
 
-// The theme shown: following the system, Light or Dark from its colour
-// scheme (high contrast stays high contrast, on the matching side); an
-// unknown scheme keeps the chosen theme.
 Code effective(const Choice &choice, Qt::ColorScheme system);
 Roles resolve(Code code, const Choice &choice);
-// The palette the Qt Quick Controls draw with.
 QPalette palette(const Roles &roles);
 
-// Owner-drawn content colours, fixed per theme.
 struct Content {
-    QColor spellcheck;   // GRID_SPELLCHECKER / EDITOR_SPELLCHECKER
-    QColor grammar;      // GR1: the Line editor's wavy underline under a Harper finding
-    QColor gridAlternate; // the Grid's every other row
-    QColor gridWarning;   // a fast CPS or bad wraps cell
-    // GR4: a Comment row's background (legacy GRID_COMMENT), fixed per theme;
-    // the text and secondary-text roles read on it at 4.5:1.
+    QColor spellcheck;
+    QColor grammar;
+    QColor gridAlternate;
+    QColor gridWarning;
     QColor gridComment;
-    std::array<QColor, 5> comparison; // GRID_COMPARISON_*: outline, mismatch, match, comment mismatch, comment match
-    QColor comparisonSelection;       // GRID_SELECTION over a compared row (with alpha)
-    // E4: the Line editor's text colours by core::syntax::Role (EDITOR_TEXT,
-    // EDITOR_CURLY_BRACES, EDITOR_TAG_OPERATORS, EDITOR_TAG_NAMES,
-    // EDITOR_TAG_VALUES, EDITOR_SPLIT_LINES_AND_DRAWINGS and the five
-    // EDITOR_TEMPLATE_* colours); the first is the theme's text.
+    std::array<QColor, 5> comparison;
+    QColor comparisonSelection;
     std::array<QColor, 11> syntax;
-    application::AudioDisplayOptions audio; // the colour fields only
+    // MUST KILL: audio is a full AudioDisplayOptions of which only the colour fields are set
+    application::AudioDisplayOptions audio;
 };
 Content content(Code code, const Roles &roles);
-// Copies the theme's colours into `options` (its other fields kept).
 void applyAudioColours(application::AudioDisplayOptions &options, const application::AudioDisplayOptions &colours);
 
-// WCAG 2.x contrast ratio of two opaque colours (1 to 21).
 double contrastRatio(const QColor &a, const QColor &b);
-// `over` at its alpha on `under` (opaque).
 QColor composite(const QColor &over, const QColor &under);
 
-// The process's appearance: what every Theme singleton, the icons and the
-// owner-drawn items follow.
 struct State {
     Code code = Code::Dark;
     Choice choice;
@@ -162,37 +117,18 @@ struct State {
     Content content;
 };
 const State &current();
-// Calls `slot` whenever the appearance changes, while `context` lives.
 void onChanged(QObject *context, std::function<void()> slot);
-// The profile whose choice is followed (none: the defaults). With a profile
-// the application palette follows the theme.
 void useSettings(SettingsStore *settings);
-// The Options dialog's live preview: its staged values over the profile's,
-// until endPreview (OK saves them first; Cancel just ends it).
 void preview(const QVariantMap &values);
 void endPreview();
-// The platform's colour scheme (QStyleHints::colorScheme; on Linux, where
-// that reports none, the XDG settings portal's: portal_colour_scheme.h), or
-// one forced for tests and screenshots (nullopt: the platform's again). On Windows,
-// while the theme does not follow the system, Qt is asked for the shown
-// theme's side (Qt draws the framed windows' title bars from it,
-// title_bars.h), and QStyleHints reports that one.
 Qt::ColorScheme systemScheme();
 void forceSystemScheme(std::optional<Qt::ColorScheme> scheme);
-// The Qt Quick Controls style the theme's palette drives on every platform:
-// HikariStyle (src/ui/style), Fusion with every control outline in the
-// theme's boundary colour (the native Windows style draws with the system's
-// colours, so the four themes could not show there), unless
-// QT_QUICK_CONTROLS_STYLE names another. Called before the first engine
-// loads the controls.
 inline constexpr const char *kControlsStyle = "HikariStyle";
+// Call before the first engine loads Qt Quick Controls.
 void chooseControlsStyle();
 
-} // namespace theme
+}
 
-// The theme for QML (the Theme singleton): the current roles, the theme's
-// state and the Appearance page's lists. One per engine, all following the
-// same appearance.
 class Theme : public QObject {
     Q_OBJECT
     QML_ELEMENT
@@ -220,7 +156,6 @@ class Theme : public QObject {
     Q_PROPERTY(QColor control READ control NOTIFY changed FINAL)
     Q_PROPERTY(QColor spellcheck READ spellcheck NOTIFY changed FINAL)
     Q_PROPERTY(QColor grammar READ grammar NOTIFY changed FINAL)
-    // E4: the Line editor's text colours, by core::syntax::Role.
     Q_PROPERTY(QVariantList syntax READ syntax NOTIFY changed FINAL)
 public:
     explicit Theme(QObject *parent = nullptr);
@@ -251,18 +186,12 @@ public:
     QColor grammar() const { return theme::current().content.grammar; }
     QVariantList syntax() const;
 
-    // The Appearance page: the themes ({code, name, dark, highContrast}), a
-    // mode's accent presets ({key, name, accent, onAccent, contrast}: the
-    // accent's lowest contrast against the mode's surfaces), the pickers'
-    // settings and defaults, the roles a theme resolves to for `values`
-    // (the page's theme samples), and the live preview.
     Q_INVOKABLE QVariantList themes() const;
     Q_INVOKABLE QVariantList accents(bool dark) const;
     Q_INVOKABLE QVariantList picks(const QString &code) const;
     Q_INVOKABLE QVariantMap rolesOf(const QString &code, const QVariantMap &values) const;
     Q_INVOKABLE void preview(const QVariantMap &values) { theme::preview(values); }
     Q_INVOKABLE void endPreview() { theme::endPreview(); }
-    // Whether the platform reports a light or dark scheme to follow.
     Q_INVOKABLE bool systemSchemeKnown() const;
 
 signals:
@@ -272,4 +201,4 @@ private:
     static const theme::Roles &roles() { return theme::current().roles; }
 };
 
-} // namespace hikari::ui
+}

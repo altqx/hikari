@@ -1,19 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Documents"
-// PU1 (#303, PU1-unsaved-window): the close review (P1) on the popup kit.
-// Several Documents with unsaved work (Quit, Close all tabs, loading a
-// session): a window on DG1's frame, modal to the main window, with a row
-// per Document (its tab name, its folder, a Save / Don't save switch, Save
-// first) that scrolls, the count of what the button does, and the buttons
-// named for the command that asked (Save and quit / Quit without saving,
-// …, Cancel). One Document: a message box (Save, Don't save, Cancel). An
-// Untitled Document set to Save asks for its file with the native picker,
-// in turn; the picker's Cancel goes back. A save that fails shows the
-// window with the problem under the rows. Nothing closes until every save
-// is written (Application::resolveClose).
-//
-// review(rows): rows as Application::reviewClose's; close() once the close
-// is done; fail(problem) when it could not be.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -23,20 +9,14 @@ import Hikari.Ui
 Item {
     id: unsaved
     required property var app
-    // ADR 0019: a cancelled quit takes "Restart now" back.
     property var updates: null
     property SettingsStore settings: null
-    // The shell's remembered picker folders (PU1-picker-titles).
     property var pickerFolder: picker => ""
     property var rememberPickerFolder: (picker, file) => {}
-    // PU1-disk-change-bar: the Documents to save whose file another program
-    // changed are confirmed first (Save over it); `cancelled` when not.
     property var confirmOverDisk: (ids, then, cancelled) => then()
     property var rows: []
-    // One per row: {id, save, path (an Untitled Document's file)}.
     property var choices: []
     property string problem: ""
-    // Application::closeKind(): the command that asked.
     property string kind: ""
     readonly property DialogWindow window: windowLoader.item as DialogWindow
     readonly property bool opened: (window !== null && window.visible) || question.opened
@@ -44,7 +24,7 @@ Item {
     visible: false
 
     function review(list) {
-        // The choices first: the rows' delegates read them.
+        // MUST KILL: choices must be set before rows; the row delegates read them
         choices = list.map(r => ({ id: r.id, save: true, path: "" }))
         rows = list
         problem = ""
@@ -73,7 +53,6 @@ Item {
         windowLoader.active = true
         window.open()
     }
-    // Row i's choice (a row's delegate may outlive the review it showed).
     function choiceAt(i) { return choices[i] || { save: false, path: "" } }
     function setSave(i, save) {
         const list = choices.slice()
@@ -81,7 +60,6 @@ Item {
         choices = list
     }
     function setAll(save) { choices = choices.map(c => Object.assign({}, c, { save: save })) }
-    // Save and …: each Untitled Document set to Save gets its file first.
     function proceed() {
         const i = choices.findIndex((c, k) => c.save && rows[k].untitled && c.path.length === 0)
         if (i >= 0)
@@ -89,9 +67,6 @@ Item {
         else
             resolve()
     }
-    // The choices to the application, once a file changed on disk that is
-    // to be saved over was confirmed; cancelled, the window stays (one
-    // Document: the close is cancelled).
     function resolve() {
         confirmOverDisk(choices.filter(c => c.save).map(c => c.id), () => app.resolveClose(choices), () => {
             if (!window || !window.visible)
@@ -112,14 +87,11 @@ Item {
             saveAs.currentFolder = v.folder
         else if (pickerFolder("subtitles").length > 0)
             saveAs.currentFolder = pickerFolder("subtitles")
-        // No suggested name: none (not the file picked for the row before).
+        // FileDialog keeps the last selectedFile between opens, so it is set even when empty.
         saveAs.selectedFile = v.file
         saveAs.open()
     }
 
-    // The words of the command that asked: {title, many (the window's main
-    // line for n Documents), one (the message box's for `name`), save,
-    // discard}.
     function words(n, name) {
         switch (kind) {
         case "quit":
@@ -146,7 +118,7 @@ Item {
             return { title: qsTr("Remove subtitles from the editor"), many: "",
                      one: qsTr("Save the changes to “%1” before removing them?").arg(name),
                      save: qsTr("Save and remove"), discard: qsTr("Remove without saving") }
-        default: // "open", "files": the tab's subtitles are replaced
+        default:
             return { title: kind === "files" ? qsTr("Open files") : qsTr("Open subtitles"), many: "",
                      one: qsTr("Save the changes to “%1” before replacing them?").arg(name),
                      save: qsTr("Save and open"), discard: qsTr("Open without saving") }
@@ -202,8 +174,6 @@ Item {
             if (next)
                 next()
         }
-        // The picker's Cancel: back to the window (or, for one Document,
-        // to the question).
         onRejected: {
             then = null
             if (unsaved.rows.length === 1 && !(unsaved.window && unsaved.window.visible))
@@ -211,7 +181,6 @@ Item {
         }
     }
 
-    // The window, made at its first opening.
     Loader {
         id: windowLoader
         active: false
@@ -224,7 +193,6 @@ Item {
             resizable: true
             readonly property var w: unsaved.words(unsaved.rows.length, unsaved.rows.length > 0 ? unsaved.rows[0].title : "")
             title: w.title
-            // Esc or Close: Cancel (a waiting file result is then shown).
             onRejected: unsaved.cancel()
 
             Label {
@@ -248,7 +216,6 @@ Item {
                 border.color: Theme.line
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                // Five rows, then it scrolls (the window can be made taller).
                 Layout.minimumHeight: Math.min(list.contentHeight, 2 * 48) + 2
                 Layout.preferredHeight: Math.min(list.contentHeight, 5 * 48) + 2
                 ListView {
@@ -327,7 +294,6 @@ Item {
             }
             Label {
                 objectName: "closeReviewCount"
-                // What the button does: the rows it saves and drops.
                 text: qsTr("Saves %1 · Discards %2").arg(unsaved.saving).arg(unsaved.rows.length - unsaved.saving)
                 color: Theme.muted
                 font: reviewWindow.fontAt(12)

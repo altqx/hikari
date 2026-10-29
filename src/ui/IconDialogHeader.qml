@@ -1,8 +1,3 @@
-// K1: a dialog's title with its icon of the set before it (legacy dialogs
-// show their bitmap as the window's icon, SetIcon; a dialog drawn in the
-// window's overlay has no title bar of its own). Shown, sized and painted as
-// the style's own title: bold, padding 6, on the window colour, only while
-// the dialog sits in the overlay.
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui

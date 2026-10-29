@@ -31,7 +31,7 @@ QVariantMap answer(const application::TimeFieldEdit &edit)
             {QStringLiteral("bell"), edit.bell}};
 }
 
-} // namespace
+}
 
 QVariantMap TimeFieldMask::type(int form, const QString &text, int start, int end, const QString &character) const
 {
@@ -80,7 +80,7 @@ QVariantMap dragMap(const application::TimeFieldDrag &drag)
             {QStringLiteral("y"), drag.y}};
 }
 
-} // namespace
+}
 
 QString TimeFieldMask::wheel(int mouseForm, bool frames, const QString &text, int column, int notches) const
 {
@@ -107,4 +107,4 @@ QVariantMap TimeFieldMask::dragMove(int mouseForm, bool frames, const QVariantMa
             {QStringLiteral("text"), next ? QString::fromStdU16String(*next) : QString()}};
 }
 
-} // namespace hikari::ui
+}

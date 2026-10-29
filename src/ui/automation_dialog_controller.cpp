@@ -15,8 +15,6 @@ using application::DialogValueType;
 
 namespace {
 
-// A script's grid is at most 256 cells each way: a place or span as large
-// as 2^31 would lay out that many empty columns first.
 constexpr int kGridCells = 256;
 
 bool isColour(const std::string &kind)
@@ -24,7 +22,7 @@ bool isColour(const std::string &kind)
     return kind == "color" || kind == "coloralpha";
 }
 
-// The helper's legacy hex: #RRGGBB, or #TTRRGGBB with TT = ASS transparency.
+// #RRGGBB, or #TTRRGGBB with TT the ASS transparency (255 - alpha).
 QColor colourOf(const QString &legacy)
 {
     const QString hex = legacy.mid(1);
@@ -45,8 +43,6 @@ QString legacyHexOf(const QColor &c, bool alpha)
     return QString::asprintf("#%02X%02X%02X", c.red(), c.green(), c.blue());
 }
 
-// A control's value as QML shows it: a colour as a QColor, a number in its
-// range; nothing for a label.
 QVariant shownOf(const application::DialogControl &c, const application::DialogValue &value)
 {
     if (const auto *s = std::get_if<std::string>(&value))
@@ -60,8 +56,6 @@ QVariant shownOf(const application::DialogControl &c, const application::DialogV
     return {};
 }
 
-// What QML's `v` gives control `c` back: typed (integers and numbers
-// clamped to their range); `fallback` for text that is no number.
 application::DialogValue valueFrom(const application::DialogControl &c, const QVariant &v,
                                    const application::DialogValue &fallback)
 {
@@ -74,9 +68,6 @@ application::DialogValue valueFrom(const application::DialogControl &c, const QV
         return v.toString().toStdString();
     case DialogValueType::Integer: {
         bool ok = false;
-        // Legacy NumCtrl: a comma is a decimal point; the value is clamped
-        // and an integer truncates toward zero; unparseable text keeps
-        // the value it had.
         const double d = v.toString().replace(QLatin1Char(','), QLatin1Char('.')).toDouble(&ok);
         if (ok && std::isfinite(d))
             return static_cast<int>(std::clamp(d, double(c.intMin), double(c.intMax)));
@@ -95,7 +86,7 @@ application::DialogValue valueFrom(const application::DialogControl &c, const QV
     return fallback;
 }
 
-} // namespace
+}
 
 AutomationDialogController::AutomationDialogController(QObject *parent) : QObject(parent) {}
 
@@ -115,7 +106,6 @@ void AutomationDialogController::present(const QString &title, const application
     m_controls.clear();
     m_columns = 1;
     for (std::size_t at = 0; at < request.controls.size(); ++at) {
-        // The controls show the values shown (the script's, or filled in).
         application::DialogControl c = request.controls[at];
         const application::DialogValue &value = m_shown.values[at];
         if (const auto *s = std::get_if<std::string>(&value))
@@ -142,7 +132,6 @@ void AutomationDialogController::present(const QString &title, const application
             {QStringLiteral("intValue"), c.intValue},
             {QStringLiteral("intMin"), c.intMin},
             {QStringLiteral("intMax"), c.intMax},
-            // Legacy NumCtrl clamps the shown value to its range.
             {QStringLiteral("number"), std::clamp(c.number, c.numberMin, c.numberMax)},
             {QStringLiteral("color"), isColour(c.kind) ? colourOf(QString::fromStdString(c.text)) : QColor()},
             {QStringLiteral("numberMin"), c.numberMin},
@@ -159,6 +148,7 @@ void AutomationDialogController::present(const QString &title, const application
                   << QCoreApplication::translate("HikariSub.Automation", "Cancel");
     for (const auto &b : request.buttons)
         m_buttons << QString::fromStdString(b);
+    // Aegisub's default button is the last ok, yes or save one (each makes itself wx's default).
     m_enterButton = 0;
     for (std::size_t i = 0; i < request.buttonIds.size() && i < request.buttons.size(); ++i) {
         const std::string &id = request.buttonIds[i];
@@ -256,8 +246,6 @@ bool AutomationDialogController::differs(int index, const QVariant &value) const
     const auto &c = m_request.controls[static_cast<std::size_t>(index)];
     if (application::dialogValueType(c.kind) == DialogValueType::None)
         return false;
-    // Both as the script would get them: the script's value as shown (a
-    // number in its range, a colour in legacy hex) against the control's.
     const auto script = application::initialDialogResult(m_request).values[static_cast<std::size_t>(index)];
     return valueFrom(c, value, script) != valueFrom(c, shownOf(c, script), script);
 }
@@ -296,4 +284,4 @@ void AutomationDialogController::deletePreset(const QString &name)
     emit memoryChanged();
 }
 
-} // namespace hikari::ui
+}

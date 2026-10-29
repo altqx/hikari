@@ -1,14 +1,5 @@
 #pragma once
 
-// T1: the Video panel's visual tools (docs/visual-tools.md). The tool
-// rail (accepted layout A on #55) lists legacy VideoToolbar's eleven
-// families and VT3's Perspective; the active tool gets the pointer over the video and the panel's
-// keys, and draws through the overlay. This controller is the tools'
-// VisualHost: it keeps the shared view transform (visual::VideoView) in step
-// with the panel's size, the video's geometry and the script resolution,
-// owns the one open gesture (Esc cancels it), the batch picker, the
-// warnings (VIDEO_VISUAL_WARNINGS_OFF) and VIDEO_COPY_COORDS.
-
 #include "hikari/application/all_tags.h"
 #include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_tools.h"
@@ -40,58 +31,29 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("Provided by the application composition")
-    // The rail: name, tooltip, icon and whether the family has its tool yet.
     Q_PROPERTY(QVariantList families READ families CONSTANT)
-    // VT3: the families' ids in the rail's order (the Perspective tool after
-    // Text X / Y rotation); `families` stays in the ids' order.
     Q_PROPERTY(QVariantList railOrder READ railOrder CONSTANT)
     Q_PROPERTY(int activeFamily READ activeFamily NOTIFY changed)
-    // Legacy VideoToolbar::DisableVisuals(form != ASS): the rail is disabled
-    // for a Document that is not ASS.
     Q_PROPERTY(bool railEnabled READ railEnabled NOTIFY changed)
-    // What the active tool draws, in the video area's logical coordinates.
     Q_PROPERTY(QVariantList overlay READ overlay NOTIFY overlayChanged)
     Q_PROPERTY(QString labelFamily READ labelFamily CONSTANT)
     Q_PROPERTY(int labelPixelSize READ labelPixelSize NOTIFY geometryChanged)
-    // VideoBox hides the pointer over the video while the crosshair is the
-    // tool (VideoBox.cpp:607-611); here over the picture only, not its bars.
     Q_PROPERTY(bool hideCursor READ hideCursor NOTIFY changed)
-    // T2-T5: the shape the tool asked for over its handles and during its
-    // drags (legacy VideoBox::SetCursor from the Visuals), a Qt::CursorShape;
-    // Qt::ArrowCursor otherwise.
     Q_PROPERTY(int pointerShape READ pointerShapeCursor NOTIFY changed)
-    // The tool's Line warning (empty for none or with VIDEO_VISUAL_WARNINGS_OFF).
     Q_PROPERTY(QString warning READ warning NOTIFY changed)
-    // The presenter draws the frame here (legacy m_BackBufferRect), from the
-    // frame's sourceRect (m_MainStreamRect, in frame pixels).
     Q_PROPERTY(QRectF videoRect READ videoRect NOTIFY geometryChanged)
     Q_PROPERTY(QRectF sourceRect READ sourceRect NOTIFY geometryChanged)
-    // The tool's numeric values (shown below the canvas): name, label, text, editable.
     Q_PROPERTY(QVariantList values READ values NOTIFY changed)
-    // T3: Esc has something to drop: an open gesture or a tool's pending step.
     Q_PROPERTY(bool escapable READ escapable NOTIFY changed)
-    // The batch picker.
     Q_PROPERTY(int batchCount READ batchCount NOTIFY changed)
-    // HY1: the Lines a value edit changes (the picked ones, else the active).
     Q_PROPERTY(int targetCount READ targetCount NOTIFY changed)
-    // HY1: the tool's last change while it can be done again with other
-    // values (tag, change, lines, values); empty otherwise.
     Q_PROPERTY(QVariantMap lastChange READ lastChange NOTIFY changed)
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
-    // VT1: counts the changes of what a value edits (the Document, the
-    // active Line, the picked Lines): a field's typed text is dropped then.
+    // MUST KILL: editTarget is a change counter, not a target
     Q_PROPERTY(int editTarget READ editTarget NOTIFY changed)
-    // The last text VIDEO_COPY_COORDS put on the clipboard.
     Q_PROPERTY(QString copied READ copied NOTIFY changed)
-    // T2-T4: the family's own options (legacy VideoToolbar's second row):
-    // name, kind ("toggle", "choice" or "action"), iconRole, tooltip, checked,
-    // enabled, choices, index. T4: its own signal, so the row is rebuilt only
-    // when it changes.
     Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
-    // T5: the "Vector shape editing" dialog while the drawing's shape list's
-    // "Edit" has it open (null otherwise).
     Q_PROPERTY(hikari::ui::ShapeEditor *shapeEditor READ shapeEditor NOTIFY shapeEditorChanged)
-    // T6: the "Tag editing" dialog while the all-tags tool's Edit has it open.
     Q_PROPERTY(hikari::ui::AllTagsEditor *tagsEditor READ tagsEditor NOTIFY tagsEditorChanged)
 public:
     using SessionProvider = std::function<application::EditSession *()>;
@@ -99,47 +61,25 @@ public:
                           QObject *parent = nullptr);
     ~VisualToolsController() override;
 
-    // Called after a gesture changed the Document (the shell refreshes).
     void setEdited(std::function<void()> edited) { m_edited = std::move(edited); }
-    // T2, T4: the video shows the open gesture's staged texts (legacy's dummy
-    // rendering, Visuals::RenderSubs) and the tool's own Lines (T4: the
-    // vector clip's mask, Visuals::AppendClipMask): called with the Document
-    // as it would be, or null when there is nothing to add (the committed
-    // Document again).
     void setPreview(std::function<void(const core::Document *)> preview) { m_preview = std::move(preview); }
-    // T2: HikariLog and the Grid's "Ignore filtering in some actions".
-    // The log (legacy HikariLog) and, NT1, the notices a tool gives
-    // (legacy's "Warning" box): both a warning toast titled toolName().
     void setLog(std::function<void(const QString &)> log) { m_log = std::move(log); }
     void setIgnoreFiltered(std::function<bool()> ignore) { m_ignoreFiltered = std::move(ignore); }
-    // VT3: the names (family, full, PostScript) of the fonts the video's
-    // renderer is given: its Script's attachments and the external fonts.
     void setLeasedFonts(const std::vector<std::string> &names);
-    // T3: the Line editor's selection in the edited text (FindTag's mode 0).
     void setEditorSelection(std::function<std::pair<long, long>()> selection)
     {
         m_editorSelection = std::move(selection);
     }
-    // T3: puts the Line editor's caret where a tool's edit left it.
     void setEditorSelectionPlacer(std::function<void(long, long)> place) { m_placeSelection = std::move(place); }
-    // The editing target, its content, active Line or format changed.
     void refresh();
-    // T5: the drawing's shape presets' file (shapes.toml in the user
-    // folder, CF2; legacy Config/ShapesSettings.txt). Without one the
-    // presets are kept in memory.
     void setShapesFile(std::shared_ptr<ListFile> file) { m_shapesFile = std::move(file); }
     const std::shared_ptr<ListFile> &shapesFile() const { return m_shapesFile; }
     ShapeEditor *shapeEditor() const { return m_shapeEditor; }
-    // T6: the all-tags tool's definitions' file (tags.toml in the user
-    // folder, CF2; legacy Config/AllTagsSettings.txt; without one they are
-    // kept in memory), which Lines the Grid shows, and the Line editor's
-    // hotkeys (the "Insert difference" keys the tool takes).
     void setAllTagsFile(std::shared_ptr<ListFile> file) { m_tagsFile = std::move(file); }
     const std::shared_ptr<ListFile> &allTagsFile() const { return m_tagsFile; }
     AllTagsEditor *tagsEditor() const { return m_tagsEditor; }
     void setShownLines(std::function<std::function<bool(core::LineId)>()> shown) { m_shownLines = std::move(shown); }
     void setEditorHotkey(std::function<std::string(int)> accel) { m_editorHotkey = std::move(accel); }
-    // Replaces a family's tool (tests; T2-T6 use makeVisualTool).
     void setTool(application::visual::Family family, std::unique_ptr<application::visual::VisualTool> tool);
     application::visual::VisualTool *tool() const;
     application::visual::BatchPicker &batchPicker() { return m_picker; }
@@ -149,7 +89,7 @@ public:
     int activeFamily() const { return static_cast<int>(m_family); }
     bool railEnabled() const { return m_railEnabled; }
     QVariantList overlay() const;
-    QString labelFamily() const; // the family the label font resolves to
+    QString labelFamily() const;
     int labelPixelSize() const;
     bool hideCursor() const;
     int pointerShapeCursor() const;
@@ -165,61 +105,32 @@ public:
     int editTarget() const { return m_editTarget; }
     QString copied() const { return m_copied; }
     QVariantList options() const { return m_options; }
-    // NT1: the active tool's name (the rail's), the title of its notices.
     QString toolName() const;
     int bells() const { return m_bells; }
 
-    // The video area's logical size (the presenter's), the panel below it
-    // and the window's device pixel ratio.
     Q_INVOKABLE void setViewport(qreal width, qreal height, qreal panelHeight, qreal devicePixelRatio);
-    // A pointer event over the video area, in its logical coordinates:
-    // kind 0 enter, 1 leave, 2 move, 3 press, 4 release, 5 wheel, 6 the
-    // second press of a double click (after its press); button a
-    // Qt::MouseButton; modifiers Qt::KeyboardModifiers.
+    // MUST KILL: kind is a magic int (0 enter, 1 leave, 2 move, 3 press, 4 release, 5 wheel, 6 double-click press)
     Q_INVOKABLE void pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps = 0);
-    // A key while the Video panel has focus: true when the tool used it.
     Q_INVOKABLE bool key(int key, int modifiers, bool release, bool autoRepeat);
-    // VT2: whether the tool takes the key ahead of the Video and Global
-    // bindings (VT2-arrow-nudge: its nudge's arrows), for the Video panel's
-    // ShortcutOverride.
     Q_INVOKABLE bool takesKey(int key, int modifiers) const;
-    // Esc: cancels the open gesture, if any (true then).
     Q_INVOKABLE bool escape();
-    // A rail button: legacy's toggle (the toggled family again goes back to
-    // the crosshair, VideoToolbar.cpp:209-210).
     Q_INVOKABLE void selectFamily(int family);
-    // VT2: a VIDEO_TOOL_* command chooses its family as its rail button does
-    // (true for one of them, whether or not the rail is enabled).
     Q_INVOKABLE bool runHotkey(const QString &action);
-    // VIDEO_COPY_COORDS at a logical position in the video area, or at the
-    // pointer (legacy wxGetMousePosition, VideoBox.cpp:1151): the last
-    // pointer event's position while the pointer is over the video, else
-    // the cursor's.
     Q_INVOKABLE QString copyCoordinates(qreal x, qreal y);
     Q_INVOKABLE QString copyCoordinatesAtCursor(QQuickItem *area);
-    // VT1: the inspector bar's number fields: a typed value or a scrub's
-    // release commits one step; a scrub's samples are staged until then
-    // (escape() drops them).
     Q_INVOKABLE bool setValue(const QString &name, const QString &text);
     Q_INVOKABLE bool scrubValue(const QString &name, const QString &text);
-    // The batch picker: the Grid's selected Lines, or nothing (the active Line).
     Q_INVOKABLE void pickBatch();
     Q_INVOKABLE void clearBatch();
-    // HY1: the value a drag or the wheel changes (◆); the last change done
-    // again with a value, in place of its step; the card closed.
     Q_INVOKABLE bool markValue(const QString &name);
     Q_INVOKABLE bool editLastChange(const QString &name, const QString &text);
     Q_INVOKABLE void dismissLastChange();
-    // A toggle (0/1), a choice's index or an action (1) of the family's options.
+    // MUST KILL: value is a toggle's 0/1, a choice's index, or 1 for an action
     Q_INVOKABLE bool setOption(const QString &name, int value);
 
-    // T4: the subtitles the video renders for a Document: as the preview
-    // gives it (the staged texts and the tool's Lines added), encoded by
-    // `encode` (E5: the renderer's options), else as saved.
     using Encoder = std::function<std::vector<std::byte>(const core::Document &)>;
     std::vector<std::byte> subtitles(const core::Document &document, const Encoder &encode = {}) const;
 
-    // VisualHost.
     const application::visual::VideoView &view() const override { return m_view; }
     const application::EditSession *session() const override { return m_session ? m_session() : nullptr; }
     std::optional<core::LineId> activeLine() const override;
@@ -255,16 +166,9 @@ public:
     std::string editorHotkey(int id) const override;
     bool undoStep(std::uint64_t revision) override;
 
-    // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
     const application::visual::VideoView &videoView() const { return m_view; }
-    // V4: legacy RendererVideo::HasVisual(true): a tool other than the
-    // crosshair, which keeps the wheel and the clicks to itself.
     bool hasNonDefaultTool() const { return tool() && m_family != application::visual::Family::Crosshair; }
-    // V4: the zoom or the aspect ratio changed the view (RendererVideo::Zoom,
-    // ResetZoom, UpdateVideoWindow): the tools take it, and a tool other
-    // than the clips and the drawing starts again (SetCurVisual,
-    // RendererVideo.cpp:785-788 and 806-811).
     void viewChanged();
     std::optional<application::CommandRefusal> lastRefusal() const { return m_lastRefusal; }
 
@@ -280,12 +184,9 @@ private:
     application::EditSession *editingSession() const { return m_session ? m_session() : nullptr; }
     void syncGeometry();
     void resetTool();
-    // Visuals::Draw with nothing to show: blockevents, and the arrow back.
     void block(application::visual::VisualTool &tool);
-    // A tool's options and values as QML takes them.
     QVariantList optionMaps(const application::visual::VisualTool &t) const;
     QVariantList valueMaps(const application::visual::VisualTool &t) const;
-    // VT1: setValue and scrubValue's tool call; a refused step resets the tool.
     bool editValue(application::visual::VisualTool &t, const QString &name, const QString &text,
                    application::visual::ValueEdit edit);
     application::visual::LineWarning currentWarning() const;
@@ -295,7 +196,7 @@ private:
     void saveShapes() const;
     void openTagsEditor();
     void saveAllTags() const;
-    std::u16string activeLineText() const; // the editors' active Line
+    std::u16string activeLineText() const;
 
     VideoController &m_video;
     SettingsStore &m_settings;
@@ -304,7 +205,7 @@ private:
     std::function<void(const core::Document *)> m_preview;
     std::function<void(const QString &)> m_log;
     std::function<bool()> m_ignoreFiltered;
-    std::set<std::string> m_leasedFonts; // ASCII lower case
+    std::set<std::string> m_leasedFonts;
     std::function<std::pair<long, long>()> m_editorSelection;
     std::function<void(long, long)> m_placeSelection;
     mutable QtTextMeasurePort m_measure;
@@ -317,30 +218,31 @@ private:
     application::visual::BatchPicker m_picker;
     std::optional<application::CommandRefusal> m_lastRefusal;
     bool m_railEnabled = true;
-    bool m_overPicture = false; // the last pointer event was over the picture (the view's video rectangle)
-    std::optional<QPointF> m_lastPointer; // the last pointer event's position, until it leaves
+    bool m_overPicture = false;
+    std::optional<QPointF> m_lastPointer;
     QFont m_labelFont;
     QString m_copied;
-    bool m_valueScrub = false; // a scrub's samples staged the open gesture (VT1)
+    bool m_valueScrub = false;
     qreal m_logicalWidth = 0, m_logicalHeight = 0, m_logicalPanel = 0;
+    // MUST KILL: commitGesture and undoStep also set m_seenRevision so refresh() keeps the tool's state
     std::uint64_t m_seenRevision = 0;
     const void *m_seenSession = nullptr;
     std::optional<core::LineId> m_seenActive;
     int m_editTarget = 0;
-    std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft; // the active Line's draft text, translation
+    std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft;
     std::int64_t m_seenTime = -1;
-    QString m_frameWarning; // the warning the last video change notified
-    QVariantList m_options; // the tool's buttons as last shown
+    QString m_frameWarning;
+    QVariantList m_options;
     int m_bells = 0;
-    std::u8string m_previewKey; // what the preview showed last
+    std::u8string m_previewKey;
     std::shared_ptr<ListFile> m_shapesFile;
-    mutable std::vector<application::visual::ShapePreset> m_shapes; // VideoToolbar::shapes
+    mutable std::vector<application::visual::ShapePreset> m_shapes;
     QPointer<ShapeEditor> m_shapeEditor;
     std::shared_ptr<ListFile> m_tagsFile;
-    mutable std::vector<application::visual::AllTagsSetting> m_allTags; // VideoToolbar::tags
+    mutable std::vector<application::visual::AllTagsSetting> m_allTags;
     QPointer<AllTagsEditor> m_tagsEditor;
     std::function<std::function<bool(core::LineId)>()> m_shownLines;
     std::function<std::string(int)> m_editorHotkey;
 };
 
-} // namespace hikari::ui
+}

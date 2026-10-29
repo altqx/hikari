@@ -10,22 +10,18 @@ namespace hikari::ui {
 
 namespace {
 
-// A field that takes typing (TextInput, TextEdit and the controls made of
-// them while editable): Qt Quick sets the flag only while it is not read-only.
+// Qt Quick sets ItemAcceptsInputMethod only while a field is editable.
 bool takesText(const QQuickItem *item)
 {
     return item && (item->flags() & QQuickItem::ItemAcceptsInputMethod);
 }
 
-// A control the keyboard moved to (Tab, F6, a menu's keys): Qt Quick
-// Controls' visualFocus. A click leaves it false.
+// visualFocus is Qt Quick Controls' keyboard-only focus; a click leaves it false.
 bool keyboardFocused(const QQuickItem *item)
 {
     return item && item->property("visualFocus").toBool();
 }
 
-// A shortcut recorder while it records (AM1's Automation panel row): it
-// takes every key as the shortcut being set.
 bool recordsKeys(const QQuickItem *item)
 {
     return item && item->property("recordsKeys").toBool();
@@ -44,7 +40,7 @@ bool sameKey(const QKeyEvent *event, int key, int modifiers)
     return event->key() == key && int(event->modifiers()) == modifiers;
 }
 
-} // namespace
+}
 
 KeyRouter::KeyRouter(QObject *parent) : QObject(parent)
 {
@@ -100,8 +96,6 @@ void KeyRouter::setHovered(QQuickItem *panel)
     emit hoveredPanelChanged();
 }
 
-// The handler's ShortcutOverride answer: whether it binds the key. The
-// shell's handlers only look the key up there; nothing runs.
 bool KeyRouter::takes(QQuickItem *target, const QKeyEvent *event)
 {
     if (!target)
@@ -126,7 +120,7 @@ bool KeyRouter::shortcutOverride(QQuickWindow *window, QKeyEvent *event)
 {
     m_routed.reset();
     if (!event->isAutoRepeat())
-        m_held.erase(event->key()); // a release that never came
+        m_held.erase(event->key());
     hoverAtPointer();
     QQuickItem *focus = window->activeFocusItem();
     if (takesText(focus) || keyboardFocused(focus) || recordsKeys(focus) || inPopup(focus))
@@ -153,9 +147,7 @@ bool KeyRouter::shortcutOverride(QQuickWindow *window, QKeyEvent *event)
             return route(m_fallbackTarget);
     }
     if (hovered && focused && takes(focused->keyTarget, event)) {
-        // The focused panel's binding, out of context: the Global bindings
-        // (the shortcut map, which runs when the override is not accepted)
-        // may take the key; the panel's handler does not see it.
+        // Unaccepted, the override leaves the key to Qt's shortcut map (the Global bindings).
         m_routed = Routed{event->key(), int(event->modifiers()), nullptr};
         event->ignore();
         return true;
@@ -175,8 +167,6 @@ bool KeyRouter::keyPress(QKeyEvent *event)
         QKeyEvent copy(event->type(), event->key(), event->modifiers(), event->nativeScanCode(),
                        event->nativeVirtualKey(), event->nativeModifiers(), event->text(), event->isAutoRepeat(),
                        event->count());
-        // The routed handler may focus its own panel (legacy SetFocus in the
-        // audio commands); a key routed past the focus moves no focus.
         QQuickWindow *window = routed.target->window();
         const QPointer<QQuickItem> focus = window ? window->activeFocusItem() : nullptr;
         const Panel *from = panelOf(focus);
@@ -234,10 +224,7 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
         return false;
     }
     case QEvent::ShortcutOverride: {
-        // Qt Quick's delivery agent offers the override to the focus item,
-        // then to its parents until one accepts. The router answers at the
-        // focus item; a key it keeps from the focused panel stays away from
-        // the parents too, unaccepted, so the shortcut map still runs.
+        // Qt Quick offers the override to the focus item, then to its parents until one accepts.
         auto *item = qobject_cast<QQuickItem *>(watched);
         QQuickWindow *window = item ? item->window() : qobject_cast<QQuickWindow *>(watched);
         if (!window)
@@ -249,7 +236,7 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
             return true;
         }
         if (!item && window->activeFocusItem())
-            return false; // the agent brings it to the focus item next
+            return false; // Qt Quick brings it to the focus item next
         m_withheld = nullptr;
         if (!shellWindow(window))
             return false;
@@ -259,17 +246,12 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
         return filtered;
     }
     case QEvent::KeyPress: {
-        // A key from the platform comes to the window after its override.
-        // A posted key (Spix, a synthesized press) has passed the window
-        // when the agent offers the override to the focus item, so the
-        // route waits for the press at the item; left over, it would take
-        // the next press of the same key.
+        // A posted key reaches the focus item without passing the window, so the route waits there.
         if (!qobject_cast<QQuickWindow *>(watched) && !(m_routed && qobject_cast<QQuickItem *>(watched)))
             return false;
         return keyPress(static_cast<QKeyEvent *>(event));
     }
     case QEvent::KeyRelease: {
-        // Its press's way (a posted release comes to the item, as a press).
         const auto *key = static_cast<QKeyEvent *>(event);
         if (!qobject_cast<QQuickWindow *>(watched)
             && !(m_held.contains(key->key()) && qobject_cast<QQuickItem *>(watched)))
@@ -281,4 +263,4 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
     }
 }
 
-} // namespace hikari::ui
+}

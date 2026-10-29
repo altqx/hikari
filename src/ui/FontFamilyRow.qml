@@ -1,10 +1,3 @@
-// SY3: a font list's row, the family's name drawn in its own face
-// (FontFaces): a symbol font, or a face without the letters of its name,
-// draws the name in the interface font and a sample after it, and a family the system's font
-// database lacks (an external font only the renderer leases) draws its name
-// in the interface font. Rows have one height whatever the face's metrics,
-// and clip what a tall face draws beyond it. PU3: `note` (the font
-// picker's catalogs of the family) stands muted at the trailing edge.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
@@ -14,7 +7,7 @@ ItemDelegate {
     id: row
     required property string family
     property string note: ""
-    // Asked again when the fonts change (FontFaces.revision).
+    // Compared, not just read: a compiled binding drops an unused read and its dependency.
     readonly property var face: FontFaces.revision >= 0 ? FontFaces.face(family) : ({})
     implicitHeight: 28
     clip: true

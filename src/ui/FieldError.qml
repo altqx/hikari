@@ -1,7 +1,3 @@
-// PU5 (#307): why a field's value is refused, under the field, in the
-// danger colour with the error icon (visual-language.md, "Invalid value":
-// never by colour alone). Hidden while there is nothing to say; the field
-// names it as its accessible description.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

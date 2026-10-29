@@ -2,23 +2,9 @@ pragma Translator: "HikariSub.Video"
 import QtQuick
 import Hikari.Ui
 
-// V6: legacy VideoToolbar's two lists (VideoToolbar.cpp:130-151): "Move video
-// to selected line on:" (MOVE_VIDEO_TO_ACTIVE_LINE, video.moveToActiveLine)
-// and "On moving to another line play:" (VIDEO_PLAY_AFTER_SELECTION,
-// video.playAfterSelection). A choice is stored at once, as legacy's
-// Options.SetInt and SaveOptions did; the application reads it when the
-// active Line changes (EditBox::SetLine), on a Grid click or double click
-// (SetVideoLineTime) and after an edit (ShowEditOnVideo).
-//
-// VF1 (#288): the lists left the panel. This is their choices and texts, for
-// the Video panel's menu ("Seek on" and "Then play", radio items) and the
-// Settings dialog's Video page; `seek` and `play` follow the stored choices,
-// wherever they are made.
 QtObject {
     id: follow
     required property SettingsStore settings
-    // The short names (the menu's), and legacy's labels (Settings' and the
-    // assistive name).
     readonly property string seekName: qsTr("Seek on")
     readonly property string playName: qsTr("Then play")
     readonly property string seekLabel: qsTr("Move video to selected line on:")

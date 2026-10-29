@@ -5,21 +5,14 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// DG1 (#222): Help › Credits on the dialog frame, redone for HikariSub
-// (the owner's decision of 2026-10-21, DG1-credits-rewrite): who made it,
-// who translated it, and the components it is built with (vcpkg.json, and
-// libass's text stack), each with its copyright holder and licence, in a
-// list that scrolls. CSRI and VSFilter show where they are part of the
-// build (Application.includesCsri, includesVsfilter). Fixed size, modeless.
 DialogWindow {
     id: credits
     objectName: "creditsDialog"
-    required property var app // Application: includesCsri, includesVsfilter
+    required property var app
     dialogId: "credits"
     title: qsTr("Credits")
     defaultButton: ok
 
-    // Name, copyright holder, licence (proper names, not translated).
     readonly property var components: {
         const all = [
             ["Qt", "The Qt Company Ltd. and other contributors", "LGPL 3"],
@@ -35,14 +28,11 @@ DialogWindow {
             ["ICU", "Unicode, Inc. and others", "Unicode License"],
             ["Hunspell", "László Németh and others", "MPL 1.1, GPL 2 or LGPL 2.1"],
             ["PortAudio", "Ross Bencina, Phil Burk and contributors", "MIT"],
-            // KA2-slowed-playback: the slowed audio box keeps its pitch
             ["SoundTouch", "Olli Parviainen", "LGPL 2.1 or later"],
             ["curl", "Daniel Stenberg and contributors", "curl License"],
             ["PCRE2", "University of Cambridge and others", "BSD 3-Clause"],
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
-            // GR1: harper-ls, the grammar checker (its crates' licences ship beside it)
             ["Harper", "Automattic and Harper contributors", "Apache 2.0"],
-            // DK1: the bundled spelling dictionaries (licenses/dictionaries holds their notices)
             ["en_US Hunspell dictionary", "Kevin Atkinson, Geoff Kuenning and others", "LGPL and BSD"],
             ["sjp.pl Polish dictionary", "sjp.pl contributors", "GPL 2, LGPL 2.1, MPL 1.1, Apache 2.0 or CC BY 4.0"],
             ["th_TH Hunspell dictionary", "NECTEC (LEXiTRON) and libthai contributors", "LGPL"],
@@ -79,7 +69,6 @@ DialogWindow {
         Rectangle {
             color: Theme.field
             border.width: 1
-            // The keyboard on the list (Tab, then Up and Down scroll it): the focus colour.
             border.color: list.activeFocus ? Theme.focus : Theme.line
             Layout.fillWidth: true
             Layout.preferredHeight: 250
@@ -97,7 +86,6 @@ DialogWindow {
                 Accessible.role: Accessible.List
                 Accessible.name: qsTr("Built with")
                 ScrollBar.vertical: ScrollBar { policy: list.contentHeight > list.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded }
-                // (In an item: the view places its delegates at its left edge.)
                 delegate: Item {
                     id: entry
                     required property var modelData

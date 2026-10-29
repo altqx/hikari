@@ -1,9 +1,3 @@
-// PU3 (#305): a filter chip (the font picker's catalog and characters): a
-// rounded button with its icon, its text and a chevron, opening the menu or
-// popover that sets the filter. While the filter narrows the list (`on`)
-// it is filled in `select` with an accent boundary and bold text; at rest
-// `raised` with a `line` boundary, accent under the pointer. Keyboard focus
-// is the 1-wide ring (FocusRing).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

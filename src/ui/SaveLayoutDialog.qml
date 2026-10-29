@@ -5,27 +5,16 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// WS3 (#217): Save layout as…: the current Document tab's arrangement under
-// a name, a saved layout every tab can use. The name starts as the tab's
-// saved layout's, so saving again replaces it; a name in use (in any case)
-// says so and the button reads Replace. A preset's name, an empty name or one
-// too long is refused with the reason under the field.
-// PU7 (#309): opened from menus (the layout switcher's, View > Layout), so a
-// compact window on DG1's frame by the small forms rule, titled after the
-// command (PU7-layout-windows).
 DialogWindow {
     id: dialog
     objectName: "saveLayoutDialog"
-    required property var layouts // WorkspaceLayoutController
+    required property var layouts
     title: qsTr("Save layout as")
     dialogId: "saveLayout"
-    // Modal to the main window, as the Dialog was: Save takes the arrangement
-    // shown, which must be the one the dialog opened for.
     modal: true
     initialFocus: nameField
     defaultButton: saveButton
-    // Both read the saved layouts too: re-evaluated when they change, not
-    // only when the name does (the dialog opens again on the same name).
+    // Invokable results are not tracked: reading savedLayouts re-evaluates these when the layouts change.
     readonly property string problem: layouts.savedLayouts && layouts.layoutNameProblem(nameField.text)
     readonly property string existing: layouts.savedLayouts && layouts.savedLayoutNamed(nameField.text)
 
@@ -47,13 +36,13 @@ DialogWindow {
             id: nameField
             objectName: "saveLayoutName"
             Layout.preferredWidth: 260
-            maximumLength: 64 // WorkspaceLayoutController::kMaximumNameLength
+            // MUST KILL: maximumLength 64 duplicates WorkspaceLayoutController::kMaximumNameLength
+            maximumLength: 64
             Accessible.name: qsTr("Name")
             Accessible.description: dialog.problem
         }
     }
     RowLayout {
-        // Nothing to say while the field is empty: the button is off.
         visible: note.text.length > 0
         spacing: 6
         Layout.leftMargin: 64

@@ -1,13 +1,3 @@
-// E4: the Line editor's counters (legacy EditBox's BoxSizer5,
-// EditBox.cpp:216-237): each wrap's characters and the characters per second
-// (EditBox::UpdateChars, warned over 43 characters a wrap or three wraps,
-// and over 15 characters per second; empty for a comment).
-// LE2: legacy's Time and Frames radios (EDITBOX_TIMES_TO_FRAMES_SWITCH) left
-// this row for Settings > Editor and the Video panel's "⋯" menu.
-// LE1 (#233): at the tag strip's end, each as its name (the Grid's column
-// names, Wraps and CPS) and the numbers, the limit in the secondary text
-// colour. Over a limit the numbers take the warning colour and a warning
-// mark, so the colour is not the only sign (LE1-counters).
 pragma Translator: "HikariSub.Editor"
 import QtQuick
 import QtQuick.Controls
@@ -21,7 +11,7 @@ RowLayout {
 
     component Counter: RowLayout {
         id: counter
-        // "5/10/43": the counts, then the limit after the last slash.
+        // MUST KILL: text packs the counts and the limit into one slash string ("5/10/43")
         property string text
         property string name
         property bool warning
@@ -40,7 +30,6 @@ RowLayout {
             color: Theme.warning
             accentColor: Theme.warning
         }
-        // The counter reads as one text (its name and numbers).
         Label {
             text: counter.name
             color: Theme.muted
@@ -71,7 +60,6 @@ RowLayout {
         objectName: "charsCounter"
         text: counters.editor.charsText
         name: qsTranslate("HikariSub.Grid", "Wraps")
-        // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role.
         warning: counters.editor.charsWarning
         description: qsTr("Number of characters in each line.\nNo more than 43 characters per line (maximum 2 lines).")
     }

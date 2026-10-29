@@ -1,8 +1,3 @@
-// O3/PU7: the import's review, shared by Import legacy settings (step 2)
-// and FR1's Getting started (its Import page): the Conflicts / All filter
-// and the search, the records with their tick, legacy and current value and
-// status, the current record's details, and Proposed choice / All
-// conflicts / None.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.SettingsImport"
 import QtQuick
@@ -13,17 +8,12 @@ import Hikari.Ui
 ColumnLayout {
     id: review
     required property var importer
-    // The window it is in (DialogWindow), for its fonts.
     required property var window
     spacing: 6
 
-    // Conflicts (the rows that can be chosen) or every record.
     property bool conflictsOnly: true
     property string search: ""
     readonly property var conflicts: importer.rows.filter(r => r.selectable)
-    // The rows the filter and the search show. importer.rows changes only
-    // with the plan; choosing rows changes importer.chosenIds, so the list
-    // keeps its delegates and where it is scrolled.
     readonly property var shownRows: {
         const needle = search.trim().toLowerCase()
         return (conflictsOnly ? conflicts : importer.rows).filter(r => needle.length === 0
@@ -33,7 +23,6 @@ ColumnLayout {
                                       ? shownRows[rowList.currentIndex] : null
     readonly property int chosenCount: importer.chosenIds.length
 
-    // Conflicts, no search, the first row current.
     function reset() {
         conflictsOnly = true
         search = ""
@@ -42,7 +31,6 @@ ColumnLayout {
     function showFirst() {
         rowList.currentIndex = shownRows.length > 0 ? 0 : -1
     }
-    // The status a record shows under All.
     function statusOf(row) {
         if (row.selectable)
             return qsTr("Conflict")
@@ -54,11 +42,10 @@ ColumnLayout {
             return qsTr("Unresolved")
         case "read":
             return qsTr("File read")
-        default: // superseded, excluded, retired
+        default:
             return qsTr("Not here")
         }
     }
-    // Sets the tick of every conflict shown.
     function chooseShown(on) {
         for (const row of shownRows)
             if (row.selectable)
@@ -132,7 +119,6 @@ ColumnLayout {
                 Accessible.role: Accessible.List
                 Accessible.name: qsTr("Settings to review")
                 ScrollBar.vertical: ScrollBar {}
-                // Space ticks the current row.
                 Keys.onSpacePressed: {
                     const row = review.currentRow
                     if (row && row.selectable)
@@ -164,12 +150,9 @@ ColumnLayout {
                             focusPolicy: Qt.NoFocus
                             function isChosen() { return review.importer.chosenIds.indexOf(rowItem.modelData.id) >= 0 }
                             checked: isChosen()
-                            // (Ticking leaves the current row and the list where
-                            // they are; a click on the row makes it current.)
                             onToggled: {
                                 review.importer.setChosen(rowItem.modelData.id, checked)
-                                // The click broke the binding: "Proposed choice" and
-                                // "All conflicts" still reach this row.
+                                // The click broke the checked binding.
                                 checked = Qt.binding(isChosen)
                             }
                             Accessible.name: rowItem.modelData.destination || rowItem.modelData.key
@@ -227,9 +210,6 @@ ColumnLayout {
             color: Theme.muted
         }
     }
-    // The current row's details: its file and key, where it goes, why.
-    // Three lines high whatever the row, so choosing one never moves
-    // the table above it.
     Rectangle {
         color: Theme.raised
         border.color: Theme.line

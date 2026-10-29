@@ -1,13 +1,3 @@
-// TS1 (#249): the Shift times panel (legacy ShiftTimes, F5/F6), redesigned
-// as a MuseScore 4 dock form (docs/research/musescore-shell.md §5 and §7;
-// the owner approved the mockup on 2026-10-19). Legacy's two modes come
-// back as a choice at the top: Shift shows the profile, the amount, the
-// Lines and the video/audio options; Post processor shows the Lines and
-// the lead-in/lead-out, continuous and keyframe options (POSTPROCESSOR_ON's
-// 16, the panel shown). Sections collapse (shiftTimes.collapsedSections).
-// The run button stays at the bottom with the form scrolling above it; a
-// refusal shows over it in `danger`. Every value is the controller's, so the
-// options, profiles and the shift itself are as before.
 pragma Translator: "HikariSub.TimeShift"
 import QtQuick
 import QtQuick.Controls
@@ -18,13 +8,9 @@ Item {
     id: panel
     required property ShiftTimesController shiftTimes
     required property var app
-    // ShiftTimes::Contents: "Move the marker to video time" needs a video
-    // (VideoBox state not None), "... to audio time" the audio mark (A3).
     property bool hasVideo: false
     property bool audioHasMark: false
-    // The last run's refusal (Application::shiftTimes), empty after a run.
     property alias message: shiftMessage.text
-    // GLOBAL_SHIFT_TIMES from the button.
     signal run()
 
     readonly property var settings: shiftTimes.settings
@@ -48,7 +34,6 @@ Item {
             list.push(id)
         shiftTimes.collapsedSections = list
     }
-    // Legacy TimeCtrl: h:mm:ss.cc, or the frame number while frames show.
     function timeText(ms) {
         const cs = Math.floor(ms / 10) % 100, s = Math.floor(ms / 1000) % 60
         const m = Math.floor(ms / 60000) % 60, h = Math.floor(ms / 3600000)
@@ -74,7 +59,7 @@ Item {
                 set("timeMs", ms)
         }
     }
-    // The field's text is set, not bound: its mouse steps assign it.
+    // Set, not bound: the field's mouse steps assign its text, which would break a binding.
     onSettingsChanged: if (shiftTime.text !== amountText()) shiftTime.text = amountText()
     Component.onCompleted: shiftTime.text = amountText()
 
@@ -96,7 +81,7 @@ Item {
     component HalfColumn: ColumnLayout {
         spacing: 8
         Layout.fillWidth: true
-        Layout.preferredWidth: 1 // two share a row evenly
+        Layout.preferredWidth: 1 // equal shares with fillWidth
         Layout.alignment: Qt.AlignBottom
     }
 
@@ -105,7 +90,6 @@ Item {
         objectName: "shiftScroll"
         anchors { left: parent.left; right: parent.right; top: parent.top; bottom: footer.top }
         clip: true
-        // The scroll bar shows while the form is taller than the panel.
         ScrollBar.vertical.policy: contentHeight > height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
         contentWidth: availableWidth
@@ -127,7 +111,6 @@ Item {
                 onActivated: index => panel.setBit("postprocessor", 16, index === 1)
             }
 
-            // Profiles (legacy "Profile editing"), in Shift mode as in legacy.
             ColumnLayout {
                 visible: !panel.postprocessorMode
                 spacing: 8
@@ -204,8 +187,7 @@ Item {
                     text: qsTr("Tag times")
                     checked: panel.settings.tagTimes
                     ToolTip.visible: hovered
-                    // The tag names as arguments: lupdate reads "\\" in a QML
-                    // string as one backslash and keys the text wrongly.
+                    // lupdate reads "\\" in a QML string as one backslash and keys the text wrongly.
                     ToolTip.text: qsTr("Shifts %1, %2, and %3 tag times\nso their positions on video do not change\n(slows down time shifting)")
                                       .arg("\\move").arg("\\t").arg("\\fad")
                     onToggled: panel.set("tagTimes", checked)
@@ -314,7 +296,6 @@ Item {
                 }
             }
 
-            // F6: the postprocessor's options (legacy CreateControls(false)).
             FormSection {
                 objectName: "ppLeadSection"
                 visible: panel.postprocessorMode
@@ -464,7 +445,6 @@ Item {
         }
     }
 
-    // The run button, under the scrolling form; a refusal over it.
     ColumnLayout {
         id: footer
         anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
@@ -498,15 +478,9 @@ Item {
         }
     }
 
-    // Legacy GetCheckedElements (Stylelistbox.cpp:72), now PK1's Choose
-    // styles popover: the ticks go into the field at once, joined by commas,
-    // and shift by styles (ShiftTimes::OnAddStyles); Esc puts the field back
-    // (approved PK1-choose-styles-live: legacy's Cancel emptied it).
     ChooseStyles {
         id: stylesPopup
         objectName: "shiftStylesPopup"
-        // Esc puts the settings back as they were, the lines to shift
-        // included (Codex review).
         property var before: null
         onChanged: (names, reverted) => {
             if (reverted && before) {

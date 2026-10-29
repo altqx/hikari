@@ -1,6 +1,3 @@
-// K1: an icon-only button. Its text stays its accessible name (and is not
-// drawn); the tooltip shows `tip`, by default that text. The icon takes the
-// disabled colour with the button; hover and press shade the button's panel.
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui

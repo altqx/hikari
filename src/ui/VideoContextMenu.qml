@@ -3,41 +3,13 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// V4: the video's context menu, legacy VideoBox::ContextMenu
-// (VideoBox.cpp:921-1059) in its order. Each Video window item shows its
-// binding; Shift alone with a click maps that hotkey for the Video window
-// instead of running it (legacy maps the ids from 2000 to 2099,
-// VideoBox.cpp:1027-1033: not the Global ids, the recent files, the
-// monitors or the open commands).
-//
-// V5: "Full screen" / "Exit full screen" (VIDEO_FULL_SCREEN, "F" or
-// "Escape" unless it has a binding of its own), one entry per monitor after
-// the first ("Open in full screen on monitor %i", in fullscreen "Switch full
-// screen to monitor %i", numbered from 2) and "Open editor" (legacy
-// GLOBAL_EDITOR's VideoBox::OpenEditor, fullscreen only, with no binding since
-// WS3 retired the command) after Stop; "Copy video position" only out of fullscreen;
-// "Show / hide progress bar" in fullscreen only. The fullscreen window has
-// its own instance (`itemPrefix` names its items). The root's id is not
-// `menu`: inside a delegate that name is the MenuItem's own `menu` property
-// (the submenu holding it), which shadows an id of the outer context.
-//
-// V3 (VideoBox.cpp:977-1016): after the separator, "Remove video" as
-// "Unload video" (VIDEO_DELETE_FILE, V3-unload-video), W1's DirectShow
-// "Filters", then each stream as a flat item, a separator before each new
-// stream kind, and after a separator each chapter as "<name>\t[<time>]",
-// the time in the binding column. The Video menu has them too
-// (V3-video-menu-entries).
 ShellMenu {
+    // Not `menu`: a MenuItem delegate's own `menu` property would shadow that id.
     id: videoMenu
     objectName: "videoContextMenu"
-    // Main's root: video, videoView, videoFullscreen, visualTools, hotkeys,
-    // hotkeyGesture, boundKeys, openSubtitles, app.
     required property var shell
-    // Where the menu opened, in the video area (VIDEO_COPY_COORDS copies there).
     property point at
     property var recent: ({ subtitles: [], videos: [] })
-    // V5: the items' objectName prefix, and the monitors when it opened
-    // (GetMonitorRect1 on each ContextMenu).
     property string itemPrefix: "videoMenu"
     property int monitors: 1
     readonly property bool fullscreen: shell.videoView.fullscreen
@@ -45,9 +17,7 @@ ShellMenu {
     signal openSubtitlesRequested()
     signal aspectRatioRequested()
 
-    // W1: the DirectShow graph's filters (empty unless DirectShow plays the video).
     property var filters: []
-    // V3: the video's streams and chapters when it opened.
     property var streams: []
     property var chapters: []
     onAboutToShow: {
@@ -58,11 +28,11 @@ ShellMenu {
         chapters = shell.video.hasVideo ? shell.video.chapters() : []
     }
 
+    // MUST KILL: boundKeys and hotkeyGesture take a magic context int (3 Video window, 0 Global)
     function keys(symbol) {
         const key = videoMenu.shell.boundKeys(symbol, 3)
         return key.length ? "\t" + key : ""
     }
-    // VIDEO_HOTKEY ids: Shift alone maps the Video window's hotkey.
     function gesture(symbol) {
         return videoMenu.shell.hotkeyGesture(symbol, 3)
     }
@@ -76,7 +46,6 @@ ShellMenu {
     ShellMenuItem {
         iconRole: "copy-position"
         objectName: videoMenu.itemPrefix + "CopyCoords"
-        // `if (!m_IsFullscreen && editor)`
         visible: !videoMenu.fullscreen
         height: visible ? implicitHeight : 0
         text: qsTr("Copy video position") + videoMenu.keys("VIDEO_COPY_COORDS")
@@ -96,7 +65,6 @@ ShellMenu {
         enabled: videoMenu.shell.video.playing
         onTriggered: if (!videoMenu.gesture("VIDEO_STOP")) videoMenu.shell.video.stop()
     }
-    // V5 (VideoBox.cpp:934-950).
     ShellMenuItem {
         id: fullScreenItem
         objectName: videoMenu.itemPrefix + "FullScreen"
@@ -187,7 +155,6 @@ ShellMenu {
         enabled: videoMenu.fullscreen
         onTriggered: if (!videoMenu.gesture("VIDEO_HIDE_PROGRESS_BAR")) videoMenu.shell.videoView.toggleProgressBar()
     }
-    // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
     ShellMenuItem {
         iconRole: "render-cost"
         objectName: videoMenu.itemPrefix + "RenderCost"
@@ -211,7 +178,7 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "CopySubbedFrame"
-        iconRole: "edit-copy" // a copy to the clipboard, as Copy in the Grid and text menus
+        iconRole: "edit-copy"
         text: qsTr("Copy frame with subtitles to clipboard") + videoMenu.keys("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
@@ -225,7 +192,7 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "CopyFrame"
-        iconRole: "edit-copy" // a copy to the clipboard, as Copy in the Grid and text menus
+        iconRole: "edit-copy"
         text: qsTr("Copy frame to clipboard") + videoMenu.keys("VIDEO_COPY_FRAME_TO_CLIPBOARD")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")
@@ -239,11 +206,6 @@ ShellMenu {
         enabled: videoMenu.shell.video.loaded
         onTriggered: if (!videoMenu.gesture("VIDEO_DELETE_FILE")) videoMenu.shell.video.unloadVideo()
     }
-    // W1: legacy "Filters" (VideoBox.cpp:981-990, 1049-1052): while
-    // DirectShow plays the loaded video, the graph's filters in order, each
-    // enabled when it has property pages; choosing one opens them where the
-    // menu opened (FilterConfig), once the menu has closed. No submenu
-    // without filters.
     Instantiator {
         model: videoMenu.filters.length > 0 ? 1 : 0
         delegate: ShellMenu {
@@ -260,7 +222,6 @@ ShellMenu {
                     text: modelData.name
                     enabled: modelData.enabled
                     onTriggered: {
-                        // Read now; the modal frame opens once the menu has closed.
                         const app = videoMenu.shell.app
                         const name = modelData.name
                         const at = videoMenu.at
@@ -275,12 +236,6 @@ ShellMenu {
         onObjectAdded: (index, object) => videoMenu.insertMenu(videoMenu.indexOfItem(unloadItem) + 1, object)
         onObjectRemoved: (index, object) => videoMenu.removeMenu(object)
     }
-    // The streams (VideoBox.cpp:997-1008, EnableStream at 1042-1045): the
-    // video's audio tracks, the one general playback plays checked. The
-    // rewrite always has the editor, so no subtitle stream is listed (legacy
-    // stopped at the first with the editor on). One kind: one separator.
-    // The entries are made per row and keep across openings, reading the
-    // rows each opening takes.
     MenuSeparator {
         id: streamsSeparator
         objectName: videoMenu.itemPrefix + "StreamsSeparator"
@@ -296,7 +251,7 @@ ShellMenu {
             text: row.label ?? ""
             checkable: true
             checked: row.checked === true
-            keepsMenuOpen: false // ITEM_RADIO
+            keepsMenuOpen: false
             onTriggered: {
                 videoMenu.shell.video.selectStream(index)
                 checked = Qt.binding(() => row.checked === true)
@@ -305,8 +260,6 @@ ShellMenu {
         onObjectAdded: (index, object) => videoMenu.insertItem(videoMenu.indexOfItem(streamsSeparator) + 1 + index, object)
         onObjectRemoved: (index, object) => videoMenu.removeItem(object)
     }
-    // The chapters (VideoBox.cpp:1009-1016, Seek at 1046-1047), the current
-    // one checked.
     MenuSeparator {
         id: chaptersSeparator
         objectName: videoMenu.itemPrefix + "ChaptersSeparator"
@@ -322,7 +275,7 @@ ShellMenu {
             text: (row.label ?? "") + "\t" + (row.time ?? "")
             checkable: true
             checked: row.checked === true
-            keepsMenuOpen: false // ITEM_RADIO
+            keepsMenuOpen: false
             onTriggered: {
                 videoMenu.shell.video.seekChapter(index)
                 checked = Qt.binding(() => row.checked === true)

@@ -1,18 +1,3 @@
-// F3, PU6 (#308): legacy SpellCheckerDialog "Spellchecker"
-// (GLOBAL_OPEN_SPELLCHECKER) as the Spellchecker panel, a dock along the
-// bottom: the misspelled word, its Line and the text around it, its
-// replacement, the suggestions, and Replace / Replace all / Ignore / Ignore
-// All / Add to dictionary. Enter in the replacement replaces. Showing the
-// panel from the menu starts at the active Line (start()); closing it ends
-// the check. Its options and "Words added to dictionary…" are the panel's
-// "⋯" items (Main.qml panelOwnItems), its messages toasts (NT1). The dock
-// header names it, so it has no heading of its own.
-// GR1 (#364): a Spelling | Grammar switch. Grammar walks the whole file from
-// the active Line in the background (Application::startGrammarWalk), shows
-// the first finding as soon as there is one, and has Cancel while it walks:
-// Harper's message, the Line and the rule's group, the text around it, its
-// suggestions, and Replace / Ignore / Ignore this rule / Add to dictionary
-// (for a word Harper's own spelling found).
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Spelling"
 import QtQuick
@@ -24,34 +9,26 @@ FocusScope {
     id: panel
     required property var app
     property ToastStack notices: null
-    // The editing target's name, for the empty state.
     property string documentName: ""
-    // The legacy window's two check boxes, for as long as the program runs.
     property bool ignoreComments: false
     property bool ignoreUpperCase: false
-    // A check is going on (start() to stop()).
     property bool checking: false
     property var current: ({})
     property var suggestions: []
-    // GR1: "spelling" or "grammar", and the grammar walk's state.
     property string mode: "spelling"
     readonly property bool grammarMode: mode === "grammar"
     property var grammar: ({})
-    property string grammarShown: "" // the finding the replacement was filled for
+    property string grammarShown: ""
     readonly property bool found: checking && (grammarMode ? grammar.found === true : current.found === true)
-    // "Spelling settings…" with no dictionary.
     signal settingsRequested()
 
     implicitWidth: 760
     implicitHeight: 150
-    // The three columns side by side, the actions whole.
-    // GR1: the word column too, which the Grammar filter makes taller.
     readonly property size minimumSize: Qt.size(Math.ceil(wordColumn.Layout.minimumWidth + suggestionFrame.Layout.minimumWidth
                                                           + actions.implicitWidth + 2 * columns.spacing) + 16,
                                                 Math.ceil(Math.max(actions.implicitHeight, wordColumn.implicitHeight)) + 16)
 
-    // The body font at `size` against its 13, as DialogWindow.fontAt (a
-    // FocusScope has no font of its own).
+    // A FocusScope has no font of its own; the hidden fontSource Label gives the body font.
     function fontAt(size, weight) {
         const base = fontSource.font
         const f = Qt.font({family: base.family, weight: weight === undefined ? Font.Normal : weight})
@@ -64,9 +41,6 @@ FocusScope {
     function options() {
         return {ignoreComments: ignoreComments, ignoreUpperCase: ignoreUpperCase}
     }
-    // GR1: the walk's state as it goes; the suggestions and the replacement
-    // are filled when another finding is shown (not while the walk moves on
-    // under what is being typed).
     function showGrammar(next, action) {
         grammar = next
         if (next.problem && next.problem.length > 0 && notices)
@@ -90,16 +64,11 @@ FocusScope {
         if (wasChecking)
             start()
     }
-    // SetNextMisspell's display: the word, its suggestions, the first one to
-    // replace with; nothing found shows the empty state and says so once.
-    // `action` names the command a refusal is titled with.
     function show(next, action) {
-        // An action that did nothing (legacy returns before touching the panel).
         if (next.unchanged)
             return
         current = next
         if (next.problem && next.problem.length > 0) {
-            // PU6: a refused replace is a toast (was a message box).
             if (notices)
                 notices.post("error", action || qsTr("Replace"), next.problem)
             return
@@ -110,8 +79,6 @@ FocusScope {
         if (!next.found && next.available !== false && notices)
             notices.post("info", qsTr("Spellchecker"), qsTr("No spelling errors were found"))
     }
-    // Opening the panel (Subtitles > Check spelling, View > Panels > Show,
-    // Check again): from the active Line.
     function start() {
         checking = true
         if (grammarMode) {
@@ -151,8 +118,6 @@ FocusScope {
         else
             show(app.spellCheckerIgnore(options()))
     }
-    // GR1: the finding's group off (and its other findings dropped); a toast
-    // says so, with Undo.
     function ignoreRule() {
         const next = app.grammarWalkIgnoreRule()
         const group = next.ignoredGroup ?? -1
@@ -173,19 +138,12 @@ FocusScope {
         else
             show(app.spellCheckerAddWord(current.word, options()))
     }
-    // ⋯ > Words added to dictionary…: the window, made at its first opening.
     function openAddedWords() {
         addedWordsLoader.active = true
         addedWordsLoader.item.openWith(app.addedDictionaryWords())
     }
 
-    // OnActive: back in the panel after the editor or the Grid. Handled once
-    // the focusing event is done: when it was a press on one of the panel's
-    // actions (the five buttons, or a suggestion, whose click picks the
-    // replacement and whose double click replaces, legacy's
-    // ID_SUGGESTIONS_LIST), that action checks the word itself (the editor's
-    // draft commits first and a changed Line starts the walk again instead of
-    // acting), so the press cannot swap the word or the list under the click.
+    // MUST KILL: actionPressed scans for a pressed action so focus-in does not swap the word under a click
     function actionPressed() {
         if ([replaceButton, replaceAllButton, ignoreButton, ignoreAllButton, addWordButton, emptyAction].some(b => b.pressed))
             return true
@@ -203,12 +161,7 @@ FocusScope {
             show(next)
     }
     onActiveFocusChanged: if (activeFocus) Qt.callLater(activate)
-    // The check starts again from the active Line with another dictionary
-    // (Spelling settings…, the editor's language menu: restartSpellChecker),
-    // its word and suggestions the new checker's; and while it waits for a
-    // dictionary, spelling turned on starts it too. Later, and not again
-    // from openSpellChecker's own spellingChanged; once for a dictionary
-    // chosen while it waits (restartSpellChecker gives both signals).
+    // MUST KILL: restarting and restartPending dedupe the restart signals openSpellChecker and restartSpellChecker emit
     property bool restarting: false
     property bool restartPending: false
     function scheduleRestart() {
@@ -219,8 +172,6 @@ FocusScope {
     }
     function restartCheck() {
         restartPending = false
-        // GR1: the Grammar walk's finding keeps the panel (also when the
-        // restart was queued before the switch to Grammar).
         if (!checking || grammarMode)
             return
         restarting = true
@@ -242,19 +193,16 @@ FocusScope {
                 panel.showGrammar(panel.app.grammarWalkState())
         }
         function onGrammarChanged() {
-            // Turned on or off in Settings: the off state, or the check again.
             if (panel.grammarMode && panel.checking && panel.grammar.on !== panel.app.grammarOn)
                 panel.start()
         }
     }
-    // GR1: Spelling | Grammar, above the word and in the empty state.
     component ModeSwitch: SegmentedButtons {
         choices: [{text: qsTr("Spelling"), name: "spellModeSpelling"}, {text: qsTr("Grammar"), name: "spellModeGrammar"}]
         currentIndex: panel.grammarMode ? 1 : 0
         onActivated: index => panel.setMode(index === 1 ? "grammar" : "spelling")
         Accessible.name: qsTr("Check")
     }
-    // GR1: the walk's progress with Cancel, or once done the count.
     component GrammarProgress: RowLayout {
         spacing: 8
         visible: panel.grammarMode && panel.checking && (panel.grammar.total ?? 0) > 0
@@ -283,8 +231,6 @@ FocusScope {
         }
     }
 
-    // Nothing to show: not checking (a layout showed the panel), nothing
-    // left to check, or no dictionary; one muted line and the command.
     ColumnLayout {
         objectName: "spellEmpty"
         anchors.centerIn: parent
@@ -367,7 +313,6 @@ FocusScope {
                 objectName: "grammarProgress"
                 Layout.fillWidth: true
             }
-            // GR1: Harper's message, then the Line and the rule's group.
             Label {
                 objectName: "grammarMessage"
                 visible: panel.grammarMode
@@ -400,10 +345,6 @@ FocusScope {
                     text: panel.current.word ?? ""
                     font: panel.fontAt(18, Font.DemiBold)
                     elide: Text.ElideRight
-                    // Up to its own width, elided in what the Line's label
-                    // leaves; never wider than the column gives it, so the
-                    // columns cannot shift under a click. Rounded up, as
-                    // the layout gives whole pixels.
                     Layout.fillWidth: true
                     Layout.preferredWidth: 0
                     Layout.maximumWidth: Math.ceil(implicitWidth)
@@ -418,7 +359,6 @@ FocusScope {
                     font: panel.fontAt(12)
                 }
             }
-            // The text around the word, the word underlined as the editor marks it.
             Label {
                 objectName: "spellContext"
                 Layout.fillWidth: true
@@ -427,7 +367,6 @@ FocusScope {
                 color: Theme.muted
                 textFormat: Text.StyledText
                 function escaped(s) { return (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
-                // GR1: a finding in the grammar colour.
                 readonly property var shown: panel.grammarMode
                     ? {before: panel.grammar.before, word: panel.grammar.text, after: panel.grammar.after, colour: Theme.grammar}
                     : {before: panel.current.before, word: panel.current.word, after: panel.current.after, colour: Theme.text}
@@ -479,9 +418,7 @@ FocusScope {
                     width: ListView.view.width
                     text: modelData
                     highlighted: ListView.isCurrentItem
-                    // A click brings the panel back, as any click on
-                    // legacy's window does (OnActive); see actionPressed().
-                    focusPolicy: Qt.ClickFocus // a click only: Tab skips the suggestions
+                    focusPolicy: Qt.ClickFocus
                     onClicked: {
                         suggestionList.currentIndex = index
                         replacement.text = modelData
@@ -545,7 +482,6 @@ FocusScope {
                 objectName: "spellAddWord"
                 iconRole: "dictionary-add"
                 text: qsTr("Add to dictionary")
-                // GR1: in Grammar, for a word Harper's own spelling found.
                 enabled: !panel.grammarMode || panel.grammar.word === true
                 Layout.columnSpan: panel.grammarMode ? 1 : 2
                 Layout.fillWidth: true

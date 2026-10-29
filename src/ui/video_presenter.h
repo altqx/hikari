@@ -1,24 +1,5 @@
 #pragma once
 
-// The scene-graph presenter (N7): a frame layer and a subtitle overlay layer.
-// present() only stores the leases and schedules a sync; textures are made
-// from the leased bytes on the render thread, and the node keeps the leases
-// alive while its textures use them. A newer submission supersedes an older
-// one that has not been shown yet. Moving to another window or losing the
-// scene graph starts a new surface epoch: submissions made for the old
-// surface are rejected instead of uploaded, while the content already shown
-// is uploaded again for the new surface.
-//
-// V1: with an RHI backend the two textures are kept and updated in place:
-// a new frame is uploaded whole, the same frame again (new subtitles over
-// it) not at all, and an overlay only where it or the one before it has
-// visible pixels. An overlay with nothing visible is not drawn. The software
-// renderer makes an image of the frame and of the overlay's visible part.
-//
-// A player frame kept as Y'CbCr planes (IndexedFrame::ycbcr) is converted in
-// a shader where the RHI backend has R8 and RG8 textures (ycbcr_node.h), and
-// on the CPU elsewhere (the software renderer), to the same pixels.
-
 #include "hikari/application/presenter.h"
 
 #include <QQuickItem>
@@ -40,18 +21,9 @@ class VideoPresenter : public QQuickItem, public application::PresenterPort {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(quint64 presentedGeneration READ presentedGeneration NOTIFY presented)
-    // T1: where the frame is drawn when set (the visual tools' shared view:
-    // legacy m_BackBufferRect), and the part of the frame drawn there
-    // (m_MainStreamRect, in frame pixels; empty: the whole frame). Unset,
-    // the frame is fitted at its display aspect.
     Q_PROPERTY(QRectF videoRect READ videoRect WRITE setVideoRect NOTIFY placementChanged)
     Q_PROPERTY(QRectF sourceRect READ sourceRect WRITE setSourceRect NOTIFY placementChanged)
-    // KE1-render-cost-overlay: what the subtitles of the frame last presented
-    // cost to draw (application::RenderCost: milliseconds, counted, events,
-    // images, area, blurred, vectorClips); empty when it had none.
     Q_PROPERTY(QVariantMap renderCost READ renderCost NOTIFY renderCostChanged)
-    // SV1-screen-size-subtitles: the whole frame's size on screen in device
-    // pixels (a zoomed frame's hidden part included); empty with no frame.
     Q_PROPERTY(QSize screenSize READ screenSize NOTIFY screenSizeChanged)
 public:
     explicit VideoPresenter(QQuickItem *parent = nullptr);
@@ -62,7 +34,6 @@ public:
 
     quint64 presentedGeneration() const { return m_presentedGeneration; }
     QVariantMap renderCost() const { return m_renderCost; }
-    // Where the frame is drawn, in item coordinates (empty with no frame).
     QRectF frameRect() const;
     QSize screenSize() const { return m_screenSize; }
     QRectF videoRect() const { return m_videoRect; }
@@ -70,15 +41,13 @@ public:
     QRectF sourceRect() const { return m_sourceRect; }
     void setSourceRect(const QRectF &rect);
     std::uint64_t rejectedSubmissions() const { return m_rejected; }
-    // Uploads so far (tests): whole frames, overlays, and the frame pixels
-    // the last overlay upload covered.
     struct UploadStats {
         int frameUploads = 0;
         int overlayUploads = 0;
         QRect lastOverlayUpload;
-        int planarFrameUploads = 0;    // of frameUploads, Y'CbCr planes converted on the GPU
-        int cpuConvertedFrames = 0;    // Y'CbCr frames converted on the CPU (no GPU path)
-        std::size_t lastFrameBytes = 0; // the bytes the last frame upload sent
+        int planarFrameUploads = 0;
+        int cpuConvertedFrames = 0;
+        std::size_t lastFrameBytes = 0;
     };
     UploadStats uploadStats() const;
 
@@ -106,30 +75,30 @@ private:
 
     void attachWindow(QQuickWindow *window);
     void resolveLater(Done done, application::PresentResult result);
-    void onFrameSwapped(); // render thread
+    void onFrameSwapped();
     QRectF placement(QSizeF frame, double pixelAspect) const;
     void updateScreenSize();
 
-    std::optional<Submission> m_pending;      // touched on the GUI thread and during sync
-    application::Presentation m_shown;        // what the node shows (or will after upload)
+    std::optional<Submission> m_pending;
+    application::Presentation m_shown;
     std::atomic<std::uint64_t> m_surfaceEpoch{1};
-    std::atomic<bool> m_convertsYcbcr{false}; // the last render's backend can (render thread)
+    std::atomic<bool> m_convertsYcbcr{false};
     std::mutex m_renderMutex;
-    std::optional<Resolved> m_awaitingRender; // uploaded, waiting for its frame to be swapped
+    std::optional<Resolved> m_awaitingRender;
     QMetaObject::Connection m_swapped, m_invalidated;
-    QQuickWindow *m_attached = nullptr; // the window whose signals are connected
+    QQuickWindow *m_attached = nullptr;
     quint64 m_presentedGeneration = 0;
     QVariantMap m_renderCost;
     std::uint64_t m_rejected = 0;
     QRectF m_videoRect, m_sourceRect;
-    QSize m_frameSize;        // the last frame presented, its pixels and aspect (GUI thread)
+    QSize m_frameSize;
     double m_pixelAspect = 1;
     QSize m_screenSize;
     struct Stats : UploadStats {
         std::mutex mutex;
-        bool failed = false; // a texture could not be made since the last swap
+        bool failed = false;
     };
-    std::shared_ptr<Stats> m_stats = std::make_shared<Stats>(); // written on the render thread
+    std::shared_ptr<Stats> m_stats = std::make_shared<Stats>();
 };
 
-} // namespace hikari::ui
+}

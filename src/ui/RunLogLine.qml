@@ -1,10 +1,3 @@
-// AD3 (#312): one line of a macro run's log (AutomationRunLines), on the
-// progress card and in the Automation panel's Runs: its time since the run
-// started when `times` is on, the level the script gave (error and fatal in
-// the danger colour, warning in the warning colour, the word always shown),
-// then the text in the monospace font. HikariSub's own lines (the run's
-// error, how it ended) carry an icon in the level's place, in the
-// interface font. The text is the script's: plain, never markup.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls

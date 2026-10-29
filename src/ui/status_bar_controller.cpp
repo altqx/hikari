@@ -21,11 +21,10 @@ QString qs(const std::u8string &s)
 
 QString resolutionText(int width, int height)
 {
-    // wxString::Format(L"%d x %d") and `<< w << L" x " << h` alike.
     return QStringLiteral("%1 x %2").arg(width).arg(height);
 }
 
-} // namespace
+}
 
 StatusBarController::Fields StatusBarController::fieldsFor(const Inputs &in)
 {
@@ -33,23 +32,17 @@ StatusBarController::Fields StatusBarController::fieldsFor(const Inputs &in)
     auto &t = out.text;
     if (in.video) {
         if (in.frameWidth > 0) {
-            // VideoBox::SetScaleAndZoom (VideoBox.cpp:1301-1315): the box's
-            // width over the frame's, then m_ZoomPercent, both truncated.
             t[VideoScale] = QString::number(static_cast<int>((static_cast<float>(in.clientWidth) /
                                                               static_cast<float>(in.frameWidth)) * 100)) +
                             QLatin1Char('%');
             t[VideoZoom] = QString::number(static_cast<int>(in.zoomPercent * 100)) + QLatin1Char('%');
-            // SetVideoResolution (HikariSubFrame.cpp:1477-1480).
             t[VideoResolution] = resolutionText(in.frameWidth, in.frameHeight);
         }
-        // VideoBox::OpenVideo (VideoBox.cpp:395-404): the duration as
-        // SubsTime::raw(SRT), getfloat(m_FPS) + " FPS", "x : y" and the file name.
         t[VideoDuration] = qs(core::legacy::srtTimeText(in.durationMs));
         t[FramesPerSecond] = qs(application::legacy::floatText(in.fps)) + QStringLiteral(" FPS");
         t[AspectRatio] = QStringLiteral("%1 : %2").arg(in.aspect.width).arg(in.aspect.height);
         t[VideoName] = QFileInfo(in.videoPath).fileName();
     }
-    // SetSubsResolution (HikariSubFrame.cpp:1439-1450): ASS only.
     if (in.document && in.ass)
         t[SubtitlesResolution] = resolutionText(in.script.width, in.script.height);
     return out;
@@ -59,8 +52,6 @@ StatusBarController::StatusBarController(VideoController &video, VisualToolsCont
                                          QObject *parent)
     : QObject(parent), m_video(video), m_tools(tools), m_document(std::move(document))
 {
-    // None of its fields moves with each player frame: the video's texts'
-    // pace (at most every 100 ms while playing) is enough.
     connect(&m_video, &VideoController::textsChanged, this, &StatusBarController::refresh);
     connect(&m_tools, &VisualToolsController::geometryChanged, this, &StatusBarController::refresh);
     connect(&m_tools, &VisualToolsController::changed, this, &StatusBarController::refresh);
@@ -80,8 +71,6 @@ StatusBarController::Inputs StatusBarController::inputs() const
             in.frameHeight = view.frameHeight();
             in.zoomPercent = view.zoomPercent();
         }
-        // RendererFFMS2::GetDuration: FFMS_VideoProperties::LastTime, the
-        // last frame's time, in whole milliseconds.
         if (const auto last = session.frameStart(session.frameCount() - 1))
             in.durationMs = last->microseconds() / 1000;
         in.fps = session.legacyFps();
@@ -99,16 +88,6 @@ StatusBarController::Inputs StatusBarController::inputs() const
 
 bool StatusBarController::nextMismatch(const Inputs &last, const Inputs &in, bool mismatch)
 {
-    // Fields 5 and 7's colour follows legacy's two setters rather than the
-    // state. SetSubsResolution (HikariSubFrame.cpp:1439-1473: another
-    // Document shown or loaded, its format or resolution changed) warns for
-    // an ASS Document whose resolution is not the open video's.
-    // SetVideoResolution (HikariSubFrame.cpp:1475-1497: a video opened)
-    // warns whenever the video's resolution is not GetASSRes's, whatever the
-    // Document's format, until the next SetSubsResolution. Anything else
-    // keeps the colour. The rewrite's "Unload video" (no legacy counterpart)
-    // counts as SetSubsResolution, as legacy's tab change to a tab without
-    // video did (OnPageChanged).
     const bool subsEvent = in.documentKey != last.documentKey || in.document != last.document ||
                            in.ass != last.ass || in.script != last.script || (!in.video && last.video);
     const bool videoEvent = in.video && in.frameWidth > 0 &&
@@ -141,7 +120,6 @@ QStringList StatusBarController::fields() const
 
 QStringList StatusBarController::tooltips()
 {
-    // HikariSubFrame.cpp:153-154.
     return {QString(),
             QCoreApplication::translate("HikariSub.StatusBar", "Video scale"),
             QCoreApplication::translate("HikariSub.StatusBar", "Video zoom"),
@@ -153,4 +131,4 @@ QStringList StatusBarController::tooltips()
             QCoreApplication::translate("HikariSub.StatusBar", "Video file name")};
 }
 
-} // namespace hikari::ui
+}

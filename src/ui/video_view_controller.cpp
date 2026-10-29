@@ -26,7 +26,7 @@ namespace {
 
 enum PointerKind { Enter = 0, Leave = 1, Move = 2, Press = 3, Release = 4, Wheel = 5, DoubleClick = 6 };
 
-} // namespace
+}
 
 VideoViewController::VideoViewController(VideoController &video, VisualToolsController &tools, SettingsStore &settings,
                                          QObject *parent)
@@ -53,7 +53,6 @@ void VideoViewController::setPlayer(application::GeneralPlayerPort *player)
 
 void VideoViewController::applyVolume()
 {
-    // VideoBox::OnVolume / OpenVideo: SetVolume(-(pos * pos)); FS1: silent while muted.
     if (m_player)
         m_player->setVolume(m_muted ? 0.0 : application::videoVolumeGain(volume()));
 }
@@ -65,20 +64,16 @@ bool VideoViewController::zoomMode() const
 
 bool VideoViewController::zoomed() const
 {
-    // VideoBox::HasZoom (VideoBox.cpp:1702-1708).
     return m_video.hasVideo() && m_tools.videoView().hasVideo() && m_tools.videoView().zoomPercent() != 1.f;
 }
 
 int VideoViewController::zoomPercent() const
 {
-    // VideoBox::SetScaleAndZoom (VideoBox.cpp:1301-1315).
     return static_cast<int>(m_tools.videoView().zoomPercent() * 100);
 }
 
 QRectF VideoViewController::zoomFrame() const
 {
-    // RendererVideo::DrawZoom (RendererVideo.cpp:831-871): the line through
-    // (x, y), (x, height - 1), (width - 1, height - 1), (width - 1, y).
     const auto &view = m_tools.videoView();
     const auto &z = view.zoomRect();
     return QRectF(QPointF(view.toLogical(z.x), view.toLogical(z.y)),
@@ -87,7 +82,6 @@ QRectF VideoViewController::zoomFrame() const
 
 QRectF VideoViewController::zoomBounds() const
 {
-    // DrawZoom's dimmed fans span 0,0 to the back buffer rectangle's right and bottom.
     const auto &view = m_tools.videoView();
     const auto &r = view.videoRect();
     return QRectF(0, 0, view.toLogical(r.right), view.toLogical(r.bottom));
@@ -127,7 +121,6 @@ void VideoViewController::viewChanged()
 
 bool VideoViewController::toggleZoom()
 {
-    // RendererVideo::SetZoom(): nothing with state None.
     if (!m_video.hasVideo() || !m_tools.videoView().hasVideo())
         return false;
     m_tools.videoView().toggleZoom(m_settings.integer("video.zoomPercent"));
@@ -147,14 +140,13 @@ bool VideoViewController::resetZoom()
 
 void VideoViewController::zoomPointer(int kind, int x, int y, int button, int buttons, int wheelSteps)
 {
-    // RendererVideo::ZoomMouseHandle (RendererVideo.cpp:873-1033).
     auto &view = m_tools.videoView();
     const bool leftDown = kind == Press && button == Qt::LeftButton;
     const bool leftHeld = (buttons & Qt::LeftButton) != 0 && kind != Release;
     const bool rotation = kind == Wheel && wheelSteps != 0;
     if (!(leftDown || leftHeld)) {
-        // The cursor near an edge; the later test wins, as legacy set them in turn.
         const auto &z = view.zoomRect();
+        // MUST KILL: the later edge test overrides the earlier one
         int cursor = 0;
         if (std::abs(x - z.x) < 5)
             cursor = 1;
@@ -181,21 +173,17 @@ void VideoViewController::zoomPointer(int kind, int x, int y, int button, int bu
 
 int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps)
 {
-    // VideoBox::OnMouseEvent (VideoBox.cpp:477-622).
     auto &view = m_tools.videoView();
     const bool control = (modifiers & Qt::ControlModifier) != 0;
     if (!m_video.hasVideo() || !view.hasVideo()) {
-        m_tools.pointer(kind, x, y, button, buttons, modifiers, wheelSteps); // GetState() == None: nothing
+        m_tools.pointer(kind, x, y, button, buttons, modifiers, wheelSteps);
         return NoRequest;
     }
     if (view.zoomMode()) {
         zoomPointer(kind, view.toDevice(x), view.toDevice(y), button, buttons, wheelSteps);
-        return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest; // FS1: it wakes the bar too
+        return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest;
     }
     if (kind == Wheel && wheelSteps != 0) {
-        // Ctrl+wheel resized legacy's video window (TabPanel::SetVideoWindowSizes);
-        // the docked panel's size is the docking layout's. In fullscreen
-        // (`event.ControlDown() && !m_IsFullscreen`) it goes on to the tool.
         if (control && !m_fullscreen)
             return NoRequest;
         if (!control && !m_tools.hasNonDefaultTool()) {
@@ -208,18 +196,15 @@ int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int but
         }
     }
     m_tools.pointer(kind, x, y, button, buttons, modifiers, wheelSteps);
-    // Only the crosshair leaves the other clicks to the video; FS1: every
-    // tool's moves wake the fullscreen bar.
     if (m_tools.hasNonDefaultTool())
         return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest;
     if (kind == Release && button == Qt::RightButton)
-        return ContextMenuRequest; // ContextMenu(event.GetPosition())
-    // V5: LeftDClick with no modifier, SetFullscreen() (VideoBox.cpp:554-569).
+        return ContextMenuRequest;
     const int held = modifiers & (Qt::ShiftModifier | Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
     if (kind == DoubleClick && button == Qt::LeftButton && held == 0)
         return FullScreenRequest;
     if (pauseOnClick() && kind == Release && button == Qt::LeftButton && !control)
-        m_video.togglePlay(); // VideoBox::Pause
+        m_video.togglePlay();
     return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest;
 }
 
@@ -236,13 +221,10 @@ void VideoViewController::panelWheel(int steps, int modifiers)
     if (!m_video.hasVideo() || steps == 0)
         return;
     if (zoomMode()) {
-        m_tools.videoView().zoomWheel(steps); // the zoom mode takes the wheel anywhere
+        m_tools.videoView().zoomWheel(steps);
         viewChanged();
         return;
     }
-    // Ctrl+wheel outside fullscreen returned before the volume, doing
-    // nothing below the video (VideoBox.cpp:508-518); in fullscreen the
-    // panel's wheel is the volume's with or without Ctrl.
     if ((modifiers & Qt::ControlModifier) != 0 && !m_fullscreen)
         return;
     volumeWheel(steps);
@@ -258,7 +240,6 @@ void VideoViewController::volumeWheel(int steps)
 
 bool VideoViewController::key(int key, int modifiers)
 {
-    // VideoBox::OnKeyPress (VideoBox.cpp:630-669) after `if (!renderer) return`.
     if (!m_video.hasVideo())
         return false;
     if (key == Qt::Key_Return && zoomMode()) {
@@ -274,7 +255,6 @@ bool VideoViewController::key(int key, int modifiers)
 
 bool VideoViewController::stepVolume(bool up)
 {
-    // VideoBox::OnSPlus / OnSMinus: nothing without a renderer.
     if (!m_video.hasVideo())
         return false;
     const auto v = application::videoVolumeKeyStep(volume(), up);
@@ -287,8 +267,8 @@ bool VideoViewController::stepVolume(bool up)
 void VideoViewController::setVolume(int volume)
 {
     if (volume != this->volume())
-        m_settings.set("video.volume", volume); // applied through the store's change (silent while muted)
-    if (m_muted) { // FS1: a new volume is heard, at its level, never the old one first
+        m_settings.set("video.volume", volume);
+    if (m_muted) {
         m_muted = false;
         applyVolume();
         emit changed();
@@ -309,8 +289,6 @@ int VideoViewController::aspectSliderValue() const
 
 QString VideoViewController::aspectLabel(int sliderValue) const
 {
-    // "Aspect ratio: %5.3f" of 1 / the ratio: the dialog's own ratio when
-    // it opens (sliderValue < 0), then the slider's.
     const float ratio = sliderValue < 0 ? m_tools.videoView().aspectRatio() : application::aspectFromSlider(sliderValue);
     return QCoreApplication::translate("HikariSub.Video", "Aspect ratio: %1")
                .arg(QString::fromStdString(application::aspectLabelNumber(ratio)));
@@ -318,8 +296,6 @@ QString VideoViewController::aspectLabel(int sliderValue) const
 
 void VideoViewController::setAspectFromSlider(int sliderValue)
 {
-    // AspectRatioDialog::OnSlider then VideoBox::SetAspectRatio: nothing
-    // without a renderer.
     if (!m_tools.videoView().hasVideo())
         return;
     m_tools.videoView().setAspectRatio(application::aspectFromSlider(sliderValue));
@@ -362,7 +338,6 @@ bool VideoViewController::toggleRenderCost()
 
 bool VideoViewController::snapshot(const QString &action)
 {
-    // VideoBox::OnAccelerator: only while paused (VideoBox.cpp:1171-1173).
     const bool save = action == QLatin1String("VIDEO_SAVE_FRAME_TO_PNG")
                       || action == QLatin1String("VIDEO_SAVE_SUBBED_FRAME_TO_PNG");
     const bool subbed = action == QLatin1String("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
@@ -380,9 +355,6 @@ bool VideoViewController::snapshot(const QString &action)
         return true;
     }
     const std::string video = session.path();
-    // HikariPathDir and wxDir::GetAllFiles(dir, filespec, wxDIR_FILES): the
-    // folder's files (not hidden ones) matching the pattern, case-sensitive
-    // outside Windows, as full paths.
     const QString folder = QFileInfo(QString::fromStdString(video)).absolutePath();
     QDir dir(folder);
     QDir::Filters filters = QDir::Files;
@@ -393,7 +365,6 @@ bool VideoViewController::snapshot(const QString &action)
     for (const QString &name :
          dir.entryList({QString::fromStdString(application::snapshotPattern(video))}, filters, QDir::Name))
         paths.push_back(QDir::toNativeSeparators(dir.filePath(name)).toStdString());
-    // m_Time: the paused frame's time (Timebase::MsAt).
     const int ms = session.legacyTimebase().msAt(frame->index);
     const QString path = QString::fromStdString(application::nextSnapshotPath(
         video, paths, ms, [](const std::string &p) { return QFileInfo::exists(QString::fromStdString(p)); }));
@@ -406,10 +377,6 @@ bool VideoViewController::snapshot(const QString &action)
 
 QVariantMap VideoViewController::recentFiles() const
 {
-    // VideoBox::ContextMenu (VideoBox.cpp:946-960): the first twenty of each
-    // list; a missing file skips its own row only (approved departure
-    // V4-recent-rows: legacy's `continue` on a missing subtitle file skipped
-    // the video row of the same index too, VideoBox.cpp:952-960).
     const auto subtitles = m_settings.settings().list("recent.subtitles");
     const auto videos = m_settings.settings().list("recent.video");
     QVariantList subs, vids;
@@ -431,4 +398,4 @@ QPointF VideoViewController::cursorIn(QQuickItem *area) const
     return area ? area->mapFromGlobal(QCursor::pos()) : QPointF();
 }
 
-} // namespace hikari::ui
+}

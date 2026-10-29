@@ -5,16 +5,10 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// SH3 (#223): Help > What's new on the dialog frame (DG1): the version the
-// notes start after, the release notes at reading width
-// (ReleaseNotesView), All release notes at the leading edge and Close.
-// Modeless and resizable; opening it fetches the notes when none are cached
-// and update checks are on. With none to show it says why: checks off,
-// fetching, or the fetch failed.
 DialogWindow {
     id: dialog
     objectName: "whatsNewDialog"
-    required property var whatsNew // WhatsNew
+    required property var whatsNew
     readonly property string state: whatsNew.state
     readonly property bool failed: state === "failed"
     dialogId: "whatsNew"
@@ -52,7 +46,6 @@ DialogWindow {
             smallFont: dialog.fontAt(11)
             Accessible.name: dialog.title
         }
-        // Nothing to show, and why.
         ColumnLayout {
             objectName: "whatsNewEmpty"
             visible: !notes.visible

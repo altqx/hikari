@@ -1,11 +1,3 @@
-// TS1: a row of mutually exclusive choices that fill the width evenly
-// (MuseScore 4's FlatRadioButton groups, docs/research/musescore-shell.md §5),
-// for the two-way choices of a dock form (Time/Frames, Forward/Backward).
-// Each choice is a radio button for assistive technology; the chosen one is
-// filled in `select` with an accent line under it and bold text. Tab
-// reaches each choice, Space or a click chooses it, and the keyboard focus
-// ring is the style's, 1 wide in the text colour (FocusRing).
-// `choices`: [{text, name, tip, enabled}], `name` the button's objectName.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Templates as T
@@ -16,7 +8,6 @@ Rectangle {
     id: group
     property var choices: []
     property int currentIndex: 0
-    // A choice made by the user (not a change of currentIndex).
     signal activated(int index)
 
     implicitWidth: row.implicitWidth + 2
@@ -31,7 +22,7 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: 1
         spacing: 0
-        uniformCellSizes: true // the choices share the width evenly
+        uniformCellSizes: true
         Repeater {
             model: group.choices
             T.AbstractButton {
@@ -46,7 +37,6 @@ Rectangle {
                 focusPolicy: Qt.StrongFocus
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                // Wide enough for the text in bold, as when chosen.
                 implicitWidth: Math.ceil(Math.max(label.implicitWidth, boldText.implicitWidth)) + 20
                 implicitHeight: label.implicitHeight + 10
                 Accessible.role: Accessible.RadioButton
@@ -54,7 +44,7 @@ Rectangle {
                 Accessible.checkable: true
                 Accessible.checked: checked
                 ToolTip.visible: hovered && (modelData.tip || "").length > 0
-                // Plain, as IconToolButton's tip.
+                // ToolTip auto-detects rich text; word joiners after "<" keep the tip plain.
                 ToolTip.text: (modelData.tip || "").replace(/</g, "<\u2060").replace(/&lt;/g, "&\u2060lt;")
                 onClicked: {
                     if (index !== group.currentIndex)
@@ -64,7 +54,6 @@ Rectangle {
                     color: choice.checked ? Theme.select : choice.down ? Theme.raised
                          : choice.hovered && choice.enabled ? Qt.rgba(Theme.raised.r, Theme.raised.g, Theme.raised.b, 0.6)
                          : "transparent"
-                    // The separator before every choice but the first.
                     Rectangle {
                         visible: choice.index > 0
                         width: 1
@@ -84,13 +73,13 @@ Rectangle {
                 Label {
                     id: boldText
                     visible: false
-                    textFormat: Text.PlainText // measured as the label shows it
+                    textFormat: Text.PlainText
                     text: choice.text
                     font.bold: true
                 }
                 contentItem: Label {
                     id: label
-                    textFormat: Text.PlainText // a choice may name a catalog from a file
+                    textFormat: Text.PlainText
                     text: choice.text
                     font.bold: choice.checked
                     color: choice.enabled ? Theme.text : Theme.disabled

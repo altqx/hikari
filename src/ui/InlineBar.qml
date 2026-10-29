@@ -1,9 +1,4 @@
 pragma Translator: "HikariSub.MainWindow"
-// PK1 (#301): the inline bar, the kit's notice for a state that lasts and
-// has its own actions (an update is ready, the file is read-only), the
-// update-ready bar's (ADR 0019) made shared: under the menus, the
-// severity icon, the text, the actions, and × when it can be closed. It
-// stays until × or until its state ends; it never takes the keyboard.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -11,7 +6,6 @@ import Hikari.Ui
 
 Pane {
     id: bar
-    // "info", "warning", "error"; `iconRole` overrides the severity's icon.
     property string severity: "info"
     property string iconRole: ""
     property string text: ""

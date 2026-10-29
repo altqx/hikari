@@ -18,13 +18,9 @@ const QString kPath = QStringLiteral("/org/freedesktop/portal/desktop");
 const QString kSettings = QStringLiteral("org.freedesktop.portal.Settings");
 const QString kNamespace = QStringLiteral("org.freedesktop.appearance");
 const QString kKey = QStringLiteral("color-scheme");
-// The first read waits at most this long for the portal (it may be started
-// by this call); a later answer is still taken unless the portal has
-// signalled a change since.
 constexpr int kReadTimeoutMs = 1000;
 
-// Read (the portal's interface version 1) wraps the value in one more
-// variant than ReadOne does; both are unwrapped.
+// Read (portal version 1) wraps the value in one more variant than ReadOne.
 QVariant unwrap(QVariant value)
 {
     for (int depth = 0; depth < 3; ++depth) {
@@ -38,7 +34,7 @@ QVariant unwrap(QVariant value)
     return value;
 }
 
-} // namespace
+}
 
 PortalColourScheme::PortalColourScheme(const QDBusConnection &bus, QObject *parent) : QObject(parent), m_bus(bus)
 {
@@ -55,7 +51,7 @@ PortalColourScheme::PortalColourScheme(const QDBusConnection &bus, QObject *pare
         return read;
     };
     QDBusMessage reply = m_bus.call(request(), QDBus::Block, kReadTimeoutMs);
-    // A portal older than ReadOne (xdg-desktop-portal before 1.15).
+    // xdg-desktop-portal before 1.15 has no ReadOne.
     if (reply.type() == QDBusMessage::ErrorMessage && reply.errorName() == QLatin1String("org.freedesktop.DBus.Error.UnknownMethod")) {
         method = QStringLiteral("Read");
         reply = m_bus.call(request(), QDBus::Block, kReadTimeoutMs);
@@ -66,8 +62,6 @@ PortalColourScheme::PortalColourScheme(const QDBusConnection &bus, QObject *pare
         return;
     }
     qCDebug(lcPortalScheme) << "portal" << method << "failed:" << reply.errorName() << reply.errorMessage();
-    // Asked again, its answer taken when it comes unless the portal has
-    // signalled a change since.
     const auto readLate = [this, method] {
         auto read = QDBusMessage::createMethodCall(kService, kPath, kSettings, method);
         read << kNamespace << kKey;
@@ -82,12 +76,9 @@ PortalColourScheme::PortalColourScheme(const QDBusConnection &bus, QObject *pare
     };
     if (reply.errorName() == QLatin1String("org.freedesktop.DBus.Error.NoReply")
         || reply.errorName() == QLatin1String("org.freedesktop.DBus.Error.Timeout")) {
-        // Too slow for the first window.
         readLate();
         return;
     }
-    // No portal yet (ServiceUnknown, NameHasNoOwner, a failed activation):
-    // read once one takes the name, as a portal still starting does.
     auto *appears = new QDBusServiceWatcher(kService, m_bus, QDBusServiceWatcher::WatchForRegistration, this);
     connect(appears, &QDBusServiceWatcher::serviceRegistered, this, [appears, readLate] {
         appears->deleteLater();
@@ -129,4 +120,4 @@ void PortalColourScheme::set(Qt::ColorScheme scheme)
     emit changed();
 }
 
-} // namespace hikari::ui::theme
+}
