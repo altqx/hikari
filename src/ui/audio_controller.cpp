@@ -1589,7 +1589,7 @@ void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
             stopBoxPlayback();
         m_tap.begin(application::KaraokeTap::targets(m_karaoke), m_startMs);
         m_tapMessage = QCoreApplication::translate("HikariSub.Audio",
-                                                   "Not applied: the Line cannot take these times as it is.");
+                                                   "Not applied: the line cannot take these times as it is.");
         setTapState(TapReady);
         return;
     }
@@ -1597,7 +1597,7 @@ void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
         if (playing())
             stopBoxPlayback();
         m_tap.begin(application::KaraokeTap::targets(m_karaoke), m_startMs);
-        m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "Every Line is tapped.");
+        m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "Every line is tapped.");
         setTapState(TapReady);
         return;
     }
@@ -1662,7 +1662,7 @@ void AudioController::tapUndo(bool line)
                                        : QString();
     const int from = line ? m_tap.undoLine() : m_tap.undo();
     if (line)
-        m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "Undid the Line");
+        m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "Undid the line");
     else
         m_tapMessage = name.isEmpty() ? QString() : QCoreApplication::translate("HikariSub.Audio", "Undid “%1”").arg(name);
     if (m_tapState == TapTapping)

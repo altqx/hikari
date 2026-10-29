@@ -20791,7 +20791,7 @@ private slots:
         QVERIFY(audio.tapNeedsSplit());
         QVERIFY(!audio.playing());
         QCOMPARE(text("audioTapLine"), QStringLiteral("Line 3"));
-        QCOMPARE(text("audioTapMessage"), QStringLiteral("This Line is one syllable. Split it first, then tap."));
+        QCOMPARE(text("audioTapMessage"), QStringLiteral("This line is one syllable. Split it first, then tap."));
         QVERIFY(visualItem("audioTapAutoSplit")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(visualItem("audioTapAutoSplit"), "clicked"));
         QVERIFY(audio.karaokeSplitMode());
@@ -20817,7 +20817,7 @@ private slots:
         QCOMPARE(editor.history().size(), steps + 2);
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapReady));
         QCOMPARE(audio.tapLine(), 3);
-        QCOMPARE(audio.tapMessage(), QStringLiteral("Not applied: the Line cannot take these times as it is."));
+        QCOMPARE(audio.tapMessage(), QStringLiteral("Not applied: the line cannot take these times as it is."));
         QVERIFY(!audio.playing());
         session->discardDraft();
         press(Qt::Key_Escape);

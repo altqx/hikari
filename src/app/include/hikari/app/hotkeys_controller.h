@@ -88,6 +88,7 @@ public:
     Q_INVOKABLE void toggleBlock(int position);
     // {name, windows, type} for the selected row, {} without a selection.
     Q_INVOKABLE QVariantMap mapTarget() const;
+    void retranslate() { emit rowsChanged(); }
     QString mapProblem() const;
     // {} when nothing conflicts; optionsMap's answer: "switch", "delete", "anyway" or "cancel".
     Q_INVOKABLE QVariantMap optionsConflict(const QString &accel, int type);

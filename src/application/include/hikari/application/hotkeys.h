@@ -152,6 +152,7 @@ struct HotkeyConflict {
     bool canSwitch = false;   // "Switch hotkeys"
     bool canSetAnyway = false; // "Set anyway"
     std::vector<std::string> commands; // the names of the commands holding the keys
+    std::vector<HotkeyId> holders;     // each command's binding
 };
 enum class HotkeyAnswer { Switch, Delete, SetAnyway, Cancel };
 

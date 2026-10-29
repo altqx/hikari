@@ -179,7 +179,7 @@ RowLayout {
             objectName: "notConfirmed"
             iconRole: "unconfirmed"
             text: qsTranslate("HikariSub.Translation", "Not confirmed")
-            tip: qsTranslate("HikariSub.Translation", "Not confirmed: marks the selected Lines for review")
+            tip: qsTranslate("HikariSub.Translation", "Not confirmed: marks the selected lines for review")
             checkable: true
             focusPolicy: Qt.NoFocus
             enabled: strip.editor.editable

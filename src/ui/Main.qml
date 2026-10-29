@@ -6809,7 +6809,7 @@ ApplicationWindow {
             return false
         }
         const target = root.hotkeys.gestureTarget(symbol, second)
-        hotkeyMapping.capture(target.name, window ?? 0, !(mapped || kind === "macro"), (accel, type) => {
+        hotkeyMapping.capture(target.label ?? target.name, window ?? 0, !(mapped || kind === "macro"), (accel, type) => {
             const conflict = root.hotkeys.gestureConflict(target.id, accel, type)
             if (conflict.message === undefined)
                 root.hotkeys.gestureMap(target.id, target.name, accel, type, "cancel")

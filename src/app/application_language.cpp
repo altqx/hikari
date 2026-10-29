@@ -54,6 +54,9 @@ void Application::languageSwitched()
     m_audio->retranslate();
     m_statusBar->retranslate();
     m_workspaceLayout->retranslate();
+    m_visualTools->retranslate();
+    if (m_hotkeys)
+        m_hotkeys->retranslate();
     emit tabsChanged();
     if (m_optionsLists.dictionarySymbols.empty() && !m_optionsLists.dictionaryNames.empty()) {
         m_optionsLists.dictionaryNames = {

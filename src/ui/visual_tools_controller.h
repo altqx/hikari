@@ -31,7 +31,7 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("Provided by the application composition")
-    Q_PROPERTY(QVariantList families READ families CONSTANT)
+    Q_PROPERTY(QVariantList families READ families NOTIFY familiesChanged)
     Q_PROPERTY(QVariantList railOrder READ railOrder CONSTANT)
     Q_PROPERTY(int activeFamily READ activeFamily NOTIFY changed)
     Q_PROPERTY(bool railEnabled READ railEnabled NOTIFY changed)
@@ -85,6 +85,7 @@ public:
     application::visual::BatchPicker &batchPicker() { return m_picker; }
 
     QVariantList families() const;
+    void retranslate();
     QVariantList railOrder() const;
     int activeFamily() const { return static_cast<int>(m_family); }
     bool railEnabled() const { return m_railEnabled; }
@@ -174,6 +175,7 @@ public:
 
 signals:
     void changed();
+    void familiesChanged();
     void overlayChanged();
     void geometryChanged();
     void optionsChanged();

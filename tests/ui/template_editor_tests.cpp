@@ -2701,7 +2701,7 @@ private slots:
         QTRY_VERIFY(row("templateRow_", rows.size() - 1));
         QVERIFY(!row("templateRow_", rows.size()));
         QVERIFY(object(QStringLiteral("templateSummary"))->property("note").toString().contains(
-            QStringLiteral(" karaoke Lines")));
+            QStringLiteral(" karaoke lines")));
         click(row("templateRow_", 1));
         QCOMPARE(editor->current(), rows[1].toMap().value(QStringLiteral("id")).toULongLong());
         QCOMPARE(object(QStringLiteral("templateLineTitle"))->property("title").toString(),
@@ -2737,7 +2737,7 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->hasProblems(); }, 20'000));
         QTRY_VERIFY(item(QStringLiteral("templateProblem"))->isVisible());
         const QString problem = textOf(QStringLiteral("templateProblemText"));
-        QVERIFY2(problem.contains(QStringLiteral("Template Line: %1").arg(editor->currentNumber())), qPrintable(problem));
+        QVERIFY2(problem.contains(QStringLiteral("Template line: %1").arg(editor->currentNumber())), qPrintable(problem));
         QVERIFY2(problem.contains(QStringLiteral("!nosuch.field!")), qPrintable(problem));
         auto *wave = item(QStringLiteral("templateProblemWave"));
         QVERIFY(wave);
@@ -2792,9 +2792,9 @@ private slots:
         QTRY_VERIFY(row("templatePreviewRow_", n - 1));
         QVERIFY(!row("templatePreviewRow_", n));
         QCOMPARE(object(QStringLiteral("templatePreviewTitle"))->property("title").toString(),
-                 QStringLiteral("Preview on Line %1").arg(editor->sourceNumber()));
+                 QStringLiteral("Preview on line %1").arg(editor->sourceNumber()));
         QVERIFY(textOf(QStringLiteral("templatePreviewSummary"))
-                    .startsWith(n == 1 ? QStringLiteral("1 Line · ") : QStringLiteral("%1 Lines · ").arg(n)));
+                    .startsWith(n == 1 ? QStringLiteral("1 line · ") : QStringLiteral("%1 lines · ").arg(n)));
         QVERIFY(item(QStringLiteral("templatePreviewList"))->isVisible());
         QVERIFY(!item(QStringLiteral("templatePreviewKept"))->isVisible());
     }

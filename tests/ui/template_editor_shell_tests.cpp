@@ -202,7 +202,7 @@ private slots:
         QVERIFY(badge);
         QTRY_VERIFY(badge->isVisible());
         QCOMPARE(textOf(QStringLiteral("videoTemplateBadgeText")),
-                 QStringLiteral("<b>Preview</b> · Line %1 · not applied").arg(editor().sourceNumber()));
+                 QStringLiteral("<b>Preview</b> · line %1 · not applied").arg(editor().sourceNumber()));
         QVERIFY(application->videoView().toggleRenderCost());
         auto *cost = item(QStringLiteral("videoRenderCost"));
         QTRY_VERIFY(cost->isVisible());

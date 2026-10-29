@@ -28,7 +28,7 @@ Pane {
     }
     // Without a catalog Qt picks no English plural form, so one is spelled out.
     function lineCount(n) {
-        return n === 1 ? qsTr("1 Line") : qsTr("%n Lines", "", n)
+        return n === 1 ? qsTr("1 line") : qsTr("%n lines", "", n)
     }
     function counted(n, one, many) {
         return n === 1 ? one : many
@@ -60,7 +60,7 @@ Pane {
             id: loopButton
             objectName: "templateLoop"
             iconRole: "loop"
-            text: qsTr("Loop the Line")
+            text: qsTr("Loop the line")
             checkable: true
             enabled: root.video !== null && root.video.hasVideo && root.controller.source !== 0
             checked: root.video !== null && root.video.looping
@@ -176,13 +176,13 @@ Pane {
                             Layout.fillWidth: true
                             title: qsTr("Templates")
                             note: root.controller.templateCount + root.controller.codeCount === 0 ? ""
-                                  //: The Templates section's counts: "2 template Lines · 1 code Line · 18 karaoke Lines"
-                                  : [root.counted(root.controller.templateCount, qsTr("1 template Line"),
-                                                  qsTr("%n template Lines", "", root.controller.templateCount)),
-                                     root.counted(root.controller.codeCount, qsTr("1 code Line"),
-                                                  qsTr("%n code Lines", "", root.controller.codeCount)),
-                                     root.counted(root.controller.karaokeCount, qsTr("1 karaoke Line"),
-                                                  qsTr("%n karaoke Lines", "", root.controller.karaokeCount))].join(" · ")
+                                  //: The Templates section's counts: "2 template lines · 1 code line · 18 karaoke lines"
+                                  : [root.counted(root.controller.templateCount, qsTr("1 template line"),
+                                                  qsTr("%n template lines", "", root.controller.templateCount)),
+                                     root.counted(root.controller.codeCount, qsTr("1 code line"),
+                                                  qsTr("%n code lines", "", root.controller.codeCount)),
+                                     root.counted(root.controller.karaokeCount, qsTr("1 karaoke line"),
+                                                  qsTr("%n karaoke lines", "", root.controller.karaokeCount))].join(" · ")
                         }
                         Button {
                             id: newButton
@@ -206,8 +206,8 @@ Pane {
                         Layout.leftMargin: 12
                         wrapMode: Text.Wrap
                         textFormat: Text.StyledText
-                        text: "<b>" + qsTr("This Document has no template Lines yet.") + "</b><br>"
-                              + qsTr("A template Line is a Comment whose Effect starts with “template”: Apply turns each karaoke Line of its Style into new Lines.")
+                        text: "<b>" + qsTr("This document has no template lines yet.") + "</b><br>"
+                              + qsTr("A template line is a Comment whose Effect starts with “template”: Apply turns each karaoke line of its Style into new lines.")
                     }
 
                     Rectangle {
@@ -606,9 +606,9 @@ Pane {
                                 const escape = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
                                 const range = root.controller.problemRange
                                 const where = range.length === 2 ? textField.text.slice(range[0], range[1]) : ""
-                                const line = (root.controller.currentIsCode ? qsTr("Code Line: %1") : qsTr("Template Line: %1"))
+                                const line = (root.controller.currentIsCode ? qsTr("Code line: %1") : qsTr("Template line: %1"))
                                              .arg(root.controller.currentNumber)
-                                //: A template's problem: "Template Line: 3, in !math.rnd(1,5)!: attempt to call a nil value"
+                                //: A template's problem: "Template line: 3, in !math.rnd(1,5)!: attempt to call a nil value"
                                 // Lua's message without its chunk name ([string "…"]:1:).
                                 const said = root.controller.problem.split("\n")[0].replace(/\[string ".*?"\]:\d+: /, "")
                                 return where !== "" ? qsTr("%1, in %2: %3").arg("<b>" + line + "</b>")
@@ -659,7 +659,7 @@ Pane {
                             objectName: "templatePreviewTitle"
                             Layout.fillWidth: true
                             title: root.controller.source === 0 ? qsTr("Preview")
-                                                                : qsTr("Preview on Line %1").arg(root.controller.sourceNumber)
+                                                                : qsTr("Preview on line %1").arg(root.controller.sourceNumber)
                             note: root.controller.source === 0 ? ""
                                   : root.controller.sourceStyle + " · " + root.controller.sourceText
                         }
@@ -673,7 +673,7 @@ Pane {
                         Label {
                             objectName: "templatePreviewSummary"
                             visible: !root.controller.previewKept && root.controller.hasPreview
-                            //: The preview's Lines and the run's time: "6 Lines · 3.8 ms"
+                            //: The preview's Lines and the run's time: "6 lines · 3.8 ms"
                             text: root.lineCount(root.controller.previewLines.length) + " · "
                                   + root.milliseconds(root.controller.previewMs / 1000)
                             color: Theme.muted
@@ -716,12 +716,12 @@ Pane {
                         text: root.controller.templateCount === 0
                               ? qsTr("No templates yet. Add one with New to preview it here.")
                               : root.controller.sourceUnknown
-                              ? qsTr("These templates give the active Line from no karaoke Line. Apply them to the whole file to preview it.")
+                              ? qsTr("These templates give the active line from no karaoke line. Apply them to the whole file to preview it.")
                               : root.controller.source === 0
-                              ? qsTr("Select a karaoke Line to preview the templates on it.")
+                              ? qsTr("Select a karaoke line to preview the templates on it.")
                               : root.controller.previewPending
-                                ? qsTr("Running the templates on Line %1…").arg(root.controller.sourceNumber)
-                                : qsTr("No preview of Line %1: the templates stopped with a problem.")
+                                ? qsTr("Running the templates on line %1…").arg(root.controller.sourceNumber)
+                                : qsTr("No preview of line %1: the templates stopped with a problem.")
                                   .arg(root.controller.sourceNumber)
                     }
                     Rectangle {
@@ -853,19 +853,19 @@ Pane {
                         return qsTr("Apply is off while a template has a problem.")
                     if (applied.lines !== undefined && applied.problems > 0)
                         //: After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from
-                        return qsTr("Applied with problems: %1 Lines from %2 karaoke Lines; the log lists the problems. Undo removes them in one step.")
+                        return qsTr("Applied with problems: %1 lines from %2 karaoke lines; the log lists the problems. Undo removes them in one step.")
                                .arg(applied.lines).arg(applied.karaokeLines)
                     if (applied.lines !== undefined)
                         //: After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run's time
-                        return qsTr("Applied: %1 Lines from %2 karaoke Lines in %3 s. Undo removes them in one step.")
+                        return qsTr("Applied: %1 lines from %2 karaoke lines in %3 s. Undo removes them in one step.")
                                .arg(applied.lines).arg(applied.karaokeLines).arg(applied.seconds.toFixed(2))
                     if (c.changedCount === 0)
                         return ""
                     if (root.narrow)
                         return qsTr("Changed since Apply")
                     return c.changedCount === 1
-                           ? qsTr("Line %1 changed since the last Apply; the generated Lines are older.").arg(c.changedNumber)
-                           : qsTr("%n template Lines changed since the last Apply; the generated Lines are older.",
+                           ? qsTr("Line %1 changed since the last Apply; the generated lines are older.").arg(c.changedNumber)
+                           : qsTr("%n template lines changed since the last Apply; the generated lines are older.",
                                   "", c.changedCount)
                 }
             }
@@ -878,7 +878,7 @@ Pane {
                     highlighted: true
                     enabled: root.controller.canApply
                     onClicked: root.controller.apply(false)
-                    Accessible.description: qsTr("Apply to every karaoke Line")
+                    Accessible.description: qsTr("Apply to every karaoke line")
                 }
                 Button {
                     id: applyArrow
@@ -913,16 +913,16 @@ Pane {
         ShellMenuItem {
             objectName: "templateApplyAll"
             iconRole: "karaoke"
-            text: qsTr("Apply to every karaoke Line")
+            text: qsTr("Apply to every karaoke line")
             onTriggered: root.controller.apply(false)
         }
         ShellMenuItem {
             objectName: "templateApplySelected"
             iconRole: "select-lines"
-            text: qsTr("Apply to the selected Lines")
+            text: qsTr("Apply to the selected lines")
             help: root.controller.canApplySelected
-                ? qsTr("Only the selected Lines are regenerated; the other Lines' output stays as it is.")
-                : qsTr("Select a karaoke Line, or a Line generated from one since the file was opened.")
+                ? qsTr("Only the selected lines are regenerated; the other lines' output stays as it is.")
+                : qsTr("Select a karaoke line, or a line generated from one since the file was opened.")
             enabled: root.controller.canApplySelected
             onTriggered: root.controller.apply(true)
         }
@@ -934,12 +934,12 @@ Pane {
         Instantiator {
             model: [
                 { effect: "template syl", text: qsTr("Template for each syllable") },
-                { effect: "template line", text: qsTr("Template for each Line") },
-                { effect: "template pre-line", text: qsTr("Template before each Line") },
+                { effect: "template line", text: qsTr("Template for each line") },
+                { effect: "template pre-line", text: qsTr("Template before each line") },
                 { effect: "template char", text: qsTr("Template for each character") },
                 { effect: "template furi", text: qsTr("Template for each furigana syllable") },
                 { effect: "code once", code: true, text: qsTr("Code run once") },
-                { effect: "code line", code: true, text: qsTr("Code for each Line") },
+                { effect: "code line", code: true, text: qsTr("Code for each line") },
                 { effect: "code syl", code: true, text: qsTr("Code for each syllable") },
                 { effect: "code furi", code: true, text: qsTr("Code for each furigana syllable") }
             ]
@@ -987,7 +987,7 @@ Pane {
             wrapMode: Text.Wrap
             color: Theme.muted
             font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
-            text: qsTr("The new Line goes above the first karaoke Line, with that Line's Style.")
+            text: qsTr("The new line goes above the first karaoke line, with that line's Style.")
         }
     }
 
@@ -1012,7 +1012,7 @@ Pane {
                { word: "all", text: qsTr("Every Style, not only %1").arg(root.controller.style) },
                { word: "loop 2", text: qsTr("Repeat") }]
             : [{ word: "noblank", text: qsTr("Skip blank syllables") },
-               { word: "keeptags", text: qsTr("Keep the Line's override tags") },
+               { word: "keeptags", text: qsTr("Keep the line's override tags") },
                { word: "all", text: qsTr("Every Style, not only %1").arg(root.controller.style) },
                { word: "loop 2", text: qsTr("Repeat") },
                { word: "fx name", text: qsTr("Only syllables marked with an effect") },
@@ -1192,7 +1192,7 @@ Pane {
                 text: !completion.variables ? qsTr("Template functions")
                       : root.controller.source === 0 ? qsTr("Syllable variables")
                       //: The variables list's title: their values on the current Line's first syllable
-                      : qsTr("Syllable variables · values for Line %1, syllable 1").arg(root.controller.sourceNumber)
+                      : qsTr("Syllable variables · values for line %1, syllable 1").arg(root.controller.sourceNumber)
             }
             ListView {
                 id: completionList

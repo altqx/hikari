@@ -417,7 +417,7 @@ std::vector<ToolOption> AllTagsTool::options(const VisualHost &host) const
     case Change::Add:
         break;
     case Change::Multiply:
-        variant.tooltip = u"How each Line's number changes the value";
+        variant.tooltip = u"How each line's number changes the value";
         variant.choices = {u"Set by line number", u"Add by line number"};
         variant.index = m_listMode - PasteMultiply;
         break;

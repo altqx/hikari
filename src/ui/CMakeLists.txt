@@ -10,7 +10,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     editor_highlighter.cpp editor_highlighter.h
     settings_store.cpp settings_store.h settings_files.cpp settings_files.h toml_file.cpp toml_file.h list_files.cpp list_files.h dialog_placement.cpp dialog_placement.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
-    visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h
+    visual_tools_controller.cpp visual_tools_controller.h command_names.cpp command_names.h shape_editor.cpp shape_editor.h
     tag_list_controller.cpp tag_list_controller.h
     all_tags_editor.cpp all_tags_editor.h time_field_mask.cpp time_field_mask.h
     script_resolution_prompt.cpp script_resolution_prompt.h
