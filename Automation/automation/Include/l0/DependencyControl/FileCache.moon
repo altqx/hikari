@@ -16,9 +16,11 @@ sanitizeLabel = (label) ->
   safe = tostring(label or "entry")\gsub "[^%w%._-]", "_"
   #safe > 0 and safe\sub(1, 64) or "entry"
 
--- The 7-hex-char SHA-1 slug of a cache key. Deterministic per key (sensitive to its exact bytes), matching
--- the DepCtrl Browser's feed-URL slug convention.
-keySlug = (key) -> Hash.getDigest(Hash.HashType.Sha1, key)\sub 1, 7
+-- The complete SHA-1 digest of a cache key. The full digest keeps attacker-controlled keys from cheaply
+-- aliasing another entry's index, while the key stored in that index is still verified on every read.
+KEY_SLUG_LENGTH = 40
+KEY_SLUG_PATTERN = ("%x")\rep KEY_SLUG_LENGTH
+keySlug = (key) -> Hash.getDigest Hash.HashType.Sha1, key
 
 -- The embedded UTC timestamp of a snapshot file name, for chronological ordering ("" when absent).
 snapshotStamp = (fileName) -> fileName\match "(%d+T%d+Z)" or ""
@@ -107,7 +109,11 @@ class FileCache
   ---Reads the cache index entry for a key.
   ---@param key string
   ---@return FileCacheMeta? meta nil when the key isn't cached.
-  getMeta: (key) => @__readMeta @__metaPath key
+  getMeta: (key) =>
+    meta = @__readMeta @__metaPath key
+    -- The filename is only an index: never allow a digest collision or a tampered index to substitute the
+    -- entry belonging to a different key.
+    meta and meta.key == key and meta or nil
 
   ---Whether a cache entry is still fresh, i.e. its expiry (fixed when it was written) hasn't passed
   ---and it hasn't been invalidated by expireAll. The expiry is intrinsic to the entry, so freshness is the
@@ -179,9 +185,9 @@ class FileCache
       expiredSlugs[keySlug meta.key] = true
       @__l1[meta.key] = nil
 
-    -- every file (snapshot or index) is named with its key's 7-hex slug prefix, so one pass removes both
+    -- every file (snapshot or index) is named with its key's full-digest prefix, so one pass removes both
     for file in *files
-      slug = file\match "^(%x%x%x%x%x%x%x)"
+      slug = file\match "^(#{KEY_SLUG_PATTERN})"
       fileOps.remove fileOps.joinPath @cacheDir, file if slug and expiredSlugs[slug]
 
   ---Stores a blob under a readable, timestamped snapshot and repoints the index at it, then trims old
