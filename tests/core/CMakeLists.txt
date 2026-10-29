@@ -52,6 +52,7 @@ hikari_add_gtest(hikari_core_clipboard_rows_tests SOURCES clipboard_rows_tests.c
 hikari_add_gtest(hikari_core_conversion_tests SOURCES conversion_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_legacy_regex_tests SOURCES legacy_regex_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_spelling_tests SOURCES spelling_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_spelling_scripts_tests SOURCES spelling_scripts_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_editor_syntax_tests SOURCES editor_syntax_tests.cpp LIBRARIES hikari_core LABELS core)
 # Y9: subtitles read from a Matroska track (legacy Demux).
 hikari_add_gtest(hikari_core_matroska_tests SOURCES matroska_tests.cpp LIBRARIES hikari_core LABELS core)

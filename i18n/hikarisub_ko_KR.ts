@@ -6717,6 +6717,10 @@ when find results window is open</source>
         <source>What is sent</source>
         <translation>보내는 정보</translation>
     </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Options</name>
@@ -8142,6 +8146,14 @@ and will be changed to the default</source>
     <message>
         <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
         <translation>충돌이나 멈춤 후에는 묻지 않고 보고서를 보냅니다: 충돌한 내용, 시스템, 설정, 마지막 로그 줄. 자막, 파일과 그 이름은 절대 보내지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

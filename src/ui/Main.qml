@@ -2976,7 +2976,6 @@ ApplicationWindow {
             ShellMenuItem { iconRole: "edit-paste"; text: qsTranslate("HikariSub.Editor", "&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
             MenuSeparator {}
             ShellMenuItem {
-                id: spellingOnItem
                 iconRole: "spellchecker"
                 objectName: field.objectName + "SpellingOn"
                 text: qsTranslate("HikariSub.Editor", "Spellchecker")
@@ -2986,44 +2985,6 @@ ApplicationWindow {
                 visible: field.spelled
                 height: visible ? implicitHeight : 0
                 onTriggered: root.app.spellingOn = checked
-            }
-            // "Installed languages": only in the spell-checked field (legacy
-            // builds it with the Spellchecker entry, useSpellchecker).
-            Instantiator {
-                model: field.spelled ? 1 : 0
-                delegate: ShellMenu {
-                    id: languagesMenu
-                    iconRole: "dictionary"
-                    objectName: field.objectName + "Languages"
-                    title: qsTranslate("HikariSub.Editor", "Installed languages")
-                    property var languages: []
-                    onAboutToShow: languages = root.app.dictionaries()
-                    Instantiator {
-                        model: languagesMenu.languages
-                        delegate: ShellMenuItem {
-                            required property var modelData
-                            text: modelData.name
-                            checkable: true
-                            // Legacy marks the entry whose name is the chosen language's.
-                            checked: modelData.name === root.app.dictionaryName(root.app.dictionaryLanguage)
-                            keepsMenuOpen: false // ITEM_RADIO
-                            onTriggered: root.app.dictionaryLanguage = modelData.symbol
-                        }
-                        onObjectAdded: (index, object) => languagesMenu.insertItem(index, object)
-                        onObjectRemoved: (index, object) => languagesMenu.removeItem(object)
-                    }
-                }
-                onObjectAdded: (index, object) => {
-                    // Right after the Spellchecker switch.
-                    for (let i = 0; i < editMenu.count; ++i) {
-                        if (editMenu.itemAt(i) === spellingOnItem) {
-                            editMenu.insertMenu(i + 1, object)
-                            return
-                        }
-                    }
-                    editMenu.addMenu(object)
-                }
-                onObjectRemoved: (index, object) => editMenu.removeMenu(object)
             }
             ShellMenuItem {
                 iconRole: "dictionary-add"

@@ -56,6 +56,7 @@
 #include <QProcess>
 #include <QRasterWindow>
 #include <QScreen>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QCursor>
 #include <QFontInfo>
@@ -106,6 +107,8 @@
 #include <memory>
 #include <optional>
 #include <future>
+#include <chrono>
+#include <thread>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -10912,7 +10915,8 @@ private slots:
 private:
     // F3: a session with a Dictionary folder beside its settings and the
     // production Hunspell backend (R2-hunspell), or no backend at all.
-    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false)
+    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false,
+                             application::SpellingBackendLoader loader = {})
     {
         delete engine;
         delete application;
@@ -10922,6 +10926,8 @@ private:
         options.gettingStarted = gettingStarted; // FR1
         if (!backend)
             options.spellingBackend = {};
+        else if (loader)
+            options.spellingBackend = std::move(loader);
         options.bundledDictionaryDir = bundled;
         application = new app::Application(options);
         engine = new QQmlApplicationEngine;
@@ -11946,9 +11952,6 @@ private slots:
         QCOMPARE(marks(), QVariantList{});
         application->setSpellingOn(true);
         QCOMPARE(marks(), QVariantList{});
-        QCOMPARE(application->dictionaries(),
-                 (QVariantList{QVariantMap{{QStringLiteral("symbol"), QStringLiteral("en_US")},
-                                           {QStringLiteral("name"), QStringLiteral("English")}}}));
         application->setDictionaryLanguage(QStringLiteral("en_US"));
         QCOMPARE(marks(), (QVariantList{0, 4}));
 
@@ -12113,7 +12116,6 @@ private slots:
         QVERIFY(application->spellingOn());
         application->settingsStore()->sync();
         QVERIFY(!settingsText(home.path(), "settings.toml").contains("spellchecker"));
-        QVERIFY(application->dictionaries().isEmpty());
 
         // Only the bundled folder has a dictionary: it loads, and the user's
         // words go to the user's folder.
@@ -12123,7 +12125,6 @@ private slots:
         restartWithSpelling(user.path(), true, bundled.filePath(QStringLiteral("Dictionary")));
         QVERIFY(application->openFile(path));
         QCOMPARE(marks(), (QVariantList{5, 5, 0, 4}));
-        QCOMPARE(application->dictionaries().size(), 1);
         QVERIFY(application->addEditorWord(QStringLiteral("wrold")));
         QVERIFY(QFile::exists(user.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
         QVERIFY(!QFile::exists(bundled.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
@@ -12482,8 +12483,8 @@ private slots:
         QCOMPARE(findItem(panel, QStringLiteral("spellEmptyAction"))->property("text").toString(), QStringLiteral("Check spelling"));
         application->editor().discard();
 
-        // No dictionary installed yet: one chosen afterwards (Settings, the
-        // editor's language menu) starts the waiting check.
+        // No dictionary installed yet: one chosen afterwards in Settings
+        // starts the waiting check.
         {
             QTemporaryDir bare;
             QVERIFY(bare.isValid());
@@ -12494,8 +12495,13 @@ private slots:
                                               Q_ARG(QVariant, QVariant::fromValue(dock))));
             QTRY_VERIFY(dock->property("isOpen").toBool());
             QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
+            // One dictionary installed at a time (SP1 #474: every installed
+            // one checks the words of its script).
             const auto dictionary = [&](const char *code, const QByteArray &words) {
-                QDir().mkpath(bare.path() + QStringLiteral("/Dictionary"));
+                QDir folder(bare.path() + QStringLiteral("/Dictionary"));
+                QDir().mkpath(folder.path());
+                for (const QString &old : folder.entryList({QStringLiteral("*.aff"), QStringLiteral("*.dic")}, QDir::Files))
+                    QVERIFY(folder.remove(old));
                 QFile aff(bare.path() + QStringLiteral("/Dictionary/%1.aff").arg(QLatin1String(code)));
                 QVERIFY(aff.open(QIODevice::WriteOnly));
                 QFile dic(bare.path() + QStringLiteral("/Dictionary/%1.dic").arg(QLatin1String(code)));
@@ -12557,9 +12563,10 @@ private slots:
     }
 
     // F3: the editor's spelling menu and the double-click suggestion list.
-    // The suggestions come first; "Spellchecker" and "Installed languages"
-    // are only in the spell-checked field (the Translated one in translation
-    // mode). A double click on a misspelling with
+    // The suggestions come first; "Spellchecker" is only in the spell-checked
+    // field (the Translated one in translation mode), and SP1 (#474) took
+    // "Installed languages" out (the primary language is chosen in Settings
+    // only). A double click on a misspelling with
     // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK lists its suggestions without
     // selecting the word.
     void editorSpellingMenuAndDoubleClick()
@@ -12580,7 +12587,7 @@ private slots:
         auto entries = menuItems(menu);
         QVERIFY(!entries.isEmpty());
         QCOMPARE(entries.first()->property("text").toString(), QStringLiteral("world"));
-        QVERIFY(hasSubMenu(menu, QStringLiteral("Installed languages")));
+        QVERIFY(!hasSubMenu(menu, QStringLiteral("Installed languages")));
         auto *spellingOn = field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"));
         QVERIFY(spellingOn && spellingOn->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(entries.first(), "triggered"));
@@ -12602,7 +12609,7 @@ private slots:
         QTRY_VERIFY(!fix->property("opened").toBool());
         application->setSuggestionsOnDoubleClick(false);
 
-        // Translation mode: the Original field has neither entry.
+        // Translation mode: the Original field has no "Spellchecker".
         const QString tl = writeFile(dir, "spelling-tl.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
         QFile f(tl);
         QVERIFY(f.open(QIODevice::ReadOnly));
@@ -12624,7 +12631,6 @@ private slots:
         QTRY_VERIFY(item("editorPanel")->height() >= item("editorPanel")->property("minimumSize").toSizeF().height());
         rightClick(fieldPoint(field, 1));
         QTRY_VERIFY(menu->property("visible").toBool());
-        QVERIFY(!hasSubMenu(menu, QStringLiteral("Installed languages")));
         QVERIFY(!field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"))->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         auto *translated = item("translationText");
@@ -12632,8 +12638,91 @@ private slots:
         QVERIFY(tlMenu);
         rightClick(translated->mapToScene(QPointF(10, 10)).toPoint());
         QTRY_VERIFY(tlMenu->property("visible").toBool());
-        QVERIFY(hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
+        QVERIFY(translated->findChild<QObject *>(QStringLiteral("translationTextSpellingOn"))->property("visible").toBool());
+        QVERIFY(!hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
         QVERIFY(QMetaObject::invokeMethod(tlMenu, "close"));
+        application->editor().discard();
+    }
+
+    // SP1 (#474): every installed dictionary checks the words of its script,
+    // the Settings language (here an existing hikari.ini's "pl") being the
+    // primary one. A mixed Line marks only the real misspellings in the Grid
+    // and the Line editor; a script without a dictionary is not marked.
+    // With HIKARI_SURFACE_SHOT_DIR the window is saved in each theme
+    // (sp1-mixed-<theme>.png).
+    void multilingualSpellingMarksOnlyRealMisspellings()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        const auto write = [&](const QString &name, const QByteArray &bytes) {
+            QFile f(home.filePath(QStringLiteral("Dictionary/") + name));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        };
+        write(QStringLiteral("pl.aff"), "SET UTF-8\n");
+        write(QStringLiteral("pl.dic"), "3\nAla\nma\nkota\n");
+        write(QStringLiteral("ko_KR.aff"), "SET UTF-8\n");
+        write(QStringLiteral("ko_KR.dic"), "2\n\xEC\x95\x88\xEB\x85\x95\xED\x95\x98\xEC\x84\xB8\xEC\x9A\x94\n\xEC\x84\xB8\xEA\xB3\x84\n");
+        write(QStringLiteral("ta.aff"), "SET UTF-8\n");
+        write(QStringLiteral("ta.dic"), "1\n\xE0\xAE\xB5\xE0\xAE\xA3\xE0\xAE\x95\xE0\xAF\x8D\xE0\xAE\x95\xE0\xAE\xAE\xE0\xAF\x8D\n");
+        {
+            QSettings ini(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat);
+            ini.setValue(QStringLiteral("profile/editor.dictionaryLanguage"), QStringLiteral("pl"));
+        }
+        restartWithSpelling(home.path(), true);
+        QCOMPARE(application->dictionaryLanguage(), QStringLiteral("pl"));
+        // English and Polish, Korean, Tamil and Russian words; "wrold",
+        // "kotta", "세게계" and "வணக்கமம்" are misspelled.
+        const QString line = QStringLiteral("Hello world, Ala ma kota! wrold kotta 안녕하세요 "
+                                            "세계 세게계 வணக்கம் "
+                                            "வணக்கமம் привет");
+        const QByteArray events = QStringLiteral("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,%1\n").arg(line).toUtf8();
+        const QString path = writeFile(dir, "sp1-mixed.ass", events.constData());
+        QVERIFY(application->openFile(path));
+        QVariantList grid, editor;
+        for (const QString &word : {QStringLiteral("wrold"), QStringLiteral("kotta"), QStringLiteral("세게계"),
+                                    QStringLiteral("வணக்கமம்")}) {
+            const int at = int(line.indexOf(word));
+            grid << at << at + int(word.size()) - 1; // inclusive
+            editor << at << at + int(word.size());
+        }
+        // The other dictionaries load in the background; their marks come
+        // in when they are in.
+        QTRY_COMPARE(application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(), grid);
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), editor);
+        // Suggestions for a Korean word come from the Korean dictionary.
+        const QVariantMap found = application->editorMisspellAt(0, int(line.indexOf(QStringLiteral("세게"))) + 1);
+        QCOMPARE(found.value(QStringLiteral("word")).toString(), QStringLiteral("세게계"));
+        QVERIFY(found.value(QStringLiteral("suggestions")).toStringList().contains(QStringLiteral("세계")));
+        // The menu and the double-click popup ask once: they wait for a
+        // dictionary still loading (here a slow ko_KR).
+        application->editor().discard();
+        restartWithSpelling(home.path(), true, {}, false,
+                            [hunspell = app::Application::Options().spellingBackend](const std::filesystem::path &aff,
+                                                                                      const std::filesystem::path &dic) {
+                                if (dic.stem() == "ko_KR")
+                                    std::this_thread::sleep_for(std::chrono::seconds(2));
+                                return hunspell(aff, dic);
+                            });
+        QVERIFY(application->openFile(path));
+        const QVariantMap loading = application->editorMisspellAt(0, int(line.indexOf(QStringLiteral("세게"))) + 1);
+        QCOMPARE(loading.value(QStringLiteral("word")).toString(), QStringLiteral("세게계"));
+        QVERIFY(loading.value(QStringLiteral("suggestions")).toStringList().contains(QStringLiteral("세계")));
+
+        if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(400);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/sp1-mixed-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+            }
+        }
         application->editor().discard();
     }
 
@@ -17935,7 +18024,8 @@ private slots:
     {
         QTemporaryDir own;
         QVERIFY(QDir(own.path()).mkdir(QStringLiteral("Dictionary")));
-        for (const char *name : {"pl_PL.dic", "pl_PL.aff", "en_US.dic", "en_US.aff", "de_DE.dic"}) {
+        for (const char *name : {"pl_PL.dic", "pl_PL.aff", "en_US.dic", "en_US.aff", "de_DE.dic", "ko_KR.dic",
+                                 "ko_KR.aff", "ta_IN.dic", "ta_IN.aff"}) {
             QFile file(own.filePath(QStringLiteral("Dictionary/") + QLatin1String(name)));
             QVERIFY(file.open(QIODevice::WriteOnly));
             file.write("x\n");
@@ -17947,20 +18037,26 @@ private slots:
         // The list is F3's availableDictionaries over the same folders, in
         // the order wxDir lists them on this platform (R5-per-platform: no
         // sorting; F3's own tests pin that order against readdir and
-        // FindFirstFile), each symbol shown by its language name.
+        // FindFirstFile), each symbol shown by its language name (DK1 #473:
+        // the bundled Korean and Tamil ones too).
         const std::filesystem::path folder(own.filePath(QStringLiteral("Dictionary")).toStdU16String());
+        const std::map<std::u16string, QString> language{
+            {u"en_US", QStringLiteral("English")},
+            {u"pl_PL", QStringLiteral("Polski")},
+            {u"ko_KR", QString::fromUtf8("\xED\x95\x9C\xEA\xB5\xAD\xEC\x96\xB4")},
+            {u"ta_IN", QString::fromUtf8("\xE0\xAE\xA4\xE0\xAE\xAE\xE0\xAE\xBF\xE0\xAE\xB4\xE0\xAF\x8D")}};
         const auto expected = [&] {
             QStringList names;
             for (const auto &symbol : application::availableDictionaries(folder))
-                names << (symbol == u"en_US" ? QStringLiteral("English") : QStringLiteral("Polski"));
+                names << language.at(symbol);
             if (names.isEmpty())
                 names << QStringLiteral("Put files .dic and .aff to \"Dictionary\" folder");
             return names;
         };
         const auto open = a.openSettingsDialog();
-        // AvailableDics pairs the i-th .dic with the i-th .aff: de_DE.dic
-        // shifts the pairs that follow it in the listing (the pairing stops
-        // at the shorter list, R3-hang-crash-loss).
+        // SP1: AvailableDics pairs each .dic with the .aff of its name:
+        // de_DE.dic, without its .aff, is not listed and drops no pair.
+        QCOMPARE(expected().size(), 4);
         QCOMPARE(open.value(QStringLiteral("dictionaries")).toStringList(), expected());
         QVERIFY(QFile::remove(own.filePath(QStringLiteral("Dictionary/de_DE.dic"))));
         const auto again = a.openSettingsDialog();
@@ -17970,8 +18066,8 @@ private slots:
             QCOMPARE(again.value(QStringLiteral("values")).toMap().value(QStringLiteral("editor.dictionaryLanguage")).toInt(),
                      shown.indexOf(QStringLiteral("Polski")));
 #ifndef _WIN32
-        // Linux: the pairing follows readdir order, as legacy Linux's wxDir
-        // did, not a name sort.
+        // Linux: the list follows readdir's .dic order, as legacy Linux's
+        // wxDir did, not a name sort.
         std::vector<std::u16string> readdirDic, readdirAff;
         if (DIR *d = ::opendir(folder.c_str())) {
             while (const dirent *e = ::readdir(d)) {
@@ -17984,9 +18080,9 @@ private slots:
             ::closedir(d);
         }
         std::vector<std::u16string> pairs;
-        for (std::size_t i = 0; i < readdirDic.size() && i < readdirAff.size(); ++i)
-            if (readdirDic[i] == readdirAff[i])
-                pairs.push_back(readdirDic[i]);
+        for (const auto &dic : readdirDic)
+            if (std::ranges::find(readdirAff, dic) != readdirAff.end())
+                pairs.push_back(dic);
         QVERIFY(application::availableDictionaries(folder) == pairs);
 #endif
     }

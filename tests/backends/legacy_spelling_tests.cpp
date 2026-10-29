@@ -1,6 +1,7 @@
 // F3 / R2-hunspell: the production spelling adapters. Hunspell 1.7.3 over
 // tiny dictionaries written for these tests (tests/fixtures/spelling:
-// en_TEST in UTF-8 with one suffix rule, pl_TEST in ISO8859-2), and legacy's
+// en_TEST in UTF-8 with one suffix rule, pl_TEST in ISO8859-2, ko_TEST and
+// ta_TEST in UTF-8 for SP1's multilingual check), and legacy's
 // word segmentation, boost::locale's boundary::word over ICU
 // (SpellChecker::Check / CheckText at 20d647c4).
 
@@ -141,8 +142,46 @@ TEST(HunspellSpelling, SpellCheckerInitializesFromTheFolder)
     EXPECT_EQ(checker.initialize(u"en_TEST"), application::SpellChecker::Status::Ready);
     EXPECT_TRUE(checker.checkWord(u"Hikari"));
     EXPECT_TRUE(checker.checkWord(u"wrold"));
-    EXPECT_FALSE(checker.checkWord(u"Teh"));
+    EXPECT_FALSE(checker.checkWord(u"Teh", true)); // waiting for pl_TEST
     EXPECT_EQ(checker.userDictionary(), user / "UserDic.udic");
+    std::error_code ec;
+    fs::remove_all(user, ec);
+}
+
+// SP1 (#474): mixed Lines over Hunspell and ICU with the fixtures folder's
+// en_TEST, pl_TEST, ko_TEST and ta_TEST installed and English the primary
+// language: every word goes to the dictionaries of its script, nothing a
+// matching dictionary knows is marked, real misspellings still are, and a
+// script without a dictionary (Cyrillic, kana) is not marked.
+TEST(HunspellSpelling, MixedLinesMarkOnlyRealMisspellings)
+{
+    std::random_device random;
+    const fs::path user = fs::temp_directory_path() / ("hikari-mixed-" + std::to_string(random()));
+    fs::create_directories(user);
+    application::SpellChecker checker(std::vector<std::filesystem::path>{user, kFixtures}, backends::hunspellSpellingLoader());
+    ASSERT_EQ(checker.initialize(u"en_TEST"), application::SpellChecker::Status::Ready);
+    const auto spelling = backends::legacySpellingText();
+    auto marked = [&](std::u16string_view text) {
+        std::vector<std::u16string> out;
+        for (const auto &m : application::editorMarks(text, core::SubtitleFormat::Ass, checker, spelling, true).misspells)
+            out.push_back(m.word);
+        return out;
+    };
+    using Words = std::vector<std::u16string>;
+    // English + Korean.
+    EXPECT_EQ(marked(u"Hello world, 안녕하세요 세계!"), Words{});
+    EXPECT_EQ(marked(u"Hello wrold, 안녕하세요 세게계!"), (Words{u"wrold", u"세게계"}));
+    // English + Polish (pl_TEST is ISO8859-2: "gęś" converts).
+    EXPECT_EQ(marked(u"The good kot, gęś"), Words{});
+    EXPECT_EQ(marked(u"The good kott, gęśi"), (Words{u"kott", u"gęśi"}));
+    // English + Tamil.
+    EXPECT_EQ(marked(u"{\\i1}Hello{\\i0} வணக்கம் உலகம்"), Words{});
+    EXPECT_EQ(marked(u"Hello வணக்கமம் உலகம் texts"), (Words{u"வணக்கமம்"}));
+    // No dictionary for Cyrillic or kana: not marked.
+    EXPECT_EQ(marked(u"привет こんにちは Teh"), Words{u"Teh"});
+    // Suggestions come from the word's own dictionary.
+    EXPECT_TRUE(contains(checker.suggestions(u"세게계"), u"세계"));
+    EXPECT_TRUE(contains(checker.suggestions(u"kott", {u"The", u"good", u"kott"}), u"kot"));
     std::error_code ec;
     fs::remove_all(user, ec);
 }
@@ -270,19 +309,16 @@ int codePoints(std::u16string_view text, int units)
 
 std::vector<Walked> windowWalk(const char *input, core::SubtitleFormat format)
 {
-    std::random_device random;
-    const fs::path user = fs::temp_directory_path() / ("hikari-walk-" + std::to_string(random()));
-    fs::create_directories(user);
-    application::SpellChecker checker(std::vector<std::filesystem::path>{user, kFixtures},
-                                      backends::hunspellSpellingLoader());
-    EXPECT_EQ(checker.initialize(u"en_TEST"), application::SpellChecker::Status::Ready);
+    // Legacy's one dictionary (SP1's other fixture dictionaries left out).
+    const auto backend = load("en_TEST");
+    EXPECT_TRUE(backend);
     std::ifstream in(fs::path(HIKARI_CAPTURE_INPUTS) / input, std::ios::binary);
     const std::string text((std::istreambuf_iterator<char>(in)), {});
     std::vector<std::byte> bytes(text.size());
     std::memcpy(bytes.data(), text.data(), text.size());
     const auto doc = format == core::SubtitleFormat::Srt ? core::loadSrt(bytes).document : core::loadAss(bytes).document;
     const auto spelling = backends::legacySpellingText();
-    const core::legacy::WordCheck check = [&](std::u16string_view w) { return checker.checkWord(w); };
+    const core::legacy::WordCheck check = [&](std::u16string_view w) { return backend->spell(w); };
     std::vector<Walked> out;
     const auto lines = doc.lines();
     for (std::size_t row = 0; row < lines.size(); ++row) {
@@ -290,8 +326,6 @@ std::vector<Walked> windowWalk(const char *input, core::SubtitleFormat format)
         for (const auto &m : core::legacy::checkText(t, format, spelling.segment, check))
             out.push_back({static_cast<int>(row), codePoints(t, m.start), codePoints(t, m.end + 1) - 1});
     }
-    std::error_code ec;
-    fs::remove_all(user, ec);
     return out;
 }
 

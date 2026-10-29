@@ -16,6 +16,7 @@
 #include <set>
 #include <utility>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace hikari::fakes {
@@ -51,10 +52,11 @@ public:
     std::vector<std::u16string> added;
     std::vector<std::u16string> removed;
 
-    // A loader reading <language>.dic as a word list; `last` sees the backend.
+    // A loader reading <language>.dic as a word list; `last` sees the backend
+    // loaded on this thread (the primary, not one loading in the background).
     static application::SpellingBackendLoader loader(FakeSpelling **last = nullptr)
     {
-        return [last](const std::filesystem::path &, const std::filesystem::path &dic)
+        return [last, thread = std::this_thread::get_id()](const std::filesystem::path &, const std::filesystem::path &dic)
                    -> std::unique_ptr<application::SpellingBackend> {
             std::ifstream in(dic, std::ios::binary);
             if (!in)
@@ -78,7 +80,7 @@ public:
                 words.insert(core::toUtf16(std::u8string(line.begin(), line.end())));
             }
             auto backend = std::make_unique<FakeSpelling>(std::move(words));
-            if (last)
+            if (last && std::this_thread::get_id() == thread)
                 *last = backend.get();
             return backend;
         };

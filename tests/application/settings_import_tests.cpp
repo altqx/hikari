@@ -307,6 +307,17 @@ TEST(SettingsImport, OptionsTheFilesLeaveOutAreMissingWithTheCurrentValueKept)
     }
 }
 
+// SP1 (#474): legacy's one dictionary (DICTIONARY_LANGUAGE) imports as the
+// primary spelling language, the setting the multilingual check starts with.
+TEST(SettingsImport, DictionaryLanguageBecomesThePrimaryLanguage)
+{
+    const Plan plan = buildPlan({config(padding() + "DICTIONARY_LANGUAGE=pl\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &language = rowOf(plan, "setting:editor.dictionaryLanguage");
+    EXPECT_EQ(language.disposition, Disposition::Change);
+    EXPECT_EQ(language.value, SettingValue(std::string("pl")));
+    EXPECT_EQ(findLegacySetting("DICTIONARY_LANGUAGE")->id, "editor.dictionaryLanguage");
+}
+
 TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
 {
     // One binding per action in its own window (GetType), to a chord no

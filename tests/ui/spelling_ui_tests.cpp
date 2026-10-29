@@ -1,9 +1,8 @@
 // F3: the Qt side of the spell checker: the Grid's marks role (legacy
-// SubsGridWindow at 20d647c4) and config::FindLanguage's names. Word
-// segmentation (boost::locale over ICU) is pinned in the backends' tests.
+// SubsGridWindow at 20d647c4). Word segmentation (boost::locale over ICU)
+// is pinned in the backends' tests.
 
 #include "line_table_model.h"
-#include "spelling_text.h"
 #include "spelling/fake_spelling.h"
 
 #include "hikari/core/ass_load.h"
@@ -30,20 +29,6 @@ core::Document load(std::string_view text)
 class SpellingUiTests : public QObject {
     Q_OBJECT
 private slots:
-    // FindLanguage: shipped names by symbol or language, then the locale's
-    // own name for its language, then the symbol itself.
-    void dictionaryNames()
-    {
-        QCOMPARE(ui::dictionaryName(QStringLiteral("pl_PL")), QStringLiteral("Polski"));
-        QCOMPARE(ui::dictionaryName(QStringLiteral("en_US")), QStringLiteral("English"));
-        // DK1 (#473): the bundled Korean and Tamil dictionaries.
-        QCOMPARE(ui::dictionaryName(QStringLiteral("ko_KR")), QString::fromUtf8("\xED\x95\x9C\xEA\xB5\xAD\xEC\x96\xB4"));
-        QCOMPARE(ui::dictionaryName(QStringLiteral("ta_IN")),
-                 QString::fromUtf8("\xE0\xAE\xA4\xE0\xAE\xAE\xE0\xAE\xBF\xE0\xAE\xB4\xE0\xAF\x8D"));
-        QCOMPARE(ui::dictionaryName(QStringLiteral("de_DE")), QStringLiteral("Deutsch"));
-        QCOMPARE(ui::dictionaryName(QStringLiteral("qq")), QStringLiteral("qq"));
-    }
-
     // The Grid's marks (TextData::Init): comments have none. Legacy draws
     // marks on the last column only, which in translation mode is the
     // translation column (not built yet), so the Text column has none there.
