@@ -176,7 +176,9 @@ Control {
                                            searchable: o.searchable, afterValues: o.afterValues,
                                            notes: o.notes, sections: o.sections, sectionNames: o.sectionNames,
                                            checked: false, enabled: false, index: 0 })),
-        values: tools.values.map(v => ({ name: v.name, label: v.label, text: "", editable: v.editable,
+        // A read-only value is as wide as its live text can be: a
+        // coordinate with two decimals (Perspective's Origin; Codex on #496).
+        values: tools.values.map(v => ({ name: v.name, label: v.label, text: v.editable ? "" : "-00000.00", editable: v.editable,
                                          group: v.group, unit: v.unit, step: v.step,
                                          swatch: v.swatch ? "#000000" : "", marked: v.marked === undefined ? undefined : false }))
     })
@@ -211,6 +213,8 @@ Control {
     // Bumped as the unseen copies are made: itemAt() is not a binding's.
     property int measuredItems: 0
     readonly property var foldedSegments: segments.slice(fitCount)
+    // Fullscreen's bar stays while More options is open (its anchor).
+    readonly property bool popoverOpen: morePopover.opened
     // The line's height, and whether the tool has one.
     readonly property real lineHeight: topPadding + 26 + bottomPadding
     readonly property bool shown: !pointer && (segments.length > 0 || batchTool)

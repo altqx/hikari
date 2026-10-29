@@ -49,6 +49,9 @@ Frame {
         return out
     }
     readonly property var folded: tools.railOrder.filter(f => !shown.includes(f))
+    // Fullscreen's bar stays while it is open (its rail grows as the bar
+    // hides, which would change the menu under the pointer; Codex on #496).
+    readonly property bool menuOpen: moreMenu.opened
 
     ColumnLayout {
         id: familyColumn

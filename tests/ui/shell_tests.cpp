@@ -28759,7 +28759,10 @@ private slots:
     {
         auto &tools = application->visualTools();
         QVERIFY(application->openFile(visualDocument(
-            "one-line.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}One line\n")));
+            "one-line.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}One line\n"
+                            // A drawing: Perspective's quad, its read-only Origin wider than
+                            // a whole coordinate ("1060.75"), for the end of this test.
+                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(1000.25,1000.25)\\p1}m 0 0 l 121 0 121 61 0 61\n")));
         application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
@@ -28903,6 +28906,28 @@ private slots:
         tools.selectFamily(11);
         QTRY_VERIFY2(drawn() && !more->isVisible(), qPrintable(QStringLiteral("width %1: %2").arg(bar->width()).arg(widthsOf())));
         QTRY_VERIFY(drawn() && visualItem("visualValue_frx") && visualItem("visualValue_frx")->isVisible());
+        // A drawing gives Perspective its quad: in Center mode its Origin is
+        // read-only with decimals, measured as wide as it shows, so at any
+        // width the groups on the line end inside it (Codex on #496).
+        tools.selectFamily(0);
+        application->selectLine(session->document().lines()[3]->id.value);
+        tools.selectFamily(11);
+        QTRY_VERIFY(visualItem("visualValue_orgx") && !visualItem("visualValue_orgx")->inherits("QQuickTextInput"));
+        const auto valuesText = [&] {
+            QStringList out;
+            for (const QVariant &v : tools.property("values").toList())
+                out << v.toMap().value(QStringLiteral("name")).toString() + QLatin1Char('=')
+                           + v.toMap().value(QStringLiteral("text")).toString();
+            return out.join(u' ') + QStringLiteral(" | ") + text(session->document().lines()[3]);
+        };
+        QTRY_VERIFY2(visualItem("visualValue_orgx")->property("text").toString().contains(u'.'), qPrintable(valuesText()));
+        settleVisualBar();
+        for (int w = 300; w <= 900; w += 3) {
+            QVERIFY(maximum.write(qreal(w)));
+            QTRY_VERIFY2(drawn() && bar->width() == w && onTheLine(),
+                         qPrintable(QStringLiteral("width %1: %2").arg(w).arg(widthsOf())));
+        }
+        QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()));
         tools.selectFamily(0);
         window->resize(was);
     }
@@ -36067,6 +36092,24 @@ private slots:
         QVERIFY(fsBar && fsBar->isVisible());
         QCOMPARE(fsBar->parentItem(), slot);
         QVERIFY(!fullscreenItem("visualToolName")); // VB1: the tools button names it
+        // VB1: the rail's More tools menu and the bar's More options hold
+        // the bar like its other menus (Codex on #496).
+        {
+            QVERIFY(!fs.menuOpen());
+            auto *moreTools = rail->findChild<QObject *>(QStringLiteral("visualToolsMoreMenu"));
+            QVERIFY(moreTools);
+            QVERIFY(QMetaObject::invokeMethod(moreTools, "open"));
+            QTRY_VERIFY(fs.menuOpen());
+            QVERIFY(QMetaObject::invokeMethod(moreTools, "close"));
+            QTRY_VERIFY(!fs.menuOpen());
+            auto *moreOptions = fsBar->findChild<QObject *>(QStringLiteral("visualToolMorePopover"));
+            QVERIFY(moreOptions);
+            QVERIFY(QMetaObject::invokeMethod(moreOptions, "openAt", Q_ARG(QVariant, QVariant::fromValue<QObject *>(fsBar)),
+                                              Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
+            QTRY_VERIFY(fs.menuOpen());
+            QVERIFY(QMetaObject::invokeMethod(moreOptions, "revert"));
+            QTRY_VERIFY(!fs.menuOpen());
+        }
         QTRY_VERIFY(fullscreenItem("visualOption_rectangle"));
         QTRY_VERIFY(fullscreenItem("visualValue_fscx") && fullscreenItem("visualValue_fscx")->isVisible());
         QCOMPARE(fullscreenItem("fullscreenToolsButton")->property("iconRole").toString(), QStringLiteral("tool-scale"));
