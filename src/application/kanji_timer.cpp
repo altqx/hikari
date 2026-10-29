@@ -692,23 +692,33 @@ KanjiTyped fitTyped(const KanjiText &kanji, const std::vector<std::pair<std::siz
     return out;
 }
 
+// The number of kanji units through each position, so testing the same long
+// reading against many runs does not repeatedly walk its whole base.
+std::vector<std::size_t> kanjiCounts(const KanjiText &kanji)
+{
+    std::vector<std::size_t> out(kanji.units.size() + 1);
+    for (std::size_t u = 0; u < kanji.units.size(); ++u)
+        out[u + 1] = out[u] + kanjiUnit(kanji.units[u]);
+    return out;
+}
+
 // Whether a typed reading's units take no kanji: a Line's own over a base
 // of kana (or other characters) only.
-bool noKanji(const KanjiText &kanji, const std::pair<std::size_t, std::size_t> &range)
+bool noKanji(const std::vector<std::size_t> &counts, const std::pair<std::size_t, std::size_t> &range)
 {
-    for (std::size_t u = range.first; u < range.second && u < kanji.units.size(); ++u)
-        if (kanjiUnit(kanji.units[u]))
-            return false;
-    return true;
+    const std::size_t from = std::min(range.first, counts.size() - 1);
+    const std::size_t to = std::min(range.second, counts.size() - 1);
+    return to <= from || counts[from] == counts[to];
 }
 
 // The typed readings over no kanji that start in [from, to).
-std::vector<std::pair<std::size_t, std::size_t>> bareIn(const KanjiTyped &typed, const KanjiText &kanji,
+std::vector<std::pair<std::size_t, std::size_t>> bareIn(const KanjiTyped &typed,
+                                                        const std::vector<std::size_t> &counts,
                                                         std::size_t from, std::size_t to)
 {
     std::vector<std::pair<std::size_t, std::size_t>> out;
     for (auto it = typed.lower_bound({from, 0}); it != typed.end() && it->first.first < to; ++it)
-        if (noKanji(kanji, it->first))
+        if (noKanji(counts, it->first))
             out.push_back(it->first);
     return out;
 }
@@ -719,7 +729,7 @@ std::vector<std::pair<std::size_t, std::size_t>> readingsIn(const KanjiTyped &ty
                                                             std::size_t from, std::size_t to)
 {
     auto out = kanjiRunsIn(kanji.units, from, to);
-    const auto bare = bareIn(typed, kanji, from, to);
+    const auto bare = bareIn(typed, kanjiCounts(kanji), from, to);
     out.insert(out.end(), bare.begin(), bare.end());
     std::ranges::sort(out);
     return out;
@@ -747,6 +757,7 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
                                         bool suggest)
 {
     std::vector<KanjiReading> out;
+    const auto counts = kanjiCounts(kanji);
     const KanjiTyped fitted = fitTyped(kanji, runsOver(kanji, groups), typed);
     auto entry = fitted.begin();
     std::size_t syllable = 0, character = 0, word = 0, before = 0; // (before: the last run's end)
@@ -762,7 +773,7 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
         // (one over kanji stops it only when it reaches a run from there)
         const auto bare = [&](std::size_t upTo) {
             for (; entry != fitted.end() && entry->first.first < upTo; ++entry) {
-                const bool none = noKanji(kanji, entry->first);
+                const bool none = noKanji(counts, entry->first);
                 if (none && entry->first.first >= from) {
                     KanjiReading k{g, entry->first.first, entry->first.second};
                     k.typed = entry->second;
@@ -787,7 +798,7 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
             // kanji and kana goes all on its first run (with the units it
             // spells) and is none of the runs after
             for (auto it = entry; it != fitted.end() && it->first.first < runs[r].second; ++it) {
-                if (noKanji(kanji, it->first)) // (bare: its group's)
+                if (noKanji(counts, it->first)) // (bare: its group's)
                     continue;
                 if (!k.typed)
                     k.typed.emplace();
