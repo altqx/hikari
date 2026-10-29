@@ -1,4 +1,4 @@
-// C2: structural ASS load (docs/qt/document-model.md).
+// C2: structural ASS load (docs/document-model.md).
 
 #include "hikari/core/ass_load.h"
 

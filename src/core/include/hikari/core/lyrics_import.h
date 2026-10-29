@@ -1,7 +1,7 @@
 #pragma once
 
 // KA6: word-timed lyrics imported as karaoke Lines (KA6-lyrics-import,
-// docs/qt/compatibility-decisions.md). An enhanced LRC file ("<mm:ss.xx>"
+// docs/compatibility-decisions.md). An enhanced LRC file ("<mm:ss.xx>"
 // word stamps) or a TTML file with word-level <span begin end> becomes an
 // ASS Document whose Lines carry one \k syllable per word, with an empty
 // syllable for each pause, so the syllables always add up to the Line's

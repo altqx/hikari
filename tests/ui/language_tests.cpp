@@ -1,4 +1,4 @@
-// O5 (#197): the interface language over the O4 catalogs (docs/qt/localisation.md).
+// O5 (#197): the interface language over the O4 catalogs (docs/localisation.md).
 // Settings lists English and the embedded catalogs as legacy OptionsDialog
 // does (OptionsDialog.cpp:322-341); the choice is stored in PROGRAM_LANGUAGE
 // and read at start as hikarisubApp.cpp:327-369 reads it, and it switches
@@ -56,15 +56,24 @@ QByteArray withoutLayout(const QByteArray &saved)
     return at < 0 ? saved : saved.left(at);
 }
 
-// Every source text the rewrite's catalogs key (i18n/migration/keys.ts, the
-// keys lupdate extracts from the sources).
+// Every source text the interface catalogs key (the Polish catalog's entries
+// lupdate keeps for the sources, so not the vanished or obsolete ones).
 QSet<QString> catalogSources()
 {
     QSet<QString> out;
-    QXmlStreamReader xml(readAll(QStringLiteral(HIKARI_SOURCE_DIR "/i18n/migration/keys.ts")));
-    while (!xml.atEnd())
-        if (xml.readNext() == QXmlStreamReader::StartElement && xml.name() == u"source")
-            out.insert(xml.readElementText());
+    QXmlStreamReader xml(readAll(QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_pl.ts")));
+    QString source;
+    while (!xml.atEnd()) {
+        if (xml.readNext() != QXmlStreamReader::StartElement)
+            continue;
+        if (xml.name() == u"source") {
+            source = xml.readElementText();
+        } else if (xml.name() == u"translation") {
+            const auto type = xml.attributes().value(QStringLiteral("type"));
+            if (type != u"vanished" && type != u"obsolete")
+                out.insert(source);
+        }
+    }
     return out;
 }
 
@@ -523,7 +532,7 @@ private slots:
     void firstStartOnAPolishSystemTakesPolish()
     {
         const QStringList polish{QStringLiteral("pl-PL"), QStringLiteral("en-US")};
-        const QString ini = dir.filePath(QStringLiteral("first-start/hikari.ini"));
+        const QString ini = dir.filePath(QStringLiteral("first-start/settings.toml"));
         QVERIFY(!QFile::exists(ini));
         start(ini, polish);
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl"));
@@ -691,7 +700,8 @@ private slots:
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); // standard buttons made anew
         // Text legacy never translates either: the OK buttons' literal label
         // (OptionsDialog.cpp:1016, MappedButton(this, wxID_OK, L"OK")).
-        const QSet<QString> allowed{QStringLiteral("OK")};
+        // A Style's name ("Default", the document's data) that is also a key.
+        const QSet<QString> allowed{QStringLiteral("OK"), QStringLiteral("Default")};
         // The History list shows the edits' own names (edit_session.cpp's
         // "Open" for the opening state), never catalog strings, though "Open"
         // is also a key.
@@ -708,7 +718,7 @@ private slots:
             // A menu item's binding (menuItemKeys) is the hotkey's key names
             // (hotkeys.cpp's legacy names: "Left" for Previous frame), never
             // a catalog string, though "Left" and "Right" are also Grid
-            // headings since they took legacy's translations (keys.ts).
+            // headings since they took legacy's translations.
             if (sources.contains(text) && !allowed.contains(text) && o && o->objectName() != u"menuItemKeys" && !unshown(o))
             {
                 QString chain;
@@ -990,6 +1000,37 @@ private slots:
         QCOMPARE(qm.translate("HikariSub.MainWindow", "&File"), QStringLiteral("&Plik"));
         QCOMPARE(qm.translate("Main", "&File"), QString());
         QCOMPARE(qm.translate("hikari::app::Application", "Untitled"), QString());
+        application->settingsStore()->set("program.language", QStringLiteral("en"));
+    }
+
+    // #477: the Script Properties wrap styles that name \N and \n show their
+    // translation in every language. lupdate read the backslashes of the
+    // old keys as escapes, so no catalog held the text the combo asked for.
+    void wrapStylesShowTheirTranslation()
+    {
+        start();
+        QVERIFY(application->openFile(episode));
+        QVERIFY(QMetaObject::invokeMethod(root()->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QTRY_VERIFY(item("propWrapStyle"));
+        const auto choice = [this](int index) {
+            QString text;
+            QMetaObject::invokeMethod(item("propWrapStyle"), "textAt", Q_RETURN_ARG(QString, text), Q_ARG(int, index));
+            return text;
+        };
+        QCOMPARE(choice(1), QStringLiteral("1: End-of-line wrapping, only \\N breaks"));
+        QCOMPARE(choice(2), QStringLiteral("2: No wrapping, both \\n and \\N break"));
+        for (const QString language : {QStringLiteral("pl"), QStringLiteral("ko_KR"), QStringLiteral("th_TH"), QStringLiteral("ta")}) {
+            QTranslator qm;
+            QVERIFY(qm.load(QStringLiteral(":/i18n/hikarisub_%1.qm").arg(language)));
+            const QString one = qm.translate("HikariSub.ScriptProperties", "1: End-of-line wrapping, only %1 breaks");
+            const QString two = qm.translate("HikariSub.ScriptProperties", "2: No wrapping, both %1 and %2 break");
+            QVERIFY2(!one.isEmpty() && !two.isEmpty(), qPrintable(language));
+            application->settingsStore()->set("program.language", language);
+            QCOMPARE(application->localisation().language(), language);
+            QCoreApplication::processEvents();
+            QCOMPARE(choice(1), one.arg(QStringLiteral("\\N")));
+            QCOMPARE(choice(2), two.arg(QStringLiteral("\\n")).arg(QStringLiteral("\\N")));
+        }
         application->settingsStore()->set("program.language", QStringLiteral("en"));
     }
 

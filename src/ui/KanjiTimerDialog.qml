@@ -202,7 +202,7 @@ DialogWindow {
                     wrapMode: Text.Wrap
                     color: Theme.muted
                     font: dialog.fontAt(12)
-                    text: qsTr("The romaji style needs lines timed with \\k tags.")
+                    text: qsTr("The romaji style needs lines timed with %1 tags.").arg("\\k")
                 }
             }
             ListView {

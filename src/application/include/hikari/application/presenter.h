@@ -1,6 +1,6 @@
 #pragma once
 
-// Video presentation port (N7; docs/qt/media.md, video pipeline). A
+// Video presentation port (N7; docs/media.md, video pipeline). A
 // presenter takes immutable leases of a decoded frame and its subtitle
 // overlay, places them with a presentation transform, and uploads them on
 // its render thread; submitting never waits for decoding or rendering. Each

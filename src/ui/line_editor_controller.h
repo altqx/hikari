@@ -1,6 +1,6 @@
 #pragma once
 
-// Presenter for the Line editor (V2; docs/qt/ux/ass-editor.md). One source of
+// Presenter for the Line editor (V2; docs/ux/ass-editor.md). One source of
 // truth: the editing target's EditSession holds the draft and history; this
 // class only projects the active Line into editor text and fields and turns
 // user edits into draft changes.

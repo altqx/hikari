@@ -1,6 +1,6 @@
 #pragma once
 
-// T1: the visual tools' shared parts (docs/qt/visual-tools.md): the eleven
+// T1: the visual tools' shared parts (docs/visual-tools.md): the eleven
 // families of legacy VideoToolbar's rail (and VT3's Perspective), the interface each tool implements,
 // the gesture transaction every tool's edit goes through and the batch
 // picker. A tool sees the Video panel through a VisualHost, which owns the
@@ -223,7 +223,7 @@ struct LastChange {
     std::vector<ToolValue> values;
 };
 
-// One gesture's edit (docs/qt/proposals/edit-transactions.md, accepted on
+// One gesture's edit (docs/proposals/edit-transactions.md, accepted on
 // #55): it stages new texts for its target Lines while the pointer or key is
 // down and commits them on release as one history step named for the tool;
 // cancelling (Esc) drops them. Nothing reaches the Document, the pending

@@ -1,6 +1,6 @@
 #pragma once
 
-// Y4-playres-ask (user decision 2026-10-13; docs/qt/compatibility-decisions.md):
+// Y4-playres-ask (user decision 2026-10-13; docs/compatibility-decisions.md):
 // legacy SubsGrid::GetASSRes (SubsGridBase.cpp:1653-1679 at 20d647c4) wrote a
 // missing PlayResX/PlayResY into the Document whenever anything read the
 // resolution, so a macro reading it (subtitles.script_resolution, karaskel's

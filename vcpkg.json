@@ -40,6 +40,7 @@
     "pcre2",
     "hunspell",
     "uchardet",
+    "tomlplusplus",
     {
       "name": "pkgconf",
       "host": true,

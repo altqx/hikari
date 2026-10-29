@@ -126,7 +126,7 @@ in `tests/application/translation_mode_tests.cpp:343-344`.
 - The rewrite already has a **hidden-tag projection** of a Line's raw text (`src/core/include/hikari/core/text_projection.h:1-60`).
   It maps each visible span to its source span, shows `\N` as a newline, and keeps every hidden token in
   order on edits. The accepted boundary rule is that text typed at a hidden-tag boundary goes **after**
-  the tags (`docs/qt/ux/ass-editor.md:7`). Any new design should build on this, not replace it.
+  the tags (`docs/ux/ass-editor.md:7`). Any new design should build on this, not replace it.
 
 ## 2. ASS tag semantics (the classification's basis)
 

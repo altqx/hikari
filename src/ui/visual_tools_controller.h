@@ -1,6 +1,6 @@
 #pragma once
 
-// T1: the Video panel's visual tools (docs/qt/visual-tools.md). The tool
+// T1: the Video panel's visual tools (docs/visual-tools.md). The tool
 // rail (accepted layout A on #55) lists legacy VideoToolbar's eleven
 // families and VT3's Perspective; the active tool gets the pointer over the video and the panel's
 // keys, and draws through the overlay. This controller is the tools'
@@ -87,11 +87,6 @@ class VisualToolsController : public QObject, public application::visual::Visual
     // enabled, choices, index. T4: its own signal, so the row is rebuilt only
     // when it changes.
     Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
-    // VT1: every family's options and values (by Family, empty without a
-    // tool), which the inspector bar lays out unseen to keep the height of
-    // the tallest at its width: the video does not resize as the tool
-    // changes.
-    Q_PROPERTY(QVariantList familyLayouts READ familyLayouts NOTIFY optionsChanged)
     // T5: the "Vector shape editing" dialog while the drawing's shape list's
     // "Edit" has it open (null otherwise).
     Q_PROPERTY(hikari::ui::ShapeEditor *shapeEditor READ shapeEditor NOTIFY shapeEditorChanged)
@@ -168,7 +163,6 @@ public:
     int editTarget() const { return m_editTarget; }
     QString copied() const { return m_copied; }
     QVariantList options() const { return m_options; }
-    QVariantList familyLayouts() const;
     // NT1: the active tool's name (the rail's), the title of its notices.
     QString toolName() const;
     int bells() const { return m_bells; }

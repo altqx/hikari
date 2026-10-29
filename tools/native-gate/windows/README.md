@@ -1,6 +1,6 @@
 # D1/D3 native gate harness (Windows)
 
-The Windows half of the native gate in [docs/qt/docking.md](../../../docs/qt/docking.md)
+The Windows half of the native gate in [docs/docking.md](../../../docs/docking.md)
 ("Required native gate and review") for cards D1 (#152) and D3 (#207, the dock chrome after MuseScore 4): NVDA,
 Windows window management and drag-and-drop with real pointer input. HikariSub runs on the
 desktop of the Winix VM (`winix-dev`, Windows 11, `vm: { displays: 2 }` in

@@ -135,7 +135,7 @@ td.sw svg{display:block}
 %s
 </style></head><body>
 <h1>HikariSub icon set (K1)</h1>
-<p>%d icons drawn in house on a 16-unit grid (docs/qt/ux/icons.md). Each appearance column shows the icon
+<p>%d icons drawn in house on a 16-unit grid (docs/ux/icons.md). Each appearance column shows the icon
 at 16 and 32 px, then disabled at 16 px, in the theme layer's colours (Light and Dark
 with the default accent); the accent layer is the second colour. PNG sheets rendered by the
 application's Icon item: <span class=sheets>%s</span></p>

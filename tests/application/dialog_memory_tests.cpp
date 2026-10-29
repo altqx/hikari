@@ -1,5 +1,5 @@
 // AD2 (#311): Repeat last run's matching, filling a dialog by name and the
-// safe-prefill rule (docs/qt/automation.md).
+// safe-prefill rule (docs/automation.md).
 #include "hikari/application/dialog_memory.h"
 
 #include <gtest/gtest.h>

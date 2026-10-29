@@ -5062,7 +5062,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
-        <translation>Ta kopia przenośna przechowuje ustawienia w %1. Ustawienia wcześniejszej wersji nadal są w %2: aby ich użyć, zamknij HikariSub i skopiuj stamtąd hikari.ini.</translation>
+        <translation type="vanished">Ta kopia przenośna przechowuje ustawienia w %1. Ustawienia wcześniejszej wersji nadal są w %2: aby ich użyć, zamknij HikariSub i skopiuj stamtąd hikari.ini.</translation>
     </message>
     <message>
         <source>%1 - HikariSub</source>
@@ -6496,6 +6496,26 @@ great help testing HikariSub on a slow computer)
         <source>Help</source>
         <translation>Pomoc</translation>
     </message>
+    <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your settings moved from hikari.ini to settings.toml, hotkeys.toml and state.json. The old file is kept as hikari.ini.old.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are at their defaults for now. HikariSub will not write over it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are back at their defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hotkeys.toml: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -6780,6 +6800,10 @@ gdy okno wyników szukania jest otwarte</translation>
     <message>
         <source>What is sent</source>
         <translation>Co jest wysyłane</translation>
+    </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8215,6 +8239,14 @@ zostanie zmieniony na domyślny</translation>
         <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
         <translation>Po awarii lub zawieszeniu raport jest wysyłany bez pytania: co uległo awarii, Twój system, ustawienia i ostatnie wiersze dziennika. Nigdy Twoje napisy, pliki ani ich nazwy.</translation>
     </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
@@ -8742,13 +8774,21 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation>1: Zawijanie na końcu linijki, łamie tylko N</translation>
+        <translation type="vanished">1: Zawijanie na końcu linijki, łamie tylko N</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation>2: Bez zawijania, łamią 
+        <translation type="vanished">2: Bez zawijania, łamią 
  i N</translation>
+    </message>
+    <message>
+        <source>1: End-of-line wrapping, only %1 breaks</source>
+        <translation>1: Zawijanie na końcu linijki, łamie tylko %1</translation>
+    </message>
+    <message>
+        <source>2: No wrapping, both %1 and %2 break</source>
+        <translation>2: Bez zawijania, łamią %1 i %2</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>
@@ -13100,6 +13140,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Zmienia aktywną linijkę</translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation>Użyj zaznaczonych linijek (wybrano 1 linijkę: narzędzia edytują ją, a nie aktywną linijkę)</translation>
     </message>
@@ -13710,6 +13754,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Warning</source>
         <translation type="vanished">Uwaga</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

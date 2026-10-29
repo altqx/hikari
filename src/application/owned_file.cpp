@@ -2,34 +2,27 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iterator>
 #include <system_error>
 
 namespace hikari::application {
 
+namespace fs = std::filesystem;
+
 namespace {
 
-std::filesystem::path withSuffix(const std::filesystem::path &path, std::string_view suffix)
+fs::path withSuffix(const fs::path &path, std::string_view suffix)
 {
-    std::filesystem::path out = path;
-    out += std::filesystem::path(suffix);
+    fs::path out = path;
+    out += fs::path(std::u8string(reinterpret_cast<const char8_t *>(suffix.data()), suffix.size()));
     return out;
 }
 
-std::optional<std::string> readAll(const std::filesystem::path &path)
-{
-    std::ifstream in(path, std::ios::binary);
-    if (!in)
-        return std::nullopt;
-    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-}
-
-// The first free <name>.broken, <name>.broken-2, ...
-std::filesystem::path brokenName(const std::filesystem::path &path)
+// <name>.broken, else the first free <name>.broken-N.
+fs::path brokenName(const fs::path &path)
 {
     std::error_code ec;
-    std::filesystem::path name = withSuffix(path, ".broken");
-    for (int n = 2; std::filesystem::exists(name, ec); ++n)
+    fs::path name = withSuffix(path, ".broken");
+    for (int n = 2; fs::exists(name, ec); ++n)
         name = withSuffix(path, ".broken-" + std::to_string(n));
     return name;
 }
@@ -46,75 +39,124 @@ std::pair<int, int> lineColumnAt(std::string_view text, std::size_t offset)
             ++line;
             start = i + 1;
         }
-    return {line, static_cast<int>(offset - start) + 1};
+    // Columns count characters: UTF-8 continuation bytes are not one.
+    int column = 1;
+    for (std::size_t i = start; i < offset; ++i)
+        if ((static_cast<unsigned char>(text[i]) & 0xC0) != 0x80)
+            ++column;
+    return {line, column};
 }
 
 std::optional<ParseFailure> checkFileVersion(std::optional<std::int64_t> version, std::int64_t supported)
 {
     if (!version)
-        return ParseFailure{0, 0, "it has no version"};
-    if (*version < 1 || *version > supported)
-        return ParseFailure{0, 0, "it has version " + std::to_string(*version) + ", which this version of HikariSub "
-                                  "does not know"};
+        return ParseFailure{0, 0, "It has no version number."};
+    if (*version < 1)
+        return ParseFailure{0, 0, "Its version " + std::to_string(*version) + " is not a version number."};
+    if (*version > supported)
+        return ParseFailure{0, 0,
+                            "It is version " + std::to_string(*version) + ", newer than this HikariSub reads (" +
+                                std::to_string(supported) + ")."};
     return std::nullopt;
 }
 
-FileLoad loadOwnedFile(const std::filesystem::path &path,
-                       const std::function<std::optional<ParseFailure>(std::string_view)> &parse)
+std::optional<std::string> readOwnedFile(const fs::path &path)
 {
+    // A folder in the file's place opens on Linux, then throws on reading.
     std::error_code ec;
-    if (!std::filesystem::is_regular_file(path, ec))
-        return {};
-    const auto bytes = readAll(path);
-    std::optional<ParseFailure> failure =
-        bytes ? parse(*bytes) : std::optional<ParseFailure>(ParseFailure{0, 0, "it cannot be read"});
-    if (!failure)
-        return {FileState::Read, std::nullopt};
-    FileProblem problem{path, brokenName(path), std::move(*failure)};
-    std::filesystem::rename(path, problem.keptAs, ec);
-    if (ec)
-        problem.keptAs.clear();
-    return {FileState::Broken, std::move(problem)};
+    if (!fs::is_regular_file(path, ec))
+        return std::nullopt;
+    try {
+        std::ifstream in(path, std::ios::binary);
+        if (!in)
+            return std::nullopt;
+        std::string bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        if (in.bad())
+            return std::nullopt;
+        return bytes;
+    } catch (const std::ios_base::failure &) {
+        return std::nullopt;
+    }
 }
 
-Conversion convertOnce(const std::filesystem::path &target, const std::filesystem::path &legacy,
-                       const std::function<bool()> &convert)
-{
-    std::error_code ec;
-    if (std::filesystem::exists(target, ec) || !std::filesystem::is_regular_file(legacy, ec))
-        return Conversion::NotNeeded;
-    if (!convert())
-        return Conversion::Failed;
-    const std::filesystem::path old = withSuffix(legacy, ".old");
-    std::filesystem::remove(old, ec);
-    std::filesystem::rename(legacy, old, ec);
-    return Conversion::Converted;
-}
-
-bool writeFileAtomically(const std::filesystem::path &path, std::string_view bytes)
+bool writeFileAtomically(const fs::path &path, std::string_view bytes, const fs::path &permissionsOf)
 {
     std::error_code ec;
     if (path.has_parent_path())
-        std::filesystem::create_directories(path.parent_path(), ec);
-    const std::filesystem::path temporary = withSuffix(path, ".tmp");
+        fs::create_directories(path.parent_path(), ec);
+    const fs::path temporary = withSuffix(path, ".writing");
+    fs::file_status existing = fs::status(path, ec);
+    if (!fs::is_regular_file(existing) && !permissionsOf.empty())
+        existing = fs::status(permissionsOf, ec);
     {
         std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
         if (!out)
             return false;
+        // The file keeps its permissions: a private state.json stays private.
+        if (fs::is_regular_file(existing))
+            fs::permissions(temporary, existing.permissions(), fs::perm_options::replace, ec);
         out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
         out.flush();
         if (!out) {
             out.close();
-            std::filesystem::remove(temporary, ec);
+            fs::remove(temporary, ec);
             return false;
         }
     }
-    std::filesystem::rename(temporary, path, ec);
+    fs::rename(temporary, path, ec);
     if (ec) {
-        std::filesystem::remove(temporary, ec);
+        fs::remove(temporary, ec);
         return false;
     }
     return true;
+}
+
+FileLoad loadOwnedFile(const fs::path &path, const std::function<std::optional<ParseFailure>(std::string_view)> &parse)
+{
+    std::error_code ec;
+    if (!fs::exists(path, ec))
+        return {};
+    FileLoad load;
+    std::optional<ParseFailure> failure;
+    const auto bytes = readOwnedFile(path);
+    if (bytes)
+        failure = parse(*bytes);
+    else
+        failure = ParseFailure{0, 0, "It could not be read."};
+    if (!failure) {
+        load.state = FileState::Read;
+        return load;
+    }
+    load.state = FileState::Broken;
+    FileProblem problem{path, {}, std::move(*failure)};
+    // A file that cannot be read stays where it is (and is not written).
+    if (bytes) {
+        const fs::path kept = brokenName(path);
+        fs::rename(path, kept, ec);
+        if (!ec)
+            problem.keptAs = kept;
+    }
+    load.problem = std::move(problem);
+    return load;
+}
+
+Conversion convertOnce(const fs::path &target, const fs::path &legacy, const std::function<bool()> &convert)
+{
+    std::error_code ec;
+    if (fs::exists(target, ec) || !fs::exists(legacy, ec))
+        return Conversion::NotNeeded;
+    if (!convert())
+        return Conversion::Failed;
+    const fs::path old = withSuffix(legacy, ".old");
+    fs::remove(old, ec);
+    fs::rename(legacy, old, ec);
+    return Conversion::Converted;
+}
+
+std::string displayPath(const fs::path &path)
+{
+    const std::u8string text = path.lexically_normal().make_preferred().u8string();
+    return {reinterpret_cast<const char *>(text.data()), text.size()};
 }
 
 } // namespace hikari::application

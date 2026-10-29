@@ -1,0 +1,127 @@
+name: Ubuntu
+
+# B2-U: reconstruct the pinned build on a fresh Ubuntu runner through the root
+# presets. Only the provisioning step receives the Qt installer secret; the
+# build and tests run without it. No caches, no SDK or binary publication.
+on:
+  push:
+    branches: [main]
+    paths:
+      - CMakeLists.txt
+      - CMakePresets.json
+      - vcpkg.json
+      - vcpkg-configuration.json
+      - cmake/provision/**
+      - cmake/locks/**
+      - cmake/HikariDependencies.cmake
+      - cmake/HikariTesting.cmake
+      - cmake/quicktest_main.cpp
+      - ports/**
+      - triplets/**
+      - src/**
+      - tests/dependency-load/**
+      - tests/runners/**
+      - tests/support/**
+      - tests/perf/**
+      - tests/references/**
+      - tests/modules/**
+      - tests/core/**
+      - tests/application/**
+      - tests/backends/**
+      - tests/ui/**
+      - tests/fixtures/**
+      - docs/fixtures/**
+      - .github/workflows/linux.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ubuntu:
+    name: Ubuntu x64 release, empty cache
+    runs-on: ubuntu-26.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Declared host prerequisites
+        run: |
+          set -euo pipefail
+          # dbus-daemon: show_in_folder_tests runs its own private session bus
+          # (fileManagerShowsTheFileSelected skipped without it, P9).
+          pkgs=(ninja-build nasm pkg-config autoconf autoconf-archive automake libtool python3 zip unzip libasound2-dev
+                libgl1-mesa-dev libegl1 libxkbcommon0 libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libfontconfig1 libdbus-1-3 dbus-daemon
+                libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-randr0
+                libxcb-render-util0 libxcb-image0 libxcb-xkb1 xvfb xauth
+                libpulse0 libx11-6 libxrandr2 libxext6 libdrm2 libbz2-1.0 zlib1g)
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends "${pkgs[@]}" > /dev/null
+          mkdir -p out/evidence
+          dpkg-query -W -f='${Package}\t${Version}\n' "${pkgs[@]}" > out/evidence/host-packages.tsv
+          { uname -srm; grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release; echo "ImageVersion=${ImageVersion:-unknown}"
+            cmake --version | head -1; ninja --version; g++ --version | head -1; nasm -v; } > out/evidence/host.txt
+
+      - name: Provision Qt and vcpkg (only step with the secret)
+        env:
+          QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
+        run: cmake --workflow --preset provision
+
+      - name: Reject a corrupted mirror object, then repair it
+        run: |
+          set -euo pipefail
+          victim=$(python3 -c "import json;l=json.load(open('cmake/locks/qt-linux.lock.json'));print(next(o['path'] for o in l['objects'] if o['kind']=='payload' and o['package']=='qt.license.thirdparty'))")
+          printf 'x' >> "out/sdk/qt-mirror-linux/$victim"
+          if cmake --preset provision -DHIKARI_QT_VERIFY_ONLY=ON > out/evidence/corrupt-verify.log 2>&1; then
+            echo "Corrupted object was accepted" >&2; exit 1
+          fi
+          grep -qF "$victim" out/build/provision/provision-evidence/qt-verify-rejections.tsv
+          cmake --preset provision -DHIKARI_QT_VERIFY_ONLY=OFF > out/evidence/repair.log 2>&1
+          awk -F'\t' 'NR>1{c[$4]++} END{for(k in c) print k"\t"c[k]}' \
+            out/build/provision/provision-evidence/qt-acquired.tsv > out/evidence/repair-actions.tsv
+          cat out/evidence/repair-actions.tsv
+
+      - name: Configure, build and test without credentials
+        run: |
+          set -euo pipefail
+          test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
+          test ! -e out/sdk/qt-install-private
+          # N6: the host has no sound card. A null ALSA PCM gives the PortAudio
+          # stream tests a device: path coverage only, it has no real timing.
+          printf 'pcm.hikari_null {\n    type null\n}\n' >> "$HOME/.asoundrc"
+          export HIKARI_TEST_AUDIO_DEVICE=hikari_null
+          # ubuntu-x64-verify's steps, with libstdc++ bounds checks on (#320).
+          cmake --preset ubuntu-x64-release -DHIKARI_GLIBCXX_ASSERTIONS=ON
+          cmake --build --preset ubuntu-x64-release
+          ctest --preset ubuntu-x64-release
+
+      - name: Performance observations (uncalibrated host)
+        run: |
+          ctest --preset ubuntu-x64-perf
+          cp out/build/ubuntu-x64-release/perf-report-*.json out/evidence/ 2>/dev/null || true
+
+      - name: Collect sanitized evidence
+        if: always()
+        run: |
+          mkdir -p out/evidence
+          for d in out/build/provision/provision-evidence out/build/ubuntu-x64-release/provision-evidence; do
+            [ -d "$d" ] && cp -r "$d" "out/evidence/$(basename "$(dirname "$d")")" || true
+          done
+          [ -f out/build/ubuntu-x64-release/Testing/Temporary/LastTest.log ] &&
+            cp out/build/ubuntu-x64-release/Testing/Temporary/LastTest.log out/evidence/ || true
+          du -sb out/sdk/* 2>/dev/null > out/evidence/sdk-sizes.tsv || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/evidence/
+          if-no-files-found: warn
+          retention-days: 14

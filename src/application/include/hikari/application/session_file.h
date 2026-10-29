@@ -36,7 +36,7 @@
 // "FFMS2: " and "Editor: " are skipped: DirectShow and the player layout are
 // gone.
 //
-// Departures (approved, docs/qt/compatibility-decisions.md):
+// Departures (approved, docs/compatibility-decisions.md):
 // - C05-audio-association: legacy never reset the Audio field between tabs,
 //   so a tab without an "Audio:" line inherited the previous tab's audio.
 //   Here each tab has only its own audio.

@@ -1,4 +1,4 @@
-// O3: "Import legacy settings" (docs/qt/proposals/settings-import.md), a
+// O3: "Import legacy settings" (docs/proposals/settings-import.md), a
 // rewrite window without a legacy counterpart: the legacy installations
 // found (or a folder the user chooses), the review plan of the chosen one
 // (each record's source, value, destination, current value, disposition and

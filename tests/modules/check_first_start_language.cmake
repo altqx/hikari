@@ -24,19 +24,23 @@ function(first_start case languages expected)
     if(NOT result EQUAL 0)
         message(FATAL_ERROR "${case}: the startup exited with ${result}:\n${out}")
     endif()
-    file(GLOB_RECURSE ini "${home}/config/*hikari.ini")
+    file(GLOB_RECURSE ini "${home}/config/*settings.toml")
     if(NOT ini)
         message(FATAL_ERROR "${case}: no settings file was written under ${home}/config")
     endif()
-    # The settings store's keys (O1): program.language and the spell
-    # checker's editor.dictionaryLanguage, both taken from the first start.
+    # The settings store's keys (O1, CF1's settings.toml): [program] language
+    # and the spell checker's [editor] dictionaryLanguage, both taken from the
+    # first start.
     file(STRINGS "${ini}" all)
     set(stored "")
     set(dictionary "")
+    set(table "")
     foreach(line IN LISTS all)
-        if(line MATCHES "^program\\.language=(.*)$")
+        if(line MATCHES "^\\[(.*)\\]$")
+            set(table "${CMAKE_MATCH_1}")
+        elseif(table STREQUAL "program" AND line MATCHES "^language = [\"'](.*)[\"']$")
             set(stored "${CMAKE_MATCH_1}")
-        elseif(line MATCHES "^editor\\.dictionaryLanguage=(.*)$")
+        elseif(table STREQUAL "editor" AND line MATCHES "^dictionaryLanguage = [\"'](.*)[\"']$")
             set(dictionary "${CMAKE_MATCH_1}")
         endif()
     endforeach()

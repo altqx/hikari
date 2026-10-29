@@ -5024,7 +5024,7 @@ Failed to copy %2 fonts.</source>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
-        <translation>இந்தக் கையடக்கப் பிரதி தன் அமைப்புகளை %1 இல் வைத்திருக்கிறது. முந்தைய பதிப்பின் அமைப்புகள் இன்னும் %2 இல் உள்ளன: அவற்றைப் பயன்படுத்த, HikariSub ஐ மூடிவிட்டு அங்கிருந்து hikari.ini ஐ நகலெடுக்கவும்.</translation>
+        <translation type="vanished">இந்தக் கையடக்கப் பிரதி தன் அமைப்புகளை %1 இல் வைத்திருக்கிறது. முந்தைய பதிப்பின் அமைப்புகள் இன்னும் %2 இல் உள்ளன: அவற்றைப் பயன்படுத்த, HikariSub ஐ மூடிவிட்டு அங்கிருந்து hikari.ini ஐ நகலெடுக்கவும்.</translation>
     </message>
     <message>
         <source>%1 - HikariSub</source>
@@ -6456,6 +6456,26 @@ great help testing HikariSub on a slow computer)
         <source>Help</source>
         <translation>உதவி</translation>
     </message>
+    <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your settings moved from hikari.ini to settings.toml, hotkeys.toml and state.json. The old file is kept as hikari.ini.old.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are at their defaults for now. HikariSub will not write over it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are back at their defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hotkeys.toml: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -6740,6 +6760,10 @@ when find results window is open</source>
     <message>
         <source>What is sent</source>
         <translation>என்ன அனுப்பப்படுகிறது</translation>
+    </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8171,6 +8195,14 @@ and will be changed to the default</source>
         <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
         <translation>செயலிழப்பு அல்லது உறைவுக்குப் பிறகு கேட்காமல் அறிக்கை அனுப்பப்படும்: என்ன செயலிழந்தது, உங்கள் கணினி, அமைப்புகள், கடைசி பதிவு வரிகள். உங்கள் வசனங்கள், கோப்புகள் அல்லது அவற்றின் பெயர்கள் ஒருபோதும் இல்லை.</translation>
     </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
@@ -8696,13 +8728,21 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation>1: வரி இறுதியில் மடக்குதல், N மட்டுமே முறிக்கும்</translation>
+        <translation type="vanished">1: வரி இறுதியில் மடக்குதல், N மட்டுமே முறிக்கும்</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation>2: மடக்குதல் இல்லை, 
+        <translation type="vanished">2: மடக்குதல் இல்லை, 
  மற்றும் N இரண்டும் முறிக்கும்</translation>
+    </message>
+    <message>
+        <source>1: End-of-line wrapping, only %1 breaks</source>
+        <translation>1: வரி இறுதியில் மடக்குதல், %1 மட்டுமே முறிக்கும்</translation>
+    </message>
+    <message>
+        <source>2: No wrapping, both %1 and %2 break</source>
+        <translation>2: மடக்குதல் இல்லை, %1 மற்றும் %2 இரண்டும் முறிக்கும்</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>
@@ -13032,6 +13072,10 @@ or codecs or a splitter may be missing</source>
         <translation>செயலில் உள்ள வரியை மாற்றுகிறது</translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation>தேர்ந்தெடுத்த வரிகளை எடு (1 வரி எடுக்கப்பட்டது: கருவிகள் செயலில் உள்ள வரியை அல்ல, அதைத் திருத்தும்)</translation>
     </message>
@@ -13636,6 +13680,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Warning</source>
         <translation type="vanished">எச்சரிக்கை</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

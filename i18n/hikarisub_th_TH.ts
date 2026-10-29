@@ -4986,7 +4986,7 @@ Failed to copy %2 fonts.</source>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
-        <translation>สำเนาแบบพกพานี้เก็บการตั้งค่าไว้ใน %1 การตั้งค่าของเวอร์ชันก่อนหน้ายังอยู่ใน %2 หากต้องการใช้ ให้ปิด HikariSub แล้วคัดลอก hikari.ini จากที่นั่น</translation>
+        <translation type="vanished">สำเนาแบบพกพานี้เก็บการตั้งค่าไว้ใน %1 การตั้งค่าของเวอร์ชันก่อนหน้ายังอยู่ใน %2 หากต้องการใช้ ให้ปิด HikariSub แล้วคัดลอก hikari.ini จากที่นั่น</translation>
     </message>
     <message>
         <source>%1 - HikariSub</source>
@@ -6416,6 +6416,26 @@ great help testing HikariSub on a slow computer)
         <source>Help</source>
         <translation>ช่วยเหลือ</translation>
     </message>
+    <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your settings moved from hikari.ini to settings.toml, hotkeys.toml and state.json. The old file is kept as hikari.ini.old.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are at their defaults for now. HikariSub will not write over it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are back at their defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hotkeys.toml: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -6700,6 +6720,10 @@ when find results window is open</source>
     <message>
         <source>What is sent</source>
         <translation>สิ่งที่ส่ง</translation>
+    </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8127,6 +8151,14 @@ and will be changed to the default</source>
         <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
         <translation>หลังจากขัดข้องหรือค้าง รายงานจะถูกส่งโดยไม่ถาม: สิ่งที่ขัดข้อง ระบบ การตั้งค่า และบรรทัดล่าสุดของบันทึก ไม่รวมคำบรรยาย ไฟล์ หรือชื่อไฟล์ของคุณ</translation>
     </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
@@ -8650,13 +8682,21 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation>1: แบ่งที่ท้ายบรรทัด ขึ้นบรรทัดใหม่เฉพาะ N</translation>
+        <translation type="vanished">1: แบ่งที่ท้ายบรรทัด ขึ้นบรรทัดใหม่เฉพาะ N</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation>2: ไม่แบ่งบรรทัด ขึ้นบรรทัดใหม่ทั้ง 
+        <translation type="vanished">2: ไม่แบ่งบรรทัด ขึ้นบรรทัดใหม่ทั้ง 
  และ N</translation>
+    </message>
+    <message>
+        <source>1: End-of-line wrapping, only %1 breaks</source>
+        <translation>1: แบ่งที่ท้ายบรรทัด ขึ้นบรรทัดใหม่เฉพาะ %1</translation>
+    </message>
+    <message>
+        <source>2: No wrapping, both %1 and %2 break</source>
+        <translation>2: ไม่แบ่งบรรทัด ขึ้นบรรทัดใหม่ทั้ง %1 และ %2</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>
@@ -12966,6 +13006,10 @@ or codecs or a splitter may be missing</source>
         <translation>เปลี่ยนบรรทัดปัจจุบัน</translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation>ตรึงบรรทัดที่เลือก (ตรึงไว้ 1 บรรทัด: เครื่องมือจะแก้ไขบรรทัดนั้น ไม่ใช่บรรทัดปัจจุบัน)</translation>
     </message>
@@ -13564,6 +13608,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Warning</source>
         <translation type="vanished">คำเตือน</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

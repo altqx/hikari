@@ -1,7 +1,7 @@
 #pragma once
 
 // A macro's staged edits against one Document (L4, A33-transaction; the
-// accepted policy in docs/qt/automation.md). The macro starts from a snapshot
+// accepted policy in docs/automation.md). The macro starts from a snapshot
 // with the Document's revision, explicit target, selection and active Line;
 // its result is validated against that revision and applied atomically as
 // one undo step through the EditSession, or rejected without changing

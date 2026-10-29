@@ -68,7 +68,7 @@ also uses these terms:
   - Hikari is GPL-3.0 as well, so copying is legally possible with notices.
   - But Pyxis is Python and JavaScript, which Hikari cannot run in-process.
   - Its Lua function libraries come from the Kara Effector line, which has no licence. Hikari already
-    keeps its KE3 presets free of that code (`docs/qt/karaoke-presets.md:5`).
+    keeps its KE3 presets free of that code (`docs/karaoke-presets.md:5`).
   - Reuse the ideas: loop/data separation, per-iterator random scopes, queue ordering, the render-cost
     heat map. Do not reuse the code.
 - **What Hikari already has.**
@@ -374,7 +374,7 @@ manual entry.
 ### 2.2 Hikari's own templater stack (KE1–KE3, KP1)
 
 - **KE1 ([#283](https://github.com/altqx/hikari/issues/283)).** Output stays byte-identical to 2.1.7 on a
-  golden corpus (`docs/qt/karaoke-templater.md:9-17`). KE1 adds ([karaoke-templater.md:23-29]):
+  golden corpus (`docs/karaoke-templater.md:9-17`). KE1 adds ([karaoke-templater.md:23-29]):
   - template problems that name the Line;
   - "Apply karaoke template to selected lines";
   - per-template timing;
@@ -402,21 +402,21 @@ manual entry.
   - **On the video.** `templatePreviewDocument` puts the preview in place of the Line's generated Lines
     and keeps only the Lines over the current window (`template_preview.h:72-101`).
   - **Cost.** The median preview is about 1.2 ms on `stock-tutorials`
-    (`docs/qt/compatibility-decisions.md:263`).
+    (`docs/compatibility-decisions.md:263`).
   - **Consent.** Nothing runs until the user chooses Preview for a Document whose templates hold Lua
     (`karaoke-templater.md:93`).
 - **KE3 ([#285](https://github.com/altqx/hikari/issues/285)): ten presets**, each one ASS file of
   template and code Lines (`src/application/karaoke-presets/*.ass`).
   - The presets are original work. They use "no random values … in integer arithmetic, so the output is the
     same on every platform", and carry no state from Line to Line, so regenerating one Line alone matches
-    a whole run (`docs/qt/karaoke-presets.md:5`, `:19`).
+    a whole run (`docs/karaoke-presets.md:5`, `:19`).
   - Goldens lock them against the unchanged 2.1.7 script (`karaoke-presets.md:42-51`).
 - **KP1 ([#286](https://github.com/altqx/hikari/issues/286)): folding.**
-  - The Karaoke arrangement puts the Template editor next to the video (`docs/qt/ux/workspaces.md:34`).
+  - The Karaoke arrangement puts the Template editor next to the video (`docs/ux/workspaces.md:34`).
   - The Grid folds runs of generated Lines, meaning those whose Effect is exactly `fx` or
     `Effector [fx]` (`src/application/generated_runs.cpp:5-8`; `workspaces.md:36`).
 - **Automation host.** Each script runs in its own helper process (ADR 0006), on LuaJIT (`vcpkg.json:25`;
-  `docs/qt/automation.md:9`). Host services include `TextExtents`, `FrameFromMs`, `Keyframes` and
+  `docs/automation.md:9`). Host services include `TextExtents`, `FrameFromMs`, `Keyframes` and
   `FrequencyPeaks` (`src/application/include/hikari/application/automation.h:191-196`).
 
 ### 2.3 Kara Effector
@@ -624,7 +624,7 @@ geometry, audio and image nodes on top.
     do this for random templates.
 - **Where the graph lives.**
   - Pyxis keeps graphs out of the subtitle (§1.3), so the `.ass` loses its source.
-  - Hikari's document model keeps unknown sections (C03-preservation, `docs/qt/document-model.md:55-63`).
+  - Hikari's document model keeps unknown sections (C03-preservation, `docs/document-model.md:55-63`).
     Whether Aegisub keeps an unknown section on save is unconfirmed.
   - A **Comment Line with an Effect such as `graph <name>` and the graph as JSON text** would travel through
     any editor:
@@ -655,7 +655,7 @@ current frame.
     (`compatibility-decisions.md:263`).
   - The video draws only the Lines over the preview window (`template_preview.h:72-82`).
   - No measurement exists for a whole-file graph run. Hikari's performance contract has no karaoke
-    workload (`docs/qt/performance.md:21` lists the fixtures G, E, V, A).
+    workload (`docs/performance.md:21` lists the fixtures G, E, V, A).
 - **What the design can rely on.**
   - **Generated Lines are independent per Line.** Determinism and no Line-to-Line state (KE3's rule,
     `karaoke-presets.md:19`) let the engine evaluate Lines in parallel and cache per Line, as Houdini's
@@ -695,7 +695,7 @@ current frame.
 
 ## 6. Proposed first Hikari node set
 
-The aim: every KE3 preset (`docs/qt/karaoke-presets.md:27-40`) can be built from these nodes and give its
+The aim: every KE3 preset (`docs/karaoke-presets.md:27-40`) can be built from these nodes and give its
 golden output byte for byte. Port types:
 
 - **Number**
@@ -851,9 +851,9 @@ Pyxis Effector at `375ad89b4969c04bfb0cc27ac9358a30779eede5`
 HikariSub `origin/qt` at `62446e2b59ffd19b5081d292b1a85793b57f3133`
 (base `https://github.com/altqx/hikari/blob/62446e2b59ffd19b5081d292b1a85793b57f3133/`):
 
-- [karaoke-templater.md:23-29], `docs/qt/karaoke-templater.md`, `docs/qt/karaoke-presets.md`,
-  `docs/qt/compatibility-decisions.md`, `docs/qt/ux/workspaces.md`, `docs/qt/document-model.md`,
-  `docs/qt/automation.md`, `docs/qt/performance.md`, `docs/adr/0001…`, `0002…`, `0004…`, `0006…`, `0013…`
+- [karaoke-templater.md:23-29], `docs/karaoke-templater.md`, `docs/karaoke-presets.md`,
+  `docs/compatibility-decisions.md`, `docs/ux/workspaces.md`, `docs/document-model.md`,
+  `docs/automation.md`, `docs/performance.md`, `docs/adr/0001…`, `0002…`, `0004…`, `0006…`, `0013…`
 - `src/application/generated_runs.cpp`, `src/application/include/hikari/application/template_preview.h`,
   `src/application/include/hikari/application/automation.h`, `src/core/include/hikari/core/document.h`,
   `src/backends/include/hikari/backends/karaoke_preview_runner.h`,

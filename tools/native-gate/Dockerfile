@@ -1,4 +1,4 @@
-# D1 native gate: Linux compositors in a container (docs/qt/docking.md,
+# D1 native gate: Linux compositors in a container (docs/docking.md,
 # "Required native gate and review"). The image carries compositors, input
 # injection, screenshot and accessibility tools only; HikariSub itself comes
 # from the host build tree, mounted read-only at its own path.

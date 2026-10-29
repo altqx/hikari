@@ -1,6 +1,6 @@
 #pragma once
 
-// KP1 (#286): the generated Lines the Grid folds away (docs/qt/ux/workspaces.md,
+// KP1 (#286): the generated Lines the Grid folds away (docs/ux/workspaces.md,
 // "Karaoke"). A karaoke effect writes them: the templater with Effect fx,
 // Kara Effector with Effect "Effector [fx]". Folding is the Grid's view only;
 // the Lines stay in the Document as they are.

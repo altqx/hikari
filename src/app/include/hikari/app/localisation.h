@@ -1,6 +1,6 @@
 #pragma once
 
-// O5: the interface language (docs/qt/localisation.md, ADR-0002). Legacy
+// O5: the interface language (docs/localisation.md, ADR-0002). Legacy
 // reads PROGRAM_LANGUAGE once at start (hikarisubApp.cpp:327-369: a wxLocale
 // with the hikarisub catalog; "Language (program restart required)"); the
 // rewrite switches live, as the card asks (so the Options label is

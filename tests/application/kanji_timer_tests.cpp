@@ -870,6 +870,24 @@ TEST(KanjiTimer, TheReadingsOfALongLineComeQuickly)
     EXPECT_EQ(s(out.substr(0, 16)), "{\\k1}君|き{\\k1}#|み");
 }
 
+TEST(KanjiTimer, ALongMixedBaseReadingIsClassifiedOnce)
+{
+    // One preserved reading spans a long kana prefix and many kanji runs. Its
+    // kanji presence must not be found by rescanning that prefix for every run.
+    constexpr std::size_t count = 64000;
+    std::u16string text(count, u'あ');
+    for (std::size_t i = 0; i < count; ++i)
+        text += u"漢あ";
+    const auto kanji = kanjiText(text);
+    const std::vector<KanjiGroup> groups{{1, text.size()}};
+    const KanjiTyped typed{{{0, text.size()}, u("x")}};
+    const auto start = std::chrono::steady_clock::now();
+    const auto rs = kanjiReadings({{u("x"), 1, {}}}, kanji, groups, {}, typed, false);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(10));
+    ASSERT_EQ(rs.size(), count);
+    EXPECT_EQ(rs.front().typed, u("x"));
+}
+
 TEST(KanjiTimer, FuriganaReadsBackAsTypedReadings)
 {
     const auto read = kanjiText(u("{\\k40}君|きみ{\\k30}の{\\k20}声｜！こ{\\k25}#|え{\\k10}二人|ふたり"));

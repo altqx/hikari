@@ -1,4 +1,4 @@
-// The isolated Lua automation helper (N8; docs/qt/automation.md, ADR 0006).
+// The isolated Lua automation helper (N8; docs/automation.md, ADR 0006).
 // One process per loaded script; the script's LuaJIT state lives for the
 // process. The Lua-facing API stays synchronous: a dialog blocks the script
 // in a host service call while the application keeps running.
@@ -2179,7 +2179,7 @@ int decodePath(lua_State *L)
 // Legacy get_translation (Automation.cpp:83-88): check_string, then
 // wxGetTranslation(str) pushed with lua_pushstring, so the result ends at its
 // first NUL. O5: the application answers through the
-// HikariSub.Automation.Gettext QM of the current language (docs/qt/localisation.md,
+// HikariSub.Automation.Gettext QM of the current language (docs/localisation.md,
 // "Lua compatibility"); it decides the lookup (the legacy UTF-8 conversion
 // and the untranslated source). Without an answer the source comes back, as
 // an untranslated key does.

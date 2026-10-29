@@ -34,7 +34,7 @@ if(HIKARI_GLIBCXX_ASSERTIONS)
 endif()
 # CR1 (#452): the package workflows build with debug info, which they split
 # off (Linux .debug files, Windows PDBs) and keep as the release's symbol
-# archives; the packages carry none (docs/qt/crash-reports.md).
+# archives; the packages carry none (docs/crash-reports.md).
 option(HIKARI_DEBUG_SYMBOLS "Build with debug info kept apart from the packages (package CI)" OFF)
 if(HIKARI_DEBUG_SYMBOLS)
     if(MSVC)
@@ -60,7 +60,6 @@ set(HIKARI_DICTIONARY_DOWNLOADS "${CMAKE_BINARY_DIR}/dictionary-downloads" CACHE
 hikari_fetch_dictionaries("${HIKARI_DICTIONARY_DOWNLOADS}" HIKARI_BUNDLED_DICTIONARIES)
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)
-add_subdirectory(tools/i18n) # O4: the PO-to-TS migration tool
 add_subdirectory(i18n) # O4: TS catalogs, QM in the build
 # installers: the app's QML is compiled into a static module under src/ui, so
 # the deploy scan for its Qt Quick imports must read that folder too.
@@ -68,7 +67,16 @@ set(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/src/ui")
 add_subdirectory(src)
 unset(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS)
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariInstall.cmake") # installers: the app tree and the packages
-include(i18n/Extraction.cmake) # O4: lupdate and the migration, on request
+# O4: hikari_lupdate updates the TS catalogs from the sources, on request
+# (i18n/CMakeLists.txt). The i18n test hikari_i18n_extraction_reads_every_caller
+# fails when a source under src/ calls qsTr/tr and none of these targets holds it.
+set(HIKARI_I18N_SOURCE_TARGETS hikarisub hikari_composition hikari_ui)
+qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_UI_TS}
+    LUPDATE_TARGET hikari_lupdate NO_GLOBAL_TARGET OPTIONS -locations none)
+# #385: the English numerus catalog, with the others.
+qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_EN_TS}
+    LUPDATE_TARGET hikari_lupdate_en NO_GLOBAL_TARGET OPTIONS -locations none -pluralonly -no-obsolete)
+add_dependencies(hikari_lupdate hikari_lupdate_en)
 add_subdirectory(tests/dependency-load)
 if(BUILD_TESTING)
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariTesting.cmake")
@@ -83,6 +91,7 @@ if(BUILD_TESTING)
     add_subdirectory(tests/runners/image)
     add_subdirectory(tests/support/perf)
     add_subdirectory(tests/support/desktop) # 38e: no test reaches the desktop's programs
+    add_subdirectory(tests/support/i18n)
     add_subdirectory(tests/perf)
     add_subdirectory(tests/modules)
     add_subdirectory(tests/core)

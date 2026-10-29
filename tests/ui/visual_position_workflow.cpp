@@ -107,8 +107,19 @@ protected:
         mouseClick("mainWindow/visualTool2");
         wait(200ms);
         observed.push_back(prop("mainWindow/visualTool2", "checked")); // 7
+        // VB1: in a small window the End group folds under More options,
+        // whose popover holds it; a press outside closes the popover.
+        const bool folded = prop("mainWindow/visualToolMore", "visible") == "true";
+        if (folded) {
+            mouseClick("mainWindow/visualToolMore");
+            wait(300ms);
+        }
         type("mainWindow/visualValue_x2", "200");
         observed.push_back(changedFrom(observed[6])); // 8
+        if (folded) {
+            mouseClick("mainWindow/visualToolMore");
+            wait(300ms);
+        }
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
         enterKey("mainWindow/videoPanel", Qt::Key_Down, spix::KeyModifiers::Alt);
         observed.push_back(changedFrom(observed[8])); // 9

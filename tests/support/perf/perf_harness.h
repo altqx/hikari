@@ -1,6 +1,6 @@
 #pragma once
 
-// Performance measurement harness (E2-perf; docs/qt/performance.md). Each
+// Performance measurement harness (E2-perf; docs/performance.md). Each
 // benchmark runs several independent repetitions; statistics are reported per
 // run (nearest-rank p95/p99 and maximum), never pooled across runs. Results
 // carry the host's identity and whether that host is a calibrated reference;

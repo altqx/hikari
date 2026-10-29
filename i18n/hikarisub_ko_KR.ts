@@ -4986,7 +4986,7 @@ Failed to copy %2 fonts.</source>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
-        <translation>이 포터블 사본은 설정을 %1에 보관합니다. 이전 버전의 설정은 아직 %2에 있습니다. 사용하려면 HikariSub를 종료하고 그곳에서 hikari.ini를 복사하세요.</translation>
+        <translation type="vanished">이 포터블 사본은 설정을 %1에 보관합니다. 이전 버전의 설정은 아직 %2에 있습니다. 사용하려면 HikariSub를 종료하고 그곳에서 hikari.ini를 복사하세요.</translation>
     </message>
     <message>
         <source>%1 - HikariSub</source>
@@ -6416,6 +6416,26 @@ great help testing HikariSub on a slow computer)
         <source>Help</source>
         <translation>도움말</translation>
     </message>
+    <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your settings moved from hikari.ini to settings.toml, hotkeys.toml and state.json. The old file is kept as hikari.ini.old.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are at their defaults for now. HikariSub will not write over it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are back at their defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hotkeys.toml: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -6696,6 +6716,10 @@ when find results window is open</source>
     <message>
         <source>What is sent</source>
         <translation>보내는 정보</translation>
+    </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8123,6 +8147,14 @@ and will be changed to the default</source>
         <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
         <translation>충돌이나 멈춤 후에는 묻지 않고 보고서를 보냅니다: 충돌한 내용, 시스템, 설정, 마지막 로그 줄. 자막, 파일과 그 이름은 절대 보내지 않습니다.</translation>
     </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
@@ -8646,13 +8678,21 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation>1: 줄 끝에서 줄 바꿈, N만 줄 바꿈</translation>
+        <translation type="vanished">1: 줄 끝에서 줄 바꿈, N만 줄 바꿈</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation>2: 줄 바꿈 없음, 
+        <translation type="vanished">2: 줄 바꿈 없음, 
  및 N 모두 줄 바꿈</translation>
+    </message>
+    <message>
+        <source>1: End-of-line wrapping, only %1 breaks</source>
+        <translation>1: 줄 끝에서 줄 바꿈, %1만 줄 바꿈</translation>
+    </message>
+    <message>
+        <source>2: No wrapping, both %1 and %2 break</source>
+        <translation>2: 줄 바꿈 없음, %1 및 %2 모두 줄 바꿈</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>
@@ -12960,6 +13000,10 @@ or codecs or a splitter may be missing</source>
         <translation>활성 줄 변경</translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation>선택한 줄 지정 (1줄 지정됨: 도구가 활성 줄 대신 이 줄을 편집함)</translation>
     </message>
@@ -13558,6 +13602,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Warning</source>
         <translation type="vanished">경고</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

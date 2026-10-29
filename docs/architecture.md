@@ -1,0 +1,67 @@
+# Hikari-owned application architecture
+
+Accepted foundation, 2026-09-27: [Own the HikariSub Qt application layer](adr/0001-hikari-owned-qt-layer.md). This is HikariSub's module contract. HikariSub legacy's wx tree is reference material; it is not the core or a library to wrap.
+
+## Planned modules
+
+| Module / planned source home | Owns | Boundary |
+| --- | --- | --- |
+| Core / `src/core` | Authoritative subtitle content, styles, script properties, time/frame values, editing operations and their invariants | Standard C++ value records; no QML/Qt Quick, window, renderer, device, global UI settings or service-container dependency. Qt conversions belong to adapters. |
+| Application / `src/application` | Document/session lifetime, editing target and selection, command dispatch, undo transactions, action metadata, settings/shortcuts, workspace/navigation policy and task coordination | Depends on core and explicit backend ports. No duplicated subtitle model in controls and no implicit access through process-wide service lookup. |
+| Backend adapters / `src/backends` | FFMS2/libass integration, audio/general playback, automation runtime, font/file/platform services and their resource lifetime | Implement the ports consumed by application services. Backend-specific handles stay inside their adapters. Renderer, A/V clock and thread contracts are separate decisions. |
+| Qt Quick UI / `src/ui` | QML shell, reusable controls, panels, model adapters/presenters, focus and accessibility representation | Observes application state and submits commands. It does not become another authoritative document store or make native backend calls from delegates. |
+| Composition root / `src/app` | Process startup, explicit service construction, Qt engine setup, platform adapter selection and orderly shutdown | Wires and owns dependencies once. It does not host document algorithms. |
+
+The names above describe the intended new tree. The CMake target graph and dependency packages are settled by [Choose the dependency and build strategy for the stateless CMake build](https://github.com/altqx/hikari/issues/24); creating these production modules is later implementation work.
+
+```mermaid
+flowchart TD
+    Root[Composition root] --> UI[Qt Quick UI and presenters]
+    Root --> App[Application services and ports]
+    Root --> Adapters[Backend adapters]
+    UI --> App
+    App --> Core[Subtitle core]
+    Adapters --> Ports[Application port contracts]
+```
+
+The adapter arrow denotes implementation of port contracts, not an application dependency on a concrete adapter. Runtime callbacks return through the specified port and application coordination path.
+
+## State and command ownership
+
+Each open document has one authoritative content state. A UI projection can cache presentation data, but writes pass through an application command and the core's invariants. The accepted [document model](document-model.md) uses ordered source-preserving records and stable Line IDs through edits and undo; IDs are not serialized ASS row numbers. [Time semantics](time-semantics.md) defines distinct document times, deltas, frame indices and rational media timestamps.
+
+An action has a stable identity, user-facing metadata, enabled state and explicit scope. Menus, toolbar buttons, shortcuts and automation entry points route through the same command boundary where they represent the same operation. Focus selects an input context; it must not silently turn a protected comparison reference into the editing target. The shortcut-conflict policy and complete legacy action mapping remain settings/hotkey design work.
+
+Application services own document transactions and undo history. Native text input may own an in-progress draft, but it must reconcile with document commands through a specified commit/cancel boundary. The [ASS editor prototype](https://github.com/altqx/hikari/issues/28) does not yet settle that boundary. Mutating Lua macros and bulk timing/style operations must eventually participate in the same document transaction policy.
+
+Workers return results tagged to their request/document revision; the application decides whether they are still applicable before updating state. Each backend contract must specify cancellation, errors, resource ownership, callback thread and shutdown ordering. This establishes the required contract fields, not a chosen worker pool, threading framework or A/V clock.
+
+The accepted [backend contract](backends.md) now supplies the value/capability/generation, owned-buffer and native-owner boundaries, including isolated FFMS2 qualification first and distinct decode/presentation/device-drain evidence. It refines this foundation without approving the still-pending draft, history, lifecycle or Lua API policies.
+
+## Application services HikariSub must provide
+
+- Actions and shortcuts: discoverable commands, contextual routing, disabled reasons, localisation and accessible labels.
+- Navigation: predictable panel traversal and focus restoration, native input/IME ownership, and semantic representations for custom views.
+- Workspaces: one shared application layout, movable/floating panels, follow/pin tool targets and optional protected comparison, as [accepted in the workspace review](ux/workspaces.md). Classic menus/local controls and optional task presets are accepted; the [KDDockWidgets adapter/persistence contract](docking.md) is accepted; native qualification and detailed surface behavior remain required.
+- Appearance: reusable Qt Quick Controls styled through the [accepted Compact Studio visual language](ux/visual-language.md). UI appearance never changes ASS style data.
+- Settings: explicit scopes, stable persisted identities and a one-shot legacy importer. Legacy theme files and theme selection are excluded from import.
+- Tasks/dialogs: owned progress/cancellation and errors; synchronous script-dialog semantics are implemented without allowing a worker to manipulate QML directly.
+- Localisation: TS authoring and QM runtime with unchanged script-facing lookup behavior, as specified in [localisation](localisation.md).
+
+These services are owned modules with explicit construction and narrow interfaces. The foundation does not require a general IoC container, a third-party plugin SDK or adoption of Muse's module/resource conventions.
+
+## Reuse and platform policy
+
+Use Qt Quick Controls as the ordinary input/control foundation. Share HikariSub-specific semantics and visual tokens in the UI module rather than cloning controls separately in each panel. A custom-drawn surface must supply the keyboard and accessibility semantics that an ordinary control would otherwise provide.
+
+FFMS2 and libass remain required by the map. Cross-platform adapters are the default; optional Windows-only backend adapters may be selected behind the same application boundary. The map's exclusion of a general plugin ecosystem does not remove those explicitly allowed backend extensions. Do not expose platform-specific types to the core or make a later macOS adapter impossible.
+
+No Muse module is imported by default. Selective future reuse needs a recorded source revision, licence/notices, dependency closure and maintenance owner; UI similarity is not itself a reason to adopt framework code. The [accepted docking contract](docking.md) selects pinned KDDockWidgets QtQuick behind Hikari’s layout adapter; it does not import a separate application framework.
+
+The accepted [platform policy](platform-policy.md) starts from Qt 6.11.2, adopts 6.12 after release and verification, and advances Qt with explicit Windows 10 retirement later. The [compatibility contract](compatibility.md) requires named approval for behavioral departures; an individually approved defect fix becomes the default.
+
+## Open design and verification
+
+The document and time contracts are accepted; command/undo granularity, session/recovery and scheduler contracts remain open. The [build mechanism](build.md), [media/audio direction](media.md), [performance gates](performance.md) and [distribution policy](distribution.md) are accepted with native feasibility and release evidence still required. The [isolated automation boundary](automation.md) and [verified font contract](fonts.md) retain explicit detailed-design obligations. Unlisted legacy defects still require named disposition.
+
+Implementation must verify dependency direction, command/selection behavior through filtering and undo, late/cancelled worker results, script transactions, native focus/IME/screen-reader behavior and lifecycle cleanup. There is no implementation or benchmark pass attached to this ADR; the completed research and throwaway prototypes are evidence for planning.

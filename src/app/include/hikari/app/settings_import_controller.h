@@ -5,7 +5,7 @@
 // plan (source, value, destination, current value, disposition and why),
 // lets the user choose which changes to import, activates the import for
 // the next start and rolls back to the previous generation
-// (docs/qt/proposals/settings-import.md; SettingsImportStore).
+// (docs/proposals/settings-import.md; SettingsImportStore).
 
 #include "hikari/app/settings_import_store.h"
 

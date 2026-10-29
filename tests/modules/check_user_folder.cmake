@@ -1,11 +1,13 @@
 # UD1 (#362): the real composition's user folder. Each case starts
 # hikari_app_startup (the window opens, then the program exits) in a home of
 # its own and checks the folders it leaves:
-#   - fresh: hikari.ini in $XDG_CONFIG_HOME/hikarisub, the bundled automation
+#   - fresh: settings.toml in $XDG_CONFIG_HOME/hikarisub, the bundled automation
 #     seeded into automation/autoload and include from the build tree's
 #     manifest, nothing in the old Qt folders;
 #   - moved: a populated ~/.config/HikariSub/HikariSub and
-#     ~/.local/share/HikariSub/HikariSub move in once; legacy's folder stays;
+#     ~/.local/share/HikariSub/HikariSub move in once, the moved hikari.ini
+#     converted into settings.toml (CF1) and kept as hikari.ini.old;
+#     legacy's folder stays;
 #   - empty: empty old folders move nothing and are removed;
 #   - override: HIKARISUB_USER_DIR holds everything; the old folders stay.
 #
@@ -57,7 +59,8 @@ endfunction()
 fresh_home(fresh home)
 start(fresh "${home}")
 set(user "${home}/config/hikarisub")
-expect(fresh "${user}/hikari.ini")
+expect(fresh "${user}/settings.toml")
+expect_not(fresh "${user}/hikari.ini")
 expect(fresh "${user}/.bundled-files")
 expect(fresh "${user}/automation/autoload/kara-templater.lua")
 expect(fresh "${user}/automation/autoload/l0.DependencyControl.Toolbox.moon")
@@ -78,7 +81,7 @@ message(STATUS "fresh: the user folder and its seeded automation")
 fresh_home(moved home)
 set(config "${home}/config/HikariSub/HikariSub")
 set(data "${home}/data/HikariSub/HikariSub")
-file(WRITE "${config}/hikari.ini" "[General]\nprogram.language=pl\n")
+file(WRITE "${config}/hikari.ini" "[profile]\nprogram.language=pl\n")
 file(WRITE "${config}/Rules.txt" "rules\n")
 file(WRITE "${config}/Dictionary/UserDic.udic" "word\n")
 file(WRITE "${config}/layouts.json" "{}\n")
@@ -88,10 +91,11 @@ file(WRITE "${data}/Automation/automation/Autoload/mine.lua" "-- mine\n")
 file(WRITE "${home}/data/HikariSub/Legacy/Config/Config.txt" "legacy\n")
 start(moved "${home}")
 set(user "${home}/config/hikarisub")
-expect(moved "${user}/hikari.ini")
-file(STRINGS "${user}/hikari.ini" ini)
-if(NOT "program.language=pl" IN_LIST ini)
-    message(FATAL_ERROR "moved: the moved hikari.ini lost its language:\n${ini}")
+expect_not(moved "${user}/hikari.ini")
+expect_text(moved "${user}/hikari.ini.old" "[profile]\nprogram.language=pl\n")
+file(STRINGS "${user}/settings.toml" settings)
+if(NOT "language = 'pl'" IN_LIST settings AND NOT "language = \"pl\"" IN_LIST settings)
+    message(FATAL_ERROR "moved: the converted settings lost the language:\n${settings}")
 endif()
 expect_text(moved "${user}/Rules.txt" "rules\n")
 expect_text(moved "${user}/dictionaries/UserDic.udic" "word\n")
@@ -114,7 +118,7 @@ message(STATUS "moved: the old Qt folders moved in once, legacy's untouched")
 fresh_home(empty home)
 file(MAKE_DIRECTORY "${home}/config/HikariSub/HikariSub" "${home}/data/HikariSub/HikariSub")
 start(empty "${home}")
-expect(empty "${home}/config/hikarisub/hikari.ini")
+expect(empty "${home}/config/hikarisub/settings.toml")
 expect_not(empty "${home}/config/HikariSub")
 expect_not(empty "${home}/data/HikariSub")
 message(STATUS "empty: empty old folders removed")
@@ -123,7 +127,7 @@ message(STATUS "empty: empty old folders removed")
 fresh_home(override home)
 file(WRITE "${home}/config/HikariSub/HikariSub/hikari.ini" "[General]\nprogram.language=pl\n")
 start(override "${home}" "HIKARISUB_USER_DIR=${home}/mine")
-expect(override "${home}/mine/hikari.ini")
+expect(override "${home}/mine/settings.toml")
 expect(override "${home}/mine/automation/include/l0/DependencyControl.moon")
 expect_not(override "${home}/config/hikarisub")
 expect_text(override "${home}/config/HikariSub/HikariSub/hikari.ini" "[General]\nprogram.language=pl\n")

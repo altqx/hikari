@@ -13,3 +13,11 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the right-hand column to match whatever vocabulary you actually use.
+
+## Codebase label
+
+| Label | Meaning |
+| --- | --- |
+| `legacy` | The issue is about HikariSub legacy (0.0.x, the wxWidgets app on the `legacy` branch) |
+
+Issues about HikariSub itself (0.1.0 and up, `main`) take no codebase label.

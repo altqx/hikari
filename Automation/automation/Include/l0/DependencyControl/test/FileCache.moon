@@ -5,6 +5,9 @@
 (basePath) ->
   FileCache = require "l0.DependencyControl.FileCache"
   fileOps = require "l0.DependencyControl.file-ops"
+  dkjson = require "l0.dkjson"
+
+  slugPattern = ("%x")\rep 40
 
   -- a fresh cache in its own base subdir with a controllable clock; returns (cache, clock)
   makeCache = (name, opts = {}) ->
@@ -23,7 +26,7 @@
       meta = cache\put "https://example.com/DependencyControl.json", '{"name":"DepCtrl"}', "DependencyControl"
       ut\assertNotNil meta
       ut\assertEquals meta.key, "https://example.com/DependencyControl.json"
-      ut\assertMatches meta.latestFile, "^%x%x%x%x%x%x%x%-DependencyControl%-%d+T%d+Z%-%x%x%x%x%.json$"
+      ut\assertMatches meta.latestFile, "^#{slugPattern}%-DependencyControl%-%d+T%d+Z%-%x%x%x%x%.json$"
 
       path, gotMeta = cache\getFile "https://example.com/DependencyControl.json"
       ut\assertNotNil path
@@ -41,6 +44,23 @@
     getFile_uncached: (ut) ->
       cache = makeCache "uncached"
       ut\assertNil (cache\getFile "https://example.com/none.json")
+
+    -- the complete key in an index must match the requested key, independently of its filename
+    get_rejectsMismatchedIndexKey: (ut) ->
+      cache = makeCache "mismatched-key", {deserialize: (content) -> {:content}}
+      key = "https://example.com/trusted.json"
+      meta = cache\put key, '{"name":"attacker"}', "attacker"
+      for file in *fileOps.listDir(cache.cacheDir)
+        if file\match "%.meta%.json$"
+          metaPath = fileOps.joinPath cache.cacheDir, file
+          stored = dkjson.decode readFile(metaPath)
+          stored.key = "https://attacker.example/feed.json"
+          fileOps.writeFile metaPath, dkjson.encode(stored), true
+          break
+
+      ut\assertNil cache\getMeta key
+      ut\assertNil cache\getFile key
+      ut\assertNil cache\get key
 
     -- freshness is bounded by maxAge, measured from cache time
     isFresh_window: (ut) ->
@@ -76,7 +96,7 @@
     put_sanitizesLabel: (ut) ->
       cache = makeCache "sanitize"
       meta = cache\put "u://f", "{}", "My Feed/../x"
-      ut\assertMatches meta.latestFile, "^%x%x%x%x%x%x%x%-My_Feed_.._"
+      ut\assertMatches meta.latestFile, "^#{slugPattern}%-My_Feed_.._"
 
     -- .get reuses one instance per resolved directory, and constructs distinct ones for a different name
     get_sharesInstancePerDir: (ut) ->
@@ -178,7 +198,8 @@
       ut\assertFalsy fileOps.getAttributes(fileOps.joinPath(cache.cacheDir, meta.latestFile), "mode").attr
 
     _order: {
-      "put_roundTrip", "put_worksWithDefaultClock", "getFile_uncached", "isFresh_window", "put_updatesLatest"
+      "put_roundTrip", "put_worksWithDefaultClock", "getFile_uncached", "get_rejectsMismatchedIndexKey"
+      "isFresh_window", "put_updatesLatest"
       "getFile_staleStillResolves", "put_sanitizesLabel"
       "get_sharesInstancePerDir", "put_expiryFixedAtWriteTime", "put_perResourceExpiry", "trim_keepsLatestOverCap"
       "get_materializesAndMemoizes", "get_memoSupersededByNewerSnapshot"

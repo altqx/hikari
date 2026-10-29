@@ -1,7 +1,7 @@
 #pragma once
 
 // T4: the vector point editor the vector clip (T4) and the drawing tool (T5)
-// share (docs/qt/visual-tools.md, "The vector point editor"): legacy
+// share (docs/visual-tools.md, "The vector point editor"): legacy
 // DrawingAndClip (HikariSub/VisualClips.cpp, VisualClipPoint.h at 20d647c4)
 // without its clip- or drawing-specific reading and writing, and the parts of
 // legacy Visuals it uses (GetVectorPoints, Curve, DrawRect, DrawCircle,

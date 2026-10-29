@@ -38,7 +38,7 @@ class WorkspaceLayoutTest : public QObject {
     void start()
     {
         app::Application::Options options;
-        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
@@ -243,7 +243,7 @@ private slots:
     void aFloatingPanelSavedOffScreenComesBackOnScreen()
     {
         if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
-            QSKIP("On Wayland the compositor places windows (docs/qt/docking.md)");
+            QSKIP("On Wayland the compositor places windows (docs/docking.md)");
         start();
         QVERIFY(dock("editorDock")->setProperty("isFloating", true));
         QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
@@ -327,7 +327,7 @@ private slots:
         f.close();
 
         app::Application::Options options;
-        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));

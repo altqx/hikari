@@ -351,7 +351,7 @@ bool exportDocs(const QString &dir, QString *error)
     if (!profile.isValid())
         return fail(QStringLiteral("Cannot make a temporary profile: %1").arg(profile.errorString()));
     Application::Options options;
-    options.settingsFile = profile.filePath(QStringLiteral("hikari.ini"));
+    options.settingsFile = profile.filePath(QStringLiteral("settings.toml"));
     options.recoveryDir = profile.filePath(QStringLiteral("Recovery"));
     options.userAutomationDir = profile.filePath(QStringLiteral("Automation"));
     options.systemUiLanguages = {QStringLiteral("en")};

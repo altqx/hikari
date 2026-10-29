@@ -285,7 +285,7 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        // Tools start closed (docs/qt/ux/workspaces.md); Timing,
+        // Tools start closed (docs/ux/workspaces.md); Timing,
         // Automation and Styles tab with the editor.
         editorDock.addDockWidgetAsTab(timingDock)
         editorDock.addDockWidgetAsTab(automationDock)
@@ -1096,7 +1096,7 @@ ApplicationWindow {
             if (!pending || root.workspaceLayout.focusWindow !== pending.window) {
                 // The main window activated with nothing to focus (its focused
                 // panel floated away): the next visible region takes it, the
-                // Grid first (docs/qt/docking.md, focus restoration).
+                // Grid first (docs/docking.md, focus restoration).
                 const w = root.workspaceLayout.focusWindow
                 const a = root.activeFocusItem // nothing, or the window's own root items
                 if (w === root && (!a || !a.parent || a === root.contentItem)) {
@@ -1138,7 +1138,7 @@ ApplicationWindow {
     }
 
     // D1: Float and Dock from View > Panels (and Move panel's Float) leave the
-    // focus on the moved panel, in its new window (docs/qt/docking.md, focus
+    // focus on the moved panel, in its new window (docs/docking.md, focus
     // restoration). The panel's window changes when the engine reparents it.
     function setPanelFloating(dock, floating) {
         const panel = panels[dockList.indexOf(dock)]
@@ -2981,7 +2981,6 @@ ApplicationWindow {
             ShellMenuItem { iconRole: "edit-paste"; text: qsTranslate("HikariSub.Editor", "&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
             MenuSeparator {}
             ShellMenuItem {
-                id: spellingOnItem
                 iconRole: "spellchecker"
                 objectName: field.objectName + "SpellingOn"
                 text: qsTranslate("HikariSub.Editor", "Spellchecker")
@@ -2991,44 +2990,6 @@ ApplicationWindow {
                 visible: field.spelled
                 height: visible ? implicitHeight : 0
                 onTriggered: root.app.spellingOn = checked
-            }
-            // "Installed languages": only in the spell-checked field (legacy
-            // builds it with the Spellchecker entry, useSpellchecker).
-            Instantiator {
-                model: field.spelled ? 1 : 0
-                delegate: ShellMenu {
-                    id: languagesMenu
-                    iconRole: "dictionary"
-                    objectName: field.objectName + "Languages"
-                    title: qsTranslate("HikariSub.Editor", "Installed languages")
-                    property var languages: []
-                    onAboutToShow: languages = root.app.dictionaries()
-                    Instantiator {
-                        model: languagesMenu.languages
-                        delegate: ShellMenuItem {
-                            required property var modelData
-                            text: modelData.name
-                            checkable: true
-                            // Legacy marks the entry whose name is the chosen language's.
-                            checked: modelData.name === root.app.dictionaryName(root.app.dictionaryLanguage)
-                            keepsMenuOpen: false // ITEM_RADIO
-                            onTriggered: root.app.dictionaryLanguage = modelData.symbol
-                        }
-                        onObjectAdded: (index, object) => languagesMenu.insertItem(index, object)
-                        onObjectRemoved: (index, object) => languagesMenu.removeItem(object)
-                    }
-                }
-                onObjectAdded: (index, object) => {
-                    // Right after the Spellchecker switch.
-                    for (let i = 0; i < editMenu.count; ++i) {
-                        if (editMenu.itemAt(i) === spellingOnItem) {
-                            editMenu.insertMenu(i + 1, object)
-                            return
-                        }
-                    }
-                    editMenu.addMenu(object)
-                }
-                onObjectRemoved: (index, object) => editMenu.removeMenu(object)
             }
             ShellMenuItem {
                 iconRole: "dictionary-add"
@@ -3363,7 +3324,7 @@ ApplicationWindow {
     }
 
     // D1: the Classic panels dock, float, tab and close (KDDockWidgets behind
-    // ui/docking.h; docs/qt/docking.md). Closing a panel hides its view; its
+    // ui/docking.h; docs/docking.md). Closing a panel hides its view; its
     // controller and any draft stay.
     KDDW.DockingArea {
         id: dockingArea
@@ -3382,33 +3343,13 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "videoPanel"
                 dockName: "Video"
-                // The controls below the video at their narrowest, above
-                // two rail buttons' height. The
-                // inspector bar counts with its tool's own lines; what it
-                // holds for a taller tool comes out of the height above that
-                // (VT1), so the minimum does not grow with it.
-                minimumBodySize: Qt.size(videoTransport.implicitWidth, controlsOwnHeight + 72)
-                // Measured, not bound (the held height follows the room this
-                // leaves), whenever the column's height or the held height
-                // changes: a switch to a tool with more lines can leave the
-                // column as tall, holding less (Codex on #293). The bar's
-                // layout and the column are laid out first, so the two
-                // numbers are of one layout.
-                property real controlsOwnHeight: 0
-                function measureControls() {
-                    videoToolBar.contentItem.ensurePolished()
-                    videoControls.ensurePolished()
-                    controlsOwnHeight = videoControls.implicitHeight - videoToolBar.held
-                }
-                Connections {
-                    target: videoControls
-                    function onImplicitHeightChanged() { Qt.callLater(videoPanel.measureControls) }
-                }
-                Connections {
-                    target: videoToolBar
-                    function onHeldChanged() { Qt.callLater(videoPanel.measureControls) }
-                }
-                Component.onCompleted: measureControls()
+                // The controls below the video at their narrowest, with the
+                // inspector bar's one line whether the tool has it or not
+                // (VB1), above two rail buttons' height (a tool and More
+                // tools): the minimum does not change with the tool.
+                minimumBodySize: Qt.size(videoTransport.implicitWidth,
+                                         videoControls.implicitHeight + videoToolBar.lineHeight + videoControls.spacing + 72
+                                         - (videoToolBar.visible ? videoToolBar.implicitHeight + videoControls.spacing : 0))
                 title: qsTranslate("HikariSub.Video", "Video")
                 // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
                 // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
@@ -3588,8 +3529,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
                     settings: root.app.settings
-                    room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
-                    // It wraps rather than widen the column: wider text (a
+                    // It folds rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
                     // push Next frame out of the panel.
                     Layout.minimumWidth: 0
@@ -3621,6 +3561,9 @@ ApplicationWindow {
                 }
                 RowLayout {
                     Layout.fillWidth: true
+                    // VB1: as tall with the pointer readout's button as
+                    // without, so the video does not move when it shows.
+                    Layout.minimumHeight: 24
                     spacing: 10
                     Label {
                         objectName: "videoTimes"
@@ -3637,6 +3580,10 @@ ApplicationWindow {
                         HoverHandler { id: timesHover }
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
+                    }
+                    // VB1: the crosshair's position and Copy video position.
+                    VisualPointerReadout {
+                        tools: root.visualTools
                     }
                 }
                 RowLayout {
@@ -6210,7 +6157,7 @@ ApplicationWindow {
             }
         }
 
-        // F1: the Search tool (find and replace; docs/qt/ux/reviewed-surface-layouts.md B).
+        // F1: the Search tool (find and replace; docs/ux/reviewed-surface-layouts.md B).
         KDDW.DockWidget {
             id: searchDock
             objectName: "searchDock"
@@ -6235,7 +6182,7 @@ ApplicationWindow {
         }
 
         // AM1: the Automation panel (the persistent manager tool,
-        // docs/qt/automation.md), with its macros' shortcuts.
+        // docs/automation.md), with its macros' shortcuts.
         KDDW.DockWidget {
             id: automationDock
             objectName: "automationDock"
@@ -6326,7 +6273,7 @@ ApplicationWindow {
             }
         }
 
-        // KE2: the Template editor (docs/qt/karaoke-templater.md, "The
+        // KE2: the Template editor (docs/karaoke-templater.md, "The
         // template editor"). Its previews run, and the video draws them, only
         // while it shows: open, and the current tab of its group.
         KDDW.DockWidget {
@@ -8217,7 +8164,7 @@ ApplicationWindow {
         case "GLOBAL_SNAP_WITH_START": root.app.snapToKeyframe(true); return true
         case "GLOBAL_SNAP_WITH_END": root.app.snapToKeyframe(false); return true
         }
-        // Not in the rewrite yet (docs/qt/coverage.md, O2): the key is taken
+        // Not in the rewrite yet (docs/coverage.md, O2): the key is taken
         // and nothing runs. GLOBAL_SAVE_WITH_VIDEO_NAME changes nothing in
         // legacy either (OnMenuSelected reads the item's check without
         // switching it), nor do the submenu ids (GLOBAL_SORT_LINES,

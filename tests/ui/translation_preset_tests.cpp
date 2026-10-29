@@ -64,7 +64,7 @@ class TranslationPresetTest : public QObject {
     void start()
     {
         app::Application::Options options;
-        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         options.playbackAudio = false;
         application = std::make_unique<app::Application>(options);
         // No dictionaries here: the first spell check would turn spelling off
@@ -132,7 +132,7 @@ private slots:
     {
         engine.reset();
         application.reset();
-        for (const char *name : {"layout.json", "layout.json.bak", "layouts.json", "last-session.json", "hikari.ini"})
+        for (const char *name : {"layout.json", "layout.json.bak", "layouts.json", "last-session.json", "settings.toml", "hotkeys.toml", "state.json"})
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 

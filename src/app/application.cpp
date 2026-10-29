@@ -27,7 +27,6 @@
 #include "hikari/application/video_matrix.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
-#include "spelling_text.h"
 #include "hikari/core/conversion.h"
 #include "hikari/application/keyframe_files.h"
 #include "hikari/core/line_groups.h"
@@ -539,7 +538,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
 {
     // O5: legacy LoadOptions() returns 2 when there is no settings file yet;
     // decided before anything here may write one.
-    const bool firstStart = !options.settingsFile.isEmpty() && !QFileInfo::exists(options.settingsFile);
+    // CF1: any of the settings files, or hikari.ini before them.
+    const bool firstStart = !options.settingsFile.isEmpty() && !ui::SettingsStore::filesExist(options.settingsFile);
     m_reader = backends::makeFileReader();
     // Write outcomes arrive on the writer's thread; publish them on this one.
     m_port = backends::makeFilePort([this](application::PermitId permit, application::WriteOutcome outcome) {
@@ -1136,6 +1136,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (!m_bundledDictionaryDir.isEmpty() && m_bundledDictionaryDir != m_dictionaryDir)
             folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
         m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
+        // SP1: a dictionary loaded in the background checks the marks again.
+        m_spellChecker->setLoadedHandler(
+            [this] { QMetaObject::invokeMethod(this, [this] { spellingRefresh(); }, Qt::QueuedConnection); });
     }
     setUpGrammar(options); // GR1 (#364)
     m_spellingLoader = options.spellingBackend;
@@ -1485,6 +1488,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     startLocalisation(); // O5
     setupTabMenu(options); // P9
     reportUserFolder(options.userFolderMove, options.userFolderSeed); // UD1
+    reportSettingsFiles(); // CF1
     refreshViews();
 }
 
@@ -1518,8 +1522,8 @@ void Application::reportUserFolder(const UserFolder::MoveReport &moved, const Us
         m_log->notice(ui::LogController::Info, title,
                       QCoreApplication::translate("HikariSub.MainWindow",
                                                   "This portable copy keeps its settings in %1. An earlier version's "
-                                                  "settings are still in %2: to use them, quit HikariSub and copy "
-                                                  "hikari.ini from there.")
+                                                  "settings are still in %2: to use them, quit HikariSub, copy "
+                                                  "hikari.ini from there and delete settings.toml here.")
                           .arg(folder, moved.earlierSettings));
     for (const QString &path : seeded.kept)
         m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
@@ -1547,6 +1551,45 @@ void Application::reportUserFolder(const UserFolder::MoveReport &moved, const Us
 // H2: general playback takes the route's device by its id (Qt's own), the
 // editor output by its name in PortAudio's list, or PortAudio's default while
 // the route follows the system default.
+// CF1 (#488): the settings files' start: hikari.ini converted, a file that
+// did not read (kept as <name>.broken, its settings at their defaults).
+void Application::reportSettingsFiles()
+{
+    const QString title = QCoreApplication::translate("HikariSub.MainWindow", "Settings");
+    if (m_settings->converted())
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
+                                               "Your settings moved from hikari.ini to settings.toml, hotkeys.toml and "
+                                               "state.json. The old file is kept as hikari.ini.old."),
+                   ui::LogController::Info, title);
+    for (const auto &problem : m_settings->problems()) {
+        const QString file = QString::fromStdString(application::displayPath(problem.file));
+        const QString where = problem.failure.line > 0
+                                  ? QCoreApplication::translate("HikariSub.MainWindow", "%1, line %2, column %3")
+                                        .arg(file)
+                                        .arg(problem.failure.line)
+                                        .arg(problem.failure.column)
+                                  : file;
+        const QString text =
+            problem.keptAs.empty()
+                ? QCoreApplication::translate("HikariSub.MainWindow",
+                                              "%1 could not be read, so its settings are at their defaults for now. "
+                                              "HikariSub will not write over it.")
+                      .arg(QFileInfo(file).fileName())
+                : QCoreApplication::translate("HikariSub.MainWindow",
+                                              "%1 could not be read, so its settings are back at their defaults. "
+                                              "The file is kept as %2: fix it while HikariSub is closed and give it "
+                                              "its name back to use it again.")
+                      .arg(QFileInfo(file).fileName(),
+                           QString::fromStdString(application::displayPath(problem.keptAs.filename())));
+        m_log->notice(ui::LogController::Warning, title, text,
+                      where + QLatin1String(": ") + QString::fromStdString(problem.failure.message));
+    }
+    for (const auto &ignored : m_settings->ignored())
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow", "hotkeys.toml: %1")
+                       .arg(QString::fromStdString(ignored)),
+                   ui::LogController::Info, title);
+}
+
 void Application::routeAudio(const application::OutputRoute &route, bool move)
 {
     m_generalPlayer->setOutputDevice(route.id);
@@ -4651,8 +4694,6 @@ void Application::setSpellingOn(bool on)
     spellingRefresh();
 }
 
-// A language from the editor menu: DICTIONARY_LANGUAGE, SpellChecker::Destroy
-// and ClearErrs, also for the language already chosen.
 void Application::setDictionaryLanguage(const QString &symbol)
 {
     m_settings->set("editor.dictionaryLanguage", symbol);
@@ -4666,21 +4707,6 @@ void Application::setSuggestionsOnDoubleClick(bool on)
         return;
     m_settings->set("editor.suggestionsOnDoubleClick", on);
     emit spellingChanged();
-}
-
-QVariantList Application::dictionaries() const
-{
-    QVariantList out;
-    if (!m_spellChecker)
-        return out;
-    for (const auto &symbol : application::availableDictionaries(m_spellChecker->folders()))
-        out << QVariantMap{{QStringLiteral("symbol"), qstr(symbol)}, {QStringLiteral("name"), ui::dictionaryName(qstr(symbol))}};
-    return out;
-}
-
-QString Application::dictionaryName(const QString &symbol) const
-{
-    return ui::dictionaryName(symbol);
 }
 
 int Application::spellingRole() const
@@ -4740,7 +4766,9 @@ QVariantMap Application::editorMisspellAt(int role, int position)
     auto *checker = spellChecker();
     if (!raw || !checker)
         return {};
-    const auto marks = application::editorMarks(*raw, targetSession()->document().format(), *checker, m_spellingText);
+    const auto format = targetSession()->document().format();
+    // SP1: asked once (the menu, the double-click popup): waits for the loads.
+    const auto marks = application::editorMarks(*raw, format, *checker, m_spellingText, true);
     int at = position;
     if (!m_editor->showTags())
         at = static_cast<int>(core::rawOffset(core::project(*raw), static_cast<std::size_t>(std::max(position, 0)), true));
@@ -4749,7 +4777,7 @@ QVariantMap Application::editorMisspellAt(int role, int position)
         return {};
     const auto &misspell = marks.misspells[*found];
     QStringList suggestions;
-    for (const auto &s : checker->suggestions(misspell.word))
+    for (const auto &s : checker->suggestions(misspell.word, application::lineWords(*raw, format, m_spellingText)))
         suggestions << qstr(s);
     return {{QStringLiteral("word"), qstr(misspell.word)},
             {QStringLiteral("start"), misspell.start},
@@ -6374,7 +6402,7 @@ QVariantList Application::sampleSpellingMarks(const QString &text, bool on, int 
     if (!m_sampleCheckerReady)
         return out;
     const auto marks = application::editorMarks(text.toStdU16String(), core::SubtitleFormat::Ass, *m_sampleChecker,
-                                                m_spellingText);
+                                                m_spellingText, true);
     for (std::size_t i = 0; i + 1 < marks.errors.size(); i += 2)
         out << marks.errors[i] << marks.errors[i + 1] + 1;
     return out;

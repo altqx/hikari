@@ -1,6 +1,6 @@
 #pragma once
 
-// D1: the WorkspaceLayout service (docs/qt/docking.md, "Save, restore and
+// D1: the WorkspaceLayout service (docs/docking.md, "Save, restore and
 // recovery"). The docking engine's layout is kept in Hikari's own versioned
 // envelope, written atomically, with the previous valid file kept as a
 // backup. A layout that fails validation or restore is never overwritten:
@@ -192,7 +192,7 @@ public:
     Q_INVOKABLE QString savedLayoutNamed(const QString &name) const;
     Q_INVOKABLE bool restoreBackup();
     Q_INVOKABLE void dismissNotice();
-    // Keyboard resize (docs/qt/docking.md): a docked panel's size in its
+    // Keyboard resize (docs/docking.md): a docked panel's size in its
     // layout, and a new width/height for it (the engine moves the panel's
     // right and bottom separators, within the neighbours' minimum sizes).
     Q_INVOKABLE QSize panelSize(QObject *dock) const;

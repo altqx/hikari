@@ -1,6 +1,6 @@
 # Every source under src/ that calls a translation function is one lupdate
 # reads: the sources Qt's qt_add_lupdate recorded for hikari_lupdate (the
-# targets in i18n/Extraction.cmake). A library or QML module added later
+# targets in the top-level CMakeLists.txt). A library or QML module added later
 # with qsTr/tr calls but left out of that list would otherwise be skipped by
 # extraction, and the next hikari_lupdate would obsolete its keys.
 execute_process(COMMAND "${CMAKE_COMMAND}" -DIN_FILE=${PROJECT_IN} -DOUT_FILE=${PROJECT_JSON}
@@ -52,6 +52,6 @@ endforeach()
 if(missing)
     list(JOIN missing "\n  " missing)
     message(FATAL_ERROR "sources with translation calls that hikari_lupdate does not read "
-        "(add their target to HIKARI_I18N_SOURCE_TARGETS in i18n/Extraction.cmake):\n  ${missing}")
+        "(add their target to HIKARI_I18N_SOURCE_TARGETS in the top-level CMakeLists.txt):\n  ${missing}")
 endif()
 message(STATUS "${calling} sources with translation calls, all among the ${extracted_count} hikari_lupdate reads")

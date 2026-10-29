@@ -634,18 +634,18 @@ public:
     // (TextEditor::SpellCheckerOnOff) that the menu and the Options dialog
     // set. Turning spell checking on does not start a spell checker created
     // while it was off (legacy SpellChecker::Get); choosing a language restarts it.
+    // SP1 (#474): the language is the primary one, chosen in Settings only.
     Q_PROPERTY(bool spellingOn READ spellingOn WRITE setSpellingOn NOTIFY spellingChanged)
-    Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage WRITE setDictionaryLanguage NOTIFY spellingChanged)
+    Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage NOTIFY spellingChanged)
     Q_PROPERTY(bool suggestionsOnDoubleClick READ suggestionsOnDoubleClick WRITE setSuggestionsOnDoubleClick NOTIFY spellingChanged)
     bool spellingOn() const;
     void setSpellingOn(bool on);
     QString dictionaryLanguage() const;
+    // The primary language as Settings' OK applies it: DICTIONARY_LANGUAGE,
+    // SpellChecker::Destroy and ClearErrs, also for the language already chosen.
     void setDictionaryLanguage(const QString &symbol);
     bool suggestionsOnDoubleClick() const;
     void setSuggestionsOnDoubleClick(bool on);
-    // The "Dictionary" folder's dictionaries: {symbol, name} (legacy AvailableDics, FindLanguage).
-    Q_INVOKABLE QVariantList dictionaries() const;
-    Q_INVOKABLE QString dictionaryName(const QString &symbol) const;
     // The Line editor's spell-checked field: 1 (Translated) in translation
     // mode, else 0. Its marks as flat [start, end) pairs of the field's text
     // (none while spelling is off); the misspelling at a field position
@@ -1540,6 +1540,7 @@ private:
     QString m_userFolder; // UD1
     // UD1: the notice of the move into the user folder and the seeding's Log lines.
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
+    void reportSettingsFiles();
     // Modification time of each Document's file when last read or written,
     // and the Documents whose removal was already noticed.
     std::map<std::uint64_t, QDateTime> m_fileTimes;

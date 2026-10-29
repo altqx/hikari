@@ -119,7 +119,9 @@ QString Scrubber::scrub(const QString &input)
                 at += name.size();
             }
     }
-    static const QRegularExpression bareFile(QStringLiteral(R"((?<![\w.])(?!file\d+\.)[^\s"“”«»<>|/\\]+\.(?:)") +
+    // Start only at the beginning of a non-file-name token. This keeps a failed
+    // extension from retrying every suffix of a token (quadratic for "----.q").
+    static const QRegularExpression bareFile(QStringLiteral(R"((?<![^\s"“”«»<>|/\\])(?!file\d+\.)[^\s"“”«»<>|/\\]+\.(?:)") +
                                                  kExtensions + QStringLiteral(R"()(?![A-Za-z0-9]))"),
                                              QRegularExpression::CaseInsensitiveOption);
     for (auto m = bareFile.match(text); m.hasMatch(); m = bareFile.match(text, m.capturedStart() + 1)) {

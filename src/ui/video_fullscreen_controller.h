@@ -4,7 +4,7 @@
 // its Fullscreen frame had it at 20d647c4 (HikariSub/VideoBox.cpp:741-855,
 // VideoFullscreen.cpp).
 //
-// The fullscreen window is a separate top-level window (docs/qt/docking.md:
+// The fullscreen window is a separate top-level window (docs/docking.md:
 // "Fullscreen video is a separate presentation surface, not a dock group")
 // that the Video panel's picture, visual tools and zoom move into. This
 // controller owns its state: whether it is shown and on which monitor

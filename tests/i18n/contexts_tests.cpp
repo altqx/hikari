@@ -1,10 +1,7 @@
-// O6 (#205): semantic translation contexts (docs/qt/localisation.md, "Keys
-// and migration"). The lint over small fixtures, the record of the move from
-// lupdate's default contexts (pairing, escaping, joining entries, the
-// comparison), and the checked-in registry, map and catalogs.
+// O6 (#205): semantic translation contexts (docs/localisation.md, "Keys").
+// The lint over small fixtures, and the checked-in registry and catalogs.
 
 #include "hikari/i18n/contexts.h"
-#include "hikari/i18n/migration.h"
 
 #include <gtest/gtest.h>
 
@@ -145,126 +142,8 @@ TEST(ContextLint, AComputedTextNeedsItsContextMarkedInTheFile)
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/U.qml:2: qsTranslate looks up a computed text in \"HikariSub.Grid\"")));
 }
 
-// Calls pair by file and line order; a key now used by two surfaces moves to
-// both, and a catalog entry without a call follows most of its context.
-TEST(ContextMap, PairsCallsInLineOrderAndMovesEntriesWithoutACall)
-{
-    const QString file = QStringLiteral("src/ui/Main.qml");
-    const TsCatalog before = catalog(
-        {{QStringLiteral("Main"),
-          {message(QStringLiteral("Cancel"), {{file, 10}, {file, 90}}), message(QStringLiteral("Line"), {{file, 50}})}},
-         {QStringLiteral("DockTitleBar"), {message(QStringLiteral("Cancel"), {{QStringLiteral("src/ui/DockTitleBar.qml"), 3}})}}});
-    const TsCatalog after = catalog(
-        {{QStringLiteral("HikariSub.Editor"), {message(QStringLiteral("Cancel"), {{file, 11}})}},
-         {QStringLiteral("HikariSub.Grid"),
-          {message(QStringLiteral("Cancel"), {{file, 91}, {QStringLiteral("src/ui/DockTitleBar.qml"), 4}}),
-           message(QStringLiteral("Line"), {{file, 51}})}}});
-    const TsCatalog translations = catalog({{QStringLiteral("Main"), {message(QStringLiteral("Gone"), {}, TsState::Vanished)}}});
-    const auto map = buildContextMap(before, after, {translations});
-    ASSERT_TRUE(map.has_value()) << map.error().toStdString();
-    QStringList rows;
-    for (const ContextMove &m : map->moves)
-        rows << QStringLiteral("%1/%2->%3 %4").arg(m.from, m.source, m.to, m.basis);
-    EXPECT_EQ(rows, (QStringList{QStringLiteral("DockTitleBar/Cancel->HikariSub.Grid extracted"),
-                                 QStringLiteral("Main/Cancel->HikariSub.Editor extracted"),
-                                 QStringLiteral("Main/Cancel->HikariSub.Grid extracted"),
-                                 QStringLiteral("Main/Line->HikariSub.Grid extracted"),
-                                 QStringLiteral("Main/Gone->HikariSub.Grid context")}));
-    // A call added or removed is not a move.
-    TsCatalog fewer = after;
-    fewer.contexts[0].messages[0].locations.clear();
-    EXPECT_FALSE(buildContextMap(before, fewer, {}).has_value());
-}
-
-TEST(ContextMap, RoundTripsThroughItsFile)
-{
-    ContextMap map;
-    map.moves.append({QStringLiteral("Main"), QStringLiteral("Two\nlines\tand \\"), QStringLiteral("meaning"), true,
-                      QStringLiteral("HikariSub.Grid"), QStringLiteral("extracted")});
-    map.moves.append({QStringLiteral("Main"), QStringLiteral("Gone"), QString(), false, QStringLiteral("HikariSub.Editor"),
-                      QStringLiteral("context")});
-    const auto read = readContextMap(writeContextMap(map));
-    ASSERT_TRUE(read.has_value()) << read.error().toStdString();
-    ASSERT_EQ(read->moves.size(), 2);
-    EXPECT_EQ(read->moves[0].source, map.moves[0].source);
-    EXPECT_EQ(read->moves[0].comment, QStringLiteral("meaning"));
-    EXPECT_TRUE(read->moves[0].numerus);
-    EXPECT_EQ(read->moves[1].basis, QStringLiteral("context"));
-    EXPECT_FALSE(readContextMap("from\tsource\tcomment\tnumerus\tto\tbasis\nMain\tx\t\tmaybe\tA\textracted\n").has_value());
-}
-
-// Entries move to every new key; entries that meet must agree, except that
-// a finished translation absorbs an unfinished suggestion of the same text.
-TEST(Recontext, MovesJoinsAndRefusesDisagreeingEntries)
-{
-    ContextMap map;
-    const auto move = [&](const char *from, const char *source, const char *to) {
-        map.moves.append({QLatin1String(from), QLatin1String(source), QString(), false, QLatin1String(to), QStringLiteral("extracted")});
-    };
-    move("Main", "Cancel", "HikariSub.Editor");
-    move("Main", "Cancel", "HikariSub.Grid");
-    move("DockTitleBar", "Cancel", "HikariSub.Grid");
-    move("Main", "Pause", "HikariSub.Grid");
-    move("VideoMenu", "Pause", "HikariSub.Grid");
-    const TsCatalog before = catalog(
-        {{QStringLiteral("Main"),
-          {message(QStringLiteral("Cancel"), {}, TsState::Finished, {QStringLiteral("Anuluj")}),
-           message(QStringLiteral("Pause"), {}, TsState::Finished, {QStringLiteral("Pauza")})}},
-         {QStringLiteral("DockTitleBar"), {message(QStringLiteral("Cancel"), {}, TsState::Finished, {QStringLiteral("Anuluj")})}},
-         {QStringLiteral("VideoMenu"), {message(QStringLiteral("Pause"), {}, TsState::Unfinished, {QStringLiteral("Pauza")})}},
-         {QStringLiteral("HikariSub.TagList"), {message(QStringLiteral("Tag"))}}});
-    const auto after = recontext(before, map);
-    ASSERT_TRUE(after.has_value()) << after.error().toStdString();
-    QStringList names;
-    for (const TsContext &c : after->contexts)
-        names << c.name;
-    EXPECT_EQ(names, (QStringList{QStringLiteral("HikariSub.Editor"), QStringLiteral("HikariSub.Grid"), QStringLiteral("HikariSub.TagList")}));
-    const TsMessage *pause = after->find(QStringLiteral("HikariSub.Grid"), QStringLiteral("Pause"), {});
-    ASSERT_NE(pause, nullptr);
-    EXPECT_EQ(pause->state, TsState::Finished);
-    EXPECT_EQ(after->contexts[1].messages.size(), 2);
-
-    const RecontextComparison c = compareRecontexted(before, *after, map);
-    EXPECT_TRUE(c.problems.isEmpty()) << c.problems.join(u'\n').toStdString();
-    EXPECT_EQ(c.entriesBefore, 5);
-    EXPECT_EQ(c.entriesAfter, 4);
-    EXPECT_EQ(c.joinedKeys, 2);
-    EXPECT_EQ(c.promoted, QStringList{QStringLiteral("HikariSub.Grid \"Pause\" (was VideoMenu)")});
-    EXPECT_EQ(c.distinctTranslatedBefore, 2);
-    EXPECT_EQ(c.distinctTranslatedAfter, 2);
-
-    // Different translations at one key, and an old context's entry without a row.
-    TsCatalog clash = before;
-    clash.contexts[1].messages[0].translations = {QStringLiteral("Zamknij")};
-    EXPECT_FALSE(recontext(clash, map).has_value());
-    TsCatalog unmapped = before;
-    unmapped.contexts[0].messages.append(message(QStringLiteral("Other")));
-    EXPECT_FALSE(recontext(unmapped, map).has_value());
-}
-
-// The comparison names a lost, changed or added entry.
-TEST(Recontext, ComparisonNamesEveryDifference)
-{
-    ContextMap map;
-    map.moves.append({QStringLiteral("Main"), QStringLiteral("Cancel"), QString(), false, QStringLiteral("HikariSub.Grid"),
-                      QStringLiteral("extracted")});
-    map.moves.append({QStringLiteral("Main"), QStringLiteral("Close"), QString(), false, QStringLiteral("HikariSub.Grid"),
-                      QStringLiteral("extracted")});
-    const TsCatalog before = catalog({{QStringLiteral("Main"),
-                                       {message(QStringLiteral("Cancel"), {}, TsState::Finished, {QStringLiteral("Anuluj")}),
-                                        message(QStringLiteral("Close"), {}, TsState::Finished, {QStringLiteral("Zamknij")})}}});
-    const TsCatalog after = catalog({{QStringLiteral("HikariSub.Grid"),
-                                      {message(QStringLiteral("Cancel"), {}, TsState::Finished, {QStringLiteral("Anuluj!")}),
-                                       message(QStringLiteral("New"), {}, TsState::Unfinished, {QStringLiteral("Nowy")})}}});
-    const RecontextComparison c = compareRecontexted(before, after, map);
-    EXPECT_TRUE(mentions(c.problems, QStringLiteral("changed: HikariSub.Grid \"Cancel\" (was Main)")));
-    EXPECT_TRUE(mentions(c.problems, QStringLiteral("lost: HikariSub.Grid \"Close\" (was Main)")));
-    EXPECT_TRUE(mentions(c.problems, QStringLiteral("added: HikariSub.Grid \"New\"")));
-}
-
-// The checked-in record: the registry reads, every move goes to a registered
-// context, and the catalogs and keys hold registered contexts only (the
-// gettext catalogs: their own context alone).
+// The checked-in registry reads, and the interface catalogs hold registered
+// contexts only.
 TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
 {
     const auto contexts = readContextRegistry(readSource(QStringLiteral("i18n/contexts.tsv")));
@@ -272,17 +151,8 @@ TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
     EXPECT_FALSE(contexts->contains(QStringLiteral("HikariSub.Automation.Gettext")));
     for (auto it = contexts->cbegin(); it != contexts->cend(); ++it)
         EXPECT_TRUE(it.key().startsWith(QStringLiteral("HikariSub.")) || it.key() == u"QGuiApplication") << it.key().toStdString();
-    const auto map = readContextMap(readSource(QStringLiteral("i18n/migration/contexts.tsv")));
-    ASSERT_TRUE(map.has_value()) << map.error().toStdString();
-    EXPECT_GT(map->moves.size(), 1800);
-    for (const ContextMove &m : map->moves) {
-        EXPECT_TRUE(contexts->contains(m.to)) << m.to.toStdString();
-        // HikariSub.TagList was semantic before O6 (tag_list_controller.cpp's
-        // QT_TRANSLATE_NOOP table): its keys stay where they were.
-        EXPECT_TRUE(!contexts->contains(m.from) || m.from == m.to) << m.from.toStdString();
-    }
     for (const char *file : {"i18n/hikarisub_pl.ts", "i18n/hikarisub_ko_KR.ts", "i18n/hikarisub_th_TH.ts",
-                             "i18n/hikarisub_ta.ts", "i18n/migration/keys.ts"}) {
+                             "i18n/hikarisub_ta.ts"}) {
         const auto catalog = readTs(readSource(QLatin1String(file)));
         ASSERT_TRUE(catalog.has_value()) << file;
         for (const TsContext &c : catalog->contexts)
@@ -295,9 +165,7 @@ TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
 // catalog. They were a table of plain literals translated at run time, which
 // lupdate never extracted, so no catalog had "Vert.", "CPS" or "Wraps". "#"
 // is not a key: legacy never translates it. The headings O4 had no key for
-// carry legacy's translation of the same id (keymap.tsv's exact rows, which
-// CheckedIn.ConversionReproducesTheCatalogs checks), finished: every
-// language's PO translates each of them.
+// carry legacy's translation of the same id, finished.
 TEST(CheckedIn, CatalogsHoldTheGridHeadings)
 {
     const QStringList headings{QStringLiteral("L."),     QStringLiteral("Start"), QStringLiteral("End"),
@@ -323,19 +191,19 @@ TEST(CheckedIn, CatalogsHoldTheGridHeadings)
     }
 }
 
-// The rewrite's own copy is in sentence case (docs/qt/ux/visual-language.md,
+// The rewrite's own copy is in sentence case (docs/ux/visual-language.md,
 // "Sentence case"): "line", "document" and "untitled" are ordinary words
 // inside a sentence ("1 line selected", "Follow the editing line"), not the
-// glossary's capitalized terms. Legacy's own ids (keymap.tsv's exact and
-// placeholder rows) keep their text: their translations depend on it.
+// glossary's capitalized terms. Legacy's own ids (the gettext catalog's
+// sources) keep their text: their translations depend on it.
 TEST(CheckedIn, InterfaceCopyIsSentenceCase)
 {
-    const auto map = readKeyMap(readSource(QStringLiteral("i18n/migration/keymap.tsv")));
-    ASSERT_TRUE(map.has_value()) << map.error().toStdString();
+    const auto gettext = readTs(readSource(QStringLiteral("i18n/hikarisub_gettext_pl.ts")));
+    ASSERT_TRUE(gettext.has_value());
     QSet<QString> legacy;
-    for (const KeyMapRow &row : map->rows)
-        if ((row.status == MapStatus::Exact || row.status == MapStatus::Placeholder) && row.context)
-            legacy.insert(*row.context + QChar(0x1f) + row.source);
+    for (const TsContext &context : gettext->contexts)
+        for (const TsMessage &m : context.messages)
+            legacy.insert(m.source);
     const auto catalog = readTs(readSource(QStringLiteral("i18n/hikarisub_pl.ts")));
     ASSERT_TRUE(catalog.has_value());
     static const QRegularExpression noun(QStringLiteral("\\b(Lines?|Documents?|Untitled)\\b"));
@@ -343,7 +211,7 @@ TEST(CheckedIn, InterfaceCopyIsSentenceCase)
     for (const TsContext &context : catalog->contexts)
         for (const TsMessage &m : context.messages) {
             if (m.state == TsState::Vanished || m.state == TsState::Obsolete
-                || legacy.contains(context.name + QChar(0x1f) + m.source))
+                || legacy.contains(m.source))
                 continue;
             ++checked;
             for (auto it = noun.globalMatch(m.source); it.hasNext();) {
@@ -356,6 +224,33 @@ TEST(CheckedIn, InterfaceCopyIsSentenceCase)
             }
         }
     EXPECT_GT(checked, 300);
+}
+
+// A translation keeps its source's placeholders: the same Qt markers (%1,
+// %L2, ...) in every interface catalog's translated plain entries.
+TEST(CheckedIn, TranslationsKeepTheSourcesPlaceholders)
+{
+    static const QRegularExpression marker(QStringLiteral("%L?(\\d+)"));
+    const auto markers = [](const QString &text) {
+        QStringList out;
+        for (auto it = marker.globalMatch(text); it.hasNext();)
+            out << it.next().captured(1);
+        out.sort();
+        return out;
+    };
+    for (const char *file : {"i18n/hikarisub_pl.ts", "i18n/hikarisub_ko_KR.ts", "i18n/hikarisub_th_TH.ts",
+                             "i18n/hikarisub_ta.ts"}) {
+        const auto catalog = readTs(readSource(QLatin1String(file)));
+        ASSERT_TRUE(catalog.has_value()) << file;
+        int checked = 0;
+        for (const TsContext &context : catalog->contexts)
+            for (const TsMessage &m : context.messages)
+                if (!m.numerus && !m.translations.value(0).isEmpty()) {
+                    EXPECT_EQ(markers(m.translations.value(0)), markers(m.source)) << file << ": " << m.source.toStdString();
+                    ++checked;
+                }
+        EXPECT_GT(checked, 700) << file;
+    }
 }
 
 // The DirectShow adapter (Windows only, so no lupdate run on Linux reads its

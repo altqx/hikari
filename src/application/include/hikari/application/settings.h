@@ -1,7 +1,7 @@
 #pragma once
 
 // O1: the settings registry. Every legacy option (config.h CONFIG, the 207
-// rows of docs/qt/proposals/settings-migration-map/options.csv) has a stable,
+// rows of docs/proposals/settings-migration-map/options.csv) has a stable,
 // untranslated SettingId with its type, scope, default and legacy name; the
 // rewrite's own settings join it. Settings reads and writes typed values
 // through a storage port, so the Qt INI file stays an adapter.

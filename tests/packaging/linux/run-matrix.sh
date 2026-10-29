@@ -1,7 +1,7 @@
 #!/bin/bash
 # Runs the package tests of installers spec 8.1 and 8.2 in docker, one fresh
 # container per image and test group, as the CI workflow
-# (.github/workflows/qt-package-linux.yml) does with its job matrix.
+# (.github/workflows/package-linux.yml) does with its job matrix.
 #
 #   run-matrix.sh --dist <dir> --old <dir> --version <V> [--expect-version-switch] [<image>...]
 #

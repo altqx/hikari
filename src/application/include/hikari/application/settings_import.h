@@ -1,9 +1,9 @@
 #pragma once
 
 // O3: the one-shot legacy settings importer's readers and review plan
-// (docs/qt/proposals/settings-import.md, accepted 2026-09-27 and 2026-09-29:
+// (docs/proposals/settings-import.md, accepted 2026-09-27 and 2026-09-29:
 // S44-import, S44-macro-alias and C04-short-file; the migration worksheet
-// docs/qt/proposals/settings-migration-map.md). No file system and no Qt:
+// docs/proposals/settings-migration-map.md). No file system and no Qt:
 // the caller (app::SettingsImportController) discovers the legacy root, hashes
 // and snapshots its files, and stages, activates and rolls back generations.
 //

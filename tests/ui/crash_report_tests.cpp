@@ -847,6 +847,9 @@ private slots:
                                                     << QStringLiteral("Moved to \u2039folder\u203A");
         QTest::newRow("home folder") << QStringLiteral("In ~/Subs") << QStringLiteral("In \u2039folder\u203A");
         QTest::newRow("bare name") << QStringLiteral("Loaded karaoke.lua") << QStringLiteral("Loaded file1.lua");
+        QTest::newRow("long unsupported extension")
+            << QString(64 * 1024, u'-') + QStringLiteral(".q then karaoke.lua")
+            << QString(64 * 1024, u'-') + QStringLiteral(".q then file1.lua");
         QTest::newRow("same name twice") << QStringLiteral("a.ass then A.ASS") << QStringLiteral("file1.ass then file1.ass");
         QTest::newRow("quoted") << QStringLiteral("No match for \u201Chello there\u201D") << QStringLiteral("No match for \u201C\u2039text\u203A\u201D");
         QTest::newRow("quoted font") << QStringLiteral("Font 'Arial Black' missing") << QStringLiteral("Font '\u2039font\u203A' missing");

@@ -121,6 +121,7 @@ Window {
         target: fs.controller
         property: "menuOpen"
         value: fullscreenMenu.opened || outputMenu.opened || modeMenu.opened || toolsMenu.opened
+               || rail.menuOpen || toolBar.popoverOpen // VB1's More tools and More options
     }
     Connections {
         target: fs.controller

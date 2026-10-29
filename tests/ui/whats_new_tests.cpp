@@ -83,7 +83,7 @@ class WhatsNewTest : public QObject {
         } else {
             list.remove();
         }
-        copy->settings = std::make_unique<SettingsStore>(copy->root + QStringLiteral("/hikari.ini"));
+        copy->settings = std::make_unique<SettingsStore>(copy->root + QStringLiteral("/settings.toml"));
         if (!lastVersion.isEmpty() && !QFile::exists(cacheOf(copy->root)))
             setHistory(copy->root, lastVersion, QString());
         copy->settings->set("updater.autoCheck", autoCheck);

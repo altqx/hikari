@@ -187,8 +187,8 @@ DialogWindow {
                 Layout.fillWidth: true
                 Accessible.name: qsTr("Wrap style")
                 onActivated: dialog.mark("wrapStyle")
-                model: [qsTr("0: Auto, top line wider"), qsTr("1: End-of-line wrapping, only \\N breaks"),
-                        qsTr("2: No wrapping, both \\n and \\N break"), qsTr("3: Auto, bottom line wider")]
+                model: [qsTr("0: Auto, top line wider"), qsTr("1: End-of-line wrapping, only %1 breaks").arg("\\N"),
+                        qsTr("2: No wrapping, both %1 and %2 break").arg("\\n").arg("\\N"), qsTr("3: Auto, bottom line wider")]
             }
             FieldLabel { text: qsTr("Colliding lines") }
             ComboBox { id: collisionBox; objectName: "propCollisions"; Layout.preferredWidth: 200; Accessible.name: qsTr("Colliding lines"); model: [qsTr("Normal"), qsTr("Reversed")]; onActivated: dialog.mark("reverseCollisions") }

@@ -56,6 +56,7 @@
 #include <QProcess>
 #include <QRasterWindow>
 #include <QScreen>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QCursor>
 #include <QFontInfo>
@@ -77,7 +78,6 @@
 #include <QQmlExpression>
 #include <QQmlProperty>
 #include <QRegularExpression>
-#include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
 #include <QTranslator>
@@ -107,12 +107,21 @@
 #include <memory>
 #include <optional>
 #include <future>
+#include <chrono>
+#include <thread>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 using namespace hikari;
 
 namespace {
+
+// CF1: one of the settings files in a user folder, as written.
+QByteArray settingsText(const QString &folder, const char *name)
+{
+    QFile f(folder + QLatin1Char('/') + QLatin1String(name));
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
 
 QString writeFile(const QTemporaryDir &dir, const char *name, const char *events)
 {
@@ -601,6 +610,10 @@ class ShellTest : public QObject {
         return nullptr;
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
+    // VB1: a window wide enough for every tool's inspector bar on one line
+    // (nothing under More options), for the tests that reach a tool's
+    // options and values by name.
+    void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
     // D3: the header row (DockTabBar.qml) of the group whose current panel
     // is `panel` (a dock's uniqueName), in any window.
     QQuickItem *dockHeader(const QString &panel) const
@@ -6306,7 +6319,7 @@ private slots:
             walk(menu, name, 0);
         }
         QFile file(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tests/ui/menu_bar.txt"));
-        QVERIFY(file.open(QIODevice::ReadOnly));
+        QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text)); // a Windows checkout's CRLF
         const QStringList listed = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
         if (shown != listed) {
             QFile actual(QDir::current().filePath(QStringLiteral("menu_bar.actual.txt")));
@@ -6497,7 +6510,7 @@ private slots:
     // recent file, a macro, a sort key, a panel, a suggestion), whose
     // submenu has the icon, nor an item a later card removes; those are
     // exempted here by the text that identifies them, and an exemption that
-    // matches no item fails too. docs/qt/ux/menu-icon-gaps.md lists them.
+    // matches no item fails too. docs/ux/menu-icon-gaps.md lists them.
     void everyMenuItemHasAnIcon()
     {
         using menu_icon_scan::Exemption;
@@ -6833,7 +6846,7 @@ private slots:
         // D3: each header names its panel (a lone panel's title bar) or
         // its tabs (page tabs with their selection); its "⋯" button, named
         // "<panel> options", opens the panel's menu, whose named items float,
-        // dock and close it (docs/qt/docking.md: tabs expose their names,
+        // dock and close it (docs/docking.md: tabs expose their names,
         // selection and close/float actions to assistive technology).
         QAccessibleInterface *audioBar = find(top, QAccessible::TitleBar, QStringLiteral("Audio"));
         QVERIFY(audioBar);
@@ -7039,7 +7052,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
     }
 
-    // D1 Move before/after (docs/qt/docking.md, keyboard contract): in a
+    // D1 Move before/after (docs/docking.md, keyboard contract): in a
     // group of tabs the "⋯" menu moves the panel's tab one place left or
     // right, off at the bar's end; the moved panel stays the shown tab with
     // the focus, and the order is part of the saved layout. A lone panel's
@@ -7499,7 +7512,7 @@ private slots:
     void floatingPanelsOffEveryScreenComeBack()
     {
         if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
-            QSKIP("On Wayland the compositor places windows (docs/qt/docking.md)");
+            QSKIP("On Wayland the compositor places windows (docs/docking.md)");
         auto *editorDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("editorDock"));
         QVERIFY(editorDock->setProperty("isFloating", true));
         QTRY_VERIFY(item("editorPanel")->window() != window);
@@ -8901,7 +8914,7 @@ private slots:
 
     // P8, DG1 (#222): Help > About shows this build's version (copied by its
     // button), the author and the GPL notice, with no legacy attribution
-    // (DG1-about-layout); Credits the Qt rewrite's people and the components
+    // (DG1-about-layout); Credits HikariSub's people and the components
     // it is built with (DG1-credits-rewrite). Both are windows of their own
     // on the dialog frame, modeless.
     void aboutAndCreditsShowTheNotices()
@@ -10906,7 +10919,8 @@ private slots:
 private:
     // F3: a session with a Dictionary folder beside its settings and the
     // production Hunspell backend (R2-hunspell), or no backend at all.
-    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false)
+    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false,
+                             application::SpellingBackendLoader loader = {})
     {
         delete engine;
         delete application;
@@ -10916,6 +10930,8 @@ private:
         options.gettingStarted = gettingStarted; // FR1
         if (!backend)
             options.spellingBackend = {};
+        else if (loader)
+            options.spellingBackend = std::move(loader);
         options.bundledDictionaryDir = bundled;
         application = new app::Application(options);
         engine = new QQmlApplicationEngine;
@@ -11827,9 +11843,8 @@ private slots:
                  QVariantList{});
         QCOMPARE(application->shell().lines()->index(2, 0).data(ui::LineTableModel::SpellMarksRole).toList(),
                  (QVariantList{4, 4}));
-        QCOMPARE(QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat)
-                     .value(QStringLiteral("profile/editor.spellchecker")).toBool(),
-                 false);
+        application->settingsStore()->sync();
+        QVERIFY(settingsText(home.path(), "settings.toml").contains("spellchecker = false"));
         application->editor().discard();
     }
 
@@ -11933,7 +11948,7 @@ private slots:
         QTemporaryDir home;
         QVERIFY(home.isValid());
         writeDictionary(home.path());
-        QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).setValue(QStringLiteral("profile/editor.spellchecker"), false);
+        ui::SettingsStore(home.filePath(QStringLiteral("settings.toml"))).set("editor.spellchecker", false);
         restartWithSpelling(home.path(), true);
         const QString path = writeFile(dir, "spelling-off.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
         QVERIFY(application->openFile(path));
@@ -11941,9 +11956,6 @@ private slots:
         QCOMPARE(marks(), QVariantList{});
         application->setSpellingOn(true);
         QCOMPARE(marks(), QVariantList{});
-        QCOMPARE(application->dictionaries(),
-                 (QVariantList{QVariantMap{{QStringLiteral("symbol"), QStringLiteral("en_US")},
-                                           {QStringLiteral("name"), QStringLiteral("English")}}}));
         application->setDictionaryLanguage(QStringLiteral("en_US"));
         QCOMPARE(marks(), (QVariantList{0, 4}));
 
@@ -12106,8 +12118,8 @@ private slots:
         QTest::qWait(50);
         QCOMPARE(application->log().warningCount() + application->log().errorCount(), 0); // no notice
         QVERIFY(application->spellingOn());
-        QVERIFY(!QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).contains(QStringLiteral("profile/editor.spellchecker")));
-        QVERIFY(application->dictionaries().isEmpty());
+        application->settingsStore()->sync();
+        QVERIFY(!settingsText(home.path(), "settings.toml").contains("spellchecker"));
 
         // Only the bundled folder has a dictionary: it loads, and the user's
         // words go to the user's folder.
@@ -12117,7 +12129,6 @@ private slots:
         restartWithSpelling(user.path(), true, bundled.filePath(QStringLiteral("Dictionary")));
         QVERIFY(application->openFile(path));
         QCOMPARE(marks(), (QVariantList{5, 5, 0, 4}));
-        QCOMPARE(application->dictionaries().size(), 1);
         QVERIFY(application->addEditorWord(QStringLiteral("wrold")));
         QVERIFY(QFile::exists(user.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
         QVERIFY(!QFile::exists(bundled.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
@@ -12476,8 +12487,8 @@ private slots:
         QCOMPARE(findItem(panel, QStringLiteral("spellEmptyAction"))->property("text").toString(), QStringLiteral("Check spelling"));
         application->editor().discard();
 
-        // No dictionary installed yet: one chosen afterwards (Settings, the
-        // editor's language menu) starts the waiting check.
+        // No dictionary installed yet: one chosen afterwards in Settings
+        // starts the waiting check.
         {
             QTemporaryDir bare;
             QVERIFY(bare.isValid());
@@ -12488,8 +12499,13 @@ private slots:
                                               Q_ARG(QVariant, QVariant::fromValue(dock))));
             QTRY_VERIFY(dock->property("isOpen").toBool());
             QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
+            // One dictionary installed at a time (SP1 #474: every installed
+            // one checks the words of its script).
             const auto dictionary = [&](const char *code, const QByteArray &words) {
-                QDir().mkpath(bare.path() + QStringLiteral("/Dictionary"));
+                QDir folder(bare.path() + QStringLiteral("/Dictionary"));
+                QDir().mkpath(folder.path());
+                for (const QString &old : folder.entryList({QStringLiteral("*.aff"), QStringLiteral("*.dic")}, QDir::Files))
+                    QVERIFY(folder.remove(old));
                 QFile aff(bare.path() + QStringLiteral("/Dictionary/%1.aff").arg(QLatin1String(code)));
                 QVERIFY(aff.open(QIODevice::WriteOnly));
                 QFile dic(bare.path() + QStringLiteral("/Dictionary/%1.dic").arg(QLatin1String(code)));
@@ -12551,9 +12567,10 @@ private slots:
     }
 
     // F3: the editor's spelling menu and the double-click suggestion list.
-    // The suggestions come first; "Spellchecker" and "Installed languages"
-    // are only in the spell-checked field (the Translated one in translation
-    // mode). A double click on a misspelling with
+    // The suggestions come first; "Spellchecker" is only in the spell-checked
+    // field (the Translated one in translation mode), and SP1 (#474) took
+    // "Installed languages" out (the primary language is chosen in Settings
+    // only). A double click on a misspelling with
     // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK lists its suggestions without
     // selecting the word.
     void editorSpellingMenuAndDoubleClick()
@@ -12574,7 +12591,7 @@ private slots:
         auto entries = menuItems(menu);
         QVERIFY(!entries.isEmpty());
         QCOMPARE(entries.first()->property("text").toString(), QStringLiteral("world"));
-        QVERIFY(hasSubMenu(menu, QStringLiteral("Installed languages")));
+        QVERIFY(!hasSubMenu(menu, QStringLiteral("Installed languages")));
         auto *spellingOn = field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"));
         QVERIFY(spellingOn && spellingOn->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(entries.first(), "triggered"));
@@ -12596,7 +12613,7 @@ private slots:
         QTRY_VERIFY(!fix->property("opened").toBool());
         application->setSuggestionsOnDoubleClick(false);
 
-        // Translation mode: the Original field has neither entry.
+        // Translation mode: the Original field has no "Spellchecker".
         const QString tl = writeFile(dir, "spelling-tl.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
         QFile f(tl);
         QVERIFY(f.open(QIODevice::ReadOnly));
@@ -12618,7 +12635,6 @@ private slots:
         QTRY_VERIFY(item("editorPanel")->height() >= item("editorPanel")->property("minimumSize").toSizeF().height());
         rightClick(fieldPoint(field, 1));
         QTRY_VERIFY(menu->property("visible").toBool());
-        QVERIFY(!hasSubMenu(menu, QStringLiteral("Installed languages")));
         QVERIFY(!field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"))->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         auto *translated = item("translationText");
@@ -12626,8 +12642,91 @@ private slots:
         QVERIFY(tlMenu);
         rightClick(translated->mapToScene(QPointF(10, 10)).toPoint());
         QTRY_VERIFY(tlMenu->property("visible").toBool());
-        QVERIFY(hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
+        QVERIFY(translated->findChild<QObject *>(QStringLiteral("translationTextSpellingOn"))->property("visible").toBool());
+        QVERIFY(!hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
         QVERIFY(QMetaObject::invokeMethod(tlMenu, "close"));
+        application->editor().discard();
+    }
+
+    // SP1 (#474): every installed dictionary checks the words of its script,
+    // the Settings language (here an existing hikari.ini's "pl") being the
+    // primary one. A mixed Line marks only the real misspellings in the Grid
+    // and the Line editor; a script without a dictionary is not marked.
+    // With HIKARI_SURFACE_SHOT_DIR the window is saved in each theme
+    // (sp1-mixed-<theme>.png).
+    void multilingualSpellingMarksOnlyRealMisspellings()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        const auto write = [&](const QString &name, const QByteArray &bytes) {
+            QFile f(home.filePath(QStringLiteral("Dictionary/") + name));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        };
+        write(QStringLiteral("pl.aff"), "SET UTF-8\n");
+        write(QStringLiteral("pl.dic"), "3\nAla\nma\nkota\n");
+        write(QStringLiteral("ko_KR.aff"), "SET UTF-8\n");
+        write(QStringLiteral("ko_KR.dic"), "2\n\xEC\x95\x88\xEB\x85\x95\xED\x95\x98\xEC\x84\xB8\xEC\x9A\x94\n\xEC\x84\xB8\xEA\xB3\x84\n");
+        write(QStringLiteral("ta.aff"), "SET UTF-8\n");
+        write(QStringLiteral("ta.dic"), "1\n\xE0\xAE\xB5\xE0\xAE\xA3\xE0\xAE\x95\xE0\xAF\x8D\xE0\xAE\x95\xE0\xAE\xAE\xE0\xAF\x8D\n");
+        {
+            QSettings ini(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat);
+            ini.setValue(QStringLiteral("profile/editor.dictionaryLanguage"), QStringLiteral("pl"));
+        }
+        restartWithSpelling(home.path(), true);
+        QCOMPARE(application->dictionaryLanguage(), QStringLiteral("pl"));
+        // English and Polish, Korean, Tamil and Russian words; "wrold",
+        // "kotta", "세게계" and "வணக்கமம்" are misspelled.
+        const QString line = QStringLiteral("Hello world, Ala ma kota! wrold kotta 안녕하세요 "
+                                            "세계 세게계 வணக்கம் "
+                                            "வணக்கமம் привет");
+        const QByteArray events = QStringLiteral("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,%1\n").arg(line).toUtf8();
+        const QString path = writeFile(dir, "sp1-mixed.ass", events.constData());
+        QVERIFY(application->openFile(path));
+        QVariantList grid, editor;
+        for (const QString &word : {QStringLiteral("wrold"), QStringLiteral("kotta"), QStringLiteral("세게계"),
+                                    QStringLiteral("வணக்கமம்")}) {
+            const int at = int(line.indexOf(word));
+            grid << at << at + int(word.size()) - 1; // inclusive
+            editor << at << at + int(word.size());
+        }
+        // The other dictionaries load in the background; their marks come
+        // in when they are in.
+        QTRY_COMPARE(application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(), grid);
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), editor);
+        // Suggestions for a Korean word come from the Korean dictionary.
+        const QVariantMap found = application->editorMisspellAt(0, int(line.indexOf(QStringLiteral("세게"))) + 1);
+        QCOMPARE(found.value(QStringLiteral("word")).toString(), QStringLiteral("세게계"));
+        QVERIFY(found.value(QStringLiteral("suggestions")).toStringList().contains(QStringLiteral("세계")));
+        // The menu and the double-click popup ask once: they wait for a
+        // dictionary still loading (here a slow ko_KR).
+        application->editor().discard();
+        restartWithSpelling(home.path(), true, {}, false,
+                            [hunspell = app::Application::Options().spellingBackend](const std::filesystem::path &aff,
+                                                                                      const std::filesystem::path &dic) {
+                                if (dic.stem() == "ko_KR")
+                                    std::this_thread::sleep_for(std::chrono::seconds(2));
+                                return hunspell(aff, dic);
+                            });
+        QVERIFY(application->openFile(path));
+        const QVariantMap loading = application->editorMisspellAt(0, int(line.indexOf(QStringLiteral("세게"))) + 1);
+        QCOMPARE(loading.value(QStringLiteral("word")).toString(), QStringLiteral("세게계"));
+        QVERIFY(loading.value(QStringLiteral("suggestions")).toStringList().contains(QStringLiteral("세계")));
+
+        if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(400);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/sp1-mixed-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+            }
+        }
         application->editor().discard();
     }
 
@@ -17929,7 +18028,8 @@ private slots:
     {
         QTemporaryDir own;
         QVERIFY(QDir(own.path()).mkdir(QStringLiteral("Dictionary")));
-        for (const char *name : {"pl_PL.dic", "pl_PL.aff", "en_US.dic", "en_US.aff", "de_DE.dic"}) {
+        for (const char *name : {"pl_PL.dic", "pl_PL.aff", "en_US.dic", "en_US.aff", "de_DE.dic", "ko_KR.dic",
+                                 "ko_KR.aff", "ta_IN.dic", "ta_IN.aff"}) {
             QFile file(own.filePath(QStringLiteral("Dictionary/") + QLatin1String(name)));
             QVERIFY(file.open(QIODevice::WriteOnly));
             file.write("x\n");
@@ -17941,20 +18041,26 @@ private slots:
         // The list is F3's availableDictionaries over the same folders, in
         // the order wxDir lists them on this platform (R5-per-platform: no
         // sorting; F3's own tests pin that order against readdir and
-        // FindFirstFile), each symbol shown by its language name.
+        // FindFirstFile), each symbol shown by its language name (DK1 #473:
+        // the bundled Korean and Tamil ones too).
         const std::filesystem::path folder(own.filePath(QStringLiteral("Dictionary")).toStdU16String());
+        const std::map<std::u16string, QString> language{
+            {u"en_US", QStringLiteral("English")},
+            {u"pl_PL", QStringLiteral("Polski")},
+            {u"ko_KR", QString::fromUtf8("\xED\x95\x9C\xEA\xB5\xAD\xEC\x96\xB4")},
+            {u"ta_IN", QString::fromUtf8("\xE0\xAE\xA4\xE0\xAE\xAE\xE0\xAE\xBF\xE0\xAE\xB4\xE0\xAF\x8D")}};
         const auto expected = [&] {
             QStringList names;
             for (const auto &symbol : application::availableDictionaries(folder))
-                names << (symbol == u"en_US" ? QStringLiteral("English") : QStringLiteral("Polski"));
+                names << language.at(symbol);
             if (names.isEmpty())
                 names << QStringLiteral("Put files .dic and .aff to \"Dictionary\" folder");
             return names;
         };
         const auto open = a.openSettingsDialog();
-        // AvailableDics pairs the i-th .dic with the i-th .aff: de_DE.dic
-        // shifts the pairs that follow it in the listing (the pairing stops
-        // at the shorter list, R3-hang-crash-loss).
+        // SP1: AvailableDics pairs each .dic with the .aff of its name:
+        // de_DE.dic, without its .aff, is not listed and drops no pair.
+        QCOMPARE(expected().size(), 4);
         QCOMPARE(open.value(QStringLiteral("dictionaries")).toStringList(), expected());
         QVERIFY(QFile::remove(own.filePath(QStringLiteral("Dictionary/de_DE.dic"))));
         const auto again = a.openSettingsDialog();
@@ -17964,8 +18070,8 @@ private slots:
             QCOMPARE(again.value(QStringLiteral("values")).toMap().value(QStringLiteral("editor.dictionaryLanguage")).toInt(),
                      shown.indexOf(QStringLiteral("Polski")));
 #ifndef _WIN32
-        // Linux: the pairing follows readdir order, as legacy Linux's wxDir
-        // did, not a name sort.
+        // Linux: the list follows readdir's .dic order, as legacy Linux's
+        // wxDir did, not a name sort.
         std::vector<std::u16string> readdirDic, readdirAff;
         if (DIR *d = ::opendir(folder.c_str())) {
             while (const dirent *e = ::readdir(d)) {
@@ -17978,9 +18084,9 @@ private slots:
             ::closedir(d);
         }
         std::vector<std::u16string> pairs;
-        for (std::size_t i = 0; i < readdirDic.size() && i < readdirAff.size(); ++i)
-            if (readdirDic[i] == readdirAff[i])
-                pairs.push_back(readdirDic[i]);
+        for (const auto &dic : readdirDic)
+            if (std::ranges::find(readdirAff, dic) != readdirAff.end())
+                pairs.push_back(dic);
         QVERIFY(application::availableDictionaries(folder) == pairs);
 #endif
     }
@@ -18100,7 +18206,6 @@ private slots:
         QVERIFY(home.isValid());
         restartWithSpelling(home.path(), false);
         auto &settings = *application->settingsStore();
-        const QString ini = home.filePath(QStringLiteral("hikari.ini"));
         const QString path = writeFile(dir, "owners.ass",
                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,alpha\n"
                                        "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,beta\n");
@@ -18136,8 +18241,13 @@ private slots:
         QVERIFY(!settings.contains("findInSubs.recentFilters")); // only the Find in subtitles tab writes them
         QCOMPARE(settings.integer("find.options") & 1, 1);
         settings.sync();
-        QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/find.recentFinds")).toStringList(),
-                 QStringList{QStringLiteral("alpha")});
+        QCOMPARE(QJsonDocument::fromJson(settingsText(home.path(), "state.json"))
+                     .object()
+                     .value(QLatin1String("find"))
+                     .toObject()
+                     .value(QLatin1String("recentFinds"))
+                     .toArray(),
+                 QJsonArray{QStringLiteral("alpha")});
         application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("find.options"));
         QVERIFY(!settings.contains("find.recentFinds"));
@@ -18216,7 +18326,6 @@ private slots:
         writeDictionary(home.path());
         restartWithSpelling(home.path(), true);
         auto &settings = *application->settingsStore();
-        const QString ini = home.filePath(QStringLiteral("hikari.ini"));
         const QString path = writeFile(dir, "options-spelling.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
         QVERIFY(application->openFile(path));
         auto marks = [&] { return application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(); };
@@ -18229,7 +18338,7 @@ private slots:
         QCOMPARE(marks(), QVariantList{});
         QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
         settings.sync();
-        QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/editor.spellchecker")).toBool(), false);
+        QVERIFY(settingsText(home.path(), "settings.toml").contains("spellchecker = false"));
         application->applySettings({{QStringLiteral("editor.spellchecker"), true}});
         QCOMPARE(marks(), (QVariantList{0, 4}));
         QCOMPARE(application->editorSpellingMarks(0), (QVariantList{0, 5}));
@@ -18264,9 +18373,7 @@ private slots:
         QCOMPARE(audio.cacheFilesLimit, 3);
         QCOMPARE(audio.acceptedStreams, (std::vector<std::string>{"jpn", "eng"}));
         settings.sync();
-        const QSettings stored(ini, QSettings::IniFormat);
-        QCOMPARE(stored.value(QStringLiteral("profile/audio.delay")).toInt(), -250);
-        QVERIFY(!stored.contains(QStringLiteral("Audio/Delay")));
+        QVERIFY(settingsText(home.path(), "settings.toml").contains("delay = -250"));
         application->editor().discard();
     }
 
@@ -25047,6 +25154,21 @@ private:
         f.write(extra);
         return path;
     }
+    // VB1: the inspector bar laid out for the tool (shown or gone), so the
+    // video is at its size before a test points at it. Offscreen a frame (a
+    // polish) comes only when asked for.
+    void settleVisualBar() const
+    {
+        QQuickItem *bar = visualItem("visualToolBar");
+        const auto settled = [&] {
+            window->update();
+            const bool shown = bar->property("shown").toBool();
+            return shown ? bar->isVisible() && bar->height() == bar->property("lineHeight").toReal() : !bar->isVisible();
+        };
+        QTRY_VERIFY2(settled(), qPrintable(QStringLiteral("shown %1 visible %2 height %3")
+                                               .arg(bar->property("shown").toBool()).arg(bar->isVisible()).arg(bar->height())));
+        QTest::qWait(20);
+    }
     QPoint videoPoint(QPointF local) const
     {
         return item("visualOverlay")->mapToScene(local).toPoint();
@@ -25110,7 +25232,12 @@ private slots:
         QVERIFY(application->openFile(visualDocument("visual.ass")));
         auto &tools = application->visualTools();
         // The rail: legacy VideoToolbar's eleven families and VT3's
-        // Perspective, the crosshair on.
+        // Perspective, the crosshair on (tall enough for all of them).
+        window->resize(1600, 1400);
+        // Under X the real pointer can rest over the video as it opens, and
+        // the crosshair keeps the position it had: out of the way first.
+        QTest::mouseMove(window, kOverNoPanel);
+        QTRY_VERIFY(!visualItem("visualToolRail")->property("overflows").toBool());
         for (int i = 0; i < application::visual::kFamilyCount; ++i) {
             auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(i)));
             QVERIFY(button);
@@ -25157,34 +25284,20 @@ private slots:
                     QVERIFY2(!names.contains(it->property("text").toString()), qPrintable(it->property("text").toString()));
             }
         }
-        // A Video panel too short for the twelve families: the rail shows a
-        // scroll bar beside them (the families below are reached by the
-        // mouse and the bar says there are more), still a narrow strip; tall
-        // enough, no bar.
-        {
-            QQuickItem *rail = visualItem("visualToolRail");
-            auto *bar = visualItem("visualToolRailScrollBar");
-            QVERIFY(bar);
-            const QSize was = window->size();
-            window->resize(1100, 520);
-            QTRY_VERIFY(rail->property("overflows").toBool());
-            QTRY_VERIFY(bar->isVisible());
-            QVERIFY2(rail->width() <= 40, qPrintable(QString::number(rail->width())));
-            auto *last = visualItem("visualTool10");
-            QVERIFY(last->mapToItem(rail, QPointF(0, 0)).x() + last->width() <= bar->mapToItem(rail, QPointF(0, 0)).x());
-            window->resize(1600, 1400);
-            QTRY_VERIFY(!rail->property("overflows").toBool());
-            QTRY_VERIFY(!bar->isVisible());
-            window->resize(was);
-        }
-        // VT1: the inspector bar is there for the crosshair too (the video
-        // does not resize with the tool): its name, Copy video position
-        // (greyed with no position yet), no batch picker, no "Targets"
-        // readout anywhere.
-        QVERIFY(visualItem("visualToolBar")->isVisible());
-        QVERIFY(visualItem("visualToolName")->isVisible());
-        QVERIFY(!visualItem("visualPickBatch")->isVisible());
+        // VB1: the crosshair has no inspector bar line; its Copy video
+        // position (greyed with no position yet) is on the video times line,
+        // with no batch picker and no "Targets" readout anywhere.
+        // (VB1; the rail's More tools: visualToolRailFoldsUnderMoreTools.)
+        QTRY_VERIFY(!visualItem("visualToolBar")->isVisible());
+        QVERIFY(visualItem("visualPointerReadout")->isVisible());
+        QVERIFY(visualItem("visualOption_copyPosition")->isVisible());
         QVERIFY(!visualItem("visualOption_copyPosition")->isEnabled());
+        {
+            const auto middle = [](QQuickItem *i) { return i->mapToScene(QPointF(0, i->height() / 2)).y(); };
+            QTRY_VERIFY2(std::abs(middle(visualItem("visualPointerReadout")) - middle(item("videoTimes"))) < 4,
+                         qPrintable(QStringLiteral("%1 %2").arg(middle(visualItem("visualPointerReadout")))
+                                        .arg(middle(item("videoTimes")))));
+        }
         QVERIFY(!visualItem("visualBatch"));
         QVERIFY(tools.overlay().isEmpty()); // no video: no tools (VideoBox state None)
         application->video().openVideo(nativeFixture("cfr.mkv"));
@@ -26131,6 +26244,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click"));
         QCOMPARE(tools.activeFamily(), 2);
+        settleVisualBar();
         QQuickItem *two = visualItem("visualOption_twoPoints");
         QVERIFY(two);
         if (!two->property("checked").toBool())
@@ -26189,6 +26303,7 @@ private slots:
         QCOMPARE(tools.activeFamily(), 3);
         QTRY_VERIFY(visualItem("visualOption_rectangle") && visualItem("visualOption_rectangle")->isVisible());
         QTRY_VERIFY(!visualItem("visualOption_copyPosition"));
+        settleVisualBar(); // the video stays put for the drags below
         // ScaleItem (VideoToolbar.cpp:83-89, 900-958): width and the aspect
         // ratio on; the rectangle's four options greyed without it.
         const char *names[] = {"rectangle", "scaleX", "aspectRatio", "scaleY", "originalRectangle", "changeAll",
@@ -26479,6 +26594,7 @@ private slots:
     // more lines, the picker keeping its slot.
     void visualInspectorBarValues()
     {
+        widenForTheInspectorBar();
         QVERIFY(application->openFile(visualDocument(
             "inspector.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}third\n")));
         auto &tools = application->visualTools();
@@ -26523,12 +26639,13 @@ private slots:
             return QString();
         };
 
-        // Scale: the tool's name leads; its options in Rectangle and Tags,
-        // its two values after them.
+        // Scale: its options in Rectangle and Tags, its two values after
+        // them (VB1: the rail names the tool, the bar does not).
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
         QCOMPARE(tools.activeFamily(), 3);
         QTRY_VERIFY(field("fscx"));
-        QVERIFY(visualItem("visualToolName")->isVisible());
+        settleVisualBar(); // shown, after the crosshair's none
+        QVERIFY(!visualItem("visualToolName"));
         QCOMPARE(groupLabel(visualItem("visualOption_rectangle")), QStringLiteral("Rectangle"));
         QCOMPARE(groupLabel(visualItem("visualOption_originalRectangle")), QStringLiteral("Rectangle"));
         QCOMPARE(groupLabel(visualItem("visualOption_changeAll")), QStringLiteral("Tags"));
@@ -26660,57 +26777,6 @@ private slots:
             application->selectLine(third.value);
             QTRY_VERIFY(session->selection().active == third);
             QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("130"));
-        }
-
-        // A narrow panel wraps the groups onto more lines; the picker stays.
-        // (The window is at least 800 wide, the Video panel all of it here:
-        // the bar is held to a panel's narrower width.)
-        {
-            QQuickItem *groups = visualItem("visualToolGroups");
-            QQuickItem *bar = visualItem("visualToolBar");
-            QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
-            const QSize was = window->size();
-            // (implicitHeight is the tool's own lines; the bar keeps the
-            // tallest family's, which may be more.)
-            window->resize(1600, 1400); // wide: Scale on one line
-            QTRY_VERIFY(groups->implicitHeight() < 40);
-            QVERIFY(maximum.write(420));
-            QTRY_COMPARE(bar->width(), qreal(420));
-            QTRY_VERIFY2(groups->implicitHeight() > 40, qPrintable(QString::number(groups->implicitHeight())));
-            QQuickItem *pick = visualItem("visualPickBatch");
-            QVERIFY(pick->isVisible());
-            QVERIFY(pick->mapToItem(bar, QPointF(pick->width(), 0)).x() <= bar->width());
-            // Every group whole, inside the bar.
-            for (QQuickItem *group : groups->childItems())
-                if (group->isVisible())
-                    QVERIFY2(group->x() + group->width() <= groups->width() + 0.5, qPrintable(group->objectName()));
-            // A tool switch keeps the bar's height (the approved design;
-            // Codex on #293): the crosshair, on fewer lines here, keeps the
-            // lines the tallest family needs.
-            // The Video panel's minimum follows the tool's own lines, not
-            // the height the bar holds (Codex on #293: the column is as tall
-            // after the switch, holding more, and the minimum must still
-            // change with the lines).
-            QQuickItem *videoPanel = item("videoPanel");
-            const auto minimumHeight = [&] { return videoPanel->property("minimumSize").toSizeF().height(); };
-            const qreal wrapped = bar->height();
-            const qreal scaleLines = groups->implicitHeight(), scaleMinimum = minimumHeight();
-            QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
-            QTRY_COMPARE(tools.activeFamily(), 0);
-            QTRY_VERIFY2(groups->implicitHeight() < groups->height() - 10,
-                         qPrintable(QStringLiteral("%1 %2").arg(groups->implicitHeight()).arg(groups->height())));
-            QCOMPARE(bar->height(), wrapped);
-            QTRY_VERIFY2(std::abs((scaleMinimum - minimumHeight()) - (scaleLines - groups->implicitHeight())) <= 1,
-                         qPrintable(QStringLiteral("minimum %1 -> %2, lines %3 -> %4").arg(scaleMinimum).arg(minimumHeight())
-                                        .arg(scaleLines).arg(groups->implicitHeight())));
-            QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
-            QTRY_COMPARE(tools.activeFamily(), 3);
-            QCOMPARE(bar->height(), wrapped);
-            QTRY_COMPARE(minimumHeight(), scaleMinimum);
-            QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()) /* the Layout default */);
-            QTRY_VERIFY(groups->implicitHeight() < 40);
-            window->resize(was);
-            QTRY_VERIFY(!tools.videoRect().isEmpty());
         }
 
         // Z rotation: its angle, and Origin in its group.
@@ -27810,6 +27876,7 @@ private slots:
     // nudge that corner, its own step; Esc during a drag drops it.
     void visualPerspectiveThroughThePanel()
     {
+        widenForTheInspectorBar();
         using namespace application::visual;
         QVERIFY(application->openFile(visualDocument(
             "perspective.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(100,80)\\p1}m 0 0 l 120 0 120 60 0 60\n")));
@@ -27826,6 +27893,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool11"), "click"));
         QCOMPARE(tools.activeFamily(), 11);
         QTRY_VERIFY(visualItem("visualOption_plane"));
+        settleVisualBar(); // shown, after the crosshair's none
         const auto option = [&](const char *name) {
             return visualItem(qPrintable(QStringLiteral("visualOption_") + QLatin1String(name)));
         };
@@ -28007,6 +28075,7 @@ private slots:
     // the file at once.
     void visualAllTagsThroughThePanel()
     {
+        widenForTheInspectorBar();
         using namespace application::visual;
         QTemporaryDir config;
         QVERIFY(config.isValid());
@@ -28594,41 +28663,281 @@ private slots:
         QTRY_COMPARE(tools.activeFamily(), 0);
     }
 
-    void visualToolRailKeepsTheActiveFamilyInView()
+    // VB1 (#481): a rail too short for the twelve
+    // families shows the ones that fit, none cut off, and ends in More
+    // tools, a menu of the others; the on family takes the last slot.
+    void visualToolRailFoldsUnderMoreTools()
     {
         auto &tools = application->visualTools();
         QVERIFY(application->openFile(
             visualDocument("rail.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}Rail\n")));
-        window->resize(1280, 860);
-        QTRY_VERIFY(visualItem("visualToolRailScroll"));
-        QQuickItem *scroll = visualItem("visualToolRailScroll");
-        auto *view = scroll->property("contentItem").value<QQuickItem *>();
-        QVERIFY(view);
+        QQuickItem *rail = visualItem("visualToolRail");
+        QQuickItem *more = visualItem("visualToolsMore");
+        QVERIFY(rail && more);
         tools.selectFamily(0);
-        const auto inView = [&](int family) {
-            QQuickItem *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family)));
-            if (!button || !button->isVisible())
-                return false;
-            const QRectF r = button->mapRectToItem(scroll, QRectF(0, 0, button->width(), button->height()));
-            return r.top() >= -0.5 && r.bottom() <= scroll->height() + 0.5;
+        const QList<int> order = [&] {
+            QList<int> out;
+            for (const QVariant &f : tools.railOrder())
+                out << f.toInt();
+            return out;
+        }();
+        const auto button = [&](int family) { return visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family))); };
+        const auto shown = [&] {
+            QList<int> out;
+            for (int f : order)
+                if (button(f)->isVisible())
+                    out << f;
+            return out;
         };
-        const auto overflows = [&] { return view->property("contentHeight").toReal() > view->height() + 0.5; };
-        // Shrink the window until the rail overflows.
-        for (int h = 760; h >= 400 && !overflows(); h -= 40) {
+        // Every button shown is whole inside the rail.
+        const auto whole = [&] {
+            QList<QQuickItem *> items;
+            for (int f : order)
+                if (button(f)->isVisible())
+                    items << button(f);
+            if (more->isVisible())
+                items << more;
+            for (QQuickItem *b : items) {
+                const QRectF r = b->mapRectToItem(rail, QRectF(0, 0, b->width(), b->height()));
+                if (r.top() < -0.5 || r.bottom() > rail->height() + 0.5)
+                    return false;
+            }
+            return true;
+        };
+        // Shrink the window until the rail folds.
+        window->resize(1280, 860);
+        for (int h = 760; h >= 400 && !rail->property("overflows").toBool(); h -= 40) {
             window->resize(1280, h);
             QTest::qWait(50);
         }
-        QVERIFY2(overflows(), "the rail does not overflow");
-        QTRY_VERIFY(inView(0));
-        QVERIFY(!inView(10));
-        for (int family : {10, 9, 0, 10}) {
-            tools.selectFamily(family);
-            QCOMPARE(tools.activeFamily(), family);
-            QTRY_VERIFY2(inView(family), qPrintable(QString::number(family)));
-            QVERIFY(visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family)))->property("checked").toBool());
-        }
+        QVERIFY2(rail->property("overflows").toBool(), "the rail does not fold");
+        QTRY_VERIFY(more->isVisible());
+        QTRY_VERIFY(whole());
+        const QList<int> first = shown();
+        QVERIFY(first.size() < order.size());
+        QCOMPARE(first, order.mid(0, first.size()));
+        QVERIFY(first.contains(0));
+        QVERIFY(rail->width() <= 34);
+        // The on family keeps the last slot: as many buttons, all whole.
+        const int last = order.last();
+        QVERIFY(!first.contains(last));
+        tools.selectFamily(last);
+        QTRY_VERIFY(button(last)->isVisible());
+        QVERIFY(button(last)->property("checked").toBool());
+        QCOMPARE(shown().size(), first.size());
+        QCOMPARE(shown().last(), last);
+        QTRY_VERIFY(whole());
+        // More tools lists the others, in the rail's order, and chooses one.
+        QVERIFY(QMetaObject::invokeMethod(more, "click"));
+        // (The rail's own: fullscreen has a rail of its own.)
+        auto *menu = rail->findChild<QObject *>(QStringLiteral("visualToolsMoreMenu"));
+        QVERIFY(menu);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QList<int> listed;
+        for (int f : order)
+            if (auto *entry = menu->findChild<QObject *>(QStringLiteral("visualToolsMore%1").arg(f))) {
+                QVERIFY(!entry->property("text").toString().isEmpty());
+                listed << f;
+            }
+        QCOMPARE(listed.size() + shown().size(), order.size());
+        for (int f : listed)
+            QVERIFY(!shown().contains(f));
+        const int chosen = listed.first();
+        QVERIFY(QMetaObject::invokeMethod(menu->findChild<QObject *>(QStringLiteral("visualToolsMore%1").arg(chosen)),
+                                          "triggered"));
+        QTRY_COMPARE(tools.activeFamily(), chosen);
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QTRY_VERIFY(button(chosen)->isVisible());
+        QTRY_VERIFY(whole());
+        // Tall enough: every family, no More tools.
+        window->resize(1600, 1400);
+        QTRY_VERIFY(!rail->property("overflows").toBool());
+        QTRY_VERIFY(!more->isVisible());
+        QTRY_COMPARE(shown(), order);
+        QTRY_VERIFY(whole());
         tools.selectFamily(0);
         window->resize(1280, 860);
+    }
+
+    // VB1 (#481): every tool's inspector bar is one line
+    // (none for the crosshair), so the video keeps its size across the
+    // tools; the groups that do not fit fold under More options, whose
+    // popover holds them live.
+    void visualInspectorBarFitsOneLine()
+    {
+        auto &tools = application->visualTools();
+        QVERIFY(application->openFile(visualDocument(
+            "one-line.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}One line\n"
+                            // A drawing: Perspective's quad, its read-only Origin wider than
+                            // a whole coordinate ("1060.75"), for the end of this test.
+                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(1000.25,1000.25)\\p1}m 0 0 l 121 0 121 61 0 61\n")));
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        QQuickItem *bar = visualItem("visualToolBar");
+        QQuickItem *groups = visualItem("visualToolGroups");
+        QQuickItem *more = visualItem("visualToolMore");
+        QQuickItem *stage = visualItem("videoStage");
+        QVERIFY(bar && groups && more && stage);
+        const qreal line = bar->property("lineHeight").toReal();
+        const auto lengthOf = [&](const char *name) {
+            return bar->property(name).value<QJSValue>().property(QStringLiteral("length")).toInt();
+        };
+        QVERIFY(line > 20 && line < 40);
+        // Offscreen, a frame (a polish) comes only when asked for.
+        const auto drawn = [&] {
+            window->update();
+            return true;
+        };
+        // The groups on the line are whole inside it.
+        const auto onTheLine = [&] {
+            for (QQuickItem *g : groups->childItems())
+                if (g->isVisible() && g->x() + g->width() > groups->width() + 0.5)
+                    return false;
+            return true;
+        };
+        const auto widthsOf = [&] {
+            QStringList out;
+            for (QQuickItem *g : groups->childItems())
+                if (g->isVisible())
+                    out << QStringLiteral("%1+%2").arg(g->x()).arg(g->width());
+            out << QStringLiteral("| measured");
+            auto *measure = bar->findChild<QQuickItem *>(QStringLiteral("visualToolMeasure"));
+            for (QQuickItem *row : measure->childItems())
+                for (QQuickItem *g : row->childItems())
+                    out << QStringLiteral("%1/%2").arg(g->width()).arg(g->implicitWidth());
+            out << QStringLiteral("room %1 more %2").arg(bar->property("groupsRoom").toReal()).arg(more->implicitWidth());
+            return out.join(u' ');
+        };
+        const auto check = [&](const QString &where) {
+            QList<qreal> stageHeights;
+            qreal pointerStage = 0;
+            for (const QVariant &v : tools.railOrder()) {
+                const int family = v.toInt();
+                tools.selectFamily(family);
+                QTRY_COMPARE(tools.activeFamily(), family);
+                const QString what = where + QStringLiteral(" family %1").arg(family);
+                if (family == 0) {
+                    QTRY_VERIFY2(drawn() && !bar->isVisible(), qPrintable(what));
+                    QTRY_VERIFY(visualItem("visualPointerReadout")->isVisible());
+                    continue;
+                }
+                QTRY_VERIFY2(drawn() && bar->height() == line, qPrintable(what));
+                QTRY_VERIFY2(drawn() && onTheLine(), qPrintable(what + QStringLiteral(" fit %1 of %2 in %3: %4")
+                                                                      .arg(bar->property("fitCount").toInt())
+                                                                      .arg(lengthOf("segments"))
+                                                                      .arg(groups->width())
+                                                                      .arg(widthsOf())));
+                QVERIFY(!visualItem("visualPointerReadout")->isVisible());
+                // More options only with groups folded under it.
+                const int folded = lengthOf("foldedSegments");
+                QCOMPARE(more->isVisible(), folded > 0);
+                QCOMPARE(bar->property("fitCount").toInt() + folded, lengthOf("segments"));
+                settleVisualBar();
+                stageHeights << stage->height();
+            }
+            // The video keeps its size across the tools with options, and
+            // gets the line back for the crosshair.
+            for (qreal h : stageHeights)
+                QCOMPARE(h, stageHeights.first());
+            tools.selectFamily(0);
+            settleVisualBar();
+            QTRY_VERIFY2(drawn() && stage->height() >= stageHeights.first() + line - 1,
+                         qPrintable(QStringLiteral("%1 %2").arg(stage->height()).arg(stageHeights.first())));
+            pointerStage = stage->height();
+            QVERIFY2(pointerStage >= stageHeights.first() + line - 1,
+                     qPrintable(where + QStringLiteral(": %1 vs %2").arg(pointerStage).arg(stageHeights.first())));
+        };
+        const QSize was = window->size();
+        window->resize(1600, 1000);
+        check(QStringLiteral("wide"));
+        // A narrow bar folds Perspective's last groups under More options.
+        QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
+        tools.selectFamily(3); // shown, so laid out at its new width
+        settleVisualBar();
+        QVERIFY(maximum.write(360));
+        QTRY_VERIFY2(drawn() && bar->width() == 360, qPrintable(QString::number(bar->width())));
+        check(QStringLiteral("narrow"));
+        tools.selectFamily(11); // Family::Perspective
+        settleVisualBar();
+        QTRY_VERIFY(more->isVisible());
+        QTRY_VERIFY(!visualItem("visualValue_frx")); // folded, not on the line
+        QVERIFY(QMetaObject::invokeMethod(more, "click"));
+        auto *popover = bar->findChild<QObject *>(QStringLiteral("visualToolMorePopover")); // not fullscreen's
+        QVERIFY(popover);
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QVERIFY(more->property("checked").toBool());
+        QTRY_VERIFY(visualItem("visualValue_frx") && visualItem("visualValue_frx")->isVisible());
+        // Its fields are the tool's: a folded field typed in, the Line
+        // takes the value (Perspective's angles are read-only: X/Y rotation's).
+        const auto editableIn = [&](QObject *in) -> QQuickItem * {
+            auto *content = in->property("contentItem").value<QQuickItem *>();
+            QList<QQuickItem *> pending{content ? content->parentItem() : nullptr};
+            while (!pending.isEmpty())
+                if (QQuickItem *f = pending.takeLast()) {
+                    if (f->objectName().startsWith(QStringLiteral("visualValue_")) && f->inherits("QQuickTextField")
+                        && f->isVisible())
+                        return f;
+                    pending << f->childItems();
+                }
+            return nullptr;
+        };
+        QVERIFY(!editableIn(popover));
+        tools.selectFamily(5); // Family::RotationXY
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        settleVisualBar();
+        QTRY_VERIFY(more->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(more, "click"));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QTRY_VERIFY(editableIn(popover));
+        QQuickItem *field = editableIn(popover);
+        const QString name = field->objectName().mid(int(qstrlen("visualValue_")));
+        const auto steps = session->historySize();
+        field->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(field, "selectAll"));
+        for (const QChar c : QStringLiteral("12"))
+            QTest::keyClick(field->window(), c.toLatin1());
+        QTest::keyClick(field->window(), Qt::Key_Return);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        bool took = false;
+        for (const QVariant &v : tools.property("values").toList())
+            took |= v.toMap().value(QStringLiteral("name")).toString() == name
+                    && v.toMap().value(QStringLiteral("text")).toString() == QLatin1String("12");
+        QVERIFY2(took, qPrintable(name));
+        // Another tool closes it; wide enough again, nothing is folded.
+        tools.selectFamily(3);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()) /* the Layout default */);
+        window->resize(2400, 1000); // Perspective's four groups need ~770 px
+        tools.selectFamily(11);
+        QTRY_VERIFY2(drawn() && !more->isVisible(), qPrintable(QStringLiteral("width %1: %2").arg(bar->width()).arg(widthsOf())));
+        QTRY_VERIFY(drawn() && visualItem("visualValue_frx") && visualItem("visualValue_frx")->isVisible());
+        // A drawing gives Perspective its quad: in Center mode its Origin is
+        // read-only with decimals, measured as wide as it shows, so at any
+        // width the groups on the line end inside it (Codex on #496).
+        tools.selectFamily(0);
+        application->selectLine(session->document().lines()[3]->id.value);
+        tools.selectFamily(11);
+        QTRY_VERIFY(visualItem("visualValue_orgx") && !visualItem("visualValue_orgx")->inherits("QQuickTextInput"));
+        const auto valuesText = [&] {
+            QStringList out;
+            for (const QVariant &v : tools.property("values").toList())
+                out << v.toMap().value(QStringLiteral("name")).toString() + QLatin1Char('=')
+                           + v.toMap().value(QStringLiteral("text")).toString();
+            return out.join(u' ') + QStringLiteral(" | ") + text(session->document().lines()[3]);
+        };
+        QTRY_VERIFY2(visualItem("visualValue_orgx")->property("text").toString().contains(u'.'), qPrintable(valuesText()));
+        settleVisualBar();
+        for (int w = 300; w <= 900; w += 3) {
+            QVERIFY(maximum.write(qreal(w)));
+            QTRY_VERIFY2(drawn() && bar->width() == w && onTheLine(),
+                         qPrintable(QStringLiteral("width %1: %2").arg(w).arg(widthsOf())));
+        }
+        QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()));
+        tools.selectFamily(0);
+        window->resize(was);
     }
 
     // T6: the Position shifter's and the all-tags tool's surfaces in the
@@ -28713,6 +29022,94 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(named("tagsClose"), "clicked"));
             QTRY_VERIFY(!dialog->isVisible());
         }
+    }
+
+    // VB1 (#481): every tool's bar and the rail in a tall and a short Video
+    // panel, the four themes (with HIKARI_SURFACE_SHOT_DIR), on the dummy
+    // video; then More options open on Perspective and More tools on the
+    // short panel.
+    void visualToolbarAdaptiveScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto &tools = application->visualTools();
+        tools.setAllTagsFile({});
+        QVERIFY(application->openFile(visualDocument(
+            "vb1-shots.ass",
+            // A drawing, so Perspective has its quad and its angles.
+            "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\an7\\pos(100,80)\\frx12\\fry-8\\p1}m 0 0 l 120 0 120 60 0 60\n")));
+        application->video().openVideo(QStringLiteral("?dummy:23.976:4000:1920:1080:47:163:161:c"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        closeMismatchQuestion(); // modal: the video takes no hover under it
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        const auto shoot = [&](const QString &name, bool whole = false) {
+            QTest::qWait(300);
+            const QImage shot = window->grabWindow();
+            QVERIFY(whole ? shot.save(out + QLatin1Char('/') + name)
+                          : shot.copy(crop(visualItem("videoPanel"))).save(out + QLatin1Char('/') + name));
+        };
+        auto *root = engine->rootObjects().first();
+        const QSize was = window->size();
+        for (const char *code : {"light", "dark", "highContrastBlack", "highContrastWhite"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QString::fromLatin1(code) + QStringLiteral(".png");
+            for (const auto &[size, height] : {std::pair{"tall", 1300}, std::pair{"short", 760}}) {
+                window->resize(1280, height);
+                QTest::qWait(200);
+                for (const QVariant &v : tools.railOrder()) {
+                    tools.selectFamily(v.toInt());
+                    QTRY_COMPARE(tools.activeFamily(), v.toInt());
+                    if (v.toInt() == 0) { // the cross and its position on the times line
+                        settleVisualBar();
+                        // Moved again each try: the video's place settles
+                        // after the resize and the theme change.
+                        int nudge = 0;
+                        const auto hovered = [&] {
+                            const QPointF at = tools.videoRect().center() + QPointF(20 + (++nudge % 2), -10);
+                            QTest::mouseMove(window, videoPoint(at));
+                            return !tools.overlay().isEmpty();
+                        };
+                        QTRY_VERIFY2(hovered(), qPrintable(QDebug::toString(tools.videoRect())));
+                    }
+                    shoot(QStringLiteral("vb1-%1-%2%3").arg(QLatin1String(size)).arg(v.toInt(), 2, 10, QLatin1Char('0'))
+                              .arg(suffix));
+                    QTest::mouseMove(window, QPoint(1, 1));
+                }
+            }
+            // Short: More options on Perspective, then More tools.
+            tools.selectFamily(11);
+            if (QQuickItem *more = visualItem("visualToolMore"); more && more->isVisible()) {
+                QVERIFY(QMetaObject::invokeMethod(more, "click"));
+                auto *popover = visualItem("visualToolBar")->findChild<QObject *>(QStringLiteral("visualToolMorePopover"));
+                QTRY_VERIFY(popover->property("opened").toBool());
+                shoot(QStringLiteral("vb1-short-more-options") + suffix, true);
+                QVERIFY(QMetaObject::invokeMethod(popover, "revert")); // Esc's, the window unfocused offscreen
+                QTRY_VERIFY(!popover->property("visible").toBool());
+            }
+            tools.selectFamily(0);
+            if (QQuickItem *more = visualItem("visualToolsMore"); more && more->isVisible()) {
+                QVERIFY(QMetaObject::invokeMethod(more, "click"));
+                auto *menu = visualItem("visualToolRail")->findChild<QObject *>(QStringLiteral("visualToolsMoreMenu"));
+                QTRY_VERIFY(menu->property("opened").toBool());
+                shoot(QStringLiteral("vb1-short-more-tools") + suffix, true);
+                QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+                QTRY_VERIFY(!menu->property("visible").toBool());
+            }
+        }
+        window->resize(was);
     }
 
     // VT1: the inspector bar in the four themes (with
@@ -28836,14 +29233,14 @@ private slots:
             QVERIFY(application->editor().undo());
             QVERIFY(tools.setOption(QStringLiteral("change"), 0)); // the next theme's shots as the first's
             application->selectLine(lines[2]->id.value);
-            // Scale on a narrow window: the groups wrap.
+            // Scale on a narrow window: the last groups fold (VB1).
             tools.selectFamily(3);
             QTRY_VERIFY(visualItem("visualValue_fscx"));
             {
                 QQuickItem *bar = visualItem("visualToolBar");
                 QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
                 QVERIFY(maximum.write(420));
-                QTRY_VERIFY(visualItem("visualToolGroups")->height() > 40);
+                QTRY_VERIFY(visualItem("visualToolMore")->isVisible());
                 QTest::qWait(300);
                 const QImage shot = window->grabWindow();
                 QVERIFY(shot.copy(crop(bar)).save(out + QStringLiteral("/vt1-scale-narrow") + suffix));
@@ -35702,7 +36099,25 @@ private slots:
         auto *fsBar = fullscreenItem("fullscreenToolBar");
         QVERIFY(fsBar && fsBar->isVisible());
         QCOMPARE(fsBar->parentItem(), slot);
-        QVERIFY(fullscreenItem("visualToolName")->isVisible());
+        QVERIFY(!fullscreenItem("visualToolName")); // VB1: the tools button names it
+        // VB1: the rail's More tools menu and the bar's More options hold
+        // the bar like its other menus (Codex on #496).
+        {
+            QVERIFY(!fs.menuOpen());
+            auto *moreTools = rail->findChild<QObject *>(QStringLiteral("visualToolsMoreMenu"));
+            QVERIFY(moreTools);
+            QVERIFY(QMetaObject::invokeMethod(moreTools, "open"));
+            QTRY_VERIFY(fs.menuOpen());
+            QVERIFY(QMetaObject::invokeMethod(moreTools, "close"));
+            QTRY_VERIFY(!fs.menuOpen());
+            auto *moreOptions = fsBar->findChild<QObject *>(QStringLiteral("visualToolMorePopover"));
+            QVERIFY(moreOptions);
+            QVERIFY(QMetaObject::invokeMethod(moreOptions, "openAt", Q_ARG(QVariant, QVariant::fromValue<QObject *>(fsBar)),
+                                              Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
+            QTRY_VERIFY(fs.menuOpen());
+            QVERIFY(QMetaObject::invokeMethod(moreOptions, "revert"));
+            QTRY_VERIFY(!fs.menuOpen());
+        }
         QTRY_VERIFY(fullscreenItem("visualOption_rectangle"));
         QTRY_VERIFY(fullscreenItem("visualValue_fscx") && fullscreenItem("visualValue_fscx")->isVisible());
         QCOMPARE(fullscreenItem("fullscreenToolsButton")->property("iconRole").toString(), QStringLiteral("tool-scale"));
@@ -35711,6 +36126,10 @@ private slots:
         QVERIFY(rail->mapToScene(QPointF(0, rail->height())).y() <= bar->mapToScene(QPointF(0, 0)).y());
         auto *crosshair = findItem(rail, QStringLiteral("visualTool0"));
         QVERIFY(crosshair && crosshair->isVisible());
+        // VB1: a short rail gave the on tool its last slot; offscreen its
+        // column is laid out again only at a frame, so lay it out now.
+        for (QQuickItem *item : rail->findChildren<QQuickItem *>())
+            item->ensurePolished();
         clickWith(crosshair, Qt::NoModifier);
         QTRY_COMPARE(tools.activeFamily(), 0);
         QTRY_VERIFY(!rail->isVisible());

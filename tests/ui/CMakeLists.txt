@@ -70,7 +70,7 @@ if(NOT WIN32)
     endforeach()
 endif()
 hikari_add_spix_test(hikari_ui_editor_workflow SOURCES editor_workflow.cpp LIBRARIES hikari_composition
-    DEFINITIONS HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
+    DEFINITIONS HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/fixtures/approved-departures")
 # E4: the Line editor's metadata fields in the accessibility tree (E2-a11y)
 # and through the real UI (Spix).
 hikari_add_qttest(hikari_ui_line_editor_a11y_tests SOURCES line_editor_a11y_tests.cpp

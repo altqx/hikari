@@ -421,7 +421,7 @@ struct Replay {
     int steps() const { return static_cast<int>(host.s->historySize() - historyStart); }
 };
 
-// Approved departures (docs/qt/compatibility-decisions.md) where a dump's
+// Approved departures (docs/compatibility-decisions.md) where a dump's
 // legacy text is kept as the old evidence and the rewrite expects another.
 struct Departure {
     std::string caseName;

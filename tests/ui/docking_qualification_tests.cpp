@@ -1,5 +1,5 @@
 // D1: qualification of the pinned docking engine (KDDockWidgets 2.4.1,
-// QtQuick frontend, docs/qt/docking.md) with the provisioned Qt: the
+// QtQuick frontend, docs/docking.md) with the provisioned Qt: the
 // default arrangement, float/redock, tabs, close/reopen, layout save and
 // restore through the public LayoutSaver, and a corrupt layout refused
 // without breaking the live one. Platform checks (screen readers, Wayland

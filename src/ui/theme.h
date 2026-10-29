@@ -1,6 +1,6 @@
 #pragma once
 
-// K2: the Hikari theme layer (docs/qt/ux/visual-language.md, "Hikari theme
+// K2: the Hikari theme layer (docs/ux/visual-language.md, "Hikari theme
 // and metrics layer"): one set of semantic colour roles resolved from the
 // chosen appearance and exposed once to every QML surface (the Theme
 // singleton, the application palette the controls draw with, the icons) and

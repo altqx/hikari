@@ -1,7 +1,7 @@
 // O3: the one-shot settings importer's readers and review plan against the
 // legacy loaders at 20d647c4 (config.cpp SetRawOptions / LoadOptions /
 // LoadAudioOpts, Hotkeys.cpp LoadHkeys, ConfigConverter.cpp) and the
-// migration worksheet (docs/qt/proposals/settings-migration-map): every
+// migration worksheet (docs/proposals/settings-migration-map): every
 // option and action row reaches a destination or an explicit disposition,
 // C04-short-file, S44-import's no-op repeat and kept user edits,
 // S44-macro-alias, foreign-platform paths, the theme exclusion and the
@@ -305,6 +305,17 @@ TEST(SettingsImport, OptionsTheFilesLeaveOutAreMissingWithTheCurrentValueKept)
         EXPECT_FALSE(row.selectable) << def.id;
         EXPECT_FALSE(row.value.has_value()) << def.id;
     }
+}
+
+// SP1 (#474): legacy's one dictionary (DICTIONARY_LANGUAGE) imports as the
+// primary spelling language, the setting the multilingual check starts with.
+TEST(SettingsImport, DictionaryLanguageBecomesThePrimaryLanguage)
+{
+    const Plan plan = buildPlan({config(padding() + "DICTIONARY_LANGUAGE=pl\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &language = rowOf(plan, "setting:editor.dictionaryLanguage");
+    EXPECT_EQ(language.disposition, Disposition::Change);
+    EXPECT_EQ(language.value, SettingValue(std::string("pl")));
+    EXPECT_EQ(findLegacySetting("DICTIONARY_LANGUAGE")->id, "editor.dictionaryLanguage");
 }
 
 TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)

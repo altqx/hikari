@@ -1,6 +1,6 @@
 #pragma once
 
-// Editor audio output port (N6; docs/qt/media.md, ADR 0010). The control
+// Editor audio output port (N6; docs/media.md, ADR 0010). The control
 // side opens a device and writes ready interleaved float samples; a real-time
 // callback consumes them and fills silence when nothing is ready. Status and
 // clock estimates are published without locks. Device identity is scoped to

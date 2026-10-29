@@ -4,7 +4,7 @@
 Writes one monochrome SVG per icon role into src/ui/icons/ and the set's
 manifest (src/ui/icons/manifest.json). The SVG files are the shipped source;
 this script is how they were drawn and is the place to change them, so that
-every icon keeps the rules of docs/qt/ux/icons.md:
+every icon keeps the rules of docs/ux/icons.md:
 
 * a 16 x 16 viewBox, every coordinate on the quarter-unit grid;
 * one stroke weight (1 unit) with round caps and joins, set once on the root;
@@ -844,7 +844,7 @@ icon("playback-speed", "Playback speed", [], [AUDIOBOX],
      stroke("M2.5 12a5.5 5.5 0 1 1 11 0") + accent(stroke("M8 12L5.5 8")) + dot(8, 12, 1.25))
 
 # IC1 (#226): every menu and context-menu item that runs a command has an
-# icon (docs/qt/ux/menu-icon-gaps.md lists the items and the ones left
+# icon (docs/ux/menu-icon-gaps.md lists the items and the ones left
 # without: check items, entries named by their data). The rules above hold:
 # an open/add badge is the plus, recent and timed the clock, a removal the
 # cross; a list's rows are lines, the Grid's tree a parent row with

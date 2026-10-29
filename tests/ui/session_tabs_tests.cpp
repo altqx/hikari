@@ -106,7 +106,7 @@ class SessionTabsTests : public QObject {
     app::Application::Options options(const QTemporaryDir &home) const
     {
         app::Application::Options o;
-        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         return o;
     }
