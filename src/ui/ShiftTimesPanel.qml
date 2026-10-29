@@ -106,7 +106,7 @@ Item {
                 objectName: "shiftMode"
                 Layout.fillWidth: true
                 choices: [{text: qsTr("Shift"), name: "shiftModeShift"},
-                          {text: qsTr("Post processor"), name: "shiftModePostprocessor"}]
+                          {text: qsTr("Timing postprocessor"), name: "shiftModePostprocessor"}]
                 currentIndex: panel.postprocessorMode ? 1 : 0
                 onActivated: index => panel.setBit("postprocessor", 16, index === 1)
             }
@@ -235,7 +235,7 @@ Item {
                         placeholderText: qsTr("Styles, separated by commas")
                         Accessible.name: qsTr("Styles")
                         ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Move according to the following styles (separated by a coma)")
+                        ToolTip.text: qsTr("Move according to the following styles (separated by a comma)")
                         text: panel.settings.styles
                         onEditingFinished: if (text !== panel.settings.styles) panel.set("styles", text)
                     }
@@ -252,14 +252,14 @@ Item {
                     currentIndex: panel.settings.whichTimes
                     onActivated: index => panel.set("whichTimes", index)
                 }
-                FieldLabel { visible: !panel.postprocessorMode; text: qsTr("Correction end times") }
+                FieldLabel { visible: !panel.postprocessorMode; text: qsTr("End time correction") }
                 ComboBox {
                     objectName: "shiftEndCorrection"
                     visible: !panel.postprocessorMode
                     Layout.fillWidth: true
-                    Accessible.name: qsTr("Correction end times")
+                    Accessible.name: qsTr("End time correction")
                     ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Correction end times, when they are improper or overlap each other")
+                    ToolTip.text: qsTr("Corrects end times that are improper or overlap each other")
                     model: [qsTr("Leave unchanged"), qsTr("Adjust overlapping times"), qsTr("New times")]
                     currentIndex: panel.settings.correctEndTimes
                     onActivated: index => panel.set("correctEndTimes", index)
@@ -275,7 +275,7 @@ Item {
                 SegmentedButtons {
                     objectName: "shiftVideoAudioTime"
                     Layout.fillWidth: true
-                    choices: [{text: qsTr("Beginning"), name: "shiftFromStart", tip: qsTr("Move the start time to the time video / audio")},
+                    choices: [{text: qsTr("Beginning"), name: "shiftFromStart", tip: qsTr("Moves the start time to the video/audio time")},
                               {text: qsTr("End"), name: "shiftFromEnd", tip: qsTr("Moves the end time to the video/audio time")}]
                     currentIndex: panel.settings.fromStartTime ? 0 : 1
                     onActivated: index => panel.set("fromStartTime", index === 0)
@@ -338,7 +338,7 @@ Item {
                             enabled: ppLeadOut.checked
                             Accessible.name: qsTr("Lead-out")
                             ToolTip.visible: hovered
-                            ToolTip.text: qsTr("End time in milliseconds")
+                            ToolTip.text: qsTr("Lead-out time in milliseconds")
                         }
                     }
                 }
@@ -405,10 +405,10 @@ Item {
                     enabled: ppSnap.checked
                     Layout.fillWidth: true
                     HalfColumn {
-                        FieldLabel { text: qsTr("Before the start of time") }
+                        FieldLabel { text: qsTr("Before the start time") }
                         MsBox {
                             key: "keyframeBeforeStart"
-                            Accessible.name: qsTr("Before the start of time")
+                            Accessible.name: qsTr("Before the start time")
                             ToolTip.visible: hovered
                             ToolTip.text: qsTr("The maximum shift to a keyframe \nbefore the start time in milliseconds")
                         }
@@ -468,8 +468,8 @@ Item {
         }
         PrimaryButton {
             objectName: "shiftApply"
-            text: panel.postprocessorMode ? qsTr("Run post processor") : qsTr("Shift")
-            Accessible.description: panel.postprocessorMode ? qsTr("Run post processor") : qsTr("Shift subtitle times")
+            text: panel.postprocessorMode ? qsTr("Run timing postprocessor") : qsTr("Shift")
+            Accessible.description: panel.postprocessorMode ? qsTr("Run timing postprocessor") : qsTr("Shift subtitle times")
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8

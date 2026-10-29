@@ -24,7 +24,7 @@
 | Automation › Rerun last macro | rerun-macro (new: the script with a repeat arrow) |
 | Automation › Repeat last run (AD2) | repeat-run (new: the script with a repeat loop; also the Automation panel's tool strip) |
 | Automation › Show panel | automation-manager (new: the scripts, two pages; AM1 made the window the Automation panel) |
-| Subtitles › Shift times / run time post processor | shift-times-run (new: Shift times' clock with run-script's play mark) |
+| Subtitles › Shift times / run timing postprocessor | shift-times-run (new: Shift times' clock with run-script's play mark) |
 
 ### Video and Audio
 
@@ -85,13 +85,13 @@
 | Swap | swap-lines (new) |
 | Join lines | join-lines (new) |
 | Join lines and keep first / last | join-keep-first / join-keep-last (new) |
-| Set times as a continuous (previous line) / (next line) | continuous-previous / continuous-next (new) |
+| Make times continuous with the previous line / with the next line | continuous-previous / continuous-next (new) |
 | Split lines (submenu) | split-lines (new) |
 | Split line at video time | split-at-video (new) |
 | Split lines into frames / characters / words | split-frames / split-characters / split-words (new) |
 | Split lines by wraps | split-wraps (new) |
 | Select all lines visible on video | select-visible (new) |
-| Make tree | make-tree (new) |
+| Make line group | make-tree (new) |
 | Paste translation text | paste-translation (new: Paste with Save translation's T) |
 | Dialogue shifting window | translation-shift (new) |
 | Hide selected lines | hide |
@@ -109,9 +109,9 @@
 | Item | Role |
 | --- | --- |
 | Add lines | tree-add-lines (new) |
-| Copy tree | edit-copy (it copies the tree to the clipboard) |
+| Copy line group | edit-copy (it copies the line group to the clipboard) |
 | Change description | edit |
-| Select tree lines | tree-select (new) |
+| Select the group's lines | tree-select (new) |
 | Delete | delete |
 
 ### Video context menu (and full screen's)

@@ -127,7 +127,7 @@ Popup {
         }
         ShellMenuItem {
             objectName: popup.objectName + "ShowVsfilterModTags"
-            text: qsTr("Show VSFiltermod tags")
+            text: qsTr("Show VSFilterMod tags")
             checkable: true
             checked: (popup.controller.options & 2) !== 0
             keepsMenuOpen: false

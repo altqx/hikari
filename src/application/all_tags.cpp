@@ -659,15 +659,13 @@ const std::array<std::u16string_view, 8> &allTagsChangeOptions()
 
 std::u16string_view allTagsChangeOptionsHelp()
 {
-    return u"Tag change options:\nAdd - changes all tags by adding the slider value.\n"
-           u"Insert - inserts the tag at the cursor position for one line,\n"
+    return u"Tag change options:\nSet - inserts the tag at the cursor position for one line,\n"
            u"or at the start for multiple lines.\n"
+           u"Add - changes all tags by adding the slider value.\n"
            u"Multiply - multiplies the slider value by the selected line number;\n"
            u"the first line is not changed.\n"
-           u"Gradient text increasing - inserts a tag at each character, increasing the value.\n"
-           u"Gradient text decreasing - inserts a tag at each character, decreasing the value.\n"
-           u"Gradient line increasing - inserts a tag in selected lines, increasing the value.\n"
-           u"Gradient line decreasing - inserts a tag in selected lines, decreasing the value.";
+           u"Gradient - inserts a tag at each character or in each selected line,\n"
+           u"increasing or decreasing the value.";
 }
 
 }

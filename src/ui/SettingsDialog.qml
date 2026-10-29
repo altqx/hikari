@@ -1230,7 +1230,7 @@ DialogWindow {
                                 objectName: "hotkeyFilter"
                                 Layout.preferredWidth: 200
                                 model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Subtitle shortcuts"),
-                                        qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio Shortcuts"),
+                                        qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio shortcuts"),
                                         qsTr("Automation shortcuts")]
                                 ToolTip.text: qsTr("Filtering mode:")
                                 ToolTip.visible: hovered

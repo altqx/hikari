@@ -1389,7 +1389,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_MISSPELLS_REPLACER"
-                help: qsTr("Turns on multireplacer")
+                help: qsTr("Shows or hides the Fix minor errors panel")
                 iconRole: "multireplace"
                 objectName: "misspellMenuItem"
                 action: Action {
@@ -1464,7 +1464,7 @@ ApplicationWindow {
                 id: runShiftTimesItem
                 iconRole: "shift-times-run"
                 objectName: "runShiftTimes"
-                text: qsTr("Shift times / run time post processor")
+                text: qsTr("Shift times / run timing postprocessor")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
             }
@@ -1687,7 +1687,7 @@ ApplicationWindow {
                 iconRole: "video-to-start-time"
                 action: Action {
                     id: goToStartAction
-                    text: qsTr("Go to start time"); enabled: root.video.hasVideo
+                    text: qsTr("Go to start time of line"); enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
                 }
             }
@@ -3321,25 +3321,25 @@ ApplicationWindow {
                 }
                 readonly property var playArounds: [
                     { id: "before", symbol: "AUDIO_PLAY_500MS_BEFORE", icon: "play-before-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500ms before the start time"),
+                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms before the start time"),
                       label: qsTranslate("HikariSub.Audio", "Play 500 ms before the start") },
                     { id: "first", symbol: "AUDIO_PLAY_500MS_FIRST", icon: "play-after-start",
                       tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time"),
                       label: qsTranslate("HikariSub.Audio", "Play the first 500 ms") },
                     { id: "last", symbol: "AUDIO_PLAY_500MS_LAST", icon: "play-before-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500ms before the end time"),
+                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms before the end time"),
                       label: qsTranslate("HikariSub.Audio", "Play the last 500 ms") },
                     { id: "after", symbol: "AUDIO_PLAY_500MS_AFTER", icon: "play-after-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500ms after the end time"),
+                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the end time"),
                       label: qsTranslate("HikariSub.Audio", "Play 500 ms after the end") },
                     { id: "toEnd", symbol: "AUDIO_PLAY_TO_END", icon: "play-to-end",
                       tip: qsTranslate("HikariSub.Audio", "Play to the end"),
                       label: qsTranslate("HikariSub.Audio", "Play to the end") },
                     { id: "beforeMark", symbol: "AUDIO_PLAY_BEFORE_MARK", icon: "play-before-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play before the tag"),
+                      tip: qsTranslate("HikariSub.Audio", "Play before the mark"),
                       label: qsTranslate("HikariSub.Audio", "Play before the mark") },
                     { id: "afterMark", symbol: "AUDIO_PLAY_AFTER_MARK", icon: "play-after-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play after the tag"),
+                      tip: qsTranslate("HikariSub.Audio", "Play after the mark"),
                       label: qsTranslate("HikariSub.Audio", "Play after the mark") }
                 ]
                 property string playAroundSetting: root.app.settings.value("audio.playAround")
@@ -4024,7 +4024,7 @@ ApplicationWindow {
                                 id: audioTapSpeedMenu
                                 objectName: "audioTapSpeedMenu"
                                 iconRole: "playback-speed"
-                                //: The Tap menu's Speed submenu; %1 is the speed in percent
+                                //: The Tap menu's Speed submenu; the current speed follows it
                                 title: qsTranslate("HikariSub.Audio", "Speed") + "\t"
                                        + qsTranslate("HikariSub.Audio", "%1%").arg(root.audio.speedPercent)
                                 Instantiator {
@@ -4046,7 +4046,7 @@ ApplicationWindow {
                             ShellMenuItem {
                                 objectName: "audioTapCalibrate"
                                 iconRole: "tap-calibrate"
-                                //: The Tap menu's item; %1 is the tap latency in milliseconds
+                                //: The Tap menu's item; the tap latency follows it
                                 text: qsTranslate("HikariSub.Audio", "Calibrate latency…") + "\t"
                                       + qsTranslate("HikariSub.Audio", "%1 ms").arg(root.audio.tapLatency)
                                 onTriggered: tapCalibrationWindow.openWindow()
@@ -4902,13 +4902,13 @@ ApplicationWindow {
                         property var description: 0
                         property point at: Qt.point(0, 0)
                         ShellMenuItem { iconRole: "tree-add-lines"; objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
-                        ShellMenuItem { iconRole: "edit-copy"; objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "edit-copy"; objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy line group"); onTriggered: root.app.copyGroup(groupMenu.description) }
                         ShellMenuItem {
                             iconRole: "edit"
                             objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description")
                             onTriggered: groupDescriptionPopover.edit(groupMenu.description, grid, groupMenu.at)
                         }
-                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select the group's lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
                         ShellMenuItem { iconRole: "delete"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
                     function clipboardKey(event) {
@@ -4990,13 +4990,13 @@ ApplicationWindow {
                         ShellMenuItem {
                             command: "GRID_MAKE_CONTINOUS_PREVIOUS_LINE"
                             iconRole: "continuous-previous"
-                            objectName: "continuousPrevious"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (previous line)")
+                            objectName: "continuousPrevious"; text: qsTranslate("HikariSub.Grid", "Make times continuous with the previous line")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
                         }
                         ShellMenuItem {
                             command: "GRID_MAKE_CONTINOUS_NEXT_LINE"
                             iconRole: "continuous-next"
-                            objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (next line)")
+                            objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "Make times continuous with the next line")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                         }
                         ShellMenu {
@@ -5046,7 +5046,7 @@ ApplicationWindow {
                             objectName: "selectVisibleLines"; text: qsTranslate("HikariSub.Grid", "Select all lines visible on video")
                             onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
                         }
-                        ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         ShellMenuItem {
                             command: "GRID_SHOW_PREVIEW"
                             iconRole: "reference"

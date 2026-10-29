@@ -748,7 +748,7 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
         if (mode == Move && m_grabbed == -1) {
             const int pos = checkPos(xy, frame, true);
             if (psize > 0 && points[(pos == static_cast<int>(psize)) ? psize - 1 : static_cast<std::size_t>(pos)].type == u'm') {
-                cb.notice(u"Double \"m\" was blocked because of Vsfilter bug");
+                cb.notice(u"A double \"m\" was blocked because of a VSFilter bug");
                 return;
             }
             addMove(xy, pos, frame);

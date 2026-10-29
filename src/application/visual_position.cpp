@@ -806,7 +806,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     ToolOption an;
     an.name = "alignment";
     an.kind = ToolOption::Kind::Choice;
-    an.tooltip = u"Text placing works similar like in styles";
+    an.tooltip = u"Text alignment works the same as in styles";
     for (const auto a : positionAlignments())
         an.choices.emplace_back(a);
     an.index = m_an;

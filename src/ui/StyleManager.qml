@@ -2013,7 +2013,7 @@ DialogWindow {
         property Item anchor: null
         property string key
         title: qsTr("Choose ASS file")
-        nameFilters: [qsTr("ASS subtitle files(*.ass)") + " (*.ass)"]
+        nameFilters: [qsTr("ASS subtitle files") + " (*.ass)"]
         onAccepted: {
             chooseLoaded.file = selectedFile
             chooseLoaded.openFor(anchor, manager.styles.fileStyles(selectedFile), [], { actionText: qsTr("Load") })
