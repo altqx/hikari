@@ -1,0 +1,6 @@
+﻿#HikariSub rules file
+1|0|1|1
+Remove doubled spaces(  +) 0
+Fix "sie"\msie\Msię9
+Tags only, lower\\FS\\fs50
+Keep casetehthe40

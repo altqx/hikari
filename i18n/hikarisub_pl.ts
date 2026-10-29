@@ -3007,8 +3007,12 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Nie zapisano: nie można zapisać kopii zapasowej</translation>
     </message>
     <message>
+        <source>The catalogs are saved automatically to fonts.toml in the &quot;catalogs&quot; folder of your user folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The catalogs are saved automatically to FontCatalogs.txt in the &quot;Config&quot; folder.</source>
-        <translation>Katalogi są zapisywane automatycznie w pliku FontCatalogs.txt w folderze &quot;Config&quot;.</translation>
+        <translation type="vanished">Katalogi są zapisywane automatycznie w pliku FontCatalogs.txt w folderze &quot;Config&quot;.</translation>
     </message>
     <message>
         <source>Catalog name</source>
@@ -3863,7 +3867,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>FontCatalogs.txt in the &quot;Config&quot; folder could not be written. Saving is tried again on exit.</source>
-        <translation>Nie można zapisać pliku FontCatalogs.txt w folderze &quot;Config&quot;. Zapis zostanie ponowiony przy zamykaniu programu.</translation>
+        <translation type="vanished">Nie można zapisać pliku FontCatalogs.txt w folderze &quot;Config&quot;. Zapis zostanie ponowiony przy zamykaniu programu.</translation>
+    </message>
+    <message>
+        <source>fonts.toml in the &quot;catalogs&quot; folder of your user folder could not be written. Saving is tried again on exit.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>From the styles and %1 tags of the open files.</source>
@@ -6495,6 +6503,22 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Help</source>
         <translation>Pomoc</translation>
+    </message>
+    <message>
+        <source>%1 moved to %2. The old file is kept as %3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its list is at its defaults for now. HikariSub will not write over it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its list is back at its defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so it is kept as %2 and a new one is saved.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>

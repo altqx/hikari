@@ -2,6 +2,7 @@
 
 #include "hikari/application/visual_all_tags.h"
 
+#include "list_files.h"
 #include "video_controller.h"
 
 #include "hikari/application/resample.h"
@@ -14,9 +15,6 @@
 #include <QClipboard>
 #include <QColor>
 #include <QCursor>
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
 #include <QFontInfo>
 #include <QFontMetricsF>
 #include <QGuiApplication>
@@ -436,71 +434,37 @@ std::int64_t VisualToolsController::videoTimeMs() const
 const std::vector<ShapePreset> *VisualToolsController::shapePresets() const
 {
     // VideoToolbar::GetShapesSettings: LoadSettings while there are none
-    // (VisualDrawingShapes.cpp:291-331): the file, read as UTF-8 (BOM
-    // dropped; the Windows build's text-mode read made CRLF LF), else
+    // (VisualDrawingShapes.cpp:291-331): the file (shapes.toml, CF2), else
     // legacy's defaults.
     if (m_shapes.empty()) {
-        QFile f(m_shapesFile);
-        if (!m_shapesFile.isEmpty() && f.open(QIODevice::ReadOnly)) {
-            QByteArray bytes = f.readAll();
-            if (bytes.startsWith("\xEF\xBB\xBF"))
-                bytes.remove(0, 3);
-            QString text = QString::fromUtf8(bytes);
-#ifdef _WIN32
-            text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
-#endif
-            m_shapes = parseShapePresets(text.toStdU16String());
-        } else {
+        std::optional<toml::array> items;
+        if (m_shapesFile)
+            items = m_shapesFile->read();
+        if (items)
+            m_shapes = std::get<std::vector<ShapePreset>>(shapesFromToml(*items));
+        else
             m_shapes = defaultShapePresets();
-        }
     }
     return &m_shapes;
 }
 
 void VisualToolsController::saveShapes() const
 {
-    // SaveSettings (VisualDrawingShapes.cpp:341-353): UTF-8 with a BOM, the
-    // folder made when missing (OpenWrite).
-    if (m_shapesFile.isEmpty())
-        return;
-    QDir().mkpath(QFileInfo(m_shapesFile).absolutePath());
-    QFile f(m_shapesFile);
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        return;
-    f.write("\xEF\xBB\xBF");
-    f.write(QString::fromStdU16String(writeShapePresets(m_shapes)).toUtf8());
+    // SaveSettings (VisualDrawingShapes.cpp:341-353).
+    if (m_shapesFile)
+        m_shapesFile->write(shapesToToml(m_shapes));
 }
 
 const std::vector<application::visual::AllTagsSetting> *VisualToolsController::allTagsSettings() const
 {
     // VideoToolbar::GetTagsSettings: LoadSettings while there are none
-    // (VisualAllTagsEdition.cpp:328-417): the file, read as UTF-8 (BOM
-    // dropped; the Windows build's text-mode read made CRLF LF), else
-    // legacy's defaults, which replace a file of an older version. An empty
-    // list (a file with the version alone) is legacy's defaults too, the file
-    // left as it is: legacy read past the end of it (T6-tags-version-only).
+    // (VisualAllTagsEdition.cpp:328-417): the file (tags.toml, CF2), else
+    // legacy's defaults. An empty list is legacy's defaults too, the file
+    // left as it is: legacy read past the end of a file with the version
+    // alone (T6-tags-version-only).
     if (m_allTags.empty()) {
-        QFile f(m_tagsFile);
-        QString text;
-        if (!m_tagsFile.isEmpty() && f.open(QIODevice::ReadOnly)) {
-            QByteArray bytes = f.readAll();
-            if (bytes.startsWith("\xEF\xBB\xBF"))
-                bytes.remove(0, 3);
-            text = QString::fromUtf8(bytes);
-#ifdef _WIN32
-            text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
-#endif
-        }
-        bool writeDefaults = false;
-        m_allTags = application::visual::parseAllTags(text.toStdU16String(), &writeDefaults);
-        if (writeDefaults && !m_tagsFile.isEmpty()) {
-            // OpenWrite::FileWrite: UTF-8 with a BOM.
-            QFile out(m_tagsFile);
-            if (out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                out.write("\xEF\xBB\xBF");
-                out.write(QString::fromStdU16String(std::u16string(application::visual::defaultAllTagsText())).toUtf8());
-            }
-        }
+        if (const auto items = m_tagsFile ? m_tagsFile->read() : std::nullopt)
+            m_allTags = std::get<std::vector<application::visual::AllTagsSetting>>(tagsFromToml(*items));
         if (m_allTags.empty())
             m_allTags = application::visual::defaultAllTags();
     }
@@ -509,16 +473,9 @@ const std::vector<application::visual::AllTagsSetting> *VisualToolsController::a
 
 void VisualToolsController::saveAllTags() const
 {
-    // SaveSettings (VisualAllTagsEdition.cpp:428-446): UTF-8 with a BOM, the
-    // folder made when missing (OpenWrite).
-    if (m_tagsFile.isEmpty())
-        return;
-    QDir().mkpath(QFileInfo(m_tagsFile).absolutePath());
-    QFile f(m_tagsFile);
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        return;
-    f.write("\xEF\xBB\xBF");
-    f.write(QString::fromStdU16String(application::visual::writeAllTags(m_allTags)).toUtf8());
+    // SaveSettings (VisualAllTagsEdition.cpp:428-446).
+    if (m_tagsFile)
+        m_tagsFile->write(tagsToToml(m_allTags));
 }
 
 std::string VisualToolsController::editorHotkey(int id) const

@@ -15,3 +15,6 @@
 
 # DK1: the fixed Tamil affix file is pinned by SHA-256 (CRLF, as upstream's).
 /packaging/dictionaries/** -text
+
+# CF2: the legacy list files are converted byte for byte (BOM, CRLF).
+/tests/fixtures/list-files/** -text

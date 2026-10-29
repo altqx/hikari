@@ -12,6 +12,7 @@
 #include "hikari/app/settings_import_controller.h"
 #include "hikari/app/settings_import_store.h"
 #include "hikari/application/hotkeys.h"
+#include "list_files.h"
 
 #include "settings_store.h"
 
@@ -48,6 +49,44 @@ QByteArray readFile(const QString &path)
     return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
 }
 
+// CF2 (#489): legacy's Rules.txt, imported as rules.toml.
+constexpr char kLegacyRules[] = "#HikariSub rules file\r\n1\r\nTypo\fteh\fthe\f0\r\n";
+
+QByteArray rulesToml(const QByteArray &legacy)
+{
+    return QByteArray::fromStdString(app::legacyRulesToml(legacy));
+}
+
+// The import generations as the version before wrote them: each
+// rules.toml as legacy's Rules.txt it converts from (one of `legacy`).
+// The number rewritten, -1 when one is not a conversion of them.
+int rewriteGenerationsWithRulesTxt(const QString &folder, const QList<QByteArray> &legacy)
+{
+    const QDir generations(folder + QStringLiteral("/Import/generations"));
+    int rewritten = 0;
+    for (const QString &name : generations.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const QString dir = generations.filePath(name);
+        QJsonObject o = QJsonDocument::fromJson(readFile(dir + QStringLiteral("/profile.json"))).object();
+        for (const QString part : {QStringLiteral("profile"), QStringLiteral("base")}) {
+            QJsonArray files = o.value(part + QStringLiteral("Files")).toArray();
+            for (qsizetype i = 0; i < files.size(); ++i) {
+                if (files[i].toString() != QLatin1String("rules.toml"))
+                    continue;
+                const QString from = dir + QLatin1Char('/') + part + QStringLiteral("/rules.toml");
+                const auto it = std::ranges::find_if(legacy, [&](const QByteArray &l) { return rulesToml(l) == readFile(from); });
+                if (it == legacy.end() || !QFile::remove(from))
+                    return -1;
+                writeFile(dir + QLatin1Char('/') + part + QStringLiteral("/Rules.txt"), *it);
+                files[i] = QStringLiteral("Rules.txt");
+                ++rewritten;
+            }
+            o[part + QStringLiteral("Files")] = files;
+        }
+        writeFile(dir + QStringLiteral("/profile.json"), QJsonDocument(o).toJson());
+    }
+    return rewritten;
+}
+
 QString hashOf(const QByteArray &bytes)
 {
     return QString::fromLatin1(QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex());
@@ -73,7 +112,7 @@ struct LegacyRoot {
                                                         "TOOLBAR_ALIGNMENT=1\r\nSUBS_RECENT_FILES={\r\n\tD:\\media\\a.ass\r\n}\r\n"));
         writeFile(path("Config/Hotkeys.txt"), "[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n"
                                               "GLOBAL_VIDEO_INDEXING G=Ctrl-Alt-I\r\nNOT_AN_ACTION G=Ctrl-K\r\n");
-        writeFile(path("Config/Rules.txt"), "1\tteh\tthe\r\n");
+        writeFile(path("Config/Rules.txt"), kLegacyRules);
         writeFile(path("Dictionary/UserDic.udic"), "\xEF\xBB\xBFs\xC5\x82owo\r\n");
         writeFile(path("Themes/Mine.txt"), "WINDOW_BACKGROUND=#000000\r\n");
     }
@@ -226,7 +265,7 @@ private slots:
             QVERIFY(s.store->pending());
             // Nothing read yet changes in this session.
             QVERIFY(!s.settings->isSet(QStringLiteral("grid.font")));
-            QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+            QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("rules.toml"))));
             // A plan made now compares with the pending generation.
             QCOMPARE(std::get<std::string>(s.store->destination().values.at("grid.font")), std::string("Arial"));
         }
@@ -251,7 +290,8 @@ private slots:
         const QJsonObject state = QJsonDocument::fromJson(readFile(folder.filePath(QStringLiteral("state.json")))).object();
         QCOMPARE(state.value(QStringLiteral("recent")).toObject().value(QStringLiteral("subtitles")).toArray().size(), 1);
         QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("hikari.ini"))));
-        QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tteh\tthe\r\n"));
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
+        QVERIFY(readFile(folder.filePath(QStringLiteral("rules.toml"))).contains("description = \"Typo\"\nenabled = true\nfind = \"teh\"\nreplace = \"the\"\n"));
         QCOMPARE(readFile(folder.filePath(QStringLiteral("Dictionary/UserDic.udic"))),
                  QByteArray("\xEF\xBB\xBFs\xC5\x82owo\r\n"));
         QVERIFY(!next.store->recover()); // once
@@ -383,7 +423,7 @@ private slots:
             QVERIFY(!next.store->recover());
             QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Mine"));
             QVERIFY(!next.settings->isSet(QStringLiteral("grid.fontSize")));
-            QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+            QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("rules.toml"))));
             // Retrying works and skips the broken staging.
             const Review r = review(*next.store, legacy.dir.path());
             QCOMPARE(next.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot, r.revision),
@@ -439,8 +479,8 @@ private slots:
             // Changed in the same session, after the import was staged.
             s.settings->set("grid.hideColumns", 6);
             s.settings->set("grid.font", QStringLiteral("Later"));
-            writeFile(folder.filePath(QStringLiteral("Rules.txt")), "1\tmine\tours\r\n");
-            QCOMPARE(s.store->editsKeptOverImport(), (QStringList{"grid.font", "Rules.txt"}));
+            writeFile(folder.filePath(QStringLiteral("rules.toml")), rulesToml("#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n"));
+            QCOMPARE(s.store->editsKeptOverImport(), (QStringList{"grid.font", "rules.toml"}));
             // A plan made now compares with what the next start will hold.
             QCOMPARE(std::get<std::string>(s.store->destination().values.at("grid.font")), std::string("Later"));
         }
@@ -448,11 +488,11 @@ private slots:
         QVERIFY(next.store->recover());
         QCOMPARE(next.settings->integer("grid.hideColumns"), 6); // not touched by the import: kept
         QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Later")); // the import changes it: kept too
-        QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tmine\tours\r\n"));
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml("#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n"));
         QCOMPARE(next.settings->integer("grid.fontSize"), 12); // the import's other changes go in
         QVERIFY(next.store->editsKeptOverImport().isEmpty());
         // A rollback would replace them: they are not the import's.
-        QCOMPARE(next.store->editsSinceActivation(), (QStringList{"grid.font", "grid.hideColumns", "Rules.txt"}));
+        QCOMPARE(next.store->editsSinceActivation(), (QStringList{"grid.font", "grid.hideColumns", "rules.toml"}));
     }
 
     // Two imports before a start: the second one's base is the live
@@ -481,7 +521,7 @@ private slots:
             QVERIFY(next.store->recover());
             QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
             QCOMPARE(next.settings->integer("grid.fontSize"), 12);
-            QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tteh\tthe\r\n"));
+            QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
             QVERIFY(next.settings->list(application::kHotkeysSetting.data())
                         .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
             QCOMPARE(next.store->rollback(), SettingsImportStore::Result::Activated);
@@ -492,7 +532,7 @@ private slots:
         QCOMPARE(back.store->activeGeneration(), first);
         QCOMPARE(back.settings->text("grid.font"), QStringLiteral("Arial"));
         QVERIFY(!back.settings->isSet(QStringLiteral("grid.fontSize")));
-        QVERIFY(QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+        QVERIFY(QFileInfo::exists(folder.filePath(QStringLiteral("rules.toml"))));
     }
 
     // An activation interrupted while an earlier import is active, live or
@@ -558,7 +598,7 @@ private slots:
             QCOMPARE(next.store->previousGeneration(), previous);
             // The first import, and the edit made since; not the second import.
             QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Mine"));
-            QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tteh\tthe\r\n"));
+            QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
             QCOMPARE(next.settings->integer("grid.hideColumns"), 4);
             QVERIFY(!next.settings->isSet(QStringLiteral("grid.fontSize")));
             // Its rollback is still the one it had.
@@ -569,7 +609,7 @@ private slots:
         QCOMPARE(back.store->activeGeneration(), previous);
         QCOMPARE(back.settings->text("grid.font"), QStringLiteral("Mine"));
         QVERIFY(!back.settings->isSet(QStringLiteral("grid.hideColumns")));
-        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("rules.toml"))));
     }
 
     void rollbackRestoresThePreviousGeneration()
@@ -606,7 +646,7 @@ private slots:
         QVERIFY(!back.settings->isSet(QStringLiteral("grid.fontSize")));
         QVERIFY(!back.settings->isSet(QStringLiteral("recent.subtitles")));
         QVERIFY(!back.settings->isSet(application::kHotkeysSetting.data()));
-        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("rules.toml"))));
         QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
         QVERIFY(!back.store->canRollBack());
         QCOMPARE(back.store->rollback(), SettingsImportStore::Result::NothingToRollBack);
@@ -614,6 +654,75 @@ private slots:
         // Importing again after the rollback proposes the import again.
         const Review again = review(*back.store, legacy.dir.path());
         QVERIFY(again.plan.row("setting:grid.fontSize")->proposedImport);
+    }
+
+    // CF2: a generation staged before rules.toml holds legacy's Rules.txt.
+    // It reads as the rules.toml it converts to: the live rules are no edit
+    // since, and a rollback to it restores them.
+    void generationsFromBeforeRulesTomlReadAsRulesToml()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        const QByteArray mine = "#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n";
+        for (const QByteArray &rules : {QByteArray(kLegacyRules), mine}) {
+            writeFile(legacy.path("Config/Rules.txt"), rules);
+            {
+                Session s(folder.path());
+                const Review r = review(*s.store, legacy.dir.path());
+                auto chosen = si::proposedRows(r.plan);
+                chosen.insert("collection:rules.toml");
+                QCOMPARE(s.store->activate(r.plan, chosen, r.snapshot, r.revision),
+                         SettingsImportStore::Result::Activated);
+            }
+            Session s(folder.path());
+            QVERIFY(s.store->recover());
+        }
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(mine));
+        QVERIFY(rewriteGenerationsWithRulesTxt(folder.path(), {kLegacyRules, mine}) >= 2);
+        {
+            Session s(folder.path());
+            QCOMPARE(s.store->editsSinceActivation(), QStringList());
+            QCOMPARE(s.store->rollback(), SettingsImportStore::Result::Activated);
+        }
+        Session back(folder.path());
+        QVERIFY(back.store->recover());
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+    }
+
+    // CF2: an import staged by the version before and not taken effect yet,
+    // over the live Rules.txt. The start converts the rules before the
+    // import takes effect (Application::convertRules), so the import's
+    // rules are not taken for an edit since and lost.
+    void importStagedBeforeRulesTomlTakesEffectOverRulesTxt()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        const QByteArray mine = "#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n";
+        writeFile(folder.filePath(QStringLiteral("rules.toml")), rulesToml(mine));
+        {
+            Session s(folder.path());
+            const Review r = review(*s.store, legacy.dir.path());
+            auto chosen = si::proposedRows(r.plan);
+            chosen.insert("collection:rules.toml");
+            QCOMPARE(s.store->activate(r.plan, chosen, r.snapshot, r.revision), SettingsImportStore::Result::Activated);
+            QVERIFY(s.store->pending());
+        }
+        QVERIFY(rewriteGenerationsWithRulesTxt(folder.path(), {kLegacyRules, mine}) >= 2);
+        QVERIFY(QFile::remove(folder.filePath(QStringLiteral("rules.toml"))));
+        writeFile(folder.filePath(QStringLiteral("Rules.txt")), mine);
+        Session next(folder.path());
+        auto rules = ui::ListFile::make(folder.filePath(QStringLiteral("rules.toml")),
+                                        folder.filePath(QStringLiteral("Rules.txt")), ui::kRulesFormat,
+                                        [](const std::filesystem::path &from) -> std::optional<toml::array> {
+                                            if (const auto read = app::readLegacyRulesFile(from))
+                                                return ui::rulesToToml(read->rules);
+                                            return std::nullopt;
+                                        });
+        rules->convert();
+        QVERIFY(next.store->recover());
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt.old"))), mine);
     }
 
     void staleSourcesAndDestinationsAreRefused()

@@ -3,9 +3,10 @@
 // T5: the drawing tool's shape presets (legacy ShapesSetting, LoadSettings,
 // SaveSettings and the ShapesEdition dialog, HikariSub/VisualDrawingShapes.h
 // and .cpp at 20d647c4; docs/visual-tools.md, "Drawing and shape
-// presets"). The presets live in Config/ShapesSettings.txt beside the
-// settings, one "Shape: <name>; <shape>; <mode>; <scaling mode>" line each;
-// without the file legacy's five defaults are used.
+// presets"). The presets live in shapes.toml in the user folder (CF2,
+// ui/list_files.h); legacy's Config/ShapesSettings.txt, one "Shape: <name>;
+// <shape>; <mode>; <scaling mode>" line each, is converted into it once.
+// Without the file legacy's five defaults are used.
 //
 // A name another preset has asks to replace it (accepted on #55, PU5's
 // message box on #307); legacy kept both.

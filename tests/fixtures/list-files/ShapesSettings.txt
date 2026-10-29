@@ -1,0 +1,4 @@
+﻿Shape: box; m 0 0 l 100 0 100 100 0 100; 0; 0
+Shape: Kółko; m 50 0 b 77 0 100 22 100 50; 1; 1
+Shape: thin; m 0 0 l 10 0 10 100; 2; 0
+Shape: odd; m 0 0 l 1 1; 7; 0

@@ -10,7 +10,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
     editor_highlighter.cpp editor_highlighter.h
-    settings_store.cpp settings_store.h settings_files.cpp settings_files.h toml_file.cpp toml_file.h dialog_placement.cpp dialog_placement.h
+    settings_store.cpp settings_store.h settings_files.cpp settings_files.h toml_file.cpp toml_file.h list_files.cpp list_files.h dialog_placement.cpp dialog_placement.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
     visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h
     tag_list_controller.cpp tag_list_controller.h

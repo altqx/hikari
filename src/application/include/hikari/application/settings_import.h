@@ -22,7 +22,9 @@
 //   "Script <file>-<k>=<accel>" automation lines. A short file's valid
 //   bindings are read (C04-short-file, approved 2026-09-27).
 // - Rules.txt, Dictionary/UserDic.udic and Dictionary/*.dic/.aff pairs are
-//   authored collections, carried over byte for byte (R6-dictionary-location).
+//   authored collections. The dictionaries are carried over byte for byte
+//   (R6-dictionary-location); Rules.txt is read the legacy way and written as
+//   rules.toml (CF2, #489).
 //
 // The plan has a row for every record found and for every registry option
 // and default binding the files leave out, with its destination or an explicit
@@ -229,7 +231,7 @@ struct Destination {
     // Registry values that are set (Settings::isSet).
     std::map<std::string, SettingValue, std::less<>> values;
     // Authored collection files present, by path in the settings folder
-    // ("Rules.txt", "Dictionary/UserDic.udic").
+    // ("rules.toml", "Dictionary/UserDic.udic").
     std::map<std::string, DestinationFile, std::less<>> files;
     // Dictionaries the program ships (names without extension).
     std::set<std::string, std::less<>> bundledDictionaries;
@@ -243,6 +245,9 @@ struct Destination {
     // SubtitleRendererSelection::providers); VSFILTER_INSTANCE naming one
     // that is not stays unresolved. Unset: not checked.
     std::function<bool(std::string_view name)> rendererInstalled;
+    // CF2 (#489): rules.toml's text for Rules.txt's bytes, read as legacy's
+    // FillRulesList read them. Unset: the rules are not imported.
+    std::function<std::string(std::string_view legacy)> convertRules;
 };
 
 // What an activated import recorded (its identity: the source hashes, the

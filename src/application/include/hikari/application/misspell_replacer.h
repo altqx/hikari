@@ -69,7 +69,8 @@ ReplacerRules readReplacerRules(std::u8string_view text, RulesReadBy build = kRu
 // FillWithDefaultRules (the English texts).
 std::u8string defaultReplacerRules();
 // SaveRules: the header, the checkbox line and one line per rule, CRLF (the
-// caller writes a UTF-8 BOM before it, as OpenWrite::FileWrite does).
+// caller writes a UTF-8 BOM before it, as OpenWrite::FileWrite does). The
+// rules are kept in rules.toml since CF2 (ui/list_files.h).
 std::u8string writeReplacerRules(const std::vector<ReplacerRule> &rules);
 
 // Per-character case functions (iswupper, towlower/towupper as wxString's

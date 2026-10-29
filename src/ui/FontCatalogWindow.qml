@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 // Y6: legacy FontCatalogList "Manage font catalogs" (FontCatalogList.cpp:
 // 94-360 at 20d647c4), a modeless resizable window. Edits are autosaved to
-// FontCatalogsAutosave0..2.txt 20 s after the first, and FontCatalogs.txt
-// is written when the window is shown or hidden (CATALOG_CHANGED) and, once
+// fonts.autosave-0..2.toml 20 s after the first, and fonts.toml (CF2;
+// legacy FontCatalogsAutosave0..2.txt and FontCatalogs.txt) is written when the window is shown or hidden (CATALOG_CHANGED) and, once
 // a window was made, when the application ends (~FontCatalogList).
 //
 // PU3 (#305): one window on DG1's frame for the program (FontWindows), never
@@ -694,7 +694,7 @@ DialogWindow {
             text: window.catalogs.autosaveFailed ? qsTr("Not saved: the safety copy could not be written") : qsTr("Saved")
             color: window.catalogs.autosaveFailed ? Theme.warning : Theme.muted
             ToolTip.visible: savedHover.hovered
-            ToolTip.text: qsTr("The catalogs are saved automatically to FontCatalogs.txt in the \"Config\" folder.")
+            ToolTip.text: qsTr("The catalogs are saved automatically to fonts.toml in the \"catalogs\" folder of your user folder.")
             HoverHandler { id: savedHover }
         }
     ]

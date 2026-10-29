@@ -73,7 +73,7 @@ DialogWindow {
         if (notices && !result.saved)
             notices.post("warning", qsTr("Add fonts from subtitles"),
                          qsTr("The fonts were added to “%1” but could not be saved.").arg(name),
-                         { details: qsTr("FontCatalogs.txt in the \"Config\" folder could not be written. Saving is tried again on exit.") })
+                         { details: qsTr("fonts.toml in the \"catalogs\" folder of your user folder could not be written. Saving is tried again on exit.") })
         else if (notices)
             notices.post("info", qsTr("Add fonts from subtitles"),
                          (added === 1 ? qsTr("Added 1 font to “%1”") : qsTr("Added %n fonts to “%1”", "", added)).arg(name),

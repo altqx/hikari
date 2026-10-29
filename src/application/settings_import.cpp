@@ -1449,9 +1449,11 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         }
     }
 
-    // ---- Authored collections: Rules.txt, UserDic.udic, dictionaries
+    // ---- Authored collections: Rules.txt (as rules.toml), UserDic.udic, dictionaries
 
-    auto collection = [&](const SourceFile &s, const std::string &destPath) {
+    // `bytes`: what the import writes (the source's, unless converted).
+    auto collection = [&](const SourceFile &s, const std::string &destPath, const std::string &bytes,
+                          std::string reason) {
         PlanRow row;
         row.kind = RowKind::Collection;
         row.id = "collection:" + destPath;
@@ -1463,24 +1465,32 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         const auto it = destination.files.find(destPath);
         if (it != destination.files.end())
             row.current = it->second.sha256;
-        if (it != destination.files.end() && it->second.bytes == s.bytes) {
+        if (it != destination.files.end() && it->second.bytes == bytes) {
             row.disposition = Disposition::Unchanged;
         } else {
             row.disposition = Disposition::Change;
-            row.reason = "carried over byte for byte (R6-dictionary-location; nothing in it is rewritten or run)";
+            row.reason = std::move(reason);
             propose(row, it != destination.files.end(), options, identity);
         }
         add(std::move(row));
     };
+    const std::string byteForByte =
+        "carried over byte for byte (R6-dictionary-location; nothing in it is rewritten or run)";
     if (const SourceFile *rules = findSource(sources, SourceKind::Rules)) {
-        plan.files["Rules.txt"] = rules->bytes;
-        fileRow(*rules, Disposition::Read, {}, "the Misspells window's rules, read the legacy way when it opens");
-        collection(*rules, "Rules.txt");
+        // CF2 (#489): written as rules.toml, read the legacy way.
+        if (destination.convertRules) {
+            const std::string converted = destination.convertRules(rules->bytes);
+            plan.files["rules.toml"] = converted;
+            fileRow(*rules, Disposition::Read, {}, "the Fix minor errors rules, read the legacy way");
+            collection(*rules, "rules.toml", converted, "converted to rules.toml (nothing in it is run)");
+        } else {
+            fileRow(*rules, Disposition::Unresolved, {}, "the Fix minor errors rules: no conversion to rules.toml here");
+        }
     }
     if (const SourceFile *dic = findSource(sources, SourceKind::UserDictionary)) {
         plan.files["Dictionary/UserDic.udic"] = dic->bytes;
         fileRow(*dic, Disposition::Read, {}, "the personal dictionary");
-        collection(*dic, "Dictionary/UserDic.udic");
+        collection(*dic, "Dictionary/UserDic.udic", dic->bytes, byteForByte);
     }
     {
         // Dictionary pairs: <name>.dic with <name>.aff.

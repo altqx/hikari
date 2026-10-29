@@ -14,6 +14,8 @@
 #include "window_frame.h"
 #include "line_grid.h"
 #include "line_table_model.h"
+#include "list_files.h"
+#include "toml_file.h"
 #include "audio_display_item.h"
 #include "fake_font_service.h"
 #include "hikari/backends/ffms_matroska.h"
@@ -497,6 +499,53 @@ QByteArray readAll(const QString &path)
 {
     QFile f(path);
     return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
+
+// CF2 (#489): a list file's items, nothing when it is not that list's TOML file.
+template <class Item, class From>
+std::optional<std::vector<Item>> listIn(const QString &path, const ui::ListFormat &format, From from)
+{
+    auto parsed = ui::parseTomlFile(readAll(path).toStdString(), ui::ListFile::kVersion);
+    const auto *table = std::get_if<toml::table>(&parsed);
+    if (!table)
+        return std::nullopt;
+    const auto *items = table->get(format.array);
+    auto read = from(items && items->is_array() ? *items->as_array() : toml::array());
+    if (auto *values = std::get_if<std::vector<Item>>(&read))
+        return *values;
+    return std::nullopt;
+}
+
+// The list files in legacy's text, to compare what they hold: shapes.toml
+// as ShapesSettings.txt's lines, tags.toml as AllTagsSettings.txt's,
+// fonts.toml as FontCatalogs.txt (with its BOM). Empty for anything else.
+QByteArray legacyShapesOf(const QString &path)
+{
+    const auto shapes = listIn<application::visual::ShapePreset>(path, ui::kShapesFormat, ui::shapesFromToml);
+    return shapes ? QString::fromStdU16String(application::visual::writeShapePresets(*shapes)).toUtf8() : QByteArray();
+}
+
+QByteArray legacyTagsOf(const QString &path)
+{
+    const auto tags = listIn<application::visual::AllTagsSetting>(path, ui::kTagsFormat, ui::tagsFromToml);
+    return tags ? QString::fromStdU16String(application::visual::writeAllTags(*tags)).toUtf8() : QByteArray();
+}
+
+QByteArray legacyCatalogsOf(const QString &path)
+{
+    const auto catalogs =
+        listIn<application::FontCatalogs::Catalog>(path, ui::kFontCatalogsFormat, ui::fontCatalogsFromToml);
+    if (!catalogs)
+        return {};
+    application::FontCatalogs out([](char16_t c) { return QChar(c).toLower().unicode(); });
+    out.load(*catalogs);
+    return QByteArray::fromStdString(out.serialize());
+}
+
+// A fonts.toml holding `catalogs`.
+QByteArray fontsToml(const std::vector<application::FontCatalogs::Catalog> &catalogs)
+{
+    return QByteArray::fromStdString(ui::listFileText(ui::kFontCatalogsFormat, ui::fontCatalogsToToml(catalogs)));
 }
 } // namespace
 
@@ -3222,9 +3271,9 @@ private slots:
     {
         {
             // Read when the catalogs are first used (LoadCatalogs' isInit).
-            QFile f(QString::fromStdU16String((application->fontCatalogs().catalogDir() / u"FontCatalogs.txt").u16string()));
+            QFile f(QString::fromStdU16String((application->fontCatalogs().catalogDir() / u"fonts.toml").u16string()));
             f.open(QIODevice::WriteOnly);
-            f.write("\xEF\xBB\xBF" "A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\nB={\r\n\tImpact\r\n}\r\n");
+            f.write(fontsToml({{u"A", {u"Verdana", u"Arial", u"Not Installed"}}, {u"B", {u"Impact"}}}));
         }
         auto service = std::make_unique<PickerFonts>();
         service->families = {{"Arial", U"aą"}, {"Comic Sans MS", U"a"}, {"Impact", U"a"}, {"Tahoma", U"aą"}, {"Verdana", U"a"}};
@@ -3689,15 +3738,16 @@ private slots:
         application->fontCatalogs().waitResolved();
     }
 
-    // PU3 (#305): a header with no '=' in FontCatalogs.txt (a catalog with
-    // no name, which nothing could choose or manage) is not loaded.
+    // PU3 (#305): a catalog with no name in fonts.toml (legacy: a header
+    // with no '=' in FontCatalogs.txt), which nothing could choose or
+    // manage, is not loaded.
     void fontCatalogsWithNoNameAreNotLoaded()
     {
         usePickerFonts();
         {
-            QFile f(QString::fromStdU16String((application->fontCatalogs().catalogDir() / u"FontCatalogs.txt").u16string()));
+            QFile f(QString::fromStdU16String((application->fontCatalogs().catalogDir() / u"fonts.toml").u16string()));
             QVERIFY(f.open(QIODevice::WriteOnly));
-            f.write("Nameless{\r\n\tArial\r\n}\r\nX={\r\n\tTahoma\r\n}\r\n");
+            f.write(fontsToml({{u"", {u"Arial"}}, {u"X", {u"Tahoma"}}}));
         }
         auto &catalogs = application->fontCatalogs();
         QCOMPARE(catalogs.catalogNames(), QStringList{"X"});
@@ -3820,7 +3870,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(a, "triggered"));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
-        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("\tTahoma\r\n}\r\nB={"));
+        QVERIFY(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")).contains("\tTahoma\r\n}\r\nB={"));
         QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"A"});
         // The catalog chip's choice follows: A now lists Tahoma.
         QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2)));
@@ -3966,7 +4016,7 @@ private slots:
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
         QCOMPARE(window->property("chosen").toString(), QStringLiteral("C"));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
-        QTRY_VERIFY(readAll(dirPath + QStringLiteral("/FontCatalogsAutosave0.txt")).contains("C={\r\n}\r\n"));
+        QTRY_VERIFY(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.autosave-0.toml")).contains("C={\r\n}\r\n"));
         QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
         QTRY_VERIFY(in("fontCatalogStatus")->isVisible());
         QCOMPARE(in("fontCatalogStatus")->property("text").toString(), QStringLiteral("Saved"));
@@ -4074,10 +4124,10 @@ private slots:
         QCOMPARE(catalogs.catalogNames(), QStringList{"Latin"});
         QCOMPARE(window->property("chosen").toString(), QStringLiteral("Latin"));
 
-        // Hiding the window saves FontCatalogs.txt (CATALOG_CHANGED).
+        // Hiding the window saves fonts.toml (CATALOG_CHANGED).
         QVERIFY(QMetaObject::invokeMethod(in("fontCatalogClose"), "click"));
         QTRY_VERIFY(!window->property("visible").toBool());
-        QTRY_COMPARE(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")),
+        QTRY_COMPARE(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")),
                      QByteArray("\xEF\xBB\xBF" "Latin={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\n"));
 
         // Delete asks; Cancel keeps the catalog, Delete removes it.
@@ -4230,14 +4280,15 @@ private slots:
     }
 
     // Y6: the edition timer (FontCatalogManagement::saveInterval, 20 s) writes
-    // FontCatalogsAutosave0, 1, 2 and then 0 again (FontCatalogList.cpp:200-210).
+    // fonts.autosave-0, 1, 2 and then 0 again (FontCatalogList.cpp:200-210;
+    // legacy FontCatalogsAutosave<n>.txt).
     void fontCatalogAutosaveRotatesThreeCopies()
     {
         auto &catalogs = application->fontCatalogs();
         QCOMPARE(catalogs.autosaveInterval(), 20000);
         catalogs.setAutosaveInterval(20);
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
-        const auto copy = [&](int i) { return readAll(dirPath + QStringLiteral("/FontCatalogsAutosave%1.txt").arg(i)); };
+        const auto copy = [&](int i) { return legacyCatalogsOf(dirPath + QStringLiteral("/fonts.autosave-%1.toml").arg(i)); };
         const char *names[] = {"W", "X", "Y", "Z"};
         const int files[] = {0, 1, 2, 0};
         for (int i = 0; i < 4; ++i) {
@@ -4247,7 +4298,7 @@ private slots:
         }
         QVERIFY(copy(1).contains("X={") && !copy(1).contains("Y={"));
         QVERIFY(copy(2).contains("Y={") && !copy(2).contains("Z={"));
-        QVERIFY(!QFileInfo::exists(dirPath + QStringLiteral("/FontCatalogsAutosave3.txt")));
+        QVERIFY(!QFileInfo::exists(dirPath + QStringLiteral("/fonts.autosave-3.toml")));
     }
 
     // PU3 (#305): a safety copy that cannot be written is not "Saved": the
@@ -4282,18 +4333,18 @@ private slots:
 
     // Y6: ~FontCatalogList saves the catalogs (FontCatalogList.cpp:218-221):
     // once the catalog window was made, the application's end writes
-    // FontCatalogs.txt with the edits made while it is still open. Without
-    // a window the file is left as it was (not rewritten with a BOM).
+    // fonts.toml with the edits made while it is still open. Without a
+    // window the file is left as it was (not rewritten).
     void fontCatalogsAreSavedAtTheEndOnceAWindowWasMade()
     {
         QTemporaryDir catalogDir;
         QVERIFY(catalogDir.isValid());
-        const QString file = catalogDir.filePath(QStringLiteral("FontCatalogs.txt"));
+        const QString file = catalogDir.filePath(QStringLiteral("fonts.toml"));
         app::Application::Options options;
         options.fontCatalogDir = catalogDir.path();
         restartWith(options);
         usePickerFonts();
-        const QByteArray plain("A={\r\n\tArial\r\n}\r\n");
+        const QByteArray plain("version = 1\n[[catalog]]\nname = \"A\"\nfonts = [\"Arial\"] # as typed\n");
         {
             QFile f(file);
             QVERIFY(f.open(QIODevice::WriteOnly));
@@ -4312,14 +4363,15 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(window, "createCatalog", Q_ARG(QVariant, QStringLiteral("C"))));
-        QVERIFY(!readAll(file).contains("C={")); // written when shown, before New
+        QVERIFY(!legacyCatalogsOf(file).contains("C={")); // written when shown, before New
         application->fontCatalogs().waitResolved();
         delete engine;
         engine = nullptr;
         delete application;
         application = nullptr;
-        QCOMPARE(readAll(file), QByteArray("\xEF\xBB\xBF" "A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\n"
-                                           "B={\r\n\tImpact\r\n}\r\nC={\r\n}\r\n"));
+        QVERIFY(readAll(file).startsWith("version = 1\n"));
+        QCOMPARE(legacyCatalogsOf(file), QByteArray("\xEF\xBB\xBF" "A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\n"
+                                                    "B={\r\n\tImpact\r\n}\r\nC={\r\n}\r\n"));
         restartWith(app::Application::Options());
     }
 
@@ -4397,7 +4449,7 @@ private slots:
         QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Skipped")));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
         // A's fonts sorted: the picker listed A (GetCatalogFonts sorts in place).
-        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("A={\r\n\tArial\r\n\tNot Installed\r\n\tVerdana\r\n\tTahoma\r\n\tImpact\r\n}"));
+        QVERIFY(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")).contains("A={\r\n\tArial\r\n\tNot Installed\r\n\tVerdana\r\n\tTahoma\r\n\tImpact\r\n}"));
         QVERIFY(lastNotice().startsWith(QStringLiteral("Add fonts from subtitles|Added 2 fonts to “A”|")));
         QCOMPARE(picker->property("choice").toInt(), 2);
         QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Arial", "Impact", "Tahoma", "Verdana"}));
@@ -4425,15 +4477,15 @@ private slots:
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "Mine"}));
         QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), (QStringList{"A", "B", "Mine"}));
         QVERIFY(lastNotice().startsWith(QStringLiteral("Add fonts from subtitles|Added 2 fonts to “B”|")));
-        // FontCatalogs.txt cannot be written: said, as a warning.
-        QVERIFY(QFile::remove(dirPath + QStringLiteral("/FontCatalogs.txt")));
-        QVERIFY(QDir(dirPath).mkdir(QStringLiteral("FontCatalogs.txt")));
+        // fonts.toml cannot be written: said, as a warning.
+        QVERIFY(QFile::remove(dirPath + QStringLiteral("/fonts.toml")));
+        QVERIFY(QDir(dirPath).mkdir(QStringLiteral("fonts.toml")));
         openFrom();
         QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
         QTRY_VERIFY(!from->isVisible());
         QCOMPARE(lastNotice(), QStringLiteral("Add fonts from subtitles|The fonts were added to “B” but could not be saved.|"
-                                              "FontCatalogs.txt in the \"Config\" folder could not be written. Saving is tried again on exit."));
-        QVERIFY(QDir(dirPath).rmdir(QStringLiteral("FontCatalogs.txt")));
+                                              "fonts.toml in the \"catalogs\" folder of your user folder could not be written. Saving is tried again on exit."));
+        QVERIFY(QDir(dirPath).rmdir(QStringLiteral("fonts.toml")));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         application->fontCatalogs().waitResolved();
     }
@@ -9608,10 +9660,12 @@ private slots:
         QCOMPARE(std::string(line.text.begin(), line.text.end()), std::string("untranslated three"));
     }
 
-    // PU2 (#304): starting and quitting leave Rules.txt alone: the default
-    // arrangement opens Fix minor errors only in passing, and the rules are
-    // read (and written back at exit) only once the panel shows (Codex
-    // review). A malformed file would come back rewritten otherwise.
+    // PU2 (#304): starting and quitting leave the rules file alone: the
+    // default arrangement opens Fix minor errors only in passing, and the
+    // rules are read (and written back at exit) only once the panel shows
+    // (Codex review). CF2 (#489): the start converts Rules.txt into
+    // rules.toml once, naming a rule it reads only in part, and keeps the
+    // old file as Rules.txt.old.
     void startingLeavesTheRulesFileAlone()
     {
         QTemporaryDir home;
@@ -9621,26 +9675,33 @@ private slots:
         rules.write(bytes);
         rules.close();
         restartWithSpelling(home.path(), false);
+        const QString toml = home.filePath(QStringLiteral("rules.toml"));
+        const QByteArray converted = readAll(toml);
+        QVERIFY(converted.startsWith("version = 1\n"));
+        QCOMPARE(readAll(home.filePath(QStringLiteral("Rules.txt.old"))), bytes);
+        QVERIFY(!QFileInfo::exists(home.filePath(QStringLiteral("Rules.txt"))));
+        QCOMPARE(application->log().history().count(QStringLiteral("Rule \"not a rule")), 1);
+        QVERIFY(application->log().history().contains(
+            QStringLiteral("Rules.txt moved to rules.toml. The old file is kept as Rules.txt.old.")));
         QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "defaultLayout"));
         QTest::qWait(100);
         QVERIFY(!item<QObject>("misspellDock")->property("isOpen").toBool());
-        QVERIFY(!application->log().history().contains(QStringLiteral("is invalid")));
         delete engine;
         delete application;
         engine = nullptr;
         application = nullptr;
-        QVERIFY(rules.open(QIODevice::ReadOnly));
-        QCOMPARE(rules.readAll(), bytes);
+        QCOMPARE(readAll(toml), converted);
     }
 
-    // F4: Rules.txt beside the INI file, written when the application ends
-    // (not when the list is empty) and read back by the next one.
+    // F4: the rules file beside the settings (rules.toml, CF2), written when
+    // the application ends (not when the list is empty) and read back by the
+    // next one.
     void misspellRulesPersist()
     {
         QDir().mkpath(dir.filePath(QStringLiteral("rules")));
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("rules/hikari.ini"));
-        const QString rulesFile = dir.filePath(QStringLiteral("rules/Rules.txt"));
+        const QString rulesFile = dir.filePath(QStringLiteral("rules/rules.toml"));
         {
             app::Application first(options);
             QCOMPARE(first.misspellRules().size(), 13);
@@ -9654,8 +9715,11 @@ private slots:
         QVERIFY(file.open(QIODevice::ReadOnly));
         const QByteArray bytes = file.readAll();
         file.close();
-        QVERIFY(bytes.startsWith("\xEF\xBB\xBF#HikariSub rules file\r\n0|0|1|0|0|0|0|0|0|0|0|0|0|0\r\n"));
-        QVERIFY(bytes.endsWith("Mine\fteh\fthe\f1\r\n"));
+        const auto saved = listIn<application::ReplacerRule>(rulesFile, ui::kRulesFormat, ui::rulesFromToml);
+        QVERIFY(saved);
+        QCOMPARE(saved->size(), std::size_t(14));
+        QVERIFY(std::ranges::count_if(*saved, &application::ReplacerRule::checked) == 1 && (*saved)[2].checked);
+        QVERIFY((saved->back() == application::ReplacerRule{u8"Mine", u8"teh", u8"the", 1, false}));
         {
             app::Application second(options);
             const auto rules = second.misspellRules();
@@ -9668,11 +9732,14 @@ private slots:
         QVERIFY(file.open(QIODevice::ReadOnly));
         QCOMPARE(file.readAll(), bytes); // an empty list is not written
         file.close();
-        // R4-uchardet: a file that is not UTF-8 is read in the charset uchardet
-        // names (legacy OpenWrite::FileOpen and CheckCharSet), here cp1250.
+        // R4-uchardet: a legacy file that is not UTF-8 is converted from the
+        // charset uchardet names (legacy OpenWrite::FileOpen and
+        // CheckCharSet), here cp1250.
         const QByteArray polish("Za\xBF\xF3\xB3\xE6 g\xEA\x9Cl\xB9 ja\x9F\xF1. Pchn\xB9\xE6 w t\xEA \xB3\xF3"
                                 "d\x9F je\xBF"
                                 "a lub o\x9Cm skrzy\xF1 fig.");
+        QVERIFY(QFile::remove(rulesFile));
+        file.setFileName(dir.filePath(QStringLiteral("rules/Rules.txt")));
         QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
         file.write("#HikariSub rules file\r\n1|1\r\n" + polish + "\fabc\fd\f0\r\n" + polish + "\fdef\fg\f0\r\n");
         file.close();
@@ -18199,7 +18266,8 @@ private slots:
     // default once created and reads the defaults when it is created after
     // it; DestroyDialogs (a changed program font) saves its options and
     // drops it with its recent lists, and destroys MisspellReplacer, whose
-    // destructor writes Rules.txt (HikariSubFrame::DestroyDialogs, OnClose).
+    // destructor writes the rules file (rules.toml since CF2;
+    // HikariSubFrame::DestroyDialogs, OnClose).
     void findAndMultireplacerFollowLegacyOwnersThroughSetDefault()
     {
         QTemporaryDir home;
@@ -18280,7 +18348,7 @@ private slots:
                                               {QStringLiteral("find"), QStringLiteral("zz")},
                                               {QStringLiteral("replace"), QStringLiteral("z")},
                                               {QStringLiteral("options"), 0}}));
-        const QString rules = home.filePath(QStringLiteral("Rules.txt"));
+        const QString rules = home.filePath(QStringLiteral("rules.toml"));
         QVERIFY(!QFile::exists(rules));
 
         // A changed program font: DestroyDialogs.
@@ -18297,7 +18365,7 @@ private slots:
         QTRY_VERIFY(!dock->property("isOpen").toBool());
         QVERIFY(!tool->property("opened").toBool());
         // ~MisspellReplacer wrote the rules; the panel stays where it is
-        // and starts again (empty fields) from Rules.txt
+        // and starts again (empty fields) from rules.toml
         // (PU2-fix-minor-errors-panel; legacy's window closed).
         QVERIFY(misspellDock->property("isOpen").toBool());
         QTRY_COMPARE(item<QObject>("misspellFind")->property("text").toString(), QString());
@@ -27277,16 +27345,16 @@ private slots:
     // draws the preset into the rectangle shown over the video. "Edit" opens
     // the "Vector shape editing" dialog on the preset chosen
     // (T5-editor-opens-next); a save under a name another preset has asks
-    // to replace it or rename (accepted on #55); OK writes Config/ShapesSettings.txt
-    // (UTF-8 with a BOM, legacy's lines) and the list takes the new names;
+    // to replace it or rename (accepted on #55); OK writes shapes.toml (CF2;
+    // legacy Config/ShapesSettings.txt) and the list takes the new names;
     // Restore default removes the file at once.
     void visualDrawingShapesAndTheirEditor()
     {
         QTemporaryDir config;
         QVERIFY(config.isValid());
         auto &tools = application->visualTools();
-        const QString shapesFile = config.filePath(QStringLiteral("Config/ShapesSettings.txt"));
-        tools.setShapesFile(shapesFile);
+        const QString shapesFile = config.filePath(QStringLiteral("Config/shapes.toml"));
+        tools.setShapesFile(ui::ListFile::make(shapesFile, {}, ui::kShapesFormat, nullptr));
         QVERIFY(application->openFile(visualDocument("drawing.ass",
                                                      "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(40,40)}\n")));
         // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE).
@@ -27493,20 +27561,15 @@ private slots:
         QCOMPARE(shapeName->property("text").toString(), QStringLiteral("rectangle"));
         QTRY_COMPARE(named("shapeList")->property("currentIndex").toInt(), 0);
         QVERIFY(!named("shapesUndo")->property("enabled").toBool());
-        const auto file = [&] {
-            QFile saved(shapesFile);
-            if (!saved.open(QIODevice::ReadOnly))
-                return QByteArray();
-            return saved.readAll();
-        };
+        const auto file = [&] { return legacyShapesOf(shapesFile); };
         // Each change is kept as it is made: the tool's list and the file.
         shapeName->setProperty("text", QStringLiteral("box"));
         QVERIFY(QMetaObject::invokeMethod(shapeName, "textEdited"));
         QCOMPARE(editor->name(), QStringLiteral("box"));
         QTRY_COMPARE(list()->property("model").toStringList().value(1), QStringLiteral("box"));
         QByteArray bytes = file();
-        QVERIFY(bytes.startsWith("\xEF\xBB\xBF"));
-        QVERIFY2(bytes.mid(3).startsWith("Shape: box; m 0 0 l 100 0 100 100 0 100; 0; 0\n"), bytes.constData());
+        QVERIFY(readAll(shapesFile).startsWith("version = 1\n"));
+        QVERIFY2(bytes.startsWith("Shape: box; m 0 0 l 100 0 100 100 0 100; 0; 0\n"), bytes.constData());
         QCOMPARE(bytes.count('\n'), 5);
         QVERIFY(named("shapesUndo")->property("enabled").toBool());
         QCOMPARE(named("shapesUndo")->property("tip").toString(), QStringLiteral("Undo “Rename shape”"));
@@ -28076,9 +28139,9 @@ private slots:
     // the change options (Insert) and Edit. The sliders are drawn over the
     // video; dragging the thumb writes the tag into the Line editor's text
     // at the caret as one "Visual Hydra tool" step. Edit opens "Tag editing":
-    // a new definition, OK writes Config/AllTagsSettings.txt (UTF-8 with a
-    // BOM, "HYDRA2.0" first) and the list takes it; Restore default removes
-    // the file at once.
+    // a new definition, OK writes tags.toml (CF2; legacy
+    // Config/AllTagsSettings.txt) and the list takes it; Restore default
+    // removes the file at once.
     void visualAllTagsThroughThePanel()
     {
         widenForTheInspectorBar();
@@ -28086,8 +28149,8 @@ private slots:
         QTemporaryDir config;
         QVERIFY(config.isValid());
         auto &tools = application->visualTools();
-        const QString tagsFile = config.filePath(QStringLiteral("Config/AllTagsSettings.txt"));
-        tools.setAllTagsFile(tagsFile);
+        const QString tagsFile = config.filePath(QStringLiteral("Config/tags.toml"));
+        tools.setAllTagsFile(ui::ListFile::make(tagsFile, {}, ui::kTagsFormat, nullptr));
         QVERIFY(application->openFile(visualDocument("alltags.ass",
                                                      "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\blur2}third\n")));
         application->settingsStore()->set("video.openAtActiveLine", true);
@@ -28273,17 +28336,15 @@ private slots:
         QTRY_VERIFY(must("visualOption_change_1")->property("chosen").toBool());
         QTRY_VERIFY(!menuOf()->property("visible").toBool());
 
-        // Set's placing is the definition's: saved to AllTagsSettings.txt.
+        // Set's placing is the definition's: saved to tags.toml.
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_change_0"), "click"));
         QTRY_VERIFY(visualItem("visualOption_variant"));
         QVERIFY(!QFile::exists(tagsFile));
         QVERIFY(tools.setOption(QStringLiteral("variant"), 1));
         QTRY_VERIFY(QFile::exists(tagsFile));
         {
-            QFile placed(tagsFile);
-            QVERIFY(placed.open(QIODevice::ReadOnly));
             QString border;
-            for (const QString &line : QString::fromUtf8(placed.readAll()).split(QLatin1Char('\n')))
+            for (const QString &line : QString::fromUtf8(legacyTagsOf(tagsFile)).split(QLatin1Char('\n')))
                 if (line.startsWith(QStringLiteral("Tag: border, bord, ")))
                     border = line;
             QCOMPARE(border.split(QStringLiteral(", ")).value(7), QStringLiteral("1")); // the mode
@@ -28379,12 +28440,7 @@ private slots:
             QCOMPARE(chosenTag(), 1);
             editor->select(1);
         }
-        const auto file = [&] {
-            QFile saved(tagsFile);
-            if (!saved.open(QIODevice::ReadOnly))
-                return QByteArray();
-            return saved.readAll();
-        };
+        const auto file = [&] { return legacyTagsOf(tagsFile); };
         // New tag: "New tag" with its Tag empty; it reaches the strip once it
         // has one. Each change is kept as it is made.
         QVERIFY(QMetaObject::invokeMethod(named("addTag"), "clicked"));
@@ -28406,7 +28462,8 @@ private slots:
         QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 23);
         QCOMPARE(option("tag")->property("model").toStringList().last(), QStringLiteral("wide"));
         QByteArray bytes = file();
-        QVERIFY(bytes.startsWith("\xEF\xBB\xBFHYDRA2.0\nTag: blur, blur, 0.000000, 100.000000, 0.000000, 0.500000, 1, 0, 1\n"));
+        QVERIFY(readAll(tagsFile).startsWith("version = 1\n"));
+        QVERIFY(bytes.startsWith("HYDRA2.0\nTag: blur, blur, 0.000000, 100.000000, 0.000000, 0.500000, 1, 0, 1\n"));
         QVERIFY2(bytes.endsWith("Tag: wide, fscx, 0.000000, 400.000000, 0.000000, 1.000000, 0, 0, 0\n"), bytes.constData());
         // A range the tool cannot use is said under it; the definition keeps
         // its last good one, and leaving the field puts it back.
@@ -36156,7 +36213,7 @@ private slots:
         // PU5 (Codex on #349): "Edit shapes" opened from fullscreen's bar.
         QTemporaryDir shapesConfig;
         QVERIFY(shapesConfig.isValid());
-        tools.setShapesFile(shapesConfig.filePath(QStringLiteral("ShapesSettings.txt")));
+        tools.setShapesFile(ui::ListFile::make(shapesConfig.filePath(QStringLiteral("shapes.toml")), {}, ui::kShapesFormat, nullptr));
         tools.selectFamily(8);
         QTRY_VERIFY(fullscreenItem("visualOption_shape"));
         QVERIFY(becomesFocusWindow(fsWindow));
@@ -36176,7 +36233,7 @@ private slots:
         // And "Edit tags" (Hydra's Edit tags…).
         QTemporaryDir tagsConfig;
         QVERIFY(tagsConfig.isValid());
-        tools.setAllTagsFile(tagsConfig.filePath(QStringLiteral("AllTagsSettings.txt")));
+        tools.setAllTagsFile(ui::ListFile::make(tagsConfig.filePath(QStringLiteral("tags.toml")), {}, ui::kTagsFormat, nullptr));
         tools.selectFamily(10);
         QTRY_VERIFY(fullscreenItem("visualOption_tag"));
         QVERIFY(becomesFocusWindow(fsWindow));
