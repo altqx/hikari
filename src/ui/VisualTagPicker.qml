@@ -19,6 +19,8 @@ AbstractButton {
     required property var live
     required property VisualToolsController tools
     property bool measuring: false
+    // VB1: named, unless unseen (measured, or folded off the bar's line).
+    property bool named: !measuring
     readonly property var model: live.choices
     readonly property var notes: live.notes ?? []
     readonly property var sections: live.sections ?? []
@@ -27,7 +29,7 @@ AbstractButton {
     readonly property string current: currentIndex >= 0 && currentIndex < model.length ? model[currentIndex] : ""
     readonly property string currentNote: currentIndex >= 0 && currentIndex < notes.length ? notes[currentIndex] : ""
 
-    objectName: measuring ? "" : "visualOption_" + modelData.name
+    objectName: named ? "visualOption_" + modelData.name : ""
     text: modelData.tooltip.split("\n")[0]
     Accessible.role: Accessible.ComboBox
     Accessible.name: text

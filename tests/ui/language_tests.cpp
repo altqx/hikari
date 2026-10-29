@@ -1003,6 +1003,37 @@ private slots:
         application->settingsStore()->set("program.language", QStringLiteral("en"));
     }
 
+    // #477: the Script Properties wrap styles that name \N and \n show their
+    // translation in every language. lupdate read the backslashes of the
+    // old keys as escapes, so no catalog held the text the combo asked for.
+    void wrapStylesShowTheirTranslation()
+    {
+        start();
+        QVERIFY(application->openFile(episode));
+        QVERIFY(QMetaObject::invokeMethod(root()->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QTRY_VERIFY(item("propWrapStyle"));
+        const auto choice = [this](int index) {
+            QString text;
+            QMetaObject::invokeMethod(item("propWrapStyle"), "textAt", Q_RETURN_ARG(QString, text), Q_ARG(int, index));
+            return text;
+        };
+        QCOMPARE(choice(1), QStringLiteral("1: End-of-line wrapping, only \\N breaks"));
+        QCOMPARE(choice(2), QStringLiteral("2: No wrapping, both \\n and \\N break"));
+        for (const QString language : {QStringLiteral("pl"), QStringLiteral("ko_KR"), QStringLiteral("th_TH"), QStringLiteral("ta")}) {
+            QTranslator qm;
+            QVERIFY(qm.load(QStringLiteral(":/i18n/hikarisub_%1.qm").arg(language)));
+            const QString one = qm.translate("HikariSub.ScriptProperties", "1: End-of-line wrapping, only %1 breaks");
+            const QString two = qm.translate("HikariSub.ScriptProperties", "2: No wrapping, both %1 and %2 break");
+            QVERIFY2(!one.isEmpty() && !two.isEmpty(), qPrintable(language));
+            application->settingsStore()->set("program.language", language);
+            QCOMPARE(application->localisation().language(), language);
+            QCoreApplication::processEvents();
+            QCOMPARE(choice(1), one.arg(QStringLiteral("\\N")));
+            QCOMPARE(choice(2), two.arg(QStringLiteral("\\n")).arg(QStringLiteral("\\N")));
+        }
+        application->settingsStore()->set("program.language", QStringLiteral("en"));
+    }
+
     // Screenshots for review (HIKARI_LANGUAGE_SHOT_DIR; skipped without it):
     // the main window with the File menu and the Options dialog (on its
     // first page) in Polish, Thai, the accented pseudolocale and the

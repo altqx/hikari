@@ -8658,13 +8658,21 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation>1: 줄 끝에서 줄 바꿈, N만 줄 바꿈</translation>
+        <translation type="vanished">1: 줄 끝에서 줄 바꿈, N만 줄 바꿈</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation>2: 줄 바꿈 없음, 
+        <translation type="vanished">2: 줄 바꿈 없음, 
  및 N 모두 줄 바꿈</translation>
+    </message>
+    <message>
+        <source>1: End-of-line wrapping, only %1 breaks</source>
+        <translation>1: 줄 끝에서 줄 바꿈, %1만 줄 바꿈</translation>
+    </message>
+    <message>
+        <source>2: No wrapping, both %1 and %2 break</source>
+        <translation>2: 줄 바꿈 없음, %1 및 %2 모두 줄 바꿈</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>
@@ -12972,6 +12980,10 @@ or codecs or a splitter may be missing</source>
         <translation>활성 줄 변경</translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation>선택한 줄 지정 (1줄 지정됨: 도구가 활성 줄 대신 이 줄을 편집함)</translation>
     </message>
@@ -13570,6 +13582,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Warning</source>
         <translation type="vanished">경고</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

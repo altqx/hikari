@@ -3336,33 +3336,13 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "videoPanel"
                 dockName: "Video"
-                // The controls below the video at their narrowest, above
-                // two rail buttons' height. The
-                // inspector bar counts with its tool's own lines; what it
-                // holds for a taller tool comes out of the height above that
-                // (VT1), so the minimum does not grow with it.
-                minimumBodySize: Qt.size(videoTransport.implicitWidth, controlsOwnHeight + 72)
-                // Measured, not bound (the held height follows the room this
-                // leaves), whenever the column's height or the held height
-                // changes: a switch to a tool with more lines can leave the
-                // column as tall, holding less (Codex on #293). The bar's
-                // layout and the column are laid out first, so the two
-                // numbers are of one layout.
-                property real controlsOwnHeight: 0
-                function measureControls() {
-                    videoToolBar.contentItem.ensurePolished()
-                    videoControls.ensurePolished()
-                    controlsOwnHeight = videoControls.implicitHeight - videoToolBar.held
-                }
-                Connections {
-                    target: videoControls
-                    function onImplicitHeightChanged() { Qt.callLater(videoPanel.measureControls) }
-                }
-                Connections {
-                    target: videoToolBar
-                    function onHeldChanged() { Qt.callLater(videoPanel.measureControls) }
-                }
-                Component.onCompleted: measureControls()
+                // The controls below the video at their narrowest, with the
+                // inspector bar's one line whether the tool has it or not
+                // (VB1), above two rail buttons' height (a tool and More
+                // tools): the minimum does not change with the tool.
+                minimumBodySize: Qt.size(videoTransport.implicitWidth,
+                                         videoControls.implicitHeight + videoToolBar.lineHeight + videoControls.spacing + 72
+                                         - (videoToolBar.visible ? videoToolBar.implicitHeight + videoControls.spacing : 0))
                 title: qsTranslate("HikariSub.Video", "Video")
                 // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
                 // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
@@ -3542,8 +3522,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
                     settings: root.app.settings
-                    room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
-                    // It wraps rather than widen the column: wider text (a
+                    // It folds rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
                     // push Next frame out of the panel.
                     Layout.minimumWidth: 0
@@ -3575,6 +3554,9 @@ ApplicationWindow {
                 }
                 RowLayout {
                     Layout.fillWidth: true
+                    // VB1: as tall with the pointer readout's button as
+                    // without, so the video does not move when it shows.
+                    Layout.minimumHeight: 24
                     spacing: 10
                     Label {
                         objectName: "videoTimes"
@@ -3591,6 +3573,10 @@ ApplicationWindow {
                         HoverHandler { id: timesHover }
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
+                    }
+                    // VB1: the crosshair's position and Copy video position.
+                    VisualPointerReadout {
+                        tools: root.visualTools
                     }
                 }
                 RowLayout {

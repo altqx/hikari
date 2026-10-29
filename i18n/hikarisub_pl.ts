@@ -8754,13 +8754,21 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation>1: Zawijanie na końcu linijki, łamie tylko N</translation>
+        <translation type="vanished">1: Zawijanie na końcu linijki, łamie tylko N</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation>2: Bez zawijania, łamią 
+        <translation type="vanished">2: Bez zawijania, łamią 
  i N</translation>
+    </message>
+    <message>
+        <source>1: End-of-line wrapping, only %1 breaks</source>
+        <translation>1: Zawijanie na końcu linijki, łamie tylko %1</translation>
+    </message>
+    <message>
+        <source>2: No wrapping, both %1 and %2 break</source>
+        <translation>2: Bez zawijania, łamią %1 i %2</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>
@@ -13112,6 +13120,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Zmienia aktywną linijkę</translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation>Użyj zaznaczonych linijek (wybrano 1 linijkę: narzędzia edytują ją, a nie aktywną linijkę)</translation>
     </message>
@@ -13722,6 +13734,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Warning</source>
         <translation type="vanished">Uwaga</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

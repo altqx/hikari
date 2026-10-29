@@ -753,16 +753,6 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
     return out;
 }
 
-QVariantList VisualToolsController::familyLayouts() const
-{
-    QVariantList out;
-    for (const auto &t : m_tools)
-        out.append(t ? QVariantMap{{QStringLiteral("options"), optionMaps(*t)},
-                                   {QStringLiteral("values"), valueMaps(*t)}}
-                     : QVariantMap{});
-    return out;
-}
-
 bool VisualToolsController::setOption(const QString &name, int value)
 {
     // Legacy VideoToolbar's item click: the tool takes its toggles

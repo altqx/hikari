@@ -41,6 +41,19 @@ public:
 
 protected:
     std::string prop(const char *path, const char *name) { return getStringProperty(path, name); }
+    // A family from the rail, or from its More tools when the rail is too
+    // short for it (VB1).
+    void choose(int family)
+    {
+        const std::string button = "mainWindow/visualTool" + std::to_string(family);
+        if (prop(button.c_str(), "visible") == "true") {
+            mouseClick(button);
+            return;
+        }
+        mouseClick("mainWindow/visualToolsMore");
+        wait(300ms);
+        mouseClick("mainWindow/visualToolsMore" + std::to_string(family));
+    }
 
     void executeTest() override
     {
@@ -52,13 +65,9 @@ protected:
         }
         observed.push_back(shown ? "video shown" : "no video"); // 0
         // The vector clip, Add line on (VectorItem's default). In the default
-        // window the rail scrolls (its lower tools are below the panel's
-        // height): scrolled to its end first, as a user would.
-        const std::string size = prop("mainWindow/visualToolRailScrollBar", "size");
-        if (!size.empty() && std::stod(size) < 1)
-            setStringProperty("mainWindow/visualToolRailScrollBar", "position", std::to_string(1 - std::stod(size)));
-        wait(100ms);
-        mouseClick("mainWindow/visualTool7");
+        // window the rail is too short for it (VB1): chosen from More tools,
+        // as a user would.
+        choose(7);
         wait(200ms);
         observed.push_back(prop("mainWindow/visualTool7", "checked"));        // 1
         observed.push_back(prop("mainWindow/visualOption_mode1", "checked")); // 2
@@ -83,7 +92,7 @@ protected:
         wait(300ms);
         // The rectangle clip: a click at a point leaves a rectangle without
         // width, which writes nothing (legacy); Invert clip then has no clip.
-        mouseClick("mainWindow/visualTool6");
+        choose(6);
         wait(200ms);
         observed.push_back(prop("mainWindow/visualTool6", "checked")); // 5
         observed.push_back(prop("mainWindow/visualOption_invert", "iconRole")); // 6
