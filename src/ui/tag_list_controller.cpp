@@ -10,8 +10,7 @@ namespace hikari::ui {
 
 namespace {
 
-// PopupTagList::InitList's descriptions (TextEditorTagList.cpp:340-416), in
-// the entries' order.
+// MUST KILL: kDescriptions is index-parallel to core::taglist::entries()
 constexpr std::array<const char *, core::taglist::kEntryCount> kDescriptions{{
     QT_TRANSLATE_NOOP("HikariSub.TagList", "Transparency of primary color"),
     QT_TRANSLATE_NOOP("HikariSub.TagList", "Transparency of secondary color"),
@@ -97,7 +96,7 @@ std::u16string u16(const QString &s)
     return s.toStdU16String();
 }
 
-} // namespace
+}
 
 TagListController::TagListController(QObject *parent) : QObject(parent) {}
 
@@ -115,7 +114,6 @@ QString TagListController::description(std::size_t entry)
 
 QString TagListController::rowText(std::size_t entry) const
 {
-    // TagListItem::GetTagText (TextEditorTagList.h:48-52).
     QString text = QString::fromStdU16String(std::u16string(core::taglist::entries()[entry].tag));
     if (m_options & core::taglist::ShowDescription)
         text += QStringLiteral(" - ") + description(entry);
@@ -151,7 +149,6 @@ bool TagListController::typed(const QString &text, int caret, const QString &key
     if (key.size() != 1)
         return false;
     const bool wasOpen = m_completion.open();
-    // The PopupTagList constructor reads the options (TextEditorTagList.cpp:250).
     const int options = m_read ? m_read() : m_options;
     if (!wasOpen)
         m_options = options;
@@ -218,7 +215,6 @@ void TagListController::wheel(int notches)
     if (!list)
         return;
     const int before = list->scrollPosition();
-    // step = 3 * rotation / delta; scrollPositionV -= step.
     list->wheel(-3 * notches);
     if (list->scrollPosition() != before)
         emit changed();
@@ -229,8 +225,6 @@ void TagListController::toggleOption(int bit)
     auto *list = m_completion.list();
     if (!list || (bit != 1 && bit != 2 && bit != 4))
         return;
-    // PopupWindow::OnMouseEvent (TextEditorTagList.cpp:130-149): the stored
-    // options flip, are saved, and filter the list again.
     const int options = (m_read ? m_read() : m_options) ^ bit;
     if (m_write)
         m_write(options);
@@ -250,8 +244,7 @@ double TagListController::popupWidth(const QFont &font) const
     if (list && list->count() > static_cast<std::size_t>(core::taglist::kMaxVisible))
         width += 20;
     width = std::min(width, 800.0);
-    // The first Popup reads the control size before it is set (0); the
-    // later ones the editor's 100 (DialogueTextEditor.cpp:472).
+    // MUST KILL: the 100 minimum width applies only from the second popup on
     if (list && list->popupCalls() > 1)
         width = std::max(width, 100.0);
     return width;
@@ -262,4 +255,4 @@ double TagListController::rowHeight(const QFont &font) const
     return QFontMetricsF(font).height() + 6;
 }
 
-} // namespace hikari::ui
+}

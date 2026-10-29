@@ -5,48 +5,21 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// P10 (#200): legacy's status bar (HikariStatusBar; its nine fields set up at
-// HikariSubFrame.cpp:150-155), in the accepted Classic shell's status strip
-// (docs/ux/visual-language.md: padding 7 / 12, gap 14, the status text
-// role). Legacy's order and widths: the first field, help and progress text,
-// takes 12 parts of the width the others leave, the last, the video file
-// name, 22 parts (HikariStatusBar::CalcWidths with widths {-12, 0, ..., -22});
-// the fields between are as wide as their text and take no space while
-// empty, as an empty legacy field had width 0. Each shown field has legacy's
-// tooltip (none on the first) and is a static text for assistive technology
-// (its text, then the tooltip as its description); the strip is the window's
-// status bar, so a screen reader's "read status bar" command reads it. Like
-// legacy's (AcceptsFocus false) it takes no keyboard focus.
-//
-// Between the first field and the video fields, the rewrite's selection count
-// (G1, the accepted announcement policy) and save state (V2), auto-sized like
-// legacy's middle fields.
-//
-// WS3: the items the bar is given (the layout switcher) stand after the video
-// file name, at the bar's end.
 Rectangle {
     id: bar
     objectName: "statusBar"
     required property var shell
-    required property var fieldsController // StatusBarController
-    // The rewrite's own fields: the selection count and the save state.
+    required property var fieldsController
     property string selectionText
     property string saveText
-    // Legacy WINDOW_WARNING_ELEMENTS on fields 5 and 7 while the subtitles'
-    // resolution is not the video's (K2: Theme.warning).
     readonly property color warningColour: Theme.warning
-    // WS3: the bar's own controls, after its fields.
     default property alias trailing: trailingItems.data
 
-    // The status text role (visual-language.md: 10 against the 13 body),
-    // kept legible on small base fonts. From the window's font, which
-    // follows the program font live (PROGRAM_FONT, O5); Qt.application.font
-    // is read once.
+    // Qt.application.font is read once; a Label's font follows the program font live.
     readonly property font statusFont: {
         const base = fontSource.font
         const f = Qt.font({family: base.family})
-        // A QML font's pointSize is QFont's pointSizeF (a real); it has no
-        // pointSizeF.
+        // A QML font's pointSize is QFont's pointSizeF.
         if (base.pointSize > 0)
             f.pointSize = Math.max(base.pointSize * 10 / 13, 8)
         else
@@ -72,11 +45,7 @@ Rectangle {
 
     component Field: Label {
         id: field
-        // Legacy's tooltip; the field's accessible description.
         property string tip
-        // 0: as wide as the text (hidden while empty); otherwise it takes a
-        // share of the width the other fields leave (its
-        // Layout.horizontalStretchFactor, which only a filling field may set).
         property int stretch: 0
         property bool warning: false
         visible: stretch > 0 || text.length > 0
@@ -94,7 +63,6 @@ Rectangle {
         Accessible.description: tip
         Accessible.ignored: text.length === 0
         HoverHandler { id: hover }
-        // Legacy shows a field's tooltip only while it has text.
         ToolTip.visible: hover.hovered && tip.length > 0 && text.length > 0
         ToolTip.text: tip
     }
@@ -108,13 +76,9 @@ Rectangle {
         anchors.bottomMargin: 7
         spacing: 14
 
-        // 0: help and progress text, never the editing target (the
-        // Document's tab and the window title name it).
         Field {
             objectName: "statusText"
             text: bar.shell.statusText
-            // AV1: a message cut short by the fields beside it reads whole
-            // in its tooltip (the unplugged output device's notice)
             tip: truncated ? text : ""
             stretch: 12
             Layout.horizontalStretchFactor: 12
@@ -128,7 +92,6 @@ Rectangle {
             text: bar.saveText
         }
         Repeater {
-            // Fields 1 to 7.
             model: [
                 {name: "statusVideoScale", field: 1},
                 {name: "statusVideoZoom", field: 2},
@@ -146,7 +109,6 @@ Rectangle {
                 warning: (modelData.field === 5 || modelData.field === 7) && bar.fieldsController.resolutionMismatch
             }
         }
-        // 8: the video file name.
         Field {
             objectName: "statusVideoName"
             text: bar.fieldsController.fields[8] ?? ""

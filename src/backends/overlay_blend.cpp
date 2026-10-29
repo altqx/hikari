@@ -21,14 +21,12 @@ using application::PixelRect;
 
 namespace {
 
-// x / 255 rounded, exact for 0 <= x <= 255 * 255 (AssBlend.cpp Div255).
 inline unsigned div255(unsigned x)
 {
     x += 128;
     return (x + (x >> 8)) >> 8;
 }
 
-// AssBlend.cpp's per-pixel tail, the whole bitmap.
 void blendPlain(std::uint8_t *dst, std::ptrdiff_t dstStride, const std::uint8_t *src, std::ptrdiff_t srcStride,
                 int width, int height, std::uint32_t color, int fromX = 0)
 {
@@ -56,12 +54,10 @@ inline __m128i div255(__m128i x)
     return _mm_srli_epi16(_mm_add_epi16(x, _mm_srli_epi16(x, 8)), 8);
 }
 
-// Four pixels at `row`, their coverage in `coverage` (AssBlend.cpp's SSE2 loop body).
 inline void blendFour(std::uint8_t *row, std::uint32_t coverage, __m128i colour, __m128i opacity)
 {
     const __m128i zero = _mm_setzero_si128();
     const __m128i full = _mm_set1_epi16(255);
-    // the alpha of each of the four pixels, spread over its four channels
     const __m128i v = _mm_unpacklo_epi8(_mm_cvtsi32_si128(static_cast<int>(coverage)), zero);
     __m128i alpha = div255(_mm_mullo_epi16(v, opacity));
     alpha = _mm_unpacklo_epi16(alpha, alpha);
@@ -109,7 +105,6 @@ HIKARI_TARGET_AVX2 inline __m256i div255x16(__m256i x)
     return _mm256_srli_epi16(_mm256_add_epi16(x, _mm256_srli_epi16(x, 8)), 8);
 }
 
-// Eight pixels at a time, the same arithmetic as the four-pixel loop.
 HIKARI_TARGET_AVX2 void blendAvx2(std::uint8_t *dst, std::ptrdiff_t dstStride, const std::uint8_t *src,
                                   std::ptrdiff_t srcStride, int width, int height, std::uint32_t color)
 {
@@ -131,8 +126,8 @@ HIKARI_TARGET_AVX2 void blendAvx2(std::uint8_t *dst, std::ptrdiff_t dstStride, c
                 continue;
             const __m128i v = _mm_cvtepu8_epi16(_mm_loadl_epi64(reinterpret_cast<const __m128i *>(cover + x)));
             __m128i alpha = div255(_mm_mullo_epi16(v, opacity8));
-            const __m128i pairsLo = _mm_unpacklo_epi16(alpha, alpha); // a0 a0 a1 a1 a2 a2 a3 a3
-            const __m128i pairsHi = _mm_unpackhi_epi16(alpha, alpha); // a4 a4 ... a7 a7
+            const __m128i pairsLo = _mm_unpacklo_epi16(alpha, alpha);
+            const __m128i pairsHi = _mm_unpackhi_epi16(alpha, alpha);
             const __m256i alpha03 = _mm256_set_m128i(_mm_unpackhi_epi32(pairsLo, pairsLo),
                                                      _mm_unpacklo_epi32(pairsLo, pairsLo));
             const __m256i alpha47 = _mm256_set_m128i(_mm_unpackhi_epi32(pairsHi, pairsHi),
@@ -145,7 +140,7 @@ HIKARI_TARGET_AVX2 void blendAvx2(std::uint8_t *dst, std::ptrdiff_t dstStride, c
                                             _mm256_mullo_epi16(lo, _mm256_sub_epi16(full, alpha03))));
             hi = div255x16(_mm256_add_epi16(_mm256_mullo_epi16(colour, alpha47),
                                             _mm256_mullo_epi16(hi, _mm256_sub_epi16(full, alpha47))));
-            // packus works within each 128-bit half: put the halves back in order.
+            // packus packs within each 128-bit lane: put the halves back in order.
             const __m256i packed = _mm256_permute4x64_epi64(_mm256_packus_epi16(lo, hi), 0xd8);
             _mm256_storeu_si256(reinterpret_cast<__m256i *>(at), packed);
         }
@@ -190,7 +185,7 @@ BlendPath detect()
 #endif
 }
 
-} // namespace
+}
 
 BlendPath blendPath()
 {
@@ -211,7 +206,7 @@ bool blendPathAvailable(BlendPath path)
 void blendAssBitmap(BlendPath path, std::uint8_t *dst, std::ptrdiff_t dstStride, const std::uint8_t *src,
                     std::ptrdiff_t srcStride, int width, int height, std::uint32_t color)
 {
-    if (width <= 0 || height <= 0 || (color & 0xff) == 0xff) // nothing, or fully transparent
+    if (width <= 0 || height <= 0 || (color & 0xff) == 0xff)
         return;
 #ifdef HIKARI_BLEND_X86
     if (path == BlendPath::Avx2)
@@ -244,8 +239,7 @@ void DrawnBoxes::add(const PixelRect &box)
     if (box.width <= 0 || box.height <= 0)
         return;
     const auto area = [](const PixelRect &r) { return static_cast<long long>(r.width) * r.height; };
-    // libass lists an event's images together, so the recent boxes are the
-    // ones that overlap; a few are enough.
+    // libass lists an event's images together, so only the recent boxes overlap.
     constexpr std::size_t kRecent = 4;
     const std::size_t from = m_boxes.size() > kRecent ? m_boxes.size() - kRecent : 0;
     for (std::size_t i = m_boxes.size(); i-- > from;) {
@@ -277,10 +271,10 @@ bool OverlayBuffers::setSize(int width, int height)
 
 OverlayBuffers::Buffer &OverlayBuffers::acquire()
 {
-    constexpr std::size_t kKept = 4; // the shown one and the ones still held elsewhere
+    constexpr std::size_t kKept = 4;
     const auto it = std::ranges::find_if(m_buffers, [](const Buffer &b) { return b.bytes.use_count() == 1; });
     if (it != m_buffers.end()) {
-        std::atomic_thread_fence(std::memory_order_acquire); // the last holder's reads are done
+        std::atomic_thread_fence(std::memory_order_acquire); // use_count() is a relaxed load
         std::rotate(it, it + 1, m_buffers.end());
         Buffer &b = m_buffers.back();
         b.drawn.zero(b.bytes->data(), stride());
@@ -288,7 +282,7 @@ OverlayBuffers::Buffer &OverlayBuffers::acquire()
         return b;
     }
     if (m_buffers.size() >= kKept)
-        m_buffers.erase(m_buffers.begin()); // its holders keep it alive
+        m_buffers.erase(m_buffers.begin());
     const std::size_t bytes = static_cast<std::size_t>(stride()) * static_cast<std::size_t>(m_height);
     m_buffers.push_back(Buffer{std::make_shared<application::OverlayPixels::Bytes>(bytes, std::uint8_t{0}), {}});
     return m_buffers.back();
@@ -300,7 +294,6 @@ PixelRect premultiplyStraightAlpha(std::uint8_t *pixels, int width, int height, 
     for (int y = 0; y < height; ++y) {
         std::uint8_t *row = pixels + y * stride;
         int rowX0 = width, rowX1 = 0;
-        // Two pixels a word: most of the frame is empty and skipped whole.
         int x = 0;
         for (; x + 2 <= width; x += 2) {
             std::uint64_t word;
@@ -346,4 +339,4 @@ PixelRect premultiplyStraightAlpha(std::uint8_t *pixels, int width, int height, 
     return {x0, y0, x1 - x0, y1 - y0};
 }
 
-} // namespace hikari::backends
+}

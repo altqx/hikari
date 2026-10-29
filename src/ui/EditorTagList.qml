@@ -1,19 +1,3 @@
-// E6: a Line editor text field's tag list: the keys it takes, the characters
-// typed into the field (TextEditor::OnCharPress) and the popup. Legacy
-// TextEditor at 20d647c4: its own accelerators close an open list
-// (OnAccelerator, DialogueTextEditor.cpp:563-567) except Up and Down, which
-// move the selection (722-750), and Return, which puts the selected tag
-// (802-808); Escape, Home and End close it too (OnKeyPress, 528-533);
-// Page Up, Page Down and Insert leave it (525-527). Those accelerators are
-// TextEditor's own fixed table (DialogueTextEditor.cpp:49-74, Up, Down and
-// Return included: "after change enter it will still work in this field"),
-// not the mapped hotkeys, so the keys here are fixed too; a mapped binding
-// went to the EditBox's table, which neither closed nor used the list, and
-// numpad Enter was TabPanel's commit (TabPanel.cpp:110-111). Typed characters open or
-// narrow it; an input method's committed text counts as typed, one
-// character at a time, as WM_CHAR delivers it, and nothing is intercepted
-// while a composition is open. A mouse press in the field or the field
-// losing focus closes it (OnMouseEvent, OnKillFocus).
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
@@ -22,7 +6,6 @@ Item {
     id: tags
     required property TextArea field
     required property TagListController controller
-    // The list works on the raw text only.
     enabled: true
 
     property string typedKey: ""
@@ -46,7 +29,6 @@ Item {
                               || event.key === Qt.Key_Escape)
     }
 
-    // The field's key press, before its own handling: true when the list took it.
     function key(event) {
         if (field.inputMethodComposing)
             return false
@@ -59,11 +41,11 @@ Item {
             }
             if (k === Qt.Key_Return && mods === 0) {
                 tags.put()
-                return true // the key is the list's even when nothing is put
+                return true
             }
             if (k === Qt.Key_Escape) {
                 controller.close()
-                return true // OnKeyPress keeps Escape (no Skip)
+                return true
             }
             const ctrl = Qt.ControlModifier, shift = Qt.ShiftModifier
             const closes = k === Qt.Key_Home || k === Qt.Key_End || k === Qt.Key_Menu
@@ -75,7 +57,7 @@ Item {
             if (closes)
                 controller.close()
         }
-        // A character for OnCharPress: no modifier but Shift, or Ctrl+Alt (AltGr).
+        // AltGr arrives as Ctrl+Alt.
         const text = event.text
         const plain = (mods & ~Qt.ShiftModifier) === 0 || (mods & (Qt.ControlModifier | Qt.AltModifier))
                       === (Qt.ControlModifier | Qt.AltModifier)
@@ -86,8 +68,6 @@ Item {
         return false
     }
 
-    // E6-ime-esc-list-first: an Escape that ends a composition closes the
-    // list, and the text the composition committed does not open it again.
     function dismiss() {
         tags.composedFrom = field.text
         tags.composedAt = field.cursorPosition

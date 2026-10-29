@@ -20,12 +20,6 @@ namespace hikari::ui {
 
 using application::AudioBox;
 
-// Legacy ProviderFFMS2::DeleteOldAudioCache: with more files than the limit
-// in the cache folder, the ones read longest ago go (legacy sorted on the
-// last access time) until the surplus is gone. The cache file in use, under
-// its final name or as it is being written (.part), is never removed: legacy
-// on Windows could not remove an open file and went on to the next oldest
-// (R5); legacy on Linux unlinked it and lost the cache (R3, data loss).
 void deleteOldAudioCache(const std::filesystem::path &folder, const std::filesystem::path &inUse, int limit)
 {
     if (limit < 1 || folder.empty())
@@ -67,22 +61,16 @@ AudioController::AudioController(application::DisplayAudioPort &own, QObject *pa
         ask(rows, std::move(answer), true);
     });
     m_box.setDefer([this](std::function<void()> step) { QTimer::singleShot(0, this, std::move(step)); });
-    // A4: legacy's playback timer (16 ms on Windows, 17 on Linux)
     m_playTimer.setTimerType(Qt::PreciseTimer);
     m_playTimer.setInterval(16);
     connect(&m_playTimer, &QTimer::timeout, this, &AudioController::tick);
-    // KA2: the latency calibration follows its beeps
     m_calibrationTimer.setTimerType(Qt::PreciseTimer);
     m_calibrationTimer.setInterval(16);
     connect(&m_calibrationTimer, &QTimer::timeout, this, &AudioController::calibrationTick);
-    // A2 with A4: the volume slider (and the vertical zoom while linked)
-    // sets the player's volume as it moves (legacy OnVolume, OnVerticalZoom,
-    // OnVerticalLink: player->SetVolume).
     connect(this, &AudioController::volumeChanged, this, [this](float volume) {
         if (m_player)
             m_player->setVolume(volume);
     });
-    // K2: the theme's colours, live.
     loadThemeColours();
     theme::onChanged(this, [this] {
         loadThemeColours();
@@ -95,7 +83,7 @@ void AudioController::ask(const std::vector<std::string> &rows, std::function<vo
                           bool forBox)
 {
     if (auto earlier = std::exchange(m_trackAnswer, nullptr))
-        earlier(std::nullopt); // a newer question replaces an unanswered one
+        earlier(std::nullopt);
     m_trackChoices.clear();
     for (const auto &row : rows)
         m_trackChoices << QString::fromStdString(row);
@@ -112,7 +100,7 @@ void AudioController::askTrack(const std::vector<std::string> &rows, std::functi
 void AudioController::trimCache()
 {
     if (m_box.state() == AudioBox::State::Opening) {
-        m_trimPending = true; // the cache file in use is known once the track is open
+        m_trimPending = true;
         return;
     }
     m_trimPending = false;
@@ -148,37 +136,29 @@ void AudioController::cancelTrackChoice()
         answer(std::nullopt);
 }
 
-// A new legacy AudioBox: zoom and scale from the options, the first Line as
-// the previous one (line_n), the panel's size kept.
 void AudioController::newView()
 {
     m_view = application::AudioView{};
     loadBoxControls();
-    m_spectrum.reset(); // legacy deletes the display's renderer with it
+    m_spectrum.reset();
     m_spectrumImage.reset();
     m_spectrumKey = {};
     m_previousActive = 0;
     m_fresh = true;
     m_cursor.reset();
     m_scrollbar = {};
-    // A3: a new display has no mark and holds nothing
     const bool hadMark = m_timing.hasMark();
     m_timing.reset();
     m_needCommit = false;
     if (hadMark)
         emit markChanged();
-    // A4: a new box plays with legacy's defaults
     if (m_player)
         m_playback = std::make_unique<application::AudioPlayback>(*m_player);
-    // A5: a new display has no syllables until its first Line; a new box
-    // has no zoom to go back to
     m_karaoke = {};
     m_lastHorizontalZoom = -1;
     leaveTapMode();
 }
 
-// KA2: tap mode belongs to the audio it played; closed or replaced, the next
-// audio starts with it off.
 void AudioController::leaveTapMode()
 {
     if (m_tapState == TapOff)
@@ -194,7 +174,6 @@ QString AudioController::status() const
     case AudioBox::State::Closed:
         return QCoreApplication::translate("HikariSub.Audio", "No audio open");
     case AudioBox::State::Opening: {
-        // legacy ProgressSink, titled for video
         const auto [done, total] = m_box.indexing();
         const int percent = total > 0 ? static_cast<int>(done * 100 / total) : 0;
         return QCoreApplication::translate("HikariSub.Audio", "Indexing video %1%").arg(percent);
@@ -209,12 +188,9 @@ QString AudioController::status() const
 void AudioController::openAudio(const QString &path)
 {
     if (path.isEmpty())
-        return; // legacy: no file, nothing happens
+        return;
     if (m_beforeOpen)
         m_beforeOpen();
-    // In the platform's form, as Open video hands its file on: legacy's
-    // wxFileDialog and wxFileName paths were native, and a file dialog's URL
-    // gives "/" on Windows too.
     m_box.open(QDir::toNativeSeparators(path).toStdString());
 }
 
@@ -228,7 +204,7 @@ void AudioController::closeAudio()
 
 AudioController::~AudioController()
 {
-    blockSignals(true); // no findingOnsetsChanged to a closing window
+    blockSignals(true);
     stopFindingOnsets();
 }
 
@@ -243,19 +219,15 @@ void AudioController::boxChanged()
     if (!loaded && wasLoaded)
         leaveTapMode();
     if (loaded && !wasLoaded) {
-        // legacy SetFile: loaded, the image, then the current Line (SetDialogue)
         const auto *audio = m_box.audio();
         m_view.setSource(audio->sampleRate(), audio->sampleCount());
         m_view.updateSamples();
-        // AudioBox::SetFile: the player starts at AUDIO_VOLUME's volume (the
-        // option as stored, which the slider may show clamped)
         if (m_player)
             m_player->setVolume(
                 application::playbackVolumeFromSlider(m_store ? m_store->integer("audio.volume") : m_volume));
         emit opened(path(), std::exchange(m_fresh, false));
         reselect();
     } else if (!loaded && m_box.error()) {
-        // a failed SetFile destroys the box; the box logged what legacy logs
         newView();
         if (m_trackForBox && (!m_trackChoices.isEmpty() || m_trackAnswer)) {
             m_trackAnswer = nullptr;
@@ -267,7 +239,7 @@ void AudioController::boxChanged()
     }
     if (m_trimPending && state != AudioBox::State::Opening)
         trimCache();
-    findOnsets(); // KA5
+    findOnsets();
     emit changed();
     redraw();
 }
@@ -275,7 +247,7 @@ void AudioController::boxChanged()
 void AudioController::setLines(std::vector<application::AudioLineSpan> lines, int active, bool select)
 {
     if (!select && active == m_active && lines == m_lines)
-        return; // nothing the display shows changed
+        return;
     m_lines = std::move(lines);
     m_active = active;
     if (select && (m_box.state() == AudioBox::State::Loading || m_box.state() == AudioBox::State::Ready))
@@ -284,24 +256,22 @@ void AudioController::setLines(std::vector<application::AudioLineSpan> lines, in
         redraw();
 }
 
-// Legacy SetDialogue.
 void AudioController::reselect()
 {
     if (m_active < 0 || m_active >= static_cast<int>(m_lines.size()))
         return redraw();
-    m_needCommit = false; // A3: SetDialogue
-    m_karaoke.current = 0; // A5
+    m_needCommit = false;
+    m_karaoke.current = 0;
     if (m_options.grabTimesOnSelect)
         std::tie(m_startMs, m_endMs) = application::legacyLineSelection(m_lines, m_active, m_previousActive);
     m_previousActive = m_active;
-    if (m_hasKara) // A5: SetDialogue splits the new Line
+    if (m_hasKara)
         splitKaraoke();
-    if (m_tapState != TapOff) // KA2: the new Line is the one to tap
+    if (m_tapState != TapOff)
         beginTapLine();
     update();
 }
 
-// Legacy Update: with auto-scroll the Line is made visible.
 void AudioController::update(bool moveToEnd, bool scroll)
 {
     if (scroll && autoScrollSetting())
@@ -309,8 +279,6 @@ void AudioController::update(bool moveToEnd, bool scroll)
     redraw();
 }
 
-// Legacy MakeDialogueVisible: the selection, or in karaoke mode the current
-// syllable as far as the next one's end (GetTimesSelection(rangeEnd)).
 void AudioController::makeDialogueVisible(bool force, bool moveToEnd)
 {
     const auto [start, end] = timesSelection(true);
@@ -330,8 +298,7 @@ std::pair<int, int> AudioController::timesSelection(bool rangeEnd, bool ignoreKa
     return {m_startMs, m_endMs};
 }
 
-// KA1: the English hyphenation Auto split uses: LibreOffice's
-// hyph_en_US.dic (BSD-style, src/ui/hyphenation/README_hyph_en_US.txt).
+// Hyphenation patterns: LibreOffice's hyph_en_US.dic (BSD-style, src/ui/hyphenation/README_hyph_en_US.txt).
 static const application::Hyphenation &karaokeHyphenation()
 {
     static const application::Hyphenation patterns = [] {
@@ -344,51 +311,37 @@ static const application::Hyphenation &karaokeHyphenation()
     return patterns;
 }
 
-// Legacy Karaoke::Split over the active Line (the edit box's): its text or
-// translation and its own times, with AUDIO_MERGE_EVERY_N_WITH_SYLLABLE read now.
 void AudioController::splitKaraoke()
 {
     if (m_active < 0 || m_active >= static_cast<int>(m_lines.size())) {
-        m_karaoke.clear(); // (legacy has no Line before the first SetDialogue)
+        m_karaoke.clear();
         return;
     }
     const auto &line = m_lines[static_cast<std::size_t>(m_active)];
     application::KaraokeSplitRules rules;
     rules.everyN = m_store && m_store->boolean("audio.mergeEveryNWithSyllable");
-    rules.doubleConsonantApart = m_store && m_store->boolean("audio.karaokeDoubleConsonantApart"); // KA1
+    rules.doubleConsonantApart = m_store && m_store->boolean("audio.karaokeDoubleConsonantApart");
     rules.hyphenation = &karaokeHyphenation();
     m_karaoke.split({m_activeText, line.startMs, line.endMs}, m_karaAuto, rules, m_classes);
 }
 
-// KA1: as legacy Commit(false) after a split on the letters:
-// CommitChanges(false, AUDIO_AUTO_COMMIT) with the syllables' text, the
-// view left where it is; the active Line's alone, so other selected Lines
-// keep their texts (Codex)
 void AudioController::commitKaraoke()
 {
     commitChanges(false, timingOptions().autoCommit, false, application::AudioAdjacent::None,
                   committedKaraokeText(), nullptr, true, false);
 }
 
-// KA1: the start as the commit writes it; the \k text is written against it
-// so the syllables keep their times (a start of 999 ms is committed as 990).
 int AudioController::committedStart() const
 {
     return m_hooks.fieldTime ? m_hooks.fieldTime(m_startMs) : m_startMs;
 }
 
-// KA1: in Karaoke mode the panel takes the start the commit wrote, so the
-// syllables are drawn, played and hit from the start their text is read
-// from, as a new reading of the Line would give (Codex)
 void AudioController::syncCommittedStart()
 {
     if (m_hasKara && loaded())
         m_startMs = committedStart();
 }
 
-// The syllables' text for that start: an earlier one lengthens the first
-// syllable; a later one (MicroDVD rounds up to a frame) first cuts the
-// syllables it passes, as moving the start does, so none is negative.
 std::u16string AudioController::committedKaraokeText()
 {
     const int start = committedStart();
@@ -399,13 +352,11 @@ std::u16string AudioController::committedKaraokeText()
 
 void AudioController::splitSyllableAtCursor()
 {
-    if (!m_hasKara || !loaded() || !m_karaoke.count() || tapBusy()) // the taps hold the syllables (Codex)
+    if (!m_hasKara || !loaded() || !m_karaoke.count() || tapBusy())
         return;
     auto &k = m_karaoke;
-    // the syllables as the committed text reads them (Codex)
     const int lineStart = committedStart();
     bool split = false;
-    // the syllable under the waveform cursor
     int under = -1, ms = 0;
     if (m_cursor && m_view.hasSource()) {
         ms = m_view.msAtX(static_cast<std::int64_t>(*m_cursor));
@@ -416,21 +367,15 @@ void AudioController::splitSyllableAtCursor()
         }
     }
     if (m_pointerOver && k.hover >= 0 && k.character >= 0 && k.hover < k.count()) {
-        // the hovered letter, as a click on it (a letter the pointer has
-        // left is no longer hovered, though its mark stays drawn)
         split = k.splitSyllable(k.hover, k.character, lineStart);
         if (split)
             k.current = k.hover;
-        // the letters moved under the pointer: none is hovered until it
-        // moves again (Codex)
         k.hover = -1;
         k.character = -1;
     } else if (under >= 0) {
-        // that syllable, at the cursor's time
         if ((split = k.splitAt(under, ms, lineStart)))
             k.current = under + 1;
     } else {
-        // no cursor, or none over a syllable
         const int i = std::clamp(k.current, 0, k.count() - 1);
         const auto [start, end] = k.syllableTimes(i, lineStart);
         if ((split = k.splitAt(i, start + (end - start) / 2, lineStart)))
@@ -449,7 +394,6 @@ void AudioController::switchLongSyllablesToKf()
         commitKaraoke();
 }
 
-// Legacy AudioBox::OnKaraoke.
 void AudioController::toggleKaraoke()
 {
     emit focusRequested();
@@ -465,13 +409,11 @@ void AudioController::setKaraoke(bool on)
 void AudioController::switchKaraoke()
 {
     if (m_hasKara && m_tapState != TapOff)
-        toggleTap(); // KA2: tap mode is Karaoke mode's
+        toggleTap();
     m_hasKara = !m_hasKara;
     const int value = application::legacyKaraokeZoom(m_hasKara, m_horizontalZoom, m_lastHorizontalZoom);
     if (m_hasKara)
         splitKaraoke();
-    // SetSamplesPercent, the slider and its setting (A5-karaoke-zoom-option:
-    // legacy wrote AUDIO_VERTICAL_ZOOM)
     m_view.setSamplesPercent(value, true, 0.5f, m_scrollbarThickness);
     m_horizontalZoom = std::clamp(value, 0, 100);
     if (m_store) {
@@ -480,13 +422,11 @@ void AudioController::switchKaraoke()
     }
     if (m_view.hasSource())
         makeDialogueVisible();
-    findOnsets(); // KA5: snapping is Karaoke mode's
+    findOnsets();
     emit boxControlsChanged();
     redraw();
 }
 
-// Legacy AudioBox::OnSplitMode: the Line split again the other way (the
-// current syllable kept).
 void AudioController::toggleKaraokeSplitMode()
 {
     emit focusRequested();
@@ -515,7 +455,6 @@ void AudioController::setVideoTime(std::optional<int> pausedMs)
     redraw();
 }
 
-// AV2: the sync toggle. Off, a cursor following the video goes at once.
 void AudioController::setSyncVideo(bool on)
 {
     m_syncVideo = on;
@@ -526,7 +465,6 @@ void AudioController::setSyncVideo(bool on)
     emit boxControlsChanged();
 }
 
-// AV2: the playing video's time. The box's own playback keeps its cursor.
 void AudioController::setPlayingVideoTime(std::optional<int> ms)
 {
     const auto *audio = m_box.audio();
@@ -560,12 +498,10 @@ application::AudioMarks AudioController::marks() const
     marks.keyframesMs = m_keyframes;
     marks.videoMs = m_videoMs;
     marks.focused = m_focused;
-    // A3
     marks.modified = m_needCommit;
     if (m_timing.hasMark())
         marks.markMs = m_timing.markMs();
     marks.markTextHeight = m_markTextHeight;
-    // A5
     if (m_hasKara) {
         auto karaoke = std::make_shared<application::AudioKaraokeMarks>();
         karaoke->times = m_karaoke.times();
@@ -595,7 +531,7 @@ void AudioController::setPointerOver(bool over)
 void AudioController::setCursor(std::optional<float> x)
 {
     if (playing() || m_followingVideo)
-        return; // legacy draws the mouse's cursor only while not playing (AV2: nor the video)
+        return;
     if (x == m_cursor)
         return;
     m_cursor = x;
@@ -610,25 +546,21 @@ void AudioController::setFocused(bool focused)
     redraw();
 }
 
-// Legacy OnMouseEvent's wheel.
 void AudioController::wheel(int rotation, bool controlOnly, bool shift, float x)
 {
     if (!m_view.hasSource())
         return;
-    // Zoom or scroll?
     bool zoom = shift;
     if (m_store && m_store->boolean("audio.wheelDefaultToZoom"))
         zoom = !zoom;
-    constexpr int kWheelDelta = 120; // wxMouseEvent::GetWheelDelta
+    constexpr int kWheelDelta = 120;
     if (controlOnly) {
-        // the vertical zoom slider moves by whole notches, within its range
         const int step = rotation / kWheelDelta;
         const int pos = std::clamp(m_verticalZoom + step, 1, 100);
         applyVerticalZoom(pos, false);
         return;
     }
     if (zoom) {
-        // the slider keeps its range, the setting takes the value as it is
         const int step = rotation / kWheelDelta;
         const int value = m_horizontalZoom - step;
         m_horizontalZoom = std::clamp(value, 0, 100);
@@ -650,8 +582,6 @@ void AudioController::setSettingsStore(SettingsStore *store)
         disconnect(m_store, nullptr, this, nullptr);
     m_store = store;
     loadBoxControls();
-    // Settings > Audio's display options, as they change (legacy applied
-    // them when the Options dialog closed: OptionsDialog's ChangeOptions).
     if (m_store)
         connect(m_store, &SettingsStore::changed, this, [this](const QString &id) {
             static const QStringList kDisplay{
@@ -668,16 +598,12 @@ void AudioController::setSettingsStore(SettingsStore *store)
     redraw();
 }
 
-// K2: the display's colours are the theme's, fixed per theme (Dark keeps
-// legacy's dark theme, config.cpp:451-472); the selection marks take the
-// accent. A theme change draws the display, and the spectrum, again (legacy
-// ChangeColors: AudioDisplay::ChangeOptions, AudioSpectrum::ChangeColours).
 void AudioController::loadThemeColours()
 {
     theme::applyAudioColours(m_options, theme::current().content.audio);
     if (m_spectrum)
         m_spectrum->setColours(m_options.spectrumBackground, m_options.spectrumEcho, m_options.spectrumInner);
-    m_spectrumImage.reset(); // drawn again with the new palette
+    m_spectrumImage.reset();
 }
 
 void AudioController::loadDisplayOptions()
@@ -690,12 +616,9 @@ void AudioController::loadDisplayOptions()
     m_options.drawSelectionBackground = m_store->boolean("audio.drawSelectionBackground");
     m_options.drawSecondBoundaries = m_store->boolean("audio.drawSecondaryLines");
     m_options.drawKeyframes = m_store->boolean("audio.drawKeyframes");
-    m_options.drawTimeCursor = m_store->boolean("audio.drawTimeCursor"); // AU-time-cursor-option
+    m_options.drawTimeCursor = m_store->boolean("audio.drawTimeCursor");
 }
 
-// Legacy AudioBox's constructor: the zoom and scale from the settings, the
-// sliders within their ranges (HikariSlider), the switches as last left; a
-// linked volume takes the vertical zoom's value.
 void AudioController::loadBoxControls()
 {
     int zoom = 50, vertical = 50, volume = 50;
@@ -708,16 +631,14 @@ void AudioController::loadBoxControls()
         m_autoScroll = m_store->boolean("audio.autoScroll");
         m_spectrumOn = m_store->boolean("audio.spectrumOn");
         m_spectrumNonLinear = m_store->boolean("audio.spectrumNonLinearOn");
-        // A5: legacy AudioDisplay's constructor
         m_hasKara = m_store->boolean("audio.karaoke");
         m_karaAuto = m_store->boolean("audio.karaokeSplitMode");
-        m_syncVideo = m_store->boolean("audio.syncVideo"); // AV2
-        // KA2
+        m_syncVideo = m_store->boolean("audio.syncVideo");
         m_speedPercent = std::clamp(m_store->integer("audio.speedPercent"), 25, 100);
         m_tap.setMode(m_store->boolean("audio.tapHold") ? application::KaraokeTap::Mode::Hold
                                                          : application::KaraokeTap::Mode::Press);
-        m_tapLatency = std::clamp(m_store->integer("audio.tapLatency"), -200, 500); // as setTapLatency
-        m_onsetSnap = m_store->boolean("audio.onsetSnap"); // KA5
+        m_tapLatency = std::clamp(m_store->integer("audio.tapLatency"), -200, 500);
+        m_onsetSnap = m_store->boolean("audio.onsetSnap");
     }
     loadDisplayOptions();
     m_view.setSamplesPercent(zoom, false);
@@ -735,11 +656,9 @@ void AudioController::loadBoxControls()
 
 bool AudioController::autoScrollSetting() const
 {
-    // legacy Update reads AUDIO_AUTO_SCROLL each time
     return m_store ? m_store->boolean("audio.autoScroll") : m_autoScroll;
 }
 
-// Legacy OnHorizontalZoom: the zoom kept around the view's centre.
 void AudioController::setHorizontalZoom(int position)
 {
     m_horizontalZoom = position;
@@ -750,8 +669,6 @@ void AudioController::setHorizontalZoom(int position)
     redraw();
 }
 
-// Legacy OnVerticalZoom (and the Ctrl wheel): the scale, and with the link
-// the volume slider and the player.
 void AudioController::applyVerticalZoom(int position, bool fromVolume)
 {
     m_verticalZoom = position;
@@ -773,7 +690,6 @@ void AudioController::setVerticalZoom(int position)
     applyVerticalZoom(position, false);
 }
 
-// Legacy OnVolume: the player, and with the link the vertical zoom.
 void AudioController::setVolume(int position)
 {
     m_volume = position;
@@ -785,7 +701,6 @@ void AudioController::setVolume(int position)
     emit boxControlsChanged();
 }
 
-// Legacy OnVerticalLink: linking moves the volume to the vertical zoom.
 void AudioController::setLinked(bool linked)
 {
     m_linked = linked;
@@ -801,8 +716,6 @@ void AudioController::setLinked(bool linked)
     emit boxControlsChanged();
 }
 
-// The view's samples per column go with the cube of the stretch
-// (AudioView::updateSamples), so the readout is (50 / position)^3.
 double AudioController::magnification() const
 {
     const double position = std::clamp(m_horizontalZoom, 1, 100);
@@ -857,8 +770,6 @@ void AudioController::scrollRight()
     redraw();
 }
 
-// Legacy DrawSpectrum: RenderRange over the view's columns at the
-// horizontal zoom; the renderer (and its cache) lasts as long as the audio.
 std::shared_ptr<const application::AudioImage> AudioController::spectrumImage()
 {
     const auto *audio = m_box.audio();
@@ -883,7 +794,7 @@ std::shared_ptr<const application::AudioImage> AudioController::spectrumImage()
     image->height = h;
     image->bgra.assign(std::size_t(w) * h * 4, 0);
     for (std::size_t i = 3; i < image->bgra.size(); i += 4)
-        image->bgra[i] = 0xFF; // legacy's X8R8G8B8 surface is opaque
+        image->bgra[i] = 0xFF;
     m_spectrum->render(*audio, key.start, (m_view.position() + w) * m_view.samples(), image->bgra.data(), w, w, h,
                        key.percent);
     m_spectrumImage = std::move(image);
@@ -916,18 +827,17 @@ std::vector<application::AudioShape> AudioController::scene(const application::A
     switch (m_box.state()) {
     case AudioBox::State::Closed:
     case AudioBox::State::Opening:
-        return {}; // legacy: not loaded, nothing drawn
+        return {};
     case AudioBox::State::Loading:
         return application::audioProgressScene(m_view, m_box.progress(), m_options);
     case AudioBox::State::Ready:
         break;
     }
-    if (m_spectrumOn) // legacy DoUpdateImage: the spectrum in place of the waveform
+    if (m_spectrumOn)
         return application::audioScene(m_view, {}, marks(), m_options, textWidth, spectrumImage());
     return application::audioScene(m_view, columns(), marks(), m_options, textWidth);
 }
 
-// A4: the player for the box's audio.
 void AudioController::setPlayer(application::AudioPlayerPort *player)
 {
     m_playTimer.stop();
@@ -948,15 +858,11 @@ void AudioController::setVideoPlayback(std::function<bool()> playing, std::funct
     m_pauseVideo = std::move(pause);
 }
 
-// Legacy AudioBox's play handlers: a mark play without a mark returns
-// first; the others ask AudioDisplay::Play for their range.
 void AudioController::play(application::PlayMode mode)
 {
     if (!hasAudio())
         return;
     const std::optional<int> mark = m_timing.hasMark() ? std::optional(m_timing.markMs()) : std::nullopt;
-    // A5: GetTimesSelection, the current syllable in karaoke mode but for
-    // AUDIO_PLAY_LINE (the mark plays do not read it)
     using application::PlayMode;
     const bool marks = mode == PlayMode::BeforeMark || mode == PlayMode::AfterMark;
     const auto [start, end] = marks ? std::pair(m_startMs, m_endMs) : timesSelection(false, mode == PlayMode::Line);
@@ -967,13 +873,8 @@ void AudioController::play(application::PlayMode mode)
     playRange(request->startMs, request->endMs);
 }
 
-// Legacy AudioDisplay::Play(start, end, pause = true): a playing video is
-// paused before anything else, then nothing plays without the audio's
-// provider (here: the box's audio and a player).
 void AudioController::playRange(int startMs, int endMs)
 {
-    // KA2-tap-to-time: while tapping only tap mode plays (a Line change's
-    // play, a play key)
     if (m_tapState == TapTapping && !m_tapPlaying)
         return;
     if (m_videoPlaying && m_videoPlaying() && m_pauseVideo)
@@ -982,13 +883,12 @@ void AudioController::playRange(int startMs, int endMs)
     if (!audio || !m_playback)
         return;
     m_playedSerial = m_box.serial();
-    stopFollowingVideo(); // AV2: the box's own cursor from now on
+    stopFollowingVideo();
     m_lastRange = m_playback->play(audio->sampleRate(), audio->sampleCount(), startMs, endMs);
     m_playTimer.start();
     playbackStateChanged();
 }
 
-// Legacy AudioBox::OnStop: AudioDisplay::Stop(true).
 void AudioController::stopPlayback()
 {
     if (!hasAudio())
@@ -1001,8 +901,6 @@ void AudioController::stopPlayback()
     stopBoxPlayback();
 }
 
-// The box's own playing stopped, whatever the video does (tap mode's stops:
-// a video started meanwhile must not keep the tapping's audio going).
 void AudioController::stopBoxPlayback()
 {
     const auto *audio = m_box.audio();
@@ -1010,7 +908,7 @@ void AudioController::stopBoxPlayback()
         return;
     m_playedSerial = m_box.serial();
     if (const auto range = m_playback->stop(audio->sampleRate(), audio->sampleCount())) {
-        m_lastRange = range; // the remembered position to the last end, again
+        m_lastRange = range;
         m_playTimer.start();
     } else {
         m_playTimer.stop();
@@ -1020,9 +918,6 @@ void AudioController::stopBoxPlayback()
     playbackStateChanged();
 }
 
-// Legacy AudioBox::OnAccelerator. AUDIO_PLAY and AUDIO_PLAY_LINE both run
-// OnPlaySelection; GetTimesSelection's karaoke flag (A5) is the event's id
-// == AUDIO_PLAY_LINE, and an AUDIO_PLAY_LINE_ALT key arrives as that id.
 bool AudioController::runHotkey(const QString &symbol)
 {
     using application::PlayMode;
@@ -1043,11 +938,10 @@ bool AudioController::runHotkey(const QString &symbol)
         {QStringLiteral("AUDIO_GOTO"), [](AudioController &c) { c.goToSelection(); }},
         {QStringLiteral("AUDIO_LEAD_IN"), [](AudioController &c) { c.leadIn(); }},
         {QStringLiteral("AUDIO_LEAD_OUT"), [](AudioController &c) { c.leadOut(); }},
-        {QStringLiteral("AUDIO_KARAOKE_SPLIT"), [](AudioController &c) { c.splitSyllableAtCursor(); }}, // KA1
-        {QStringLiteral("AUDIO_KARAOKE_KF"), [](AudioController &c) { c.switchLongSyllablesToKf(); }},  // KA1
+        {QStringLiteral("AUDIO_KARAOKE_SPLIT"), [](AudioController &c) { c.splitSyllableAtCursor(); }},
+        {QStringLiteral("AUDIO_KARAOKE_KF"), [](AudioController &c) { c.switchLongSyllablesToKf(); }},
         {QStringLiteral("AUDIO_SCROLL_LEFT"), [](AudioController &c) { c.scrollRight(); }},
         {QStringLiteral("AUDIO_SCROLL_RIGHT"), [](AudioController &c) { c.scrollLeft(); }},
-        // KA2
         {QStringLiteral("AUDIO_TAP"), [](AudioController &c) { c.toggleTap(); }},
         {QStringLiteral("AUDIO_SPEED_DOWN"), [](AudioController &c) { c.stepSpeed(-1); }},
         {QStringLiteral("AUDIO_SPEED_UP"), [](AudioController &c) { c.stepSpeed(1); }},
@@ -1055,8 +949,6 @@ bool AudioController::runHotkey(const QString &symbol)
     const auto found = actions.find(symbol);
     if (found == actions.end())
         return false;
-    // KA2-tap-to-time: while tapping the other audio hotkeys wait (their
-    // buttons too: see tapBusy); Stop stops tapping
     if (tapBusy()) {
         if (symbol == QLatin1String("AUDIO_STOP"))
             tapStop();
@@ -1069,28 +961,20 @@ bool AudioController::runHotkey(const QString &symbol)
     return true;
 }
 
-// The play buttons' and keys' handlers focus the display first (SetFocus).
 void AudioController::focusAndPlay(application::PlayMode mode)
 {
     emit focusRequested();
     play(mode);
 }
 
-// Legacy UpdateTimer: the cursor follows the player, the view scrolls to
-// keep it in sight; while the player is not playing the cursor is cleared
-// without a redraw.
 void AudioController::tick()
 {
     if (!m_playback)
         return m_playTimer.stop();
-    // KA2: the playing reached the audio's end when this tick stops it past
-    // the end, not when the player stopped without it (a failed output)
     const bool wasPlaying = playing();
     const std::int64_t at = wasPlaying ? m_player->position() : 0;
     const auto redrawn = m_playback->tick(m_view, m_scrollbarThickness);
     m_cursor = m_playback->cursorPainted() ? std::optional(m_playback->cursorX()) : std::nullopt;
-    // AV2: the video shows where the box is (legacy GetMSAtSample)
-    // inside the played range (not in the silence after its end)
     if (m_syncVideo && m_showVideoAt && playing())
         if (const auto *audio = m_box.audio(); audio && audio->sampleRate() > 0)
             if (const auto at = m_player->position(); at >= m_player->startPosition() && at <= m_player->endPosition())
@@ -1117,8 +1001,6 @@ void AudioController::playbackStateChanged()
     emit playingChanged();
 }
 
-// Legacy SetFile's unload: a playing player is stopped (Stop: a playing
-// video is paused instead), then the player is closed with the audio.
 void AudioController::releasePlayer()
 {
     if (playing())
@@ -1135,18 +1017,15 @@ void AudioController::releasePlayer()
     playbackStateChanged();
 }
 
-// Legacy UpdateImage: the samples per column first, then a new image.
 void AudioController::redraw()
 {
     if (m_view.hasSource())
         m_view.updateSamples();
-    m_timing.drawn(m_view, {m_startMs, m_endMs, m_needCommit}); // A3: DoUpdateImage's selStart, selEnd, selMark
+    m_timing.drawn(m_view, {m_startMs, m_endMs, m_needCommit});
     m_scrollbar = m_view.scrollbar();
     ++m_revision;
     emit displayChanged();
 }
-
-// A3: timing.
 
 application::AudioTimingOptions AudioController::timingOptions() const
 {
@@ -1169,8 +1048,6 @@ application::AudioSnapContext AudioController::snapContext() const
     return snap;
 }
 
-// Legacy CommitChanges: the times go into the editor's fields and, with
-// `save`, to the Line (EditBox::Send); then Update(moveToEnd).
 bool AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent,
                                     std::optional<std::u16string> karaokeText, const char *stepName, bool activeOnly,
                                     bool scroll)
@@ -1192,9 +1069,6 @@ bool AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, ap
     return committed;
 }
 
-// AudioBox::OnCommit: CommitChanges(true), to the next Line.
-// AU-next-line-on-commit: only while AUDIO_NEXT_LINE_ON_COMMIT is on (legacy
-// never read it); off, the Line stays active.
 void AudioController::commit()
 {
     if (tapBusy())
@@ -1203,9 +1077,6 @@ void AudioController::commit()
     commitChanges(!m_store || m_store->boolean("audio.nextLineOnCommit"), true, false);
 }
 
-// Legacy ChangeLine: nothing past either end; otherwise the shown Line
-// `delta` away becomes active (SubsGrid::SetActive, which runs SetDialogue
-// again for the same Line).
 void AudioController::changeLine(int delta)
 {
     const int count = static_cast<int>(m_lines.size());
@@ -1221,10 +1092,6 @@ void AudioController::changeLine(int delta)
         reselect();
 }
 
-// AudioBox::OnNext / OnPrev: the display takes the focus when the new Line
-// plays (A4's hook), and the new Line's selection plays.
-// AudioDisplay::Next: in karaoke mode the next syllable, past the last the
-// next Line's first.
 void AudioController::nextLine()
 {
     if (tapBusy())
@@ -1242,15 +1109,12 @@ void AudioController::nextLine()
     } else {
         changeLine(1);
     }
-    if (play && loaded()) { // GetTimesSelection, then Play
+    if (play && loaded()) {
         const auto [start, end] = timesSelection();
         playRange(start, end);
     }
 }
 
-// AudioDisplay::Prev: the previous syllable only when it plays (legacy's
-// `hasKara && play`), before the first the previous Line's last one;
-// otherwise the previous Line.
 void AudioController::previousLine()
 {
     if (tapBusy())
@@ -1276,8 +1140,6 @@ void AudioController::previousLine()
     }
 }
 
-// AU1: the range goToSelection brings into view, as timesSelection(true)
-// gives it: in Karaoke the current syllable's, else the Line's.
 int AudioController::lineOutOfView() const
 {
     if (!m_view.hasSource() || m_view.width() <= 0 || m_active < 0 || m_active >= static_cast<int>(m_lines.size()))
@@ -1293,8 +1155,6 @@ int AudioController::lineOutOfView() const
     return 0;
 }
 
-// AudioBox::OnGoto: MakeDialogueVisible(true).
-
 void AudioController::goToSelection()
 {
     emit focusRequested();
@@ -1304,8 +1164,6 @@ void AudioController::goToSelection()
     redraw();
 }
 
-// Legacy AddLead: the editor's fields take the times (UpdateTimeEditCtrls),
-// the selection is modified, and AUDIO_AUTO_COMMIT commits it.
 void AudioController::addLead(bool in, bool out)
 {
     if (tapBusy())
@@ -1317,21 +1175,13 @@ void AudioController::addLead(bool in, bool out)
     const int startBefore = m_startMs;
     std::tie(m_startMs, m_endMs) =
         application::legacyAddLead(m_startMs, m_endMs, in, out, options.leadIn, options.leadOut);
-    // KA1-lead-in-keeps-syllables: in Karaoke mode the syllables stay at
-    // their times and their text goes into the editor with the times (in
-    // Line mode the commit keeps the text's syllables in place); with several
-    // Lines selected each would take this one's text, so they keep theirs
-    // (legacy, as in Line mode; Codex)
     std::optional<std::u16string> karaokeText;
     const bool several = m_hooks.severalSelected && m_hooks.severalSelected();
-    // the syllables are read from the start the last commit wrote (Codex)
     const int committedBefore = m_hooks.fieldTime ? m_hooks.fieldTime(startBefore) : startBefore;
     if (m_hasKara && m_karaoke.count() && m_startMs != startBefore && !several) {
         m_karaoke.moveStart(committedBefore, committedStart());
         karaokeText = m_karaoke.text(committedStart());
     } else if (m_hasKara && m_karaoke.count() && m_startMs != startBefore) {
-        // the text's \k tags stay, now from the new start: the syllables
-        // move with it, as the text will read (Codex)
         const int by = committedStart() - committedBefore;
         for (auto &time : m_karaoke.times())
             time += by;
@@ -1344,7 +1194,7 @@ void AudioController::addLead(bool in, bool out)
                         .holding = m_timing.hold() != 0,
                         .adjacent = application::AudioAdjacent::None,
                         .karaokeText = std::move(karaokeText),
-                        .duration = false}); // UpdateTimeEditCtrls: Start and End
+                        .duration = false});
     syncCommittedStart();
     m_needCommit = true;
     if (options.autoCommit)
@@ -1352,8 +1202,6 @@ void AudioController::addLead(bool in, bool out)
     update();
 }
 
-// GLOBAL_SET_AUDIO_FROM_VIDEO / GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: SetMark,
-// then ChangePosition(time) (the time in the middle of the view).
 void AudioController::showTime(int ms, bool mark)
 {
     if (!m_view.hasSource() || m_view.samples() <= 0)
@@ -1368,9 +1216,6 @@ void AudioController::showTime(int ms, bool mark)
     redraw();
 }
 
-// KA1: a start drag cut short keeps the syllables at their times, as its
-// release does (Codex); one the right button carried them with commits them
-// as its release would, since a later Commit reads the Line's own tags
 void AudioController::lostCapture()
 {
     application::AudioKaraokeMouse karaoke;
@@ -1378,7 +1223,7 @@ void AudioController::lostCapture()
         karaoke.karaoke = &m_karaoke;
         karaoke.fieldTime = m_hooks.fieldTime;
     }
-    if (m_timing.lostCapture(m_startMs, karaoke)) // the active Line's alone, as commitKaraoke (Codex)
+    if (m_timing.lostCapture(m_startMs, karaoke))
         commitChanges(false, timingOptions().autoCommit, false, application::AudioAdjacent::None,
                       committedKaraokeText(), nullptr, true);
 }
@@ -1386,24 +1231,23 @@ void AudioController::lostCapture()
 application::AudioMouseResult AudioController::mouse(const application::AudioMouse &event)
 {
     if (m_box.state() != AudioBox::State::Ready || !m_view.hasSource())
-        return {}; // legacy: nothing without a player and provider
+        return {};
     application::AudioTiming::Selection selection{m_startMs, m_endMs, m_needCommit};
     const bool hadMark = m_timing.hasMark();
     const int mark = m_timing.markMs();
-    // A5: karaoke mode's syllables, with AUDIO_KARAOKE_MOVE_ON_CLICK read now
     application::AudioKaraokeMouse karaoke;
     if (m_hasKara) {
         karaoke.karaoke = &m_karaoke;
         karaoke.moveOnClick = m_store && m_store->boolean("audio.karaokeMoveOnClick");
         karaoke.measure = m_measure;
         karaoke.fieldTime = m_hooks.fieldTime;
-        karaoke.onsetsMs = snapOnsets(); // KA5
+        karaoke.onsetsMs = snapOnsets();
     }
     const auto hover = std::tuple(m_karaoke.hover, m_karaoke.character, m_karaoke.current);
     auto result =
         m_timing.mouse(event, m_view, selection, snapContext(), timingOptions(), m_scrollbarThickness, karaoke);
     if (std::tuple(m_karaoke.hover, m_karaoke.character, m_karaoke.current) != hover)
-        result.redraw = true; // the letter's mark and the current syllable are drawn
+        result.redraw = true;
     m_startMs = selection.startMs;
     m_endMs = selection.endMs;
     m_needCommit = selection.modified;
@@ -1411,20 +1255,16 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
         emit markChanged();
     if (result.seekVideoMs && m_hooks.seekVideo)
         m_hooks.seekVideo(*result.seekVideoMs);
-    // legacy: a boundary moved while not playing to the end moves the
-    // player's end (SetEndPosition, which stops a player already past it)
     if (result.playEnd && m_player && m_playback && !m_playback->playingToEnd()) {
         m_player->setEndPosition(*result.playEnd);
         playbackStateChanged();
     }
-    if (result.playSelection) { // the middle double click: Play(GetTimesSelection)
+    if (result.playSelection) {
         const auto [start, end] = timesSelection();
         playRange(start, end);
     }
-    if (result.playMs) // A5: the right click's syllable
+    if (result.playMs)
         playRange(result.playMs->first, result.playMs->second);
-    // legacy Commit(moveToEnd): in karaoke mode the syllables' text into the
-    // editor, then CommitChanges(false, AUDIO_AUTO_COMMIT, moveToEnd)
     if (result.commit)
         commitChanges(false, timingOptions().autoCommit, *result.commit, result.adjacent,
                       m_hasKara ? std::optional(committedKaraokeText()) : std::nullopt, nullptr, false,
@@ -1434,11 +1274,8 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
     return result;
 }
 
-// KA2 (#277): slowed playback and tap-to-time.
-
 namespace {
 
-// A syllable's or Line's text as the tap bar shows it: without its override blocks.
 QString visibleText(std::u16string_view text)
 {
     QString out;
@@ -1454,8 +1291,6 @@ QString visibleText(std::u16string_view text)
     return out.simplified();
 }
 
-// The calibration's beeps: 1 kHz, 40 ms with 5 ms fades, every
-// kCalibrationIntervalMs from 1 s, then 1 s of silence.
 constexpr int kBeepRate = 48000;
 constexpr int kFirstBeepMs = 1000;
 
@@ -1487,7 +1322,7 @@ std::shared_ptr<application::DisplayAudio> calibrationBeeps()
     return audio;
 }
 
-} // namespace
+}
 
 void AudioController::applySpeed()
 {
@@ -1507,7 +1342,6 @@ void AudioController::setSpeedPercent(int percent)
     emit boxControlsChanged();
 }
 
-// The preset nearest the speed, `delta` presets on.
 void AudioController::stepSpeed(int delta)
 {
     const int count = static_cast<int>(std::size(kSpeeds));
@@ -1547,10 +1381,6 @@ void AudioController::beginTapLine()
             stopBoxPlayback();
         m_tapState = TapReady;
     } else if (m_tapState == TapTapping && !m_tapAdvancing) {
-        // another Line chosen while tapping: its taps come from its own
-        // playing, from before it (the playing went on for the old Line),
-        // and the keys from the audio panel again once the grid's click has
-        // taken the focus
         playForTap(m_tap.resumeMs());
         QMetaObject::invokeMethod(this, [this] { if (m_tapState == TapTapping) emit focusRequested(); },
                                   Qt::QueuedConnection);
@@ -1588,7 +1418,6 @@ void AudioController::toggleTap()
 
 void AudioController::setTapHold(bool hold)
 {
-    // a held syllable is dropped (see KaraokeTap::setMode)
     m_tap.setMode(hold ? application::KaraokeTap::Mode::Hold : application::KaraokeTap::Mode::Press);
     if (m_store)
         m_store->set("audio.tapHold", hold);
@@ -1621,11 +1450,6 @@ std::string AudioController::onsetKey() const
            std::to_string(audio ? audio->sampleCount() : 0);
 }
 
-// KA5-onset-snap: the open audio's onsets, from this session's cache or found
-// by a worker over the loaded audio, while snapping is on in Karaoke mode.
-// A worker for audio since closed, or once snapping is off or Karaoke mode
-// left, is cancelled; one finished for the same file is kept for when it
-// opens again.
 void AudioController::findOnsets()
 {
     if (m_onsetsSerial != m_box.serial()) {
@@ -1634,7 +1458,7 @@ void AudioController::findOnsets()
         m_onsetsSerial = m_box.serial();
     }
     if (!m_onsetSnap || !m_hasKara)
-        return stopFindingOnsets(); // a detection no longer wanted stops
+        return stopFindingOnsets();
     if (!ready() || m_onsets || m_onsetCancel)
         return;
     const std::string key = onsetKey();
@@ -1652,7 +1476,7 @@ void AudioController::findOnsets()
         try {
             found = application::detectVocalOnsets(*audio, cancel.get());
         } catch (const std::exception &) {
-            found.emplace(); // out of memory: no onsets, rather than the editor ending
+            found.emplace();
         }
         if (!found)
             return;
@@ -1661,7 +1485,7 @@ void AudioController::findOnsets()
             this,
             [this, cancel, key, serial, onsets] {
                 if (cancel->load())
-                    return; // stopFindingOnsets has joined it
+                    return;
                 m_onsetWorker.join();
                 m_onsetCancel.reset();
                 m_onsetCache[key] = onsets;
@@ -1723,8 +1547,6 @@ bool AudioController::tapKey(int key, bool pressed, bool autoRepeat, bool shift)
         return true;
     }
     int songMs = tapSongNow();
-    // KA5-onset-snap: a press (a syllable's start, or Press mode's boundary)
-    // lands on the nearest onset from the last boundary on; a release stays
     if (pressed)
         songMs =
             application::snapToOnset(snapOnsets(), songMs, application::kOnsetSnapWindowMs, m_tap.lastBoundary());
@@ -1743,9 +1565,6 @@ void AudioController::tapFocusLost()
         tapKey(Qt::Key_Space, false, false, false);
 }
 
-// The finished Line committed as one step, the next Line made active
-// (reselect begins it); Press mode's press that ended the Line starts the
-// next one's first syllable.
 void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
 {
     const auto result = m_tap.result();
@@ -1762,13 +1581,10 @@ void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
     const int before = m_active;
     const bool hasNext = application::legacyKeyFromPosition(m_lines, m_active, 1) != m_active;
     m_tapAdvancing = true;
-    // KA1: the text for the start the commit writes, the taps kept
     const bool committed = commitChanges(hasNext, true, false, application::AudioAdjacent::None,
                                          committedKaraokeText(), "Tap timing", true);
     m_tapAdvancing = false;
     if (!committed) {
-        // refused (an edit the Line editor shows as not valid, a read-only
-        // file): the taps stay in the Line's fields, nothing goes on
         if (playing())
             stopBoxPlayback();
         m_tap.begin(application::KaraokeTap::targets(m_karaoke), m_startMs);
@@ -1791,10 +1607,6 @@ void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
     emit tapSpansChanged();
 }
 
-// The tap playing stopped by itself. At the audio's end a held syllable (the
-// last press's in Press mode) ends there, and it may finish the Line; a player
-// that stopped before it (a failed output) drops the held syllable as Esc
-// does. Then tapping stops.
 void AudioController::tapPlayingEnded(bool atEnd)
 {
     const auto *audio = m_box.audio();
@@ -1845,7 +1657,6 @@ void AudioController::tapUndo(bool line)
 {
     if (m_tapState == TapOff)
         return;
-    // the note names the earliest syllable taken back
     const int earliest = m_tap.tapped() > 0 ? m_tap.tapped() - 1 : m_tap.holding() ? 0 : -1;
     const QString name = earliest >= 0 ? visibleText(m_tap.syllables()[static_cast<std::size_t>(earliest)].text)
                                        : QString();
@@ -1973,4 +1784,4 @@ QVariantList AudioController::calibrationDelays() const
     return out;
 }
 
-} // namespace hikari::ui
+}

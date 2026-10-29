@@ -53,7 +53,7 @@ const Manifest &manifest()
     return loaded;
 }
 
-} // namespace
+}
 
 QString resourcePath(const QString &role)
 {
@@ -100,8 +100,6 @@ QByteArray tint(const QByteArray &svg, const QColor &colour, const QColor &accen
     const QByteArray base = colour.name(QColor::HexRgb).toLatin1();
     const QByteArray layer = accent.name(QColor::HexRgb).toLatin1();
     QByteArray out = svg;
-    // The accent group's strokes inherit its own stroke; its explicit paints
-    // are currentColor, which is the accent there.
     if (const auto start = out.indexOf(kAccentOpen); start >= 0) {
         const auto end = out.indexOf("</g>", start);
         if (end > start) {
@@ -127,7 +125,7 @@ QImage render(const QString &role, QSize pixels, const QColor &colour, const QCo
     return image;
 }
 
-} // namespace icons
+}
 
 IconTheme::IconTheme(QObject *parent) : QObject(parent)
 {
@@ -162,7 +160,6 @@ void IconTheme::setWindowIcon(QObject *object, const QString &role)
 
 void IconTheme::applyWindowIcon(QWindow *window, const QString &role) const
 {
-    // Drawn at each size a title bar or task switcher asks for, at once.
     QIcon icon;
     for (const int side : {16, 20, 24, 32, 40, 48, 64})
         icon.addPixmap(QPixmap::fromImage(icons::render(role, QSize(side, side), normal(), accent())));
@@ -274,5 +271,5 @@ void TintedSvg::paint(QPainter *painter)
     m_renderer->render(painter, QRectF(0, 0, width(), height()));
 }
 
-} // namespace hikari::ui
+}
 

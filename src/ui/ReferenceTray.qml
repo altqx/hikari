@@ -4,42 +4,25 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// R2: the reference tray (docs/ux/translation-comparison.md), standing in
-// for legacy's in-Grid subtitles preview (SubsGridPreview at 20d647c4). It
-// shows the protected reference's Lines, navigated on their own: clicks and
-// keys move the reference's selection, never its content. "Follow the
-// editing Line" links it one way to the editing target's active Line, with
-// the candidates counted, Previous/Next match and an empty no-match state
-// (legacy's nearest Line only on request). These controls sit in the
-// dock's header (D3); legacy's close mark is the header's "⋯" menu's Close
-// reference (Main.qml), so the header has no close button of its own.
-// The menu lists every occurrence of the editing Line in the other
-// Documents, as the preview's context menu did.
 FocusScope {
     id: tray
     required property var app
     required property var shell
     required property var hotkeys
-    // Main's root: the Grid's key routing (runGridHotkey).
     property var shellRoot: null
-    // The editing Grid: while comparing, the linked reference scrolls with it.
     property Item editingGrid: null
     readonly property alias grid: referenceGrid
 
-    // The Grid's fixed clipboard keys (TabPanel::SetAccels, SubsGridPreview's
-    // own Ctrl+C and Ctrl+V).
     function clipboardKey(event) {
         const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
         return mods === Qt.ControlModifier && (event.key === Qt.Key_C || event.key === Qt.Key_X || event.key === Qt.Key_V)
     }
 
-    // D3: the tray's toolbar, shown in its dock's header right of the tab
-    // (Docking.setPanelHeader; MuseScore's toolbar slot), not as a row of
-    // its own. Until the header takes it, it stays out of sight.
     readonly property Item toolbar: referenceBar
     RowLayout {
         id: referenceBar
         objectName: "referenceBar"
+        // MUST KILL: referenceBar shows only once the dock header reparents it
         visible: parent !== tray
         spacing: 2
         IconToolButton {
@@ -96,12 +79,10 @@ FocusScope {
             Layout.fillWidth: true
             Layout.fillHeight: true
             focus: true
-            Accessible.role: Accessible.Table // in the accessibility tree, as the Grid
+            Accessible.role: Accessible.Table
             accessibleName: qsTr("Reference lines (protected, read-only)")
             model: tray.shell.referenceLines
             GridHeaderToolTip { grid: referenceGrid }
-            // The tray's own navigation: every gesture is a request for the
-            // reference's selection (G1), never its content.
             onActiveLineRequested: id => tray.app.selectReferenceLine(id)
             onExtendRequested: rows => tray.app.extendReferenceSelection(rows)
             onLineClicked: (id, modifiers) => tray.app.clickReferenceLine(id, modifiers)
@@ -112,12 +93,6 @@ FocusScope {
                 occurrences.model = tray.app.referenceOccurrences()
                 occurrenceMenu.popup(referenceGrid, x, y)
             }
-            // Ctrl+C copies the reference's selected Lines (PREVIEW_COPY);
-            // Ctrl+V pasted into the previewed grid (PREVIEW_PASTE) and is
-            // refused, as the reference is protected. Ctrl+X and the Grid's
-            // bindings reached the grid the preview was drawn on (its
-            // accelerator table, TabPanel::SetAccels, TabPanel.cpp:100-200):
-            // they act on the editing target, never on the reference.
             Keys.onShortcutOverride: event => {
                 event.accepted = tray.clipboardKey(event) || tray.hotkeys.actionFor(1, event.key, event.modifiers) !== ""
             }
@@ -141,13 +116,10 @@ FocusScope {
         }
     }
 
-    // A seek made a reference Line active: bring it into view (MakeVisible).
     Connections {
         target: tray.shell
         function onReferenceLineShown(id) { referenceGrid.makeLineVisible(id) }
     }
-    // Comparing with the linked reference: its first row follows the editing
-    // Grid's (ShowSecondComparedLine with setViaScroll).
     Connections {
         target: tray.editingGrid
         enabled: tray.editingGrid !== null && tray.shell.referenceLinked
@@ -158,8 +130,6 @@ FocusScope {
         }
     }
 
-    // SubsGridPreview::ContextMenu: "SubsName (lineRangeStart lineRangeLen)"
-    // for each occurrence, the one shown checked.
     ShellMenu {
         id: occurrenceMenu
         objectName: "referenceOccurrenceMenu"
@@ -173,7 +143,7 @@ FocusScope {
                 text: modelData.text
                 checkable: true
                 checked: modelData.checked
-                keepsMenuOpen: false // ITEM_RADIO (SubsGridPreview.cpp:947)
+                keepsMenuOpen: false
                 onTriggered: tray.app.chooseReferenceOccurrence(index)
             }
             onObjectAdded: (index, object) => occurrenceMenu.insertItem(index, object)

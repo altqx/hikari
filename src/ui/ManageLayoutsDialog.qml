@@ -5,30 +5,17 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// WS3 (#217): Manage layouts…: the saved layouts, in the order they were
-// saved, renamed or deleted at once (every tab can use them; a tab whose
-// arrangement started from one keeps the arrangement under the new name, or
-// its preset's once the layout is deleted). A layout this version cannot use
-// says why and can be deleted.
-// PU7 (#309): a compact window on DG1's frame (opened from menus). The
-// current row shows Rename and Delete as icon buttons; Rename (or F2) turns
-// the row into the name field (Enter renames, Esc puts the name back, a
-// refused name says why under the list), and Delete (or the Delete key)
-// asks first in PK1's message box (PU7-layout-delete-asks).
 DialogWindow {
     id: dialog
     objectName: "manageLayoutsDialog"
-    required property var layouts // WorkspaceLayoutController
+    required property var layouts
     title: qsTr("Manage layouts")
     dialogId: "manageLayouts"
-    // Modal to the main window, as the Dialog was: a rename or delete can't
-    // race a layout chosen meanwhile.
     modal: true
     initialFocus: list
     defaultButton: closeButton
     readonly property var rows: layouts.savedLayouts
     readonly property var current: list.currentIndex >= 0 && list.currentIndex < rows.length ? rows[list.currentIndex] : null
-    // The name being typed in the current row, while renaming.
     property bool renaming: false
     property string newName: ""
     readonly property string problem: renaming && current ? layouts.layoutNameProblem(newName, current.name) : ""
@@ -109,8 +96,6 @@ DialogWindow {
             highlightMoveDuration: 0
             Accessible.role: Accessible.List
             Accessible.name: qsTr("Saved layouts")
-            // Both are global hotkeys' keys too (F2: Select line at
-            // current video position): the list takes them first.
             Keys.onShortcutOverride: event => event.accepted = event.modifiers === Qt.NoModifier
                                                                && (event.key === Qt.Key_Delete || event.key === Qt.Key_F2)
             Keys.onPressed: event => {
@@ -127,14 +112,12 @@ DialogWindow {
                 required property var modelData
                 required property int index
                 readonly property bool editing: highlighted && dialog.renaming
-                // The list gives its current row the focus: the field keeps
-                // none of it once the row is a row again (Esc closes then).
                 onEditingChanged: if (!editing) nameField.focus = false
                 width: ListView.view.width
                 height: modelData.usable ? 32 : 44
                 highlighted: ListView.isCurrentItem
                 text: modelData.name
-                focusPolicy: Qt.NoFocus // the list holds the focus
+                focusPolicy: Qt.NoFocus
                 onClicked: list.currentIndex = index
                 onDoubleClicked: dialog.startRename()
                 Accessible.role: Accessible.ListItem
@@ -172,13 +155,13 @@ DialogWindow {
                         objectName: row.editing ? "manageLayoutsName" : ""
                         visible: row.editing
                         text: dialog.newName
-                        maximumLength: 64 // WorkspaceLayoutController::kMaximumNameLength
+                        // MUST KILL: 64 duplicates WorkspaceLayoutController::kMaximumNameLength
+                        maximumLength: 64
                         Layout.fillWidth: true
                         Accessible.name: qsTr("Name")
                         Accessible.description: dialog.problem
                         onVisibleChanged: if (visible) { forceActiveFocus(); selectAll() }
                         onTextEdited: dialog.newName = text
-                        // Enter renames and Esc puts the name back, before the window's keys.
                         Keys.onReturnPressed: event => { event.accepted = true; dialog.rename() }
                         Keys.onEnterPressed: event => { event.accepted = true; dialog.rename() }
                         Keys.onEscapePressed: event => { event.accepted = true; dialog.endRename() }

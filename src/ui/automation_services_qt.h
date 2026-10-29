@@ -1,9 +1,5 @@
 #pragma once
 
-// Qt adapters for automation host services (L3): the system clipboard, text
-// measurement for text_extents, and a fixed QML file picker. All run on the
-// GUI thread; the picker answers asynchronously.
-
 #include "hikari/application/automation_services.h"
 
 #include <QObject>
@@ -23,22 +19,16 @@ public:
     bool setText(const std::string &text) override;
 };
 
-// Legacy GetLineTextExtents: GDI on Windows (the legacy code), elsewhere the
-// font legacy's wx made for the style's size, a line that high (wxFont of a
-// pixel height). Results are scaled by the style's ScaleX/ScaleY; Spacing
-// adds per character. Used on the GUI thread only (QFont, and the cache).
 class QtTextMeasurePort : public application::TextMeasurePort {
 public:
     std::optional<application::TextExtents> measure(const std::vector<std::string> &style,
                                                     const std::string &text) override;
 
 private:
-    // The point size found for a resolved face (family and style), the
-    // requested bold and italic, and a pixel height (the search in measure).
     std::map<std::tuple<std::string, std::string, bool, bool, int>, int> m_points;
 };
 
-// The legacy wx wildcard ("Label|*.a;*.b|...") as Qt name filters.
+// A wx wildcard ("Label|*.a;*.b|...") from a script, as Qt name filters.
 QStringList nameFiltersOf(const std::string &wildcard);
 
 class AutomationFilePickerController : public QObject, public application::FilePickerPort {
@@ -69,7 +59,6 @@ public:
     QUrl file() const { return m_file; }
     QStringList nameFilters() const { return m_filters; }
 
-    // From QML: the chosen files, or none when cancelled.
     Q_INVOKABLE void accept(const QList<QUrl> &files);
     Q_INVOKABLE void reject();
 
@@ -84,4 +73,4 @@ private:
     QStringList m_filters;
 };
 
-} // namespace hikari::ui
+}

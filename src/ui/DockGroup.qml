@@ -2,21 +2,13 @@ import QtQuick
 import Hikari.Ui
 import com.kdab.dockwidgets 2.0 as KDDW
 
-// D3: a docked or floating panel group (the engine's Group.qml without its
-// MDI resize handles), after MuseScore's DockFrame.qml
-// (docs/research/musescore-docking.md §1): one header row (DockTabBar.qml,
-// the title bar of a lone panel or the tabs), then the panel. The group is
-// drawn in the panel body's colour, with no frame of its own: the 1-pixel
-// separators between groups are the boundaries. Below a tab bar the content
-// starts 12 lower (the header's contentGap and the Panel's own margin).
-// Loaded through the adapter's view factory (ui/docking.cpp).
 Rectangle {
     id: root
     objectName: "dockGroup"
 
     property KDDW.GroupView groupCpp
     readonly property QtObject titleBarCpp: groupCpp ? groupCpp.titleBar : null
-    // Read by the engine: the group's height besides its panel.
+    // Read by KDDW: the group's height besides its panel.
     readonly property int nonContentsHeight: (titleBar.item && titleBar.item.visible ? titleBar.item.heightWhenVisible : 0)
                                              + (tabbar.item && tabbar.item.visible ? tabbar.item.implicitHeight : 0)
                                              + contentGap
@@ -27,7 +19,7 @@ Rectangle {
     readonly property bool tabsAtTop: true
 
     anchors.fill: parent
-    color: Theme.field // the panel body (Panel draws the palette's base)
+    color: Theme.field
 
     onGroupCppChanged: {
         if (groupCpp)
@@ -38,8 +30,6 @@ Rectangle {
             groupCpp.geometryUpdated()
     }
 
-    // The engine's title bar: hidden while the tabs show, which with the
-    // adapter's flags is always (DockTabBar.qml draws a lone panel's).
     Loader {
         id: titleBar
         readonly property QtObject titleBarCpp: root.titleBarCpp

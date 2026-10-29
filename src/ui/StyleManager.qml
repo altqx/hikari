@@ -1,11 +1,3 @@
-// SY1 (#247): the Style manager and its Style editor in one window on DG1's
-// frame (legacy StyleStore with StyleChange), resizable, modeless, its place
-// and size kept. The sidebar has the filter, the catalog with its Styles
-// above and this file's Styles below (legacy's order), the copies between
-// them and a strip of icon tools over each list. The editor is always
-// beside the lists, on the selected Styles, under its pinned preview. One
-// footer: Revert at the leading edge, then OK, Cancel and Apply.
-// List actions (copy, delete, move, sort) take effect at once, as before.
 pragma Translator: "HikariSub.Styles"
 import QtQuick
 import QtQuick.Controls
@@ -16,13 +8,11 @@ import Hikari.Ui
 DialogWindow {
     id: manager
     objectName: "styleManager"
-    // K1: the set's styles icon as the window's (legacy stylestore SetIcon).
     Component.onCompleted: IconTheme.setWindowIcon(manager, "styles")
-    required property var styles   // StyleManagerController
-    required property var catalogs // Y6: FontCatalogsController
+    required property var styles
+    required property var catalogs
     required property ColourPickerController colourPicker
     required property var app
-    // PK1's toasts (Main.qml's root.notices), for Delete unused styles.
     property var notices: null
     title: qsTr("Style manager")
     dialogId: "styleManager"
@@ -37,36 +27,23 @@ DialogWindow {
     property var assSelected: []
     property bool editingStore: false
     property bool editing: false
-    // The values the edited Style had when the editor opened on it (what
-    // Revert and each field's reset put back).
     property var values: ({})
-    // The fields that differ between the selected Styles ("Multiple
-    // values"), and those the editor opened with (Revert).
     property var mixed: []
     property var openedMixed: []
-    // The "Multiple values" fields set by hand: written to every Style,
-    // even at the first one's value.
     property var resolved: []
-    // New or Duplicate: a Style not in its list until Apply or OK.
     property bool pendingNew: false
-    // The fields edited since the editor opened ({key: true}).
     property var changedKeys: ({})
     readonly property bool dirty: editing && (pendingNew || Object.keys(changedKeys).length > 0)
     readonly property var editedRows: editingStore ? storeSelected : assSelected
     readonly property bool multi: editing && !pendingNew && editedRows.length > 1
     property var storeRows: []
     property var assRows: []
-    // The catalog storeRows came from.
     property string listedCatalog: ""
-    // The manager's own change of a list (a commit, a delete): it sets the
-    // selections itself.
+    // MUST KILL: ownChange is set by own() because the controller emits its change before the action returns
     property bool ownChange: false
-    // Another tab's question about an edit not applied is open: the lists
-    // and the edit stay on the file it was made in until it is answered.
     property bool awaitingSwitch: false
     readonly property string filterText: filterField.text.trim().toLowerCase()
 
-    // --- Opening ----------------------------------------------------------
     function showFor(styleName) {
         const go = () => {
             refresh()
@@ -82,9 +59,6 @@ DialogWindow {
             go()
         open()
     }
-    // LE6 (#231): the Line editor's Edit style: the editor on the Line's
-    // Style, its name field focused, whatever the window showed; a Style
-    // the Document lacks is offered for creation, from its Default.
     function editStyle(styleName) {
         const go = () => {
             refresh()
@@ -96,12 +70,10 @@ DialogWindow {
             }
         }
         if (shown()) {
-            open() // raised
+            open()
             guard(go)
             return
         }
-        // Closed: open on the file's Styles; a missing Style is asked about
-        // over them.
         refresh()
         const row = rowNamed(false, styleName)
         if (row < 0)
@@ -109,9 +81,6 @@ DialogWindow {
         open()
         go()
     }
-    // TP1 (#274): the Styles panel's rows are the Document's, a name
-    // possibly twice. The window on `row` (-1: the first the filter shows);
-    // an edit in progress keeps both lists' selections.
     function showAt(row) {
         if (!editing) {
             refresh()
@@ -119,9 +88,6 @@ DialogWindow {
         }
         open()
     }
-    // The Styles panel's New, Edit, Duplicate and Copy to the catalog, as
-    // the window's own buttons do them on the file's list (an edit not
-    // applied is asked about first).
     function onDocumentRow(row, then) {
         if (!shown())
             refresh()
@@ -145,7 +111,7 @@ DialogWindow {
     function copyStyleToCatalog(row) { onDocumentRow(row, () => manager.copyToCatalog()) }
     function editDocumentStyle(row) {
         choose(false, [row])
-        requestActivate() // also after a question's own window
+        requestActivate()
         nameField.forceActiveFocus()
         nameField.selectAll()
     }
@@ -172,17 +138,15 @@ DialogWindow {
         editDocumentStyle(rowNamed(false, styleName))
     }
     function closeManager() { close() }
-    // Open, or hidden only while its frame is made again (Wayland,
-    // MainWindowFrame::apply), which is no closing.
+    // On Wayland the window hides while its frame is remade; that is no closing.
     function shown() { return visible || WindowFrame.remaking(manager) }
     onVisibleChanged: {
         if (shown())
             return
-        styles.saveCatalog() // OnClose saves the store
+        styles.saveCatalog()
         endEditing()
     }
 
-    // --- The lists ----------------------------------------------------------
     function refresh() {
         styles.refreshLists()
         reloadRows()
@@ -192,9 +156,6 @@ DialogWindow {
         assRows = styles.styleRows(false)
         listedCatalog = styles.catalog
     }
-    // The manager's own change of a list (a commit, a move, a copy): its
-    // rows are set by the action itself, not followed by name (a name may
-    // repeat, and the list emits its change before the action returns).
     function own(action) {
         ownChange = true
         try {
@@ -203,9 +164,6 @@ DialogWindow {
             ownChange = false
         }
     }
-    // A list's rows after the manager changed it: selected, and the editor
-    // on them where it was on that list (an edit not applied stays, pinned
-    // to its Style's row now).
     function followRows(store, rows) {
         if (store)
             storeSelected = rows
@@ -221,10 +179,6 @@ DialogWindow {
             openOn(store, rows)
     }
     function sameRows(a, b) { return a.length === b.length && a.every((r, i) => r === b[i]) }
-    // The lists again after a change made elsewhere (an undo, a move,
-    // Settings' catalog): the selections follow their Styles by name (a
-    // repeated name's by its copy) and the editor with them; an edit not
-    // applied stays on its Style while it is there.
     function reloadFollowing() {
         if (awaitingSwitch)
             return
@@ -262,8 +216,6 @@ DialogWindow {
             dropped(values.name, qsTr("The style is gone."))
         const other = store ? assFound : storeFound
         if (found.length > 0 && sameRows(found, editedRows)) {
-            // Opened again only when its values moved (an edit, say, at
-            // each Line typed would cost a preview).
             const map = styles.beginEdit(store, found[0])
             const fields = found.length > 1 ? styles.mixedFields(store, found) : []
             if (Object.keys(map).some(k => !same(map[k], values[k])) || !sameRows(fields.slice().sort(), mixed.slice().sort()))
@@ -276,13 +228,10 @@ DialogWindow {
         else
             storeSelected = other
     }
-    // An edit not applied over its Style changed elsewhere (an undo): the
-    // fields not edited take the Style's values now, the edited ones stay,
-    // so Apply writes only what was edited over them.
     function rebase(store, row, rows) {
         const edits = editor.values()
         const kept = Object.keys(changedKeys)
-        const map = styles.beginEdit(store, row) // pinned again, at its values now
+        const map = styles.beginEdit(store, row)
         if (map.name === undefined)
             return
         const fields = rows.length > 1 ? styles.mixedFields(store, rows) : []
@@ -291,8 +240,6 @@ DialogWindow {
         values = map
         openedMixed = fields
         mixed = fields.filter(k => kept.indexOf(k) < 0)
-        // A field edited that the Styles now differ in is set by hand (a
-        // "Multiple values" field): written to each.
         resolved = kept.filter(k => fields.indexOf(k) >= 0)
         const v = Object.assign({}, map)
         for (const k of kept)
@@ -301,16 +248,13 @@ DialogWindow {
         refreshChanges()
         updatePreview()
     }
-    // Settings loaded another catalog under an edit of a catalog Style: the
-    // edit is asked about (Apply writes it to its own catalog), then the
-    // catalog shown is.
     function catalogMoved() {
         if (!dirty) {
             catalogShown()
             return
         }
         if (messages.asking)
-            return // answered first; the catalog is followed then
+            return
         ask({
             title: qsTr("Edit style"),
             text: qsTr("Apply the changes to “%1”?").arg(pendingNew ? nameField.text : values.name),
@@ -329,9 +273,6 @@ DialogWindow {
         const rows = store ? storeRows : assRows
         return rows.findIndex(r => r.name === name)
     }
-    // Each of `rows` as its name and its copy of the name (0 for the first
-    // "Dup", 1 for the second), to be found again after a change; in one
-    // pass, as rowsOfKeys: a file may hold thousands of Styles.
     function keysOf(store, rows) {
         const list = store ? storeRows : assRows
         const wanted = Object.create(null)
@@ -347,8 +288,6 @@ DialogWindow {
         }
         return rows.filter(r => at[r] !== undefined).map(r => at[r])
     }
-    // The rows of `keys` (keysOf) now, each once: a name's copy at its
-    // place, or its last copy when the name has fewer now.
     function rowsOfKeys(store, keys) {
         const list = store ? storeRows : assRows
         const at = Object.create(null)
@@ -368,7 +307,6 @@ DialogWindow {
         }
         return out
     }
-    // `rows` the filter shows; if none, the shown row nearest the first.
     function shownOf(store, rows) {
         const shown = (store ? storeShown : assShown).filter(s => !s.pending).map(s => s.row)
         if (shown.length === 0 || rows.length === 0)
@@ -383,8 +321,6 @@ DialogWindow {
         return [after !== undefined ? after : shown[shown.length - 1]]
     }
     function sorted(list) { return list.slice().sort((a, b) => a - b) }
-    // Selects `rows` in one list (the other's selection goes) and opens the
-    // editor on them.
     function choose(store, rows) {
         rows = sorted(rows)
         storeSelected = store ? rows : []
@@ -405,8 +341,6 @@ DialogWindow {
         }
         beginMixed(styles.beginEdit(store, rows[0]), store, rows.length > 1 ? styles.mixedFields(store, rows) : [])
     }
-    // A pick in a list, a New, a tab change: an edit not applied is asked
-    // about first (Apply, Discard or Cancel), then `next` runs.
     function guard(next) {
         if (!dirty) {
             next()
@@ -422,15 +356,13 @@ DialogWindow {
                       { id: "apply", text: qsTr("Apply"), role: "accept", isDefault: true },
                       { id: "cancel", text: qsTr("Cancel"), role: "reject" }]
         }, id => {
-            // The lists changed under the question (the main window showed
-            // another tab, say): a Cancel; the switch asks its own.
             if (manager.styles.listsKey() !== key)
                 return
             if (id === "apply") {
                 if (manager.commit(false))
                     next()
             } else if (id === "discard") {
-                manager.revert() // the selection stays open, as it was
+                manager.revert()
                 next()
             }
         })
@@ -478,19 +410,14 @@ DialogWindow {
             return
         followRows(store, own(() => styles.moveStyles(store, rows, kind)))
     }
-    // The selection follows its Styles by name and copy (the sort is
-    // stable: a repeated name's Styles keep their order).
     function sortList(store) {
         const keys = keysOf(store, store ? storeSelected : assSelected)
         own(() => styles.sortStyles(store))
         followRows(store, sorted(rowsOfKeys(store, keys)))
     }
-    // SY1-clean-toast: Delete unused styles (the file's ⋯ menu and the
-    // Subtitles menu's command): a toast with the Styles deleted and the
-    // legacy report in the Log, where StyleStore showed a message.
     function deleteUnused() {
         const done = () => {
-            const keys = keysOf(false, assSelected) // a name's copies go or stay together
+            const keys = keysOf(false, assSelected)
             const result = own(() => styles.deleteUnusedStyles())
             if (result.deleted === undefined)
                 return
@@ -514,11 +441,7 @@ DialogWindow {
             done()
     }
 
-    // --- Copies -------------------------------------------------------------
-    // PK1's clash review (it replaces legacy's chained "Style named \"%s\"
-    // already exists. Replace?" Yes to all / Yes / No / Cancel). The clashes
-    // that are the same both sides are left out and counted; Cancel copies
-    // nothing.
+    // MUST KILL: fieldNames decodes the controller's field bits by magic numbers
     function fieldNames(fields) {
         const groups = [
             [1, qsTr("font")], [2, qsTr("size")], [4 | 8 | 16 | 32, qsTr("bold, italic, underline or strikeout")],
@@ -529,9 +452,6 @@ DialogWindow {
         const text = names.join(", ")
         return text.length > 0 ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : ""
     }
-    // `clashes` from the controller (transferClashes, fileClashes); `total`
-    // the Styles copied; `into` names where they go. done(choices), only
-    // while the lists are as they were at `key` (listsKey: by default now).
     function reviewClashes(clashes, total, into, done, key) {
         const since = key !== undefined ? key : styles.listsKey()
         const listed = clashes.filter(c => !c.same)
@@ -552,15 +472,12 @@ DialogWindow {
             if (!results)
                 return
             if (manager.styles.listsKey() !== since) {
-                // The rows and the clashes were of the lists then.
                 manager.showError(qsTr("Copy styles"), qsTr("The styles changed while this was open. Nothing was copied."))
                 return
             }
             done(results)
         })
     }
-    // Add to file, Add to catalog, Add to all open files: the selection's
-    // Styles; the copies are selected in the list they went to.
     function copyToFile(all) {
         guard(() => {
             const rows = storeSelected
@@ -580,7 +497,6 @@ DialogWindow {
             })
         })
     }
-    // PK1: made at the first clash (a window made at the start costs it).
     Loader {
         id: clashReviewLoader
         active: false
@@ -590,8 +506,6 @@ DialogWindow {
             settings: manager.app.settings
         }
     }
-    // NT1's message host (PK1's box, made at the first): the questions and
-    // the errors, one after another.
     function ask(options, done) { messages.ask(options, done) }
     function showError(title, text) {
         ask({ title: title, text: text, severity: "error" })
@@ -602,15 +516,12 @@ DialogWindow {
         settings: manager.app.settings
     }
 
-    // --- Catalogs -----------------------------------------------------------
     function chooseCatalog(name) {
         guard(() => {
             if (manager.own(() => styles.chooseCatalog(name)))
                 manager.catalogShown()
         })
     }
-    // Another catalog's Styles: its first selected when the editor was on
-    // the catalog.
     function catalogShown() {
         if (editing && editingStore)
             choose(true, shownOf(true, [0]))
@@ -644,9 +555,7 @@ DialogWindow {
         })
     }
 
-    // --- The editor ---------------------------------------------------------
     function beginEditing(map, store) { beginMixed(map, store, []) }
-    // `mixedKeys`: the fields that differ in a multiple selection.
     function beginMixed(map, store, mixedKeys) {
         if (map.name === undefined)
             return
@@ -657,12 +566,12 @@ DialogWindow {
         openedMixed = mixed
         resolved = []
         renameBox.checked = true
-        // Y6: StyleChange makes its font list once (ChangeCatalog in its constructor).
         if (!fontCatalogBar.made) {
             fontCatalogBar.made = true
             fontCatalogBar.reset()
         }
-        editing = true // (before the fields: a multiple selection leaves the name empty)
+        // MUST KILL: editing must be set before editor.load(): a multiple selection leaves the name empty
+        editing = true
         editor.load(map)
         refreshChanges()
         updatePreview()
@@ -675,7 +584,6 @@ DialogWindow {
         styles.endEdit()
     }
     function isMixed(key) { return mixed.indexOf(key) >= 0 }
-    // A field edited by hand: no longer "Multiple values".
     function edited(key) {
         if (isMixed(key)) {
             mixed = mixed.filter(k => k !== key)
@@ -699,11 +607,10 @@ DialogWindow {
         for (const key in v)
             if (!same(v[key], values[key]))
                 out[key] = true
-        for (const key of resolved) // set by hand, maybe to the first Style's value
+        for (const key of resolved)
             out[key] = true
         changedKeys = out
     }
-    // A field set by hand back to "Multiple values".
     function unresolve(key) {
         if (resolved.indexOf(key) < 0)
             return
@@ -711,7 +618,6 @@ DialogWindow {
         if (!isMixed(key))
             mixed = mixed.concat([key])
     }
-    // A label's reset: its fields' values when the editor opened.
     function resetFields(keys) {
         const v = editor.values()
         for (const key of keys) {
@@ -733,10 +639,6 @@ DialogWindow {
         refreshChanges()
         updatePreview()
     }
-    // SY3: the sample line follows every field at once; while the font list
-    // is open it shows the family under the keyboard or the pointer.
-    // SV1: drawn again on a screen of another scale, or when the setting
-    // changes (Window.devicePixelRatio, Qt 6.11).
     readonly property real previewPixelRatio: preview.Window.window ? preview.Window.window.devicePixelRatio : 1
     onPreviewPixelRatioChanged: updatePreview()
     Connections {
@@ -759,7 +661,6 @@ DialogWindow {
         const name = nameField.text
         if (name.trim().length === 0)
             return qsTr("A style needs a name.")
-        // Its own name kept is no clash, a repeated one too (commitStyle).
         if (!pendingNew && name === values.name)
             return ""
         const rows = editingStore ? storeRows : assRows
@@ -772,10 +673,6 @@ DialogWindow {
     }
     readonly property int editedLines: !editingStore && editedRows.length === 1 && editedRows[0] < assRows.length
                                        ? assRows[editedRows[0]].lines : 0
-    // ChangeStyle. A multiple selection writes the fields changed to each
-    // (SY1-multi-edit); a renamed file Style is renamed in its Lines as the
-    // check box says (SY1-rename-inline). Apply keeps the editor on the
-    // Styles; OK closes the window. False when refused.
     function commit(close) {
         if (!editing) {
             if (close)
@@ -805,15 +702,11 @@ DialogWindow {
         choose(store, pendingNew ? [rowNamed(store, v.name)] : rows)
         return true
     }
-    // The editor's values to the controller: "" or the refusal.
     function commitValues(v) {
         const many = multi
         return own(() => styles.commitEdit(v, many ? editedRows : [], many, renameBox.visible && renameBox.checked,
                                            many ? resolved : []))
     }
-    // Apply as the lists move on (another tab, another catalog): a name
-    // refused is put back and the other changes go in; what can't be
-    // applied is said in a toast.
     function applyAway() {
         const name = pendingNew ? nameField.text : values.name
         if (!styles.editOpen()) {
@@ -836,7 +729,6 @@ DialogWindow {
         if (problem !== "")
             dropped(name, problem)
     }
-    // An edit not applied, and why.
     function dropped(name, why) {
         if (notices)
             notices.post("warning", qsTr("Changes to “%1” not applied").arg(name), why)
@@ -855,40 +747,32 @@ DialogWindow {
             fontField.forceActiveFocus()
     }
 
-    // The lists follow the controller, and the editing target: an edit, an
-    // undo, or another tab (whose Styles the file list shows then; an edit
-    // not applied is asked about, and applied to the file it was made in).
     Connections {
         target: manager.styles
         function onChanged() { manager.reloadFollowing() }
         function onTargetEdited(switched) {
             if (!manager.shown() || manager.awaitingSwitch)
-                return // (a question open: its answer shows the tab then)
+                return
             if (!switched) {
                 manager.reloadFollowing()
                 return
             }
-            // The new tab may name another catalog (Last Style Storage).
             const catalogMoves = manager.styles.followedCatalog() !== manager.styles.catalog
             const onStore = manager.editing && manager.editingStore
             const onFile = manager.editing && !manager.editingStore
             const shown = () => {
                 manager.refresh()
                 if (onFile)
-                    manager.choose(false, manager.shownOf(false, [0])) // the first the filter shows
+                    manager.choose(false, manager.shownOf(false, [0]))
                 else if (onStore && catalogMoves)
                     manager.choose(true, manager.shownOf(true, [0]))
                 else
-                    manager.assSelected = [] // a catalog Style stays open
+                    manager.assSelected = []
             }
-            // An edit not applied that the switch would leave on another
-            // file or catalog is asked about first; the lists stay where the
-            // edit was made until answered.
             if (!manager.dirty || (onStore && !catalogMoves)) {
                 shown()
                 return
             }
-            // The file it was made in is closed: nothing to ask.
             if (onFile && !manager.styles.editOpen()) {
                 manager.dropped(manager.pendingNew ? nameField.text : manager.values.name, qsTr("Its file was closed."))
                 manager.revert()
@@ -905,8 +789,6 @@ DialogWindow {
                 choices: [{ id: "discard", text: qsTr("Discard"), role: "destructive" },
                           { id: "apply", text: qsTr("Apply"), role: "accept", isDefault: true }]
             }, id => {
-                // Only Apply writes it: Discard, or the question closed,
-                // drops the edit.
                 if (id === "apply")
                     manager.applyAway()
                 manager.awaitingSwitch = false
@@ -916,18 +798,15 @@ DialogWindow {
         }
     }
 
-    // --- Keys ---------------------------------------------------------------
     Shortcut {
         sequences: [StandardKey.Find]
         onActivated: { filterField.forceActiveFocus(); filterField.selectAll() }
     }
-    // F6: the catalog list, this file's list, the editor, in turn; Shift+F6
-    // the other way.
     function cycleRegions(step) {
         const regions = [storeList, assList, null].filter(r => r === null || r.enabled)
         let at = regions.findIndex(r => r !== null && r.activeFocus)
         if (at < 0)
-            at = regions.length - 1 // the editor, or anywhere else
+            at = regions.length - 1
         const next = regions[(at + step + regions.length) % regions.length]
         if (next)
             next.forceActiveFocus(Qt.TabFocusReason)
@@ -943,15 +822,11 @@ DialogWindow {
         onActivated: manager.cycleRegions(-1)
     }
 
-    // --- Parts ----------------------------------------------------------------
-    // A section of the editor: its title in bold, the fields under it.
     component SectionTitle: Label {
         font: manager.fontAt(13, Font.DemiBold)
         Layout.columnSpan: 4
         Layout.topMargin: 12
     }
-    // A field's label, with a reset button while the field (or one of its
-    // `keys`) differs from the value it opened with.
     component FieldLabel: RowLayout {
         id: fieldLabel
         property string text
@@ -983,8 +858,6 @@ DialogWindow {
             onClicked: manager.resetFields(fieldLabel.changed)
         }
     }
-    // A field of the editor, "Multiple values" while the Styles differ, a
-    // unit (%, °) at its end.
     component StyleField: TextField {
         id: field
         property string key
@@ -1005,8 +878,6 @@ DialogWindow {
             anchors.verticalCenter: parent.verticalCenter
         }
     }
-    // Bold, Italic, Underline or Strikethrough: a toggle, with a dash under
-    // its icon while the Styles differ.
     component EmphasisToggle: IconToolButton {
         id: toggle
         property string key
@@ -1027,8 +898,6 @@ DialogWindow {
             anchors.bottomMargin: 3
         }
     }
-    // A Style's colour: its swatch (the hex in a chip; hatched while the
-    // Styles differ) and its transparency (0-255).
     component ColourField: RowLayout {
         id: colourField
         required property int number
@@ -1110,7 +979,6 @@ DialogWindow {
                 }
             }
             onClicked: manager.colourClick(colourField.number, true)
-            // Y7: the right click (wxEVT_RIGHT_UP, StyleChange.cpp:144-151).
             TapHandler {
                 acceptedButtons: Qt.RightButton
                 onTapped: manager.colourClick(colourField.number, false)
@@ -1119,7 +987,6 @@ DialogWindow {
         TextField {
             id: alphaField
             objectName: "styleAlpha" + colourField.number
-            // The transparency as a number (the old spin box's value).
             property int value: 0
             signal valueModified()
             Layout.preferredWidth: 46
@@ -1139,11 +1006,6 @@ DialogWindow {
             }
         }
     }
-    // A list of Styles: each row's swatch (the primary colour on the border
-    // colour), its name, the unapplied mark on the edited one and, in the
-    // file's list, the number of Lines using it. Click, Shift+click and
-    // Ctrl+click select; the keys: Up, Down (Shift extends), Ctrl+A, Enter
-    // to the name field, Delete, Alt+Up / Alt+Down / Alt+Home / Alt+End move.
     component StyleList: ListView {
         id: list
         required property bool store
@@ -1157,8 +1019,7 @@ DialogWindow {
         Accessible.role: Accessible.List
         Accessible.name: store ? qsTr("Catalog styles") : qsTr("Styles in this file")
         ScrollBar.vertical: ScrollBar {}
-        // The model follows the rows in place, so the view keeps its place
-        // while the file is edited.
+        // Updated in place: a new model would reset the view's position.
         function sync(rows) {
             const m = model
             let i = 0
@@ -1228,7 +1089,7 @@ DialogWindow {
                 manager.deleteSelected(store)
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 if (!manager.editing || manager.editingStore !== store || selected.length === 0)
-                    return // the window's default button
+                    return
                 manager.focusEditor()
             } else {
                 return
@@ -1275,7 +1136,6 @@ DialogWindow {
                     border.color: rowItem.outline
                     border.width: 3
                     radius: 2
-                    // A thin edge so a swatch like the panel still shows.
                     Rectangle {
                         anchors.fill: parent
                         color: "transparent"
@@ -1317,14 +1177,10 @@ DialogWindow {
                     if (!rowItem.pending)
                         list.pickIndex(rowItem.index, mouse.modifiers)
                 }
-                // Legacy's double click edited: the editor already shows it.
                 onDoubleClicked: if (!rowItem.pending) manager.focusEditor()
             }
         }
     }
-    // A list's tools: New, Duplicate, Delete, Move up, Move down, Load from
-    // a file…, and the ⋯ menu (Move to top, Move to bottom, Sort by name,
-    // and for the file Delete unused styles).
     component ListTools: RowLayout {
         id: tools
         required property bool store
@@ -1406,16 +1262,11 @@ DialogWindow {
         }
     }
 
-    // --- The window -------------------------------------------------------------
     RowLayout {
         id: body
         spacing: 0
         Layout.fillWidth: true
         Layout.fillHeight: true
-        // The sidebar: the filter, the catalog and its Styles, the copies,
-        // this file's Styles. It narrows to its icon strips' width (260
-        // pixels here) before the editor has to scroll sideways (1280 x 800
-        // at 150 %); the copies' texts, wider in some fonts, wrap instead.
         Rectangle {
             objectName: "styleSidebar"
             readonly property real narrowest: Math.max(260, Math.ceil(storeTools.implicitWidth) + 24)
@@ -1437,8 +1288,6 @@ DialogWindow {
                     Accessible.name: qsTr("Filter styles")
                     leftPadding: 28
                     Layout.fillWidth: true
-                    // Enter and Down go to the first Style shown, this file's
-                    // list first (Enter is not the window's OK here).
                     Keys.onReturnPressed: manager.fromFilter()
                     Keys.onEnterPressed: manager.fromFilter()
                     Keys.onDownPressed: manager.fromFilter()
@@ -1466,7 +1315,6 @@ DialogWindow {
                         currentIndex: manager.styles.catalogs.indexOf(manager.styles.catalog)
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Style catalog")
-                        // Named as its tooltip, not by the catalog it shows.
                         Accessible.name: qsTr("Style catalog")
                         onActivated: i => {
                             const name = model[i]
@@ -1494,7 +1342,6 @@ DialogWindow {
                     padding: 1
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    // The two lists share the height evenly.
                     Layout.preferredHeight: 0
                     Layout.minimumHeight: 80
                     background: Rectangle { color: Theme.field; border.color: Theme.line }
@@ -1546,7 +1393,7 @@ DialogWindow {
                     enabled: manager.styles.available
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.preferredHeight: 0 // as the catalog's
+                    Layout.preferredHeight: 0
                     Layout.minimumHeight: 80
                     background: Rectangle { color: Theme.field; border.color: Theme.line }
                     StyleList {
@@ -1572,7 +1419,6 @@ DialogWindow {
             implicitWidth: 1
             Layout.fillHeight: true
         }
-        // StyleChange: the editor, on the selected Styles, under its preview.
         ColumnLayout {
             spacing: 0
             enabled: manager.editing
@@ -1580,7 +1426,6 @@ DialogWindow {
             Layout.fillHeight: true
             Layout.preferredWidth: 680
             Layout.minimumWidth: 420
-            // The preview and its text, pinned above the fields.
             ColumnLayout {
                 spacing: 6
                 Layout.fillWidth: true
@@ -1591,9 +1436,7 @@ DialogWindow {
                     id: preview
                     objectName: "stylePreview"
                     Layout.fillWidth: true
-                    // SV1: drawn with the screen's pixels; the layout takes
-                    // its size in the window's units (Image ignores the
-                    // image's pixel ratio).
+                    // Image ignores the provider's pixel ratio, so the layout sets its size in window units.
                     Layout.preferredWidth: manager.styles.previewScale > 1 ? implicitWidth / manager.styles.previewScale : -1
                     Layout.preferredHeight: 84
                     cache: false
@@ -1619,10 +1462,6 @@ DialogWindow {
                         text: qsTr("%n styles: the preview shows %1", "", manager.editedRows.length).arg(manager.values.name || "")
                     }
                 }
-                // Legacy STYLE_PREVIEW_TEXT, edited by clicking the preview
-                // (Settings > Appearance has it too, PV1 #398).
-                // SY3: kept when edited, as legacy's StylePreview kept it
-                // (StylePreview.cpp:136-141).
                 TextField {
                     id: previewText
                     objectName: "stylePreviewText"
@@ -1630,10 +1469,8 @@ DialogWindow {
                     Accessible.name: qsTr("Preview text")
                     leftPadding: 28
                     Layout.fillWidth: true
-                    // PV1 (#398): typed, or changed in Settings.
                     onTextChanged: manager.updatePreview()
                     onEditingFinished: manager.catalogs.setPreviewText(text)
-                    // Enter keeps the text (it is not the window's OK here).
                     Keys.onReturnPressed: manager.catalogs.setPreviewText(text)
                     Keys.onEnterPressed: manager.catalogs.setPreviewText(text)
                     Icon {
@@ -1650,22 +1487,16 @@ DialogWindow {
                 implicitHeight: 1
                 Layout.fillWidth: true
             }
-            // A window too short for the fields scrolls them, with a
-            // visible scroll bar; the preview and the buttons stay.
             ScrollView {
                 id: editorScroll
                 objectName: "styleEditorScroll"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 120
-                // As wide as the view, or the fields' narrowest (a screen
-                // narrower than 1280 x 800 at 150 % scrolls them sideways).
-                // The grid reports it once measured (a layout measures
-                // itself while laid out: read in this binding, it loops).
+                // Set from the grid after layout: reading its minimum width in this binding loops.
                 property real narrowest: 0
                 contentWidth: Math.max(narrowest, availableWidth)
-                // Its width is the layout's, never its content's: a view sized
-                // by what it scrolls would loop through contentWidth.
+                // Never sized by its content: that would loop through contentWidth.
                 implicitWidth: 0
                 ScrollBar.vertical.policy: contentHeight > availableHeight ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
                 ScrollBar.horizontal.policy: contentWidth > availableWidth + 0.5 ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
@@ -1674,14 +1505,11 @@ DialogWindow {
                     objectName: "styleEditor"
                     width: editorScroll.contentWidth - 48 - (editorScroll.ScrollBar.vertical.visible ? editorScroll.ScrollBar.vertical.width : 0)
                     x: 24
-                    // After the layout pass that measured it.
                     onImplicitWidthChanged: Qt.callLater(() => editorScroll.narrowest = Layout.minimumWidth + 48)
                     columns: 4
                     columnSpacing: 12
                     rowSpacing: 4
                     uniformCellWidths: true
-                    // The fields as the Style's values; a field showing
-                    // "Multiple values" is left empty.
                     function load(m) {
                         const show = (key, text) => manager.isMixed(key) ? "" : String(text)
                         nameField.text = manager.multi ? "" : m.name
@@ -1709,14 +1537,11 @@ DialogWindow {
                         marginLeft.text = show("marginLeft", m.marginLeft)
                         marginRight.text = show("marginRight", m.marginRight)
                         marginVertical.text = show("marginVertical", m.marginVertical)
-                        // An unknown encoding shows "1 - Default" (legacy) and
-                        // stays as it was until another is chosen.
+                        // MUST KILL: an unknown encoding shows as "1 - Default" while encodings.code keeps it
                         encodings.code = String(m.encoding)
                         const enc = encodings.model.findIndex(e => e.startsWith(m.encoding + " "))
                         encodings.currentIndex = manager.isMixed("encoding") ? -1 : enc < 0 ? 1 : enc
                     }
-                    // The values to commit: a field still showing "Multiple
-                    // values" keeps the value it opened with.
                     function values() {
                         let alignment = String(manager.values.alignment)
                         for (let i = 0; i < 9; ++i)
@@ -1739,7 +1564,6 @@ DialogWindow {
                         return v
                     }
 
-                    // Name
                     SectionTitle { text: qsTr("Name"); Layout.topMargin: 16 }
                     TextField {
                         id: nameField
@@ -1750,7 +1574,7 @@ DialogWindow {
                         placeholderText: manager.multi ? qsTr("Multiple values") : ""
                         font.italic: manager.multi
                         Accessible.name: qsTr("Name")
-                        validator: RegularExpressionValidator { regularExpression: /[^,]*/ } // legacy excludes ","
+                        validator: RegularExpressionValidator { regularExpression: /[^,]*/ } // ASS Style lines are comma-separated
                         onTextEdited: manager.edited("name")
                         Rectangle {
                             visible: manager.nameProblem !== ""
@@ -1761,7 +1585,6 @@ DialogWindow {
                             radius: 2
                         }
                     }
-                    // SY1-name-inline-error: an empty or taken name, under the field.
                     Label {
                         objectName: "styleNameProblem"
                         visible: manager.nameProblem !== ""
@@ -1771,7 +1594,6 @@ DialogWindow {
                         Layout.columnSpan: 4
                         Layout.fillWidth: true
                     }
-                    // SY1-rename-inline: the old question, as a check box.
                     CheckBox {
                         id: renameBox
                         objectName: "styleRenameLines"
@@ -1783,7 +1605,6 @@ DialogWindow {
                         Layout.columnSpan: 4
                     }
 
-                    // Font
                     SectionTitle { text: qsTr("Font") }
                     FieldLabel { text: qsTr("Family"); key: "fontname"; Layout.columnSpan: 3 }
                     FieldLabel { text: qsTr("Size"); key: "fontsize" }
@@ -1805,7 +1626,7 @@ DialogWindow {
                         // The box's text field draws no placeholder of its own.
                         Label {
                             objectName: "styleFontMixed"
-                            z: 2 // over the box's text field
+                            z: 2
                             visible: manager.isMixed("fontname") && fontField.editText.length === 0
                             x: fontField.contentItem.x + fontField.contentItem.leftPadding
                             anchors.verticalCenter: parent.verticalCenter
@@ -1813,7 +1634,6 @@ DialogWindow {
                             font: fontField.font
                             color: fontField.palette.placeholderText
                         }
-                        // The family highlighted in the open list, or "".
                         function browsedFont() {
                             return popup.visible && highlightedIndex >= 0 && model && highlightedIndex < model.length
                                    ? model[highlightedIndex] : ""
@@ -1822,14 +1642,10 @@ DialogWindow {
                             target: fontField.popup
                             function onVisibleChanged() { manager.updatePreview() }
                         }
-                        // A refresh of the fonts: each row's face asked again.
                         Connections {
                             target: manager.catalogs
                             function onFontsChanged() { FontFaces.forget() }
                         }
-                        // SY3: each family in its own face. The list makes
-                        // rows only for what it shows, so a large font set
-                        // costs no more than a screenful of faces.
                         delegate: FontFamilyRow {
                             required property string modelData
                             required property int index
@@ -1844,7 +1660,6 @@ DialogWindow {
                     FieldLabel { text: qsTr("Font catalog"); Layout.columnSpan: 2 }
                     FieldLabel { text: qsTr("Emphasis"); keys: ["bold", "italic", "underline", "strikeOut"]; resetName: "emphasis" }
                     FieldLabel { text: qsTr("Text encoding"); key: "encoding" }
-                    // Y6: the font catalogs and the Filter (StyleChange's filtersizer).
                     FontCatalogBar {
                         id: fontCatalogBar
                         property bool made: false
@@ -1853,14 +1668,13 @@ DialogWindow {
                         Layout.preferredWidth: 120
                         catalogs: manager.catalogs
                         fontName: fontField.editText
-                        // HikariChoice::PutArray keeps the typed font.
+                        // A new model clears the ComboBox's editText.
                         onListMade: {
                             const text = fontField.editText
                             fontField.model = fonts
                             fontField.editText = text
                         }
                     }
-                    // Bold, Italic, Underline and Strikethrough as toggles.
                     Rectangle {
                         objectName: "styleEmphasis"
                         color: "transparent"
@@ -1883,7 +1697,6 @@ DialogWindow {
                     ComboBox {
                         id: encodings
                         objectName: "styleEncoding"
-                        // The encoding written: the one chosen, else the Style's own.
                         property string code: "1"
                         Layout.fillWidth: true
                         Layout.preferredWidth: 60
@@ -1897,8 +1710,6 @@ DialogWindow {
                                 qsTr("238 - Central European (Polish)"), qsTr("255 - OEM")]
                     }
 
-                    // Colours and transparency: legacy's kolgrid
-                    // (StyleChange.cpp:146-171), one column each.
                     SectionTitle { text: qsTr("Colours and transparency") }
                     Repeater {
                         id: labelsOfColours
@@ -1923,10 +1734,6 @@ DialogWindow {
                         }
                     }
 
-                    // Shape and position: legacy's labelled boxes and
-                    // Alignment (StyleChange.cpp:173-252) as one grid, each
-                    // field under its label; Alignment beside Angle and the
-                    // margins.
                     SectionTitle { text: qsTr("Shape and position") }
                     GridLayout {
                         id: geometry
@@ -1961,7 +1768,6 @@ DialogWindow {
                             Accessible.description: checkState === Qt.PartiallyChecked ? qsTr("Multiple values") : ""
                             onToggled: manager.edited("borderStyle")
                         }
-                        // The 3 × 3 alignment grid (the numpad's places).
                         Rectangle {
                             objectName: "styleAlignment"
                             Layout.row: 3; Layout.column: 3; Layout.rowSpan: 3
@@ -1973,7 +1779,6 @@ DialogWindow {
                             radius: 2
                             Accessible.role: Accessible.Grouping
                             Accessible.name: qsTr("Alignment")
-                            // No place checked: the Styles differ.
                             Accessible.description: manager.isMixed("alignment") ? qsTr("Multiple values") : ""
                             ButtonGroup { id: alignmentGroup }
                             Grid {
@@ -2042,9 +1847,6 @@ DialogWindow {
         }
     }
 
-    // One footer, whatever is selected (SY1-one-footer): Revert drops what
-    // is not applied and stays; OK applies and closes; Cancel (and Esc, and
-    // the title bar's Close) drops it and closes; Apply applies.
     leadingActions: [
         Button {
             objectName: "styleEditorRevert"
@@ -2077,12 +1879,8 @@ DialogWindow {
         }
     ]
 
-    // The lists' rows: the filter's, and a New or Duplicate not yet made at
-    // the end of its list.
     readonly property var storeShown: shownRows(true, storeRows, filterText, pendingNew && editingStore, nameField.text, heldRows(true))
     readonly property var assShown: shownRows(false, assRows, filterText, pendingNew && !editingStore, nameField.text, heldRows(false))
-    // The Styles the editor is on stay listed whatever the filter: an edit
-    // keeps its targets, and no Style it acts on is hidden.
     function heldRows(store) { return editing && !pendingNew && editingStore === store ? editedRows : [] }
     function shownRows(store, rows, filter, pending, pendingName, held) {
         const keep = Object.create(null)
@@ -2104,16 +1902,10 @@ DialogWindow {
     }
     onStoreShownChanged: storeList.sync(storeShown)
     onAssShownChanged: assList.sync(assShown)
-    // A row the filter hides leaves the selection, so no command acts on a
-    // Style that is not shown; the editor follows, and an edit not applied
-    // stays open on its Style.
-    // Any other selection loses the rows the filter hides, so no command
-    // acts on a Style not shown (also when the editor closes).
     onFilterTextChanged: dropHidden()
     onEditingChanged: if (!editing) dropHidden()
     function dropHidden() {
-        // (The rows are read, not storeShown: its binding may not have
-        // followed the filter yet.)
+        // Reads the rows, not storeShown, whose binding may not have followed the filter yet.
         for (const store of [true, false]) {
             if (heldRows(store).length > 0)
                 continue
@@ -2126,24 +1918,18 @@ DialogWindow {
         }
     }
 
-    // Y7: StyleChange::OnAllCols (StyleChange.cpp:335-399). SY2: a left
-    // click opens the colour popover at the button's colour and
-    // transparency, a right click opens it with the eyedropper started;
-    // COLORPICKER_SWITCH_CLICKS swaps them.
     function colourClick(number, leftClick) {
         if (colourPicker.switchClicks)
             leftClick = !leftClick
         const column = colours.itemAt(number - 1)
         stylePopover.openFor(column.swatch, styleColours, () => {
-            colourPicker.opened("styleEditor") // DialogColorPicker::Get(this, ...)
+            colourPicker.opened("styleEditor")
             return styleColours.begin(number)
         }, { title: column.name, dropper: !leftClick, focus: column.swatch })
     }
-    // The popover's target: one of the four colours of the edited Style.
     QtObject {
         id: styleColours
         property int number: 1
-        // lastColor: what Cancel puts back.
         property var lastColour: ({ r: 0, g: 0, b: 0, a: 0 })
         property bool wasMixed: false
         function begin(n) {
@@ -2154,16 +1940,12 @@ DialogWindow {
             wasMixed = field.isMixed
             return lastColour
         }
-        // COLOR_CHANGED: UpdateColor (737-746) sets the button, the
-        // transparency and the preview.
         function changeColour(c) {
             const field = colours.itemAt(number - 1)
             field.setColour({ r: c.r, g: c.g, b: c.b, a: c.a })
             manager.edited(field.key)
             return true
         }
-        // Cancel: UpdateColor(lastColor) (368-371, 395-398), and "Multiple
-        // values" again where it was.
         function endDialog(accepted) {
             if (accepted)
                 return
@@ -2179,8 +1961,6 @@ DialogWindow {
         objectName: "styleColourPopover"
         picker: manager.colourPicker
     }
-    // New catalog: its name, in a popover at the button
-    // (SY1-catalog-popups).
     Popover {
         id: newCatalogPopover
         objectName: "newCatalogPopover"
@@ -2227,13 +2007,11 @@ DialogWindow {
             onClicked: newCatalogPopover.create()
         }
     }
-    // LoadStylesS: "Choose ASS file", then the Styles to load (PK1's Choose
-    // styles popover, at the Load button), then the clash review.
     FileDialog {
         id: loadDialog
         property bool toStore: false
         property Item anchor: null
-        property string key // listsKey when Load was clicked
+        property string key
         title: qsTr("Choose ASS file")
         nameFilters: [qsTr("ASS subtitle files(*.ass)") + " (*.ass)"]
         onAccepted: {
@@ -2255,7 +2033,6 @@ DialogWindow {
             }
             manager.reviewClashes(manager.styles.fileClashes(toStore, file, names), names.length,
                                   toStore ? qsTr("the catalog") : qsTr("this file"), function(choices) {
-                // Added at the end, or in place of a clash: the rows stay.
                 manager.own(() => manager.styles.loadFromFile(toStore, file, names, choices))
                 manager.followRows(toStore, toStore ? manager.storeSelected : manager.assSelected)
             }, key)

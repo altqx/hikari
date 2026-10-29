@@ -1,14 +1,5 @@
 #pragma once
 
-// W1: legacy's video renderer filter (CD2DVideoRender, DshowRenderer.cpp)
-// on the DirectShow base classes. It accepts legacy's formats (YV12, NV12,
-// YUY2, RGB32 in VIDEOINFOHEADER or VIDEOINFOHEADER2), records the format as
-// legacy's SetMediaType did, and hands every sample it shows to the player as
-// a BGRA frame (converted on the streaming thread, into a pooled buffer): the paused state's first sample (OnReceiveFirstSample) and
-// each sample the clock releases (Render), once each, preroll samples skipped
-// as legacy's Render skipped them. A sample's time is the segment's start
-// plus its own (legacy added the sample time to the position it sought).
-
 #include "directshow_frames.h"
 
 #include "hikari/application/playback_pipeline.h"
@@ -34,17 +25,13 @@ struct Delivery {
 // Shared by the player (its thread) and the renderer (streaming threads).
 struct Bridge {
     std::function<void(Delivery)> deliver; // posts to the player's thread (the newest only)
-    // V1: the frames' buffers, reused once the frames shown before are released.
     std::shared_ptr<application::FramePool> pool = application::FramePool::create();
     std::function<void()> endOfStream;     // likewise
     std::atomic<bool> bt709{false};
-    // V1: YV12 and NV12 samples are kept as Y'CbCr planes (the presenter
-    // converts them on the GPU), not converted to BGRA here.
     std::atomic<bool> ycbcr{false};
     std::atomic<std::uint64_t> requestedSerial{0};
 };
 
-// Legacy VideoInf with its defaults (CD2DVideoRender's constructor).
 struct VideoInf {
     int width = 1280;
     int height = 720;
@@ -69,8 +56,7 @@ public:
 
     VideoInf info() const;
     bool connected() { return m_pInputPin && m_pInputPin->IsConnected(); }
-    // A seek while the graph is stopped flushes nothing: its first frame
-    // follows that seek directly.
+    // A seek on a stopped graph flushes nothing, so its first frame follows it directly.
     void adoptSerial(std::uint64_t serial) { m_serial = serial; }
 
 private:
@@ -80,9 +66,9 @@ private:
     mutable std::mutex m_infoMutex;
     VideoInf m_info;
     std::atomic<std::uint64_t> m_serial{0};
-    // The sample OnReceiveFirstSample showed: Render then skips it (legacy norender).
+    // OnReceiveFirstSample's sample, which Render then gets again and skips.
     IMediaSample *m_shownFirst = nullptr;
     REFERENCE_TIME m_shownFirstStart = 0;
 };
 
-} // namespace hikari::backends::dshow
+}

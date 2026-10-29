@@ -1,17 +1,5 @@
 #pragma once
 
-// Y7: the colour picker's screen dropper (legacy ColorPickerScreenDropper,
-// DialogColorPicker::OnDropperMouse and SimpleColorPickerDialog at
-// 20d647c4). Legacy blits 7x7 screen pixels around the pointer into the
-// dropper (DropFromScreenXY) while it holds the mouse capture, and picks a
-// pixel of that capture (SendGetColorEvent).
-//
-// Routes: "grab" reads the screen through QScreen::grabWindow (Windows,
-// X11); "portal" asks the desktop's Screenshot portal to pick one colour
-// (Wayland, where a client cannot read the screen); without either the
-// sampler reports itself unavailable with the reason, and samples nothing
-// (legacy's Wayland build returned early: ColorPicker.cpp:429-434).
-
 #include <QImage>
 #include <QObject>
 #include <QPoint>
@@ -38,25 +26,17 @@ class ScreenSampler : public QObject {
     Q_PROPERTY(bool tracking READ tracking NOTIFY trackingChanged)
     Q_PROPERTY(bool portalBusy READ portalBusy NOTIFY portalBusyChanged)
 public:
-    // The dropper's capture: 7x7 pixels (legacy resx, resy), shown 8 times
-    // larger (magnification).
     static constexpr int kSize = 7;
     static constexpr int kMagnification = 8;
 
     struct Route {
-        QString name; // "grab", "portal" or empty
-        QString reason; // why sampling is unavailable, when it is
+        QString name;
+        QString reason;
     };
-    // The route for a Qt platform plugin, whether the session is a Wayland
-    // one (an X11 client there runs on XWayland, whose root window shows no
-    // Wayland client: its grab would read black) and whether the desktop
-    // offers the Screenshot portal (version 2, PickColor).
+    // An X11 client in a Wayland session runs on XWayland, whose screen grab reads black.
     static Route routeFor(const QString &platformName, bool waylandSession, bool portalAvailable);
-    // WAYLAND_DISPLAY is set, or XDG_SESSION_TYPE is "wayland".
     static bool isWaylandSession();
 
-    // `pixels` grabs the kSize x kSize pixels centred on a global point
-    // (the default reads the screen).
     using Source = std::function<QImage(QPoint global)>;
 
     explicit ScreenSampler(QObject *parent = nullptr);
@@ -68,63 +48,29 @@ public:
     bool tracking() const { return !m_window.isNull(); }
     bool portalBusy() const { return m_portalBusy; }
 
-    // DropFromScreenXY: the capture around the global point, row by row,
-    // {r, g, b} each; empty unless the route is "grab".
     Q_INVOKABLE QVariantList sample(int x, int y) const;
-    // The pointer's global position.
     Q_INVOKABLE QPoint cursorPosition() const;
-    // The available area of the screen at a global point (legacy
-    // MoveToMousePosition's display client area), or the primary screen's.
     Q_INVOKABLE QRect availableGeometryAt(int x, int y) const;
-    // Legacy MoveToMousePosition (config.cpp:1379-1400): the window, frame
-    // included as wxWindow::GetSize and Move take it, centred under the
-    // global point and 15 pixels below it inside that area; above the point
-    // when it would leave the bottom, at the bottom when that leaves the top.
     Q_INVOKABLE void moveToPointer(QWindow *window, int x, int y) const;
 
-    // Legacy CaptureMouse: `window` grabs the pointer, and its mouse events
-    // come as pointerEvent with global positions. With `passInside` the
-    // events over the window itself still reach its controls (the simple
-    // picker releases the capture over itself), otherwise every event is
-    // the dropper's. The eyedropper cursor shows while the pointer is
-    // outside (or everywhere without `passInside`).
-    //
-    // Under an X11 window manager the window is not viewable until the
-    // manager maps it, and X refuses a grab asked at show()
-    // (GrabNotViewable) while Qt's XInput 2 grab reports it held. The
-    // grab waits for the window's expose; it is asked again when the
-    // window is exposed or activated and when the pointer leaves it for
-    // outside the window (where legacy OnLeaveWindow captures again), and,
-    // after the platform refuses it, every kRegrabInterval ms up to
-    // kRegrabTries times.
     Q_INVOKABLE bool startTracking(QWindow *window, bool passInside);
     Q_INVOKABLE void stopTracking();
-    // Whether the platform reported the tracked window's grab held.
     bool holdsPointer() const { return m_grabbed; }
-    // Whether the timer is still asking after a refusal.
     bool regrabbing() const { return m_regrab.isActive(); }
 
     static constexpr int kRegrabInterval = 50;
     static constexpr int kRegrabTries = 40;
 
-    // The portal route: the desktop picks one colour; portalPicked or,
-    // unless the user cancelled, portalFailed answers while portalBusy is
-    // still true, and portalBusy falls after it (a cancel only lets it
-    // fall), so a listener gated on its own request still hears the answer.
+    // MUST KILL: pickFromPortal emits portalPicked/portalFailed before portalBusy falls, and listeners rely on that order
     Q_INVOKABLE void pickFromPortal();
 
-    // Tests: another pixel source, or another route.
     void setSource(Source source) { m_source = std::move(source); }
     void setRoute(const Route &route);
-    // Tests: `request` runs in place of the desktop's PickColor call;
-    // answerPortal then delivers its Response (0 with the colour's channels
-    // as the portal's 0-1 doubles, 1 cancelled, 2 failed) and
-    // failPortalCall the call's own error.
     using PortalRequest = std::function<void()>;
     void setPortalRequest(PortalRequest request) { m_portalRequest = std::move(request); }
+    // The xdg-desktop-portal Request response: 0 success, 1 cancelled, 2 other.
     void answerPortal(uint response, double red = 0, double green = 0, double blue = 0);
     void failPortalCall(const QString &message);
-    // Tests: `grab` runs in place of QWindow::setMouseGrabEnabled.
     using Grab = std::function<bool(QWindow *window, bool grab)>;
     void setGrab(Grab grab) { m_grab = std::move(grab); }
 
@@ -132,11 +78,8 @@ signals:
     void routeChanged();
     void trackingChanged();
     void portalBusyChanged();
-    // kind: 0 move, 1 press, 2 release; `button` the one pressed or
-    // released (Qt::MouseButton), `buttons` those held after the event;
-    // `inside` whether the point is over the tracked window.
+    // MUST KILL: pointerEvent's kind is a magic int (0 move, 1 press, 2 release)
     void pointerEvent(int kind, int x, int y, int button, int buttons, bool inside);
-    // The tracked window lost the pointer (legacy wxEVT_MOUSE_CAPTURE_LOST).
     void trackingLost();
     void portalPicked(const QVariantMap &colour);
     void portalFailed(const QString &message);
@@ -149,8 +92,6 @@ private slots:
 
 private:
     void resolveRoute() const;
-    // Asks for the pointer grab once the window is exposed, unless it is
-    // held already (or `again`).
     void takePointer(bool again);
     void showCursor(bool dropper);
     void finishPortal();
@@ -171,4 +112,4 @@ private:
     PortalRequest m_portalRequest;
 };
 
-} // namespace hikari::ui
+}

@@ -55,8 +55,6 @@ std::vector<std::string_view> segments(std::string_view id)
     }
 }
 
-// ---- Which file
-
 bool rememberedByTheApp(std::string_view id)
 {
     static const std::set<std::string_view> ids{
@@ -66,13 +64,10 @@ bool rememberedByTheApp(std::string_view id)
     return id.starts_with("recent.") || ids.contains(id);
 }
 
-// [workspace] keys a user chooses on purpose.
 bool chosenWorkspaceSetting(std::string_view id)
 {
     return id == "toolbar.actions" || id == "toolbar.alignment" || id == "program.tabTextMaxChars";
 }
-
-// ---- TOML values
 
 std::optional<SettingValue> fromToml(const toml::node &node)
 {
@@ -113,7 +108,6 @@ void putToml(toml::table &table, std::string_view key, const SettingValue &value
         value);
 }
 
-// The table that holds the id's last segment; made on the way when `create`.
 toml::table *tomlParent(toml::table &root, std::string_view id, bool create)
 {
     const auto parts = segments(id);
@@ -148,12 +142,9 @@ void eraseToml(toml::table &root, std::string_view id)
         chain.push_back(next->as_table());
     }
     chain.back()->erase(parts.back());
-    // Tables left empty go too.
     for (std::size_t i = chain.size() - 1; i > 0 && chain[i]->empty(); --i)
         chain[i - 1]->erase(parts[i - 1]);
 }
-
-// ---- JSON values
 
 QJsonValue toJson(const SettingValue &value)
 {
@@ -209,7 +200,6 @@ QJsonValue jsonNode(const QJsonObject &root, std::string_view id)
     return object.value(qs(parts.back()));
 }
 
-// Sets (or, for Undefined, removes) the value at `parts`; objects left empty go.
 void putJson(QJsonObject &object, std::span<const std::string_view> parts, const QJsonValue &value)
 {
     const QString key = qs(parts.front());
@@ -236,15 +226,12 @@ void putJson(QJsonObject &root, std::string_view id, const QJsonValue &value)
     putJson(root, parts, value);
 }
 
-// ---- Rows "<key>\t<rest>" as a table or object keyed by their first field
-
+// MUST KILL: list settings carry "<key>\t<rest>" string rows instead of a type
 struct Row {
     QString key;
     QString rest;
 };
 
-// The rows, or nothing when one has no tab or a key comes twice (then the
-// list is kept as it is).
 std::optional<std::vector<Row>> keyedRows(const StringList &rows)
 {
     std::vector<Row> out;
@@ -272,8 +259,7 @@ QString compactJson(const QJsonValue &value)
     return QString::fromUtf8(QJsonDocument(value.toArray()).toJson(QJsonDocument::Compact));
 }
 
-// JSON as TOML: nothing for a null, which TOML has no value for. Whole
-// numbers are integers, as Qt writes them.
+// TOML has no null, and Qt's JSON keeps whole numbers as doubles.
 std::optional<toml::array> tomlArrayOf(const QJsonArray &array);
 std::optional<toml::table> tomlTableOf(const QJsonObject &object);
 
@@ -354,8 +340,6 @@ QJsonValue jsonOf(const toml::node &node)
     return {};
 }
 
-// ---- Tag buttons: editor.tagButton1..20 are [[editor.tagButton]] slots
-
 constexpr std::string_view kTagButtonSlots = "editor.tagButton";
 
 int tagButtonSlot(const SettingDefinition &setting)
@@ -368,7 +352,6 @@ int tagButtonSlot(const SettingDefinition &setting)
     return std::stoi(std::string(digits)) - 1;
 }
 
-// TagButtonsController::toLegacy's text: "{\n\t<tag>\n\t<type>\n\t<name>[\n\t<icon>]\n}".
 std::string tagButtonText(const std::string &tag, std::int64_t type, const std::string &name, const std::string &icon)
 {
     std::string text = "{\n\t" + tag + "\n\t" + std::to_string(type) + "\n\t" + name;
@@ -377,8 +360,6 @@ std::string tagButtonText(const std::string &tag, std::int64_t type, const std::
     return text + "\n}";
 }
 
-// The slot's fields, or { text = "…" } when the text is not one the fields
-// give back.
 toml::table tagButtonTable(const std::string &text)
 {
     toml::table out;
@@ -425,12 +406,9 @@ std::optional<std::string> tagButtonOf(const toml::table &slot)
                          slot["name"].value_or(std::string()), slot["icon"].value_or(std::string()));
 }
 
-// ---- Hotkeys
-
 constexpr std::string_view kWindowTables[application::kHotkeyWindows] = {"global", "grid", "editor", "video", "audio"};
 constexpr std::string_view kAutomationTable = "automation";
 
-// Legacy accelerator text as Qt's portable text, when it comes back the same.
 std::string hotkeyText(const std::string &accel)
 {
     const std::string keys = application::qtKeysOfAccel(accel);
@@ -470,7 +448,6 @@ application::HotkeyMap defaultsOf(bool audio)
     return map;
 }
 
-// The binding's text in a table: a string, or the first of an array.
 std::optional<std::string> bindingText(const toml::node &node)
 {
     if (const auto *s = node.as_string())
@@ -518,7 +495,6 @@ void writeHotkeys(toml::table &file, bool audio, const StringList *lines)
     for (int window = 0; window < application::kHotkeyWindows; ++window) {
         if (audioFile(window) != audio)
             continue;
-        // What a later version's commands hold stays.
         toml::table table;
         if (const auto *old = file[kWindowTables[window]].as_table())
             for (const auto &[key, node] : *old)
@@ -544,7 +520,7 @@ void writeHotkeys(toml::table &file, bool audio, const StringList *lines)
     }
 }
 
-// shortcuts.automationMacros: "legacy name\tkeys\tmacro\tsha256" rows.
+// MUST KILL: macro hotkeys are "name\tkeys\tmacro\tsha256" string rows
 std::optional<StringList> readMacroHotkeys(const toml::table &file)
 {
     const auto *table = file[kAutomationTable].as_table();
@@ -595,13 +571,11 @@ std::string tomlKey(std::string_view key)
     return bare ? std::string(key) : tomlText(toml::value<std::string>(std::string(key)));
 }
 
-// hotkeys.toml as a person reads it: each binding with its command's name.
 std::string formatHotkeys(const toml::table &file)
 {
     std::ostringstream out;
     out << "version = " << SettingsFiles::kVersion << "\n";
-    // Unknown keys stay: those at the root go before the first table header,
-    // where they still read as root keys.
+    // TOML root keys must come before the first table header.
     toml::table root;
     toml::table rest;
     for (const auto &[key, node] : file) {
@@ -645,11 +619,6 @@ std::string formatHotkeys(const toml::table &file)
     return out.str();
 }
 
-// ---- The INI file before CF1
-
-// One-time steps the INI store took at each start (the registry's interim
-// keys, the retired settings), on its values in memory: hikari.ini is never
-// written again.
 void migrateIni(QVariantMap &ini)
 {
     auto targetKey = [](std::string_view id) {
@@ -661,7 +630,6 @@ void migrateIni(QVariantMap &ini)
             ini.remove(QLatin1String(scope) + qs(id));
     if (ini.value(QStringLiteral("registry/schema"), 0).toInt() >= 1)
         return;
-    // A value already under the registry key wins; the interim key goes either way.
     for (const auto &interim : application::interimKeys()) {
         const QString from = qs(interim.key);
         if (!ini.contains(from))
@@ -697,8 +665,6 @@ void migrateIni(QVariantMap &ini)
         ini.insert(targetKey(application::kAutomationHotkeysSetting), rows);
 }
 
-// The INI store's reading of a value (the QVariant conversions the interim
-// readers used).
 SettingValue iniValue(const QVariant &v, SettingType type)
 {
     switch (type) {
@@ -720,7 +686,7 @@ SettingValue iniValue(const QVariant &v, SettingType type)
 
 std::string jsonDocumentText(const QJsonObject &state)
 {
-    // `version` first, then the rest as Qt writes it (keys in order).
+    // QJsonObject sorts its keys, so `version` is put first by hand.
     QByteArray text = QJsonDocument(state).toJson(QJsonDocument::Indented);
     const QByteArray version = "    \"version\": " + QByteArray::number(SettingsFiles::kVersion);
     if (state.isEmpty())
@@ -729,14 +695,13 @@ std::string jsonDocumentText(const QJsonObject &state)
     return text.toStdString();
 }
 
-// Recursive: a SettingsFiles whose load throws goes inside open()'s lock.
+// MUST KILL: recursive only because ~SettingsFiles locks it again when load() throws inside open()
 std::recursive_mutex &registryMutex()
 {
     static std::recursive_mutex m;
     return m;
 }
 
-// state.json's text into `into`, else where it fails.
 std::optional<application::ParseFailure> parseStateText(std::string_view text, QJsonObject &into)
 {
     QJsonParseError error;
@@ -767,9 +732,7 @@ std::map<QString, std::weak_ptr<SettingsFiles>> &registry()
     return r;
 }
 
-} // namespace
-
-// ---- SettingsFiles
+}
 
 SettingsFiles::File SettingsFiles::fileOf(const SettingDefinition &setting)
 {
@@ -840,7 +803,7 @@ void SettingsFiles::load()
     m_converted = conversion == application::Conversion::Converted;
     m_conversionPending = conversion == application::Conversion::Failed && m_writable[Settings];
     if (conversion != application::Conversion::NotNeeded)
-        return; // the documents are the converted ones (also when a write failed)
+        return;
     const auto parseToml = [](toml::table &into) {
         return [&into](std::string_view text) -> std::optional<application::ParseFailure> {
             auto parsed = parseTomlFile(text, kVersion);
@@ -860,12 +823,10 @@ void SettingsFiles::load()
             m_problems.push_back(std::move(*loaded.problem));
         }
     }
-    // A first start writes settings.toml even with every value at its
-    // default: the next start is not a first start (O5).
+    // MUST KILL: settings.toml is written at a first start only so that its existence marks later starts
     if (!QFileInfo::exists(path(Settings)) &&
         std::ranges::none_of(m_problems, [this](const auto &p) { return p.file == pathOf(path(Settings)); }))
         changed(Settings);
-    // The model has one shortcut per command and window: an array's first.
     for (int window = 0; window < application::kHotkeyWindows; ++window)
         if (const auto *table = m_hotkeys[kWindowTables[window]].as_table())
             for (const auto &[key, node] : *table)
@@ -876,8 +837,6 @@ void SettingsFiles::load()
 
 bool SettingsFiles::convertIni()
 {
-    // An INI that does not read is not converted to defaults: nothing is
-    // written this session, and the next start tries again.
     if (QFile probe(legacyIni()); !probe.open(QIODevice::ReadOnly)) {
         m_problems.push_back({pathOf(legacyIni()), {}, {0, 0, "It could not be read."}});
         std::ranges::fill(m_writable, false);
@@ -900,8 +859,6 @@ bool SettingsFiles::convertIni()
     return writeConversion();
 }
 
-// settings.toml last, and only after the other two: it says the conversion
-// is done.
 bool SettingsFiles::writeConversion()
 {
     m_converting = true;
@@ -982,7 +939,7 @@ std::optional<SettingValue> SettingsFiles::read(const SettingDefinition &setting
 void SettingsFiles::write(const SettingDefinition &setting, const SettingValue &value)
 {
     const SettingValue v = application::convertSetting(value, setting.type);
-    if (read(setting) == v) // Settings writes unchanged values too
+    if (read(setting) == v)
         return;
     if (v == setting.defaultValue && fileOf(setting) != Hotkeys) {
         remove(setting);
@@ -1112,7 +1069,6 @@ void SettingsFiles::erase(const SettingDefinition &setting)
             auto &array = *node->as_array();
             if (static_cast<std::size_t>(slot) < array.size())
                 array.replace(array.begin() + slot, toml::table());
-            // Empty slots at the end are left out.
             while (!array.empty() && array.back().is_table() && array.back().as_table()->empty())
                 array.pop_back();
             if (array.empty())
@@ -1145,7 +1101,6 @@ void SettingsFiles::queueFlush(int delayMs)
 void SettingsFiles::flush()
 {
     m_flushQueued = false;
-    // A conversion that could not be written is tried again as a whole.
     if (m_conversionPending) {
         m_conversionPending = application::convertOnce(pathOf(path(Settings)), pathOf(legacyIni()), [this] {
                                   return writeConversion();
@@ -1162,11 +1117,9 @@ bool SettingsFiles::writeFile(File file)
 {
     if (!m_writable[file])
         return false;
-    // One writer at a time on the folder, as QSettings' lock file did. While
-    // another HikariSub holds the lock the file stays dirty and is tried again
-    // shortly; a folder that cannot hold a lock is written without one.
     QDir().mkpath(m_folder);
     QLockFile lock(m_folder + QStringLiteral("/.settings.lock"));
+    // MUST KILL: a lock that fails for any reason but another holder is ignored and the file written anyway
     if (!lock.tryLock(2000) && lock.error() == QLockFile::LockFailedError) {
         queueFlush(1000);
         return false;
@@ -1184,8 +1137,6 @@ bool SettingsFiles::writeFile(File file)
         text = jsonDocumentText(m_state);
         break;
     }
-    // Kept dirty when the write fails, so a later flush tries again.
-    // Converted files are as private as hikari.ini was.
     if (!application::writeFileAtomically(pathOf(path(file)), text, m_converting ? pathOf(legacyIni()) : fs::path()))
         return false;
     m_dirty[file] = false;
@@ -1193,9 +1144,6 @@ bool SettingsFiles::writeFile(File file)
     return true;
 }
 
-// Another HikariSub on the folder may have written the file since this one
-// read it: the file as it is now is kept, with only what changed here put
-// over it.
 void SettingsFiles::mergeFromDisk(File file)
 {
     if (m_changed[file].empty())
@@ -1226,4 +1174,4 @@ void SettingsFiles::mergeFromDisk(File file)
             erase(*setting);
 }
 
-} // namespace hikari::ui
+}

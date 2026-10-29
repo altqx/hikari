@@ -5,25 +5,16 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// DG1 (#222): Help › About on the dialog frame (the approved mockup,
-// revision 2): the application icon, its name, this build's version (with
-// a button that copies it) and author, the GNU GPL 3 notice the licence asks
-// an interactive program to show, and the website and the issue tracker.
-// Fixed size, modeless. The components it is built with are in Credits
-// (DG1-about-layout).
 DialogWindow {
     id: about
     objectName: "aboutDialog"
-    required property var app      // Application: the links and the clipboard
-    required property var updates  // UpdateChecker: the version
-    // CR1 (#452): Report an issue opens the report window.
+    required property var app
+    required property var updates
     signal reportIssueRequested()
     dialogId: "about"
     title: qsTr("About HikariSub")
     defaultButton: ok
 
-    // A link of the dialog: its icon and text in the accent, underlined
-    // under the pointer; a Tab stop with the focus ring.
     RowLayout {
         spacing: 16
         Layout.preferredWidth: 412

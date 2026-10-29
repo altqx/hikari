@@ -1,20 +1,4 @@
 pragma ComponentBehavior: Bound
-// F4: legacy MisspellReplacer "Multireplacer" (GLOBAL_MISSPELLS_REPLACER,
-// "Fix minor errors (experimental)") and its FindResultDialog "Search
-// results". PU2 (#304): one dock panel, the Fix minor errors panel
-// (PU2-fix-minor-errors-panel):
-// * which Lines (the styles field, with PK1's Choose styles, only for
-//   "According to the selected styles");
-// * the rules with their checkboxes, an icon strip to add (from the
-//   fields), update (the selected rule) or delete one, and the Rule
-//   section's fields: the three case boxes one Case list and "Replace only
-//   in tags / text" one In list, the rules file's bits unchanged;
-// * This tab / All tabs, then Find or Replace all with the checked rules;
-// * after a Find, the Results section: a header per Document (its box
-//   checks its finds, its arrow folds them), each find marked in its
-//   Line; a double click shows it; Replace checked works once per search.
-//   While the results show, the rules cannot change (legacy), so the strip
-//   waits until they are closed.
 pragma Translator: "HikariSub.MisspellReplacer"
 import QtQuick
 import QtQuick.Controls
@@ -28,7 +12,6 @@ Item {
     property var rules: []
     property int selectedRule: -1
     property bool editorOpen: true
-    // D3: the smallest body its docked panel takes unclipped.
     readonly property size minimumSize: Qt.size(320, 420)
     readonly property alias results: results
     readonly property int checkedRules: rules.filter(r => r.checked).length
@@ -38,9 +21,6 @@ Item {
         if (selectedRule >= rules.length)
             selectedRule = -1
     }
-    // DestroyDialogs (a changed program font) dropped the legacy window and
-    // the next opening began afresh: the panel stays, its fields and
-    // results start again.
     function reset() {
         results.close()
         selectedRule = -1
@@ -53,12 +33,9 @@ Item {
         whereChoice.currentIndex = 0
         whichLines.currentIndex = 0
         styles.text = ""
-        rules = [] // read again at the next showing
+        rules = []
     }
-    // The rules file's bits (MisspellReplacer: 1 match case, 2 lower case,
-    // 4 upper case, 8 unchanged, 16 only in tags, 32 only in text). Case
-    // follows the order the engine reads them (moveCase): unchanged, then
-    // lower, then upper, else like the found text.
+    // MUST KILL: rule options are raw rules-file bits (1 match case, 2 lower, 4 upper, 8 unchanged, 16 tags only, 32 text only)
     function caseIndexOf(o) { return (o & 8) ? 1 : (o & 2) ? 2 : (o & 4) ? 3 : 0 }
     function whereIndexOf(o) { return (o & 16) && !(o & 32) ? 1 : (o & 32) && !(o & 16) ? 2 : 0 }
     function options() {
@@ -67,7 +44,6 @@ Item {
     function fields() {
         return {description: description.text, find: findPhrase.text, replace: replacePhrase.text, options: options()}
     }
-    // LIST_ITEM_LEFT_CLICK: the rule's values go to the editing fields.
     function chooseRule(index) {
         selectedRule = index
         const r = rules[index]
@@ -85,14 +61,12 @@ Item {
     function find() {
         results.show(app.findMisspells(scope(), allTabs()))
     }
-    // A pattern as the list shows it: its spaces as middle dots.
     function shown(text) { return text.replace(/ /g, "·") }
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 6
 
-        // Which Lines.
         GridLayout {
             columns: 2
             columnSpacing: 8
@@ -133,7 +107,6 @@ Item {
             }
         }
 
-        // The rules: the strip, then the list.
         RowLayout {
             spacing: 2
             Layout.fillWidth: true
@@ -253,7 +226,6 @@ Item {
             }
         }
 
-        // The Rule section: the fields Add rule and Update rule take.
         AbstractButton {
             id: editorToggle
             objectName: "misspellRuleSection"
@@ -333,7 +305,6 @@ Item {
             }
         }
 
-        // Where, then Find or Replace all with the checked rules.
         RowLayout {
             spacing: 6
             Layout.fillWidth: true
@@ -359,7 +330,6 @@ Item {
             }
         }
 
-        // FindResultDialog "Search results", now the panel's Results section.
         ColumnLayout {
             id: results
             objectName: "misspellResults"
@@ -391,7 +361,6 @@ Item {
             }
             onShownChanged: tool.app.setMisspellResultsShown(shown)
             function setChecks(on) { checks = rows.map(() => on) }
-            // The header row of row `i`.
             function headerOf(i) {
                 while (i >= 0 && !rows[i].header)
                     --i
@@ -417,7 +386,6 @@ Item {
                 }
                 checks = next
             }
-            // A header's box: all, some or none of its finds.
             function stateOf(i) {
                 let on = 0, all = 0
                 for (let j = i + 1; j < rows.length && !rows[j].header; ++j) {
@@ -543,7 +511,6 @@ Item {
                                 Layout.leftMargin: 18
                                 Layout.preferredWidth: 64
                             }
-                            // The Line's text with the find marked in it.
                             RowLayout {
                                 visible: !resultRow.modelData.header
                                 spacing: 0
@@ -589,8 +556,6 @@ Item {
         }
     }
 
-    // PK1's Choose styles for the styles field (legacy bound nothing to the
-    // button): the ticks write the field at once, Esc puts it back.
     ChooseStyles {
         id: stylesChooser
         objectName: "misspellStylesChooser"

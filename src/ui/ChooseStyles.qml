@@ -1,19 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.MainWindow"
-// PK1 (#301): "Choose styles", one popover for the four copies (Find and
-// replace, Select lines, Shift times and the Style manager's load): a
-// search field that filters the list, the styles with the lines that use
-// each, Select all and None (on the rows shown) and the count.
-//
-// Live by default: each tick goes to `changed` at once; Esc puts the ticks
-// it opened with back (`changed` again with them, `reverted` true: an
-// opener may put back more than the ticks), and a press outside or
-// Enter keeps them. With `actionText` ("Load") the ticks are only applied
-// by that button (`acted`), which Enter in the search field or the list
-// presses.
-//
-// openFor(anchor, names, checked, options): options.counts ({name: lines}),
-// options.actionText.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -28,9 +14,7 @@ Popover {
     property var counts: ({})
     property var checkedNames: []
     property var original: []
-    // Membership by lookup, not by scans: a file can list a great many
-    // styles (Codex security review). Plain objects, as V4's Set searches
-    // its entries one by one.
+    // Plain objects, not a Set: V4's Set.has searches linearly.
     readonly property var checkedSet: lookup(checkedNames)
     property string actionText: ""
     readonly property var shown: {
@@ -48,7 +32,6 @@ Popover {
         actionText = o.actionText || ""
         const all = lookup(names)
         checkedNames = (checked || []).filter(n => all[n] === true)
-        // Esc gives back what the opener gave, names not listed included.
         original = (checked || []).slice()
         search.text = ""
         styleList.currentIndex = names.length > 0 ? 0 : -1
@@ -60,7 +43,6 @@ Popover {
             set[list[i]] = true
         return set
     }
-    // In the styles' order.
     function ordered(list) {
         const wanted = lookup(list)
         return names.filter(n => wanted[n] === true)
@@ -89,8 +71,6 @@ Popover {
         Layout.fillWidth: true
         Layout.preferredWidth: 236
         leftPadding: 28
-        // The field takes Enter itself: as the popover's Enter, it keeps the
-        // ticks, or with an action presses it.
         onAccepted: chooser.confirm()
         Icon {
             iconRole: "search"

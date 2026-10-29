@@ -5,22 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// SH1 (#220): the main window's title bar, after MuseScore 4's
-// (docs/research/musescore-shell.md §1 and §7, SH1): the application icon
-// (the window menu), the menus, the layout switcher, the window's title
-// and the window buttons, in one 32-pixel row above the Document tabs. Its
-// free parts move the window, a double-click maximises it, and a right
-// click opens the window system's window menu (MainWindowFrame, which also
-// makes the window frameless). Where the system's title bar is kept
-// (MainWindowFrame.custom false: the "Use system title bar" setting) only
-// the menus and the switcher stay, in the window's first row.
-//
-// Keyboard (MS1 §1 "Menu bar"): Alt alone or F10 (Main.qml) puts the
-// keyboard on the first menu, ringed, with the letters underlined;
-// Left and Right walk the menus and the switcher, Down, Return or Space
-// opens one, a menu's letter opens it, Esc or Alt again gives the keyboard
-// back. Narrow windows elide the title, then drop it, then fold the last
-// menus into More (⋯).
 Rectangle {
     id: bar
     objectName: "mainTitleBar"
@@ -35,13 +19,9 @@ Rectangle {
         && (window.visibility === Window.Maximized || window.visibility === Window.FullScreen)
     property string title: window ? window.title : ""
 
-    // The title clears the menus and the buttons by this much, or moves.
     readonly property int titleGap: 32
-    // Under this much room the title is not shown.
     readonly property int titleMinimum: 80
 
-    // Keyboard mode: the title the keyboard is on (a menu title, More or
-    // the switcher), and the item that had the keyboard before.
     readonly property bool keyboardMode: keyboardTarget !== null
     property Item keyboardTarget: null
     property Item returnFocus: null
@@ -66,16 +46,13 @@ Rectangle {
     Binding { target: bar.menus; property: "windowActive"; value: bar.active || !bar.custom }
     Binding { target: bar.switcher; property: "keyboardCurrent"; value: bar.keyboardTarget === bar.switcher }
 
-    // The leading and trailing edges in reading order: in a right-to-left
-    // layout the row runs from the right.
     readonly property bool mirrored: LayoutMirroring.enabled
     function leadingOf(x: real, w: real): real { return mirrored ? width - x - w : x }
     readonly property real leadStart: leadingOf(lead.x, lead.width)
     readonly property real buttonsStart: custom ? leadingOf(buttons.x, buttons.width) : width
 
-    // Between the menus and the switcher (Main.qml's Layout.leftMargin).
+    // MUST KILL: switcherGap copies Main.qml's Layout.leftMargin by hand
     readonly property int switcherGap: 8
-    // Menus from this index on are folded into More.
     readonly property int foldFrom: {
         const n = menus.count
         let total = 0
@@ -111,7 +88,6 @@ Rectangle {
         function onCountChanged() { bar.applyFold() }
     }
 
-    // The keyboard's stops, in order: the shown menus, More, the switcher.
     function keyboardStops() {
         const stops = []
         for (let i = 0; i < menus.count; ++i) {
@@ -149,8 +125,6 @@ Rectangle {
         const at = stops.indexOf(keyboardTarget)
         keyboardTarget = stops[(Math.max(at, 0) + by + stops.length) % stops.length]
     }
-    // Opens a stop's menu; the menu takes the keyboard from there and
-    // gives it back to where it was when it closes.
     function openStop(stop: Item) {
         leaveKeyboard(true)
         if (stop === switcher)
@@ -168,7 +142,7 @@ Rectangle {
         folded.item = item
         item.menu.popup(more, 0, more.height)
     }
-    // A folded menu opens under More; back under its title once closed.
+    // Menu.popup(more, …) reparents the menu; it goes back under its title once closed.
     QtObject {
         id: folded
         property Menu menu: null
@@ -182,7 +156,6 @@ Rectangle {
             folded.item = null
         }
     }
-    // The letter's menu, if a shown or folded menu has it.
     function mnemonicIndex(letter: string): int {
         const wanted = letter.toLowerCase()
         for (let i = 0; i < menus.count; ++i) {
@@ -197,11 +170,8 @@ Rectangle {
 
     activeFocusOnTab: false
     onActiveFocusChanged: if (!activeFocus && keyboardMode) leaveKeyboard(false)
-    // The keyboard is on the bar: the shell's key router (key_router.cpp)
-    // leaves its keys to it, as to any control the keyboard moved to.
+    // MUST KILL: a Rectangle faking Control.visualFocus so key_router.cpp leaves it its keys
     readonly property bool visualFocus: keyboardMode && activeFocus
-    // The keys the bar answers in keyboard mode are its own before any
-    // shortcut's (Left and Right step frames, Space plays).
     function ownsKey(event): bool {
         switch (event.key) {
         case Qt.Key_Left: case Qt.Key_Right: case Qt.Key_Home: case Qt.Key_End:
@@ -253,7 +223,6 @@ Rectangle {
     }
     Connections {
         target: bar.frame
-        // Alt alone: into keyboard mode, or out of it; an open menu closes.
         function onAltTapped() {
             if (bar.keyboardMode)
                 bar.leaveKeyboard(true)
@@ -261,7 +230,6 @@ Rectangle {
                 bar.enterKeyboard()
         }
     }
-    // Closes an open menu of the bar's; whether one was open.
     function closeMenus(): bool {
         let closed = false
         for (let i = 0; i < menus.count; ++i) {
@@ -274,7 +242,6 @@ Rectangle {
         return closed
     }
 
-    // The free parts of the bar: moving, maximising, the window menu.
     TitleBarMoveArea {
         id: moveArea
         objectName: "titleBarMoveArea"
@@ -282,8 +249,7 @@ Rectangle {
         frame: bar.frame
     }
 
-    // The application icon: the window menu (MuseScore and Windows put it
-    // there; on Windows WM_NCHITTEST's HTSYSMENU does it natively).
+    // On Windows WM_NCHITTEST's HTSYSMENU opens the window menu natively.
     Item {
         id: appIcon
         objectName: "titleBarAppIcon"
@@ -311,7 +277,7 @@ Rectangle {
         Accessible.onPressAction: bar.frame.showWindowMenu(appIcon.mapToItem(null, 0, appIcon.height))
     }
 
-    // The menus, More and the switcher (placed here in Component.onCompleted).
+    // MUST KILL: lead is filled by reparenting menus, More and the switcher in Component.onCompleted
     RowLayout {
         id: lead
         objectName: "titleBarLead"
@@ -320,7 +286,6 @@ Rectangle {
         anchors.leftMargin: bar.custom ? 0 : 2
         anchors.verticalCenter: parent.verticalCenter
     }
-    // More (⋯): the menus a narrow window has no room for.
     ToolButton {
         id: more
         objectName: "titleBarMore"
@@ -365,9 +330,6 @@ Rectangle {
         }
     }
 
-    // The window's title: centred on the window where it clears the menus
-    // and the buttons, else centred in the room between them, elided; not
-    // shown under titleMinimum.
     Label {
         id: titleLabel
         objectName: "titleBarTitle"
@@ -389,10 +351,7 @@ Rectangle {
         Accessible.name: text
     }
 
-    // The window buttons. On Windows the maximise button is the frame's
-    // (WM_NCHITTEST's HTMAXBUTTON, for Windows 11's snap layouts): the
-    // window system tracks its pointer (MainWindowFrame.maximizeHovered,
-    // maximizePressed) and maximises.
+    // On Windows the maximise button is the frame's HTMAXBUTTON (snap layouts); the system tracks its pointer.
     Row {
         id: buttons
         objectName: "titleBarButtons"
@@ -425,7 +384,6 @@ Rectangle {
         }
     }
 
-    // High contrast: the title bar's edge against the tabs below.
     Rectangle {
         visible: Theme.highContrast
         anchors.left: parent.left

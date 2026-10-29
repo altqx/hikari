@@ -44,4 +44,4 @@ void AudioRing::clear()
     m_tail.store(m_head.load(std::memory_order_acquire), std::memory_order_release);
 }
 
-} // namespace hikari::backends
+}

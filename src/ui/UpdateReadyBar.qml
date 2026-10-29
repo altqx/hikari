@@ -1,10 +1,4 @@
 pragma Translator: "HikariSub.MainWindow"
-// ADR 0019: the update notice under the menus. "HikariSub <V> is ready to
-// install" with Restart now and Later once a download has been verified (and
-// again at each start while it waits); Later, or closing the window, installs
-// it at the next quit. A deb or rpm copy without pkexec gets the downloaded
-// file instead, with the command that installs it. On PK1's inline bar
-// (InlineBar.qml), the kit's notice for a state that lasts.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -16,7 +10,6 @@ InlineBar {
     required property var updates
     readonly property var installer: updates.installer
     readonly property bool manual: installer.state === "manual"
-    // Later: hidden for this session; a new download shows it again.
     property bool dismissed: false
     signal restartRequested()
     visible: !dismissed && (installer.state === "ready" || manual)

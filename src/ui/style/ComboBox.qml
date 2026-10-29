@@ -1,24 +1,4 @@
-// K2: Fusion's combo box with its outline in the theme's boundary colour
-// (control.palette.mid, the line role; see CMakeLists.txt). Fusion draws it
-// in Fusion.outline(), the window colour darkened 140%, about 1.1:1 against
-// the Dark and High contrast black panels. Keyboard focus (visualFocus) is
-// the style's ring (FocusFrame: 1 wide, just outside the control, in the
-// theme's focus role, the text colour) instead of Fusion's accent-derived outline,
-// apart from the accent of selection and the default button
-// (visual-language.md: focus stays distinguishable from selection).
-// Everything else is Fusion's.
-// The popup's frame takes the boundary colour too.
-// TP1 (Codex security review): the popup's items are Fusion's, their text
-// plain. The choices are often a file's own text (Styles, actors, effects):
-// as markup an <img> in them would be fetched (and Qt's IconLabel crashes
-// laying one out).
-// Fusion's text field inside the box (read-only unless the box is editable)
-// is the box's Edit to assistive technology (UI Automation's Edit under the
-// ComboBox); it carries the box's accessible name, as a native combo box's
-// edit does, rather than none (K1: every control named).
-// K2-control-boundary (2026-10-15): enabled, the outline is the theme's
-// control boundary (StyleColours.control, at least 3:1 on every surface);
-// disabled, the palette's Mid, the line role.
+// Fusion's outline (the window colour darkened) all but vanishes on black panels.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 import QtQuick.Controls.Fusion.impl as FI
@@ -38,6 +18,7 @@ F.ComboBox {
         hoverEnabled: control.hoverEnabled
         contentItem: Text {
             text: choice.text
+            // File text as markup would fetch an <img> (and Qt's IconLabel crashes laying one out).
             textFormat: Text.PlainText
             font: choice.font
             color: choice.down || choice.highlighted ? F.Fusion.highlightedText(choice.palette) : choice.palette.text
@@ -50,13 +31,12 @@ F.ComboBox {
         implicitHeight: 24
         control: control
         visible: !control.flat || control.down
-        // An editable box's field takes the accent's border when focused,
-        // as a field does; Fusion's accent tint for keyboard focus is gone.
         highlighted: control.contentItem.activeFocus
         border.color: !control.enabled ? control.palette.mid
             : highlighted ? F.Fusion.highlightedOutline(control.palette) : (StyleColours.themed ? StyleColours.control : control.palette.mid)
         FocusFrame { control: control; shown: control.visualFocus }
     }
+    // Fusion's inner text field is the box's Edit to UI Automation; it needs the box's name.
     Binding {
         target: control.contentItem
         property: "Accessible.name"

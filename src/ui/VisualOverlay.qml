@@ -2,36 +2,19 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// T1: the visual tools over the Video canvas. The pointer goes to the active
-// tool (legacy VideoBox::OnMouseEvent hands it to the Visuals) and what the
-// tool draws is painted here, apart from the frame (docs/media.md: tool
-// handles stay separate from the decoded textures). The crosshair hides the
-// pointer over the video; the other tools show legacy's resize shapes over
-// their handles and during their drags. The Line warning of the other tools
-// is drawn centred on the video in red (Visuals::DrawWarning), unless
-// VIDEO_VISUAL_WARNINGS_OFF.
 Item {
     id: overlayItem
     objectName: "visualOverlay"
     required property VisualToolsController tools
-    // The panel that takes the keys (and Esc) after a click on the video.
     property Item focusTarget: null
-    // The height of the panel below the canvas (legacy m_PanelHeight).
     property real panelHeight: 0
-    // V4: the view's commands take the pointer first (VideoBox::OnMouseEvent's
-    // order: the zoom mode, the wheel's zoom, then the tool, the context
-    // menu and VIDEO_PAUSE_ON_CLICK); without one the tool has it alone.
     property VideoViewController view: null
-    // V5: fullscreen's pointer (VideoBox::OnMouseEvent's fullscreen part):
-    // each move reported, and the cursor it asks for over the video (-1: the
-    // tool's; FS1: before the zoom mode's, the hidden pointer).
+    // MUST KILL: cursorOverride -1 means the tool's cursor
     property int cursorOverride: -1
     signal contextMenuRequested(real x, real y)
     signal fullScreenRequested()
     signal pointerMoved(real x, real y)
 
-    // The pointer is over the video area for the tools: set by the events
-    // routed to them, cleared by the Leave routed to them (sent once).
     property bool pointerInside: false
 
     function route(kind, x, y, button, buttons, modifiers, steps) {
@@ -61,19 +44,12 @@ Item {
     onHeightChanged: sync()
     onPanelHeightChanged: sync()
     Component.onCompleted: sync()
-    // V5: moved into the fullscreen window (another screen, another scale).
     readonly property var shownIn: Window.window
     readonly property real shownScale: Window.window ? Window.window.devicePixelRatio : 1
     onShownInChanged: sync()
     onShownScaleChanged: sync()
 
-    // The pointer left the video area without the MouseArea's exited: its
-    // hover state is lost when the area moves into the fullscreen window
-    // (the main window's leave reaches it there), so it is never hovered
-    // again and goes out over the fullscreen panel with no exited. The
-    // handler follows the pointer itself, so the tools hear the Leave
-    // (the crosshair goes, the pointer is the arrow) as they do in the
-    // panel. A drag keeps the pointer until its release.
+    // A MouseArea moved into another window loses its hover and never sends exited: this handler sends the Leave.
     HoverHandler {
         id: pointerHover
         onHoveredChanged: {
@@ -98,16 +74,15 @@ Item {
         onPositionChanged: mouse => overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
         onPressed: mouse => {
             if (overlayItem.focusTarget)
-                overlayItem.focusTarget.forceActiveFocus() // legacy SetFocus on the video
+                overlayItem.focusTarget.forceActiveFocus()
             overlayItem.route(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
         onReleased: mouse => overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
-        // T2: legacy's wxEVT_LEFT_DCLICK (Position puts the Line there).
         onDoubleClicked: mouse => overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         onWheel: wheel => {
             overlayItem.route(5, wheel.x, wheel.y, Qt.NoButton, wheel.buttons, wheel.modifiers,
                               Math.round(wheel.angleDelta.y / 120))
-            wheel.accepted = overlayItem.view !== null // V4: the view takes the wheel over the video
+            wheel.accepted = overlayItem.view !== null
         }
     }
 
@@ -122,10 +97,6 @@ Item {
             ctx.reset()
             for (const s of shapes) {
                 if (s.type === "polygon") {
-                    // T2-T4: filled contours (one path, non-zero: the
-                    // rectangle clip's two fans without a seam), then the
-                    // first contour's one-pixel border; an empty fill or
-                    // border is not drawn (T3: RotationZ's ring).
                     const first = s.contours.length > 0 ? s.contours[0] : []
                     if (first.length < 2)
                         continue
@@ -173,7 +144,7 @@ Item {
                 } else if (s.type === "text") {
                     ctx.font = "bold " + s.pixelSize + "px \"" + overlayItem.tools.labelFamily + "\""
                     ctx.textBaseline = "top"
-                    if (s.outline) { // DRAWOUTTEXT: the eight one-pixel offsets in black
+                    if (s.outline) {
                         ctx.fillStyle = "#000000"
                         for (let dx = -1; dx <= 1; ++dx)
                             for (let dy = -1; dy <= 1; ++dy)
@@ -187,22 +158,10 @@ Item {
         }
     }
 
-    // Visuals::DrawWarning (Visuals.cpp:531-546, the Direct3D path): bold
-    // Tahoma a twentieth of the video's width high, red with a black outline
-    // (DRAWOUTTEXT). Direct3D centred it in {0, 0, VideoSize.width,
-    // VideoSize.height}, the window's corner to the video's right and bottom
-    // edges (RendererVideo.cpp:321), off-centre with a bar. Approved
-    // departure T1-warning-centre (docs/compatibility-decisions.md): it is
-    // centred on the video rectangle, as legacy's wx path did
-    // (DrawWarningWx, Visuals.cpp:479-493).
     Label {
         objectName: "visualWarning"
         visible: text.length > 0
         text: overlayItem.tools.warning
-        // Legacy's text, size and centring; drawn in the theme's danger
-        // colour and the application's font on a scrim of the panel colour
-        // (legacy's pure red on a black outline in Tahoma read as an error
-        // banner).
         color: Theme.danger
         font.bold: true
         font.pixelSize: Math.max(1, overlayItem.tools.videoRect.width / 20)

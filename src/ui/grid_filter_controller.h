@@ -1,12 +1,5 @@
 #pragma once
 
-// The Grid's filtering preferences (G8; legacy GRID_FILTER_BY,
-// GRID_FILTER_STYLES, GRID_FILTER_INVERTED, GRID_ADD_TO_FILTER,
-// GRID_FILTER_AFTER_LOAD and GRID_IGNORE_FILTERING at 20d647c4), shown in the
-// Grid menu's Filtering submenu and kept in the settings registry (grid.filter*,
-// grid.addToFilter, grid.ignoreFiltering). The filter itself runs in the
-// application (grid_filtering.h).
-
 #include "settings_store.h"
 
 #include <QObject>
@@ -42,17 +35,12 @@ public:
     void setAfterLoad(bool on);
     void setIgnoreInActions(bool on);
 
-    // A filter-by item (styles 1, selection 2, comments 4, unconfirmed 8,
-    // untranslated 16) checked or unchecked.
+    // MUST KILL: setFilterBy and filterBy use magic bits (styles 1, selection 2, comments 4, unconfirmed 8, untranslated 16)
     Q_INVOKABLE void setFilterBy(int bit, bool on);
-    // A Style item under "Hide lines with styles": the styles filter follows
-    // whether any Style is chosen (legacy ID_FILTERING_STYLES).
     Q_INVOKABLE void setStyle(const QString &name, bool on);
 
-    // Reads the settings again.
     void reload();
-    // After "Set default": the filter takes the defaults, "Ignore filtering
-    // in some actions" stays as it was (legacy keeps it per open grid).
+    // MUST KILL: settingsReset leaves ignoreInActions as it was
     void settingsReset();
 
 signals:
@@ -71,4 +59,4 @@ private:
     bool m_ignore = false;
 };
 
-} // namespace hikari::ui
+}

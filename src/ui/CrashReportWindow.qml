@@ -5,43 +5,23 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// CR1 (#452, CR1-mockups, approved 2026-10-28): a crash or freeze report,
-// on the dialog frame, modeless. Built on this machine and shown in full
-// before anything goes (CrashReports):
-// * "start": the report the last run left, at the first start after it
-//   crashed or was closed frozen, with PU1's crash offer (Restore session,
-//   Autosaves…) as Your work; closing the window keeps that offer;
-// * "freeze": a freeze the window came back from (the notice's Report…);
-// * "sent": the last report "Always send crash reports" sent, read only.
-// Send report sends it once, usage data on or off; Open GitHub issue opens
-// a Bug issue with the same text (the note as What happened); Don't send,
-// Esc and × drop it and send nothing. The note goes in as typed.
 DialogWindow {
     id: report
     objectName: "crashReport"
-    required property var reports // CrashReports
-    property var app: null // copyText
+    required property var reports
+    property var app: null
     property StartupOffer offer: null
-    // "start", "freeze" or "sent".
     property string source: "start"
-    // "crash" or "freeze".
     property string kind: "crash"
     property bool expanded: false
     readonly property bool sent: source === "sent"
     readonly property bool crashed: kind === "crash"
     readonly property bool recovery: source === "start" && offer !== null && offer.kind === "crash"
-    // The report as it goes; started() completes it after the first frame.
     property string reportText: ""
-    // A Send report or Open GitHub issue answered it (closing drops it).
     property bool answered: false
-    // The note of the last Send report (the failure notice's Try again).
     property string lastNote: ""
     signal autosavesRequested()
-    // Open GitHub issue: too long for a link, the report went to the
-    // clipboard and the blank form opened.
     signal linkTooLong()
-    // Open GitHub issue: no browser opened; the issue is on the clipboard
-    // and the report kept.
     signal browserFailed()
 
     dialogId: "crashReport"
@@ -63,7 +43,6 @@ DialogWindow {
     function refreshText() {
         reportText = sent ? reports.sentText() : reports.text(source, note.text)
     }
-    // The window's Open GitHub issue, and the failed send notice's.
     function openOnGitHub(from, text) {
         const result = reports.openOnGitHub(from, text)
         if (result.opened === false) {
@@ -74,7 +53,6 @@ DialogWindow {
             linkTooLong()
         return true
     }
-    // "today at 14:32", "yesterday at 14:32", or the date and time.
     function whenText(when) {
         if (!when || isNaN(when.getTime()))
             return ""
@@ -137,7 +115,6 @@ DialogWindow {
         }
     }
 
-    // PU1's crash offer, unchanged.
     SectionHead {
         visible: report.recovery
         title: qsTr("Your work")
@@ -248,7 +225,7 @@ DialogWindow {
     buttons: [
         PrimaryButton {
             id: sendButton
-            // Hidden, it gives back its slot (FooterButton).
+            // DialogButtonBox keeps a hidden button's spacing; the negative width takes it back.
             implicitWidth: visible ? Math.max(80, implicitContentWidth + leftPadding + rightPadding)
                                    : -(DialogButtonBox.buttonBox ? DialogButtonBox.buttonBox.spacing : 0)
             objectName: "crashReportSend"
@@ -279,7 +256,7 @@ DialogWindow {
         },
         PrimaryButton {
             id: closeButton
-            // Hidden, it gives back its slot (FooterButton).
+            // DialogButtonBox keeps a hidden button's spacing; the negative width takes it back.
             implicitWidth: visible ? Math.max(80, implicitContentWidth + leftPadding + rightPadding)
                                    : -(DialogButtonBox.buttonBox ? DialogButtonBox.buttonBox.spacing : 0)
             objectName: "crashReportClose"
@@ -290,7 +267,6 @@ DialogWindow {
         }
     ]
 
-    // A section's bold title over a rule, a muted note at its trailing end.
     component SectionHead: ColumnLayout {
         id: head
         property string title

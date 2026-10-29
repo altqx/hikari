@@ -1,18 +1,5 @@
 #pragma once
 
-// AD3 (#312): each macro run's log, kept after it ends (Cancel and errors
-// included), for the progress card and the Automation panel's Runs. The last
-// kKept runs of the session, newest first: the macro, its script, the
-// Document, when it started, how it ended and every line it logged.
-// * A script's line carries the aegisub.debug.out level it was given (0 fatal
-//   … 5 trace; kNoLevel without one). The helper still drops the levels above
-//   the trace level, so only what Aegisub would show is recorded.
-// * Output is kept as Aegisub shows it: text without a final newline is
-//   continued by the next output, on the same line.
-// * HikariSub's own lines (the run's error, its outcome) are kHostError and
-//   kHostInfo; they show whatever the level filter.
-// AutomationRunLines shows one run's lines, filtered by level and text.
-
 #include <QAbstractListModel>
 #include <QDateTime>
 #include <QObject>
@@ -34,13 +21,11 @@ class AutomationRuns : public QAbstractListModel {
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 public:
     static constexpr int kKept = 20;
-    // A run's script output kept at most (a script can write without end).
     static constexpr int kMaxLines = 10'000;
     static constexpr qsizetype kMaxChars = 4'000'000;
-    // HikariSub's own line (a run's error and traceback) kept at most.
     static constexpr int kMaxNoteLines = 200;
-    // A run's names, task and outcome kept at most (the script gives them).
     static constexpr qsizetype kMaxText = 4'000;
+    // MUST KILL: line levels mix Aegisub's debug.out levels (0 fatal … 5 trace) with these negative sentinels
     static constexpr int kNoLevel = -1;
     static constexpr int kHostError = -2;
     static constexpr int kHostInfo = -3;
@@ -49,32 +34,33 @@ public:
         MacroRole,
         ScriptRole,
         DocumentRole,
-        StartedRole, // "HH:MM"
-        StateRole,   // "running", "applied", "problems", "cancelled", "failed"
+        StartedRole,
+        StateRole,
         TaskRole,
-        ProgressRole, // percent; -1 while the script has set none
-        DurationRole, // milliseconds (so far, while it runs)
+        ProgressRole,
+        DurationRole,
         LineCountRole,
-        MessageRole, // how it ended, in a sentence
+        MessageRole,
     };
     struct Line {
         int level = kNoLevel;
-        qint64 elapsed = 0; // ms since the run started
+        qint64 elapsed = 0;
         QString text;
     };
     struct Run {
         int id = 0;
         QString macro, script, document;
         QDateTime started;
-        qint64 startedAt = 0; // the clock's ms
-        qint64 duration = -1; // -1 while it runs
+        qint64 startedAt = 0;
+        // MUST KILL: duration -1 doubles as the run's still-running flag
+        qint64 duration = -1;
         QString state = QStringLiteral("running");
         QString task, message;
         double progress = -1;
         std::vector<Line> lines;
-        bool open = false; // the last line awaits the rest of its text
-        qsizetype chars = 0; // the script's output kept
-        bool full = false;   // over kMaxLines or kMaxChars: no more kept
+        bool open = false;
+        qsizetype chars = 0;
+        bool full = false;
     };
 
     explicit AutomationRuns(QObject *parent = nullptr);
@@ -84,42 +70,29 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     int count() const { return static_cast<int>(m_runs.size()); }
 
-    // A run starts: its id (the oldest finished run goes past kKept).
     int begin(const QString &macro, const QString &script, const QString &document);
-    // The script's output (`level` kNoLevel when it gave none).
     void append(int run, const QString &text, int level = kNoLevel);
-    // HikariSub's own line (kHostError or kHostInfo), a line of its own.
     void note(int run, const QString &text, int kind);
     void setTask(int run, const QString &task);
     void setProgress(int run, double percent);
     void finish(int run, const QString &state, const QString &message);
 
     const Run *run(int id) const;
-    // The run's lines as text: every line, or those `accept` takes; with
-    // times, each line's time since the start first. Saved files are headed
-    // by the run (macro, script, Document, start, outcome).
     QString text(int id, bool times, const std::function<bool(const Line &)> &accept = {}, bool header = false) const;
     static QString levelName(int level);
     static QString elapsedText(qint64 ms);
 
     Q_INVOKABLE int rowOf(int id) const;
-    // The id of the run at `row` (0: none).
     Q_INVOKABLE int idAt(int row) const;
-    // The Document run `id` ran on ("" when it is no longer kept).
     Q_INVOKABLE QString documentOf(int id) const;
-    // The finished runs go; a running one stays.
     Q_INVOKABLE void clear();
 
-    // Tests: the clocks (a monotonic ms count, and the start's date).
     void setClock(std::function<qint64()> clock) { m_clock = std::move(clock); }
     void setWallClock(std::function<QDateTime()> clock) { m_wallClock = std::move(clock); }
 
 signals:
     void countChanged();
-    // Lines [first, last] of `run` were added; `changed` (>= 0) is a line
-    // whose text grew (an open line continued).
     void linesAdded(int run, int first, int last, int changed);
-    // `run` went (cleared, or past kKept).
     void removed(int run);
 
 private:
@@ -127,14 +100,12 @@ private:
     void changedRow(int id, const QList<int> &roles);
     qint64 now() const;
 
-    std::deque<Run> m_runs; // newest first
+    std::deque<Run> m_runs;
     int m_nextId = 1;
     std::function<qint64()> m_clock;
     std::function<QDateTime()> m_wallClock;
 };
 
-// One run's lines as a list: those at or under `levelLimit` (lines without a
-// level and HikariSub's own always) that contain `filterText`.
 class AutomationRunLines : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
@@ -142,10 +113,8 @@ class AutomationRunLines : public QAbstractListModel {
     Q_PROPERTY(int run READ run WRITE setRun NOTIFY runChanged)
     Q_PROPERTY(int levelLimit READ levelLimit WRITE setLevelLimit NOTIFY filterChanged)
     Q_PROPERTY(QString filterText READ filterText WRITE setFilterText NOTIFY filterChanged)
-    // Each line's time since the run started, in its role and in the text.
     Q_PROPERTY(bool times READ times WRITE setTimes NOTIFY timesChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
-    // Every line of the run, whatever the filter.
     Q_PROPERTY(int total READ total NOTIFY countChanged)
 public:
     enum Role { LevelRole = Qt::UserRole + 1, LevelNameRole, TextRole, TimeRole };
@@ -169,15 +138,10 @@ public:
     int count() const { return static_cast<int>(m_shown.size()); }
     int total() const;
 
-    // The run's lines at `level` (the level menu's counts).
     Q_INVOKABLE int countAt(int level) const;
-    // Copy and Save take the lines shown.
     Q_INVOKABLE QString shownText() const;
     Q_INVOKABLE void copyShown() const;
-    // Writes the lines shown (UTF-8, headed by the run) to `file`; the error,
-    // or "" when written.
     Q_INVOKABLE QString saveShown(const QUrl &file) const;
-    // A name to save it as: "<macro> <yyyy-MM-dd HH-mm>.log".
     Q_INVOKABLE QString suggestedName() const;
 
 signals:
@@ -198,7 +162,7 @@ private:
     int m_levelLimit = 5;
     QString m_filter;
     bool m_times = false;
-    std::vector<int> m_shown; // line indexes
+    std::vector<int> m_shown;
 };
 
-} // namespace hikari::ui
+}

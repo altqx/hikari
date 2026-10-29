@@ -1,18 +1,3 @@
-// R2: reference navigation and the subtitles preview (legacy SubsGridPreview,
-// SubsGrid::OnShowPreview, ShowPreviewWindow and ShowSecondComparedLine at
-// 20d647c4; docs/ux/translation-comparison.md).
-//
-// Legacy drew another tab's grid inside the editing Grid (SubsGridPreview);
-// the rewrite shows that Document in the reference tray as the protected
-// reference, and it stays a tab (Workspace::setTabReference). The tray is
-// navigated on its own: clicks and keys move the reference's selection, never
-// its content. Linked matching makes it follow the editing target's active
-// Line one way, as the preview followed its grid (NewSeeking): the
-// reference's Lines overlapping the editing Line in time, in runs, the first
-// one shown, with the candidates counted and an empty no-match state instead
-// of legacy's nearest Line. While the editing target is compared (R1), the
-// compared partner follows by its pairing instead (ShowSecondComparedLine).
-
 #include "hikari/app/application.h"
 
 #include "hikari/application/grid_clipboard.h"
@@ -36,12 +21,10 @@ std::optional<std::size_t> rowOf(const core::Document &document, core::LineId id
     return std::nullopt;
 }
 
-} // namespace
+}
 
 std::optional<application::DocumentId> Application::comparedPartner() const
 {
-    // The editing grid has a Comparison table: it is CG1 or CG2 (only the
-    // compared pair has tables, R1-stale-table).
     const auto target = m_workspace.editingTarget();
     if (!target || !m_comparison.table(*target))
         return std::nullopt;
@@ -55,7 +38,6 @@ std::optional<application::DocumentId> Application::comparedPartner() const
 
 bool Application::canShowPreview() const
 {
-    // SubsGrid.cpp:277 and 884-887: Notebook::GetTabs()->Size() > 1 && !preview.
     return m_workspace.editingTarget() && !m_workspace.reference() && m_workspace.tabs().size() > 1;
 }
 
@@ -69,19 +51,12 @@ bool Application::showPreview()
         return false;
     std::optional<application::DocumentId> shown;
     if (const auto partner = comparedPartner()) {
-        // SubsGrid::OnShowPreview (SubsGrid.cpp:1416-1424): a compared grid
-        // shows ShowSecondComparedLine(currentLine, true), which returns
-        // before showing anything for a Line without a pair
-        // (SubsGridWindow.cpp:2038-2041).
         const auto *table = m_comparison.table(target);
         const auto row = rowOf(session->document(), *session->selection().active);
         if (!row || *row >= table->size() || !(*table)[*row].matchedRow)
             return false;
         shown = partner;
     } else {
-        // ShowPreviewWindow(nullptr, ...) and NewSeeking(false): with no grid
-        // shown yet, SeekForOccurences takes the first entry, the first other
-        // tab's (every tab gives one, SubsGridPreview.cpp:917-924).
         for (const auto id : m_workspace.tabs())
             if (id != target) {
                 shown = id;
@@ -90,7 +65,6 @@ bool Application::showPreview()
     }
     if (!shown || !m_workspace.setTabReference(*shown))
         return false;
-    // The preview follows its grid (NewSeeking from every line change).
     m_referenceLinked = true;
     m_linkedFrom.reset();
     refreshViews();
@@ -112,7 +86,6 @@ void Application::followEditingLine(bool force)
 {
     const auto reference = m_workspace.reference();
     if (!reference) {
-        // The tray closed or its Document went: a later reference starts independent.
         if (m_referenceLinked || m_linkedMatch.active()) {
             m_referenceLinked = false;
             m_linkedMatch.clear();
@@ -130,8 +103,6 @@ void Application::followEditingLine(bool force)
     if (!active)
         return;
     const std::pair key{target->value, active->value};
-    // Only a move to another Line seeks (legacy NewSeeking runs from the
-    // line-changing gestures, never from an edit of the same Line).
     if (!force && m_linkedFrom == key && m_linkedReference == reference->value)
         return;
     m_linkedFrom = key;
@@ -151,12 +122,8 @@ void Application::seekLinkedReference()
     if (!row)
         return;
     if (const auto partner = comparedPartner()) {
-        // `if (Comparison) ShowSecondComparedLine(row); else if (preview)
-        // preview->NewSeeking();` (SubsGridWindow.cpp:1638-1639, 1662-1663,
-        // 1872-1873; SubsGridBase.cpp:1415-1416): a compared grid moves its
-        // partner to the paired Line, and nothing for an unpaired one.
         if (*partner != *reference) {
-            m_linkedMatch.clear(); // legacy moved the hidden partner, not the preview
+            m_linkedMatch.clear();
             publishReferenceNavigation();
             return;
         }
@@ -170,16 +137,12 @@ void Application::seekLinkedReference()
         m_linkedMatch.set(application::seekOccurrences(referenceSession->document(), *session->document().lines()[*row]));
     }
     publishReferenceNavigation();
-    // NewSeeking: previewGrid->ChangeActiveLine(lastData.lineRangeStart),
-    // then MakeVisible. A no-match leaves the reference where it was.
     if (const auto current = m_linkedMatch.current())
         showReferenceRow(current->row);
 }
 
 void Application::showReferenceRow(std::size_t row)
 {
-    // SubsGrid::ChangeActiveLine (SubsGridWindow.cpp:1968-1980): the Line
-    // becomes active and is selected alone.
     const auto reference = m_workspace.reference();
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
     if (!referenceSession)
@@ -217,8 +180,6 @@ bool Application::showNearestReferenceLine()
 
 void Application::closeReference()
 {
-    // DestroyPreview (SubsGridPreview.cpp:91-107): the preview goes; the
-    // previewed tab stays as it was.
     if (!m_workspace.reference())
         return;
     m_workspace.setReference(std::nullopt);
@@ -239,8 +200,6 @@ application::GridSelection Application::referenceGridSelection() const
 
 void Application::applyReferenceSelection(application::Selection next)
 {
-    // A selection change is not a content change (EditSession::setSelection
-    // makes no history step), so the protected reference allows it.
     const auto reference = m_workspace.reference();
     auto *session = reference ? m_files->session(*reference) : nullptr;
     if (!session)
@@ -258,9 +217,6 @@ void Application::selectReferenceLine(qulonglong id)
 
 void Application::clickReferenceLine(qulonglong id, int modifiers)
 {
-    // SubsGridPreview::OnMouseEvent's selection (SubsGridPreview.cpp:700-790)
-    // is the Grid's: a click selects the Line alone, Ctrl toggles it, Shift
-    // selects the block.
     const auto reference = m_workspace.reference();
     auto *session = reference ? m_files->session(*reference) : nullptr;
     if (!session)
@@ -299,8 +255,6 @@ void Application::selectAllReferenceLines()
 
 bool Application::copyReferenceLines()
 {
-    // SubsGridPreview::OnAccelerator PREVIEW_COPY (SubsGridPreview.cpp:842-850):
-    // with a selection, CopyRows(GRID_COPY) of the previewed grid.
     const auto reference = m_workspace.reference();
     auto *session = reference ? m_files->session(*reference) : nullptr;
     if (!session || session->selection().selected.empty())
@@ -313,16 +267,11 @@ bool Application::copyReferenceLines()
 
 void Application::refuseReferenceChange()
 {
-    // Legacy pasted into the previewed grid (PREVIEW_PASTE); the reference is
-    // protected, so nothing changes.
     m_shell->setStatusText(QCoreApplication::translate("HikariSub.Reference", "The reference is protected (read-only)."));
 }
 
 QVariantList Application::referenceOccurrences()
 {
-    // SubsGridPreview::ContextMenu (SubsGridPreview.cpp:940-961):
-    // SeekForOccurences over every tab but the editing one, each entry
-    // "SubsName (lineRangeStart lineRangeLen)", the one shown checked.
     m_occurrenceMenu.clear();
     QVariantList rows;
     const auto target = m_workspace.editingTarget();
@@ -342,7 +291,6 @@ QVariantList Application::referenceOccurrences()
         const std::string *title = m_workspace.title(id);
         const auto lines = other->document().lines();
         for (const auto &occurrence : application::seekOccurrences(other->document(), editing)) {
-            // lastData == previewData[i]: the occurrence the shown grid's active Line starts.
             const bool checked = reference == id && other->selection().active && occurrence.row < lines.size() &&
                                  lines[occurrence.row]->id == *other->selection().active;
             rows << QVariantMap{{QStringLiteral("text"), QStringLiteral("%1 (%2 %3)")
@@ -358,8 +306,6 @@ QVariantList Application::referenceOccurrences()
 
 bool Application::chooseReferenceOccurrence(int index)
 {
-    // ContextMenu's choice (SubsGridPreview.cpp:950-960): that grid is shown
-    // and its Line lineRangeStart becomes active.
     if (index < 0 || index >= static_cast<int>(m_occurrenceMenu.size()))
         return false;
     const auto [id, occurrence] = m_occurrenceMenu[static_cast<std::size_t>(index)];
@@ -367,7 +313,7 @@ bool Application::chooseReferenceOccurrence(int index)
         return false;
     if (m_workspace.reference() != id && !m_workspace.setTabReference(id))
         return false;
-    refreshViews(); // a linked tray follows the editing Line in the Document now shown
+    refreshViews();
     if (m_referenceLinked && m_linkedMatch.choose(occurrence.row))
         publishReferenceNavigation();
     showReferenceRow(occurrence.row);
@@ -376,9 +322,6 @@ bool Application::chooseReferenceOccurrence(int index)
 
 int Application::comparedReferenceRow(int row) const
 {
-    // ShowSecondComparedLine(scrollPosition, false, false, true) from the
-    // compared grid's wheel and scroll bar (SubsGridWindow.cpp:1462-1465,
-    // 1719-1729): the partner's first row becomes the paired one.
     const auto reference = m_workspace.reference();
     const auto partner = comparedPartner();
     const auto target = m_workspace.editingTarget();
@@ -396,4 +339,4 @@ int Application::comparedReferenceRow(int row) const
     return matched ? static_cast<int>(*matched) : -1;
 }
 
-} // namespace hikari::app
+}

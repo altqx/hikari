@@ -4,20 +4,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// AV1 (#238): the audio panel's output device menu, from its speaker button.
-// The entries are Settings > Audio's device choice (H2): System default, the
-// connected devices and a chosen device that is not connected, the stored
-// choice checked; choosing one stores it as the dialog's OK does, so the
-// outputs move at once. "Audio settings…" opens the dialog on its Audio page.
-//
-// AU1 (#267): given the audio box's controller (`audio`), the menu is the
-// speaker's popover: the volume slider that left the panel's slider column
-// above the devices, with a note while the volume is linked to the vertical
-// stretch, and the devices under their heading.
-//
-// KA2 (#277, KA2-slowed-playback): under the volume, the playback speed's
-// five presets with the pitch kept, and the keys that step it (`slowerKey`
-// and `fasterKey`, AUDIO_SPEED_DOWN and AUDIO_SPEED_UP).
 ShellMenu {
     id: menu
     required property var app
@@ -25,16 +11,13 @@ ShellMenu {
     property string slowerKey
     property string fasterKey
     property var rows: []
-    // the items before the devices' (the volume, its note, the speed, its
-    // hint and the heading)
+    // MUST KILL: firstDevice is a hand count of the menu items above the devices
     readonly property int firstDevice: 5
     signal settingsRequested()
     onAboutToShow: rows = app.audioOutputMenu()
     AudioSliderRow {
         visible: menu.audio !== null
         height: visible ? implicitHeight : 0
-        // Named only where it is the audio box's: FS1's fullscreen speaker
-        // shows this menu too, without `audio`.
         sliderName: menu.audio !== null ? "audioVolume" : ""
         text: qsTr("Volume")
         from: 1
@@ -67,7 +50,6 @@ ShellMenu {
                 Layout.preferredWidth: 76
                 elide: Text.ElideRight
             }
-            // a segmented control: the speed's presets, the current one marked
             Rectangle {
                 objectName: "audioSpeed"
                 Layout.fillWidth: true
@@ -109,7 +91,6 @@ ShellMenu {
                                     color: Theme.line
                                     visible: speed.index > 0
                                 }
-                                // the chosen one's accent line: not its fill alone
                                 Rectangle {
                                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                                     height: 2
@@ -130,7 +111,6 @@ ShellMenu {
             }
         }
     }
-    // "Pitch is kept. [ and ] change the speed.", under the presets
     Item {
         objectName: "audioSpeedHint"
         readonly property bool keys: menu.slowerKey.length > 0 && menu.fasterKey.length > 0

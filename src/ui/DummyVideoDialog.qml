@@ -5,20 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// V3: GLOBAL_OPEN_DUMMY_VIDEO's dialog (legacy DummyVideo "Dummy video
-// options", DummyVideo.cpp:20-116): the resolution presets (1920x1080 chosen)
-// and the width and height (300 to 8000, 200 to 4500), the colour and the
-// checkerboard, the frames per second (typed or one of six, digits and dots
-// only) and the duration. Open hands the values to App.openDummyVideo.
-// The colour is legacy's ButtonColorPicker value as ASS text (&HBBGGRR&),
-// shown beside a swatch (V3-dummy-colour-text); SY2: the swatch opens the
-// colour popover, whose changes write the text.
-// PU4 (#306, PU4-dummy-video): a window on DG1's frame titled with the
-// command, Open for OK; "This gives %1 frames" follows the rate and the
-// duration as they are typed (legacy computed it once, for the defaults); a
-// rate outside 15 to 120 or a duration that is no time is said under its
-// field and Open is off (legacy's "Invalid FPS value." came after OK); the
-// presets show Custom for a size that is none of them.
 DialogWindow {
     id: dialog
     objectName: "dummyVideoDialog"
@@ -29,7 +15,6 @@ DialogWindow {
     modal: true
     defaultButton: openButton
     property var defaults: ({})
-    // the text to log when the values are refused ("Invalid FPS value.")
     signal refused(string message)
 
     readonly property int frames: app.dummyVideoFrames(fps.editText, Math.max(0, durationMs(duration.text)))
@@ -49,14 +34,13 @@ DialogWindow {
         syncPreset()
         open()
     }
-    // SubsTime from the TimeCtrl's "H:MM:SS.CC" (ms; -1 unreadable)
     function durationMs(text) {
         const m = /^(\d+):(\d{1,2}):(\d{1,2})(?:[.,](\d{1,2}))?$/.exec(text.trim())
         if (!m)
             return -1
         return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
     }
-    // AssColor from "&HBBGGRR&"
+    // ASS colours are &H[AA]BBGGRR&, blue first.
     function rgb(text) {
         const m = /^&H([0-9A-Fa-f]{2})?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})&?$/.exec(text.trim())
         if (!m)
@@ -69,7 +53,6 @@ DialogWindow {
                  width: widthBox.value, height: heightBox.value,
                  red: c.red, green: c.green, blue: c.blue, pattern: pattern.checked }
     }
-    // The preset of the size shown, or none (Custom).
     function syncPreset() {
         const list = resolution.model || []
         resolution.currentIndex = list.findIndex(r => {
@@ -91,7 +74,6 @@ DialogWindow {
                 Layout.fillWidth: true
                 displayText: currentIndex < 0 ? qsTr("Custom") : currentText
                 Accessible.name: qsTr("Video resolution")
-                // OnResolutionChoose: "<w>x<h> (...)" into the two fields
                 onActivated: {
                     const m = /^(\d+)x(\d+)/.exec(currentText)
                     if (m) {
@@ -212,7 +194,6 @@ DialogWindow {
             Label {
                 id: frameCount
                 objectName: "dummyFrames"
-                // The count waits for a rate it can use.
                 visible: dialog.fpsValid && dialog.durationValid
                 text: qsTr("This gives %1 frames").arg(Math.max(0, dialog.frames))
                 color: Theme.muted

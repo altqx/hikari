@@ -3,11 +3,6 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// KE2: while the Template editor's preview is on the video, a badge in the
-// picture's top left corner says so: the frame draws the current Line's
-// preview in place of its generated Lines, which Apply has not written. After
-// a problem the preview kept is the last run that worked, in the warning
-// colour. It takes no input: the pointer goes through to the view.
 Rectangle {
     id: badge
     objectName: "videoTemplateBadge"

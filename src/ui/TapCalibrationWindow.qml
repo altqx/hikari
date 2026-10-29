@@ -4,20 +4,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// KA2 (#277, KA2-tap-to-time): Calibrate latency…, opened from the audio
-// panel's Tap menu. Opening it plays the calibration's beeps (16 at 100 BPM,
-// the first four practice) and Space is pressed on each; the beats heard
-// fill their dots, each counted press shows on a strip of 0 to 200 ms with
-// the median, and once enough are counted the latency takes the result (it
-// can be typed too). Apply saves it (audio.tapLatency), Cancel or Esc
-// leaves it; Start again plays the beeps again. Enter applies.
 Window {
     id: calibration
     objectName: "tapCalibrationWindow"
     required property var audio
-    // the latency typed or changed with the arrows: the result no longer replaces it
     property bool edited: false
-    color: Theme.panel // K2: a Window draws white unless told
+    color: Theme.panel // a Window draws white unless told
     title: qsTr("Calibrate tap latency")
     flags: Qt.Dialog
     modality: Qt.ApplicationModal
@@ -43,7 +35,7 @@ Window {
     }
     function apply() {
         audio.stopCalibration()
-        // what is typed in the field, though Enter there has not committed it
+        // SpinBox.value lags the typed text until Enter commits it.
         const typed = latency.valueFromText(latency.contentItem.text, latency.locale)
         audio.setTapLatency(Math.max(latency.from, Math.min(latency.to, typed)))
         close()
@@ -61,9 +53,6 @@ Window {
         sequences: [StandardKey.Cancel]
         onActivated: calibration.close()
     }
-    // Space on a beep, Esc closes, Enter applies; the window's own keys before
-    // its buttons'. The latency field is inside, so Enter typed there comes
-    // here too; while the beeps play it cannot be chosen, so Space does.
     Item {
         id: keys
         anchors.fill: parent
@@ -106,7 +95,6 @@ Window {
                     text: qsTr("16 beeps at 100 BPM; the first four are practice.")
                 }
             }
-            // the beats: the practice ones dashed, those heard filled
             Row {
                 objectName: "tapCalibrationBeats"
                 spacing: 6
@@ -153,7 +141,6 @@ Window {
                     color: Theme.muted
                     font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
                 }
-                // the counted presses' delays on 0 to 200 ms, the median across them
                 Canvas {
                     id: plot
                     objectName: "tapCalibrationPlot"

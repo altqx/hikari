@@ -4,19 +4,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// P9: legacy Notebook::LoadVideo's question when subtitles open (Notebook.cpp:
-// 1191-1222 at 20d647c4), shown inline over the Video panel so the Document
-// stays editable: "Associated files:" with the Script Info video, audio and
-// keyframes, "Video from directory:" with the same-named video beside the
-// subtitles; "Load associated" and "Load from directory" (each "Yes" when
-// alone), "No", and "Apply to All" for the rest of the same opening
-// (HikariMessageDialog's ASK_ONCE check). Legacy's dialog was modal and
-// Escape (its escape id) answered No; this question does not take the focus
-// from the Document, so Escape answers No while the focus is in it (reached
-// with Tab, or after "Apply to All"): the key comes up from its controls.
-// It sits over the video, beside the tool rail, on the panel colour: the
-// style's Frame draws only its outline, and the rail's icons and the picture
-// showed through the question.
 Frame {
     id: offer
     objectName: "associationOffer"

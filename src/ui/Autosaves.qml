@@ -1,22 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Session"
-// PU1 (#303, PU1-autosaves-window): File > Open auto save (P3, and P9's
-// legacy autosaves) and File > Remove temporary files (P4) in one window on
-// DG1's frame, modeless and resizable. Every autosave bundle, this
-// version's (Application::recoveryBundles) and the previous version's
-// (legacy's Subs folder, read only), newest first, with:
-// * a search that matches the name and the path as it is typed, every word
-//   of it (legacy's "All words");
-// * the date filter: Any time, Today, Last 7 days, Last 30 days, Before a
-//   date (PK1's date picker);
-// * per row the version (the latest first), Open copy, which opens it as a
-//   new unsaved copy and closes the window (L58-recovery-copy), and Delete,
-//   at once; the previous version's cannot be deleted;
-// * Delete older than…, a popover with the date picker: its button counts
-//   what goes and deletes in one step ("Everything" is legacy's Remove all
-//   auto save files). Remove temporary files opens the window with it open.
-// Nothing opens by itself at the start any more (the Home card or the
-// startup bar offers it).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -26,21 +9,16 @@ Item {
     id: autosaves
     required property var app
     property SettingsStore settings: null
-    // The rows: {kind ("bundle", "legacy"), key, name, path, when (Date),
-    // versions: [{label, generation | file}]}.
     property var entries: []
-    // The date filter: "any", "today", "week", "month", "before".
     property string range: "any"
     property date before: new Date()
     property string query: ""
-    // The clock "Today" counts from; tests set it.
     property date now: new Date()
     readonly property DialogWindow window: windowLoader.item as DialogWindow
     readonly property var shown: {
         const words = query.toLocaleLowerCase().split(" ").filter(w => w.length > 0)
         const from = rangeStart()
         return entries.filter(e => {
-            // A previous version's files are where its path is.
             const hay = [e.name, e.path].concat(e.versions.map(v => v.file || "")).join("\n").toLocaleLowerCase()
             if (!words.every(w => hay.includes(w)))
                 return false
@@ -72,8 +50,6 @@ Item {
             return qsTr("Yesterday %1").arg(time)
         return d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
     }
-    // Delete or Delete older than removed bundles (the startup offer counts
-    // them again).
     signal bundlesDeleted()
     function reload() {
         now = new Date()
@@ -90,8 +66,6 @@ Item {
         rows.sort((a, b) => b.when - a.when)
         entries = rows
     }
-    // Open auto save; Remove temporary files with `deleting` (the Delete
-    // older than… popover open).
     function show(deleting) {
         reload()
         windowLoader.active = true
@@ -113,7 +87,6 @@ Item {
         reload()
         autosaves.bundlesDeleted()
     }
-    // The bundles Delete older than would delete for `cutoff` (a day).
     function olderCount(cutoff) {
         const c = day(cutoff)
         return entries.filter(e => e.kind === "bundle" && e.when < c).length
@@ -138,7 +111,6 @@ Item {
             initialFocus: search
 
             function openDeleteOlder() {
-                // Legacy's default: a month before today.
                 olderDate.setDate(olderDate.back({ months: 1 }))
                 deleteOlder.openAt(deleteOlderButton, null)
             }
@@ -243,7 +215,6 @@ Item {
                             ColumnLayout {
                                 spacing: 2
                                 Layout.fillWidth: true
-                                // The name at its width, the tag after it.
                                 Item {
                                     Layout.fillWidth: true
                                     implicitHeight: nameLabel.implicitHeight
@@ -347,14 +318,14 @@ Item {
                     id: olderDate
                     objectName: "olderDate"
                     accessibleName: qsTr("Delete autosaves saved before")
-                    // Tomorrow: every autosave (legacy's Remove all auto save files).
+                    // MUST KILL: days: -1 (tomorrow) is the "Everything" shortcut
                     shortcuts: [{ text: qsTr("A week ago"), days: 7 }, { text: qsTr("A month ago"), months: 1 },
                                 { text: qsTr("Everything"), days: -1 }]
                 }
                 DangerButton {
                     objectName: "autosavesDeleteOlderNow"
                     enabled: deleteOlder.count > 0
-                    // English has no plural catalog: one says "1 autosave".
+                    // Without an English catalog, qsTr %n never picks a singular.
                     text: deleteOlder.count === 1 ? qsTr("Delete 1 autosave") : qsTr("Delete %n autosaves", "", deleteOlder.count)
                     Layout.alignment: Qt.AlignRight
                     onClicked: {

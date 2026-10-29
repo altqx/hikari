@@ -1,6 +1,3 @@
-// W2: the CSRI renderer list on Windows, as legacy CsriMod.cpp builds it
-// (20d647c4: csrilib_os_init, csrilib_enum_dir, csrilib_load, csrilib_do_load).
-
 #include "hikari/backends/csri_renderer.h"
 
 #include <windows.h>
@@ -11,7 +8,6 @@ namespace hikari::backends {
 
 namespace {
 
-// get_errstr: the system's text for GetLastError, without its last newline.
 std::string errorText()
 {
     char msg[2048];
@@ -56,7 +52,6 @@ struct Loader {
         return true;
     }
 
-    // csrilib_do_load
     void loadLibrary(const std::wstring &file)
     {
         HMODULE module = LoadLibraryExW(file.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -85,16 +80,13 @@ struct Loader {
             FreeLibrary(module);
             return;
         }
-        // Only the library's default renderer is added, at the front.
         r.rend = rendererDefault();
         r.info = rendererInfo(r.rend);
         renderers.insert(renderers.begin(), r);
-        // Legacy never unloads a renderer library (csri_close_renderer frees
-        // only its list), so neither does this.
+        // MUST KILL: the no-op deleter never unloads the library.
         libraries.emplace_back(static_cast<void *>(module), [](void *) {});
     }
 
-    // csrilib_load
     void load(const std::wstring &path)
     {
         const DWORD attributes = GetFileAttributesW(path.c_str());
@@ -107,7 +99,6 @@ struct Loader {
         loadLibrary(path);
     }
 
-    // csrilib_enum_dir: every entry whose name does not start with '.'.
     void enumerate(const std::wstring &dir)
     {
         WIN32_FIND_DATAW data;
@@ -125,7 +116,7 @@ struct Loader {
     }
 };
 
-} // namespace
+}
 
 std::shared_ptr<CsriRenderers> CsriRenderers::load(const std::filesystem::path &folder, const Log &log)
 {
@@ -134,4 +125,4 @@ std::shared_ptr<CsriRenderers> CsriRenderers::load(const std::filesystem::path &
     return std::make_shared<CsriRenderers>(std::move(loader.renderers), std::move(loader.libraries));
 }
 
-} // namespace hikari::backends
+}

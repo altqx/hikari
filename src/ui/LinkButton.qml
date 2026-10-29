@@ -2,9 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// A link that opens the browser: an icon and the text in the accent,
-// underlined under the pointer, with the focus ring (DG1's About; SH3's
-// What's new).
 AbstractButton {
     id: link
     required property string iconRole

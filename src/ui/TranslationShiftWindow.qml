@@ -5,13 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// Legacy TLDialog ("Translation matching options", Grid menu › Dialogue
-// shifting window, GRID_TRANSLATION_DIALOG): moves the translation or the
-// original against the other from the first selected Line; it stays open
-// while working. PU2 (#304): a compact window on DG1's frame that does not
-// block; the description legacy's info button kept in a tooltip is text
-// on the window, and each button says what it moves under it
-// (PU2-translation-matching).
 DialogWindow {
     id: shift
     objectName: "translationShiftWindow"
@@ -63,7 +56,7 @@ DialogWindow {
             }
         }
         Repeater {
-            // Legacy layout: Original left, Translation right; mode is MoveTextTL's.
+            // MUST KILL: mode is a magic int 0-5 for Application::shiftTranslation, listed out of order for the two columns
             model: [
                 { mode: 2, name: qsTr("Add line"), hint: qsTr("A blank line before the selected one; the original moves down. Time the new line.") },
                 { mode: 3, name: qsTr("Add line"), hint: qsTr("A blank line before the selected one; the translation moves down.") },

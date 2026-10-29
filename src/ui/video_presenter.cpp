@@ -27,13 +27,6 @@ QRect rectOf(const std::optional<application::PixelRect> &r)
     return r ? QRect(r->x, r->y, r->width, r->height) : QRect();
 }
 
-// A texture kept across frames and updated in place on the render thread
-// (RHI backends): the frame's image whole, the overlay's only where it or
-// the overlay before it has visible pixels. The image given stays valid
-// until the next commit (the node keeps the lease it points into). A
-// texture that cannot be made (larger than the backend allows, or refused)
-// is reported through `failed`; the image stays pending and the next sync
-// gives it again.
 class UpdatableTexture : public QSGTexture {
 public:
     using Uploaded = std::function<void(const QRect &)>;
@@ -52,11 +45,8 @@ public:
     QSize textureSize() const override { return m_size; }
     bool hasAlphaChannel() const override { return m_alpha; }
     bool hasMipmaps() const override { return false; }
-    // The last commit could not make the texture (render thread, also
-    // where the node syncs).
     bool failed() const { return m_failure; }
 
-    // The whole image next commit; `lease` keeps its pixels.
     void setFrame(const QImage &image, std::shared_ptr<const void> lease)
     {
         m_image = image;
@@ -66,8 +56,6 @@ public:
         m_bounds.reset();
         m_pending = true;
     }
-    // An overlay: what changes is where it or the previous one has visible
-    // pixels (`bounds` when known; else found at commit, off the GUI thread).
     void setOverlay(const QImage &image, std::shared_ptr<const application::OverlayFrame> lease,
                     std::optional<QRect> bounds)
     {
@@ -112,7 +100,7 @@ public:
         if (m_overlay) {
             const QRect visible = m_bounds ? *m_bounds : rectOf(application::overlayBounds(*m_overlay));
             if (!whole)
-                region = visible.united(m_content); // clears what the last one drew
+                region = visible.united(m_content);
             m_content = visible;
         }
         if (m_uploaded)
@@ -140,26 +128,21 @@ private:
     QImage m_image;
     std::shared_ptr<const application::OverlayFrame> m_overlay;
     std::optional<QRect> m_bounds;
-    QRect m_content; // the overlay texels that may be visible
+    QRect m_content;
     bool m_pending = false;
 };
 
-// Holds the leases its textures were made from.
 class PresentNode : public QSGNode {
 public:
     QSGRectangleNode *background = nullptr;
-    // The frame layer: a BGRA texture, or Y'CbCr planes converted on the GPU
-    // (one of the two in the tree, after the background).
     QSGSimpleTextureNode *frame = nullptr;
     YcbcrNode *ycbcr = nullptr;
-    QSGSimpleTextureNode *overlay = nullptr; // in the tree only while it draws something
+    QSGSimpleTextureNode *overlay = nullptr;
     std::shared_ptr<const application::IndexedFrame> frameLease;
-    // The BGRA the frame texture shows: the frame's own, or its Y'CbCr
-    // planes converted on the CPU.
     std::shared_ptr<const application::IndexedFrame> bgraLease;
-    std::shared_ptr<const application::OverlayFrame> overlayLease; // null: no overlay drawn
-    QRect overlayRegion; // the overlay pixels its texture holds
-    QSizeF overlayScale{1, 1}; // frame pixels per overlay pixel (SV1: an overlay drawn at screen size)
+    std::shared_ptr<const application::OverlayFrame> overlayLease;
+    QRect overlayRegion;
+    QSizeF overlayScale{1, 1};
     bool frameAttached = true;
     bool ycbcrAttached = false;
     bool overlayAttached = false;
@@ -172,7 +155,6 @@ public:
         if (!overlayAttached)
             delete overlay;
     }
-    // The frame layer shows the GPU-converted planes, or the BGRA texture.
     void showPlanes(bool planes)
     {
         QSGNode *show = planes ? static_cast<QSGNode *>(ycbcr) : frame;
@@ -190,8 +172,7 @@ public:
     }
 };
 
-// Visible pixels plus a margin of transparent ones, so a filtered edge
-// samples as it would in the whole overlay.
+// A 2-pixel transparent margin, so a filtered edge samples as in the whole overlay.
 QRect padded(const QRect &bounds, const QSize &size)
 {
     return bounds.adjusted(-2, -2, 2, 2).intersected(QRect(QPoint(0, 0), size));
@@ -210,7 +191,6 @@ QString layoutError(const application::Presentation &p)
         return QStringLiteral("frame layout does not match its buffer");
     }
     if (p.overlay && !p.overlay->empty) {
-        // SV1: drawn at the frame's size or at the picture's size on screen.
         const auto &o = *p.overlay;
         if (o.width <= 0 || o.height <= 0 || o.stride < o.width * 4 ||
             o.pixels.size() < static_cast<std::size_t>(o.stride) * static_cast<std::size_t>(o.height))
@@ -221,13 +201,12 @@ QString layoutError(const application::Presentation &p)
     return {};
 }
 
-} // namespace
+}
 
 VideoPresenter::VideoPresenter(QQuickItem *parent) : QQuickItem(parent)
 {
     setFlag(ItemHasContents);
-    // An item constructed with a parent joins its window before this
-    // constructor runs, so itemChange() never saw that scene change.
+    // An item made with a parent joins its window before this runs: itemChange() never sees it.
     attachWindow(window());
 }
 
@@ -286,7 +265,7 @@ void VideoPresenter::setVideoRect(const QRectF &rect)
     m_videoRect = rect;
     emit placementChanged();
     updateScreenSize();
-    update(); // placement only
+    update();
 }
 
 void VideoPresenter::setSourceRect(const QRectF &rect)
@@ -321,7 +300,6 @@ void VideoPresenter::updateScreenSize()
 {
     QSize size;
     if (!m_frameSize.isEmpty()) {
-        // The shown part's rectangle, widened to the whole frame (T1's zoom).
         const QRectF target = placement(QSizeF(m_frameSize), m_pixelAspect);
         const QRectF source = m_sourceRect.isEmpty() ? QRectF(QPointF(), QSizeF(m_frameSize)) : m_sourceRect;
         const double dpr = window() ? window()->effectiveDevicePixelRatio() : 1.0;
@@ -342,7 +320,6 @@ void VideoPresenter::itemChange(ItemChange change, const ItemChangeData &value)
         attachWindow(value.window);
     }
     QQuickItem::itemChange(change, value);
-    // V5: fullscreen moves it to another window, maybe on a screen of another scale.
     if (change == ItemSceneChange || change == ItemDevicePixelRatioHasChanged)
         updateScreenSize();
 }
@@ -364,14 +341,14 @@ void VideoPresenter::geometryChange(const QRectF &newGeometry, const QRectF &old
 {
     QQuickItem::geometryChange(newGeometry, oldGeometry);
     updateScreenSize();
-    update(); // placement only; nothing is uploaded again
+    update();
 }
 
 QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
     auto *node = static_cast<PresentNode *>(oldNode);
     QQuickWindow *win = window();
-    bool upload = !node && m_shown.frame; // a new surface: show the current content again
+    bool upload = !node && m_shown.frame;
     std::optional<Resolved> uploaded;
 
     if (m_pending) {
@@ -392,8 +369,6 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         delete node;
         return nullptr;
     }
-    // V1: the RHI backends keep their textures and update them in place; the
-    // software renderer makes images.
     QRhi *rhi = win->rhi();
     const bool inPlace = rhi && rhi->isTextureFormatSupported(QRhiTexture::BGRA8);
     const bool planes = ycbcrSupported(rhi);
@@ -411,7 +386,6 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         upload = true;
     }
     if (upload) {
-        // The same frame again (new subtitles over it): its texture stays.
         auto *kept = dynamic_cast<UpdatableTexture *>(node->frame->texture());
         const bool gpuPlanes = m_shown.frame->ycbcr && planes;
         const bool same = node->frameLease == m_shown.frame &&
@@ -437,7 +411,7 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         } else if (!same) {
             node->showPlanes(false);
             std::shared_ptr<const application::IndexedFrame> bgra = m_shown.frame;
-            if (bgra->ycbcr) { // no GPU conversion here: the CPU's, to the same pixels
+            if (bgra->ycbcr) {
                 auto converted = std::make_shared<application::IndexedFrame>();
                 if (!application::ycbcrToBgra(*bgra, *converted)) {
                     if (uploaded)
@@ -488,7 +462,6 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
             node->frameLease = m_shown.frame;
             node->bgraLease = std::move(bgra);
         }
-        // The overlay: none, or nothing visible, draws nothing.
         const auto overlay = m_shown.overlay && !m_shown.overlay->empty ? m_shown.overlay : nullptr;
         std::optional<QRect> bounds;
         if (overlay && m_shown.overlayBoundsKnown)
@@ -524,7 +497,6 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
                 node->overlayLease = overlay;
                 node->overlayScale = {double(m_shown.frame->width) / o.width, double(m_shown.frame->height) / o.height};
             } else {
-                // Only the part with visible pixels becomes an image.
                 const QRect region = padded(*bounds, size);
                 const QImage part(o.pixels.data() + static_cast<std::size_t>(region.y()) * o.stride + region.x() * 4,
                                   region.width(), region.height(), o.stride, QImage::Format_ARGB32_Premultiplied);
@@ -548,7 +520,6 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
     }
     const QRectF target = frameRect();
     node->background->setRect(boundingRect());
-    // T1: the zoomed part of the frame (and of its overlay, made at its size).
     const QRectF whole(0, 0, m_shown.frame->width, m_shown.frame->height);
     const QRectF source = m_sourceRect.isEmpty() ? whole : m_sourceRect;
     if (node->ycbcrAttached) {
@@ -557,7 +528,6 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         node->frame->setRect(target);
         node->frame->setSourceRect(source);
     }
-    // The overlay's region of the frame, where the shown part of the frame covers it.
     const QSizeF k = node->overlayScale;
     const QRect r = node->overlayRegion;
     const QRectF region(r.x() * k.width(), r.y() * k.height(), r.width() * k.width(), r.height() * k.height());
@@ -569,7 +539,6 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         node->overlay->setRect(QRectF(target.x() + (visible.x() - source.x()) * sx,
                                       target.y() + (visible.y() - source.y()) * sy, visible.width() * sx,
                                       visible.height() * sy));
-        // In the texture's pixels (the overlay's, from the region's corner).
         node->overlay->setSourceRect(QRectF((visible.x() - region.x()) / k.width(), (visible.y() - region.y()) / k.height(),
                                             visible.width() / k.width(), visible.height() / k.height()));
         if (!node->overlayAttached) {
@@ -606,8 +575,6 @@ void VideoPresenter::onFrameSwapped()
         std::lock_guard lock(m_renderMutex);
         done = std::exchange(m_awaitingRender, std::nullopt);
     }
-    // A texture the frame just rendered could not be made (V1: textures
-    // are made while rendering, after the sync that accepted the frame).
     bool failed = false;
     {
         std::lock_guard lock(m_stats->mutex);
@@ -639,4 +606,4 @@ void VideoPresenter::onFrameSwapped()
         Qt::QueuedConnection);
 }
 
-} // namespace hikari::ui
+}

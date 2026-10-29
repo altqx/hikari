@@ -1,10 +1,5 @@
 #pragma once
 
-// Presenter for the Classic shell (V1-S). It projects the workspace's editing
-// target and protected reference into read-only Line models and labels. It
-// owns no Document: callers pass snapshots, and the workspace stays the only
-// authority on which Document is which.
-
 #include "line_table_model.h"
 
 #include "hikari/application/reference_navigation.h"
@@ -29,35 +24,17 @@ class ShellController : public QObject {
     Q_PROPERTY(QAbstractItemModel *referenceLines READ referenceLines CONSTANT)
     Q_PROPERTY(QString activeLineText READ activeLineText NOTIFY activeLineChanged)
     Q_PROPERTY(QString activeLineStyle READ activeLineStyle NOTIFY activeLineChanged)
-    // FS1: the active Line's number in the Grid's # column (its row + 1); 0 for none.
     Q_PROPERTY(int activeLineNumber READ activeLineNumber NOTIFY activeLineChanged)
-    // "3 Lines selected", with the hidden count when some are hidden (G1).
     Q_PROPERTY(QString selectionStatus READ selectionStatus NOTIFY activeLineChanged)
-    // GRID_HIDE_COLUMNS: legacy column bits hidden in both Grids (G7).
+    // MUST KILL: hiddenColumns is a bitmask of legacy GRID_HIDE_* column bits
     Q_PROPERTY(int hiddenColumns READ hiddenColumns WRITE setHiddenColumns NOTIFY hiddenColumnsChanged)
-    // GR3: empty columns hide themselves in both Grids (grid.autoHideColumns).
     Q_PROPERTY(bool autoHideColumns READ autoHideColumns WRITE setAutoHideColumns NOTIFY autoHideColumnsChanged)
-    // KP1 (#286): the Grid folds each run of generated Lines into one row
-    // (grid.foldGenerated; the Grid's Fold generated lines).
     Q_PROPERTY(bool foldGenerated READ foldGenerated WRITE setFoldGenerated NOTIFY foldGeneratedChanged)
-    // The editing target's format has the ASS columns (Layer ... Effect), and an End time.
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
-    // The editing target is filtered (legacy IsFiltered): "Turn off filtering".
     Q_PROPERTY(bool filtered READ filtered NOTIFY targetsChanged)
-    // E6: GLOBAL_HIDE_TAGS (GRID_HIDE_TAGS): the Grids show override tags as
-    // GRID_TAGS_SWAP_CHARACTER.
     Q_PROPERTY(bool hideTags READ hideTags NOTIFY hideTagsChanged)
-    // The status bar's first field (P10, legacy HikariStatusBar field 0):
-    // help and progress text. Automation's set_status_text, the menus' and
-    // tool buttons' help, "Autosave" and progress write it, the last one wins
-    // (legacy SetStatusText(text, 0)). It never names the editing target.
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
-    // R2: the reference tray's navigation. Linked: it follows the editing
-    // target's active Line one way; then the candidates' count, the one shown
-    // (0-based), the empty no-match state and whether legacy's nearest Line
-    // can be shown on request. A tab reference is another tab's Document
-    // (the subtitles preview).
     Q_PROPERTY(bool referenceLinked READ referenceLinked NOTIFY referenceNavigationChanged)
     Q_PROPERTY(int referenceMatchCount READ referenceMatchCount NOTIFY referenceNavigationChanged)
     Q_PROPERTY(int referenceMatchIndex READ referenceMatchIndex NOTIFY referenceNavigationChanged)
@@ -68,15 +45,10 @@ class ShellController : public QObject {
 public:
     explicit ShellController(application::Workspace &workspace, QObject *parent = nullptr);
 
-    // Re-reads the workspace targets and projects the given snapshots: the
-    // editing target's and the reference's (nullptr when there is none).
     void refresh(const core::Document *target, const core::Document *reference);
-    // R1: with each one's comparison table (nullptr for none).
     void refresh(const core::Document *target, const core::Document *reference,
                  const std::vector<application::LineComparison> *targetComparison,
                  const std::vector<application::LineComparison> *referenceComparison);
-    // R1: the comparison colours of both Grids (GRID_COMPARISON_*).
-    // E5: legacy SubsGrid::showOriginal of each Grid, from the next refresh.
     void setShowOriginal(bool target, bool reference)
     {
         m_lines.setShowOriginal(target);
@@ -92,7 +64,6 @@ public:
     QString editingTitle() const;
     bool hasReference() const { return m_workspace.reference().has_value(); }
     QString referenceTitle() const;
-    // The Grid shows the editing target's Lines that are not hidden (G8).
     QAbstractItemModel *lines() { return &m_shown; }
     QAbstractItemModel *referenceLines() { return &m_referenceLines; }
     QString activeLineText() const { return m_activeText; }
@@ -108,16 +79,9 @@ public:
         }
     }
 
-    // P10: a task's progress in the first field (legacy ProgressSinkSilent:
-    // HikariSubFrame::ProgressSetup/ProgressTitle, ProgressParcentProgress
-    // and ProgressEnd, HikariSubFrame.cpp:559-621): "<title> <n>%. Time
-    // elapsed: <H:MM:SS.cc>", the time since the task started; the end
-    // empties the field. A start without a title shows nothing until the
-    // first percentage (ProgressSetup calls ProgressTitle only with one).
     void startProgress(const QString &title);
     void setProgress(int percent);
     void endProgress();
-    // The milliseconds since startProgress (tests replace the clock).
     void setProgressClock(std::function<qint64()> clock) { m_progressClock = std::move(clock); }
 
     int hiddenColumns() const { return m_lines.hiddenColumns(); }
@@ -138,15 +102,12 @@ public:
         m_referenceLines.setAutoHideColumns(on);
         emit autoHideColumnsChanged();
     }
-    // Legacy toggles one column's bit (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
     Q_INVOKABLE void toggleColumn(int bit) { setHiddenColumns(hiddenColumns() ^ bit); }
-    // E4: the Grid's Start/End as frames (the editor's Times/Frames switch).
     void setFrameTimebase(std::optional<application::LegacyTimebase> frames) { m_lines.setFrameTimebase(std::move(frames)); }
     bool assColumns() const { return m_assFormat; }
     bool endColumn() const { return m_endColumn; }
     bool filtered() const { return m_lines.headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool(); }
     bool hideTags() const { return m_lines.hideTags(); }
-    // E6: both Grids, at once (legacy HideOverrideTags refreshes the Grid).
     void setHideTags(bool hide, const QString &swap)
     {
         const bool changed = hide != m_lines.hideTags();
@@ -155,71 +116,45 @@ public:
         if (changed)
             emit hideTagsChanged();
     }
-    // TM1: the Grids' "runs not placed" marks while tags from the original
-    // are carried (translation.autoMoveTagsFromOriginal). Turned on, they
-    // show from the next refresh, which reads the Styles they need.
     void setRunMarks(bool on)
     {
         m_lines.setRunMarks(on);
         m_referenceLines.setRunMarks(on);
     }
-    // E6: the changed-Line mark of each Grid's Lines, read at each refresh.
     void setChangeStates(const LineTableModel::ChangeState &target, const LineTableModel::ChangeState &reference)
     {
         m_lines.setChangeState(target);
         m_referenceLines.setChangeState(reference);
     }
-    // F3: spelling marks in both Grids, from the next refresh.
     void setSpelling(const LineTableModel::TagSpelling &spelling)
     {
         m_lines.setSpelling(spelling);
         m_referenceLines.setSpelling(spelling);
     }
 
-    // KP1 (#286): folding in the editing target's Grid (LineTableModel).
-    // Every run folds when folding is turned on; while it is on, each run
-    // folds and unfolds on its own.
     bool foldGenerated() const { return m_lines.foldGenerated(); }
+    // MUST KILL: setFoldGenerated emits foldGeneratedChanged before the rows fold; Application relies on that order
     void setFoldGenerated(bool on);
     void setRunFolded(core::LineId first, bool folded);
-    // The first Line of the run of generated Lines `line` is in.
     std::optional<core::LineId> runFirst(core::LineId line) const;
     bool runFolded(core::LineId first) const;
     std::vector<core::LineId> runLines(core::LineId first) const;
-    // A Grid gesture's selection with each folded run selected as its row is:
-    // all its Lines or none.
     application::Selection withFoldedRuns(application::Selection selection) const;
-    // The selection a fold leaves, for the run `first` or every folded run:
-    // an active Line inside moves to the run's first Line, and the run is
-    // selected whole or not at all, as that Line is.
     application::Selection foldedWhole(application::Selection selection,
                                        std::optional<core::LineId> first = std::nullopt) const;
 
-    // GR2: the editing target's pending draft, shown live in its Grid row
-    // until it is committed or reverted (set again after each refresh).
     void setDraft(std::optional<core::LineRecord> draft) { m_lines.setDraft(std::move(draft)); }
 
-    // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);
-    // Marks a Line active and selected in the editing target's Grid.
     Q_INVOKABLE void selectLine(qulonglong id);
-    // Shows the editing target's whole selection (G1).
+    // MUST KILL: setSelection also unfolds a folded run it selects in part or activates inside
     void setSelection(const application::Selection &selection);
-    // The editing target's Lines in the order the Grid shows them, one per row.
     std::vector<core::LineId> displayedLines() const;
-    // The Lines actions take as shown: displayedLines with every Line a
-    // folded row stands for that the Grid filter passes (KP1).
     std::vector<core::LineId> actionLines() const;
-    // O5: the interface language changed: the selection status, the titles
-    // and both Grids' headings again.
     void retranslate();
 
-    // R2: the reference's own selection (navigated independently).
     void setReferenceSelection(const application::Selection &selection);
-    // The reference's Lines in the order the tray shows them (every row).
     std::vector<core::LineId> referenceDisplayedLines() const;
-    // The reference's navigation state; `shown` is a Line a seek made active,
-    // for the tray to bring into view (legacy SubsGridPreview::MakeVisible).
     void setReferenceNavigation(bool linked, const application::LinkedMatch &match);
     void showReferenceLine(core::LineId line) { emit referenceLineShown(line.value); }
     bool referenceLinked() const { return m_referenceLinked; }
@@ -238,7 +173,6 @@ signals:
     void foldGeneratedChanged();
     void hideTagsChanged();
     void referenceNavigationChanged();
-    // R2: a seek made this reference Line active: the tray brings it into view.
     void referenceLineShown(qulonglong id);
 
 private:
@@ -253,7 +187,7 @@ private:
     QString m_activeStyle;
     int m_activeNumber = 0;
     QString m_selectionStatus;
-    qsizetype m_selectedCount = 0, m_hiddenCount = 0; // what m_selectionStatus says
+    qsizetype m_selectedCount = 0, m_hiddenCount = 0;
     QString m_statusText;
     QString m_progressTitle;
     qint64 m_progressStart = 0;
@@ -261,8 +195,8 @@ private:
     qint64 progressNow() const;
     bool m_assFormat = true;
     bool m_endColumn = true;
-    bool m_referenceLinked = false;          // R2
-    application::LinkedMatch m_referenceMatch; // R2
+    bool m_referenceLinked = false;
+    application::LinkedMatch m_referenceMatch;
 };
 
-} // namespace hikari::ui
+}

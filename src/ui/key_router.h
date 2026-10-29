@@ -1,27 +1,5 @@
 #pragma once
 
-// KB1/KB2: which panel a key's hotkeys act on. The shell's panels keep their
-// own key handlers (their Keys.onShortcutOverride / Keys.onPressed run the
-// context's bindings, HotkeysController::actionFor); the router chooses the
-// handler before the focused control sees the key:
-//
-// - the hovered panel's handler when the pointer is over a panel other than
-//   the focused one (the hotkey context follows the pointer; nothing takes
-//   keyboard focus on hover), else the focused panel's;
-// - a key that panel does not bind goes to the fallback target when
-//   `fallbackAccepts(key, modifiers)` says so (Space plays and pauses
-//   everywhere);
-// - a key the focused panel binds but the hovered one does not is the
-//   focused panel's no longer: the Global bindings may still take it;
-// - a routed key's release goes where its press went (VT2: a visual tool's
-//   nudge commits on its key's release), wherever the pointer is by then.
-//
-// It stands aside while a text field has focus (typing is never redirected
-// by hover), while a control the keyboard moved to has focus (it keeps its
-// own Space and arrows), while a shortcut recorder records (its
-// `recordsKeys` property is true), inside a popup and in any window that
-// holds no registered panel.
-
 #include <QJSValue>
 #include <QObject>
 #include <QPointF>
@@ -41,20 +19,15 @@ namespace hikari::ui {
 class KeyRouter : public QObject {
     Q_OBJECT
     QML_ELEMENT
-    // (key, modifiers) => bool: a key no panel takes goes to fallbackTarget.
     Q_PROPERTY(QJSValue fallbackAccepts READ fallbackAccepts WRITE setFallbackAccepts)
     Q_PROPERTY(QQuickItem *fallbackTarget READ fallbackTarget WRITE setFallbackTarget)
-    // () => bool, asked at each key: whether hotkeys follow the hovered
-    // panel (true when unset).
     Q_PROPERTY(QJSValue followsPointer READ followsPointer WRITE setFollowsPointer)
-    // The panel under the pointer, if any (tests and diagnostics).
     Q_PROPERTY(QQuickItem *hoveredPanel READ hoveredPanel NOTIFY hoveredPanelChanged)
 
 public:
     explicit KeyRouter(QObject *parent = nullptr);
     ~KeyRouter() override;
 
-    // A panel and the item holding its key handlers (the panel itself when null).
     Q_INVOKABLE void addPanel(QQuickItem *panel, QQuickItem *keyTarget = nullptr);
     QQuickItem *hoveredPanel() const { return m_hovered; }
     QQuickItem *fallbackTarget() const { return m_fallbackTarget; }
@@ -78,7 +51,8 @@ private:
     struct Routed {
         int key = 0;
         int modifiers = 0;
-        QPointer<QQuickItem> target; // null: swallowed
+        // MUST KILL: a null target means the key is swallowed
+        QPointer<QQuickItem> target;
     };
 
     bool shellWindow(QQuickWindow *window) const;
@@ -93,17 +67,15 @@ private:
 
     std::vector<Panel> m_panels;
     QPointer<QQuickItem> m_hovered;
-    // Where the pointer last moved: panels moved or resized under a still
-    // pointer change the hovered panel without a move.
     QPointer<QQuickWindow> m_pointerWindow;
     QPointF m_pointerPos;
     QJSValue m_fallbackAccepts;
     QJSValue m_followsPointer;
     QPointer<QQuickItem> m_fallbackTarget;
     std::optional<Routed> m_routed;
-    std::map<int, QPointer<QQuickItem>> m_held; // a routed press's key: where its release goes
-    const QEvent *m_withheld = nullptr; // an override kept from the focused panel's items
+    std::map<int, QPointer<QQuickItem>> m_held;
+    const QEvent *m_withheld = nullptr;
     bool m_dispatching = false;
 };
 
-} // namespace hikari::ui
+}

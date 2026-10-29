@@ -1,17 +1,3 @@
-// PU4 (#306): a question "Don't ask again" can hide (PK1, visual-language.md
-// "Popups"), asked in the application's message box (NT1's MessageHost),
-// unless `questionId` is in notices.hiddenQuestions, when the default choice
-// is the answer at once. Ticked with the default choice, "Don't ask again"
-// hides the question (Settings > Notices > Ask again brings it back); with
-// any other answer it hides nothing, so a hidden question never answers what
-// was not chosen.
-//
-// askWith(options, done): MessageBox.ask's options (the default choice's
-// isDefault offers "Don't ask again"; `from`, the window it opens over) and
-// done(id). withdraw() takes back every question still waiting for its
-// answer, as its reject choice: the caller's, when what it asks about
-// changed (a question over the fullscreen video window leaves the main
-// window in use).
 import QtQuick
 import Hikari.Ui
 
@@ -19,9 +5,6 @@ QtObject {
     id: question
     property MessageHost messages: null
     property string questionId: ""
-    // The questions waiting for their answers (MessageHost.ask's): asked
-    // again from the main window while one shows over the fullscreen video
-    // window, there can be two.
     property var pending: []
 
     function hidden() {

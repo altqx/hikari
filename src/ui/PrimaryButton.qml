@@ -1,9 +1,3 @@
-// TS1: a form's primary action, filled in the accent with its text in
-// `onAccent` (visual-language.md: the accent marks the primary action;
-// MuseScore 4's accent button, docs/research/musescore-shell.md §7). Hover
-// and press shade the fill; disabled, it is outlined in `line` with the
-// disabled text. Keyboard focus is the 1-wide ring in the text colour
-// (FocusRing), apart from the accent fill.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Templates as T

@@ -5,21 +5,11 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// Legacy HistoryDialog (Edit › History, GLOBAL_HISTORY), PU2 (#304): a
-// resizable window on DG1's frame that does not block, so the grid stays
-// usable (PU2-history). It follows the editing target and names its
-// Document above the steps. Every step, the current one bold and tagged;
-// steps after it (undone, still redoable) muted. Go to step (Enter, or a
-// double-click on a step) jumps there and stays open; Close or Esc closes.
 DialogWindow {
     id: history
     objectName: "historyWindow"
     required property var editor
-    // The Document it shows: History follows the editing target, and names
-    // it (grid-operations.md; Codex review).
     property string documentName: ""
-    // The editing target's tab id: another one selects its current step,
-    // so Go to step never acts on the last tab's choice (Codex review).
     property var target: null
     property var selectedFor: null
     onTargetChanged: {

@@ -1,13 +1,3 @@
-// E6: the Line editor's tag list (legacy PopupTagList/PopupWindow,
-// TextEditorTagList.cpp at 20d647c4). It opens below the caret's line while
-// an override tag is typed and never takes keyboard focus, so the text field
-// keeps its caret and any input-method composition; the field routes Up,
-// Down, Enter and Escape to it (RoleField in Main.qml). Ten rows at most,
-// with a scroll bar beyond; the pointer selects the row under it, a left
-// click puts it, the wheel scrolls three rows, a right click opens the
-// options menu. Colours are the theme palette's (legacy MENUBAR_BACKGROUND,
-// WINDOW_BORDER, MENU_BACKGROUND_SELECTION, MENU_BORDER_SELECTION and
-// WINDOW_TEXT).
 pragma Translator: "HikariSub.TagList"
 import QtQuick
 import QtQuick.Controls
@@ -17,7 +7,6 @@ Popup {
     id: popup
     required property TagListController controller
     required property TextArea field
-    // Enter or a click chose the selected row.
     signal chosen()
 
     readonly property real rowHeight: controller.rowHeight(field.font)
@@ -26,8 +15,6 @@ Popup {
 
     objectName: field.objectName + "TagList"
     parent: field
-    // TextEditor::OnCharPress: x after the caret's text on its line, y the
-    // line's bottom plus 5 (DialogueTextEditor.cpp:451-472).
     x: field.cursorRectangle.x
     y: field.cursorRectangle.y + field.cursorRectangle.height + 5
     width: controller.popupWidth(field.font)
@@ -38,7 +25,6 @@ Popup {
     closePolicy: Popup.NoAutoClose
     visible: controller.popupShown && (field.activeFocus || menuOpen)
 
-    // K2: the popup surface and its boundary.
     background: Rectangle {
         color: Theme.panel
         border.color: Theme.line
@@ -69,8 +55,6 @@ Popup {
                 Accessible.name: modelData
                 Accessible.selected: selected
                 Accessible.selectable: true
-                // The selected row: a rectangle inset by 2 (OnPaint), on the
-                // theme's selected background with the accent's outline (K2).
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 1
@@ -99,7 +83,6 @@ Popup {
             size: popup.controller.maxVisible / Math.max(1, popup.controller.rows.length)
             position: popup.controller.scrollPosition / Math.max(1, popup.controller.rows.length)
             policy: ScrollBar.AlwaysOn
-            // OnScroll: the dragged thumb sets the first row.
             onPositionChanged: if (pressed)
                 popup.controller.scrollBy(Math.round(position * popup.controller.rows.length)
                                           - popup.controller.scrollPosition)
@@ -123,7 +106,6 @@ Popup {
         }
     }
 
-    // The right-click menu (TextEditorTagList.cpp:131-149).
     ShellMenu {
         id: optionsMenu
         objectName: popup.objectName + "Options"
@@ -132,7 +114,7 @@ Popup {
             text: qsTr("Show description")
             checkable: true
             checked: (popup.controller.options & 4) !== 0
-            keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (TextEditorTagList.cpp:133-135)
+            keepsMenuOpen: false
             onTriggered: popup.controller.toggleOption(4)
         }
         ShellMenuItem {
@@ -154,8 +136,7 @@ Popup {
         onClosed: if (!popup.field.activeFocus) popup.field.forceActiveFocus()
     }
 
-    // Announced while the field keeps focus: the list on opening, then each
-    // selected row (assistive technology does not follow the popup itself).
+    // Assistive technology does not follow the popup, so the field announces it.
     Connections {
         target: popup.controller
         function onChanged() {

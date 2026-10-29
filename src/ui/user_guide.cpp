@@ -14,4 +14,4 @@ bool UserGuide::hasPage(const QString &kind, const QString &id) const
                 .empty();
 }
 
-} // namespace hikari::ui
+}

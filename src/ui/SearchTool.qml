@@ -1,12 +1,3 @@
-// F1: find and replace as the persistent Search tool
-// (docs/ux/reviewed-surface-layouts.md, Search: "B — Scope rail"): the
-// scope and query controls of legacy FindReplaceDialog's Find, Find and
-// replace and Find in subtitles tabs on the left, the results of
-// FindReplaceResultsDialog and their change review (checks, Replace) on the
-// right. The legacy message boxes are a queue of PK1 message boxes (PU2,
-// #304), one at a time, and its messages toasts; the application resumes
-// the search when a question is answered (findQuestion /
-// answerFindQuestion) and refuses other find work meanwhile (findBusy).
 pragma Translator: "HikariSub.Search"
 import QtQuick
 import QtQuick.Controls
@@ -28,16 +19,11 @@ Item {
     property bool opened: false
     property bool resultsShown: false
     property bool showResults: false
-    // Legacy blockTextChange: the activation after a message box closes
-    // does not take the editor's selection.
+    // MUST KILL: skipActivation makes the next activated() skip taking the editor's selection
     property bool skipActivation: false
     readonly property bool busy: app.findBusy
-    // D3: the smallest size its docked panel takes unclipped: the scope
-    // rail at its minimum beside a narrow results pane, the rail scrolling
-    // above its action buttons (Panel.minimumBodySize).
     readonly property size minimumSize: Qt.size(220 + 6 + 200, 160)
 
-    // Ctrl+F / Ctrl+H / Edit menu: the tab to show (legacy ShowDialog).
     function showTab(which) {
         if (!opened) {
             apply(app.openFindReplace(which))
@@ -51,8 +37,6 @@ Item {
     function focusFind() {
         findText.forceActiveFocus()
     }
-    // The tool gains the focus from elsewhere (legacy OnActivate): the text
-    // selected in the Line editor becomes the search text.
     function activated() {
         if (skipActivation) {
             skipActivation = false
@@ -65,8 +49,6 @@ Item {
         if (opened)
             app.saveFindReplaceSettings(settings())
     }
-    // DestroyDialogs: FR->SaveOptions(), then the dialog and its FindReplace
-    // go; the next opening reads the options and recent lists again.
     function destroyTool() {
         save()
         opened = false
@@ -118,7 +100,6 @@ Item {
         app.saveFindReplaceSettings(settings())
         app.runFindReplace(action, settings())
     }
-    // Enter (OnEnterConfirm): Replace from the replacement field, else Find.
     function confirm() {
         if (tab !== 0 && replaceText.activeFocus)
             run(tab === 2 ? "replaceInFiles" : "replace")
@@ -133,8 +114,6 @@ Item {
 
     Connections {
         target: search.app
-        // The operation's end (also after its questions): AddRecent selects
-        // the first entry of each list again; the styles may have changed.
         function onFindFinished(s) {
             if (!search.opened)
                 return
@@ -154,8 +133,6 @@ Item {
             search.showResults = false
         }
         function onFindResultsChanged() { search.refreshResults() }
-        // A message is an NT1 notice (Application's ask); the questions
-        // are PK1 message boxes, one at a time.
         function onFindQuestion(id, kind, shown) { question.push(id, kind, shown) }
     }
 
@@ -163,13 +140,10 @@ Item {
         anchors.fill: parent
         spacing: 6
 
-        // The scope rail: mode, query and scope, scrolling (with its scroll
-        // bar shown while there is more) above the action buttons, which
-        // stay in view.
         ColumnLayout {
             Layout.preferredWidth: 360
             Layout.minimumWidth: 220
-            Layout.fillWidth: false // the results take the rest
+            Layout.fillWidth: false
             Layout.fillHeight: true
             spacing: 4
             ScrollView {
@@ -181,7 +155,6 @@ Item {
                 contentWidth: availableWidth - (ScrollBar.vertical.visible ? ScrollBar.vertical.width + 2 : 0)
                 ScrollBar.vertical.policy: contentHeight > availableHeight ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
 
-                // Beside the scroll bar, not under it.
                 ColumnLayout {
                     width: rail.availableWidth - (rail.ScrollBar.vertical.visible ? rail.ScrollBar.vertical.width + 2 : 0)
                     spacing: 4
@@ -189,12 +162,6 @@ Item {
                         id: modes
                         objectName: "findTabs"
                         Layout.fillWidth: true
-                        // K1: the three modes with the set's icons (legacy's
-                        // search and findreplace bitmaps, the Edit menu's and
-                        // FindReplaceDialog's; find-in-files for the third,
-                        // which legacy drew without one). The tabs carry short
-                        // names that fit the rail; the full name is the tooltip
-                        // and the accessible name.
                         IconTabButton {
                             objectName: "findTab"
                             iconRole: "search"
@@ -292,8 +259,6 @@ Item {
                         CheckBox { id: matchCase; objectName: "findMatchCase"; text: qsTr("Match case") }
                         CheckBox { id: includeComments; objectName: "findIncludeComments"; text: qsTr("Include comments") }
                         CheckBox { id: regex; objectName: "findRegex"; text: qsTr("Regular expressions") }
-                        // OnRecheck: Skip tags and Skip text exclude each other, as do
-                        // Beginning and End of text.
                         CheckBox {
                             id: skipTags
                             objectName: "findSkipTags"
@@ -342,7 +307,6 @@ Item {
                                 Repeater {
                                     id: lineButtons
                                     model: [qsTr("All lines"), qsTr("Selected lines"), qsTr("From selected")]
-                                    // TabWindow::Reset: the next search starts over.
                                     RadioButton { text: modelData; ButtonGroup.group: linesGroup; onClicked: search.app.resetFindReplace() }
                                 }
                             }
@@ -446,9 +410,6 @@ Item {
             Layout.fillHeight: true
         }
 
-        // Results and change review (legacy "Search results"). The pane has
-        // no heading: the Search panel's header already names it, and the
-        // name is the pane's accessible name.
         ColumnLayout {
             objectName: "findResultsPane"
             Layout.fillWidth: true
@@ -456,8 +417,6 @@ Item {
             spacing: 4
             Accessible.role: Accessible.Pane
             Accessible.name: qsTr("Search results")
-            // The empty state: one muted line in the middle of the pane, with
-            // the explanation in its tooltip.
             Label {
                 objectName: "findResultsEmpty"
                 visible: !search.resultsShown
@@ -519,7 +478,6 @@ Item {
                     }
                 }
             }
-            // The review footer, once there are results to review.
             RowLayout {
                 Layout.fillWidth: true
                 visible: search.resultsShown
@@ -550,25 +508,17 @@ Item {
     Dialogs.FolderDialog {
         id: folderDialog
         objectName: "findFolderDialog"
-        title: qsTr("Choose subtitle search folder") // TI1-find-folder-title
+        title: qsTr("Choose subtitle search folder")
         onAccepted: folderText.editText = search.app.localPath(selectedFolder)
     }
 
-    // Legacy Stylelistbox, now PK1's Choose styles popover: the ticks fill
-    // the field at once, joined by commas; Esc puts it back (approved
-    // PK1-choose-styles-live: legacy's Cancel emptied the field).
     ChooseStyles {
         id: stylesChooser
         objectName: "findStylesChooser"
-        // Esc puts the field back as it was typed (Codex review).
         property string before: ""
         onChanged: (names, reverted) => styles.text = reverted ? before : names.join(",")
     }
 
-    // HikariMessageBox / HikariMessageDialog, one at a time, as PK1 message
-    // boxes with verb buttons (PU2-find-questions): the search waits for a
-    // question's answer without blocking anything (no nested event loop).
-    // The box is made at the first question.
     Item {
         id: question
         objectName: "findQuestion"
@@ -579,30 +529,28 @@ Item {
         property string text: ""
         readonly property bool opened: boxLoader.item !== null && boxLoader.item.visible
         readonly property MessageBox box: boxLoader.item
-        // Each kind's answers: id, text, role, default, and the engine's
-        // code (0 Ok, 1 Yes, 2 No, 3 Cancel). Esc or Close answers the
-        // "reject" one.
+        // MUST KILL: question kinds are magic ints (1 end reached, 2 some styles missing, 3 no chosen style, else replace in files), answer codes too (0 Ok, 1 Yes, 2 No, 3 Cancel)
         function choicesFor(k) {
             switch (k) {
-            case 1: // Reached the end
+            case 1:
                 return [{ id: "fromStart", text: qsTr("Search from the start"), role: "accept", isDefault: true, code: 1 },
                         { id: "stop", text: qsTr("Stop"), role: "reject", code: 2 }]
-            case 2: // some chosen styles missing
+            case 2:
                 return [{ id: "dropMissing", text: qsTr("Drop the missing styles"), role: "accept", isDefault: true, code: 0 },
                         { id: "everyStyle", text: qsTr("Search every style"), role: "action", code: 1 },
                         { id: "keepStyles", text: qsTr("Keep them"), role: "action", code: 2 },
                         { id: "cancel", text: qsTr("Cancel"), role: "reject", code: 3 }]
-            case 3: // none of the chosen styles
+            case 3:
                 return [{ id: "everyStyle", text: qsTr("Search every style"), role: "accept", isDefault: true, code: 1 },
                         { id: "cancel", text: qsTr("Cancel"), role: "reject", code: 3 }]
-            default: // replace in files: destructive, Cancel the default
+            default:
                 return [{ id: "replaceInFiles", text: qsTr("Replace in the files"), role: "destructive", code: 1 },
                         { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true, code: 2 }]
             }
         }
         function push(id, k, shown) {
             queue.push({id: id, kind: k, shown: shown})
-            // After the answer that asked again: the box closes first.
+            // MUST KILL: deferred so the box that asked again has closed before next() opens it
             Qt.callLater(next)
         }
         function next() {

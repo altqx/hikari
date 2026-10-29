@@ -39,7 +39,7 @@ QString clock(std::int64_t us)
         .arg(cs % 100, 2, 10, QLatin1Char('0'));
 }
 
-} // namespace
+}
 
 VideoController::VideoController(application::IndexedSourcePort &source, application::SubtitleRendererPort &renderer,
                                  QObject *parent)
@@ -54,7 +54,7 @@ VideoController::VideoController(application::IndexedSourcePort &source, applica
     m_seekTimer->setSingleShot(true);
     m_seekTimer->setTimerType(Qt::PreciseTimer);
     connect(m_seekTimer, &QTimer::timeout, this, &VideoController::seekBarTimer);
-    connect(this, &VideoController::changed, this, &VideoController::textsMayChange); // O5
+    connect(this, &VideoController::changed, this, &VideoController::textsMayChange);
 }
 
 void VideoController::setMediaInfo(application::DisplayAudioPort *tracks, application::ChapterPort *chapters)
@@ -63,9 +63,6 @@ void VideoController::setMediaInfo(application::DisplayAudioPort *tracks, applic
     m_chapterPort = chapters;
 }
 
-// V3: a video that became ready gets its track names and chapters from the
-// media helper (legacy read them while the provider indexed); prevchap
-// starts again with each video (VideoBox::LoadVideo, VideoBox.cpp:287).
 void VideoController::sessionChanged()
 {
     const bool ready = m_session.state() == VideoSession::State::Ready;
@@ -75,7 +72,7 @@ void VideoController::sessionChanged()
         m_trackInfo.clear();
         m_chapters.clear();
         m_prevChapter = -1;
-        if (ready && !m_session.dummy()) { // ProviderDummy::GetChapters gives none
+        if (ready && !m_session.dummy()) {
             const std::weak_ptr<bool> alive = m_alive;
             if (m_trackPort)
                 m_trackPort->probe(path, [this, alive, path](std::expected<application::MediaProbe, application::AudioFailure> probe) {
@@ -96,14 +93,6 @@ void VideoController::sessionChanged()
     emit changed();
 }
 
-// V1: every player frame changes the session; the texts, the frame and the
-// seek bar follow at most every 100 ms while playing, at once otherwise.
-// Legacy refreshed the time and the slider while playing on a 100 ms timer
-// too (VideoBox::Play's m_VideoTimeTimer, HikariSub/VideoBox.cpp:220-222,
-// and RefreshTime, VideoBox.cpp:1386-1410).
-// V2 (user decision 2026-10-14): a seek while playing (the seek bar, a
-// jump, the active Line) shows at once, so the bar never shows where the
-// player was; the 100 ms pace then goes on.
 void VideoController::textsMayChange()
 {
     if (m_session.playing() && m_session.playEpoch() == m_textsEpoch) {
@@ -131,14 +120,13 @@ double VideoController::indexingProgress() const
 
 void VideoController::cancelIndexing()
 {
-    ++m_openRequest; // an open still in the filter is cancelled too
+    ++m_openRequest;
     m_session.cancelOpen();
     emit changed();
 }
 
 bool VideoController::unloadVideo()
 {
-    // legacy OnDeleteVideo returns at once without a video (VideoBox.cpp:1062-1063)
     if (m_session.state() == VideoSession::State::Closed)
         return false;
     ++m_openRequest;
@@ -172,7 +160,6 @@ bool VideoController::selectStream(int index)
 
 std::vector<int> VideoController::chapterStarts() const
 {
-    // legacy chapter.time: whole ms
     std::vector<int> starts;
     starts.reserve(m_chapters.size());
     for (const auto &c : m_chapters)
@@ -186,7 +173,6 @@ QVariantList VideoController::chapters() const
     const auto starts = chapterStarts();
     const int current = application::currentChapter(starts, m_session.tell());
     for (std::size_t j = 0; j < m_chapters.size(); ++j) {
-        // name + "\t[" + SubsTime::raw() + "]" (VideoBox.cpp:1012-1014): H:MM:SS.CC
         const int ms = std::max(0, starts[j]);
         const QString time = QStringLiteral("%1:%2:%3.%4")
                                  .arg(ms / 3600000)
@@ -204,7 +190,6 @@ bool VideoController::seekChapter(int index)
 {
     if (!hasVideo() || index < 0 || index >= chapterCount())
         return false;
-    // VideoBox.cpp:1046-1047: Seek(time) (prevchap unchanged)
     return m_session.seekToMs(chapterStarts()[static_cast<std::size_t>(index)]);
 }
 
@@ -228,7 +213,7 @@ bool VideoController::previousChapter()
 
 void VideoController::resetForTarget()
 {
-    ++m_openRequest; // P6: an open still in the filter belonged to the previous target
+    ++m_openRequest;
     m_session.close();
     m_offer.clear();
     m_offerApplyToAll = false;
@@ -350,7 +335,7 @@ void VideoController::open(const QString &path)
         self->m_session.open(path.toStdString(), std::move(index));
         emit self->changed();
     };
-    if (m_filter && !application::isDummyVideo(path.toStdString())) // a dummy has no file to probe
+    if (m_filter && !application::isDummyVideo(path.toStdString()))
         m_filter(path, std::move(asVideo));
     else
         asVideo({});
@@ -380,7 +365,7 @@ bool VideoController::playActualLine()
 
 bool VideoController::loopRange(int startMs, int endMs)
 {
-    const bool done = m_session.playLine(startMs, endMs, /*loop*/ true);
+    const bool done = m_session.playLine(startMs, endMs, true);
     emit changed();
     return done;
 }
@@ -406,7 +391,6 @@ QString VideoController::times() const
     if (!start)
         return {};
     const std::int64_t ms = start->microseconds() / 1000;
-    // SubsTime::raw(SRT): "%02i:%02i:%02i,%03i".
     QString out = QStringLiteral("%1:%2:%3,%4;  %5;  ")
                       .arg(ms / 3'600'000, 2, 10, QLatin1Char('0'))
                       .arg(ms / 60'000 % 60, 2, 10, QLatin1Char('0'))
@@ -414,8 +398,6 @@ QString VideoController::times() const
                       .arg(ms % 1000, 3, 10, QLatin1Char('0'))
                       .arg(*shown);
     if (m_lineTimes) {
-        // The Line's start frame is the one at or after its start
-        // (Timebase::FrameAt); 0 past the last frame.
         const int lineFrame = m_session.frameAtOrAfter(m_lineTimes->first).value_or(0);
         out += QStringLiteral("%1;  ").arg(*shown - lineFrame);
     }
@@ -453,8 +435,6 @@ void VideoController::seekBarReleased()
 {
     m_seekTimer->stop();
     seekBarSeek(m_seekThrottle.release(application::SeekThrottle::Clock::now()));
-    // The bar follows the frame again: at once, not with the last texts
-    // (the frame let go on may have been sought before the release).
     textsNow();
 }
 
@@ -466,7 +446,6 @@ void VideoController::seekBarSeek(std::optional<int> frame)
     emit seekBarSought(*frame);
 }
 
-// Seeks the waiting frame once it is due, else waits for it.
 void VideoController::seekBarTimer()
 {
     const auto now = application::SeekThrottle::Clock::now();
@@ -489,7 +468,6 @@ bool VideoController::goToLineStart()
 {
     if (!hasVideo() || !m_lineTimes)
         return false;
-    // Seek(MAX(0, start)): the frame at or after it.
     if (m_lineTimes->first.microseconds() <= 0)
         m_session.showFrame(0);
     else
@@ -513,4 +491,4 @@ void VideoController::setActiveLineTimes(std::optional<std::pair<core::DocumentT
     emit changed();
 }
 
-} // namespace hikari::ui
+}

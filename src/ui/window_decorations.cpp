@@ -25,10 +25,6 @@ namespace {
 #ifdef HIKARI_WAYLAND_DECORATIONS
 Q_LOGGING_CATEGORY(lcDecorations, "hikari.decorations")
 
-// The compositor's zxdg_decoration_manager_v1, bound through Qt's registry
-// (inactive where the compositor has none: mutter). Made once and kept for
-// the process: tearing it down after QGuiApplication would talk to a closed
-// display.
 class DecorationManager final
     : public QWaylandClientExtensionTemplate<DecorationManager, &QtWayland::zxdg_decoration_manager_v1::destroy>,
       public QtWayland::zxdg_decoration_manager_v1 {
@@ -41,14 +37,13 @@ public:
 
     static DecorationManager *instance()
     {
+        // Never freed: torn down after QGuiApplication it would talk to a closed display.
         static DecorationManager *manager = new DecorationManager;
         return manager;
     }
 };
 
-// The names of the globals the compositor advertises, read once through a
-// registry of our own on a queue of our own (Qt's registry and queue are
-// left alone).
+// Our own registry on our own queue, so Qt's registry and event queue are left alone.
 const QStringList &compositorGlobals()
 {
     static const QStringList globals = [] {
@@ -79,7 +74,6 @@ const QStringList &compositorGlobals()
 
 class Tracker;
 
-// One window's zxdg_toplevel_decoration_v1, for one xdg_toplevel.
 class ToplevelDecoration final : public QtWayland::zxdg_toplevel_decoration_v1 {
 public:
     ToplevelDecoration(::zxdg_toplevel_decoration_v1 *object, Tracker *tracker)
@@ -101,8 +95,6 @@ private:
 };
 #endif
 
-// Per window: what the window system draws round it, and on Wayland the
-// decoration object asking it not to. A child of the window.
 class Tracker final : public QObject {
 public:
     explicit Tracker(QWindow *window)
@@ -152,13 +144,9 @@ public:
         if (m_watching || !QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
             return;
         m_watching = true;
-        // Read now, outside Qt's dispatch of the compositor's events (the
-        // decoration's configure reads them).
+        // Read now, outside Qt's dispatch of compositor events, where configure needs them.
         compositorGlobals();
-        // The platform window comes with QWindow::create(); its xdg_toplevel
-        // with each show. A decoration object is made before the toplevel's
-        // first buffer and has to go before the toplevel does: Qt destroys
-        // the toplevel when the window hides, after visibleChanged.
+        // xdg-decoration: made before the toplevel's first buffer, gone before it; Qt drops the toplevel on hide.
         m_window->installEventFilter(this);
         connect(m_window, &QWindow::visibleChanged, this, [this](bool visible) {
             if (!visible)
@@ -193,8 +181,7 @@ private:
             return;
         m_platform = platform;
         connect(platform, &WaylandWindow::surfaceRoleCreated, this, &Tracker::create);
-        // Late (the toplevel is gone already), for a role Qt drops without
-        // hiding the window.
+        // Late (the toplevel is gone), for a role Qt drops without hiding the window.
         connect(platform, &WaylandWindow::surfaceRoleDestroyed, this, &Tracker::drop);
 #endif
     }
@@ -244,7 +231,7 @@ void ToplevelDecoration::zxdg_toplevel_decoration_v1_configure(uint32_t mode)
     m_tracker->setFrame(frame);
 }
 #endif
-} // namespace
+}
 
 void requestNone(QWindow *window)
 {
@@ -297,4 +284,4 @@ void overrideSystemFrame(QWindow *window, std::optional<SystemFrame> frame)
         Tracker::ensure(window)->setOverride(frame);
 }
 
-} // namespace hikari::ui::windowdecorations
+}

@@ -1,15 +1,3 @@
-// Y6: legacy GetFontsFromASSDialog "Add fonts from subtitles"
-// (FontCatalogList.cpp:840-905 at 20d647c4). Add fonts collects every
-// Style's font and each \fn of the active tab's Lines (or every tab's) into
-// the chosen catalog and saves the catalogs (CollectFontsFromSubtitles).
-//
-// PU3 (#305): a compact window on DG1's frame, modal to its opener, one for
-// the program (FontWindows). The catalog is chosen or typed, a new name
-// making it (PU3-from-subtitles: legacy's Add button did, and OK without a
-// chosen entry did nothing); "From" (This file / All open files) and
-// "Replace the catalog's fonts" replace legacy's two check boxes, a hint
-// says what will happen, "Add fonts" replaces OK, and the result is a
-// toast.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
@@ -20,8 +8,7 @@ DialogWindow {
     id: dialog
     objectName: "fontsFromSubtitlesDialog"
     required property var catalogs
-    property var notices: null // ToastStack
-    // The open files, and the name of the one in use, for the hint.
+    property var notices: null
     property int openFiles: 1
     property string fileName: ""
     property var done: null
@@ -30,10 +17,8 @@ DialogWindow {
     modal: true
     initialFocus: catalog
 
-    // Opens from `opener` (a window) with `name` chosen (a catalog, or the
-    // first); done(catalog) once fonts were added.
     function openFor(name, callback, opener) {
-        // Shown for another window: closed first, so that it is modal to the new one.
+        // A shown window keeps its transient parent: close it to be modal to the new opener.
         if (visible && opener && transientParent !== opener && opener.transientParent !== dialog)
             close()
         const names = catalogs.catalogNames
@@ -47,8 +32,7 @@ DialogWindow {
         openFrom(opener || null)
     }
     readonly property string chosen: catalog.editText.trim()
-    // The catalog the name stands for, ignoring case, else the new name
-    // (read while shown: the catalogs load at their first use).
+    // MUST KILL: target skips the catalog lookup while hidden so it does not load the catalogs
     readonly property string target: {
         if (!visible)
             return chosen
@@ -61,7 +45,7 @@ DialogWindow {
             return
         const made = catalogs.existingName(name).length === 0
         if (made)
-            catalogs.addCatalog(name, false) // the dialog's Add: no autosave
+            catalogs.addCatalog(name, false)
         const before = replace.checked ? 0 : catalogs.catalogSize(name)
         const result = catalogs.collectFromSubtitles(name, replace.checked, from.currentIndex === 1)
         if (!result.done)
@@ -96,8 +80,7 @@ DialogWindow {
             editable: true
             Layout.preferredWidth: 260
             Accessible.name: qsTr("Catalog")
-            // The catalogs' names as plain text (Fusion's delegate would read
-            // markup in a name from a loaded file).
+            // Fusion's delegate would read markup in a catalog name from a file.
             delegate: ItemDelegate {
                 id: catalogItem
                 required property string modelData

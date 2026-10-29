@@ -1,16 +1,9 @@
-// K2: Fusion's menu with its outline in the theme's boundary colour
-// (control.palette.mid, the line role; see CMakeLists.txt). Fusion draws it
-// in Fusion.outline(), the window colour darkened 140%, about 1.1:1 against
-// the Dark and High contrast black panels. Its width follows its items
-// (below). Everything else is Fusion's.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 
 F.Menu {
     id: control
-    // UI polish: as wide as its widest item (Fusion's menu stays at its
-    // background's 200 and elides longer labels), up to 480, beyond which
-    // the items elide.
+    // Fusion's menu stays at its background's 200 px and elides longer labels.
     readonly property real widestItem: {
         let widest = 0
         for (let i = 0; i < count; ++i) {
@@ -26,6 +19,7 @@ F.Menu {
         implicitWidth: 200
         implicitHeight: 20
         color: control.palette.base
+        // Fusion outlines its menu in the window colour darkened 140%, about 1.1:1 on dark panels.
         border.color: control.palette.mid
 
         Rectangle {

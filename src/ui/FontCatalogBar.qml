@@ -1,13 +1,3 @@
-// Y6: the font catalog choice, Add, Manage and the Filter toggle of the
-// Style editor (StyleChange.cpp:78-130 at 20d647c4). `fonts` is the list
-// ChangeCatalog made; the owner shows it and selects in it when listMade()
-// is signalled. The Style editor reads the filter text when it opens and
-// asks the catalog window to select its font when it is opened again.
-// "Without catalog" removes the catalogs' fonts (Y6-without-catalog).
-//
-// PU3 (#305): the font picker has its own chips instead; Manage and "Add
-// fonts from subtitles" open the program's one window of each
-// (FontWindows), never made inside the Style manager.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
@@ -17,22 +7,16 @@ import Hikari.Ui
 RowLayout {
     id: bar
     objectName: "styleEditorCatalogBar"
-    required property var catalogs // FontCatalogsController
-    // GetFontName / styleFont->GetValue(): the font Add and Manage act on.
+    required property var catalogs
     property string fontName: ""
     property var fonts: []
     property var choices: []
-    // StyleChange reads STYLE_EDIT_FILTER_TEXT once, when it is made.
     property string filterTextAtOpen: ""
-    property bool listed: false // the window made its list (a FontEnum observer)
-    // HikariChoice's txtchoice where it no longer names the entry at the
-    // choice (the Style editor after the catalogs changed under a choice past
-    // the new end); "" while they agree. It is drawn and it is GetValue().
+    property bool listed: false
+    // MUST KILL: staleText emulates legacy's choice text going stale past the list's new end
     property string staleText: ""
     signal listMade()
 
-    // The window opens: the catalogs and the two entries, "All fonts" chosen,
-    // the Filter as STYLE_EDIT_FILTER_TEXT_ON says.
     function reset() {
         listed = true
         filterTextAtOpen = catalogs.filterText
@@ -42,8 +26,6 @@ RowLayout {
         filter.checked = catalogs.filterOn
         changeCatalog(false)
     }
-    // ChangeCatalog(save): the list for the choice; the Filter toggle saves
-    // STYLE_EDIT_FILTER_TEXT_ON.
     function changeCatalog(save) {
         if (save)
             catalogs.setFilterOn(filter.checked)
@@ -52,22 +34,14 @@ RowLayout {
         fonts = catalogs.fontList(choice.currentIndex, value, filter.checked, filterTextAtOpen)
         listMade()
     }
-    // CATALOG_CHANGED (the catalog window shown or hidden): the choice made
-    // again around its selection, the list, then SaveCatalogs. The Style
-    // editor does not clamp the choice (StyleChange.cpp:98-104).
     function catalogsChangedByWindow() {
         let sel = choice.currentIndex
         const before = choices
         choices = catalogs.catalogChoices()
         if (sel < choices.length) {
-            choice.currentIndex = sel // SetSelection(sel): its text follows
+            choice.currentIndex = sel
             staleText = ""
         } else {
-            // HikariChoice::SetSelection ignores a position past the end
-            // (ListControls.cpp:459), so the choice stays where
-            // PutArray(names) left it before "All fonts" and "Without
-            // catalog" were inserted ahead of it (ListControls.cpp:498-519,
-            // 685-688), and its text stays that name.
             const names = catalogs.catalogNames
             const ce = sel >= 0 && sel < before.length ? before[sel] : ""
             let c = sel
@@ -80,7 +54,7 @@ RowLayout {
                     text = names[0]
                 }
                 if (ce !== names[c]) {
-                    c = Math.max(0, names.indexOf(ce)) // wxArrayString::Index
+                    c = Math.max(0, names.indexOf(ce))
                     text = names[c]
                 }
             }
@@ -90,27 +64,19 @@ RowLayout {
         changeCatalog(false)
         catalogs.save()
     }
-    // AddToCatalog: the menu of "Add fonts from subtitles" and a check per
-    // catalog; with none, "No catalogs yet" and New catalog… (PU3-no-catalog:
-    // legacy logged where to make one).
     function addToCatalog() {
         addMenu.targetFont = fontName
         addMenu.names = catalogs.catalogNames
         addMenu.popup(addButton, 0, addButton.height)
     }
-    // ShowGetFromAssDialog's answer: the choice made again with "All fonts"
-    // and "Without catalog" and the catalog chosen (Y6-collect-choice:
-    // legacy's PutArray left the catalog names alone, so the catalog's index
-    // among them read as "All fonts" or "Without catalog" to ChangeCatalog).
     function collectedInto(catalog) {
         if (catalog.length === 0)
             return
         choices = catalogs.catalogChoices()
         const lower = catalog.toLowerCase()
         const at = catalogs.catalogNames.findIndex(n => n.toLowerCase() === lower)
-        // The names follow the two entries (there is a catalog, so no clamp).
         choice.currentIndex = at < 0 ? -1 : at + 2
-        staleText = "" // SetSelection
+        staleText = ""
         changeCatalog(false)
     }
 
@@ -126,8 +92,6 @@ RowLayout {
             bar.changeCatalog(false)
         }
     }
-    // An inline tool row beside the choice: icon-only, the help text as
-    // the tooltip and the name as the accessible name.
     IconToolButton {
         id: addButton
         objectName: "fontCatalogAdd"
@@ -141,7 +105,6 @@ RowLayout {
         iconRole: "settings"
         text: qsTr("Manage")
         tip: qsTr("Allows managing font catalogs")
-        // FCL->SetStyleFont: the window selects the Style's font.
         onClicked: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(bar.fontName, bar.Window.window)
     }
     IconToolButton {
@@ -154,7 +117,6 @@ RowLayout {
         onToggled: bar.changeCatalog(true)
     }
 
-    // FontEnum's observers: a font change lists the fonts again (ReloadFonts).
     Connections {
         target: bar.catalogs
         function onFontsChanged() {
@@ -198,7 +160,7 @@ RowLayout {
                 text: modelData
                 checkable: true
                 checked: bar.catalogs.isFontInCatalog(modelData, addMenu.targetFont)
-                keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (FontCatalogList.cpp:687)
+                keepsMenuOpen: false
                 onTriggered: bar.catalogs.toggleFontInCatalog(modelData, addMenu.targetFont, checked)
             }
             onObjectAdded: (index, object) => addMenu.insertItem(index + 1, object)

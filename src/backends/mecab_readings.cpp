@@ -12,7 +12,7 @@ namespace {
 // UniDic 2.1.2's kana form, the reading as written.
 constexpr std::size_t kKanaField = 17;
 
-// Field `index` of a MeCab feature (CSV, a field with a comma in quotes).
+// MeCab features are CSV; a field holding a comma is quoted.
 std::string_view featureField(std::string_view feature, std::size_t index)
 {
     std::size_t field = 0;
@@ -34,7 +34,7 @@ std::u16string utf16(std::string_view utf8)
     return QString::fromUtf8(utf8.data(), qsizetype(utf8.size())).toStdU16String();
 }
 
-} // namespace
+}
 
 struct MecabReadings::State {
     std::unique_ptr<MeCab::Model> model;
@@ -47,8 +47,7 @@ MecabReadings::~MecabReadings() = default;
 
 std::unique_ptr<MecabReadings> MecabReadings::open(const std::filesystem::path &folder, std::string *error)
 {
-    // Arguments, not one command line: a folder may have spaces. MeCab takes
-    // UTF-8 paths (wide on Windows, ports/mecab).
+    // argv, not one command line, so a folder may hold spaces; MeCab takes UTF-8 paths.
     const std::u8string dir = folder.u8string(), rc = (folder / u8"mecabrc").u8string();
     std::string d(dir.begin(), dir.end()), r(rc.begin(), rc.end());
     std::string program = "mecab", dFlag = "-d", rFlag = "-r";
@@ -93,4 +92,4 @@ application::ReadingAnalyzer MecabReadings::analyzer(std::shared_ptr<const Mecab
     return [readings = std::move(readings)](std::u16string_view text) { return readings->words(text); };
 }
 
-} // namespace hikari::backends
+}

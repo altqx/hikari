@@ -40,7 +40,6 @@ SourceError errorOf(Outcome o, const std::vector<std::byte> &message)
     }
 }
 
-// A1: the audio box's failures: u8 stage and str text (media_protocol.h).
 application::AudioFailure failureOf(Outcome o, const std::vector<std::byte> &message)
 {
     application::AudioFailure failure;
@@ -64,7 +63,6 @@ application::AudioFailure failureOf(Outcome o, const std::vector<std::byte> &mes
     default: failure.error = SourceError::BackendFailure; break;
     }
     failure.message = std::move(text);
-    // a failed read carries the block's buffer as FFMS2 left it
     if (failure.stage == application::AudioStage::Read && in.ok() && !in.atEnd()) {
         auto samples = in.bytes();
         if (in.ok())
@@ -78,7 +76,7 @@ application::AudioFailure hostFailure(SourceError error)
     return {error, application::AudioStage::Host, {}};
 }
 
-} // namespace
+}
 
 FfmsIndexedSource::FfmsIndexedSource(QString helperProgram, QObject *parent)
     : QObject(parent), m_program(std::move(helperProgram))
@@ -107,7 +105,6 @@ void FfmsIndexedSource::ensureHelper(std::function<void(bool)> ready)
 {
     if (m_host && m_host->state() == HelperHost::State::Ready)
         return ready(true);
-    // A lost or refused helper is replaced by a new process (a new session).
     auto *host = m_host.get();
     if (!host || host->state() == HelperHost::State::Lost || host->state() == HelperHost::State::Refused) {
         m_host = std::make_unique<HelperHost>(m_program, QStringList{}, media::kProtocolVersion);
@@ -116,7 +113,6 @@ void FfmsIndexedSource::ensureHelper(std::function<void(bool)> ready)
         started->start();
         connect(host, &HelperHost::ready, this, [this, started] { m_startupMs = started->nsecsElapsed() / 1e6; },
                 Qt::SingleShotConnection);
-        // Loss after the handshake closes the generation; nothing restarts on its own.
         connect(host, &HelperHost::lost, this, [this, host] {
             if (host != m_host.get() || host->session() == 0)
                 return;
@@ -129,7 +125,7 @@ void FfmsIndexedSource::ensureHelper(std::function<void(bool)> ready)
     connect(host, &HelperHost::refused, this, [shared] { (*shared)(false); }, Qt::SingleShotConnection);
     connect(host, &HelperHost::lost, this, [shared, host] {
         if (host->session() == 0)
-            (*shared)(false); // ended before the handshake
+            (*shared)(false);
     }, Qt::SingleShotConnection);
     host->start();
 }
@@ -148,12 +144,8 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
     m_path = path;
     m_index = index;
     m_audio.reset();
-    m_display.reset(); // the helper's Open replaces the box's audio too
+    m_display.reset();
     m_openFailure.reset();
-    // A1: the index the source held goes with it. For a chosen audio track
-    // with an index file, a temporary file is made (exclusively, in the temp
-    // folder) for the helper to hand a new index over in when that file
-    // cannot be written; it is removed again when unused.
     dropHandoff();
     if (!index.indexFile.empty() && index.audioTrack >= 0) {
         QTemporaryFile handoff(QDir::temp().filePath(QStringLiteral("hikari-index-XXXXXX.ffindex")));
@@ -175,8 +167,6 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
             Writer().u8(static_cast<std::uint8_t>(media::Command::Open)).str(path).i32(index.audioTrack)
                 .str(index.indexFile).str(handoffFile).take(),
             [this, generation, handoffFile, progress, done](std::expected<Event, HostError> e) {
-                // an unused handoff file goes, also one a superseded open's
-                // helper wrote after the later open had removed it
                 const auto unused = [&] {
                     if (handoffFile.empty())
                         return;
@@ -206,7 +196,6 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 }
                 if (e->outcome != Outcome::Ok) {
                     unused();
-                    // V3: the stage and FFMS2's text (protocol 8)
                     const auto failure = failureOf(e->outcome, e->payload);
                     application::OpenFailure open;
                     switch (failure.stage) {
@@ -225,8 +214,7 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 t.track = in.i32();
                 t.fpsNumerator = in.i64();
                 t.fpsDenominator = in.i64();
-                // FFMS2's track time base gives milliseconds (pts * num / den);
-                // the port's time base is in seconds.
+                // FFMS2's track time base gives milliseconds; the port's is in seconds.
                 t.timeBaseNumerator = in.i64();
                 t.timeBaseDenominator = in.i64() * 1000;
                 const int count = in.i32();
@@ -328,7 +316,6 @@ void FfmsIndexedSource::frame(int index, FrameReady done)
             f.stride = in.i32();
             f.pts = in.i64();
             f.bgra = in.bytes();
-            // Check the layout before publishing the buffer.
             if (!in.ok() || f.width <= 0 || f.height <= 0 || f.stride < f.width * 4 ||
                 f.bgra.size() != static_cast<std::size_t>(f.stride) * static_cast<std::size_t>(f.height))
                 return finish(std::unexpected(SourceError::BackendFailure));
@@ -633,7 +620,6 @@ void FfmsIndexedSource::parseDisplayOpen(
     done(application::DisplayAudioOpened{a, newIndex});
 }
 
-// A1: like open(), for the audio box's own file; there is no video to read.
 void FfmsIndexedSource::openDisplayAudio(const std::string &path, int track, const std::string &indexFile,
                                          Progress progress, application::DisplayAudioPort::Opened done)
 {
@@ -643,7 +629,7 @@ void FfmsIndexedSource::openDisplayAudio(const std::string &path, int track, con
     m_path = path;
     m_audio.reset();
     m_display.reset();
-    dropHandoff(); // the helper's source, and the index it stood for, are replaced
+    dropHandoff();
     ensureHelper([this, generation, path, track, indexFile, progress = std::move(progress),
                   done = std::move(done)](bool ok) mutable {
         if (!ok)
@@ -750,15 +736,12 @@ void FfmsIndexedSource::closeAll()
     cancelOpen();
     cancelReads();
     cancelDisplay();
-    ++m_generation; // a late open of the closed source resolves Stale
+    ++m_generation;
     m_open = false;
-    m_path.clear(); // nothing to restart()
+    m_path.clear();
     m_audio.reset();
     m_display.reset();
     m_pcmChannels = 0;
-    // The helper answers in order: an open still running ends first, then
-    // its source closes. A helper still starting has opened nothing (its
-    // open resolves Stale before it is sent).
     if (m_host && m_host->state() == HelperHost::State::Ready)
         (void)m_host->request(m_generation, Writer().u8(static_cast<std::uint8_t>(media::Command::Close)).take(),
                               [](std::expected<Event, HostError>) {});
@@ -775,4 +758,4 @@ void FfmsIndexedSource::cancelReads()
     }
 }
 
-} // namespace hikari::backends
+}

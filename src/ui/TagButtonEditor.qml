@@ -1,10 +1,3 @@
-// LE5 (#230): the custom tag button popover, legacy TagButtonDialog ("Enter
-// ASS tag") as a popover at the button it edits or at the strip's "+": the
-// name, the tag text, where it goes (legacy's three insertion types) and an
-// icon of the set or none, with the button as the strip will show it. Save
-// takes a tag text the controller accepts (TagButtonsController::problem);
-// Enter saves, Esc or a press outside cancels. `saved` hands the button to
-// the owner: the strip adds or edits it, Settings > Editor stages it.
 pragma Translator: "HikariSub.Editor"
 import QtQuick
 import QtQuick.Controls
@@ -15,12 +8,10 @@ Popup {
     id: popover
     objectName: "tagButtonEditor"
     required property TagButtonsController tagButtons
-    // The place the button has (-1: a new one).
     property int index: -1
     signal saved(int index, var button)
 
-    // qsTr on every evaluation: a language switch re-evaluates only the
-    // bindings that called it, and the controller's texts follow with it.
+    // A language switch re-evaluates only the bindings that called qsTr.
     readonly property string problem: {
         const noName = qsTr("Enter a name or choose an icon")
         if (!tagButtons)
@@ -32,7 +23,6 @@ Popup {
     }
     readonly property var button: ({ name: tagName.text, tag: tagText.text, type: tagType.currentIndex, icon: icons.chosen })
 
-    // `button` {name, tag, type, icon} or null for a new one; at `anchor`.
     function openFor(anchor, i, b) {
         parent = anchor
         index = i
@@ -45,7 +35,6 @@ Popup {
         tagText.selectAll()
         tagText.forceActiveFocus()
     }
-    // The problem shows once the tag text was typed in or Save was tried.
     property bool touched: false
     function save() {
         touched = true
@@ -56,7 +45,6 @@ Popup {
     }
 
     y: parent ? parent.height + 2 : 0
-    // Kept inside the window (a button at the strip's right end).
     margins: 8
     modal: false
     focus: true
@@ -104,8 +92,6 @@ Popup {
                 Accessible.name: qsTr("Insertion")
             }
             Label { text: qsTr("Icon"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 4 }
-            // "None" above a grid of equal cells, so that its width leaves
-            // the icons' columns alone.
             Column {
                 id: icons
                 objectName: "tagIcons"
@@ -117,7 +103,6 @@ Popup {
                     checkable: true
                     checked: icons.chosen.length === 0
                     focusPolicy: Qt.TabFocus
-                    // The check shows the choice, not the click's toggle.
                     onClicked: {
                         icons.chosen = ""
                         checked = Qt.binding(() => icons.chosen.length === 0)
@@ -163,7 +148,6 @@ Popup {
                 tip: tagName.text.length > 0 ? tagName.text : tagText.text
                 focusPolicy: Qt.NoFocus
             }
-            // Save and Cancel in the platform's order, as every footer.
             DialogButtonBox {
                 Layout.fillWidth: true
                 padding: 0

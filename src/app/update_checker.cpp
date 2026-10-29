@@ -21,9 +21,6 @@ namespace {
 
 namespace a = application;
 
-// GitHub's list a page at a time (legacy ReleasePages): fifty to a page, four
-// pages at most, each reply cut off past 4 MiB, the whole check within two
-// minutes.
 constexpr int kReleasesPerPage = 50;
 constexpr int kMaxPages = 4;
 constexpr qint64 kMaxListBytes = 4 * 1024 * 1024;
@@ -46,10 +43,6 @@ std::optional<std::string> text(const QJsonValue &v)
     return v.toString().toStdString();
 }
 
-// The release list as legacy FindNewerRelease reads it; anything but an
-// array gives no releases.
-// The page's releases; an entry that is none (no object, no tag name) is
-// left out and makes the page unreadable.
 std::vector<a::ReleaseEntry> releaseList(const QJsonArray &list, bool &unreadable)
 {
     std::vector<a::ReleaseEntry> out;
@@ -143,13 +136,12 @@ QString origin(const QUrl &url)
     return url.adjusted(QUrl::RemovePath | QUrl::RemoveQuery | QUrl::RemoveFragment | QUrl::RemoveUserInfo).toString();
 }
 
-} // namespace
+}
 
 struct UpdateChecker::Run {
     bool interactive = false;
-    bool listOnly = false; // SH3: What's new's read of the list, no check
-    // SH3: whether the list was read (m_releases is this run's), or a page
-    // was no list (an error object, say); unset while it is being read.
+    bool listOnly = false;
+    // MUST KILL: tri-state: unset while reading, false when a page was not a list
     std::optional<bool> listRead;
     bool unreadable = false;
     int page = 0;
@@ -323,7 +315,7 @@ void UpdateChecker::readReleases()
 {
     if (!m_run)
         start(true, false);
-    else if (m_run->listRead) // checking manifests: past the list
+    else if (m_run->listRead)
         emit releasesRead(*m_run->listRead);
 }
 
@@ -348,7 +340,6 @@ void UpdateChecker::remindInAWeek()
 
 void UpdateChecker::openReleasePage(const QString &url)
 {
-    // Only a page this checker built from a tag, never a link from the reply.
     if (!url.isEmpty() && url.startsWith(m_feed.pageBase))
         backends::desktop::openUrl(QUrl(url));
 }
@@ -387,8 +378,7 @@ QNetworkReply *UpdateChecker::get(const QUrl &url, bool api)
     const QString feedOrigin = origin(m_feed.releases);
     const bool github = m_feed.paginate;
     connect(reply, &QNetworkReply::redirected, this, [reply, api, github, feedOrigin](const QUrl &to) {
-        // The API answers from its own host only (legacy IsApiReplyUrl); an
-        // asset may move to GitHub's download hosts; a local feed stays put.
+        // GitHub's API answers from its own host; assets redirect to its download hosts.
         const bool https = to.scheme() == QLatin1String("https") && to.port() == -1 && to.userInfo().isEmpty();
         const bool allowed = github ? https && (api ? to.host().compare(QLatin1String("api.github.com"), Qt::CaseInsensitive) == 0
                                                     : a::isAllowedDownloadHost(to.host().toStdString()))
@@ -408,7 +398,6 @@ QNetworkReply *UpdateChecker::get(const QUrl &url, bool api)
 void UpdateChecker::check(bool interactive)
 {
     if (m_run) {
-        // What's new's read becomes this check, from the list on.
         if (m_run->listOnly) {
             m_run->listOnly = false;
             m_run->interactive = interactive;
@@ -426,7 +415,7 @@ void UpdateChecker::start(bool listOnly, bool interactive)
     m_run->interactive = interactive;
     m_run->deadline.setSingleShot(true);
     connect(&m_run->deadline, &QTimer::timeout, this, [this] {
-        // Later: the reply's end, and with it the run and this timer, go.
+        // MUST KILL: deferred because the abort ends the run that owns this timer
         if (m_run && m_run->reply)
             QTimer::singleShot(0, m_run->reply.data(), &QNetworkReply::abort);
     });
@@ -467,9 +456,6 @@ void UpdateChecker::pageFinished()
         emit releasesRead(false);
         return;
     }
-    // Legacy: a page that is no array lists nothing, and the check goes on;
-    // but the list counts as not read (What's new takes none of it), as
-    // does one holding an entry that is no release.
     const QJsonDocument json = QJsonDocument::fromJson(body);
     m_run->unreadable = m_run->unreadable || !json.isArray();
     const qsizetype listed = json.array().size();
@@ -529,8 +515,6 @@ void UpdateChecker::manifestFinished()
     const QByteArray body = reply->error() == QNetworkReply::NoError && (!status.isValid() || status.toInt() == 200)
                                 ? reply->readAll()
                                 : QByteArray();
-    // A manifest that does not arrive or does not hold is no reason to
-    // trust the release without one: the release is skipped.
     if (body.isEmpty() || body.size() > a::kMaxManifestBytes) {
         walk();
         return;
@@ -555,7 +539,7 @@ void UpdateChecker::offer(const a::ReleaseEntry &release, const a::ReleasePackag
     auto chosen = a::chooseOffer(env.package.kind, onWindows(), packages, env.osVersion.toStdString(),
                                  env.glibcVersion.toStdString());
     if (chosen.kind == a::OfferKind::Install && !m_installer->canInstall())
-        chosen.kind = a::OfferKind::Notify; // say so only (an AppImage in a folder it cannot write)
+        chosen.kind = a::OfferKind::Notify;
     const QString tag = qs(release.tag);
     const QString version = tag.mid(1);
     m_offerVersion = version;
@@ -573,11 +557,9 @@ void UpdateChecker::offer(const a::ReleaseEntry &release, const a::ReleasePackag
                           {QStringLiteral("requirement"), qs(chosen.requirement)},
                           {QStringLiteral("requirementIsOs"), chosen.requirementIsOs}};
     end(QString());
-    // PU7: a skipped version is the menu's check's only.
     if (!interactive && !m_skippedVersion.isEmpty() && version == m_skippedVersion)
         return;
     if (m_offerInstallable && !interactive && m_autoInstall) {
-        // The automatic check downloads without asking; "Update ready" follows.
         downloadOffer();
         return;
     }
@@ -595,13 +577,11 @@ void UpdateChecker::end(const QString &outcome)
     }
     m_run.reset();
     if (listOnly)
-        return; // no check: nothing to report, the next check's time unchanged
+        return;
     emit checkingChanged();
-    // Any finished check backs the automatic one off a day, so a server
-    // that is down does not mean a request on every start.
     setNextCheck(QDateTime::currentSecsSinceEpoch() + a::kUpdateDay);
     if (interactive && !outcome.isEmpty())
         emit finished(outcome, {}, true);
 }
 
-} // namespace hikari::app
+}

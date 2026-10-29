@@ -1,24 +1,4 @@
 pragma ComponentBehavior: Bound
-// Y6: legacy FontCatalogList "Manage font catalogs" (FontCatalogList.cpp:
-// 94-360 at 20d647c4), a modeless resizable window. Edits are autosaved to
-// fonts.autosave-0..2.toml 20 s after the first, and fonts.toml (CF2;
-// legacy FontCatalogsAutosave0..2.txt and FontCatalogs.txt) is written when the window is shown or hidden (CATALOG_CHANGED) and, once
-// a window was made, when the application ends (~FontCatalogList).
-//
-// PU3 (#305): one window on DG1's frame for the program (FontWindows), never
-// made inside the font picker or the Style manager that open it:
-// * the catalogs on the leading side with their sizes, under one icon
-//   strip: New and Rename (popovers at the button, their name errors
-//   inline), Delete (a message box), Load from a file (the clash review for
-//   the catalogs that exist) and Add fonts from subtitles;
-// * every installed font with a check saying whether the chosen catalog
-//   holds it (Space toggles the selected rows), its catalogs and a sample
-//   (PU3-catalog-membership: legacy's mark column and per-row catalog
-//   menu); Show narrows the list; "Refresh fonts" (F47-refresh) reads the
-//   fonts again;
-// * the selected font's preview by the subtitle renderer;
-// * "Saved" in the footer while the safety copy is fresh, the file in its
-//   tooltip (legacy's status bar and its sentence), and Close.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
@@ -29,28 +9,26 @@ import Hikari.Ui
 DialogWindow {
     id: window
     objectName: "fontCatalogWindow"
-    required property var catalogs // FontCatalogsController
-    property var notices: null // ToastStack
+    required property var catalogs
+    property var notices: null
     title: qsTr("Manage font catalogs")
     dialogId: "fontCatalogs"
     resizable: true
     property bool created: false
-    property var fonts: []        // GetFonts when the window was made
-    property string chosen: ""    // the catalog on the leading side
-    property int revision: 0      // the catalogs changed
-    property int show: 0          // 0 all fonts, 1 in the chosen catalog, 2 in none
-    property var selected: ({})   // the selected rows' fonts
+    property var fonts: []
+    property string chosen: ""
+    property int revision: 0
+    // MUST KILL: show is a magic int (0 all fonts, 1 in the chosen catalog, 2 in none)
+    property int show: 0
+    property var selected: ({})
     property int resolveRequest: -1
     property var resolution: ({})
-    property string resolvedFor: "" // the characters the last lookup asked for
-    property bool extending: false // a Ctrl click moves the current row, keeping the selection
-    property string selectedFont: "" // the current row's font, kept when the list changes under it
-    // Show "In …" lists the chosen catalog: another catalog, another list.
+    property string resolvedFor: ""
+    property bool extending: false
+    property string selectedFont: ""
     onChosenChanged: if (created && show === 1) selectFont(selectedFont)
-    // CATALOG_CHANGED, sent when the window is shown and when it is hidden.
     signal catalogChanged()
 
-    // The fonts the chosen catalog holds, by name.
     readonly property var members: {
         revision
         const set = Object.create(null)
@@ -68,25 +46,17 @@ DialogWindow {
     }
     readonly property string currentFont: list.currentIndex >= 0 && list.currentIndex < shown.length ? shown[list.currentIndex] : ""
 
-    // GenerateList(styleFont): every font, the font given selected (the
-    // first equal ignoring case, else the first), and the first catalog
-    // holding it chosen.
     function create(font) {
         fonts = catalogs.allFonts()
         created = true
-        catalogs.windowMade() // ~FontCatalogList saves at the end
+        catalogs.windowMade()
         const holding = catalogs.catalogsOf(font || "")
         chosen = holding.length > 0 ? holding[0] : catalogs.catalogNames.length > 0 ? catalogs.catalogNames[0] : ""
         show = 0
         search.text = ""
         selectFont(font)
     }
-    // Opened from the picker or the Style editor (`opener`, their window)
-    // with their font: the whole list, that font selected. Shown for
-    // another window already, it closes first, so that it serves (and is
-    // not blocked by) the new opener.
     function openFor(font, opener) {
-        // (Not for a window opened from this one: it would close with it.)
         if (visible && opener && transientParent !== opener && opener.transientParent !== window)
             close()
         if (!created) {
@@ -98,7 +68,6 @@ DialogWindow {
         }
         openFrom(opener || null)
     }
-    // + › New catalog… in the picker: the window, then New's popover.
     function startNew(font, opener) {
         openFor(font, opener)
         Qt.callLater(() => newPopover.openFor(newButton))
@@ -109,7 +78,7 @@ DialogWindow {
     }
     function select(row) {
         list.currentIndex = row
-        list.positionViewAtIndex(Math.max(0, row - 2), ListView.Beginning) // ScrollTo(sel - 2)
+        list.positionViewAtIndex(Math.max(0, row - 2), ListView.Beginning)
         const f = row >= 0 && row < shown.length ? shown[row] : ""
         const set = Object.create(null)
         if (f.length > 0)
@@ -118,8 +87,6 @@ DialogWindow {
         selectedFont = f
         refreshPreview()
     }
-    // SV1: drawn again on a screen of another scale, or when the setting
-    // changes (Window.devicePixelRatio, Qt 6.11).
     readonly property real previewPixelRatio: preview.Window.window ? preview.Window.window.devicePixelRatio : 1
     onPreviewPixelRatioChanged: refreshPreview()
     Connections {
@@ -128,22 +95,16 @@ DialogWindow {
     }
     function refreshPreview() {
         if (currentFont.length === 0) {
-            // No row (nothing matches): no preview and no resolution.
             resolveRequest = -1
             resolution = ({})
             return
         }
         catalogs.renderPreview(currentFont, Math.max(1, preview.width), Math.max(1, preview.height),
                                previewPixelRatio)
-        // The preview Style is bold: the bold face is the one drawn, with
-        // the preview text's characters. Until this request's answer no
-        // other face is said.
         resolution = ({})
         resolvedFor = catalogs.samplePlain(catalogs.previewText, true)
         resolveRequest = catalogs.resolveFamily(currentFont, true, false, false, resolvedFor)
     }
-    // The selected fonts join or leave the chosen catalog (CatalogList's
-    // menu over the marked rows).
     function setMembership(names, add) {
         if (chosen.length === 0 || names.length === 0)
             return
@@ -153,8 +114,6 @@ DialogWindow {
         const names = shown.filter(f => selected[f] === true)
         if (names.length === 0)
             return
-        // The current row decides while it is marked (a Ctrl-click can
-        // unmark it), else the first marked one.
         const lead = selected[currentFont] === true ? currentFont : names[0]
         setMembership(names, !(members[lead] === true))
     }
@@ -183,9 +142,6 @@ DialogWindow {
         refreshPreview()
     }
 
-    // --- Catalogs -------------------------------------------------------
-    // The name typed is taken when a catalog has it ignoring case (other
-    // than the one renamed).
     function nameProblem(name, renaming) {
         const n = name.trim()
         if (n.length === 0)
@@ -206,7 +162,6 @@ DialogWindow {
         catalogs.addCatalog(name, true)
         chosen = name
     }
-    // ChangeCatalogName: onto another catalog's name, the question first.
     function renameCatalog(oldName, newName) {
         const existing = catalogs.existingName(newName)
         if (existing.length > 0 && existing !== oldName) {
@@ -252,8 +207,6 @@ DialogWindow {
             chosen = left.length > 0 ? left[Math.min(at, left.length - 1)] : ""
         })
     }
-    // Load (PU3-load-review): the file's catalogs; those that exist with
-    // other fonts go to the clash review, Merge (legacy's) first.
     function load(file) {
         const r = catalogs.reviewCatalogFile(file)
         if (!r.ok) {
@@ -265,7 +218,6 @@ DialogWindow {
             loaded(catalogs.loadReviewed([]), r.file)
             return
         }
-        // Names a rename cannot take: yours and the file's, ignoring case.
         const taken = catalogs.catalogNames.concat(r.names)
         const suggest = name => {
             for (let i = 2; ; ++i) {
@@ -286,12 +238,11 @@ DialogWindow {
             nameHeading: qsTr("Catalog"),
             differenceHeading: qsTr("Fonts"),
             rows: r.rows.map(row => ({ name: row.name,
-                                       // The fonts here, and those the file would add (or its count when it adds none).
                                        difference: row.added > 0 ? qsTr("%1 here, +%2 new").arg(row.here).arg(row.added)
                                                                  : qsTr("%1 here, %2 in the file").arg(row.here).arg(row.there),
                                        suggestion: suggest(row.name) })),
             added: r.total - r.rows.length - r.same,
-            namePattern: /.*/, // a catalog name may hold a comma
+            namePattern: /.*/,
             nameTaken: (name, row) => {
                 const review = reviewLoader.item
                 const renames = review.names.filter((n, i) => i !== row && review.actions[i] === "rename").map(n => n.trim())
@@ -315,7 +266,6 @@ DialogWindow {
                          { details: qsTr("From %1: %2.").arg(file).arg(parts.join(", ")) })
         }
     }
-    // PK1's message box: made at the first question.
     function ask(options, done) {
         boxLoader.active = true
         boxLoader.item.ask(options, done)
@@ -331,18 +281,14 @@ DialogWindow {
         target: window.catalogs
         function onCatalogsChanged() {
             window.revision++
-            // A catalog gone, or the first loaded into an empty list: the first.
             if (window.created && !window.catalogs.catalogExists(window.chosen)) {
                 window.chosen = window.catalogs.catalogNames.length > 0 ? window.catalogs.catalogNames[0] : ""
                 if (window.chosen.length === 0 && window.show === 1)
-                    window.show = 0 // no catalog to show the fonts of: every font
+                    window.show = 0
             }
-            // Show "In …" or "Not in a catalog": a membership change takes rows
-            // out or in; the current font stays if it is still listed.
             if (window.created && window.show !== 0)
                 window.selectFont(window.selectedFont)
         }
-        // FontEnum's observers: a font change lists the fonts again.
         function onFontsChanged() {
             if (!window.created)
                 return
@@ -350,8 +296,6 @@ DialogWindow {
             window.fonts = window.catalogs.allFonts()
             window.selectFont(font)
         }
-        // The preview text changed (the Style editor's, shared): the image
-        // and the lookup follow its characters.
         function onFilterChanged() {
             if (window.created && window.visible && window.currentFont.length > 0
                     && window.catalogs.samplePlain(window.catalogs.previewText, true) !== window.resolvedFor)
@@ -368,7 +312,6 @@ DialogWindow {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.topMargin: 6
-        // The catalogs.
         ColumnLayout {
             spacing: 6
             Layout.preferredWidth: 200
@@ -435,11 +378,9 @@ DialogWindow {
                     anchors.fill: parent
                     anchors.margins: 1
                     clip: true
-                    // Read once made: the catalogs load at their first use.
                     model: window.created ? window.catalogs.catalogNames : []
                     currentIndex: model.indexOf(window.chosen)
                     highlightMoveDuration: 0
-                    // Up and Down choose the catalog (the current row follows `chosen`).
                     Keys.onUpPressed: window.stepCatalog(-1)
                     Keys.onDownPressed: window.stepCatalog(1)
                     Accessible.name: qsTr("Catalogs")
@@ -476,7 +417,6 @@ DialogWindow {
                 }
             }
         }
-        // The fonts.
         ColumnLayout {
             spacing: 8
             Layout.fillWidth: true
@@ -512,7 +452,6 @@ DialogWindow {
                     }
                 }
             }
-            // Show, on its own row: its choices keep their words.
             RowLayout {
                 spacing: 8
                 Label { text: qsTr("Show"); color: Theme.muted }
@@ -525,7 +464,6 @@ DialogWindow {
                                 name: "fontCatalogShowIn", enabled: window.chosen.length > 0 },
                               { text: qsTr("Not in a catalog"), name: "fontCatalogShowNone" }]
                     Accessible.name: qsTr("Show")
-                    // The cells share the widest choice's width (in bold, as when chosen).
                     readonly property real widest: Math.max(...choices.map(c => showMetrics.advanceWidth(c.text)))
                     Layout.preferredWidth: choices.length * (widest + 24) + 2
                     Layout.maximumWidth: Layout.preferredWidth
@@ -562,7 +500,6 @@ DialogWindow {
                             color: Theme.muted
                             font: window.fontAt(12)
                             Layout.fillWidth: true
-                            // fonts.md: a Qt-drawn sample is labelled as one.
                             ToolTip.visible: sampleHover.hovered
                             ToolTip.text: qsTr("Drawn by Qt, not by the subtitle renderer")
                             HoverHandler { id: sampleHover }
@@ -602,13 +539,10 @@ DialogWindow {
                         height: 28
                         highlighted: isSelected
                         Accessible.name: modelData
-                        // The current row has the list's focus: Space toggles
-                        // the selection, not a press of the row.
                         Keys.onSpacePressed: window.toggleSelected()
                         background: Rectangle {
                             color: row.isSelected ? Theme.select : row.hovered ? Theme.raised : "transparent"
                             Rectangle { visible: row.isSelected && row.ListView.isCurrentItem; width: 3; height: parent.height; color: Theme.accent }
-                            // A click selects; Ctrl adds or removes, Shift a range.
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: mouse => {
@@ -645,7 +579,6 @@ DialogWindow {
                             Label {
                                 objectName: "fontCatalogSample"
                                 textFormat: Text.PlainText
-                                // #403: its characters, as the Styles panel's swatches draw them.
                                 text: window.catalogs.samplePlain(window.catalogs.previewText, true)
                                 font.family: row.modelData
                                 font.pixelSize: 15
@@ -657,7 +590,6 @@ DialogWindow {
                     }
                 }
             }
-            // The selected font's preview, by the subtitle renderer.
             Rectangle {
                 color: Theme.field
                 border.color: Theme.line
@@ -669,8 +601,7 @@ DialogWindow {
                     anchors.fill: parent
                     anchors.margins: 1
                     cache: false
-                    // SV1: drawn with the screen's pixels, shown at the
-                    // preview's size (Image ignores the image's pixel ratio).
+                    // Image ignores the image's pixel ratio.
                     fillMode: window.catalogs.previewScale > 1 ? Image.PreserveAspectFit : Image.Pad
                     visible: window.currentFont.length > 0
                     source: window.catalogs.previewKey > 0 ? "image://fontcatalogpreview/" + window.catalogs.previewKey : ""
@@ -709,7 +640,6 @@ DialogWindow {
     ]
     defaultButton: closeButton
 
-    // New and Rename: the name in a popover at the button.
     Popover {
         id: newPopover
         objectName: "fontCatalogNewPopover"
@@ -808,14 +738,13 @@ DialogWindow {
 
     Loader {
         id: boxLoader
-        visible: false // a window: no room in the layout
+        visible: false
         active: false
         sourceComponent: MessageBox {
             objectName: "fontCatalogMessageBox"
             settings: window.settings
         }
     }
-    // PK1: made at the first clash.
     Loader {
         id: reviewLoader
         visible: false
@@ -826,9 +755,7 @@ DialogWindow {
             settings: window.settings
         }
     }
-    // OnLoadCatalogs (FontCatalogList.cpp:315-316): "Text files (*.txt)",
-    // whose pattern Qt reads from the label. Titled for catalog files
-    // (Y6-load-title: legacy's read "Choose video file").
+    // Qt reads the pattern from the filter's label.
     Dialogs.FileDialog {
         id: loadDialog
         objectName: "fontCatalogLoadDialog"

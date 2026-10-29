@@ -4,20 +4,6 @@ import Hikari.Ui
 import com.kdab.dockwidgets 2.0 as KDDW
 import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDWViews
 
-// D3: a floating panel window, after MuseScore's DockFloatingWindow.qml
-// (docs/research/musescore-docking.md §1, §5): a borderless tool window
-// whose panel keeps its header (DockTabBar.qml; a window of several groups
-// gets DockTitleBar.qml above them), framed in the panel body's colour with
-// a 1-pixel boundary, 3-pixel corners and a drawn 8-pixel shadow around it.
-// The window is transparent around the frame on every platform (the
-// adapter, ui/docking.cpp, makes it so), and the shadow's edges resize it
-// through the window system (startSystemResize). On X11 without a
-// compositing manager the transparent margin would show black, so there
-// is no shadow (Docking.floatingShadow is 0) and a band inside the frame's
-// edge resizes; so too where the window system frames the window all the
-// same (Docking.windowShadow: Hyprland's border went round the shadow's
-// transparent margin, 8 pixels off the frame). Loaded through the
-// adapter's view factory.
 Item {
     id: root
     objectName: "dockFloatingWindow"
@@ -25,12 +11,9 @@ Item {
     readonly property KDDW.FloatingWindowView floatingWindowCpp: parent
     readonly property KDDW.TitleBarView titleBarCpp: floatingWindowCpp ? floatingWindowCpp.titleBar : null
     readonly property KDDW.DropAreaView dropAreaCpp: floatingWindowCpp ? floatingWindowCpp.dropArea : null
-    // None inside a frame the window system draws all the same (a Wayland
-    // compositor that decorates server-side: Docking.windowSystemFrame).
-    // (The revision is compared, not just read: a compiled binding drops a
-    // read whose value it does not use, and the dependency with it.)
+    // Compared, not just read: a compiled binding drops an unused read and its dependency.
     readonly property int shadow: Docking.windowTitleRevision >= 0 ? Docking.windowShadow(Window.window) : 0
-    // Read by the engine: the title bar's height and the contents' inset.
+    // KDDockWidgets reads titleBarHeight and margins.
     readonly property int titleBarHeight: titleBar.item && titleBar.item.visible ? titleBar.item.heightWhenVisible : 0
     readonly property int margins: shadow + 1
 
@@ -45,12 +28,7 @@ Item {
             floatingWindowCpp.geometryUpdated()
     }
 
-    // Qt Quick's popup overlay (menus, tool tips) of this window is placed
-    // from the window's size when its content item's size changes, and the
-    // engine sizes the content item before the window: the overlay kept the
-    // window's first size's offset (native gate: the panel's menu drawn
-    // 300 pixels below its button, outside the window). Re-placed whenever
-    // the window's size changes, as Qt places it.
+    // Qt places the popup overlay when the content item resizes, which KDDW does before the window; re-place it here.
     readonly property size windowSize: Qt.size(Window.width, Window.height)
     onWindowSizeChanged: placeOverlay()
     Component.onCompleted: Qt.callLater(placeOverlay)
@@ -63,7 +41,6 @@ Item {
         overlay.y = (w.height - w.contentItem.height) / 2
     }
 
-    // The shadow: rings fading outwards from the frame.
     Repeater {
         model: root.shadow
         delegate: Rectangle {
@@ -113,17 +90,12 @@ Item {
         }
     }
     onDropAreaCppChanged: {
-        // The engine's drop area lives in the visual one, as the engine's own
-        // FloatingWindow.qml has it.
         if (dropAreaCpp) {
             dropAreaCpp.parent = dropArea
             dropAreaCpp.anchors.fill = dropArea
         }
     }
 
-    // Resizing from the shadow, through the compositor. Without a shadow
-    // (X11 without a compositing manager, ui/docking.cpp) a band just inside
-    // the frame's edge does it.
     readonly property int grip: Math.max(shadow, Docking.resizeGrip)
     component ResizeEdge: MouseArea {
         required property int edges

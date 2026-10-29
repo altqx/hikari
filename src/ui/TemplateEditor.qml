@@ -1,18 +1,3 @@
-// KE2 (#284; the design approved on the card): the Template editor panel,
-// a tab beside the Line editor. It lists the Document's template and code
-// Lines in Grid order and edits one of them: its Effect (typed, or through
-// the picker, in stock syntax), Style, Layer and text, coloured as the Line
-// editor colours a template, with a problem underlined in place. Each edit
-// goes into the template Line (one undo step per pause) and re-runs the
-// karaoke templater on the current karaoke Line only; "Preview on Line N"
-// lists what Apply would write for it, and the video draws that in place of
-// the Line's generated Lines. Apply runs the stock macro as the Automation
-// menu does, one undo step; its arrow applies to the selected Lines. `$`
-// and `!` open a list of the variables (with their values on the current
-// Line) and the template functions. The dock header names the panel and
-// holds its eye (the preview on the video) and Loop the Line; the panel has
-// no heading of its own. At its minimum width the fields stack and the
-// preview folds into one row.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.TemplateEditor"
 import QtQuick
@@ -23,18 +8,13 @@ import Hikari.Ui
 Pane {
     id: root
     required property TemplateEditorController controller
-    // The video Loop the Line plays (loopRange, looping, pause, hasVideo).
     property VideoController video: null
     implicitWidth: 520
     implicitHeight: 640
     padding: 0
-    // The narrowest panel shows every part (the fields stacked, the preview
-    // folded); the shortest holds the list's first rows and the footer.
     readonly property size minimumSize: Qt.size(360, 260)
     readonly property bool narrow: width < 520
-    // Narrow: the preview's section unfolds on a click.
     property bool previewUnfolded: false
-    // The dock header's tools (Docking.setPanelHeader), right of its tab.
     readonly property Item toolbar: headerBar
 
     readonly property font monoFont: Qt.font({ family: "monospace", pixelSize: Qt.application.font.pixelSize })
@@ -46,14 +26,13 @@ Pane {
                          //: A time a template took: %1 seconds
                          : qsTr("%1 s").arg(seconds.toFixed(2))
     }
-    // English has no plural catalog: one says "1 Line".
+    // Without a catalog Qt picks no English plural form, so one is spelled out.
     function lineCount(n) {
         return n === 1 ? qsTr("1 Line") : qsTr("%n Lines", "", n)
     }
     function counted(n, one, many) {
         return n === 1 ? one : many
     }
-    // A template row's figures: the Lines it made and its time.
     function rowStatus(row) {
         if (row.seconds < 0)
             return ""
@@ -62,8 +41,6 @@ Pane {
         return lineCount(row.generated) + " · " + milliseconds(row.seconds)
     }
 
-    // The header's tools: the preview on the video (the eye) and Loop the
-    // Line, icon-only with their names on hover.
     RowLayout {
         id: headerBar
         objectName: "templateHeaderBar"
@@ -87,8 +64,6 @@ Pane {
             checkable: true
             enabled: root.video !== null && root.video.hasVideo && root.controller.source !== 0
             checked: root.video !== null && root.video.looping
-            // The span the loop plays: another Line previewed, or new times,
-            // loop that instead.
             property var span: null
             function loopSource() {
                 span = [root.controller.sourceStartMs, root.controller.sourceEndMs]
@@ -118,7 +93,6 @@ Pane {
         }
     }
 
-    // A section's title: bold, with a muted note after it.
     component SectionTitle: RowLayout {
         id: sectionTitle
         property string title
@@ -131,12 +105,11 @@ Pane {
         Label {
             Layout.fillWidth: true
             text: sectionTitle.note
-            textFormat: Text.PlainText // a Line's fields: no <img> fetched
+            textFormat: Text.PlainText // AutoText would fetch an <img> in a Line's field
             color: Theme.muted
             elide: Text.ElideRight
         }
     }
-    // A key in a hint, drawn as a key cap.
     component KeyCap: Rectangle {
         id: cap
         property string key
@@ -155,7 +128,6 @@ Pane {
             font.bold: true
         }
     }
-    // A thin rule between the panel's sections.
     component Rule: Rectangle {
         Layout.fillWidth: true
         implicitHeight: 1
@@ -176,7 +148,6 @@ Pane {
             text: qsTr("The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.")
         }
 
-        // The panel scrolls as a whole; nothing moves into a scroll-only area.
         Flickable {
             id: scroller
             objectName: "templateScroller"
@@ -194,7 +165,6 @@ Pane {
                 width: scroller.width
                 spacing: 0
 
-                // The templates: one row per template or code Line.
                 ColumnLayout {
                     Layout.fillWidth: true
                     Layout.margins: 12
@@ -229,7 +199,6 @@ Pane {
                         }
                     }
 
-                    // No template Lines yet: what one is, and New.
                     Label {
                         objectName: "templateEmpty"
                         visible: root.controller.templateCount + root.controller.codeCount === 0
@@ -281,7 +250,6 @@ Pane {
                                         anchors.leftMargin: 6
                                         anchors.rightMargin: 8
                                         spacing: 8
-                                        // Changed since the last Apply, or a problem.
                                         Item {
                                             implicitWidth: 14
                                             implicitHeight: 14
@@ -365,7 +333,6 @@ Pane {
 
                 Rule {}
 
-                // The current template or code Line.
                 ColumnLayout {
                     objectName: "templateLine"
                     visible: root.controller.current !== 0
@@ -444,7 +411,7 @@ Pane {
                                 highlighted: styleBox.highlightedIndex === index
                                 contentItem: Label {
                                     text: parent.modelData
-                                    textFormat: Text.PlainText // a Style's name
+                                    textFormat: Text.PlainText
                                     elide: Text.ElideRight
                                 }
                             }
@@ -460,7 +427,6 @@ Pane {
                             Layout.preferredWidth: 80
                             enabled: root.controller.editable
                             editable: true
-                            // The Line editor's range: a Layer may be negative.
                             from: -10000000
                             to: 10000000
                             value: root.controller.layer
@@ -469,7 +435,6 @@ Pane {
                         }
                     }
 
-                    // The text, coloured as a template, its problem underlined.
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: Math.max(64, textField.implicitHeight + 2)
@@ -486,11 +451,8 @@ Pane {
                             wrapMode: TextEdit.Wrap
                             font: root.monoFont
                             enabled: root.controller.editable
-                            // The controller's text, put in only when it is not
-                            // what the field holds (the cursor stays).
                             property bool loading: false
-                            // The text last seen: the highlighter's formatting
-                            // notifies the same text again, later.
+                            // The highlighter's formatting notifies the same text again, later.
                             property string seen: ""
                             function load() {
                                 if (text === root.controller.text)
@@ -550,14 +512,11 @@ Pane {
                                 colours: Theme.syntax
                             }
 
-                            // The problem's place: a wavy line under it (Qt
-                            // Quick's text draws no wave underline), one
-                            // segment per row it wraps over.
+                            // Qt Quick's text draws no wave underline, so the problem's is painted per wrapped row.
                             Canvas {
                                 id: problemWave
                                 objectName: "templateProblemWave"
                                 anchors.fill: parent
-                                // [x, y (the row's bottom), width] per row.
                                 property var segments: []
                                 function measure() {
                                     const out = []
@@ -567,8 +526,6 @@ Pane {
                                         for (let i = range[0]; i < range[1]; ++i) {
                                             const at = textField.positionToRectangle(i)
                                             const after = textField.positionToRectangle(i + 1)
-                                            // The character's right edge: the next cursor, or a
-                                            // character's width at a row's end.
                                             const right = after.y === at.y ? after.x : at.x + charWidth.advanceWidth("m")
                                             if (row && row[1] === at.y + at.height)
                                                 row[2] = right - row[0]
@@ -615,7 +572,6 @@ Pane {
                         }
                     }
 
-                    // The current Line's problem: where and what.
                     RowLayout {
                         objectName: "templateProblem"
                         visible: root.controller.problem !== ""
@@ -635,8 +591,6 @@ Pane {
                             HoverHandler {
                                 id: problemHover
                             }
-                            // The templater's whole message on hover, as text:
-                            // it quotes the template.
                             ToolTip {
                                 id: problemTip
                                 objectName: "templateProblemToolTip"
@@ -655,7 +609,7 @@ Pane {
                                 const line = (root.controller.currentIsCode ? qsTr("Code Line: %1") : qsTr("Template Line: %1"))
                                              .arg(root.controller.currentNumber)
                                 //: A template's problem: "Template Line: 3, in !math.rnd(1,5)!: attempt to call a nil value"
-                                // Its first line, without Lua's chunk name ([string "…"]:1:).
+                                // Lua's message without its chunk name ([string "…"]:1:).
                                 const said = root.controller.problem.split("\n")[0].replace(/\[string ".*?"\]:\d+: /, "")
                                 return where !== "" ? qsTr("%1, in %2: %3").arg("<b>" + line + "</b>")
                                                           .arg("<tt>" + escape(where) + "</tt>").arg(escape(said))
@@ -664,7 +618,6 @@ Pane {
                         }
                     }
 
-                    // What `$` and `!` do.
                     Flow {
                         objectName: "templateHint"
                         Layout.fillWidth: true
@@ -686,7 +639,6 @@ Pane {
                     visible: root.controller.current !== 0
                 }
 
-                // What Apply would write for the current karaoke Line.
                 ColumnLayout {
                     id: previewSection
                     objectName: "templatePreview"
@@ -731,9 +683,6 @@ Pane {
                             onTapped: root.previewUnfolded = !root.previewUnfolded
                         }
                     }
-                    // A file's templates and code are Lua with the user's
-                    // rights: they run for previews only once the user says so
-                    // (Apply runs them too, as the Automation menu does).
                     RowLayout {
                         id: trustRow
                         objectName: "templatePreviewTrust"
@@ -826,7 +775,6 @@ Pane {
                                     implicitHeight: previewLine.implicitHeight + 6
                                     Accessible.role: Accessible.ListItem
                                     Accessible.name: modelData.start + " " + modelData.end + " " + modelData.text
-                                    // The current template's own Lines.
                                     Rectangle {
                                         visible: previewRow.modelData.own
                                         width: 3
@@ -872,7 +820,6 @@ Pane {
             visible: root.controller.available
         }
 
-        // The footer: what changed or went wrong, and Apply.
         RowLayout {
             objectName: "templateFooter"
             visible: root.controller.available
@@ -922,8 +869,6 @@ Pane {
                                   "", c.changedCount)
                 }
             }
-            // Apply: the face applies to every karaoke Line, the arrow
-            // offers the selected Lines.
             Row {
                 spacing: 0
                 Button {
@@ -976,15 +921,13 @@ Pane {
             iconRole: "select-lines"
             text: qsTr("Apply to the selected Lines")
             help: root.controller.canApplySelected
-                ? qsTr("KE1's regenerate-selected: the other Lines' output stays as it is.")
+                ? qsTr("Only the selected Lines are regenerated; the other Lines' output stays as it is.")
                 : qsTr("Select a karaoke Line, or a Line generated from one since the file was opened.")
             enabled: root.controller.canApplySelected
             onTriggered: root.controller.apply(true)
         }
     }
 
-    // New: a template or code Line above the first karaoke Line, with its
-    // Style; the Effect at the right is what it writes.
     ShellMenu {
         id: newMenu
         objectName: "templateNewMenu"
@@ -1012,8 +955,6 @@ Pane {
             onObjectRemoved: (index, object) => newMenu.removeItem(object)
         }
         MenuSeparator {}
-        // KE3: a built-in effect, as its template and code Lines (still stock
-        // syntax, editable like any other); what it does on hover.
         ShellMenu {
             id: presetMenu
             objectName: "templatePresetMenu"
@@ -1050,9 +991,6 @@ Pane {
         }
     }
 
-    // The Effect picker: what the template runs for and its modifiers, in
-    // plain words with the stock keyword at the right. It only writes the
-    // Effect's text, which stays stock syntax.
     Popup {
         id: effectPicker
         objectName: "templateEffectPopover"
@@ -1088,7 +1026,6 @@ Pane {
             border.width: 1
             border.color: Theme.line
         }
-        // A picker row: the plain words and the keyword they write.
         component PickerRow: ItemDelegate {
             id: pickerRow
             property string keyword
@@ -1189,8 +1126,6 @@ Pane {
         }
     }
 
-    // `$` and `!`: what fits at the cursor, a variable's value on the
-    // current Line beside it.
     Popup {
         id: completion
         objectName: "templateCompletion"
@@ -1203,8 +1138,6 @@ Pane {
         closePolicy: Popup.CloseOnPressOutsideParent
         property var entries: []
         property int chosen: 0
-        // The text an insertion left: the list stays closed on it until
-        // the next edit.
         property string inserted: ""
         property bool inserting: false
         readonly property bool variables: entries.length > 0 && entries[0].name.startsWith("$")
@@ -1279,7 +1212,6 @@ Pane {
                     leftPadding: 10
                     rightPadding: 10
                     onClicked: completion.insert(index)
-                    // The chosen one as the list's current row.
                     background: Rectangle {
                         color: entryRow.index === completion.chosen ? Theme.select
                                : entryRow.hovered ? Theme.raised : "transparent"
@@ -1300,7 +1232,7 @@ Pane {
                             Layout.preferredWidth: 48
                             horizontalAlignment: Text.AlignRight
                             text: root.controller.values[entryRow.modelData.name.slice(1)] ?? ""
-                            textFormat: Text.PlainText // e.g. $actor's value
+                            textFormat: Text.PlainText
                             font.bold: true
                             elide: Text.ElideRight
                         }

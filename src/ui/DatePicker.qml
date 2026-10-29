@@ -1,13 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.MainWindow"
-// PK1 (#301): a date field with a calendar popover (it replaces the day /
-// month / year boxes of Remove temporary files). The date is typed in the
-// system's short date format (with the whole year), or picked: the calendar button (or Alt+Down
-// in the field) opens the month; the arrows move the day, Page Up and Page
-// Down the month, Enter or a click takes it, Esc puts the date before
-// back. The week starts on the system's first day. Shortcuts under the
-// month for the common choices (`shortcuts`: [{text, days, months}] back
-// from today; Today always).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -18,12 +10,11 @@ RowLayout {
     property date date: new Date()
     property string accessibleName: ""
     property var shortcuts: [{ text: qsTr("A week ago"), days: 7 }, { text: qsTr("A month ago"), months: 1 }]
-    // The date shown in the calendar while it is open.
     property date pending: new Date()
     property int shownYear: pending.getFullYear()
     property int shownMonth: pending.getMonth()
     readonly property var locale: Qt.locale()
-    // The short format with the whole year: two digits would read as 19xx.
+    // Qt parses a two-digit year as 19xx.
     readonly property string shortFormat: {
         const f = locale.dateFormat(Locale.ShortFormat)
         return f.indexOf("yyyy") >= 0 || f.indexOf("yy") < 0 ? f : f.replace("yy", "yyyy")
@@ -44,8 +35,6 @@ RowLayout {
         const d = Date.fromLocaleDateString(locale, text.trim(), shortFormat)
         return isNaN(d.getTime()) ? null : d
     }
-    // `s` before `from` (default today). A month back from the 31st is the
-    // last day of a shorter month, not a day of this one.
     function back(s, from) {
         const d = day(from || new Date())
         if (s.months) {
@@ -77,12 +66,11 @@ RowLayout {
         show(d)
     }
     function openCalendar() {
-        // A typed date not yet committed is the one to start from.
         const typed = parse(dateField.text)
         if (typed && day(typed).getTime() !== date.getTime())
             setDate(typed)
         show(date)
-        // Made before the popover measures its content.
+        // MUST KILL: the grid must load before openAt, which measures the popover's content
         gridLoader.active = true
         calendar.openAt(dateField)
         gridLoader.item.forceActiveFocus()
@@ -126,8 +114,6 @@ RowLayout {
         id: calendar
         objectName: "datePickerCalendar"
         title: picker.accessibleName.length > 0 ? picker.accessibleName : qsTr("Choose a date")
-        // Esc and a press outside leave the date as it was; Enter, a click
-        // on a day and the shortcuts take one (take()).
         RowLayout {
             Layout.fillWidth: true
             IconToolButton {
@@ -163,9 +149,6 @@ RowLayout {
                 font.pixelSize: Math.round(Qt.application.font.pixelSize * 11 / 13)
             }
         }
-        // The month's days are made at the first opening: each is a label
-        // with its date written out for screen readers, and a date picker
-        // made with its window would cost the program's start.
         Loader {
             id: gridLoader
             active: false
@@ -217,7 +200,6 @@ RowLayout {
                         border.width: model.today ? 1 : 0
                         border.color: Theme.line
                         radius: 1
-                        // The keyboard's day: the focus ring around it.
                         Rectangle {
                             visible: cell.chosen && grid.activeFocus
                             anchors.fill: parent
@@ -255,7 +237,6 @@ RowLayout {
             }
         }
     }
-    // A day taken: the field shows it, and the calendar closes.
     function take(d) {
         setDate(d)
         calendar.keep()

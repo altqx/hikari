@@ -1,10 +1,3 @@
-// NT1 (#302): the Log panel (legacy's Log window, LogWindow at 20d647c4, as
-// a dock). Every entry since the program started, oldest first: its time,
-// its severity, the command that gave it and its text, details below. A
-// strip above filters them (the three severities, with their counts, and
-// the text) and copies the ones shown. A toast's Details opens the panel at
-// its entry, marked. The panel never opens by itself; the dock header
-// names it, so it has no heading of its own.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.MainWindow"
 import QtQuick
@@ -19,7 +12,6 @@ Pane {
     implicitWidth: 520
     implicitHeight: 200
     padding: 0
-    // The strip whole and a line of the list.
     readonly property size minimumSize: Qt.size(Math.ceil(strip.implicitWidth) + 16,
                                                 Math.ceil(strip.implicitHeight) + 48)
 
@@ -31,7 +23,6 @@ Pane {
         return severity === LogController.Error ? "notice-error"
              : severity === LogController.Warning ? "notice-warning" : "about"
     }
-    // The marked entry in view (a toast's Details).
     function showMarked() {
         const row = entries.rowOf(log.marked)
         if (row >= 0) {
@@ -170,7 +161,6 @@ Pane {
                         height: parent.height
                         color: Theme.accent
                     }
-                    // The list takes the keys (Ctrl+C copies the entry).
                     TapHandler {
                         onTapped: {
                             list.currentIndex = row.index
@@ -202,7 +192,6 @@ Pane {
                         ColumnLayout {
                             spacing: 0
                             Layout.fillWidth: true
-                            // Selectable, as the window's text was.
                             TextEdit {
                                 objectName: "logEntryText"
                                 readOnly: true
