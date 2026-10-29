@@ -9155,7 +9155,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     </message>
     <message>
         <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
-        <translation>Umieść pliki .dic i .aff w folderze &quot;Dictionary&quot;</translation>
+        <translation>Umieść pliki .dic i .aff do folderu &quot;Dictionary&quot;</translation>
     </message>
     <message>
         <source>The selected %1 for conversion does not exist
