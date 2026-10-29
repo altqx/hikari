@@ -1118,11 +1118,16 @@ void SettingsFiles::erase(const SettingDefinition &setting)
 void SettingsFiles::changed(File file)
 {
     m_dirty[file] = true;
+    queueFlush(0);
+}
+
+void SettingsFiles::queueFlush(int delayMs)
+{
     if (m_flushQueued || !QCoreApplication::instance())
         return;
     m_flushQueued = true;
     std::weak_ptr<SettingsFiles> self = weak_from_this();
-    QTimer::singleShot(0, QCoreApplication::instance(), [self] {
+    QTimer::singleShot(delayMs, QCoreApplication::instance(), [self] {
         if (auto files = self.lock())
             files->flush();
     });
@@ -1148,11 +1153,15 @@ bool SettingsFiles::writeFile(File file)
 {
     if (!m_writable[file])
         return false;
-    // One writer at a time on the folder, as QSettings' lock file did; without
-    // the lock (a stuck one, a folder that cannot hold it) it writes all the same.
+    // One writer at a time on the folder, as QSettings' lock file did. While
+    // another HikariSub holds the lock the file stays dirty and is tried again
+    // shortly; a folder that cannot hold a lock is written without one.
     QDir().mkpath(m_folder);
     QLockFile lock(m_folder + QStringLiteral("/.settings.lock"));
-    lock.tryLock(2000);
+    if (!lock.tryLock(2000) && lock.error() == QLockFile::LockFailedError) {
+        queueFlush(1000);
+        return false;
+    }
     mergeFromDisk(file);
     std::string text;
     switch (file) {

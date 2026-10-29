@@ -79,6 +79,7 @@ private:
     bool writeConversion();
     QString legacyIni() const { return m_folder + QStringLiteral("/hikari.ini"); }
     void changed(File file);
+    void queueFlush(int delayMs);
     bool writeFile(File file);
 
     QString m_folder;

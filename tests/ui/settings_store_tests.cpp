@@ -20,6 +20,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLockFile>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -710,6 +711,23 @@ private slots:
         QVERIFY(QDir(state).removeRecursively());
         store.sync();
         QVERIFY(readAll(state).contains("/v.mkv"));
+    }
+
+    // Another HikariSub writing the folder holds the lock: the change waits
+    // for it and is written once the lock is free.
+    void aLockedFolderIsWrittenOnceFree()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        SettingsStore store(file);
+        QLockFile other(dir.filePath(QStringLiteral(".settings.lock")));
+        QVERIFY(other.tryLock());
+        store.set("audio.volume", 70);
+        store.sync();
+        QVERIFY(!QFileInfo::exists(file));
+        QCOMPARE(store.integer("audio.volume"), 70);
+        other.unlock();
+        QTRY_VERIFY(readAll(file).contains("volume = 70"));
     }
 
     // Two HikariSubs on one folder: each writes only its own changes over
