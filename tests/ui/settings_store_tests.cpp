@@ -736,9 +736,9 @@ private slots:
         const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
         const QString file = dir.filePath(QStringLiteral("settings.toml"));
         writeAll(ini, "[profile]\naudio.volume=70\n");
-        QVERIFY(QFile::setPermissions(ini, {}));
-        if (QFile probe(ini); probe.open(QIODevice::ReadOnly))
-            QSKIP("the file reads without permissions (root, or a file system without them)");
+        // Windows keeps read access whatever setPermissions asks.
+        if (QFile probe(ini); !QFile::setPermissions(ini, {}) || probe.open(QIODevice::ReadOnly))
+            QSKIP("the file reads without permissions (Windows, root, or a file system without them)");
         {
             SettingsStore store(file);
             QVERIFY(!store.converted());
