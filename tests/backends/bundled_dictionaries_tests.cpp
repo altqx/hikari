@@ -35,6 +35,8 @@ std::vector<Word> fixtureWords()
     std::ifstream in(fs::path(HIKARI_SPELLING_FIXTURES) / "bundled_words.txt", std::ios::binary);
     std::vector<Word> out;
     for (std::string line; std::getline(in, line);) {
+        if (line.ends_with('\r')) // a Windows checkout's CRLF
+            line.pop_back();
         if (line.empty() || line.front() == '#')
             continue;
         const auto a = line.find('\t'), b = line.find('\t', a + 1);
