@@ -3891,7 +3891,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>HikariSub’s</source>
-        <translation>HikariSub 자체</translation>
+        <translation>HikariSub</translation>
     </message>
     <message>
         <source>The system’s</source>
