@@ -1,9 +1,3 @@
-// SH1 (#220): a menu title in the title bar (MS1, musescore-shell.md §1 "Menu
-// bar"): its text with 8 on each side, `raised` under the pointer, while its
-// menu is open and while the keyboard is on it (MainTitleBar's Alt and F10),
-// which also rings it. Its letter is underlined only while the menus have
-// the keyboard or Alt is held; the "&" in its title stays its Alt+letter
-// shortcut either way.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -15,8 +9,6 @@ MenuBarItem {
     readonly property bool keyboardCurrent: strip !== null && strip.keyboardTarget === item
     readonly property bool letterShown: strip !== null && strip.showMnemonics
 
-    // The title with its mnemonic letter underlined ("&File": "<u>F</u>ile"),
-    // or plain.
     function titleText(underline: bool): string {
         const escape = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         let out = ""

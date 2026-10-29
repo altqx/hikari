@@ -21,7 +21,7 @@ QString qs(std::string_view s)
     return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
 }
 
-} // namespace
+}
 
 SettingsStore::SettingsStore(QString file, QObject *parent) : QObject(parent), m_file(std::move(file))
 {
@@ -58,8 +58,7 @@ QVariant SettingsStore::toVariant(const SettingValue &value)
 
 SettingValue SettingsStore::fromVariant(const QVariant &value)
 {
-    // A JavaScript array from QML (AU2's audio.panelControls) comes as a
-    // QJSValue: its list, not its text.
+    // A JavaScript array from QML arrives as a QJSValue.
     if (value.metaType() == QMetaType::fromType<QJSValue>())
         return fromVariant(value.value<QJSValue>().toVariant());
     switch (value.typeId()) {
@@ -153,4 +152,4 @@ QStringList SettingsStore::list(const char *id) const
     return out;
 }
 
-} // namespace hikari::ui
+}

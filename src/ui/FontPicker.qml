@@ -1,28 +1,4 @@
 pragma ComponentBehavior: Bound
-// PU3 (#305): the font picker, one window on DG1's frame (it replaces E1's
-// FontDialog, legacy FontDialog "Select a font"), titled for the command
-// that opens it, "Font selection":
-// * a search field that filters the families as you type (Ctrl+F; Up and
-//   Down move in the list while the field keeps the keyboard, Enter is
-//   OK). A name no font answers to can still be used ("Use “…” anyway"),
-//   for a file made for another machine (PU3-font-search: legacy's name
-//   field selected by prefix, FontList::SetSelectionByPartialName);
-// * the catalog as a chip (All fonts, Without catalog, a catalog; Y6's
-//   catalog choice, FontDialog.cpp:656-695) and the characters filter as a
-//   second chip, its text in a popover (legacy's Filter toggle and the
-//   catalog window's "Save filter", PU3-character-chip);
-// * each family drawn in its own face (SY3's rows), its catalogs muted at
-//   the trailing edge; + adds the family to a catalog (legacy's Add menu);
-// * the size and the Bold, Italic, Underline and Strikethrough toggles;
-// * the preview: the Line's text, its selected part if there is one, drawn
-//   by the subtitle renderer, and the face it selected for the name
-//   (PU3-renderer-preview: legacy drew "AaBbCc…" with the system's font);
-// * "Manage catalogs…" opens the catalog window, a window of its own.
-//
-// From the Line editor (openFor) each change is applied to the edited text
-// at once, as legacy's FONT_CHANGED does, and Cancel takes every change
-// back. From the Style editor (choose) the preview is the Style manager's
-// sample text and OK hands the font to the opener.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
@@ -32,7 +8,7 @@ import Hikari.Ui
 DialogWindow {
     id: picker
     objectName: "fontPicker"
-    required property var catalogs // FontCatalogsController
+    required property var catalogs
     property LineEditorController editor: null
     title: qsTr("Font selection")
     dialogId: "fontPicker"
@@ -40,47 +16,38 @@ DialogWindow {
     modal: true
     initialFocus: search
 
-    // What it opened for: "line" (the Line editor) or "style" (choose()).
     property string mode: "line"
     property var done: null
-    property var openerWindow: null // choose()'s opener
+    property var openerWindow: null
     property bool loading: false
     property string family: ""
-    // The preview's text and where it comes from: "selection", "line" or "sample".
     property string sampleText: ""
     property string sampleSource: "sample"
-    property bool sampleAss: true // the sample is ASS text (override blocks are not drawn)
-    // The catalog choice: "All fonts", "Without catalog", then the catalogs.
+    property bool sampleAss: true
     property var choices: []
     property int choice: 0
-    property var listed: [] // ChangeCatalog's list for the choice and the characters
-    property var installed: [] // every installed font
+    property var listed: []
+    property var installed: []
     readonly property int total: installed.length
     property var resolution: ({})
     property int resolveRequest: -1
-    property string resolvedFor: "" // the characters the last lookup asked for
+    property string resolvedFor: ""
 
     readonly property var shown: {
         const term = search.text.trim().toLowerCase()
         return term.length === 0 ? listed : listed.filter(f => f.toLowerCase().indexOf(term) >= 0)
     }
     readonly property int familyIndex: indexIn(shown, family)
-    // The search text names no installed family: it can be used as it is.
     readonly property string unlisted: {
         const term = search.text.trim()
         return term.length > 0 && indexIn(shown, term) < 0 && indexIn(installed, term) < 0 ? term : ""
     }
-    // The search text names an installed family the catalog or the
-    // characters leave out.
     readonly property string leftOut: {
         const term = search.text.trim()
         return term.length > 0 && indexIn(shown, term) < 0 && indexIn(installed, term) >= 0 ? term : ""
     }
     readonly property bool catalogChosen: choice > 1
 
-    // Opens on the Line editor's field `role` with its selection; false
-    // when the editor refuses. The preview draws what the selection (else
-    // the line) draws, from the raw text.
     function openFor(role, selectionStart, selectionEnd) {
         const f = editor.beginFont(role, selectionStart, selectionEnd)
         if (f.name === undefined)
@@ -93,13 +60,10 @@ DialogWindow {
         const line = catalogs.samplePlain(raw, editor.assFields)
         sampleSource = selected.length > 0 ? "selection" : line.length > 0 ? "line" : "sample"
         sampleText = selected.length > 0 ? selected : line
-        sampleAss = false // plain already
+        sampleAss = false
         start(f)
         return true
     }
-    // Opens with `font` ({name, size, bold, italic, underline, strikeOut})
-    // and the sample text, from `opener` (the Style editor's window; null:
-    // the one with the keyboard); done(font) on OK.
     function choose(font, sample, callback, opener) {
         mode = "style"
         done = callback || null
@@ -131,17 +95,13 @@ DialogWindow {
         return { name: family, size: sizeField.text, bold: bold.checked, italic: italic.checked,
                  underline: underline.checked, strikeOut: strikeOut.checked }
     }
-    // "All fonts" then "Without catalog", then the catalogs (with none,
-    // legacy's clamped insert puts "Without catalog" first).
     function catalogChoices() {
         const c = catalogs.catalogChoices()
         return c.length === 2 && catalogs.catalogNames.length === 0 ? [c[1], c[0]] : c
     }
-    // The same family ignoring case as the catalogs compare names.
     function indexIn(list, name) {
         return catalogs.sameNameIndex(list, name)
     }
-    // ChangeCatalog: the list for the choice and the characters filter.
     function relist() {
         const value = choice >= 0 && choice < choices.length ? choices[choice] : ""
         listed = catalogs.fontList(choice, value, catalogs.filterOn, catalogs.filterText)
@@ -156,7 +116,6 @@ DialogWindow {
         if (familyIndex >= 0)
             list.positionViewAtIndex(familyIndex, ListView.Contain)
     }
-    // A family chosen in the list or typed.
     function pick(name) {
         if (name === family)
             return
@@ -164,8 +123,6 @@ DialogWindow {
         changed()
         showFamily()
     }
-    // Typing picks the best family shown: the one of that name, else the
-    // first starting with it, else the first.
     function pickTyped() {
         const term = search.text.trim().toLowerCase()
         if (shown.length === 0 || term.length === 0)
@@ -189,18 +146,12 @@ DialogWindow {
         resolve()
         renderTimer.restart()
     }
-    // Y6: what the renderer selects for the name (requested and resolved
-    // identities stay distinct, fonts.md).
     function resolve() {
-        resolution = ({}) // until this request's answer: no other face is said
-        // The characters the preview draws need the glyphs (a CJK Line, a
-        // CJK face): the Line's, else the preview text's.
+        resolution = ({})
         const own = sampleText.trim().length > 0
         resolvedFor = own ? catalogs.samplePlain(sampleText, sampleAss) : catalogs.samplePlain(catalogs.previewText, true)
         resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true, resolvedFor)
     }
-    // SV1: drawn again on a screen of another scale, or when the setting
-    // changes (Window.devicePixelRatio, Qt 6.11).
     readonly property real previewPixelRatio: preview.Window.window ? preview.Window.window.devicePixelRatio : 1
     onPreviewPixelRatioChanged: renderTimer.restart()
     Connections {
@@ -218,8 +169,6 @@ DialogWindow {
             editor.changeFont(current())
         }
     }
-    // The catalogs changed (the catalog window, + or Add fonts from
-    // subtitles): the choice stays on its catalog while it exists.
     function catalogsEdited() {
         const was = choice >= 0 && choice < choices.length ? choices[choice] : ""
         choices = catalogChoices()
@@ -245,8 +194,6 @@ DialogWindow {
                 picker.resolution = result
         }
         function onCatalogsChanged() { if (picker.visible) picker.catalogsEdited() }
-        // A refresh can change which face the name gets: the note and the
-        // preview follow it.
         function onFontsChanged() {
             if (!picker.visible)
                 return
@@ -254,8 +201,6 @@ DialogWindow {
             picker.resolve()
             renderTimer.restart()
         }
-        // The filter, or (PV1 #398) the preview text changed in Settings or
-        // the Style editor: a sample without the Line's text follows it.
         function onFilterChanged() {
             if (!picker.visible)
                 return
@@ -289,7 +234,6 @@ DialogWindow {
         onActivated: search.forceActiveFocus()
     }
 
-    // The search, the two chips and +.
     RowLayout {
         spacing: 6
         Layout.fillWidth: true
@@ -408,7 +352,7 @@ DialogWindow {
                     highlighted: picker.family === picker.unlisted
                     text: qsTr("Use “%1” anyway").arg(picker.unlisted)
                     onClicked: picker.pick(picker.unlisted)
-                    contentItem: Label { // the typed name as written, never markup
+                    contentItem: Label {
                         text: parent.text
                         textFormat: Text.PlainText
                         elide: Text.ElideRight
@@ -449,7 +393,6 @@ DialogWindow {
         font: picker.fontAt(11)
         Layout.topMargin: -4
     }
-    // The preview, by the subtitle renderer.
     Rectangle {
         color: Theme.field
         border.color: Theme.line
@@ -462,8 +405,7 @@ DialogWindow {
             anchors.fill: parent
             anchors.margins: 1
             cache: false
-            // SV1: drawn with the screen's pixels, shown at the preview's
-            // size (Image ignores the image's pixel ratio).
+            // Image ignores the image's pixel ratio.
             fillMode: picker.catalogs.sampleScale > 1 ? Image.PreserveAspectFit : Image.Pad
             source: picker.catalogs.sampleKey > 0 ? "image://fontcatalogpreview/sample/" + picker.catalogs.sampleKey : ""
             onWidthChanged: renderTimer.restart()
@@ -511,7 +453,6 @@ DialogWindow {
     ]
     defaultButton: okButton
 
-    // The catalog chip's menu: the choices with their sizes, then Manage catalogs….
     ShellMenu {
         id: catalogMenu
         objectName: "fontPickerCatalogMenu"
@@ -549,8 +490,6 @@ DialogWindow {
             onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(picker.family, picker)
         }
     }
-    // +: the family joins or leaves a catalog (AddToCatalog's menu), a new
-    // catalog, or the fonts of the subtitles.
     ShellMenu {
         id: addMenu
         objectName: "fontPickerAddMenu"
@@ -574,7 +513,7 @@ DialogWindow {
                 text: modelData
                 checkable: true
                 checked: picker.catalogs.isFontInCatalog(modelData, picker.family)
-                keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (FontCatalogList.cpp:687)
+                keepsMenuOpen: false
                 onTriggered: picker.catalogs.toggleFontInCatalog(modelData, picker.family, checked)
             }
             onObjectAdded: (index, object) => addMenu.insertItem(index + 1, object)
@@ -601,8 +540,6 @@ DialogWindow {
                                                                }, picker)
         }
     }
-    // The characters filter (STYLE_EDIT_FILTER_TEXT and _ON): Apply keeps
-    // the text and turns it on; Clear turns it off.
     Popover {
         id: charactersPopover
         objectName: "fontPickerCharactersPopover"

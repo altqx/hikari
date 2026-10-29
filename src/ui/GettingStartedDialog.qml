@@ -1,16 +1,3 @@
-// FR1 (#363): Getting started, after MuseScore 4's first-launch setup
-// (FirstLaunchSetupDialog.qml; owner-approved mockup, version 2): a compact
-// window on DG1's frame with page dots, a centred title and explanation and
-// one page per choice (Language, Import while a legacy installation is
-// found, Look, What you do, Video and audio, Editing, Updates and privacy,
-// Your files), Back, Skip setup and Next, Finish on the last page. Each page
-// says where its choice lives later.
-// The pages are a few of the Settings window's controls: the opening is
-// app.openGettingStarted() (openSettingsDialog's), and Finish writes them as
-// OK does, then the import's chosen rows but the settings the pages set.
-// Until then nothing is written: the theme and the language are previewed.
-// Skip setup, Close and Esc keep the defaults and import nothing; either
-// way the window does not open by itself again.
 pragma Translator: "HikariSub.GettingStarted"
 import QtQuick
 import QtQuick.Controls
@@ -21,12 +8,8 @@ DialogWindow {
     id: setup
     objectName: "gettingStartedDialog"
     required property var app
-    // The legacy settings importer (Main's settingsImport).
     required property var importer
-    // The update checker (Settings › Updates): the channel choice is not
-    // offered where the package manager has one.
     property var updates: null
-    // The layout presets View › Layout offers, Editing first.
     property var layouts: []
     title: qsTr("Getting started")
     dialogId: "gettingStarted"
@@ -34,27 +17,18 @@ DialogWindow {
     modal: true
     defaultButton: nextButton
 
-    // The Settings window's controls' state for the pages (choices by
-    // index), and the opening's lists.
     property var values: ({})
     property var languages: []
     property var dictionaries: []
     property var renderers: []
     property var rendererLabels: []
     property var outputDevices: []
-    // A legacy installation was found: the Import page shows.
     property bool legacy: false
-    // Import my old settings (else Set up from scratch).
     property bool importing: true
-    // #393: opened at the start, before anything was set up (not from Help).
     property bool due: false
-    // Why Finish could not stage the import (the importer's status).
     property string importProblem
-    // The layout the first tab opens with; empty keeps Editing.
     property string layout: ""
     property int page: 0
-    // The values before any import, and the settings changed on a page:
-    // an import fills the others.
     property var opened: ({})
     property var touched: ({})
     readonly property var pages: legacy ? ["language", "import", "look", "layout", "media", "editing", "updates", "files"]
@@ -62,9 +36,7 @@ DialogWindow {
     readonly property string pageId: pages[page]
     readonly property bool lastPage: page === pages.length - 1
     signal reloaded()
-    // Finish: Main shows the first tab in `layout` (empty: Editing).
     signal finished(string layout)
-    // Skip setup, Close or Esc.
     signal skipped()
 
     function openSetup() {
@@ -92,7 +64,6 @@ DialogWindow {
         reloaded()
         open()
     }
-    // A page's choice: staged, the theme and the language previewed.
     function put(setting, value) {
         const v = Object.assign({}, values)
         v[setting] = value
@@ -108,8 +79,6 @@ DialogWindow {
         if (setting === undefined || setting === "program.language")
             app.previewLanguage(values["program.language"] ?? 0)
     }
-    // Leaving the Import page: the pages start from what the import leaves,
-    // or from the settings as they are; a page's own change stays.
     function fillFromImport() {
         const from = importing ? app.gettingStartedImported(opened) : opened
         const v = Object.assign({}, values)
@@ -127,8 +96,6 @@ DialogWindow {
             page++
             return
         }
-        // The import could not be staged: nothing was written, and the
-        // Import page says why.
         if (!app.finishGettingStarted(values, legacy && importing)) {
             importProblem = importer.status
             page = pages.indexOf("import")
@@ -147,13 +114,9 @@ DialogWindow {
         skipped()
     }
 
-    // The theme shown (the pages' values previewed; following the system,
-    // the system's side), its dark and high contrast: the accent the user
-    // picks is the one for what they see (as Settings › Appearance does).
     readonly property string stagedTheme: Theme.code
     readonly property var stagedThemeInfo: Theme.themes().find(t => t.code === stagedTheme) ?? ({dark: Theme.dark, highContrast: Theme.highContrast})
-    // The theme and accent names (theme.cpp's), looked up by their source
-    // so they follow a language switch while the window stays open.
+    // Never read: it lists theme.cpp's names for lupdate; qsTranslate finds them by source.
     readonly property var themeTexts: [QT_TRANSLATE_NOOP("HikariSub.Options", "Light"),
         QT_TRANSLATE_NOOP("HikariSub.Options", "Dark"), QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast white"),
         QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast black"), QT_TRANSLATE_NOOP("HikariSub.Options", "Red"),
@@ -161,8 +124,6 @@ DialogWindow {
         QT_TRANSLATE_NOOP("HikariSub.Options", "Green"), QT_TRANSLATE_NOOP("HikariSub.Options", "Blue"),
         QT_TRANSLATE_NOOP("HikariSub.Options", "Purple"), QT_TRANSLATE_NOOP("HikariSub.Options", "Pink")]
 
-    // A page: the title and the explanation centred, its controls, where
-    // the choice lives later.
     component SetupPage: Item {
         id: setupPage
         required property string title
@@ -177,7 +138,6 @@ DialogWindow {
             spacing: 16
         }
     }
-    // A choice drawn as a card: its icon, a radio and its name, what it does.
     component OptionCard: AbstractButton {
         id: card
         property string iconRole
@@ -186,7 +146,7 @@ DialogWindow {
         checkable: false
         implicitWidth: 260
         implicitHeight: cardColumn.implicitHeight + 32
-        Layout.fillHeight: true // a row of cards is as tall as its tallest
+        Layout.fillHeight: true
         Accessible.role: Accessible.RadioButton
         Accessible.name: text
         Accessible.description: description
@@ -236,11 +196,9 @@ DialogWindow {
         border.color: on ? Theme.accent : Theme.control
         Rectangle { visible: parent.on; anchors.centerIn: parent; width: 8; height: 8; radius: 4; color: Theme.accent }
     }
-    // The main window drawn small in a theme's roles: the menus, the video,
-    // the audio over the Line editor, the Grid.
     component ThemeSample: AbstractButton {
         id: sample
-        required property var theme // {code, source}
+        required property var theme
         readonly property var roles: Theme.rolesOf(theme.code, setup.values)
         implicitWidth: 220
         implicitHeight: 136 + 30
@@ -276,7 +234,6 @@ DialogWindow {
             }
         }
     }
-    // A layout preset drawn as its arrangement.
     component LayoutCard: AbstractButton {
         id: layoutCard
         required property string preset
@@ -336,8 +293,6 @@ DialogWindow {
         required property string preset
         color: Theme.background
         border.color: Theme.line
-        // Translation and Timing are Editing with a panel closed; Typesetting
-        // and Karaoke have arrangements of their own (workspaces.md).
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 2
@@ -381,7 +336,6 @@ DialogWindow {
             Block { visible: thumb.preset !== "Typesetting"; label: qsTr("Grid"); Layout.preferredHeight: thumb.preset === "Karaoke" ? 26 : 42 }
         }
     }
-    // A number setting, its unit after it.
     component PageNumber: RowLayout {
         id: numberRow
         required property string setting
@@ -405,7 +359,6 @@ DialogWindow {
         }
         Label { visible: numberRow.unit.length > 0; text: numberRow.unit; color: Theme.muted }
     }
-    // A choice by index in one of the opening's lists.
     component PageChoice: ComboBox {
         id: choice
         required property string setting
@@ -427,7 +380,6 @@ DialogWindow {
         Layout.preferredWidth: 704
         Layout.preferredHeight: 520
 
-        // The page dots.
         Row {
             objectName: "gettingStartedDots"
             spacing: 8
@@ -474,7 +426,6 @@ DialogWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            // 1. Language.
             SetupPage {
                 objectName: "gettingStartedLanguage"
                 title: qsTr("Welcome to HikariSub")
@@ -534,7 +485,6 @@ DialogWindow {
                 }
             }
 
-            // 2. Import (a legacy installation was found).
             SetupPage {
                 id: importPage
                 objectName: "gettingStartedImport"
@@ -552,7 +502,6 @@ DialogWindow {
                         iconRole: "import"
                         text: qsTr("Import my old settings")
                         badge: qsTr("Recommended")
-                        // #393: legacy themes are not imported (settings_import_store.h).
                         description: qsTr("Hotkeys, fonts, audio and video options and your dictionary words.")
                         checked: setup.importing
                         onClicked: setup.importing = true
@@ -602,8 +551,6 @@ DialogWindow {
                         }
                     }
                 }
-                // As Import legacy settings asks: files that are not UTF-8
-                // stay unresolved until their encoding is chosen.
                 RowLayout {
                     id: encodingRow
                     visible: setup.importing && (setup.importer.ambiguousEncoding || setup.importer.interpretation > 0)
@@ -629,14 +576,12 @@ DialogWindow {
                     importer: setup.importer
                     window: setup
                     Layout.fillWidth: true
-                    // The rest of the page, so its buttons stay above the Later line.
                     Layout.preferredHeight: Math.max(140, importPage.height - importChoices.height - 16
                                                      - (importProblemRow.visible ? importProblemRow.height + 16 : 0)
                                                      - (encodingRow.visible ? encodingRow.height + 16 : 0))
                 }
             }
 
-            // 3. Look: MuseScore's theme page.
             SetupPage {
                 objectName: "gettingStartedLook"
                 title: qsTr("Look")
@@ -659,7 +604,6 @@ DialogWindow {
                             objectName: "gettingStartedTheme_" + modelData.code
                             theme: modelData
                             checked: setup.stagedTheme === modelData.code
-                            // Choosing a theme by hand stops following the system.
                             onClicked: {
                                 setup.put("appearance.theme", modelData.code)
                                 if (setup.values["appearance.followSystem"] === true)
@@ -720,7 +664,6 @@ DialogWindow {
                     objectName: "gettingStartedHighContrast"
                     text: qsTr("Enable high contrast")
                     checked: setup.stagedThemeInfo.highContrast === true
-                    // The dark one of the pair for a dark theme, and back.
                     onToggled: setup.put("appearance.theme", checked
                                           ? (setup.stagedThemeInfo.dark ? "highContrastBlack" : "highContrastWhite")
                                           : (setup.stagedThemeInfo.dark ? "dark" : "light"))
@@ -736,7 +679,7 @@ DialogWindow {
                         choices: [{ text: qsTr("HikariSub’s"), name: "gettingStartedTitleBarOwn" },
                                   { text: qsTr("The system’s"), name: "gettingStartedTitleBarSystem" }]
                         currentIndex: WindowFrame.usesSystemTitleBar(setup.values["appearance.titleBar"] ?? "auto") ? 1 : 0
-                        // The desktop's default stores "auto", so it follows the desktop again.
+                        // MUST KILL: picking the desktop's default stores "auto", not the choice
                         onActivated: index => setup.put("appearance.titleBar",
                                                          (index === 1) === WindowFrame.systemTitleBarByDefault ? "auto"
                                                              : index === 1 ? "system" : "custom")
@@ -750,7 +693,6 @@ DialogWindow {
                 }
             }
 
-            // 4. What you do: the layout the first tab opens with.
             SetupPage {
                 objectName: "gettingStartedLayout"
                 title: qsTr("What do you mostly do?")
@@ -772,7 +714,6 @@ DialogWindow {
                                            Typesetting: qsTr("A large video with the visual tools and the Styles panel."),
                                            Karaoke: qsTr("The Template editor beside the video, the audio in Karaoke mode.")})[modelData] ?? ""
                             checked: setup.layout === modelData
-                            // A second click unpicks it: Editing again.
                             onClicked: setup.layout = setup.layout === modelData ? "" : modelData
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
@@ -781,7 +722,6 @@ DialogWindow {
                 }
             }
 
-            // 5. Video and audio.
             SetupPage {
                 objectName: "gettingStartedMedia"
                 title: qsTr("Video and audio")
@@ -816,8 +756,6 @@ DialogWindow {
                     Item { implicitWidth: 1 }
                     Image {
                         objectName: "gettingStartedFrame"
-                        // The sample frame, drawn by the chosen renderer.
-                        // Drawn only while the page shows (the window lives hidden in Main).
                         source: setup.visible && setup.pageId === "media"
                                 ? setup.app.sampleFrame(setup.values["video.subtitleProvider"] ?? 0, 480, 135) : ""
                         sourceSize: Qt.size(480, 135)
@@ -844,7 +782,6 @@ DialogWindow {
                 }
             }
 
-            // 6. Editing.
             SetupPage {
                 objectName: "gettingStartedEditing"
                 title: qsTr("Editing")
@@ -875,7 +812,6 @@ DialogWindow {
                             Accessible.name: qsTr("Primary language")
                         }
                     }
-                    // GR1 (#364): grammar check with Harper, Off or its four Englishes.
                     Label { text: qsTr("Grammar") }
                     PageChoice {
                         setting: "grammar.language"
@@ -904,7 +840,6 @@ DialogWindow {
                 }
             }
 
-            // 7. Updates and privacy (Settings' page of that name).
             SetupPage {
                 objectName: "gettingStartedUpdates"
                 title: qsTr("Updates and privacy")
@@ -945,7 +880,6 @@ DialogWindow {
                     font: setup.fontAt(12)
                     Layout.alignment: Qt.AlignHCenter
                 }
-                // AN1 (#404): the Settings window's "Send anonymous usage data".
                 CheckBox {
                     objectName: "gettingStartedUsageData"
                     text: qsTr("Send anonymous usage data")
@@ -972,7 +906,6 @@ DialogWindow {
                 }
             }
 
-            // 8. Your files.
             SetupPage {
                 objectName: "gettingStartedFiles"
                 title: qsTr("Your files")
@@ -997,7 +930,6 @@ DialogWindow {
             }
         }
 
-        // Where the page's choice lives later.
         RowLayout {
             spacing: 6
             Layout.alignment: Qt.AlignHCenter

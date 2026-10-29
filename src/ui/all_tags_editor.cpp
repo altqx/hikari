@@ -35,7 +35,7 @@ const QSet<QString> &defaultNames()
     return names;
 }
 
-} // namespace
+}
 
 AllTagsEditor::AllTagsEditor(std::vector<AllTagsSetting> tags, int curTag, Hooks hooks, QObject *parent)
     : QObject(parent), m_edition(std::move(tags), curTag), m_hooks(std::move(hooks))
@@ -97,8 +97,6 @@ QStringList AllTagsEditor::valueNames() const
 
 QVariantMap AllTagsEditor::preview() const
 {
-    // What Set writes on the Line (allTagsSetPreview: its own tag replaced,
-    // else placed as Set places it).
     const AllTagsSetting &t = m_edition.current();
     const std::u16string line = m_hooks.activeLineText ? m_hooks.activeLineText() : std::u16string();
     if (t.tag.empty())
@@ -121,8 +119,6 @@ int AllTagsEditor::ownCount() const
 void AllTagsEditor::kept()
 {
     emit changed();
-    // An action that changed nothing (Restore with the defaults already
-    // there) hands nothing on, not the last step's renames again.
     if (m_edition.revision() == m_published)
         return;
     m_published = m_edition.revision();
@@ -194,7 +190,6 @@ int AllTagsEditor::setNumber(const QString &field, const QString &text)
         return CheckNotANumber;
     if (text == numbers().value(field).toString())
         return CheckOk;
-    // What a range check names: the other end, or half the range as typed.
     float limit = 0;
     const auto check = m_edition.setNumber(*it, text.toStdU16String(), &limit);
     m_limit = number(limit);
@@ -276,4 +271,4 @@ void AllTagsEditor::close()
     emit closed();
 }
 
-} // namespace hikari::ui
+}

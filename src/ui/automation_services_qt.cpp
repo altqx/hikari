@@ -29,7 +29,7 @@ std::string field(const std::vector<std::string> &style, std::size_t i)
 
 double number(const std::vector<std::string> &style, std::size_t i)
 {
-    return std::atof(field(style, i).c_str()); // wxAtof
+    return std::atof(field(style, i).c_str());
 }
 
 bool flag(const std::vector<std::string> &style, std::size_t i)
@@ -46,7 +46,7 @@ QString qs(const std::string &s)
     return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
 }
 
-} // namespace
+}
 
 std::string QtClipboardPort::text() const
 {
@@ -116,16 +116,10 @@ std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::ve
     DeleteDC(dc);
     DeleteObject(font);
 #else
-    // Legacy Linux (UtilsWindows.cpp:300-330): wxFont(wxSize(0, round(size)))
-    // and a memory DC's whole-pixel extents, scaled by 64. wxGTK makes a font
-    // of a pixel height as wxFontBase::SetPixelSize does: the largest whole
-    // point size whose line height is at most that height, at the screen's 96
-    // dots per inch. So the style's size is the line's height, as GDI's
-    // positive lfHeight makes it on Windows, not the em (Titillium Web's em is
-    // two thirds of its line).
+    // The style's size is the line's height, as GDI's positive lfHeight makes it on Windows, not the em.
     const int pixelHeight = std::max(1, static_cast<int>((fontsize / 64.f) + 0.5f));
     QImage device(1, 1, QImage::Format_ARGB32);
-    device.setDotsPerMeterX(3780); // 96 dpi
+    device.setDotsPerMeterX(3780);
     device.setDotsPerMeterY(3780);
     QFont font(qs(field(style, Fontname)));
     font.setBold(flag(style, Bold));
@@ -136,14 +130,11 @@ std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::ve
         font.setPointSize(points);
         return QFontMetrics(font, &device).height();
     };
-    // Keyed on the face the font resolves to, so a face added after a
-    // measure that fell back to another one is searched again.
     const QFontInfo face(font);
     const auto key = std::tuple{face.family().toStdString(), face.styleName().toStdString(), font.bold(),
                                 font.italic(), pixelHeight};
     auto found = m_points.find(key);
     if (found == m_points.end()) {
-        // From the size a line of the em's height would have, by whole points.
         int points = std::max(1, pixelHeight * 3 / 4);
         points = std::max(1, static_cast<int>(points * static_cast<double>(pixelHeight) / heightAt(points)));
         while (points > 1 && heightAt(points) > pixelHeight)
@@ -178,7 +169,7 @@ QStringList nameFiltersOf(const std::string &wildcard)
     QStringList filters;
     for (qsizetype i = 0; i + 1 < parts.size(); i += 2) {
         QString label = parts[i].trimmed();
-        // A wx label often repeats its patterns: "Text files (*.txt)".
+        // A script's wx label often repeats its patterns: "Text files (*.txt)".
         if (label.endsWith(QLatin1Char(')')) && label.contains(QLatin1Char('(')))
             label = label.left(label.lastIndexOf(QLatin1Char('('))).trimmed();
         QStringList patterns = parts[i + 1].split(QLatin1Char(';'), Qt::SkipEmptyParts);
@@ -195,7 +186,7 @@ void AutomationFilePickerController::pick(const application::FilePickerRequest &
                                 std::function<void(std::optional<std::vector<std::string>>)> reply)
 {
     if (m_reply)
-        m_reply(std::nullopt); // one picker at a time; the router never overlaps them
+        m_reply(std::nullopt);
     m_request = request;
     m_reply = std::move(reply);
     m_title = qs(request.title);
@@ -237,4 +228,4 @@ void AutomationFilePickerController::reject()
     reply(std::nullopt);
 }
 
-} // namespace hikari::ui
+}

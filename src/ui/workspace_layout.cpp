@@ -37,9 +37,6 @@ QString engineVersion()
     return QStringLiteral("KDDockWidgets %1").arg(QStringLiteral(KDDOCKWIDGETS_VERSION_STRING));
 }
 
-// A file's bytes, at most kMaximumBytes + 1 (a larger file is refused);
-// nullopt when there is none, or when it is there but cannot be read
-// (`unreadable`: then nothing may write over it).
 std::optional<QByteArray> readFile(const QString &path, bool *unreadable = nullptr)
 {
     QFile f(path);
@@ -53,9 +50,6 @@ std::optional<QByteArray> readFile(const QString &path, bool *unreadable = nullp
     return f.read(WorkspaceLayoutController::kMaximumBytes + 1);
 }
 
-// The whole of a file refused at start copied aside before anything can
-// write over it; false when it could not be. An older copy is replaced only
-// once the new one is complete (a full disk leaves it as it was).
 bool keepAside(const QString &path, const QString &kept)
 {
     QFile from(path);
@@ -87,9 +81,7 @@ bool writeAtomically(const QString &path, const QByteArray &bytes)
     return f.commit();
 }
 
-// Whether `focus` is in a Qt Quick Controls menu: a menu's popup item, or an
-// item under it. The menu's items and its popup item are QObject children of
-// the menu (QQuickMenu, a private type: matched by class name).
+// QQuickMenu is a private type: matched by class name.
 bool isInMenu(QObject *focus)
 {
     for (auto *item = qobject_cast<QQuickItem *>(focus); item; item = item->parentItem())
@@ -98,9 +90,7 @@ bool isInMenu(QObject *focus)
     return false;
 }
 
-// A window's popup layer (QQuickOverlay, a private type: matched by class
-// name), made with the window's first popup; under the content item or
-// beside it.
+// QQuickOverlay is a private type (matched by class name), under the content item or beside it.
 QQuickItem *overlayOf(QQuickWindow *window)
 {
     for (QQuickItem *layer : {window->contentItem(), window->contentItem()->parentItem()})
@@ -111,10 +101,7 @@ QQuickItem *overlayOf(QQuickWindow *window)
     return nullptr;
 }
 
-// Whether `overlay` shows a modal popup. An open popup's item is a child of
-// the overlay from its opening to the end of its closing (before it shows,
-// so its visibility is not asked), and the popup is the item's QObject
-// parent (as a menu's, above).
+// A popup's item is in the overlay from its opening to the end of its closing, before it shows.
 bool showsModal(QQuickItem *overlay)
 {
     for (QQuickItem *item : overlay->childItems())
@@ -124,7 +111,7 @@ bool showsModal(QQuickItem *overlay)
     return false;
 }
 
-} // namespace
+}
 
 const QStringList &WorkspaceLayoutController::panelIds()
 {
@@ -153,8 +140,6 @@ WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QString
             }
             checkModal();
         });
-        // A screen that goes away or shrinks can leave a floating panel
-        // where no screen shows it: bring it back (docs/docking.md).
         m_screenCheck.setSingleShot(true);
         m_screenCheck.setInterval(250); // after the platform has moved its windows
         connect(&m_screenCheck, &QTimer::timeout, this, &WorkspaceLayoutController::keepFloatingPanelsOnScreen);
@@ -180,14 +165,10 @@ void WorkspaceLayoutController::checkModal()
         auto *quick = qobject_cast<QQuickWindow *>(window);
         if (!quick || !quick->isVisible())
             continue;
-        // A modal window of its own (DG1's frame: PF1's Settings window, PK1's
-        // message boxes); its showing and hiding move the keyboard.
         if (quick->modality() != Qt::NonModal) {
             open = true;
             continue;
         }
-        // A popup opening or closing moves its item in or out of the
-        // overlay, with or without the keyboard.
         QQuickItem *overlay = overlayOf(quick);
         if (!overlay)
             continue;
@@ -211,14 +192,14 @@ QJsonObject envelopeObject(const QByteArray &payload, const QString &preset, con
     o.insert(QStringLiteral("engine"), engineVersion());
     o.insert(QStringLiteral("preset"), preset);
     if (!layout.isEmpty())
-        o.insert(QStringLiteral("layout"), layout); // WS3: the saved layout it started from
+        o.insert(QStringLiteral("layout"), layout);
     o.insert(QStringLiteral("panels"), QJsonArray::fromStringList(WorkspaceLayoutController::panelIds()));
     if (!payload.isEmpty())
         o.insert(QStringLiteral("payload"), QJsonDocument::fromJson(payload).object());
     return o;
 }
 
-} // namespace
+}
 
 QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const QString &preset, const QString &layout)
 {
@@ -232,8 +213,6 @@ QByteArray WorkspaceArrangement::serialise() const
 
 std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray &bytes, QString *problem)
 {
-    // A preset alone has no payload; one with a payload is checked as the
-    // saved file is, its size before it is read.
     const QJsonObject o = bytes.size() > WorkspaceLayoutController::kMaximumBytes ? QJsonObject()
                                                                                   : QJsonDocument::fromJson(bytes).object();
     if (!o.isEmpty() && !o.contains(QStringLiteral("payload"))) {
@@ -252,8 +231,6 @@ std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray
 
 namespace {
 
-// WS2: a saved rectangle ({"x", "y", "width", "height"}) under `key`, moved
-// by `by`; an empty one (a window that never had a place) stays.
 QPoint rectTopLeft(const QJsonObject &holder, const QString &key)
 {
     const QJsonObject rect = holder.value(key).toObject();
@@ -270,7 +247,6 @@ void moveRect(QJsonObject &holder, const QString &key, QPoint by)
     holder.insert(key, rect);
 }
 
-// The Classic main window's top-left in an engine payload.
 QPoint mainWindowPosition(const QJsonObject &payload)
 {
     for (const auto &w : payload.value(QStringLiteral("mainWindows")).toArray()) {
@@ -283,9 +259,6 @@ QPoint mainWindowPosition(const QJsonObject &payload)
     return {};
 }
 
-// The payload's windows moved by `by`: the main windows, the floating
-// windows and the places closed panels float again at. `forFile` also
-// leaves out the screens and each window's screen.
 QByteArray moveWindows(const QByteArray &payload, QPoint by, bool forFile)
 {
     QJsonObject o = QJsonDocument::fromJson(payload).object();
@@ -295,8 +268,6 @@ QByteArray moveWindows(const QByteArray &payload, QPoint by, bool forFile)
         for (qsizetype i = 0; i < list.size(); ++i) {
             QJsonObject window = list.at(i).toObject();
             moveRect(window, QStringLiteral("geometry"), by);
-            // A maximized main window's normal place is a screen position of
-            // its own: the file keeps it at the main window's top-left too.
             const QString normal = QStringLiteral("normalGeometry");
             moveRect(window, normal, forFile && main ? -rectTopLeft(window, normal) : by);
             if (forFile) {
@@ -323,7 +294,7 @@ QByteArray moveWindows(const QByteArray &payload, QPoint by, bool forFile)
     return QJsonDocument(o).toJson(QJsonDocument::Compact);
 }
 
-} // namespace
+}
 
 QByteArray WorkspaceArrangement::serialiseForFile() const
 {
@@ -380,7 +351,7 @@ QString WorkspaceLayoutController::presetLabel(const QString &name)
 QString WorkspaceLayoutController::presetMode(const QString &preset)
 {
     static const std::map<QString, QString> modes{{QStringLiteral("Translation"), QStringLiteral("Translation")},
-                                                  {QStringLiteral("Karaoke"), QStringLiteral("Karaoke")}}; // KP1
+                                                  {QStringLiteral("Karaoke"), QStringLiteral("Karaoke")}};
     const auto mode = modes.find(preset);
     return mode == modes.end() ? QString() : mode->second;
 }
@@ -407,18 +378,13 @@ void WorkspaceLayoutController::setPreset(const QString &preset)
         return;
     m_preset = preset;
     m_layout.clear();
-    m_lastSaved.clear(); // the envelope changes even when the arrangement does not
+    m_lastSaved.clear();
     emit changed();
 }
 
 namespace {
 
-// WS2: what the engine reads from a window's layout tree (Item and
-// ItemBoxContainer::fillFromJson, SizingInfo, Rect, Size) it reads outside
-// its own catch, so a value of the wrong type, or null, throws out of
-// restoreLayout halfway through the restore. Each value is absent or of the
-// type the engine reads; a size is a number a window can have (up to Qt's
-// largest, which an unbounded panel's size hint is).
+// KDDockWidgets reads the layout tree outside its own catch: a mistyped value throws mid-restore. 16777215 is Qt's largest size.
 bool readableNumber(const QJsonValue &v)
 {
     return v.isUndefined() || (v.isDouble() && std::abs(v.toDouble()) <= 16777215);
@@ -453,8 +419,6 @@ bool readableItem(const QJsonObject &item)
               s.value(QStringLiteral("percentageWithinParent")).isDouble())));
 }
 
-// An index the engine reads into an int: absent, or a whole number from
-// first to last.
 bool readableIndex(const QJsonValue &v, double first, double last)
 {
     if (v.isUndefined())
@@ -463,8 +427,6 @@ bool readableIndex(const QJsonValue &v, double first, double last)
     return v.isDouble() && d == std::trunc(d) && d >= first && d <= last;
 }
 
-// Affinities the engine would copy onto Hikari's window and panels, which
-// have none.
 bool noAffinities(const QJsonObject &o)
 {
     const QJsonValue affinities = o.value(QStringLiteral("affinities"));
@@ -473,7 +435,7 @@ bool noAffinities(const QJsonObject &o)
            (name.isUndefined() || name == QJsonValue(QString()));
 }
 
-} // namespace
+}
 
 std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray &file, QString *problem, QString *preset,
                                                                QString *layout)
@@ -505,18 +467,13 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     const QJsonObject payload = o.value(QStringLiteral("payload")).toObject();
     if (payload.isEmpty())
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no layout"));
-    // IDs before the engine sees them: the Classic main window, known panels only.
     const QJsonArray mainWindows = payload.value(QStringLiteral("mainWindows")).toArray();
     bool classic = false;
     for (const auto &w : mainWindows)
         classic = classic || w.toObject().value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic");
     if (!classic)
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no Classic arrangement"));
-    // The engine makes a window, a group or a layout item for every entry it
-    // is given, and a file can come from anyone: no more than Hikari's panels
-    // can fill. One main window; a floating window, a group and each panel
-    // in a group at most once per panel; in each window's layout, a place and
-    // a placeholder per panel and the containers between them.
+    // KDDockWidgets makes a window, group or layout item per entry: cap them at what our panels can fill.
     const QJsonArray floatingWindows = payload.value(QStringLiteral("floatingWindows")).toArray();
     const qsizetype panels = panelIds().size();
     const QString tooMany =
@@ -532,8 +489,6 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     for (const auto &w : windows) {
         if (!noAffinities(w.toObject()))
             return fail(unreadable);
-        // A window's place, which a file's is moved by from the main
-        // window's: a number a window can have, so the move stays an int.
         if (!readableRect(w.toObject().value(QStringLiteral("geometry"))) ||
             !readableRect(w.toObject().value(QStringLiteral("normalGeometry"))))
             return fail(unreadable);
@@ -550,9 +505,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
                     return fail(tooMany);
                 grouped.insert(name);
             }
-        // A group is found by its id from its layout item: each one a real
-        // group under its own id, not the central one (Classic has none),
-        // in one layout item of its window.
+        // KDDockWidgets finds a group by its id; options bit 2 is the central group, which Classic lacks.
         for (auto frame = frames.begin(); frame != frames.end(); ++frame) {
             const QJsonObject f = frame.value().toObject();
             if (f.value(QStringLiteral("id")) != QJsonValue(frame.key()) || frame.key().isEmpty() ||
@@ -588,9 +541,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     }
     if (groups > panels)
         return fail(tooMany);
-    // The engine takes a floating window's parent from its own main windows
-    // by this index without a check (LayoutSaver::restoreLayout), and a file
-    // can come from anyone: Hikari's one main window, or none.
+    // KDDockWidgets takes a floating window's parent by this index unchecked (LayoutSaver::restoreLayout).
     for (const auto &f : payload.value(QStringLiteral("floatingWindows")).toArray()) {
         const QJsonValue parent = f.toObject().value(QStringLiteral("parentIndex"));
         if (!parent.isUndefined() && !(parent.isDouble() && (parent.toDouble() == -1 || parent.toDouble() == 0)))
@@ -608,20 +559,12 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         if (docks.contains(name) || places.size() > 1 + floatingWindows.size())
             return fail(tooMany);
         docks.insert(name);
-        // Where a closed panel floats again, moved as the windows are.
         if (!readableRect(position.value(QStringLiteral("lastFloatingGeometry"))))
             return fail(unreadable);
-        // The tab a panel goes back to: the engine inserts it at this index
-        // when it is not -1 and the group has no fewer tabs, so one below -1
-        // reaches its tab list unchecked (Layout::restorePlaceholder).
+        // KDDockWidgets inserts at tabIndex unchecked unless it is -1 (Layout::restorePlaceholder).
         if (!readableIndex(position.value(QStringLiteral("tabIndex")), -1, 16777215))
             return fail(unreadable);
-        // A panel's place: the engine finds a docked one's main window by
-        // name and uses it without a check (Positions::deserialize), and a
-        // floating one's window by index. What it cannot read is a docked
-        // place in no window, or a floating place in a window the file does
-        // not have (-1, as the engine writes for a window being deleted,
-        // is passed over).
+        // KDDockWidgets resolves a place's window unchecked (Positions::deserialize); it writes -1 for a window being deleted.
         const QString nowhere =
             QCoreApplication::translate("HikariSub.Workspace", "it puts a panel in a window that does not exist");
         for (const auto &place : places) {
@@ -668,24 +611,18 @@ void WorkspaceLayoutController::buildsArrangement(const QString &name)
 
 bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool inPlace)
 {
-    m_restoring = true; // no autosave while restoring
-    // D2: an arrangement taken back within the session keeps the main
-    // window as it is now and the floating panels at their own sizes.
+    m_restoring = true;
     const KDDockWidgets::RestoreOptions options =
         inPlace ? KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_RelativeToMainWindow |
                                                 KDDockWidgets::RestoreOption_AbsoluteFloatingDockWindows)
                 : KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_None);
     const bool restored = KDDockWidgets::LayoutSaver(options).restoreLayout(payload);
     if (!restored && !m_default.isEmpty())
-        KDDockWidgets::LayoutSaver(options).restoreLayout(m_default); // rebuild a known arrangement
+        KDDockWidgets::LayoutSaver(options).restoreLayout(m_default);
     m_restoring = false;
-    // D1: the floating windows' layouts at their windows' size (native
-    // gate: the floating Audio panel came back 35 pixels short on Wayland).
+    // Floating windows come back short of their layouts on Wayland.
     hikari::ui::fitFloatingLayouts();
-    // D3: the panels' minimum sizes now, not the ones it was saved with.
     hikari::ui::refreshDockConstraints();
-    // A layout saved with another set of screens may place a floating panel
-    // where none shows it.
     hikari::ui::keepFloatingPanelsOnScreen();
     return restored;
 }
@@ -694,15 +631,10 @@ bool WorkspaceLayoutController::restoreSaved()
 {
     m_loaded = true;
     const bool restored = restoreSavedFile();
-    // WS2: files opened before this place their windows from the main
-    // window's top-left now.
     const QPoint origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
     for (auto &[id, t] : m_tabs)
         if (std::exchange(t.unplaced, false) && t.arrangement && !t.arrangement->payload.isEmpty())
             t.arrangement->payload = moveWindows(t.arrangement->payload, origin, false);
-    // WS1: the current tab's own arrangement (from the Session, or the
-    // Translation preset of a TLMode file opened before the first frame);
-    // without one the tab takes the arrangement just restored.
     if (m_tab) {
         Tab &shown = m_tabs[*m_tab];
         if (shown.arrangement) {
@@ -711,7 +643,6 @@ bool WorkspaceLayoutController::restoreSaved()
             shown.arrangement = shownArrangement();
         }
     }
-    // Tabs opened in the background before it copy it too.
     for (auto &[id, t] : m_tabs)
         if (!t.arrangement && m_tab != id)
             t.arrangement = shownArrangement();
@@ -731,9 +662,6 @@ bool WorkspaceLayoutController::restoreSavedFile()
     if (!payload || !restorePayload(*payload)) {
         if (problem.isEmpty())
             problem = QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it");
-        // A copy of the whole file is kept for diagnosis before anything can
-        // overwrite it; saving resumes once the user changes or resets the
-        // layout. A file that cannot be read or copied is not written over.
         const QString kept = m_file + QStringLiteral(".unrestored");
         m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
         if (unreadable || !keepAside(m_file, kept)) {
@@ -766,12 +694,8 @@ bool WorkspaceLayoutController::save()
     const QByteArray current = KDDockWidgets::LayoutSaver().serializeLayout();
     if (current == m_lastSaved)
         return false;
-    // The previous valid file becomes the backup.
     if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
         writeAtomically(backupFile(), *old);
-    // WS3: a write that fails says so (the saved layout the arrangement
-    // started from is in it too); m_lastSaved stays, so the next save, at the
-    // latest on quit, writes it again.
     const QString failure = QCoreApplication::translate("HikariSub.Workspace", "The panel layout could not be written to %1.")
                                 .arg(QDir::toNativeSeparators(m_file));
     if (!writeAtomically(m_file, envelope(current, m_preset, m_layout))) {
@@ -788,8 +712,6 @@ bool WorkspaceLayoutController::save()
 bool WorkspaceLayoutController::saveForQuit()
 {
     const bool saved = save();
-    // The Session written after this (endSession) names this arrangement
-    // for the current tab, not the closed panels of the window going down.
     if (m_loaded)
         m_quitArrangement = shownArrangement();
     m_quitting = true;
@@ -816,7 +738,6 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
 {
     if (m_default.isEmpty())
         return false;
-    // TP1: a preset with an arrangement of its own (Typesetting, and KP1's Karaoke).
     if (const auto own = m_presetPayloads.find(name); own != m_presetPayloads.end())
         return restorePayload(own->second, inPlace);
     const bool done = restorePayload(m_default, inPlace);
@@ -825,9 +746,6 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
         m_presetPayloads[name] = KDDockWidgets::LayoutSaver().serializeLayout();
         return true;
     }
-    // The Editing arrangement with the panels the preset leaves closed
-    // (docs/ux/workspaces.md): Timing without Video, Translation (and
-    // Typesetting without a shell to build its own) without Audio.
     QString closed;
     if (name == QLatin1String("Timing"))
         closed = QStringLiteral("Video");
@@ -851,12 +769,10 @@ bool WorkspaceLayoutController::applyPresetArrangement(const QString &name)
 {
     if (!presets().contains(name) || m_default.isEmpty())
         return false;
-    // In place, as a saved layout or a tab's arrangement: the main window
-    // keeps its geometry, not the one the preset was captured or built at.
     const bool done = buildPreset(name, true);
     dismissPanelNotice();
     setPreset(name);
-    emit arrangementSwapped(); // WS3: the panels the preset leaves closed are closed now
+    emit arrangementSwapped();
     save();
     return done;
 }
@@ -876,13 +792,11 @@ bool WorkspaceLayoutController::restoreBackup()
     if (!restorePayload(*payload))
         return false;
     emit arrangementSwapped();
-    // WS3: the arrangement the backup names comes back with it (the switcher,
-    // Reset this layout and the next save read them).
     layout = knownLayout(layout);
     if (preset != m_preset || layout != m_layout) {
         m_preset = preset;
         m_layout = layout;
-        m_lastSaved.clear(); // the saved file names the other one, panels alike or not
+        m_lastSaved.clear();
         emit changed();
     }
     dismissPanelNotice();
@@ -927,7 +841,7 @@ KDDockWidgets::Core::DockWidget *controllerOf(QObject *dock)
     return instantiator ? instantiator->controller() : nullptr;
 }
 
-} // namespace
+}
 
 QSize WorkspaceLayoutController::panelSize(QObject *dock) const
 {
@@ -948,8 +862,6 @@ bool WorkspaceLayoutController::resizePanel(QObject *dock, int width, int height
     return true;
 }
 
-// --- WS1: each Document tab's arrangement -----------------------------------
-
 WorkspaceArrangement WorkspaceLayoutController::shownArrangement() const
 {
     if (m_quitArrangement)
@@ -963,9 +875,6 @@ bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arra
     if (arrangement.payload.isEmpty()) {
         shown = buildPreset(arrangement.preset, true);
     } else if (arrangement.payload != KDDockWidgets::LayoutSaver().serializeLayout()) {
-        // In place: the main window keeps its geometry, the floating panels
-        // take theirs; nothing is drawn between taking the panels out and
-        // putting them back.
         shown = restorePayload(arrangement.payload, true);
     }
     if (!shown)
@@ -984,9 +893,6 @@ bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arra
 
 void WorkspaceLayoutController::refuseArrangement(const WorkspaceArrangement &arrangement)
 {
-    // restorePayload rebuilt the default arrangement (a partial restore): the
-    // tab shows the Editing layout from now on. (Serialised first: it may be
-    // the tab's own.)
     const QByteArray rejected = arrangement.serialise();
     if (m_tab)
         m_tabs[*m_tab].arrangement = WorkspaceArrangement{};
@@ -1002,8 +908,6 @@ void WorkspaceLayoutController::keepUnrestored(const QByteArray &bytes, const QS
                    : QCoreApplication::translate("HikariSub.Workspace",
                                                  "The panel layout of %1 was not restored because %2. The tab shows the Editing layout.")
                          .arg(title, problem);
-    // A copy is kept for diagnosis; the Session is written with the tab's
-    // Editing layout from now on.
     if (!m_file.isEmpty()) {
         const QString kept = m_file + QStringLiteral(".tab.unrestored");
         if (writeAtomically(kept, bytes))
@@ -1026,8 +930,6 @@ void WorkspaceLayoutController::showTab(std::uint64_t tab, TabStart start)
         if (start == TabStart::Translation) {
             shown.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
         } else {
-            // A copy of the arrangement shown: nothing moves. Before the
-            // first arrangement the tab takes the one restoreSaved shows.
             if (m_loaded)
                 shown.arrangement = shownArrangement();
             return;
@@ -1041,7 +943,7 @@ void WorkspaceLayoutController::showTab(std::uint64_t tab, TabStart start)
 void WorkspaceLayoutController::addTab(std::uint64_t tab, TabStart start)
 {
     if (m_tab == tab)
-        return; // showTab's
+        return;
     Tab &added = m_tabs[tab];
     if (added.arrangement)
         return;
@@ -1049,7 +951,6 @@ void WorkspaceLayoutController::addTab(std::uint64_t tab, TabStart start)
         added.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
     else if (m_loaded)
         added.arrangement = shownArrangement();
-    // else restoreSaved gives it the arrangement it shows
 }
 
 void WorkspaceLayoutController::replaceTab(std::uint64_t tab, std::uint64_t replacement, TabStart start)
@@ -1100,9 +1001,6 @@ void WorkspaceLayoutController::setTabArrangement(std::uint64_t tab, const QByte
 
 void WorkspaceLayoutController::giveTab(std::uint64_t tab, WorkspaceArrangement arrangement)
 {
-    // A layout this profile has not saved (a Session or a file from another
-    // profile) is not the tab's origin: one saved later under that name is
-    // not it.
     arrangement.layout = knownLayout(arrangement.layout);
     Tab &t = m_tabs[tab];
     t.arrangement = arrangement;
@@ -1119,9 +1017,6 @@ QByteArray WorkspaceLayoutController::fileArrangement(std::uint64_t tab) const
 
 bool WorkspaceLayoutController::setFileArrangement(std::uint64_t tab, const QByteArray &text, QString *problem)
 {
-    // Where the main window is now, as the engine would save it. A file
-    // opened before its first arrangement (from the command line, before
-    // the window exists) is placed when restoreSaved has put it somewhere.
     QPoint origin;
     if (m_loaded)
         origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
@@ -1143,7 +1038,6 @@ void WorkspaceLayoutController::reservePresetNames(const QStringList &names)
     if (names == m_reservedNames)
         return;
     m_reservedNames = names;
-    // The saved layouts again, under the names now reserved.
     readSavedLayouts();
     m_layout = knownLayout(m_layout);
     for (auto &[id, tab] : m_tabs)
@@ -1152,8 +1046,6 @@ void WorkspaceLayoutController::reservePresetNames(const QStringList &names)
     emit savedLayoutsChanged();
     emit changed();
 }
-
-// --- WS3: the user's saved layouts -----------------------------------------
 
 void WorkspaceLayoutController::readSavedLayouts()
 {
@@ -1183,8 +1075,6 @@ void WorkspaceLayoutController::readSavedLayouts()
     else if (!o.value(QStringLiteral("layouts")).isArray())
         problem = QCoreApplication::translate("HikariSub.Workspace", "it is not a layouts file");
     if (!problem.isEmpty()) {
-        // The whole file kept for diagnosis before a saved layout can
-        // overwrite it; one that cannot be copied is not written over.
         const QString kept = m_savedFile + QStringLiteral(".unrestored");
         if (!keepAside(m_savedFile, kept)) {
             lockSavedLayouts();
@@ -1201,8 +1091,6 @@ void WorkspaceLayoutController::readSavedLayouts()
         SavedLayout saved;
         saved.name = record.value(QStringLiteral("name")).toString().trimmed();
         saved.record = record;
-        // Not a record, a name Save layout as… refuses (none, too long, a
-        // line break, a preset's), or one already listed: not offered.
         if (!value.isObject() || !layoutNameProblem(saved.name).isEmpty() || savedLayoutIndex(saved.name) >= 0) {
             skipped = true;
             continue;
@@ -1214,8 +1102,6 @@ void WorkspaceLayoutController::readSavedLayouts()
             saved.arrangement->layout = saved.name;
         m_saved.push_back(std::move(saved));
     }
-    // The next write leaves out what was skipped: the file as it was is kept
-    // aside first, or not written over at all.
     if (skipped) {
         const QString kept = m_savedFile + QStringLiteral(".unrestored");
         if (!keepAside(m_savedFile, kept)) {
@@ -1240,16 +1126,16 @@ void WorkspaceLayoutController::lockSavedLayouts()
 bool WorkspaceLayoutController::writeSavedLayouts()
 {
     if (m_savedFile.isEmpty())
-        return true; // nothing is persisted
+        return true;
     if (m_savedLocked) {
-        lockSavedLayouts(); // the notice again
+        lockSavedLayouts();
         emit changed();
         return false;
     }
     QJsonArray layouts;
     for (const SavedLayout &saved : m_saved) {
         if (!saved.arrangement) {
-            layouts.append(saved.record); // as read: this version cannot use it
+            layouts.append(saved.record);
             continue;
         }
         QJsonObject record;
@@ -1261,11 +1147,8 @@ bool WorkspaceLayoutController::writeSavedLayouts()
     o.insert(QStringLiteral("schema"), kSavedLayoutsSchema);
     o.insert(QStringLiteral("layouts"), layouts);
     const QByteArray bytes = QJsonDocument(o).toJson(QJsonDocument::Indented);
-    // An earlier write's failure is over, or replaced by this one's (the
-    // caller says changed() when it succeeds).
     m_savedNotices.removeAll(m_writeFailure);
     m_writeFailure.clear();
-    // A file larger than the next start reads would lose every saved layout.
     if (bytes.size() <= kMaximumBytes && writeAtomically(m_savedFile, bytes))
         return true;
     m_writeFailure = bytes.size() > kMaximumBytes
@@ -1306,8 +1189,6 @@ QVariantList WorkspaceLayoutController::savedLayouts() const
 
 QString WorkspaceLayoutController::layout() const
 {
-    // A layout since deleted, or named by an arrangement from elsewhere (a
-    // Session of another profile): the preset's.
     return savedLayoutIndex(m_layout) >= 0 ? savedLayoutNamed(m_layout) : QString();
 }
 
@@ -1332,8 +1213,6 @@ QString WorkspaceLayoutController::layoutNameProblem(const QString &name, const 
         if (trimmed.compare(preset, Qt::CaseInsensitive) == 0 ||
             trimmed.compare(presetLabel(preset), Qt::CaseInsensitive) == 0)
             return QCoreApplication::translate("HikariSub.Workspace", "%1 is a built-in layout.").arg(presetLabel(preset));
-    // A preset's name in another language: the menus would show two after a
-    // switch to it.
     for (const QString &reserved : m_reservedNames)
         if (trimmed.compare(reserved, Qt::CaseInsensitive) == 0)
             return QCoreApplication::translate("HikariSub.Workspace", "%1 is a built-in layout.").arg(reserved);
@@ -1357,7 +1236,7 @@ void WorkspaceLayoutController::renameLayoutOrigin(const QString &from, const QS
     rename(m_quitArrangement);
     if (m_layout.compare(from, Qt::CaseInsensitive) == 0) {
         m_layout = to;
-        m_lastSaved.clear(); // the saved file names it
+        m_lastSaved.clear();
     }
 }
 
@@ -1391,7 +1270,6 @@ bool WorkspaceLayoutController::saveLayoutAs(const QString &name)
     WorkspaceArrangement arrangement = shownArrangement();
     arrangement.layout = trimmed;
     if (const int index = savedLayoutIndex(trimmed); index >= 0) {
-        // Replaced in its place in the list, under the name as typed now.
         SavedLayout &saved = m_saved[static_cast<std::size_t>(index)];
         renameLayoutOrigin(saved.name, trimmed);
         saved = SavedLayout{trimmed, arrangement, {}, {}};
@@ -1420,8 +1298,6 @@ bool WorkspaceLayoutController::applySavedArrangement(const QString &name)
     if (!arrangement)
         return false;
     dismissPanelNotice();
-    // In place, as a tab's arrangement is shown (the main window keeps its
-    // geometry); the shell then puts the Reference tray as the comparison has it.
     const bool shown = showArrangement(*arrangement);
     save();
     return shown;
@@ -1457,7 +1333,6 @@ bool WorkspaceLayoutController::deleteSavedLayout(const QString &name)
     if (index < 0)
         return false;
     SavedLayoutsState before = savedLayoutsState();
-    // The tabs keep their arrangements; they started from their presets now.
     renameLayoutOrigin(m_saved[static_cast<std::size_t>(index)].name, {});
     m_saved.erase(m_saved.begin() + index);
     return commitSavedLayouts(std::move(before));
@@ -1468,4 +1343,4 @@ int WorkspaceLayoutController::keepFloatingPanelsOnScreen()
     return hikari::ui::keepFloatingPanelsOnScreen();
 }
 
-} // namespace hikari::ui
+}

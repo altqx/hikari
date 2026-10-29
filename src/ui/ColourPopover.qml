@@ -1,34 +1,3 @@
-// SY2 (#245): the one colour picker, a popover anchored to the colour button
-// or swatch it edits. It replaces E1/Y7's "Choose color" dialog
-// (ColourPickerDialog, legacy DialogColorPicker) and the simple "Color
-// picker" window (SimpleColourPicker, legacy SimpleColorPickerDialog).
-//
-// Compact: the colour before and after (Esc puts the one before back), the
-// eyedropper, a palette, the newest recent colours, Hex and
-// Alpha. More… expands it in place to the full picker of "Choose color":
-// the saturation/value spectrum with its hue strip, the RGB, HSL and HSV
-// values (one mode shown at a time), the ASS and HTML texts, the 7x7 screen
-// dropper and all the recent colours, and the "swap shortcuts" option. The
-// expansion is kept for the next opening.
-//
-// The colour belongs to its `target`, given at each opening: an object with
-// changeColour(colour), which takes each change at once (legacy
-// COLOR_CHANGED), and endDialog(accepted), which takes the end. Esc takes
-// every change back (legacy Cancel); Enter, a press outside and clicking the
-// anchor again keep them and add the colour to the recent ones (legacy OK).
-// Colours are {r, g, b, a}, a the ASS alpha (0 opaque).
-//
-// The values follow legacy's UpdateFrom* (ColorPicker.cpp:770-907) through
-// its integer colour spaces (colorspace.cpp): the spectrum is saturation
-// across and value down from black at the top (MakeSVSpectrum), the hue
-// strip hue down, all 0-255. The dropper is "Choose color"'s
-// (OnDropperMouse, ColorPicker.cpp:1142-1172): a left press on the
-// eyedropper takes the pointer, a move captures the 7x7 pixels under it, a
-// right release picks their centre and lets go, a left press lets go; on
-// the portal route (Wayland) the desktop picks.
-//
-// Frame: MuseScore 4's popup (docs/research/musescore-shell.md, "Popups"):
-// padding 12, the panel surface, radius 4, a 1-pixel boundary and a shadow.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Colours"
 import QtQuick
@@ -43,14 +12,11 @@ Popup {
     readonly property ScreenSampler sampler: picker.sampler
     property var target: null
     property Item anchor: null
-    // What the popover edits ("Primary color"), its accessible name.
     property string title: ""
-    // The value has an alpha (the ASS colours) or not (theme colours).
     property bool hasAlpha: true
     property bool expanded: false
-    // The mode of the values under More…: 0 RGB, 1 HSL, 2 HSV.
+    // MUST KILL: mode is a magic int (0 RGB, 1 HSL, 2 HSV)
     property int mode: 0
-    // Open for a target: false once it has ended.
     property bool active: false
     property bool loading: false
     property var original: ({ r: 0, g: 0, b: 0, a: 0 })
@@ -58,36 +24,23 @@ Popup {
     property int green: 0
     property int blue: 0
     property int alpha: 0 // ASS alpha: 0 opaque
-    // hsl_input and hsv_input (0-255 each).
     property int hslHue: 0
     property int hslSaturation: 0
     property int lightness: 0
     property int hsvHue: 0
     property int hsvSaturation: 0
     property int hsvValue: 0
-    // The screen dropper holds the pointer (legacy screen_dropper_icon's capture).
     property bool dropping: false
     property bool portalAsked: false
-    // The portal's last failure, shown under the dropper until the next ask.
     property string portalNote: ""
-    // The item that had the keyboard before, given it back at the end.
     property Item returnFocus: null
     readonly property color shown: Qt.rgba(red / 255, green / 255, blue / 255, 1)
     readonly property int compactRecent: 16
 
-    // `owner` edits the colour `begin()` gives ({r, g, b, a}; one without r
-    // opens nothing). `begin` runs only once the colour open before has
-    // ended, so a caller's edit session (the Line editor's beginColour, the
-    // Style editor's swatch) never starts under the one still open.
-    // `options`: title, alpha (false: no alpha), dropper (true: start the
-    // eyedropper at once, the colour buttons' right click), focus (the item
-    // to give the keyboard back to).
     function openFor(anchorItem, owner, begin, options) {
         if (active)
             finish(true)
-        // The click of a press that closed the popover on its own anchor
-        // (a popover in its own window lets that press through to the host):
-        // the anchor toggles, so it ends there and nothing begins.
+        // A Popup.Window lets the press that closed it through to the anchor; that click must not reopen it.
         if (anchorItem && anchorItem === pressedAnchor && Date.now() - pressedAt < 1000) {
             pressedAnchor = null
             return
@@ -107,9 +60,6 @@ Popup {
         setColour(original)
         portalNote = ""
         active = true
-        // A host window too small for the popover with More… open (a short
-        // Automation dialog): the popover in a window of its own, which can
-        // reach past the host.
         const host = parent ? parent.Window.window : null
         popupType = host && (host.width < fullSize.width || host.height < fullSize.height) ? Popup.Window : Popup.Item
         open()
@@ -117,8 +67,6 @@ Popup {
         if (o.dropper)
             startDropper()
     }
-    // Below the anchor, or above it where there is no room below; centred
-    // in the window without one. Popup's margins keep it inside the window.
     function place() {
         if (!parent)
             return
@@ -130,16 +78,12 @@ Popup {
             return
         }
         x = 0
-        // Below the anchor, or above it when only there is room: in the host
-        // window, or on the screen for a popover in its own window.
         const own = popupType === Popup.Window && win && win.screen
         const top = own ? anchor.mapToGlobal(0, 0).y - win.screen.virtualY : anchor.mapToItem(null, 0, 0).y
         const room = own ? win.screen.desktopAvailableHeight : win ? win.height : top + anchor.height + 4 + h + 8
         const below = room - (top + anchor.height + 4) - 8
         y = below >= h || top - 4 - 8 < h ? anchor.height + 4 : -h - 4
     }
-    // The popover's size with More… open, margins included (measured when it
-    // shows so, first an estimate): what a host window must hold for it.
     property size fullSize: Qt.size(560, 540)
     function measure() {
         if (expanded && visible && implicitWidth > 0)
@@ -154,7 +98,6 @@ Popup {
     function colour() {
         return { r: red, g: green, b: blue, a: hasAlpha ? alpha : 0 }
     }
-    // SetColor without a change event (the colour the popover opens with).
     function setColour(c) {
         loading = true
         red = c.r
@@ -170,7 +113,6 @@ Popup {
         hslHue = hsl[0]; hslSaturation = hsl[1]; lightness = hsl[2]
         hsvHue = hsv[0]; hsvSaturation = hsv[1]; hsvValue = hsv[2]
     }
-    // UpdateFromRGB (also the Hex, ASS and HTML fields, UpdateFromASS/HTML).
     function setRgb(r, g, b) {
         red = r
         green = g
@@ -178,7 +120,6 @@ Popup {
         fromRgb()
         changed()
     }
-    // UpdateFromHSL: the HSV values from hsl_to_hsv, not from the RGB.
     function setHsl(h, s, l) {
         hslHue = h; hslSaturation = s; lightness = l
         const rgb = picker.hslToRgb(h, s, l)
@@ -187,7 +128,6 @@ Popup {
         hsvHue = hsv[0]; hsvSaturation = hsv[1]; hsvValue = hsv[2]
         changed()
     }
-    // UpdateFromHSV (the spectrum and the hue strip too).
     function setHsv(h, s, v) {
         hsvHue = h; hsvSaturation = s; hsvValue = v
         const rgb = picker.hsvToRgb(h, s, v)
@@ -200,8 +140,6 @@ Popup {
         alpha = a
         changed()
     }
-    // OnRecentSelect, shared by the palette, the recent colours and the
-    // dropper: the colour without its alpha (SetColor(color, 0, true, false)).
     function pickColour(c) {
         setRgb(c.r, c.g, c.b)
     }
@@ -209,8 +147,6 @@ Popup {
         if (!loading && active)
             changeTimer.restart()
     }
-    // The Hex field: #RGB or #RRGGBB, or the ASS form (&HBBGGRR&); anything
-    // else leaves the colour as it is.
     function setHex(text) {
         const t = text.trim()
         if (/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(t)) {
@@ -245,13 +181,10 @@ Popup {
         dropping = false
         sampler.stopTracking()
     }
-    // The end: OK (accepted) keeps the changes and adds the colour to the
-    // recent ones; Cancel takes every change back.
     function finish(accepted) {
         if (!active)
             return
-        // Kept: the value being typed first. An editable SpinBox takes its
-        // text when it loses the keyboard, which Enter alone does not do.
+        // An editable SpinBox commits its text only on focus loss, so take the focus first.
         if (accepted)
             editEnd.forceActiveFocus()
         active = false
@@ -280,12 +213,7 @@ Popup {
     focus: true
     padding: 12
     margins: 8
-    // Esc is the popover's own (Cancel); a press outside keeps the colour.
     closePolicy: Popup.CloseOnPressOutside
-    // A press outside: OK. On the anchor of a popover in its own window the
-    // same press reaches the anchor too (openFor). Once that press has been
-    // delivered, only an anchor it went to stays recorded: a press anywhere
-    // else leaves the next click on the anchor free to open the popover.
     onClosed: {
         const pressed = active && popupType === Popup.Window
         const was = anchor
@@ -297,7 +225,7 @@ Popup {
         }
     }
     function keepPressedAnchor() {
-        if (pressedAnchor && pressedAnchor.pressed === false) // as Popover's
+        if (pressedAnchor && pressedAnchor.pressed === false)
             pressedAnchor = null
     }
     property Item pressedAnchor: null
@@ -311,9 +239,6 @@ Popup {
     Connections {
         target: popover.sampler
         enabled: popover.dropping
-        // While captured, the motion and the left press, left release and
-        // right release refresh the capture (DropFromScreenXY); a right
-        // release picks its centre and lets go, a left press lets go.
         function onPointerEvent(kind, x, y, button, buttons, inside) {
             const left = button === Qt.LeftButton, right = button === Qt.RightButton
             if (!(kind === 0 || (kind === 1 && left) || (kind === 2 && (left || right))))
@@ -342,8 +267,6 @@ Popup {
             popover.portalAsked = false
             popover.portalNote = message
         }
-        // The answer comes while portalBusy is still true; a cancel only
-        // lets it fall.
         function onPortalBusyChanged() {
             if (!popover.sampler.portalBusy)
                 popover.portalAsked = false
@@ -358,13 +281,11 @@ Popup {
         implicitHeight: content.implicitHeight
         Accessible.role: Accessible.Dialog
         Accessible.name: popover.title
-        // The popover's keys come before the application's shortcuts.
         Keys.onShortcutOverride: event => event.accepted = event.modifiers === Qt.NoModifier
                                  && [Qt.Key_Escape, Qt.Key_Return, Qt.Key_Enter].includes(event.key)
         Keys.onEscapePressed: popover.reject()
         Keys.onReturnPressed: popover.accept()
         Keys.onEnterPressed: popover.accept()
-        // Takes the keyboard from an editor at the end (finish()).
         Item { id: editEnd; activeFocusOnTab: false }
         RowLayout {
             id: content
@@ -376,7 +297,6 @@ Popup {
                 Layout.alignment: Qt.AlignTop
                 spacing: 12
 
-                // The colour before and after, and the eyedropper.
                 RowLayout {
                     spacing: 8
                     Rectangle {
@@ -408,8 +328,6 @@ Popup {
                             }
                         }
                     }
-                    // Not a Button: the press is not kept, so nothing stays
-                    // pressed while the dropper holds the pointer.
                     Rectangle {
                         id: eyedropper
                         objectName: "eyedropper"
@@ -433,8 +351,7 @@ Popup {
                             enabled: eyedropper.enabled
                         }
                         HoverHandler { id: eyedropperHover }
-                        // A left press takes the pointer and is not kept: the
-                        // dropper takes every event from here on.
+                        // The press is not accepted, so nothing stays pressed while the dropper grabs the pointer.
                         MouseArea {
                             objectName: "eyedropperArea"
                             anchors.fill: parent
@@ -468,7 +385,6 @@ Popup {
                     id: paletteGrid
                     objectName: "palette"
                     Accessible.name: qsTr("Palette")
-                    // Neutrals, the primaries and their mixes.
                     colours: [
                         { r: 255, g: 255, b: 255, a: 0 }, { r: 192, g: 192, b: 192, a: 0 },
                         { r: 128, g: 128, b: 128, a: 0 }, { r: 64, g: 64, b: 64, a: 0 },
@@ -543,7 +459,6 @@ Popup {
                 }
             }
 
-            // More…: the full picker.
             ColumnLayout {
                 id: full
                 objectName: "colourFull"
@@ -565,7 +480,6 @@ Popup {
                             popover.setHsv(popover.hsvHue, Math.max(0, Math.min(255, popover.hsvSaturation + ds)),
                                            Math.max(0, Math.min(255, popover.hsvValue + dv)))
                         }
-                        // Before the application's arrow shortcuts (frame steps).
                         Keys.onShortcutOverride: event => event.accepted = [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up,
                                                                             Qt.Key_Down].includes(event.key)
                         Keys.onPressed: (event) => {
@@ -674,7 +588,6 @@ Popup {
                         }
                     }
                 }
-                // The values, one colour space at a time.
                 TabBar {
                     id: modes
                     objectName: "colourMode"
@@ -724,7 +637,6 @@ Popup {
                             Layout.fillWidth: true
                             implicitWidth: 100
                             Accessible.name: qsTr("ASS colour")
-                            // GetAss(false, false): the alpha has its own field.
                             text: popover.picker.assText(popover.colour(), false)
                             onEditingFinished: {
                                 const c = popover.picker.parse(text)
@@ -749,7 +661,6 @@ Popup {
                         }
                     }
                 }
-                // COLORPICKER_SWITCH_CLICKS, saved at each click.
                 CheckBox {
                     objectName: "switchClicks"
                     Layout.fillWidth: true
@@ -766,7 +677,6 @@ Popup {
         }
     }
 
-    // Three labelled values of one colour space, 0-255 each.
     component ValueRow: RowLayout {
         id: row
         property var names: []

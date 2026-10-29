@@ -1,18 +1,3 @@
-// O3: "Import legacy settings" (docs/proposals/settings-import.md), a
-// rewrite window without a legacy counterpart: the legacy installations
-// found (or a folder the user chooses), the review plan of the chosen one
-// (each record's source, value, destination, current value, disposition and
-// why), the changes to import, Import (in effect at the next start) and
-// Roll back to the settings before the last import. Colours are the
-// palette's (the theme layer), never settings of their own.
-// PU7 (#309): a window on DG1's frame (resizable, modal to the main window)
-// and three steps (PU7-import-wizard): choose the installation (choosing one
-// reads it), review (Conflicts, the rows that can be chosen, or All, every
-// record with its status; the current row's details under the table), and
-// the import's result with Roll back…, which PK1's message box asks first
-// (the result then says it rolled back). While an import is in effect the
-// first step offers Roll back… too; a folder that cannot be read says why
-// there.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.SettingsImport"
 import QtQuick
@@ -31,19 +16,13 @@ DialogWindow {
     resizable: true
     defaultButton: step === 1 ? nextButton : step === 2 ? importButton : closeButton
 
-    // 1: the installation, 2: the review, 3: the result.
+    // MUST KILL: step is a magic int (1 installation, 2 review, 3 result)
     property int step: 1
-    // How many rows the last import wrote (the plan is proposed again after it).
     property int imported: 0
     readonly property int chosenCount: importer.chosenIds.length
 
-    // Settings edited since a waiting import was staged, kept at the next
-    // start over the import's values (settings-import.md step 5).
     property var keptEdits: []
-    // Why the folder chosen or the installation picked cannot be read (the
-    // importer's status), shown on the first step.
     property string rootProblem: ""
-    // The result step's last operation was Roll back, not the import.
     property bool rolledBack: false
 
     function openDialog() {
@@ -57,7 +36,6 @@ DialogWindow {
         if (importer.roots.length > 0)
             chooseRoot(0)
     }
-    // A folder from Choose folder…: listed and chosen, or why not.
     function addFolder(folder) {
         if (importer.addRoot(folder))
             chooseRoot(importer.roots.length - 1)
@@ -101,7 +79,6 @@ DialogWindow {
         onAccepted: dialog.addFolder(selectedFolder.toString())
     }
 
-    // The steps, the current one filled in the accent, those done ticked.
     RowLayout {
         objectName: "settingsImportSteps"
         spacing: 10
@@ -162,7 +139,6 @@ DialogWindow {
         Layout.fillHeight: true
         Layout.preferredHeight: 420
 
-        // 1. The installation.
         ColumnLayout {
             spacing: 6
             Label {
@@ -295,7 +271,6 @@ DialogWindow {
                 }
             }
             Item { Layout.fillHeight: true }
-            // An import waiting for the next start, or one in effect: Roll back… here too.
             Rectangle {
                 visible: dialog.importer.canRollBack || dialog.importer.pending
                 color: Theme.raised
@@ -331,7 +306,6 @@ DialogWindow {
             }
         }
 
-        // 2. The review.
         ColumnLayout {
             spacing: 6
             Label {
@@ -355,7 +329,6 @@ DialogWindow {
             }
         }
 
-        // 3. The result.
         ColumnLayout {
             spacing: 6
             RowLayout {

@@ -2,26 +2,16 @@ pragma Translator: "HikariSub.Tabs"
 import QtQuick
 import QtQuick.Controls
 
-// R1: the tab menu's "Subtitle comparison" (legacy Notebook::ContextMenu,
-// Notebook.cpp:915-956, at 20d647c4). Opened on a tab other than the active
-// one, it compares the editing target with that tab: by times, visible lines,
-// selections, styles and selected styles (the styles both share), then
-// Compare; Turn off comparison while one is on. The criteria are
-// SUBS_COMPARISON_TYPE and SUBS_COMPARISON_STYLES, saved as they change.
 ShellMenu {
     id: comparison
     objectName: "subtitleComparisonMenu"
     iconRole: "compare"
     title: qsTr("Subtitle comparison")
     required property var app
-    // The tab the menu was opened on (-1: not on a tab), and what
-    // app.openComparisonMenu reported for it.
     property int tabIndex: -1
     property var menuState: ({})
     enabled: menuState.enabled === true
 
-    // Before the tab menu opens: legacy builds the menu then, adding the
-    // checked styles to the chosen ones (Notebook.cpp:917-939).
     function prepare(index) {
         tabIndex = index
         menuState = app.openComparisonMenu(index)
@@ -29,24 +19,17 @@ ShellMenu {
         compareByVisible.checked = menuState.visible === true
         compareBySelections.checked = menuState.selections === true
         compareByStyles.checked = menuState.styles === true
-        // Legacy builds the style items anew at each opening (Notebook.cpp:
-        // 918-928). An equal list would keep the old items, and one the user
-        // unchecked would still show unchecked although the opening checked
-        // it again (a style added twice stays chosen, Notebook.cpp:103-109).
+        // Reset first: an equal model list keeps the old items and their stale checks.
         styleItems.model = []
         styleItems.model = menuState.styleItems ?? []
     }
 
-    // "Compare by selected styles" is a checked item with the styles under
-    // it, checked while any style is chosen (Notebook.cpp:936, 113-121).
     delegate: ShellMenuItem {
         id: entry
         readonly property bool stylesEntry: entry.subMenu !== null && entry.subMenu.objectName === "compareStylesMenu"
         objectName: stylesEntry ? "compareByChosenStyles" : ""
         checkable: stylesEntry
         checked: stylesEntry && comparison.menuState.chosenStyles === true
-        // A click opens the styles; it checks nothing (legacy sends no event
-        // for an item with a submenu, Menu.cpp:647-649).
         onToggled: checked = Qt.binding(() => stylesEntry && comparison.menuState.chosenStyles === true)
         Accessible.checkable: stylesEntry
         Accessible.checked: checked
@@ -58,7 +41,8 @@ ShellMenu {
         text: qsTr("Compare by times")
         checkable: true
         enabled: comparison.menuState.canCompare === true
-        onTriggered: comparison.app.toggleComparisonBit(1) // COMPARE_BY_TIMES
+        // MUST KILL: toggleComparisonBit takes raw bits (1 times, 2 styles, 8 visible lines, 16 selections)
+        onTriggered: comparison.app.toggleComparisonBit(1)
     }
     ShellMenuItem {
         id: compareByVisible
@@ -66,16 +50,15 @@ ShellMenu {
         text: qsTr("Compare by visible lines")
         checkable: true
         enabled: comparison.menuState.canCompare === true
-        onTriggered: comparison.app.toggleComparisonBit(8) // COMPARE_BY_VISIBLE
+        onTriggered: comparison.app.toggleComparisonBit(8)
     }
     ShellMenuItem {
         id: compareBySelections
         objectName: "compareBySelections"
         text: qsTr("Compare by selections")
         checkable: true
-        // Both files have selections (SelectionsSize() > 0).
         enabled: comparison.menuState.selectionsEnabled === true
-        onTriggered: comparison.app.toggleComparisonBit(16) // COMPARE_BY_SELECTIONS
+        onTriggered: comparison.app.toggleComparisonBit(16)
     }
     ShellMenuItem {
         id: compareByStyles
@@ -83,7 +66,7 @@ ShellMenu {
         text: qsTr("Compare by styles")
         checkable: true
         enabled: comparison.menuState.canCompare === true
-        onTriggered: comparison.app.toggleComparisonBit(2) // COMPARE_BY_STYLES
+        onTriggered: comparison.app.toggleComparisonBit(2)
     }
     ShellMenu {
         id: stylesMenu
@@ -93,7 +76,7 @@ ShellMenu {
         enabled: comparison.menuState.canCompare === true
         Instantiator {
             id: styleItems
-            model: [] // set by prepare()
+            model: []
             delegate: ShellMenuItem {
                 required property var modelData
                 objectName: "compareStyle_" + modelData.name

@@ -8,7 +8,6 @@ namespace hikari::ui {
 
 namespace {
 
-// Lengths (UTF-16 units) of the word segments holding a letter or a number.
 int wordChars(const QString &text)
 {
     QTextBoundaryFinder finder(QTextBoundaryFinder::Word, text);
@@ -32,7 +31,7 @@ int wordChars(const QString &text)
     return count;
 }
 
-} // namespace
+}
 
 LineMeasures measureLine(const QString &text, core::SubtitleFormat format, MeasureOptions options)
 {
@@ -45,7 +44,6 @@ LineMeasures measureLine(const QString &text, core::SubtitleFormat format, Measu
     QString checkText;
     int hardSpaceOffset = 0;
     bool block = false, drawing = false;
-    // SpellChecker::Check: one wrap's counts.
     auto check = [&](int fullTextLen) {
         const int counted = wordChars(checkText);
         out.chars += options.allCharsForCps ? fullTextLen : counted;
@@ -99,7 +97,6 @@ LineMeasures measureLine(const QString &text, core::SubtitleFormat format, Measu
         check(static_cast<int>(checkText.size()) - hardSpaceOffset);
     if (out.wraps.isEmpty())
         out.wraps = QStringLiteral("0/");
-    // TextData::GetStrippedWraps.
     if (out.wraps.endsWith(QLatin1Char('/')))
         out.wraps.chop(1);
     return out;
@@ -115,4 +112,4 @@ int legacyCps(int chars, std::int64_t startMs, std::int64_t endMs)
     return cps > 999 ? 999 : cps;
 }
 
-} // namespace hikari::ui
+}

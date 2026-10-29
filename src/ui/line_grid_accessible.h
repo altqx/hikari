@@ -1,10 +1,5 @@
 #pragma once
 
-// Accessibility for the painted Grid (V1-A; docs/ux/subtitle-grid.md).
-// The Grid is a Table whose cells are virtual: created on demand, keyed by
-// LineId and column (never by row), and kept in a bounded cache. They are not
-// paint objects or QML delegates.
-
 #include <QAccessible>
 #include <QAccessibleObject>
 
@@ -16,7 +11,6 @@ namespace hikari::ui {
 
 class LineGrid;
 
-// Registers the Grid's accessibility factory once per process.
 void installGridAccessibility();
 
 class LineGridAccessible : public QAccessibleObject,
@@ -28,12 +22,8 @@ public:
     explicit LineGridAccessible(LineGrid *grid);
     ~LineGridAccessible() override;
 
-    // QAccessibleInterface
     QAccessibleInterface *parent() const override;
-    // The Grid's window. QAccessibleObject has none, and Qt's Windows UI
-    // Automation bridge gives an element whose parent has another window
-    // (none counts) that window's HWND: each cell then hosted the whole main
-    // window, and focus in the Grid resolved to it (D1 Windows gate).
+    // Qt's Windows UI Automation bridge hosts an element in its parent's window: without one here each cell hosted the main window.
     QWindow *window() const override;
     int childCount() const override;
     QAccessibleInterface *child(int index) const override;
@@ -46,7 +36,6 @@ public:
     QAccessible::State state() const override;
     void *interface_cast(QAccessible::InterfaceType type) override;
 
-    // QAccessibleTableInterface
     QAccessibleInterface *caption() const override { return nullptr; }
     QAccessibleInterface *summary() const override { return nullptr; }
     QAccessibleInterface *cellAt(int row, int column) const override;
@@ -62,13 +51,12 @@ public:
     QList<int> selectedRows() const override;
     bool isColumnSelected(int) const override { return false; }
     bool isRowSelected(int row) const override;
-    bool selectRow(int) override { return false; }      // selection is application state
+    bool selectRow(int) override { return false; }
     bool selectColumn(int) override { return false; }
     bool unselectRow(int) override { return false; }
     bool unselectColumn(int) override { return false; }
     void modelChange(QAccessibleTableModelChangeEvent *) override {}
 
-    // QAccessibleSelectionInterface
     int selectedItemCount() const override;
     QList<QAccessibleInterface *> selectedItems() const override;
     bool isSelected(QAccessibleInterface *child) const override;
@@ -77,7 +65,6 @@ public:
     bool selectAll() override { return false; }
     bool clear() override { return false; }
 
-    // Evidence for the bounded cache.
     std::size_t cachedCellCount() const { return m_cache.size(); }
     std::size_t cellsCreated() const { return m_created; }
 
@@ -93,9 +80,9 @@ private:
         std::size_t operator()(const Key &k) const { return std::hash<std::uint64_t>()(k.line) * 31 + k.column; }
     };
 
-    mutable std::list<Key> m_lru; // most recent at the front
+    mutable std::list<Key> m_lru;
     mutable std::unordered_map<Key, std::pair<QAccessible::Id, std::list<Key>::iterator>, KeyHash> m_cache;
     mutable std::size_t m_created = 0;
 };
 
-} // namespace hikari::ui
+}

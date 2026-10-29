@@ -4,29 +4,13 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// SH2 (#221): the Home page, in the main area while no Document is open (at
-// start without subtitles, after the last tab closed). The design the owner
-// approved on 2026-10-19 (docs/research/musescore-shell.md §7, SH2): New,
-// Open… and Open video…; the last Session with Restore when it has a
-// Document; the recent subtitles with their last-opened time, a missing file
-// kept, marked and removable; and a column for SH3's What's new. There is no
-// Home tab: the page goes when a Document opens.
-// PU1 (#303, PU1-startup-cards): the startup offer (StartupOffer.qml) takes
-// the Last session row's place as a card: after a crash, Restore session and
-// Autosaves… with × to dismiss; with On start: Ask, Restore and "Restore it at
-// every start".
 FocusScope {
     id: home
     required property var app
-    // SH3 (#223): What's new, shown in the right-hand column when set.
     property Component whatsNew: null
-    // The height of the empty space right above the page (the Document tab
-    // bar, kept while Home shows).
     property real spaceAbove: 0
-    // PU1: the startup offer, shown as the card while active.
     property StartupOffer offer: null
     readonly property bool offerShown: offer !== null && offer.active
-    // The clock "Today" and "Yesterday" count from; tests set it.
     property date now: new Date()
 
     signal newRequested()
@@ -51,7 +35,6 @@ FocusScope {
         sessionNames = app.lastSessionSummary().names
         now = new Date()
     }
-    // The list first when it has a file to open, else New.
     function takeFocus() {
         if (recentList.count > 0)
             recentList.forceActiveFocus(Qt.OtherFocusReason)
@@ -82,8 +65,6 @@ FocusScope {
         recentList.currentIndex = Math.min(index, recentList.count - 1)
     }
 
-    // The day turns while Home shows: "Today" and "Yesterday" move on at
-    // the next local midnight (a timer that fires early is set again).
     Timer {
         objectName: "homeMidnight"
         running: home.visible
@@ -96,7 +77,7 @@ FocusScope {
         onTriggered: home.now = new Date()
     }
 
-    // Later: a close writes the session after the tabs change.
+    // MUST KILL: reload waits a callLater for the closing tab's session write
     onVisibleChanged: if (visible) Qt.callLater(reload)
     Component.onCompleted: reload()
     Connections {
@@ -112,14 +93,12 @@ FocusScope {
         color: Theme.background
     }
 
-    // The two columns stack below this width; What's new goes under the list.
     readonly property bool narrow: width < 1000
 
     ColumnLayout {
         id: page
         anchors.fill: parent
         anchors.margins: 24
-        // The empty tab bar above counts toward the top margin.
         anchors.topMargin: Math.max(0, 24 - home.spaceAbove)
         anchors.leftMargin: Math.max(24, (home.width - 1120) / 2)
         anchors.rightMargin: anchors.leftMargin
@@ -131,8 +110,7 @@ FocusScope {
                 id: newButton
                 objectName: "homeNew"
                 text: qsTr("New")
-                // The page's primary action, filled with the accent (Fusion's
-                // highlighted button only tints its outline).
+                // Fusion's highlighted button only tints its outline.
                 palette.button: Theme.accent
                 palette.buttonText: Theme.onAccent
                 icon.source: IconTheme.image("tab-new", Theme.onAccent, Theme.onAccent, false)
@@ -167,7 +145,6 @@ FocusScope {
                 Layout.fillHeight: true
                 spacing: 16
 
-                // PU1-startup-cards: the startup offer, where the Last session row is.
                 Rectangle {
                     id: offerCard
                     objectName: "homeOffer"
@@ -247,7 +224,6 @@ FocusScope {
                     }
                 }
 
-                // The last Session, when it has a Document to restore.
                 Rectangle {
                     objectName: "homeSession"
                     visible: home.sessionNames.length > 0 && !home.offerShown
@@ -277,7 +253,7 @@ FocusScope {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
                                 color: Theme.muted
-                                // English has no plural catalog: one says "1 document".
+                                // English has no plural catalog, so the singular is its own string.
                                 text: (home.sessionNames.length === 1 ? qsTr("1 document")
                                                                       : qsTr("%n documents", "", home.sessionNames.length))
                                       + " · " + home.sessionNames.join(", ")
@@ -344,8 +320,6 @@ FocusScope {
                             color: Theme.muted
                             text: home.rows.length === 0 ? qsTr("No recent files") : qsTr("No matching files")
                         }
-                        // Without the list, the room under the message (SH3's
-                        // card can make the row taller than the list's own).
                         Item { visible: !recentList.visible; Layout.fillHeight: true }
                         ListView {
                             id: recentList
@@ -363,7 +337,6 @@ FocusScope {
                             Accessible.role: Accessible.List
                             Accessible.name: qsTr("Recent files")
                             ScrollBar.vertical: ScrollBar { policy: recentList.contentHeight > recentList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
-                            // The ring shows while the keyboard has the list (the Grid's row rule).
                             property bool keyboardFocus: false
                             onActiveFocusChanged: {
                                 if (!activeFocus)
@@ -413,7 +386,7 @@ FocusScope {
                                     color: row.current && recentList.activeFocus ? Theme.select
                                          : hover.hovered ? Theme.raised : "transparent"
                                 }
-                                Rectangle { // the selected row's leading marker
+                                Rectangle {
                                     visible: row.current && recentList.activeFocus
                                     width: 3
                                     height: parent.height
@@ -425,7 +398,7 @@ FocusScope {
                                     height: 1
                                     color: Theme.highContrast ? Theme.line : Theme.raised
                                 }
-                                Rectangle { // keyboard focus: 1 wide, inside the row, in the text colour
+                                Rectangle {
                                     objectName: "homeRowFocus"
                                     anchors.fill: parent
                                     color: "transparent"
@@ -499,7 +472,7 @@ FocusScope {
                                         objectName: "homeRemove" + row.index
                                         visible: row.modelData.missing
                                         text: qsTr("Remove")
-                                        focusPolicy: Qt.NoFocus // Delete removes from the keyboard
+                                        focusPolicy: Qt.NoFocus
                                         Accessible.description: row.modelData.name
                                         onClicked: home.remove(row.modelData)
                                     }
@@ -509,7 +482,7 @@ FocusScope {
                                         iconRole: "show-in-folder"
                                         text: qsTr("Show in folder")
                                         flat: true
-                                        focusPolicy: Qt.NoFocus // the context menu has it for the keyboard
+                                        focusPolicy: Qt.NoFocus
                                         onClicked: home.app.showInFolder(row.modelData.path)
                                     }
                                     Label {
@@ -528,7 +501,6 @@ FocusScope {
                 }
             }
 
-            // SH3's What's new; nothing shows until it fills the slot.
             Loader {
                 objectName: "homeWhatsNew"
                 active: home.whatsNew !== null
@@ -542,7 +514,6 @@ FocusScope {
         }
     }
 
-    // The muted secondary text: 11 against the 13 body (visual-language.md).
     readonly property font smallFont: {
         const base = fontSource.font
         const f = Qt.font({family: base.family})

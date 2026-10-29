@@ -1,9 +1,3 @@
-// K1: a push button with an icon of the set beside its text (legacy
-// buttons with a bitmap beside the label, e.g. the Style manager's
-// transfer buttons, stylestore.cpp:86-88), in the appearance's colours
-// (disabled while disabled; hover and press shade the button). The
-// style draws the button; the icon is its image source from IconTheme's
-// image provider. Directional icons mirror in right-to-left layouts.
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui

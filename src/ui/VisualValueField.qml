@@ -4,43 +4,24 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// VT1: one of the active tool's values in the inspector bar, its label in
-// the muted colour. An editable value is a number field in tabular figures
-// with its unit inside (%, °, ms): typed and applied by Enter, or scrubbed
-// by dragging its label sideways (the value's step per pixel, a tenth of it
-// with Shift), the video showing each sample. Enter, and each drag's
-// release, is one history step; Esc during a drag drops it (the tool's
-// handles go back), Esc while typing puts the value back. A read-only value
-// (the crosshair's position) is its number, shown while it has one; its
-// place stays in the bar without one, so the bar does not re-wrap.
-//
-// HY1: a colour's first value has its swatch before it, and the value a
-// drag on the video changes is marked (◆); a press on a value marks it.
 RowLayout {
     id: field
     required property VisualToolsController tools
     required property string name
-    // The tool's value (name, label, text, editable, group, unit, step),
-    // looked up by name so the field is not rebuilt as the value changes.
     required property var value
-    // VT1: an unseen copy the bar measures (no names).
     property bool measuring: false
-    // VB1: named, unless unseen (measured, or folded off the bar's line).
     property bool named: !measuring
-    // Assistive technology's name: the tool, the group and the label.
     property string accessibleName: value.label
     readonly property bool editable: value.editable
     readonly property bool scrubbing: scrub.active
     readonly property bool shown: editable || value.text.length > 0
     spacing: 3
 
-    // The fields fit a coordinate ("-00000.00") and the unit, not the panel.
     TextMetrics {
         id: numberWidth
         font: Qt.application.font
         text: "-00000.00"
     }
-    // A read-only value is the crosshair's whole pixels.
     TextMetrics {
         id: readoutWidth
         font: Qt.application.font
@@ -61,8 +42,6 @@ RowLayout {
     }
     Label {
         objectName: !field.named ? "" : "visualValueMark_" + field.name
-        // Its place stays for every value of a tool that marks one, so the
-        // mark moving does not move the bar.
         visible: field.value.marked !== undefined && field.editable
         opacity: field.value.marked ? 1 : 0
         text: "\u25C6"
@@ -79,7 +58,6 @@ RowLayout {
         Accessible.ignored: !field.shown
         color: scrub.active ? Theme.accent : Theme.muted
         Layout.alignment: Qt.AlignVCenter
-        // The drag handle: a dotted underline says it can be dragged.
         Rectangle {
             visible: field.editable && input.enabled
             anchors { left: parent.left; right: parent.right; top: parent.bottom }
@@ -115,7 +93,7 @@ RowLayout {
                 active = false
                 cancelled = false
                 sent = ""
-                input.forceActiveFocus(Qt.MouseFocusReason) // Esc reaches the field
+                input.forceActiveFocus(Qt.MouseFocusReason)
             }
             onPositionChanged: mouse => {
                 if (cancelled)
@@ -131,17 +109,12 @@ RowLayout {
                 const text = field.format(next)
                 if (text === sent)
                     return
-                // A sample the tool refuses (Scale below zero) is not taken:
-                // the field and the release keep the last one it showed.
                 if (!field.tools.scrubValue(field.name, text))
                     return
                 current = next
                 sent = text
                 input.text = text
             }
-            // A scrub whose gesture the controller ended (the active Line or
-            // the Document changed under it: refresh() escapes) is over: its
-            // later moves and its release write nothing (Codex on #293).
             Connections {
                 target: field.tools
                 function onChanged() {
@@ -166,8 +139,6 @@ RowLayout {
         objectName: field.editable && field.named ? "visualValue_" + field.name : ""
         visible: field.editable
         enabled: field.tools.railEnabled
-        // Typed text stays until Enter or Esc: the tool's refreshes (the
-        // pointer over the video, a frame) do not put the value back.
         property bool editing: false
         selectByMouse: true
         implicitHeight: 24
@@ -184,13 +155,8 @@ RowLayout {
             field.tools.setValue(field.name, text)
             field.restore()
         }
-        // The field's keys come before the window's shortcuts (the digits
-        // and the arrows are bound elsewhere): its typing, its editing keys
-        // and Esc, and the standard copy, paste and undo.
         Keys.onShortcutOverride: event => {
             const plain = (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
-            // Esc is the field's while it has something to put back, else the
-            // tool's (a pending point or step) when it has one (Codex on #293).
             if (event.key === Qt.Key_Escape) {
                 event.accepted = plain && (input.editing || scrub.active || field.tools.escapable)
                 return
@@ -211,7 +177,6 @@ RowLayout {
                 event.accepted = true
                 return
             }
-            // Nothing typed or scrubbed: the tool's Esc, as over the video.
             event.accepted = field.tools.escape()
         }
         onActiveFocusChanged: {
@@ -229,8 +194,6 @@ RowLayout {
             color: Theme.muted
         }
     }
-    // A read-only value keeps a whole coordinate's width, right-aligned, so
-    // the groups after it do not move as the pointer crosses the video.
     Label {
         objectName: field.editable || !field.named ? "" : "visualValue_" + field.name
         visible: !field.editable
@@ -243,19 +206,14 @@ RowLayout {
         Accessible.ignored: !field.shown
     }
 
-    // The scrub's text: up to three decimals, as the tags hold them.
     function format(v) {
         return String(Number(v.toFixed(3)))
     }
-    // The field shows the tool's value again (after Enter, Esc or a drag),
-    // and follows it while it is not typed in or scrubbed.
     function restore() {
         input.editing = false
         input.text = field.value.text
     }
     onValueChanged: if (!input.editing && !scrub.active) input.text = value.text
-    // Typed text belongs to what it was typed for: another Document, active
-    // Line or picked Lines put the value back (Codex on #293).
     readonly property int editTarget: tools.editTarget
     onEditTargetChanged: if (input.editing) restore()
     Component.onCompleted: input.text = value.text

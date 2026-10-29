@@ -5,20 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// PU5 (#307, mockup approved 2026-10-22): "Edit tags", legacy's "Tag
-// editing" (AllTagsEdition, VisualAllTagsEdition.cpp:155-455), opened by
-// Hydra's "Edit tags…". The same window as "Edit shapes": the definitions on
-// the left in the strip's sections (Common, More folded, Your tags) with a
-// search, New tag, Duplicate, Delete and ⋯ under them; the selected one's
-// name, tag and default value, then behind Advanced (folded; HY2 #272,
-// folded into PU5) its range, step, decimal places, count and change
-// option with Set's placing, in the strip's words (HY1); the preview under
-// them: the strip as Hydra shows the tag, and what Set writes
-// on the active Line. Each change is kept as it is made; Undo and Redo walk
-// the window's steps; Close and Esc keep them. A value the tool cannot use
-// is said under its field and the definition keeps its last good one; a
-// name another definition has asks to replace it; Restore default tags asks
-// first.
 DialogWindow {
     id: dialog
     objectName: "tagsEditionDialog"
@@ -28,18 +14,15 @@ DialogWindow {
     resizable: true
     initialFocus: tagList
 
-    // The strip's change switch and the choice beside it (HY1,
-    // AllTagsTool::changeOf): the definition's change option is one of
-    // legacy's eight (AllTagsPasteMode), Set's choice its placing.
     readonly property var changeNames: [qsTr("Set"), qsTr("Add"), qsTr("Multiply"), qsTr("Gradient")]
     readonly property var placingNames: [qsTr("At the cursor"), qsTr("At the start of the text"),
                                          qsTr("Clip rectangle with %1 animation").arg("\\t")]
     readonly property var multiplyNames: [qsTr("Set by line number"), qsTr("Add by line number")]
     readonly property var gradientNames: [qsTr("Across characters, increasing"), qsTr("Across characters, decreasing"),
                                           qsTr("Across lines, increasing"), qsTr("Across lines, decreasing")]
-    // HY2: Advanced is folded at each opening of the window.
     property bool advancedOpen: false
     onVisibleChanged: if (visible) advancedOpen = false
+    // MUST KILL: changeOption is a magic int (eight paste modes) remapped by hand into change and variant
     readonly property int changeOption: editor ? editor.changeOption : 1
     readonly property int change: changeOption === 1 ? 0 : changeOption === 0 ? 1 : changeOption <= 3 ? 2 : 3
     readonly property var variants: change === 0 ? placingNames : change === 2 ? multiplyNames
@@ -56,7 +39,7 @@ DialogWindow {
             editor.changeOption = (change === 2 ? 2 : 4) + index
     }
 
-    // The window's words for its steps (AllTagsEdition::Step).
+    // MUST KILL: stepText's list is index-parallel to AllTagsEdition::Step
     function stepText(step) {
         return [qsTr("Rename tag"), qsTr("Edit tag"), qsTr("Edit range"), qsTr("Edit step"),
                 qsTr("Edit decimal places"), qsTr("Change count"), qsTr("Edit starting value"),
@@ -64,7 +47,6 @@ DialogWindow {
                 qsTr("Delete tag"), qsTr("Replace tag"), qsTr("Restore default tags"),
                 qsTr("Undo all changes")][step] ?? ""
     }
-    // A refused value, said for its field (AllTagsEditor::Check).
     function checkText(code, field) {
         switch (code) {
         case AllTagsEditor.CheckEmpty:
@@ -92,19 +74,14 @@ DialogWindow {
         return ""
     }
 
-    // The fields show the definition again (another one chosen, a step
-    // undone, or a refused value left).
     signal showFields()
     property bool asking: false
-    // Enter, or leaving the name with an error: a taken name asks to replace
-    // the other definition; any other refused name goes back.
     function nameLeft() {
         if (!editor || asking || tagName.error.length === 0) {
             if (editor)
                 editor.endTyping()
             return
         }
-        // Closing with a taken name keeps the last good one, unasked.
         if (!visible) {
             showFields()
             return
@@ -155,11 +132,7 @@ DialogWindow {
     function redo() { if (editor) { editor.redo(); showFields() } }
 
     onEditorChanged: showFields()
-    // Closing keeps the changes: the editor goes with the window. Not on
-    // hiding, nor when the window goes with the one it opened from
-    // (fullscreen left, a floating panel hidden): the bar showing the
-    // dialogs then makes the window again with the same editor and its
-    // history (or Edit… brings it back).
+    // MUST KILL: a hidden transientParent means the window went with its opener, not a close
     onClosing: if (editor && !(transientParent && !transientParent.visible)) editor.close()
     Connections {
         target: dialog.editor
@@ -174,18 +147,12 @@ DialogWindow {
         onActivated: dialog.redo()
     }
 
-    // A field of the definition: what it shows comes back from the editor
-    // (showFields), what is typed goes to it at once; a refused value is
-    // said (error) and goes back when the field is left.
     component EditField: TextField {
         id: edit
-        // The editor's name for it ("name", "tag", "min", … "value3").
         property string field
         property string error
         selectByMouse: true
         Accessible.description: error
-        // (Read now, not through a binding: the editor's change may reach
-        // this before a binding on it.)
         function show() {
             text = !dialog.editor ? ""
                  : field === "name" ? dialog.editor.name
@@ -204,7 +171,6 @@ DialogWindow {
                 dialog.nameLeft()
                 return
             }
-            // (A kept number shows as the tool reads it: "1,5" as 1.5.)
             dialog.editor.endTyping()
             show()
         }
@@ -222,8 +188,6 @@ DialogWindow {
         font.family: "monospace"
         inputMethodHints: Qt.ImhFormattedNumbersOnly
     }
-    // A starting value, named as the strip names it; shown while the tag
-    // takes it.
     component ValueEdit: RowLayout {
         id: valueEdit
         property int at
@@ -240,7 +204,6 @@ DialogWindow {
             Accessible.name: valueEdit.label
         }
     }
-    // (One width, so the Advanced rows line up with the ones above.)
     component RowLabel: Label {
         color: Theme.muted
         horizontalAlignment: Text.AlignRight
@@ -264,7 +227,6 @@ DialogWindow {
         Layout.preferredHeight: 680
         spacing: 0
 
-        // The definitions in the strip's sections, and the commands on them.
         Rectangle {
             Layout.preferredWidth: 250
             Layout.fillHeight: true
@@ -281,7 +243,6 @@ DialogWindow {
                     Layout.margins: 6
                     placeholderText: qsTr("Search tags")
                     Accessible.name: qsTr("Search tags")
-                    // Enter takes the first match; Down goes into the list.
                     Keys.onReturnPressed: event => { event.accepted = true; tagList.selectRow(tagList.firstItemRow(0, 1)) }
                     Keys.onEnterPressed: event => { event.accepted = true; tagList.selectRow(tagList.firstItemRow(0, 1)) }
                     Keys.onDownPressed: tagList.forceActiveFocus()
@@ -290,9 +251,6 @@ DialogWindow {
                     id: tagList
                     objectName: "tagList"
                     property bool moreOpen: false
-                    // The rows: a section's header ({header, section, count})
-                    // or a definition ({index, name, tag}); searching shows
-                    // the matches of every section, without headers.
                     model: {
                         const items = dialog.editor ? dialog.editor.items : []
                         const query = search.text.trim().toLowerCase()
@@ -326,7 +284,6 @@ DialogWindow {
                     Accessible.role: Accessible.List
                     Accessible.name: qsTr("Tags")
                     ScrollBar.vertical: ScrollBar {}
-                    // The row of the selected definition (More opens to show it).
                     function rowOf(index) {
                         for (let r = 0; r < count; ++r)
                             if (!model[r].header && model[r].index === index)
@@ -339,11 +296,7 @@ DialogWindow {
                                 return r
                         return -1
                     }
-                    // The selected definition's row, through this binding
-                    // only: a click or a key chooses through the editor. (Set
-                    // by hand after each new model, the view freed its rows
-                    // after them when its window went: a crash, found with
-                    // Codex on #349.)
+                    // Bound only: setting it after a model change crashes QQuickItemView when the window goes.
                     currentIndex: dialog.editor && count > 0 ? rowOf(dialog.editor.selection) : -1
                     onCurrentIndexChanged: if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
                     function selectRow(row) {
@@ -354,7 +307,6 @@ DialogWindow {
                             dialog.showFields()
                         }
                     }
-                    // More opens to show a definition chosen in it.
                     readonly property int selected: dialog.editor ? dialog.editor.selection : -1
                     onSelectedChanged: {
                         const items = dialog.editor ? dialog.editor.items : []
@@ -459,7 +411,6 @@ DialogWindow {
             }
         }
 
-        // The selected definition, then its preview.
         ScrollView {
             id: detailScroll
             Layout.fillWidth: true
@@ -471,8 +422,6 @@ DialogWindow {
                 x: 20
                 spacing: 8
 
-                // HY2 (#272, folded into PU5): the name, the tag and its
-                // default first; the rest behind Advanced, folded.
                 GridLayout {
                     columns: 2
                     columnSpacing: 12
@@ -502,8 +451,6 @@ DialogWindow {
                     }
                     Item { implicitWidth: 1; visible: tagCodeError.visible }
                     FieldError { id: tagCodeError; objectName: "tagCodeError"; text: tagCode.error; Layout.fillWidth: true }
-                    // The value the strip starts at (each, named as the
-                    // strip names them, for a tag taking several).
                     RowLabel { text: qsTr("Default") }
                     Flow {
                         Layout.fillWidth: true
@@ -570,7 +517,6 @@ DialogWindow {
                         RowLabel { text: qsTr("Count") }
                         SegmentedButtons {
                             objectName: "tagCount"
-                            // Legacy's "No / One / Two / Three additional values".
                             choices: [1, 2, 3, 4].map(n => ({ text: String(n), name: "tagCount" + n,
                                                               tip: qsTr("The tag takes %n value(s)", "", n) }))
                             currentIndex: dialog.editor ? dialog.editor.count - 1 : 0
@@ -605,8 +551,6 @@ DialogWindow {
                 Rule {}
                 SectionTitle { text: qsTr("Preview") }
                 Label { text: qsTr("In the inspector bar"); color: Theme.muted }
-                // The strip as Hydra shows this tag (HY1): the tag, its
-                // values at their start, the change.
                 Rectangle {
                     objectName: "tagStripPreview"
                     Layout.fillWidth: true
@@ -726,7 +670,6 @@ DialogWindow {
         }
     }
 
-    // The window's questions, PK1's message box over it.
     MessageHost {
         id: messages
         objectName: "tagsMessages"

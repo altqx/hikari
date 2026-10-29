@@ -1,15 +1,6 @@
 import QtQuick
 import Hikari.Ui
 
-// SH1 (#220): the edges of the main window while it draws its own title bar
-// on Wayland and X11: a 1-pixel boundary in the line role, and a band just
-// inside it (WindowFrame.resizeBand) that resizes the window through the
-// window system (startSystemResize). Neither while the window is maximised
-// or full screen. There is no drawn shadow: it would need a see-through
-// window, blended over the video on every frame. Windows resizes from the
-// native frame and draws its own boundary and shadow (WindowFrame.nativeResize).
-// DG1: a dialog's window (DialogFrame) has the boundary too, and the band
-// only while it can be resized.
 Item {
     id: root
     objectName: "mainWindowEdges"

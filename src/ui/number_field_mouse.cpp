@@ -14,7 +14,7 @@ application::NumberFieldRange rangeOf(double from, double to)
     return {static_cast<std::int64_t>(from), static_cast<std::int64_t>(to)};
 }
 
-} // namespace
+}
 
 double NumberFieldMouse::value(const QString &text) const
 {
@@ -41,4 +41,4 @@ QVariantMap NumberFieldMouse::dragMove(const QVariantMap &drag, int x, int y, do
             {QStringLiteral("text"), text ? QString::fromStdU16String(*text) : QString()}};
 }
 
-} // namespace hikari::ui
+}

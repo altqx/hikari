@@ -10,8 +10,7 @@ namespace hikari::ui {
 
 namespace {
 
-// A symbol font (Wingdings, Webdings, Symbol): a Windows symbol cmap
-// (platform 3, encoding 0), whose letters draw pictures.
+// A Windows symbol cmap (platform 3, encoding 0) maps letters to pictures.
 bool symbolCmap(const QRawFont &font)
 {
     const QByteArray cmap = font.fontTable("cmap");
@@ -25,7 +24,7 @@ bool symbolCmap(const QRawFont &font)
     return false;
 }
 
-} // namespace
+}
 
 FontFaces::FontFaces(QObject *parent) : QObject(parent)
 {
@@ -46,24 +45,18 @@ QVariantMap FontFaces::face(const QString &family)
     QString face;
     QString sample;
     if (!family.isEmpty() && QFontDatabase::hasFamily(family)) {
-        // The face's own glyphs, without fallback: whether it has the letters
-        // of its name.
         const QRawFont raw = QRawFont::fromFont(QFont(family));
         const auto systems = QFontDatabase::writingSystems(family);
-        // Or a font Qt lists under Symbol alone, without the OS/2 script bits
-        // every text font sets (URW's Dingbats draws its letters as pictures
-        // through a Unicode cmap).
+        // Qt lists a font without OS/2 script bits under Symbol alone (URW's Dingbats has a Unicode cmap).
         const bool symbol = raw.isValid()
                             && (symbolCmap(raw) || systems == QList<QFontDatabase::WritingSystem>{QFontDatabase::Symbol});
         bool drawsName = raw.isValid() && !symbol;
         for (const QChar c : family)
             drawsName = drawsName && raw.supportsCharacter(c);
         if (symbol) {
-            // Its pictures for the letters, when it has any there.
             if (raw.supportsCharacter(QLatin1Char('A')))
                 sample = QStringLiteral("AaBbYyZz");
         } else if (!drawsName) {
-            // A text in a script the face writes, when the database knows one.
             for (const auto system : systems)
                 if (system != QFontDatabase::Latin && system != QFontDatabase::Symbol
                     && system != QFontDatabase::Any && system != QFontDatabase::Other) {
@@ -71,8 +64,6 @@ QVariantMap FontFaces::face(const QString &family)
                     break;
                 }
         }
-        // The name in the face, or the interface font and the sample after it;
-        // a face drawing neither stays out (the interface font alone).
         if (drawsName || !sample.isEmpty())
             face = family;
     }
@@ -81,4 +72,4 @@ QVariantMap FontFaces::face(const QString &family)
     return answer;
 }
 
-} // namespace hikari::ui
+}

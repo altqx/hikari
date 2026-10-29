@@ -45,12 +45,6 @@ bool isDarkColour(const QColor &colour)
     return colour.lightnessF() < 0.5;
 }
 
-// The accent presets (K2): seven hues per mode drawn for the Compact Studio
-// palette. Light accents carry white text and meet 4.5:1 on every light
-// surface; dark accents carry a dark tint of their hue and meet 4.5:1 on
-// every dark surface (measured in docs/ux/visual-language.md). Each
-// preset's selected background is its hue at the spec green's selected
-// lightness and saturation.
 const std::array<Accent, 7> kLightAccents{{
     {"red", QT_TRANSLATE_NOOP("HikariSub.Options", "Red"), rgb(0xB3261E), rgb(0xFFFFFF), rgb(0xEBD7D6)},
     {"orange", QT_TRANSLATE_NOOP("HikariSub.Options", "Orange"), rgb(0x9C4600), rgb(0xFFFFFF), rgb(0xEBDFD6)},
@@ -70,11 +64,6 @@ const std::array<Accent, 7> kDarkAccents{{
     {"pink", QT_TRANSLATE_NOOP("HikariSub.Options", "Pink"), rgb(0xEFAAD3), rgb(0x2C1021), rgb(0x4C3041)},
 }};
 
-// The fixed roles of each theme (visual-language.md): Light and Dark are the
-// spec's tokens, with the accent's three from the chosen preset; High
-// contrast black is the spec's high-contrast column; High contrast white is
-// drawn to match it on white. Keyboard focus is resolved from the text
-// colour (resolve).
 Roles baseRoles(Code code)
 {
     switch (code) {
@@ -111,10 +100,10 @@ QColor readColour(const QVariant &value)
     const auto parsed = application::parseSettingColour(value.toString().toStdString());
     if (!parsed)
         return {};
-    return QColor::fromRgb(QRgb(*parsed | 0xFF000000u)); // drawn opaque
+    return QColor::fromRgb(QRgb(*parsed | 0xFF000000u));
 }
 
-} // namespace
+}
 
 QString codeName(Code code)
 {
@@ -229,20 +218,13 @@ Code effective(const Choice &choice, Qt::ColorScheme system)
 
 namespace {
 
-// Keyboard focus (K2, visual-language.md "Keyboard focus"; the user's
-// 2026-10-05 decision): MuseScore 4's convention, a ring in the text colour
-// (its NavigationFocusBorder in fontPrimaryColor), which the accent of
-// selection, the default button and a focused field's border never is; 1
-// wide and drawn tight since the user's 2026-10-13 decision, which marks
-// the focused panel with an accent corner triangle instead of a ring. A
-// high-contrast text pick takes it along.
 Roles withFocus(Roles roles)
 {
     roles.focus = roles.text;
     return roles;
 }
 
-} // namespace
+}
 
 Roles resolve(Code code, const Choice &choice)
 {
@@ -255,9 +237,7 @@ Roles resolve(Code code, const Choice &choice)
             roles.text = picks[1];
         if (picks[2].isValid())
             roles.line = picks[2];
-        roles.control = roles.line; // the border pick outlines the controls too
-        // Text on the accent: the theme's, or the other of black and white
-        // when a picked accent leaves it unreadable.
+        roles.control = roles.line;
         if (contrastRatio(roles.onAccent, roles.accent) < 4.5) {
             const QColor other = roles.onAccent == QColor(Qt::black) ? QColor(Qt::white) : QColor(Qt::black);
             if (contrastRatio(other, roles.accent) > contrastRatio(roles.onAccent, roles.accent))
@@ -276,8 +256,6 @@ Roles resolve(Code code, const Choice &choice)
 QPalette palette(const Roles &r)
 {
     QPalette p;
-    // The palette's derived shades (Light, Midlight, Mid, Dark, Shadow) for
-    // the styles' bevels and separators: the boundary for Mid and Dark.
     const QColor lighter = isDarkColour(r.panel) ? r.raised.lighter(115) : r.field;
     for (const auto group : {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
         const bool off = group == QPalette::Disabled;
@@ -311,35 +289,26 @@ Content content(Code code, const Roles &roles)
 {
     Content c;
     application::AudioDisplayOptions &a = c.audio;
-    // Selection-type marks take the accent: the selection's background
-    // (AUDIO_SELECTION_BACKGROUND and _MODIFIED, legacy's 0x37 alpha) and the
-    // waveform inside it (AUDIO_WAVEFORM_SELECTED).
     QColor selection = roles.accent;
     selection.setAlpha(0x37);
     switch (code) {
     case Code::Dark:
-        // Legacy's dark theme (config.cpp:451-472, LoadDefaultColors(true)),
-        // the AudioDisplayOptions defaults.
-        c.spellcheck = rgb(0x940000); // GRID_SPELLCHECKER / EDITOR_SPELLCHECKER (config.cpp:432, 449)
-        c.grammar = rgb(0x6EA8FE);    // GR1: blue, apart from spelling's red (approved mockup)
+        c.spellcheck = rgb(0x940000);
+        c.grammar = rgb(0x6EA8FE);
         c.gridAlternate = rgb(0x242A31);
         c.gridWarning = rgb(0x7A2E2E);
-        c.gridComment = rgb(0x253A57); // GR4: legacy GRID_COMMENT's #4880D0 hue, toned for the text roles
-        // GRID_COMPARISON_* (config.cpp:427-431)
+        c.gridComment = rgb(0x253A57);
         c.comparison = {rgb(0x2700FF), rgb(0x272B32), rgb(0x3A3E45), rgb(0x003176), rgb(0x3662A1)};
-        // EDITOR_CURLY_BRACES .. EDITOR_TEMPLATE_STRINGS (config.cpp:433-442)
         c.syntax = {QColor(), rgb(0x8791FD), rgb(0x00C3FF), rgb(0x00C3FF), rgb(0x0076FF), rgb(0xADABAB),
                     rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243)};
         break;
     case Code::Light:
-        c.spellcheck = rgb(0xFF6968); // legacy's light theme (config.cpp:432, 449)
+        c.spellcheck = rgb(0xFF6968);
         c.grammar = rgb(0x1A56DB);
         c.gridAlternate = rgb(0xF0F2F4);
         c.gridWarning = rgb(0xF4C7C7);
         c.gridComment = rgb(0xD6E3F5);
-        // legacy's light theme (config.cpp:427-431, LoadDefaultColors(false))
         c.comparison = {rgb(0xFFFFFF), rgb(0xFF000C), rgb(0xB7AC00), rgb(0x9C0000), rgb(0x817900)};
-        // legacy's light theme (config.cpp:433-442)
         c.syntax = {QColor(), rgb(0x7E3B00), rgb(0x787600), rgb(0x787600), rgb(0x34C200), rgb(0x817F7F),
                     rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243)};
         a.background = 0xFFDDE3E8;
@@ -366,9 +335,8 @@ Content content(Code code, const Roles &roles)
         c.grammar = rgb(0x0000C8);
         c.gridAlternate = rgb(0xFFFFFF);
         c.gridWarning = rgb(0xFFC0C0);
-        c.gridComment = rgb(0xF2E2B0); // amber: the selection is blue, a compared match grey
+        c.gridComment = rgb(0xF2E2B0);
         c.comparison = {rgb(0xC000C0), rgb(0xFFD0D0), rgb(0xE0E0E0), rgb(0xD0D0FF), rgb(0xD0E8FF)};
-        // Legacy's roles, each readable on the field at 4.5:1.
         c.syntax = {QColor(), rgb(0x7A3E00), rgb(0x005A9E), rgb(0x005A9E), rgb(0x006400), rgb(0x595959),
                     rgb(0x6B5E00), rgb(0xB00000), rgb(0x005A9E), rgb(0x5B2DA8), rgb(0x00663A)};
         a.background = 0xFFFFFFFF;
@@ -395,7 +363,7 @@ Content content(Code code, const Roles &roles)
         c.grammar = rgb(0xFFFF00);
         c.gridAlternate = rgb(0x000000);
         c.gridWarning = rgb(0x800000);
-        c.gridComment = rgb(0x403400); // amber: the selection is blue, a compared match grey
+        c.gridComment = rgb(0x403400);
         c.comparison = {rgb(0xFF00FF), rgb(0x3A0000), rgb(0x303030), rgb(0x000060), rgb(0x003060)};
         c.syntax = {QColor(), rgb(0xFFB060), rgb(0x60D0FF), rgb(0x60D0FF), rgb(0x7CFC7C), rgb(0xBEBEBE),
                     rgb(0xF0E68C), rgb(0xFF6060), rgb(0x60D0FF), rgb(0xC8A8FF), rgb(0xA0E0A0)};
@@ -419,11 +387,9 @@ Content content(Code code, const Roles &roles)
         a.syllableText = 0xFF000000;
         break;
     }
-    c.syntax[0] = roles.text; // EDITOR_TEXT: the field's own text
+    c.syntax[0] = roles.text;
     a.selectionBackground = a.selectionModified = toArgb(selection);
     a.waveformSelected = toArgb(roles.accent);
-    // GRID_SELECTION (legacy #8791FD at alpha 75, config.cpp:422) over a
-    // compared row: the accent at that alpha.
     c.comparisonSelection = roles.accent;
     c.comparisonSelection.setAlpha(75);
     return c;
@@ -474,9 +440,6 @@ QColor composite(const QColor &over, const QColor &under)
 
 namespace {
 
-// What every Theme singleton, the icons and the owner-drawn items follow:
-// the profile's choice (or the Options dialog's preview of one) and the
-// platform's colour scheme.
 class Hub : public QObject {
     Q_OBJECT
 public:
@@ -508,8 +471,7 @@ public:
         refresh(true);
     }
 
-    // The platform's scheme; where Qt's platform theme reports none (Linux
-    // desktops other than GNOME and KDE), the XDG settings portal's.
+    // Qt reports no scheme on Linux desktops other than GNOME and KDE; the XDG settings portal's is used then.
     Qt::ColorScheme scheme() const
     {
         if (forcedScheme)
@@ -530,7 +492,6 @@ public:
     {
         if (portal) {
             disconnect(portal, nullptr, this, nullptr);
-            // The hub's own reader (the session bus's) goes; a test's stays its own.
             if (portal != next && portal->parent() == this)
                 portal->deleteLater();
         }
@@ -548,8 +509,7 @@ public:
 
     void refresh(bool force = false)
     {
-        // Asking Qt for a colour scheme (requestScheme) can report a change
-        // at once, which would come back here.
+        // QStyleHints::setColorScheme can emit colorSchemeChanged at once, re-entering here.
         if (refreshing)
             return;
         refreshing = true;
@@ -565,8 +525,6 @@ public:
         };
         State next;
         next.choice = choiceFrom(value);
-        // Following the system, Qt's scheme is the system's again before it
-        // is read.
         if (next.choice.followSystem)
             requestScheme(Qt::ColorScheme::Unknown);
         next.code = effective(next.choice, scheme());
@@ -574,26 +532,18 @@ public:
         next.content = content(next.code, next.roles);
         const bool same = next.code == state.code && next.choice == state.choice && next.roles == state.roles;
         state = std::move(next);
-        // With a profile the controls draw with the theme's palette, and
-        // their keyboard focus in its focus role (the palette has no role
-        // for it); without one, Fusion's.
         if (settings && (force || !same))
             QGuiApplication::setPalette(palette(state.roles));
-        // Not following the system, Qt's own scheme is the theme's side, so
-        // that what Qt sets on a window's frame (at its creation, on a
-        // palette or system change) agrees with the theme.
         if (!state.choice.followSystem)
             requestScheme(isDark(state.code) ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
         style::StyleColours::setFocus(settings ? state.roles.focus : QColor());
         style::StyleColours::setControl(settings ? state.roles.control : QColor());
-        // Every time, as the system's own change (which comes here) has Qt
-        // set the frames from its scheme.
+        // Qt resets the title bars from its own scheme on every system change.
         themeTitleBars(QGuiApplication::topLevelWindows());
         if (force || !same)
             emit changed();
     }
 
-    // The window system's title bars of the framed windows (title_bars.h).
     void themeTitleBars(const QList<QWindow *> &windows) const
     {
         const bool dark = isDark(state.code);
@@ -602,9 +552,6 @@ public:
                 titlebars::setDark(window, dark);
     }
 
-    // A window's title bar once it has its native window, when it is shown,
-    // and again after Qt has set its frame for an application palette change
-    // (it does so after the event's filters, hence queued).
     bool eventFilter(QObject *object, QEvent *event) override
     {
         const auto type = event->type();
@@ -617,10 +564,9 @@ public:
             if (static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated)
                 themeTitleBars({window});
         } else if (type == QEvent::Show) {
-            // A window whose flags changed after its creation (framed now)
-            // is themed when it is next shown.
             themeTitleBars({window});
         } else {
+            // Qt sets the frame after the palette-change event's filters run.
             QMetaObject::invokeMethod(
                 this, [this, w = QPointer<QWindow>(window)] {
                     if (w)
@@ -631,14 +577,7 @@ public:
         return false;
     }
 
-    // The colour scheme Qt is asked for (Unknown: the system's). Windows
-    // only: there Qt draws a framed window's title bar from it. Elsewhere
-    // it would also change the platform's palette, the client-side
-    // decorations (Wayland) and the application's appearance (macOS), which
-    // follow the desktop's own theme as in the legacy application, and what
-    // systemScheme reports. A request already made is not made again
-    // (each one has Qt refresh its palettes and themes), unless Qt reports
-    // another side than the one asked for.
+    // Windows only: Qt draws title bars from the requested scheme (elsewhere it restyles the whole platform theme); each request makes Qt refresh every palette.
     void requestScheme(Qt::ColorScheme scheme)
     {
 #ifdef Q_OS_WIN
@@ -654,16 +593,7 @@ public:
 #endif
     }
 
-    // The popups (menus, dialogs) take the palette of their window, which a
-    // Qt Quick window makes when it is first read, from the controls' theme
-    // (the style's own defaults, which do not follow the application
-    // palette), and then changes only when the application palette changes.
-    // Made after the theme's palette was set (the Application sets it before
-    // the engine loads), it stayed light under Dark, the default, until the
-    // theme next changed (W1). So each window's palette is made at once,
-    // after the engine's load (Theme's constructor) or when a window made
-    // later first takes the focus (a floating panel), and the palette is
-    // then set again as a change.
+    // A QQuickWindow creates its palette on first read from the style's defaults and then follows only application palette changes.
     void adopt(const QList<QWindow *> &windows, bool again = false)
     {
         bool added = again;
@@ -672,7 +602,7 @@ public:
             if (!quick || (quick->property(kAdopted).toBool() && !again))
                 continue;
             quick->setProperty(kAdopted, true);
-            quick->property("palette"); // made now
+            quick->property("palette");
             added = true;
         }
         if (added && settings) {
@@ -695,8 +625,6 @@ private:
         if (auto *hints = QGuiApplication::styleHints())
             connect(hints, &QStyleHints::colorSchemeChanged, this, [this] { refresh(); });
 #ifdef HIKARI_COLOUR_SCHEME_PORTAL
-        // On the desktop's own platforms only: offscreen (the tests) follows
-        // no desktop.
         const QString platform = QGuiApplication::platformName();
         if (platform == QLatin1String("xcb") || platform.startsWith(QLatin1String("wayland")))
             portal = new PortalColourScheme(QDBusConnection::sessionBus(), this);
@@ -718,7 +646,7 @@ private:
     std::optional<Qt::ColorScheme> requested;
 };
 
-} // namespace
+}
 
 const State &current()
 {
@@ -737,14 +665,13 @@ void useSettings(SettingsStore *settings)
 
 namespace {
 
-// After the engine's load: its windows' palettes (Hub::adopt).
 void repaletteAfterLoad()
 {
     QMetaObject::invokeMethod(
         &Hub::get(), [] { Hub::get().adopt(QGuiApplication::topLevelWindows(), true); }, Qt::QueuedConnection);
 }
 
-} // namespace
+}
 
 void preview(const QVariantMap &values)
 {
@@ -788,17 +715,15 @@ void chooseControlsStyle()
 {
     if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
         QQuickStyle::setStyle(QString::fromLatin1(kControlsStyle));
-        // The controls the style leaves alone are Fusion's.
         QQuickStyle::setFallbackStyle(QStringLiteral("Fusion"));
     }
 }
 
-} // namespace theme
+}
 
 Theme::Theme(QObject *parent) : QObject(parent)
 {
     theme::onChanged(this, [this] { emit changed(); });
-    // An engine's singleton: once its load has made the popups.
     theme::repaletteAfterLoad();
 }
 
@@ -835,7 +760,6 @@ QVariantList Theme::themes() const
     for (const auto code : theme::kCodes)
         out << QVariantMap{{QStringLiteral("code"), theme::codeName(code)},
                            {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", names[static_cast<int>(code)])},
-                           // FR1: for a window open across a language switch (qsTranslate).
                            {QStringLiteral("source"), QString::fromLatin1(names[static_cast<int>(code)])},
                            {QStringLiteral("dark"), theme::isDark(code)},
                            {QStringLiteral("highContrast"), theme::isHighContrast(code)}};
@@ -899,9 +823,8 @@ bool Theme::systemSchemeKnown() const
     return theme::systemScheme() != Qt::ColorScheme::Unknown;
 }
 
-} // namespace hikari::ui
+}
 
 #include "theme.moc"
 
-// K2: the controls style (src/ui/style), a static QML plugin.
 Q_IMPORT_QML_PLUGIN(HikariStylePlugin)

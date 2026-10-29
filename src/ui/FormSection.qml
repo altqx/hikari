@@ -1,10 +1,3 @@
-// TS1: a titled section of a dock form (MuseScore 4's ExpandableBlank,
-// docs/research/musescore-shell.md §5): a disclosure arrow and the title in
-// bold, the content 8 below, sections 12 apart with a 1-pixel `line` rule
-// between them. The header is a button: a click, Space or Enter collapses
-// or expands the content. The arrow is drawn here, as Qt draws a list's
-// arrows (outside the icon set, docs/ux/icons.md), and points to the
-// trailing side while collapsed.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Templates as T
@@ -14,10 +7,8 @@ import Hikari.Ui
 ColumnLayout {
     id: section
     property string title
-    // CR1 (#452): a muted line after the title, what the section holds.
     property string summary
     property bool expanded: true
-    // The rule above the section (off for the form's first section).
     property bool ruled: true
     default property alias content: body.data
     signal toggled(bool expanded)
@@ -30,7 +21,7 @@ ColumnLayout {
         color: Theme.line
         implicitHeight: 1
         Layout.fillWidth: true
-        Layout.bottomMargin: 4 // 12 from the section above with the spacing
+        Layout.bottomMargin: 4
     }
     T.AbstractButton {
         id: header
@@ -42,7 +33,7 @@ ColumnLayout {
         implicitWidth: arrow.width + 4 + title.implicitWidth + (summaryLabel.visible ? 8 + summaryLabel.implicitWidth : 0)
         Accessible.role: Accessible.Button
         Accessible.name: text
-        // Qt Quick's Accessible has no expanded state: a toggle, on while open.
+        // Qt Quick's Accessible has no expanded state, so the header is a checkable toggle.
         Accessible.checkable: true
         Accessible.checked: section.expanded
         onClicked: section.toggled(!section.expanded)

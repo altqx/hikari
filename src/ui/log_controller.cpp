@@ -11,7 +11,6 @@
 namespace hikari::ui {
 
 namespace {
-// More than the toasts can show at once; older ones stay in the Log only.
 constexpr size_t kUnshownKept = 10;
 }
 
@@ -216,4 +215,4 @@ void LogController::copyEntry(int id) const
         clipboard->setText(lineOf(m_model->entries[size_t(id - 1)]));
 }
 
-} // namespace hikari::ui
+}

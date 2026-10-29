@@ -1,20 +1,3 @@
-// O1: legacy OptionsDialog "Options" (GLOBAL_SETTINGS, File > Settings) over
-// the settings registry. `values` is what each control holds
-// (application::OptionsState); OK/Apply write the bound controls whose value
-// differs (legacy SetOptions). Theme files are excluded by the accepted
-// settings decision; the Appearance page (K2, AppearancePage.qml) takes the
-// Themes page's place and previews its choices live until OK, Apply or
-// Cancel; the Hotkeys page is the shortcut editor's (O2, `hotkeys`);
-// Associations are Windows only and wait for their platform card.
-//
-// PF1 (#225), after MuseScore 4's Preferences (docs/research/musescore-shell.md
-// §PF1): the window "Settings" on DG1's frame (resizable, its place and size
-// kept, modal to the main window), a flat page list (legacy's sub-pages are
-// sections now: PF1-pages), each page one column of titled sections
-// (SettingsSection, SettingsRow), the page shown last opened again, also
-// after a restart. "Reset page" and "Reset all settings…" are staged like
-// any change (PF1-staged-reset): OK or Apply keeps them, Cancel, Esc and the
-// window's Close drop them.
 pragma Translator: "HikariSub.Options"
 import QtQuick
 import QtQuick.Controls
@@ -26,12 +9,11 @@ DialogWindow {
     id: dialog
     objectName: "settingsDialog"
     required property var app
-    // SY2: the Appearance page's colour popover.
     required property ColourPickerController colourPicker
-    property var hotkeys: null // O2: the Hotkeys page's HotkeysController
-    property var updates: null // PU7: the Updates page's UpdateChecker (what this install offers)
-    property var crashReports: null // CR1 (#468): CrashReports, whether this build can send one
-    property TagButtonsController tagButtons: null // LE5: the Line editor page's tag button list
+    property var hotkeys: null
+    property var updates: null
+    property var crashReports: null
+    property TagButtonsController tagButtons: null
     title: qsTr("Settings")
     dialogId: "settings"
     settings: app ? app.settings : null
@@ -44,25 +26,17 @@ DialogWindow {
     property var dictionaries: []
     property var catalogs: []
     property var styles: []
-    property var renderers: [] // W2: the CSRI renderers' names and "libass", VSFilterMod last
-    property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
-    property var outputDevices: [] // H2: System default, the connected devices, a missing choice
+    property var renderers: []
+    property var rendererLabels: []
+    property var outputDevices: []
     property ToastStack notices: null
-    // LE5: the tag buttons as the Line editor page holds them, {name, tag,
-    // type, icon} each, written on OK or Apply where they differ.
     property var tagButtonList: []
-    // "Reset all settings…" since the last OK or Apply: OK or Apply resets
-    // the store first (PF1-staged-reset).
     property bool resetAllStaged: false
     signal reloaded()
-    // GR1: the Spelling & grammar page's licence line asks for Help > Credits.
     signal creditsRequested()
-    // VF1: the follow lists' texts, shared with the Video panel's menu.
     readonly property VideoFollowChoices follow: VideoFollowChoices { settings: dialog.app.settings }
 
-    // The pages in the list's order, by id (the C++ OptionsPage ids, and
-    // "hotkeys"). PU7 (#309): Updates after Hotkeys (MuseScore 4's Update
-    // after Shortcuts). GR1 (#364): Spelling & grammar after Line editor.
+    // MUST KILL: the page ids must match the C++ OptionsPage ids (and "hotkeys")
     readonly property var pages: [
         {id: "general", name: qsTr("General"), iconRole: "settings"},
         {id: "appearance", name: qsTr("Appearance"), iconRole: "appearance"},
@@ -75,15 +49,11 @@ DialogWindow {
         {id: "subtitleProperties", name: qsTr("Subtitle properties"), iconRole: "script-properties"},
         {id: "automation", name: qsTr("Automation"), iconRole: "automation"},
         {id: "hotkeys", name: qsTr("Hotkeys"), iconRole: "hotkeys"},
-        {id: "updates", name: qsTr("Updates and privacy"), iconRole: "check-updates"} // AN1
+        {id: "updates", name: qsTr("Updates and privacy"), iconRole: "check-updates"}
     ]
     readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
     function pageIndex(id) { return pages.findIndex(p => p.id === id) }
 
-    // `page`: the page to show by id (AV1's "Audio settings…" asks for
-    // "audio"); without one, the page shown last. AM1: `filter` is the
-    // Hotkeys page's filter to choose (the Automation panel's "Shortcuts in
-    // Settings…", MuseScore's deep link from a plugin to its shortcut).
     function openDialog(page, filter) {
         const r = app.openSettingsDialog()
         languages = r.languages
@@ -97,7 +67,7 @@ DialogWindow {
         resetAllStaged = false
         copyTagButtons()
         reloaded()
-        hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
+        hotkeyFilter.currentIndex = 0
         hotkeySearch.text = ""
         const shown = pageIndex(page ?? (settings ? settings.value("workspace.settingsPage") : ""))
         pageList.currentIndex = shown >= 0 ? shown : 0
@@ -106,9 +76,7 @@ DialogWindow {
             hotkeys.filter(hotkeyFilter.currentIndex)
         }
         open()
-        rememberPage() // a deep link's page is the one shown last
-        // NT1 (#302): the legacy constructor's "does not exist" message
-        // boxes, one at a time; warning toasts now.
+        rememberPage()
         if (notices)
             for (const warning of r.warnings)
                 notices.post("warning", qsTr("Settings"), warning)
@@ -117,13 +85,10 @@ DialogWindow {
         if (visible && settings && pageList.currentIndex >= 0)
             settings.setValue("workspace.settingsPage", pages[pageList.currentIndex].id)
     }
-    // O5: Apply switched the interface language: the dictionary choice's
-    // entry for an empty Dictionary folder in the new language.
     Connections {
         target: dialog.app
         function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
     }
-    // AD2: asks first; OK or Apply forgets the answers (and Repeat's record).
     function clearLastAnswers() {
         ask({
             title: qsTr("Clear last answers"),
@@ -134,7 +99,6 @@ DialogWindow {
                       { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
         }, id => { if (id === "clear") put("automation.dialogAnswers", []) })
     }
-    // PK1's message box, made at its first question.
     readonly property var question: questionLoader.item
     function ask(options, done) {
         questionLoader.active = true
@@ -144,16 +108,11 @@ DialogWindow {
         const v = Object.assign({}, values)
         v[setting] = value
         values = v
-        // K2: the appearance shows at once; OK or Apply saves it, Cancel takes it back.
         if (setting.startsWith("appearance."))
             Theme.preview(values)
     }
-    // The Appearance page's colour picker for a high-contrast colour (SY2:
-    // the colour popover at `anchor`). Each change is staged at once as
-    // "#RRGGBB" and previewed; Esc puts the colour before back.
     function pickThemeColour(setting, colour, anchor, name) {
         themeColourPopover.openFor(anchor, themeColourTarget, () => {
-            // The staged colour once the one open before has ended.
             const now = values[setting] ?? colour
             themeColourTarget.setting = setting
             themeColourTarget.before = now
@@ -162,14 +121,11 @@ DialogWindow {
             return { r: c.r, g: c.g, b: c.b, a: 0 }
         }, { title: name, alpha: false, focus: anchor })
     }
-    // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {
         app.applySettings(values, resetAllStaged)
         resetAllStaged = false
         commitTagButtons()
     }
-    // "Reset page": the page's settings at their defaults, staged; the
-    // Hotkeys page's every default hotkey, in the list's history.
     function resetPage() {
         if (currentPage === "hotkeys") {
             hotkeys.optionsResetAll()
@@ -179,13 +135,11 @@ DialogWindow {
         if (currentPage === "appearance")
             Theme.preview(values)
         if (currentPage === "lineEditor")
-            tagButtonList = [] // the page's tag buttons too, staged
+            tagButtonList = []
         if (currentPage === "conversion")
-            styles = app.settingsStyles() // the default catalog's
+            styles = app.settingsStyles()
         reloaded()
     }
-    // "Reset all settings…", after its question: every page but the
-    // appearance and the hotkeys at the defaults, staged.
     function resetAll() {
         ask({
             title: qsTr("Reset all settings"),
@@ -201,7 +155,6 @@ DialogWindow {
                 return
             dialog.values = dialog.app.resetSettings(dialog.values)
             dialog.resetAllStaged = true
-            // The shown tag buttons stay (EditBox keeps what SetTagButtons built).
             dialog.copyTagButtons()
             dialog.reloaded()
         })
@@ -243,10 +196,7 @@ DialogWindow {
         tagButtonList = list
         tagButtonRows.currentIndex = index + step
     }
-    // O2: OnMapHkey for the selected row: the mapping window, then the
-    // question when the keys are taken (ItemHotkey::OnMapHotkey).
-    readonly property color warningColour: Theme.warning // WINDOW_WARNING_ELEMENTS
-    // PK1: the capture as a popover under the row (or under `from`).
+    readonly property color warningColour: Theme.warning
     function mapHotkey(from) {
         const target = hotkeys.mapTarget()
         if (target.name === undefined || hotkeys.mapProblem.length > 0)
@@ -263,8 +213,6 @@ DialogWindow {
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)
         styles = r.styles
-        // Over the staged values: the ones without a control (Ask again's
-        // notices.hiddenQuestions) stay staged (Codex review).
         values = Object.assign({}, values, r.values)
         reloaded()
     }
@@ -274,12 +222,8 @@ DialogWindow {
         resetAllStaged = false
         commitTagButtons()
     }
-    // K2: the preview ends with the window: after OK or Apply the saved
-    // appearance shows, after Cancel the one before.
     onVisibleChanged: if (!visible) Theme.endPreview()
 
-    // "Reset page" at the leading edge (its menu: "Reset all settings…");
-    // OK, Cancel and Apply at the trailing one in the platform's order.
     leadingActions: [
         RowLayout {
             spacing: 2
@@ -336,7 +280,6 @@ DialogWindow {
         }
     ]
 
-    // A page: a scrolling column of sections inside the page's margins.
     component SettingsPage: ScrollView {
         id: settingsPage
         default property alias content: pageColumn.data
@@ -350,8 +293,6 @@ DialogWindow {
             spacing: 16
         }
     }
-    // A muted line under a check box: when its change takes effect, what
-    // it means.
     component SettingNote: Label {
         color: Theme.muted
         wrapMode: Text.Wrap
@@ -359,8 +300,6 @@ DialogWindow {
         Layout.topMargin: -5
         Layout.fillWidth: true
     }
-    // A check box bound to a boolean setting, its box in the rows' icon
-    // slot. Its label wraps in the page's width.
     component SettingCheck: CheckBox {
         id: check
         required property string setting
@@ -379,12 +318,11 @@ DialogWindow {
         Connections { target: dialog; function onReloaded() { check.refresh() } }
         onToggled: dialog.put(setting, checked)
     }
-    // A NumCtrl: a number within the legacy range, its unit after it.
     component SettingNumber: RowLayout {
         id: numberRow
         required property string setting
         property string unit
-        property string name // the accessible name
+        property string name
         property string tip
         property int from: 0
         property int to: 100000
@@ -410,7 +348,6 @@ DialogWindow {
             color: Theme.muted
         }
     }
-    // A text field bound to a string setting.
     component SettingText: TextField {
         id: field
         required property string setting
@@ -421,8 +358,6 @@ DialogWindow {
         Connections { target: dialog; function onReloaded() { field.refresh() } }
         onTextEdited: dialog.put(setting, text)
     }
-    // A HikariChoice: `values` holds its selection, which may be -1 (nothing
-    // shown) or past the list; it changes only when an entry is chosen.
     component SettingChoice: ComboBox {
         id: choice
         required property string setting
@@ -442,12 +377,11 @@ DialogWindow {
             chosen(index)
         }
     }
-    // FontPickerButton: the family and point size of a font setting.
     component SettingFont: RowLayout {
         id: fontRow
         required property string setting
         required property string sizeSetting
-        property string name // the accessible name
+        property string name
         spacing: 8
         ComboBox {
             id: family
@@ -485,11 +419,9 @@ DialogWindow {
             spacing: 0
             Layout.fillWidth: true
             Layout.fillHeight: true
-            // MuseScore 4's reference size, the window's smallest.
             Layout.preferredWidth: 880
             Layout.preferredHeight: 528
 
-            // The page list on the background, the page on the panel.
             Rectangle {
                 color: Theme.background
                 Layout.preferredWidth: 220
@@ -506,7 +438,6 @@ DialogWindow {
                     activeFocusOnTab: true
                     Accessible.role: Accessible.PageTabList
                     Accessible.name: dialog.title
-                    // The page shown last, where the window opens next.
                     onCurrentIndexChanged: dialog.rememberPage()
                     delegate: ItemDelegate {
                         id: pageItem
@@ -524,7 +455,6 @@ DialogWindow {
                         Accessible.role: Accessible.PageTab
                         Accessible.name: text
                         Accessible.selected: highlighted
-                        // The selection's fill, the accent marker and bold (MuseScore's selected page).
                         background: Rectangle {
                             color: pageItem.highlighted ? Theme.select : pageItem.hovered ? Theme.raised : "transparent"
                             Rectangle {
@@ -561,15 +491,12 @@ DialogWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                // General: the language, tabs, saving, notices, folders.
                 SettingsPage {
                     objectName: "settingsPageGeneral"
                     SettingsSection {
                         objectName: "settingsLanguageGroup"
                         title: qsTr("Language")
                         ruled: false
-                        // Legacy "Language (program restart required)": the
-                        // switch is live (O5-language-label).
                         SettingsRow {
                             iconRole: "language"
                             text: qsTr("Interface language")
@@ -602,8 +529,6 @@ DialogWindow {
                             }
                         }
                     }
-                    // PK1 (#301): notices as toasts or in the Log only, and
-                    // the questions hidden with "Don't ask again" back.
                     SettingsSection {
                         objectName: "settingsNoticesGroup"
                         title: qsTr("Notices")
@@ -622,8 +547,6 @@ DialogWindow {
                     }
                     SettingsSection {
                         title: qsTr("Folders")
-                        // UD1 (#362): the user folder, where settings, scripts,
-                        // dictionaries and presets live; Help has the command too.
                         SettingsRow {
                             objectName: "settingsUserFolderRow"
                             visible: (dialog.app.userFolder || "").length > 0
@@ -657,20 +580,14 @@ DialogWindow {
                     }
                 }
 
-                // K2: Appearance, in the Themes page's place.
                 AppearancePage { dialog: dialog }
 
-                // Line editor: display, editing, Translation mode, LE5's tag buttons.
                 SettingsPage {
                     objectName: "settingsPageLineEditor"
                     SettingsSection {
                         title: qsTr("Display")
                         ruled: false
-                        // LE3-tags-shown: the Line editor shows ASS override tags unless this is on
-                        // (View > "Hide tags in the line editor" switches it too).
                         SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags") }
-                        // LE2: legacy's Time / Frames radios under the Line editor
-                        // (EDITBOX_TIMES_TO_FRAMES_SWITCH); the Video panel's "⋯" menu has it too.
                         SettingCheck { setting: "editor.timesToFramesSwitch"; text: qsTr("Show video frames instead of times") }
                         SettingNote { text: qsTr("In the line editor and the subtitle grid.") }
                     }
@@ -684,7 +601,6 @@ DialogWindow {
                         SettingCheck { setting: "translation.showOriginal"; text: qsTr("Show the original") }
                         SettingCheck { setting: "translation.hideOriginalOnVideo"; text: qsTr("Hide the original on the video") }
                     }
-                    // LE5: the Line editor's custom tag buttons, in strip order.
                     SettingsSection {
                         objectName: "settingsTagButtons"
                         title: qsTr("Tag buttons")
@@ -741,7 +657,7 @@ DialogWindow {
                                     }
                                 }
                                 Label {
-                                    parent: tagButtonRows // over the view, not in its content
+                                    parent: tagButtonRows // a ListView's children go into its content item
                                     anchors.centerIn: parent
                                     visible: tagButtonRows.count === 0
                                     text: qsTr("No tag buttons")
@@ -807,8 +723,6 @@ DialogWindow {
                     }
                 }
 
-                // GR1 (#364): Spelling & grammar: the Line editor's Spelling
-                // section, grammar check with Harper and its rule groups.
                 SettingsPage {
                     id: spellingPage
                     objectName: "settingsPageSpelling"
@@ -817,8 +731,6 @@ DialogWindow {
                         title: qsTr("Spelling")
                         ruled: false
                         SettingCheck { setting: "editor.spellchecker"; text: qsTr("Check spelling") }
-                        // SP1 (#474): the primary language; every other
-                        // installed dictionary checks the words of its script.
                         SettingsRow {
                             iconRole: "dictionary"
                             text: qsTr("Primary language")
@@ -826,9 +738,6 @@ DialogWindow {
                             SettingChoice {
                                 setting: "editor.dictionaryLanguage"
                                 model: dialog.dictionaries
-                                // With no dictionary installed, a disabled box
-                                // that says so; with none chosen, it says that
-                                // (not a blank box).
                                 enabled: count > 0
                                 displayText: currentIndex >= 0 ? currentText
                                            : count > 0 ? qsTr("None chosen") : qsTr("No dictionaries found")
@@ -871,9 +780,6 @@ DialogWindow {
                             Layout.fillWidth: true
                             Repeater {
                                 model: dialog.app.grammarGroups()
-                                // A group's switch: its name, rule count and
-                                // description; greyed out (its state kept)
-                                // while grammar check is off.
                                 CheckBox {
                                     id: group
                                     required property var modelData
@@ -936,7 +842,6 @@ DialogWindow {
                     }
                 }
 
-                // Subtitle grid: the Grid's settings from legacy Editor and Editor > Advanced.
                 SettingsPage {
                     objectName: "settingsPageGrid"
                     SettingsSection {
@@ -948,7 +853,6 @@ DialogWindow {
                     }
                     SettingsSection {
                         title: qsTr("Columns")
-                        // GR3: the Grid's Hide columns > Hide empty columns, one setting.
                         SettingCheck { setting: "grid.autoHideColumns"; text: qsTr("Hide empty columns") }
                     }
                     SettingsSection {
@@ -973,7 +877,6 @@ DialogWindow {
                     }
                 }
 
-                // Video (legacy video page), with the Video settings legacy kept on Main.
                 SettingsPage {
                     objectName: "settingsPageVideo"
                     SettingsSection {
@@ -982,9 +885,6 @@ DialogWindow {
                         SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
                         SettingCheck { setting: "video.fullScreenOnStart"; text: qsTr("Open video from the context menu in full screen") }
                         SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video at the active line's time") }
-                        // VF1 (#288): the Video panel's two follow lists, also in
-                        // its menu ("Seek on", "Then play"): OK and Apply store
-                        // them as the other pages', and the menu follows.
                         SettingsRow {
                             text: dialog.follow.seekName
                             SettingChoice {
@@ -1001,12 +901,8 @@ DialogWindow {
                                 Accessible.name: dialog.follow.playLabel
                             }
                         }
-                        // W1 (Windows): the player that plays video, the
-                        // built-in one or the optional DirectShow adapter
-                        // (legacy's player with indexing off). It applies at
-                        // once; a playing video pauses.
                         Loader {
-                            // DX1: the docs export's entry on every platform.
+                            // MUST KILL: docsEntries is read by name by the docs export, active or not
                             readonly property var docsEntries: [{
                                 setting: "video.playbackPlayer", control: "choice", label: qsTr("Player"), platform: "windows",
                                 values: [{value: 0, label: qsTr("Built-in")}, {value: 1, label: "DirectShow"}]
@@ -1027,9 +923,6 @@ DialogWindow {
                     }
                     SettingsSection {
                         title: qsTr("Subtitles on video")
-                        // W2: legacy's "Subtitle display filter" (ID_VSFILTER_PROVIDER),
-                        // only when there is a CSRI renderer to choose besides libass
-                        // (W2-filter-row-hidden).
                         SettingsRow {
                             objectName: "settingsRendererGroup"
                             visible: dialog.renderers.length > 1
@@ -1041,8 +934,6 @@ DialogWindow {
                                 Accessible.name: qsTr("Subtitle display filter")
                             }
                         }
-                        // SV1 (#365): where libass draws the previews'
-                        // subtitles; a CSRI filter draws at the video's size.
                         SettingsRow {
                             id: previewAtRow
                             objectName: "settingsPreviewSubtitlesAt"
@@ -1086,7 +977,7 @@ DialogWindow {
                         SettingsRow {
                             iconRole: "zoom"
                             text: qsTr("Start zoom")
-                            // A NumCtrl with its own id: OK stores its digits as typed.
+                            // MUST KILL: video.zoomPercent is a number edited as text
                             SettingText {
                                 setting: "video.zoomPercent"
                                 Layout.preferredWidth: 120
@@ -1101,19 +992,12 @@ DialogWindow {
                         title: qsTr("Script resolution")
                         SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off the visual tools warning") }
                         SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Don't warn about a resolution mismatch") }
-                        // Y4-playres-ask: the script resolution question's "Always" choice.
                         SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
                     }
                 }
 
-                // Audio (legacy AudioMain and AudioSecond).
                 SettingsPage {
                     objectName: "settingsPageAudio"
-                    // H2-output-device: the device both the audio box and
-                    // video playback play through (System default follows
-                    // the system's default); A4-wasapi-default (Windows): the
-                    // audio box's output API, which applies when the output
-                    // next opens.
                     SettingsSection {
                         objectName: "audioOutputBox"
                         title: qsTr("Output")
@@ -1129,7 +1013,7 @@ DialogWindow {
                         }
                         Loader {
                             objectName: "audioOutputHostApiBox"
-                            // DX1: the docs export's entry on every platform.
+                            // MUST KILL: docsEntries is read by name by the docs export, active or not
                             readonly property var docsEntries: [{
                                 setting: "audio.outputHostApi", control: "choice", label: qsTr("API"), platform: "windows",
                                 hint: qsTr("Applies when the output opens again."),
@@ -1168,7 +1052,7 @@ DialogWindow {
                         }
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don't play after changing the line") }
-                        SettingCheck { setting: "audio.autoFocus"; text: qsTr("Hotkeys follow the panel under the pointer") } // KB1
+                        SettingCheck { setting: "audio.autoFocus"; text: qsTr("Hotkeys follow the panel under the pointer") }
                     }
                     SettingsSection {
                         title: qsTr("Display")
@@ -1199,8 +1083,6 @@ DialogWindow {
                         title: qsTr("Karaoke")
                         SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge every \"n\" with the previous syllable") }
                         SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move the syllable line after a click") }
-                        // KA1 (#276): Auto split's double consonants, and the
-                        // length the \k and \kf switch takes as long
                         SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
                         SettingsRow {
                             text: qsTr("Long syllables for %1").arg("\\kf")
@@ -1224,7 +1106,6 @@ DialogWindow {
                     }
                 }
 
-                // Conversion (legacy Editor > Conversion, ConvOpt).
                 SettingsPage {
                     objectName: "settingsPageConversion"
                     SettingsSection {
@@ -1237,7 +1118,7 @@ DialogWindow {
                                 setting: "convert.styleCatalog"
                                 model: dialog.catalogs
                                 Accessible.name: qsTr("Catalog")
-                                onChosen: index => dialog.chooseCatalog(index) // OnChangeCatalog
+                                onChosen: index => dialog.chooseCatalog(index)
                             }
                         }
                         SettingsRow {
@@ -1291,19 +1172,15 @@ DialogWindow {
                     }
                 }
 
-                // Subtitle properties (legacy SubtitlesProperties page). Its
-                // credit fields wait until a save writes them (#383).
                 SettingsPage {
                     objectName: "settingsPageSubtitleProperties"
                     SettingsSection {
                         title: qsTr("Files")
                         ruled: false
-                        // WS2: the tab's panel layout in the ASS file's [Hikari] section.
                         SettingCheck { setting: "subtitles.layoutInFile"; text: qsTr("Save the panel layout in subtitle files") }
                     }
                 }
 
-                // Automation: the automation settings from legacy Editor and Editor > Advanced.
                 SettingsPage {
                     objectName: "settingsPageAutomation"
                     SettingsSection {
@@ -1315,7 +1192,6 @@ DialogWindow {
                             SettingNumber { setting: "automation.traceLevel"; from: 0; to: 5; name: qsTr("Lua trace level") }
                         }
                     }
-                    // AD2 (#311): script dialogs' last answers (AD2-fill-last-answers).
                     SettingsSection {
                         objectName: "settingsScriptDialogsGroup"
                         title: qsTr("Script dialogs")
@@ -1337,12 +1213,6 @@ DialogWindow {
                     }
                 }
 
-                // O2: Hotkeys (legacy Hotkeyss page): the context filter and
-                // PF1's search, the Function / Hotkey list under its
-                // contexts' headings (a double click maps; Ctrl+Z / Ctrl+Y
-                // undo and redo in it), Map hotkey, Restore default and
-                // Delete. Changed rows show in the warning colour until
-                // OK/Apply.
                 Item {
                     objectName: "settingsPageHotkeys"
                     ColumnLayout {
@@ -1382,8 +1252,6 @@ DialogWindow {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
-                            // PU7 (#309): AM1's import, moved here from the
-                            // Automation panel's menu (PU7-import-hotkeys).
                             IconTextButton {
                                 objectName: "hotkeyImportLegacy"
                                 iconRole: "import"
@@ -1402,21 +1270,17 @@ DialogWindow {
                             clip: true
                             focus: true
                             model: dialog.hotkeys ? dialog.hotkeys.rows : []
-                            // The list's selection (a shown position, -1 for none).
                             readonly property int selectedRow: dialog.hotkeys ? dialog.hotkeys.selected : -1
                             ScrollBar.vertical: ScrollBar {}
                             Accessible.name: qsTr("Hotkeys")
-                            // The heading a row is listed under: its window, or Automation for a macro.
+                            // MUST KILL: contexts is indexed by a magic window int, 5 standing for Automation
                             readonly property var contexts: [qsTr("Global"), qsTr("Subtitle grid"), qsTr("Line editor"),
                                                              qsTr("Video"), qsTr("Audio"), qsTr("Automation")]
                             function contextOf(row) { return row.script !== undefined ? 5 : row.context }
-                            // HikariListCtrl's gutter while the list is filtered: a
-                            // box where rows are hidden ("+") or shown again ("-");
-                            // a click shows or hides them (ShowOrHideBlock).
-                            // PF1: not while searching (the search hides rows on purpose).
                             readonly property bool gutter: dialog.hotkeys ? dialog.hotkeys.listFiltered && hotkeySearch.text.length === 0
                                                                           : false
                             component BlockBox: Label {
+                                // MUST KILL: block is a magic int (0 none, 1 rows hidden, else rows shown)
                                 property int block: 0
                                 property int position: -1
                                 visible: block !== 0 && hotkeyList.gutter
@@ -1460,7 +1324,6 @@ DialogWindow {
                                 required property var modelData
                                 required property int index
                                 width: hotkeyList.width
-                                // A heading where the context changes.
                                 readonly property bool headed: index === 0
                                     || hotkeyList.contextOf(hotkeyList.model[index - 1]) !== hotkeyList.contextOf(modelData)
                                 Label {
@@ -1489,8 +1352,6 @@ DialogWindow {
                                         dialog.hotkeys.select(index)
                                         dialog.mapHotkey(hotkeyRow)
                                     }
-                                    // AM1: a macro's row names its script and macro, and
-                                    // says in the warning colour why its keys do not run it.
                                     readonly property bool macro: modelData.script !== undefined
                                     Accessible.name: (macro ? modelData.script + " " + modelData.macro : modelData.text) + " " + modelData.accel
                                                      + (macro && modelData.note.length > 0 ? ", " + modelData.note : "")
@@ -1500,7 +1361,6 @@ DialogWindow {
                                     }
                                     contentItem: RowLayout {
                                         Item {
-                                            // the block's line beside rows shown from it
                                             visible: hotkeyList.gutter
                                             Layout.preferredWidth: 13
                                             Layout.fillHeight: true
@@ -1510,11 +1370,6 @@ DialogWindow {
                                                 color: Theme.text
                                             }
                                         }
-                                        // ItemText / ItemHotkey (HikariListCtrl.cpp:44-55,
-                                        // OptionsDialog.cpp:48-71): a cell whose text does
-                                        // not fit shows it whole as its tooltip (the
-                                        // Function column's first 1000 characters). Under
-                                        // its heading a row shows its name (PF1).
                                         Label {
                                             id: hotkeyText
                                             objectName: "hotkeyText"
@@ -1544,7 +1399,6 @@ DialogWindow {
                                             ToolTip.text: hotkeyKeys.text
                                         }
                                     }
-                                    // the box for the gap after this row
                                     BlockBox {
                                         objectName: "hotkeyBlock" + hotkeyRow.index
                                         block: hotkeyRow.modelData.block
@@ -1554,7 +1408,6 @@ DialogWindow {
                                     }
                                 }
                             }
-                            // HikariListCtrl's accelerators: undo, redo, and the selection.
                             function ownKey(event) {
                                 const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
                                 return (mods === Qt.ControlModifier && (event.key === Qt.Key_Z || event.key === Qt.Key_Y))
@@ -1582,7 +1435,6 @@ DialogWindow {
                                 id: hotkeyMapButton
                                 objectName: "hotkeyMap"
                                 text: qsTr("Map hotkey…")
-                                // The row's note says why (AM1: a name two loaded scripts share).
                                 enabled: dialog.hotkeys.mapProblem.length === 0
                                 onClicked: dialog.mapHotkey(hotkeyMapButton)
                             }
@@ -1596,12 +1448,6 @@ DialogWindow {
                     }
                 }
 
-                // PU7 (#309): Updates, the three options that left the update
-                // window (PU7-update-settings) and the version "Skip this
-                // version" hid, staged as every other setting. An install
-                // that does not install updates itself (AUR, portable) shows
-                // why in place of "Install updates automatically"; an AUR
-                // install with a channel has no "Stable versions only".
                 SettingsPage {
                     objectName: "settingsPageUpdates"
                     SettingsSection {
@@ -1619,8 +1465,7 @@ DialogWindow {
                             text: qsTr("Off: prereleases (beta versions) are offered too.")
                         }
                         SettingsRow {
-                            // DX1 (#367): the docs export's entry; shown only
-                            // once a version is skipped, Offer it again clears it.
+                            // MUST KILL: the docs* properties are read by name by the docs export
                             readonly property string docsSetting: "updater.skippedVersion"
                             readonly property string docsControl: "readonly"
                             readonly property string docsLabel: text
@@ -1659,8 +1504,6 @@ DialogWindow {
                             Layout.topMargin: !dialog.updates || dialog.updates.installsUpdates ? -5 : 0
                         }
                     }
-                    // AN1 (#404): anonymous usage data, on by default; the
-                    // same setting as Getting started's Updates page.
                     SettingsSection {
                         title: qsTr("Privacy")
                         SettingCheck { setting: "privacy.usageData"; text: qsTr("Send anonymous usage data") }
@@ -1672,9 +1515,6 @@ DialogWindow {
                             Layout.leftMargin: 22
                             onClicked: dialog.app.openWhatIsSent()
                         }
-                        // CR1 (#452): a crash or freeze report goes without
-                        // its window, usage data on or off; #468: only in a
-                        // build that can send one (with the PostHog key).
                         SettingCheck {
                             setting: "privacy.alwaysSendCrashReports"
                             visible: !dialog.crashReports || dialog.crashReports.canSend
@@ -1694,7 +1534,7 @@ DialogWindow {
     FolderDialog {
         id: fontsFolderDialog
         objectName: "fontsFolderDialog"
-        title: qsTr("Choose external font folder") // TI1-fonts-folder-title
+        title: qsTr("Choose external font folder")
         onAccepted: {
             const path = dialog.app.settingsFolderPath(selectedFolder)
             fontsFolder.text = path
@@ -1702,8 +1542,6 @@ DialogWindow {
         }
     }
 
-    // PU7 (#309): Import legacy hotkeys: what was added at once, as a toast
-    // (NT1's rule for an outcome); the skipped ones under Details.
     FileDialog {
         id: legacyHotkeysFile
         objectName: "legacyHotkeysFile"
@@ -1756,7 +1594,6 @@ DialogWindow {
         settings: dialog.app ? dialog.app.settings : null
     }
 
-    // PK1's message box: the "Reset all settings…" question.
     Loader {
         id: questionLoader
         active: false

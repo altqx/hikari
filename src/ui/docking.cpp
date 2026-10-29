@@ -4,9 +4,7 @@
 #include <kddockwidgets/Config.h>
 #include <kddockwidgets/KDDockWidgets.h>
 #include <kddockwidgets/LayoutSaver.h>
-// Private engine headers, isolated here: re-initializing the platform for a
-// new QML engine has no public entry point (the engine's own
-// tests_deinitPlatform does the same, in developer builds only).
+// Private KDDW headers: re-initializing the platform for a new QML engine has no public entry point.
 #include <kddockwidgets/core/DockRegistry.h>
 #include <kddockwidgets/core/DockWidget.h>
 #include <kddockwidgets/core/DropArea.h>
@@ -53,19 +51,7 @@ bool g_everAttached = false;
 
 using KDDockWidgets::DropLocation;
 
-// D3: MuseScore's drop feedback (docs/research/musescore-docking.md §4). The
-// engine's QtQuick frontend has no Segmented indicators at 2.4.1 (its view
-// factory returns no view for them), and their wedge-shaped hot zones are not
-// MuseScore's highlight anyway, so the Classic overlay stays and its two
-// parts are replaced: the indicator "window" draws nothing and finds the drop
-// from where the pointer is (DropZones), and the rubber band is the accent
-// highlight over the area the drop takes (DockDropHighlight.qml).
-//
-// Zones, over the group under the pointer: its header adds a tab, as does
-// its middle third (both ways); elsewhere the nearest edge splits it on that
-// side. Within kOuterBand of the drop area's own edge, the panel goes along
-// that whole edge. A zone the engine does not allow (its
-// dropIndicatorVisible) is no drop: the panel stays floating there.
+// KDDW 2.4.1's QtQuick frontend has no Segmented indicators, so the Classic overlay's window and rubber band are replaced.
 class DropZones final : public KDDockWidgets::Core::ClassicIndicatorWindowViewInterface {
 public:
     static constexpr int kOuterBand = 24;
@@ -81,7 +67,6 @@ public:
         QQuickItem *area = dropArea();
         return area ? locate(area->mapFromGlobal(QPointF(globalPos)).toPoint()) : DropLocation::DropLocation_None;
     }
-    // Where a drop at `location` would be made: the zone's middle (tests).
     QPoint posForIndicator(DropLocation location) const override
     {
         QQuickItem *area = dropArea();
@@ -134,7 +119,6 @@ private:
         QQuickItem *area = dropArea();
         const QRect bounds(0, 0, int(area->width()), int(area->height()));
         const int band = outerBand(bounds);
-        // Along an edge of the whole area: the nearest one.
         struct Edge {
             int distance;
             DropLocation location;
@@ -147,7 +131,6 @@ private:
                                                [](const Edge &a, const Edge &b) { return a.distance < b.distance; });
         if (nearest->distance >= 0 && nearest->distance < band && m_overlay->dropIndicatorVisible(nearest->location))
             return nearest->location;
-        // Over a group: its header or middle third adds a tab, the rest splits it.
         const QRect group = m_overlay->hoveredGroupRect();
         if (!m_overlay->hoveredGroup() || !group.contains(local) || group.width() <= 0 || group.height() <= 0)
             return DropLocation::DropLocation_None;
@@ -168,8 +151,6 @@ private:
     KDDockWidgets::Core::ClassicDropIndicatorOverlay *const m_overlay;
 };
 
-// The drop highlight, in the drop area over the area the drop takes; the
-// engine sizes, shows and raises it (the Classic overlay's rubber band).
 class DropHighlight final : public KDDockWidgets::QtQuick::View {
 public:
     explicit DropHighlight(QQuickItem *parent)
@@ -186,8 +167,6 @@ public:
     }
 };
 
-// The engine's views with Hikari's headers, and (K2) its separators, group
-// frames and floating windows in the theme's colours.
 class ViewFactory : public KDDockWidgets::QtQuick::ViewFactory {
 public:
     QUrl titleBarFilename() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Hikari/Ui/DockTitleBar.qml")); }
@@ -210,27 +189,9 @@ public:
     }
 };
 
-std::function<std::optional<qreal>(QWindow *)> g_nativeScale; // tests
+std::function<std::optional<qreal>(QWindow *)> g_nativeScale;
 
-// dockchrome::kScaleSettleMs: a floating window's size in device-independent
-// pixels across a change of its screen's scale. Qt keeps a window's size
-// when Windows asks it to (WM_DPICHANGED); a live change of the display
-// scale left the floating Line editor's window at its pixel size instead
-// (native gate at 100 to 125 %), so its size became 80 % of the panel's
-// minimum and the engine, which keeps the panel at least that big, drew it
-// cut off. The keeper remembers the window's size and its scales while
-// they settle, and after a change of Qt's device pixel ratio gives the
-// window that size back.
-//
-// dockchrome::kScreenLossWatchMs: a floating window whose screen goes away
-// (a monitor unplugged, Windows' "PC screen only") is placed whole on the
-// main window's screen at its size before the loss. The Windows gate
-// (2026-10-15, a panel on a 150 % monitor beside a 100 % one) saw the window
-// system move the window onto the remaining screen at a pixel size, then the
-// window come back at its size in device-independent pixels but with only
-// its left 173 px on the screen, or as a window larger than its panel. The
-// keeper places the window once the window system has stopped moving it,
-// and again if it moves it within kScreenLossWatchMs of the loss.
+// Windows can leave a floating window at its pixel size after a live scale change, or partly off-screen after a screen loss.
 class ScaleKeeper final : public QObject {
 public:
     explicit ScaleKeeper(QWindow *window)
@@ -246,8 +207,6 @@ public:
 
     bool eventFilter(QObject *, QEvent *event) override
     {
-        // After a screen loss, whatever the window system does to the window
-        // waits for it to finish, and none of it is a size to keep.
         if (!m_lost.hasExpired()) {
             switch (event->type()) {
             case QEvent::Show:
@@ -263,19 +222,11 @@ public:
         switch (event->type()) {
         case QEvent::Show:
         case QEvent::Resize:
-            // A device pixel ratio that changed without its event (the
-            // window's screen's scale taken another way) settles as well,
-            // and so does a resize for a new screen's scale.
             if (m_known && (!qFuzzyCompare(m_window->devicePixelRatio(), m_dpr) || screenRunsAhead())) {
                 if (!m_settle.isActive())
                     m_settle.start();
                 break;
             }
-            // Not while a scale change settles, nor when the window system
-            // has a new scale that Qt has not taken yet (its resize for the
-            // new scale, read at the old one). A resize of the user's own
-            // within kScaleSettleMs of a change is not kept either: the
-            // window takes its size from before the change.
             if (!m_settle.isActive() && (!m_known || !runsAhead()))
                 remember();
             break;
@@ -297,13 +248,7 @@ private:
             && qFuzzyCompare(m_window->devicePixelRatio(), m_dpr);
     }
 
-    // The window on a screen of another scale than it was remembered at,
-    // before it takes that scale. Outside Windows, Qt resizes a window that
-    // moved to such a screen first (its pixels at the new screen's scale:
-    // QWindowPrivate's screenChanged handler) and updates its device pixel
-    // ratio after; that resize, read at the old ratio, is not the size to
-    // keep. The CI's offscreen runs on Linux: a 600 x 220 panel moved onto
-    // a 150 % screen was kept at 400 x 147.
+    // Outside Windows, Qt resizes a window moved to a screen of another scale before it updates its devicePixelRatio.
     bool screenRunsAhead() const
     {
         const QScreen *screen = m_window->screen();
@@ -319,23 +264,19 @@ private:
         m_known = true;
     }
 
-    // Qt emits screenRemoved before it moves the screen's windows to the
-    // primary screen; on Windows the window system may have moved the
-    // window to another screen already, so the screen it was remembered on
-    // counts as well.
+    // Qt emits screenRemoved before it moves the screen's windows; Windows may have moved the window already.
     void screenRemoved(QScreen *screen)
     {
         if (!m_window->isVisible() || (screen != m_window->screen() && screen != m_screen))
             return;
         if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
-            return; // the compositor places windows (docs/docking.md)
+            return; // the Wayland compositor places windows
         qCDebug(lcDocking) << "screen removed:" << m_window->title() << "was on" << screen->name()
                            << m_window->frameGeometry();
         m_lost.setRemainingTime(dockchrome::kScreenLossWatchMs);
         m_settle.start();
     }
 
-    // The main window's screen (the primary one without it).
     QScreen *returnScreen() const
     {
         const QList<QScreen *> screens = QGuiApplication::screens();
@@ -347,8 +288,6 @@ private:
         return screens.isEmpty() ? nullptr : screens.first();
     }
 
-    // The window whole on `screen`, at `size` (without its frame), as close
-    // to where it is as fits.
     void place(QScreen *screen, QSize size)
     {
         const QRect available = screen->availableGeometry();
@@ -364,7 +303,6 @@ private:
             m_window->setGeometry(want);
     }
 
-    // The engine's floating window view (a child of the window's content item).
     KDDockWidgets::QtQuick::FloatingWindow *view() const
     {
         auto *quick = qobject_cast<QQuickWindow *>(m_window);
@@ -375,9 +313,6 @@ private:
         return nullptr;
     }
 
-    // The window's minimum size for its panels: the engine's floating window
-    // view's (a child of the window's content item), with whatever of the
-    // window lies outside the view, and at least the window's own minimum.
     QSize minimum() const
     {
         QSize least = m_window->minimumSize();
@@ -407,10 +342,7 @@ private:
             place(screen, want);
         else if (want != m_window->size())
             m_window->resize(want);
-        // The panel fills its window again: after a screen loss the engine's
-        // view can keep a size from before it (the gate's 800 x 672 window
-        // with the panel in its top-left two thirds). As the engine's own
-        // window does on a resize (its QuickView::updateRootItemSize).
+        // After a screen loss KDDW's view can keep its old size; resize it as KDDW's QuickView::updateRootItemSize does.
         if (KDDockWidgets::QtQuick::FloatingWindow *view = this->view();
             view && static_cast<QQuickItem *>(view)->size() != QSizeF(m_window->size()))
             view->KDDockWidgets::Core::View::setSize(m_window->size());
@@ -424,59 +356,32 @@ private:
     qreal m_dpr = 1;
     std::optional<qreal> m_native;
     QPointer<QScreen> m_screen;
-    QDeadlineTimer m_lost; // watching for the window system after a screen loss
+    QDeadlineTimer m_lost;
 };
 
-// MuseScore's engine setup (its dockmodule.cpp, research §0): one header row
-// (the title bar hides while tabs show, and a group always shows its tabs:
-// DockTabBar.qml draws a lone panel's as a title bar), 1-pixel separators,
-// and floating panels as tool windows. Hikari's headers draw no float button,
-// so Flag_TitleBarNoFloatButton is not needed; the engine would also read it
-// as part of Flag_AutoHideSupport (a mask test) and build side bars, which
-// the QtQuick frontend cannot.
-//
-// Floating windows, on every platform: borderless tool windows,
-// transparent around a drawn shadow (DockFloatingWindow.qml), resized
-// through the window system (startSystemResize from the shadow). A
-// header's title or tabs move them by the engine's drag, which tracks the
-// pointer to show the drop highlight and dock (on Wayland, where the engine
-// cannot place windows, a drag-and-drop). On Wayland and X11 the rest of
-// the header moves the window through the window system (startSystemMove,
-// DockSystemMoveArea.qml), so its snapping and tiling apply there; a system
-// move hands the pointer to the window system, so that part does not dock
-// (the user's choice of 2026-10-12, docs/docking.md). On Windows the
-// whole header is the engine's drag (the owner's choice of 2026-10-15):
-// Snap never takes the borderless tool window, so the split only cost
-// docking there (Docking::platformUsesSystemMove). The engine's
-// Aero-snap frame (Flag_AeroSnapWithClientDecos) is not used: it keeps the
-// system's frame, which the borderless window has not.
+// Not Flag_TitleBarNoFloatButton: KDDW reads it as part of Flag_AutoHideSupport and builds side bars QtQuick cannot.
 void configureEngine()
 {
     using KDDockWidgets::Config;
     Config &config = Config::self();
     config.setFlags(Config::Flag_HideTitleBarWhenTabsVisible | Config::Flag_AlwaysShowTabs);
     config.setSeparatorThickness(1);
-    // The drop highlight is drawn in the window under the dragged panel:
-    // the dragged window is see-through while it moves (where the window
-    // system composites), as with the engine's own in-window indicators.
     config.setDraggedWindowOpacity(0.7);
     config.setInternalFlags(config.internalFlags() | Config::InternalFlag_UseTransparentFloatingWindow);
     KDDockWidgets::Core::FloatingWindow::s_windowFlagsOverride =
         Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint;
-    // Frameless is not enough on Wayland (window_decorations.h): the window
-    // asks the compositor itself, before it is first shown. And the window
-    // keeps its size across a change of its screen's scale.
+    // Frameless is not enough on Wayland: the window asks the compositor itself, before it is first shown.
     KDDockWidgets::QtQuick::FloatingWindow::setQuickWindowCreationCallback(
         [](QQuickView *window, KDDockWidgets::QtQuick::MainWindow *) {
             windowdecorations::requestNone(window);
             new ScaleKeeper(window);
         });
 }
-} // namespace
+}
 
 namespace {
-std::optional<bool> g_compositing; // tests
-} // namespace
+std::optional<bool> g_compositing;
+}
 
 bool dockchrome::windowSystemComposites()
 {
@@ -484,8 +389,7 @@ bool dockchrome::windowSystemComposites()
         return *g_compositing;
     if (QGuiApplication::platformName() != QLatin1String("xcb"))
         return true; // Wayland and Windows always composite
-    // Qt's xcb integration tracks the compositing manager's selection
-    // (_NET_WM_CM_S<n>) per screen.
+    // Qt's xcb integration tracks the compositing manager's selection (_NET_WM_CM_S<n>) per screen.
     QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
     QScreen *screen = QGuiApplication::primaryScreen();
     return native && screen && native->nativeResourceForScreen(QByteArrayLiteral("compositingenabled"), screen);
@@ -518,8 +422,6 @@ void dockchrome::overrideNativeScale(std::function<std::optional<qreal>(QWindow 
 
 int dockchrome::floatingShadow()
 {
-    // MuseScore's DOCK_WINDOW_SHADOW, drawn in the window's transparent
-    // margin; none where that margin would come out opaque.
     return windowSystemComposites() ? 8 : 0;
 }
 
@@ -528,11 +430,9 @@ bool attachDocking(QQmlEngine &engine)
     if (g_attached == &engine)
         return true;
     if (g_attached)
-        return false; // one engine at a time
+        return false;
     if (g_everAttached && KDDockWidgets::Core::Platform::instance()) {
-        // The previous engine is gone, and its docks with it. The platform
-        // connects focusObjectChanged to a lambda on itself with qApp as the
-        // context; that connection would outlive it, so it goes first.
+        // KDDW's platform connects focusObjectChanged to itself with qApp as context; that connection would outlive it.
         QObject::disconnect(qApp, &QGuiApplication::focusObjectChanged, qApp, nullptr);
         delete KDDockWidgets::DockRegistry::self();
         delete KDDockWidgets::Core::Platform::instance();
@@ -553,8 +453,6 @@ int keepFloatingPanelsOnScreen()
     const QList<QScreen *> screens = QGuiApplication::screens();
     if (screens.isEmpty())
         return 0;
-    // A header is reachable when this much of its window's top strip (the
-    // drawn shadow, then the header) is on a screen.
     const int kStrip = dockchrome::floatingShadow() + dockchrome::kHeaderHeight;
     constexpr int kMinimumWidth = 80;
     int moved = 0;
@@ -580,8 +478,6 @@ int keepFloatingPanelsOnScreen()
                               }();
         if (reachable)
             continue;
-        // Onto the main window's screen (the primary one without it), as
-        // close to where it was as fits.
         QWindow *main = window->transientParent();
         QScreen *target = main && screens.contains(main->screen()) ? main->screen() : QGuiApplication::primaryScreen();
         if (!target)
@@ -629,9 +525,7 @@ int Docking::windowShadow(QWindow *window) const
 
 bool Docking::platformUsesSystemMove(QStringView platformName)
 {
-    // Not on Windows: Snap never takes the borderless tool window (the VM
-    // gate and real hardware, 2026-10-15), and a press right of the title
-    // that never docks lost the owner's first drag to dock.
+    // Not on Windows: Snap never takes the borderless tool window.
     return platformName.startsWith(u"wayland") || platformName == u"xcb";
 }
 
@@ -650,8 +544,7 @@ void Docking::setSystemMove(bool on)
 
 namespace {
 
-// Installed after the engine's own filter on the window, so it sees the
-// close first (Qt runs the filter installed last first).
+// Qt runs the last-installed filter first, so this sees the close before KDDW's.
 class CloseGuard : public QObject {
 public:
     CloseGuard(QQuickWindow *window, QJSValue admit) : QObject(window), m_admit(std::move(admit)) {}
@@ -675,7 +568,7 @@ private:
     QJSValue m_admit;
 };
 
-} // namespace
+}
 
 void Docking::guardClose(QQuickWindow *window, const QJSValue &admit)
 {
@@ -734,19 +627,7 @@ KDDockWidgets::Core::MainWindow *mainWindowByName(const QString &uniqueName)
     return registry ? registry->mainWindowByName(uniqueName) : nullptr;
 }
 
-// Decision 63: the window holding a main window's docking area is never
-// smaller than the docked layout's minimum, so no docked panel is cut off
-// past the window's edge. The engine sizes only a main window that is its
-// window's root item ("there's no layout propagation" in QtQuick), and the
-// DockingArea sits in an ApplicationWindow under its menu bar, so the
-// window's minimum stayed 0 x 0 (the Windows gate, 2026-10-16: the window
-// at 480 wide with the Grid and the Line editor past its right edge).
-// The layout's view reports every change of its minimum (a panel docked,
-// floated, shown or hidden, a panel's own minimum changed) as
-// geometryUpdated; the window's minimum is that minimum plus whatever of the
-// window lies outside the docking area (the menu bar, the status bar),
-// within the screen's available area. A window already smaller (a size set
-// by a program, a restored geometry) grows to it.
+// KDDW sizes only a main window that is its window's root item (no layout propagation in QtQuick).
 class LayoutMinimumKeeper final : public QObject {
 public:
     explicit LayoutMinimumKeeper(KDDockWidgets::Core::MainWindow *main, KDDockWidgets::QtQuick::View *view)
@@ -755,10 +636,7 @@ public:
         , m_view(view)
     {
         setObjectName(QStringLiteral("hikariLayoutMinimumKeeper"));
-        // A layout change reports several intermediate minimums (Reset layout
-        // and a restore take panels out and put them back one by one), and
-        // the window would grow to the largest of them, so the window follows
-        // the layout once it has been still for a moment.
+        // KDDW reports intermediate minimums while a restore re-adds panels one by one.
         m_settle.setSingleShot(true);
         m_settle.setInterval(kSettleMs);
         connect(&m_settle, &QTimer::timeout, this, &LayoutMinimumKeeper::apply);
@@ -769,14 +647,12 @@ public:
         apply();
     }
 
+    // MUST KILL: LayoutMinimumKeeper is found by object name because it has no Q_OBJECT
     static LayoutMinimumKeeper *of(KDDockWidgets::QtQuick::View *view)
     {
-        // The class has no Q_OBJECT, so it is found by its object name.
         return view ? static_cast<LayoutMinimumKeeper *>(view->findChild<QObject *>(QStringLiteral("hikariLayoutMinimumKeeper"), Qt::FindDirectChildrenOnly)) : nullptr;
     }
 
-    // The window's minimum as the layout needs it; empty while the docking
-    // area has no size yet.
     QSize wanted() const
     {
         QQuickWindow *window = item()->window();
@@ -824,7 +700,7 @@ KDDockWidgets::QtQuick::View *mainWindowView(KDDockWidgets::Core::MainWindow *ma
 {
     return main ? qobject_cast<KDDockWidgets::QtQuick::View *>(KDDockWidgets::QtQuick::asQQuickItem(main->view())) : nullptr;
 }
-} // namespace
+}
 
 bool Docking::followLayoutMinimum(const QString &mainName)
 {
@@ -851,7 +727,7 @@ KDDockWidgets::Core::DockWidget *dockByName(const QString &uniqueName)
     auto *registry = KDDockWidgets::Core::Platform::instance() ? KDDockWidgets::DockRegistry::self() : nullptr;
     return registry ? registry->dockByName(uniqueName) : nullptr;
 }
-} // namespace
+}
 
 int fitFloatingLayouts()
 {
@@ -862,12 +738,7 @@ int fitFloatingLayouts()
         KDDockWidgets::Core::DropArea *area = floating->dropArea();
         if (!area || !area->view())
             continue;
-        // The engine builds a floating window's layout at its area's size
-        // then, with the window's title bar shown (there are no groups yet
-        // to tell it otherwise), hides the title bar once the layout has a
-        // lone group, and does not follow its area's resizes while the
-        // restore runs: the layout kept the area's height under the title
-        // bar, 35 pixels short of it.
+        // KDDW lays out a restored floating window under its title bar, hides the bar, and does not follow the area while restoring.
         const QSize areaSize = area->view()->size();
         const QSize layoutSize = area->layoutSize();
         const QQuickItem *item = KDDockWidgets::QtQuick::asQQuickItem(floating->view());
@@ -890,9 +761,7 @@ void refreshDockConstraints()
         if (!view)
             continue;
         view->updateConstraints();
-        // The engine takes a restored size as it was saved, below a minimum
-        // that has grown since: grow the group across its bottom (or right)
-        // edge, else its top (or left) one, as a separator drag would.
+        // KDDW takes a restored size as it was saved, below a minimum that has grown since.
         KDDockWidgets::Core::DockWidget *dock = group->currentDockWidget();
         if (!dock || !dock->isOpen() || dock->isFloating())
             continue;
@@ -915,10 +784,7 @@ bool Docking::setMinimumSize(const QString &uniqueName, QSize size)
     KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
     if (!dock)
         return false;
-    // The dock widget's own minimum: the engine takes the larger of it and
-    // its guest's. The QtQuick frontend propagates constraints by hand: the
-    // group holding the panel recomputes its own (header included) and has
-    // the layout honour them.
+    // The QtQuick frontend propagates constraints by hand: the group must recompute its own.
     dock->view()->setMinimumSize(size);
     for (KDDockWidgets::Core::Group *group : KDDockWidgets::DockRegistry::self()->groups()) {
         if (group->containsDockWidget(dock)) {
@@ -992,7 +858,7 @@ KDDockWidgets::Core::Group *groupOf(KDDockWidgets::Core::DockWidget *dock)
             return group;
     return nullptr;
 }
-} // namespace
+}
 
 int Docking::tabIndex(const QString &uniqueName) const
 {
@@ -1017,20 +883,14 @@ bool Docking::moveTab(const QString &uniqueName, int step)
     const int to = from + step;
     if (from < 0 || to < 0 || to >= group->dockWidgetCount())
         return false;
-    // The engine's TabBar::moveTabTo moves the tab in its own list only (the
-    // pinned QtQuick frontend's view of it is a stub), so the tab bar's model
-    // takes the panel out and back in at its new place. Taking the panel out
-    // of its group and back in does not work: the engine's reparenting on
-    // insertion takes a panel out of the group it is in.
+    // KDDW's TabBar::moveTabTo moves only its own list (the QtQuick view is a stub), so the model's row moves too.
     auto *bar = qobject_cast<KDDockWidgets::QtQuick::TabBar *>(KDDockWidgets::QtQuick::asQQuickItem(group->tabBar()->view()));
     if (!bar)
         return false;
     group->tabBar()->moveTabTo(from, to);
     bar->dockWidgetModel()->remove(dock);
     bar->dockWidgetModel()->insert(dock, to);
-    // While the panel's row was out the header made its neighbour current
-    // (in the model, not in the engine): the panel is current again in both,
-    // and the header's index follows it.
+    // Removing the row made its neighbour current in the model only.
     bar->setCurrentIndex(to);
     group->setCurrentDockWidget(dock);
     if (QQuickItem *header = bar->tabBarQmlItem())
@@ -1038,4 +898,4 @@ bool Docking::moveTab(const QString &uniqueName, int step)
     return group->indexOfDockWidget(dock) == to;
 }
 
-} // namespace hikari::ui
+}

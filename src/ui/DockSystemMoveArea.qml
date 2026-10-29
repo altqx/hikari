@@ -1,15 +1,6 @@
 import QtQuick
 import Hikari.Ui
 
-// D3: the free part of a floating window's header (DockTabBar.qml,
-// DockTitleBar.qml), where the window system moves the window
-// (Docking.startSystemMove), so its snapping and tiling apply; on Wayland
-// and X11 only (Docking.systemMove: on Windows the whole header is the
-// engine's drag, which docks). The move
-// starts once the pointer has moved, so a click or a double-click (which
-// the header handles, to dock) never hands the pointer over. Where the
-// platform declines the move (X11 with no window manager that moves
-// windows), the window follows the pointer itself.
 MouseArea {
     id: root
     objectName: "dockSystemMoveArea"
@@ -41,6 +32,7 @@ MouseArea {
         if (moving || Math.abs(at.x - pressedAt.x) + Math.abs(at.y - pressedAt.y) < Application.styleHints.startDragDistance)
             return
         moving = true
+        // X11 with no window manager that moves windows declines the system move.
         if (!Docking.startSystemMove(root)) {
             windowAt = Qt.point(Window.window.x, Window.window.y)
             following = true

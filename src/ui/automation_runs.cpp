@@ -23,7 +23,7 @@ QElapsedTimer &monotonic()
     return timer;
 }
 
-} // namespace
+}
 
 AutomationRuns::AutomationRuns(QObject *parent) : QAbstractListModel(parent) {}
 
@@ -104,7 +104,6 @@ void AutomationRuns::changedRow(int id, const QList<int> &roles)
 
 int AutomationRuns::begin(const QString &macro, const QString &script, const QString &document)
 {
-    // The oldest finished run makes room (a running one is never dropped).
     while (count() >= kKept) {
         auto it = std::ranges::find_if(m_runs.rbegin(), m_runs.rend(), [](const Run &r) { return r.duration >= 0; });
         if (it == m_runs.rend())
@@ -139,9 +138,6 @@ void AutomationRuns::append(int id, const QString &text, int level)
     const qint64 at = now() - r->startedAt;
     int changed = -1;
     const int first = static_cast<int>(r->lines.size());
-    // Walked a line at a time, never split whole: a script's output is
-    // kept up to kMaxLines lines and kMaxChars characters, then one line
-    // says the rest was not kept.
     qsizetype from = 0;
     while (from < text.size()) {
         if (r->lines.size() >= static_cast<std::size_t>(kMaxLines) || r->chars >= kMaxChars) {
@@ -151,7 +147,6 @@ void AutomationRuns::append(int id, const QString &text, int level)
         const qsizetype newline = text.indexOf(QLatin1Char('\n'), from);
         const qsizetype end = newline < 0 ? text.size() : newline;
         const qsizetype length = std::min<qsizetype>(end - from, kMaxChars - r->chars);
-        // A line cut short at the limit: the rest is not kept, said now.
         if (length < end - from)
             r->full = true;
         const QString piece = text.mid(from, length);
@@ -188,14 +183,11 @@ void AutomationRuns::note(int id, const QString &text, int kind)
         return;
     const qint64 at = now() - r->startedAt;
     const int first = static_cast<int>(r->lines.size());
-    // An error's text is the script's too: bounded as its output is
-    // (kMaxNoteLines lines of the first kMaxChars characters).
     QString body = text;
     while (body.endsWith(QLatin1Char('\n')))
         body.chop(1);
     bool cut = body.size() > kMaxChars;
     body.truncate(kMaxChars);
-    // Its first line carries the kind; a traceback's lines follow without one.
     qsizetype from = 0;
     for (int i = 0;; ++i) {
         if (i == kMaxNoteLines) {
@@ -208,7 +200,6 @@ void AutomationRuns::note(int id, const QString &text, int kind)
             break;
         from = newline + 1;
     }
-    // What was cut is said, as a flooded log says it.
     if (cut)
         r->lines.push_back({kHostInfo, at,
                             QCoreApplication::translate("HikariSub.Automation", "The rest of this message is not kept.")});
@@ -307,8 +298,6 @@ QString AutomationRuns::text(int id, bool times, const std::function<bool(const 
     }
     return out;
 }
-
-// ---------------------------------------------------------------------------
 
 AutomationRunLines::AutomationRunLines(QObject *parent) : QAbstractListModel(parent) {}
 
@@ -428,7 +417,6 @@ void AutomationRunLines::onAdded(int run, int first, int last, int changed)
     const auto *r = current();
     if (run != m_run || !r)
         return;
-    // A continued line: shown now, or no longer (the filter text).
     if (changed >= 0) {
         const bool takes = accepts(r->lines[static_cast<std::size_t>(changed)]);
         const auto it = std::ranges::find(m_shown, changed);
@@ -442,7 +430,6 @@ void AutomationRunLines::onAdded(int run, int first, int last, int changed)
                 endRemoveRows();
             }
         } else if (takes) {
-            // The continued line is the run's last before the new ones.
             const int row = static_cast<int>(m_shown.size());
             beginInsertRows({}, row, row);
             m_shown.push_back(changed);
@@ -501,11 +488,10 @@ QString AutomationRunLines::suggestedName() const
     if (!r)
         return {};
     QString name = r->macro;
-    // Characters no file system takes.
     for (QChar &c : name)
         if (QStringLiteral("\\/:*?\"<>|").contains(c) || c.unicode() < 32)
             c = QLatin1Char('_');
     return name + QLatin1Char(' ') + r->started.toString(QStringLiteral("yyyy-MM-dd HH-mm")) + QStringLiteral(".log");
 }
 
-} // namespace hikari::ui
+}

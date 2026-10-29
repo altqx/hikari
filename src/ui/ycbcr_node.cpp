@@ -20,8 +20,6 @@ bool ycbcrSupported(QRhi *rhi)
 
 namespace {
 
-// One plane, uploaded whole when its frame changes. The bytes stay valid
-// until the next frame is set (the material keeps the frame's lease).
 class PlaneTexture : public QSGTexture {
 public:
     explicit PlaneTexture(QRhiTexture::Format format) : m_format(format) {}
@@ -43,8 +41,6 @@ public:
         m_size = size;
         m_pending = true;
     }
-    // Whether the plane was uploaded (or nothing was pending); false when its
-    // texture could not be made.
     bool commit(QRhi *rhi, QRhiResourceUpdateBatch *updates, std::size_t &uploaded)
     {
         if (!m_pending)
@@ -65,7 +61,6 @@ public:
         }
         m_pending = false;
         const qsizetype bytes = static_cast<qsizetype>(m_stride) * m_size.height();
-        // Not copied: the frame's lease outlives this frame's render.
         QRhiTextureSubresourceUploadDescription plane(
             QByteArray::fromRawData(reinterpret_cast<const char *>(m_bytes), bytes));
         plane.setDataStride(static_cast<quint32>(m_stride));
@@ -73,7 +68,8 @@ public:
         uploaded += static_cast<std::size_t>(bytes);
         return true;
     }
-    void commitTextureOperations(QRhi *, QRhiResourceUpdateBatch *) override {} // YcbcrShader commits
+    // MUST KILL: commitTextureOperations is a no-op; YcbcrShader commits the planes through YcbcrMaterial::commit
+    void commitTextureOperations(QRhi *, QRhiResourceUpdateBatch *) override {}
 
 private:
     QRhiTexture::Format m_format;
@@ -87,7 +83,7 @@ private:
 // std140: qt_Matrix, qt_Opacity, then four vec4 (YcbcrShader).
 constexpr int kMatrixOffset = 0, kOpacityOffset = 64, kParametersOffset = 80, kUniformBytes = 144;
 
-} // namespace
+}
 
 class YcbcrMaterial : public QSGMaterial {
 public:
@@ -119,7 +115,6 @@ public:
             first.setPlane(f.bgra.data() + p.offset[1], p.stride[1], chroma);
             second.setPlane(f.bgra.data() + p.offset[2], p.stride[2], chroma);
         }
-        // cy, rv, gu, gv; bu, yOffset, round, 1 / 2^shift; sizes; shape.
         const auto &m = p.matrix;
         parameters = {float(m.cy), float(m.rv), float(m.gu), float(m.gv),
                       float(m.bu), float(m.yOffset), float(1 << (m.shift - 1)), 1.0f / float(1 << m.shift),
@@ -136,7 +131,6 @@ public:
             return &pairs;
         return binding == 2 ? static_cast<QSGTexture *>(&first) : &second;
     }
-    // The planes of a new frame, once (render thread).
     void commit(QRhi *rhi, QRhiResourceUpdateBatch *updates)
     {
         if (!pending)
@@ -161,6 +155,7 @@ public:
     std::function<void()> failed;
     std::shared_ptr<const application::IndexedFrame> frame;
     PlaneTexture luma{QRhiTexture::R8}, pairs{QRhiTexture::RG8}, first{QRhiTexture::R8}, second{QRhiTexture::R8};
+    // MUST KILL: parameters is a positional float[16] that must match ycbcr.frag's four vec4 in order
     std::array<float, 16> parameters{};
     bool interleaved = false;
     bool pending = false;
@@ -197,7 +192,6 @@ public:
     {
         auto *material = static_cast<YcbcrMaterial *>(newMaterial);
         material->commit(state.rhi(), state.resourceUpdateBatch());
-        // Exact samples: the shader reads whole texels (nearest, as the BGRA frame node).
         QSGTexture *t = material->texture(binding);
         t->setFiltering(QSGTexture::Nearest);
         t->setHorizontalWrapMode(QSGTexture::ClampToEdge);
@@ -206,7 +200,7 @@ public:
     }
 };
 
-} // namespace
+}
 
 QSGMaterialShader *YcbcrMaterial::createShader(QSGRendererInterface::RenderMode) const
 {
@@ -252,4 +246,4 @@ bool YcbcrNode::failed() const
     return m_material->failure;
 }
 
-} // namespace hikari::ui
+}

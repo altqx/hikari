@@ -30,7 +30,7 @@ const QSet<QString> &defaultNames()
     return names;
 }
 
-} // namespace
+}
 
 ShapeEditor::ShapeEditor(std::vector<ShapePreset> presets, int curShape, Hooks hooks, QObject *parent)
     : QObject(parent), m_edition(std::move(presets), curShape), m_hooks(std::move(hooks))
@@ -39,8 +39,6 @@ ShapeEditor::ShapeEditor(std::vector<ShapePreset> presets, int curShape, Hooks h
 
 QString ShapeEditor::svgPath(std::u16string_view drawing, QRectF *bounds)
 {
-    // The drawing's tokens: a command letter, or a number (anything else is
-    // skipped, as libass skips it).
     QString out;
     QChar command;
     std::vector<double> numbers;
@@ -53,13 +51,9 @@ QString ShapeEditor::svgPath(std::u16string_view drawing, QRectF *bounds)
         y1 = std::max(y1, p.y());
         return QString::number(p.x()) + QLatin1Char(' ') + QString::number(p.y());
     };
-    // The pen: the last point given. A B-spline's control points (s, more
-    // with p) start at the pen; its curve is drawn as the renderer draws it
-    // (flattenCurve's uniform cubic B-spline): each run of four points one
-    // Bézier, a line from the pen to its start, c closing it with its first
-    // three points again.
     QPointF pen;
     std::vector<QPointF> spline;
+    // libass draws s and p as a uniform cubic B-spline; c closes it with its first three points again.
     const auto drawSpline = [&](bool close) {
         if (close && spline.size() >= 3)
             spline.insert(spline.end(), {spline[0], spline[1], spline[2]});
@@ -103,6 +97,7 @@ QString ShapeEditor::svgPath(std::u16string_view drawing, QRectF *bounds)
         numbers.clear();
     };
     const QString text = qs(drawing);
+    // Tokens that are neither a command nor a number are skipped, as libass skips them.
     for (const QString &token : text.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts)) {
         if (token.size() == 1 && QStringLiteral("mnlbspc").contains(token[0])) {
             flush();
@@ -175,8 +170,6 @@ int ShapeEditor::ownCount() const
 void ShapeEditor::kept()
 {
     emit changed();
-    // An action that changed nothing (Restore with the defaults already
-    // there) hands nothing on, not the last step's renames again.
     if (m_edition.revision() == m_published)
         return;
     m_published = m_edition.revision();
@@ -285,4 +278,4 @@ void ShapeEditor::close()
     emit closed();
 }
 
-} // namespace hikari::ui
+}

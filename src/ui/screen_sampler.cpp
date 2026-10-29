@@ -33,7 +33,7 @@ const QString kPortalService = QStringLiteral("org.freedesktop.portal.Desktop");
 const QString kPortalPath = QStringLiteral("/org/freedesktop/portal/desktop");
 const QString kScreenshot = QStringLiteral("org.freedesktop.portal.Screenshot");
 
-// The Screenshot portal with PickColor (its interface version 2).
+// PickColor arrived in Screenshot portal version 2.
 bool portalOffersPickColor()
 {
     auto bus = QDBusConnection::sessionBus();
@@ -49,9 +49,6 @@ bool portalOffersPickColor()
 }
 #endif
 
-// The 7x7 screen pixels around a global point, in device pixels; black
-// where the point's surroundings leave the screen (legacy Blit from a
-// wxScreenDC).
 QImage grabScreen(QPoint global)
 {
     constexpr int n = ScreenSampler::kSize;
@@ -62,7 +59,6 @@ QImage grabScreen(QPoint global)
         return cells;
     const QRect geometry = screen->geometry();
     const qreal ratio = screen->devicePixelRatio();
-    // A logical square holding n device pixels each way, inside the screen.
     const int margin = int(std::ceil((n / 2 + 1) / ratio));
     const QPoint local = global - geometry.topLeft();
     const QRect wanted(local.x() - margin, local.y() - margin, 2 * margin + 1, 2 * margin + 1);
@@ -84,7 +80,7 @@ QImage grabScreen(QPoint global)
     return cells;
 }
 
-} // namespace
+}
 
 bool ScreenSampler::isWaylandSession()
 {
@@ -95,7 +91,6 @@ bool ScreenSampler::isWaylandSession()
 ScreenSampler::Route ScreenSampler::routeFor(const QString &platformName, bool waylandSession, bool portalAvailable)
 {
     const bool wayland = platformName.startsWith(QLatin1String("wayland"));
-    // Offscreen and the other platforms read their own screens.
     if (!wayland && !(waylandSession && platformName == QLatin1String("xcb")))
         return {QStringLiteral("grab"), {}};
     if (portalAvailable)
@@ -110,8 +105,6 @@ ScreenSampler::ScreenSampler(QObject *parent)
       m_grab([](QWindow *window, bool grab) { return window->setMouseGrabEnabled(grab); })
 {
     m_regrab.setInterval(kRegrabInterval);
-    // Runs only after a refusal; hidden again, the window waits for its
-    // next expose. Only real asks count against kRegrabTries.
     connect(&m_regrab, &QTimer::timeout, this, [this] {
         if (!m_window || !m_window->isExposed()) {
             m_regrab.stop();
@@ -197,7 +190,6 @@ void ScreenSampler::moveToPointer(QWindow *window, int x, int y) const
         return;
     const QRect rc = availableGeometryAt(x, y);
     const QSize size = window->frameGeometry().size();
-    // mst.x = MID(rc.x, mst.x - siz.x / 2, rc.width + rc.x - siz.x)
     const int nx = std::max(rc.x(), std::min(x - size.width() / 2, rc.width() + rc.x() - size.width()));
     int ny = y + 15;
     if (ny + size.height() > rc.height() + rc.y()) {
@@ -216,9 +208,6 @@ bool ScreenSampler::startTracking(QWindow *window, bool passInside)
     m_window = window;
     m_passInside = passInside;
     window->installEventFilter(this);
-    // Offscreen and Wayland grant no pointer grab; the events over the
-    // window still come. Under an X11 window manager the window is not
-    // viewable yet: the grab waits for its expose.
     m_grabbed = false;
     m_regrabTries = 0;
     takePointer(false);
@@ -243,9 +232,7 @@ void ScreenSampler::stopTracking()
 
 void ScreenSampler::takePointer(bool again)
 {
-    // X refuses a grab on a window that is not viewable (GrabNotViewable),
-    // and Qt's XInput 2 grab reports success all the same: ask only once
-    // the window is exposed.
+    // X refuses a grab on an unviewable window (GrabNotViewable), yet Qt's XInput 2 grab reports success: ask once exposed.
     if (!m_window || !m_window->isExposed() || (m_grabbed && !again))
         return;
     m_grabbed = m_grab(m_window, true);
@@ -261,7 +248,6 @@ void ScreenSampler::showCursor(bool dropper)
     if (dropper == m_cursorShown)
         return;
     m_cursorShown = dropper;
-    // Legacy sets its "eyedropper_cursor"; the cross marks the pixel.
     if (dropper)
         QGuiApplication::setOverrideCursor(Qt::CrossCursor);
     else
@@ -288,17 +274,10 @@ bool ScreenSampler::eventFilter(QObject *watched, QEvent *event)
         qCDebug(lcDropper) << m_window << "deactivated: tracking lost";
         emit trackingLost();
         return false;
-    // The window became viewable (its expose; the window manager maps its
-    // frame and then activates it): ask for the grab again, since a grab
-    // Qt reported held may have been refused.
     case QEvent::Expose:
     case QEvent::WindowActivate:
         takePointer(true);
         return QObject::eventFilter(watched, event);
-    // The pointer left it for outside the window, not for a child or a
-    // popup over it: legacy OnLeaveWindow captures the mouse again then.
-    // This asks even when Qt reports the grab held, as that report can be
-    // wrong.
     case QEvent::Leave:
         if (!m_window->geometry().contains(QCursor::pos()))
             takePointer(true);
@@ -311,7 +290,6 @@ bool ScreenSampler::eventFilter(QObject *watched, QEvent *event)
     const bool inside = QRect(QPoint(), m_window->size()).contains(mouse->position().toPoint());
     showCursor(!m_passInside || !inside);
     emit pointerEvent(kind, global.x(), global.y(), int(mouse->button()), int(mouse->buttons()), inside);
-    // Over its own window the simple picker's controls take the event.
     return !(m_passInside && inside);
 }
 
@@ -332,7 +310,7 @@ void ScreenSampler::pickFromPortal()
     }
 #ifdef HIKARI_SCREEN_PORTAL
     auto bus = QDBusConnection::sessionBus();
-    // Subscribe to the request's Response before asking (handle_token).
+    // The portal protocol: subscribe to the Request's Response before calling (handle_token).
     const QString token = QStringLiteral("hikari_pick%1_%2")
                               .arg(++m_portalRequests)
                               .arg(QUuid::createUuid().toString(QUuid::Id128).left(8));
@@ -379,16 +357,13 @@ void ScreenSampler::answerPortal(uint response, double red, double green, double
 {
     if (!m_portalBusy)
         return;
-    // The answer goes out first and portalBusy falls after it: a listener
-    // that stops listening once the request is over (portalBusyChanged)
-    // would otherwise miss the answer emitted in the same call.
     if (response == 0) {
         auto channel = [](double v) { return std::clamp(int(std::lround(v * 255)), 0, 255); };
         emit portalPicked({{QStringLiteral("r"), channel(red)},
                            {QStringLiteral("g"), channel(green)},
                            {QStringLiteral("b"), channel(blue)},
                            {QStringLiteral("a"), 0}});
-    } else if (response != 1) { // 1: the user cancelled, as a dropper released without a pick
+    } else if (response != 1) {
         emit portalFailed(QCoreApplication::translate("HikariSub.Colours", "The desktop could not pick a colour from the screen."));
     }
     finishPortal();
@@ -415,4 +390,4 @@ void ScreenSampler::finishPortal()
     emit portalBusyChanged();
 }
 
-} // namespace hikari::ui
+}

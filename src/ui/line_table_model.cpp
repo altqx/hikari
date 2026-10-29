@@ -30,7 +30,6 @@ QString qs(const std::u8string &s)
     return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
 }
 
-// SubsTime::raw for the Document's format.
 QString legacyTime(const core::TimeField &time, std::optional<std::int64_t> frame, core::SubtitleFormat format)
 {
     const std::int64_t ms = time.value.microseconds() / 1000;
@@ -44,7 +43,7 @@ QString legacyTime(const core::TimeField &time, std::optional<std::int64_t> fram
     }
 }
 
-} // namespace
+}
 
 int LineTableModel::hideBit(Column column)
 {
@@ -87,7 +86,7 @@ bool LineTableModel::columnShown(int column) const
             return false;
         break;
     case TranslationColumn:
-        return m_showOriginal; // SubsGridWindow.cpp:330
+        return m_showOriginal;
     default:
         break;
     }
@@ -104,8 +103,7 @@ void LineTableModel::setHiddenColumns(int mask)
 
 namespace {
 
-// GR3: the columns that hide themselves when empty (hideBit's Layer, Actor,
-// Left, Right, Vertical and Effect).
+// MUST KILL: kAutoHideBits repeats hideBit's values as bare ints
 constexpr int kAutoHideBits = 1 | 16 | 32 | 64 | 128 | 256;
 
 bool blank(const std::u8string &text)
@@ -113,7 +111,6 @@ bool blank(const std::u8string &text)
     return std::all_of(text.begin(), text.end(), [](char8_t c) { return c == u8' ' || c == u8'\t'; });
 }
 
-// The auto-hidden columns' bits a Line leaves empty.
 int emptyColumnsOf(const core::LineRecord &line)
 {
     int bits = 0;
@@ -132,7 +129,7 @@ int emptyColumnsOf(const core::LineRecord &line)
     return bits;
 }
 
-} // namespace
+}
 
 int LineTableModel::emptyColumns() const
 {
@@ -151,7 +148,6 @@ void LineTableModel::setAutoHideColumns(bool on)
 
 LineTableModel::LineTableModel(QObject *parent) : QAbstractTableModel(parent)
 {
-    // K2: the theme's comparison and (E6) label colours, live.
     theme::onChanged(this, [this] {
         setComparisonColours(themeComparisonColours());
         setLabelColours(themeLabelColours());
@@ -161,7 +157,7 @@ LineTableModel::LineTableModel(QObject *parent) : QAbstractTableModel(parent)
 void LineTableModel::setFrameTimebase(std::optional<application::LegacyTimebase> frames)
 {
     if (frames && !frames->exact())
-        frames.reset(); // only an exact timebase shows frames
+        frames.reset();
     if (!frames && !m_frames)
         return;
     m_frames = std::move(frames);
@@ -195,19 +191,13 @@ const QString &LineTableModel::shownTextOf(const Row &row) const
 {
     if (row.shownText)
         return *row.shownText;
-    // E5 (SubsGridWindow.cpp:376 and 415): without the original shown, a
-    // translated Line shows its translation (isTl = hasTLMode && TextTl != "").
     const core::LineRecord &line = row.line;
     QString text = qs(!m_showOriginal && m_translationMode && !line.translation.empty() ? line.translation : line.text);
     if (tagsSwapped()) {
-        // SubsGrid::TagsPattern (SubsGridWindow.cpp:34-39): wxRegEx
-        // "\{[^\{]*\}" (SRT "\<[^\<]*\>"), advanced syntax, its
-        // ReplaceAll taking GRID_TAGS_SWAP_CHARACTER as a replacement (so
-        // "&" and "\0".."\9" there are back-references, as in legacy);
-        // SubsGridWindow.cpp:405-410 replaces the shown text only.
         static const core::LegacyRegex ass(u"\\{[^\\{]*\\}", core::LegacyRegex::Advanced);
         static const core::LegacyRegex srt(u"\\<[^\\<]*\\>", core::LegacyRegex::Advanced);
         std::u16string raw = text.toStdU16String();
+        // MUST KILL: m_tagSwap is a regex replacement, so "&" and "\0".."\9" in the swap text are back-references
         (m_format == core::SubtitleFormat::Srt ? srt : ass).replaceAll(raw, m_tagSwap.toStdU16String());
         text = QString::fromStdU16String(raw);
     }
@@ -244,13 +234,10 @@ bool LineTableModel::unplacedRunsOf(const Row &row) const
         return *row.unplacedRuns;
     const core::LineRecord &line = row.line;
     bool unplaced = false;
-    // A text past what Tags from original reads (a UTF-16 unit is three
-    // UTF-8 bytes at most) has no runs: not converted for nothing.
+    // A UTF-16 unit is at most three UTF-8 bytes.
     const auto readable = [](const std::u8string &text) { return text.size() <= 3 * core::kMaxTagTransferUnits; };
     if (m_runMarks && m_translationMode && !m_tooManyStyles && !line.comment && !line.translation.empty()
         && readable(line.text) && readable(line.translation)) {
-        // Legacy GetStyle(0, name): the first Style of that name, else the
-        // first Style.
         const auto style = std::ranges::find(m_styles, line.style, &core::StyleValues::name);
         const auto *base = style != m_styles.end() ? &*style : m_styles.empty() ? nullptr : &m_styles.front();
         const auto tags = core::readOriginalTags(core::toUtf16(line.text), base, m_styles);
@@ -266,7 +253,6 @@ void LineTableModel::setHideTags(bool hide, const QString &swap)
         return;
     m_hideTags = hide;
     m_tagSwap = swap;
-    // HideOverrideTags clears SpellErrors and refreshes (SubsGridWindow.cpp:1959-1965).
     for (const Row &row : m_rows) {
         row.shownText.reset();
         row.spellMarks.reset();
@@ -286,10 +272,6 @@ int LineTableModel::labelSlot(int state)
 
 LineTableModel::LabelColours LineTableModel::themeLabelColours(bool dark)
 {
-    // GRID_LABEL_NORMAL, _MODIFIED, _SAVED, _DOUBTFUL (config.cpp:422-425).
-    // Light's normal label is lighter than legacy's #7F7F7F mid grey, on
-    // which neither the text nor the field role reached 4.5:1 for the
-    // number's digits; it stays darker than the saved label.
     if (dark)
         return {QColor(0x2F, 0x31, 0x36), QColor(0x32, 0x2F, 0x4E), QColor(0x20, 0x22, 0x25), QColor(0x92, 0x5B, 0x1F)};
     return {QColor(0x9C, 0x9C, 0x9C), QColor(0xB0, 0xAD, 0xD8), QColor(0xBF, 0xBF, 0xBF), QColor(0x92, 0x5B, 0x1F)};
@@ -314,12 +296,8 @@ const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
         return *row.spellMarks;
     QVariantList marks;
     const core::LineRecord &line = row.line;
-    // SubsGridWindow: comments are not checked, and marks are drawn on the
-    // last column only. In translation mode that is the translation column
-    // (not built yet), so the Text column, showing the original, has none.
     if (m_spelling && !line.comment && !line.text.empty() && !m_translationMode) {
         const QString text = qs(line.text);
-        // E6: with tags hidden, Init gets the tag length (SubsGridWindow.cpp:385-386).
         const auto result = m_spelling(std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()),
                                                            static_cast<std::size_t>(text.size())),
                                        m_format, true, tagsSwapped() ? static_cast<int>(m_tagSwap.size()) : -1);
@@ -337,8 +315,6 @@ void LineTableModel::setDocument(const core::Document &document)
 
 LineTableModel::ComparisonColours LineTableModel::themeComparisonColours()
 {
-    // GRID_COMPARISON_OUTLINE, _BACKGROUND_NOT_MATCH, _BACKGROUND_MATCH,
-    // _COMMENT_BACKGROUND_NOT_MATCH, _COMMENT_BACKGROUND_MATCH (theme.cpp).
     return theme::current().content.comparison;
 }
 
@@ -361,10 +337,7 @@ void LineTableModel::setDocument(const core::Document &document,
     m_draft.reset();
     m_draftRow = -1;
     m_format = document.format();
-    // Legacy measures the translation when translation mode shows one.
     m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
-    // TM1: the runs' Styles, only while the marks are shown (the Document is
-    // read again when they are turned on: ShellController::setRunMarks).
     m_styles.clear();
     m_tooManyStyles = false;
     if (m_runMarks && m_translationMode) {
@@ -378,13 +351,9 @@ void LineTableModel::setDocument(const core::Document &document,
         m_empty &= emptyColumnsOf(*line);
         m_rowById.emplace(line->id.value, static_cast<int>(m_rows.size()));
         m_rows.push_back(Row{*line, std::nullopt, 0});
-        // E6: Dialogue::GetState: the changed-Line mark (bits 1 and 2), 4
-        // Unconfirmed, 8 bookmarked.
         m_rows.back().state = (m_changeState ? m_changeState(*line) : 0) | (line->unconfirmed ? 4 : 0) |
                               (line->bookmark ? 8 : 0);
     }
-    // Hidden-block marks (legacy CheckIfHasHiddenBlock), in one pass from the
-    // end: hiddenRun[k] counts the hidden Lines from k up to the next shown one.
     m_filtered = application::isFiltered(document);
     const std::size_t n = lines.size();
     std::vector<int> hiddenRun(n + 1, 0);
@@ -402,15 +371,11 @@ void LineTableModel::setDocument(const core::Document &document,
             m_rows[r].groupClosed = lines[r + 1]->group == core::GroupMarker::Closed;
     for (std::size_t r = 0; r < n; ++r)
         m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
-    // KP1: the runs of generated Lines and their summaries; the runs unfolded
-    // keep that only while their first Line is still a run's first.
     m_runs.clear();
     std::unordered_set<std::uint64_t> unfolded;
     for (const auto &found : application::generatedRuns(lines)) {
         Run run{static_cast<int>(found.first), static_cast<int>(found.count), static_cast<int>(found.first),
                 static_cast<int>(found.first), static_cast<int>(found.first), {}, {}};
-        // The first few distinct names, then "…": a run of many distinct
-        // Styles from a file costs one lookup per Line.
         constexpr qsizetype kNames = 8;
         QStringList styles, effects;
         QSet<QString> seenStyles, seenEffects;
@@ -439,10 +404,6 @@ void LineTableModel::setDocument(const core::Document &document,
         m_runs.push_back(std::move(run));
     }
     m_unfolded = std::move(unfolded);
-    // R1: a row is painted from Comparison->at(key) (SubsGridWindow.cpp:419-
-    // 420): a mismatch while lineCompare has entries, a match when the texts
-    // were equal. A row past the table (legacy std::out_of_range) paints
-    // plainly (R1-stale-table).
     if (comparison)
         for (std::size_t r = 0; r < n && r < comparison->size(); ++r) {
             const auto &c = (*comparison)[r];
@@ -450,7 +411,6 @@ void LineTableModel::setDocument(const core::Document &document,
             for (std::size_t m = 1; m + 1 < c.marks.size(); m += 2)
                 m_rows[r].comparisonMarks << c.marks[m] << c.marks[m + 1];
         }
-    // Keep only selection that still names existing Lines.
     std::erase_if(m_selection.selected, [&](core::LineId id) { return !m_rowById.contains(id.value); });
     if (m_selection.active && !m_rowById.contains(m_selection.active->value))
         m_selection.active.reset();
@@ -478,13 +438,7 @@ void LineTableModel::setDraft(std::optional<core::LineRecord> draft)
     m_draft.reset();
     m_draftRow = -1;
     if (const auto row = draft ? rowOf(draft->id) : std::nullopt) {
-        // The committed row's marks and state, with the draft's content and
-        // its own measures, shown text and spelling marks.
         Row shown = m_rows[static_cast<std::size_t>(*row)];
-        // R1's comparison is the committed Line's: it holds while the draft
-        // leaves what the comparison reads (compareSubtitles: the compared
-        // text, the times, the style) as it was, and the row shows none
-        // otherwise until the commit compares it again.
         const core::LineRecord &committed = shown.line;
         if (application::comparedText(*draft, m_translationMode) !=
                 application::comparedText(committed, m_translationMode) ||
@@ -505,7 +459,7 @@ void LineTableModel::setDraft(std::optional<core::LineRecord> draft)
         emitRowChanged(previous);
     if (m_draftRow >= 0)
         emitRowChanged(m_draftRow);
-    if (emptyColumns() != empty) // GR3: the draft fills or empties an auto-hidden column
+    if (emptyColumns() != empty)
         emit headerDataChanged(Qt::Horizontal, 0, ColumnCount - 1);
 }
 
@@ -568,9 +522,6 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
             return 0;
         return role == FoldCountRole ? m_runs[std::size_t(r.run)].count : runFolded(index.row()) ? 1 : 2;
     }
-    // KP1: a folded run's row summarises it; it keeps its first Line's
-    // identity and selection, and the hidden-block mark after its last shown
-    // Line, which toggles from there.
     if (r.run >= 0 && m_runs[std::size_t(r.run)].first == index.row() && runFolded(index.row())) {
         const Run &run = m_runs[std::size_t(r.run)];
         switch (role) {
@@ -774,12 +725,10 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return headerToolTip(section);
     if (role != Qt::DisplayRole)
         return {};
-    // Legacy headings (SubsGridWindow.cpp:310-330). "#" is the one legacy
-    // never translates (L"#").
     if (section == NumberColumn)
         return QStringLiteral("#");
     if (section == TextColumn && m_showOriginal)
-        return QCoreApplication::translate("HikariSub.Grid", "Original text"); // SubsGridWindow.cpp:329
+        return QCoreApplication::translate("HikariSub.Grid", "Original text");
     static const char *const names[] = {nullptr,
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "L."),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Start"),
@@ -798,12 +747,6 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
     return QCoreApplication::translate("HikariSub.Grid", names[section]);
 }
 
-// An abbreviated heading's full name, the Grid's hover text; empty for a
-// heading that is already a word ("Start", "Styles", "Text"), so no name is
-// said twice. Legacy names these columns in its Paste columns choices
-// (SubsGrid.cpp:501-508: "Layer", "Left margin", "Right margin", "Vertical
-// margin") and its Hide columns menu (SubsGrid.cpp:199-200: "characters per
-// second", "line wraps").
 QString LineTableModel::headerToolTip(int section)
 {
     switch (section) {
@@ -886,7 +829,7 @@ int LineFilterModel::hiddenSelectedCount() const
     int hidden = 0;
     for (const auto &id : m_lines->selection().selected) {
         const auto row = m_lines->rowOf(id);
-        if (row && !passes(*row)) // KP1: a Line folded into a shown row is not hidden
+        if (row && !passes(*row))
             ++hidden;
     }
     return hidden;
@@ -911,4 +854,4 @@ int LineFilterModel::nearestVisibleRow(core::LineId id) const
     return -1;
 }
 
-} // namespace hikari::ui
+}

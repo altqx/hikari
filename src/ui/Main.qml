@@ -7,11 +7,6 @@ import QtQuick.Dialogs
 import Hikari.Ui
 import com.kdab.dockwidgets 2.0 as KDDW
 
-// Classic shell (V1-S): menus across the top, video left, audio above the
-// Line editor on the right, the Grid across the bottom and, when a protected
-// comparison reference is open, its tray below. Panels are focus scopes, so
-// F6/Shift+F6 traversal returns to whatever had focus inside a panel.
-// Movable/floating panels and layout persistence arrive with the docking cards.
 ApplicationWindow {
     id: root
     objectName: "mainWindow"
@@ -19,7 +14,7 @@ ApplicationWindow {
     height: 800
     visible: true
     title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
-    color: Theme.background // K2: the application background between panels
+    color: Theme.background
 
     required property ShellController shell
     required property LineEditorController editor
@@ -40,23 +35,21 @@ ApplicationWindow {
     required property GridFilterController gridFilter
     required property var automationHotkeys
     required property var updates
-    required property var whatsNew // SH3: WhatsNew
-    required property var analytics // AN1 (#404): Analytics, anonymous usage data
-    required property var crashReports // CR1 (#452): CrashReports, crash, freeze and issue reports
+    required property var whatsNew
+    required property var analytics
+    required property var crashReports
     required property var styleManager
-    required property var kanjiTimer // KA3: KanjiTimerController
-    required property var fontCollector // Y8: FontCollectorController
-    required property var fontCatalogs // Y6: FontCatalogsController
-    required property var matroska // Y9: MatroskaController (GRID_SUBS_FROM_MKV)
-    required property var hotkeys // O2: the shortcut editor (HotkeysController)
-    required property var settingsImport // O3: SettingsImportController
-    required property VisualToolsController visualTools // T1: the Video panel's visual tools
-    required property VideoViewController videoView // V4: zoom, aspect, volume, snapshots
-    required property StatusBarController statusBar // P10: the status bar's video and subtitle fields
-    required property VideoFullscreenController videoFullscreen // V5: fullscreen and the monitors
+    required property var kanjiTimer
+    required property var fontCollector
+    required property var fontCatalogs
+    required property var matroska
+    required property var hotkeys
+    required property var settingsImport
+    required property VisualToolsController visualTools
+    required property VideoViewController videoView
+    required property StatusBarController statusBar
+    required property VideoFullscreenController videoFullscreen
 
-    // Every registered macro, in load and registration order (the dynamic
-    // part of the legacy Automation menu).
     readonly property var macroItems: {
         const out = []
         for (const script of root.automationManager.scripts)
@@ -65,8 +58,6 @@ ApplicationWindow {
         return out
     }
 
-    // Subtitles > Conversion: target, label, GLOBAL_CONVERT_TO_* id.
-    // P10: with legacy's help (HikariSubFrame.cpp:323-331).
     readonly property var conversionItems: [
         ["ass", qsTr("Convert to ASS"), "GLOBAL_CONVERT_TO_ASS", qsTr("Converts to ASS format")],
         ["srt", qsTr("Convert to SRT"), "GLOBAL_CONVERT_TO_SRT", qsTr("Converts to SRT format")],
@@ -74,8 +65,6 @@ ApplicationWindow {
         ["mpl2", qsTr("Convert to MPL2"), "GLOBAL_CONVERT_TO_MPL2", qsTr("Converts to MPL2 format")],
         ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP", qsTr("Converts to TMPlayer format (not recommended)")]]
 
-    // With their GLOBAL_SORT_ALL_BY_* / GLOBAL_SORT_SELECTED_BY_* ids and
-    // legacy's help (P10, HikariSubFrame.cpp:227-234).
     readonly property var sortKeys: [
         { key: "start", label: qsTr("The starting time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
           selected: "GLOBAL_SORT_SELECTED_BY_START_TIMES", help: qsTr("Sort by start time") },
@@ -91,23 +80,17 @@ ApplicationWindow {
           help: qsTr("Sort by layer") }
     ]
 
-    // E2: a custom tag button. Types 0 and 1 work in the focused field like
-    // Bold; plain text (type 2) goes, as in legacy, into the main field (the
-    // translation in translation mode, unless it is empty).
-    // `edited`: the text field edited before a menu took the focus (LE1's
-    // More), else the one edited now.
     function applyTagButton(index, edited) {
-        // EditBox::OnButtonTag reads the button's option as stored now.
         const b = root.tagButtons.pressed(index)
         if (b.tag === undefined || b.tag.length === 0)
             return false
         let field = edited ?? root.editedField()
+        // MUST KILL: tag button type is a magic int (2 = plain text into the main field)
         if (b.type === 2)
             field = root.editor.translationMode && translationText.text.length > 0 ? translationText : lineText
         return root.editor.applyTagButton(field.role, b.tag, b.type, field.selectionStart, field.selectionEnd)
     }
 
-    // Close review (P1): rows of Documents with unsaved work, then `then`.
     function beginClose(then) {
         const rows = root.app.reviewClose(then)
         if (rows.length === 0)
@@ -115,22 +98,15 @@ ApplicationWindow {
         else
             closeReview.review(rows)
     }
-    // Opening subtitles into the editing target (P2): staged first, then the
-    // target's unsaved work is reviewed as for Close.
     function openSubtitles(path) {
         const result = root.app.reviewOpen(path)
         if (!result.ok || result.done)
-            return // the log window shows the problem; P9: opened in a new tab
+            return
         else if (result.rows.length === 0)
             root.app.finishClose()
         else
             closeReview.review(result.rows)
     }
-    // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
-    // 20d647c4): an MKV file goes to OnMkvSubs, its subtitle track loaded as
-    // GRID_SUBS_FROM_MKV loads the tab video's (in a new tab when the tab has
-    // subtitles of a file); an OGM file opens as OpenFile opens a video;
-    // anything else opens as subtitles.
     function openChosenSubtitles(path) {
         if (root.matroska.opensAsMatroska(path))
             matroskaSubtitles.beginFile(path)
@@ -139,16 +115,8 @@ ApplicationWindow {
         else
             root.openSubtitles(path)
     }
-    // Legacy ReloadSubsIfModified when the window becomes active (and
-    // ChangePage's on a tab change): a bar on that Document instead of a
-    // modal question (PU1-disk-change-bar). Documents whose bar shows, by id.
     property var changedOnDisk: ({})
-    // Documents saved under another name while their bar showed: the bar
-    // goes once that write is done (a failed one leaves it).
     property var savingAway: ({})
-    // PU1-mkv-notices: the tab an MKV load started on (taken as it starts,
-    // before its tracks are listed, as the application takes its target);
-    // "home" for a load File > Open started on Home.
     property var mkvTab: undefined
     Connections {
         target: root.matroska
@@ -176,11 +144,7 @@ ApplicationWindow {
         if (active)
             checkExternalChange()
     }
-    // The close as the window receives it, before the docking engine closes
-    // every panel (Docking.guardClose, from the first frame on): the review
-    // of unsaved work holds a close back here, so the panels stay while it is
-    // shown and after it is cancelled, and a close that goes ahead saves the
-    // layout as the user sees it, the last save of the session.
+    // KDDW closes every panel before onClosing, so the close is reviewed here first (Docking.guardClose).
     function admitClose() {
         if (!root.app.quitApproved) {
             const rows = root.app.reviewClose("quit")
@@ -201,11 +165,9 @@ ApplicationWindow {
                 return
             }
         }
-        // HikariSubFrame::OnClose: FR->SaveOptions().
         searchTool.save()
-        root.app.endSession() // P6: SaveLastSession(true)
+        root.app.endSession()
     }
-    // P10: the menus' help in the status bar's first field (StatusHelp).
     Connections {
         target: StatusHelp
         function onShown(text) { root.shell.statusText = text }
@@ -222,41 +184,23 @@ ApplicationWindow {
                 closeReview.fail(problem)
             }
         }
-        // F1: a file result opens into the changed Untitled Document.
         function onFindOpenReview(rows) {
             closeReview.review(rows)
         }
-        // DestroyDialogs (a changed program font): the Search tool saves its
-        // tab (FR->SaveOptions) and closes with its results.
         function onFindReplaceDestroyed() {
             searchTool.destroyTool()
             searchDock.close()
         }
     }
 
-    // D1: the Classic arrangement (also Reset layout): Video beside Audio over
-    // the Line editor, the Grid below, the Reference under it when there is one.
-    // Legacy AUDIO_BOX_HEIGHT: the display with its ruler, the search bar
-    // and the button row take 170 px; the Audio dock's request in
-    // defaultLayout() assumes a chrome height (title bars) that fonts change,
-    // so the difference is moved across the dock's bottom edge.
     function fitAudioBox() {
-        // With audio open the box fills the panel's body (the search bar and
-        // button rows appear then), so the body is what gets 170 px: the
-        // group's height in the layout less its header (35) and the body's
-        // margins.
         const chrome = audioDock.isOpen ? Math.round(root.workspaceLayout.panelSize(audioDock).height - audioPanel.bodyHeight) : 0
-        // D3: the Line editor below keeps its minimum (Panel). When it has
-        // no room to give, the first move of the separator between them
-        // grows the top row instead (the engine takes the room from the
-        // Grid's row and gives it to the editor), and the next one gives it
-        // to the audio box. The default arrangement shows the editor's rows
-        // whole, so while it is fitted that minimum is their height (with
-        // the body's margins); a dock squeezed later scrolls them.
+        // KDDW: a separator dragged past the editor's minimum pushes the next one, so the minimum is its rows' height.
         Docking.setMinimumSize("Editor", Qt.size(editorPanel.minimumSize.width,
                                                  Math.ceil(editorColumn.implicitHeight) + 8))
         for (let pass = 0; pass < 3; ++pass) {
             const body = root.workspaceLayout.panelSize(audioDock).height - chrome
+            // MUST KILL: 170 is a magic audio box body height
             const deficit = Math.round(170 - body)
             if (deficit === 0 || !audioDock.isOpen)
                 break
@@ -266,60 +210,34 @@ ApplicationWindow {
     }
 
     function defaultLayout() {
-        // Search (its scope rail beside the results) spans the bottom; it is
-        // placed and closed first so the panels after it share the whole area.
         dockingArea.addDockWidget(searchDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 280))
         searchDock.close()
         dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
-        // The top row and the Audio dock are sized so that at the default
-        // window (1280 x 800) the audio box gets legacy's AUDIO_BOX_HEIGHT
-        // (170 px for the display, search bar and buttons) above a usable
-        // Line editor; the docking engine shares the row by these requests.
         dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 520))
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 272))
-        // TM1: the Original text panel's place, between the Audio panel and
-        // the Line editor; it shows while the mode is on (placeOriginal).
         dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
         originalDock.close()
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        // Tools start closed (docs/ux/workspaces.md); Timing,
-        // Automation and Styles tab with the editor.
         editorDock.addDockWidgetAsTab(timingDock)
         editorDock.addDockWidgetAsTab(automationDock)
         editorDock.addDockWidgetAsTab(stylesDock)
-        // KE2: the Template editor tabs with the editor too.
         editorDock.addDockWidgetAsTab(templateDock)
         editorDock.setAsCurrentTab()
         timingDock.close()
         automationDock.close()
         stylesDock.close()
         templateDock.close()
-        // NT1: the Log has no place until it first opens (addLog), so the
-        // arrangement keeps the sizes it had without it.
-        // PU2: Fix minor errors at the right edge, full height, 420 wide.
         dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         misspellDock.close()
     }
 
-    // TP1 (#274): the Typesetting preset's own arrangement (owner-approved
-    // mockup 2026-10-22), built from the default one the first time the
-    // preset is chosen and kept as the preset's (buildsArrangement). The
-    // Video panel leads the upper row, about two thirds of the height, with
-    // Styles on its right in about a quarter of the width; below, the Line
-    // editor at its natural height beside a short Grid. Audio is closed; it and the Original text panel
-    // keep their places above the Line editor, as in Editing.
     function typesettingLayout() {
         const area = root.workspaceLayout.panelSize(gridDock).width
-        // The Line editor leaves the right column for the Grid's row, on
-        // its left; Audio and the Original text go above it (shown for the
-        // move, then closed again).
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnLeft, gridDock,
                                   Qt.size(Math.round(area * 0.44), 0))
-        // LE1: wide enough for the Line editor's two rows of fields (narrow,
-        // their names go above them and the rows double), up to half.
         const fieldsShort = Math.ceil(editorInspector.wideMinimum - editorColumn.width)
         const room = Math.round(area * 0.5) - root.workspaceLayout.panelSize(editorDock).width
         if (fieldsShort > 0 && room > 0)
@@ -333,37 +251,22 @@ ApplicationWindow {
             originalDock.close()
         dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
                                   Qt.size(Math.round(area * 0.24), 0))
-        // Wide enough for its header's commands whatever the font (the
-        // title's width varies), with a little room to spare.
         const tools = stylesTool.toolbar
         const short = Math.ceil(tools.implicitWidth + 12 - tools.width)
         if (tools.visible && short > 0)
             Docking.resizeInLayout("Styles", short, 0, 0, 0)
-        // The lower row at the Line editor's natural height at its new
-        // width (its rows whole, as fitAudioBox measures them, below its
-        // header), the rest to the upper row. The Video panel's bottom edge
-        // moves: the Line editor's top edge is the closed Audio and Original
-        // places', which the engine doesn't move.
+        // KDDW doesn't move the closed Audio/Original places' edge, so the Video panel's bottom edge moves instead.
         editorColumn.ensurePolished()
         const lower = root.workspaceLayout.panelSize(editorDock).height
         const natural = Math.ceil(editorColumn.implicitHeight) + 8 + lower - editorPanel.height
         if (lower !== natural)
             Docking.resizeInLayout("Video", 0, 0, 0, lower - natural)
     }
-    // KP1 (#286): the Karaoke preset's own arrangement (owner-approved
-    // mockup A, 2026-10-26), built from the default one as Typesetting's is.
-    // Video and the Template editor, the Line editor the tab behind it, share
-    // the upper row; Audio spans the window under them, so a Line's syllables
-    // get its whole width; a short Grid at the bottom.
     function karaokeLayout() {
-        // Audio leaves the Line editor's column for the Grid's row, above it,
-        // at the height Editing gives it.
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, gridDock,
                                   Qt.size(0, root.workspaceLayout.panelSize(audioDock).height))
         templateDock.open()
         templateDock.raise()
-        // The Grid gets its heading and seven rows; Audio, above it, gives or
-        // takes the difference.
         const lower = root.workspaceLayout.panelSize(gridDock).height
         const short = Math.ceil(lower - grid.height + grid.rowHeight * 8)
         if (short !== lower)
@@ -380,8 +283,6 @@ ApplicationWindow {
     }
     Connections {
         target: root.shell
-        // The tray is part of the Grid: a comparison opened while the
-        // tab's layout has the Grid closed leaves it closed too.
         function onHasReferenceChanged() {
             if (root.shell.hasReference && gridDock.isOpen)
                 referenceDock.open()
@@ -390,12 +291,6 @@ ApplicationWindow {
         }
     }
 
-    // TM1 (#232): the Original text panel follows the editing target's
-    // Translation mode, as the Reference tray follows the comparison: while
-    // the mode is on it opens where the arrangement keeps its place (above
-    // the Line editor in one that never had it), and it closes when the mode
-    // goes off. Closed by hand, it stays closed until the mode or the
-    // arrangement changes, and the Line editor shows the Original text then.
     readonly property bool originalShown: root.editor.translationMode && originalDock.isOpen
     readonly property bool translationMode: root.editor.translationMode
     onTranslationModeChanged: root.placeOriginal()
@@ -415,9 +310,6 @@ ApplicationWindow {
         else
             root.addOriginal()
     }
-    // Where an arrangement that never had the panel (an older saved layout)
-    // puts it: above the Line editor, in the Line editor's own window when
-    // that floats (placePanel), or on the right without one.
     function addOriginal() {
         if (editorDock.isOpen && editorDock.isFloating)
             editorDock.addDockWidgetToContainingWindow(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock,
@@ -428,20 +320,12 @@ ApplicationWindow {
             dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(400, 0))
     }
 
-    // NT1 (#302): the Log's place when it opens in an arrangement that has
-    // none for it (every preset, an older saved layout): along the bottom,
-    // the whole width.
     function addLog() {
         dockingArea.addDockWidget(logDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
     }
-    // PU6 (#308): the Spellchecker panel's place the same way (every preset,
-    // an arrangement saved before it existed: panel registry 9 or less),
-    // along the bottom, the whole width.
     function addSpellChecker() {
         dockingArea.addDockWidget(spellDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
     }
-    // Subtitles > Check spelling (GLOBAL_OPEN_SPELLCHECKER): the panel,
-    // checking from the active Line, again when it was already checking.
     function openSpellChecker() {
         const checking = spellTool.checking
         root.showPanel(spellDock)
@@ -449,18 +333,12 @@ ApplicationWindow {
             spellTool.start()
     }
 
-    // TP1 (#274): the Styles panel's place when it opens in an arrangement
-    // saved before it existed (panel registry 6 or earlier): its default
-    // one, a tab with the Line editor, or the window's right side when the
-    // Line editor is closed.
     function addStyles() {
         if (editorDock.isOpen)
             editorDock.addDockWidgetAsTab(stylesDock)
         else
             dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
-    // KE2: the Template editor's, in one saved before it (registry 8 or
-    // earlier), the same way.
     function addTemplate() {
         if (editorDock.isOpen)
             editorDock.addDockWidgetAsTab(templateDock)
@@ -468,9 +346,6 @@ ApplicationWindow {
             dockingArea.addDockWidget(templateDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
 
-    // AD3 (#312): a run shows on its progress card (AutomationProgress, in
-    // the toast stack); the Automation panel no longer opens for it. The
-    // card's "Open in panel" shows the run in the panel's Runs.
     function openAutomationRun(runId) {
         if (root.videoFullscreen.active)
             root.videoFullscreen.leave()
@@ -478,26 +353,16 @@ ApplicationWindow {
         automationTool.showRun(runId)
     }
 
-    // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                           timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
                                           misspellPanel, templatePanel]
-    // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                      searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
-    // KB2, KB1 (key_router.h): a panel's bindings act before the control
-    // it has focused (a clicked button keeps no Space of its own), on the
-    // hovered panel rather than the focused one, and the Video window's
-    // VIDEO_PLAY_PAUSE (Space by default) acts from every panel; never while
-    // a text field or a control the keyboard moved to has focus.
     KeyRouter {
         id: keyRouter
         objectName: "keyRouter"
         fallbackTarget: videoPanel
         fallbackAccepts: (key, modifiers) => root.hotkeys.actionFor(3, key, modifiers) === "VIDEO_PLAY_PAUSE"
-        // AUDIO_AUTO_FOCUS folded in: legacy's audio took the focus under
-        // the pointer; now no panel does, and the hotkeys follow it. KA2:
-        // not while tap mode is on, so its taps stay the audio panel's.
         followsPointer: () => root.app.settings.value("audio.autoFocus") && !root.audio.tapOn
         Component.onCompleted: {
             for (const panel of root.panels)
@@ -505,30 +370,20 @@ ApplicationWindow {
         }
     }
 
-    // A preset is the Editing arrangement with the panels it leaves closed
-    // (Timing: Video; Translation and Typesetting: Audio), for the current
-    // Document tab only (WS1).
     function applyPreset(name) {
-        // Before the first frame the default arrangement and the saved
-        // layout are not in place yet: settle them first.
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.applyPreset(name))
-        root.analytics.layoutChanged(name) // AN1 (#404)
+        root.analytics.layoutChanged(name)
     }
-    // WS3: a saved layout for the current tab, and Reset this layout (the
-    // saved layout the tab's arrangement started from, else its preset).
     function applySavedLayout(name) {
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.applySavedLayout(name))
-        root.analytics.layoutChanged("saved") // AN1 (#404): never the layout's name
+        root.analytics.layoutChanged("saved")
     }
     function resetLayout() {
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.resetCurrentLayout())
     }
-    // A panel with the focus that the new layout hides gives it to the
-    // Grid, else to the first shown panel in F6 order (as the retired
-    // arrangements did).
     function keepFocusShown(apply) {
         const focused = root.panels.find(p => p.visible && p.activeFocus) ?? null
         apply()
@@ -539,10 +394,6 @@ ApplicationWindow {
         if (next)
             root.focusPanel(next, Qt.OtherFocusReason)
     }
-    // WS1: another arrangement is shown (another tab's, a preset, a saved
-    // layout, the backup). The Reference tray follows the comparison, not
-    // the arrangement (shown with the Grid while there is one), and a video
-    // the arrangement hides pauses (no transport shows it playing).
     Connections {
         target: root.workspaceLayout
         function onArrangementSwapped() {
@@ -552,19 +403,13 @@ ApplicationWindow {
                 referenceDock.close()
             if (!videoDock.isOpen && root.video.playing)
                 root.video.pause()
-            // TM1: once the editor is the shown tab's: a tab's arrangement
-            // is swapped in before the editor leaves the tab before.
+            // MUST KILL: deferred because the arrangement swaps in before the editor leaves the old tab
             Qt.callLater(root.placeOriginal)
         }
-        // TM1: a preset that carries a mode (WorkspaceLayoutController::presetMode).
-        // Translation asks to turn the editing target's Translation mode on
-        // and leaves it on when another arrangement is chosen.
         function onPresetModeChosen(mode) {
             if (mode === "Translation" && root.app.translationQuestionDue())
                 root.openInMainWindow(translationModeQuestion)
             if (mode === "Karaoke") {
-                // KP1: Karaoke mode and the Grid's folding on, remembered as
-                // Karaoke's own change while nobody changes them after.
                 const karaoke = root.audio.karaoke
                 const folds = root.shell.foldGenerated
                 root.audio.setKaraoke(true)
@@ -573,7 +418,6 @@ ApplicationWindow {
                 root.foldTurnedOn = root.foldTurnedOn || !folds
             }
         }
-        // KP1: leaving Karaoke puts back what it changed itself.
         function onPresetModeLeft(mode) {
             if (mode !== "Karaoke")
                 return
@@ -585,9 +429,6 @@ ApplicationWindow {
             root.foldTurnedOn = false
         }
     }
-    // KP1: what choosing Karaoke turned on; a change by anyone else since
-    // keeps it as it is when Karaoke is left. #400: kept across a restart
-    // (workspace.karaokeTurnedOn), Karaoke still the mode to leave.
     property bool karaokeTurnedOn: false
     property bool foldTurnedOn: false
     readonly property bool audioKaraoke: root.audio.karaoke
@@ -601,10 +442,7 @@ ApplicationWindow {
     onKaraokeTurnedOnChanged: root.keepKaraokeTurnedOn()
     onFoldTurnedOnChanged: root.keepKaraokeTurnedOn()
 
-    // F1: GLOBAL_SEARCH (0) and GLOBAL_FIND_REPLACE (1) open the Search tool
-    // on that tab; the same shortcut again while the tool has the focus on
-    // that tab hides it (legacy ShowDialog). The focus coming in from
-    // elsewhere takes the editor's selection (legacy OnActivate).
+    // MUST KILL: which is a magic int search tab (0 Search, 1 Find and replace)
     function openSearch(which) {
         if (searchDock.isOpen && searchPanel.activeFocus && searchTool.tab === which) {
             searchDock.close()
@@ -616,14 +454,10 @@ ApplicationWindow {
         searchTool.focusFind()
     }
 
-    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first
-    // (legacy; PU4-shift-question: PK1's message box, which can be hidden).
-    // The answer shifts the document it was asked for: another editing
-    // target meanwhile (the main window stays in use under the fullscreen
-    // video window's question) takes the question back.
     function runShiftTimes() {
         const which = root.shiftTimes.settings.whichTimes
         const pp = root.shiftTimes.settings.postprocessor
+        // MUST KILL: whichTimes (1 start, else end) and the postprocessor bit test are magic ints
         if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
             const start = which === 1
             const target = root.app.editingTargetId()
@@ -650,15 +484,13 @@ ApplicationWindow {
         shiftTimesPanel.message = root.app.shiftTimes()
     }
 
-    // The dock of the panel with the focus (the Grid's otherwise).
     function focusedDock() {
         const w = root.workspaceLayout.focusWindow
         const i = panels.findIndex(p => p.activeFocus && p.Window.window === w)
         return i >= 0 ? dockList[i] : gridDock
     }
 
-    // D1 keyboard placement: kind 0 tab with, 1 left of, 2 above, 3 right of,
-    // 4 below, 5 float. The moved panel keeps the focus.
+    // MUST KILL: kind is a magic int (0 tab, 1 left, 2 above, 3 right, 4 below, 5 float)
     function placePanel(dock, kind, target) {
         if (!root.panelAvailable(dock))
             return false
@@ -683,8 +515,6 @@ ApplicationWindow {
         return true
     }
 
-    // D1 Move before/after: the panel `step` places along its group's tabs;
-    // it stays the shown tab and keeps the focus.
     function moveTab(dock, step) {
         if (!Docking.moveTab(dock.uniqueName, step))
             return false
@@ -692,21 +522,13 @@ ApplicationWindow {
         return true
     }
 
-    // View > Panels > Show: open the panel, bring its window up and focus it.
-    // GLOBAL_EDITOR's VideoBox::OpenEditor (fullscreen's Open editor): out
-    // of fullscreen to the Line editor, shown even where the tab's layout
-    // has it closed (WS3).
     function openEditorFromFullScreen() {
         if (root.app.openEditorFromFullScreen())
             root.showPanel(editorDock)
     }
-    // TM1: the Original text panel has no content outside translation mode,
-    // so nothing opens it then.
     function panelAvailable(dock) {
         return dock !== originalDock || root.editor.translationMode
     }
-    // Edit › Fix minor errors shows or hides its panel (legacy
-    // MR->Show(!MR->IsShown())).
     function toggleMisspellPanel() {
         if (misspellDock.isOpen)
             misspellDock.close()
@@ -716,7 +538,7 @@ ApplicationWindow {
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
-        root.analytics.panelOpened(dock.uniqueName) // AN1 (#404): once per panel and session
+        root.analytics.panelOpened(dock.uniqueName)
         if (dock === originalDock)
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace("Log"))
@@ -726,8 +548,6 @@ ApplicationWindow {
         else if (dock === stylesDock && !Docking.hasPlace("Styles"))
             root.addStyles()
         else if (dock === misspellDock && !Docking.hasPlace("FixMinorErrors"))
-            // An arrangement saved before the panel (registry 7 or less) has no
-            // place for it: the right edge, as the Classic arrangement.
             dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         else if (dock === templateDock && !Docking.hasPlace("Template"))
             root.addTemplate()
@@ -735,14 +555,11 @@ ApplicationWindow {
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
         dock.raise()
-        // PU6: showing the Spellchecker starts it at the active Line.
         if (dock === spellDock && !spellTool.checking)
             spellTool.start()
         root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
 
-    // The panel an item belongs to; a dock header (DockTabBar.qml) belongs
-    // to its current panel.
     function panelOf(item) {
         for (let p = item; p; p = p.parent) {
             for (const panel of panels)
@@ -757,11 +574,6 @@ ApplicationWindow {
         return null
     }
 
-    // DX1 (#367): User guide (GLOBAL_HELP): the page of the DG1 window with
-    // the keyboard (its guideId), else of the panel the hotkeys act on (the
-    // one under the pointer while they follow it, KeyRouter, else the one
-    // with the focus; its guideId when its mode has a page, #409); the
-    // guide's home for anything else.
     function openUserGuide() {
         const w = root.workspaceLayout.focusWindow
         if (w && w.guideId !== undefined) {
@@ -777,7 +589,6 @@ ApplicationWindow {
         target: UserGuide
         function onOpenRequested(kind, id) { root.app.openUserGuide(kind, id) }
     }
-    // User guide's keys in a DG1 window, where the Global bindings are off.
     Shortcut {
         objectName: "dialogUserGuide"
         sequences: root.hotkeys.globalShortcuts.filter(s => s.symbol === "GLOBAL_HELP").map(s => s.keys)
@@ -787,25 +598,7 @@ ApplicationWindow {
         onActivated: root.openUserGuide()
     }
 
-    // D3: a panel's "⋯" menu (MuseScore's DockPanelMenuModel,
-    // docs/research/musescore-docking.md §1): the panel's own items, then
-    // Move panel…, Undock (Dock while it floats) and Close, each disabled
-    // where the panel cannot do it (its dock's options: not closable, not
-    // dockable). Its header asks for it (Docking.requestMenu: the "⋯"
-    // button, a right click on the header, Space or Enter on the button).
-    // A panel's own items are commands that have no place in its body or
-    // its header's toolbar, never a copy of them. The Reference tray has
-    // "Compare with reference" (R1-compare-reference: the editing target
-    // with the Protected reference, which the tab menu's Compare cannot
-    // reach when the reference is no tab). Its Close closes the reference,
-    // the tray with it (legacy's close mark, DestroyPreview), so the header
-    // holds one close, not two.
-    // An item's `enabled` is a function its entry follows, so the list itself
-    // stays put while the menu is open (a new list would remake the entries,
-    // the one being chosen too).
-    // LE2: the Video panel's Times/Frames choice (legacy's radios under the
-    // Line editor, EDITBOX_TIMES_TO_FRAMES_SWITCH), enabled once a video was
-    // opened; the Line editor and the Grid follow it.
+    // Item flags are functions: a new model list makes the Instantiator remake every entry, the open one too.
     function panelOwnItems(dock) {
         if (dock === videoDock)
             return [{ name: "showTimes", text: qsTranslate("HikariSub.Editor", "Show times"), checkable: true, radio: true,
@@ -817,9 +610,6 @@ ApplicationWindow {
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
                       enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference(), iconRole: "compare" }]
-        // AM1: the Automation menu's commands for scripts and the Hotkeys
-        // page on the macros' shortcuts (a legacy Hotkeys.txt is imported
-        // there since PU7, #309).
         if (dock === automationDock)
             return [{ name: "automationLoadScript", text: qsTranslate("HikariSub.Automation", "Load script…"), iconRole: "automation",
                       enabled: () => loadScriptAction.enabled, run: () => loadScriptAction.trigger() },
@@ -828,12 +618,9 @@ ApplicationWindow {
                       run: () => reloadAutoloadAction.trigger() },
                     { name: "automationShortcutsInSettings", text: qsTranslate("HikariSub.Automation", "Shortcuts in Settings…"),
                       iconRole: "hotkeys", run: () => root.openSettings("hotkeys", 7) },
-                    // AD3: the finished runs go from Runs.
                     { name: "automationClearRuns", text: qsTranslate("HikariSub.Automation", "Clear runs"),
                       iconRole: "remove", enabled: () => root.automation.runs.count > (root.automation.running ? 1 : 0),
                       run: () => root.automation.runs.clear() }]
-        // PU6: the Spellchecker's two options (legacy's check boxes) and
-        // the user dictionary's words (legacy's "Remove from dictionary").
         if (dock === spellDock)
             return [{ name: "spellIgnoreComments", text: qsTranslate("HikariSub.Spelling", "Ignore comments"), checkable: true,
                       checked: () => spellTool.ignoreComments, run: () => spellTool.setIgnoreComments(!spellTool.ignoreComments) },
@@ -842,17 +629,12 @@ ApplicationWindow {
                       run: () => spellTool.setIgnoreUpperCase(!spellTool.ignoreUpperCase) },
                     { name: "spellAddedWords", text: qsTranslate("HikariSub.Spelling", "Words added to dictionary…"),
                       iconRole: "dictionary", run: () => spellTool.openAddedWords() }]
-        // KP1 (#286): runs of generated Lines folded into one row each.
         if (dock === gridDock)
             return [{ name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated lines"), checkable: true,
                       checked: () => root.shell.foldGenerated,
                       run: () => root.shell.foldGenerated = !root.shell.foldGenerated }]
         return []
     }
-    // VF1 (#288): a panel's own submenus, after its own items: an item's
-    // `items` are radio choices, its `iconRole` the submenu's. The Video
-    // panel's "Seek on" and "Then play" (legacy VideoToolbar's two lists,
-    // which left the panel).
     readonly property VideoFollowChoices videoFollow: VideoFollowChoices { settings: root.app.settings }
     function panelOwnMenus(dock) {
         if (dock === videoDock)
@@ -888,16 +670,13 @@ ApplicationWindow {
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotClosable) === 0
         readonly property bool dockable: dock !== null
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotDockable) === 0
-        // The panel's place among its group's tabs, read as the menu opens.
         property int tabIndex: -1
         property int tabCount: 0
-        // Left is toward the first tab, unless the layout is mirrored.
         readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
         function openFor(target, anchor) {
             dock = target
             tabIndex = Docking.tabIndex(target.uniqueName)
             tabCount = Docking.tabCount(target.uniqueName)
-            // inside a floating panel's frame, not over its drawn shadow
             margins = anchor.Window.window !== root ? Docking.windowShadow(anchor.Window.window) + 1 : 0
             popup(anchor, 0, anchor.height)
         }
@@ -912,12 +691,11 @@ ApplicationWindow {
                 text: modelData.text
                 checkable: modelData.checkable === true
                 checked: typeof modelData.checked === "function" ? modelData.checked() : modelData.checked === true
-                // A choice among items (radio) closes the menu, as legacy's ITEM_RADIO.
                 keepsMenuOpen: checkable && modelData.radio !== true
                 enabled: typeof modelData.enabled === "function" ? modelData.enabled() : modelData.enabled !== false
                 onTriggered: {
                     modelData.run()
-                    // The item's check follows its state, not the click's toggle.
+                    // Clicking a checkable item assigns checked and breaks its binding; restore it.
                     if (typeof modelData.checked === "function")
                         checked = Qt.binding(() => modelData.checked())
                 }
@@ -942,7 +720,7 @@ ApplicationWindow {
                         text: modelData.text
                         checkable: true
                         checked: modelData.checked()
-                        keepsMenuOpen: false // a choice among items closes the menu (ITEM_RADIO)
+                        keepsMenuOpen: false
                         onTriggered: {
                             modelData.run()
                             checked = Qt.binding(() => modelData.checked())
@@ -952,7 +730,6 @@ ApplicationWindow {
                     onObjectRemoved: (index, object) => ownMenu.removeItem(object)
                 }
             }
-            // After the own items, whichever Instantiator fills first.
             onObjectAdded: (index, object) => panelOptionsMenu.insertMenu(panelOptionsMenu.ownItems.length + index, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeMenu(object)
         }
@@ -968,8 +745,6 @@ ApplicationWindow {
             enabled: panelOptionsMenu.dockable
             onTriggered: placementWindow.openFor(panelOptionsMenu.dock)
         }
-        // D1 Move before/after: a tab one place along its tab bar, kept
-        // current and focused; only in a group of tabs, off at its end.
         ShellMenuItem {
             id: panelOptionsTabLeft
             iconRole: "tab-move-left"
@@ -1008,12 +783,9 @@ ApplicationWindow {
     }
 
     function cyclePanels(step) {
-        if (homePage.visible) // SH2: the Home page is the one region
+        if (homePage.visible)
             return homePage.takeFocus()
         const shown = panels.filter(p => p.visible)
-        // AD3: the progress card is a region after the panels while it
-        // shows its controls (F6 never starts on it: it takes no focus by
-        // itself).
         const card = automationProgress.reachable ? automationProgress : null
         if (card && card.activeFocus) {
             card.leave()
@@ -1021,17 +793,12 @@ ApplicationWindow {
                 root.focusPanel(shown[step > 0 ? 0 : shown.length - 1], Qt.TabFocusReason)
             return
         }
-        // Every panel closed: the card is the one region, or there is none.
         if (shown.length === 0) {
             if (card)
                 root.enterCard(null)
             return
         }
-        // The panel with focus in the focus window: the main one or a
-        // floating panel group (D1). Window.active cannot tell them apart:
-        // Qt reports a floating panel's window active whenever its transient
-        // parent, the main window, is, so the shell compares the
-        // application's focus window.
+        // Not Window.active: Qt reports a floating panel's window active whenever its transient parent is.
         const focusWindow = root.workspaceLayout.focusWindow
         let current = shown.findIndex(p => p.activeFocus && p.Window.window === focusWindow)
         if (current < 0 && focusWindow === root)
@@ -1047,13 +814,8 @@ ApplicationWindow {
         root.focusPanel(shown[next], Qt.TabFocusReason)
     }
 
-    // The panel waiting for its window's activation (focusPanel), or what
-    // takes the focus then ({window, focus}: enterCard).
     property var pendingFocus: null
 
-    // AD3: F6 into the progress card, whose window (the main one, or the
-    // fullscreen video's) is activated first when the keys are elsewhere,
-    // as focusPanel does for a panel.
     function enterCard(from) {
         const w = automationProgress.Window.window
         const take = () => automationProgress.enter(from)
@@ -1066,10 +828,6 @@ ApplicationWindow {
         take()
     }
 
-    // TM1: a question of the main window's (a dialog in its overlay) asked
-    // from a floating panel's window, the Translation mode hotkey's say: the
-    // main window comes up and is activated first, so the question shows
-    // above that window and takes the keys.
     function openInMainWindow(dialog) {
         if (root.workspaceLayout.focusWindow !== root) {
             root.raise()
@@ -1078,12 +836,7 @@ ApplicationWindow {
         dialog.open()
     }
 
-    // TM1: the text field the Line editor's commands act on. With the
-    // Original text panel in a window of its own each window keeps its own
-    // focus item, so the Translated text gets its active focus back whenever
-    // the main window is activated, by a click on a tag button too (an
-    // activation or a popup's closing, as the platform reports it); the
-    // field last focused for any other reason is the one being edited.
+    // Qt restores each window's own focus item on activation, so activeFocus can't tell which field was edited.
     property Item lastTextField: null
     function editedField() {
         return translationText.visible && root.lastTextField === translationText
@@ -1094,11 +847,8 @@ ApplicationWindow {
         function onFocusWindowChanged() {
             const pending = root.pendingFocus
             if (!pending || root.workspaceLayout.focusWindow !== pending.window) {
-                // The main window activated with nothing to focus (its focused
-                // panel floated away): the next visible region takes it, the
-                // Grid first (docs/docking.md, focus restoration).
                 const w = root.workspaceLayout.focusWindow
-                const a = root.activeFocusItem // nothing, or the window's own root items
+                const a = root.activeFocusItem
                 if (w === root && (!a || !a.parent || a === root.contentItem)) {
                     const inMain = root.panels.filter(p => p.visible && p.Window.window === root)
                     const next = inMain.includes(gridPanel) ? gridPanel : inMain[0]
@@ -1110,18 +860,12 @@ ApplicationWindow {
             root.pendingFocus = null
             const take = pending.focus || (() => pending.panel.forceActiveFocus(pending.reason))
             take()
-            // Again after the other activation handlers (the docking layer
-            // focuses its own frame when a floating window activates).
+            // Again after KDDW focuses its own frame on a floating window's activation.
             Qt.callLater(take)
         }
     }
 
-    // Focus a panel, activating its window first when that is not the focus
-    // window (a floating panel, or the main window from one). Activation is
-    // asynchronous on X11 and Wayland, and the window gives the focus to its
-    // own item when it activates, so the panel takes it again then. A panel
-    // behind another tab of its group (TM1: the Original text and the Line
-    // editor tabbed together) comes to the front first.
+    // Window activation is asynchronous on X11 and Wayland; the panel takes the focus again once it activates.
     function focusPanel(panel, reason) {
         const owner = root.panelOf(panel)
         const dock = owner ? root.dockList[root.panels.indexOf(owner)] : null
@@ -1137,27 +881,18 @@ ApplicationWindow {
         panel.forceActiveFocus(reason)
     }
 
-    // D1: Float and Dock from View > Panels (and Move panel's Float) leave the
-    // focus on the moved panel, in its new window (docs/docking.md, focus
-    // restoration). The panel's window changes when the engine reparents it.
+    // Deferred: KDDW reparents the panel into its new window first.
     function setPanelFloating(dock, floating) {
         const panel = panels[dockList.indexOf(dock)]
         dock.isFloating = floating
         Qt.callLater(() => root.focusPanel(panel, Qt.OtherFocusReason))
     }
 
-    // V5: a double click on the picture (VideoBox.cpp:554-559): SetFullscreen(),
-    // and once out of fullscreen the Line shown at the video's time with
-    // GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN.
     function videoDoubleClick() {
         root.videoFullscreen.toggle(0)
         if (!root.videoFullscreen.active)
             root.app.selectVisibleLineAfterFullScreen()
     }
-    // V5: OpenFile(path, fulls) and OpenFile in fullscreen: subtitles named
-    // as the video load without "Load subtitles named ...?" (asked only
-    // `!fulls && !IsFullScreen()`, HikariSubFrame.cpp:1351), then the video.
-    // `fullscreen` (V5): legacy OpenFile's `fulls`, for that open only.
     function openVideoUnasked(path, fullscreen) {
         const found = root.app.openVideoFile(path)
         if (found.subtitles.length === 0) {
@@ -1174,13 +909,9 @@ ApplicationWindow {
         else
             closeReview.review(result.rows)
     }
-    // CF3: a session file opened alone (dropped, or handed over by a start)
-    // loads as Load session from file does.
     function openSessionFile(path) {
         sessionWindows.load(root.app.fileUrl(path))
     }
-    // V5: OpenFiles with one file, a video: OpenFile(files[0], videos.size()
-    // == 1 && VIDEO_FULL_SCREEN_ON_START) (HikariSubFrame.cpp:1856-1858).
     function openSingleVideo(path) {
         if (root.app.settings.value("video.fullScreenOnStart")) {
             root.openVideoUnasked(path, true)
@@ -1189,28 +920,15 @@ ApplicationWindow {
         }
     }
 
-    // D1: a floating panel's window is part of the shell. The Classic
-    // shortcuts work there too, and not in dialogs or tool windows.
     readonly property bool floatingPanelActive: {
         const w = root.workspaceLayout.focusWindow
         return w !== null && w !== root && panels.some(p => p.visible && p.Window.window === w)
     }
-    // While a menu has the keyboard none of the shell's shortcuts fire, as
-    // legacy's menus took every key while shown (MenuBar::OnKey, Menu.cpp:1335):
-    // Left and Right (Previous and Next frame) open and close submenus.
     readonly property bool menuHasKeys: root.workspaceLayout.menuHasFocus
-    // V5: the fullscreen video window takes the Global bindings too
-    // (Fullscreen::SetAccels, VideoFullscreen.cpp:222-260).
     readonly property bool videoFullscreenActive: root.workspaceLayout.focusWindow !== null
                                                   && root.workspaceLayout.focusWindow === videoFullscreenWindow
     readonly property bool shellActive: (root.workspaceLayout.focusWindow === root || floatingPanelActive
                                          || videoFullscreenActive) && !menuHasKeys
-    // O2: the Global window's accelerator table (HikariSubFrame::SetAccels,
-    // HikariSubFrame.cpp:1754-1800), on the whole shell (legacy's Tabs). The
-    // focused panel's own bindings come first (each panel takes its keys in
-    // ShortcutOverride, as the nearer wx accelerator table wins), then these.
-    // Every Global binding is routed here, the menu items' included, so
-    // remapping any of them works (runGlobalHotkey).
     Repeater {
         objectName: "globalHotkeys"
         model: root.hotkeys.globalShortcuts
@@ -1225,9 +943,6 @@ ApplicationWindow {
             }
         }
     }
-    // Application-wide, so F6 also leaves a floating panel group (D1); a
-    // Global binding of the same keys comes first. Off in a dialog's window
-    // (the Style manager's F6 goes from list to list, SY1).
     Shortcut {
         sequences: ["F6"]
         context: Qt.ApplicationShortcut
@@ -1240,19 +955,13 @@ ApplicationWindow {
         enabled: root.shellActive && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
     }
-    // Windows hands Shift+F10 to the system when no shortcut wants it; the
-    // system then asks for a context menu but also puts the window in its
-    // menu mode, which takes the next keys (native gate,
-    // header-menu-undock-dock-keyboard). Claimed here, the key reaches the
-    // focused control first (a panel header takes it); elsewhere it asks the
-    // focused control for its context menu, as Windows would.
+    // Windows puts the window in menu mode on an unclaimed Shift+F10, which eats the next keys.
     Shortcut {
         sequences: ["Shift+F10"]
         context: Qt.ApplicationShortcut
         enabled: Qt.platform.os === "windows" && !root.hotkeys.globalSequences.includes("Shift+F10")
         onActivated: Docking.requestKeyboardContextMenu()
     }
-    // P6: a tab closed from the tab bar (its close mark or a middle click).
     function closeTab(index) {
         if (index === root.app.currentTab) {
             root.beginClose("close")
@@ -1273,11 +982,6 @@ ApplicationWindow {
     }
     Connections {
         target: root.app
-        // P6: the shown tab's Grid scroll (legacy each tab kept its Grid), and
-        // legacy ChangePage's ReloadSubsIfModified.
-        // The application ignores the Grid's scroll reports from the tab
-        // change until scrollRestored(), so the model reset's transient 0
-        // never replaces the tab's own scroll.
         function onDocumentWritten(id) {
             matroskaSubtitles.written(id, root.currentTab())
             if (root.savingAway[id] !== true)
@@ -1288,6 +992,7 @@ ApplicationWindow {
             root.endDiskChange(id)
         }
         function onDocumentWriteFailed(id) { matroskaSubtitles.writeFailed(id) }
+        // MUST KILL: the app ignores Grid scroll reports until scrollRestored(), hiding the model reset's transient 0
         function onTabShown(scroll) {
             Qt.callLater(() => {
                 grid.contentY = scroll * grid.rowHeight
@@ -1297,11 +1002,6 @@ ApplicationWindow {
         }
     }
 
-    // SH1 (#220): the window's frame and its title bar (MainTitleBar.qml,
-    // window_frame.h): HikariSub's own (frameless, the menus, the layout
-    // switcher, the title and the window buttons in one row) or the
-    // system's, by the "Use system title bar" setting (appearance.titleBar:
-    // "auto" is the desktop's default, WindowFrame.systemTitleBarByDefault).
     property string titleBarChoice: root.app.settings.value("appearance.titleBar")
     Connections {
         target: root.app.settings
@@ -1313,15 +1013,13 @@ ApplicationWindow {
     MainWindowFrame {
         id: windowFrame
         window: root
-        // (customAvailable is read for its notification: the desktop can change in tests.)
+        // MUST KILL: customAvailable is read for its change notification (the desktop changes in tests)
         custom: WindowFrame.customAvailable && !WindowFrame.usesSystemTitleBar(root.titleBarChoice)
     }
     menuBar: MainTitleBar {
         id: titleBar
         frame: windowFrame
         menus: appMenus
-        // WS3: the layout switcher after the menus, where MuseScore 4 puts
-        // its Workspaces button.
         switcher: LayoutSwitcher {
             layouts: root.workspaceLayout
             Layout.leftMargin: titleBar.switcherGap
@@ -1332,17 +1030,12 @@ ApplicationWindow {
             onManageRequested: manageLayoutsDialog.show()
         }
     }
-    // The resize band and boundary of the frameless window (Wayland, X11),
-    // over everything but the popups.
     MainWindowEdges {
         frame: windowFrame
         parent: root.contentItem.parent
         anchors.fill: parent
         z: 100
     }
-    // SH1: F10 puts the keyboard on the menus (MS1 §1 "Menu bar"), as Alt
-    // alone does (MainWindowFrame.altTapped); a Global binding of F10 comes
-    // first.
     Shortcut {
         objectName: "menusShortcut"
         sequences: ["F10"]
@@ -1350,11 +1043,6 @@ ApplicationWindow {
         onActivated: titleBar.keyboardMode ? titleBar.leaveKeyboard(true) : titleBar.enterKeyboard()
     }
 
-    // Classic menus, in the title bar. Commands join through the shared
-    // action system as their cards land. K1: the items legacy drew with a
-    // bitmap (HikariSubFrame.cpp's AppendTool) show the set's icon
-    // (ShellMenuItem, ShellMenu). MN1 (#472): the bar is File, Edit,
-    // Subtitles, Video, Audio, Automation, View, Help.
     TitleBarMenus {
         id: appMenus
         TitleBarMenuItem {
@@ -1363,7 +1051,7 @@ ApplicationWindow {
                 title: qsTr("&File")
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_SUBS"
-                    help: qsTr("Open subtitle file") // HikariSubFrame.cpp:178
+                    help: qsTr("Open subtitle file")
                     iconRole: "open-subtitles"
                     action: Action {
                         id: openAction
@@ -1372,7 +1060,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenu {
-                    help: qsTr("Recently opened subtitles") // HikariSubFrame.cpp:188
+                    help: qsTr("Recently opened subtitles")
                     id: recentMenu
                     iconRole: "recent-subtitles"
                     objectName: "recentSubtitlesMenu"
@@ -1385,9 +1073,8 @@ ApplicationWindow {
                             required property var modelData
                             required property int index
                             objectName: "recentSubtitles" + index
-                            help: qsTr("Open") + " " + modelData.path // HikariSubFrame.cpp:1574
+                            help: qsTr("Open") + " " + modelData.path
                             text: modelData.label
-                            // P9: Ctrl+click shows the file in its folder.
                             onTriggered: if (!root.app.revealRecent(modelData.path)) root.openSubtitles(modelData.path)
                         }
                         onObjectAdded: (index, object) => recentMenu.insertItem(index, object)
@@ -1402,10 +1089,9 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_REMOVE_SUBS"
-                    help: qsTr("Remove subtitles from the editor") // HikariSubFrame.cpp:190
+                    help: qsTr("Remove subtitles from the editor")
                     iconRole: "close-subtitles"
                     objectName: "newMenuItem"
-                    // Legacy GLOBAL_REMOVE_SUBS: the tab gets an Untitled default Document.
                     action: Action {
                         id: removeSubsAction
                         text: qsTr("Remove subtitles from the &editor")
@@ -1425,7 +1111,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_VIDEO"
-                    help: qsTr("Opens video file") // HikariSubFrame.cpp:247
+                    help: qsTr("Opens video file")
                     iconRole: "open-video"
                     objectName: "openVideoMenuItem"
                     action: Action {
@@ -1436,7 +1122,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_SAVE_SUBS"
-                    help: qsTr("Save current file") // HikariSubFrame.cpp:180
+                    help: qsTr("Save current file")
                     iconRole: "save"
                     objectName: "saveMenuItem"
                     action: Action {
@@ -1448,7 +1134,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_SAVE_ALL_SUBS"
-                    help: qsTr("Save all subtitles") // HikariSubFrame.cpp:182
+                    help: qsTr("Save all subtitles")
                     iconRole: "save-all"
                     objectName: "saveAllMenuItem"
                     action: Action {
@@ -1464,7 +1150,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_SAVE_SUBS_AS"
-                    help: qsTr("Save as") // HikariSubFrame.cpp:184
+                    help: qsTr("Save as")
                     iconRole: "save-as"
                     objectName: "saveAsMenuItem"
                     action: Action {
@@ -1476,7 +1162,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_SAVE_TRANSLATION"
-                    help: qsTr("Save translation") // HikariSubFrame.cpp:186
+                    help: qsTr("Save translation")
                     iconRole: "save-translation"
                     objectName: "saveTranslationMenuItem"
                     action: Action {
@@ -1493,7 +1179,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_SAVE_WITH_VIDEO_NAME"
-                    help: qsTr("Save subtitles using the video name") // HikariSubFrame.cpp:192
+                    help: qsTr("Save subtitles using the video name")
                     iconRole: "save-with-video-name"
                     objectName: "saveWithVideoNameMenuItem"
                     action: Action {
@@ -1502,8 +1188,6 @@ ApplicationWindow {
                         checkable: true
                         checked: root.app.saveWithVideoName
                         onToggled: {
-                            // A Shift+click maps without switching (legacy
-                            // MenuDialog::SendEvent toggles only without Shift).
                             if (root.hotkeyGesture("GLOBAL_SAVE_WITH_VIDEO_NAME"))
                                 checked = Qt.binding(() => root.app.saveWithVideoName)
                             else
@@ -1513,7 +1197,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_AUTO_SAVE"
-                    help: qsTr("Opens the selected autosave from the list") // HikariSubFrame.cpp:196
+                    help: qsTr("Opens the selected autosave from the list")
                     iconRole: "autosave"
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
@@ -1524,7 +1208,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_DELETE_TEMPORARY_FILES"
-                    help: qsTr("Opens the temporary file removal window") // HikariSubFrame.cpp:197
+                    help: qsTr("Opens the temporary file removal window")
                     iconRole: "remove-temporary"
                     objectName: "removeTemporaryMenuItem"
                     action: Action {
@@ -1533,15 +1217,14 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) autosaves.show(true)
                     }
                 }
-                // P6: legacy "Last session" submenu.
                 ShellMenu {
-                    help: qsTr("Last session options") // HikariSubFrame.cpp:200
+                    help: qsTr("Last session options")
                     iconRole: "last-session"
                     objectName: "lastSessionMenu"
                     title: qsTr("Last session")
                     ShellMenuItem {
                         command: "GLOBAL_LOAD_LAST_SESSION"
-                        help: qsTr("Loads previously loaded files") // HikariSubFrame.cpp:161
+                        help: qsTr("Loads previously loaded files")
                         id: loadLastSessionItem
                         iconRole: "last-session"
                         objectName: "loadLastSessionMenuItem"
@@ -1550,7 +1233,7 @@ ApplicationWindow {
                     }
                     ShellMenuItem {
                         command: "GLOBAL_LOAD_EXTERNAL_SESSION"
-                        help: qsTr("Loads session from saved session file") // HikariSubFrame.cpp:163
+                        help: qsTr("Loads session from saved session file")
                         id: loadSessionFileItem
                         iconRole: "session-open"
                         objectName: "loadSessionFileMenuItem"
@@ -1559,7 +1242,7 @@ ApplicationWindow {
                     }
                     ShellMenuItem {
                         command: "GLOBAL_SAVE_EXTERNAL_SESSION"
-                        help: qsTr("Saves session to file") // HikariSubFrame.cpp:165
+                        help: qsTr("Saves session to file")
                         id: saveSessionFileItem
                         iconRole: "session-save"
                         objectName: "saveSessionFileMenuItem"
@@ -1567,28 +1250,27 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_EXTERNAL_SESSION")) sessionWindows.chooseSessionToSave()
                     }
                     ShellMenuItem {
-                        help: qsTr("Asks whether to load previously loaded files at program startup") // HikariSubFrame.cpp:168
+                        help: qsTr("Asks whether to load previously loaded files at program startup")
                         objectName: "askForLastSessionMenuItem"
                         text: qsTr("Ask whether to load the last session at program startup")
                         checkable: true
                         checked: root.app.sessionRestore === 1
-                        keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (HikariSubFrame.cpp:171)
+                        keepsMenuOpen: false
                         onToggled: root.app.sessionRestore = checked ? 1 : 0
                     }
                     ShellMenuItem {
-                        help: qsTr("Loads previously loaded files at program startup") // HikariSubFrame.cpp:172
+                        help: qsTr("Loads previously loaded files at program startup")
                         objectName: "loadLastSessionOnStartMenuItem"
                         text: qsTr("Load last session after program start")
                         checkable: true
                         checked: root.app.sessionRestore === 2
-                        keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (HikariSubFrame.cpp:175)
+                        keepsMenuOpen: false
                         onToggled: root.app.sessionRestore = checked ? 2 : 0
                     }
                 }
-                // O1: legacy GLOBAL_SETTINGS, the Options dialog.
                 ShellMenuItem {
                     command: "GLOBAL_SETTINGS"
-                    help: qsTr("Program settings") // HikariSubFrame.cpp:202
+                    help: qsTr("Program settings")
                     iconRole: "settings"
                     objectName: "settingsMenuItem"
                     action: Action {
@@ -1597,7 +1279,6 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) root.openSettings()
                     }
                 }
-                // O3: the one-shot legacy settings importer (no legacy item).
                 ShellMenuItem {
                     iconRole: "import"
                     objectName: "importSettingsMenuItem"
@@ -1606,7 +1287,7 @@ ApplicationWindow {
                     onTriggered: settingsImportDialog.openDialog()
                 }
                 ShellMenuItem {
-                    help: qsTr("Exit the program") // HikariSubFrame.cpp:204
+                    help: qsTr("Exit the program")
                     iconRole: "exit"
                     objectName: "exitMenuItem"
                     action: Action {
@@ -1620,7 +1301,7 @@ ApplicationWindow {
             title: qsTr("&Edit")
             ShellMenuItem {
                 command: "GLOBAL_UNDO"
-                help: qsTr("Undo") // HikariSubFrame.cpp:209
+                help: qsTr("Undo")
                 iconRole: "undo"
                 action: Action {
                     id: undoAction
@@ -1631,7 +1312,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_REDO"
-                help: qsTr("Redo") // HikariSubFrame.cpp:214
+                help: qsTr("Redo")
                 iconRole: "redo"
                 action: Action {
                     id: redoAction
@@ -1640,9 +1321,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
                 }
             }
-            // Legacy GLOBAL_SORT_LINES / GLOBAL_SORT_SELECTED_LINES submenus.
             ShellMenu {
-                help: qsTr("Sorts all lines in ASS file") // HikariSubFrame.cpp:237
+                help: qsTr("Sorts all lines in ASS file")
                 iconRole: "sort"
                 objectName: "sortAllMenu"
                 title: qsTr("So&rt all lines")
@@ -1663,7 +1343,7 @@ ApplicationWindow {
                 }
             }
             ShellMenu {
-                help: qsTr("Sorts selected lines in ASS file") // HikariSubFrame.cpp:239
+                help: qsTr("Sorts selected lines in ASS file")
                 iconRole: "sort-selected"
                 objectName: "sortSelectedMenu"
                 title: qsTr("So&rt selected lines")
@@ -1685,7 +1365,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_UNDO_TO_LAST_SAVE"
-                help: qsTr("Undo to last save") // HikariSubFrame.cpp:211
+                help: qsTr("Undo to last save")
                 iconRole: "undo-to-last-save"
                 objectName: "undoToLastSaveMenuItem"
                 action: Action {
@@ -1697,7 +1377,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_HISTORY"
-                help: qsTr("History") // HikariSubFrame.cpp:216
+                help: qsTr("History")
                 iconRole: "history"
                 objectName: "historyMenuItem"
                 action: Action {
@@ -1709,7 +1389,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_MISSPELLS_REPLACER"
-                help: qsTr("Turns on multireplacer") // HikariSubFrame.cpp:241
+                help: qsTr("Turns on multireplacer")
                 iconRole: "multireplace"
                 objectName: "misspellMenuItem"
                 action: Action {
@@ -1720,7 +1400,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_SELECT_LINES"
-                help: qsTr("Selects lines by expressions") // HikariSubFrame.cpp:243
+                help: qsTr("Selects lines by expressions")
                 iconRole: "select-lines"
                 objectName: "selectLinesMenuItem"
                 action: Action {
@@ -1730,10 +1410,9 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SELECT_LINES")) selectLinesDialog.openDialog()
                 }
             }
-            // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
             ShellMenuItem {
                 command: "GLOBAL_FIND_REPLACE"
-                help: qsTr("Searches for the specified text phrases and replaces them") // HikariSubFrame.cpp:218
+                help: qsTr("Searches for the specified text phrases and replaces them")
                 iconRole: "find-replace"
                 objectName: "findReplaceMenuItem"
                 action: Action {
@@ -1745,7 +1424,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_SEARCH"
-                help: qsTr("Searches for the specified text phrase") // HikariSubFrame.cpp:220
+                help: qsTr("Searches for the specified text phrase")
                 iconRole: "search"
                 objectName: "findMenuItem"
                 action: Action {
@@ -1757,25 +1436,23 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_FIND_NEXT"
-                help: qsTr("Finds the next occurrence of the phrase in the text") // HikariSubFrame.cpp:222
+                help: qsTr("Finds the next occurrence of the phrase in the text")
                 iconRole: "search"
                 objectName: "findNextMenuItem"
                 action: Action {
                     id: findNextAction
                     text: qsTr("Find next")
-                    // A question box waits: nothing re-enters the search (legacy's are modal).
                     enabled: root.editor.hasLine && !root.app.findBusy
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
                 }
             }
         }
-        // Legacy Subtitles menu; its entries join as their cards land.
         ShellMenu {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
             ShellMenuItem {
                 command: "GLOBAL_SHOW_SHIFT_TIMES"
-                help: qsTr("Shifting subtitle times") // HikariSubFrame.cpp:336
+                help: qsTr("Shifting subtitle times")
                 id: showShiftTimesItem
                 iconRole: "shift-times"
                 objectName: "showShiftTimes"
@@ -1793,7 +1470,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_STYLE_MANAGER"
-                help: qsTr("Is used to manage ASS styles") // HikariSubFrame.cpp:320
+                help: qsTr("Is used to manage ASS styles")
                 id: styleManagerItem
                 iconRole: "styles"
                 objectName: "styleManagerMenuItem"
@@ -1803,7 +1480,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_ASS_PROPERTIES"
-                help: qsTr("ASS subtitle properties") // HikariSubFrame.cpp:318
+                help: qsTr("ASS subtitle properties")
                 id: assPropertiesItem
                 iconRole: "script-properties"
                 objectName: "assProperties"
@@ -1812,7 +1489,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
             }
             ShellMenu {
-                help: qsTr("Converts from one format to another") // HikariSubFrame.cpp:334
+                help: qsTr("Converts from one format to another")
                 id: conversionMenu
                 iconRole: "convert"
                 objectName: "conversionMenu"
@@ -1832,11 +1509,9 @@ ApplicationWindow {
                     }
                 }
             }
-            // Legacy SubsMenu: Font collector after Conversion and Shift times
-            // (HikariSubFrame.cpp:338), enabled for subsFormat < SRT (2407).
             ShellMenuItem {
                 command: "GLOBAL_OPEN_FONT_COLLECTOR"
-                help: qsTr("Font collector") // HikariSubFrame.cpp:338
+                help: qsTr("Font collector")
                 id: fontCollectorItem
                 objectName: "fontCollectorMenuItem"
                 iconRole: "font-collector"
@@ -1846,7 +1521,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_SUBS_RESAMPLE"
-                help: qsTr("Resample subtitles") // HikariSubFrame.cpp:340
+                help: qsTr("Resample subtitles")
                 id: resampleItem
                 iconRole: "resample"
                 objectName: "resampleMenuItem"
@@ -1854,10 +1529,9 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) root.openResample()
             }
-            // Legacy HikariSubFrame: after Resample subtitles.
             ShellMenuItem {
                 command: "GLOBAL_OPEN_SPELLCHECKER"
-                help: qsTr("Check spelling") // HikariSubFrame.cpp:342
+                help: qsTr("Check spelling")
                 id: checkSpellingItem
                 iconRole: "spellchecker"
                 objectName: "checkSpellingMenuItem"
@@ -1865,7 +1539,6 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) root.openSpellChecker()
             }
-            // KA7: the Karaoke check window, after Check spelling.
             ShellMenuItem {
                 command: "GLOBAL_CHECK_KARAOKE"
                 help: qsTr("Checks the karaoke syllables of every line")
@@ -1876,7 +1549,6 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
             }
-            // KA3: the Kanji timer window, after Check karaoke.
             ShellMenuItem {
                 command: "GLOBAL_KANJI_TIMER"
                 help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
@@ -1888,10 +1560,6 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
             }
             MenuSeparator {}
-            // TM1 (#232): the editing target's Translation mode, which the
-            // Line editor's "Translator mode" check box switched in legacy
-            // (TM1-translator-check-removed). On is one "Turning on translator
-            // mode" step; off asks first (TranslationModeOffConfirm).
             ShellMenuItem {
                 command: "GLOBAL_TRANSLATION_MODE"
                 help: root.app.translationHint.length > 0 ? root.app.translationHint
@@ -1919,22 +1587,15 @@ ApplicationWindow {
         ShellMenu {
             objectName: "videoMenu"
             title: qsTr("&Video")
-            // Each item: Shift+click maps its Global hotkey (OnMenuSelected).
             ShellMenuItem {
                 command: "GLOBAL_OPEN_VIDEO"
-                help: qsTr("Opens video file") // HikariSubFrame.cpp:247
+                help: qsTr("Opens video file")
                 iconRole: "open-video"
                 action: Action {
                     text: qsTr("Open &video…")
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
                 }
             }
-            // V3: legacy's order (HikariSubFrame.cpp:246-258): the recent
-            // videos (GLOBAL_RECENT_VIDEO), Open keyframes, the recent
-            // keyframes (GLOBAL_RECENT_KEYFRAMES) and Open dummy video.
-            // Legacy OnMenuOpened (HikariSubFrame.cpp:2252-2275) enables
-            // Open keyframes and the recent keyframes with a video loaded, and
-            // OnMenuSelected checks that for their hotkeys too (:681-687).
             RecentFilesMenu {
                 iconRole: "recent-video"
                 objectName: "recentVideoMenu"
@@ -1946,7 +1607,7 @@ ApplicationWindow {
             ShellMenuItem {
                 command: "GLOBAL_OPEN_KEYFRAMES"
                 objectName: "openKeyframesMenuItem"
-                help: qsTr("Open keyframes") // HikariSubFrame.cpp:252
+                help: qsTr("Open keyframes")
                 iconRole: "open-keyframes"
                 action: Action {
                     id: openKeyframesAction
@@ -1960,7 +1621,7 @@ ApplicationWindow {
                 objectName: "recentKeyframesMenu"
                 prefix: "recentKeyframes"
                 title: qsTr("Recently opened keyframes")
-                enabled: root.video.hasVideo // D2: OnMenuOpened's VidMenu
+                enabled: root.video.hasVideo
                 load: () => root.app.recentKeyframes()
                 onChosen: path => {
                     const problem = root.app.openKeyframesFile(path)
@@ -1978,8 +1639,6 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) root.openDummyVideo()
                 }
             }
-            // V6: GLOBAL_SET_START_TIME / GLOBAL_SET_END_TIME (HikariSubFrame.cpp:259-262;
-            // OnMenuOpened enables them with a video and the editor).
             ShellMenuItem {
                 command: "GLOBAL_SET_START_TIME"
                 iconRole: "set-start-time"
@@ -2004,7 +1663,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_PREVIOUS_FRAME"
-                help: qsTr("Go to previous frame") // HikariSubFrame.cpp:263
+                help: qsTr("Go to previous frame")
                 iconRole: "frame-previous"
                 action: Action {
                     id: previousFrameAction
@@ -2014,7 +1673,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_NEXT_FRAME"
-                help: qsTr("Go to next frame") // HikariSubFrame.cpp:265
+                help: qsTr("Go to next frame")
                 iconRole: "frame-next"
                 action: Action {
                     id: nextFrameAction
@@ -2024,7 +1683,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_SET_VIDEO_AT_START_TIME"
-                help: qsTr("Moves video to start time") // HikariSubFrame.cpp:267
+                help: qsTr("Moves video to start time")
                 iconRole: "video-to-start-time"
                 action: Action {
                     id: goToStartAction
@@ -2034,7 +1693,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_SET_VIDEO_AT_END_TIME"
-                help: qsTr("Moves video to end time") // HikariSubFrame.cpp:270
+                help: qsTr("Moves video to end time")
                 iconRole: "video-to-end-time"
                 action: Action {
                     id: goToEndAction
@@ -2044,7 +1703,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_PLAY_PAUSE"
-                help: qsTr("Plays / Pauses video") // HikariSubFrame.cpp:273
+                help: qsTr("Plays / Pauses video")
                 iconRole: root.video.playing ? "media-pause" : "media-play"
                 action: Action {
                     id: playPauseAction
@@ -2070,10 +1729,6 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
                 }
             }
-            // V3: legacy's video context menu entries (VideoBox.cpp:979-1016),
-            // which the context menu has in legacy's form, in the Video menu
-            // too (V3-video-menu-entries): Unload video (VIDEO_DELETE_FILE,
-            // V3-unload-video), the streams and the chapters.
             MenuSeparator {}
             ShellMenuItem {
                 iconRole: "close-video"
@@ -2090,8 +1745,6 @@ ApplicationWindow {
                 objectName: "videoChaptersMenu"
                 video: root.video
             }
-            // V4: GLOBAL_VIDEO_ZOOM and GLOBAL_RESET_VIDEO_ZOOM (legacy
-            // OnMenuOpened: a loaded video; the reset also a zoom != 1).
             ShellMenuItem {
                 command: "GLOBAL_VIDEO_ZOOM"
                 iconRole: "zoom"
@@ -2112,7 +1765,6 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
                 }
             }
-            // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
             ShellMenuItem {
                 command: "GLOBAL_VIDEO_RENDER_COST"
                 iconRole: "render-cost"
@@ -2124,16 +1776,13 @@ ApplicationWindow {
                 }
             }
         }
-        // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
-        // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_CLOSE_AUDIO). AV3 (#240) retired
-        // GLOBAL_OPEN_DUMMY_AUDIO: a dummy video brings its own silent audio.
         ShellMenu {
             id: audioMenu
             objectName: "audioMenu"
             title: qsTr("A&udio")
             ShellMenuItem {
                 command: "GLOBAL_OPEN_AUDIO"
-                help: qsTr("Opens audio file") // HikariSubFrame.cpp:293
+                help: qsTr("Opens audio file")
                 iconRole: "open-audio"
                 objectName: "openAudioMenuItem"
                 action: Action {
@@ -2148,7 +1797,7 @@ ApplicationWindow {
                 }
             }
             ShellMenu {
-                help: qsTr("Recently opened audio") // HikariSubFrame.cpp:297
+                help: qsTr("Recently opened audio")
                 id: recentAudioMenu
                 iconRole: "recent-audio"
                 objectName: "recentAudioMenu"
@@ -2161,9 +1810,8 @@ ApplicationWindow {
                         required property var modelData
                         required property int index
                         objectName: "recentAudio" + index
-                        help: qsTr("Open") + " " + modelData.path // HikariSubFrame.cpp:1574
+                        help: qsTr("Open") + " " + modelData.path
                         text: modelData.label
-                        // P9: Ctrl+click shows the file in its folder.
                         onTriggered: if (!root.app.revealRecent(modelData.path)) root.audio.openAudio(modelData.path)
                     }
                     onObjectAdded: (index, object) => recentAudioMenu.insertItem(index, object)
@@ -2178,7 +1826,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_AUDIO_FROM_VIDEO"
-                help: qsTr("Opens audio from video") // HikariSubFrame.cpp:299
+                help: qsTr("Opens audio from video")
                 iconRole: "audio-from-video"
                 objectName: "audioFromVideoMenuItem"
                 action: Action {
@@ -2190,7 +1838,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_CLOSE_AUDIO"
-                help: qsTr("Closes audio") // HikariSubFrame.cpp:303
+                help: qsTr("Closes audio")
                 iconRole: "close-audio"
                 objectName: "closeAudioMenuItem"
                 action: Action {
@@ -2201,9 +1849,6 @@ ApplicationWindow {
                 }
             }
             MenuSeparator {}
-            // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO,
-            // in legacy's Video menu, here since MN1 (legacy OnMenuOpened: ABox != nullptr && editor; the editor is
-            // the editing target's).
             ShellMenuItem {
                 command: "GLOBAL_SET_AUDIO_FROM_VIDEO"
                 iconRole: "audio-to-video-time"
@@ -2231,14 +1876,10 @@ ApplicationWindow {
             id: automationMenu
             objectName: "automationMenu"
             title: qsTr("&Automation")
-            // S4: legacy BuildMenu on opening (the Document's scripts, changed files reloaded).
             onAboutToShow: root.automation.menuOpened()
-            // AM1: legacy's "Open shortcut mapping window" is gone with its
-            // window (AM1-hotkeys-window-retired); each macro's shortcut is
-            // in the Automation panel and Settings → Hotkeys.
             ShellMenuItem {
                 command: "GLOBAL_AUTOMATION_LOAD_SCRIPT"
-                help: qsTr("Load script") // HikariSubFrame.cpp:349
+                help: qsTr("Load script")
                 iconRole: "automation"
                 objectName: "loadScriptMenuItem"
                 action: Action {
@@ -2249,7 +1890,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_AUTOMATION_RELOAD_AUTOLOAD"
-                help: qsTr("Refresh autoload scripts") // HikariSubFrame.cpp:351
+                help: qsTr("Refresh autoload scripts")
                 iconRole: "automation"
                 objectName: "reloadAutoloadMenuItem"
                 action: Action {
@@ -2265,9 +1906,6 @@ ApplicationWindow {
                 action: Action {
                     id: loadLastScriptAction
                     text: qsTr("Run the last loaded script")
-                    // Legacy's modal progress dialog blocks it while a macro
-                    // runs; D2: OnMenuOpened disables m_AutoMenu's items. AM1:
-                    // off under a modal dialog, as the macros' shortcuts.
                     enabled: !root.automation.running && !root.workspaceLayout.modalOpen
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
                 }
@@ -2281,8 +1919,6 @@ ApplicationWindow {
                     onTriggered: root.automation.rerunLast()
                 }
             }
-            // AD2-repeat-last-run: the last run again with its answers,
-            // without its dialogs when they are unchanged.
             ShellMenuItem {
                 command: "GLOBAL_AUTOMATION_REPEAT_LAST_RUN"
                 help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
@@ -2295,8 +1931,6 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_REPEAT_LAST_RUN")) root.automation.repeatLast()
                 }
             }
-            // AD3: the progress card's Cancel from the menu (it has no
-            // hotkey of its own).
             ShellMenuItem {
                 iconRole: "run-cancelled"
                 objectName: "cancelMacroMenuItem"
@@ -2316,21 +1950,15 @@ ApplicationWindow {
                     onTriggered: root.showPanel(automationDock)
                 }
             }
-            // The macros go after it, whatever static items come before.
             MenuSeparator {
                 id: macrosSeparator
                 objectName: "macrosSeparator"
             }
-            // AS1: a "/" in a macro's name opens submenus.
             MacroMenuEntries {
                 menu: automationMenu
                 after: macrosSeparator
                 macros: root.macroItems
                 enabled: !root.automation.running
-                // Automation.cpp:1376-1379: Shift maps the macro's hotkey
-                // (OnMapHkey(-1, "Script <file>-<n>")); AM1: in the
-                // Automation panel, which records it in place
-                // (AM1-hotkeys-window-retired).
                 onTriggered: macro => {
                     if (root.hotkeys.shiftClicked(true)) {
                         root.showPanel(automationDock)
@@ -2344,13 +1972,7 @@ ApplicationWindow {
         ShellMenu {
             id: viewMenu
             objectName: "viewMenu"
-            // Legacy ViewMenu "View" (HikariSubFrame.cpp:307-313); &w, as
-            // Alt+V stays with &Video.
             title: qsTr("Vie&w")
-            // WS3 (#217): legacy's five views (GLOBAL_VIEW_*) are retired;
-            // the current tab's layout is chosen here and in the layout
-            // switcher, the same menu: the presets, the saved layouts, Save
-            // layout as…, Reset this layout and Manage layouts….
             LayoutMenu {
                 id: viewLayoutMenu
                 objectName: "viewLayoutMenu"
@@ -2365,8 +1987,6 @@ ApplicationWindow {
                 onManageRequested: manageLayoutsDialog.show()
             }
             MenuSeparator {}
-            // D1: each panel can be shown (and focused), hidden, floated or
-            // docked.
             ShellMenu {
                 id: panelsMenu
                 iconRole: "panels"
@@ -2425,8 +2045,6 @@ ApplicationWindow {
                 onTriggered: root.workspaceLayout.restoreBackup()
             }
             MenuSeparator {}
-            // NT1: the Log panel, shown or hidden (legacy's place was File;
-            // MN1: with the view switches).
             ShellMenuItem {
                 iconRole: "log"
                 objectName: "logMenuItem"
@@ -2440,8 +2058,6 @@ ApplicationWindow {
                     }
                 }
             }
-            // E6: legacy SubsMenu's last item, "Hides tags in ASS and MDVD"
-            // (HikariSubFrame.cpp:344-345): the Grid's switch, in View since MN1.
             ShellMenuItem {
                 command: "GLOBAL_HIDE_TAGS"
                 id: hideTagsItem
@@ -2450,9 +2066,6 @@ ApplicationWindow {
                 text: qsTr("Hide tags")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS")) root.app.toggleHideTags()
             }
-            // LE3-tags-shown: the Line editor's hidden-tag view, a setting
-            // (editor.hideTags) and this command; the Grid's switch above
-            // stays its own.
             ShellMenuItem {
                 command: "GLOBAL_EDITOR_HIDE_TAGS"
                 iconRole: "hide-tags"
@@ -2472,7 +2085,6 @@ ApplicationWindow {
         }
         ShellMenu {
             title: qsTr("&Help")
-            // FR1 (#363): the setup of the first start, any time.
             ShellMenuItem {
                 command: "GLOBAL_GETTING_STARTED"
                 help: qsTr("Walks through the settings most people change first")
@@ -2486,8 +2098,6 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_HELP"
-                // DX1 (#367): legacy's "HikariSub website" (HikariSubFrame.cpp:360)
-                // is the user guide now, at the page of the panel or window in use.
                 help: qsTr("Opens the user guide in the default browser")
                 iconRole: "help"
                 objectName: "userGuideMenuItem"
@@ -2499,7 +2109,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_ANSI"
-                help: qsTr("Opens a form for a bug, feature request or question on GitHub") // HikariSubFrame.cpp:362; CR1 (#468): the form
+                help: qsTr("Opens a form for a bug, feature request or question on GitHub")
                 iconRole: "report-issue"
                 objectName: "reportIssueMenuItem"
                 action: Action {
@@ -2510,7 +2120,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_CHECK_FOR_UPDATES"
-                help: qsTr("Checks whether a newer version is available") // HikariSubFrame.cpp:364
+                help: qsTr("Checks whether a newer version is available")
                 iconRole: "check-updates"
                 objectName: "checkForUpdatesMenuItem"
                 action: Action {
@@ -2520,7 +2130,6 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
                 }
             }
-            // UD1 (#362): the user folder in the file manager; no hotkey.
             ShellMenuItem {
                 help: qsTr("Opens the folder that holds your settings, scripts, dictionaries and presets")
                 iconRole: "folder-open"
@@ -2533,7 +2142,6 @@ ApplicationWindow {
                     onTriggered: root.app.openUserFolder()
                 }
             }
-            // SH3 (#223): the release notes since the version used before; no hotkey.
             ShellMenuItem {
                 help: qsTr("Shows the release notes of the versions since the one you used before")
                 iconRole: "whats-new"
@@ -2546,7 +2154,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_ABOUT"
-                help: qsTr("Shows program info") // HikariSubFrame.cpp:366
+                help: qsTr("Shows program info")
                 iconRole: "about"
                 objectName: "aboutMenuItem"
                 action: Action {
@@ -2557,7 +2165,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_HELPERS"
-                help: qsTr("Shows credits") // HikariSubFrame.cpp:368
+                help: qsTr("Shows credits")
                 iconRole: "credits"
                 objectName: "creditsMenuItem"
                 action: Action {
@@ -2569,39 +2177,27 @@ ApplicationWindow {
         }
     }
 
-    // One text role of the Line editor (Original or Translated). The field
-    // mirrors the editor's projection; user changes go to the controller,
-    // which maps them onto the raw source. Programmatic updates are not edits.
     component RoleField: TextArea {
         id: field
+        // MUST KILL: role is a magic int (0 Original, 1 Translated)
         required property int role
         readonly property string shown: role === 0 ? root.editor.text : root.editor.translationText
-        // TM1: the field Tab or Shift+Tab reaches across panels, when set.
         property Item tabNext: null
         property Item tabPrevious: null
         readOnly: !root.editor.editable
         wrapMode: TextEdit.Wrap
         selectByMouse: true
-        persistentSelection: true // the Original's selection survives for "Paste the selected"
+        persistentSelection: true
         Layout.fillWidth: true
         Layout.fillHeight: true
-        // E4: the Line's fields take rows below; a short panel keeps a line of text.
         Layout.minimumHeight: topPadding + bottomPadding + cursorRectangle.height
 
         property bool syncing: false
-        // Where `inner` starts in `outer` past its carried tags: a match
-        // after whole override blocks and the spaces among them ("\h" before
-        // a leading tag), not one inside a tag ("an8" in "{\an8}an8").
-        // Where `inner` starts in `outer` past a prefix of override blocks
-        // and ASS spaces ending with a block, or -1. Linear in both: the
-        // prefix walked once for where its blocks end, `inner` found by
-        // KMP (a long Line's prefix is never scanned per candidate). The
-        // block ends kept by position: V4's Set.has is linear. Past what
-        // Tags from original carries (an Original and a translation of 3 *
-        // 16384 units each) no tags were carried: nothing is walked.
         function carriedPrefix(outer, inner) {
+            // MUST KILL: 6 * 16384 is a magic cap tied to how much Tags from original carries
             if (outer.length > 6 * 16384 || inner.length > 6 * 16384)
                 return -1
+            // Block ends by position, not a Set: V4's Set.has is linear.
             const ends = []
             let any = false
             let at = 0
@@ -2651,8 +2247,6 @@ ApplicationWindow {
                 return
             syncing = true
             let caret = cursorPosition
-            // TM1: the carried tags shown or left out around the same text
-            // (Tags from original switched): the caret keeps its place in it.
             const added = text.length > 0 ? carriedPrefix(shown, text) : -1
             const removed = shown.length > 0 ? carriedPrefix(text, shown) : -1
             if (added > 0)
@@ -2686,16 +2280,11 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
-            // E5: an untranslated Line with tags gives the Translated field the
-            // focus (TM1's Tags from original; legacy's Moving tags), in its
-            // window (the Original text panel may float in another).
             function onFieldFocusRequested(role) {
                 if (role === field.role)
                     root.focusPanel(field, Qt.OtherFocusReason)
             }
         }
-        // The rows of text from the rectangle of one position to another's,
-        // each {x, y, width} with y at its foot: an underline on each.
         function underlineRows(first, last) {
             const right = width - rightPadding
             if (last.y <= first.y)
@@ -2711,11 +2300,6 @@ ApplicationWindow {
             out.push({x: leftPadding, y: last.y + last.height, width: last.x - leftPadding})
             return out
         }
-        // TM1: the Original's runs (editor.tagRuns): a numbered badge where
-        // each starts in the Original text, and in the Translated text a
-        // badge and an underline under the text it is placed on, or a dotted
-        // underline under the same text found unplaced (a suggestion: Tab
-        // places it, Escape dismisses it).
         Repeater {
             model: root.editor.translationMode ? root.editor.tagRuns : []
             delegate: Item {
@@ -2723,8 +2307,6 @@ ApplicationWindow {
                 required property var modelData
                 anchors.fill: parent
                 z: 2
-                // Every suggestion Tab would place is shown, a wrapped one
-                // on every row as a placed run's underline is.
                 Item {
                     id: suggestion
                     readonly property int from: field.role === 1 ? run.modelData.suggestedStart : -1
@@ -2734,8 +2316,6 @@ ApplicationWindow {
                     objectName: field.objectName + "Run" + run.modelData.number + "Suggestion"
                     visible: from >= 0 && to > from && to <= field.length
                     anchors.fill: parent
-                    // The dotted underline, 2 px dots 2 px apart on every
-                    // row, in one Shape: no item per dot or row.
                     Shape {
                         anchors.fill: parent
                         ShapePath {
@@ -2780,7 +2360,6 @@ ApplicationWindow {
                             color: Theme.onAccent
                         }
                     }
-                    // The underline, on every row a wrapped run takes.
                     Repeater {
                         model: field.role === 1 ? field.underlineRows(mark.first, mark.last) : []
                         Rectangle {
@@ -2797,15 +2376,9 @@ ApplicationWindow {
                 }
             }
         }
-        // F3: the spell-checked field (legacy TextEdit: the Translated one in
-        // translation mode) marks misspellings and bracket errors while
-        // spelling is on, and its menu offers suggestions, the Spellchecker
-        // switch, the installed languages and "Add word".
         readonly property bool spelled: role === (root.editor.translationMode ? 1 : 0)
         property var misspell: ({})
         property int misspellPosition: -1
-        // GR1 (#364): Harper's findings in the same field (grammar check on),
-        // flat [start, end) pairs, and the one the menu was opened on.
         property var grammarRanges: []
         property var grammar: ({})
         function refreshMarks() {
@@ -2813,10 +2386,7 @@ ApplicationWindow {
             grammarRanges = spelled ? root.app.editorGrammarMarks(role) : []
         }
         onSpelledChanged: refreshMarks()
-        // A wavy underline in the theme's grammar colour under each finding,
-        // on every row a wrapped one takes (Qt Quick's text draws straight
-        // underlines only), in one Shape. `rows` (tests): each wave's row as
-        // [x, y, width].
+        // Qt Quick text draws straight underlines only, so the wavy one is a Shape.
         Shape {
             id: grammarMarks
             objectName: field.objectName + "Grammar"
@@ -2845,7 +2415,6 @@ ApplicationWindow {
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
                 PathMultiline {
-                    // 2 px up and down every 2 px, just above the row's foot.
                     paths: grammarMarks.rows.map(r => {
                         const points = []
                         for (let x = 0; x <= r[2]; x += 2)
@@ -2855,13 +2424,10 @@ ApplicationWindow {
                 }
             }
         }
-        // E4: the text in legacy TextEditor's colours (tags, line breaks and
-        // drawings; a template or code comment's code), and F3's marks.
         EditorHighlighter {
             id: spellMarks
             objectName: field.objectName + "Highlighter"
             document: field.textDocument
-            // EDITOR_SPELLCHECKER: the theme's (K2; legacy's dark and light defaults).
             colour: Theme.spellcheck
             runs: {
                 root.editor.textState
@@ -2877,13 +2443,10 @@ ApplicationWindow {
         }
         ContextMenu.onRequested: position => {
             field.misspellPosition = field.positionAt(position.x, position.y)
-            // GR1: a grammar finding there takes the menu's top (a Hunspell
-            // mark under it keeps today's items otherwise).
             field.grammar = field.spelled ? root.app.editorGrammarAt(field.role, field.misspellPosition) : ({})
             field.misspell = field.spelled && !field.grammar.rule
                 ? root.app.editorMisspellAt(field.role, field.misspellPosition) : ({})
         }
-        // GR1: "Ignore this rule" turns its group off; a toast says so, with Undo.
         function ignoreGrammarRule() {
             const group = root.app.ignoreGrammarRule(field.grammar.rule)
             if (group < 0)
@@ -2901,8 +2464,6 @@ ApplicationWindow {
             objectName: field.objectName + "Menu"
             readonly property bool grammar: !!field.grammar.rule
             readonly property var suggestions: (grammar ? field.grammar.suggestions : field.misspell.suggestions) || []
-            // GR1: Harper's message and the rule's group, not an action, first
-            // (only with a finding, so the menu is today's without one).
             property bool headerShown: false
             Instantiator {
                 model: editMenu.grammar ? 1 : 0
@@ -2949,7 +2510,6 @@ ApplicationWindow {
                     onTriggered: editMenu.grammar ? root.app.replaceEditorGrammar(field.role, field.misspellPosition, modelData)
                                                   : root.app.replaceEditorMisspell(field.role, field.misspellPosition, modelData)
                 }
-                // After the grammar message.
                 onObjectAdded: (index, object) => editMenu.insertItem(index + (editMenu.headerShown ? 1 : 0), object)
                 onObjectRemoved: (index, object) => editMenu.removeItem(object)
             }
@@ -2986,7 +2546,7 @@ ApplicationWindow {
                 text: qsTranslate("HikariSub.Editor", "Spellchecker")
                 checkable: true
                 checked: root.app.spellingOn
-                keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (DialogueTextEditor.cpp:2326)
+                keepsMenuOpen: false
                 visible: field.spelled
                 height: visible ? implicitHeight : 0
                 onTriggered: root.app.spellingOn = checked
@@ -3010,8 +2570,6 @@ ApplicationWindow {
                 onTriggered: field.remove(field.selectionStart, field.selectionEnd)
             }
         }
-        // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK: a double click on a
-        // misspelling lists its suggestions ("Fix suggestions").
         TapHandler {
             acceptedButtons: Qt.LeftButton
             onDoubleTapped: eventPoint => {
@@ -3020,31 +2578,14 @@ ApplicationWindow {
                 const position = field.positionAt(eventPoint.position.x, eventPoint.position.y)
                 const found = root.app.editorMisspellAt(field.role, position)
                 if (found.word) {
-                    // Legacy shows the list and returns before its double
-                    // click selects the word: the caret stays where clicked.
                     field.deselect()
                     field.cursorPosition = position
                     fixSuggestions.openFor(field, field.role, position, found.suggestions)
                 }
             }
         }
-        // E6-ime-enter-held (decision 60): an Enter that comes with an input
-        // method's end of composition only ends it. Windows' Microsoft Korean
-        // IME commits the syllable and then passes the same Enter on as a key
-        // (E6 Windows evidence K7); ibus-hangul clears the preedit, commits
-        // and forwards it. So an Enter while composing finishes the
-        // composition, and the first key after a composition ends, if it is
-        // an Enter within compositionKeyWindow ms, is taken and does nothing:
-        // no commit, no advance, no tag put. Any other key, the release of an
-        // Enter (the Japanese IME keeps the Enter that confirms, J4, and only
-        // its release reaches the field), a click or a focus change ends the
-        // wait, so a second, separate Enter commits as usual. CodeMirror 6
-        // and ProseMirror ignore one Enter within 100 or 500 ms of
-        // compositionend the same way.
-        // E6-ime-esc-list-first (decision 60): Escape the same way cancels
-        // the composition and closes the tag list, keeping the draft (K8;
-        // the Japanese IME keeps its Escape, J5); a second, separate Escape
-        // reverts the draft as usual (K10).
+        // Korean IMEs (Microsoft's, ibus-hangul) commit the syllable and then forward the same Enter, so the first
+        // Enter or Escape within compositionKeyWindow ms after a composition ends is swallowed.
         readonly property int compositionKeyWindow: 200
         property double compositionEndedAt: -1
         onInputMethodComposingChanged: compositionEndedAt = inputMethodComposing ? -1 : Date.now()
@@ -3076,13 +2617,6 @@ ApplicationWindow {
             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Escape)
                 field.compositionEndedAt = -1
         }
-        // Legacy EDITBOX bindings (O2, HotkeysController::actionFor): the
-        // text field's own plain Enter (commit and go to the next line) and
-        // TabPanel's fixed numpad Enter and Ctrl+numpad Enter first, then the
-        // Editor's bindings, which act before the application's shortcuts;
-        // composition keeps its own Enter (compositionKey above). Escape
-        // discards the draft and Ctrl+Z / Ctrl+Y undo and redo it (accepted
-        // transaction policy).
         function hotkeyAction(event) {
             const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
             const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
@@ -3092,19 +2626,9 @@ ApplicationWindow {
                 return "EDITBOX_COMMIT_GO_NEXT_LINE"
             if (event.key === Qt.Key_Enter && mods === Qt.ControlModifier)
                 return "EDITBOX_COMMIT"
+            // MUST KILL: actionFor's first argument is a magic int hotkey window (1 Grid, 2 Editor, 3 Video, 4 Audio)
             return root.hotkeys.actionFor(2, event.key, event.modifiers)
         }
-        // TextEditor::OnKeyPress (DialogueTextEditor.cpp:534-545): Tab never
-        // goes into the text; it is a navigation event, forward or with
-        // Shift backward, to the next control in the tab order (the tag
-        // list, which takes its own keys first, closes as the field loses
-        // focus). Its window change flag (Ctrl) reached EditBox's
-        // HikariContainer::OnNavigation first (HikariPanel.cpp:23), which
-        // ignores it, so Ctrl+Tab and Ctrl+Shift+Tab move the same way.
-        // TM1: from the Original text panel, Tab goes on to the Translated
-        // text, and Shift+Tab comes back, as in legacy's one EditBox. The
-        // other panel may float in its own window, which focusPanel activates,
-        // or be the hidden tab of the same group, which comes to the front.
         function tabOut(forward) {
             const reason = forward ? Qt.TabFocusReason : Qt.BacktabFocusReason
             const linked = forward ? field.tabNext : field.tabPrevious
@@ -3117,9 +2641,7 @@ ApplicationWindow {
             if (next && next !== field)
                 next.forceActiveFocus(reason)
         }
-        // Undo and Redo go through the draft first (editor-shortcuts.md):
-        // the field takes Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z whatever the
-        // platform's own keys, or xcb's Ctrl+Y would reach GLOBAL_REDO (KB3).
+        // Claimed whatever the platform's undo keys are, or on xcb Ctrl+Y reaches GLOBAL_REDO.
         function undoRedoKey(event) {
             return (event.modifiers & ~Qt.ShiftModifier) === Qt.ControlModifier
                    && (event.key === Qt.Key_Z || (event.key === Qt.Key_Y && !(event.modifiers & Qt.ShiftModifier)))
@@ -3132,18 +2654,16 @@ ApplicationWindow {
                 event.accepted = true
                 return
             }
-            field.compositionEndedAt = -1 // only the first key can be the composition's
+            field.compositionEndedAt = -1
             if (tagListPopup.key(event)) {
                 event.accepted = true
                 return
             }
             const ctrl = event.modifiers & Qt.ControlModifier
             const action = hotkeyAction(event)
-            // TM1: a plain Tab places the suggested runs and Escape dismisses
-            // them; without suggestions they move on and discard as usual.
             const plain = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
             if (action !== "") {
-                root.runEditorHotkey(action, field) // an action not here yet still takes the key
+                root.runEditorHotkey(action, field)
                 event.accepted = true
             } else if (plain && field.role === 1 && event.key === Qt.Key_Tab && root.editor.acceptSuggestedRuns()) {
                 event.accepted = true
@@ -3164,8 +2684,6 @@ ApplicationWindow {
                 event.accepted = true
             }
         }
-        // E6: the tag list (TextEditor's PopupTagList), on the raw text only:
-        // the hidden-tag view refuses ASS syntax, so no tag is typed there.
         EditorTagList {
             id: tagListPopup
             field: field
@@ -3174,26 +2692,14 @@ ApplicationWindow {
         }
     }
 
-    // A panel's body. Its dock's header (DockTabBar.qml: a title bar or its
-    // tab) is its only visible header: the user dropped the in-panel title
-    // row on 2026-10-05, since with docking it repeated the dock's title. The
-    // title stays the panel's name for assistive technology.
     component Panel: FocusScope {
         id: panel
         property string title
-        // The panel's name for assistive technology: its title unless the
-        // title names something else (the Grid's names the editing target).
         property string accessibleName: title
         default property alias content: body.data
         readonly property real bodyHeight: body.height
-        // D3: the dock's uniqueName, and the smallest body its content takes
-        // unclipped. The docking engine keeps the panel at least that big
-        // (with the body's margins), so dragging a separator cannot squeeze
-        // it into clipping its controls.
         property string dockName
         property size minimumBodySize: Qt.size(0, 0)
-        // The item holding the panel's key handlers (KeyRouter), when not
-        // the panel itself.
         property Item keyTarget: null
         readonly property size minimumSize: Qt.size(Math.ceil(minimumBodySize.width) + 2 * body.anchors.margins,
                                                     Math.ceil(minimumBodySize.height) + 2 * body.anchors.margins)
@@ -3204,19 +2710,11 @@ ApplicationWindow {
         onMinimumSizeChanged: reportMinimumSize()
         Component.onCompleted: Qt.callLater(reportMinimumSize)
         activeFocusOnTab: false
-        // A panel squeezed below its content's size cuts it off rather than
-        // draw over the next panel (the body's margin holds a control's
-        // 1-wide focus ring).
         clip: true
         Accessible.role: Accessible.Pane
         Accessible.name: accessibleName
         Accessible.description: accessibleName !== title ? title : ""
 
-        // K2 (visual-language.md, "Keyboard focus"): the panel holding the
-        // focus shows the accent corner mark on its dock header
-        // (DockTabBar.qml, PanelFocusMark.qml). D3: no frame of its own; the
-        // docking engine's 1-pixel separators are the boundaries between
-        // panels (MuseScore's).
         Rectangle {
             anchors.fill: parent
             color: panel.palette.base
@@ -3230,12 +2728,7 @@ ApplicationWindow {
         }
     }
 
-    // Dropped files open by the legacy rules (subtitles, scripts, video).
-    // It takes file drags only and stays out of the docking engine's way
-    // (D1): declared before the docking area, so the engine's own hit test
-    // (the last child under the cursor wins; X11, Windows) finds the panels,
-    // and above it (z) for real drag-and-drop, where it refuses every drag
-    // without files so the engine's drop indicators get it (Wayland).
+    // Before the docking area so KDDW's hit test (last child wins) finds the panels; non-file drags are refused for its Wayland drop indicators.
     DropArea {
         id: fileDropArea
         objectName: "dropArea"
@@ -3249,8 +2742,6 @@ ApplicationWindow {
             if (!drop.hasUrls)
                 return
             drop.accept(Qt.CopyAction)
-            // P9: legacy OpenFiles: one file opens as OpenFile does; several
-            // open as tabs, after a review of the editing target's work.
             const result = root.app.openDropped(drop.urls)
             if (result.kind === "subtitles")
                 root.openSubtitles(result.path)
@@ -3263,11 +2754,7 @@ ApplicationWindow {
         }
     }
 
-    // Wayland: the docking engine drags a panel with real drag-and-drop, and
-    // its QtQuick frontend takes such drops only in floating windows (a QML
-    // DropArea naming the engine's drop area in dropAreaCpp). This gives the
-    // main window the same receiver, under the file drop target. Elsewhere
-    // the engine finds drop areas by hit test, so it is hidden there.
+    // Wayland: KDDW's QtQuick frontend takes panel drops only through a DropArea with dropAreaCpp, which it gives floating windows alone.
     DropArea {
         id: panelDropArea
         objectName: "panelDropArea"
@@ -3275,14 +2762,9 @@ ApplicationWindow {
         z: 1
         visible: Qt.platform.pluginName.startsWith("wayland")
         property QtObject dropAreaCpp: null
-        // The engine makes the main window's drop area with the docking area.
         Component.onCompleted: Qt.callLater(() => dropAreaCpp = Docking.mainDropArea(dockingArea.uniqueName))
     }
 
-    // SH2: the Home page over the docked panels while no Document is open,
-    // under the file drop area (z), so files dropped on it open. The panels
-    // under it stay laid out (their layout is saved as it is) but take no
-    // input.
     HomePage {
         id: homePage
         objectName: "homePage"
@@ -3297,9 +2779,7 @@ ApplicationWindow {
         onRestoreRequested: sessionWindows.load()
         offer: sessionWindows.offer
         onAutosavesRequested: autosaves.show()
-        // SH3: What's new, while there are notes to show.
         whatsNew: root.whatsNew.releases.length > 0 ? whatsNewCard : null
-        // P9: Ctrl+click shows the file in its folder, as in File > Recent.
         onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
         onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
         Component.onCompleted: if (visible) Qt.callLater(takeFocus)
@@ -3311,9 +2791,6 @@ ApplicationWindow {
             smallFont: homePage.smallFont
         }
     }
-    // The first Document opened from Home: the focus, left nowhere when the
-    // page went, goes to the Grid (else the first shown panel), unless the
-    // opening put it somewhere.
     function focusAfterHome() {
         if (homePage.visible || (root.activeFocusItem && root.activeFocusItem !== root.contentItem))
             return
@@ -3323,15 +2800,12 @@ ApplicationWindow {
             root.focusPanel(next, Qt.OtherFocusReason)
     }
 
-    // D1: the Classic panels dock, float, tab and close (KDDockWidgets behind
-    // ui/docking.h; docs/docking.md). Closing a panel hides its view; its
-    // controller and any draft stay.
     KDDW.DockingArea {
         id: dockingArea
         objectName: "dockingArea"
         anchors.fill: parent
         uniqueName: "Classic"
-        enabled: !homePage.visible // SH2
+        enabled: !homePage.visible
 
         KDDW.DockWidget {
             id: videoDock
@@ -3343,28 +2817,11 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "videoPanel"
                 dockName: "Video"
-                // The controls below the video at their narrowest, with the
-                // inspector bar's one line whether the tool has it or not
-                // (VB1), above two rail buttons' height (a tool and More
-                // tools): the minimum does not change with the tool.
+                // MUST KILL: 72 is a magic height for two tool rail buttons
                 minimumBodySize: Qt.size(videoTransport.implicitWidth,
                                          videoControls.implicitHeight + videoToolBar.lineHeight + videoControls.spacing + 72
                                          - (videoToolBar.visible ? videoToolBar.implicitHeight + videoControls.spacing : 0))
                 title: qsTranslate("HikariSub.Video", "Video")
-                // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
-                // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
-                // table (legacy VideoBox has no arrow keys of its own).
-                // O2: the Video window's bindings (VideoBox's table; by default
-                // VIDEO_PLAY_PAUSE Space, VIDEO_5_SECONDS_* L / ;,
-                // VIDEO_MINUTE_* Up / Down), before the application's shortcuts.
-                // T1: Esc cancels an open visual gesture first; keys no binding
-                // takes go to the visual tool, as VideoBox::OnKeyPress hands
-                // them to the Visuals. VT2-arrow-nudge: a tool's nudge (the
-                // arrows, Shift a tenth) comes before the bindings, so they
-                // reach it over the video, focused or hovered (KB1's router
-                // asks this override).
-                // FS1: VIDEO_FULLSCREEN_BAR is the fullscreen window's; here
-                // its key (Tab) keeps moving the keyboard focus.
                 function panelAction(event) {
                     const action = root.hotkeys.actionFor(3, event.key, event.modifiers)
                     return action === "VIDEO_FULLSCREEN_BAR" ? "" : action
@@ -3386,13 +2843,13 @@ ApplicationWindow {
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
-                    } else if (event.key === Qt.Key_F) { // V5: VideoBox::OnKeyPress's SetFullscreen()
+                    } else if (event.key === Qt.Key_F) {
                         root.videoFullscreen.toggle(0)
                         event.accepted = true
-                    } else if (event.key === Qt.Key_Menu) { // V4: WXK_WINDOWS_MENU, the menu at the pointer
+                    } else if (event.key === Qt.Key_Menu) {
                         videoContextMenu.openAt(root.videoView.cursorIn(visualOverlay))
                         event.accepted = true
-                    } else if (root.videoView.key(event.key, event.modifiers)) { // V4: Return in the zoom mode, Ctrl+Shift+Z
+                    } else if (root.videoView.key(event.key, event.modifiers)) {
                         event.accepted = true
                     } else if (root.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)) {
                         event.accepted = true
@@ -3400,38 +2857,27 @@ ApplicationWindow {
                 }
                 Keys.onReleased: event => event.accepted = root.visualTools.key(event.key, event.modifiers, true, event.isAutoRepeat)
 
-                // The legacy "Associated files" confirmation, inline: the
-                // Document stays editable whatever is chosen (P9: its text,
-                // buttons and "Apply to All"). Over the picture, beside the
-                // tool rail, so the rail stays whole and usable.
                 AssociationOffer {
                     video: root.video
                     anchors { left: videoStageDock.left; right: parent.right; top: parent.top }
                     z: 1
                 }
-                // V3: the indexing's progress and Cancel, placed as the
-                // question above.
                 VideoIndexingProgress {
                     video: root.video
                     anchors { left: videoStageDock.left; right: parent.right; top: parent.top }
                     z: 1
                 }
-                // T1: the tool rail beside the canvas (layout A).
                 VisualToolRail {
                     id: visualRail
                     tools: root.visualTools
                     keyOf: symbol => root.boundKeys(symbol, 3)
                     anchors { left: parent.left; top: parent.top; bottom: videoControls.top }
                 }
-                // Where the picture sits in the panel.
                 Item {
                     id: videoStageDock
                     anchors { left: visualRail.visible ? visualRail.right : parent.left; right: parent.right
                               top: parent.top; bottom: videoControls.top }
                 }
-                // V5: the picture, the visual tools' overlay and the zoom
-                // frame; they move into the fullscreen window while it is
-                // shown (one presenter: the video is shown in one place).
                 Item {
                     id: videoStage
                     objectName: "videoStage"
@@ -3442,7 +2888,6 @@ ApplicationWindow {
                     objectName: "videoPresenter"
                     visible: root.video.hasVideo
                     anchors.fill: parent
-                    // The visual tools' shared view places the frame (legacy UpdateRects).
                     videoRect: root.visualTools.videoRect
                     sourceRect: root.visualTools.sourceRect
                     Component.onCompleted: root.video.attachPresenter(presenter)
@@ -3452,11 +2897,8 @@ ApplicationWindow {
                     anchors.fill: presenter
                     tools: root.visualTools
                     focusTarget: root.videoFullscreen.active ? videoFullscreenWindow.keyTarget : videoPanel
-                    // In fullscreen the pinned panel (m_PanelOnFullscreen) or none.
                     panelHeight: root.videoFullscreen.active ? videoFullscreenWindow.pinnedPanelHeight : videoControls.height
-                    view: root.videoView // V4
-                    // FS1-cursor-hide: the pointer hides over the fullscreen
-                    // picture while nothing holds the bar.
+                    view: root.videoView
                     cursorOverride: root.videoFullscreen.active && videoFullscreenWindow.cursorHidden ? Qt.BlankCursor : -1
                     onContextMenuRequested: (x, y) => {
                         if (root.videoFullscreen.active)
@@ -3470,12 +2912,10 @@ ApplicationWindow {
                             videoFullscreenWindow.pointerMoved(visualOverlay.mapToItem(null, x, y))
                     }
                 }
-                // V4: the zoom mode's frame, the context menu and the aspect ratio.
                 VideoZoomFrame {
                     anchors.fill: presenter
                     view: root.videoView
                 }
-                // KE2: the Template editor's preview on the frame.
                 VideoTemplateBadge {
                     id: templateBadge
                     x: presenter.x + 8
@@ -3483,19 +2923,17 @@ ApplicationWindow {
                     visible: root.templateEditor.videoPreview && root.video.hasVideo
                     controller: root.templateEditor
                 }
-                // KE1-render-cost-overlay: what the frame's subtitles cost to
-                // draw; below the preview badge when it shows.
                 VideoRenderCost {
                     anchors.fill: presenter
                     visible: root.videoView.renderCost && root.video.hasVideo
                     cost: presenter.renderCost
                     textTop: templateBadge.visible ? templateBadge.height + 12 : 8
                 }
-                // HY1: Hydra's last change card, in the video's top-right corner.
                 VisualLastChange {
                     anchors { top: parent.top; right: parent.right; margins: 14 }
                     tools: root.visualTools
-                    visible: hasChange && root.video.hasVideo && root.visualTools.activeFamily === 10 // Family::Hydra
+                    // MUST KILL: activeFamily 10 is a magic int for Family::Hydra
+                    visible: hasChange && root.video.hasVideo && root.visualTools.activeFamily === 10
                 }
                 }
                 VideoContextMenu {
@@ -3514,24 +2952,19 @@ ApplicationWindow {
                     visible: !root.video.hasVideo
                     text: root.video.status
                 }
-                // The seek bar and the legacy times field (keyframes highlighted).
                 ColumnLayout {
                     id: videoControls
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                     spacing: 2
-                    // V4: the wheel over the panel is the volume's (VideoBox.cpp:519-534).
                     WheelHandler {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
-                VisualToolBar { // VT1: the tool, its options and values, the batch picker
+                VisualToolBar {
                     id: videoToolBar
                     Layout.fillWidth: true
-                    dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
+                    dialogs: !videoFullscreenWindow.visible
                     settings: root.app.settings
-                    // It folds rather than widen the column: wider text (a
-                    // translation, a larger font) or a narrow panel must not
-                    // push Next frame out of the panel.
                     Layout.minimumWidth: 0
                     tools: root.visualTools
                 }
@@ -3542,10 +2975,6 @@ ApplicationWindow {
                     from: 0
                     to: Math.max(0, root.video.frameCount - 1)
                     stepSize: 1
-                    // It follows the reported frame (the player's while
-                    // playing, at the texts' pace) except while held, as
-                    // legacy VideoSlider's `block` kept its thumb under the
-                    // mouse; only its own moves seek.
                     Binding on value {
                         when: !videoSeekBar.pressed
                         value: Math.max(0, root.video.frame)
@@ -3554,15 +2983,11 @@ ApplicationWindow {
                     enabled: root.video.hasVideo
                     focusPolicy: Qt.NoFocus
                     Accessible.name: qsTranslate("HikariSub.Video", "Video position")
-                    // A drag seeks at most every 50 ms and once more where it
-                    // is let go (V2 user decision 2026-10-14).
                     onMoved: root.video.seekBarMoved(Math.round(value), pressed)
                     onPressedChanged: if (!pressed) root.video.seekBarReleased()
                 }
                 RowLayout {
                     Layout.fillWidth: true
-                    // VB1: as tall with the pointer readout's button as
-                    // without, so the video does not move when it shows.
                     Layout.minimumHeight: 24
                     spacing: 10
                     Label {
@@ -3574,14 +2999,12 @@ ApplicationWindow {
                         font.features: { "tnum": 1 }
                         color: root.video.keyframeShown ? Theme.warning : palette.windowText
                         Accessible.name: qsTranslate("HikariSub.Video", "Video times")
-                        // Legacy's times field: its parts named in the tooltip.
                         Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line's start frame; "
                                                      + "milliseconds from the line's start and end")
                         HoverHandler { id: timesHover }
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
                     }
-                    // VB1: the crosshair's position and Copy video position.
                     VisualPointerReadout {
                         tools: root.visualTools
                     }
@@ -3589,16 +3012,6 @@ ApplicationWindow {
                 RowLayout {
                     id: videoTransport
                     Layout.fillWidth: true
-                    // Legacy VideoBox's bitmap buttons (VIDEO_PLAY_PAUSE,
-                    // GLOBAL_PLAY_ACTUAL_LINE, VIDEO_STOP): the binding in the
-                    // tooltip, and Shift+click maps it (BitmapButton). K1: the
-                    // set's icons in place of legacy's bitmaps (play / pause
-                    // as legacy ChangeButtonBMP swaps them, VideoBox.cpp:1414);
-                    // the text stays the accessible name.
-                    // V3: legacy's Previous file / Next file buttons around
-                    // the transport (VideoBox.cpp:156-165), asking first.
-                    // Flat tool buttons, as the audio box's (one button
-                    // language for the two transports).
                     IconToolButton {
                         objectName: "previousFile"
                         iconRole: "media-previous-file"
@@ -3616,8 +3029,6 @@ ApplicationWindow {
                         tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
-                    // A4: GLOBAL_PLAY_ACTUAL_LINE; legacy then focuses the
-                    // Line editor's text.
                     IconToolButton {
                         objectName: "playActualLine"
                         iconRole: "play-line"
@@ -3629,7 +3040,7 @@ ApplicationWindow {
                         onClicked: {
                             if (root.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap"))
                                 return
-                            root.focusPanel(lineText, Qt.OtherFocusReason) // TM1: maybe in a floating panel
+                            root.focusPanel(lineText, Qt.OtherFocusReason)
                             root.video.playActualLine()
                         }
                     }
@@ -3655,7 +3066,7 @@ ApplicationWindow {
                         iconRole: "frame-previous"
                         text: qsTranslate("HikariSub.Video", "Previous frame")
                         enabled: root.video.hasVideo && root.video.frame > 0
-                        focusPolicy: Qt.NoFocus // KB2: a click left Space to the button
+                        focusPolicy: Qt.NoFocus
                         onClicked: root.video.stepFrames(-1)
                     }
                     Label {
@@ -3669,10 +3080,10 @@ ApplicationWindow {
                         iconRole: "frame-next"
                         text: qsTranslate("HikariSub.Video", "Next frame")
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
-                        focusPolicy: Qt.NoFocus // KB2: a click left Space to the button
+                        focusPolicy: Qt.NoFocus
                         onClicked: root.video.stepFrames(1)
                     }
-                    VideoVolumeSlider { // V4: legacy VolSlider at the right
+                    VideoVolumeSlider {
                         view: root.videoView
                         hasVideo: root.video.hasVideo
                     }
@@ -3691,19 +3102,10 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "audioPanel"
                 dockName: "Audio"
-                // With audio open: the button row under a short display,
-                // as narrow as the folded row (AU1).
                 minimumBodySize: audioButtons.visible
                                  ? Qt.size(audioButtons.foldedWidth, 64 + audioScroll.implicitHeight + 4 + audioButtons.implicitHeight)
                                  : Qt.size(audioStatus.implicitWidth, audioStatus.implicitHeight)
                 title: qsTranslate("HikariSub.Audio", "Audio")
-                // The audio box in legacy AudioBox's layout: the display with
-                // the search bar below it (DisplaySizer) and the button row
-                // across the bottom (ButtonSizer). AU1 (#267): the sliders
-                // beside them (TopSizer) moved into the zoom and speaker
-                // popovers, so the display takes the full width.
-                // KA2 (#277, KA2-tap-to-time): the tap bar above the display
-                // while tap mode is on.
                 AudioTapBar {
                     id: audioTapBar
                     audio: root.audio
@@ -3711,7 +3113,6 @@ ApplicationWindow {
                     height: visible ? implicitHeight : 0
                     anchors { left: parent.left; right: parent.right; top: parent.top }
                 }
-                // A1: the waveform with its time ruler and marks (legacy AudioDisplay).
                 AudioDisplay {
                     id: audioDisplay
                     objectName: "audioDisplay"
@@ -3725,10 +3126,6 @@ ApplicationWindow {
                     Accessible.name: qsTranslate("HikariSub.Audio", "Audio display")
                     Accessible.description: root.audio.status
                 }
-                // KA2-tap-to-time: the tapped syllables in a lane near the top
-                // of the waveform, under the karaoke letters' row, the held
-                // one growing at the playhead; a release before the next
-                // press leaves a hatched gap.
                 Item {
                     id: audioTapLane
                     objectName: "audioTapLane"
@@ -3750,7 +3147,6 @@ ApplicationWindow {
                             x: modelData.x1
                             width: Math.max(1, modelData.x2 - modelData.x1)
                             height: parent.height
-                            // the gap before this syllable, hatched
                             Canvas {
                                 objectName: "audioTapGap"
                                 readonly property color ink: Theme.highContrast ? Theme.text : Theme.muted
@@ -3775,7 +3171,6 @@ ApplicationWindow {
                             }
                             Rectangle {
                                 anchors.fill: parent
-                                // high contrast: outlined on the field, the held one filled
                                 color: Theme.highContrast && !span.modelData.held ? Theme.field
                                      : Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, span.modelData.held || Theme.highContrast ? 0.9 : 0.5)
                                 border.width: Theme.highContrast ? 1 : 0
@@ -3788,7 +3183,7 @@ ApplicationWindow {
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: Text.ElideRight
                                 text: span.modelData.text
-                                textFormat: Text.PlainText // a Line's text, never markup (no <img> fetched)
+                                textFormat: Text.PlainText
                                 font.bold: true
                                 color: span.modelData.held ? Theme.onAccent : Theme.text
                             }
@@ -3802,13 +3197,10 @@ ApplicationWindow {
                     orientation: Qt.Horizontal
                     policy: ScrollBar.AlwaysOn
                     focusPolicy: Qt.NoFocus
-                    // legacy DisplaySizer: wxBOTTOM 4 under the search bar
                     anchors { left: parent.left; right: audioSliderColumn.visible ? audioSliderColumn.left : parent.right
                               bottom: audioButtons.top; bottomMargin: visible ? 4 : 0 }
                     height: visible ? implicitHeight : 0
                     size: root.audio.scrollRange > 0 ? Math.min(1, root.audio.scrollPage / root.audio.scrollRange) : 1
-                    // A visible track in the boundary colour: the handle alone
-                    // read as a stray pill.
                     background: Rectangle {
                         implicitHeight: 6
                         radius: 3
@@ -3820,16 +3212,10 @@ ApplicationWindow {
                         value: root.audio.scrollRange > 0 ? root.audio.scrollPosition / root.audio.scrollRange : 0
                     }
                     onPositionChanged: {
-                        if (pressed) // legacy AudioBox::OnScrollbar
+                        if (pressed)
                             root.audio.setScrollPosition(Math.round(position * root.audio.scrollRange))
                     }
-                    // #385: no tooltip; legacy's "Search bar" named it wrongly.
                 }
-                // AU2 (#268): legacy's slider column beside the display and
-                // its search bar (TopSizer, AudioBox.cpp:105-143), shown from
-                // Customise: the horizontal stretch, then the vertical
-                // stretch and the volume with Link under them. The zoom and
-                // speaker popovers keep the same values.
                 RowLayout {
                     id: audioSliderColumn
                     objectName: "audioSliderColumn"
@@ -3853,7 +3239,6 @@ ApplicationWindow {
                         implicitWidth: 1
                         color: Theme.line
                     }
-                    // legacy HorizontalZoom: 0 at the top (wxSL_VERTICAL)
                     ColumnSlider {
                         objectName: "audioColumnHorizontal"
                         tip: qsTranslate("HikariSub.Audio", "Horizontal stretching")
@@ -3867,8 +3252,6 @@ ApplicationWindow {
                         spacing: 2
                         RowLayout {
                             spacing: 2
-                            // legacy VerticalZoom and VolumeBar: the top end
-                            // at the top (wxSL_INVERSE)
                             ColumnSlider {
                                 objectName: "audioColumnVertical"
                                 tip: qsTranslate("HikariSub.Audio", "Vertical stretching")
@@ -3886,7 +3269,6 @@ ApplicationWindow {
                                 onMoved: root.audio.setVolume(Math.round(value))
                             }
                         }
-                        // legacy VerticalLink, under the two it links
                         ToolButton {
                             objectName: "audioColumnLink"
                             Layout.fillWidth: true
@@ -3925,9 +3307,6 @@ ApplicationWindow {
                     visible: !root.audio.loaded
                     text: root.audio.status
                 }
-                // Legacy MappedButton's tooltip for an AUDIO_HOTKEY action:
-                // the bindings ("A or B" for the buttons with two,
-                // SetTwoHotkeys: the id and the id - 10) and the gesture.
                 function audioTip(text, symbol, alt) {
                     let key = root.boundKeys(symbol, 4)
                     if (alt) {
@@ -3940,12 +3319,6 @@ ApplicationWindow {
                         tip += "\n" + qsTranslate("HikariSub.Audio", "Second shortcut can be set using Control + Click")
                     return tip
                 }
-                // AU1 (#267): Play around's plays, in its menu's order, with
-                // legacy's button tips (AudioBox.cpp:149-193). audio.playAround
-                // holds the one the face shows and a click repeats: the last
-                // one chosen from the menu (a hotkey plays its range without
-                // changing it). AU2: `id` is the play's in
-                // audio.panelControls, `label` its menu text.
                 readonly property var playArounds: [
                     { id: "before", symbol: "AUDIO_PLAY_500MS_BEFORE", icon: "play-before-start",
                       tip: qsTranslate("HikariSub.Audio", "Play 500ms before the start time"),
@@ -3975,9 +3348,6 @@ ApplicationWindow {
                     root.app.settings.setValue("audio.playAround", symbol)
                     root.audio.runHotkey(symbol)
                 }
-                // A3: AUDIO_AUTO_COMMIT and AUDIO_NEXT_LINE_ON_COMMIT
-                // (AudioBox::OnAutoCommit / OnNextLineCommit save the option;
-                // legacy's commit never reads the second), now in Commit's menu.
                 property bool autoCommit: root.app.settings.value("audio.autoCommit")
                 property bool nextLineOnCommit: root.app.settings.value("audio.nextLineOnCommit")
                 Connections {
@@ -3993,17 +3363,10 @@ ApplicationWindow {
                             audioPanel.panelControls = root.app.settings.value(id)
                     }
                 }
-                // AU2 (#268): the controls AU1 folded that the row shows
-                // (audio.panelControls, the Customise menu). The extras in
-                // the row's order, left to right: legacy's (AudioBox.cpp:
-                // 160-193), the mark plays, the 500 ms plays and Play to end,
-                // then Auto-commit, Next after commit and Go after Commit.
                 property var panelControls: root.app.settings.value("audio.panelControls")
                 readonly property var extraOrder: ["beforeMark", "afterMark", "before", "first", "last", "after", "toEnd",
                                                    "autoCommit", "nextCommit", "goto"]
                 readonly property var playExtras: ["beforeMark", "afterMark", "before", "first", "last", "after", "toEnd"]
-                // Classic: close to legacy's box (AU2-classic-arrangement);
-                // Default: AU1's row.
                 readonly property var classicControls: extraOrder.concat(["sliders"])
                 readonly property var defaultControls: ["playAround"]
                 function shows(id) { return panelControls.indexOf(id) >= 0 }
@@ -4021,17 +3384,11 @@ ApplicationWindow {
                     root.app.settings.setValue(id, on)
                     audioDisplay.forceActiveFocus()
                 }
-                // AU1: the zoom readout, the horizontal stretch against the
-                // default ("1.5×"), whole numbers from 10×.
                 readonly property string magnificationText: {
                     const m = root.audio.magnification
                     //: The audio panel's zoom readout; %1 is the magnification
                     return qsTranslate("HikariSub.Audio", "%1×").arg(m >= 10 ? Math.round(m) : m.toFixed(1))
                 }
-                // AU1: Go to selection's button gave way to this chip, shown
-                // only while none of the current Line's selection is in view,
-                // on the side it lies beyond (AU1-go-to-selection-chip).
-                // AUDIO_GOTO (B) keeps working everywhere.
                 AbstractButton {
                     id: audioBackToLine
                     objectName: "audioBackToLine"
@@ -4061,7 +3418,6 @@ ApplicationWindow {
                         spacing: 6
                         Icon {
                             iconRole: "go-to-selection"
-                            // the arrow points to the Line
                             mirrored: audioBackToLine.side < 0
                         }
                         Label {
@@ -4081,44 +3437,24 @@ ApplicationWindow {
                         root.audio.goToSelection()
                     }
                 }
-                // The box's buttons (legacy AudioBox's ButtonSizer). AU1
-                // (#267): transport, Play around and the timing group on the
-                // left; the mode switches, the toggles, zoom and the speaker
-                // on the right. Below the width the whole row needs, the
-                // switches and toggles fold into a ⋯ menu in their order.
                 RowLayout {
                     id: audioButtons
                     objectName: "audioButtons"
                     visible: root.audio.loaded
                     height: visible ? implicitHeight : 0
                     spacing: 2
-                    // legacy MainSizer: a 2-pixel spacer under the buttons
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
-                    // From the fixed sizes, not the right-hand items' own,
-                    // which change as the row folds. KA2 (#277): Karaoke
-                    // mode's row, with Tap, folds the toggles into ⋯ first
-                    // (the default 640 px panel does), the switches when
-                    // even that does not fit; Line mode folds them together.
                     readonly property bool folded: width < transportWidth(shownExtras)
                                                            + (root.audio.karaoke ? audioSwitches.modesWidth + 26 + spacing
                                                                                  : audioSwitches.fullWidth)
                                                            + audioTail.unfoldedWidth + 3 * spacing
                     readonly property bool togglesFolded: folded
                         || width < transportWidth(shownExtras) + audioSwitches.fullWidth + audioTail.unfoldedWidth + 3 * spacing
-                    // KA1 (owner 2026-10-21): Auto split's arrow, after the
-                    // toggles and before the switches; its commands are in ⋯
-                    // while it is folded (the default panel folds it)
                     readonly property bool splitArrowFolded: folded
                         || root.audio.karaoke && width < transportWidth(shownExtras) + audioSwitches.modesWidth
                                                         + audioSwitches.splitArrowWidth + 26 + spacing
                                                         + audioTail.unfoldedWidth + 3 * spacing
-                    // the row with the switches in ⋯ and no extra shown: the
-                    // panel's least width
                     readonly property real foldedWidth: transportWidth([]) + audioTail.unfoldedWidth + 26 + 3 * spacing
-                    // AU2: the extras Customise shows, in the row's order;
-                    // `kept` the ones the row has room for. Once the switches
-                    // are in ⋯, the extras that do not fit follow them from
-                    // the right end (AU2-classic-arrangement).
                     readonly property var shownExtras: audioPanel.extraOrder.filter(id => audioPanel.shows(id))
                     readonly property var kept: {
                         if (!folded)
@@ -4131,9 +3467,7 @@ ApplicationWindow {
                     }
                     function keeps(id) { return kept.indexOf(id) >= 0 }
                     function foldsOut(id) { return audioPanel.shows(id) && !keeps(id) }
-                    // audioTransport's width with the extras in `extras`
-                    // shown, from the fixed sizes (a button 26, a split
-                    // button 39, a separator 5 with its margins).
+                    // MUST KILL: transportWidth hardcodes the row's item widths (button 26, split button 39, separator 5)
                     function transportWidth(extras) {
                         const around = audioPanel.shows("playAround")
                         const marks = extras.filter(id => id === "beforeMark" || id === "afterMark").length
@@ -4152,13 +3486,6 @@ ApplicationWindow {
                         widths.push(26, 26, 39)
                         return widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * spacing
                     }
-                    // Legacy MappedButton's square buttons; a Shift+click maps
-                    // the action's Audio hotkey instead (Hotkeys::OnMapHkey).
-                    // K1: each shows the set's icon in place of legacy's
-                    // bitmap; its text is not drawn, the tip stays its
-                    // accessible name and tooltip. AU1: a checked button has
-                    // an accent line under it, so its state is not its fill
-                    // alone.
                     component AudioButton: ToolButton {
                         id: audioButton
                         property string symbol: ""
@@ -4189,7 +3516,6 @@ ApplicationWindow {
                             visible: audioButton.checked
                         }
                     }
-                    // A segment of a two-way switch: one of its choices.
                     component AudioSegment: AudioButton {
                         id: segment
                         property bool divider: false
@@ -4206,8 +3532,6 @@ ApplicationWindow {
                             }
                         }
                     }
-                    // AU1: Line | Karaoke and Waveform | Spectrum
-                    // (AU1-audio-mode-switches).
                     component AudioSwitch: Rectangle {
                         default property alias segments: switchRow.data
                         implicitWidth: switchRow.implicitWidth + 2
@@ -4221,7 +3545,6 @@ ApplicationWindow {
                             anchors { fill: parent; margins: 1 }
                         }
                     }
-                    // The arrow of a split button and of a menu button.
                     component AudioArrow: Canvas {
                         implicitWidth: 8
                         implicitHeight: 8
@@ -4241,8 +3564,6 @@ ApplicationWindow {
                             ctx.stroke()
                         }
                     }
-                    // AU1: a split button: the face runs its action, the arrow
-                    // opens `menu` under the face.
                     component AudioSplitButton: Row {
                         id: split
                         property string name
@@ -4252,7 +3573,6 @@ ApplicationWindow {
                         property string tip
                         property string menuTip
                         property Menu menu
-                        // KA1: a face that toggles (Auto split), and a narrower arrow
                         property string faceText: tip
                         property real arrowWidth: 13
                         property bool arrowShown: true
@@ -4294,7 +3614,6 @@ ApplicationWindow {
                             onClicked: split.menu.popup(splitFace, 0, splitFace.height)
                         }
                     }
-                    // A mark on Commit's face: an option that is on.
                     component CommitMark: Rectangle {
                         property string glyph
                         width: Math.max(9, markText.implicitWidth + 2)
@@ -4317,8 +3636,6 @@ ApplicationWindow {
                         Layout.rightMargin: 2
                         color: Theme.line
                     }
-                    // KA2: a choice of several in a menu, with a radio mark
-                    // (its circle, filled when chosen); it closes the menu.
                     component AudioRadioItem: ShellMenuItem {
                         id: radioItem
                         checkable: true
@@ -4344,7 +3661,6 @@ ApplicationWindow {
                             }
                         }
                     }
-                    // KA2: a muted heading over a menu's group of items.
                     component AudioMenuHeading: Label {
                         leftPadding: 12
                         rightPadding: 12
@@ -4354,8 +3670,6 @@ ApplicationWindow {
                         font.bold: true
                         font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
                     }
-                    // A play of Play around's menu, its hotkey beside it; a
-                    // Shift+click maps the hotkey (AU1: as the old button did).
                     component PlayAroundItem: ShellMenuItem {
                         id: playItem
                         property string symbol
@@ -4376,8 +3690,6 @@ ApplicationWindow {
                         id: audioTransport
                         objectName: "audioTransport"
                         spacing: 2
-                        // A3, A4: AUDIO_PREVIOUS, AUDIO_PLAY, AUDIO_PLAY_LINE
-                        // (two hotkeys each), AUDIO_STOP, AUDIO_NEXT
                         AudioButton {
                             objectName: "audioPrevious"; text: qsTranslate("HikariSub.Audio", "Previous line")
                             iconRole: "audio-previous-line"
@@ -4409,9 +3721,6 @@ ApplicationWindow {
                             onRun: root.audio.nextLine()
                         }
                         AudioSeparator {}
-                        // A4: the 500 ms, to-end and mark plays in one split
-                        // button (AU1-play-around-split); AU2: unless
-                        // Customise hides it.
                         AudioSplitButton {
                             name: "audioPlayAround"
                             visible: audioPanel.shows("playAround")
@@ -4455,9 +3764,6 @@ ApplicationWindow {
                                 symbol: "AUDIO_PLAY_AFTER_MARK"; label: qsTranslate("HikariSub.Audio", "Play after the mark")
                             }
                         }
-                        // AU2 (#268): the plays Customise shows as their own
-                        // buttons, legacy's (AudioBox.cpp:160-176): the mark
-                        // plays, then the 500 ms plays and Play to end.
                         component ExtraPlay: AudioButton {
                             required property var modelData
                             objectName: "audioExtra" + modelData.id[0].toUpperCase() + modelData.id.slice(1)
@@ -4483,12 +3789,9 @@ ApplicationWindow {
                             model: audioPanel.timePlays
                             delegate: ExtraPlay {}
                         }
-                        // not twice when nothing sits between the transport and
-                        // the timing group
                         AudioSeparator {
                             visible: audioPanel.shows("playAround") || audioPanel.playArounds.some(p => audioButtons.keeps(p.id))
                         }
-                        // A3: AUDIO_LEAD_IN, AUDIO_LEAD_OUT, AUDIO_COMMIT
                         AudioButton {
                             objectName: "audioLeadIn"; text: qsTranslate("HikariSub.Audio", "In")
                             iconRole: "lead-in"
@@ -4501,9 +3804,6 @@ ApplicationWindow {
                             symbol: "AUDIO_LEAD_OUT"; tip: qsTranslate("HikariSub.Audio", "Add lead-out to the active line")
                             onRun: root.audio.leadOut()
                         }
-                        // AU1: Commit's arrow holds Auto-commit and Next after
-                        // commit; marks on the face show which are on
-                        // (AU1-commit-split).
                         AudioSplitButton {
                             name: "audioCommit"
                             iconRole: "commit"
@@ -4515,8 +3815,6 @@ ApplicationWindow {
                             Row {
                                 anchors { right: parent.right; bottom: parent.bottom; rightMargin: 1; bottomMargin: 1 }
                                 spacing: 1
-                                // AU2: not while the option is a button of
-                                // its own on the row
                                 CommitMark {
                                     objectName: "audioAutoCommitMark"
                                     glyph: "A"
@@ -4535,7 +3833,6 @@ ApplicationWindow {
                             ShellMenuItem {
                                 objectName: "audioCommitItem"
                                 iconRole: "commit"
-                                // both of Commit's keys, as the face's tip
                                 text: qsTranslate("HikariSub.Audio", "Commit") + "\t"
                                       + [root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4)]
                                         .filter(k => k.length).join(qsTranslate("HikariSub.Audio", " or "))
@@ -4567,9 +3864,6 @@ ApplicationWindow {
                                 }
                             }
                         }
-                        // AU2: Commit's options and Go to selection as
-                        // buttons after Commit (legacy's AutoCommit,
-                        // NextCommit and Goto, AudioBox.cpp:180-215).
                         AudioButton {
                             objectName: "audioExtraAutoCommit"
                             visible: audioButtons.keeps("autoCommit")
@@ -4607,20 +3901,15 @@ ApplicationWindow {
                         }
                     }
                     Item { Layout.fillWidth: true }
-                    // AU1: the mode switches and the toggles. `fullWidth` is
-                    // what they take unfolded, whether shown or not.
                     RowLayout {
                         id: audioSwitches
                         objectName: "audioSwitches"
                         visible: !audioButtons.folded
                         spacing: 2
-                        // two switches, and Auto split and Tap in Karaoke
-                        // mode (and Auto split's arrow); a separator and three
-                        // toggles
+                        // MUST KILL: modesWidth and fullWidth hardcode the switches' and toggles' widths
                         readonly property real modesWidth: 2 * 54 + 2 * spacing + (root.audio.karaoke ? 26 + 39 + 2 * spacing : 0)
                         readonly property real splitArrowWidth: root.audio.karaoke ? 9 : 0
                         readonly property real fullWidth: modesWidth + splitArrowWidth + 5 + 3 * 26 + 4 * spacing
-                        // A5: legacy AudioBox's KaraSwitch, as a switch
                         AudioSwitch {
                             AudioSegment {
                                 objectName: "audioLineMode"
@@ -4640,9 +3929,6 @@ ApplicationWindow {
                                 onRun: if (!root.audio.karaoke) root.audio.toggleKaraoke()
                             }
                         }
-                        // A5: KaraMode, in Karaoke mode only; KA1 (#276, owner
-                        // 2026-10-21): its arrow holds the split at the cursor
-                        // and the \k and \kf switch
                         AudioSplitButton {
                             name: "audioKaraokeSplit"
                             visible: root.audio.karaoke
@@ -4653,7 +3939,7 @@ ApplicationWindow {
                             tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
                             menuTip: qsTranslate("HikariSub.Audio", "Syllable commands")
                             menu: audioKaraokeMenu
-                            arrowWidth: 9 // narrower than the others (owner, 2026-10-21)
+                            arrowWidth: 9
                             arrowShown: !audioButtons.splitArrowFolded
                             onToggled: {
                                 root.audio.toggleKaraokeSplitMode()
@@ -4678,10 +3964,6 @@ ApplicationWindow {
                                 onTriggered: root.audio.switchLongSyllablesToKf()
                             }
                         }
-                        // KA2-tap-to-time: Tap, in Karaoke mode only. The face
-                        // turns tap mode on and off (AUDIO_TAP), the arrow
-                        // holds how a key makes a syllable, the speed and
-                        // the latency.
                         AudioSplitButton {
                             name: "audioTap"
                             visible: root.audio.karaoke
@@ -4727,8 +4009,6 @@ ApplicationWindow {
                                 }
                             }
                             MenuSeparator {}
-                            // KA5 (#280, KA5-onset-snap): dragged and tapped
-                            // boundaries snap to vocal onsets
                             ShellMenuItem {
                                 objectName: "audioOnsetSnap"
                                 text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
@@ -4772,7 +4052,6 @@ ApplicationWindow {
                                 onTriggered: tapCalibrationWindow.openWindow()
                             }
                         }
-                        // A2: SpectrumMode, as a switch
                         AudioSwitch {
                             AudioSegment {
                                 objectName: "audioWaveformMode"
@@ -4795,10 +4074,6 @@ ApplicationWindow {
                         AudioSeparator {
                             visible: !audioButtons.togglesFolded
                         }
-                        // A2: legacy AudioBox's AutoScroll and SpectrumNonLinear
-                        // switches (each focuses the display, as legacy's
-                        // handlers do); AV2 (#239): the video and audio
-                        // cursors follow each other while playing.
                         AudioButton {
                             objectName: "audioAutoScroll"
                             visible: !audioButtons.togglesFolded
@@ -4833,11 +4108,8 @@ ApplicationWindow {
                     RowLayout {
                         id: audioTail
                         spacing: 2
-                        // the separator, zoom, the speaker and Customise
                         readonly property real unfoldedWidth: 5 + audioZoomButton.implicitWidth + 2 * 26 + 3 * spacing
                         AudioSeparator {}
-                        // AU1: the switches and toggles of a narrow panel;
-                        // KA2: in Karaoke mode the toggles alone first.
                         AudioButton {
                             id: audioMoreButton
                             objectName: "audioMore"
@@ -4850,7 +4122,6 @@ ApplicationWindow {
                             ShellMenu {
                                 id: audioMoreMenu
                                 objectName: "audioMoreMenu"
-                                // the switches' check items, while they are folded too
                                 component FoldedItem: ShellMenuItem {
                                     checkable: true
                                     visible: audioButtons.folded
@@ -4860,8 +4131,6 @@ ApplicationWindow {
                                     visible: audioButtons.folded
                                     height: visible ? implicitHeight : 0
                                 }
-                                // AU2: the extras the row has no room for,
-                                // first, in its order
                                 component FoldedPlay: ShellMenuItem {
                                     property var play
                                     objectName: "audioMoreExtra" + play.id[0].toUpperCase() + play.id.slice(1)
@@ -4951,7 +4220,6 @@ ApplicationWindow {
                                         root.audio.toggleKaraokeSplitMode()
                                     }
                                 }
-                                // KA1 (#276): the Auto split arrow's commands, while it is folded
                                 FoldedItem {
                                     objectName: "audioMoreKaraokeSplitAtCursor"
                                     visible: audioButtons.splitArrowFolded && root.audio.karaoke
@@ -4983,8 +4251,6 @@ ApplicationWindow {
                                         root.audio.toggleTap()
                                     }
                                 }
-                                // the Tap button's menu (Hold or Press, the
-                                // speed, the latency), at ⋯ while it is folded
                                 FoldedItem {
                                     objectName: "audioMoreTapOptions"
                                     visible: audioButtons.folded && root.audio.karaoke
@@ -5051,10 +4317,6 @@ ApplicationWindow {
                                 }
                             }
                         }
-                        // AU1: the stretches and their link, folded from the
-                        // slider column into one button with a readout
-                        // (AU1-audio-slider-column-folded). Shift+wheel and
-                        // Ctrl+wheel on the waveform still zoom.
                         ToolButton {
                             id: audioZoomButton
                             objectName: "audioZoom"
@@ -5082,8 +4344,6 @@ ApplicationWindow {
                             ShellMenu {
                                 id: audioZoomMenu
                                 objectName: "audioZoomMenu"
-                                // the horizontal slider zooms in to the right
-                                // (legacy's vertical one had 0 at the top)
                                 AudioSliderRow {
                                     sliderName: "audioHorizontalZoom"
                                     text: qsTranslate("HikariSub.Audio", "Horizontal")
@@ -5102,8 +4362,6 @@ ApplicationWindow {
                                     readout: root.audio.verticalZoom
                                     onMoved: v => root.audio.setVerticalZoom(v)
                                 }
-                                // K1: the set's link icon (legacy VerticalLink's
-                                // button_link bitmap, AudioBox.cpp:123).
                                 ShellMenuItem {
                                     id: audioLink
                                     objectName: "audioLink"
@@ -5134,9 +4392,6 @@ ApplicationWindow {
                                 }
                             }
                         }
-                        // AV1 (#238): the output device menu; AU1: with the
-                        // volume above it, the level shown by the icon, and
-                        // the wheel changing the volume.
                         AudioButton {
                             id: audioOutputButton
                             objectName: "audioOutputButton"
@@ -5151,17 +4406,13 @@ ApplicationWindow {
                                     ? "\n" + qsTranslate("HikariSub.Audio", "Speed: %1%").arg(root.audio.speedPercent) : "")
                             down: audioOutputMenu.visible
                             onRun: audioOutputMenu.popup(audioOutputButton, 0, audioOutputButton.height)
-                            // KA2-slowed-playback: the speed, while not 100%
                             CommitMark {
                                 objectName: "audioSpeedMark"
                                 anchors { right: parent.right; bottom: parent.bottom; rightMargin: 1; bottomMargin: 1 }
                                 glyph: root.audio.speedPercent
                                 visible: root.audio.speedPercent !== 100
                             }
-                            // 5 a notch of 120. A touchpad or high-resolution
-                            // wheel sends parts of a notch (or only pixels, 15
-                            // a notch): they add up until a whole notch, and a
-                            // turn the other way drops what was left over.
+                            // High-resolution wheels and touchpads send parts of a 120 notch (or pixels only), so deltas add up to whole notches.
                             WheelHandler {
                                 id: speakerWheel
                                 property real rest: 0
@@ -5192,8 +4443,6 @@ ApplicationWindow {
                                 onSettingsRequested: root.openSettings("audio")
                             }
                         }
-                        // AU2 (#268): Customise: each control AU1 folded as a
-                        // button of its own, and the two arrangements.
                         AudioButton {
                             id: audioCustomiseButton
                             objectName: "audioCustomise"
@@ -5205,8 +4454,6 @@ ApplicationWindow {
                             ShellMenu {
                                 id: audioCustomiseMenu
                                 objectName: "audioCustomiseMenu"
-                                // An item a tick shows or hides; the menu stays
-                                // open (checkable).
                                 component ShownItem: ShellMenuItem {
                                     property string control
                                     checkable: true
@@ -5289,14 +4536,6 @@ ApplicationWindow {
                         }
                     }
                 }
-                // Legacy AudioBox's accelerator table (AudioBox::SetAccels:
-                // its window's bindings in the hotkey registry, O2), acting
-                // while the focus is in the box; the registry routes the key
-                // (HotkeysController::actionFor), so a remapped key acts and
-                // the old one no longer does.
-                // KA2-tap-to-time: while tap mode is on, Space, Backspace and
-                // Esc are its keys (before VIDEO_PLAY_PAUSE's Space), their
-                // presses and releases.
                 function tapKey(event, pressed) {
                     if (root.audio.tapOn && root.audio.tapKey(event.key, pressed, event.isAutoRepeat,
                                                               (event.modifiers & Qt.ShiftModifier) !== 0))
@@ -5325,7 +4564,6 @@ ApplicationWindow {
                     target: root.audio
                     function onFocusRequested() { audioDisplay.forceActiveFocus() }
                 }
-                // Legacy EditBox::LoadAudio focuses a newly made display.
                 Connections {
                     target: root.audio
                     function onOpened(path, created) {
@@ -5336,11 +4574,6 @@ ApplicationWindow {
             }
         }
 
-        // TM1 (#232): the Original text panel. In translation mode the Line's
-        // Original text field (lineText) is here, and the Line editor's field
-        // is the Translated text; the translation buttons and toggles are in
-        // its header (OriginalTextTools). It follows the editing target's
-        // mode (placeOriginal).
         KDDW.DockWidget {
             id: originalDock
             objectName: "originalDock"
@@ -5355,8 +4588,6 @@ ApplicationWindow {
                                               : qsTranslate("HikariSub.Translation", "Original text")
                 accessibleName: qsTranslate("HikariSub.Translation", "Original text")
                 minimumBodySize: Qt.size(160, lineText.Layout.minimumHeight)
-                // EditBox's accelerator table covered both text fields: the
-                // Editor bindings the field does not take run here too.
                 Keys.onShortcutOverride: event => event.accepted = editorPanel.panelAction(event) !== ""
                 Keys.onPressed: event => {
                     const action = editorPanel.panelAction(event)
@@ -5391,11 +4622,6 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "editorPanel"
                 dockName: "Editor"
-                // LE1: the strip at its narrowest (its groups fold into
-                // More) or the Line inspector's narrow grid, with the
-                // content's side margins; its width-dependent implicit
-                // width is not used. In height, the strip and a line of each
-                // text field shown: the rest scrolls.
                 minimumBodySize: Qt.size(Math.max(editorStrip.minimumWidth, editorInspector.minimumWidth)
                                          + 2 * (editorColumn.x - 4),
                                          editorStrip.implicitHeight
@@ -5404,12 +4630,6 @@ ApplicationWindow {
                                             + translationText.Layout.minimumHeight : 0))
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Editor", "Line editor: %1").arg(shell.editingTitle)
                                               : qsTranslate("HikariSub.Editor", "Line editor")
-                // O2: EditBox's accelerator table covers the whole Line editor
-                // (TabPanel::SetAccels): a key its other controls do not take
-                // (the time and margin fields keep their editing keys) runs
-                // the Editor binding; the text fields route their own first.
-                // The commit keys stay the fields' own (E4: LineInspector runs
-                // them with OnNewline's rule for the time fields).
                 function panelAction(event) {
                     if (lineText.activeFocus || translationText.activeFocus)
                         return ""
@@ -5424,13 +4644,6 @@ ApplicationWindow {
                     root.runEditorHotkey(action, root.editedField())
                     event.accepted = true
                 }
-                // A dock shorter than the Line editor's rows (translation mode
-                // in the default 1280 x 800 layout) scrolls them, with a thin
-                // bar beside them; nothing is cut off below the dock's edge.
-                // The wheel and the bar scroll; a mouse drag stays the text
-                // fields' selection, and touch flicks. The scrolled area
-                // takes the whole panel with the body's margin inside it, so
-                // a control at the panel's edge keeps its focus ring.
                 Flickable {
                     id: editorScroll
                     objectName: "editorScroll"
@@ -5446,8 +4659,6 @@ ApplicationWindow {
                     readonly property bool overflows: editorColumn.implicitHeight + 8 > height + 0.5
                     contentWidth: width - (overflows ? barWidth : 0)
                     contentHeight: editorColumn.height + 8
-                    // Keyboard focus brings its control into view, and a text
-                    // field keeps its caret in view while it is typed in.
                     readonly property Item focusItem: Window.activeFocusItem
                     onFocusItemChanged: Qt.callLater(revealFocus)
                     function inEditor(item) {
@@ -5459,7 +4670,7 @@ ApplicationWindow {
                     }
                     function reveal(item, rect) {
                         const r = item.mapToItem(contentItem, rect)
-                        const room = 1 // the focus ring's (FocusFrame: 1 wide, touching the control)
+                        const room = 1
                         let y = contentY
                         if (r.y + r.height + room > y + height)
                             y = r.y + r.height + room - height
@@ -5471,12 +4682,10 @@ ApplicationWindow {
                         let item = focusItem
                         if (!item || !inEditor(item))
                             return
-                        // An editable box's text field brings the whole box.
                         for (let p = item.parent; p && p !== editorColumn; p = p.parent) {
                             if (p.activeFocus && p.height <= height)
                                 item = p
                         }
-                        // A text field taller than the view keeps its caret in view.
                         if ((item === lineText || item === translationText) && item.height + 6 > height)
                             reveal(item, item.cursorRectangle)
                         else
@@ -5493,15 +4702,13 @@ ApplicationWindow {
                     ScrollBar.vertical: ScrollBar {
                         objectName: "editorScrollBar"
                         parent: editorScroll
-                        x: editorScroll.width - width - 2 // inside the panel's border
+                        x: editorScroll.width - width - 2
                         y: 2
                         height: editorScroll.height - 4
                         width: editorScroll.barWidth
                         padding: 0
                         policy: editorScroll.overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
                         focusPolicy: Qt.NoFocus
-                        // A visible track in the boundary colour, as the
-                        // visual tool rail's and the audio display's.
                         background: Rectangle {
                             implicitWidth: editorScroll.barWidth
                             radius: editorScroll.barWidth / 2
@@ -5520,18 +4727,12 @@ ApplicationWindow {
                     ColumnLayout {
                         id: editorColumn
                         objectName: "editorContent"
-                        // LE1: 12 at the sides (the dock title's inset, as
-                        // MuseScore's Properties panel), the body's 4 above
-                        // and below, in the scrolled area; rows 6 apart.
                         x: 12
                         y: 4
                         width: editorScroll.contentWidth - 2 * x
                         spacing: 6
-                        // The rows' own heights, or the dock's when it is taller
-                        // (the text fields take the rest).
                         height: Math.max(editorScroll.height - 8, implicitHeight)
 
-                        // LE1: the tag strip and the counters (LineEditorStrip).
                         LineEditorStrip {
                             id: editorStrip
                             shellRoot: root
@@ -5543,15 +4744,9 @@ ApplicationWindow {
                             translated: translationText
                             translationTools: root.editor.translationMode && !root.originalShown
                             Layout.fillWidth: true
-                            // Its groups fold instead (not their widths' sum).
                             Layout.minimumWidth: minimumWidth
                         }
-                        // TM1-translator-check-removed: legacy's "Translator mode"
-                        // check box (BoxSizer5, EditBox.cpp:233-239, 308) is
-                        // Subtitles > Translation mode and the Translation preset.
 
-                        // LE1: with both text fields here (translation mode,
-                        // the Original text panel closed) each is named above it.
                         Label {
                             objectName: "originalCaption"
                             visible: lineTextSlot.visible && root.editor.translationMode
@@ -5560,10 +4755,6 @@ ApplicationWindow {
                             Layout.bottomMargin: -4
                         }
 
-                        // TM1: the Line's text field, the Original text in
-                        // translation mode. While the Original text panel shows,
-                        // the field is there (root.originalShown) and the Line
-                        // editor's text field is the Translated text.
                         Item {
                             id: lineTextSlot
                             objectName: "lineTextSlot"
@@ -5599,15 +4790,12 @@ ApplicationWindow {
                             tabPrevious: root.originalShown ? lineText : null
                             Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
                         }
-                        // TM1: the Original's runs, placed on the translation's words.
                         RunStrip {
                             editor: root.editor
                             shellRoot: root
                             translated: translationText
                             Layout.fillWidth: true
                         }
-                        // A karaoke Line carries its leading tags without the
-                        // timing, which differs with the translation's syllables.
                         Label {
                             objectName: "karaokeCarryNotice"
                             visible: root.editor.translationMode && root.editor.karaokeCarried
@@ -5616,14 +4804,7 @@ ApplicationWindow {
                             wrapMode: Text.Wrap
                             Layout.fillWidth: true
                         }
-                        // TM1: legacy's translation-mode buttons (EDITBOX_PASTE_*,
-                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original) and
-                        // toggles are the Original text panel's header
-                        // (OriginalTextTools) while it shows; LE1: the strip's
-                        // translation group while it is closed.
 
-                        // LE1: the editor's problem and what it did not apply,
-                        // right under the text they concern.
                         RowLayout {
                             objectName: "editorMessages"
                             visible: root.editor.problem.length > 0 || root.editor.attempted.length > 0
@@ -5662,14 +4843,13 @@ ApplicationWindow {
                             }
                         }
 
-                        // E4: the Line's fields (legacy BoxSizer2, below the text).
                         LineInspector {
                             id: editorInspector
                             objectName: "lineInspector"
                             editor: root.editor
                             hotkeys: root.hotkeys
                             Layout.fillWidth: true
-                            onStyleEditRequested: style => styleManagerWindow.editStyle(style) // LE6
+                            onStyleEditRequested: style => styleManagerWindow.editStyle(style)
                         }
                     }
                 }
@@ -5686,7 +4866,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "gridPanel"
                 dockName: "Grid"
-                minimumBodySize: Qt.size(240, grid.rowHeight * 3) // the header and two Lines
+                minimumBodySize: Qt.size(240, grid.rowHeight * 3)
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "Editing: %1").arg(shell.editingTitle) : qsTranslate("HikariSub.Grid", "No document open")
                 accessibleName: qsTranslate("HikariSub.Grid", "Grid")
                 focus: true
@@ -5696,14 +4876,10 @@ ApplicationWindow {
                     objectName: "editingGrid"
                     anchors.fill: parent
                     focus: true
-                    // Puts the Grid in the shell's accessibility tree: Qt Quick
-                    // lists only items with an Accessible attachment; the
-                    // Grid's own table interface (ui/line_grid_accessible.h)
-                    // answers for it.
+                    // Qt Quick puts only items with an Accessible attachment in the accessibility tree.
                     Accessible.role: Accessible.Table
                     model: shell.lines
-                    onContentYChanged: root.app.setTargetScroll(Math.floor(contentY / rowHeight)) // P6
-                    // Every gesture is a request; the application owns the selection (G1).
+                    onContentYChanged: root.app.setTargetScroll(Math.floor(contentY / rowHeight))
                     onActiveLineRequested: id => root.app.selectLine(id)
                     onActiveLineFallbackRequested: id => root.app.moveActiveLine(id)
                     onExtendRequested: rows => root.app.extendSelection(rows)
@@ -5714,18 +4890,17 @@ ApplicationWindow {
                     GridHeaderToolTip { grid: grid }
                     onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
                     onGroupToggleRequested: id => root.app.toggleGroup(id)
-                    onFoldToggleRequested: id => root.app.toggleFold(id) // KP1
+                    onFoldToggleRequested: id => root.app.toggleFold(id)
                     onGroupMenuRequested: (id, x, y) => {
                         groupMenu.description = id
                         groupMenu.at = Qt.point(x, y)
                         groupMenu.popup(grid, x, y)
                     }
-                    // Legacy tree description menu (ContextMenuTree).
                     ShellMenu {
                         id: groupMenu
                         objectName: "groupMenu"
                         property var description: 0
-                        property point at: Qt.point(0, 0) // where the menu was asked for, in the grid
+                        property point at: Qt.point(0, 0)
                         ShellMenuItem { iconRole: "tree-add-lines"; objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
                         ShellMenuItem { iconRole: "edit-copy"; objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
                         ShellMenuItem {
@@ -5736,12 +4911,6 @@ ApplicationWindow {
                         ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
                         ShellMenuItem { iconRole: "delete"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
-                    // The Grid's accelerators (TabPanel::SetAccels): the fixed
-                    // clipboard keys (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X,
-                    // GRID_PASTE Ctrl+V) first, then the Subtitles bindings
-                    // (O2; GRID_DUPLICATE_LINES Ctrl+D by default) with the
-                    // Editor and Video actions bound for the Grid and Video's
-                    // play and seek bindings, before the application's shortcuts.
                     function clipboardKey(event) {
                         const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
                         return mods === Qt.ControlModifier && (event.key === Qt.Key_C || event.key === Qt.Key_X || event.key === Qt.Key_V)
@@ -5810,7 +4979,6 @@ ApplicationWindow {
                             command: "GRID_DUPLICATE_LINES"
                             objectName: "duplicateLines"
                             iconRole: "duplicate"
-                            // SetAccMenu: the binding's keys after the tab.
                             readonly property string keys: root.boundKeys("GRID_DUPLICATE_LINES", 1)
                             text: qsTranslate("HikariSub.Grid", "&Duplicate lines") + (keys.length ? "\t" + keys : "")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
@@ -5831,7 +4999,6 @@ ApplicationWindow {
                             objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (next line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                         }
-                        // Legacy "Split lines" (GRID_SPLIT_BY_*).
                         ShellMenu {
                             iconRole: "split-lines"
                             title: qsTranslate("HikariSub.Grid", "Split lines")
@@ -5873,7 +5040,6 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
-                        // V6: after "Split lines", as legacy's menu (SubsGrid.cpp:264-265).
                         ShellMenuItem {
                             command: "GRID_SELECT_VISIBLE_LINES"
                             iconRole: "select-visible"
@@ -5881,7 +5047,6 @@ ApplicationWindow {
                             onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
                         }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
-                        // R2: legacy's in-Grid preview, here another tab in the reference tray (SubsGrid.cpp:277).
                         ShellMenuItem {
                             command: "GRID_SHOW_PREVIEW"
                             iconRole: "reference"
@@ -5891,14 +5056,13 @@ ApplicationWindow {
                             enabled: gridMenu.visible && root.app.canShowPreview()
                             onTriggered: if (!root.gridGesture(this, "GRID_SHOW_PREVIEW")) root.app.showPreview()
                         }
-                        // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
                         ShellMenuItem {
                             command: "GRID_PASTE_TRANSLATION"
                             iconRole: "paste-translation"
                             objectName: "pasteTranslation"
                             text: qsTranslate("HikariSub.Grid", "Paste translation text")
                             enabled: gridMenu.canPasteTranslation
-                            help: root.app.translationHint // E5-tlmode-needs-script-info: why it is disabled
+                            help: root.app.translationHint
                             onTriggered: {
                                 if (root.gridGesture(this, "GRID_PASTE_TRANSLATION"))
                                     return
@@ -5915,7 +5079,6 @@ ApplicationWindow {
                             onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.open()
                         }
                         ShellMenuItem { command: "GRID_HIDE_SELECTED"; iconRole: "hide"; objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
-                        // Legacy Filtering submenu (GRID_FILTER_*).
                         ShellMenu {
                             id: filteringMenu
                             objectName: "filteringMenu"
@@ -6009,15 +5172,11 @@ ApplicationWindow {
                             checked: root.gridFilter.ignoreInActions
                             onTriggered: if (!root.gridGesture(this, "GRID_FILTER_IGNORE_IN_ACTIONS")) root.gridFilter.ignoreInActions = checked
                         }
-                        // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
                         ShellMenu {
                             id: hideColumnsMenu
                             iconRole: "columns"
                             objectName: "hideColumnsMenu"
                             title: qsTranslate("HikariSub.Grid", "Hide columns")
-                            // GR3 (Aegisub's convention): columns empty in
-                            // the whole Document hide themselves; the same
-                            // setting as Settings > Editor's.
                             ShellMenuItem {
                                 objectName: "hideEmptyColumns"
                                 text: qsTranslate("HikariSub.Grid", "Hide empty columns")
@@ -6066,10 +5225,8 @@ ApplicationWindow {
                         ShellMenuItem { command: "GRID_PASTE"; iconRole: "edit-paste"; objectName: "pasteLines"; text: qsTranslate("HikariSub.Grid", "Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
                         ShellMenuItem { command: "GRID_COPY_COLUMNS"; iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
                         ShellMenuItem { command: "GRID_PASTE_COLUMNS"; iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
-                        // E6: SubsGrid's menu, "Delete text" before "Delete" (SubsGrid.cpp:285-286).
                         ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
                         ShellMenuItem { command: "GLOBAL_REMOVE_LINES"; iconRole: "delete"; objectName: "deleteLines"; text: qsTranslate("HikariSub.Grid", "Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
-                        // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}
                         ShellMenuItem {
                             command: "GLOBAL_OPEN_FONT_COLLECTOR"
@@ -6077,7 +5234,6 @@ ApplicationWindow {
                             objectName: "gridFontCollector"; text: qsTranslate("HikariSub.Grid", "Font collector"); enabled: root.shell.assColumns
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
                         }
-                        // Y9: SubsGrid.cpp:289, enabled for a ".mkv" or ".ogm" video.
                         ShellMenuItem {
                             command: "GRID_SUBS_FROM_MKV"
                             iconRole: "extract-subtitles"
@@ -6087,14 +5243,13 @@ ApplicationWindow {
                         }
                     }
                 }
-                // The Grid's empty state.
                 Label {
                     objectName: "gridEmptyState"
                     anchors.centerIn: parent
                     visible: !shell.hasEditingTarget
                     text: qsTranslate("HikariSub.Grid", "No document open")
                     color: gridPanel.palette.placeholderText
-                    Accessible.ignored: true // the panel's description says it
+                    Accessible.ignored: true
                 }
             }
         }
@@ -6103,8 +5258,6 @@ ApplicationWindow {
             id: referenceDock
             objectName: "referenceDock"
             uniqueName: "Reference"
-            // The tray's dock names the Protected reference: unlike the
-            // Grid's Document, no Document tab shows it.
             title: shell.hasReference ? qsTranslate("HikariSub.Reference", "Reference: %1").arg(shell.referenceTitle) : qsTranslate("HikariSub.Reference", "Reference")
             Panel {
                 id: referencePanel
@@ -6115,7 +5268,6 @@ ApplicationWindow {
                 minimumBodySize: Qt.size(240, referenceTray.grid.rowHeight * 3)
                 visible: shell.hasReference
                 title: qsTranslate("HikariSub.Reference", "Reference (protected, read-only): %1").arg(shell.referenceTitle)
-                // R2: its own navigation, linked matching and legacy's preview menu.
                 ReferenceTray {
                     id: referenceTray
                     anchors.fill: parent
@@ -6129,22 +5281,18 @@ ApplicationWindow {
             }
         }
 
-        // F5: the Timing tool (legacy ShiftTimes panel).
         KDDW.DockWidget {
             id: timingDock
             objectName: "timingDock"
             uniqueName: "Timing"
-            // One name for the tool: the menu's, the panel's and legacy's
-            // ("Shift times"); the uniqueName keeps saved layouts.
             title: qsTranslate("HikariSub.TimeShift", "Shift times")
             Panel {
                 id: timingPanel
                 objectName: "timingPanel"
                 dockName: "Timing"
-                minimumBodySize: shiftTimesPanel.minimumBodySize // the form scrolls
+                minimumBodySize: shiftTimesPanel.minimumBodySize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
-                // TS1: the form and its run button.
                 ShiftTimesPanel {
                     id: shiftTimesPanel
                     anchors.fill: parent
@@ -6157,13 +5305,11 @@ ApplicationWindow {
             }
         }
 
-        // F1: the Search tool (find and replace; docs/ux/reviewed-surface-layouts.md B).
         KDDW.DockWidget {
             id: searchDock
             objectName: "searchDock"
             uniqueName: "Search"
             title: qsTranslate("HikariSub.Search", "Search")
-            // TabWindow::SaveValues when the tool closes.
             onIsOpenChanged: if (!isOpen) searchTool.save()
             Panel {
                 id: searchPanel
@@ -6181,8 +5327,6 @@ ApplicationWindow {
             }
         }
 
-        // AM1: the Automation panel (the persistent manager tool,
-        // docs/automation.md), with its macros' shortcuts.
         KDDW.DockWidget {
             id: automationDock
             objectName: "automationDock"
@@ -6213,8 +5357,6 @@ ApplicationWindow {
             }
         }
 
-        // PU6 (#308): the Spellchecker panel (legacy's Spellchecker window).
-        // Closing it ends the check.
         KDDW.DockWidget {
             id: spellDock
             objectName: "spellDock"
@@ -6228,7 +5370,6 @@ ApplicationWindow {
                 minimumBodySize: spellTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Spelling", "Spellchecker")
-                // #409: User guide in the Grammar mode opens its own page.
                 readonly property string guideId: spellTool.grammarMode ? "Spellchecker.grammar" : ""
                 SpellCheckerPanel {
                     id: spellTool
@@ -6238,13 +5379,11 @@ ApplicationWindow {
                     app: root.app
                     notices: root.notices
                     documentName: root.shell.editingTitle
-                    onSettingsRequested: root.openSettings("spelling") // the dictionary (GR1: and grammar check)
+                    onSettingsRequested: root.openSettings("spelling")
                 }
             }
         }
 
-        // TP1 (#274): the Styles panel, the editing target's Styles, beside
-        // the video in the Typesetting preset.
         KDDW.DockWidget {
             id: stylesDock
             objectName: "stylesDock"
@@ -6273,9 +5412,6 @@ ApplicationWindow {
             }
         }
 
-        // KE2: the Template editor (docs/karaoke-templater.md, "The
-        // template editor"). Its previews run, and the video draws them, only
-        // while it shows: open, and the current tab of its group.
         KDDW.DockWidget {
             id: templateDock
             objectName: "templateDock"
@@ -6303,8 +5439,6 @@ ApplicationWindow {
             }
         }
 
-        // NT1 (#302): the Log panel (legacy's Log window). A toast's Details
-        // opens it at its entry; nothing else opens it by itself.
         KDDW.DockWidget {
             id: logDock
             objectName: "logDock"
@@ -6325,16 +5459,12 @@ ApplicationWindow {
                 }
             }
         }
-        // PU2 (#304): the Fix minor errors panel (legacy Multireplacer and
-        // its Search results), shown and hidden by Edit › Fix minor errors.
         KDDW.DockWidget {
             id: misspellDock
             objectName: "misspellDock"
             uniqueName: "FixMinorErrors"
             title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-            // MR->Show() read the rules file (rules.toml) again at each showing. Not on the
-            // passing open of the default arrangement, which closes it at
-            // once: read rules are written back at exit (Codex review).
+            // MUST KILL: deferred because the default arrangement opens the panel and closes it at once
             onIsOpenChanged: if (isOpen) Qt.callLater(misspellDock.reloadIfOpen)
             function reloadIfOpen() {
                 if (misspellDock.isOpen)
@@ -6351,7 +5481,6 @@ ApplicationWindow {
                     id: misspellTool
                     anchors.fill: parent
                     app: root.app
-                    // DestroyDialogs (a changed program font): MR->Destroy().
                     Connections {
                         target: root.app
                         function onMisspellReplacerDestroyed() {
@@ -6364,24 +5493,17 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            // D3: the horizontal panels keep a one-tab header even alone;
-            // the Reference tray's toolbar sits in its header.
             Docking.setPanelHeader("Grid", true, null)
             Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
             Docking.setPanelHeader("Search", true, null)
             Docking.setPanelHeader("Log", true, null)
             Docking.setPanelHeader("Spellchecker", true, null)
-            Docking.setPanelHeader("Original", true, originalTools) // TM1
-            Docking.setPanelHeader("Styles", true, stylesTool.toolbar) // TP1
+            Docking.setPanelHeader("Original", true, originalTools)
+            Docking.setPanelHeader("Styles", true, stylesTool.toolbar)
             Docking.setPanelHeader("Template", false, templateTool.toolbar)
             root.defaultLayout()
         }
     }
-    // Once the arrangement is laid out (its first frame), give the audio box
-    // legacy's height whatever this platform's fonts make the panel chrome,
-    // then keep that as the default (Reset layout) before a saved layout
-    // replaces it. D3: the panels' minimum sizes come first, from their
-    // laid-out content (Panel), so the default arrangement holds them.
     property bool arrangementSettled: false
     function settleArrangement() {
         if (root.arrangementSettled)
@@ -6391,23 +5513,19 @@ ApplicationWindow {
             panel.reportMinimumSize()
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
-        root.workspaceLayout.buildsArrangement("Typesetting") // TP1: when first chosen
-        root.workspaceLayout.buildsArrangement("Karaoke") // KP1
+        root.workspaceLayout.buildsArrangement("Typesetting")
+        root.workspaceLayout.buildsArrangement("Karaoke")
         root.workspaceLayout.restoreSaved()
-        root.placeOriginal() // TM1: a TLMode file opened before the first frame
+        root.placeOriginal()
         Docking.guardClose(root, root.admitClose)
-        // Decision 63: the window is never smaller than the docked layout's
-        // minimum, so no docked panel is cut off past its edge.
         Docking.followLayoutMinimum(dockingArea.uniqueName)
     }
     onFrameSwapped: settleArrangement()
-    Timer { // without frames (a hidden window)
+    Timer { // a hidden window swaps no frames
         interval: 1000
         running: !root.arrangementSettled
         onTriggered: root.settleArrangement()
     }
-    // Completed layout operations are saved, not every drag (D1): a cheap
-    // periodic check writes only when the arrangement changed.
     Timer {
         interval: 5000
         running: true
@@ -6415,24 +5533,18 @@ ApplicationWindow {
         onTriggered: root.workspaceLayout.save()
     }
 
-    // WS4: the window's top rows under the title bar (SH1): the open
-    // Documents' tabs, as in MuseScore and IDEs, then the notices, each
-    // shown only while it has something to say.
     header: ColumnLayout {
         objectName: "windowTop"
         spacing: 0
-        // P6: the open Documents' tabs (legacy Notebook's bar).
         DocumentTabBar {
             id: documentTabBar
             app: root.app
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
-            // P9: the tab menu's Save, Save all and Close all tabs.
             onSaveRequested: id => root.saveSubtitles(id)
             onSaveAllRequested: root.saveAllTabs()
             onCloseAllRequested: tabCommands.confirmCloseAll()
         }
-        // D1: a layout that could not be restored is named here, with the way back.
         Pane {
             id: layoutNotice
             objectName: "layoutNotice"
@@ -6459,20 +5571,15 @@ ApplicationWindow {
                 }
             }
         }
-        // ADR 0019: a downloaded update that is ready to install.
         UpdateReadyBar {
             id: updateReadyBar
             updates: root.updates
             Layout.fillWidth: true
-            // The normal quit follows: its review of unsaved work, then the
-            // installer. A cancelled review keeps the update for later.
             onRestartRequested: {
                 root.updates.installer.restartNow()
                 root.close()
             }
         }
-        // PU1-startup-cards: the startup offer while a Document is open (files
-        // from the command line); Home shows it as a card.
         InlineBar {
             id: startupBar
             objectName: "startupBar"
@@ -6496,13 +5603,8 @@ ApplicationWindow {
                 onClicked: autosaves.show()
             }
         }
-        // PU1-mkv-notices: subtitles read from an MKV (legacy's modal
-        // ProgresDialog "Loading subtitles from Matroska.": the gauge, "Time
-        // elapsed", Cancel), a bar while the window stays usable.
         InlineBar {
             objectName: "mkvProgress"
-            // With the tab the read started on (it goes on while another
-            // tab, or Home, shows).
             visible: root.matroska.state === 3
                      && (root.mkvTab === "home" ? root.app.home : !root.app.home && root.currentTab().id === root.mkvTab)
             closable: false
@@ -6526,11 +5628,6 @@ ApplicationWindow {
                 onClicked: root.matroska.cancel()
             }
         }
-        // PU1-disk-change-bar: the editing target's file was changed by another
-        // program (legacy's modal "Subtitles were modified by another program.
-        // Reload?"): Reload reads it again, Compare opens it as the protected
-        // reference and compares, Keep mine ends the bar and accepts the
-        // change (a save then writes over the file).
         InlineBar {
             id: diskChangeBar
             objectName: "diskChangeBar"
@@ -6546,7 +5643,6 @@ ApplicationWindow {
                 objectName: "reloadYes"
                 text: qsTranslate("HikariSub.Documents", "Reload")
                 onClicked: {
-                    // The bar stays when the file can't be read now.
                     const id = diskChangeBar.tab.id
                     if (root.app.reloadTarget())
                         root.endDiskChange(id)
@@ -6561,8 +5657,6 @@ ApplicationWindow {
                 objectName: "reloadNo"
                 text: qsTranslate("HikariSub.Documents", "Keep mine")
                 onClicked: {
-                    // A file that can't be read now can't be kept over: the
-                    // bar stays (Save as… still saves the work).
                     if (root.app.acceptFileOnDisk(diskChangeBar.tab.id))
                         root.endDiskChange(diskChangeBar.tab.id)
                     else
@@ -6571,8 +5665,6 @@ ApplicationWindow {
                 }
             }
         }
-        // PU1-session-entries-bar: what a restore could not find for this tab,
-        // one bar each, with Retry, Relink… and Remove (they stay until then).
         ColumnLayout {
             objectName: "unresolvedBars"
             visible: entryBars.count > 0
@@ -6610,40 +5702,22 @@ ApplicationWindow {
         }
     }
 
-    // P10: legacy's status bar, the window's bottom row. Its first field is
-    // help and progress text (Automation's set_status_text, menu help,
-    // "Autosave"), never the editing target, which the Document tab and the
-    // window title name.
     footer: StatusBar {
         id: statusStrip
         shell: root.shell
         fieldsController: root.statusBar
         selectionText: root.shell.selectionStatus
-        // The last save's message only: the tab's modified mark says
-        // "Modified" (said once, visual-language.md).
         saveText: root.editor.saveStatus
     }
-    // PK1 (#301): the toasts, at the bottom right of the main window above
-    // the status bar, or of the fullscreen video window (above its pinned
-    // bar) while it is open. root.notices.post(severity, title, text, options);
-    // C++ gives them through LogController::notice (NT1). NT1: beside the
-    // window's popup overlay and above it, so a modal dialog's dimmer does
-    // not hide them (Settings' warnings).
-    // The editing target's row of app.tabs ({} without one).
     function currentTab() {
         const tabs = root.app.tabs
         return root.app.currentTab >= 0 && root.app.currentTab < tabs.length ? tabs[root.app.currentTab] : ({})
     }
-    // PU1-picker-titles: the folder a file picker was last left in
-    // ("subtitles", "sessions", "video", "audio", "keyframes"), kept in
-    // workspace.pickerFolders; "" when none was.
     function pickerFolder(picker) {
         const rows = root.app.settings.value("workspace.pickerFolders") || []
         const row = rows.find(r => r.startsWith(picker + "\t"))
         return row ? row.slice(picker.length + 1) : ""
     }
-    // A picker's own start (the Document's or the video's folder, legacy's
-    // rules), else the folder that kind of picker was last left in.
     function startFolder(picker, folder) {
         return folder.toString() !== "" ? folder : root.pickerFolder(picker)
     }
@@ -6655,7 +5729,6 @@ ApplicationWindow {
         rows.push(picker + "\t" + folder)
         root.app.settings.setValue("workspace.pickerFolders", rows)
     }
-    // The tab name of the Document `id` (0: the editing target's).
     function tabTitle(id) {
         if (!id)
             return root.currentTab().title || ""
@@ -6677,14 +5750,11 @@ ApplicationWindow {
         anchors.rightMargin: 12
         anchors.bottomMargin: 12 + (inFullscreen ? videoFullscreenWindow.pinnedPanelHeight : root.footer.height)
         z: 1000002
-        // AD3 (#312): a macro run's notice and progress card, under the toasts.
         AutomationProgress {
             id: automationProgress
             width: parent ? parent.width : implicitWidth
             automation: root.automation
             onOpenRun: runId => root.openAutomationRun(runId)
-            // Back to the panel F6 came from; with none (every panel
-            // closed), to the window itself.
             onFocusReturned: panel => {
                 if (panel)
                     root.focusPanel(panel, Qt.OtherFocusReason)
@@ -6694,8 +5764,6 @@ ApplicationWindow {
         }
     }
     readonly property alias notices: notices
-    // NT1: a toast's Details (and "N more notices") opens the Log panel,
-    // out of fullscreen (as the fullscreen's Audio settings).
     Connections {
         target: root.log
         function onRevealRequested() {
@@ -6704,15 +5772,12 @@ ApplicationWindow {
             root.showPanel(logDock)
         }
     }
-    // NT1 (#302): the message box for the notices that need an answer
-    // (root.messages.ask(options, done), MessageHost.qml).
     MessageHost {
         id: messages
         objectName: "messages"
         settings: root.app.settings
     }
     readonly property alias messages: messages
-    // WS3: Save layout as… and Manage layouts… (the switcher's and View > Layout's).
     SaveLayoutDialog {
         id: saveLayoutDialog
         layouts: root.workspaceLayout
@@ -6724,13 +5789,11 @@ ApplicationWindow {
         settings: root.app.settings
     }
 
-    // KA2 (#277): Calibrate latency…, from the audio panel's Tap menu.
     TapCalibrationWindow {
         id: tapCalibrationWindow
         audio: root.audio
     }
 
-    // Legacy HistoryDialog (PU2: HistoryWindow.qml).
     HistoryWindow {
         id: historyWindow
         editor: root.editor
@@ -6742,10 +5805,6 @@ ApplicationWindow {
         settings: root.app.settings
     }
 
-    // Legacy HikariSubFrame::Save: "Save subtitle file" for the Document's
-    // format, starting at its file (or the video's, with the video name).
-    // P9: for any tab's Document `id` (none: the editing target), and Save
-    // all's queue of Documents that need the dialog, one after another.
     function saveSubtitles(id, overDisk) {
         const document = id ?? 0
         const route = root.app.saveRouteFor(document)
@@ -6760,12 +5819,10 @@ ApplicationWindow {
             return root.editor.save()
         else
             return root.app.saveDocument(document)
-        return true // it asks
+        return true
     }
     property var saveQueue: []
     function saveAllTabs(overDisk) {
-        // Only the saves written over their own file ask: a Save As or a
-        // read-only file's question doesn't write it.
         const marked = root.app.tabs.filter(t => t.modified && root.changedOnDisk[t.id] === true
                                                  && root.app.saveRouteFor(t.id) === "").map(t => t.id)
         if (!overDisk && marked.length > 0) {
@@ -6788,15 +5845,13 @@ ApplicationWindow {
     function openSaveDialog(id) {
         const v = root.app.saveDialogValuesFor(id ?? 0)
         saveAsDialog.document = id ?? 0
-        // PU1-picker-titles: named for the Document; its format first
-        // (the extension is added to a name without it).
         saveAsDialog.title = qsTranslate("HikariSub.Documents", "Save “%1” as").arg(root.tabTitle(id ?? 0))
         saveAsDialog.nameFilters = [v.filter, qsTranslate("HikariSub.Documents", "All files (*)")]
         if (v.folder.toString() !== "")
             saveAsDialog.currentFolder = v.folder
         else if (root.pickerFolder("subtitles").length > 0)
             saveAsDialog.currentFolder = root.pickerFolder("subtitles")
-        saveAsDialog.selectedFile = v.file // none: not the last Document's
+        saveAsDialog.selectedFile = v.file
         saveAsDialog.open()
     }
     FileDialog {
@@ -6804,28 +5859,26 @@ ApplicationWindow {
         objectName: "saveAsDialog"
         fileMode: FileDialog.SaveFile
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file ") + "(*.ass)"]
-        property var document: 0 // P9: the Document saved (0: the editing target)
+        // MUST KILL: document id 0 means the editing target
+        property var document: 0
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
             const result = root.app.saveChosenFor(document, selectedFile)
             if (result === "readonly") {
                 root.warnReadOnly(document, root.app.localPath(selectedFile).replace(/^.*[\\/]/, ""))
             } else {
-                // PU1-disk-change-bar: saved under another name, the bar
-                // about the file it came from goes once that write is done.
                 const id = document === 0 ? root.currentTab().id : document
                 if (result === "" && root.changedOnDisk[id] === true)
                     root.savingAway = Object.assign({}, root.savingAway, { [id]: true })
-                matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
+                matroskaSubtitles.saveDone()
                 root.saveNext()
             }
         }
         onRejected: {
             matroskaSubtitles.saveDone()
-            root.saveNext() // legacy SaveAll goes on with the next tab
+            root.saveNext()
         }
     }
-    // Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
     MatroskaSubtitles {
         id: matroskaSubtitles
         objectName: "matroskaSubtitles"
@@ -6841,10 +5894,6 @@ ApplicationWindow {
             return route === "dialog" || route === "readonly" || asks
         }
     }
-    // PU1-message-boxes on NT1's host: a Save onto a read-only file
-    // (legacy's OK-only "Warning", whose OK opened the Save dialog again,
-    // with no way out but it): Save as… opens it, Cancel goes on as a
-    // cancelled Save dialog does.
     function warnReadOnly(document, name) {
         root.messages.ask({
             title: qsTranslate("HikariSub.Documents", "Save"),
@@ -6865,10 +5914,6 @@ ApplicationWindow {
         })
     }
 
-    // PU1-disk-change-bar: a save while a Document's changed-on-disk bar
-    // shows asks first (legacy's question was modal, answered before any
-    // save); Save over it accepts the change, ends those bars and saves
-    // (otherwise the save is refused: the file is not what was read).
     LazyMessageBox {
         id: diskSaveQuestion
         name: "diskSaveQuestion"
@@ -6887,16 +5932,12 @@ ApplicationWindow {
                     { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject", isDefault: true }
                 ]
             }, id => {
-                // A file that can't be read now (gone, unreadable) can't be
-                // saved over: its bar stays, and nothing is saved.
                 const unread = id === "saveOver" ? ids.filter(marked => !root.app.acceptFileOnDisk(marked)) : []
                 if (id === "saveOver" && unread.length === 0) {
                     for (const marked of ids)
                         root.endDiskChange(marked)
-                    // Y9: an MKV load waiting for this save goes on once it
-                    // is written, and is cancelled if it fails.
                     matroskaSubtitles.awaitWrite(ids, root.currentTab().id)
-                    if (save() === false) // refused: nothing is being written
+                    if (save() === false)
                         matroskaSubtitles.saveCancelled()
                 } else if (id === "saveOver") {
                     root.notify("warning", qsTranslate("HikariSub.Documents", "Save"),
@@ -6906,15 +5947,12 @@ ApplicationWindow {
                 } else if (cancelled) {
                     cancelled()
                 }
-                // Y9: nothing saved: a waiting MKV load is cancelled and the
-                // work stays.
                 if (id !== "saveOver" || unread.length > 0)
                     matroskaSubtitles.saveCancelled()
             })
         }
     }
 
-    // P9: Close all tabs' question and a video's same-named subtitles.
     TabCommands {
         id: tabCommands
         objectName: "tabCommands"
@@ -6931,9 +5969,6 @@ ApplicationWindow {
         }
     }
 
-    // The accepted close review (P1), on the popup kit (PU1-unsaved-window):
-    // a window with every affected Document, or a message box for one.
-    // Nothing closes until every save is acknowledged as written.
     UnsavedChanges {
         id: closeReview
         objectName: "unsavedChanges"
@@ -6943,8 +5978,6 @@ ApplicationWindow {
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
         confirmOverDisk: (ids, then, cancelled) => {
-            // The review writes each one to its own file (an Untitled one,
-            // with no bar, to the file picked).
             const marked = ids.filter(id => root.changedOnDisk[id] === true)
             if (marked.length === 0)
                 then()
@@ -6953,8 +5986,6 @@ ApplicationWindow {
         }
     }
 
-    // Automation windows (S1): the fixed script dialog and picker, the
-    // manager tool and the progress window (legacy LuaProgressDialog).
     AutomationDialog {
         objectName: "automationDialog"
         controller: root.automationDialogs
@@ -6983,24 +6014,18 @@ ApplicationWindow {
         id: videoDialog
         objectName: "videoOpenDialog"
         nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTranslate("HikariSub.Video", "All files (*)")]
-        // P9; V5: from the fullscreen window without the subtitles question.
         onAccepted: {
-            root.rememberPickerFolder("video", selectedFile) // PU1-picker-titles
+            root.rememberPickerFolder("video", selectedFile)
             if (root.videoFullscreen.active)
                 root.openVideoUnasked(root.app.localPath(selectedFile))
             else
                 tabCommands.openVideoFile(root.app.localPath(selectedFile))
         }
-        // V3: the subtitles' folder, else the latest recent video's (else
-        // where the video picker was last left, PU1-picker-titles)
         function show() {
             currentFolder = root.startFolder("video", root.app.videoDialogFolder())
             open()
         }
     }
-    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question. PU4: the
-    // window made at its first opening (PK1: every window made at the start
-    // costs the program).
     Loader {
         id: dummyVideoLoader
         active: false
@@ -7021,8 +6046,6 @@ ApplicationWindow {
         video: root.video
         messages: root.messages
     }
-    // TM1: the Translation preset's question and Translation mode's turn-off
-    // confirmation (Subtitles > Translation mode).
     TranslationModeQuestion {
         id: translationModeQuestion
         app: root.app
@@ -7032,8 +6055,6 @@ ApplicationWindow {
         app: root.app
     }
 
-    // V4: VIDEO_ASPECT_RATIO (PU4: a popover from the context menus, a
-    // compact window from the hotkey).
     AspectRatioDialog {
         id: aspectRatioDialog
         view: root.videoView
@@ -7041,9 +6062,6 @@ ApplicationWindow {
         settings: root.app.settings
     }
 
-    // V5: the fullscreen video window (legacy Fullscreen). What it asks
-    // shows in it, as legacy parented its dialogs to m_FullScreenWindow
-    // (VideoBox.cpp:895, 907, 1087, 1103).
     VideoFullscreen {
         id: videoFullscreenWindow
         shell: root
@@ -7052,7 +6070,6 @@ ApplicationWindow {
         onOpenSubtitlesRequested: openDialog.show()
         onAspectRatioRequested: aspectRatioDialog.openAtCursor(videoFullscreenWindow.contentItem)
         onFileQuestionRequested: next => videoFileQuestion.ask(next, videoFullscreenWindow)
-        // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
             root.openSettings("audio")
@@ -7070,12 +6087,8 @@ ApplicationWindow {
         when: root.videoFullscreen.active
         target: openDialog; property: "parentWindow"; value: videoFullscreenWindow
     }
-    // SetFullscreen(monitor) with another monitor than 0 hides the docked
-    // video while fullscreen lasts (m_IsOnAnotherMonitor, VideoBox.cpp:845-849)
-    // and leaving shows it again (761-766).
     property bool videoDockClosedForFullscreen: false
-    // Where the picture is (Main's videoStage): moved once the dock is
-    // closed, as closing the dock takes its content back into the panel.
+    // MUST KILL: must be set after videoDock closes, or closing the dock takes the picture back into the panel
     property bool videoStageInFullscreen: false
     Connections {
         target: root.videoFullscreen
@@ -7090,9 +6103,7 @@ ApplicationWindow {
                 root.videoDockClosedForFullscreen = false
                 videoDock.open()
             }
-            // The picture moved to another window: a frame submitted just
-            // before is refused there (the surface changed before upload),
-            // so the shown frame is submitted again once the move is done.
+            // A frame submitted just before the move to another window is refused there (its surface changed), so submit again.
             Qt.callLater(() => root.video.attachPresenter(presenter))
         }
     }
@@ -7100,16 +6111,13 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         objectName: "subtitlesOpenDialog"
-        title: qsTranslate("HikariSub.Documents", "Open subtitles") // PU1-picker-titles
-        // Where the subtitle pickers were last left.
+        title: qsTranslate("HikariSub.Documents", "Open subtitles")
         function show() {
             const folder = root.pickerFolder("subtitles")
             if (folder.length > 0)
                 currentFolder = folder
             open()
         }
-        // Legacy's second filter, "Videos with embedded subtitles". KA6:
-        // word-timed lyrics, imported as karaoke Lines, after the subtitles.
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
                       qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.ttml)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
@@ -7120,8 +6128,6 @@ ApplicationWindow {
         }
     }
 
-    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new
-    // one (PU4: a compact window, made at its first opening).
     Loader {
         id: setNewFpsLoader
         active: false
@@ -7135,17 +6141,12 @@ ApplicationWindow {
         setNewFpsLoader.item.show()
     }
 
-    // The column choice for Copy columns / Paste columns (PU2: ColumnsWindow.qml).
     ColumnsWindow {
         id: columnsWindow
         app: root.app
         settings: root.app.settings
     }
 
-    // D1: every drag placement from the keyboard, and numeric resizing.
-    // PU7 (#309): a compact window on DG1's frame, the panel, then a Move
-    // section and a Resize section, each with its own button; it stays open
-    // to move or resize again.
     DialogWindow {
         id: placementWindow
         objectName: "placementWindow"
@@ -7173,10 +6174,7 @@ ApplicationWindow {
                 id: placementPanel
                 objectName: "placementPanel"
                 Layout.fillWidth: true
-                // The docks themselves, and the shown text read from the dock
-                // while the window shows. A dock's title reads empty until the
-                // engine has made its dock widget, and the dock does not notify
-                // the change, so text taken earlier stayed empty (D1 gate).
+                // KDDW's dock title reads empty until its dock widget exists and doesn't notify, so it is read while shown.
                 model: root.dockList
                 textRole: "title"
                 displayText: placementWindow.visible && currentIndex >= 0 ? root.dockList[currentIndex].title : ""
@@ -7270,7 +6268,6 @@ ApplicationWindow {
         ]
     }
 
-    // A1: legacy OpenAudioInTab's dialog and filter.
     FileDialog {
         id: audioDialog
         objectName: "audioDialog"
@@ -7278,14 +6275,10 @@ ApplicationWindow {
         nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)",
                       qsTranslate("HikariSub.Audio", "All files") + " (*)"]
         onAccepted: {
-            root.rememberPickerFolder("audio", selectedFile) // PU1-picker-titles
+            root.rememberPickerFolder("audio", selectedFile)
             root.audio.openAudioUrl(selectedFile)
         }
     }
-    // A1: legacy HikariListBox "Choose the track" (ProviderFFMS2::Init with
-    // several audio tracks), on PK1's list chooser in its compact window:
-    // the first row chosen, Open or a double click takes a row, Cancel opens
-    // no audio.
     ListChooser {
         id: audioTrackChooser
         objectName: "audioTrackChooser"
@@ -7314,17 +6307,14 @@ ApplicationWindow {
     FileDialog {
         id: keyframesDialog
         objectName: "keyframesDialog"
-        title: qsTranslate("HikariSub.Video", "Choose keyframes file") // TI1-keyframes-title
+        title: qsTranslate("HikariSub.Video", "Choose keyframes file")
         nameFilters: [qsTranslate("HikariSub.Video", "Keyframes file (*.txt *.pass *.stats *.log)"), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
-            root.rememberPickerFolder("keyframes", selectedFile) // PU1-picker-titles
-            // V3: the recent keyframes take the file too (SetRecent(3))
+            root.rememberPickerFolder("keyframes", selectedFile)
             const problem = root.app.openKeyframesFile(selectedFile.toString())
             if (problem.length > 0)
                 root.notices.post("error", qsTr("Open keyframes"), problem)
         }
-        // V3: the video's folder, else the latest recent keyframes' (else
-        // where the keyframes picker was last left, PU1-picker-titles)
         function show() {
             currentFolder = root.startFolder("keyframes", root.app.keyframesDialogFolder())
             open()
@@ -7336,19 +6326,16 @@ ApplicationWindow {
         nameFilters: [qsTranslate("HikariSub.Translation", "Subtitle files (*.ass *.srt *.sub *.txt)")]
         onAccepted: root.app.pasteTranslationFile(selectedFile)
     }
-    // Legacy TLDialog (PU2: TranslationShiftWindow.qml).
     TranslationShiftWindow {
         id: translationShiftWindow
         app: root.app
         settings: root.app.settings
     }
-    // GLOBAL_SHIFT_TIMES' question (runShiftTimes).
     HidableQuestion {
         id: shiftQuestion
         objectName: "shiftQuestion"
         messages: root.messages
         questionId: "shiftOneTime"
-        // The editing target it was asked for (App.editingTargetId).
         property var askedFor: 0
         property Connections targetChanges: Connections {
             target: root.app
@@ -7358,19 +6345,12 @@ ApplicationWindow {
             }
         }
     }
-    // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
-    // and failures; the automatic one speaks only for a newer release.
-    // ADR 0019: an update that installs offers "Download and install" and,
-    // once downloaded, the ready bar; PU7 (#309): an AUR copy gets the same
-    // window, with its command.
     Connections {
         target: root.updates
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
-                // The automatic check's window takes no keyboard (DG1).
                 updateAvailable.showRelease(release, !interactive)
             } else if (outcome === "current") {
-                // NT1 (#302): toasts, titled with the command (DG1-update-titles).
                 root.notices.post("info", qsTr("Check for updates"), qsTr("You already have the latest version"))
             } else {
                 root.notices.post("warning", qsTr("Check for updates"), qsTr("Cannot check for updates"))
@@ -7385,8 +6365,6 @@ ApplicationWindow {
         target: root.updates.installer
         function onReady() { updateAvailable.close() }
     }
-    // DG1 (#222): About, Credits and the update offers are windows of their
-    // own on the dialog frame (DialogWindow.qml), modeless.
     UpdateAvailable {
         id: updateAvailable
         updates: root.updates
@@ -7406,8 +6384,6 @@ ApplicationWindow {
         settings: root.app.settings
         onReportIssueRequested: reportIssueWindow.openForm()
     }
-    // CR1 (#452): the crash and freeze report, Report an issue, and the
-    // notices of a freeze and of a report sent.
     CrashReportWindow {
         id: crashReportWindow
         reports: root.crashReports
@@ -7443,7 +6419,6 @@ ApplicationWindow {
                 root.notices.post("info", qsTranslate("HikariSub.Reports", "Crash report sent. Thank you."), "")
                 return
             }
-            // `source`: where the report is kept ("" when a newer freeze took its place).
             const note = crashReportWindow.lastNote
             root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
                               source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
@@ -7469,10 +6444,6 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    // Y5, PU6 (#308): conversion with the approved loss preview
-    // (C02-loss-preview), Resample subtitles and ASS file properties
-    // (ConversionWindow, ResampleWindow, ScriptPropertiesDialog), each made
-    // at its first opening.
     function openConversion(target, label) {
         conversionLoader.active = true
         conversionLoader.item.openFor(target, label)
@@ -7499,7 +6470,6 @@ ApplicationWindow {
             video: root.video
         }
     }
-    // False for a Document that is not ASS.
     function openScriptProperties() {
         scriptPropertiesLoader.active = true
         return scriptPropertiesLoader.item.openFor()
@@ -7513,20 +6483,12 @@ ApplicationWindow {
             video: root.video
         }
     }
-    // Y4, PU6: legacy SubsMismatchResolutionDialog ("Incompatible
-    // resolution") as a message box titled with the command that found it:
-    // both sizes on one line, the choices as buttons (Resample the default,
-    // Keep as is on Esc, Resample and stretch only when the aspect ratio
-    // differs), Don't ask again legacy's "Disable warning".
     function askResolutionMismatch(sizes) {
         const choices = [{ id: "keep", text: qsTranslate("HikariSub.Conversion", "Keep as is"), role: "reject" },
                          { id: "only", text: qsTranslate("HikariSub.Conversion", "Change resolution only"), role: "action" }]
         if (sizes.videoWidth / sizes.subsWidth !== sizes.videoHeight / sizes.subsHeight)
             choices.push({ id: "stretch", text: qsTranslate("HikariSub.Conversion", "Resample and stretch"), role: "action" })
         choices.push({ id: "resample", text: qsTranslate("HikariSub.Conversion", "Resample"), role: "accept", isDefault: true })
-        // The answer acts on the Document and the video it shows: with
-        // another tab active by then, or another video or resolution (the box
-        // is modal to its window only), it does nothing.
         const document = root.app.editingDocument()
         const shown = () => {
             const now = root.app.resampleValues()
@@ -7567,8 +6529,6 @@ ApplicationWindow {
         importer: root.settingsImport
         settings: root.app.settings
     }
-    // FR1 (#363): Getting started, by itself at the first start (and at the
-    // next one when it was left unanswered), else from Help.
     GettingStartedDialog {
         id: gettingStartedDialog
         app: root.app
@@ -7579,12 +6539,9 @@ ApplicationWindow {
             if (layout.length > 0)
                 root.applyPreset(layout)
         }
-        // #393: from Help, Skip changes nothing and says nothing.
         onSkipped: if (gettingStartedDialog.due) root.notices.post("info", qsTranslate("HikariSub.GettingStarted", "Default settings in use"),
                                                                   qsTranslate("HikariSub.GettingStarted", "Help › Getting started opens the setup again."))
     }
-    // PF1 (#225): the Settings window, made at its first opening (a window
-    // made at the start slows every start, PK1).
     Loader {
         id: settingsLoader
         objectName: "settingsLoader"
@@ -7598,7 +6555,7 @@ ApplicationWindow {
                 crashReports: root.crashReports
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
-                onCreditsRequested: creditsDialog.open() // GR1: Harper's licence notice
+                onCreditsRequested: creditsDialog.open()
             }
         }
     }
@@ -7606,12 +6563,7 @@ ApplicationWindow {
         settingsLoader.active = true
         return settingsLoader.item
     }
-    // `page`: a page's id ("audio", "hotkeys"); without one, the page shown
-    // last. `filter`: the Hotkeys page's filter.
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
-    // Y8: the font collector, PU6: a window on DG1's frame made at its first
-    // opening (as KA7's); a double click on a Style in its log opens the
-    // Style editor (StyleStore::ShowStyleEdit).
     Loader {
         id: fontCollectorLoader
         active: false
@@ -7627,14 +6579,13 @@ ApplicationWindow {
     Connections {
         target: root.fontCollector
         function onStyleRequested(style) {
-            styleManagerWindow.showFor(style) // SY1: the editor is on it
+            styleManagerWindow.showFor(style)
         }
     }
     SelectLinesDialog {
         id: selectLinesDialog
         app: root.app
         notices: root.notices
-        // DestroyDialogs (a changed program font): SaveOptions, then gone.
         Connections {
             target: root.app
             function onSelectLinesDestroyed() {
@@ -7643,11 +6594,6 @@ ApplicationWindow {
             }
         }
     }
-    // F3: the editor's "Fix suggestions" list (the Spellchecker is a panel,
-    // PU6; legacy's spelling message boxes are toasts, NT1).
-    // KA7: the Karaoke check window, made at its first opening, as PK1's
-    // windows are: every window made at the start costs it (on Windows a
-    // native event filter apiece).
     Loader {
         id: karaokeCheckLoader
         active: false
@@ -7660,7 +6606,6 @@ ApplicationWindow {
         karaokeCheckLoader.active = true
         karaokeCheckLoader.item.openDialog()
     }
-    // KA3: the Kanji timer window, made at its first opening too.
     Loader {
         id: kanjiTimerLoader
         active: false
@@ -7673,11 +6618,6 @@ ApplicationWindow {
         kanjiTimerLoader.active = true
         kanjiTimerLoader.item.openDialog()
     }
-    // W1: DirectShow could not open the video: legacy VideoBox::LoadVideo's
-    // HikariMessageBox is a warning toast (NT1, application_directshow.cpp).
-    // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK's "Fix suggestions", on PK1's list
-    // chooser as a popover at the misspelled word: a click or Enter replaces
-    // it, Esc or a press outside leaves it.
     ListChooser {
         id: fixSuggestions
         objectName: "fixSuggestions"
@@ -7695,9 +6635,6 @@ ApplicationWindow {
             })
         }
     }
-    // PU3 (#305): the font picker, and the program's one catalog window and
-    // one "Add fonts from subtitles" window (FontWindows), which the picker
-    // and the Style editor open.
     FontPicker {
         id: fontPicker
         editor: root.editor
@@ -7720,15 +6657,10 @@ ApplicationWindow {
         fileName: root.app.currentTab >= 0 && root.app.currentTab < root.app.tabs.length ? root.app.tabs[root.app.currentTab].title : ""
         Component.onCompleted: FontWindows.fromSubtitles = fontsFromSubtitles
     }
-    // SY2: the one colour picker, anchored to the colour button.
     ColourPopover {
         id: colourPopover
         picker: root.colourPicker
     }
-    // Y7: EditBox::AllColorClick (EditBox.cpp:862-919). SY2: a left click and
-    // the hotkey open the colour popover, a right click opens it with the
-    // eyedropper started (legacy's simple "Color picker" took the pointer at
-    // once); COLORPICKER_SWITCH_CLICKS swaps them.
     function colourClick(number, leftClick, field) {
         if (root.colourPicker.switchClicks)
             leftClick = !leftClick
@@ -7740,10 +6672,6 @@ ApplicationWindow {
         }, { title: editorStrip.colourName(number), dropper: !leftClick, focus: field })
     }
 
-    // Legacy TreeDialog ("Tree description"), PU2 (#304): a popover under
-    // the line group's row, opened from its menu's Change description, as
-    // PK1's spelling suggestions open at the word (PU2-group-description).
-    // Enter, Rename or a press outside renames; Esc changes nothing.
     Popover {
         id: groupDescriptionPopover
         objectName: "groupDescriptionPopover"
@@ -7752,7 +6680,6 @@ ApplicationWindow {
         initialFocus: groupDescription
         property var description: 0
         property bool titled: false
-        // Opens under the row at `at` in `grid` (the menu's place).
         function edit(id, grid, at) {
             description = id
             titled = root.app.groupTitle(id).length > 0
@@ -7765,9 +6692,6 @@ ApplicationWindow {
             groupDescription.selectAll()
         }
         onKept: if (groupDescription.text.length > 0) root.app.renameGroup(description, groupDescription.text)
-        // The group is in the tab it was opened from: with the Grid floating
-        // the main window's tabs stay usable, and another editing target
-        // closes it as Esc does, changing nothing (Codex review).
         property var askedFor: null
         function editingTarget() {
             const tab = root.app.tabs[root.app.currentTab]
@@ -7801,10 +6725,6 @@ ApplicationWindow {
         }
     }
 
-    // G56-contiguity: a command that would break a Line group is refused.
-    // PU2 (#304): a message box to remove the group (its description Line
-    // is deleted) or cancel; without a group to remove, a warning toast
-    // (PU2-group-break).
     Connections {
         target: root.app
         function onGroupBreakRefused(description, title) {
@@ -7831,9 +6751,6 @@ ApplicationWindow {
         id: groupBreakBox
         objectName: "groupBreakBox"
         settings: root.app.settings
-        // The group is in the tab that refused: with the Grid floating the
-        // main window's tabs stay usable, and another editing target closes
-        // the box unanswered (Codex review), as Translation mode's questions.
         property var askedFor: null
         function editingTarget() {
             const tab = root.app.tabs[root.app.currentTab]
@@ -7850,7 +6767,6 @@ ApplicationWindow {
 
     Component.onCompleted: {
         root.applyMenuShortcuts()
-        // #400: what Karaoke turned on before the restart.
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
         root.foldTurnedOn = turnedOn.indexOf("grid.foldGenerated") >= 0
@@ -7858,16 +6774,10 @@ ApplicationWindow {
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => gettingStartedDialog.openSetup())
-        // CR1 (#452): the report the last run left, before anything else
-        // asks; with "Always send crash reports" it goes by itself instead.
         if (root.crashReports.pending.length > 0
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))
     }
-    // P3, P4 and P9 in one window (PU1-autosaves-window): the work left by a
-    // session that did not close cleanly, the previous version's autosaves,
-    // and removing them. It no longer opens by itself at the start: the
-    // Home page's crash card or the startup bar offers it.
     Autosaves {
         id: autosaves
         objectName: "autosaves"
@@ -7876,41 +6786,24 @@ ApplicationWindow {
         onBundlesDeleted: sessionWindows.offer.recountAutosaves()
     }
 
-    // O2: the shortcut editor. An installed binding as legacy text ("Ctrl-D"), following installs.
     function boundKeys(symbol, window) {
         return root.hotkeys.keys ? root.hotkeys.accelOf(symbol, window) : ""
     }
-    // A mapped button's tooltip (MappedButton::SetToolTip).
     function mappedTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
     }
-    // A bitmap button's tooltip (BitmapButton::SetToolTip): its binding in
-    // its window, then the gesture.
     function bitmapTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
     }
-    // Hotkeys::OnMapHkey (Hotkeys.cpp:466-540): the gesture maps the
-    // action's hotkey instead of running it; the bindings are installed and
-    // saved at once. `kind`:
-    // - a menu item (omitted, "menu"): Shift alone, with the window choice
-    //   (HikariSubFrame::OnMenuSelected/OnMenuSelected1, the Grid's menu);
-    // - "macro": Shift alone, no window choice (Automation.cpp:1376-1379);
-    // - a mapped button (true, "mapped"): Shift held, no window choice; with
-    //   `two` (MappedButton's twoHotkeys) Ctrl held maps the second hotkey,
-    //   the main id - 10 (O2-second-hotkey; legacy computed that id and then
-    //   mapped the main one, MappedButton.cpp:437-445);
-    // - "bitmap": the video panel's buttons (BitmapButton.cpp:97-106), Shift
-    //   held, with the window choice.
+    // MUST KILL: kind is true or a string ("menu", "mapped", "macro", "bitmap"); two maps the second (id - 10) hotkey
     function hotkeyGesture(symbol, window, kind, two) {
         const mapped = kind === true || kind === "mapped"
         const held = mapped || kind === "bitmap"
         const shift = root.hotkeys.shiftClicked(!held)
         const second = !shift && mapped && two && root.hotkeys.ctrlClicked()
         if (!shift && !second) {
-            // AN1 (#404): the command runs from a menu or a button (a key's
-            // run reaches here too, and counts as the key's).
             if (root.keyRuns === 0)
                 root.analytics.commandUsed(symbol, "pointer")
             return false
@@ -7925,9 +6818,6 @@ ApplicationWindow {
         })
         return true
     }
-    // SubsGrid::ContextMenu (SubsGrid.cpp:294-302): Shift with an id from
-    // 4000 maps its hotkey for the Subtitles window (with the window
-    // choice); a checkable item is not switched then.
     function gridGesture(item, symbol) {
         if (!root.hotkeyGesture(symbol, 1))
             return false
@@ -7935,13 +6825,10 @@ ApplicationWindow {
             item.toggle()
         return true
     }
-    // A menu item's command when it is enabled (legacy checks the item's
-    // state for an accelerator: OnMenuSelected's OnMenuOpened, OnMenuSelected1).
     function runItem(item) {
         if (item.enabled)
             item.triggered()
     }
-    // The Global window's ids the menus' actions and items run (OnMenuSelected).
     function globalActions() {
         return {
         GLOBAL_SAVE_SUBS: saveAction, GLOBAL_SAVE_ALL_SUBS: saveAllAction, GLOBAL_SAVE_SUBS_AS: saveAsAction,
@@ -7953,25 +6840,24 @@ ApplicationWindow {
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
-        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, // AD2
+        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction,
         GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
-        GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction, // V6
+        GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
-        GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
-        GLOBAL_VIDEO_RENDER_COST: renderCostAction, // KE1
+        GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
+        GLOBAL_VIDEO_RENDER_COST: renderCostAction,
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
-        GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
+        GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
-        GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction, // LE3
-        GLOBAL_TRANSLATION_MODE: translationModeAction, // TM1
-        // P6: OnPageClose (the rewrite's File > Close).
+        GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
+        GLOBAL_TRANSLATION_MODE: translationModeAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }
@@ -7979,18 +6865,14 @@ ApplicationWindow {
         return {
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
-        GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem, // Y8
+        GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
-        GLOBAL_CHECK_KARAOKE: checkKaraokeItem, // KA7
-        GLOBAL_KANJI_TIMER: kanjiTimerItem, // KA3
+        GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
+        GLOBAL_KANJI_TIMER: kanjiTimerItem,
     }
     }
-    // DX1 (#367): where each command is in the menus, for the docs export:
-    // symbol => ["File > Save", ...], the menu bar's places first, then the
-    // Grid's menu's ("Grid menu > Insert > Insert before"). The titles as
-    // shown, without mnemonics or the keys after a tab.
     function commandMenus() {
         const symbolOf = new Map()
         const actions = root.globalActions(), items = root.globalItems()
@@ -8024,11 +6906,9 @@ ApplicationWindow {
         }
         for (let i = 0; i < appMenus.count; ++i)
             walk(appMenus.menuAt(i), [plain(appMenus.menuAt(i).title)])
-        walk(gridMenu, ["Grid menu"]) // (the export is in English)
+        walk(gridMenu, ["Grid menu"])
         return out
     }
-    // The menu bar's items show their Global binding at the right (legacy
-    // SetAccMenu wrote it after a tab), refreshed when the bindings change.
     function applyMenuShortcuts() {
         const symbolOf = new Map()
         const actions = root.globalActions(), items = root.globalItems()
@@ -8056,8 +6936,6 @@ ApplicationWindow {
         target: root.hotkeys
         function onInstalledChanged() { root.applyMenuShortcuts() }
     }
-    // KB3: each command a key reaches is reported (HotkeysController::ran,
-    // the hotkey audit's record); rehearsing, it is only reported.
     function runGlobalHotkey(symbol) {
         return root.hotkeys.report(symbol, root.hotkeys.rehearsing() || root.byKey(() => root.globalHotkey(symbol)))
     }
@@ -8073,8 +6951,6 @@ ApplicationWindow {
     function runAudioHotkey(action) {
         return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.byKey(() => root.audioHotkey(action)))
     }
-    // AN1 (#404): while a key's command runs, the menu actions it triggers
-    // are the key's (Analytics hears it from HotkeysController::ran).
     property int keyRuns: 0
     function byKey(run) {
         ++root.keyRuns
@@ -8084,26 +6960,16 @@ ApplicationWindow {
             --root.keyRuns
         }
     }
-    // The frame's handlers of the Global window's bindings (HikariSubFrame:
-    // OnMenuSelected, OnMenuSelected1, OnChangeLine, OnDelete, OnPageChange,
-    // OnPageAdd, OnPageClose, OnAudioSnap, OnUseWindowHotkey), reached from
-    // the shell's table and from a Global id bound for a panel. An id below
-    // 5000 runs in its own window (OnUseWindowHotkey,
-    // HikariSubFrame.cpp:1802-1814). A Global action the rewrite does not
-    // have yet still takes its key, as legacy's accelerator does.
     function globalHotkey(symbol) {
         const field = root.editedField()
         if (symbol.startsWith("AUDIO_"))
-            return root.audio.loaded && root.runAudioHotkey(symbol) // only with an audio box
+            return root.audio.loaded && root.runAudioHotkey(symbol)
         if (symbol.startsWith("VIDEO_"))
             return root.runVideoHotkey(symbol)
         if (symbol.startsWith("EDITBOX_"))
             return root.runEditorHotkey(symbol, field)
         if (symbol.startsWith("GRID_"))
             return root.runGridHotkey(symbol)
-        // OnMenuSelected1's ids (GLOBAL_OPEN_SUBS..GLOBAL_CHECK_FOR_UPDATES,
-        // GLOBAL_SELECT_FROM_VIDEO..GLOBAL_STYLE_MANAGER_CLEAN_STYLE) pass
-        // CheckLastKeyEvent (HikariSubFrame.cpp:1005).
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
                                "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
                                "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
@@ -8123,7 +6989,6 @@ ApplicationWindow {
         }
         const conversion = root.conversionItems.find(c => c[2] === symbol)
         if (conversion) {
-            // OnMenuOpened: the item is enabled for the formats it converts to.
             if (root.app.conversionTargets().indexOf(conversion[0]) >= 0)
                 root.openConversion(conversion[0], conversion[1])
             return true
@@ -8137,13 +7002,13 @@ ApplicationWindow {
         const editing = root.shell.hasEditingTarget
         switch (symbol) {
         case "GLOBAL_QUIT": root.close(); return true
-        case "GLOBAL_PLAY_ACTUAL_LINE": // the video panel's "Play the current line"
+        case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
-                root.focusPanel(lineText, Qt.OtherFocusReason) // TM1: maybe in a floating panel
+                root.focusPanel(lineText, Qt.OtherFocusReason)
                 root.video.playActualLine()
             }
             return true
-        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles; SY1-clean-toast
+        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE":
             if (editing)
                 styleManagerWindow.deleteUnused()
             return true
@@ -8152,45 +7017,29 @@ ApplicationWindow {
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
-        // E6: OnMenuSelected's GLOBAL_HIDE_TAGS, OnChangeLine (SubsGrid::NextLine)
-        // and OnDelete's GLOBAL_REMOVE_TEXT (HikariSubFrame.cpp:835, 2443-2466).
         case "GLOBAL_HIDE_TAGS": root.app.toggleHideTags(); return true
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
-        // V6: SubsGrid::SelVideoLine and HikariSubFrame::OnAudioSnap
         case "GLOBAL_SELECT_FROM_VIDEO": root.app.selectLineFromVideo(); return true
         case "GLOBAL_SNAP_WITH_START": root.app.snapToKeyframe(true); return true
         case "GLOBAL_SNAP_WITH_END": root.app.snapToKeyframe(false); return true
         }
-        // Not in the rewrite yet (docs/coverage.md, O2): the key is taken
-        // and nothing runs. GLOBAL_SAVE_WITH_VIDEO_NAME changes nothing in
-        // legacy either (OnMenuSelected reads the item's check without
-        // switching it), nor do the submenu ids (GLOBAL_SORT_LINES,
-        // GLOBAL_SORT_SELECTED_LINES, GLOBAL_RECENT_*). GLOBAL_VIDEO_INDEXING
-        // is retired (V3-indexing-retired): its bindings are dropped as the
-        // hotkeys are read.
         return false
     }
-    // EditBox::OnAccelerator for an Editor binding in `field` (the focused
-    // text field); Video actions bound for the Editor go to the video.
-    // False for an action the rewrite does not have yet.
     function editorHotkey(action, field) {
         if (action.startsWith("GLOBAL_"))
-            return root.runGlobalHotkey(action) // the event goes up to the frame
+            return root.runGlobalHotkey(action)
         const tags = { EDITBOX_INSERT_BOLD: "b", EDITBOX_INSERT_ITALIC: "i", EDITBOX_CHANGE_UNDERLINE: "u",
                        EDITBOX_CHANGE_STRIKEOUT: "s" }
         const colours = { EDITBOX_CHANGE_COLOR_PRIMARY: 1, EDITBOX_CHANGE_COLOR_SECONDARY: 2,
                           EDITBOX_CHANGE_COLOR_OUTLINE: 3, EDITBOX_CHANGE_COLOR_SHADOW: 4 }
-        // Legacy writes time differences into the edited field (the
-        // Translated one in translation mode) whichever field has focus.
         const edited = root.editor.translationMode ? translationText : lineText
         if (tags[action] !== undefined) {
             root.editor.toggleTagIn(field.role, tags[action], field.selectionStart, field.selectionEnd)
             return true
         }
-        // TM1: the Original's runs go on the Translated text's selection.
         if (action.startsWith("EDITBOX_PLACE_RUN_") || action === "EDITBOX_PLACE_NEXT_RUN") {
             const number = action === "EDITBOX_PLACE_NEXT_RUN" ? 0 : Number(action.substring(18))
             if (field.role === 1)
@@ -8208,7 +7057,7 @@ ApplicationWindow {
             return true
         }
         switch (action) {
-        case "EDITBOX_COMMIT_GO_NEXT_LINE": root.app.commitAndAdvance(); return true // V6: NextLine's play-after
+        case "EDITBOX_COMMIT_GO_NEXT_LINE": root.app.commitAndAdvance(); return true
         case "EDITBOX_COMMIT": root.editor.applyChanges(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
@@ -8227,14 +7076,11 @@ ApplicationWindow {
         }
         return action.startsWith("VIDEO_") && root.runVideoHotkey(action)
     }
-    // VideoBox::OnAccelerator; Editor and Grid actions bound for the Video
-    // window go to theirs.
     function videoHotkey(action) {
         if (action.startsWith("GLOBAL_"))
-            return root.runGlobalHotkey(action) // the event goes up to the frame
-        if (root.hotkeys.repeatedKey(action, 50)) // VideoBox::OnAccelerator (VideoBox.cpp:1137)
+            return root.runGlobalHotkey(action)
+        if (root.hotkeys.repeatedKey(action, 50))
             return true
-        // VT2: the tool commands choose their visual tool.
         if (root.visualTools.runHotkey(action))
             return true
         switch (action) {
@@ -8244,22 +7090,16 @@ ApplicationWindow {
         case "VIDEO_MINUTE_FORWARD": root.video.seekBy(60000); return true
         case "VIDEO_MINUTE_BACKWARD": root.video.seekBy(-60000); return true
         case "VIDEO_STOP": root.video.stop(); return true
-        // T1: the pointer's position in the video window (VideoBox.cpp:1151).
         case "VIDEO_COPY_COORDS": root.visualTools.copyCoordinatesAtCursor(visualOverlay); return true
-        // V3 (VideoBox.cpp:1145-1150, 1170): the folder walk asks first
-        // (OnPrew / OnNext), the chapters, Unload video (V3-unload-video).
         case "VIDEO_PREVIOUS_FILE": videoFileQuestion.ask(false); return true
         case "VIDEO_NEXT_FILE": videoFileQuestion.ask(true); return true
         case "VIDEO_PREVIOUS_CHAPTER": root.video.previousChapter(); return true
         case "VIDEO_NEXT_CHAPTER": root.video.nextChapter(); return true
         case "VIDEO_DELETE_FILE": root.video.unloadVideo(); return true
-        // V4 (VideoBox.cpp:1147-1173).
         case "VIDEO_VOLUME_PLUS": root.videoView.stepVolume(true); return true
         case "VIDEO_VOLUME_MINUS": root.videoView.stepVolume(false); return true
         case "VIDEO_HIDE_PROGRESS_BAR": root.videoView.toggleProgressBar(); return true
-        // V5 (VideoBox.cpp:1161-1162): SetFullscreen().
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
-        // FS1-bar-mode: Auto, Always, Never.
         case "VIDEO_FULLSCREEN_BAR": root.videoFullscreen.cycleBarMode(); return true
         case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openWindow(root.videoFullscreen.active ? videoFullscreenWindow : null); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
@@ -8273,20 +7113,13 @@ ApplicationWindow {
             return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
-    // SubsGrid::OnAccelerator; Editor and Video actions bound for the Grid
-    // go to theirs.
     function gridHotkey(action) {
         if (action.startsWith("GLOBAL_"))
-            return root.runGlobalHotkey(action) // the event goes up to the frame
-        // SubsGrid::OnAccelerator hands audio ids to the audio box (when
-        // there is one; the key is the Grid's either way), whose
-        // OnAccelerator checks CheckLastKeyEvent (SubsGrid.cpp:810-819,
-        // AudioBox.cpp:670-674).
+            return root.runGlobalHotkey(action)
         if (action.startsWith("AUDIO_"))
             return !root.hotkeys.repeatedKey(action) && root.audio.runHotkey(action)
         if (root.hotkeys.repeatedKey(action))
             return true
-        // GRID_HIDE_*: the column's bit (id - 4000; CPS 512, wraps 8192).
         const columns = { GRID_HIDE_LAYER: 1, GRID_HIDE_START: 2, GRID_HIDE_END: 4, GRID_HIDE_STYLE: 8,
                           GRID_HIDE_ACTOR: 16, GRID_HIDE_MARGINL: 32, GRID_HIDE_MARGINR: 64, GRID_HIDE_MARGINV: 128,
                           GRID_HIDE_EFFECT: 256, GRID_HIDE_CPS: 512, GRID_HIDE_WRAPS: 8192 }
@@ -8321,23 +7154,18 @@ ApplicationWindow {
         case "GRID_SPLIT_BY_WORDS": root.app.splitLines("words"); return true
         case "GRID_SPLIT_BY_WRAPS": root.app.splitLines("wraps"); return true
         case "GRID_TREE_MAKE": root.app.makeGroups(); return true
-        case "GRID_SELECT_VISIBLE_LINES": root.app.selectLinesVisibleOnVideo(); return true // V6
-        case "GRID_SHOW_PREVIEW": if (root.app.canShowPreview()) root.app.showPreview(); return true // R2
+        case "GRID_SELECT_VISIBLE_LINES": root.app.selectLinesVisibleOnVideo(); return true
+        case "GRID_SHOW_PREVIEW": if (root.app.canShowPreview()) root.app.showPreview(); return true
         case "GRID_HIDE_SELECTED": root.app.hideSelectedLines(); return true
         case "GRID_FILTER": root.app.filterLines(); return true
         case "GRID_FILTER_BY_NOTHING": root.app.turnOffFiltering(); return true
-        // SubsGrid::OnAccelerator (SubsGrid.cpp:879-881): only for a ".mkv" or ".ogm" video.
         case "GRID_SUBS_FROM_MKV": matroskaSubtitles.begin(); return true
         case "GRID_FILTER_INVERT": root.gridFilter.inverted = !root.gridFilter.inverted; return true
         case "GRID_FILTER_DO_NOT_RESET": root.gridFilter.addToFilter = !root.gridFilter.addToFilter; return true
         case "GRID_FILTER_AFTER_SUBS_LOAD": root.gridFilter.afterLoad = !root.gridFilter.afterLoad; return true
-        // The hotkey toggles from the stored option, not from the Grid's own
-        // "ignore filtering" (which "Set default" leaves as it was).
         case "GRID_FILTER_IGNORE_IN_ACTIONS":
             root.gridFilter.ignoreInActions = root.hotkeys.ignoreFilteringFromOption()
             return true
-        // KB3: these ran only from the Grid menu, so their keys did nothing
-        // (SubsGrid::OnAccelerator, SubsGrid.cpp:839-881, 938).
         case "GRID_COPY_COLUMNS": columnsWindow.choose(false); return true
         case "GRID_PASTE_COLUMNS": columnsWindow.choose(true); return true
         case "GRID_SET_NEW_FPS": root.openSetNewFps(); return true
@@ -8354,28 +7182,23 @@ ApplicationWindow {
             return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("VIDEO_") && root.runVideoHotkey(action)
     }
-    // AudioBox::OnAccelerator; Video, Editor and Grid actions bound for the
-    // Audio window go to theirs (AudioBox::SetAccels).
     function audioHotkey(action) {
         if (action.startsWith("GLOBAL_"))
-            return root.runGlobalHotkey(action) // the event goes up to the frame
+            return root.runGlobalHotkey(action)
         if (action.startsWith("AUDIO_"))
-            return !root.hotkeys.repeatedKey(action) && root.audio.runHotkey(action) // AudioBox.cpp:673
+            return !root.hotkeys.repeatedKey(action) && root.audio.runHotkey(action)
         if (action.startsWith("VIDEO_"))
             return root.runVideoHotkey(action)
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
-    // PK1's hotkey capture: Shift+click on a command opens it in its
-    // compact window.
     HotkeyCapture {
         id: hotkeyMapping
         objectName: "hotkeyMapping"
         hotkeys: root.hotkeys
         settings: root.app.settings
     }
-    // S2: committed automation shortcuts, application-wide.
     Repeater {
         model: root.automationHotkeys.shortcuts
         delegate: Item {
@@ -8383,12 +7206,6 @@ ApplicationWindow {
             Shortcut {
                 sequence: modelData.keys
                 context: Qt.ApplicationShortcut
-                // The scripts' entries follow the static ones in the frame's
-                // table (map order: ids from 30100), so a static Global
-                // binding of the same keys wins, as the Video window's
-                // Play / Pause does (KB2: it acts from every panel).
-                // Off under a modal dialog, which keeps the panel's run
-                // controls out of reach.
                 enabled: !root.menuHasKeys && !root.workspaceLayout.modalOpen
                          && !root.hotkeys.macroTakenSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)

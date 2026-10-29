@@ -19,8 +19,7 @@ titlebars::Setter &overridden()
 }
 
 #ifdef Q_OS_WIN
-// DWMWA_USE_IMMERSIVE_DARK_MODE: 20 from Windows 10 20H1, 19 before it (as
-// Qt's own QWindowsWindow::setDarkBorderToWindow has them).
+// DWMWA_USE_IMMERSIVE_DARK_MODE: 20 from Windows 10 20H1, 19 before it.
 constexpr DWORD kDarkMode = 20;
 constexpr DWORD kDarkModeBefore20H1 = 19;
 
@@ -31,7 +30,7 @@ HWND nativeWindow(QWindow *window)
 }
 #endif
 
-} // namespace
+}
 
 bool themed(const QWindow *window)
 {
@@ -85,4 +84,4 @@ void overrideSetter(Setter setter)
     overridden() = std::move(setter);
 }
 
-} // namespace hikari::ui::titlebars
+}

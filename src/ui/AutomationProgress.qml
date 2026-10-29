@@ -1,16 +1,3 @@
-// AD3 (#312; the design approved on the card): a macro run's notice and
-// progress card, PK1's Notice kind, at the bottom of the toast stack (Main
-// puts it there, under the toasts). As a macro starts, a one-line notice:
-// its name and a slim bar (busy until the script sets a progress). Once the
-// macro itself has run about a second, or as soon as it writes to its log,
-// the notice grows into the card: the name, the script's task and progress,
-// the Document that is read-only, the log (folded, or open when the script
-// wrote to it), Cancel, and Force stop when automation.md's grace has
-// passed. When the run ends the card says how (AutomationShell.cardState)
-// and stays until × when there is something to read: a log, problems,
-// cancelled or failed; the run's log stays in the Automation panel's Runs
-// ("Open in panel"). The card never takes the keyboard by itself; F6
-// reaches it while it shows.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Automation"
 import QtQuick
@@ -22,18 +9,10 @@ import Hikari.Ui
 FocusScope {
     id: card
     objectName: "automationCard"
-    // AutomationShell: cardState, cardText, runId, runs, runTitle, task,
-    // progress, progressKnown, cancelling, forceStopOffered, problems,
-    // cancelRun, forceStopRun, dismissCard.
     property var automation: null
-    // "Open in panel": the Automation panel's Runs at that run.
     signal openRun(int runId)
-    // The keyboard leaves the card (Esc, or the card going) for `panel`,
-    // where F6 came from.
     signal focusReturned(Item panel)
 
-    // F6 reaches the card while it shows its controls (enter); Esc gives the
-    // keyboard back without cancelling.
     readonly property bool reachable: visible && !notice
     property Item returnTo: null
     function enter(from) {
@@ -57,11 +36,8 @@ FocusScope {
     readonly property bool notice: phase === "notice"
     readonly property bool running: phase === "notice" || phase === "running"
     readonly property bool ended: phase.length > 0 && !running
-    // Folded or open; the script's first output opens it unless the user
-    // folded it, and a run naming problems shows them.
     property bool logOpen: false
     property bool logChosen: false
-    // ToastStack's pinned slot shows while it is shown.
     readonly property bool shown: phase.length > 0
     visible: shown
     implicitWidth: 360
@@ -101,20 +77,16 @@ FocusScope {
         if (!automation)
             return ""
         if (state === "applied")
-            // English has no plural catalog: one says "1 line".
+            // With no English catalog, %n would read "1 lines".
             return lines.total === 1 ? qsTr("Applied. The script wrote 1 line to its log.")
                                      : qsTr("Applied. The script wrote %n lines to its log.", "", lines.total)
         if (state === "problems")
             return automation.problems === 1 ? qsTr("Applied. The templates have 1 problem.")
                                              : qsTr("Applied. The templates have %n problems.", "", automation.problems)
-        // A Lua error's text is its traceback: "File …, line N" headers
-        // and the message; the card says the message, the log has the rest.
         const parts = automation.cardText.split("\n").filter(l => l.trim().length > 0)
         return parts.find(l => !/^File ".*", line -?\d+/.test(l)) || parts[0] || ""
     }
 
-    // A slim bar in the accent; busy (a sliding segment) until the script
-    // sets a progress.
     component RunBar: T.ProgressBar {
         id: bar
         from: 0
@@ -155,7 +127,6 @@ FocusScope {
         }
     }
 
-    // The short run's notice.
     Item {
         id: pill
         objectName: "automationNotice"
@@ -188,7 +159,6 @@ FocusScope {
         }
     }
 
-    // The card.
     PopoverBackground {
         anchors.fill: parent
         visible: !card.notice
@@ -275,7 +245,6 @@ FocusScope {
             Layout.fillWidth: true
             Layout.leftMargin: 26
         }
-        // The run's last lines, following the end unless scrolled up.
         Rectangle {
             visible: card.logOpen && lines.count > 0
             color: Theme.field

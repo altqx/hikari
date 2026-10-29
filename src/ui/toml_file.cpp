@@ -32,7 +32,7 @@ namespace {
 
 constexpr auto kFlags = toml::toml_formatter::default_flags & ~toml::format_flags::allow_literal_strings;
 
-} // namespace
+}
 
 std::string formatToml(const toml::node &node)
 {
@@ -50,4 +50,4 @@ std::string formatTomlFile(const toml::table &table, std::int64_t version)
     return out.str();
 }
 
-} // namespace hikari::ui
+}

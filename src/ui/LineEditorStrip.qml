@@ -1,17 +1,3 @@
-// LE1 (#233): the Line editor's tag strip, one row of icon buttons in groups
-// split by thin rules: the tag buttons (legacy BoxSizer4), the font and the
-// four colours (E1), the translation buttons and toggles while the Original
-// text panel is closed (TM1's OriginalTextTools, in the strip), Text
-// position (E4, LE4) and the custom tag buttons (E2, LE5), with the
-// counters (LineCounters) at the row's end. The buttons take no focus, so
-// the text keeps it and its selection; each one's name and hotkey show on
-// hover.
-//
-// LE1-strip-folds: groups that do not fit go, last first, into a More
-// button's menu (icons, names and hotkeys; Text position as a submenu, the
-// custom buttons after it). The tag buttons always show, so the strip
-// needs only them, More and the counters: a long row of custom buttons
-// never widens the Line editor's dock.
 pragma Translator: "HikariSub.Editor"
 import QtQuick
 import QtQuick.Controls
@@ -21,31 +7,24 @@ import Hikari.Ui
 RowLayout {
     id: strip
     objectName: "tagStrip"
-    // Main's root: editedField, mappedTip, boundKeys, hotkeyGesture,
-    // colourClick, applyTagButton and focusPanel.
     required property var shellRoot
     required property LineEditorController editor
     required property var app
     required property TagButtonsController tagButtons
     required property var fontPicker
-    // The Original and Translated text fields ("Paste the selected").
     required property Item original
     required property Item translated
-    // The translation group shows while the Original text panel is closed.
     required property bool translationTools
     spacing: 2
 
-    // The strip at its narrowest: the tag buttons, More and the counters.
     readonly property real minimumWidth: tagGroup.implicitWidth + 2 * spacing + more.implicitWidth + gap
                                          + counters.implicitWidth
-    readonly property int gap: 8 // before the counters
-    // The groups that fold, in order; the first `shownGroups` show.
+    readonly property int gap: 8
     readonly property var foldable: [lookGroup, translationGroup, alignGroup, customGroup]
-    // A group's width from its buttons, also while it is folded (hidden).
     function groupWidth(g) {
         let w = 0, n = 0
         for (const c of g.children) {
-            // (a Repeater is 0 wide; a popup is no child item)
+            // A Repeater is 0 wide and a Popup is no child item.
             if (c.implicitWidth <= 0 || c.stripHidden === true)
                 continue
             w += c.implicitWidth
@@ -65,7 +44,6 @@ RowLayout {
         return n
     }
     function isFolded(g) { return g.active && foldable.indexOf(g) >= shownGroups }
-    // Where a colour's popover opens: its button, or More while it is folded.
     function colourAnchor(number) {
         return lookGroup.visible ? colourButtons.itemAt(number - 1) : more
     }
@@ -73,7 +51,8 @@ RowLayout {
 
     component Group: RowLayout {
         property bool active: true
-        required property int order // in `foldable`
+        // MUST KILL: order must match the group's index in strip.foldable
+        required property int order
         visible: active && order < strip.shownGroups
         spacing: 2
     }
@@ -89,11 +68,6 @@ RowLayout {
         objectName: "tagGroup"
         spacing: 2
         Repeater {
-            // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
-            // maps the hotkey, the tooltip shows it.
-            // K1: the set's icons in place of the letters
-            // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
-            // bitmaps, EditBox.cpp:168-195).
             model: [
                 { tag: "b", name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
                 { tag: "i", name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
@@ -119,8 +93,6 @@ RowLayout {
         }
     }
 
-    // E1: Font selection and the four colours (EDITBOX_CHANGE_FONT,
-    // EDITBOX_CHANGE_COLOR_*).
     Group {
         id: lookGroup
         order: 0
@@ -156,7 +128,6 @@ RowLayout {
                         return
                     strip.shellRoot.colourClick(modelData.number, true, strip.shellRoot.editedField())
                 }
-                // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
                 TapHandler {
                     acceptedButtons: Qt.RightButton
                     onTapped: if (parent.enabled) strip.shellRoot.colourClick(parent.modelData.number, false,
@@ -170,9 +141,6 @@ RowLayout {
         fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd)
     }
 
-    // TM1: legacy's translation-mode buttons and toggles (OriginalTextTools),
-    // here while the Original text panel is closed (the panel's header holds
-    // them while it shows).
     Group {
         id: translationGroup
         order: 1
@@ -207,7 +175,6 @@ RowLayout {
             onClicked: strip.commentOut()
         }
         Rule {}
-        // E5: legacy DoubtfulTL and AutoMoveTags (EditBox.cpp:248-258).
         IconToolButton {
             objectName: "notConfirmed"
             iconRole: "unconfirmed"
@@ -216,12 +183,11 @@ RowLayout {
             checkable: true
             focusPolicy: Qt.NoFocus
             enabled: strip.editor.editable
-            // SetLine: DoubtfulTL->SetValue(line->IsDoubtful()).
             checked: strip.editor.unconfirmed
             Accessible.checkable: true
             Accessible.checked: checked
             onClicked: {
-                strip.editor.toggleUnconfirmed() // OnDoubtfulTl: the selected Lines
+                strip.editor.toggleUnconfirmed()
                 checked = Qt.binding(() => strip.editor.unconfirmed)
             }
         }
@@ -236,7 +202,7 @@ RowLayout {
             Accessible.checkable: true
             Accessible.checked: checked
             onClicked: {
-                strip.app.setMoveTags(checked) // OnAutoMoveTags: the option, saved at once
+                strip.app.setMoveTags(checked)
                 checked = Qt.binding(() => strip.editor.moveTags)
             }
         }
@@ -254,7 +220,6 @@ RowLayout {
             editor.commentOutOriginal()
     }
 
-    // E4: Text position (legacy Ban, after the colours).
     Group {
         id: alignGroup
         order: 2
@@ -263,14 +228,11 @@ RowLayout {
         AlignmentChoice {
             id: alignment
             editor: strip.editor
-            // TM1: the Original text may be in its own panel, floating or a hidden tab.
             onChosen: strip.shellRoot.focusPanel(strip.editor.translationMode && strip.editor.translationText.length
                                                  ? strip.translated : strip.original, Qt.OtherFocusReason)
         }
     }
 
-    // E2: custom tag buttons. LE5: a button without a tag opens its
-    // popover; the right click its menu.
     Group {
         id: customGroup
         order: 3
@@ -287,7 +249,6 @@ RowLayout {
                 iconRole: modelData.icon
                 focusPolicy: Qt.NoFocus
                 enabled: strip.editor.editable
-                // An icon-only button reads as its tag, as in Settings' list.
                 Accessible.name: modelData.name.length > 0 ? modelData.name : modelData.tag
                 Accessible.description: modelData.tag
                 tip: strip.shellRoot.mappedTip(modelData.name.length > 0 && modelData.icon.length > 0
@@ -307,6 +268,7 @@ RowLayout {
         IconToolButton {
             id: addTagButton
             objectName: "addTagButton"
+            // MUST KILL: stripHidden is read by name in groupWidth to leave the button out
             readonly property bool stripHidden: strip.tagButtons.count >= strip.tagButtons.maximum
             iconRole: "add"
             text: qsTr("Add a tag button")
@@ -320,15 +282,12 @@ RowLayout {
             onSaved: (index, b) => index < 0 ? strip.tagButtons.add(b.name, b.tag, b.type, b.icon)
                                              : strip.tagButtons.edit(index, b.name, b.tag, b.type, b.icon)
         }
-        // LE5: a button's context menu.
         ShellMenu {
             id: tagButtonMenu
             objectName: "tagButtonMenu"
             property Item button: null
             property int index: -1
-            // Left is toward the first button, unless the layout is mirrored.
             readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
-            // At the click, inside the button it is for.
             function openFor(b, i, at) {
                 button = b
                 index = i
@@ -366,12 +325,7 @@ RowLayout {
                 onTriggered: strip.tagButtons.remove(tagButtonMenu.index)
             }
         }
-        // LE3-tags-shown: the hidden-tag view's switch left the strip for
-        // Settings > Editor and GLOBAL_EDITOR_HIDE_TAGS (Subtitles > "Hide
-        // tags in the line editor").
     }
-    // A custom button's click (or its item in More): its tag, or the
-    // popover that gives it one.
     function runTagButton(anchor, index, b, edited) {
         if (b.tag.length === 0)
             tagButtonEditor.openFor(anchor, index, b)
@@ -387,7 +341,7 @@ RowLayout {
         focusPolicy: Qt.NoFocus
         visible: strip.foldable.some(g => strip.isFolded(g))
         onClicked: {
-            // The menu takes the focus: its items act on the field edited now.
+            // The menu takes the focus, so the edited field is read before it opens.
             moreMenu.field = strip.shellRoot.editedField()
             moreMenu.popup(more, 0, more.height)
         }
@@ -401,7 +355,6 @@ RowLayout {
         editor: strip.editor
     }
 
-    // The folded groups' buttons, in the strip's order.
     ShellMenu {
         id: moreMenu
         objectName: "tagStripMoreMenu"
@@ -495,7 +448,7 @@ RowLayout {
             }
         }
         FoldSeparator {
-            id: alignSlot // Text position's submenu goes after it
+            id: alignSlot
             visible: moreMenu.translation && (moreMenu.align || moreMenu.custom)
         }
         FoldSeparator { visible: moreMenu.align && moreMenu.custom }
@@ -525,7 +478,6 @@ RowLayout {
             onTriggered: tagButtonEditor.openFor(more, -1, null)
         }
         onAboutToShow: placeAlignment()
-        // Text position's submenu is in the menu only while folded.
         function placeAlignment() {
             for (let i = 0; i < count; ++i) {
                 if (itemAt(i) && itemAt(i).subMenu === alignMenu) {
@@ -543,7 +495,6 @@ RowLayout {
                 }
             }
         }
-        // The custom buttons' items go before Add.
         function customStart() {
             for (let i = 0; i < count; ++i) {
                 if (itemAt(i) === foldedAdd)
@@ -552,7 +503,6 @@ RowLayout {
             return count
         }
     }
-    // Text position as a submenu of More (moreMenu.placeAlignment).
     ShellMenu {
         id: alignMenu
         objectName: "foldedAlignment"

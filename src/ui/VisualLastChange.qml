@@ -4,12 +4,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// HY1 (#271): Hydra's last change card, over the video's top-right corner.
-// After each change the tool applied it keeps that change's values: a value
-// typed here (Enter) undoes the change's step and does the change again
-// with it, on the same Lines, so the history still has one step for it.
-// Another edit of the Document, an undo, or another tool, tag or change
-// option closes it, as does ✕.
 Rectangle {
     id: card
     objectName: "visualLastChange"
@@ -38,8 +32,7 @@ Rectangle {
     function nameOf(text) {
         return labelNames[text] ?? text
     }
-    // The fields are made again only when the values' names change, not on
-    // each refresh (a pointer move): typed text stays until Enter or Esc.
+    // Repeater rebuilds its delegates for each new array; this string changes only with the names.
     readonly property string shape: (last.values ?? []).map(v => v.name).join("\u0001")
     readonly property var names: shape.length > 0 ? shape.split("\u0001") : []
     function valueNamed(name) {
@@ -49,7 +42,6 @@ Rectangle {
         return { name: name, label: "", group: "", text: "", swatch: "" }
     }
 
-    // The card takes its own clicks: none reaches the video below.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons

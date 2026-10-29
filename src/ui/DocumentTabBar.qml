@@ -4,21 +4,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// P6: legacy Notebook's tab bar, which sat below the workspace; WS4 made it
-// the window's first row under the menu bar (Main.qml). One tab per Document
-// (the protected reference has its own tray). A click shows a tab; the
-// active tab's close mark or a middle click closes a tab through the close
-// review; "+" and a double click on the empty bar add a tab (both write the
-// session, as legacy AddPage(true, true) did). K1: the close mark, the new tab
-// button and the modified mark (legacy's "*" between the history step and the
-// name) are the set's icons.
-//
-// P9: the tab menu's Save, Save all and Close all tabs go to the window
-// (saveRequested, saveAllRequested, closeAllRequested). A tab dragged over
-// another trades places with it (legacy Notebook::OnMouseEvent swaps the two
-// Pages while the left button is down, Notebook.cpp:537-556, and writes the
-// session when the button comes up after a swap, 397-400); a drag shows the
-// tab it started on. The bar scrolls with the wheel; dragging never scrolls it.
 Item {
     id: bar
     objectName: "documentTabBar"
@@ -28,32 +13,23 @@ Item {
     signal saveAllRequested()
     signal closeAllRequested()
 
-    // The tabs stand a little in from the window's left edge and below the
-    // menu bar (WS4).
     readonly property int inset: 4
     implicitHeight: row.implicitHeight + inset
-    // SH2: empty and inert while the Home page shows (no Document open),
-    // whose New the "+" would repeat. The bar keeps its height, so the
-    // docked panels are not resized when the first Document opens.
     readonly property bool shown: !bar.app.home
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
     Accessible.ignored: !shown
 
     TapHandler {
-        // A double click where there is no tab (legacy i == -1).
         enabled: bar.shown
         onDoubleTapped: bar.app.addPage(true)
     }
     TapHandler {
-        // A right click where there is no tab: the tab menu for none (-1).
         enabled: bar.shown
         acceptedButtons: Qt.RightButton
         onTapped: eventPoint => bar.openTabMenu(-1, bar, eventPoint.position.x, eventPoint.position.y)
     }
 
-    // Legacy Notebook::ContextMenu on tab `index` (-1: none), at (x, y) in
-    // `item`; its items are in DocumentTabMenu.qml.
     function openTabMenu(index, item, x, y) {
         tabMenu.openOn(index, item, x, y, firstVisibleTab())
     }
@@ -65,14 +41,13 @@ Item {
         onCloseAllRequested: bar.closeAllRequested()
     }
 
-    // The tabs as a model that moves its rows rather than making them anew,
-    // so a reorder during a drag keeps the dragged pointer's grab.
+    // A ListModel moves rows instead of remaking delegates, so a drag keeps its pointer grab.
     ListModel {
         id: tabModel
     }
     function tabEntry(row) {
         return { tabId: String(row.id), tabLabel: row.label, tabTitle: row.title, tabModified: row.modified,
-                 tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference } // R2
+                 tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference }
     }
     function syncTabs() {
         const rows = bar.app.tabs
@@ -104,7 +79,6 @@ Item {
     }
     Component.onCompleted: syncTabs()
 
-    // Legacy firstVisibleTab: the first tab the scrolled bar shows.
     function firstVisibleTab() {
         for (let i = 0; i < tabRepeater.count; ++i) {
             const tab = tabRepeater.itemAt(i)
@@ -113,9 +87,7 @@ Item {
         }
         return 0
     }
-    // The tab at `x` in the row (-1: none), from the tabs' widths in their
-    // order now (legacy FindTab over tabSizes), so a swap the layout has not
-    // placed yet is already seen.
+    // Widths in order, not x: the RowLayout places a swap only at its next polish.
     function tabAt(x) {
         let left = 0
         for (let i = 0; i < tabRepeater.count; ++i) {
@@ -129,12 +101,10 @@ Item {
         return -1
     }
 
-    // P9: a tab dragged over another trades places with it (the handler is
-    // the bar's own, so it outlives the tab items the new order rebuilds).
     DragHandler {
         id: tabDrag
         objectName: "tabDragHandler"
-        enabled: bar.shown // SH2
+        enabled: bar.shown
         target: null
         yAxis.enabled: false
         acceptedButtons: Qt.LeftButton
@@ -144,7 +114,6 @@ Item {
         }
         onActiveChanged: {
             if (active) {
-                // The press showed the tab in legacy (ChangePage on LeftDown).
                 dragged = tabUnder(centroid.pressPosition.x)
                 if (dragged >= 0)
                     bar.app.selectTab(dragged)
@@ -167,13 +136,13 @@ Item {
         anchors.fill: parent
         anchors.topMargin: bar.inset
         anchors.leftMargin: bar.inset
-        opacity: bar.shown ? 1 : 0 // SH2
+        opacity: bar.shown ? 1 : 0
         enabled: bar.shown
         contentWidth: row.implicitWidth
         clip: true
         flickableDirection: Flickable.HorizontalFlick
         boundsBehavior: Flickable.StopAtBounds
-        interactive: false // a drag reorders tabs (P9); the wheel scrolls
+        interactive: false
 
         WheelHandler {
             orientation: Qt.Vertical
@@ -206,14 +175,9 @@ Item {
                     Accessible.role: Accessible.PageTab
                     Accessible.name: tabTitle
                     Accessible.checked: tabCurrent
-                    // R2: the tab shown as the protected reference says so.
                     Accessible.description: [tabModified ? qsTr("Modified") : "",
                                              tabReference ? qsTr("Protected reference") : ""].filter(s => s.length > 0).join(", ")
-                    // "<history step>*<name>" while modified: the modified
-                    // mark in place of the "*", then the name; the step (a
-                    // bare number on the tab read as a counter) is in the
-                    // tooltip. Every tab keeps the close button's slot, so
-                    // a tab's width does not change as it becomes current.
+                    // MUST KILL: tabLabel packs "<history step>*<name>" and is parsed back here
                     readonly property int mark: tabModified ? tabLabel.indexOf("*") : -1
                     readonly property string stepText: mark >= 0 ? tabLabel.slice(0, mark) : ""
                     implicitHeight: label.implicitHeight + 10
@@ -240,8 +204,6 @@ Item {
                         Label {
                             id: label
                             text: tab.mark >= 0 ? tab.text.slice(tab.mark + 1) : tab.text
-                            // Not bold when current: the tab's surface and
-                            // border mark it, and a bold name widened the tab.
                             leftPadding: tab.mark >= 0 ? 0 : 4
                         }
                         IconToolButton {
@@ -266,7 +228,6 @@ Item {
                         onTapped: bar.closeRequested(tab.index)
                     }
                     TapHandler {
-                        // The tab's own: the bar's handler does not see it.
                         acceptedButtons: Qt.RightButton
                         gesturePolicy: TapHandler.WithinBounds
                         onTapped: eventPoint => bar.openTabMenu(tab.index, tab, eventPoint.position.x, eventPoint.position.y)

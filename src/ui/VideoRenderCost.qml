@@ -1,15 +1,10 @@
 pragma Translator: "HikariSub.Video"
 import QtQuick
 
-// KE1-render-cost-overlay: what drawing the shown frame's subtitles cost
-// (VideoPresenter.renderCost), in the picture's top left corner. White text
-// with a black outline, as the other marks drawn on the video, so it reads on
-// any picture in every theme; the pointer goes through to the view.
 Item {
     id: overlay
     objectName: "videoRenderCost"
     property var cost: ({})
-    // KE2: below the Template editor's preview badge when both show.
     property real textTop: 8
     enabled: false
     readonly property bool drawn: cost.milliseconds !== undefined

@@ -1,11 +1,3 @@
-// KA7: the Karaoke check window (Subtitles > Check karaoke,
-// GLOBAL_CHECK_KARAOKE), modeless like the Spellchecker. It lists the editing
-// target's karaoke problems (Application::checkKaraoke): unclosed syllables,
-// syllables that don't add up to the Line's duration, zero-length syllables
-// and syllables outside the Line, the first thousand and how many more.
-// Choosing a row selects its Line; Re-check reads the Document again. A
-// window of its own on DG1's dialog frame (PK1: no in-window popups),
-// resizable, kept where it was left.
 pragma Translator: "HikariSub.Karaoke"
 import QtQuick
 import QtQuick.Controls
@@ -34,10 +26,6 @@ DialogWindow {
         recheck()
         problemList.forceActiveFocus()
     }
-    // A row's Line, selected as a click in the Grid selects it. When the
-    // editing target is another Document now, the Line has gone since the
-    // check, or the editor keeps its Line (a draft it cannot commit, which
-    // it reports), the window checks again instead.
     function choose(index) {
         if (index < 0 || index >= problems.length)
             return
@@ -68,8 +56,7 @@ DialogWindow {
             keyNavigationEnabled: true
             Accessible.role: Accessible.List
             Accessible.name: qsTr("Karaoke problems")
-            // The arrow keys move through the rows and select each Line (a
-            // click chooses its row itself: the window need not be active).
+            // MUST KILL: clicking stops onCurrentIndexChanged choosing the row a click chooses itself
             property bool clicking: false
             onCurrentIndexChanged: if (activeFocus && !clicking) dialog.choose(currentIndex)
             header: RowLayout {
@@ -102,7 +89,6 @@ DialogWindow {
                     dialog.choose(index)
                 }
             }
-            // (Esc closes the window, as the frame has it.)
             Keys.onReturnPressed: dialog.choose(currentIndex)
             Keys.onEnterPressed: dialog.choose(currentIndex)
         }

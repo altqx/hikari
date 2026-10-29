@@ -1,8 +1,3 @@
-// SY2: a grid of colour swatches (the colour popover's palette and recent
-// colours). One tab stop: the arrow keys move the current swatch, Space
-// picks it, as a click does, and Enter picks it and goes on to the
-// container (the popover keeps the colour). Each colour is {r, g, b, a} with a the ASS
-// alpha; `names` gives each its accessible name.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Colours"
 import QtQuick
@@ -37,7 +32,6 @@ Item {
         if (next >= 0 && next < colours.length)
             current = next
     }
-    // Before the application's arrow shortcuts (frame steps).
     Keys.onShortcutOverride: event => event.accepted = [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down, Qt.Key_Space,
                                                         Qt.Key_Return, Qt.Key_Enter].includes(event.key)
     Keys.onLeftPressed: move(-1)
@@ -68,8 +62,6 @@ Item {
             Accessible.focusable: true
             Accessible.focused: grid.activeFocus && grid.current === swatch.index
             Accessible.onPressAction: grid.pick(swatch.index)
-            // The current swatch while the grid has the keyboard: K2's ring,
-            // 1 wide just outside it in the focus role (FocusRing.qml).
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: -1

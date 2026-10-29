@@ -1,22 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.MainWindow"
-// PK1 (#301): the clash review, which replaces the chained "Yes to all /
-// Yes / No / Cancel" questions of a batch (style copy and load, catalogs,
-// shape names): a resizable window on DG1's frame, modal to its opener,
-// with every clash of the batch on a row of its own and its own action,
-// Replace, Rename (to a free name it suggests, which can be edited) or
-// Skip, and "All" to set every row. Clashes that are the same on both
-// sides are left out (the caller counts them in the detail). The accept
-// button says what will be written.
-//
-// review(options, done): title, text, detail, rows ([{name, occurrence,
-// difference, suggestion}]: occurrence, which of the Styles of that name
-// sent the row is), canRename (default true), canMerge (PU3: a Merge action
-// first, for font catalogs; default false), action (each row's first,
-// default "replace"), nameHeading and differenceHeading (the columns'
-// headings, default "Name" and "Difference"), acceptText(count of rows
-// written, added) and added;
-// done([{name, occurrence, action, newName}]), or done(null) when cancelled.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -34,20 +17,14 @@ DialogWindow {
     property bool canMerge: false
     property string nameHeading: qsTr("Name")
     property string differenceHeading: qsTr("Difference")
-    // Each row's action ("replace", "rename", "skip") and new name.
     property var actions: []
     property var names: []
     property int added: 0
     property var acceptText: null
-    // nameTaken(name, row): true when a rename's name is taken (the
-    // review's owner knows which names are); none: only an empty name stops it.
     property var nameTaken: null
-    // What a rename's name may hold: by default a style name, which has
-    // no comma (legacy excludes it; the style editor's field refuses it).
     property var namePattern: /[^,]*/
     property var done: null
     readonly property int written: added + actions.filter(a => a !== "skip").length
-    // The actions offered, in order, with their buttons' names.
     readonly property var kinds: (canMerge ? ["merge"] : []).concat(canRename ? ["replace", "rename", "skip"] : ["replace", "skip"])
     function choicesFor(prefix) {
         const text = { merge: qsTr("Merge"), replace: qsTr("Replace"), rename: qsTr("Rename"), skip: qsTr("Skip") }
@@ -106,7 +83,6 @@ DialogWindow {
         const name = (names[i] || "").trim()
         return actions[i] === "rename" && name.length > 0 && nameTaken !== null && nameTaken(name, i) === true
     }
-    // A rename needs a name that is not empty and not taken.
     readonly property bool complete: actions.every((a, i) => a !== "rename" || (names[i].trim().length > 0 && !taken(i)))
 
     Label {
@@ -223,7 +199,7 @@ DialogWindow {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 120
                         onTextEdited: review.setName(clash.index, text)
-                        // The field takes Enter itself: Enter writes, as the window's default.
+                        // The field takes Enter itself, so it does what the window's default button would.
                         onAccepted: if (review.complete) review.finish(true)
                     }
                     Label {

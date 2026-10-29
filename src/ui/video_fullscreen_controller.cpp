@@ -27,12 +27,11 @@ application::MonitorRect rectOf(const QRect &r)
 
 bool positionsKnown()
 {
-    // Wayland clients do not know where their windows are; the compositor
-    // says which outputs a surface is on (QWindow::screen).
+    // Wayland clients do not know where their windows are.
     return !QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
 }
 
-} // namespace
+}
 
 VideoFullscreenController::VideoFullscreenController(VideoController &video, VideoViewController &view,
                                                      SettingsStore &settings, QObject *parent)
@@ -47,19 +46,16 @@ VideoFullscreenController::VideoFullscreenController(VideoController &video, Vid
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
         if (id == QLatin1String("video.fullscreenBar")) {
             updateBar();
-            emit panelChanged(); // the mode itself
+            emit panelChanged();
         }
     });
     connect(&m_video, &VideoController::changed, this, [this] {
-        // The video went (Unload video, another editing target): the
-        // fullscreen window has nothing left to show.
         if (m_active && !m_video.hasVideo())
             leave();
         if (!m_pendingPath.isEmpty() && m_video.openRequest() != m_pendingRequest) {
-            m_pendingPath.clear(); // another open, or none made
+            m_pendingPath.clear();
         } else if (!m_pendingPath.isEmpty()) {
             if (m_video.hasVideo()) {
-                // The video shown before the open started stays until it does.
                 const bool same = QFileInfo(QString::fromStdString(m_video.session().path())) == QFileInfo(m_pendingPath);
                 if (same || m_pendingOpening)
                     m_pendingPath.clear();
@@ -68,10 +64,10 @@ VideoFullscreenController::VideoFullscreenController(VideoController &video, Vid
             } else if (m_video.indexing()) {
                 m_pendingOpening = true;
             } else if (m_pendingOpening) {
-                m_pendingPath.clear(); // the open failed or was cancelled
+                m_pendingPath.clear();
             }
         }
-        updateBar(); // played or paused
+        updateBar();
         emit progressChanged();
     });
 }
@@ -88,9 +84,6 @@ void VideoFullscreenController::setWindows(QQuickWindow *fullscreen, QWindow *ma
 
 bool VideoFullscreenController::eventFilter(QObject *watched, QEvent *event)
 {
-    // FS1: Qt Quick's hover for a still pointer repeats its point, so a move
-    // is a new point; one that left the window (another monitor) and comes
-    // back where it left is a move too.
     if (watched == m_window && event->type() == QEvent::Leave)
         m_pointer.reset();
     return QObject::eventFilter(watched, event);
@@ -103,13 +96,7 @@ QQuickWindow *VideoFullscreenController::window() const
 
 QList<QScreen *> VideoFullscreenController::monitors()
 {
-    // GetMonitorRect1's list: on Windows MonitorEnumProc1's, the primary
-    // first, then the others in EnumDisplayMonitors' order; on Linux
-    // wxDisplay's. Qt's screens are the primary first on every platform
-    // (V5-monitor-order): QGuiApplication::primaryScreen is by definition the
-    // first of QGuiApplication::screens (qguiapplication.cpp), so a primary
-    // change puts the new primary at the front of that list. The others are
-    // in Qt's order (on Wayland the outputs' order, as wxDisplay's).
+    // QGuiApplication::screens() lists the primary screen first.
     return QGuiApplication::screens();
 }
 
@@ -125,7 +112,6 @@ int VideoFullscreenController::monitorFor(int monitor) const
     for (QScreen *s : screens)
         rects.push_back(rectOf(s->geometry()));
     if (monitor == 0 && screens.size() > 1 && m_main && !positionsKnown()) {
-        // The program's centre is unknown here: the monitor the main window is on.
         const int i = static_cast<int>(screens.indexOf(m_main->screen()));
         return i >= 0 ? i : 0;
     }
@@ -142,7 +128,7 @@ void VideoFullscreenController::setBarMode(int mode)
 {
     const auto m = application::fullscreenBarMode(mode);
     if (static_cast<int>(m) != barMode())
-        m_settings.set("video.fullscreenBar", static_cast<int>(m)); // applied through the store's change
+        m_settings.set("video.fullscreenBar", static_cast<int>(m));
 }
 
 bool VideoFullscreenController::pinned() const
@@ -160,7 +146,7 @@ void VideoFullscreenController::setMenuOpen(bool open)
     if (m_menuOpen == open)
         return;
     m_menuOpen = open;
-    if (!open && m_active) { // the bar stays a while after the menu goes
+    if (!open && m_active) {
         m_awake = true;
         m_idle.start();
     }
@@ -219,7 +205,6 @@ QString VideoFullscreenController::videoName() const
 {
     if (!m_video.hasVideo())
         return {};
-    // One row in the strip, whatever the file system allows in a name.
     const QString name = QFileInfo(QString::fromStdString(m_video.session().path())).fileName();
     return QString::fromStdString(application::fullscreenOneRow(name.toStdString()));
 }
@@ -247,19 +232,12 @@ void VideoFullscreenController::enterWhenShown(const QString &path)
 
 void VideoFullscreenController::place(QScreen *screen)
 {
-    // Fullscreen on the chosen output: X11 and Windows place the window on
-    // the screen's rectangle, Wayland asks the compositor for that output
-    // (xdg_toplevel.set_fullscreen with the window's screen).
     if (m_window->isVisible())
         m_window->hide();
     const std::uint64_t placing = ++m_placing;
     QScreen *mainScreen = m_main ? m_main->screen() : nullptr;
     if (!positionsKnown() && mainScreen && mainScreen != screen) {
-        // A Wayland compositor need not give the keyboard to a window mapped
-        // on another output than the focused one (sway gives it only to new
-        // windows of the focused workspace). Mapped first on the main
-        // window's output, where it takes the keyboard, then made fullscreen
-        // on the chosen output, which moves it there with the keyboard.
+        // Wayland compositors (sway) give the keyboard only to windows mapped on the focused output: map there first.
         m_window->setScreen(mainScreen);
         m_window->showNormal();
         m_window->requestActivate();
@@ -281,9 +259,7 @@ void VideoFullscreenController::place(QScreen *screen)
     m_window->showFullScreen();
     m_window->raise();
     m_window->requestActivate();
-    // On Wayland the request made before the surface is mapped can go
-    // unanswered when the window opens on another output than the focused
-    // one; asked again once its first frame is shown.
+    // On Wayland an activation request made before the surface is mapped can go unanswered.
     auto once = std::make_shared<QMetaObject::Connection>();
     *once = connect(m_window, &QQuickWindow::frameSwapped, this, [this, once] {
         disconnect(*once);
@@ -301,12 +277,9 @@ bool VideoFullscreenController::enter(int monitor)
     if (index < 0 || index >= screens.size())
         return false;
     if (!m_active) {
-        // What had the keyboard, to give it back on leaving.
         m_focusWindow = QGuiApplication::focusWindow();
         auto *quick = qobject_cast<QQuickWindow *>(m_focusWindow.data());
         m_focusItem = quick ? quick->activeFocusItem() : nullptr;
-        // A menu's item (the context menu's Full screen and monitors) goes
-        // with its menu: the fallback takes the keyboard back.
         for (QQuickItem *i = m_focusItem; i; i = i->parentItem())
             if (i->inherits("QQuickPopupItem")) {
                 m_focusItem = nullptr;
@@ -315,9 +288,7 @@ bool VideoFullscreenController::enter(int monitor)
     }
     m_active = true;
     m_monitor = index;
-    // `if (monitor && tab->editor)`: the argument, not where it lands.
     m_onAnotherMonitor = monitor != 0;
-    // FS1: the bar shows on entering, and hides after a while in Auto.
     m_awake = true;
     m_idle.start();
     m_view.setFullscreen(true);
@@ -333,8 +304,6 @@ bool VideoFullscreenController::leave()
 {
     if (!m_active)
         return false;
-    // `if (GetState() == Playing){ if (tab->editor){ Pause(); } ...}`: the
-    // editor is always on in the rewrite.
     if (m_video.playing())
         m_video.pause();
     m_active = false;
@@ -363,12 +332,7 @@ void VideoFullscreenController::hideWindow()
         m_window->hide();
         return;
     }
-    // Wayland, on another output than the main window's: hidden there, the
-    // keyboard stays on that output, and a compositor need not let the main
-    // window take it back (sway marks it urgent). Carried back first, made
-    // fullscreen on the main window's output (out of fullscreen, then in,
-    // each once the compositor's answer resized the window), then hidden,
-    // the keyboard falls to the main window. At most a second for each.
+    // Wayland: hidden on another output, the keyboard stays there (sway marks the main window urgent), so carry it back first.
     QPointer<QQuickWindow> w = m_window;
     auto step = std::make_shared<int>(0);
     auto resized = std::make_shared<QMetaObject::Connection>();
@@ -410,7 +374,7 @@ void VideoFullscreenController::restoreFocus()
         w->requestActivate();
         if (item && item->isVisible())
             item->forceActiveFocus(Qt::OtherFocusReason);
-        else if (item) // a dock opened again shows its panel a moment later
+        else if (item)
             QTimer::singleShot(0, item, [item] { item->forceActiveFocus(Qt::OtherFocusReason); });
     }
     m_focusWindow = nullptr;
@@ -423,7 +387,6 @@ QVariantMap VideoFullscreenController::progressBar(qreal clientWidth, qreal text
     const auto bar = application::fullscreenProgressBar(static_cast<int>(clientWidth), static_cast<int>(textWidth),
                                                         static_cast<int>(textHeight), session.tellMs(),
                                                         session.durationMs());
-    // Each line's pixels from its first to its last point.
     auto rect = [](int l, int t, int r, int b) { return QRectF(l, t, r - l + 1, b - t + 1); };
     return {{QStringLiteral("frame"), rect(bar.frameLeft, bar.frameTop, bar.frameRight, bar.frameBottom)},
             {QStringLiteral("inner"), rect(bar.innerLeft, bar.innerTop, bar.innerRight, bar.innerBottom)},
@@ -433,4 +396,4 @@ QVariantMap VideoFullscreenController::progressBar(qreal clientWidth, qreal text
                                             bar.textBottom - bar.textTop)}};
 }
 
-} // namespace hikari::ui
+}

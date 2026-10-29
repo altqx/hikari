@@ -1,14 +1,3 @@
-// TP1 (#274): the Styles panel, the editing target's Styles beside the video
-// (owner-approved mockup 2026-10-22). Each row draws a sample in the Style's
-// font and colours (PV1 #398: the preview text, styles.previewText), with
-// its name, font, size and how many Lines use it; the
-// current Line's Style is marked. Enter or a double click applies the chosen
-// Style to the selected Lines, as the Line editor's Style choice does (one
-// undo step). Typing filters. The header's toolbar (Docking.setPanelHeader)
-// holds Apply, New, Edit, Duplicate, Delete and Style manager; the row menu
-// adds Select lines with this style and Copy to the catalog. Catalogs and the
-// Style editor stay in the Style manager window, which New, Edit, Duplicate
-// and Copy to the catalog open.
 pragma Translator: "HikariSub.Styles"
 import QtQuick
 import QtQuick.Controls
@@ -17,24 +6,20 @@ import Hikari.Ui
 
 Item {
     id: panel
-    required property var styles  // StyleManagerController
-    required property var editor   // LineEditorController: the current line's style, chooseStyle
-    required property var app      // selectLinesWithStyle
-    required property var manager  // the Style manager window (StyleManager.qml)
-    required property var catalogs // FontCatalogsController: the samples' text (previewText)
-    // The header's toolbar; its dock reads the rows only while it is open.
+    required property var styles
+    required property var editor
+    required property var app
+    required property var manager
+    required property var catalogs
     readonly property Item toolbar: tools
     property bool live: false
 
-    // Each row carries `row`, its place in the Document: a file may hold two
-    // Styles of one name, and the commands act on the one chosen.
+    // A file may hold two Styles of one name, so a row also carries its place.
     property var rows: []
     readonly property var shownRows: {
         const text = filterField.text.trim().toLocaleLowerCase()
         return text.length === 0 ? rows : rows.filter(r => r.name.toLocaleLowerCase().includes(text))
     }
-    // The chosen Style, kept by name (and row) while the list is read again;
-    // the commands act on it only while the filter shows it.
     property string chosen: ""
     property int chosenAt: -1
     readonly property var chosenRow: shownRows.find(r => r.row === chosenAt) ?? null
@@ -42,21 +27,13 @@ Item {
         if (rows[chosenAt]?.name !== chosen)
             chosenAt = rows.findIndex(r => r.name === chosen)
     }
-    // A Style named "" is listed but not applied (the Line editor's Style
-    // choice refuses it too).
     readonly property bool canApply: chosenRow !== null && chosen.length > 0 && editor.editable && editor.assFields
-    // While the Style manager holds an edit not yet applied, nothing here
-    // starts another or changes the list under it.
     readonly property bool canChange: !manager.editing
     readonly property bool canChangeChosen: chosenRow !== null && canChange
     readonly property int smallSize: Math.max(9, Math.round(Qt.application.font.pointSize * 0.9))
 
-    // The list moves its current row while its model is replaced (to the
-    // first row); the choice is made from the new rows before that, and the
-    // move is not taken as one.
+    // ListView resets currentIndex when its model is replaced; that move is not a choice.
     property bool reloading: false
-    // `retargeted`: another Document's rows; in the same one a chosen row
-    // whose name went (renamed in the Style manager) stays chosen.
     function reload(retargeted) {
         if (!live)
             return
@@ -148,7 +125,6 @@ Item {
             Accessible.role: Accessible.List
             Accessible.name: qsTr("Styles")
             ScrollBar.vertical: ScrollBar { policy: list.contentHeight > list.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
-            // The ring shows while the keyboard has the list (the Grid's row rule).
             property bool keyboardFocus: false
             onActiveFocusChanged: {
                 if (!activeFocus)
@@ -185,7 +161,6 @@ Item {
                     event.accepted = true
                 } else if (event.text.length > 0 && event.text.trim().length > 0
                            && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
-                    // Typing filters.
                     filterField.text += event.text
                     filterField.forceActiveFocus(Qt.ShortcutFocusReason)
                     event.accepted = true
@@ -212,7 +187,7 @@ Item {
                     anchors.fill: parent
                     color: row.current ? Theme.select : hover.hovered ? Theme.raised : "transparent"
                 }
-                Rectangle { // the chosen row's leading marker
+                Rectangle {
                     visible: row.current
                     width: 3
                     height: parent.height
@@ -224,7 +199,7 @@ Item {
                     height: 1
                     color: Theme.highContrast ? Theme.line : Theme.raised
                 }
-                Rectangle { // keyboard focus: 1 wide, inside the row, in the text colour
+                Rectangle {
                     anchors.fill: parent
                     color: "transparent"
                     border.width: 1
@@ -256,10 +231,6 @@ Item {
                     anchors.leftMargin: 6
                     anchors.rightMargin: 10
                     spacing: 8
-                    // The Style's look: the preview text in its font, primary
-                    // and outline colours, over a checkered ground (as the
-                    // Style editor's preview), so light and dark Styles both
-                    // show; a long text shrinks to the swatch.
                     Rectangle {
                         id: sample
                         objectName: "stylesSample" + row.index
@@ -307,7 +278,6 @@ Item {
                         id: rowText
                         spacing: 0
                         Layout.fillWidth: true
-                        // The file's names, never markup (no <img> fetched).
                         Label {
                             objectName: "stylesName" + row.index
                             text: row.modelData.name
@@ -347,10 +317,6 @@ Item {
         }
     }
 
-    // The header's toolbar (MuseScore's toolbar slot, as the Original text
-    // panel's): icon-only, their names on hover, taking no focus. A header
-    // narrower than the buttons shows one "More" button whose menu holds
-    // them in the same order. Until the header takes it, it stays out of sight.
     Item {
         id: tools
         objectName: "stylesTools"
@@ -470,12 +436,11 @@ Item {
         }
     }
 
-    // The row menu (right click, the Menu key, Shift+F10).
     ShellMenu {
         id: rowMenu
         objectName: "stylesRowMenu"
         property string name: ""
-        property int row: -1 // its place in the Document
+        property int row: -1
         function show(entry, item, x, y) {
             rowMenu.name = entry.name
             rowMenu.row = entry.row
