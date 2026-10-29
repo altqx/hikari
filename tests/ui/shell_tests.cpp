@@ -6306,7 +6306,7 @@ private slots:
             walk(menu, name, 0);
         }
         QFile file(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tests/ui/menu_bar.txt"));
-        QVERIFY(file.open(QIODevice::ReadOnly));
+        QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text)); // a Windows checkout's CRLF
         const QStringList listed = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
         if (shown != listed) {
             QFile actual(QDir::current().filePath(QStringLiteral("menu_bar.actual.txt")));
