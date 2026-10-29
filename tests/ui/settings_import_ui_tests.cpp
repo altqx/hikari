@@ -12,6 +12,7 @@
 #include "hikari/app/settings_import_controller.h"
 #include "hikari/app/settings_import_store.h"
 #include "hikari/application/hotkeys.h"
+#include "list_files.h"
 
 #include "settings_store.h"
 
@@ -54,6 +55,36 @@ constexpr char kLegacyRules[] = "#HikariSub rules file\r\n1\r\nTypo\fteh\fthe\f0
 QByteArray rulesToml(const QByteArray &legacy)
 {
     return QByteArray::fromStdString(app::legacyRulesToml(legacy));
+}
+
+// The import generations as the version before wrote them: each
+// rules.toml as legacy's Rules.txt it converts from (one of `legacy`).
+// The number rewritten, -1 when one is not a conversion of them.
+int rewriteGenerationsWithRulesTxt(const QString &folder, const QList<QByteArray> &legacy)
+{
+    const QDir generations(folder + QStringLiteral("/Import/generations"));
+    int rewritten = 0;
+    for (const QString &name : generations.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const QString dir = generations.filePath(name);
+        QJsonObject o = QJsonDocument::fromJson(readFile(dir + QStringLiteral("/profile.json"))).object();
+        for (const QString part : {QStringLiteral("profile"), QStringLiteral("base")}) {
+            QJsonArray files = o.value(part + QStringLiteral("Files")).toArray();
+            for (qsizetype i = 0; i < files.size(); ++i) {
+                if (files[i].toString() != QLatin1String("rules.toml"))
+                    continue;
+                const QString from = dir + QLatin1Char('/') + part + QStringLiteral("/rules.toml");
+                const auto it = std::ranges::find_if(legacy, [&](const QByteArray &l) { return rulesToml(l) == readFile(from); });
+                if (it == legacy.end() || !QFile::remove(from))
+                    return -1;
+                writeFile(dir + QLatin1Char('/') + part + QStringLiteral("/Rules.txt"), *it);
+                files[i] = QStringLiteral("Rules.txt");
+                ++rewritten;
+            }
+            o[part + QStringLiteral("Files")] = files;
+        }
+        writeFile(dir + QStringLiteral("/profile.json"), QJsonDocument(o).toJson());
+    }
+    return rewritten;
 }
 
 QString hashOf(const QByteArray &bytes)
@@ -647,31 +678,7 @@ private slots:
             QVERIFY(s.store->recover());
         }
         QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(mine));
-        // The generations as the version before wrote them.
-        const QDir generations(folder.filePath(QStringLiteral("Import/generations")));
-        int rewritten = 0;
-        for (const QString &name : generations.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-            const QString dir = generations.filePath(name);
-            QJsonObject o = QJsonDocument::fromJson(readFile(dir + QStringLiteral("/profile.json"))).object();
-            for (const QString part : {QStringLiteral("profile"), QStringLiteral("base")}) {
-                QJsonArray files = o.value(part + QStringLiteral("Files")).toArray();
-                for (qsizetype i = 0; i < files.size(); ++i) {
-                    if (files[i].toString() != QLatin1String("rules.toml"))
-                        continue;
-                    const QString from = dir + QLatin1Char('/') + part + QStringLiteral("/rules.toml");
-                    const QByteArray toml = readFile(from);
-                    QVERIFY(toml == rulesToml(kLegacyRules) || toml == rulesToml(mine));
-                    QVERIFY(QFile::remove(from));
-                    writeFile(dir + QLatin1Char('/') + part + QStringLiteral("/Rules.txt"),
-                              toml == rulesToml(mine) ? mine : QByteArray(kLegacyRules));
-                    files[i] = QStringLiteral("Rules.txt");
-                    ++rewritten;
-                }
-                o[part + QStringLiteral("Files")] = files;
-            }
-            writeFile(dir + QStringLiteral("/profile.json"), QJsonDocument(o).toJson());
-        }
-        QVERIFY(rewritten >= 2);
+        QVERIFY(rewriteGenerationsWithRulesTxt(folder.path(), {kLegacyRules, mine}) >= 2);
         {
             Session s(folder.path());
             QCOMPARE(s.store->editsSinceActivation(), QStringList());
@@ -681,6 +688,41 @@ private slots:
         QVERIFY(back.store->recover());
         QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
         QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+    }
+
+    // CF2: an import staged by the version before and not taken effect yet,
+    // over the live Rules.txt. The start converts the rules before the
+    // import takes effect (Application::convertRules), so the import's
+    // rules are not taken for an edit since and lost.
+    void importStagedBeforeRulesTomlTakesEffectOverRulesTxt()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        const QByteArray mine = "#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n";
+        writeFile(folder.filePath(QStringLiteral("rules.toml")), rulesToml(mine));
+        {
+            Session s(folder.path());
+            const Review r = review(*s.store, legacy.dir.path());
+            auto chosen = si::proposedRows(r.plan);
+            chosen.insert("collection:rules.toml");
+            QCOMPARE(s.store->activate(r.plan, chosen, r.snapshot, r.revision), SettingsImportStore::Result::Activated);
+            QVERIFY(s.store->pending());
+        }
+        QVERIFY(rewriteGenerationsWithRulesTxt(folder.path(), {kLegacyRules, mine}) >= 2);
+        QVERIFY(QFile::remove(folder.filePath(QStringLiteral("rules.toml"))));
+        writeFile(folder.filePath(QStringLiteral("Rules.txt")), mine);
+        Session next(folder.path());
+        auto rules = ui::ListFile::make(folder.filePath(QStringLiteral("rules.toml")),
+                                        folder.filePath(QStringLiteral("Rules.txt")), ui::kRulesFormat,
+                                        [](const std::filesystem::path &from) -> std::optional<toml::array> {
+                                            if (const auto read = app::readLegacyRulesFile(from))
+                                                return ui::rulesToToml(read->rules);
+                                            return std::nullopt;
+                                        });
+        rules->convert();
+        QVERIFY(next.store->recover());
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt.old"))), mine);
     }
 
     void staleSourcesAndDestinationsAreRefused()

@@ -1538,6 +1538,7 @@ private:
     void reportSettingsFiles();
     // CF2 (#489): the user's lists converted from their legacy files at the
     // start (a Log line, or a notice for one that did not read).
+    void convertRules();
     void convertListFiles();
     // Modification time of each Document's file when last read or written,
     // and the Documents whose removal was already noticed.

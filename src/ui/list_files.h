@@ -118,9 +118,10 @@ public:
     // write tries again). A legacy file that cannot be read is not, and the
     // list is not written this session (so the next start tries again).
     void convert();
-    // The file's items (a list waiting for the lock is this one's): nothing
-    // when there is none, or when it (or the legacy file) did not read: the
-    // list's defaults.
+    // The file's items (a list waiting for the lock is this one's, and a
+    // conversion waiting for it reads the legacy file): nothing when there
+    // is none, or when it (or the legacy file) did not read: the list's
+    // defaults.
     std::optional<toml::array> read();
     // Writes `items` over the file (its unknown keys kept).
     enum class Write { Written, Waiting, Failed };
@@ -148,6 +149,8 @@ private:
     // The conversion's items when their file could not be written: the
     // next write converts.
     std::optional<toml::array> m_converted;
+    // The conversion waited for another HikariSub's lock.
+    bool m_deferred = false;
     bool m_writable = true;
     bool m_retryQueued = false;
     bool m_reportedUnreadable = false;

@@ -753,6 +753,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_importStore->rendererInstalled = [this](std::string_view name) {
             return std::ranges::contains(m_renderer.providers(), name);
         };
+        // CF2: Rules.txt is rules.toml before an import staged by an earlier
+        // version (its rules converted on reading) takes effect over it.
+        convertRules();
         m_importStore->recover();
     }
     m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
@@ -4466,12 +4469,8 @@ std::vector<application::ReplacerRule> &Application::misspellRuleList()
     return *m_misspellRules;
 }
 
-void Application::convertListFiles()
+void Application::convertRules()
 {
-    m_fontCatalogs->convertFiles();
-    // Without a settings file (tests) the lists are kept in memory.
-    if (m_settingsFile.isEmpty())
-        return;
     const QString folder = QFileInfo(m_settingsFile).absolutePath();
     // F4: Rules.txt as FillRulesList read it (readLegacyRules). A rule it
     // cannot read whole is kept as far as it got, and named in the Log.
@@ -4488,6 +4487,17 @@ void Application::convertListFiles()
             return ui::rulesToToml(read->rules);
         },
         listFileReport(*m_log));
+    m_rulesFile->convert();
+}
+
+void Application::convertListFiles()
+{
+    m_fontCatalogs->convertFiles();
+    // Without a settings file (tests) the lists are kept in memory; the
+    // rules were converted with the settings import (convertRules()).
+    if (m_settingsFile.isEmpty())
+        return;
+    const QString folder = QFileInfo(m_settingsFile).absolutePath();
     // T5: the drawing's shape presets; T6: the all-tags tool's definitions.
     auto shapes = ui::ListFile::make(folder + QStringLiteral("/shapes.toml"), folder + QStringLiteral("/ShapesSettings.txt"),
                                      ui::kShapesFormat,
@@ -4505,7 +4515,7 @@ void Application::convertListFiles()
                                        return std::nullopt;
                                    },
                                    listFileReport(*m_log));
-    for (const auto &file : {m_rulesFile, shapes, tags})
+    for (const auto &file : {shapes, tags})
         file->convert();
     m_visualTools->setShapesFile(std::move(shapes));
     m_visualTools->setAllTagsFile(std::move(tags));

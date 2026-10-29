@@ -517,15 +517,19 @@ std::unique_ptr<QLockFile> ListFile::lockFolder() const
 
 void ListFile::convert()
 {
+    m_deferred = false;
     if (m_legacy.isEmpty() || m_converted || QFileInfo::exists(m_path) || !QFileInfo::exists(m_legacy))
         return;
     // Two HikariSubs starting at once convert it once.
-    if (const auto lock = lockFolder())
+    const auto lock = lockFolder();
+    m_deferred = !lock;
+    if (lock)
         convertLocked();
 }
 
 void ListFile::convertLocked()
 {
+    m_deferred = false;
     if (m_legacy.isEmpty() || m_converted)
         return;
     std::optional<toml::array> items;
@@ -564,6 +568,9 @@ std::optional<toml::array> ListFile::read()
         return *m_pending;
     if (m_converted)
         return *m_converted;
+    // The conversion waits for the lock: the legacy file's items meanwhile.
+    if (m_deferred)
+        return m_convert ? m_convert(pathOf(m_legacy)) : std::nullopt;
     toml::table table;
     const auto load =
         application::loadOwnedFile(pathOf(m_path), [&](std::string_view text) { return parse(text, table); });

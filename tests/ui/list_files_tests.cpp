@@ -455,8 +455,9 @@ private slots:
     }
 
     // The conversion is under the folder's lock, so two HikariSubs starting
-    // at once convert once: while another holds it, nothing moves, and the
-    // next read converts.
+    // at once convert once: while another holds it, nothing moves and the
+    // legacy file's items are read; the next read converts, and a list
+    // written meanwhile goes over the conversion.
     void conversionWaitsForTheLock_data() { eachList_data(); }
     void conversionWaitsForTheLock()
     {
@@ -470,7 +471,9 @@ private slots:
         auto file = open(dir, list, &reports);
         QLockFile other(dir.filePath(QStringLiteral(".settings.lock")));
         QVERIFY(other.tryLock(0));
-        QVERIFY(!file->read());
+        const auto waiting = file->read();
+        QVERIFY(waiting);
+        QVERIFY(sameAsLegacy(Kind(kind), legacy, *waiting));
         QVERIFY(QFileInfo::exists(legacy));
         QVERIFY(!QFileInfo::exists(legacy + QStringLiteral(".old")));
         QVERIFY(!QFileInfo::exists(dir.filePath(QLatin1String(list.file))));
@@ -481,6 +484,22 @@ private slots:
         QVERIFY(sameAsLegacy(Kind(kind), legacy + QStringLiteral(".old"), *items));
         QCOMPARE(reports.converted.size(), 1);
         QVERIFY(reports.problems.empty());
+
+        // Written while the conversion waits: converted first, then this list.
+        QTemporaryDir later;
+        QVERIFY(later.isValid());
+        const QString laterLegacy = later.filePath(QLatin1String(list.legacy));
+        QVERIFY(QFile::copy(list.fixture, laterLegacy));
+        auto edits = open(later, list);
+        QLockFile held(later.filePath(QStringLiteral(".settings.lock")));
+        QVERIFY(held.tryLock(0));
+        const toml::array one = edited(Kind(kind), *edits->read());
+        QCOMPARE(edits->write(one), ListFile::Write::Waiting);
+        held.unlock();
+        QVERIFY(edits->flush());
+        QCOMPARE(readAll(laterLegacy + QStringLiteral(".old")), readAll(list.fixture));
+        QVERIFY(!QFileInfo::exists(laterLegacy));
+        QCOMPARE(*open(later, list)->read(), one);
     }
 
     // A file found broken when it is written (an autosave is never read) is
