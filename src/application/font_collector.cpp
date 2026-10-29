@@ -140,7 +140,7 @@ Block &blockFor(std::map<u16, Block> &map, const u16 &family, Block::Header head
     return it->second;
 }
 
-} // namespace
+}
 
 namespace collector {
 
@@ -308,7 +308,7 @@ Scan scan(const std::vector<CollectorDocument> &documents, const std::function<b
     return s;
 }
 
-} // namespace collector
+}
 
 namespace {
 
@@ -450,7 +450,7 @@ void nameFile(CollectedFile &file, const CollectedFont &font, const FontCollecti
     file.name = fileName(file.shown);
 }
 
-} // namespace
+}
 
 bool CollectorReview::rendererComplete() const
 {
@@ -893,4 +893,4 @@ std::string FontCollector::labelText(const CollectorReview &review, const Collec
     return s;
 }
 
-} // namespace hikari::application
+}

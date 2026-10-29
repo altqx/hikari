@@ -309,7 +309,7 @@ std::string windowLetter(int type)
     return type >= 0 && type < kHotkeyWindows ? std::string(1, kWindowLetters[std::size_t(type)]) : std::string("?");
 }
 
-} // namespace
+}
 
 std::span<const KnownSource> knownSources()
 {
@@ -531,7 +531,7 @@ std::pair<std::string, std::string> convertConfigLine(std::string token)
     return {std::move(token), match};
 }
 
-} // namespace
+}
 
 std::string convertConfigText(std::string_view text, std::string_view progname, std::map<int, std::string> *renames)
 {
@@ -783,7 +783,7 @@ struct Effective {
     std::string path;
 };
 
-} // namespace
+}
 
 Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destination, const PlanOptions &options)
 {
@@ -1577,4 +1577,4 @@ Receipt receiptOf(const Plan &plan, const std::set<std::string, std::less<>> &ch
     return r;
 }
 
-} // namespace hikari::application::settings_import
+}

@@ -25,4 +25,4 @@ struct KaraokePreset {
 // Description and its Lines are template or code Comments, one at least.
 std::optional<KaraokePreset> readKaraokePreset(std::span<const std::byte> bytes);
 
-} // namespace hikari::application
+}

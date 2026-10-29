@@ -44,7 +44,7 @@ constexpr std::array kLinks{
     GuideLink{Window, "styleManager", "/en/docs/basics/styles"},
 };
 
-} // namespace
+}
 
 std::string_view guideSurfaceName(GuideSurface kind)
 {
@@ -72,4 +72,4 @@ std::string guideUrl(GuideSurface kind, std::string_view id)
     return url;
 }
 
-} // namespace hikari::application
+}

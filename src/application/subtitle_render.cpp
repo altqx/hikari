@@ -51,4 +51,4 @@ OverlaySize overlaySizeFor(int videoWidth, int videoHeight, std::optional<std::p
     return size;
 }
 
-} // namespace hikari::application
+}

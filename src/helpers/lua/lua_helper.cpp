@@ -2382,7 +2382,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     r.terminal(cancelled ? Outcome::Cancelled : Outcome::Failed, bytesOf(message));
 }
 
-} // namespace
+}
 
 int main()
 {

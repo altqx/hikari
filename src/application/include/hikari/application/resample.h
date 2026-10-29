@@ -30,4 +30,4 @@ void resizeSubtitles(core::Document &document, float xScale, float yScale, bool 
 std::expected<void, CommandRefusal> changeResolution(EditSession &session, Resolution from, Resolution to,
                                                      bool resample, bool stretch, const ResampleWarning &warn = {});
 
-} // namespace hikari::application
+}

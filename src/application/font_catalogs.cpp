@@ -82,7 +82,7 @@ bool containsExact(const std::vector<u16> &list, u16v value)
     return std::find(list.begin(), list.end(), value) != list.end();
 }
 
-} // namespace
+}
 
 int compareNoCase(u16v a, u16v b, const FontNameLower &lower)
 {
@@ -393,4 +393,4 @@ bool writeFontCatalogFile(const std::filesystem::path &path, const std::string &
     return bool(out);
 }
 
-} // namespace hikari::application
+}

@@ -167,4 +167,4 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                                                                    const AudioCommitRequest &request,
                                                                    const LineVisible &shown);
 
-} // namespace hikari::application
+}

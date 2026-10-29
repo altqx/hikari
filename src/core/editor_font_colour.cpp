@@ -77,7 +77,7 @@ u16 colourPattern(int n, bool closing)
     return number(n) + (n == 1 ? u"?c&(.*)" : u"c&(.*)") + (closing ? u"&" : u"");
 }
 
-} // namespace
+}
 
 FontValues defaultFontValues()
 {
@@ -294,4 +294,4 @@ EditStep colourNonAssStep(const TagColour &chosen)
     return {u"C:" + assColourText(chosen, false, true).substr(2), u"C:([^}]*)", {}, true, true};
 }
 
-} // namespace hikari::core::legacy
+}

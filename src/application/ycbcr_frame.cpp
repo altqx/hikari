@@ -12,7 +12,7 @@ int aligned(int bytes)
     return (bytes + 3) & ~3;
 }
 
-} // namespace
+}
 
 YcbcrPlanes ycbcrLayout(int width, int height, bool interleaved, bool fullHeightChroma, const yuv::Matrix &matrix)
 {
@@ -98,4 +98,4 @@ bool ycbcrToBgra(const IndexedFrame &f, IndexedFrame &out)
     return true;
 }
 
-} // namespace hikari::application
+}

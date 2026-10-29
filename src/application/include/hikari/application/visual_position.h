@@ -166,4 +166,4 @@ private:
     std::array<std::optional<int>, 2> m_typedTimes;
 };
 
-} // namespace hikari::application::visual
+}

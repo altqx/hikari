@@ -86,7 +86,7 @@ std::u8string changeTagTimes(std::u8string_view text8, int start, int end)
     return core::toUtf8(text);
 }
 
-} // namespace legacy
+}
 
 namespace {
 
@@ -121,7 +121,7 @@ struct Shifted {
     bool marked = false;
 };
 
-} // namespace
+}
 
 std::expected<ShiftOutcome, std::variant<ShiftProblem, CommandRefusal>>
 shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext &context, const LineVisible &visible)
@@ -471,4 +471,4 @@ ShiftTimesSettings applyShiftProfile(const std::string &text, ShiftTimesSettings
     return s;
 }
 
-} // namespace hikari::application
+}

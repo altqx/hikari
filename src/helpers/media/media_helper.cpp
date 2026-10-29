@@ -582,7 +582,7 @@ void pcmNext(Source &source, std::unique_ptr<PcmSession> &session, Reader &in, R
                                 .take());
 }
 
-} // namespace
+}
 
 // Read here so FFmpeg stays out of the application.
 void chapters(Reader &in, Responder &r)
@@ -700,7 +700,7 @@ bool readSubtitles(const std::string &path, int track, SubtitleRead &read)
     return true;
 }
 
-} // namespace
+}
 
 // In container order; the application keeps the text codecs.
 void subtitleTracks(Reader &in, Responder &r)

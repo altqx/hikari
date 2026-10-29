@@ -102,4 +102,4 @@ private:
 FrequencyPeaks legacyFrequencyPeaks(const DisplayAudio &audio, long long timeStart, long long timeEnd, int freqStart,
                                     int freqEnd, int peek);
 
-} // namespace hikari::application
+}

@@ -13,7 +13,7 @@ std::string_view trimLeft(std::string_view s)
     return s;
 }
 
-} // namespace
+}
 
 std::vector<std::string> scriptInfoScriptPaths(std::string_view value)
 {
@@ -69,4 +69,4 @@ bool DocumentScripts::readScriptInfo(const std::string &value, const std::functi
     return true;
 }
 
-} // namespace hikari::application
+}

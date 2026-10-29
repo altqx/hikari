@@ -25,4 +25,4 @@ struct MediaAssociations {
 MediaAssociations resolveMediaAssociations(const core::Document &document, const std::string &subtitlePath,
                                            const std::function<bool(const std::string &)> &exists, bool windows);
 
-} // namespace hikari::application
+}

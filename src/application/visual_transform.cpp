@@ -409,7 +409,7 @@ bool rectanglePoints(const u16 &clip, std::vector<ClipPoint> &points, const Cont
     return true;
 }
 
-} // namespace
+}
 
 Mouse mouse(const Pointer &event)
 {
@@ -1321,4 +1321,4 @@ void drawRect(Overlay &out, PointF pos, bool selected, float size)
                             kHandleBorder});
 }
 
-} // namespace hikari::application::visual::transform
+}

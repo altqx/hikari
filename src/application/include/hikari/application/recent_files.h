@@ -45,4 +45,4 @@ bool isMissingLocalFile(const std::string &path, const std::function<bool(const 
 enum class OpenKind { Subtitles, Script, Keyframes, Video, Session, Refused };
 OpenKind openKindOf(std::string_view path, bool single);
 
-} // namespace hikari::application
+}

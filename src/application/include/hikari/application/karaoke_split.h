@@ -49,4 +49,4 @@ int karaokeWeight(std::u16string_view text, const KaraokeCharClass &classes);
 // By extended grapheme clusters (UAX #29).
 bool karaokeContinuesGrapheme(std::u16string_view text, std::size_t at);
 
-} // namespace hikari::application
+}

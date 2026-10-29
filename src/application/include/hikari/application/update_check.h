@@ -291,4 +291,4 @@ inline bool automaticCheckDue(bool autoCheck, std::int64_t now, std::int64_t nex
     return autoCheck && now >= nextCheck;
 }
 
-} // namespace hikari::application
+}

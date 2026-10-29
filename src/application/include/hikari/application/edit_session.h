@@ -235,4 +235,4 @@ private:
     InvalidCommitPolicy m_policy = InvalidCommitPolicy::Block;
 };
 
-} // namespace hikari::application
+}

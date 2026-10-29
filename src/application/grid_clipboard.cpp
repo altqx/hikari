@@ -20,7 +20,7 @@ bool inGroup(core::GroupMarker marker)
     return marker == core::GroupMarker::Opened || marker == core::GroupMarker::Closed;
 }
 
-} // namespace
+}
 
 bool translationMode(const EditSession &session)
 {
@@ -151,4 +151,4 @@ std::expected<void, CommandRefusal> pasteColumns(EditSession &session, std::u8st
     return {};
 }
 
-} // namespace hikari::application
+}

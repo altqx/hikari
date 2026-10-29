@@ -56,7 +56,7 @@ bool hexToLong(std::u16string_view text, long *value)
     return true;
 }
 
-} // namespace
+}
 
 int clipColourValue(int value)
 {
@@ -344,4 +344,4 @@ Channels htmlToColour(std::u16string_view html)
     return {};
 }
 
-} // namespace hikari::core::legacy
+}

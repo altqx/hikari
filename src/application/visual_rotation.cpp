@@ -62,7 +62,7 @@ const std::array<ItemInfo, 3> &zItems()
     return table;
 }
 
-} // namespace
+}
 
 int RotationZTool::toggled() const
 {
@@ -1193,7 +1193,7 @@ void fan(Overlay &out, const Pipeline &p, const std::vector<std::array<float, 3>
     }
 }
 
-} // namespace
+}
 
 std::optional<PointF> projectXY(const XYProjection &p, float x, float y, float z)
 {
@@ -1252,4 +1252,4 @@ void drawXYGrid(Overlay &out, const XYProjection &p, int an)
         colour);
 }
 
-} // namespace hikari::application::visual
+}

@@ -76,4 +76,4 @@ std::vector<MacroBinding> parseLegacyScriptHotkeys(std::string_view text)
     return out;
 }
 
-} // namespace hikari::application
+}

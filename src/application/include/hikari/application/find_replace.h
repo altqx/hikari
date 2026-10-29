@@ -281,4 +281,4 @@ private:
     std::u16string m_resultsFindString;
 };
 
-} // namespace hikari::application
+}

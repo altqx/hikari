@@ -38,4 +38,4 @@ bool isFiltered(const core::Document &document);
 // For the Line at `row` (-1 before the first): 1 a hidden block follows, 2 a revealed block, 0 none.
 int hiddenBlockAfter(const core::Document &document, int row);
 
-} // namespace hikari::application
+}

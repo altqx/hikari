@@ -50,4 +50,4 @@ private:
     bool m_shown = false;
 };
 
-} // namespace hikari::application
+}

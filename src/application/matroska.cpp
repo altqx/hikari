@@ -63,7 +63,7 @@ std::u16string attachmentName(const MatroskaAttachment &a)
     return name;
 }
 
-} // namespace
+}
 
 std::vector<OfferedTrack> offeredTracks(const std::vector<MatroskaTrack> &tracks)
 {
@@ -242,4 +242,4 @@ std::vector<MatroskaFontsSaved> saveMatroskaFonts(const std::vector<MatroskaFont
     return out;
 }
 
-} // namespace hikari::application
+}

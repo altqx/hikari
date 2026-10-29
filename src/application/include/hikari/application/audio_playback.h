@@ -117,4 +117,4 @@ struct FollowedCursor {
 };
 FollowedCursor followCursor(AudioView &view, std::int64_t sample, int scrollbarThickness);
 
-} // namespace hikari::application
+}

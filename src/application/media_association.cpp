@@ -51,7 +51,7 @@ std::optional<MediaReference> resolve(const core::Document &document, std::u8str
     return ref;
 }
 
-} // namespace
+}
 
 bool MediaAssociations::offersAnything() const
 {
@@ -67,4 +67,4 @@ MediaAssociations resolveMediaAssociations(const core::Document &document, const
             resolve(document, u8"Keyframes File", dir, exists, windows)};
 }
 
-} // namespace hikari::application
+}

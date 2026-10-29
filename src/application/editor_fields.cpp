@@ -86,7 +86,7 @@ std::optional<std::int64_t> clockTime(std::u8string_view text, char8_t separator
     return ms;
 }
 
-} // namespace
+}
 
 std::optional<core::DocumentTime> microDvdFrameTime(std::int64_t frame, const std::optional<core::FrameRate> &rate)
 {
@@ -272,7 +272,7 @@ TimeFieldEdit replaceInNumber(const TimeFieldState &field, std::u16string_view d
     return edited(std::move(text), from + digits.size(), from + digits.size());
 }
 
-} // namespace
+}
 
 TimeFieldEdit typeIntoTimeField(TimeFieldForm form, const TimeFieldState &field, char16_t c)
 {
@@ -373,7 +373,7 @@ std::u16string clockText(TimeFieldForm form, std::int64_t ms)
     return std::u16string(t.begin(), t.end());
 }
 
-} // namespace
+}
 
 std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column)
 {
@@ -456,7 +456,7 @@ std::u16string mouseText(TimeFieldMouse mouse, std::int64_t value)
     return shownAsNumber(mouse) ? numberText(value) : clockText(clockForm(mouse.form), value);
 }
 
-} // namespace
+}
 
 std::int64_t timeFieldStep(TimeFieldMouse mouse, std::size_t column)
 {
@@ -537,7 +537,7 @@ std::optional<std::u16string> stepNumber(std::int64_t &value, std::int64_t delta
     return numberText(next);
 }
 
-} // namespace
+}
 
 std::optional<std::u16string> wheelNumberField(std::int64_t &value, int notches, NumberFieldRange range)
 {
@@ -600,4 +600,4 @@ int legacyAlignment(const core::LineRecord &line, int styleAlignment)
     return styleAlignment;
 }
 
-} // namespace hikari::application
+}

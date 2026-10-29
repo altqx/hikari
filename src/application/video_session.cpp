@@ -608,7 +608,7 @@ std::int64_t msOf(core::DocumentTime t)
     return t.microseconds() / 1000;
 }
 
-} // namespace
+}
 
 void VideoSession::seekToEnd(core::DocumentTime end)
 {
@@ -845,4 +845,4 @@ void VideoSession::setKeyframes(std::vector<int> frames)
     m_keyframes = std::move(frames);
 }
 
-} // namespace hikari::application
+}

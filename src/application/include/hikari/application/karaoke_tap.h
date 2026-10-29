@@ -116,4 +116,4 @@ private:
     bool m_done = false;
 };
 
-} // namespace hikari::application
+}

@@ -72,7 +72,7 @@ int compareIdentifiers(std::string_view a, std::string_view b)
     return result < 0 ? -1 : (result > 0 ? 1 : 0);
 }
 
-} // namespace
+}
 
 std::optional<SemVer> parseSemVer(std::string_view text)
 {
@@ -230,7 +230,7 @@ bool shellSafe(char c)
            c == ':' || c == '@' || c == '%' || c == '=';
 }
 
-} // namespace
+}
 
 std::optional<Codebase> codebaseOfVersion(std::string_view version)
 {
@@ -756,7 +756,7 @@ std::string keyWithPath(std::string_view kindToken, std::string_view path)
         key += "0123456789abcdef"[(hash >> shift) & 0xF];
     return key;
 }
-} // namespace
+}
 
 std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
 {
@@ -806,4 +806,4 @@ StartupArguments parseStartupArguments(const std::vector<std::string> &arguments
     return out;
 }
 
-} // namespace hikari::application
+}

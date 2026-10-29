@@ -124,4 +124,4 @@ bool LinkedMatch::choose(std::size_t row)
     return false;
 }
 
-} // namespace hikari::application
+}

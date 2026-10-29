@@ -36,7 +36,7 @@ u8 fromString(const std::string &s)
     return u8(s.begin(), s.end());
 }
 
-} // namespace
+}
 
 int compareStyles(const core::StyleValues &a, const core::StyleValues &b)
 {
@@ -498,4 +498,4 @@ bool StyleCatalogs::save()
     return out.good();
 }
 
-} // namespace hikari::application
+}

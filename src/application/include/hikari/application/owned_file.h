@@ -55,4 +55,4 @@ bool writeFileAtomically(const std::filesystem::path &path, std::string_view byt
 // UTF-8, native separators.
 std::string displayPath(const std::filesystem::path &path);
 
-} // namespace hikari::application
+}

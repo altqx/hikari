@@ -159,7 +159,7 @@ std::string tmpTime(std::int64_t ms)
     return buffer;
 }
 
-} // namespace
+}
 
 std::string fullscreenProgressText(std::int64_t positionMs, std::int64_t durationMs)
 {
@@ -199,4 +199,4 @@ FullscreenProgressBar fullscreenProgressBar(int clientWidth, int textWidth, int 
     return bar;
 }
 
-} // namespace hikari::application
+}

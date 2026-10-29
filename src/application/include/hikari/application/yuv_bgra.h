@@ -25,4 +25,4 @@ Matrix matrix(Space space, bool fullRange);
 void row(const Matrix &m, const std::uint8_t *y, const std::uint8_t *u, const std::uint8_t *v, int width,
          std::uint8_t *bgra);
 
-} // namespace hikari::application::yuv
+}

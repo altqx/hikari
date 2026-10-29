@@ -99,4 +99,4 @@ public:
     virtual ClockEstimate clock() const = 0;
 };
 
-} // namespace hikari::application
+}

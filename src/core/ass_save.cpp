@@ -50,7 +50,7 @@ std::u8string assLineText(const LineRecord &line)
     return out;
 }
 
-} // namespace legacy
+}
 
 namespace {
 
@@ -88,7 +88,7 @@ bool endsWithBlankLine(const std::vector<std::byte> &out)
     return out[n - 2] == std::byte{'\n'} || (n >= 3 && out[n - 2] == std::byte{'\r'} && out[n - 3] == std::byte{'\n'});
 }
 
-} // namespace
+}
 
 std::vector<std::byte> encodeAss(const Document &document)
 {
@@ -340,4 +340,4 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
     return out;
 }
 
-} // namespace hikari::core
+}

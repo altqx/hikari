@@ -203,7 +203,7 @@ std::optional<RecoveryContent> contentOf(const fs::path &generation)
     return c;
 }
 
-} // namespace
+}
 
 RecoveryStore::RecoveryStore(fs::path root, std::string session, int capacity)
     : m_root(std::move(root)), m_session(std::move(session)), m_capacity(capacity)
@@ -351,4 +351,4 @@ void RecoveryStore::prune(std::chrono::system_clock::time_point now, std::chrono
     }
 }
 
-} // namespace hikari::application
+}

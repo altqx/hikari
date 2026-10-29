@@ -87,7 +87,7 @@ constexpr std::array<Entry, kEntryCount> kEntries{{
     {u"z", TypeVsfilterMod, false},
 }};
 
-} // namespace
+}
 
 std::span<const Entry> entries()
 {
@@ -330,4 +330,4 @@ std::optional<Put> Completion::put(std::u16string_view text, std::size_t caret)
     return std::nullopt;
 }
 
-} // namespace hikari::core::taglist
+}

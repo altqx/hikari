@@ -888,7 +888,7 @@ TagSetter firstSetter(const History &history, const std::u16string &component, s
     return {};
 }
 
-} // namespace
+}
 
 TagSetter alone(TagSetter setter, const std::u16string &component, const std::u16string &value,
                 const std::function<std::u16string(const std::u16string &)> &expected)
@@ -1417,7 +1417,7 @@ std::optional<std::vector<Drawn>> drawnText(const OriginalTags &tags, std::u16st
     return out;
 }
 
-} // namespace
+}
 
 bool keepsOwnFormatting(const OriginalTags &tags, const TranslationDraft &draft)
 {
@@ -1538,7 +1538,7 @@ bool isPlaced(std::span<const RunPlacement> placements, int run)
     return std::ranges::any_of(placements, [&](const RunPlacement &p) { return p.run == run; });
 }
 
-} // namespace
+}
 
 int nextUnplacedRun(const OriginalTags &tags, std::span<const RunPlacement> placements)
 {
@@ -1708,4 +1708,4 @@ bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation)
     return draft.carried && nextUnplacedRun(tags, draft.placements) != 0;
 }
 
-} // namespace hikari::core
+}

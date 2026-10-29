@@ -85,4 +85,4 @@ private:
     float m_vectorDrawScale = 1.f;
 };
 
-} // namespace hikari::application::visual
+}

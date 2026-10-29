@@ -142,4 +142,4 @@ std::vector<int> keyframesWithoutVideo(const std::vector<int> &frames);
 // Half a 23.976 fps frame earlier, truncated to 10 ms.
 int keyframeSnapWithoutVideo(int keyMs);
 
-} // namespace hikari::application
+}

@@ -133,4 +133,4 @@ Selection GridSelection::selectAll(const Selection &current) const
     return s;
 }
 
-} // namespace hikari::application
+}

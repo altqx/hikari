@@ -22,4 +22,4 @@ std::vector<LineId> groupBreaks(const Document &before, const Document &after);
 // A description's members in Document order (empty for a standalone description).
 std::vector<LineId> groupMembers(const Document &document, LineId description);
 
-} // namespace hikari::core
+}

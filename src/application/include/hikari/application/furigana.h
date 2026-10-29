@@ -69,4 +69,4 @@ std::u16string syllableText(const FuriganaSyllable &syllable);
 // Full-width ｜ ＃ ！ ＜ read as half-width; text without | has no reading.
 FuriganaSyllable parseSyllable(std::u16string_view text);
 
-} // namespace hikari::application
+}

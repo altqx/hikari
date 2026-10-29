@@ -116,7 +116,7 @@ std::uint8_t red(std::uint32_t argb) { return std::uint8_t(argb >> 16); }
 std::uint8_t green(std::uint32_t argb) { return std::uint8_t(argb >> 8); }
 std::uint8_t blue(std::uint32_t argb) { return std::uint8_t(argb); }
 
-} // namespace
+}
 
 void legacyFft(float *data)
 {
@@ -391,7 +391,7 @@ int bandIndex(int value)
     return static_cast<int>(static_cast<unsigned long>(value) < last ? static_cast<unsigned long>(value) : last);
 }
 
-} // namespace
+}
 
 FrequencyPeaks AudioSpectrum::createRange(const DisplayAudio &audio, long long timeStart, long long timeEnd,
                                           int freqStart, int freqEnd, int peek)
@@ -476,4 +476,4 @@ FrequencyPeaks legacyFrequencyPeaks(const DisplayAudio &audio, long long timeSta
     return spectrum.createRange(audio, timeStart, timeEnd, freqStart, freqEnd, peek);
 }
 
-} // namespace hikari::application
+}

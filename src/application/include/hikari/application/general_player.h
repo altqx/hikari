@@ -98,4 +98,4 @@ public:
     virtual void chapters(const std::string &path, Listed done) = 0;
 };
 
-} // namespace hikari::application
+}

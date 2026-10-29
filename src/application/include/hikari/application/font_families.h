@@ -93,4 +93,4 @@ struct ExternalFontsLoad {
 ExternalFontsLoad loadExternalFonts(std::u16string_view path, const FontNameLower &lower,
                                     FontListPlatform platform = kFontListPlatform);
 
-} // namespace hikari::application
+}

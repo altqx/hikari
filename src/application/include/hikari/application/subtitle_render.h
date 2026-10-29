@@ -148,4 +148,4 @@ std::uint64_t subtitleFontsReloads();
 // channel. An empty overlay, or one of another size, leaves the picture as it is.
 void compositeOverlay(const OverlayFrame &overlay, std::uint8_t *bgra, int width, int height, std::ptrdiff_t stride);
 
-} // namespace hikari::application
+}

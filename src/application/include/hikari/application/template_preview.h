@@ -107,4 +107,4 @@ public:
     virtual bool apply(bool selectedOnly) = 0;
 };
 
-} // namespace hikari::application
+}

@@ -202,7 +202,7 @@ bool syllablesOf(u8sv text, Each each)
     return unclosed;
 }
 
-} // namespace
+}
 
 KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
 {
@@ -281,4 +281,4 @@ KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
     return check;
 }
 
-} // namespace hikari::core
+}

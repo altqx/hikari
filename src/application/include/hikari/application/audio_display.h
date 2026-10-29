@@ -281,4 +281,4 @@ std::vector<std::pair<int, int>> legacyInactiveLines(int mode, std::span<const A
 // active one, else at 0, and lasts 5 s.
 std::pair<int, int> legacyLineSelection(std::span<const AudioLineSpan> lines, int active, int previousActive);
 
-} // namespace hikari::application
+}

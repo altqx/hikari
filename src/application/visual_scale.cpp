@@ -48,7 +48,7 @@ const std::array<ItemInfo, 7> &items()
     return table;
 }
 
-} // namespace
+}
 
 int ScaleTool::toggled() const
 {
@@ -885,4 +885,4 @@ bool ScaleTool::setValue(const std::string &name, const std::u16string &text, Vi
     return host.session() && host.session()->revision() != before;
 }
 
-} // namespace hikari::application::visual
+}

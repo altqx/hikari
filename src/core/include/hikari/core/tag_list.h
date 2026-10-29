@@ -117,4 +117,4 @@ private:
 // With "()" for tags taking arguments.
 std::u16string insertedTag(const Entry &entry);
 
-} // namespace hikari::core::taglist
+}

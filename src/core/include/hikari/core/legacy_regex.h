@@ -55,4 +55,4 @@ private:
     std::u16string m_error, m_converted;
 };
 
-} // namespace hikari::core
+}

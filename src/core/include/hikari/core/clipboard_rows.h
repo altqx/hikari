@@ -14,7 +14,7 @@ inline constexpr int Layer = 1, Start = 2, End = 4, Style = 8, Actor = 16, Margi
                      MarginVertical = 128, Effect = 256, Text = 1024, Translation = 2048;
 // Copy columns uses the translation bit for "Text without tags".
 inline constexpr int TextWithoutTags = Translation;
-} // namespace column
+}
 
 // In the given order. With `numberSrtCues` SRT numbers each cue by its
 // Document row. In translation mode a Line's translation, if any, is copied
@@ -65,4 +65,4 @@ struct LegacyDialogue {
 };
 LegacyDialogue legacyDialogue(std::u8string_view raw);
 
-} // namespace hikari::core
+}

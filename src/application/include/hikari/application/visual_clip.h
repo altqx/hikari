@@ -51,7 +51,7 @@ std::u16string maskTag(std::u16string_view text);
 // A translucent black rectangle over the script, clipped by the opposite of the clip, drawn above everything.
 std::u16string maskText(std::u16string_view tag, std::u16string_view body, int scriptWidth, int scriptHeight);
 
-} // namespace clip
+}
 
 class RectangleClipTool : public VisualTool {
 public:
@@ -119,4 +119,4 @@ private:
     bool m_inKey = false, m_keyCommit = false;
 };
 
-} // namespace hikari::application::visual
+}

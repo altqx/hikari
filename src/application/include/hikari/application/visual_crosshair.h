@@ -52,4 +52,4 @@ private:
     bool m_onVideo = true;
 };
 
-} // namespace hikari::application::visual
+}

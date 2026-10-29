@@ -73,4 +73,4 @@ struct FullscreenProgressBar {
 FullscreenProgressBar fullscreenProgressBar(int clientWidth, int textWidth, int textHeight, std::int64_t timeMs,
                                             std::int64_t durationMs);
 
-} // namespace hikari::application
+}

@@ -117,4 +117,4 @@ std::span<const std::string_view> retiredSettings();
 // "#RRGGBB" or "#RRGGBBAA" as 0xAARRGGBB; nullopt otherwise.
 std::optional<std::uint32_t> parseSettingColour(std::string_view text);
 
-} // namespace hikari::application
+}

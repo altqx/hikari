@@ -21,4 +21,4 @@ std::vector<GeneratedRun> generatedRuns(const std::vector<const core::LineRecord
     return runs;
 }
 
-} // namespace hikari::application
+}

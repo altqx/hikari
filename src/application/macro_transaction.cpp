@@ -29,7 +29,7 @@ core::IntField intOf(std::int64_t v)
     return core::IntField{wide(std::to_string(v)), v};
 }
 
-} // namespace
+}
 
 MacroDialogueLine macroLineOf(const core::LineRecord &l)
 {
@@ -144,7 +144,7 @@ bool sameFields(const MacroDialogueLine &a, const MacroDialogueLine &b)
            a.marginV == b.marginV && a.effect == b.effect && a.text == b.text && a.translation == b.translation;
 }
 
-} // namespace
+}
 
 core::LineRecord lineOfMacro(const MacroDialogueLine &d)
 {
@@ -309,4 +309,4 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
     return {};
 }
 
-} // namespace hikari::application
+}

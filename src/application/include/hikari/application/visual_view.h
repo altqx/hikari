@@ -131,4 +131,4 @@ private:
     double m_dpr = 1.0;
 };
 
-} // namespace hikari::application::visual
+}

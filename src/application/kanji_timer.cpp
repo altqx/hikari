@@ -115,7 +115,7 @@ std::size_t charactersIn(const std::vector<KanjiGroup> &groups)
     return n;
 }
 
-} // namespace
+}
 
 bool hasKaraokeTags(u16v text)
 {
@@ -222,7 +222,7 @@ std::optional<std::vector<u16>> splitOver(const std::vector<KanjiText::Unit> &un
     return parts;
 }
 
-} // namespace
+}
 
 KanjiText kanjiText(u16v text)
 {
@@ -689,7 +689,7 @@ void eraseTyped(KanjiTyped &typed, const std::vector<std::pair<std::size_t, std:
     }
 }
 
-} // namespace
+}
 
 std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
                                         const std::vector<KanjiGroup> &groups,
@@ -903,7 +903,7 @@ Furigana furiganaOf(const std::vector<KanjiSyllable> &syllables, const KanjiText
     return out;
 }
 
-} // namespace
+}
 
 std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
                            const std::vector<KanjiGroup> &written, bool multi, const std::vector<KanjiReading> *readings)
@@ -1044,7 +1044,7 @@ int overlap(const KanjiTimer::Line &a, const KanjiTimer::Line &b)
     return std::min(a.endMs, b.endMs) - std::max(a.startMs, b.startMs);
 }
 
-} // namespace
+}
 
 void KanjiTimer::derive()
 {
@@ -1366,7 +1366,7 @@ bool resize(std::size_t &value, int by, std::size_t left)
     return true;
 }
 
-} // namespace
+}
 
 bool KanjiTimer::growSyllables()
 {
@@ -1742,4 +1742,4 @@ void KanjiTimer::applied()
     m_undo = 0;
 }
 
-} // namespace hikari::application
+}

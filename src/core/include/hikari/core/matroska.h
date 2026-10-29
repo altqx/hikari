@@ -16,7 +16,7 @@ MatroskaCodec matroskaCodec(std::u8string_view codecName);
 namespace legacy {
 // Empty when the bytes are not UTF-8.
 std::u8string utf8OrEmpty(std::string_view bytes);
-} // namespace legacy
+}
 
 // ASS/SSA: Matroska's ReadOrder and Layer fields taken off the block, "Dialogue: <layer>,<start>,<end>"
 // put before the rest, times + 5 ms truncated to centiseconds. Text: "<start> --> <end>\r\n<text>".
@@ -29,4 +29,4 @@ std::u8string matroskaLine(std::int64_t start, std::int64_t duration, std::strin
 // non-plain-text Line's, else ASS. `codecPrivate` is bytes, not decoded.
 Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::u8string> &lines, MatroskaCodec codec);
 
-} // namespace hikari::core
+}

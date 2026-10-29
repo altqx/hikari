@@ -111,7 +111,7 @@ char16_t romajiLetter(char16_t c)
     return 0;
 }
 
-} // namespace
+}
 
 bool isKana(char32_t c)
 {
@@ -215,4 +215,4 @@ std::optional<u16> romajiToHiragana(u16v romaji)
     return out;
 }
 
-} // namespace hikari::application
+}

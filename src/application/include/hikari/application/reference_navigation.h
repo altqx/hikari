@@ -50,4 +50,4 @@ private:
     std::optional<std::size_t> m_nearest;
 };
 
-} // namespace hikari::application
+}

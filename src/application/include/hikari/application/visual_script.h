@@ -107,4 +107,4 @@ void drawDashedLine(Overlay &out, const PointF *points, std::size_t count, int d
 // Dashed lines across the video rectangle and a small square.
 void drawHelperLine(Overlay &out, int x, int y, const VideoView &view);
 
-} // namespace hikari::application::visual
+}

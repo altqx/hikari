@@ -112,7 +112,7 @@ std::ptrdiff_t activeRow(const EditSession &session)
     return 0;
 }
 
-} // namespace
+}
 
 std::vector<std::u16string> availableDictionaries(const fs::path &folder)
 {
@@ -717,4 +717,4 @@ bool SpellCheckWalk::addWord(EditSession &session, std::u16string_view word, con
     return added;
 }
 
-} // namespace hikari::application
+}

@@ -51,7 +51,7 @@ CheckedText scanned(std::u16string_view raw, SubtitleFormat format)
     return out;
 }
 
-} // namespace
+}
 
 CheckedText checkedText(std::u16string_view raw, SubtitleFormat format)
 {
@@ -183,4 +183,4 @@ std::vector<std::pair<std::string_view, bool>> linterSwitches(std::span<const bo
     return out;
 }
 
-} // namespace hikari::core::grammar
+}

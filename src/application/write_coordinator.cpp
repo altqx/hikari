@@ -104,4 +104,4 @@ void WriteCoordinator::complete(PermitId permit, WriteOutcome outcome)
         m_onResult(WriteResult{permit, p.document, p.destination, p.revision, outcome});
 }
 
-} // namespace hikari::application
+}

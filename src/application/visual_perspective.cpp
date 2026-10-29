@@ -337,7 +337,7 @@ PointF anchorShift(int an)
     return {h, v};
 }
 
-} // namespace
+}
 
 double screenZ(int scriptHeight, int layoutHeight)
 {
@@ -573,7 +573,7 @@ Leading leadingOf(u16v text)
     return out;
 }
 
-} // namespace
+}
 
 constexpr std::size_t kMaxStyleBytes = 64 * 1024;
 
@@ -1374,7 +1374,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
     return out;
 }
 
-} // namespace
+}
 
 LineState readTags(const VisualHost &host, const core::LineRecord &line)
 {
@@ -1541,7 +1541,7 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     return head + out.substr(rest);
 }
 
-} // namespace perspective
+}
 
 using namespace perspective;
 
@@ -1618,7 +1618,7 @@ std::optional<std::array<PointF, 2>> inView(PointF a, PointF b, const VideoView 
                                  PointF{float(a.x + to * dx), float(a.y + to * dy)}};
 }
 
-} // namespace
+}
 
 Quad PerspectiveTool::outer() const
 {
@@ -2429,4 +2429,4 @@ bool PerspectiveTool::setOption(const std::string &name, int value, VisualHost &
     return true;
 }
 
-} // namespace hikari::application::visual
+}

@@ -181,4 +181,4 @@ public:
     virtual std::uint64_t generation() const = 0;
 };
 
-} // namespace hikari::application
+}

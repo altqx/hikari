@@ -331,7 +331,7 @@ std::u16string crlf(std::u16string_view text)
     return out;
 }
 
-} // namespace
+}
 
 namespace {
 
@@ -360,7 +360,7 @@ void readOptions(Settings &s, int options)
     s.skipText = options & kSeekOnlyInTags;
 }
 
-} // namespace
+}
 
 FindReplaceSettings findReplaceFromOptions(int options)
 {
@@ -1755,4 +1755,4 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
     finish();
 }
 
-} // namespace hikari::application
+}

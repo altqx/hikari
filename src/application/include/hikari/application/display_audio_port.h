@@ -82,4 +82,4 @@ public:
     virtual void closeDisplay() {}
 };
 
-} // namespace hikari::application
+}

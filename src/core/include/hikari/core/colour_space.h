@@ -31,4 +31,4 @@ std::u16string colourToHtml(int r, int g, int b);
 // is black. A negative or wide value wraps to its low byte.
 Channels htmlToColour(std::u16string_view html);
 
-} // namespace hikari::core::legacy
+}

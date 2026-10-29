@@ -197,7 +197,7 @@ std::optional<std::u16string> replaceInText(const std::u16string &lineText, cons
     return changedText;
 }
 
-} // namespace
+}
 
 std::u8string defaultReplacerRules()
 {
@@ -527,4 +527,4 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
     return out;
 }
 
-} // namespace hikari::application
+}

@@ -138,4 +138,4 @@ void karaokeShapes(std::vector<AudioShape> &out, const AudioView &view, std::int
 
 KaraokeMeasure karaokeLabelMeasure(const AudioTextWidth &textWidth);
 
-} // namespace hikari::application
+}

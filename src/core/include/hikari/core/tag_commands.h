@@ -87,4 +87,4 @@ EditorText insertTagButtonText(EditorText state, std::u16string_view text);
 // `from` is clamped to the text.
 std::u16string insertTagButtonTextAt(std::u16string text, long from, std::u16string_view insert);
 
-} // namespace hikari::core::legacy
+}

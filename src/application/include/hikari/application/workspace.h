@@ -66,4 +66,4 @@ private:
     std::uint64_t m_next = 1;
 };
 
-} // namespace hikari::application
+}

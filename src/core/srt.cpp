@@ -76,7 +76,7 @@ LegacyCue parseCue(const std::u8string &raw)
     return cue;
 }
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -102,7 +102,7 @@ std::u8string srtTimeText(std::int64_t ms)
     return std::u8string(reinterpret_cast<const char8_t *>(buf));
 }
 
-} // namespace legacy
+}
 
 LoadResult loadSrt(std::span<const std::byte> bytes)
 {
@@ -273,4 +273,4 @@ std::vector<std::byte> encodeSrt(const Document &document)
     return out;
 }
 
-} // namespace hikari::core
+}

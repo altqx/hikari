@@ -138,4 +138,4 @@ struct DocumentTimeConversion {
 // Nearest microsecond, ties away from zero; reports whether that lost precision.
 Checked<DocumentTimeConversion> toDocumentTime(const MediaTimestamp &timestamp);
 
-} // namespace hikari::core
+}

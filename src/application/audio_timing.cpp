@@ -488,7 +488,7 @@ std::int64_t timeMs(const core::TimeField &field)
     return field.value.microseconds() / 1000;
 }
 
-} // namespace
+}
 
 std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &session,
                                                                    const AudioCommitRequest &request,
@@ -733,4 +733,4 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     return outcome;
 }
 
-} // namespace hikari::application
+}

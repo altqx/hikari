@@ -168,4 +168,4 @@ private:
     std::function<void()> m_beforeSave;
 };
 
-} // namespace hikari::application
+}

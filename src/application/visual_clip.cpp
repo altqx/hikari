@@ -165,7 +165,7 @@ void commitInvert(VisualHost &host, bool vector)
     (void)host.commitGesture();
 }
 
-} // namespace
+}
 
 namespace clip {
 
@@ -350,7 +350,7 @@ u16 maskText(u16v tag, u16v body, int nx, int ny)
            u16(body) + u")}m 0 0 l " + number(nx) + u" 0 " + number(nx) + u" " + number(ny) + u" 0 " + number(ny);
 }
 
-} // namespace clip
+}
 
 namespace {
 
@@ -359,7 +359,7 @@ enum { LEFT = 1, RIGHT, TOP = 4, BOTTOM = 8, INSIDE = 16, OUTSIDE = 32 };
 constexpr std::uint32_t kMask = 0x88000000;
 constexpr std::uint32_t kOutline = 0xFFBB0000;
 
-} // namespace
+}
 
 void RectangleClipTool::reset(VisualHost &host)
 {
@@ -917,4 +917,4 @@ std::vector<core::LineRecord> VectorClipTool::previewLines(const VisualHost &hos
     return {line};
 }
 
-} // namespace hikari::application::visual
+}

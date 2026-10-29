@@ -21,6 +21,6 @@ namespace legacy {
 std::int64_t srtTimeMilliseconds(std::u8string_view lexeme);
 // "%02i:%02i:%02i,%03i".
 std::u8string srtTimeText(std::int64_t milliseconds);
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

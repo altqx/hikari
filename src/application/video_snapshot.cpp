@@ -59,7 +59,7 @@ int snapshotNumberOf(std::string_view name, std::string_view stem)
     return static_cast<int>(std::strtol(std::string(rest.substr(0, end)).c_str(), nullptr, 10));
 }
 
-} // namespace
+}
 
 int nextSnapshotNumber(std::string_view videoPath, const std::vector<std::string> &paths)
 {
@@ -105,4 +105,4 @@ std::string nextSnapshotPath(std::string_view videoPath, const std::vector<std::
     }
 }
 
-} // namespace hikari::application
+}

@@ -110,4 +110,4 @@ private:
 
 bool sameNameIgnoringCase(std::u16string_view a, std::u16string_view b);
 
-} // namespace hikari::application::visual
+}

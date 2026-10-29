@@ -126,4 +126,4 @@ bool placementHolds(const OriginalTags &tags, const TranslationDraft &draft, std
 // Removes the placements that no longer hold after a body edit; their tags are not written.
 void keepHeldPlacements(const OriginalTags &tags, TranslationDraft &draft);
 
-} // namespace hikari::core
+}

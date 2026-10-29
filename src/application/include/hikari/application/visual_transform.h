@@ -173,4 +173,4 @@ int endMs(const core::LineRecord &line);
 // Truncated to 10 ms.
 inline int zeroit(int ms) { return (ms / 10) * 10; }
 
-} // namespace hikari::application::visual::transform
+}

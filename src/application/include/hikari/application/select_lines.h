@@ -61,4 +61,4 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
                                                              const LineVisible &visible = {},
                                                              const TextFold &fold = {});
 
-} // namespace hikari::application
+}

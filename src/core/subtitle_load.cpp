@@ -16,7 +16,7 @@ std::optional<LoadResult> found(LoadResult result)
     return result;
 }
 
-} // namespace
+}
 
 std::optional<LoadResult> loadSubtitle(std::span<const std::byte> bytes, std::u8string_view extension)
 {
@@ -55,4 +55,4 @@ std::vector<std::byte> encodeSubtitle(const Document &document, const AssSaveOpt
     }
 }
 
-} // namespace hikari::core
+}

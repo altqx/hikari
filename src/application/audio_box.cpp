@@ -37,7 +37,7 @@ std::string toUtf8(const std::filesystem::path &path)
     return std::string(text.begin(), text.end());
 }
 
-} // namespace
+}
 
 AudioTrackChoice legacyAudioTrackChoice(const std::vector<AudioTrack> &tracks, const std::vector<std::string> &accepted)
 {
@@ -494,4 +494,4 @@ void AudioBox::close()
     }
 }
 
-} // namespace hikari::application
+}

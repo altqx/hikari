@@ -78,4 +78,4 @@ std::u16string changeColourInLine(std::u16string text, int number, const TagColo
 // "C:" + BBGGRR markup for the line-based formats.
 EditStep colourNonAssStep(const TagColour &chosen);
 
-} // namespace hikari::core::legacy
+}

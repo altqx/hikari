@@ -43,4 +43,4 @@ private:
     bool m_changeActive = true;
 };
 
-} // namespace hikari::application
+}

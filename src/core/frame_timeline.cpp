@@ -21,7 +21,7 @@ Checked<VideoFrameIndex> bounded(std::int64_t index, const std::optional<std::in
     return VideoFrameIndex(index);
 }
 
-} // namespace
+}
 
 FrameTimeline FrameTimeline::constantRate(FrameRate rate, DocumentTime origin, std::optional<std::int64_t> frameCount)
 {
@@ -173,4 +173,4 @@ Checked<std::int64_t> frameOffset(const FrameTimeline &timeline, DocumentTime an
     return b->minus(*a);
 }
 
-} // namespace hikari::core
+}

@@ -26,7 +26,7 @@ fs::path brokenName(const fs::path &path)
     return name;
 }
 
-} // namespace
+}
 
 std::pair<int, int> lineColumnAt(std::string_view text, std::size_t offset)
 {
@@ -155,4 +155,4 @@ std::string displayPath(const fs::path &path)
     return {reinterpret_cast<const char *>(text.data()), text.size()};
 }
 
-} // namespace hikari::application
+}

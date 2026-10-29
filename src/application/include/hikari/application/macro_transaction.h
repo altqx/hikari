@@ -31,4 +31,4 @@ struct MacroApplyFailure {
 std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
                                                         const MacroResult &result, const std::string &name);
 
-} // namespace hikari::application
+}

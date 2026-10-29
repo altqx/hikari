@@ -22,4 +22,4 @@ std::optional<std::vector<std::filesystem::path>> entries(const std::filesystem:
 // with dotSpecial a text starting with '.' never matches.
 bool matchWild(std::u32string_view pattern, std::u32string_view text, bool dotSpecial);
 
-} // namespace hikari::application::legacy_dir
+}

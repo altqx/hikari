@@ -37,7 +37,7 @@ std::vector<const core::LineRecord *> shownSelected(const EditSession &s, const 
     return out;
 }
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -127,7 +127,7 @@ std::u8string moveToPos(std::u8string_view text, std::int64_t lineStartMs, std::
     return out;
 }
 
-} // namespace legacy
+}
 
 std::expected<void, CommandRefusal> splitAtVideoTime(EditSession &session, const LegacyTimebase &timebase,
                                                      std::int64_t videoMs, const LineVisible &visible)
@@ -300,7 +300,7 @@ void splitWords(std::vector<u16> &out, const u16 &wordsText, std::size_t offset,
         out.emplace_back(text.substr(wordOffset, curWordPos));
 }
 
-} // namespace
+}
 
 std::vector<u16> splitByWord(u16v txt, const WordSegments &words)
 {
@@ -366,7 +366,7 @@ std::vector<u16> splitByWrap(u16v txt)
     return out;
 }
 
-} // namespace legacy
+}
 
 namespace {
 
@@ -900,7 +900,7 @@ u16 numberText(float v)
     return core::toUtf16(t);
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText kind, TextMeasurePort &measure,
                                                 const WordSegments &words, const LineVisible &visible)
@@ -1137,4 +1137,4 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
     return {};
 }
 
-} // namespace hikari::application
+}

@@ -100,7 +100,7 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line);
 std::u16string writeTransform(std::u16string_view text, const Transform &t, const core::StyleValues &style,
                               std::optional<PointF> movedFrom = std::nullopt, bool explicitOrg = false);
 
-} // namespace perspective
+}
 
 class PerspectiveTool : public VisualTool {
 public:
@@ -192,4 +192,4 @@ private:
     perspective::Transform m_written; // what the open gesture writes
 };
 
-} // namespace hikari::application::visual
+}

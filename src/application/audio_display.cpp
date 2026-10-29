@@ -261,7 +261,7 @@ private:
     std::thread m_writer;
 };
 
-} // namespace
+}
 
 std::unique_ptr<AudioStore> ramAudioStore(int channels)
 {
@@ -820,7 +820,7 @@ std::pair<std::int64_t, std::int64_t> dialoguePos(const AudioView &view, const A
     return {selStart, selEnd};
 }
 
-} // namespace
+}
 
 std::vector<std::pair<float, float>> legacyDashes(float from, float to, int dash)
 {
@@ -1111,4 +1111,4 @@ std::pair<int, int> legacyLineSelection(std::span<const AudioLineSpan> lines, in
     return {start, start + 5000};
 }
 
-} // namespace hikari::application
+}

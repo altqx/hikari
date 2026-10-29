@@ -36,6 +36,6 @@ namespace legacy {
 std::u8string assTimeText(std::int64_t milliseconds);
 // Without the line terminator.
 std::u8string assLineText(const LineRecord &line);
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

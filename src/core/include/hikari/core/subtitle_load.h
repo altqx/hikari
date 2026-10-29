@@ -18,4 +18,4 @@ std::optional<LoadResult> loadSubtitle(std::span<const std::byte> bytes, std::u8
 std::vector<std::byte> encodeSubtitle(const Document &document);
 std::vector<std::byte> encodeSubtitle(const Document &document, const AssSaveOptions &options);
 
-} // namespace hikari::core
+}

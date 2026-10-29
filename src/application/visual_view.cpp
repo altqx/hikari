@@ -15,7 +15,7 @@ float mid(float a, float b, float c)
     return (a > lowest) ? a : lowest;
 }
 
-} // namespace
+}
 
 AspectPair sourceAspect(const SourceGeometry &source)
 {
@@ -379,4 +379,4 @@ int VideoView::toDevice(double logical) const
     return static_cast<int>(std::lround(logical * m_dpr));
 }
 
-} // namespace hikari::application::visual
+}

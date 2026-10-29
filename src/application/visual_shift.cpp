@@ -151,7 +151,7 @@ void rotateDrawing(ClipPoint &point, float sinOfAngle, float cosOfAngle, PointF 
     point.y = (x * sinOfAngle) + (y * cosOfAngle) - orgpivot.y;
 }
 
-} // namespace
+}
 
 int PositionShifterTool::toggled() const
 {
@@ -788,4 +788,4 @@ Overlay PositionShifterTool::overlay(const VisualHost &host) const
     return out;
 }
 
-} // namespace hikari::application::visual
+}

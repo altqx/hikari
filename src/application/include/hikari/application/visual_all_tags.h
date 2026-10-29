@@ -205,4 +205,4 @@ private:
 // `accel` is accelerator text such as "Ctrl-,".
 bool keyMatchesAccelerator(const Key &key, std::string_view accel);
 
-} // namespace hikari::application::visual
+}

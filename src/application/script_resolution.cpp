@@ -16,7 +16,7 @@ std::u8string wide(const std::string &s)
     return std::u8string(s.begin(), s.end());
 }
 
-} // namespace
+}
 
 Resolution writtenScriptResolution(const core::Document &document)
 {
@@ -95,4 +95,4 @@ std::expected<void, CommandRefusal> setScriptResolution(EditSession &session, Re
     return {};
 }
 
-} // namespace hikari::application
+}

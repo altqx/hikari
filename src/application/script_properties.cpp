@@ -34,7 +34,7 @@ std::pair<int, int> assRes(const core::Document &d)
     return {x, y};
 }
 
-} // namespace
+}
 
 const std::vector<u8> &matrixNames()
 {
@@ -153,4 +153,4 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
     return {};
 }
 
-} // namespace hikari::application
+}

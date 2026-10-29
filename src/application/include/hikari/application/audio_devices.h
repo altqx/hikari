@@ -83,4 +83,4 @@ struct OutputDeviceChoice {
 std::vector<OutputDeviceChoice> outputDeviceChoices(const std::vector<SystemOutputDevice> &devices,
                                                     std::string_view chosenId, std::string_view chosenName);
 
-} // namespace hikari::application
+}

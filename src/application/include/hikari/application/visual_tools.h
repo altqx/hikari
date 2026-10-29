@@ -82,7 +82,7 @@ struct Key {
 // The arrow keys (Qt::Key values; the application layer does not link Qt).
 namespace keys {
 inline constexpr int Left = 0x01000012, Up = 0x01000013, Right = 0x01000014, Down = 0x01000015;
-} // namespace keys
+}
 
 // -1, 0 or 1 on each axis for `key`'s arrow; nullopt for another key, with Ctrl,
 // or with Alt unless `alt`. The tool applies Shift's tenth.
@@ -474,4 +474,4 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family);
 LineWarning lineWarning(Family family, const core::LineRecord &line, std::int64_t videoMs);
 std::u16string_view warningText(LineWarning warning);
 
-} // namespace hikari::application::visual
+}

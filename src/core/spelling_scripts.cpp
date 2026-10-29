@@ -144,7 +144,7 @@ std::u16string lower(std::u16string_view s)
     return out;
 }
 
-} // namespace
+}
 
 bool scriptOf(char32_t c, Script &out)
 {
@@ -210,4 +210,4 @@ Scripts dictionaryScripts(std::u16string_view symbol)
     return {};
 }
 
-} // namespace hikari::core::spelling
+}

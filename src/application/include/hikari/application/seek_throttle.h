@@ -34,4 +34,4 @@ private:
     std::optional<int> m_last;
 };
 
-} // namespace hikari::application
+}

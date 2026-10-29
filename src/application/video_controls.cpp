@@ -57,4 +57,4 @@ float wheelZoomPercent(float zoomPercent, int steps)
     return 1.f > lowest ? 1.f : lowest;
 }
 
-} // namespace hikari::application
+}

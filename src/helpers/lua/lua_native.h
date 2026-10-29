@@ -13,4 +13,4 @@ void installGlobalLocale();
 // The re, unicode and lfs FFI functions return malloc'd strings the scripts free.
 void preload(lua_State *L);
 
-} // namespace hikari::lua_native
+}

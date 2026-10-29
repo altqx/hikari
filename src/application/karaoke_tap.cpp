@@ -35,7 +35,7 @@ std::u16string withoutEmptyBlocks(std::u16string text)
     return text;
 }
 
-} // namespace
+}
 
 int tapSongMs(double positionMs, int latencyMs, double speed)
 {
@@ -260,4 +260,4 @@ KaraokeTap::Result KaraokeTap::result() const
     return r;
 }
 
-} // namespace hikari::application
+}

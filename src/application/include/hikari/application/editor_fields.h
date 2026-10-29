@@ -141,4 +141,4 @@ std::optional<std::int64_t> layerValue(std::u8string_view text);
 // else the Style's alignment; outside 1..9 selects nothing.
 int legacyAlignment(const core::LineRecord &line, int styleAlignment);
 
-} // namespace hikari::application
+}

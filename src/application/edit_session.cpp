@@ -145,7 +145,7 @@ std::optional<DraftProblem> problemOf(const core::LineRecord &line)
     return std::nullopt;
 }
 
-} // namespace
+}
 
 EditSession::EditSession(core::Document document, bool protectedReference) : m_protected(protectedReference)
 {
@@ -552,4 +552,4 @@ bool EditSession::isDirty() const
     return m_draft.has_value() || !m_saved || *m_saved != contentId();
 }
 
-} // namespace hikari::application
+}

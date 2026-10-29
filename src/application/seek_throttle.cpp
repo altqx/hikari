@@ -52,4 +52,4 @@ std::optional<int> SeekThrottle::release(Clock::time_point now)
     return last;
 }
 
-} // namespace hikari::application
+}

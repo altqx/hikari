@@ -233,7 +233,7 @@ constexpr std::string_view kNotShown[] = {
     "convert.showSettings",
 };
 
-} // namespace
+}
 
 std::span<const OptionsBinding> optionsBindings()
 {
@@ -581,4 +581,4 @@ void chooseOptionsDialogCatalog(const OptionsLists &lists, OptionsState &state, 
         state["convert.style"] = std::int64_t{0};
 }
 
-} // namespace hikari::application
+}

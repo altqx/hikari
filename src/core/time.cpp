@@ -9,7 +9,7 @@ namespace {
 
 constexpr std::int64_t kMicrosPerSecond = 1'000'000;
 
-} // namespace
+}
 
 Checked<TimeDelta> TimeDelta::fromMilliseconds(std::int64_t milliseconds)
 {
@@ -106,4 +106,4 @@ Checked<DocumentTimeConversion> toDocumentTime(const MediaTimestamp &timestamp)
     return DocumentTimeConversion{DocumentTime(*us), floor && ceil && *floor == *ceil};
 }
 
-} // namespace hikari::core
+}

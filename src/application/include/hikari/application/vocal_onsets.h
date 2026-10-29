@@ -25,4 +25,4 @@ std::optional<std::vector<int>> detectVocalOnsets(const DisplayAudio &audio,
 // [lowMs, highMs], the earlier on a tie; else `ms`.
 int snapToOnset(std::span<const int> onsetsMs, int ms, int windowMs, int lowMs = INT_MIN, int highMs = INT_MAX);
 
-} // namespace hikari::application
+}

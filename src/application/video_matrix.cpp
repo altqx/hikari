@@ -78,4 +78,4 @@ std::optional<LegacyColourMatrix::Change> LegacyColourMatrix::set(std::string_vi
     return change;
 }
 
-} // namespace hikari::application
+}

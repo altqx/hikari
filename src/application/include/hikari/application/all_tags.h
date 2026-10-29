@@ -181,4 +181,4 @@ private:
 const std::array<std::u16string_view, 8> &allTagsChangeOptions();
 std::u16string_view allTagsChangeOptionsHelp();
 
-} // namespace hikari::application::visual
+}

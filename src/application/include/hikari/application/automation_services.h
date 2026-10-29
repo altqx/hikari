@@ -161,4 +161,4 @@ private:
     bool m_resolutionOpen = false;
 };
 
-} // namespace hikari::application
+}

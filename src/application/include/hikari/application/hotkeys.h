@@ -119,7 +119,7 @@ inline constexpr int Shift = 306, Alt = 307, Control = 308, Pause = 310, End = 3
                      PageUp = 366, PageDown = 367, NumpadEnter = 370, NumpadHome = 375, NumpadDelete = 385,
                      NumpadMultiply = 387, NumpadAdd = 388, NumpadSeparator = 389, NumpadSubtract = 390,
                      NumpadDecimal = 391, NumpadDivide = 392, WindowsLeft = 393;
-} // namespace wxk
+}
 
 // Key names by wx key code.
 const std::map<int, std::string> &hotkeyKeyNames();
@@ -279,4 +279,4 @@ struct HotkeyNowResult {
 HotkeyNowResult mapHotkeyNow(HotkeyMap &live, int id, const std::string &name, const std::string &accel, int type,
                              HotkeyAnswer answer);
 
-} // namespace hikari::application
+}

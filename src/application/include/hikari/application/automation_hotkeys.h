@@ -24,4 +24,4 @@ std::string legacyNameOf(std::string_view fileName, int ordinal);
 std::vector<MacroBinding> parseLegacyScriptHotkeys(std::string_view text);
 std::string portableKeys(std::string_view wxAccelerator);
 
-} // namespace hikari::application
+}

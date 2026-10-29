@@ -100,4 +100,4 @@ private:
     std::thread m_worker;
 };
 
-} // namespace hikari::application
+}

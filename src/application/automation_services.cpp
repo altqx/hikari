@@ -46,7 +46,7 @@ HostServiceReply strings(std::vector<std::string> values)
     return reply;
 }
 
-} // namespace
+}
 
 namespace {
 
@@ -75,7 +75,7 @@ void addUnique(std::vector<std::string> &folders, const std::string &folder, boo
     folders.push_back(folder);
 }
 
-} // namespace
+}
 
 AutomationFolders automationFolders(const std::string &shipped, const std::string &user, bool windows)
 {
@@ -307,4 +307,4 @@ void AutomationServiceRouter::withdraw()
         m_picker->withdraw();
 }
 
-} // namespace hikari::application
+}

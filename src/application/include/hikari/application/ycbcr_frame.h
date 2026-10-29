@@ -18,4 +18,4 @@ std::string ycbcrLayoutError(const IndexedFrame &frame);
 // Opaque BGRA, stride width * 4. False when the layout is invalid.
 bool ycbcrToBgra(const IndexedFrame &frame, IndexedFrame &out);
 
-} // namespace hikari::application
+}

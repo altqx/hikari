@@ -81,4 +81,4 @@ std::u8string karaokeText(LyricLine &line);
 // New-Document Script Info and Default Style, then one Dialogue per Line.
 LoadResult lyricsDocument(LyricSheet sheet);
 
-} // namespace hikari::core::detail
+}

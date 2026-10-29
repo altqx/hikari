@@ -42,4 +42,4 @@ struct AttachedFontsKey {
 };
 AttachedFontsKey attachedFontsKey(const Document &document);
 
-} // namespace hikari::core
+}

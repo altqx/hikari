@@ -64,4 +64,4 @@ bool dominantScript(std::u16string_view text, Script &out);
 // language is not in the table.
 Scripts dictionaryScripts(std::u16string_view symbol);
 
-} // namespace hikari::core::spelling
+}

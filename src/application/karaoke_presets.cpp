@@ -23,4 +23,4 @@ std::optional<KaraokePreset> readKaraokePreset(std::span<const std::byte> bytes)
     return preset;
 }
 
-} // namespace hikari::application
+}

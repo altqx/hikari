@@ -54,7 +54,7 @@ bool isNumber(u8sv s)
     return true;
 }
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -235,7 +235,7 @@ std::optional<std::u8string> styleTagValue(const StyleValues &style, std::u8stri
     return std::nullopt;
 }
 
-} // namespace legacy
+}
 
 std::size_t styleCount(const Document &document)
 {
@@ -283,7 +283,7 @@ std::u8string hexColour(const Colour &c)
     return std::u8string(reinterpret_cast<const char8_t *>(buf));
 }
 
-} // namespace
+}
 
 std::vector<std::u8string> styleRawFields(const StyleValues &s)
 {
@@ -296,6 +296,6 @@ std::vector<std::u8string> styleRawFields(const StyleValues &s)
             s.marginRight,  s.marginVertical, s.encoding};
 }
 
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

@@ -90,7 +90,7 @@ void keepBlocks(const std::vector<const core::LineRecord *> &lines, std::map<std
     }
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> filterLines(EditSession &session, const FilterSettings &settings,
                                                 const LineVisible &shown, bool afterLoad)
@@ -239,4 +239,4 @@ int hiddenBlockAfter(const core::Document &document, int row)
     return hidden ? 1 : 0;
 }
 
-} // namespace hikari::application
+}

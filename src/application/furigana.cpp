@@ -167,7 +167,7 @@ void wordRuns(std::u16string_view surface, std::u16string_view reading, std::siz
     run(segs[first].begin, segs[last].end, std::u16string(rest));
 }
 
-} // namespace
+}
 
 bool isKanji(char32_t c)
 {
@@ -282,4 +282,4 @@ FuriganaSyllable parseSyllable(std::u16string_view text)
     return out;
 }
 
-} // namespace hikari::application
+}

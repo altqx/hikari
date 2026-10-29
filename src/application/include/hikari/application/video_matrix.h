@@ -20,7 +20,7 @@ inline constexpr int kSmpte240m = 7;
 inline constexpr int kRangeUnspecified = 0;
 inline constexpr int kRangeMpeg = 1;
 inline constexpr int kRangeJpeg = 2;
-} // namespace ffms_colour
+}
 
 // "TV." or "PC." (full range) with 601, 709, FCC or 240M, else "None".
 std::string colourMatrixName(int colorSpace, int colorRange);
@@ -66,4 +66,4 @@ private:
     std::string m_applied, m_source;
 };
 
-} // namespace hikari::application
+}

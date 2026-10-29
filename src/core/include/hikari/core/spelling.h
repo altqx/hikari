@@ -85,4 +85,4 @@ struct RemovedUserWords {
 };
 RemovedUserWords removeUserWords(std::u16string_view content, const std::vector<std::u16string> &words);
 
-} // namespace hikari::core::legacy
+}

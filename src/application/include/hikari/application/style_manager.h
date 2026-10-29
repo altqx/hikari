@@ -25,7 +25,7 @@ inline constexpr int FontName = 1, FontSize = 2, Bold = 4, Italic = 8, Underline
                      ShadowWidth = 1 << 11, ScaleX = 1 << 12, ScaleY = 1 << 13, Angle = 1 << 14, Spacing = 1 << 15,
                      BorderStyle = 1 << 16, Alignment = 1 << 17, MarginLeft = 1 << 18, MarginRight = 1 << 19,
                      MarginVertical = 1 << 20, Encoding = 1 << 21;
-} // namespace style_field
+}
 // The style_field bits that differ.
 int compareStyles(const core::StyleValues &a, const core::StyleValues &b);
 core::StyleValues copyStyleChanges(core::StyleValues target, const core::StyleValues &changed, int fields);
@@ -124,4 +124,4 @@ private:
     bool m_changed = false;
 };
 
-} // namespace hikari::application
+}

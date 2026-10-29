@@ -137,4 +137,4 @@ DialogResult safePrefill(const DialogRequest &request, const LastDialogAnswer &l
     return result;
 }
 
-} // namespace hikari::application
+}

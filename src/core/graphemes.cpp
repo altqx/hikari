@@ -26,7 +26,7 @@ struct MatchDataFree {
     void operator()(pcre2_match_data *data) const { pcre2_match_data_free(data); }
 };
 
-} // namespace
+}
 
 std::size_t graphemeEnd(std::u16string_view text, std::size_t at)
 {
@@ -51,4 +51,4 @@ std::size_t graphemeEnd(std::u16string_view text, std::size_t at)
     }
 }
 
-} // namespace hikari::core
+}

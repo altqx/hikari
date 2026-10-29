@@ -17,4 +17,4 @@ struct MacroRef {
 // in first-load order. Empty when `path` is not listed.
 std::vector<MacroRef> dependencyValidations(const std::vector<ScriptStatus> &scripts, const std::string &path);
 
-} // namespace hikari::application
+}

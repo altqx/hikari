@@ -67,4 +67,4 @@ std::optional<std::size_t> groupOfRule(std::string_view rule);
 // Hunspell checks spelling) and SentenceCapitalization (always off).
 std::vector<std::pair<std::string_view, bool>> linterSwitches(std::span<const bool> groupsOn, bool hunspellOn);
 
-} // namespace hikari::core::grammar
+}

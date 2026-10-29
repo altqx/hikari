@@ -166,7 +166,7 @@ std::u32string toUtf32(std::u16string_view s)
     return out;
 }
 
-} // namespace
+}
 
 std::optional<std::vector<fs::path>> entries(const fs::path &folder, std::u16string_view filespec, int flags)
 {
@@ -198,4 +198,4 @@ std::optional<std::vector<fs::path>> entries(const fs::path &folder, std::u16str
 
 #endif
 
-} // namespace hikari::application::legacy_dir
+}

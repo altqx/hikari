@@ -237,4 +237,4 @@ bool isPathListSetting(std::string_view id);
 // '/'-rooted one on Windows.
 bool isForeignPath(std::string_view path, bool windowsHost);
 
-} // namespace hikari::application::settings_import
+}

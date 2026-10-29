@@ -184,4 +184,4 @@ public:
     virtual std::vector<std::string> fontDirectories() { return {}; }
 };
 
-} // namespace hikari::application
+}

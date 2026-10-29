@@ -56,4 +56,4 @@ private:
     int m_capacity;
 };
 
-} // namespace hikari::application
+}

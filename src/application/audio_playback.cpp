@@ -147,4 +147,4 @@ FollowedCursor followCursor(AudioView &view, std::int64_t sample, int scrollbarT
     return out;
 }
 
-} // namespace hikari::application
+}

@@ -42,4 +42,4 @@ std::optional<Session> parseSession(std::string_view text);
 // Whether "]\n[Close session]\n" follows the header (CRLF and CR read as LF).
 bool sessionClosed(std::string_view text);
 
-} // namespace hikari::application
+}

@@ -160,4 +160,4 @@ std::optional<PointF> projectXY(const XYProjection &p, float x, float y, float z
 // Grid, axes and arrow cones, clipped at the near plane.
 void drawXYGrid(Overlay &out, const XYProjection &p, int an);
 
-} // namespace hikari::application::visual
+}

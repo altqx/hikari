@@ -120,4 +120,4 @@ private:
     std::uint64_t m_revision = 0;
 };
 
-} // namespace hikari::application::visual
+}

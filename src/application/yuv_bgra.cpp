@@ -92,7 +92,7 @@ void eight(const Coefficients &k, __m128i y, __m128i u, __m128i v, __m128i &b, _
 }
 #endif
 
-} // namespace
+}
 
 void row(const Matrix &m, const std::uint8_t *y, const std::uint8_t *u, const std::uint8_t *v, int width,
          std::uint8_t *bgra)
@@ -136,4 +136,4 @@ void row(const Matrix &m, const std::uint8_t *y, const std::uint8_t *u, const st
         pixel(m, y[x], u[x / 2], v[x / 2], bgra + static_cast<std::ptrdiff_t>(x) * 4);
 }
 
-} // namespace hikari::application::yuv
+}

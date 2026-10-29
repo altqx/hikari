@@ -258,4 +258,4 @@ private:
     std::size_t m_stepBytes = 0;
 };
 
-} // namespace hikari::application
+}

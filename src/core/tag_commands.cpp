@@ -60,7 +60,7 @@ bool replaceWithGroup(u16 &s, const LegacyRegex &re)
     return re.replaceAll(s, u"\\1") > 0;
 }
 
-} // namespace
+}
 
 std::pair<long, long> findBrackets(u16v text, long from)
 {
@@ -382,7 +382,7 @@ u16 window(u16v txt, long from)
     return subString(txt, from - 4, from + 4);
 }
 
-} // namespace
+}
 
 EditorText toggleNonAssTag(EditorText state, char16_t tag, bool srt)
 {
@@ -489,7 +489,7 @@ long plainInsertPosition(u16v text, long from)
     return from;
 }
 
-} // namespace
+}
 
 EditorText insertTagButtonText(EditorText state, u16v text)
 {
@@ -537,7 +537,7 @@ LegacyRegex legacyRegex(u16v pattern)
     return LegacyRegex(pattern, LegacyRegex::Advanced | LegacyRegex::IgnoreCase);
 }
 
-} // namespace
+}
 
 EditorText putInNonAss(EditorText state, NonAssFormat format, u16v text, u16v tag)
 {
@@ -614,4 +614,4 @@ u16 putInNonAssLine(u16 line, NonAssFormat format, u16v text, u16v tag)
     return open + u16(text) + close + line;
 }
 
-} // namespace hikari::core::legacy
+}

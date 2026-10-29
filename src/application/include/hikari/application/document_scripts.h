@@ -37,4 +37,4 @@ private:
     std::string m_lastValue;
 };
 
-} // namespace hikari::application
+}

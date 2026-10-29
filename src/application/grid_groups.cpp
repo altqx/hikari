@@ -58,7 +58,7 @@ void keepActiveShown(EditSession &session, core::LineId description)
     }
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> makeGroups(EditSession &session, const LineVisible &shown)
 {
@@ -277,4 +277,4 @@ std::u8string copyGroup(const EditSession &session, core::LineId description)
     return core::clipboardRows(session.document(), ids, translationMode(session));
 }
 
-} // namespace hikari::application
+}

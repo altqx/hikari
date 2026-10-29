@@ -64,7 +64,7 @@ using SetScale = std::function<void(std::u16string &text, std::size_t position, 
 PutResult putDrawing(std::u16string text, std::u16string_view body, PointF position, int alignment,
                      const SetScale &setScale = {});
 
-} // namespace drawing
+}
 
 class DrawingTool : public VisualTool {
 public:
@@ -152,4 +152,4 @@ private:
     bool m_inKey = false, m_keyCommit = false;
 };
 
-} // namespace hikari::application::visual
+}

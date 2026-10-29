@@ -387,7 +387,7 @@ void setPreload(lua_State *L, const char *name, lua_CFunction open)
     lua_setfield(L, -2, name);
 }
 
-} // namespace
+}
 
 void installGlobalLocale()
 {
@@ -426,4 +426,4 @@ void preload(lua_State *L)
     lua_pop(L, 2);
 }
 
-} // namespace hikari::lua_native
+}

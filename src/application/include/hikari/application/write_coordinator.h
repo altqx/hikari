@@ -112,4 +112,4 @@ private:
     std::size_t m_ignoredReports = 0;
 };
 
-} // namespace hikari::application
+}

@@ -41,7 +41,7 @@ bool drawingAfter(std::u16string_view tag, bool drawing)
     return drawing;
 }
 
-} // namespace
+}
 
 Projection project(std::u16string_view raw)
 {
@@ -107,7 +107,7 @@ std::vector<std::u16string> keptTokens(std::u16string_view raw, const Projection
     return out;
 }
 
-} // namespace
+}
 
 std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw, std::size_t start,
                                                         std::size_t end, std::u16string_view insertedText,
@@ -275,4 +275,4 @@ std::u8string toUtf8(std::u16string_view s)
     return out;
 }
 
-} // namespace hikari::core
+}

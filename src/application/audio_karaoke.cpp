@@ -157,7 +157,7 @@ std::optional<std::size_t> hashIn(const u16 &syl)
     return block ? std::nullopt : at;
 }
 
-} // namespace
+}
 
 AudioKaraoke::Place AudioKaraoke::newPlace(const std::u16string &syl)
 {
@@ -745,7 +745,7 @@ std::optional<std::size_t> karaokePieceEnd(std::u16string_view text, std::size_t
     return text.size();
 }
 
-} // namespace
+}
 
 std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs,
                                                    int endMs, int pieceTags)
@@ -875,4 +875,4 @@ void karaokeShapes(std::vector<AudioShape> &out, const AudioView &view, std::int
     }
 }
 
-} // namespace hikari::application
+}

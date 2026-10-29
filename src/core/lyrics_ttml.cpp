@@ -2023,7 +2023,7 @@ private:
     std::optional<std::size_t> m_overAt; // where the Lines' budget ran out (charge)
 };
 
-} // namespace
+}
 
 std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> bytes)
 {
@@ -2057,4 +2057,4 @@ std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> b
     return detail::lyricsDocument(std::move(*sheet));
 }
 
-} // namespace hikari::core
+}

@@ -36,7 +36,7 @@ const core::LineRecord *findLine(const core::Document &document, core::LineId id
     return nullptr;
 }
 
-} // namespace
+}
 
 bool parseValue(const std::u16string &text, double &out)
 {
@@ -326,4 +326,4 @@ std::u16string_view warningText(LineWarning warning)
     return {};
 }
 
-} // namespace hikari::application::visual
+}

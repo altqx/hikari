@@ -217,4 +217,4 @@ public:
     virtual void setObserver(std::function<void()> changed) = 0;
 };
 
-} // namespace hikari::application
+}

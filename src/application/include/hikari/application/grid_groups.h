@@ -25,4 +25,4 @@ std::expected<void, CommandRefusal> addLinesToGroup(EditSession &session, core::
 // The description and members as clipboard rows.
 std::u8string copyGroup(const EditSession &session, core::LineId description);
 
-} // namespace hikari::application
+}

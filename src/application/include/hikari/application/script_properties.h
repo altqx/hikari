@@ -38,4 +38,4 @@ struct ScriptPropertiesEdits {
 std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, const ScriptProperties &edited,
                                                           const ScriptPropertiesEdits &edits, bool linkResolutions);
 
-} // namespace hikari::application
+}

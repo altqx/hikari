@@ -266,4 +266,4 @@ struct LoadResult {
     std::vector<Diagnostic> diagnostics;
 };
 
-} // namespace hikari::core
+}

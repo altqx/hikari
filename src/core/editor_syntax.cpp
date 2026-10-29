@@ -251,11 +251,11 @@ private:
     bool m_hasDrawing = false, m_hasSplit = false;
 };
 
-} // namespace
+}
 
 std::vector<Run> colourRuns(std::u16string_view text, TextState state)
 {
     return Walker(text, state).run();
 }
 
-} // namespace hikari::core::syntax
+}

@@ -28,4 +28,4 @@ private:
     float m_fps = 0.f;
 };
 
-} // namespace hikari::application
+}

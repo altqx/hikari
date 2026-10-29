@@ -47,4 +47,4 @@ using ConversionCollate = std::function<int(std::u8string_view, std::u8string_vi
 std::optional<ConversionResult> convertDocument(const Document &source, SubtitleFormat target,
                                                 const ConversionOptions &options, const ConversionCollate &collate = {});
 
-} // namespace hikari::core
+}

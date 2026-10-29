@@ -51,4 +51,4 @@ std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> b
 // By extension; a non-lyrics extension gives NoLyrics.
 std::expected<LoadResult, LyricsProblem> importLyrics(std::span<const std::byte> bytes, std::u8string_view extension);
 
-} // namespace hikari::core
+}

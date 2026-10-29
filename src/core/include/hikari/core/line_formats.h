@@ -18,6 +18,6 @@ std::vector<std::byte> encodeLineFormat(const Document &document);
 namespace legacy {
 // TMPlayer "%02i:%02i:%02i".
 std::u8string tmpTimeText(std::int64_t milliseconds);
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

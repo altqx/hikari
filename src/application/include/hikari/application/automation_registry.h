@@ -50,4 +50,4 @@ private:
     std::vector<Script> m_scripts;
 };
 
-} // namespace hikari::application
+}

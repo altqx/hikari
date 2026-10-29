@@ -51,7 +51,7 @@ std::u8string titleField(std::u8string_view text)
     return field(words, false);
 }
 
-} // namespace
+}
 
 std::u8string literalText(std::u8string_view text)
 {
@@ -137,7 +137,7 @@ LoadResult lyricsDocument(LyricSheet sheet)
     return loadAss(std::as_bytes(std::span(script)));
 }
 
-} // namespace detail
+}
 
 namespace {
 
@@ -243,7 +243,7 @@ std::optional<std::u8string> voiceMarker(u8sv &rest)
     return voice;
 }
 
-} // namespace
+}
 
 bool isLyricsExtension(std::u8string_view extension)
 {
@@ -459,4 +459,4 @@ std::expected<LoadResult, LyricsProblem> importLyrics(std::span<const std::byte>
     return std::unexpected(LyricsProblem{LyricsProblem::Kind::NoLyrics, 0, {}});
 }
 
-} // namespace hikari::core
+}

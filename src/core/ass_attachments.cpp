@@ -26,7 +26,7 @@ std::string_view trimmed(std::string_view s)
     return s;
 }
 
-} // namespace
+}
 
 std::vector<std::byte> decodeAssAttachment(std::string_view text)
 {
@@ -90,7 +90,7 @@ void fontsLines(const Document &document, Line &&line, End &&end)
         end();
 }
 
-} // namespace
+}
 
 std::vector<AttachedFont> attachedFonts(const Document &document)
 {
@@ -138,4 +138,4 @@ AttachedFontsKey attachedFontsKey(const Document &document)
     return key;
 }
 
-} // namespace hikari::core
+}

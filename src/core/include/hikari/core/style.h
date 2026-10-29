@@ -47,6 +47,6 @@ Colour colour(std::u8string_view text);
 std::optional<std::u8string> styleTagValue(const StyleValues &style, std::u8string_view tag);
 // The Style line's fields, name first (colours as &HAABBGGRR, flags -1/0).
 std::vector<std::u8string> styleRawFields(const StyleValues &style);
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

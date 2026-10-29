@@ -26,4 +26,4 @@ std::string_view gettingStartedPageOf(std::string_view setting);
 // Settings Finish leaves out of an import; a choice at index -1 stays the import's.
 std::set<std::string, std::less<>> gettingStartedPageSettings(const OptionsState &pages);
 
-} // namespace hikari::application
+}

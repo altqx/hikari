@@ -63,4 +63,4 @@ std::size_t displayOffset(const Projection &projection, std::size_t rawOffset);
 std::u16string toUtf16(std::u8string_view text);
 std::u8string toUtf8(std::u16string_view text);
 
-} // namespace hikari::core
+}

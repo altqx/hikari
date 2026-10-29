@@ -22,7 +22,7 @@ std::filesystem::path normalized(const std::string &utf8)
     return ec ? p.lexically_normal() : canonical;
 }
 
-} // namespace
+}
 
 std::vector<MacroRef> dependencyValidations(const std::vector<ScriptStatus> &scripts, const std::string &path)
 {
@@ -54,4 +54,4 @@ std::vector<MacroRef> dependencyValidations(const std::vector<ScriptStatus> &scr
     return out;
 }
 
-} // namespace hikari::application
+}

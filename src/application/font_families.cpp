@@ -73,7 +73,7 @@ int partialSearch(const std::vector<u16> &fonts, const u16 &partial, const FontN
     return -1;
 }
 
-} // namespace
+}
 
 std::u32string filterCharacters(u16v filter, FontListPlatform platform)
 {
@@ -293,4 +293,4 @@ ExternalFontsLoad loadExternalFonts(u16v path, const FontNameLower &lower, FontL
     return out;
 }
 
-} // namespace hikari::application
+}

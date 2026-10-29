@@ -76,6 +76,6 @@ namespace legacy {
 // The first two times of \move (after its four coordinates), \t and \fad gain
 // `start` and `end`, floored at 0.
 std::u8string changeTagTimes(std::u8string_view text, int start, int end);
-} // namespace legacy
+}
 
-} // namespace hikari::application
+}

@@ -47,7 +47,7 @@ bool isShown(const ShownLine &shown, core::LineId id)
     return !shown || shown(id);
 }
 
-} // namespace
+}
 
 int legacyFrameTime(const LegacyTimebase &timebase, int tellMs, bool start)
 {
@@ -265,4 +265,4 @@ VideoFollow followEdit(SeekAfter seek, VideoState state, bool visualTool, const 
     return follow;
 }
 
-} // namespace hikari::application
+}

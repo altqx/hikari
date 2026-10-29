@@ -97,7 +97,7 @@ Checked<std::int64_t> finish(U128 q, const U128 &rem, const U128 &den, bool nega
     return -static_cast<std::int64_t>(q.lo);
 }
 
-} // namespace
+}
 
 namespace detail {
 
@@ -136,7 +136,7 @@ Checked<std::int64_t> mulDivPortable(std::int64_t a, std::int64_t b, std::int64_
     return finish(q, r, den, negative, rounding);
 }
 
-} // namespace detail
+}
 
 Checked<std::int64_t> checkedAdd(std::int64_t a, std::int64_t b)
 {
@@ -207,4 +207,4 @@ Checked<std::int64_t> mulDiv(std::int64_t a, std::int64_t b, std::int64_t c, std
 #endif
 }
 
-} // namespace hikari::core
+}

@@ -102,7 +102,7 @@ int toInt(float value)
     return static_cast<int>(value);
 }
 
-} // namespace legacy
+}
 
 namespace {
 
@@ -133,7 +133,7 @@ void line(Overlay &out, PointF a, PointF b, std::uint32_t argb, float width)
     out.lines.push_back({a, b, width, argb});
 }
 
-} // namespace
+}
 
 std::vector<VectorPoint> parseVectorPoints(std::u16string_view vector)
 {
@@ -979,4 +979,4 @@ void VectorEditor::drawPoints(Overlay &out, const VectorFrame &frame) const
     }
 }
 
-} // namespace hikari::application::visual
+}

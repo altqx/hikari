@@ -123,7 +123,7 @@ int atoi(const std::string &text)
     return static_cast<int>(std::strtol(text.c_str(), nullptr, 10));
 }
 
-} // namespace
+}
 
 std::optional<std::string> decodeSessionBytes(std::string_view bytes)
 {
@@ -227,4 +227,4 @@ bool sessionClosed(std::string_view text)
     return normalized.find("]\n[Close session]\n") != std::string::npos;
 }
 
-} // namespace hikari::application
+}

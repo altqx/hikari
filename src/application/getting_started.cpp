@@ -19,7 +19,7 @@ constexpr std::array<std::string_view, 15> kSettings{
     "updater.checkForStable", "updater.autoCheck", "privacy.usageData",
 };
 
-} // namespace
+}
 
 std::span<const std::string_view> gettingStartedSettings()
 {
@@ -78,4 +78,4 @@ std::set<std::string, std::less<>> gettingStartedPageSettings(const OptionsState
     return out;
 }
 
-} // namespace hikari::application
+}

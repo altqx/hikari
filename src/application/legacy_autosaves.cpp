@@ -27,7 +27,7 @@ std::tuple<int, int, int, int, int, int> key(const LocalTime &t)
     return {t.year, t.month, t.day, t.hour, t.minute, t.second};
 }
 
-} // namespace
+}
 
 LocalTime systemLocalTime(std::filesystem::file_time_type time)
 {
@@ -94,4 +94,4 @@ std::vector<LegacyAutosaveFile> listLegacyAutosaves(const std::filesystem::path 
     return out;
 }
 
-} // namespace hikari::application
+}

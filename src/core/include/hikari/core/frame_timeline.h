@@ -64,4 +64,4 @@ private:
 // The difference of the frameAtOrAfter indices (never the frame of target - anchor).
 Checked<std::int64_t> frameOffset(const FrameTimeline &timeline, DocumentTime anchor, DocumentTime target);
 
-} // namespace hikari::core
+}

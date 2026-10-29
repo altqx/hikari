@@ -43,4 +43,4 @@ struct AssociationLoad {
 };
 AssociationLoad associationLoad(const AssociationOffer &offer, AssociationAnswer answer);
 
-} // namespace hikari::application
+}

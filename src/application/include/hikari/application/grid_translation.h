@@ -42,4 +42,4 @@ enum class TranslationMove {
 std::expected<void, CommandRefusal> moveTranslation(EditSession &session, TranslationMove move,
                                                     const LineVisible &visible = {});
 
-} // namespace hikari::application
+}

@@ -243,7 +243,7 @@ private:
     int m_recorded = 0;
 };
 
-} // namespace
+}
 
 struct PlaybackPipeline::State {
     std::mutex mutex;
@@ -479,4 +479,4 @@ void PlaybackPipeline::run()
     }
 }
 
-} // namespace hikari::application
+}

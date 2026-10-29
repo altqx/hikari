@@ -40,4 +40,4 @@ struct KaraokeCheck {
 // checked on its translation; template, code, mixin and generated "fx" Lines are skipped.
 KaraokeCheck checkKaraoke(const Document &document, std::size_t limit = kListedProblems);
 
-} // namespace hikari::core
+}

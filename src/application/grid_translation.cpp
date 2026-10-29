@@ -68,7 +68,7 @@ std::vector<u8> pastedEntries(u8v text, u8v extension)
     return out;
 }
 
-} // namespace
+}
 
 bool turnOnTranslationMode(core::Document &document)
 {
@@ -215,7 +215,7 @@ std::optional<std::size_t> rowWithOffset(const std::vector<Row> &rows, std::size
     return std::nullopt;
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> moveTranslation(EditSession &session, TranslationMove move, const LineVisible &visible)
 {
@@ -353,4 +353,4 @@ std::expected<void, CommandRefusal> moveTranslation(EditSession &session, Transl
     return {};
 }
 
-} // namespace hikari::application
+}

@@ -26,4 +26,4 @@ std::string_view guidePage(GuideSurface kind, std::string_view id);
 // Falls back to the guide's home.
 std::string guideUrl(GuideSurface kind, std::string_view id);
 
-} // namespace hikari::application
+}

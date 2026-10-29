@@ -21,4 +21,4 @@ std::string aspectLabelNumber(float aspectRatio);
 // Clamped to [1, 10].
 float wheelZoomPercent(float zoomPercent, int steps);
 
-} // namespace hikari::application
+}

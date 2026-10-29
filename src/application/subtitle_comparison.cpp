@@ -46,7 +46,7 @@ template <typename Char>
 void compareElements(LineComparison &firstCompare, LineComparison &secondCompare, std::basic_string_view<Char> first,
                      std::basic_string_view<Char> second);
 
-} // namespace
+}
 
 std::u16string comparedText(const core::LineRecord &line, bool translationMode)
 {
@@ -222,7 +222,7 @@ void compareElements(LineComparison &firstCompare, LineComparison &secondCompare
     }
 }
 
-} // namespace
+}
 
 std::vector<std::u8string> commonStyles(const core::Document &first, const core::Document &second)
 {
@@ -319,4 +319,4 @@ const std::vector<LineComparison> *SubtitleComparison::table(DocumentId id) cons
     return it == m_tables.end() ? nullptr : &it->second;
 }
 
-} // namespace hikari::application
+}

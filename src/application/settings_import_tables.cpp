@@ -730,4 +730,4 @@ std::span<const std::string_view> audioDefaultKeys()
     return table;
 }
 
-} // namespace hikari::application::settings_import
+}

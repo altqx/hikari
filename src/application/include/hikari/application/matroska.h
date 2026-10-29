@@ -154,4 +154,4 @@ struct MatroskaFontsSaved {
 std::vector<MatroskaFontsSaved> saveMatroskaFonts(const std::vector<MatroskaFontTab> &tabs, CollectorOutput &output,
                                                   const std::atomic<bool> *cancel = nullptr);
 
-} // namespace hikari::application
+}

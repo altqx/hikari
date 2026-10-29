@@ -36,4 +36,4 @@ std::string snapshotPath(std::string_view videoPath, int number, int ms);
 // The folder listing's wildcard: "<video file name without extension>_*_*.png".
 std::string snapshotPattern(std::string_view videoPath);
 
-} // namespace hikari::application
+}

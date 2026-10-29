@@ -29,4 +29,4 @@ std::expected<void, CommandRefusal> pasteColumns(EditSession &session, std::u8st
                                                  const LineVisible &visible = {},
                                                  const core::PasteConversion &conversion = {});
 
-} // namespace hikari::application
+}

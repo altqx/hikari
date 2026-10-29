@@ -9,7 +9,7 @@ bool isMember(GroupMarker g)
     return g == GroupMarker::Opened || g == GroupMarker::Closed;
 }
 
-} // namespace
+}
 
 std::unordered_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document)
 {
@@ -62,4 +62,4 @@ std::vector<LineId> groupMembers(const Document &document, LineId description)
     return ordered;
 }
 
-} // namespace hikari::core
+}

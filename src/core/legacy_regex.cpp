@@ -184,7 +184,7 @@ u16 convertWordBoundaries(u16v expr)
     return out;
 }
 
-} // namespace
+}
 
 struct LegacyRegex::Impl {
     pcre2_code *code = nullptr;
@@ -479,4 +479,4 @@ int LegacyRegex::replace(std::u16string &text, std::u16string_view replacement, 
     return count;
 }
 
-} // namespace hikari::core
+}

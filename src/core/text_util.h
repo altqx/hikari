@@ -120,5 +120,5 @@ inline bool validUtf8(const std::byte *p, std::size_t n)
 }
 
 
-} // namespace detail
-} // namespace hikari::core
+}
+}

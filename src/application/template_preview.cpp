@@ -55,7 +55,7 @@ bool over(const core::LineRecord &l, TemplatePreviewWindow window)
     return msOf(l.start) <= window.toMs && msOf(l.end) > window.fromMs;
 }
 
-} // namespace
+}
 
 std::optional<TemplateKind> templateKindOf(const core::LineRecord &line)
 {
@@ -317,4 +317,4 @@ bool isPreviewService(HostService service)
     }
 }
 
-} // namespace hikari::application
+}

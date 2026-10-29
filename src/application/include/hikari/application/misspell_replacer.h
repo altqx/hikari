@@ -135,4 +135,4 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
                                                           const std::vector<ReplacerFind> &finds,
                                                           const ReplacerCase &cases = {});
 
-} // namespace hikari::application
+}

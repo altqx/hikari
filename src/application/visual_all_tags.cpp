@@ -220,7 +220,7 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
     }
 }
 
-} // namespace
+}
 
 bool keyMatchesAccelerator(const Key &key, std::string_view accel)
 {
@@ -1210,7 +1210,7 @@ std::vector<std::string> rolesOf(int mode)
     return {};
 }
 
-} // namespace
+}
 
 float AllTagsTool::field(const Fields &f, const std::string &name, int mode) const
 {
@@ -1841,4 +1841,4 @@ AllTagsSetPreview allTagsSetPreview(const AllTagsSetting &tag, std::u16string_vi
     return out;
 }
 
-} // namespace hikari::application::visual
+}

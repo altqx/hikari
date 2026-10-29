@@ -63,7 +63,7 @@ std::vector<bool> embeddedData(const std::vector<Section> &sections)
     return data;
 }
 
-} // namespace
+}
 
 bool Document::setScriptInfo(std::u8string_view key, std::u8string value)
 {
@@ -401,7 +401,7 @@ void prepareInserted(LineRecord &line, LineId id, std::size_t offset)
     line.span = SourceSpan{offset, 0, 0};
 }
 
-} // namespace
+}
 
 std::optional<LineId> Document::insertLineBefore(LineId before, LineRecord line, ChangeMark mark)
 {
@@ -874,7 +874,7 @@ private:
     std::optional<std::u8string> m_tlStyle; // set while TLMode pairing is on
 };
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -938,11 +938,11 @@ bool isCanonicalAssTime(std::u8string_view lexeme)
            t[colon + 6] == u8'.' && digits(colon + 7, 2);
 }
 
-} // namespace legacy
+}
 
 LoadResult loadAss(std::span<const std::byte> bytes)
 {
     return Loader(bytes).run();
 }
 
-} // namespace hikari::core
+}

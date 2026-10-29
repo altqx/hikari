@@ -117,7 +117,7 @@ std::u8string number(std::int64_t v)
     return std::u8string(s.begin(), s.end());
 }
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -129,7 +129,7 @@ std::u8string tmpTimeText(std::int64_t ms)
     return std::u8string(reinterpret_cast<const char8_t *>(buf));
 }
 
-} // namespace legacy
+}
 
 void Document::setFrameRate(FrameRate rate)
 {
@@ -293,4 +293,4 @@ std::vector<std::byte> encodeLineFormat(const Document &document)
     return out;
 }
 
-} // namespace hikari::core
+}

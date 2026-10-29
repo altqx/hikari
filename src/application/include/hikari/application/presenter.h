@@ -54,4 +54,4 @@ public:
     virtual bool convertsYcbcr() const { return false; }
 };
 
-} // namespace hikari::application
+}

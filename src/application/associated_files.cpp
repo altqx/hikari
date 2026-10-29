@@ -32,7 +32,7 @@ bool startsWith(std::string_view s, std::string_view prefix)
     return s.substr(0, prefix.size()) == prefix;
 }
 
-} // namespace
+}
 
 std::optional<std::filesystem::path> findSameNamedFile(const std::filesystem::path &file, bool video)
 {
@@ -100,4 +100,4 @@ AssociationLoad associationLoad(const AssociationOffer &offer, AssociationAnswer
     return load;
 }
 
-} // namespace hikari::application
+}

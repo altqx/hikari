@@ -34,7 +34,7 @@ OpenError openError(ReadError e)
     return OpenError::ReadFailed;
 }
 
-} // namespace
+}
 
 DocumentFiles::DocumentFiles(FileReadPort &reader, WriteCoordinator &writes) : m_reader(reader), m_writes(writes) {}
 
@@ -318,4 +318,4 @@ std::optional<SaveStatus> DocumentFiles::lastSave(DocumentId document) const
     return it == m_documents.end() ? std::nullopt : it->second.lastSave;
 }
 
-} // namespace hikari::application
+}

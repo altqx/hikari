@@ -109,4 +109,4 @@ std::optional<std::u16string> readFontCatalogFile(const std::filesystem::path &p
 // Makes the folder when missing and replaces the file; false when it could not be written.
 bool writeFontCatalogFile(const std::filesystem::path &path, const std::string &bytes);
 
-} // namespace hikari::application
+}

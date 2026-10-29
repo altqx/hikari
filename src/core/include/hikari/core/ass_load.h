@@ -19,6 +19,6 @@ std::int64_t assTimeMilliseconds(std::u8string_view lexeme);
 bool isCanonicalAssTime(std::u8string_view lexeme);
 // C strtol on a 64-bit long, then truncated to int.
 std::int64_t atoi(std::u8string_view text);
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

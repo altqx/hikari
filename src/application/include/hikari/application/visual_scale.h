@@ -100,4 +100,4 @@ private:
     bool m_valueRatios = false; // a value is being written: each axis' own ratio
 };
 
-} // namespace hikari::application::visual
+}

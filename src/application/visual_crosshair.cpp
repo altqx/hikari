@@ -27,7 +27,7 @@ std::u8string toU8(const std::u16string &text)
     return core::toUtf8(text);
 }
 
-} // namespace
+}
 
 CrossCoefficients crossCoefficients(const VideoView &view)
 {
@@ -212,4 +212,4 @@ std::vector<ToolOption> CrosshairTool::options(const VisualHost &host) const
     return {copy};
 }
 
-} // namespace hikari::application::visual
+}

@@ -37,4 +37,4 @@ struct Run {
 // In order, adjacent runs of one role merged, Text runs included.
 std::vector<Run> colourRuns(std::u16string_view text, TextState state);
 
-} // namespace hikari::core::syntax
+}

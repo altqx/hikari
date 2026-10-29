@@ -71,7 +71,7 @@ Selection selectAll(const std::vector<core::LineId> &ids)
     return s;
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> insertLine(EditSession &session, InsertWhere where,
                                                std::optional<std::int64_t> videoMs, const LineVisible &visible)
@@ -291,7 +291,7 @@ std::u8string joined(const std::vector<const core::LineRecord *> &parts, bool tr
     return out;
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> joinLines(EditSession &session, JoinKind kind, const LineVisible &visible)
 {
@@ -563,7 +563,7 @@ std::expected<void, CommandRefusal> retimeAll(EditSession &session, const std::s
     return {};
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> setFpsFromVideo(EditSession &session, std::int64_t videoMs, const LineVisible &visible)
 {
@@ -593,4 +593,4 @@ std::expected<void, CommandRefusal> setNewFps(EditSession &session, double oldFp
                      [&](std::int64_t t) { return static_cast<int>(static_cast<double>(t) * sub); });
 }
 
-} // namespace hikari::application
+}

@@ -50,4 +50,4 @@ LastDialogAnswer lastDialogAnswer(const DialogRequest &request, const DialogResu
 // as last time.
 DialogResult safePrefill(const DialogRequest &request, const LastDialogAnswer &last);
 
-} // namespace hikari::application
+}

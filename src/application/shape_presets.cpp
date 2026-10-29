@@ -86,7 +86,7 @@ char16_t lower(char16_t c)
     return static_cast<char16_t>(std::towlower(static_cast<wint_t>(c)));
 }
 
-} // namespace
+}
 
 bool sameNameIgnoringCase(u16v a, u16v b)
 {
@@ -184,7 +184,7 @@ bool blank(u16v text)
     return std::ranges::all_of(text, isBlank);
 }
 
-} // namespace
+}
 
 ShapesEdition::ShapesEdition(std::vector<ShapePreset> presets, int selection)
     : m_history(presets, clampedSelection(selection, presets.size()))
@@ -363,4 +363,4 @@ void ShapesEdition::restoreDefaults(std::vector<ShapePreset> defaults)
     m_history.change(std::move(defaults), choice, RestoreDefaults);
 }
 
-} // namespace hikari::application::visual
+}

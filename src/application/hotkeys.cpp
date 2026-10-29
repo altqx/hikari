@@ -797,7 +797,7 @@ struct ConflictScan {
     bool audioNamed = false;
 };
 
-} // namespace
+}
 
 std::span<const HotkeyAction> hotkeyActions()
 {
@@ -1255,7 +1255,7 @@ bool shownByFilter(int mode, const HotkeyList::Row &r)
     }
 }
 
-} // namespace
+}
 
 void HotkeyList::addRows(const HotkeyMap &more)
 {
@@ -1491,7 +1491,7 @@ void addName(ConflictScan &scan, const HotkeyId &key, const Hotkey &hotkey)
     scan.commands.push_back(reportName(key, hotkey));
 }
 
-} // namespace
+}
 
 std::optional<HotkeyConflict> HotkeyList::mapConflict(int index, const std::string &accel, int type,
                                                       const HotkeyMap &live)
@@ -1709,7 +1709,7 @@ std::vector<HotkeyId> holding(const HotkeyMap &live, const std::string &accel)
     return out;
 }
 
-} // namespace
+}
 
 std::optional<HotkeyConflict> mapHotkeyNowConflict(const HotkeyMap &live, int, const std::string &accel, int type)
 {
@@ -1750,4 +1750,4 @@ HotkeyNowResult mapHotkeyNow(HotkeyMap &live, int id, const std::string &name, c
     return out;
 }
 
-} // namespace hikari::application
+}

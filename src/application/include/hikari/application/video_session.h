@@ -243,4 +243,4 @@ private:
     std::unique_ptr<PlaybackPipeline> m_pipeline;
 };
 
-} // namespace hikari::application
+}

@@ -71,7 +71,7 @@ core::LineRecord stagedRecord(const Gesture &gesture, core::LineId id)
     return rec;
 }
 
-} // namespace
+}
 
 const std::array<std::u16string_view, 21> &positionAlignments()
 {
@@ -1392,4 +1392,4 @@ bool MoveTool::setOption(const std::string &name, int value, VisualHost &host)
     return true;
 }
 
-} // namespace hikari::application::visual
+}

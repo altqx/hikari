@@ -421,7 +421,7 @@ PointF add(PointF a, PointF b)
     return {a.x + b.x, a.y + b.y};
 }
 
-} // namespace
+}
 
 ScriptState scriptState(const VisualHost &host)
 {
@@ -1036,4 +1036,4 @@ void drawHelperLine(Overlay &out, int x, int y, const VideoView &view)
     drawRect(out, {static_cast<float>(x), static_cast<float>(y)}, false, 4.f);
 }
 
-} // namespace hikari::application::visual
+}

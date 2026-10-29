@@ -726,7 +726,7 @@ const LineRecord *find(const Document &document, LineId id)
     return nullptr;
 }
 
-} // namespace
+}
 
 std::u8string clipboardRows(const Document &document, const std::vector<LineId> &lines, bool translationMode,
                             bool numberSrtCues)
@@ -992,4 +992,4 @@ std::optional<ConversionResult> convertDocument(const Document &source, Subtitle
     return ConversionResult{std::move(document), report};
 }
 
-} // namespace hikari::core
+}

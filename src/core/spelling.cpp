@@ -111,7 +111,7 @@ void collectText(std::u16string_view text, SubtitleFormat format, std::u16string
     }
 }
 
-} // namespace
+}
 
 SpellMarks checkTextAndBrackets(std::u16string_view text, SubtitleFormat format, const WordSegmenter &segment,
                                 const WordCheck &check, int replaceTagsLen)
@@ -446,4 +446,4 @@ RemovedUserWords removeUserWords(std::u16string_view content, const std::vector<
     return out;
 }
 
-} // namespace hikari::core::legacy
+}

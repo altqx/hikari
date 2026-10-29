@@ -345,7 +345,7 @@ std::optional<std::int64_t> parseInteger(std::string_view text)
     return out;
 }
 
-} // namespace
+}
 
 std::optional<std::uint32_t> parseSettingColour(std::string_view text)
 {
@@ -643,4 +643,4 @@ std::span<const InterimBit> interimShiftOptionBits()
     return bits;
 }
 
-} // namespace hikari::application
+}

@@ -102,7 +102,7 @@ std::string lowerExtension(std::string_view path)
     return ext;
 }
 
-} // namespace
+}
 
 OpenKind openKindOf(std::string_view path, bool single)
 {
@@ -125,4 +125,4 @@ OpenKind openKindOf(std::string_view path, bool single)
     return OpenKind::Video;
 }
 
-} // namespace hikari::application
+}

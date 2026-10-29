@@ -30,4 +30,4 @@ std::vector<KanaReading> kanaReadings(std::u16string_view text);
 // part of it is no romaji.
 std::optional<std::u16string> romajiToHiragana(std::u16string_view romaji);
 
-} // namespace hikari::application
+}

@@ -35,4 +35,4 @@ void setStagedScriptResolution(std::vector<MacroInfoLine> &info, Resolution reso
 // no step when both keys already hold it.
 std::expected<void, CommandRefusal> setScriptResolution(EditSession &session, Resolution resolution);
 
-} // namespace hikari::application
+}

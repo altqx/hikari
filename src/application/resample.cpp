@@ -171,7 +171,7 @@ u16 trimmed(u16v s)
     return u16(s.substr(b, e - b + 1));
 }
 
-} // namespace
+}
 
 Resolution scriptResolution(const core::Document &document)
 {
@@ -355,4 +355,4 @@ std::expected<void, CommandRefusal> changeResolution(EditSession &session, Resol
     }});
 }
 
-} // namespace hikari::application
+}

@@ -96,7 +96,7 @@ struct Tag {
 std::vector<Tag> parseTags(const std::u32string &text);
 std::vector<Tag> parseTags(const std::u32string &text, const std::vector<std::u32string> &names);
 
-} // namespace collector
+}
 
 struct CollectedFile {
     std::u16string family; // the block it is logged in
@@ -214,4 +214,4 @@ private:
 std::u16string toU16(const std::u8string &text);
 std::string toUtf8(const std::u16string &text);
 
-} // namespace hikari::application
+}

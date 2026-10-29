@@ -73,4 +73,4 @@ using TextCompare = std::function<int(std::u8string_view, std::u8string_view)>;
 std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key, bool selectedOnly,
                                               const TextCompare &compare = {});
 
-} // namespace hikari::application
+}

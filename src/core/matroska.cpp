@@ -111,7 +111,7 @@ void copyFields(LineRecord &to, const LineRecord &from)
     to.translation = from.translation;
 }
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -122,7 +122,7 @@ std::u8string utf8OrEmpty(std::string_view bytes)
     return std::u8string(reinterpret_cast<const char8_t *>(bytes.data()), bytes.size());
 }
 
-} // namespace legacy
+}
 
 MatroskaCodec matroskaCodec(std::u8string_view codecName)
 {
@@ -261,4 +261,4 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
     return document;
 }
 
-} // namespace hikari::core
+}

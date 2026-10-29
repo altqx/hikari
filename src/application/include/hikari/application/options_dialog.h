@@ -103,4 +103,4 @@ std::int64_t legacyAtoi(std::string_view text);
 // A comma is a decimal point; 0 when the text is not a number; truncated, then clamped.
 std::int64_t numCtrlValue(std::string_view text, std::int64_t min, std::int64_t max);
 
-} // namespace hikari::application
+}

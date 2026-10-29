@@ -124,4 +124,4 @@ VideoFollow followGridPress(SeekAfter seek, PlayAfter play, VideoState state, co
 // other than the crosshair is on.
 VideoFollow followEdit(SeekAfter seek, VideoState state, bool visualTool, const FollowedLine &line);
 
-} // namespace hikari::application
+}

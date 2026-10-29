@@ -163,4 +163,4 @@ std::vector<DocumentId> Workspace::documents() const
     return out;
 }
 
-} // namespace hikari::application
+}

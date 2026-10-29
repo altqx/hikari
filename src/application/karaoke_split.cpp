@@ -386,7 +386,7 @@ void splitWord(const std::vector<Unit> &all, std::size_t from, std::size_t to, c
     }
 }
 
-} // namespace
+}
 
 Hyphenation Hyphenation::fromPatterns(std::string_view utf8)
 {
@@ -516,4 +516,4 @@ std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const Karaok
     return starts;
 }
 
-} // namespace hikari::application
+}

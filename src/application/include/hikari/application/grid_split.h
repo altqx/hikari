@@ -44,6 +44,6 @@ std::u8string floatText(float value);
 // The text with its first \move(...) (or \pos(...)) replaced by \pos(x,y) at
 // `ms`, the move's times absolute (zero times meaning the Line's own).
 std::u8string moveToPos(std::u8string_view text, std::int64_t lineStartMs, std::int64_t lineEndMs, int ms);
-} // namespace legacy
+}
 
-} // namespace hikari::application
+}

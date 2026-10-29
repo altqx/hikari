@@ -17,4 +17,4 @@ struct GeneratedRun {
 };
 std::vector<GeneratedRun> generatedRuns(const std::vector<const core::LineRecord *> &lines);
 
-} // namespace hikari::application
+}

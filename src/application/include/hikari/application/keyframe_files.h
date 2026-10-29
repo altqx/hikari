@@ -9,4 +9,4 @@ namespace hikari::application {
 // frame 0), XviD/ffmpeg/avconv 2-pass stats, x264 stats and DivX "##map version" (no keyframes).
 std::vector<int> parseKeyframes(std::string_view text);
 
-} // namespace hikari::application
+}

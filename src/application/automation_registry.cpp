@@ -13,7 +13,7 @@ std::string fileNameOf(const std::string &path)
     return slash == std::string::npos ? path : path.substr(slash + 1);
 }
 
-} // namespace
+}
 
 std::string MacroIdentity::legacyAlias() const
 {
@@ -86,4 +86,4 @@ AliasResolution AutomationRegistry::resolve(const std::string &alias,
     return result;
 }
 
-} // namespace hikari::application
+}

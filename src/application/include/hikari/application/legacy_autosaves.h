@@ -34,4 +34,4 @@ std::vector<LegacyAutosaveFile> listLegacyAutosaves(const std::filesystem::path 
                                                     const std::u16string &untitled,
                                                     const LocalTimeOf &localTime = systemLocalTime);
 
-} // namespace hikari::application
+}

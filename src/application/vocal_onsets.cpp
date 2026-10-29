@@ -128,7 +128,7 @@ double localMedian(const std::vector<double> &v, std::int64_t at, int span, std:
     return *middle;
 }
 
-} // namespace
+}
 
 std::optional<std::vector<int>> detectVocalOnsets(const DisplayAudio &audio, const std::atomic<bool> *cancel)
 {
@@ -207,4 +207,4 @@ int snapToOnset(std::span<const int> onsetsMs, int ms, int windowMs, int lowMs, 
     return best;
 }
 
-} // namespace hikari::application
+}

@@ -228,7 +228,7 @@ u16 currentText(const VisualHost &host, const Gesture &g, core::LineId id, bool 
     return editedText(host, before);
 }
 
-} // namespace
+}
 
 namespace drawing {
 
@@ -568,7 +568,7 @@ PutResult putDrawing(u16 text, u16v clip, PointF position, int alignment, const 
     return {std::move(text), startOfDrawing, endDrawing};
 }
 
-} // namespace drawing
+}
 
 DrawingTool::DrawingTool()
 {
@@ -1179,4 +1179,4 @@ bool DrawingTool::setOption(const std::string &name, int value, VisualHost &host
     return false;
 }
 
-} // namespace hikari::application::visual
+}

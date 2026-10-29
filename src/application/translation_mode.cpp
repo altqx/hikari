@@ -53,7 +53,7 @@ bool translationModeOn(const core::Document &document)
     return document.scriptInfo(u8"TLMode") == std::optional<u8>(u8"Yes");
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> turnOnTranslationModeStep(EditSession &session)
 {
@@ -164,4 +164,4 @@ void OriginalColumns::pasted(const core::Document &after)
     see(after);
 }
 
-} // namespace hikari::application
+}

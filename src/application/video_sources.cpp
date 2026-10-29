@@ -136,7 +136,7 @@ int saturate(double v)
     return v >= static_cast<double>(INT_MAX) ? INT_MAX : static_cast<int>(v);
 }
 
-} // namespace
+}
 
 bool isNextFileVideo(std::string_view path)
 {
@@ -222,7 +222,7 @@ bool isDigit(char c)
     return c >= '0' && c <= '9';
 }
 
-} // namespace
+}
 
 int naturalNameCompare(std::string_view a, std::string_view b, const NameLower &lower)
 {
@@ -641,4 +641,4 @@ int keyframeSnapWithoutVideo(int keyMs)
     return (frameTime / 10) * 10; // truncated to 10 ms
 }
 
-} // namespace hikari::application
+}

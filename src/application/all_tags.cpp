@@ -58,7 +58,7 @@ u16 streamed(float value)
     return ascii(buffer);
 }
 
-} // namespace
+}
 
 AllTagsSetting AllTagsSetting::named(std::u16string name)
 {
@@ -316,7 +316,7 @@ u16 hexByte(float value)
     return {digits[v >> 4], digits[v & 15]};
 }
 
-} // namespace
+}
 
 std::vector<u16> allTagsValueNames(const AllTagsSetting &tag)
 {
@@ -399,7 +399,7 @@ AllTagsEdition::Check checkRange(const AllTagsSetting &t, AllTagsEdition::Number
     return Check::Ok;
 }
 
-} // namespace
+}
 
 AllTagsEdition::AllTagsEdition(std::vector<AllTagsSetting> tags, int selection)
     : m_history(tags, clampedSelection(selection, tags.size()))
@@ -670,4 +670,4 @@ std::u16string_view allTagsChangeOptionsHelp()
            u"Gradient line decreasing - inserts a tag in selected lines, decreasing the value.";
 }
 
-} // namespace hikari::application::visual
+}

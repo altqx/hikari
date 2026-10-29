@@ -98,7 +98,7 @@ std::u16string asciiFold(std::u16string_view s)
     return out;
 }
 
-} // namespace
+}
 
 SelectLinesSettings selectLinesFromOptions(int options)
 {
@@ -335,4 +335,4 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     return result;
 }
 
-} // namespace hikari::application
+}

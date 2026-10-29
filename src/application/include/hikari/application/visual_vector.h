@@ -13,7 +13,7 @@ namespace hikari::application::visual {
 namespace keys {
 inline constexpr int A = 0x41; // Ctrl+A selects every point
 inline constexpr int Delete = 0x01000007;
-} // namespace keys
+}
 
 // `type` is the drawing command ('m', 'l', 'b' or 's'); `start` marks the point that begins a command.
 struct VectorPoint {
@@ -34,7 +34,7 @@ int atoi(std::u16string_view text);
 std::u16string getfloat(float value, std::string_view format = "5.3f");
 // Float to int as MSVC x64 does (cvttss2si): truncated, INT_MIN when out of range.
 int toInt(float value);
-} // namespace legacy
+}
 
 // Tokens split at spaces; "p" reads as "s", "c" only starts a new command; a number without its pair,
 // or a pair whose second number does not parse, is dropped.
@@ -134,4 +134,4 @@ private:
     unsigned char m_axis = 0;
 };
 
-} // namespace hikari::application::visual
+}
