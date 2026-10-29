@@ -18266,7 +18266,8 @@ private slots:
     // default once created and reads the defaults when it is created after
     // it; DestroyDialogs (a changed program font) saves its options and
     // drops it with its recent lists, and destroys MisspellReplacer, whose
-    // destructor writes Rules.txt (HikariSubFrame::DestroyDialogs, OnClose).
+    // destructor writes the rules file (rules.toml since CF2;
+    // HikariSubFrame::DestroyDialogs, OnClose).
     void findAndMultireplacerFollowLegacyOwnersThroughSetDefault()
     {
         QTemporaryDir home;
@@ -18347,7 +18348,7 @@ private slots:
                                               {QStringLiteral("find"), QStringLiteral("zz")},
                                               {QStringLiteral("replace"), QStringLiteral("z")},
                                               {QStringLiteral("options"), 0}}));
-        const QString rules = home.filePath(QStringLiteral("Rules.txt"));
+        const QString rules = home.filePath(QStringLiteral("rules.toml"));
         QVERIFY(!QFile::exists(rules));
 
         // A changed program font: DestroyDialogs.
@@ -18364,7 +18365,7 @@ private slots:
         QTRY_VERIFY(!dock->property("isOpen").toBool());
         QVERIFY(!tool->property("opened").toBool());
         // ~MisspellReplacer wrote the rules; the panel stays where it is
-        // and starts again (empty fields) from Rules.txt
+        // and starts again (empty fields) from rules.toml
         // (PU2-fix-minor-errors-panel; legacy's window closed).
         QVERIFY(misspellDock->property("isOpen").toBool());
         QTRY_COMPARE(item<QObject>("misspellFind")->property("text").toString(), QString());

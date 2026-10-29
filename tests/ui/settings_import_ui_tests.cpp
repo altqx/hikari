@@ -49,6 +49,8 @@ QByteArray readFile(const QString &path)
 }
 
 // CF2 (#489): legacy's Rules.txt, imported as rules.toml.
+constexpr char kLegacyRules[] = "#HikariSub rules file\r\n1\r\nTypo\fteh\fthe\f0\r\n";
+
 QByteArray rulesToml(const QByteArray &legacy)
 {
     return QByteArray::fromStdString(app::legacyRulesToml(legacy));
@@ -79,7 +81,7 @@ struct LegacyRoot {
                                                         "TOOLBAR_ALIGNMENT=1\r\nSUBS_RECENT_FILES={\r\n\tD:\\media\\a.ass\r\n}\r\n"));
         writeFile(path("Config/Hotkeys.txt"), "[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n"
                                               "GLOBAL_VIDEO_INDEXING G=Ctrl-Alt-I\r\nNOT_AN_ACTION G=Ctrl-K\r\n");
-        writeFile(path("Config/Rules.txt"), "1\tteh\tthe\r\n");
+        writeFile(path("Config/Rules.txt"), kLegacyRules);
         writeFile(path("Dictionary/UserDic.udic"), "\xEF\xBB\xBFs\xC5\x82owo\r\n");
         writeFile(path("Themes/Mine.txt"), "WINDOW_BACKGROUND=#000000\r\n");
     }
@@ -257,7 +259,8 @@ private slots:
         const QJsonObject state = QJsonDocument::fromJson(readFile(folder.filePath(QStringLiteral("state.json")))).object();
         QCOMPARE(state.value(QStringLiteral("recent")).toObject().value(QStringLiteral("subtitles")).toArray().size(), 1);
         QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("hikari.ini"))));
-        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml("1\tteh\tthe\r\n"));
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
+        QVERIFY(readFile(folder.filePath(QStringLiteral("rules.toml"))).contains("description = \"Typo\"\nenabled = true\nfind = \"teh\"\nreplace = \"the\"\n"));
         QCOMPARE(readFile(folder.filePath(QStringLiteral("Dictionary/UserDic.udic"))),
                  QByteArray("\xEF\xBB\xBFs\xC5\x82owo\r\n"));
         QVERIFY(!next.store->recover()); // once
@@ -445,7 +448,7 @@ private slots:
             // Changed in the same session, after the import was staged.
             s.settings->set("grid.hideColumns", 6);
             s.settings->set("grid.font", QStringLiteral("Later"));
-            writeFile(folder.filePath(QStringLiteral("rules.toml")), rulesToml("1\tmine\tours\r\n"));
+            writeFile(folder.filePath(QStringLiteral("rules.toml")), rulesToml("#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n"));
             QCOMPARE(s.store->editsKeptOverImport(), (QStringList{"grid.font", "rules.toml"}));
             // A plan made now compares with what the next start will hold.
             QCOMPARE(std::get<std::string>(s.store->destination().values.at("grid.font")), std::string("Later"));
@@ -454,7 +457,7 @@ private slots:
         QVERIFY(next.store->recover());
         QCOMPARE(next.settings->integer("grid.hideColumns"), 6); // not touched by the import: kept
         QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Later")); // the import changes it: kept too
-        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml("1\tmine\tours\r\n"));
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml("#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n"));
         QCOMPARE(next.settings->integer("grid.fontSize"), 12); // the import's other changes go in
         QVERIFY(next.store->editsKeptOverImport().isEmpty());
         // A rollback would replace them: they are not the import's.
@@ -487,7 +490,7 @@ private slots:
             QVERIFY(next.store->recover());
             QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
             QCOMPARE(next.settings->integer("grid.fontSize"), 12);
-            QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml("1\tteh\tthe\r\n"));
+            QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
             QVERIFY(next.settings->list(application::kHotkeysSetting.data())
                         .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
             QCOMPARE(next.store->rollback(), SettingsImportStore::Result::Activated);
@@ -564,7 +567,7 @@ private slots:
             QCOMPARE(next.store->previousGeneration(), previous);
             // The first import, and the edit made since; not the second import.
             QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Mine"));
-            QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml("1\tteh\tthe\r\n"));
+            QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
             QCOMPARE(next.settings->integer("grid.hideColumns"), 4);
             QVERIFY(!next.settings->isSet(QStringLiteral("grid.fontSize")));
             // Its rollback is still the one it had.
