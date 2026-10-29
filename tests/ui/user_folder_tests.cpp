@@ -249,6 +249,11 @@ private slots:
         const QString locked = user.filePath(QStringLiteral("automation/include/BM/BadMutex"));
         const auto permissions = QFile::permissions(locked);
         QVERIFY(QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+        if (QFile probe(locked + QStringLiteral("/probe")); probe.open(QIODevice::WriteOnly)) { // root writes anyway
+            probe.close();
+            QVERIFY(probe.remove() && QFile::setPermissions(locked, permissions));
+            QSKIP("the folder stays writable for this user");
+        }
         UserFolder::SeedReport r = folder.seed(program.path());
         QVERIFY(QFile::setPermissions(locked, permissions));
         QCOMPARE(r.failed, QStringList{QStringLiteral("automation/include/BM/BadMutex/a.so")});
