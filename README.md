@@ -27,7 +27,7 @@ This is HikariSub 0.1, on the `main` branch. The wxWidgets app it replaces, [Hik
         <source media="(prefers-color-scheme: light)" srcset="docs/readme/layouts-light.webp">
         <img src="docs/readme/layouts-dark.webp" alt="The window switching between the Editing, Timing, Translation and Typesetting layouts">
       </picture>
-      <p>Dockable panels with Editing, Timing, Translation and Typesetting layouts. Each tab keeps its own.</p>
+      <p>Dockable panels with Editing, Timing, Translation, Typesetting and Karaoke layouts. Each tab keeps its own.</p>
     </td>
     <td width="50%">
       <picture>
