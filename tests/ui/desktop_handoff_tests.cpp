@@ -61,7 +61,7 @@ class DesktopHandoffTests : public QObject {
     void start(const QString &userFolder = {})
     {
         app::Application::Options o;
-        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.userFolder = userFolder;
         o.playbackAudio = false;
         o.spellingBackend = {}; // no spell checker, so no notice over the window

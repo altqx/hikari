@@ -70,7 +70,7 @@ class FileSessionPopupsTests : public QObject {
     app::Application::Options options() const
     {
         app::Application::Options o;
-        o.settingsFile = dir.filePath(QLatin1String(QTest::currentTestFunction()) + QStringLiteral("/hikari.ini"));
+        o.settingsFile = dir.filePath(QLatin1String(QTest::currentTestFunction()) + QStringLiteral("/settings.toml"));
         o.recoveryDir = dir.filePath(QLatin1String(QTest::currentTestFunction()) + QStringLiteral("/Recovery"));
         o.playbackAudio = false;
         o.spellingBackend = {};

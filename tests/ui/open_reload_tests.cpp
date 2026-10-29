@@ -186,7 +186,7 @@ private slots:
     void theRecentListFollowsOpensAndSavesAndPersists()
     {
         QTemporaryDir own;
-        const QString settings = own.filePath(QStringLiteral("hikari.ini"));
+        const QString settings = own.filePath(QStringLiteral("settings.toml"));
         const QString a1 = writeFile(own, "a.ass", "a"), b1 = writeFile(own, "b.ass", "b");
         const QString saved = own.filePath(QStringLiteral("c.ass"));
         {
@@ -231,7 +231,7 @@ private slots:
     {
         QTemporaryDir own;
         app::Application::Options options;
-        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = own.filePath(QStringLiteral("settings.toml"));
         {
             app::Application a(options);
             QCOMPARE(a.shell().hiddenColumns(), 0);
@@ -246,7 +246,7 @@ private slots:
     {
         QTemporaryDir own;
         app::Application::Options options;
-        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = own.filePath(QStringLiteral("settings.toml"));
         const QString path = own.filePath(QStringLiteral("comments.ass"));
         {
             QFile f(path);

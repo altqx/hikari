@@ -4986,7 +4986,7 @@ Failed to copy %2 fonts.</source>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
-        <translation>이 포터블 사본은 설정을 %1에 보관합니다. 이전 버전의 설정은 아직 %2에 있습니다. 사용하려면 HikariSub를 종료하고 그곳에서 hikari.ini를 복사하세요.</translation>
+        <translation type="vanished">이 포터블 사본은 설정을 %1에 보관합니다. 이전 버전의 설정은 아직 %2에 있습니다. 사용하려면 HikariSub를 종료하고 그곳에서 hikari.ini를 복사하세요.</translation>
     </message>
     <message>
         <source>%1 - HikariSub</source>
@@ -6415,6 +6415,26 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Help</source>
         <translation>도움말</translation>
+    </message>
+    <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your settings moved from hikari.ini to settings.toml, hotkeys.toml and state.json. The old file is kept as hikari.ini.old.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are at their defaults for now. HikariSub will not write over it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are back at their defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hotkeys.toml: %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

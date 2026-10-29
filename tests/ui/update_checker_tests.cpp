@@ -185,7 +185,7 @@ private slots:
 
     void automaticCheckFollowsTheOptionAndTheSchedule()
     {
-        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        const QString ini = dir.filePath(QStringLiteral("settings.toml"));
         const UpdateFeed missing = UpdateFeed::local(QUrl::fromLocalFile(dir.filePath(QStringLiteral("missing/"))));
         UpdateChecker checker(ini, missing, QStringLiteral("0.1.0"));
         QVERIFY(!checker.autoCheck()); // legacy default: off

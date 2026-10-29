@@ -85,7 +85,7 @@ class TabMenuTests : public QObject {
     void start()
     {
         app::Application::Options o;
-        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.revealInFolder = [this](const QString &path) { revealed << path; };
         o.spellingBackend = {}; // no spell checker, so no notice over the window
@@ -237,7 +237,8 @@ private slots:
         engine = nullptr;
         delete application;
         application = nullptr;
-        QFile::remove(home.filePath(QStringLiteral("hikari.ini")));
+        for (const char *name : {"settings.toml", "hotkeys.toml", "state.json"})
+            QFile::remove(home.filePath(QLatin1String(name)));
     }
 
     // Notebook.cpp:886-911: every tab by name with the active one checked,
@@ -1010,7 +1011,7 @@ private slots:
         qputenv(variable, QDir::toNativeSeparators(data.path()).toLocal8Bit());
         cleanup();
         {
-            ui::SettingsStore settings(home.filePath(QStringLiteral("hikari.ini")));
+            ui::SettingsStore settings(home.filePath(QStringLiteral("settings.toml")));
             app::SettingsImportStore store(settings, home.path());
             const auto root = app::SettingsImportStore::inspectRoot(picked.path());
             QVERIFY(root);

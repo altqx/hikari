@@ -82,7 +82,7 @@ class AutomationDocumentScriptsTests : public QObject {
     app::Application::Options options()
     {
         app::Application::Options o;
-        o.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         return o;
     }
@@ -875,7 +875,7 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
         qputenv("HIKARI_CAPTURE_OUT", out.toLocal8Bit());
         // Settings of its own, as legacy's fresh copy (no script editor set).
         auto o = options();
-        o.settingsFile = caseDir.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = caseDir.filePath(QStringLiteral("settings.toml"));
         // Autosaves only where the replay makes one (below): none on a timer.
         o.recoveryDir = caseDir.filePath(QStringLiteral("Recovery"));
         app = std::make_unique<app::Application>(o);

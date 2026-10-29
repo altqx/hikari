@@ -64,7 +64,7 @@ class AutomationResolutionTests : public QObject {
     app::Application::Options options()
     {
         app::Application::Options o;
-        o.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         return o;
     }
@@ -154,7 +154,8 @@ private slots:
     void cleanup()
     {
         app.reset();
-        QFile::remove(dir.filePath(QStringLiteral("hikari.ini")));
+        for (const char *name : {"settings.toml", "hotkeys.toml", "state.json"})
+            QFile::remove(dir.filePath(QLatin1String(name)));
     }
 
     // The macro reads the resolution of a Document without it: asked, with

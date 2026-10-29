@@ -93,7 +93,7 @@ struct Session {
     std::unique_ptr<SettingsImportStore> store;
     explicit Session(const QString &folder)
     {
-        settings = std::make_unique<SettingsStore>(folder + QStringLiteral("/hikari.ini"));
+        settings = std::make_unique<SettingsStore>(folder + QStringLiteral("/settings.toml"));
         store = std::make_unique<SettingsImportStore>(*settings, folder);
     }
     ~Session()
@@ -149,7 +149,7 @@ private slots:
         QVERIFY(put(bundled + QStringLiteral("/en_US.dic"), "1\nword\n"));
         QVERIFY(put(dictionaries + QStringLiteral("/en_US.dic"), "1\nword\n"));
         QVERIFY(put(dictionaries + QStringLiteral("/UserDic.udic"), "mine\n"));
-        SettingsStore settings(folder + QStringLiteral("/hikari.ini"));
+        SettingsStore settings(folder + QStringLiteral("/settings.toml"));
         SettingsImportStore store(settings, folder);
         store.setDictionaryFolder(dictionaries, bundled);
         auto files = store.liveProfile().files;
@@ -239,6 +239,17 @@ private slots:
         // The foreign path is kept in the list, unresolved, not repaired.
         QCOMPARE(next.settings->list("recent.subtitles"), QStringList{QStringLiteral("D:\\media\\a.ass")});
         QVERIFY(next.settings->list(application::kHotkeysSetting.data()).contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
+        // CF1: written to the user folder's three files.
+        next.settings->sync();
+        const QString settings = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("settings.toml"))));
+        QVERIFY2(settings.contains(QStringLiteral("font = \"Arial\"")) && settings.contains(QStringLiteral("fontSize = 12")),
+                 qPrintable(settings));
+        const QString hotkeys = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("hotkeys.toml"))));
+        // Not in legacy's modifier order (Alt-Ctrl-Shift), so kept as written.
+        QVERIFY2(hotkeys.contains(QStringLiteral("GLOBAL_SAVE_SUBS = \"Ctrl-Alt-S\"")), qPrintable(hotkeys));
+        const QJsonObject state = QJsonDocument::fromJson(readFile(folder.filePath(QStringLiteral("state.json")))).object();
+        QCOMPARE(state.value(QStringLiteral("recent")).toObject().value(QStringLiteral("subtitles")).toArray().size(), 1);
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("hikari.ini"))));
         QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tteh\tthe\r\n"));
         QCOMPARE(readFile(folder.filePath(QStringLiteral("Dictionary/UserDic.udic"))),
                  QByteArray("\xEF\xBB\xBFs\xC5\x82owo\r\n"));
@@ -336,14 +347,14 @@ private slots:
             Session s(folder.path());
             QVERIFY(s.store->recover());
             s.settings->sync();
-            ini = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("hikari.ini"))));
+            ini = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("settings.toml"))));
             QVERIFY(QFile::remove(s.store->importDir() + QStringLiteral("/live")));
         }
         Session again(folder.path());
         QVERIFY(again.store->pending());
         QVERIFY(again.store->recover());
         again.settings->sync();
-        QCOMPARE(QString::fromUtf8(readFile(folder.filePath(QStringLiteral("hikari.ini")))), ini);
+        QCOMPARE(QString::fromUtf8(readFile(folder.filePath(QStringLiteral("settings.toml")))), ini);
         QCOMPARE(again.settings->text("grid.font"), QStringLiteral("Arial"));
     }
 

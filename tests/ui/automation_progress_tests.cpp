@@ -81,7 +81,7 @@ private slots:
     {
         QVERIFY(dir.isValid());
         app::Application::Options o;
-        o.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         application = std::make_unique<app::Application>(o);
         const QString subtitles = dir.filePath(QStringLiteral("episode.ass"));

@@ -84,7 +84,7 @@ class AutomationHotkeysUiTests : public QObject {
     app::Application::Options options()
     {
         app::Application::Options o;
-        o.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         return o;
     }
@@ -185,7 +185,7 @@ private slots:
     void rerecordingAChangedMacroBindsItAgain()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("changed.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("changed/settings.toml"));
         {
             app::Application a(o);
             a.settingsStore()->set(application::kAutomationHotkeysSetting.data(),
@@ -246,7 +246,7 @@ private slots:
     void aMacroRegisteredWhileSettingsIsOpenIsListed()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("live.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("live/settings.toml"));
         app::Application a(o);
         a.automation().load(HIKARI_AUTOLOAD_DIR "/macro-1-edgeblur.lua");
         QTRY_VERIFY_WITH_TIMEOUT(!a.automationHotkeys().unboundMacros().empty(), 30'000);
@@ -283,7 +283,7 @@ private slots:
     void aBoundMacroLoadedWhileSettingsIsOpenResolves()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("bound.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("bound/settings.toml"));
         app::Application a(o);
         a.automationHotkeys().replaceCommitted({{kEdgeblur, "Ctrl+Alt+E"}});
         auto &h = a.hotkeys();
@@ -308,7 +308,7 @@ private slots:
     void aSearchFindsAMacroLoadedWhileSettingsIsOpen()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("searched.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("searched/settings.toml"));
         app::Application a(o);
         a.automationHotkeys().replaceCommitted({{kEdgeblur, "Ctrl+Alt+E"}});
         auto &h = a.hotkeys();
@@ -328,7 +328,7 @@ private slots:
     void aMacroUnloadedWhileSettingsIsOpenLeavesTheList()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("unloaded.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("unloaded/settings.toml"));
         app::Application a(o);
         const QString one = dir.filePath(QStringLiteral("one.lua")), two = dir.filePath(QStringLiteral("two.lua"));
         for (const QString &path : {one, two}) {
@@ -370,7 +370,7 @@ private slots:
     void aNameTwoScriptsShareTakesNoKeysInSettings()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("twins.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("twins/settings.toml"));
         app::Application a(o);
         constexpr auto twin = "Script twin.lua-0";
         auto &macros = a.automationHotkeys();
@@ -408,7 +408,7 @@ private slots:
     void aMacroOnTheExitKeysSaysExitTakesThem()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("exit.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("exit/settings.toml"));
         app::Application a(o);
         a.automation().load(HIKARI_AUTOLOAD_DIR "/macro-1-edgeblur.lua");
         QTRY_VERIFY_WITH_TIMEOUT(!a.automationHotkeys().unboundMacros().empty(), 30'000);
@@ -430,7 +430,7 @@ private slots:
     void retiredWindowAudioBindingIsDropped()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("retired.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("retired/settings.toml"));
         ui::SettingsStore(o.settingsFile)
             .set(application::kAudioHotkeysSetting.data(),
                  QStringList{QStringLiteral("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW A=Ctrl-Shift-H"), QStringLiteral("AUDIO_COMMIT_ALT A=G")});
@@ -478,7 +478,7 @@ private slots:
     void settingsHotkeysPageImportsLegacyScripts()
     {
         app::Application::Options o = options();
-        o.settingsFile = dir.filePath(QStringLiteral("page-import.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("page-import/settings.toml"));
         app::Application a(o);
         QVERIFY(loadScripts(a));
         auto &macros = a.automationHotkeys();
