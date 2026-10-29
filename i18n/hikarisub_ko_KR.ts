@@ -48,13 +48,18 @@
         <translation>음높이는 유지됩니다.</translation>
     </message>
     <message>
+        <source>%1 and %2 change the speed.</source>
+        <extracomment>%1 the key that slows the audio down, %2 the key that speeds it up</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>and</source>
         <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation>및</translation>
+        <translation type="vanished">및</translation>
     </message>
     <message>
         <source>change the speed.</source>
-        <translation>키로 속도를 바꿉니다.</translation>
+        <translation type="vanished">키로 속도를 바꿉니다.</translation>
     </message>
     <message>
         <source>Output device</source>
@@ -106,15 +111,15 @@
     </message>
     <message>
         <source>Play before the tag</source>
-        <translation>표시선 이전 재생</translation>
+        <translation type="vanished">표시선 이전 재생</translation>
     </message>
     <message>
         <source>Play after the tag</source>
-        <translation>표시선 이후 재생</translation>
+        <translation type="vanished">표시선 이후 재생</translation>
     </message>
     <message>
         <source>Play 500ms before the start time</source>
-        <translation>시작 전 0.5초 재생</translation>
+        <translation type="vanished">시작 전 0.5초 재생</translation>
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
@@ -122,11 +127,11 @@
     </message>
     <message>
         <source>Play 500ms before the end time</source>
-        <translation>종료 전 0.5초 재생</translation>
+        <translation type="vanished">종료 전 0.5초 재생</translation>
     </message>
     <message>
         <source>Play 500ms after the end time</source>
-        <translation>종료 후 0.5초 재생</translation>
+        <translation type="vanished">종료 후 0.5초 재생</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -214,12 +219,24 @@
         <translation>시작 전 0.5초 재생</translation>
     </message>
     <message>
+        <source>Play 500 ms before the start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Play the first 500 ms</source>
         <translation>처음 0.5초 재생</translation>
     </message>
     <message>
+        <source>Play 500 ms before the end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Play the last 500 ms</source>
         <translation>마지막 0.5초 재생</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end time</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -299,7 +316,7 @@
     </message>
     <message>
         <source>Speed</source>
-        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
+        <extracomment>The Tap menu&apos;s Speed submenu; the current speed follows it</extracomment>
         <translation>속도</translation>
     </message>
     <message>
@@ -309,7 +326,7 @@
     </message>
     <message>
         <source>Calibrate latency…</source>
-        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
+        <extracomment>The Tap menu&apos;s item; the tap latency follows it</extracomment>
         <translation>지연 시간 보정…</translation>
     </message>
     <message>
@@ -544,11 +561,16 @@ Output device: %2</source>
     </message>
     <message>
         <source>Press</source>
-        <translation>신호음마다</translation>
+        <translation type="vanished">신호음마다</translation>
     </message>
     <message>
         <source>on each beep.</source>
-        <translation>키를 누르십시오.</translation>
+        <translation type="vanished">키를 누르십시오.</translation>
+    </message>
+    <message>
+        <source>Press %1 on each beep.</source>
+        <extracomment>%1 the Space key</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>16 beeps at 100 BPM; the first four are practice.</source>
@@ -2495,6 +2517,10 @@ Should not exceed 15 characters per second</source>
         <translation>그림자 색상</translation>
     </message>
     <message>
+        <source>Paste the selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
         <translation>태그 버튼 추가</translation>
     </message>
@@ -2532,7 +2558,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Paste the selected</source>
-        <translation>선택 붙여 넣기</translation>
+        <translation type="vanished">선택 붙여 넣기</translation>
     </message>
     <message>
         <source>Comment out original</source>
@@ -4166,7 +4192,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Copy tree</source>
-        <translation>트리 복사</translation>
+        <translation type="vanished">트리 복사</translation>
     </message>
     <message>
         <source>Change description</source>
@@ -4174,7 +4200,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Select tree lines</source>
-        <translation>하위 항목 선택</translation>
+        <translation type="vanished">하위 항목 선택</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -4230,11 +4256,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set times as a continuous (previous line)</source>
-        <translation>연속으로 시간 설정 (시작-이전 줄 종료)</translation>
+        <translation type="vanished">연속으로 시간 설정 (시작-이전 줄 종료)</translation>
     </message>
     <message>
         <source>Set times as a continuous (next line)</source>
-        <translation>연속으로 시간 설정 (종료-다음 줄 시작)</translation>
+        <translation type="vanished">연속으로 시간 설정 (종료-다음 줄 시작)</translation>
     </message>
     <message>
         <source>Split lines</source>
@@ -4266,7 +4292,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Make tree</source>
-        <translation>트리 만들기</translation>
+        <translation type="vanished">트리 만들기</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -4455,6 +4481,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Line group</source>
         <translation>줄 그룹</translation>
+    </message>
+    <message>
+        <source>Copy line group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the group&apos;s lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make times continuous with the previous line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make times continuous with the next line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make line group</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -4998,19 +5044,19 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Play first 500ms</source>
-        <translation>처음 500ms 재생</translation>
+        <translation type="vanished">처음 500ms 재생</translation>
     </message>
     <message>
         <source>Play last 500ms</source>
-        <translation>마지막 500ms 재생</translation>
+        <translation type="vanished">마지막 500ms 재생</translation>
     </message>
     <message>
         <source>Play 500ms before</source>
-        <translation>시작 전 500ms 재생</translation>
+        <translation type="vanished">시작 전 500ms 재생</translation>
     </message>
     <message>
         <source>Play 500ms after</source>
-        <translation>종료 후 500ms 재생</translation>
+        <translation type="vanished">종료 후 500ms 재생</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -5086,7 +5132,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Paste the selected</source>
-        <translation>선택 붙여 넣기</translation>
+        <translation type="vanished">선택 붙여 넣기</translation>
     </message>
     <message>
         <source>Insert difference to the end</source>
@@ -5186,11 +5232,11 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Set times as a continuous (next line)</source>
-        <translation>연속으로 시간 설정 (종료-다음 줄 시작)</translation>
+        <translation type="vanished">연속으로 시간 설정 (종료-다음 줄 시작)</translation>
     </message>
     <message>
         <source>Set times as a continuous (previous line)</source>
-        <translation>연속으로 시간 설정 (시작-이전 줄 종료)</translation>
+        <translation type="vanished">연속으로 시간 설정 (시작-이전 줄 종료)</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -5294,7 +5340,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Make tree</source>
-        <translation>트리 만들기</translation>
+        <translation type="vanished">트리 만들기</translation>
     </message>
     <message>
         <source>Select all lines visible on video</source>
@@ -5534,7 +5580,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift times / run time post processor</source>
-        <translation>시간 이동 / 타이밍 후처리기 실행</translation>
+        <translation type="vanished">시간 이동 / 타이밍 후처리기 실행</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -5650,7 +5696,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Save as...</source>
-        <translation>다른 이름으로 저장...</translation>
+        <translation type="vanished">다른 이름으로 저장...</translation>
     </message>
     <message>
         <source>Save translation</source>
@@ -5694,7 +5740,55 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Go to start time</source>
-        <translation>시작 시간으로</translation>
+        <translation type="vanished">시작 시간으로</translation>
+    </message>
+    <message>
+        <source>Play first 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play last 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste the selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make times continuous with the next line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make times continuous with the previous line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filtering: hide selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make line group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift times / run timing postprocessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished">다른 이름으로 저장…</translation>
+    </message>
+    <message>
+        <source>Go to start time of line</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -6503,6 +6597,10 @@ What would you like to do?</source>
         <translation>기록[&amp;H]</translation>
     </message>
     <message>
+        <source>Shows or hides the Fix minor errors panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix minor errors (experimental)</source>
         <translation>사소한 오류 수정 (실험적)</translation>
     </message>
@@ -6521,6 +6619,14 @@ What would you like to do?</source>
     <message>
         <source>Find next</source>
         <translation>다음 찾기</translation>
+    </message>
+    <message>
+        <source>Shift times / run timing postprocessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to start time of line</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>&amp;Automation</source>
@@ -6556,7 +6662,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Go to start time</source>
-        <translation>시작 시간으로</translation>
+        <translation type="vanished">시작 시간으로</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -6712,7 +6818,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift times / run time post processor</source>
-        <translation>시간 이동 / 타이밍 후처리기 실행</translation>
+        <translation type="vanished">시간 이동 / 타이밍 후처리기 실행</translation>
     </message>
     <message>
         <source>Style &amp;manager</source>
@@ -6784,7 +6890,13 @@ What would you like to do?</source>
     </message>
     <message>
         <source>%1 steps. Steps after the current one can be redone.</source>
-        <translation>단계 %1개. 현재 단계 이후의 단계는 다시 실행할 수 있습니다.</translation>
+        <translation type="vanished">단계 %1개. 현재 단계 이후의 단계는 다시 실행할 수 있습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n steps. Steps after the current one can be redone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>%1, current</source>
@@ -6944,7 +7056,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Turns on multireplacer</source>
-        <translation>자동 바꾸기 창 열기</translation>
+        <translation type="vanished">자동 바꾸기 창 열기</translation>
     </message>
     <message>
         <source>Selects lines by expressions</source>
@@ -7731,6 +7843,20 @@ What would you like to do?</source>
         <translation>사소한 오류 수정</translation>
     </message>
     <message>
+        <source>Cannot change rules
+when the find results window is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 cannot be replaced,
+because it was edited.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rule description</source>
         <translation>규칙에 대한 설명</translation>
     </message>
@@ -7804,7 +7930,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>%1 of %2 rules on</source>
-        <translation>규칙 %1/%2 켜짐</translation>
+        <translation type="vanished">규칙 %1/%2 켜짐</translation>
     </message>
     <message>
         <source>Rule</source>
@@ -7886,9 +8012,15 @@ What would you like to do?</source>
         <source>1 error</source>
         <translation>오류 1개</translation>
     </message>
+    <message numerus="yes">
+        <source>%n checked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>%1 errors</source>
-        <translation>오류 %1개</translation>
+        <translation type="vanished">오류 %1개</translation>
     </message>
     <message>
         <source>in 1 file</source>
@@ -7896,7 +8028,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>in %1 files</source>
-        <translation>(파일 %1개)</translation>
+        <translation type="vanished">(파일 %1개)</translation>
     </message>
     <message>
         <source>All</source>
@@ -7924,7 +8056,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>%1 checked</source>
-        <translation>%1개 선택됨</translation>
+        <translation type="vanished">%1개 선택됨</translation>
     </message>
     <message>
         <source>Replace checked</source>
@@ -7942,6 +8074,25 @@ What would you like to do?</source>
         <source>Delete rule</source>
         <translation>규칙 삭제</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n rules on</source>
+        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n errors</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n files</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Search results</source>
         <translation>찾기 결과</translation>
@@ -7957,7 +8108,7 @@ What would you like to do?</source>
     <message>
         <source>Line %1 cannot be replaced,
 cause it was edited.</source>
-        <translation>%1번 줄은 편집되었으므로
+        <translation type="vanished">%1번 줄은 편집되었으므로
 바꿀 수 없습니다.</translation>
     </message>
     <message>
@@ -7967,12 +8118,12 @@ cause it was edited.</source>
     <message>
         <source>Cannot change rules
 when find results window is open</source>
-        <translation>찾기 결과 창이 열려 있을 때
+        <translation type="vanished">찾기 결과 창이 열려 있을 때
 규칙을 변경할 수 없음</translation>
     </message>
     <message>
         <source>Cannot replace &quot;%1&quot; to &quot;%2&quot;, with rule &quot;%3&quot; in line %4.</source>
-        <translation>&quot;%1&quot;(을)를 &quot;%2&quot;(으)로 바꿀 수 없습니다. 규칙: &quot;%3&quot;, 줄: %4.</translation>
+        <translation type="vanished">&quot;%1&quot;(을)를 &quot;%2&quot;(으)로 바꿀 수 없습니다. 규칙: &quot;%3&quot;, 줄: %4.</translation>
     </message>
 </context>
 <context>
@@ -8306,6 +8457,10 @@ removing audio cache files.</source>
     <message>
         <source>Updates and privacy</source>
         <translation>업데이트 및 개인정보</translation>
+    </message>
+    <message>
+        <source>Audio shortcuts</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Privacy</source>
@@ -8871,7 +9026,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Audio Shortcuts</source>
-        <translation>소리 단축키</translation>
+        <translation type="vanished">소리 단축키</translation>
     </message>
     <message>
         <source>Automation shortcuts</source>
@@ -9739,6 +9894,11 @@ and will be changed to the default</source>
         <translation>검색 폴더 “%1”(이)가 없습니다.</translation>
     </message>
     <message>
+        <source>Line %1 cannot be replaced,
+because it was edited.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In files</source>
         <translation>파일에서</translation>
     </message>
@@ -9945,7 +10105,7 @@ and will be changed to the default</source>
     <message>
         <source>Line %1 cannot be replaced,
 cause it was edited.</source>
-        <translation>%1번 줄은 편집되었으므로
+        <translation type="vanished">%1번 줄은 편집되었으므로
 바꿀 수 없습니다.</translation>
     </message>
     <message>
@@ -10521,6 +10681,10 @@ cause it was edited.</source>
         <translation>세션 파일이 손상되었습니다.</translation>
     </message>
     <message>
+        <source>It is not valid JSON: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>It is not a session file.</source>
         <translation>세션 파일이 아닙니다.</translation>
     </message>
@@ -10605,7 +10769,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Choose...</source>
-        <translation>선택...</translation>
+        <translation type="vanished">선택...</translation>
     </message>
     <message>
         <source>Latin-1 (ISO 8859-1)</source>
@@ -10662,6 +10826,10 @@ cause it was edited.</source>
     <message>
         <source>Files that are not UTF-8 are read as</source>
         <translation>UTF-8이 아닌 파일을 읽을 인코딩</translation>
+    </message>
+    <message>
+        <source>Choose…</source>
+        <translation type="unfinished">선택…</translation>
     </message>
     <message>
         <source>An import waits for the next start. These settings changed since it was made keep your change: %1.</source>
@@ -11363,6 +11531,10 @@ Spell checking will be disabled</source>
         <translation>삭제</translation>
     </message>
     <message>
+        <source>ASS subtitle files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>불러오기</translation>
     </message>
@@ -11900,7 +12072,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>ASS subtitle files(*.ass)</source>
-        <translation>ASS 자막 파일(*.ass)</translation>
+        <translation type="vanished">ASS 자막 파일(*.ass)</translation>
     </message>
     <message>
         <source>Copy of </source>
@@ -12449,8 +12621,12 @@ Styles deleted:
         <translation>모든 태그 표시</translation>
     </message>
     <message>
+        <source>Show VSFilterMod tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show VSFiltermod tags</source>
-        <translation>VSFiltermod 태그 표시</translation>
+        <translation type="vanished">VSFiltermod 태그 표시</translation>
     </message>
     <message>
         <source>%1, %2, %3 of %4</source>
@@ -12550,6 +12726,10 @@ Styles deleted:
         <translation>템플릿이 아직 없습니다. 새로 만들기로 템플릿을 추가하면 여기에서 미리 볼 수 있습니다.</translation>
     </message>
     <message>
+        <source>These templates made the active line without a karaoke line. Apply them to the whole file to preview it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>L</source>
         <extracomment>The preview&apos;s column: the Line&apos;s layer</extracomment>
         <translation>L</translation>
@@ -12569,6 +12749,20 @@ Styles deleted:
     <message>
         <source>Apply is off while a template has a problem.</source>
         <translation>템플릿에 문제가 있는 동안에는 적용할 수 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied with problems: %n lines from %1; the log lists the problems. Undo removes them in one step.</source>
+        <extracomment>After an Apply with problems: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;)</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2 s. Undo removes them in one step.</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;), %2 the run&apos;s time</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Changed since Apply</source>
@@ -12677,7 +12871,7 @@ Styles deleted:
     </message>
     <message>
         <source>These templates give the active line from no karaoke line. Apply them to the whole file to preview it.</source>
-        <translation>이 템플릿은 활성 줄을 어느 노래방 줄에서도 만들지 않습니다. 미리 보려면 템플릿을 파일 전체에 적용하십시오.</translation>
+        <translation type="vanished">이 템플릿은 활성 줄을 어느 노래방 줄에서도 만들지 않습니다. 미리 보려면 템플릿을 파일 전체에 적용하십시오.</translation>
     </message>
     <message>
         <source>Select a karaoke line to preview the templates on it.</source>
@@ -12694,12 +12888,12 @@ Styles deleted:
     <message>
         <source>Applied with problems: %1 lines from %2 karaoke lines; the log lists the problems. Undo removes them in one step.</source>
         <extracomment>After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from</extracomment>
-        <translation>문제가 있는 채로 적용했습니다: 노래방 줄 %2개에서 줄 %1개를 만들었으며, 문제는 로그에 나와 있습니다. 실행 취소하면 한 번에 제거됩니다.</translation>
+        <translation type="vanished">문제가 있는 채로 적용했습니다: 노래방 줄 %2개에서 줄 %1개를 만들었으며, 문제는 로그에 나와 있습니다. 실행 취소하면 한 번에 제거됩니다.</translation>
     </message>
     <message>
         <source>Applied: %1 lines from %2 karaoke lines in %3 s. Undo removes them in one step.</source>
         <extracomment>After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run&apos;s time</extracomment>
-        <translation>적용했습니다: 노래방 줄 %2개에서 줄 %1개를 %3초 만에 만들었습니다. 실행 취소하면 한 번에 제거됩니다.</translation>
+        <translation type="vanished">적용했습니다: 노래방 줄 %2개에서 줄 %1개를 %3초 만에 만들었습니다. 실행 취소하면 한 번에 제거됩니다.</translation>
     </message>
     <message>
         <source>Line %1 changed since the last Apply; the generated lines are older.</source>
@@ -12784,6 +12978,10 @@ Styles deleted:
         <translation>줄의 재정의 태그 유지</translation>
     </message>
     <message>
+        <source>The Effect text keeps the standard template syntax; this picker only writes it for you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Syllable variables · values for line %1, syllable 1</source>
         <extracomment>The variables list&apos;s title: their values on the current Line&apos;s first syllable</extracomment>
         <translation>음절 변수 · %1번 줄, 1번 음절의 값</translation>
@@ -12806,7 +13004,7 @@ Styles deleted:
     </message>
     <message>
         <source>The Effect text stays stock syntax; this picker only writes it.</source>
-        <translation>효과 텍스트는 표준 구문 그대로 남습니다. 이 선택기는 그 구문을 대신 써 줄 뿐입니다.</translation>
+        <translation type="vanished">효과 텍스트는 표준 구문 그대로 남습니다. 이 선택기는 그 구문을 대신 써 줄 뿐입니다.</translation>
     </message>
     <message>
         <source>Template functions</source>
@@ -12855,7 +13053,7 @@ Styles deleted:
     </message>
     <message>
         <source>The karaoke fill from left to right, fading in with the line and out after it.</source>
-        <translation>왼쪽에서 오른쪽으로 채워지는 노래방 효과입니다. 줄과 함께 페이드 인하고 줄이 끝나면 페이드 아웃합니다.</translation>
+        <translation type="vanished">왼쪽에서 오른쪽으로 채워지는 노래방 효과입니다. 줄과 함께 페이드 인하고 줄이 끝나면 페이드 아웃합니다.</translation>
     </message>
     <message>
         <source>Staggered fade</source>
@@ -13029,6 +13227,10 @@ Styles deleted:
     <message>
         <source>Lines take turns through a short palette of fill colours, by their place in the file.</source>
         <translation>줄이 파일 안의 순서에 따라 몇 가지 채우기 색상을 번갈아 사용합니다.</translation>
+    </message>
+    <message>
+        <source>The karaoke fills from left to right, fading in with the line and out after it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>syllable duration (ms)</source>
@@ -13274,12 +13476,28 @@ Styles deleted:
         <translation>태그 시간</translation>
     </message>
     <message>
+        <source>Move according to the following styles (separated by a comma)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time correction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrects end times that are improper or overlap each other</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shift by video / audio</source>
         <translation>영상 / 소리 기준 이동</translation>
     </message>
     <message>
         <source>Beginning</source>
         <translation>시작 시간</translation>
+    </message>
+    <message>
+        <source>Moves the start time to the video/audio time</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move the marker to video time</source>
@@ -13292,6 +13510,10 @@ Styles deleted:
     <message>
         <source>Which lines</source>
         <translation>대상 줄</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Amount</source>
@@ -13362,8 +13584,12 @@ so their positions on video do not change
         <translation>쉼표로 구분한 스타일</translation>
     </message>
     <message>
+        <source>Run timing postprocessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move according to the following styles (separated by a coma)</source>
-        <translation>다음 스타일에 따라 이동(쉼표로 구분)</translation>
+        <translation type="vanished">다음 스타일에 따라 이동(쉼표로 구분)</translation>
     </message>
     <message>
         <source>A method of time shift</source>
@@ -13379,11 +13605,11 @@ so their positions on video do not change
     </message>
     <message>
         <source>Correction end times</source>
-        <translation>종료 시간 수정</translation>
+        <translation type="vanished">종료 시간 수정</translation>
     </message>
     <message>
         <source>Correction end times, when they are improper or overlap each other</source>
-        <translation>잘못되었거나 서로 겹치는 종료 시간 수정</translation>
+        <translation type="vanished">잘못되었거나 서로 겹치는 종료 시간 수정</translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -13399,7 +13625,7 @@ so their positions on video do not change
     </message>
     <message>
         <source>Move the start time to the time video / audio</source>
-        <translation>시작 시간을 영상 / 소리 시간으로 이동</translation>
+        <translation type="vanished">시작 시간을 영상 / 소리 시간으로 이동</translation>
     </message>
     <message>
         <source>Moves the end time to the video/audio time</source>
@@ -13423,7 +13649,7 @@ so their positions on video do not change
     </message>
     <message>
         <source>End time in milliseconds</source>
-        <translation>종결부 시간(ms)</translation>
+        <translation type="vanished">종결부 시간(ms)</translation>
     </message>
     <message>
         <source>Enable</source>
@@ -13436,6 +13662,10 @@ so their positions on video do not change
     <message>
         <source>End time extension threshold</source>
         <translation>종료 시간 확장 임계값</translation>
+    </message>
+    <message>
+        <source>Before the start time</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
@@ -13463,11 +13693,11 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Run post processor</source>
-        <translation>후처리기 실행</translation>
+        <translation type="vanished">후처리기 실행</translation>
     </message>
     <message>
         <source>Post processor</source>
-        <translation>후처리기</translation>
+        <translation type="vanished">후처리기</translation>
     </message>
     <message>
         <source>Lead-in</source>
@@ -13476,6 +13706,10 @@ after the end time in milliseconds</source>
     <message>
         <source>Lead-out</source>
         <translation>종결부</translation>
+    </message>
+    <message>
+        <source>Lead-out time in milliseconds</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Set times as continuous</source>
@@ -13495,7 +13729,7 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Before the start of time</source>
-        <translation>시작 시간 전</translation>
+        <translation type="vanished">시작 시간 전</translation>
     </message>
     <message>
         <source>After the start time</source>
@@ -15189,8 +15423,37 @@ or codecs or a splitter may be missing</source>
         <translation>점 삭제</translation>
     </message>
     <message>
+        <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List of ASS drawings with an edit option.
+After choosing a drawing from the list, put the cursor
+where the drawing should start, then hold the left mouse button and drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List of tags the visual tool can edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag change options:
+Set - inserts the tag at the cursor position for one line,
+or at the start for multiple lines.
+Add - changes all tags by adding the slider value.
+Multiply - multiplies the slider value by the selected line number;
+the first line is not changed.
+Gradient - inserts a tag at each character or in each selected line,
+increasing or decreasing the value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text alignment works the same as in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Double &quot;m&quot; was blocked because of Vsfilter bug</source>
-        <translation>VSFilter 버그 때문에 연속된 &quot;m&quot;을 막았습니다</translation>
+        <translation type="vanished">VSFilter 버그 때문에 연속된 &quot;m&quot;을 막았습니다</translation>
     </message>
     <message>
         <source>Edit</source>
@@ -15222,13 +15485,13 @@ or has zero duration</source>
         <source>List of ASS drawings with edit option.
 After choose drawing from list just set cursor i n place
 of start of drawing and click left mouse button and drag.</source>
-        <translation>편집할 수 있는 ASS 도형 목록입니다.
+        <translation type="vanished">편집할 수 있는 ASS 도형 목록입니다.
 목록에서 도형을 고른 뒤 도형을 시작할 위치에
 커서를 두고 마우스 왼쪽 버튼을 누른 채 드래그하십시오.</translation>
     </message>
     <message>
         <source>List of tags that can edit visual tool</source>
-        <translation>시각 도구로 편집할 수 있는 태그 목록</translation>
+        <translation type="vanished">시각 도구로 편집할 수 있는 태그 목록</translation>
     </message>
     <message>
         <source>Lock outer quad
@@ -15387,7 +15650,7 @@ Gradient text increasing - inserts a tag at each character, increasing the value
 Gradient text decreasing - inserts a tag at each character, decreasing the value.
 Gradient line increasing - inserts a tag in selected lines, increasing the value.
 Gradient line decreasing - inserts a tag in selected lines, decreasing the value.</source>
-        <translation>태그 변경 옵션:
+        <translation type="vanished">태그 변경 옵션:
 더하기 - 슬라이더 값을 더해 모든 태그를 변경합니다.
 삽입 - 한 줄이면 커서 위치에, 여러 줄이면
 시작 부분에 태그를 삽입합니다.
@@ -15400,7 +15663,7 @@ Gradient line decreasing - inserts a tag in selected lines, decreasing the value
     </message>
     <message>
         <source>Text placing works similar like in styles</source>
-        <translation>텍스트 배치는 스타일과 같은 방식으로 작동합니다</translation>
+        <translation type="vanished">텍스트 배치는 스타일과 같은 방식으로 작동합니다</translation>
     </message>
     <message>
         <source>Top-center</source>

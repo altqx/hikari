@@ -48,13 +48,18 @@
         <translation>ระดับเสียงคงเดิม</translation>
     </message>
     <message>
+        <source>%1 and %2 change the speed.</source>
+        <extracomment>%1 the key that slows the audio down, %2 the key that speeds it up</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>and</source>
         <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation>และ</translation>
+        <translation type="vanished">และ</translation>
     </message>
     <message>
         <source>change the speed.</source>
-        <translation>เปลี่ยนความเร็ว</translation>
+        <translation type="vanished">เปลี่ยนความเร็ว</translation>
     </message>
     <message>
         <source>Output device</source>
@@ -106,15 +111,15 @@
     </message>
     <message>
         <source>Play before the tag</source>
-        <translation>เล่นเสียงก่อนเครื่องหมาย</translation>
+        <translation type="vanished">เล่นเสียงก่อนเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play after the tag</source>
-        <translation>เล่นเสียงหลังเครื่องหมาย</translation>
+        <translation type="vanished">เล่นเสียงหลังเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play 500ms before the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
@@ -122,11 +127,11 @@
     </message>
     <message>
         <source>Play 500ms before the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play 500ms after the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -214,12 +219,24 @@
         <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
     </message>
     <message>
+        <source>Play 500 ms before the start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Play the first 500 ms</source>
         <translation>เล่น 500 มิลลิวินาทีแรก</translation>
     </message>
     <message>
+        <source>Play 500 ms before the end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Play the last 500 ms</source>
         <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end time</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -299,7 +316,7 @@
     </message>
     <message>
         <source>Speed</source>
-        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
+        <extracomment>The Tap menu&apos;s Speed submenu; the current speed follows it</extracomment>
         <translation>ความเร็ว</translation>
     </message>
     <message>
@@ -309,7 +326,7 @@
     </message>
     <message>
         <source>Calibrate latency…</source>
-        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
+        <extracomment>The Tap menu&apos;s item; the tap latency follows it</extracomment>
         <translation>ปรับเทียบความหน่วง…</translation>
     </message>
     <message>
@@ -544,11 +561,16 @@ Output device: %2</source>
     </message>
     <message>
         <source>Press</source>
-        <translation>กด</translation>
+        <translation type="vanished">กด</translation>
     </message>
     <message>
         <source>on each beep.</source>
-        <translation>ทุกครั้งที่ได้ยินเสียงบี๊บ</translation>
+        <translation type="vanished">ทุกครั้งที่ได้ยินเสียงบี๊บ</translation>
+    </message>
+    <message>
+        <source>Press %1 on each beep.</source>
+        <extracomment>%1 the Space key</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>16 beeps at 100 BPM; the first four are practice.</source>
@@ -2495,6 +2517,10 @@ Should not exceed 15 characters per second</source>
         <translation>สีเงา</translation>
     </message>
     <message>
+        <source>Paste the selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
         <translation>เพิ่มปุ่มแท็ก</translation>
     </message>
@@ -2532,7 +2558,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Paste the selected</source>
-        <translation>วางส่วนที่เลือก</translation>
+        <translation type="vanished">วางส่วนที่เลือก</translation>
     </message>
     <message>
         <source>Comment out original</source>
@@ -4166,7 +4192,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Copy tree</source>
-        <translation>คัดลอกทรี</translation>
+        <translation type="vanished">คัดลอกทรี</translation>
     </message>
     <message>
         <source>Change description</source>
@@ -4174,7 +4200,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Select tree lines</source>
-        <translation>เลือกบรรทัดในทรี</translation>
+        <translation type="vanished">เลือกบรรทัดในทรี</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -4230,11 +4256,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set times as a continuous (previous line)</source>
-        <translation>กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดก่อนหน้า)</translation>
+        <translation type="vanished">กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดก่อนหน้า)</translation>
     </message>
     <message>
         <source>Set times as a continuous (next line)</source>
-        <translation>กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดถัดไป)</translation>
+        <translation type="vanished">กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดถัดไป)</translation>
     </message>
     <message>
         <source>Split lines</source>
@@ -4266,7 +4292,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Make tree</source>
-        <translation>สร้างโครงสร้างต้นไม้</translation>
+        <translation type="vanished">สร้างโครงสร้างต้นไม้</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -4455,6 +4481,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Line group</source>
         <translation>กลุ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Copy line group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the group&apos;s lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make times continuous with the previous line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make times continuous with the next line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make line group</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -4998,19 +5044,19 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Play first 500ms</source>
-        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีแรก</translation>
     </message>
     <message>
         <source>Play last 500ms</source>
-        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีสุดท้าย</translation>
     </message>
     <message>
         <source>Play 500ms before</source>
-        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
     </message>
     <message>
         <source>Play 500ms after</source>
-        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -5086,7 +5132,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Paste the selected</source>
-        <translation>วางส่วนที่เลือก</translation>
+        <translation type="vanished">วางส่วนที่เลือก</translation>
     </message>
     <message>
         <source>Insert difference to the end</source>
@@ -5186,11 +5232,11 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Set times as a continuous (next line)</source>
-        <translation>กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดถัดไป)</translation>
+        <translation type="vanished">กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดถัดไป)</translation>
     </message>
     <message>
         <source>Set times as a continuous (previous line)</source>
-        <translation>กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดก่อนหน้า)</translation>
+        <translation type="vanished">กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดก่อนหน้า)</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -5294,7 +5340,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Make tree</source>
-        <translation>สร้างโครงสร้างต้นไม้</translation>
+        <translation type="vanished">สร้างโครงสร้างต้นไม้</translation>
     </message>
     <message>
         <source>Select all lines visible on video</source>
@@ -5534,7 +5580,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift times / run time post processor</source>
-        <translation>เลื่อนเวลา / ใช้โพสต์โปรเซสเซอร์</translation>
+        <translation type="vanished">เลื่อนเวลา / ใช้โพสต์โปรเซสเซอร์</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -5650,7 +5696,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Save as...</source>
-        <translation>บันทึกเป็น...</translation>
+        <translation type="vanished">บันทึกเป็น...</translation>
     </message>
     <message>
         <source>Save translation</source>
@@ -5694,7 +5740,55 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Go to start time</source>
-        <translation>ไปยังเวลาเริ่มต้น</translation>
+        <translation type="vanished">ไปยังเวลาเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Play first 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play last 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste the selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make times continuous with the next line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make times continuous with the previous line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filtering: hide selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make line group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift times / run timing postprocessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished">บันทึกเป็น…</translation>
+    </message>
+    <message>
+        <source>Go to start time of line</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -6503,6 +6597,10 @@ What would you like to do?</source>
         <translation>&amp;ประวัติ</translation>
     </message>
     <message>
+        <source>Shows or hides the Fix minor errors panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix minor errors (experimental)</source>
         <translation>แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)</translation>
     </message>
@@ -6521,6 +6619,14 @@ What would you like to do?</source>
     <message>
         <source>Find next</source>
         <translation>ค้นหาถัดไป</translation>
+    </message>
+    <message>
+        <source>Shift times / run timing postprocessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to start time of line</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>&amp;Automation</source>
@@ -6556,7 +6662,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Go to start time</source>
-        <translation>ไปยังเวลาเริ่มต้น</translation>
+        <translation type="vanished">ไปยังเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -6712,7 +6818,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift times / run time post processor</source>
-        <translation>เลื่อนเวลา / ใช้โพสต์โปรเซสเซอร์</translation>
+        <translation type="vanished">เลื่อนเวลา / ใช้โพสต์โปรเซสเซอร์</translation>
     </message>
     <message>
         <source>Style &amp;manager</source>
@@ -6784,7 +6890,13 @@ What would you like to do?</source>
     </message>
     <message>
         <source>%1 steps. Steps after the current one can be redone.</source>
-        <translation>%1 ขั้นตอน ขั้นตอนหลังขั้นตอนปัจจุบันทำซ้ำได้</translation>
+        <translation type="vanished">%1 ขั้นตอน ขั้นตอนหลังขั้นตอนปัจจุบันทำซ้ำได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n steps. Steps after the current one can be redone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>%1, current</source>
@@ -6944,7 +7056,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Turns on multireplacer</source>
-        <translation>เปิดเครื่องมือแทนที่หลายรายการ</translation>
+        <translation type="vanished">เปิดเครื่องมือแทนที่หลายรายการ</translation>
     </message>
     <message>
         <source>Selects lines by expressions</source>
@@ -7731,6 +7843,20 @@ What would you like to do?</source>
         <translation>แก้ไขข้อผิดพลาดเล็กน้อย</translation>
     </message>
     <message>
+        <source>Cannot change rules
+when the find results window is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 cannot be replaced,
+because it was edited.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rule description</source>
         <translation>คำอธิบายกฎ</translation>
     </message>
@@ -7804,7 +7930,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>%1 of %2 rules on</source>
-        <translation>เปิดกฎอยู่ %1 จาก %2</translation>
+        <translation type="vanished">เปิดกฎอยู่ %1 จาก %2</translation>
     </message>
     <message>
         <source>Rule</source>
@@ -7886,9 +8012,15 @@ What would you like to do?</source>
         <source>1 error</source>
         <translation>ข้อผิดพลาด 1 รายการ</translation>
     </message>
+    <message numerus="yes">
+        <source>%n checked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>%1 errors</source>
-        <translation>ข้อผิดพลาด %1 รายการ</translation>
+        <translation type="vanished">ข้อผิดพลาด %1 รายการ</translation>
     </message>
     <message>
         <source>in 1 file</source>
@@ -7896,7 +8028,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>in %1 files</source>
-        <translation>ใน %1 ไฟล์</translation>
+        <translation type="vanished">ใน %1 ไฟล์</translation>
     </message>
     <message>
         <source>All</source>
@@ -7924,7 +8056,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>%1 checked</source>
-        <translation>เลือกไว้ %1 รายการ</translation>
+        <translation type="vanished">เลือกไว้ %1 รายการ</translation>
     </message>
     <message>
         <source>Replace checked</source>
@@ -7942,6 +8074,25 @@ What would you like to do?</source>
         <source>Delete rule</source>
         <translation>ลบกฎ</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n rules on</source>
+        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n errors</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n files</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Search results</source>
         <translation>ผลการค้นหา</translation>
@@ -7957,7 +8108,7 @@ What would you like to do?</source>
     <message>
         <source>Line %1 cannot be replaced,
 cause it was edited.</source>
-        <translation>ไม่สามารถแทนที่บรรทัด %1 ได้
+        <translation type="vanished">ไม่สามารถแทนที่บรรทัด %1 ได้
 เนื่องจากถูกแก้ไข</translation>
     </message>
     <message>
@@ -7967,12 +8118,12 @@ cause it was edited.</source>
     <message>
         <source>Cannot change rules
 when find results window is open</source>
-        <translation>ไม่สามารถเปลี่ยนกฎ
+        <translation type="vanished">ไม่สามารถเปลี่ยนกฎ
 ขณะที่หน้าต่างผลลัพธ์การค้นหาเปิดอยู่</translation>
     </message>
     <message>
         <source>Cannot replace &quot;%1&quot; to &quot;%2&quot;, with rule &quot;%3&quot; in line %4.</source>
-        <translation>ไม่สามารถแทนที่ &quot;%1&quot; ด้วย &quot;%2&quot; โดยใช้กฎ &quot;%3&quot; ในบรรทัด %4</translation>
+        <translation type="vanished">ไม่สามารถแทนที่ &quot;%1&quot; ด้วย &quot;%2&quot; โดยใช้กฎ &quot;%3&quot; ในบรรทัด %4</translation>
     </message>
 </context>
 <context>
@@ -8306,6 +8457,10 @@ removing audio cache files.</source>
     <message>
         <source>Updates and privacy</source>
         <translation>การอัปเดตและความเป็นส่วนตัว</translation>
+    </message>
+    <message>
+        <source>Audio shortcuts</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Privacy</source>
@@ -8871,7 +9026,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Audio Shortcuts</source>
-        <translation>ปุ่มลัดเสียง</translation>
+        <translation type="vanished">ปุ่มลัดเสียง</translation>
     </message>
     <message>
         <source>Automation shortcuts</source>
@@ -9739,6 +9894,11 @@ and will be changed to the default</source>
         <translation>ไม่มีโฟลเดอร์สำหรับค้นหา “%1”</translation>
     </message>
     <message>
+        <source>Line %1 cannot be replaced,
+because it was edited.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In files</source>
         <translation>ในไฟล์</translation>
     </message>
@@ -9945,7 +10105,7 @@ and will be changed to the default</source>
     <message>
         <source>Line %1 cannot be replaced,
 cause it was edited.</source>
-        <translation>ไม่สามารถแทนที่บรรทัด %1 ได้
+        <translation type="vanished">ไม่สามารถแทนที่บรรทัด %1 ได้
 เนื่องจากถูกแก้ไข</translation>
     </message>
     <message>
@@ -10521,6 +10681,10 @@ cause it was edited.</source>
         <translation>ไฟล์เซสชันเสียหาย</translation>
     </message>
     <message>
+        <source>It is not valid JSON: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>It is not a session file.</source>
         <translation>ไม่ใช่ไฟล์เซสชัน</translation>
     </message>
@@ -10605,7 +10769,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Choose...</source>
-        <translation>เลือก...</translation>
+        <translation type="vanished">เลือก...</translation>
     </message>
     <message>
         <source>Latin-1 (ISO 8859-1)</source>
@@ -10662,6 +10826,10 @@ cause it was edited.</source>
     <message>
         <source>Files that are not UTF-8 are read as</source>
         <translation>อ่านไฟล์ที่ไม่ใช่ UTF-8 เป็น</translation>
+    </message>
+    <message>
+        <source>Choose…</source>
+        <translation type="unfinished">เลือก…</translation>
     </message>
     <message>
         <source>An import waits for the next start. These settings changed since it was made keep your change: %1.</source>
@@ -11363,6 +11531,10 @@ Spell checking will be disabled</source>
         <translation>ลบ</translation>
     </message>
     <message>
+        <source>ASS subtitle files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>โหลด</translation>
     </message>
@@ -11900,7 +12072,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>ASS subtitle files(*.ass)</source>
-        <translation>ไฟล์คำบรรยาย ASS(*.ass)</translation>
+        <translation type="vanished">ไฟล์คำบรรยาย ASS(*.ass)</translation>
     </message>
     <message>
         <source>Copy of </source>
@@ -12449,8 +12621,12 @@ Styles deleted:
         <translation>แสดงแท็กทั้งหมด</translation>
     </message>
     <message>
+        <source>Show VSFilterMod tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show VSFiltermod tags</source>
-        <translation>แสดงแท็ก VSFilterMod</translation>
+        <translation type="vanished">แสดงแท็ก VSFilterMod</translation>
     </message>
     <message>
         <source>%1, %2, %3 of %4</source>
@@ -12550,6 +12726,10 @@ Styles deleted:
         <translation>ยังไม่มีเทมเพลต เพิ่มด้วย “ใหม่” เพื่อดูตัวอย่างที่นี่</translation>
     </message>
     <message>
+        <source>These templates made the active line without a karaoke line. Apply them to the whole file to preview it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>L</source>
         <extracomment>The preview&apos;s column: the Line&apos;s layer</extracomment>
         <translation>ชั้น</translation>
@@ -12569,6 +12749,20 @@ Styles deleted:
     <message>
         <source>Apply is off while a template has a problem.</source>
         <translation>นำไปใช้ไม่ได้ขณะที่เทมเพลตมีปัญหา</translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied with problems: %n lines from %1; the log lists the problems. Undo removes them in one step.</source>
+        <extracomment>After an Apply with problems: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;)</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2 s. Undo removes them in one step.</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;), %2 the run&apos;s time</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Changed since Apply</source>
@@ -12677,7 +12871,7 @@ Styles deleted:
     </message>
     <message>
         <source>These templates give the active line from no karaoke line. Apply them to the whole file to preview it.</source>
-        <translation>เทมเพลตเหล่านี้ไม่ได้สร้างบรรทัดปัจจุบันจากบรรทัดคาราโอเกะใด นำเทมเพลตไปใช้กับทั้งไฟล์เพื่อดูตัวอย่าง</translation>
+        <translation type="vanished">เทมเพลตเหล่านี้ไม่ได้สร้างบรรทัดปัจจุบันจากบรรทัดคาราโอเกะใด นำเทมเพลตไปใช้กับทั้งไฟล์เพื่อดูตัวอย่าง</translation>
     </message>
     <message>
         <source>Select a karaoke line to preview the templates on it.</source>
@@ -12694,12 +12888,12 @@ Styles deleted:
     <message>
         <source>Applied with problems: %1 lines from %2 karaoke lines; the log lists the problems. Undo removes them in one step.</source>
         <extracomment>After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from</extracomment>
-        <translation>นำไปใช้แล้วแต่มีปัญหา: สร้าง %1 บรรทัดจากบรรทัดคาราโอเกะ %2 บรรทัด ล็อกแสดงรายการปัญหา เลิกทำจะลบบรรทัดเหล่านี้ในขั้นตอนเดียว</translation>
+        <translation type="vanished">นำไปใช้แล้วแต่มีปัญหา: สร้าง %1 บรรทัดจากบรรทัดคาราโอเกะ %2 บรรทัด ล็อกแสดงรายการปัญหา เลิกทำจะลบบรรทัดเหล่านี้ในขั้นตอนเดียว</translation>
     </message>
     <message>
         <source>Applied: %1 lines from %2 karaoke lines in %3 s. Undo removes them in one step.</source>
         <extracomment>After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run&apos;s time</extracomment>
-        <translation>นำไปใช้แล้ว: สร้าง %1 บรรทัดจากบรรทัดคาราโอเกะ %2 บรรทัด ใน %3 วินาที เลิกทำจะลบบรรทัดเหล่านี้ในขั้นตอนเดียว</translation>
+        <translation type="vanished">นำไปใช้แล้ว: สร้าง %1 บรรทัดจากบรรทัดคาราโอเกะ %2 บรรทัด ใน %3 วินาที เลิกทำจะลบบรรทัดเหล่านี้ในขั้นตอนเดียว</translation>
     </message>
     <message>
         <source>Line %1 changed since the last Apply; the generated lines are older.</source>
@@ -12784,6 +12978,10 @@ Styles deleted:
         <translation>คงแท็กของบรรทัดไว้</translation>
     </message>
     <message>
+        <source>The Effect text keeps the standard template syntax; this picker only writes it for you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Syllable variables · values for line %1, syllable 1</source>
         <extracomment>The variables list&apos;s title: their values on the current Line&apos;s first syllable</extracomment>
         <translation>ตัวแปรพยางค์ · ค่าของบรรทัด %1 พยางค์ 1</translation>
@@ -12806,7 +13004,7 @@ Styles deleted:
     </message>
     <message>
         <source>The Effect text stays stock syntax; this picker only writes it.</source>
-        <translation>ข้อความเอฟเฟกต์ยังคงเป็นไวยากรณ์มาตรฐาน ตัวเลือกนี้เพียงเขียนข้อความนั้นให้</translation>
+        <translation type="vanished">ข้อความเอฟเฟกต์ยังคงเป็นไวยากรณ์มาตรฐาน ตัวเลือกนี้เพียงเขียนข้อความนั้นให้</translation>
     </message>
     <message>
         <source>Template functions</source>
@@ -12855,7 +13053,7 @@ Styles deleted:
     </message>
     <message>
         <source>The karaoke fill from left to right, fading in with the line and out after it.</source>
-        <translation>คาราโอเกะเติมสีจากซ้ายไปขวา ค่อยๆ ปรากฏพร้อมบรรทัดและค่อยๆ จางหายหลังบรรทัด</translation>
+        <translation type="vanished">คาราโอเกะเติมสีจากซ้ายไปขวา ค่อยๆ ปรากฏพร้อมบรรทัดและค่อยๆ จางหายหลังบรรทัด</translation>
     </message>
     <message>
         <source>Staggered fade</source>
@@ -13029,6 +13227,10 @@ Styles deleted:
     <message>
         <source>Lines take turns through a short palette of fill colours, by their place in the file.</source>
         <translation>บรรทัดผลัดกันใช้สีเติมจากชุดสีสั้นๆ ตามตำแหน่งในไฟล์</translation>
+    </message>
+    <message>
+        <source>The karaoke fills from left to right, fading in with the line and out after it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>syllable duration (ms)</source>
@@ -13274,12 +13476,28 @@ Styles deleted:
         <translation>เวลาแท็ก</translation>
     </message>
     <message>
+        <source>Move according to the following styles (separated by a comma)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time correction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrects end times that are improper or overlap each other</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shift by video / audio</source>
         <translation>เลื่อนตามเวลาวิดีโอหรือเสียง</translation>
     </message>
     <message>
         <source>Beginning</source>
         <translation>เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Moves the start time to the video/audio time</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move the marker to video time</source>
@@ -13292,6 +13510,10 @@ Styles deleted:
     <message>
         <source>Which lines</source>
         <translation>บรรทัดใด</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Amount</source>
@@ -13362,8 +13584,12 @@ so their positions on video do not change
         <translation>สไตล์ คั่นด้วยจุลภาค</translation>
     </message>
     <message>
+        <source>Run timing postprocessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move according to the following styles (separated by a coma)</source>
-        <translation>เลื่อนตามสไตล์ต่อไปนี้ (คั่นด้วยจุลภาค)</translation>
+        <translation type="vanished">เลื่อนตามสไตล์ต่อไปนี้ (คั่นด้วยจุลภาค)</translation>
     </message>
     <message>
         <source>A method of time shift</source>
@@ -13379,11 +13605,11 @@ so their positions on video do not change
     </message>
     <message>
         <source>Correction end times</source>
-        <translation>แก้ไขเวลาสิ้นสุด</translation>
+        <translation type="vanished">แก้ไขเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Correction end times, when they are improper or overlap each other</source>
-        <translation>แก้ไขเวลาสิ้นสุดเมื่อไม่ถูกต้องหรือทับซ้อนกัน</translation>
+        <translation type="vanished">แก้ไขเวลาสิ้นสุดเมื่อไม่ถูกต้องหรือทับซ้อนกัน</translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -13399,7 +13625,7 @@ so their positions on video do not change
     </message>
     <message>
         <source>Move the start time to the time video / audio</source>
-        <translation>ย้ายเวลาเริ่มต้นไปยังเวลาวิดีโอหรือเสียง</translation>
+        <translation type="vanished">ย้ายเวลาเริ่มต้นไปยังเวลาวิดีโอหรือเสียง</translation>
     </message>
     <message>
         <source>Moves the end time to the video/audio time</source>
@@ -13423,7 +13649,7 @@ so their positions on video do not change
     </message>
     <message>
         <source>End time in milliseconds</source>
-        <translation>เวลาช่วงต่อท้ายเป็นมิลลิวินาที</translation>
+        <translation type="vanished">เวลาช่วงต่อท้ายเป็นมิลลิวินาที</translation>
     </message>
     <message>
         <source>Enable</source>
@@ -13436,6 +13662,10 @@ so their positions on video do not change
     <message>
         <source>End time extension threshold</source>
         <translation>เกณฑ์การขยายเวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Before the start time</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
@@ -13463,11 +13693,11 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Run post processor</source>
-        <translation>เรียกใช้โพสต์โปรเซสเซอร์</translation>
+        <translation type="vanished">เรียกใช้โพสต์โปรเซสเซอร์</translation>
     </message>
     <message>
         <source>Post processor</source>
-        <translation>โพสต์โปรเซสเซอร์</translation>
+        <translation type="vanished">โพสต์โปรเซสเซอร์</translation>
     </message>
     <message>
         <source>Lead-in</source>
@@ -13476,6 +13706,10 @@ after the end time in milliseconds</source>
     <message>
         <source>Lead-out</source>
         <translation>ช่วงต่อท้าย</translation>
+    </message>
+    <message>
+        <source>Lead-out time in milliseconds</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Set times as continuous</source>
@@ -13495,7 +13729,7 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Before the start of time</source>
-        <translation>ก่อนเวลาเริ่มต้น</translation>
+        <translation type="vanished">ก่อนเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>After the start time</source>
@@ -15189,8 +15423,37 @@ or codecs or a splitter may be missing</source>
         <translation>ลบจุด</translation>
     </message>
     <message>
+        <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List of ASS drawings with an edit option.
+After choosing a drawing from the list, put the cursor
+where the drawing should start, then hold the left mouse button and drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List of tags the visual tool can edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag change options:
+Set - inserts the tag at the cursor position for one line,
+or at the start for multiple lines.
+Add - changes all tags by adding the slider value.
+Multiply - multiplies the slider value by the selected line number;
+the first line is not changed.
+Gradient - inserts a tag at each character or in each selected line,
+increasing or decreasing the value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text alignment works the same as in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Double &quot;m&quot; was blocked because of Vsfilter bug</source>
-        <translation>ป้องกันการใช้ &quot;m&quot; ซ้ำสองครั้งเนื่องจากข้อบกพร่องของ VSFilter</translation>
+        <translation type="vanished">ป้องกันการใช้ &quot;m&quot; ซ้ำสองครั้งเนื่องจากข้อบกพร่องของ VSFilter</translation>
     </message>
     <message>
         <source>Edit</source>
@@ -15222,13 +15485,13 @@ or has zero duration</source>
         <source>List of ASS drawings with edit option.
 After choose drawing from list just set cursor i n place
 of start of drawing and click left mouse button and drag.</source>
-        <translation>รายการภาพวาด ASS พร้อมตัวเลือกแก้ไข
+        <translation type="vanished">รายการภาพวาด ASS พร้อมตัวเลือกแก้ไข
 หลังจากเลือกภาพวาดจากรายการแล้ว ให้วางเคอร์เซอร์
 ที่จุดเริ่มต้นของภาพวาด แล้วคลิกเมาส์ซ้ายค้างไว้และลาก</translation>
     </message>
     <message>
         <source>List of tags that can edit visual tool</source>
-        <translation>รายการแท็กที่เครื่องมือภาพแก้ไขได้</translation>
+        <translation type="vanished">รายการแท็กที่เครื่องมือภาพแก้ไขได้</translation>
     </message>
     <message>
         <source>Lock outer quad
@@ -15387,7 +15650,7 @@ Gradient text increasing - inserts a tag at each character, increasing the value
 Gradient text decreasing - inserts a tag at each character, decreasing the value.
 Gradient line increasing - inserts a tag in selected lines, increasing the value.
 Gradient line decreasing - inserts a tag in selected lines, decreasing the value.</source>
-        <translation>ตัวเลือกการเปลี่ยนแท็ก:
+        <translation type="vanished">ตัวเลือกการเปลี่ยนแท็ก:
 เพิ่ม - เปลี่ยนแท็กทั้งหมดโดยบวกค่าจากแถบเลื่อน
 แทรก - แทรกแท็กที่ตำแหน่งเคอร์เซอร์เมื่อมีบรรทัดเดียว
 หรือที่ต้นบรรทัดเมื่อมีหลายบรรทัด
@@ -15400,7 +15663,7 @@ Gradient line decreasing - inserts a tag in selected lines, decreasing the value
     </message>
     <message>
         <source>Text placing works similar like in styles</source>
-        <translation>การจัดวางข้อความทำงานเหมือนในสไตล์</translation>
+        <translation type="vanished">การจัดวางข้อความทำงานเหมือนในสไตล์</translation>
     </message>
     <message>
         <source>Top-center</source>
