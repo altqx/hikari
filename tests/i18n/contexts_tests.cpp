@@ -226,6 +226,33 @@ TEST(CheckedIn, InterfaceCopyIsSentenceCase)
     EXPECT_GT(checked, 300);
 }
 
+// A translation keeps its source's placeholders: the same Qt markers (%1,
+// %L2, ...) in every interface catalog's translated plain entries.
+TEST(CheckedIn, TranslationsKeepTheSourcesPlaceholders)
+{
+    static const QRegularExpression marker(QStringLiteral("%L?(\\d+)"));
+    const auto markers = [](const QString &text) {
+        QStringList out;
+        for (auto it = marker.globalMatch(text); it.hasNext();)
+            out << it.next().captured(1);
+        out.sort();
+        return out;
+    };
+    for (const char *file : {"i18n/hikarisub_pl.ts", "i18n/hikarisub_ko_KR.ts", "i18n/hikarisub_th_TH.ts",
+                             "i18n/hikarisub_ta.ts"}) {
+        const auto catalog = readTs(readSource(QLatin1String(file)));
+        ASSERT_TRUE(catalog.has_value()) << file;
+        int checked = 0;
+        for (const TsContext &context : catalog->contexts)
+            for (const TsMessage &m : context.messages)
+                if (!m.numerus && !m.translations.value(0).isEmpty()) {
+                    EXPECT_EQ(markers(m.translations.value(0)), markers(m.source)) << file << ": " << m.source.toStdString();
+                    ++checked;
+                }
+        EXPECT_GT(checked, 700) << file;
+    }
+}
+
 // The DirectShow adapter (Windows only, so no lupdate run on Linux reads its
 // sources) reports a failed open step as legacy's HR text, and the
 // application translates it through its HikariSub.Video table
