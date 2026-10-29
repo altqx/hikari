@@ -1,9 +1,3 @@
-// PU6 (#308): legacy CustomCheckListBox "Words added to dictionary" (the
-// Spellchecker's "Remove from dictionary"), the Spellchecker panel's ⋯ >
-// "Words added to dictionary…": a compact window on DG1's frame, modal to
-// the main window. A filter over the user dictionary's words, each with a
-// check box; "Remove N words" (outlined in the danger colour, never the
-// default) removes the checked ones and closes; Close keeps them all.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Spelling"
 import QtQuick

@@ -15,17 +15,10 @@
  * along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************/
 
-// Icon resource ids for HikariSub.exe.
-//
-// Plain #defines only: hikarisub.rc.in includes this, so no C++ here.
-//
-// IDI_HIKARISUB_APP must keep the lowest id. Explorer shows an executable's
-// first icon group, ordered by numeric id with string-named ones last.
-//
-// The file type ids go into the registry (negated, as resource ids) by
-// Registry::AddFileAssociation, so they are part of the on-disk format:
-// append, never renumber. They match the ids the retired Icons_dll used.
-// 114-126 were the dropped video types; do not reuse them.
+// Plain #defines only: the resource compiler includes this file.
+// Explorer shows an executable's lowest-id icon group, so IDI_HIKARISUB_APP keeps the lowest id.
+// File type ids are written into the registry as icon resource ids: append, never renumber,
+// and never reuse 114-126.
 
 #pragma once
 

@@ -2,18 +2,11 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// SH1 (#220), DG1 (#222): a window button of a drawn title bar (MainTitleBar,
-// DialogTitleBar): 46 × 32, IC1's glyph, `raised` under the pointer and a
-// shade darker pressed (high contrast: `select`, with a 1-pixel `line`
-// ring); Close too, with no red (the owner's SH1 answer). While the window
-// is not active the glyph takes the disabled colour. Not a Tab stop: the
-// window menu (Alt+Space) reaches the buttons from the keyboard.
 AbstractButton {
     id: windowButton
     required property string iconRole
-    // Whether the button's window is active.
     property bool active: true
-    // The pointer state as shown (Windows tracks Maximise's itself: SH1's snap layouts).
+    // Windows tracks the Maximise button's hover and press itself (snap layouts).
     property bool shownHover: hovered
     property bool shownDown: down
     readonly property color pressColor: Theme.highContrast

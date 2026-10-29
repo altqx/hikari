@@ -12,7 +12,7 @@ void ScriptResolutionPromptController::setView(QObject *view)
 void ScriptResolutionPromptController::ask(Question question, Reply reply)
 {
     if (m_reply)
-        m_reply(std::nullopt); // one question at a time; the router never overlaps them
+        m_reply(std::nullopt);
     m_question = std::move(question);
     m_reply = std::move(reply);
     emit changed();
@@ -46,4 +46,4 @@ void ScriptResolutionPromptController::reject()
     reply(std::nullopt);
 }
 
-} // namespace hikari::ui
+}

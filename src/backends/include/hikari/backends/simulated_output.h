@@ -1,12 +1,5 @@
 #pragma once
 
-// An editor output without a device (A4): the real OutputEngine rendered at
-// the device's pace into nothing, so playback, its clock and the cursor run
-// where no sound may be made (tests, playbackAudio off). There is no
-// callback thread: each call first renders the buffers the elapsed time is
-// due, so the output keeps time on whichever thread uses it (the audio box
-// player's fill thread, every few milliseconds), with no event loop.
-
 #include "hikari/application/audio_output.h"
 
 #include <functional>
@@ -16,10 +9,11 @@ namespace hikari::backends {
 
 class OutputEngine;
 
+// No callback thread: every call first renders the buffers the elapsed time is due.
 class SimulatedOutput final : public application::AudioOutputPort {
 public:
     static constexpr int kBufferFrames = 256;
-    static constexpr double kLatencySeconds = 0.02; // the reported DAC latency
+    static constexpr double kLatencySeconds = 0.02;
 
     SimulatedOutput();
     ~SimulatedOutput() override;
@@ -36,18 +30,16 @@ public:
     application::OutputStatus status() const override;
     application::ClockEstimate clock() const override;
 
-    // Renders the buffers due by now (each call's first step).
     void render() const;
-    // Fault injection (H2): the next buffer aborts the stream, as a host
-    // ends it when its device goes away; reopening recovers.
+    // The next buffer aborts the stream; reopening recovers.
     void simulateDeviceLoss();
 
 private:
     std::unique_ptr<OutputEngine> m_engine;
     mutable bool m_running = false;
-    double m_startedAt = 0;              // steady seconds at start
-    mutable std::int64_t m_rendered = 0; // frames rendered since start
+    double m_startedAt = 0;
+    mutable std::int64_t m_rendered = 0;
     mutable std::vector<float> m_buffer;
 };
 
-} // namespace hikari::backends
+}

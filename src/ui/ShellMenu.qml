@@ -2,16 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// A shell menu: its submenu entries are ShellMenuItems too.
-//
-// K1: with an iconRole, a submenu shows that icon of the set on its item in
-// the parent menu (legacy menus' bitmaps on submenus: recent files, sorting,
-// conversion, last session), in the normal or disabled colours of the
-// appearance.
-//
-// P10: `help` is the help its item in the parent menu shows (ShellMenuItem).
-// StatusHelp counts the open shell menus: the status bar's first field
-// empties when the last one closes (legacy HideMenus).
 Menu {
     id: menu
     property string iconRole

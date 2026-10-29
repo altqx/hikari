@@ -21,7 +21,7 @@ QString duration(double seconds)
     return QCoreApplication::translate("HikariSub.Automation", "%1 s").arg(QString::number(seconds, 'f', 2));
 }
 
-} // namespace
+}
 
 std::optional<KaraokeReport> readKaraokeReport(const std::string &text)
 {
@@ -92,4 +92,4 @@ QString karaokeReportDetails(const KaraokeReport &r)
     return lines.join(QLatin1Char('\n'));
 }
 
-} // namespace hikari::ui
+}

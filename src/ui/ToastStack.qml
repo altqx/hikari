@@ -1,29 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.MainWindow"
-// PK1 (#301), NT1 (#302): toasts, the kit's notice that needs no answer
-// (the OK-only messages of legacy, and the messages that popped its Log
-// window up). They stack at the bottom right of the window they are put
-// in, the newest on top, three at most:
-// * "info" fades after 5 seconds; the pointer over it holds it;
-// * "warning" and "error" stay until their × is pressed;
-// * a fourth makes the oldest information toast go, or, with three
-//   warnings showing, folds the oldest into a "1 more notice" line that
-//   opens the Log (it stays when the toasts showing are dismissed);
-// * Details (when the notice has more to say) opens the Log panel at it.
-// Every notice is an entry of the Log (LogController::notice, which C++
-// calls directly); the stack shows what the Log's `noticed` gives it. With
-// "Show notices as toasts" off (notices.toasts) they go only to the Log.
-// Those given before the stack was made show when it is.
-//
-// AD3 (#312): what is declared in it (the macro run's progress card) sits
-// at the bottom, under the toasts, while its `shown` is true. It shows with
-// "Show notices as toasts" off too: it is the run's control (Cancel, Force
-// stop), as legacy's progress window was, not a notice.
-//
-// post(severity, title, text, options): severity "info", "warning" or
-// "error"; title the command that gave it; options.details, more lines for
-// the Log, which adds Details; options.actions, [{text, run}] buttons
-// beside it, each closing the toast. Returns the toast's id (0: none shown).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -34,12 +10,9 @@ Item {
     objectName: "toastStack"
     property LogController log: null
     property SettingsStore settings: null
-    // Opens the Log panel at entry `id` (0: none marked).
     property var openLog: id => { if (stack.log) stack.log.reveal(id || 0) }
     default property alias pinned: pinnedSlot.data
-    // Newest first: {id, entry (the Log's), severity, title, text, details, actions}.
     property var entries: []
-    // Warnings folded into the "more" line.
     property int folded: 0
     property int nextId: 1
     readonly property int maximum: 3
@@ -60,7 +33,7 @@ Item {
     height: implicitHeight
 
     readonly property var severities: ["info", "warning", "error"]
-    // The actions of the notice being posted (they do not go to the Log).
+    // MUST KILL: post() passes pendingActions and gets lastShown back through the synchronous noticed signal
     property var pendingActions: []
     property int lastShown: 0
     function post(severity, title, text, options) {
@@ -70,7 +43,7 @@ Item {
             return show(0, level, title, text, o.details, o.actions)
         pendingActions = o.actions || []
         lastShown = 0
-        log.notice(level, title || "", text || "", o.details || "") // shown by onNoticed
+        log.notice(level, title || "", text || "", o.details || "")
         pendingActions = []
         return lastShown
     }
@@ -80,7 +53,6 @@ Item {
             stack.lastShown = stack.show(id, severity, title, text, details, stack.pendingActions)
         }
     }
-    // Notices of the start (a profile's retired hotkeys) came before the stack.
     Component.onCompleted: if (log) log.replayNotices()
     function show(entry, level, title, text, details, actions) {
         if (!toasts)
@@ -102,7 +74,6 @@ Item {
         entries = list
         return item.id
     }
-    // The folded count stays: only the Log (or clear()) lets those go.
     function dismiss(id) {
         entries = entries.filter(e => e.id !== id)
     }
@@ -184,8 +155,6 @@ Item {
                     ColumnLayout {
                         spacing: 3
                         Layout.fillWidth: true
-                        // Notices quote files (a lyrics excerpt): never
-                        // markup, which could fetch an <img> (KA6).
                         Label {
                             objectName: "toastTitle"
                             textFormat: Text.PlainText
@@ -241,7 +210,6 @@ Item {
                 }
             }
         }
-        // The warnings that did not fit.
         Rectangle {
             objectName: "toastMore"
             visible: stack.folded > 0
@@ -272,9 +240,7 @@ Item {
                 }
             }
         }
-        // The pinned items, the tallest shown sets the height. An item says
-        // it shows by its `shown` (its own visible goes false with the
-        // slot's, so it cannot say it).
+        // A child's visible goes false with the slot's, so each says it shows by its own `shown`.
         Item {
             id: pinnedSlot
             objectName: "toastPinned"

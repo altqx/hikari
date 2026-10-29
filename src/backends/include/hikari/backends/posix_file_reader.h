@@ -1,7 +1,5 @@
 #pragma once
 
-// Linux file reading for open, reload and external-change checks (A2).
-
 #include "hikari/application/document_files.h"
 
 namespace hikari::backends {
@@ -12,4 +10,4 @@ public:
     read(const application::DestinationKey &destination) override;
 };
 
-} // namespace hikari::backends
+}

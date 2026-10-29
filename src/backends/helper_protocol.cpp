@@ -23,7 +23,7 @@ template <typename T> T get(const std::byte *p)
     return static_cast<T>(v);
 }
 
-} // namespace
+}
 
 std::vector<std::byte> encode(const Frame &f)
 {
@@ -175,4 +175,4 @@ std::string textOf(const std::vector<std::byte> &bytes)
     return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
 }
 
-} // namespace hikari::backends::helper
+}

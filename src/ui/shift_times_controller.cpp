@@ -15,8 +15,6 @@ std::u8string u8(const QString &s)
     return std::u8string(reinterpret_cast<const char8_t *>(b.constData()), static_cast<std::size_t>(b.size()));
 }
 
-// The panel's values and their settings; the switches are the
-// shiftTimes.options bits (legacy ShiftTimes::SaveOptions).
 struct Field {
     const char *name;
     const char *setting;
@@ -42,11 +40,12 @@ struct Bit {
     const char *name;
     int bit;
 };
+// MUST KILL: kBits packs the six switches into the shiftTimes.options int
 constexpr Bit kBits[] = {{"forward", 1},         {"fromStartTime", 2}, {"moveToVideoTime", 4},
                          {"moveToAudioTime", 8}, {"byFrames", 16},     {"tagTimes", 32}};
 constexpr int kAllBits = 63;
 
-} // namespace
+}
 
 ShiftTimesController::ShiftTimesController(QString settingsFile, QObject *parent)
     : QObject(parent), m_ownedStore(std::make_unique<SettingsStore>(std::move(settingsFile))),
@@ -61,9 +60,6 @@ ShiftTimesController::ShiftTimesController(SettingsStore &settings, QObject *par
     load();
 }
 
-// The panel reads its options as legacy ShiftTimes does (SHIFT_TIMES_TIME
-// 2000 and backward when SHIFT_TIMES_OPTIONS is unset) and writes nothing
-// until it changes.
 void ShiftTimesController::load()
 {
     QVariantMap map;
@@ -205,7 +201,6 @@ void ShiftTimesController::save() const
     const auto map = settingsMap();
     for (const auto &f : kFields)
         m_store->set(f.setting, map.value(QLatin1String(f.name)));
-    // Bits legacy does not know are kept.
     int options = m_store->integer("shiftTimes.options") & ~kAllBits;
     for (const auto &b : kBits)
         if (map.value(QLatin1String(b.name)).toBool())
@@ -214,4 +209,4 @@ void ShiftTimesController::save() const
     m_store->set("shiftTimes.profiles", m_profiles);
 }
 
-} // namespace hikari::ui
+}

@@ -15,7 +15,7 @@ namespace {
 constexpr application::yuv::Matrix kBt601{298, 409, -100, -208, 516, 16, 8};
 constexpr application::yuv::Matrix kBt709{298, 459, -55, -136, 541, 16, 8};
 
-} // namespace
+}
 
 std::size_t sampleBytes(const SampleFormat &f)
 {
@@ -51,18 +51,15 @@ bool toBgra(const SampleFormat &f, const std::uint8_t *data, std::size_t size, b
     out.height = h;
     out.stride = w * 4;
     out.ycbcr.reset();
-    // A reused buffer of the same size is neither reallocated nor cleared.
     out.bgra.resize(static_cast<std::size_t>(out.stride) * static_cast<std::size_t>(h));
     auto *dst = reinterpret_cast<std::uint8_t *>(out.bgra.data());
     const int cw = (w + 1) / 2;
-    // Chroma (and YUY2's luma) taken apart into rows the converter reads 8 samples at a time.
     thread_local std::vector<std::uint8_t> yRow, uRow, vRow;
     yRow.resize(static_cast<std::size_t>(w));
     uRow.resize(static_cast<std::size_t>(cw) + 8);
     vRow.resize(static_cast<std::size_t>(cw) + 8);
     switch (f.subtype) {
     case Subtype::RGB32:
-        // Legacy m_SwapFrame: an RGB32 sample is a bottom-up DIB.
         for (int y = 0; y < h; ++y) {
             const std::uint8_t *src = data + static_cast<std::size_t>(f.bottomUp ? h - 1 - y : y) * w * 4;
             std::uint8_t *row = dst + static_cast<std::size_t>(y) * w * 4;
@@ -109,9 +106,6 @@ bool toBgra(const SampleFormat &f, const std::uint8_t *data, std::size_t size, b
                     std::memcpy(vRow.data(), vPlane + static_cast<std::size_t>(cy) * half, static_cast<std::size_t>(half));
                     std::memcpy(uRow.data(), uPlane + static_cast<std::size_t>(cy) * half, static_cast<std::size_t>(half));
                 }
-                // An odd width's last pixel has no chroma sample of its own
-                // in these w / 2 layouts: it takes its left neighbour's
-                // (neutral grey for a one-pixel width).
                 if (half < cw) {
                     uRow[static_cast<std::size_t>(half)] = half > 0 ? uRow[static_cast<std::size_t>(half - 1)] : 128;
                     vRow[static_cast<std::size_t>(half)] = half > 0 ? vRow[static_cast<std::size_t>(half - 1)] : 128;
@@ -144,9 +138,6 @@ bool toYcbcr(const SampleFormat &f, const std::uint8_t *data, std::size_t size, 
     for (int y = 0; y < h; ++y)
         std::memcpy(base + p.offset[0] + static_cast<std::size_t>(y) * p.stride[0], data + static_cast<std::size_t>(y) * w,
                     static_cast<std::size_t>(w));
-    // toBgra's chroma rows: the sample holds w / 2 samples a row and h / 2
-    // rows; an odd height's last row and an odd width's last pixel reuse
-    // their neighbours' (neutral grey for a one-pixel width).
     const std::uint8_t *chroma = data + static_cast<std::size_t>(w) * h;
     const int half = w / 2;
     for (int r = 0; r < p.chromaHeight; ++r) {
@@ -174,4 +165,4 @@ bool toYcbcr(const SampleFormat &f, const std::uint8_t *data, std::size_t size, 
     return true;
 }
 
-} // namespace hikari::backends::dshow
+}

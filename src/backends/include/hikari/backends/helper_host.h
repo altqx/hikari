@@ -1,22 +1,5 @@
 #pragma once
 
-// The host side of a helper process (H1). Starts the helper, checks its
-// protocol version before any work (an incompatible helper is refused and
-// stopped), and routes replies to requests by session and request ID. Every
-// request resolves exactly once: its Terminal frame, or HelperLost when the
-// process ends, crashes or breaks the protocol. Late, duplicated or unknown
-// replies are rejected and counted. Outstanding work is bounded. A running
-// request may make synchronous service calls (Kind::Service); each is
-// answered at most once, and never after its request has ended. The helper's
-// stderr is kept as bounded diagnostics, separate from the protocol.
-//
-// Frames sent in one turn of the event loop reach the helper in one write,
-// so a Cancel sent right after its request arrives with it on every
-// platform (QProcess on Windows writes each write() call to the pipe only
-// once the previous one has completed, a round trip later).
-//
-// Runs on the thread that owns it, with a Qt event loop.
-
 #include "hikari/backends/helper_protocol.h"
 
 #include <QObject>
@@ -33,7 +16,7 @@ namespace hikari::backends::helper {
 enum class HostError {
     NotReady,   // not started, still starting, refused or lost
     Busy,       // the outstanding-request limits are reached
-    HelperLost, // the process ended before the request finished
+    HelperLost,
 };
 
 struct Event {
@@ -43,6 +26,7 @@ struct Event {
     std::uint64_t call = 0;         // for Service: pass to answer()
 };
 
+// Lives on its owner's thread, which needs a Qt event loop.
 class HelperHost : public QObject {
     Q_OBJECT
 public:
@@ -71,8 +55,7 @@ public:
     std::expected<std::uint64_t, HostError> request(std::uint64_t run, std::vector<std::byte> payload,
                                                     Handler handler);
     void cancel(std::uint64_t request);
-    // Answers a Service call. False when the call is unknown, already
-    // answered, or its request has ended: the answer is dropped.
+    // False, dropping the answer, when the call is unknown, answered, or its request ended.
     bool answer(std::uint64_t request, std::uint64_t call, Outcome outcome, std::vector<std::byte> payload = {});
     void stop(); // ends the helper; pending requests resolve as HelperLost
 
@@ -92,14 +75,15 @@ private:
     void readDiagnostics();
     void fail();
     void write(const Frame &frame);
-    void flush(); // hands the frames sent so far to the process in one write
+    // One write per turn: QProcess on Windows starts each write() a round trip after the last.
+    void flush();
 
     QString m_program;
     QStringList m_arguments;
     std::uint32_t m_version;
     Limits m_limits;
     QProcess m_process;
-    QByteArray m_outgoing; // frames not yet handed to the process
+    QByteArray m_outgoing;
     bool m_flushQueued = false;
     Decoder m_decoder;
     State m_state = State::Idle;
@@ -109,7 +93,7 @@ private:
     struct Pending {
         Handler handler;
         std::size_t bytes = 0;
-        std::set<std::uint64_t> calls; // unanswered service calls
+        std::set<std::uint64_t> calls;
     };
     std::map<std::uint64_t, Pending> m_pending;
     std::size_t m_pendingBytes = 0;
@@ -120,4 +104,4 @@ private:
     static inline std::uint64_t s_nextSession = 1;
 };
 
-} // namespace hikari::backends::helper
+}

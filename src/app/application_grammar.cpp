@@ -1,11 +1,3 @@
-// GR1 (#364): grammar check with Harper. harper-ls is a helper process
-// (backends::HarperClient), started at the first check while grammar check is
-// on and ended when it is switched off. The Line editor's spell-checked field
-// is checked 300 ms after its text stops changing; the Spellchecker panel's
-// Grammar filter walks the whole file in the background. What harper-ls is
-// given and where its findings go back is core::grammar's; a suggestion goes
-// in by application::replaceGrammar.
-
 #include "hikari/app/application.h"
 
 #include "hikari/core/editor_syntax.h"
@@ -25,19 +17,12 @@ namespace hikari::app {
 
 namespace {
 
-// Lines the panel's walk has with harper-ls at once, and the most it reads in
-// one turn of the event loop (the rest are skipped comments or blank text).
 constexpr std::size_t kWalkInFlight = 4;
 constexpr std::size_t kWalkPerTurn = 256;
-// A Line's text longer than this (UTF-16 units) is never checked: a check
-// keeps a few copies of it and a raw range per unit. The walk keeps the checks
-// of Lines with findings left; past kWalkKept units of them it reads no
-// further until findings are dealt with.
 constexpr std::size_t kMaxCheckedUnits = 4096;
 constexpr std::size_t kWalkKept = std::size_t(1) << 20;
 
-// Harper's groups (harper-core/default_config.json), in core::grammar's order,
-// with their descriptions shortened (the approved mockup).
+// MUST KILL: kGroupTexts must stay in core::grammar::groupIds() order.
 constexpr std::array<std::pair<const char *, const char *>, 15> kGroupTexts{{
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Proper nouns"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Names of places, organizations and products keep their standard capitalization.")},
@@ -99,18 +84,17 @@ QString harperPath(const QString &configured)
     const QString sibling = QCoreApplication::applicationDirPath() + QLatin1Char('/') + name;
 #ifdef HIKARI_BUILD_HARPER_LS
     if (!QFileInfo::exists(sibling))
-        return QStringLiteral(HIKARI_BUILD_HARPER_LS); // running from the build tree
+        return QStringLiteral(HIKARI_BUILD_HARPER_LS);
 #endif
     return sibling;
 }
 
-// A Line's text with nothing for harper-ls to read.
 bool blank(const core::grammar::CheckedText &text)
 {
     return std::ranges::all_of(text.text, [](char16_t c) { return c == u' '; });
 }
 
-} // namespace
+}
 
 void Application::setUpGrammar(const Options &options)
 {
@@ -118,8 +102,6 @@ void Application::setUpGrammar(const Options &options)
     m_grammarDir = options.grammarDir;
     if (m_grammarDir.isEmpty() && !m_settingsFile.isEmpty())
         m_grammarDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Harper");
-    // Without a spell checker the words added are harper-ls's user dictionary
-    // alone: read back from it, so a restart keeps them (#409).
     if (!m_spellChecker && !m_grammarDir.isEmpty()) {
         QFile words(QDir(m_grammarDir).filePath(QStringLiteral("dictionary.txt")));
         if (words.open(QIODevice::ReadOnly))
@@ -132,7 +114,6 @@ void Application::setUpGrammar(const Options &options)
     m_grammarDelay->setInterval(300);
     connect(m_grammarDelay, &QTimer::timeout, this, &Application::checkEditorGrammar);
     connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::scheduleGrammar);
-    // Words added to (or removed from) the user dictionary reach harper-ls's.
     connect(this, &Application::spellingChanged, this, &Application::syncGrammarWords);
 }
 
@@ -178,8 +159,6 @@ QJsonObject Application::grammarSettings() const
     QJsonObject linters;
     for (const auto &[rule, on] : core::grammar::linterSwitches(groups, hunspellOn))
         linters.insert(latin(rule), on);
-    // Every file harper-ls keeps is in its own folder, never the user's
-    // config folders.
     const QDir dir(m_grammarDir);
     const auto path = [&](const char *name) { return QDir::toNativeSeparators(dir.filePath(QLatin1String(name))); };
     return {{QStringLiteral("dialect"), QLatin1String(kDialects[language - 1])},
@@ -193,14 +172,13 @@ QJsonObject Application::grammarSettings() const
 
 void Application::applyGrammarSettings()
 {
-    // Settings' Apply writes many keys: they are taken together, once.
     if (m_grammarApplyPending)
         return;
     m_grammarApplyPending = true;
     QMetaObject::invokeMethod(this, [this] {
         m_grammarApplyPending = false;
         if (!grammarOn()) {
-            m_harper.reset(); // the process ends
+            m_harper.reset();
             m_grammarTicket = 0;
             m_grammarEditor.reset();
             if (m_grammarWalk && !m_grammarWalk->pending.empty()) {
@@ -217,20 +195,17 @@ void Application::applyGrammarSettings()
             const QJsonObject before = m_harper->settings();
             if (settings == before)
                 return;
-            m_harper->setSettings(settings); // ends the process and the checks it had
+            m_harper->setSettings(settings);
             m_grammarTicket = 0;
             if (m_grammarWalk)
                 grammarWalkSettingsChanged(before, settings);
         }
-        m_grammarEditor.reset(); // found under the old rules
+        m_grammarEditor.reset();
         checkEditorGrammar();
         emit grammarChanged();
     }, Qt::QueuedConnection);
 }
 
-// The walk's findings were found under `before`. Rules turned off (Ignore
-// this rule, a group switched off) only drop theirs; any other change (the
-// English, a rule turned on, Hunspell) walks the file again.
 void Application::grammarWalkSettingsChanged(const QJsonObject &before, const QJsonObject &after)
 {
     auto &walk = *m_grammarWalk;
@@ -259,8 +234,6 @@ void Application::grammarWalkSettingsChanged(const QJsonObject &before, const QJ
         emit grammarWalkChanged();
         return;
     }
-    // Found under other settings: all of it again, from the walk's first Line
-    // (a cancelled walk only loses what it found).
     walk.checks.clear();
     walk.queue.clear();
     walk.pending.clear();
@@ -284,7 +257,6 @@ void Application::scheduleGrammar()
 void Application::checkEditorGrammar()
 {
     const int role = spellingRole();
-    // E4: as spelling, none for a comment, a template or code.
     auto raw = core::syntax::spellChecked(m_editor->syntaxState()) ? editorRaw(role) : std::nullopt;
     if (raw && raw->size() > kMaxCheckedUnits)
         raw.reset();
@@ -298,17 +270,15 @@ void Application::checkEditorGrammar()
         }
         return;
     }
-    // The same text in a Document of another format is read otherwise.
     const auto format = editorFormat();
     if (m_grammarEditor && m_grammarEditorRole == role && m_grammarEditor->raw == *raw && m_grammarEditor->format == format) {
-        // Back to the text checked: a check of other text since is dropped.
         if (m_grammarTicket && m_harper)
             m_harper->cancel(m_grammarTicket);
         m_grammarTicket = 0;
         return;
     }
     if (m_grammarTicket && m_grammarRole == role && m_grammarPending.raw == *raw && m_grammarPending.format == format)
-        return; // already with harper-ls
+        return;
     auto *client = grammarClient();
     if (!client)
         return;
@@ -357,7 +327,6 @@ void Application::grammarFailed(const QString &message)
         m_grammarWalk->problem = QCoreApplication::translate("HikariSub.Spelling", "The grammar checker stopped.");
         emit grammarWalkChanged();
     }
-    // One notice until a check succeeds again.
     if (m_grammarFailed)
         return;
     m_grammarFailed = true;
@@ -381,14 +350,12 @@ void Application::syncGrammarWords()
     if (!file.open(QIODevice::WriteOnly) || file.write(content.toUtf8()) < 0 || !file.commit())
         return;
     m_grammarWords = content;
-    // harper-ls reads the file for each text: the field is checked again, a
-    // check that read the old words dropped.
+    // harper-ls rereads the dictionary file for each check: redo the checks in flight.
     if (m_grammarTicket)
         m_harper->cancel(m_grammarTicket);
     m_grammarTicket = 0;
     m_grammarEditor.reset();
     scheduleGrammar();
-    // So are the walk's Lines with harper-ls or waiting to join: sent again.
     if (m_grammarWalk && (!m_grammarWalk->pending.empty() || !m_grammarWalk->arrived.empty())) {
         auto &walk = *m_grammarWalk;
         std::set<std::size_t> again;
@@ -422,9 +389,6 @@ core::SubtitleFormat Application::editorFormat() const
     return session ? session->document().format() : core::SubtitleFormat::Ass;
 }
 
-// A finding's range in the field as shown: the raw text's (whole Translated
-// text in translation mode), less a carried leading block, and through the
-// projection when tags are hidden.
 std::optional<std::pair<int, int>> Application::fieldSpan(int role, const core::grammar::CheckedText &text, int start,
                                                           int end) const
 {
@@ -445,7 +409,6 @@ const backends::GrammarFinding *Application::editorGrammarFinding(int role, int 
     const auto range = [&](const backends::GrammarFinding &f) {
         return fieldSpan(role, check->text, f.start, f.end).value_or(std::pair{-1, -1});
     };
-    // A position inside a finding, else at its end (the caret after a word).
     for (const auto &f : check->findings)
         if (const auto [s, e] = range(f); s <= position && position < e)
             return &f;
@@ -497,10 +460,9 @@ bool Application::replaceEditorGrammar(int role, int position, const QString &re
     if (!caret)
         return false;
     m_editor->reloadFromSession();
-    refreshViews(); // the Grid and the tab's modified mark
+    refreshViews();
     const int shown = m_editor->displaySpan(role, int(*caret), int(*caret)).first;
     m_editor->selectInField(shown, shown);
-    // The findings after it moved with the text: the field is checked again.
     m_grammarEditor.reset();
     checkEditorGrammar();
     emit grammarChanged();
@@ -552,11 +514,9 @@ bool Application::addGrammarWord(const QString &word)
         m_grammarOwnWords << trimmed;
     }
     syncGrammarWords();
-    spellingRefresh(); // Hunspell's marks, the Grid's too
+    spellingRefresh();
     return true;
 }
-
-// The panel's Grammar walk.
 
 QVariantMap Application::startGrammarWalk()
 {
@@ -564,7 +524,7 @@ QVariantMap Application::startGrammarWalk()
     auto *session = targetSession();
     if (!grammarOn() || !session)
         return grammarWalkState();
-    m_editor->commit(); // the editor is left for the panel: its draft commits
+    m_editor->commit();
     auto walk = std::make_unique<GrammarWalk>();
     walk->document = *m_workspace.editingTarget();
     walk->translation = application::spellsTranslation(session->document());
@@ -600,12 +560,10 @@ void Application::pumpGrammarWalk()
 {
     if (!m_grammarWalk || m_grammarWalk->cancelled)
         return;
-    // Another Document went into the editor while the walk waited for harper-ls.
     if (grammarWalkStale())
         return;
     auto &walk = *m_grammarWalk;
     const auto *session = m_files->session(walk.document);
-    // Lines read whose findings are all dealt with keep nothing.
     std::set<std::size_t> open;
     for (const auto &found : walk.findings)
         if (!found.handled)
@@ -631,7 +589,7 @@ void Application::pumpGrammarWalk()
     };
     std::size_t read = 0;
     while (walk.pending.size() < kWalkInFlight && !walk.queue.empty() && kept < kWalkKept) {
-        if (++read > kWalkPerTurn) { // the window answers (Cancel too) before the rest
+        if (++read > kWalkPerTurn) {
             again();
             break;
         }
@@ -649,7 +607,7 @@ void Application::pumpGrammarWalk()
             continue;
         }
         check.text = core::grammar::checkedText(check.raw, format);
-        if (blank(check.text)) { // nothing to find, nothing kept
+        if (blank(check.text)) {
             walk.arrived[index] = {};
             continue;
         }
@@ -661,11 +619,9 @@ void Application::pumpGrammarWalk()
             return;
         walk.pending[client->check(text)] = index;
     }
-    // The findings join in walk order, as their Lines' results come.
     const std::size_t joined = walk.checked;
     bool added = false;
     for (auto it = walk.arrived.find(walk.checked); it != walk.arrived.end(); it = walk.arrived.find(walk.checked)) {
-        // A Line's findings left to right, as they are read.
         auto found = it->second;
         std::ranges::stable_sort(found, {}, [](const backends::GrammarFinding &f) { return std::pair{f.start, f.end}; });
         for (const auto &f : found)
@@ -678,7 +634,6 @@ void Application::pumpGrammarWalk()
         nextGrammarFinding();
         showGrammarFinding();
     }
-    // Held back by the kept checks: the Lines just joined may free some.
     if (kept >= kWalkKept && walk.checked > joined && !walk.queue.empty())
         again();
     emit grammarWalkChanged();
@@ -694,7 +649,6 @@ void Application::nextGrammarFinding()
             walk.current = i;
             return;
         }
-    // Back to any left before (the walk moves on with what it finds).
     for (std::size_t i = 0; i < std::min(from, walk.findings.size()); ++i)
         if (!walk.findings[i].handled) {
             walk.current = i;
@@ -709,7 +663,6 @@ void Application::showGrammarFinding()
     auto *session = targetSession();
     if (!session)
         return;
-    // A deleted Line's findings went with it.
     auto &walk = *m_grammarWalk;
     while (walk.current && !grammarWalkLine(*session, walk.findings[*walk.current].line)) {
         const std::size_t gone = walk.findings[*walk.current].line;
@@ -723,16 +676,13 @@ void Application::showGrammarFinding()
     const auto &found = walk.findings[*walk.current];
     const auto &check = walk.checks.at(found.line);
     const auto line = walk.lines[found.line];
-    // The finding's Line alone is selected, as the spelling walk does: Enter
-    // in the editor commits to the selection. A draft the editor cannot
-    // commit (Block) keeps it where it is.
     m_editor->commit();
     if (session->draftLine() && *session->draftLine() != line)
         return;
     session->setSelection(application::Selection{line, {line}, line, {}});
     m_editor->reloadFromSession();
     m_editor->showLine(line.value);
-    refreshViews(); // the Grid's selection
+    refreshViews();
     const int role = walk.translation ? 1 : 0;
     if (editorRaw(role) != check.raw)
         return;
@@ -746,7 +696,6 @@ bool Application::grammarWalkStale()
         return true;
     if (m_workspace.editingTarget() == m_grammarWalk->document)
         return false;
-    // Another Document is edited: the walk's Lines are not there.
     cancelGrammarWalk();
     m_grammarWalk->current.reset();
     m_grammarWalk->problem = QCoreApplication::translate("HikariSub.Spelling", "Another file is open in the editor.");
@@ -789,8 +738,6 @@ QVariantMap Application::grammarWalkState()
             if (lines[i]->id == walk.lines[found.line])
                 row = int(i) + 1;
     }
-    // The text around the finding, as harper-ls read it (no tags, breaks as
-    // spaces), at most kContext characters a side, cut at a word (#409).
     constexpr std::size_t kContext = 40;
     const std::size_t start = std::size_t(f.start), end = std::size_t(f.end);
     const std::u16string_view shown(text);
@@ -855,7 +802,6 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
                                       ? QCoreApplication::translate("HikariSub.Spelling", "The line changed since it was checked.")
                                       : QCoreApplication::translate("HikariSub.Spelling", "The text there cannot be replaced."));
     }
-    // The Line's other findings move with its text; one it overlapped is gone.
     const int delta = int(replacement.size()) - (end - start);
     for (auto &other : walk.findings) {
         if (other.line != found.line || other.handled)
@@ -871,12 +817,11 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
         check.raw = core::toUtf16(walk.translation ? line->translation : line->text);
         check.text = core::grammar::checkedText(check.raw, session->document().format());
     }
-    // The editor shows the correction even when no finding is left to show.
     m_editor->reloadFromSession();
     refreshViews();
     nextGrammarFinding();
     showGrammarFinding();
-    pumpGrammarWalk(); // reads on if the kept checks held it back
+    pumpGrammarWalk();
     emit grammarWalkChanged();
     return grammarWalkState();
 }
@@ -888,7 +833,7 @@ QVariantMap Application::grammarWalkIgnore()
     m_grammarWalk->findings[*m_grammarWalk->current].handled = true;
     nextGrammarFinding();
     showGrammarFinding();
-    pumpGrammarWalk(); // reads on if the kept checks held it back
+    pumpGrammarWalk();
     emit grammarWalkChanged();
     return grammarWalkState();
 }
@@ -906,7 +851,7 @@ QVariantMap Application::grammarWalkIgnoreRule()
                 other.handled = true;
     nextGrammarFinding();
     showGrammarFinding();
-    pumpGrammarWalk(); // reads on if the kept checks held it back
+    pumpGrammarWalk();
     if (group)
         setGrammarGroup(int(*group), false);
     QVariantMap state = grammarWalkState();
@@ -937,9 +882,9 @@ QVariantMap Application::grammarWalkAddWord()
             other.handled = true;
     nextGrammarFinding();
     showGrammarFinding();
-    pumpGrammarWalk(); // reads on if the kept checks held it back
+    pumpGrammarWalk();
     emit grammarWalkChanged();
     return grammarWalkState();
 }
 
-} // namespace hikari::app
+}

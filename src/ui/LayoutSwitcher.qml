@@ -5,30 +5,19 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// WS3 (#217): the layout switcher, MuseScore 4's Workspaces button (MS1's
-// research, musescore-shell.md section 7, the SH1 row): the layout icon, the
-// current Document tab's layout (a saved layout's name, else its preset's)
-// and the drop-down mark, opening the LayoutMenu. It is self-contained: the
-// title bar holds it after the menus (SH1, #220; MainTitleBar.qml), framed
-// so it reads as a control beside the window's title, and the shell answers
-// its signals as it answers View > Layout's.
 ToolButton {
     id: switcher
     objectName: "layoutSwitcher"
-    required property var layouts // WorkspaceLayoutController
+    required property var layouts
     signal presetChosen(string name)
     signal savedLayoutChosen(string name)
     signal saveRequested()
     signal resetRequested()
     signal manageRequested()
-    // The text size beside it.
     property font labelFont: font
-    // The menu opens below the button (the title bar), or above it.
     property bool opensUpward: false
-    // The title bar's keyboard is on it (MainTitleBar's Alt and F10).
     property bool keyboardCurrent: false
-    // The menu's height is known only once its items are laid out, so its
-    // place is a binding rather than popup()'s one-off position.
+    // A Menu's height is known only once laid out, so its place is a binding, not popup()'s.
     function openMenu() {
         layoutMenu.parent = switcher
         layoutMenu.x = Qt.binding(() => switcher.width - layoutMenu.width)
@@ -37,8 +26,6 @@ ToolButton {
     }
 
     text: layouts.layoutLabel
-    // It takes no focus: the keyboard reaches it through the title bar's
-    // Alt and F10, and the same menu through View > Layout.
     focusPolicy: Qt.NoFocus
     checked: layoutMenu.visible
     padding: 2
@@ -68,7 +55,7 @@ ToolButton {
             Layout.alignment: Qt.AlignVCenter
         }
         Icon {
-            iconRole: "menu-more" // a list that drops open (docking.md, Chrome)
+            iconRole: "menu-more"
             size: 12
             Layout.alignment: Qt.AlignVCenter
         }

@@ -33,8 +33,7 @@ QJsonObject toJson(const NamedDialogValues &values)
     return out;
 }
 
-// Numbers come back as doubles; a control takes a whole one as an integer
-// (application::dialogValueOf).
+// JSON numbers come back as doubles; application::dialogValueOf makes a whole one an integer.
 NamedDialogValues fromJson(const QJsonObject &object)
 {
     NamedDialogValues out;
@@ -50,7 +49,6 @@ NamedDialogValues fromJson(const QJsonObject &object)
     return out;
 }
 
-// The row's JSON for `key`, and where it is.
 std::optional<std::pair<qsizetype, QJsonDocument>> findRow(const QStringList &rows, const QString &key)
 {
     const QString prefix = key + QLatin1Char('\t');
@@ -65,7 +63,7 @@ QString rowOf(const QString &key, const QJsonDocument &json)
     return key + QLatin1Char('\t') + QString::fromUtf8(json.toJson(QJsonDocument::Compact));
 }
 
-} // namespace
+}
 
 QString ScriptDialogMemory::keyOf(const QString &script, const application::DialogRequest &request)
 {
@@ -178,4 +176,4 @@ void ScriptDialogMemory::deletePreset(const QString &key, const QString &name)
     m_settings->sync();
 }
 
-} // namespace hikari::ui
+}

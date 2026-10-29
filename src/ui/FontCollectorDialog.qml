@@ -1,16 +1,3 @@
-// Y8: legacy FontCollectorDialog "Font collector" (GLOBAL_OPEN_FONT_COLLECTOR,
-// FontCollector.cpp:134-239 at 20d647c4). PU6 (#308): a window on DG1's
-// frame, modeless and resizable (Subtitles > Font collector raises it while
-// it is open; it reopens where and as big as it was left): the action
-// (legacy's "Options" radio box: Check availability of fonts, Copy to
-// selected folder, Zip) as one choice with a hint, where to save with
-// "Select a folder", writing beside the subtitles, taking the fonts from the
-// loaded MKV file, the log, then Show folder (legacy "Save folder"), Start
-// on all tabs ("Start on tabs"), Start and Close (Stop while it runs).
-// The copy modes stage their output (routing #60): Start shows what the
-// review would write; an incomplete collection is written only after the
-// acknowledgment and is labelled incomplete (routing #54). A double click in
-// the log goes to a Style or Line as legacy's OnConsoleDoubleClick did.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
@@ -22,9 +9,6 @@ DialogWindow {
     id: dialog
     objectName: "fontCollectorDialog"
     required property var collector
-    // FontCollectorDialog's colours: WINDOW_TEXT, WINDOW_WARNING_ELEMENTS and
-    // the success "#008000" (on Dark a readable green, K2-dark-success),
-    // from the theme (K2).
     readonly property color warningColour: Theme.warning
     readonly property color successColour: Theme.success
     readonly property bool working: collector.stage === 1
@@ -46,7 +30,6 @@ DialogWindow {
         open()
         startButton.forceActiveFocus()
     }
-    // ShowDialog: raised when the window is already there.
     function showOnce() {
         if (visible)
             open()
@@ -58,8 +41,7 @@ DialogWindow {
         acknowledge.checked = false
         const r = collector.start(path.text, allTabs)
         if (r.message !== undefined) {
-            // NT1 (#302): on PK1's message box; a missing path is a warning
-            // and the path field has the keyboard once it closes.
+            // MUST KILL: missingPath recognises the error by comparing its translated message text
             const missingPath = r.message === qsTr("Select the folder where you want to copy fonts")
                              || r.message === qsTr("Choose a name for the archive")
             messages.ask({ title: dialog.title, text: r.message, severity: missingPath ? "warning" : "error" }, () => {
@@ -67,9 +49,6 @@ DialogWindow {
                     path.forceActiveFocus()
             })
         } else if (r.question !== undefined) {
-            // PU6: legacy "Confirmation", "The zip file already exists,
-            // delete it?" Yes / No, where No replaced it all the same once
-            // written: Replace, or Cancel and nothing runs.
             const name = r.archive.replace(/^.*[\\/]/, "")
             messages.ask({
                 title: dialog.title,
@@ -85,7 +64,6 @@ DialogWindow {
         }
     }
     function choosePath() {
-        // OnButtonPath: a folder for "Copy to selected folder", else the archive.
         const s = collector.chooserStart(path.text)
         if (collector.action === 1) {
             if (s.folder.length > 0)
@@ -113,13 +91,10 @@ DialogWindow {
         }
         return "<div style=\"white-space: pre-wrap\">" + out + "</div>"
     }
-    // Nothing closes it while it runs (Stop first).
     onClosing: close => {
         if (working)
             close.accepted = false
     }
-    // Closed, not hidden while its frame is made again (a title bar change):
-    // a run or a review waiting goes on then.
     onVisibleChanged: if (!visible && !WindowFrame.remaking(dialog)) collector.close()
 
     GridLayout {
@@ -127,7 +102,6 @@ DialogWindow {
         columnSpacing: 12
         rowSpacing: 10
         Layout.fillWidth: true
-        // SetEnterId(9879): Enter starts (DialogWindow: the default button).
         Label { text: qsTr("Action"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
         ColumnLayout {
             spacing: 6
@@ -169,9 +143,6 @@ DialogWindow {
                     onAccepted: dialog.start(false)
                     Accessible.name: qsTr("Save to")
                     placeholderText: dialog.collector.action === 2 ? qsTr("Choose an archive") : qsTr("Choose a folder")
-                    // HikariTextValidator with wxFILTER_EXCLUDE_CHAR_LIST: / * ? " < > |
-                    // on Windows; elsewhere '/' separates the folders, so it is
-                    // accepted (FC-slash-linux).
                     validator: RegularExpressionValidator {
                         regularExpression: Qt.platform.os === "windows" ? /[^\/*?"<>|]*/ : /[^*?"<>|]*/
                     }
@@ -193,8 +164,6 @@ DialogWindow {
                 ToolTip.visible: hovered
                 onToggled: dialog.changeOptions()
             }
-            // Y9: FontCollector.cpp:181-183, enabled for an MKV video (and,
-            // after an Options change, only for the copy modes).
             CheckBox {
                 id: fromMkv
                 objectName: "fontCollectorFromMkv"
@@ -204,7 +173,6 @@ DialogWindow {
             }
         }
     }
-    // The log, on the field colour, with one muted line before the first Start.
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -239,7 +207,6 @@ DialogWindow {
             text: qsTr("Start lists the fonts the subtitles use.")
         }
     }
-    // The staged review: Copy fonts / Write archive writes what the log lists.
     Rectangle {
         objectName: "fontCollectorReview"
         visible: dialog.collector.stage === 2
@@ -283,7 +250,6 @@ DialogWindow {
 
     leadingActions: Button {
         objectName: "fontCollectorSaveFolder"
-        // Legacy "Save folder": opens the folder written to.
         text: qsTr("Show folder")
         visible: dialog.collector.action !== 0
         enabled: dialog.collector.canSaveFolder && !dialog.working
@@ -330,7 +296,6 @@ DialogWindow {
         id: folderDialog
         objectName: "fontCollectorFolderDialog"
         title: qsTr("Choose save folder")
-        // Cancel keeps the previous path (FC-chooser-cancel).
         onAccepted: dialog.chosen(dialog.collector.localPath(selectedFolder))
     }
     Dialogs.FileDialog {

@@ -43,7 +43,7 @@ QString colour(std::uint32_t argb)
     return QColor::fromRgba(argb).name(QColor::HexArgb);
 }
 
-} // namespace
+}
 
 VisualToolsController::VisualToolsController(VideoController &video, SettingsStore &settings, SessionProvider session,
                                              QObject *parent)
@@ -51,8 +51,6 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
 {
     for (int i = 0; i < kFamilyCount; ++i)
         m_tools.push_back(makeVisualTool(static_cast<Family>(i)));
-    // The crosshair's label: the program font + 4 (config::GetFont(4),
-    // VisualCross.cpp:179-185), bold as the D3DX font Cross::SizeChanged makes.
     const QString family = m_settings.value(QStringLiteral("program.font")).toString();
     m_labelFont = QGuiApplication::font();
     if (!family.isEmpty())
@@ -61,20 +59,12 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
     m_labelFont.setBold(true);
     connect(&m_video, &VideoController::changed, this, [this] {
         syncGeometry();
-        // The render: Visuals::Draw sets blockevents for the shown frame.
         if (auto *t = tool(); t && m_view.hasVideo() && t->warnsOutsideLine() && currentWarning() != LineWarning::None)
             block(*t);
-        // The shown frame's time moves the warning. V1: while playing, every
-        // player frame changes the video and none of the rest of this
-        // controller's state, so a frame notifies only when it changes the
-        // warning (the status bar and the panel's bindings follow `changed`).
         if (const QString now = warning(); !m_video.session().playing() || now != m_frameWarning) {
             m_frameWarning = now;
             emit changed();
         }
-        // T3: a \move's position follows the shown frame (legacy Draw ran
-        // DrawVisual on every frame, Visuals.cpp:504-529);
-        // T5: so do a \move drawing's points (DrawingAndClip::DrawVisual).
         if (const auto time = videoTimeMs(); time != m_seenTime) {
             m_seenTime = time;
             emit overlayChanged();
@@ -97,16 +87,6 @@ void VisualToolsController::setTool(Family family, std::unique_ptr<VisualTool> t
 
 VisualTool *VisualToolsController::tool() const
 {
-    // Legacy's renderer holds a tool (m_Visual) exactly while its tab's
-    // Document is ASS: made when the renderer opens unless the rail is
-    // disabled (RendererVideo.cpp:113-114, VideoBox.cpp:315-321), made when an
-    // ASS Document arrives with the video already open (VideoBox::
-    // DisableVisuals, VideoBox.cpp:1748-1758, from Notebook.cpp:1145,
-    // SubsGridBase.cpp:981, SubsGrid.cpp:1184, HikariSubFrame.cpp:1169) and
-    // deleted for any other format (RemoveVisual(false, true),
-    // RendererVideo.cpp:1133-1146). An edit never makes it while the
-    // crosshair is the tool (SubsGridBase.cpp:1168, EditBox.cpp:485, 979,
-    // SubsGridWindow.cpp:1399 run SetVisual only above CROSS).
     const auto *s = editingSession();
     if (!s || s->document().format() != core::SubtitleFormat::Ass)
         return nullptr;
@@ -139,9 +119,7 @@ void VisualToolsController::setViewport(qreal width, qreal height, qreal panelHe
     m_logicalHeight = height;
     m_logicalPanel = panelHeight;
     m_view.setDevicePixelRatio(devicePixelRatio);
-    // The video window's client: the video area and the panel below it.
     m_view.setClient(m_view.toDevice(width), m_view.toDevice(height + panelHeight), m_view.toDevice(panelHeight));
-    // RendererVideo::UpdateVideoWindow: the tool takes the new size (SetCurVisual).
     if (auto *t = tool())
         t->reset(*this);
     emit geometryChanged();
@@ -173,7 +151,6 @@ void VisualToolsController::refresh()
     const bool ass = s && s->document().format() == core::SubtitleFormat::Ass;
     bool reset = false;
     if (ass != m_railEnabled) {
-        // VideoToolbar::DisableVisuals: the rail's toggle goes back to the crosshair.
         m_railEnabled = ass;
         if (!ass && m_family != Family::Crosshair) {
             (void)escape();
@@ -184,8 +161,6 @@ void VisualToolsController::refresh()
     const void *id = s;
     const std::uint64_t revision = s ? s->revision() : 0;
     const auto active = s ? s->selection().active : std::nullopt;
-    // T2: the Line editor's text changed (legacy EditBox::OnEdit committed
-    // it and ran SetVisual, so the tool read the Line again).
     std::optional<std::pair<std::u8string, std::u8string>> draft;
     if (s && active)
         if (const auto record = s->draftRecord(); record && record->id == *active)
@@ -194,7 +169,6 @@ void VisualToolsController::refresh()
         reset = true;
     m_seenDraft = draft;
     if (id != m_seenSession) {
-        // Another editing target: a gesture never moves to it.
         (void)escape();
         m_picker.clear();
         reset = true;
@@ -202,17 +176,11 @@ void VisualToolsController::refresh()
         reset = true;
     }
     if (active != m_seenActive) {
-        // Another active Line: the tool reads it again (legacy's SetVisual,
-        // which dropped the tool's unsent preview), so an open gesture is
-        // cancelled. It never moves to the new Line, and the tool's state no
-        // longer belongs to the Lines it targets (T4).
         (void)escape();
         reset = true;
     }
     if (id != m_seenSession || active != m_seenActive)
         ++m_editTarget;
-    // PU5: an open "Edit tags" previews Set on the active Line (or the
-    // first): read again whenever the tool reads its Line again.
     if (m_tagsEditor && reset)
         m_tagsEditor->lineChanged();
     m_seenSession = id;
@@ -232,8 +200,6 @@ void VisualToolsController::block(VisualTool &t)
 
 void VisualToolsController::resetTool()
 {
-    // RendererVideo::SetVisual: the tools' transform takes the current zoom,
-    // then the tool's SetCurVisual.
     m_view.refreshToolTransform();
     if (auto *t = tool())
         t->reset(*this);
@@ -245,7 +211,7 @@ void VisualToolsController::resetTool()
 
 namespace {
 
-// libass's ass_strcasecmp: ASCII letters only.
+// Matches libass's ass_strcasecmp, which folds ASCII letters only.
 std::string asciiLower(std::string s)
 {
     for (char &c : s)
@@ -254,7 +220,7 @@ std::string asciiLower(std::string s)
     return s;
 }
 
-} // namespace
+}
 
 void VisualToolsController::setLeasedFonts(const std::vector<std::string> &names)
 {
@@ -264,7 +230,6 @@ void VisualToolsController::setLeasedFonts(const std::vector<std::string> &names
     if (lowered == m_leasedFonts)
         return;
     m_leasedFonts = std::move(lowered);
-    // The Perspective tool measures only fonts it can see: it reads its Line again.
     if (m_family == Family::Perspective && tool())
         resetTool();
 }
@@ -279,8 +244,7 @@ bool VisualToolsController::fallsBackToLeased(const std::string &font, bool bold
 {
     if (m_leasedFonts.empty() || text.empty())
         return false;
-    // The face the measure resolves the name to, alone: QFontMetrics would
-    // answer for Qt's fallbacks too.
+    // QRawFont, not QFontMetrics: the metrics would answer for Qt's fallback fonts too.
     QFont f(QString::fromStdString(font));
     f.setBold(bold);
     f.setItalic(italic);
@@ -298,6 +262,7 @@ void VisualToolsController::viewChanged()
 {
     m_view.refreshToolTransform();
     auto *t = tool();
+    // MUST KILL: relies on RectangleClip..Drawing being contiguous in Family
     if (t && (m_family < Family::RectangleClip || m_family > Family::Drawing))
         t->reset(*this);
     emit geometryChanged();
@@ -343,12 +308,10 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
     m_gesture.reset();
     if (!result)
         m_lastRefusal = result.error();
-    // T3: the tool's own step is no reason to reset it (legacy ran no
-    // SetVisual after a visual edit); refresh() sees the revision as seen.
     if (const auto *t = tool(); result && t && t->keepsStateAfterCommit())
         m_seenRevision = s->revision();
     if (changes && m_edited)
-        m_edited(); // the shell refreshes; refresh() follows
+        m_edited();
     updatePreview();
     emit changed();
     return result;
@@ -358,8 +321,6 @@ bool VisualToolsController::escape()
 {
     m_valueScrub = false;
     if (!m_gesture) {
-        // T3: with no gesture open Esc drops a tool's pending step (the
-        // first of RotationZ's two points, the card's evidence on #178).
         auto *t = tool();
         if (t && m_view.hasVideo() && t->cancelPending(*this)) {
             emit changed();
@@ -369,13 +330,8 @@ bool VisualToolsController::escape()
         return false;
     }
     m_gesture.reset();
-    // The drag is over: the shape it set goes, as on legacy's button
-    // release; the next move sets the one over a handle again.
     if (!hasArrow())
         setPointerShape(PointerShape::Arrow);
-    // T2-T4: the tool reads its Lines again, as before the gesture (legacy
-    // SetCurVisual), so its handles, points or corners go back to where the
-    // text puts them.
     if (auto *t = tool(); t && t->family() != Family::Crosshair) {
         resetTool();
     } else {
@@ -396,7 +352,6 @@ bool VisualToolsController::escapable() const
 
 std::pair<int, int> VisualToolsController::measureLabel(std::u16string_view text) const
 {
-    // In device pixels, as legacy measured in its window.
     const QFontMetricsF metrics(m_labelFont);
     const double dpr = m_view.devicePixelRatio();
     return {static_cast<int>(std::lround(metrics.horizontalAdvance(qs(text)) * dpr)),
@@ -423,7 +378,6 @@ void VisualToolsController::toolChanged()
 
 std::int64_t VisualToolsController::videoTimeMs() const
 {
-    // VideoBox::Tell: the reported frame's start (the player's while playing).
     const auto frame = m_video.session().reportedFrame();
     if (!frame)
         return 0;
@@ -433,9 +387,6 @@ std::int64_t VisualToolsController::videoTimeMs() const
 
 const std::vector<ShapePreset> *VisualToolsController::shapePresets() const
 {
-    // VideoToolbar::GetShapesSettings: LoadSettings while there are none
-    // (VisualDrawingShapes.cpp:291-331): the file (shapes.toml, CF2), else
-    // legacy's defaults.
     if (m_shapes.empty()) {
         std::optional<toml::array> items;
         if (m_shapesFile)
@@ -450,18 +401,12 @@ const std::vector<ShapePreset> *VisualToolsController::shapePresets() const
 
 void VisualToolsController::saveShapes() const
 {
-    // SaveSettings (VisualDrawingShapes.cpp:341-353).
     if (m_shapesFile)
         m_shapesFile->write(shapesToToml(m_shapes));
 }
 
 const std::vector<application::visual::AllTagsSetting> *VisualToolsController::allTagsSettings() const
 {
-    // VideoToolbar::GetTagsSettings: LoadSettings while there are none
-    // (VisualAllTagsEdition.cpp:328-417): the file (tags.toml, CF2), else
-    // legacy's defaults. An empty list is legacy's defaults too, the file
-    // left as it is: legacy read past the end of a file with the version
-    // alone (T6-tags-version-only).
     if (m_allTags.empty()) {
         if (const auto items = m_tagsFile ? m_tagsFile->read() : std::nullopt)
             m_allTags = std::get<std::vector<application::visual::AllTagsSetting>>(tagsFromToml(*items));
@@ -473,7 +418,6 @@ const std::vector<application::visual::AllTagsSetting> *VisualToolsController::a
 
 void VisualToolsController::saveAllTags() const
 {
-    // SaveSettings (VisualAllTagsEdition.cpp:428-446).
     if (m_tagsFile)
         m_tagsFile->write(tagsToToml(m_allTags));
 }
@@ -485,10 +429,6 @@ std::string VisualToolsController::editorHotkey(int id) const
 
 std::u16string VisualToolsController::activeLineText() const
 {
-    // OnGetShapeFromLine reads tab->edit->line: the Line as last sent
-    // (Dialogue::GetTextNoCopy: its translation when it has one). Legacy's
-    // editor sent each edit (EditBox::OnEdit), so the Line editor's pending
-    // draft is the Line's text here.
     const auto *s = editingSession();
     const auto active = activeLine();
     if (!s || !active)
@@ -503,8 +443,6 @@ std::u16string VisualToolsController::activeLineText() const
 
 int VisualToolsController::targetCount() const
 {
-    // HY1: the Lines a change edits: several picked ones less those the
-    // Grid hides (AllTagsTool::beginEdit).
     const auto targets = batchTargets();
     const auto shown = application::visual::transform::severalLines(targets, activeLine())
                            ? shownLines()
@@ -516,9 +454,6 @@ int VisualToolsController::targetCount() const
 
 bool VisualToolsController::undoStep(std::uint64_t revision)
 {
-    // HY1: the tool's own last step undone, only while it is the last thing
-    // that changed the Document (no gesture, no draft on it); the tool keeps
-    // its state through it.
     auto *s = editingSession();
     if (!s || m_gesture || s->revision() != revision || s->draftLine() || !s->canUndo() || !s->undo())
         return false;
@@ -529,8 +464,6 @@ bool VisualToolsController::undoStep(std::uint64_t revision)
 void VisualToolsController::openTagsEditor()
 {
     if (m_tagsEditor) {
-        // Open already: its window comes forward (or back, gone with the
-        // window it opened from).
         emit tagsEditorChanged();
         return;
     }
@@ -539,7 +472,6 @@ void VisualToolsController::openTagsEditor()
         return;
     AllTagsEditor::Hooks hooks;
     hooks.activeLineText = [this] {
-        // The preview's Line: the active one, else the first.
         if (const auto *s = editingSession(); s && !activeLine() && !s->document().lines().empty()) {
             const auto *first = s->document().lines().front();
             return core::toUtf16(first->translation.empty() ? first->text : first->translation);
@@ -548,11 +480,6 @@ void VisualToolsController::openTagsEditor()
     };
     hooks.changed = [this](const std::vector<application::visual::AllTagsSetting> &tags,
                            const AllTagsEditor::Renames &renamed) {
-        // PU5: each change in "Edit tags" is kept at once (legacy's OK:
-        // VideoToolbar::SetTagsSettings, the list's names again, its
-        // selection kept by name, and the tool told, ChangeTool). The chosen
-        // definition follows a rename, and Hydra takes the change while
-        // another family is shown too (the window stays open).
         auto oldNames = application::visual::allTagsNames(*allTagsSettings());
         for (const auto &r : renamed)
             std::ranges::replace(oldNames, r.from, r.to);
@@ -581,8 +508,6 @@ void VisualToolsController::openTagsEditor()
 void VisualToolsController::openShapeEditor()
 {
     if (m_shapeEditor) {
-        // Open already: its window comes forward (or back, gone with the
-        // window it opened from).
         emit shapeEditorChanged();
         return;
     }
@@ -596,14 +521,6 @@ void VisualToolsController::openShapeEditor()
     hooks.activeLineText = [this] { return activeLineText(); };
     hooks.defaults = [] { return defaultShapePresets(); };
     hooks.changed = [this](const std::vector<ShapePreset> &presets, const ShapeEditor::Renames &renamed) {
-        // PU5: each change in "Edit shapes" is kept at once (legacy's OK:
-        // VideoToolbar::SetShapesSettings, the list's names again, its
-        // selection kept (or the last preset's), and the tool told,
-        // ChangeTool -> SetShape). The chosen preset follows its name when
-        // others come or go before it or it is renamed, and the tool reads it
-        // again (legacy's SetShape kept the shape it had when the selection
-        // was the same), also while another family is shown (the window
-        // stays open).
         auto *drawing = dynamic_cast<DrawingTool *>(m_tools[static_cast<std::size_t>(Family::Drawing)].get());
         int selection = drawing ? drawing->shapeSelection() : 0;
         if (selection > 0 && selection <= static_cast<int>(m_shapes.size())) {
@@ -631,16 +548,12 @@ void VisualToolsController::openShapeEditor()
         m_shapeEditor = nullptr;
         emit shapeEditorChanged();
     };
-    // The chosen preset: the list's selection less "Choose" (from "Choose"
-    // the first). Legacy passed the selection itself, opening on the preset
-    // after the one chosen (T5-editor-opens-next).
     m_shapeEditor = new ShapeEditor(*shapePresets(), selection - 1, std::move(hooks), this);
     emit shapeEditorChanged();
 }
 
 void VisualToolsController::bell()
 {
-    // Legacy wxBell; counted (the shell has no audible bell to give).
     ++m_bells;
 }
 
@@ -660,8 +573,6 @@ QString VisualToolsController::toolName() const
 
 void VisualToolsController::refreshOptions()
 {
-    // Its own signal, only when the options change: the row is not rebuilt
-    // on every pointer move.
     QVariantList out;
     if (const auto *t = tool())
         out = optionMaps(*t);
@@ -712,23 +623,18 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
 
 bool VisualToolsController::setOption(const QString &name, int value)
 {
-    // Legacy VideoToolbar's item click: the tool takes its toggles
-    // (VideoBox.cpp:179-181, Visuals::ChangeTool); never during a gesture.
     auto *t = tool();
     if (!t || !m_railEnabled || m_gesture)
         return false;
+    // MUST KILL: the shape choice's index 0 is "Choose", 1..n the presets and n+1 "Edit"
     if (m_family == Family::Drawing && name == QStringLiteral("shape") && shapePresets() &&
         value > static_cast<int>(m_shapes.size())) {
-        // The shape list's "Edit" (VectorItem::ShowContols, VideoToolbar.cpp:
-        // 516-536): the editor opens; the list keeps its selection.
         openShapeEditor();
         refreshOptions();
-        emit optionsChanged(); // the list shows the selection again
+        emit optionsChanged();
         return true;
     }
     if (m_family == Family::Crosshair && name == QStringLiteral("copyPosition")) {
-        // VT1: the bar's Copy video position, the shown position in
-        // VIDEO_COPY_COORDS' text form.
         const auto *cross = dynamic_cast<const CrosshairTool *>(t);
         if (!cross || cross->copyText().empty())
             return false;
@@ -739,21 +645,14 @@ bool VisualToolsController::setOption(const QString &name, int value)
         return true;
     }
     if (m_family == Family::Hydra && name == QStringLiteral("edit")) {
-        // The all-tags row's Edit (AllTagsItem, VideoToolbar.cpp:783-797):
-        // the "Tag editing" dialog on the list's selection.
         openTagsEditor();
         return true;
     }
     if (m_family == Family::Hydra && name == QStringLiteral("variant")) {
-        // HY1: Set's placing is the tag definition's (AllTagsSettings.txt),
-        // as the "Tag editing" dialog's Mode.
         auto *allTags = dynamic_cast<application::visual::AllTagsTool *>(t);
         const auto at = allTags ? static_cast<std::size_t>(allTags->currentTag()) : 0;
         if (allTags && allTags->mode() == application::visual::PasteInsert && allTagsSettings() &&
             at < m_allTags.size() && value >= 0 && value <= 2) {
-            // PU5: an open Edit tags takes it as one of its steps (and
-            // hands the definitions back), else the window would put the
-            // old placing back with its next change.
             if (m_tagsEditor) {
                 m_tagsEditor->setPlacingOf(QString::fromStdU16String(m_allTags[at].name), value);
             } else {
@@ -771,8 +670,6 @@ bool VisualToolsController::setOption(const QString &name, int value)
 
 bool VisualToolsController::previewDocument(const core::Document &document, core::Document &out) const
 {
-    // Legacy's dummy render: the edited Lines' texts as the gesture staged
-    // them (Visuals::RenderSubs), then the tool's Lines (AppendClipMask).
     const auto *t = tool();
     std::vector<core::LineRecord> extra;
     if (t && m_view.hasVideo())
@@ -780,9 +677,6 @@ bool VisualToolsController::previewDocument(const core::Document &document, core
     const bool staged = m_gesture && m_gesture->hasChanges();
     if (!staged && extra.empty())
         return false;
-    // T2: only the Lines the frame shows while a gesture has staged texts,
-    // as legacy's GetVisible sent: a long script is not reparsed on every
-    // pointer move.
     out = staged ? m_gesture->preview(document, videoTimeMs(), m_video.session().playing()) : document;
     for (auto &line : extra)
         (void)out.appendLine(std::move(line));
@@ -798,8 +692,6 @@ std::vector<std::byte> VisualToolsController::subtitles(const core::Document &do
 
 void VisualToolsController::updatePreview()
 {
-    // The preview is asked for again only when what it adds changed (each
-    // pointer move redraws the overlay, not the subtitles).
     std::u8string key;
     if (m_gesture)
         for (const auto &id : m_gesture->targets())
@@ -866,10 +758,6 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     p.shift = (modifiers & Qt::ShiftModifier) != 0;
     p.alt = (modifiers & Qt::AltModifier) != 0;
     p.wheelSteps = wheelSteps;
-    // The crosshair's hidden pointer is the picture's only, where the cross
-    // is drawn (VideoView::onPicture): over the letterbox or pillarbox bars
-    // the pointer is the arrow. Legacy hid it over the whole video window,
-    // bars included (VideoBox.cpp:607-611), until a8a428e4c.
     if (p.kind == Pointer::Kind::Leave) {
         m_overPicture = false;
         m_lastPointer.reset();
@@ -877,17 +765,14 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
         m_overPicture = m_view.onPicture(p.x, p.y);
         m_lastPointer = QPointF(x, y);
     }
-    // VideoBox::OnMouseEvent: nothing without a video (GetState() == None).
     auto *t = tool();
     if (!t || !m_view.hasVideo())
         return;
-    // Visuals::Draw's blockevents: a tool other than the crosshair takes no
-    // events outside its Line's time or on a comment, warning shown or not.
     if (t->warnsOutsideLine() && currentWarning() != LineWarning::None) {
         const PointerShape shape = pointerShape();
         block(*t);
         if (m_gesture && p.kind == Pointer::Kind::Release)
-            (void)escape(); // legacy released the mouse capture
+            (void)escape();
         if (pointerShape() != shape)
             emit changed();
         return;
@@ -908,15 +793,13 @@ Key keyOf(int key, int modifiers)
     return k;
 }
 
-} // namespace
+}
 
 bool VisualToolsController::key(int key, int modifiers, bool release, bool autoRepeat)
 {
     auto *t = tool();
     if (!t || !m_view.hasVideo())
         return false;
-    // VideoBox::OnKeyPress hands the keys to the tool whether or not its
-    // events are blocked (VideoBox.cpp:666-668; blockevents is the pointer's).
     Key k = keyOf(key, modifiers);
     k.release = release;
     k.autoRepeat = autoRepeat;
@@ -934,17 +817,12 @@ bool VisualToolsController::runHotkey(const QString &action)
     const auto family = application::visual::familyOfHotkey(action.toStdString());
     if (!family)
         return false;
-    // VT2: the command toggles as the rail does, so the on tool's key goes
-    // back to the crosshair (the crosshair's stays on it).
     selectFamily(static_cast<int>(*family));
     return true;
 }
 
 void VisualToolsController::selectFamily(int family)
 {
-    // VideoBox::OnChangeVisual after VideoToolbar's click: the toggled
-    // family again returns to the crosshair; a gesture never moves to
-    // another tool.
     if (!m_railEnabled || family < 0 || family >= kFamilyCount)
         return;
     const Family chosen = static_cast<Family>(family) == m_family ? Family::Crosshair : static_cast<Family>(family);
@@ -952,10 +830,8 @@ void VisualToolsController::selectFamily(int family)
         return;
     (void)escape();
     m_family = chosen;
-    // VideoBox::OnChangeVisual: the arrow back for the new tool.
     if (!hasArrow())
         setPointerShape(PointerShape::Arrow);
-    // Visuals::Get made a new tool for the family (RendererVideo::SetVisual).
     if (auto *t = tool())
         t->selected(*this);
     resetTool();
@@ -963,8 +839,6 @@ void VisualToolsController::selectFamily(int family)
 
 QString VisualToolsController::copyCoordinates(qreal x, qreal y)
 {
-    // VideoBox::OnCopyCoords: needs a renderer (VideoBox.cpp:1151 runs it in
-    // OnAccelerator, which a video without one never reaches).
     if (!m_view.hasVideo())
         return {};
     m_copied = qs(copyCoordinatesText(m_view, m_view.toDevice(x), m_view.toDevice(y)));
@@ -986,9 +860,6 @@ QString VisualToolsController::copyCoordinatesAtCursor(QQuickItem *area)
 
 bool VisualToolsController::editValue(VisualTool &t, const QString &name, const QString &text, ValueEdit edit)
 {
-    // VT1: a value step the session refuses (a blocked draft, a read-only
-    // Document), at the first sample or the release, leaves no gesture: the
-    // tool reads its Lines again, its handles and fields back at the text's.
     const auto refusedBefore = std::exchange(m_lastRefusal, std::nullopt);
     const bool done = t.setValue(name.toStdString(), text.toStdU16String(), *this, edit);
     if (!done && m_lastRefusal && !m_gesture && t.family() != Family::Crosshair)
@@ -1000,13 +871,10 @@ bool VisualToolsController::editValue(VisualTool &t, const QString &name, const 
 
 bool VisualToolsController::setValue(const QString &name, const QString &text)
 {
-    // VT1: a typed value (Enter) or a scrub's release: one history step.
     auto *t = tool();
     if (!t || !m_railEnabled)
         return false;
     const bool done = editValue(*t, name, text, ValueEdit::Commit);
-    // A scrub's release the tool refuses (a value out of its range) leaves
-    // nothing staged behind: its gesture is dropped, as by Esc.
     const bool scrubbed = std::exchange(m_valueScrub, false);
     if (!done && scrubbed && m_gesture)
         escape();
@@ -1017,8 +885,6 @@ bool VisualToolsController::setValue(const QString &name, const QString &text)
 
 bool VisualToolsController::scrubValue(const QString &name, const QString &text)
 {
-    // VT1: a scrub's sample, staged on the gesture its first sample opens
-    // (shown on the video); the release commits it, Esc drops it.
     auto *t = tool();
     if (!t || !m_railEnabled)
         return false;
@@ -1090,16 +956,12 @@ QVariantMap VisualToolsController::lastChange() const
 
 bool VisualToolsController::editLastChange(const QString &name, const QString &text)
 {
-    // HY1: the card's value: the last step undone and done again with it,
-    // so the history still has one step for it.
     auto *t = tool();
     const auto *s = editingSession();
     if (!t || !s || !m_railEnabled || m_gesture)
         return false;
     const std::uint64_t before = s->revision();
     const bool done = t->editLastChange(name.toStdString(), text.toStdU16String(), *this);
-    // A redone change refreshed the shell as it committed; an undo whose
-    // change could not be done again has not.
     if (const auto *now = editingSession(); !done && now && now->revision() != before && m_edited)
         m_edited();
     updatePreview();
@@ -1139,7 +1001,6 @@ LineWarning VisualToolsController::currentWarning() const
 
 QString VisualToolsController::warning() const
 {
-    // Visuals::DrawWarning: none with VIDEO_VISUAL_WARNINGS_OFF.
     const auto *t = tool();
     if (!t || !t->warnsOutsideLine() || !m_view.hasVideo() || m_settings.boolean("video.visualWarningsOff"))
         return {};
@@ -1148,8 +1009,6 @@ QString VisualToolsController::warning() const
 
 int VisualToolsController::pointerShapeCursor() const
 {
-    // wx's stock cursors as Qt's: SIZING is the four-way move (IDC_SIZEALL
-    // on Windows, legacy's platform).
     if (!tool() || !m_view.hasVideo() || m_view.zoomMode())
         return Qt::ArrowCursor;
     switch (pointerShape()) {
@@ -1171,7 +1030,6 @@ int VisualToolsController::pointerShapeCursor() const
 
 bool VisualToolsController::hideCursor() const
 {
-    // V4: the zoom mode shows the pointer (ZoomMouseHandle's cursors).
     return !m_view.zoomMode() && m_overPicture && m_view.hasVideo() && m_railEnabled && m_family == Family::Crosshair && tool();
 }
 
@@ -1195,17 +1053,12 @@ QVariantList VisualToolsController::overlay() const
 {
     QVariantList out;
     const auto *t = tool();
-    // V4: the tools are not drawn in the zoom mode (RendererFFMS2.cpp:392,
-    // `m_Visual && !m_HasZoom`).
     if (!t || !m_view.hasVideo() || m_view.zoomMode())
         return out;
-    // Visuals::Draw draws the warning instead of the tool.
     if (t->warnsOutsideLine() && currentWarning() != LineWarning::None)
         return out;
     const Overlay o = t->overlay(*this);
     const auto L = [this](double device) { return m_view.toLogical(device); };
-    // Filled shapes (T2-T4), before the lines, or after them (T4: `above`);
-    // a fill or border of 0 is not drawn (T3).
     const auto polygon = [&](const OverlayPolygon &p) {
         QVariantList contours;
         const auto contour = [&](const std::vector<PointF> &c) {
@@ -1225,8 +1078,6 @@ QVariantList VisualToolsController::overlay() const
     for (const OverlayPolygon &p : o.polygons)
         if (!p.above)
             polygon(p);
-    // SV1-hidpi-tool-sizes: a line's width is legacy's pixels, in the
-    // window's units (as the borders' and the labels'), at any scale.
     for (const OverlayLine &l : o.lines)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("line")},
                                {QStringLiteral("x1"), L(l.from.x)}, {QStringLiteral("y1"), L(l.from.y)},
@@ -1257,7 +1108,6 @@ QVariantList VisualToolsController::values() const
 
 QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
 {
-    // HY1: "marked" only for a tool that marks one of its values.
     QVariantList out;
     const auto values = t.values(*this);
     const bool marks = std::ranges::any_of(values, [](const ToolValue &v) { return v.marked; });
@@ -1274,4 +1124,4 @@ QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
     return out;
 }
 
-} // namespace hikari::ui
+}

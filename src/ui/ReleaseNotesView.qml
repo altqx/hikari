@@ -5,16 +5,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// SH3 (#223): release notes, newest first, as the Home page's What's new and
-// Help > What's new show them. Each version: its name, a Pre-release badge on
-// a pre-release, its date, then its notes as plain rich text
-// (WhatsNew.render; a link opens the browser, its address as the tooltip).
-// Past the ten shown, how many more, with a link to all release notes.
-// Scrolls; the keyboard scrolls it once it has the focus.
 ScrollView {
     id: view
-    required property var whatsNew // WhatsNew
-    // The space either side of the text.
+    required property var whatsNew
     property int sidePadding: 16
     property font smallFont: Qt.font({})
     property alias count: versions.count
@@ -71,7 +64,7 @@ ScrollView {
                         objectName: "releaseName"
                         Layout.fillWidth: true
                         text: version.modelData.name
-                        textFormat: Text.PlainText // GitHub's text, never markup
+                        textFormat: Text.PlainText
                         font.weight: Font.DemiBold
                         wrapMode: Text.Wrap
                     }
@@ -133,7 +126,7 @@ ScrollView {
             wrapMode: Text.Wrap
             color: Theme.muted
             linkColor: Theme.accent
-            // English has no plural catalog: one says "1 earlier version".
+            // Without a catalog Qt picks no English plural form, so one is spelled out.
             text: (view.whatsNew.more === 1 ? qsTr("And 1 earlier version: %1")
                                             : qsTr("And %n earlier versions: %1", "", view.whatsNew.more))
                   .arg("<a href=\"all\">" + qsTr("all release notes") + "</a>")

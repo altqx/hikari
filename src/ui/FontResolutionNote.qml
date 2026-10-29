@@ -1,8 +1,3 @@
-// Y6: what the subtitle renderer selected for a font name (requested and
-// resolved identities stay distinct, fonts.md), under a preview it drew.
-// PU3 (#305): a name it substitutes or falls back from is a warning, said in
-// words with the warning icon, not by colour alone. `resolution` is
-// FontCatalogsController.resolveFamily's answer.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls

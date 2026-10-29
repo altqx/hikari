@@ -15,7 +15,7 @@ std::size_t queueSamples(const application::OutputFormat &format, double seconds
     return static_cast<std::size_t>(frames) * static_cast<std::size_t>(format.channels);
 }
 
-} // namespace
+}
 
 OutputEngine::OutputEngine(application::OutputFormat format, double outputLatency, double queueSeconds)
     : m_format(format), m_outputLatency(outputLatency), m_ring(queueSamples(format, queueSeconds))
@@ -34,9 +34,6 @@ bool OutputEngine::render(std::span<float> out, const CallbackTiming &timing) no
     const double rate = m_format.sampleRate;
     const double bufferSeconds = static_cast<double>(frames) / rate;
 
-    // A stream clock that moved much further than the previous buffer lasted
-    // means callbacks stopped (suspend, a stalled device): the old mapping
-    // from queued frames to time no longer holds.
     bool epochBreak = false;
     if (m_hasPrevious) {
         const double expected = static_cast<double>(m_previousFrames) / rate;
@@ -182,7 +179,6 @@ application::OutputStatus OutputEngine::status() const
 application::ClockEstimate OutputEngine::clock(double now) const
 {
     application::ClockEstimate e;
-    // Bounded: a reader that keeps losing to the callback reports no estimate.
     for (int attempt = 0; attempt < 16; ++attempt) {
         const std::uint64_t before = m_seq.load(std::memory_order_acquire);
         if (before & 1)
@@ -211,4 +207,4 @@ application::ClockEstimate OutputEngine::clock(double now) const
     return {};
 }
 
-} // namespace hikari::backends
+}

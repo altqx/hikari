@@ -20,7 +20,7 @@ QString stateName(ScriptStatus::State s)
     return {};
 }
 
-} // namespace
+}
 
 AutomationManagerController::AutomationManagerController(application::AutomationServicePort &service, QObject *parent)
     : QObject(parent), m_service(service)
@@ -117,7 +117,7 @@ void AutomationManagerController::cancel()
     m_service.cancel();
 }
 
-} // namespace hikari::ui
+}
 
 namespace hikari::ui {
 
@@ -126,4 +126,4 @@ bool AutomationManagerController::forceStop(const QString &path)
     return m_service.forceStop(path.toStdString());
 }
 
-} // namespace hikari::ui
+}

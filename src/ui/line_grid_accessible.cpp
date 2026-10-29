@@ -10,8 +10,6 @@ namespace hikari::ui {
 
 namespace {
 
-// A virtual table cell. It holds the Line's identity, not a row: its row index
-// is looked up on every query, so filtering or reordering never retargets it.
 class LineGridCell : public QAccessibleInterface,
                      public QAccessibleTableCellInterface,
                      public QAccessibleActionInterface {
@@ -19,7 +17,7 @@ public:
     LineGridCell(LineGrid *grid, core::LineId line, int column) : m_grid(grid), m_line(line), m_column(column) {}
 
     bool isValid() const override { return m_grid && m_grid->rowOfLine(m_line) >= 0; }
-    QObject *object() const override { return nullptr; } // not a paint object or delegate
+    QObject *object() const override { return nullptr; }
     QWindow *window() const override { return m_grid ? m_grid->window() : nullptr; }
     QAccessibleInterface *parent() const override
     {
@@ -37,10 +35,9 @@ public:
             return {};
         switch (type) {
         case QAccessible::Name:
-            return m_grid->cellText(row, m_column); // the cell first: its displayed text
+            return m_grid->cellText(row, m_column);
         case QAccessible::Description:
         {
-            // E6: the label colour's State in words (the changed-Line mark).
             const QString state = m_grid->rowStateText(row);
             const QString base = QStringLiteral("%1, %2").arg(m_grid->cellText(row, 0), m_grid->columnTitle(m_column));
             return state.isEmpty() ? base : base + QStringLiteral(", ") + state;
@@ -82,7 +79,6 @@ public:
         return nullptr;
     }
 
-    // QAccessibleTableCellInterface
     bool isSelected() const override { return rowIndex() >= 0 && m_grid->isRowSelected(rowIndex()); }
     QList<QAccessibleInterface *> columnHeaderCells() const override { return {}; }
     QList<QAccessibleInterface *> rowHeaderCells() const override { return {}; }
@@ -92,8 +88,6 @@ public:
     int rowExtent() const override { return 1; }
     QAccessibleInterface *table() const override { return parent(); }
 
-    // QAccessibleActionInterface: focusing asks the application to make this
-    // Line active, exactly as keyboard navigation does.
     QStringList actionNames() const override { return {setFocusAction()}; }
     void doAction(const QString &name) override
     {
@@ -116,7 +110,7 @@ QAccessibleInterface *gridFactory(const QString &className, QObject *object)
     return nullptr;
 }
 
-} // namespace
+}
 
 void installGridAccessibility()
 {
@@ -150,10 +144,9 @@ QAccessibleInterface *LineGridAccessible::cellAt(int row, int column) const
         return nullptr;
     const Key key{line->value, column};
     if (auto it = m_cache.find(key); it != m_cache.end()) {
-        m_lru.splice(m_lru.begin(), m_lru, it->second.second); // most recently used
+        m_lru.splice(m_lru.begin(), m_lru, it->second.second);
         return QAccessible::accessibleInterface(it->second.first);
     }
-    // Bounded cache: evict the least recently used cell.
     if (m_cache.size() >= kCellCacheCapacity) {
         const Key oldest = m_lru.back();
         m_lru.pop_back();
@@ -173,15 +166,13 @@ QAccessibleInterface *LineGridAccessible::parent() const
     LineGrid *g = grid();
     if (!g)
         return nullptr;
-    // The nearest ancestor that lists the Grid among its accessible
-    // children (Qt Quick skips items without an Accessible attachment).
+    // Qt Quick leaves items without an Accessible attachment out of the accessible tree.
     auto *self = const_cast<LineGridAccessible *>(this);
     for (QQuickItem *p = g->parentItem(); p; p = p->parentItem())
         if (QAccessibleInterface *candidate = QAccessible::queryAccessibleInterface(p);
             candidate && candidate->indexOfChild(self) >= 0)
             return candidate;
-    // Otherwise the nearest accessible ancestor, and at last the window: an
-    // element without a parent counts as a top-level window to UI Automation.
+    // UI Automation takes an element without a parent for a top-level window.
     for (QQuickItem *p = g->parentItem(); p; p = p->parentItem())
         if (QAccessibleInterface *candidate = QAccessible::queryAccessibleInterface(p))
             return candidate;
@@ -240,7 +231,6 @@ QAccessibleInterface *LineGridAccessible::focusChild() const
 QString LineGridAccessible::text(QAccessible::Text type) const
 {
     if (type == QAccessible::Name) {
-        // R2: a Grid may name itself (the reference tray's).
         if (const LineGrid *g = grid(); g && !g->accessibleName().isEmpty())
             return g->accessibleName();
         return QCoreApplication::translate("HikariSub.Grid", "Subtitle lines");
@@ -356,4 +346,4 @@ bool LineGridAccessible::isSelected(QAccessibleInterface *child) const
     return cell && cell->isSelected();
 }
 
-} // namespace hikari::ui
+}

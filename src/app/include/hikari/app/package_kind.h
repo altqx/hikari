@@ -1,10 +1,5 @@
 #pragma once
 
-// How this copy was installed (ADR 0019): package-kind.txt beside the
-// executable names the installer (NSIS, AppImage, deb, rpm, the AUR); no
-// marker is a portable copy. An AppImage counts only while $APPIMAGE names
-// the image it runs from; otherwise it is an extracted AppDir, portable.
-
 #include "hikari/application/update_check.h"
 
 #include <QString>
@@ -20,19 +15,17 @@ struct PackageInfo {
     std::optional<application::AurChannel> aurChannel;
 };
 
-// The kind of the copy in `exeDir`, with `appImageEnv` as $APPIMAGE.
+// From package-kind.txt beside the executable (none: portable). An AppImage counts only while
+// appImageEnv ($APPIMAGE) names an image file; an extracted AppDir is portable.
 PackageInfo detectPackageKind(const QString &exeDir, const QString &appImageEnv);
-// This process's kind. Test builds (HIKARI_UPDATE_TEST_FEED) take
-// HIKARISUB_PACKAGE_KIND (and HIKARISUB_AUR_CHANNEL) first, so the AUR
-// notice and the other flows can be tried without installing a package.
+// Test builds (HIKARI_UPDATE_TEST_FEED) take HIKARISUB_PACKAGE_KIND and _AUR_CHANNEL first.
 PackageInfo currentPackageKind();
 
 bool onWindows();
-// The marker's token (`portable-linux` on Linux without one), as
-// `--version` prints it.
+// The marker's token as --version prints it (portable-linux for a portable Linux copy).
 QString packageKindToken(application::PackageKind kind);
 // The kind as About names it: "AppImage", "AUR", "deb", "rpm", "installer"
 // or "portable".
 QString packageKindLabel(application::PackageKind kind);
 
-} // namespace hikari::app
+}

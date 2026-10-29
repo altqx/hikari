@@ -5,16 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// GRID_SET_NEW_FPS (legacy FPSDialog, SubsGridDialogs.cpp:23-71): the
-// subtitles' FPS and the new one, typed or one of six (digits and dots
-// only); Change FPS scales every start and end time by old / new
-// (App.setNewFps). PU4 (#306, PU4-set-new-fps): a compact window on DG1's
-// frame titled with the command (legacy "Choose new FPS"), opening at
-// legacy's 23.976 and 25; a line under the fields says what the change does,
-// and a field that is no frame rate is said under it with Change FPS off
-// (legacy's "Incorrect FPS" box came after the press). It scales the
-// document it opened for: another editing target meanwhile (from the
-// fullscreen video window the main window stays in use) closes it.
 DialogWindow {
     id: dialog
     objectName: "fpsWindow"
@@ -26,10 +16,8 @@ DialogWindow {
     readonly property var presets: ["23.976", "24", "25", "29.97", "30", "60"]
     readonly property real oldValue: rate(oldFps.editText)
     readonly property real newValue: rate(newFps.editText)
-    // The editing target it opened for (App.editingTargetId).
     property var openedFor: 0
 
-    // A frame rate as App.setNewFps reads it (C locale, above 0), else NaN.
     function rate(text) {
         const t = text.trim()
         if (!/^(\d+\.?\d*|\.\d+)$/.test(t))

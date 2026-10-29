@@ -1,11 +1,3 @@
-// Y3, PU6 (#308): legacy ScriptInfo "ASS subtitle properties"
-// (GLOBAL_OPEN_ASS_PROPERTIES), titled with its menu command, on DG1's
-// frame, fixed, modal to the main window. Credits, Resolution and Rendering
-// are sections with the labels beside the fields; legacy's "Link the layout
-// resolution to the subtitle resolution" is "Same as the subtitles" under
-// the Layout row it controls. Only the fields the user changes are written
-// (legacy IsModified; PU6: the matrix, wrap style, collisions and border
-// scaling too), with the legacy defaults applied on Save.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.ScriptProperties"
 import QtQuick
@@ -17,17 +9,13 @@ DialogWindow {
     id: dialog
     objectName: "scriptPropertiesDialog"
     required property var app
-    title: qsTr("ASS file properties") // the menu command's name
+    title: qsTr("ASS file properties")
     dialogId: "scriptProperties"
     modal: true
     defaultButton: saveButton
     initialFocus: titleField
     property var initial: ({})
     property var edits: ({})
-    // The Document it opened for. Opened from a floating panel, it is modal
-    // to that panel only and another tab can become the editing target:
-    // that closes it rather than writing these values to the other
-    // Document.
     property var document: 0
     Connections {
         target: dialog.app
@@ -37,7 +25,7 @@ DialogWindow {
         }
     }
 
-    // False for a Document that is not ASS.
+    // MUST KILL: openFor returns false for a non-ASS Document, signalled by scriptProperties() having no title
     function openFor() {
         const p = app.scriptProperties()
         if (p.title === undefined)
@@ -70,8 +58,6 @@ DialogWindow {
         e[name] = true
         edits = e
     }
-    // From video: the video open now (the main window can open another
-    // while this is open beside a floating panel); the buttons follow it.
     property var video: null
     Connections {
         target: dialog.video

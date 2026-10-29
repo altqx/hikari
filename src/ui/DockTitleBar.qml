@@ -4,18 +4,6 @@ import QtQuick.Controls
 import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDWViews
 import Hikari.Ui
 
-// D3: the engine's title bar. With the adapter's flags a group never shows
-// one (DockTabBar.qml is every group's header), so this is the bar of a
-// floating window that holds several groups side by side: the window's
-// title in bold and a "⋯" menu that docks or closes the whole window, in
-// the header's look (docs/research/musescore-docking.md §1), with the move
-// cursor. Dragging its title moves the window and docks it where the
-// highlight shows, double-clicking docks it. As on a panel's header
-// (DockTabBar.qml), on Wayland and X11 the rest of the bar moves the window
-// through the window system; on Windows the whole bar is the drag. The bar draws no keyboard focus mark: the group holding
-// the focus in the window shows the accent corner mark on its own header
-// (K2, PanelFocusMark.qml), one mark for one focus. Loaded through the
-// adapter's view factory (ui/docking.cpp).
 KDDWViews.TitleBarBase {
     id: root
     objectName: "dockTitleBar"
@@ -23,13 +11,12 @@ KDDWViews.TitleBarBase {
     color: Theme.field
     heightWhenVisible: 35
 
-    // A compositor that frames the window although it asked for no frame
-    // (Docking.windowSystemTitle) shows its title: the bar keeps the "⋯".
+    // Some compositors frame the window although it asked for no frame; their title then replaces ours.
     readonly property bool systemTitle: Docking.windowTitleRevision >= 0 && Docking.windowSystemTitle(Window.window)
 
     Accessible.role: Accessible.TitleBar
     Accessible.name: root.title
-    // Every group loads one; only a floating window of several groups shows it.
+    // KDDW loads a title bar into every group; only some show it.
     Accessible.ignored: !root.visible
 
     Rectangle {
@@ -47,11 +34,11 @@ KDDWViews.TitleBarBase {
         width: Math.max(0, (systemMoveArea.enabled ? systemMoveArea.x : menuButton.x) - x - 4)
         anchors.verticalCenter: parent.verticalCenter
         text: root.title
-        textFormat: Text.PlainText // the file's name in it, never markup
+        textFormat: Text.PlainText
         color: Theme.text
         font.bold: true
         elide: Text.ElideRight
-        Accessible.ignored: true // the title bar carries the name
+        Accessible.ignored: true
     }
 
     DockMenuButton {
@@ -84,15 +71,11 @@ KDDWViews.TitleBarBase {
         }
     }
 
-    // The move cursor over the bar (the engine's drag area takes the
-    // presses).
+    // KDDW's drag area takes the presses, so the cursor comes from a HoverHandler.
     HoverHandler {
         cursorShape: Qt.SizeAllCursor
     }
 
-    // Right of the title the window system moves the window; a
-    // double-click there docks it. The title and that part keep 48 pixels
-    // each, as on a panel's header.
     DockSystemMoveArea {
         id: systemMoveArea
         z: 1

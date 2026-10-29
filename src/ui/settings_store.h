@@ -1,10 +1,5 @@
 #pragma once
 
-// O1: the settings registry over the files the application names (or in
-// memory without one). CF1 (#488): `file` is the user folder's
-// settings.toml; hotkeys.toml and state.json are beside it, and hikari.ini
-// is converted into them once (settings_files.h).
-
 #include "hikari/application/owned_file.h"
 #include "hikari/application/settings.h"
 
@@ -38,18 +33,11 @@ public:
     Q_INVOKABLE bool isSet(const QString &id) const;
     Q_INVOKABLE bool setValue(const QString &id, const QVariant &value);
     Q_INVOKABLE void reset(const QString &id);
-    // Legacy "Set default" (config::ResetDefault).
     Q_INVOKABLE void resetAll();
-    // Writes pending values to the files now (they also are at the next
-    // event loop pass and when the last store on them goes).
     void sync();
-    // What opening the files found (settings_files.h): the files kept as
-    // <name>.broken, whether hikari.ini was converted, what was ignored.
     std::vector<application::FileProblem> problems() const;
     bool converted() const;
     std::vector<std::string> ignored() const;
-    // Whether the folder of `file` holds settings (one of the files, or
-    // hikari.ini before them).
     static bool filesExist(const QString &file);
 
     bool boolean(const char *id) const { return m_settings->boolean(id); }
@@ -64,7 +52,6 @@ public:
     static application::SettingValue fromVariant(const QVariant &value);
 
 signals:
-    // A setting's effective value changed.
     void changed(const QString &id);
 
 private:
@@ -74,4 +61,4 @@ private:
     std::unique_ptr<application::Settings> m_settings;
 };
 
-} // namespace hikari::ui
+}

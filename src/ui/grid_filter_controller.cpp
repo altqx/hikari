@@ -23,8 +23,6 @@ void GridFilterController::reload()
 
 void GridFilterController::settingsReset()
 {
-    // Legacy SubsGrid reads these when it filters; each open grid keeps the
-    // ignoreFiltered it read when it was created.
     const bool ignore = m_ignore;
     load();
     m_ignore = ignore;
@@ -90,4 +88,4 @@ void GridFilterController::setStyle(const QString &name, bool on)
     emit changed();
 }
 
-} // namespace hikari::ui
+}

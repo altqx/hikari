@@ -38,7 +38,7 @@ bool writeAll(int fd, const std::byte *data, std::size_t size)
     return true;
 }
 
-} // namespace
+}
 
 PosixFilePort::PosixFilePort(Completion completion) : PosixFilePort(std::move(completion), Options{}) {}
 
@@ -54,8 +54,6 @@ PosixFilePort::~PosixFilePort()
 
 void PosixFilePort::waitIdle()
 {
-    // Jobs stay registered while joined, so a cancel request that arrives
-    // during the wait still reaches its worker.
     std::vector<Job *> pending;
     {
         std::lock_guard lock(m_mutex);
@@ -99,7 +97,6 @@ WriteOutcome PosixFilePort::writeFile(PermitId permit, const std::string &path, 
     const std::string temp = dir + "/." + path.substr(path.rfind('/') + 1) + ".hikari-tmp-" +
                              std::to_string(::getpid()) + "-" + std::to_string(permit.value);
 
-    // Keep an existing destination's permission bits; otherwise honour umask.
     mode_t mode = 0666;
     struct stat existing {};
     if (::stat(path.c_str(), &existing) == 0)
@@ -136,7 +133,7 @@ WriteOutcome PosixFilePort::writeFile(PermitId permit, const std::string &path, 
         ::unlink(temp.c_str());
         return WriteOutcome::Failed;
     }
-    // Published. The rename is durable only once the directory entry is synced.
+    // The rename is durable only once the directory entry is synced.
     const int dfd = ::open(dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
     if (dfd < 0)
         return WriteOutcome::DurabilityUncertain;
@@ -145,4 +142,4 @@ WriteOutcome PosixFilePort::writeFile(PermitId permit, const std::string &path, 
     return synced ? WriteOutcome::Written : WriteOutcome::DurabilityUncertain;
 }
 
-} // namespace hikari::backends
+}

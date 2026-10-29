@@ -1,8 +1,6 @@
 #pragma once
 
-// Framing for helper processes (H1; docs/backends.md, docs/automation.md).
-// Shared by the host and the helpers; plain C++ so helpers need no Qt.
-//
+// Helper process framing, shared by the host and the helpers (which link no Qt).
 // Frame: "HKRI" | u32 payload length | u16 kind | u16 code | u64 session |
 //        u64 run | u64 request | payload. Little-endian.
 
@@ -100,4 +98,4 @@ private:
 std::vector<std::byte> bytesOf(const std::string &text);
 std::string textOf(const std::vector<std::byte> &bytes);
 
-} // namespace hikari::backends::helper
+}

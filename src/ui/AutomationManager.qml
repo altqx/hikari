@@ -1,18 +1,3 @@
-// The Automation panel (L1, AM1 #248; the design approved on the card):
-// the loaded scripts in two sections, the Document scripts ("Subtitle
-// scripts": named by a Document's Script Info or added with Load script, one
-// list for the application as legacy's) and autoload's, each script's macros with their shortcuts, the run under way
-// and the shortcuts whose macro is missing. A macro runs from its row (Enter,
-// a double click or its Run button); its shortcut is recorded in place
-// through the shortcut editor (legacy's one hotkey map, the Shift+click
-// gesture's path), so Settings → Hotkeys shows the same bindings. Loading
-// and reloading run the script's top level visibly; a failed or stopped
-// script says why and offers reload. The dock header names the panel; the
-// panel has no heading of its own. AD3 (#312): a second view, Runs, keeps
-// the session's last runs (AutomationRuns) and the chosen run's log, with a
-// level filter (a threshold, as the trace level is), a text filter, times
-// on or off, Copy and Save; the run under way shows on the progress card
-// (AutomationProgress), not here.
 pragma Translator: "HikariSub.Automation"
 import QtQuick
 import QtQuick.Controls
@@ -24,41 +9,25 @@ import Hikari.Ui
 Pane {
     id: root
     required property AutomationManagerController controller
-    // AutomationShell: the run (running, canRerun, rerunLast, canRepeat,
-    // repeatText, repeatLast, editScript, runs).
     property var automation: null
-    // AutomationHotkeysController: the macros' bindings (keys, missing, clearKeys).
     property var macroHotkeys: null
-    // HotkeysController: capture, gestureTarget/Conflict/Map, holdersOf, globalHolder.
     property var hotkeys: null
-    // The Automation menu's actions: Load script…, Refresh autoload scripts.
     property Action loadAction: null
     property Action refreshAction: null
-    // The editing target's name (its scripts are offered as it changes).
     property string documentName: ""
-    // SettingsStore: automation.runLogTimes.
     property var settings: null
-    // ToastStack: Save's refusal.
     property var notices: null
-    // The current tab: the editing target changes with it.
     property int documentTab: -1
     implicitWidth: 340
     implicitHeight: 420
     padding: 0
-    // The smallest size that shows the tool strip and a row whole.
     readonly property size minimumSize: Qt.size(240, 160)
 
-    // The macro whose shortcut is being recorded (its legacy name), and what
-    // was pressed so far: {accel, keys} accepted, or a refusal's message.
     property string recording: ""
     property var pressed: null
     property string refusal: ""
-    // Why the macro being recorded cannot have a shortcut (its file name is
-    // several loaded scripts'), "" when it can: Enter then saves nothing.
     property string blocked: ""
-    // Section keys folded away; the missing shortcuts start folded.
     property var folded: ({ missing: true })
-    // "scripts" or "runs" (AD3); showRun() opens Runs at a run.
     property string view: "scripts"
     readonly property AutomationRuns runs: automation ? automation.runs : null
     function showRun(id) {
@@ -68,12 +37,6 @@ Pane {
     readonly property bool running: automation !== null && automation.running
     readonly property string filterText: filter.text.trim().toLowerCase()
 
-    // The Document's scripts (its Script Info) that are not loaded, offered
-    // as the panel shows and as the editing target changes while it shows
-    // (the panel stays open, restored with a layout or a tab's arrangement).
-    // Loading a script runs its code, so the panel waits for Load; the
-    // Automation menu opening still loads them, as legacy's did
-    // (Automation.cpp:1359).
     property var offeredScripts: []
     function readDocumentScripts() {
         offeredScripts = automation && visible ? automation.documentScriptsToLoad() : []
@@ -81,8 +44,6 @@ Pane {
     function fileName(path) {
         return path.replace(/^.*[\\/]/, "")
     }
-    // The field is the Document's, of any length: the offer names the first
-    // few and counts the rest, its tooltip the first paths.
     readonly property int offerNamed: 8
     readonly property int offerTipPaths: 30
     function offerText() {
@@ -96,7 +57,7 @@ Pane {
         const paths = offeredScripts.slice(0, offerTipPaths).join("\n")
         return extra > 0 ? paths + "\n" + qsTr("and %n more", "", extra) : paths
     }
-    // After the change: the tab and its name change before the target does.
+    // MUST KILL: the reads wait a callLater because the tab and its name change before the editing target
     onVisibleChanged: Qt.callLater(readDocumentScripts)
     onDocumentNameChanged: Qt.callLater(readDocumentScripts)
     onDocumentTabChanged: Qt.callLater(readDocumentScripts)
@@ -105,25 +66,20 @@ Pane {
         function onChanged() { Qt.callLater(root.readDocumentScripts) }
     }
 
-    // A macro row runs (Run, a double click, Enter) when its script is ready
-    // and no macro is running.
     function runnable(row) {
         return row.script.state === "ready" && !root.controller.busy
     }
 
-    // Starts recording `legacyName`'s shortcut (the Automation menu's
-    // Shift+click on a macro opens the panel on it).
     function record(legacyName) {
         const indexOf = () => rows.findIndex(r => r.kind === "macro" && r.legacyName === legacyName)
         let i = indexOf()
         if (i < 0) {
-            // Its row is shown first: the filter goes, its section unfolds.
             filter.text = ""
             folded = ({ missing: folded.missing === true })
             i = indexOf()
         }
         if (i < 0)
-            return // no loaded macro has it
+            return
         recording = legacyName
         pressed = null
         blocked = macroHotkeys ? macroHotkeys.recordingProblem(legacyName) : ""
@@ -140,15 +96,11 @@ Pane {
         reassign.close()
         list.forceActiveFocus(Qt.OtherFocusReason)
     }
-    // Enter while recording: the shortcut is set through the shortcut
-    // editor's gesture path (OnMapHkey), asking first when it is taken.
     function saveRecording() {
         if (!hotkeys || !pressed || blocked.length > 0)
             return
         const target = hotkeys.gestureTarget(recording)
         const conflict = hotkeys.gestureConflict(target.id, pressed.accel, 0)
-        // The keys it has already (legacy's question counts the binding
-        // itself): nothing to ask; the binding is kept, made for this macro.
         if (conflict.message === undefined || hotkeys.holdersOf(pressed.accel, target.id).length === 0) {
             hotkeys.gestureMap(target.id, target.name, pressed.accel, 0, "cancel")
             stopRecording()
@@ -166,9 +118,7 @@ Pane {
     function scriptTitle(script) {
         return script.name !== "" ? script.name : script.fileName
     }
-    // A script's error with its own chunk name, [string "/path/to/a.lua"]
-    // (cut to [string "/path/t..."] when long), read as a.lua (#390; the
-    // Template editor strips it too).
+    // Lua names a string chunk [string "<source>"], cut to "..." when long.
     function shownError(script) {
         return (script.error ?? "").replace(/\[string "([^"]*)"\]/g, (chunk, name) => {
             const head = name.endsWith("...") ? name.slice(0, -3) : name
@@ -179,9 +129,6 @@ Pane {
         return filterText.length === 0 || text.toLowerCase().includes(filterText)
     }
 
-    // The list, flattened: section headers, scripts, their macros, the
-    // missing shortcuts. A script shows while its name or a macro matches
-    // the filter; a section while it has a script.
     readonly property var rows: {
         const out = []
         const scripts = controller.scripts
@@ -226,8 +173,6 @@ Pane {
         anchors.fill: parent
         spacing: 0
 
-        // The tool strip: the two views and the panel's commands, icon-only
-        // with their names on hover; the Scripts view's filter below.
         RowLayout {
             Layout.fillWidth: true
             Layout.margins: 8
@@ -263,8 +208,6 @@ Pane {
                 enabled: root.automation !== null && root.automation.canRerun
                 onClicked: root.automation.rerunLast()
             }
-            // AD2-repeat-last-run: its tooltip names the macro and the
-            // button it presses again.
             IconToolButton {
                 objectName: "automationRepeat"
                 iconRole: "repeat-run"
@@ -285,7 +228,6 @@ Pane {
             Keys.onDownPressed: list.forceActiveFocus(Qt.TabFocusReason)
         }
 
-        // The Document's scripts, offered until loaded.
         Rectangle {
             objectName: "documentScriptsOffer"
             visible: root.view === "scripts" && root.offeredScripts.length > 0
@@ -312,9 +254,7 @@ Pane {
                         objectName: "documentScriptsOfferText"
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
-                        // The paths are the Document's, so they are shown as
-                        // written: as rich text, markup in one (an image) could
-                        // reach a server before Load is clicked.
+                        // Plain: as rich text, an <img> in a Document's path could reach a server.
                         textFormat: Text.PlainText
                         text: root.offerText()
                         HoverHandler { id: offerHover }
@@ -348,7 +288,6 @@ Pane {
             }
         }
 
-        // The empty state: what is missing and the command that adds it.
         ColumnLayout {
             visible: root.view === "scripts" && root.controller.scripts.length === 0 && root.rows.length === 0
             Layout.fillWidth: true
@@ -401,7 +340,6 @@ Pane {
             Accessible.role: Accessible.List
             Accessible.name: qsTr("Macros")
             readonly property var current: currentIndex >= 0 && currentIndex < root.rows.length ? root.rows[currentIndex] : null
-            // Up and Down step over the headers and scripts to the macros.
             function step(by) {
                 for (let i = currentIndex + by; i >= 0 && i < root.rows.length; i += by)
                     if (root.rows[i].kind === "macro" || root.rows[i].kind === "missing") {
@@ -439,7 +377,6 @@ Pane {
             }
         }
 
-        // AD3: Runs, newest first, and the chosen run's log.
         Label {
             objectName: "runsEmpty"
             visible: root.view === "runs" && (!root.runs || root.runs.count === 0)
@@ -462,7 +399,6 @@ Pane {
                 color: Theme.field
                 border.color: Theme.line
                 Layout.fillWidth: true
-                // Up to five runs show; the rest scroll.
                 Layout.preferredHeight: Math.min(runList.contentHeight, 5 * 52) + 2
                 ListView {
                     id: runList
@@ -478,7 +414,7 @@ Pane {
                     Accessible.role: Accessible.List
                     Accessible.name: qsTr("Runs")
                     ScrollBar.vertical: ScrollBar { policy: runList.contentHeight > runList.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded }
-                    // The chosen run (its id; 0: the newest).
+                    // MUST KILL: chosen 0 means follow the newest run
                     property int chosen: 0
                     readonly property int shownRun: !root.runs ? 0
                                                     : (root.runs.count, chosen > 0 && root.runs.rowOf(chosen) >= 0)
@@ -569,10 +505,6 @@ Pane {
                                 RowLayout {
                                     id: runTitle
                                     Layout.fillWidth: true
-                                    // The macro, then its script: two
-                                    // scripts' macros may share a name. The
-                                    // script gives way first; the macro is
-                                    // elided only when it alone is too wide.
                                     Label {
                                         text: runRow.macro
                                         textFormat: Text.PlainText
@@ -626,14 +558,12 @@ Pane {
                     }
                 }
             }
-            // The chosen run's log: its strip, then its lines.
             RowLayout {
                 spacing: 4
                 Layout.fillWidth: true
                 ComboBox {
                     id: levelChoice
                     objectName: "runLogLevel"
-                    // Up to fatal (0) … All levels (5): a threshold, as the trace level is.
                     model: [qsTr("Up to fatal"), qsTr("Up to error"), qsTr("Up to warning"), qsTr("Up to hint"),
                             qsTr("Up to debug"), qsTr("All levels")]
                     currentIndex: runLines.levelLimit
@@ -654,7 +584,6 @@ Pane {
                                 Layout.fillWidth: true
                             }
                             Label {
-                                // The level's number and how many lines it has.
                                 text: levelItem.index + " · " + (runLines.total, runLines.countAt(levelItem.index))
                                 color: Theme.muted
                                 font.features: { "tnum": 1 }
@@ -743,7 +672,6 @@ Pane {
                         run: runList.shownRun
                         times: root.settings ? root.settings.value("automation.runLogTimes") === true : false
                     }
-                    // Follows the end while the run logs, unless scrolled up.
                     property bool follow: true
                     onMovementEnded: follow = atYEnd
                     onCountChanged: if (follow) Qt.callLater(positionViewAtEnd)
@@ -798,7 +726,6 @@ Pane {
         }
     }
 
-    // A section header: a fold arrow, the title in bold and the count.
     Component {
         id: sectionRow
         AbstractButton {
@@ -852,10 +779,6 @@ Pane {
         }
     }
 
-    // A script: its name in bold, its state in words when it is not ready,
-    // Reload and its menu; an error under it in the danger colour. An
-    // autoload script has a box before its name: unticked, it is off (#397:
-    // not loaded, at start or by Refresh, until it is ticked again).
     Component {
         id: scriptRow
         ColumnLayout {
@@ -878,7 +801,6 @@ Pane {
                     objectName: "enabled_" + scriptItem.row.index
                     visible: !scriptItem.script.inDocument
                     checked: scriptItem.script.enabled ?? true
-                    // Not while it loads or runs a macro (#397), as Reload.
                     enabled: scriptItem.state !== "running" && scriptItem.state !== "loading"
                     padding: 0
                     Accessible.name: qsTr("Load %1 at start").arg(root.scriptTitle(scriptItem.script))
@@ -897,7 +819,6 @@ Pane {
                     ToolTip.visible: nameHover.hovered && (truncated || (scriptItem.script.description ?? "") !== "")
                     ToolTip.text: (scriptItem.script.description ?? "") !== "" ? scriptItem.script.description : text
                 }
-                // The state in words, muted; a failure in the danger colour.
                 Label {
                     objectName: "state_" + scriptItem.row.index
                     readonly property string scriptState: scriptItem.state
@@ -947,7 +868,6 @@ Pane {
                 flat: true
                 text: scriptItem.fullError ? qsTr("Show less") : qsTr("Show full error")
                 onClicked: scriptItem.fullError = !scriptItem.fullError
-                // The error's whole height, to know whether it was cut.
                 Text {
                     id: errorMeasure
                     visible: false
@@ -959,8 +879,6 @@ Pane {
         }
     }
 
-    // A macro: its name (the description on hover), Run on the current row,
-    // and its shortcut at the end, recorded in place.
     Component {
         id: macroRow
         ItemDelegate {
@@ -1006,7 +924,6 @@ Pane {
                     color: Theme.accent
                 }
                 Rectangle {
-                    // keyboard focus on the current row: a ring in the text colour
                     anchors.fill: parent
                     visible: macroItem.current && list.activeFocus && !root.recording
                     color: "transparent"
@@ -1026,7 +943,6 @@ Pane {
                         elide: Text.ElideRight
                         color: macroItem.runnable || macroItem.row.script.state === "ready" ? Theme.text : Theme.disabled
                     }
-                    // AD3: the macro running turns its mark (the card has the run).
                     Icon {
                         id: busyMark
                         objectName: "macroBusy_" + macroItem.row.index + "_" + macroItem.row.macro.ordinal
@@ -1057,17 +973,12 @@ Pane {
                         implicitWidth: macroItem.recordingHere ? recorderField.implicitWidth : keysButton.implicitWidth
                         implicitHeight: macroItem.recordingHere ? recorderField.implicitHeight : keysButton.implicitHeight
                         Layout.preferredWidth: implicitWidth
-                        // The shortcut: its keys like a menu's (in the warning
-                        // colour when a command takes them), "Add shortcut" on
-                        // the current row without one; a click records.
                         Button {
                             id: keysButton
                             objectName: "keys_" + macroItem.row.index + "_" + macroItem.row.macro.ordinal
                             visible: !macroItem.recordingHere && (macroItem.keys.length > 0 || macroItem.current)
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            // As wide as its keys (not the style's minimum
-                            // button width), so they end at the row's edge.
                             implicitWidth: implicitContentWidth + leftPadding + rightPadding
                             flat: macroItem.keys.length > 0
                             focusPolicy: Qt.NoFocus
@@ -1088,7 +999,6 @@ Pane {
                                 root.record(macroItem.row.legacyName)
                             }
                         }
-                        // Recording: the keys as pressed, Esc cancels, Enter saves.
                         FocusScope {
                             id: recorderField
                             visible: macroItem.recordingHere
@@ -1128,8 +1038,6 @@ Pane {
                         }
                     }
                 }
-                // What the keys are: taken (while recording), refused, or
-                // a command's binding that takes them.
                 Label {
                     objectName: "keysNote_" + macroItem.row.index + "_" + macroItem.row.macro.ordinal
                     readonly property var holders: macroItem.recordingHere && root.pressed && root.hotkeys
@@ -1150,8 +1058,6 @@ Pane {
         }
     }
 
-    // A shortcut whose macro is not loaded or changed: what it was for, why
-    // it does not run, and Remove.
     Component {
         id: missingRow
         ItemDelegate {
@@ -1199,14 +1105,11 @@ Pane {
         }
     }
 
-    // Keys while recording go here; the recorder takes every key but Tab
-    // (MuseScore's record field): Esc cancels, Enter saves.
     Item {
         id: recorder
         objectName: "automationRecorder"
         focus: root.recording.length > 0
-        // KB1's key router stands aside: no hovered panel's binding or
-        // Space's play and pause takes a key being recorded.
+        // MUST KILL: recordsKeys is read by name by key_router.cpp, which then stands aside
         readonly property bool recordsKeys: root.recording.length > 0
         Accessible.role: Accessible.EditableText
         Accessible.name: qsTr("Shortcut")
@@ -1242,8 +1145,6 @@ Pane {
         onActiveFocusChanged: if (!activeFocus && root.recording.length > 0 && !reassign.visible) root.stopRecording()
     }
 
-    // The script's menu: Reload, Edit script, and Unload (legacy
-    // Automation::Remove for a Document script: the Script Info keeps it).
     ShellMenu {
         id: scriptMenu
         objectName: "automationScriptMenu"
@@ -1278,8 +1179,6 @@ Pane {
         }
     }
 
-    // A macro's menu (right click, the Menu key): Run, Set shortcut…,
-    // Clear shortcut.
     ShellMenu {
         id: macroMenu
         objectName: "automationMacroMenu"
@@ -1308,9 +1207,6 @@ Pane {
         }
     }
 
-    // "Reassign shortcut" (MuseScore's question): the keys move to this
-    // macro, the other bindings losing them; across windows legacy's
-    // "Set anyway" keeps both.
     Popup {
         id: reassign
         objectName: "automationReassign"
@@ -1334,7 +1230,6 @@ Pane {
             close()
             root.stopRecording()
         }
-        // Escape closes it as Cancel does: the recording ends.
         onClosed: if (root.recording.length > 0) root.stopRecording()
         background: Rectangle {
             color: Theme.panel

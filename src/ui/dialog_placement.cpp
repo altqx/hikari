@@ -25,8 +25,6 @@ bool isWayland()
     return QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
 }
 
-// `outer` (the window with its frame) moved whole into `area`, as close to
-// where it is as fits; `area` is at least as big as it.
 QPoint inside(const QRect &outer, const QRect &area)
 {
     const int x = std::clamp(outer.x(), area.left(), std::max(area.left(), area.right() + 1 - outer.width()));
@@ -34,7 +32,7 @@ QPoint inside(const QRect &outer, const QRect &area)
     return {x, y};
 }
 
-} // namespace
+}
 
 QRect centred(const QRect &opener, QSize size, const QRect &available, const QMargins &margins)
 {
@@ -52,7 +50,6 @@ std::optional<QRect> restored(const QRect &saved, QSize size, QSize minimum, boo
 {
     if (!saved.isValid())
         return std::nullopt;
-    // The top edge of the frame, the part a window is moved by.
     const QRect edge(saved.x() - margins.left(), saved.y() - margins.top(), saved.width() + margins.left() + margins.right(), 1);
     const QRect *screen = nullptr;
     int best = 0;
@@ -65,8 +62,6 @@ std::optional<QRect> restored(const QRect &saved, QSize size, QSize minimum, boo
     }
     if (!screen || best < std::min(kGrip, edge.width()))
         return std::nullopt;
-    // A resizable dialog as big as it was left, up to the screen; a fixed
-    // one as big as on a first open (centred), whichever way it opens.
     const int room = resizable ? 0 : kMargin;
     if (resizable)
         size = saved.size().expandedTo(minimum);
@@ -112,7 +107,7 @@ QStringList replaced(QStringList rows, const QString &id, const QRect &geometry)
     return rows;
 }
 
-} // namespace dialogplacement
+}
 
 DialogPlacement::DialogPlacement(QObject *parent)
     : QObject(parent)
@@ -163,8 +158,7 @@ void DialogPlacement::setResizable(bool resizable)
 QWindow *DialogPlacement::opener() const
 {
     QWindow *focus = QGuiApplication::focusWindow();
-    // A menu or a tool tip is a window of its own on some platforms: its
-    // window is the opener.
+    // Menus and tool tips are windows of their own on some platforms.
     while (focus && focus->transientParent()
            && (focus->type() == Qt::Popup || focus->type() == Qt::ToolTip))
         focus = focus->transientParent();
@@ -181,10 +175,6 @@ QSize DialogPlacement::natural() const
 void DialogPlacement::fitRoom(QScreen *on, const QMargins &margins)
 {
     namespace dp = dialogplacement;
-    // A hidden window has not sized its content (0 wide before the first
-    // open), and wrapped text's height depends on its width. The room is
-    // set before the geometry: the window's minimum follows it, and a
-    // minimum the screen can't hold would undo the fit.
     if (on) {
         const QMargins room(dp::kMargin, dp::kMargin, dp::kMargin, dp::kMargin);
         const QSize size = on->availableGeometry().size().shrunkBy(room).shrunkBy(margins).expandedTo(QSize(1, 1));
@@ -204,7 +194,7 @@ std::function<void(const QString &)> &openedHook()
     static std::function<void(const QString &)> hook;
     return hook;
 }
-} // namespace
+}
 
 void DialogPlacement::setOpenedHook(std::function<void(const QString &dialogId)> hook)
 {
@@ -219,7 +209,6 @@ void DialogPlacement::place(QWindow *opener, QQuickItem *content)
         openedHook()(m_dialogId);
     namespace dp = dialogplacement;
     m_content = content;
-    // Opened as it was before any maximising: the place kept is the normal one.
     if (m_window->windowStates() & (Qt::WindowMaximized | Qt::WindowFullScreen))
         m_window->setWindowStates(Qt::WindowNoState);
     std::optional<QRect> saved;
@@ -228,11 +217,9 @@ void DialogPlacement::place(QWindow *opener, QQuickItem *content)
     QScreen *screen = opener && opener->isVisible() ? opener->screen() : nullptr;
     if (!screen)
         screen = m_window->transientParent() ? m_window->transientParent()->screen() : QGuiApplication::primaryScreen();
-    // Laid out at the width it opens at on the screen it opens on, then measured.
     settle(m_window->contentItem());
     if (dp::isWayland()) {
-        // The compositor places the window: only a resizable dialog's
-        // size, as big as it was left up to the screen, as elsewhere.
+        // The Wayland compositor places windows; only the size is ours.
         fitRoom(screen, {});
         const QSize smallest = natural().boundedTo(m_room);
         QSize size = smallest;
@@ -244,9 +231,7 @@ void DialogPlacement::place(QWindow *opener, QQuickItem *content)
         m_window->resize(size);
         return;
     }
-    // The window system's frame is known once the window is made, and on
-    // X11 only once it is mapped: the opener's until then, which has the
-    // same choice of title bar.
+    // Frame margins exist only after create(), and on X11 only once mapped; until then the opener's.
     m_window->create();
     QMargins margins = m_window->frameMargins();
     if (margins.isNull() && !m_window->flags().testFlag(Qt::FramelessWindowHint) && opener
@@ -258,7 +243,6 @@ void DialogPlacement::place(QWindow *opener, QQuickItem *content)
     fitRoom(screen, margins);
     if (saved) {
         if (auto rect = dp::restored(*saved, natural(), natural(), m_resizable, screens, margins)) {
-            // Kept on another screen: laid out for its room.
             QScreen *on = QGuiApplication::screenAt(rect->center());
             if (on && on != screen) {
                 fitRoom(on, margins);
@@ -300,7 +284,6 @@ void DialogPlacement::refit()
     QList<QRect> screens;
     for (QScreen *each : QGuiApplication::screens())
         screens << each->availableGeometry();
-    // As a place kept: on its screen, with the room the new frame leaves.
     const QSize size = m_resizable ? m_window->size() : natural();
     if (const auto rect = dp::restored(m_window->geometry(), size, natural(), m_resizable, screens, margins)) {
         if (*rect != m_window->geometry())
@@ -325,7 +308,6 @@ void DialogPlacement::remember()
 {
     if (!m_window || !m_settings || m_dialogId.isEmpty())
         return;
-    // A maximised or full-screen dialog keeps the place it had before.
     if (m_shown == QWindow::Maximized || m_shown == QWindow::FullScreen)
         return;
     namespace dp = dialogplacement;
@@ -354,13 +336,13 @@ void polishTree(QQuickItem *item)
     item->ensurePolished();
 }
 
-} // namespace
+}
 
 void DialogPlacement::settle(QQuickItem *item)
 {
     if (!item)
         return;
-    // Twice: the outer layouts' widths reflow wrapped text inside them.
+    // A hidden window never polishes; a second pass lets outer layout widths reflow wrapped text.
     polishTree(item);
     polishTree(item);
 }
@@ -370,4 +352,4 @@ void DialogPlacement::overrideWayland(std::optional<bool> wayland)
     dialogplacement::g_wayland = wayland;
 }
 
-} // namespace hikari::ui
+}

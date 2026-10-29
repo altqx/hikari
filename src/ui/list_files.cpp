@@ -46,8 +46,6 @@ std::u8string u8(std::string_view s)
     return {reinterpret_cast<const char8_t *>(s.data()), s.size()};
 }
 
-// A float in its shortest text (20, not 20.000000), which reads back as the
-// same float.
 toml::value<double> number(float value)
 {
     char text[32];
@@ -57,7 +55,6 @@ toml::value<double> number(float value)
     return toml::value<double>(out);
 }
 
-// A choice by its name, or its number when it has none.
 template <std::size_t N> void putChoice(toml::table &item, std::string_view key, int value, const std::string_view (&names)[N])
 {
     if (value >= 0 && value < int(N))
@@ -66,8 +63,6 @@ template <std::size_t N> void putChoice(toml::table &item, std::string_view key,
         item.insert(key, std::int64_t(value));
 }
 
-// An item's fields read in order: the first that fails stops the rest and
-// says where.
 class Fields {
 public:
     Fields(const toml::table &item, std::string_view array, std::size_t index)
@@ -164,7 +159,6 @@ private:
     std::optional<ParseFailure> m_failure;
 };
 
-// Each item of `items` read by `read`, which returns the item's value.
 template <class Item, class Read>
 ListRead<Item> readItems(const toml::array &items, std::string_view array, Read read)
 {
@@ -192,8 +186,6 @@ template <class Item> std::optional<ParseFailure> failureOf(const ListRead<Item>
     return std::nullopt;
 }
 
-// ---- rules.toml
-
 struct RuleOption {
     std::string_view key;
     int bit;
@@ -204,21 +196,17 @@ constexpr RuleOption kRuleOptions[] = {
     {"onlyInTags", application::kReplacerOnlyTags}, {"onlyInText", application::kReplacerOnlyText},
 };
 
-// ---- shapes.toml
-
 constexpr std::string_view kFromCursor[] = {"widthAndHeight", "keepAspectRatio", "widthOnly"};
 constexpr std::string_view kScaling[] = {"points", "scale"};
-
-// ---- tags.toml
 
 constexpr std::string_view kPlacing[] = {"cursor", "textStart", "clipAnimation"};
 constexpr std::string_view kChange[] = {"add",          "set",
                                         "multiply",     "multiplyAdd",
                                         "gradientCharsUp", "gradientCharsDown",
                                         "gradientLinesUp", "gradientLinesDown"};
-constexpr std::int64_t kByte = 255; // legacy's unsigned char fields
+constexpr std::int64_t kByte = 255;
 
-} // namespace
+}
 
 std::string listFileText(const ListFormat &format, toml::array items)
 {
@@ -403,12 +391,8 @@ std::optional<std::vector<Catalog>> fontCatalogsFromText(std::string_view text)
     return std::nullopt;
 }
 
-// ---- The legacy files
-
 namespace {
 
-// LoadSettings' read of a visual tool's file: UTF-8 (the BOM dropped; the
-// Windows build's text-mode read made CRLF LF).
 std::optional<std::u16string> legacyToolText(const fs::path &path)
 {
     auto bytes = application::readOwnedFile(path);
@@ -417,13 +401,14 @@ std::optional<std::u16string> legacyToolText(const fs::path &path)
     if (bytes->starts_with("\xEF\xBB\xBF"))
         bytes->erase(0, 3);
     QString text = QString::fromUtf8(bytes->data(), static_cast<qsizetype>(bytes->size()));
+    // Windows text-mode reads turned CRLF into LF.
 #ifdef _WIN32
     text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
 #endif
     return text.toStdU16String();
 }
 
-} // namespace
+}
 
 std::optional<std::vector<ShapePreset>> readLegacyShapes(const fs::path &path)
 {
@@ -435,8 +420,6 @@ std::optional<std::vector<ShapePreset>> readLegacyShapes(const fs::path &path)
 
 std::optional<std::vector<AllTagsSetting>> readLegacyTags(const fs::path &path)
 {
-    // A file of an older version (no "HYDRA2.0") gave legacy's defaults,
-    // which legacy then wrote over it.
     const auto text = legacyToolText(path);
     if (!text)
         return std::nullopt;
@@ -450,13 +433,9 @@ std::optional<std::vector<Catalog>> readLegacyFontCatalogs(const fs::path &path)
     std::vector<Catalog> out;
     if (const auto text = application::readFontCatalogFile(path))
         out = application::FontCatalogs::parse(*text);
-    // A header with no '=' read as a catalog with no name, which nothing
-    // could choose or manage.
     std::erase_if(out, [](const Catalog &c) { return c.name.empty(); });
     return out;
 }
-
-// ---- ListFile
 
 std::shared_ptr<ListFile> ListFile::make(QString path, QString legacy, const ListFormat &format, Convert convert,
                                          Report report)
@@ -504,9 +483,6 @@ void ListFile::problem(application::FileProblem problem)
 
 std::unique_ptr<QLockFile> ListFile::lockFolder() const
 {
-    // One writer at a time on the folder (settings_files.h's lock): nothing
-    // while another HikariSub holds it. A folder that cannot hold a lock is
-    // used without one.
     const QString folder = QFileInfo(m_path).absolutePath();
     QDir().mkpath(folder);
     auto lock = std::make_unique<QLockFile>(folder + QStringLiteral("/.settings.lock"));
@@ -520,7 +496,6 @@ void ListFile::convert()
     m_deferred = false;
     if (m_legacy.isEmpty() || m_converted || QFileInfo::exists(m_path) || !QFileInfo::exists(m_legacy))
         return;
-    // Two HikariSubs starting at once convert it once.
     const auto lock = lockFolder();
     m_deferred = !lock;
     if (lock)
@@ -548,27 +523,23 @@ void ListFile::convertLocked()
         if (m_report.converted)
             m_report.converted(pathOf(m_legacy), pathOf(m_path));
     } else if (unreadable) {
-        // Not written over by defaults: the next start tries again.
         m_writable = false;
         if (!std::exchange(m_reportedUnreadable, true))
             problem({pathOf(m_legacy), {}, {0, 0, "It could not be read."}});
     } else if (conversion == application::Conversion::Failed) {
-        m_converted = std::move(items); // written, and the old file moved, with the next write
+        m_converted = std::move(items);
     }
 }
 
 std::optional<toml::array> ListFile::read()
 {
     convert();
-    // A legacy file that cannot be read, or a broken file that could not be
-    // moved aside: the defaults, reported once.
     if (!m_writable)
         return std::nullopt;
     if (m_pending)
         return *m_pending;
     if (m_converted)
         return *m_converted;
-    // The conversion waits for the lock: the legacy file's items meanwhile.
     if (m_deferred)
         return m_convert ? m_convert(pathOf(m_legacy)) : std::nullopt;
     toml::table table;
@@ -588,8 +559,6 @@ std::optional<toml::array> ListFile::read()
 
 toml::table ListFile::merged(toml::array items, toml::table onDisk) const
 {
-    // The file as it is now keeps what this HikariSub does not know: its
-    // other keys, and each item's (the k-th of a name gets the k-th's).
     std::map<std::string, std::vector<const toml::table *>> before;
     if (const auto *old = onDisk[m_format.array].as_array())
         for (const auto &node : *old)
@@ -634,7 +603,7 @@ ListFile::Write ListFile::writePending()
             retryLater();
             return Write::Waiting;
         }
-        convertLocked(); // when the start could not
+        convertLocked();
     }
     if (!m_writable) {
         m_pending.reset();
@@ -643,8 +612,6 @@ ListFile::Write ListFile::writePending()
     toml::array items = std::move(*m_pending);
     m_pending.reset();
     if (m_converted) {
-        // The conversion's file could not be written before: it is this
-        // list, and the old file moves aside once it is.
         const std::string text = listFileText(m_format, items);
         const auto conversion = application::convertOnce(pathOf(m_path), pathOf(m_legacy), [&] {
             return application::writeFileAtomically(pathOf(m_path), text, pathOf(m_legacy));
@@ -656,7 +623,6 @@ ListFile::Write ListFile::writePending()
         m_converted.reset();
         if (conversion == application::Conversion::Converted)
             return Write::Written;
-        // Another HikariSub converted it meanwhile: this list goes over it.
     }
     toml::table onDisk;
     const auto load =
@@ -688,4 +654,4 @@ void ListFile::retryLater()
     });
 }
 
-} // namespace hikari::ui
+}

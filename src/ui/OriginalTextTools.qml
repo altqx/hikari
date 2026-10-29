@@ -1,14 +1,3 @@
-// TM1 (#232): the Original text panel's toolbar, shown in its dock's header
-// (Docking.setPanelHeader; MuseScore's toolbar slot,
-// docs/research/musescore-shell.md §7). Legacy EditBox's translation-mode
-// buttons (EDITBOX_PASTE_ALL_TO_TRANSLATION,
-// EDITBOX_PASTE_SELECTION_TO_TRANSLATION, and EDITBOX_HIDE_ORIGINAL as
-// "Comment out original") and its "Not confirmed" and "Moving tags" toggles
-// (EditBox.cpp:248-258; Moving tags is "Tags from original", TM1's carried
-// tags, line_editor_controller.h moveTags), icon-only with their names on hover. They take no
-// focus, as legacy's, so the text keeps it. A header narrower than the
-// buttons shows one "More" button whose menu holds them in the same order.
-// Until the header takes it, it stays out of sight.
 pragma Translator: "HikariSub.Translation"
 import QtQuick
 import QtQuick.Controls
@@ -19,11 +8,10 @@ Item {
     id: tools
     required property var app
     required property var editor
-    // Main's root: hotkeyGesture (Shift+click maps) and mappedTip.
     required property var shellRoot
-    // The Original and Translated text fields ("Paste the selected").
     required property Item original
     required property Item translated
+    // MUST KILL: visible only once reparented into an item named "dockToolbarSlot"
     visible: parent !== null && parent.objectName === "dockToolbarSlot"
     implicitWidth: buttons.implicitWidth
     implicitHeight: buttons.implicitHeight
@@ -87,12 +75,11 @@ Item {
             checkable: true
             focusPolicy: Qt.NoFocus
             enabled: tools.editor.editable
-            // SetLine: DoubtfulTL->SetValue(line->IsDoubtful()).
             checked: tools.editor.unconfirmed
             Accessible.checkable: true
             Accessible.checked: checked
             onClicked: {
-                tools.editor.toggleUnconfirmed() // OnDoubtfulTl: the selected Lines
+                tools.editor.toggleUnconfirmed()
                 checked = Qt.binding(() => tools.editor.unconfirmed)
             }
         }
@@ -107,7 +94,7 @@ Item {
             Accessible.checkable: true
             Accessible.checked: checked
             onClicked: {
-                tools.app.setMoveTags(checked) // OnAutoMoveTags: the option, saved at once
+                tools.app.setMoveTags(checked)
                 checked = Qt.binding(() => tools.editor.moveTags)
             }
         }

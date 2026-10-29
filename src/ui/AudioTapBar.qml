@@ -4,13 +4,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// KA2 (#277, KA2-tap-to-time): the tap bar above the audio display while tap
-// mode is on. Its state by a shape and a word (● Tapping, ■ Stopped,
-// ○ Ready), the Line's number and syllables (tapped ones muted, the held one
-// filled, the next one outlined), the next Line's text and the last note;
-// at the right what the keys or buttons do in that state: Backspace undoes
-// and Esc stops while tapping, Resume and Revert Line once stopped, Auto
-// split while the Line is one syllable.
 Rectangle {
     id: bar
     objectName: "audioTapBar"
@@ -23,8 +16,6 @@ Rectangle {
     color: Theme.panel
     clip: true
 
-    // A button of the bar; `primary` fills it in the accent, as the
-    // default action. The keys stay tap mode's: it takes no focus.
     component BarButton: AbstractButton {
         id: barButton
         property bool primary: false
@@ -69,7 +60,6 @@ Rectangle {
             }
         }
     }
-    // A key and what it does ("⌫ Undo").
     component KeyHint: RowLayout {
         property alias key: cap.text
         property alias text: hintLabel.text
@@ -92,26 +82,22 @@ Rectangle {
     RowLayout {
         anchors { fill: parent; leftMargin: 8; rightMargin: 8; bottomMargin: 1 }
         spacing: 10
-        // the state: its shape and its word
         RowLayout {
             spacing: 6
             Item {
                 implicitWidth: 9
                 implicitHeight: 9
-                // ● Tapping: a red dot
                 Rectangle {
                     anchors.fill: parent
                     radius: 4.5
                     color: Theme.danger
                     visible: bar.tapping
                 }
-                // ■ Stopped: a square
                 Rectangle {
                     anchors.fill: parent
                     color: Theme.text
                     visible: bar.stopped
                 }
-                // ○ Ready: a ring
                 Rectangle {
                     anchors.fill: parent
                     radius: 4.5
@@ -129,7 +115,6 @@ Rectangle {
                 Accessible.name: text
             }
         }
-        // the Line, its syllables and the next Line, cut at the right
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -157,13 +142,12 @@ Rectangle {
                         readonly property bool isNext: modelData.state === AudioController.TapSyllableNext
                         objectName: "audioTapSyllable" + index
                         text: modelData.text
-                        textFormat: Text.PlainText // a Line's text, never markup (no <img> fetched)
+                        textFormat: Text.PlainText // AutoText would render a Line's markup and fetch its <img>
                         leftPadding: 5
                         rightPadding: 5
                         topPadding: 1
                         bottomPadding: 1
                         font.bold: true
-                        // tapped: muted (underlined in high contrast, not by its colour alone)
                         font.underline: tapped && Theme.highContrast
                         color: held ? Theme.onAccent : tapped ? Theme.muted : Theme.text
                         background: Rectangle {
@@ -177,7 +161,7 @@ Rectangle {
                     objectName: "audioTapNext"
                     visible: bar.audio.tapNextText.length > 0 && !bar.stopped && !bar.needsSplit
                     text: "› " + bar.audio.tapNextText
-                    textFormat: Text.PlainText // a Line's text, never markup
+                    textFormat: Text.PlainText
                     color: Theme.muted
                     leftPadding: 6
                     elide: Text.ElideRight
@@ -193,7 +177,6 @@ Rectangle {
                 }
             }
         }
-        // what the keys and buttons do now
         KeyHint {
             visible: bar.tapping
             key: "⌫"

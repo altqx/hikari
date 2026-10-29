@@ -1,39 +1,3 @@
-// A script's dialog (N8, AD1 #310): fixed controls placed on the script's
-// grid cells, on DG1's frame. Values go back through the controller, which
-// types them per control; a script gets Aegisub's values and button results
-// (docs/automation.md). Closing the window answers with no button.
-//
-// AD1 (owner, 2026-10-22, the mockup on #310):
-// - a resizable DG1 window titled with the macro, its size and place kept per
-//   script and dialog (controller.dialogId); never larger than the screen's
-//   free area: past that the grid scrolls and the hint strip and the
-//   buttons stay. Columns holding an edit, a textbox, a number, a dropdown
-//   or a colour take the extra width, rows holding a textbox the extra height;
-// - the hint strip above the buttons shows the hovered control's hint, else
-//   the focused one's (with a number's range), at one height while open;
-//   the hint is the control's tooltip and accessible description;
-// - numbers take any typing and clamp when committed; the arrows, the wheel,
-//   Up / Down and Page Up / Page Down step them (a floatedit by its step,
-//   AD1-float-step; without one it is a plain number field);
-// - a colour is a swatch, which opens the shared colour popover, and a field
-//   taking #RRGGBB, RRGGBB or ASS &HBBGGRR& (with alpha for coloralpha);
-// - a dropdown of more than 10 items filters as you type;
-// - keys (AD1-keyboard), one set on every platform: Tab follows the grid,
-//   row by row, then the buttons in the script's order; Enter presses the
-//   focused button, else the Enter button (controller.enterButton), and
-//   Ctrl+Enter does so from a textbox; Esc ends the dialog with no button
-//   from anywhere (an open list or popover takes it first); Space ticks a
-//   check box and presses a button; Alt with a label's `&` letter presses
-//   the button, ticks the check box or (a label) moves to the control after
-//   it, the letters underlined while Alt is held.
-//
-// AD2 (owner, 2026-10-22, the mockup on #311): the ⋯ button at the leading
-// end of the footer (its menu: Last used, Presets with Save as preset… and
-// Delete preset, Reset to the script's values) only changes the values shown
-// before a button is pressed. A control that differs from the script's value
-// has a 2 px accent bar at its leading edge: hovering it says the script's
-// value, clicking it puts that one back. A repeated run's dialog that is
-// shown says why in an inline bar (controller.notice).
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Automation"
 import QtQuick
@@ -44,29 +8,21 @@ import Hikari.Ui
 DialogWindow {
     id: window
     required property AutomationDialogController controller
-    // SY2: the colour controls' popover.
     required property ColourPickerController colourPicker
-    // AD2: asks before a preset is deleted (Main's MessageHost).
     property var messages: null
 
     title: controller.title
     dialogId: controller.dialogId
-    guideId: "automation" // DX1: one page for every script's window
+    guideId: "automation"
     resizable: true
     modal: true
 
-    // Alt is held: the `&` letters are underlined.
     property bool altHeld: false
-    // The controls in Tab order (the grid's rows, then its columns), each
-    // {spec, index} with its place in the script's list.
     readonly property var cellsInOrder: {
         const list = controller.controls.map((spec, index) => ({ spec: spec, index: index }))
         list.sort((a, b) => a.spec.y - b.spec.y || a.spec.x - b.spec.x || a.index - b.index)
         return list
     }
-    // The columns that take the extra width: those of an edit, a textbox, a
-    // number, a dropdown or a colour one column wide, and the columns of a wider one
-    // when none of its columns does already.
     readonly property var growingColumns: {
         const grows = {}
         const growing = controller.controls.filter(c => ["edit", "alpha", "textbox", "intedit", "floatedit",
@@ -89,7 +45,6 @@ DialogWindow {
     property Item focusedCell: null
     readonly property string hintText: hoveredCell && hoveredCell.stripText !== "" ? hoveredCell.stripText
                                        : focusedCell ? focusedCell.stripText : ""
-    // Every hint (and number range) the strip can show; none: no strip.
     readonly property var stripTexts: {
         const out = []
         for (let i = 0; i < cells.count; ++i) {
@@ -110,8 +65,6 @@ DialogWindow {
     }
     function press(index) { controller.finish(index, values()) }
 
-    // AD2: the controls `list` holds a value for (one per control, as the
-    // controls show it; undefined leaves one as it is) take it.
     function fill(list) {
         for (let i = 0; i < cells.count; ++i) {
             const cell = cells.itemAt(i)
@@ -125,7 +78,6 @@ DialogWindow {
         if (v !== undefined && v !== null && cell.item)
             cell.item.writeValue(v)
     }
-    // A control's hint, and that it was changed (the marker).
     function descriptionOf(cell) {
         const hint = cell && cell.spec ? cell.spec.hint : ""
         if (!cell || !cell.differs)
@@ -156,7 +108,6 @@ DialogWindow {
             b.click()
     }
 
-    // The grid cell holding `item`, or null.
     function cellOf(item) {
         for (let p = item; p; p = p.parent)
             if (p.hasOwnProperty("controlIndex") && p.hasOwnProperty("stripText"))
@@ -164,8 +115,7 @@ DialogWindow {
         return null
     }
     onActiveFocusItemChanged: {
-        // The footer's box is a focus scope of its own, but no control: on
-        // the window's activation it can keep the keyboard its button had.
+        // Qt: the DialogButtonBox is a focus scope but no control, so on activation it can keep its button's focus.
         if (activeFocusItem && (activeFocusItem === buttonBox || activeFocusItem === buttonBox.contentItem)
                 && defaultButton && defaultButton.Window.window === window) {
             defaultButton.forceActiveFocus(Qt.TabFocusReason)
@@ -186,8 +136,7 @@ DialogWindow {
         event.accepted = false
     }
 
-    // The label's `&` letter, the label without its `&`s, and the label
-    // with that letter underlined (`&&` is one `&`).
+    // `&&` is a literal `&`.
     function mnemonic(label) {
         const m = /&([^&])/.exec(String(label).replace(/&&/g, "\u0001\u0001"))
         return m ? m[1] : ""
@@ -212,7 +161,6 @@ DialogWindow {
     }
     function shownLabel(label) { return altHeld ? underlined(label) : underlined(plain(label).replace(/&/g, "&&")) }
 
-    // A label's `&` letter: the control after it in Tab order.
     function focusAfter(cell) {
         for (let i = 0; i < cells.count; ++i) {
             const c = cells.itemAt(i)
@@ -222,7 +170,6 @@ DialogWindow {
             }
         }
     }
-    // The name a control is read with: the label just before it in its row.
     function nameFor(spec) {
         let best = null
         for (const c of controller.controls)
@@ -234,14 +181,10 @@ DialogWindow {
 
     function show() {
         makeButtons()
-        // The footer's list places the new buttons on its next layout: now,
-        // so the Enter button is in the window when open() gives it the keys.
+        // A ListView places new items on its next layout; force it so the Enter button exists when open() focuses it.
         if (buttonBox.contentItem && typeof buttonBox.contentItem.forceLayout === "function")
             buttonBox.contentItem.forceLayout()
-        // The box keeps its list at the width of the buttons it had partway
-        // through (Qt 6.11) when its own width does not change, so a dialog
-        // with the same buttons as the last one had them past the window's
-        // edge: setting the alignment fits the list to them again.
+        // Qt 6.11: the box keeps its list at an earlier width when its own width is unchanged; re-aligning refits it.
         buttonBox.alignment = 0
         buttonBox.alignment = Qt.AlignRight
         if (visible) {
@@ -263,7 +206,6 @@ DialogWindow {
     }
     onRejected: if (controller.open) controller.finish(-1, values())
 
-    // AD2: the ⋯ button and its menu, for a script's dialog.
     leadingActions: Button {
         id: moreButton
         objectName: "automationDialogMore"
@@ -351,8 +293,6 @@ DialogWindow {
             onTriggered: window.fill(window.controller.scriptValues())
         }
     }
-    // Save as preset…: a name over ⋯; Enter or Save saves (Replace for a
-    // name in use), Esc, Cancel or a press outside closes it only.
     Popover {
         id: savePopover
         objectName: "savePresetPopover"
@@ -409,8 +349,7 @@ DialogWindow {
         }
     }
 
-    // The script's buttons in its order at the trailing edge (all one role,
-    // so the footer keeps the order), the Enter button in the accent.
+    // One role for every button, so DialogButtonBox keeps the script's order.
     property var madeButtons: []
     function makeButtons() {
         for (const b of madeButtons) {
@@ -477,13 +416,9 @@ DialogWindow {
         implicitWidth: scroll.implicitWidth
         implicitHeight: scroll.implicitHeight + (strip.visible ? strip.implicitHeight + 12 : 0)
                         + (noticeBar.visible ? noticeBar.implicitHeight + 12 : 0)
-        // Alt held: the letters show (no control takes Alt; the buttons,
-        // outside this item, track it too). Tab needs no help: the cells are
-        // made in Tab order, then come the buttons.
         Keys.onPressed: event => window.trackAlt(event, true)
         Keys.onReleased: event => window.trackAlt(event, false)
 
-        // The buttons' `&` letters.
         Repeater {
             model: window.controller.buttons
             delegate: Item {
@@ -502,7 +437,6 @@ DialogWindow {
             }
         }
 
-        // AD2-repeat-last-run: why a repeated run shows this dialog.
         InlineBar {
             id: noticeBar
             objectName: "automationDialogNotice"
@@ -527,7 +461,6 @@ DialogWindow {
             boundsBehavior: Flickable.StopAtBounds
             readonly property bool overflows: contentHeight > height + 0.5
             readonly property int barWidth: 6
-            // AD2: room for the first column's markers.
             readonly property int markerRoom: 6
             implicitWidth: markerRoom + grid.implicitWidth + barWidth + 4
             implicitHeight: grid.implicitHeight
@@ -572,7 +505,6 @@ DialogWindow {
                 rowSpacing: 6
                 columnSpacing: 8
 
-                // Brings the focused control into view.
                 function reveal(item) {
                     const p = item.mapToItem(scroll.contentItem, 0, 0)
                     const across = scroll.width - scroll.barWidth - 4
@@ -596,7 +528,6 @@ DialogWindow {
                         readonly property var spec: modelData.spec
                         readonly property int controlIndex: modelData.index
                         readonly property bool numeric: spec.kind === "intedit" || spec.kind === "floatedit"
-                        // What the strip shows for it: its hint, and a number's range.
                         readonly property string stripText: {
                             const parts = []
                             if (spec.hint)
@@ -607,7 +538,6 @@ DialogWindow {
                                 parts.push(item.overflowText)
                             return parts.join(" ")
                         }
-                        // Its longest: a number's with the out-of-range sentence.
                         readonly property string longestStripText: {
                             const parts = []
                             if (spec.hint)
@@ -618,7 +548,6 @@ DialogWindow {
                                 parts.push(item.overflowLongest)
                             return parts.join(" ")
                         }
-                        // AD2: the value shown differs from the script's.
                         readonly property bool differs: item !== null && item.current !== undefined
                                                         && window.controller.differs(controlIndex, item.current)
                         objectName: "control_" + controlIndex
@@ -647,7 +576,7 @@ DialogWindow {
                             case "checkbox": return checkControl
                             case "color":
                             case "coloralpha": return colourControl
-                            default: return editControl // edit, alpha
+                            default: return editControl
                             }
                         }
                         HoverHandler {
@@ -658,9 +587,6 @@ DialogWindow {
                                     window.hoveredCell = null
                             }
                         }
-                        // The marker in the column gap at the leading edge:
-                        // 2 px of accent; hovering says the script's value
-                        // and a click puts it back.
                         Item {
                             id: marker
                             objectName: "marker_" + cell.controlIndex
@@ -690,8 +616,6 @@ DialogWindow {
             }
         }
 
-        // The hint strip: one height while open, the tallest text it holds
-        // up to three lines; no strip when nothing has a hint or a range.
         Item {
             id: strip
             objectName: "automationHints"
@@ -746,9 +670,7 @@ DialogWindow {
             id: label
             readonly property var spec: parent ? parent.spec : ({})
             readonly property var focusTargets: []
-            // Its line breaks kept, as legacy's wxStaticText did: styled text
-            // folds them, which put DependencyControl's trust prompt and its
-            // feed on one line wider than the screen (#392).
+            // Qt's StyledText folds line breaks.
             text: window.shownLabel(spec.label).replace(/\r?\n/g, "<br>")
             textFormat: Text.StyledText
             Accessible.description: window.descriptionOf(parent)
@@ -792,15 +714,12 @@ DialogWindow {
             text: spec.text
             selectByMouse: true
             wrapMode: TextEdit.NoWrap
-            // At least two lines (Aegisub: 30 pixels).
             implicitHeight: Math.max(2 * font.pixelSize * 1.5 + topPadding + bottomPadding,
                                      contentHeight + topPadding + bottomPadding)
             Accessible.name: window.nameFor(spec)
             Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
-            // Enter is a new line here; Ctrl+Enter presses the Enter button.
-            // Tab moves on (a script's textbox takes no tabs, as in Aegisub).
             Keys.onPressed: event => {
                 if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                         && (event.modifiers & Qt.ControlModifier)) {
@@ -820,13 +739,6 @@ DialogWindow {
     }
     Component {
         id: numberControl
-        // AD1-number-commit: any text can be typed; the value is clamped to
-        // the range when the field is committed (Enter, leaving it, a button).
-        // The arrows, the wheel, Up / Down and Page Up / Page Down step it by
-        // 1 / 10 steps: an intedit by 1, a floatedit by its step
-        // (AD1-float-step); a floatedit without one is a plain number field.
-        // An intedit keeps legacy NumCtrl's right-button drag: 1 per 8 pixels
-        // up or down, 10 per 10 pixels sideways.
         TextField {
             id: num
             objectName: "numberField"
@@ -839,14 +751,11 @@ DialogWindow {
             readonly property bool steps: step > 0
             readonly property bool hasLo: isInt ? lo > -2147483648 : lo > -1.7976931348623157e308
             readonly property bool hasHi: isInt ? hi < 2147483647 : hi < 1.7976931348623157e308
-            // The committed value.
             property real value: isInt ? spec.intValue : spec.number
             readonly property real typed: parse(text)
             readonly property bool outOfRange: !isNaN(typed) && (typed < lo || typed > hi)
-            // Text that is no number: it goes back to the value when committed.
             readonly property bool notANumber: isNaN(typed) && text.trim() !== ""
             readonly property bool bad: outOfRange || notANumber
-            // An intedit's decimal, which the field cuts to a whole number.
             readonly property bool truncated: isInt && !isNaN(typed) && /[.,eE]/.test(text)
             readonly property string rangeText: {
                 if (hasLo && hasHi)
@@ -869,9 +778,7 @@ DialogWindow {
             property real oldX: 0
             property real oldY: 0
 
-            // Decimal text only (a comma for the point, an exponent), as the
-            // controller reads it: not 0x10 or Infinity. An intedit cuts a
-            // decimal toward zero (legacy NumCtrl::GetInt).
+            // Decimal text only: Number() would take 0x10 and Infinity.
             function parse(t) {
                 const s = String(t).trim().replace(",", ".")
                 if (!/^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?$/.test(s))
@@ -879,14 +786,12 @@ DialogWindow {
                 const n = Number(s)
                 return !isFinite(n) ? NaN : isInt ? Math.trunc(n) : n
             }
-            // The digits after the point a number is written with (-1: in
-            // exponent form).
+            // MUST KILL: decimals() returns -1 for a number in exponent form
             function decimals(n) {
                 const s = String(n)
                 return s.indexOf("e") >= 0 ? -1 : (s.split(".")[1] || "").length
             }
             function clamp(n) { return Math.min(Math.max(n, lo), hi) }
-            // The shortest text that reads back as the same number.
             function shown(n) { return isInt ? String(Math.trunc(n)) : String(Number(n)) }
             function commit() {
                 const n = parse(text)
@@ -897,8 +802,7 @@ DialogWindow {
                 const base = parse(text)
                 const from = isNaN(base) ? value : clamp(base)
                 let next = from + n * step
-                // The sum to the digits its terms are written with: no float
-                // noise (1.3000000000000003), nothing more dropped.
+                // Round to the operands' digits: no float noise (1.3000000000000003).
                 const places = Math.max(decimals(from), decimals(step))
                 if (!isInt && decimals(from) >= 0 && decimals(step) >= 0 && places <= 100)
                     next = Number(next.toFixed(places))
@@ -1040,13 +944,6 @@ DialogWindow {
     }
     Component {
         id: dropdownControl
-        // Ten items or fewer: a plain list (a letter jumps to the next item
-        // starting with it), the keyboard staying on the dropdown. More:
-        // typing (or Space) opens the list with a filter field, which takes
-        // the keys and an input method's text; the matches keep the
-        // script's order, the first is current, Enter picks it, Esc closes
-        // the list only. A value that is none of the items shows blank and
-        // is returned untouched (legacy).
         ComboBox {
             id: dropdown
             readonly property var spec: parent ? parent.spec : ({})
@@ -1068,7 +965,6 @@ DialogWindow {
             Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== "" && !popup.visible
-            // The script's value when it is none of the items (kept as it is).
             property string unlisted: spec.text
             function readValue() { return currentIndex >= 0 ? currentText : unlisted }
             readonly property var current: currentIndex >= 0 ? spec.items[currentIndex] : unlisted
@@ -1076,9 +972,6 @@ DialogWindow {
                 unlisted = v
                 currentIndex = spec.items.indexOf(v)
             }
-            // The list opens below the dropdown, or above it when there is
-            // more room there, at most as tall as that room (it scrolls) and
-            // no wider than the dialog.
             function fit() {
                 const top = dropdown.mapToItem(null, 0, 0).y
                 const below = window.height - (top + dropdown.height + 2) - 4
@@ -1100,9 +993,6 @@ DialogWindow {
                     openFiltered(event.text)
                 }
             }
-            // A key while the list is open: it moves the current row, picks
-            // it (Enter, Space without a filter), closes the list (Esc) or,
-            // in a short list, jumps to an item.
             function listKey(event) {
                 const view = popup.contentItem.view
                 event.accepted = true
@@ -1121,7 +1011,6 @@ DialogWindow {
                          && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)))
                     typeAhead(event.text.toLowerCase())
                 else {
-                    // Tab closes the list and moves on; the rest are the dropdown's.
                     if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
                         popup.close()
                     event.accepted = false
@@ -1130,7 +1019,6 @@ DialogWindow {
                 if (popup.visible)
                     view.positionViewAtIndex(view.currentIndex, ListView.Contain)
             }
-            // A letter in a short open list: the next row starting with it.
             function typeAhead(letter) {
                 const view = popup.contentItem.view
                 const n = matches.length
@@ -1152,7 +1040,6 @@ DialogWindow {
             }
             popup: Popup {
                 id: list
-                // Set by fit() before each opening.
                 property bool above: false
                 property real room: 320
                 property real roomRight: 180
@@ -1161,9 +1048,9 @@ DialogWindow {
                 width: Math.max(60, Math.min(Math.max(dropdown.width, 180), roomRight))
                 implicitHeight: Math.min(wanted, room)
                 padding: 4
-                // In the dialog: a list window would close on losing the keys.
+                // A list window would close on losing the keys.
                 popupType: Popup.Item
-                focus: false // the keys stay on the dropdown, or go to the filter
+                focus: false
                 closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
                 onAboutToShow: {
                     if (!dropdown.filters)
@@ -1182,7 +1069,6 @@ DialogWindow {
                 contentItem: ColumnLayout {
                     readonly property alias view: view
                     spacing: 4
-                    // The filter; the list's keys go on to the dropdown.
                     TextField {
                         id: filterField
                         objectName: "dropdownFilter"
@@ -1270,10 +1156,6 @@ DialogWindow {
     }
     Component {
         id: colourControl
-        // A swatch, which opens the colour popover, and a field taking
-        // #RRGGBB, RRGGBB or ASS &HBBGGRR& (and the alpha: #RRGGBBAA or
-        // &HAABBGGRR& for coloralpha; AA is the ASS transparency, 0 opaque).
-        // The script gets the value as before (the controller's legacy hex).
         RowLayout {
             id: colourRow
             readonly property var spec: parent ? parent.spec : ({})
@@ -1293,7 +1175,6 @@ DialogWindow {
                 return "#" + hex2(c.r * 255) + hex2(c.g * 255) + hex2(c.b * 255)
                        + (alpha ? hex2(255 - c.a * 255) : "")
             }
-            // A typed colour, or null.
             function parsed(text) {
                 const t = String(text).trim()
                 let m = /^#?([0-9A-Fa-f]{6})([0-9A-Fa-f]{2})?$/.exec(t)
@@ -1312,8 +1193,7 @@ DialogWindow {
             }
             onValueChanged: if (!editing) hexField.text = shownText(value)
             Component.onCompleted: hexField.text = shownText(value)
-            // SY2: the colour popover at the value; its alpha is the ASS
-            // transparency (255 - the colour's own alpha).
+            // ASS alpha is transparency: 255 - the colour's own alpha.
             function pick() {
                 const row = colourRow
                 let before = null
@@ -1321,7 +1201,7 @@ DialogWindow {
                     changeColour: c => row.value = Qt.rgba(c.r / 255, c.g / 255, c.b / 255, row.alpha ? (255 - c.a) / 255 : 1),
                     endDialog: accepted => { if (!accepted) row.value = before }
                 }, () => {
-                    // A copy, once the colour open before has ended: `value` reads back live.
+                    // A copy: a QML colour read back is a live reference.
                     before = Qt.rgba(row.value.r, row.value.g, row.value.b, row.value.a)
                     window.colourPicker.opened("automation")
                     return { r: Math.round(before.r * 255), g: Math.round(before.g * 255), b: Math.round(before.b * 255),

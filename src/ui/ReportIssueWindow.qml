@@ -5,39 +5,22 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// CR1 (#452, CR1-mockups, approved 2026-10-28): Help › Report an issue (and
-// About's), on the dialog frame, modeless and resizable. Its fields are the
-// repository's issue forms' (.github/ISSUE_TEMPLATE: bug.yml, feature.yml,
-// question.yml), so Open on GitHub fills the matching form in the browser.
-// System and settings always go; for a bug the Log excerpt and the
-// screenshot are ticked and can be unticked, the subtitle file only when
-// ticked. Nothing is sent by the app: the browser takes the link, and what
-// a link cannot carry (the screenshot, the subtitle file as a .zip, kept in
-// the cache folder until Done) is offered on Finish on GitHub to drag in.
-// Too long for a link (about 8000 characters): the issue goes to the
-// clipboard and the blank form opens. Copy puts it on the clipboard as
-// Markdown.
 DialogWindow {
     id: issue
     objectName: "reportIssue"
-    required property var reports // CrashReports
-    property var app: null // showInFolder, fileUrl
-    // The window the screenshot is of.
+    required property var reports
+    property var app: null
     property var mainWindow: null
-    // "bug", "feature" or "question".
     property string kind: "bug"
-    // "form", then "finish" after Open on GitHub.
     property string page: "form"
     property bool complete: true
     property string screenshot: ""
     property string subtitleZip: ""
-    // The editing target's file as the form opened ("" without one).
     property string subtitleName: ""
     readonly property var kinds: ["bug", "feature", "question"]
     readonly property var kindNames: [qsTr("Bug"), qsTr("Feature request"), qsTr("Question")]
     readonly property bool bug: kind === "bug"
     readonly property bool ready: titleField.text.trim().length > 0 && first.text.trim().length > 0
-    // Open on GitHub: no browser opened; the issue is on the clipboard.
     signal browserFailed()
 
     dialogId: "reportIssue"
@@ -48,10 +31,8 @@ DialogWindow {
 
     function openForm() {
         reports.discardAttachments()
-        // The Log and the file it shows and sends, as it opens.
         reports.beginIssue()
         subtitleName = reports.subtitleFileName()
-        // The window as it is, before the form opens over it.
         screenshot = mainWindow ? reports.takeScreenshot(mainWindow) : ""
         subtitleZip = ""
         page = "form"
@@ -86,10 +67,8 @@ DialogWindow {
         page = "finish"
         doneButton.forceActiveFocus(Qt.TabFocusReason)
     }
-    // Not when the title bar setting remakes the window (hide, then show).
     onVisibleChanged: if (!visible && !WindowFrame.remaking(issue)) reports.discardAttachments()
 
-    // The form.
     GridLayout {
         visible: issue.page === "form"
         columns: 2
@@ -255,7 +234,6 @@ DialogWindow {
         }
     }
 
-    // Finish on GitHub: what the link could not carry.
     ColumnLayout {
         visible: issue.page === "finish"
         spacing: 12
@@ -327,7 +305,7 @@ DialogWindow {
     buttons: [
         PrimaryButton {
             id: openButton
-            // Hidden, it gives back its slot (FooterButton).
+            // A hidden button still takes the DialogButtonBox's spacing; a negative width gives it back.
             implicitWidth: visible ? Math.max(80, implicitContentWidth + leftPadding + rightPadding)
                                    : -(DialogButtonBox.buttonBox ? DialogButtonBox.buttonBox.spacing : 0)
             objectName: "reportIssueOpen"
@@ -346,7 +324,6 @@ DialogWindow {
         },
         PrimaryButton {
             id: doneButton
-            // Hidden, it gives back its slot (FooterButton).
             implicitWidth: visible ? Math.max(80, implicitContentWidth + leftPadding + rightPadding)
                                    : -(DialogButtonBox.buttonBox ? DialogButtonBox.buttonBox.spacing : 0)
             objectName: "reportIssueDone"
@@ -357,7 +334,6 @@ DialogWindow {
         }
     ]
 
-    // An attachment's preview: its text as it goes, monospace, scrolling.
     component Preview: ScrollView {
         id: preview
         property alias text: previewText.text
@@ -376,8 +352,6 @@ DialogWindow {
             }
         }
     }
-    // A step of Finish on GitHub: its icon, heading and detail, its buttons
-    // under them.
     component Step: RowLayout {
         id: step
         property string iconRole
