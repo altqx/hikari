@@ -56,23 +56,44 @@ bool isFile(const QString &path)
     return !path.isEmpty() && QFileInfo(path).isFile();
 }
 
-// The computers a session's UNC paths (\\host\share, //host/share) name.
+// What a session's path names on another computer: the computer of a UNC
+// path (\\host\share, //host/share, \\?\UNC\host\share), or the whole path
+// of any other device path (\\?\GLOBALROOT\..., which can reach the network
+// too); nothing for this computer's paths, a device path only when it names
+// a drive (\\?\C:\).
+QString networkTarget(const QString &p)
+{
+    auto separator = [&](qsizetype i) { return i < p.size() && (p[i] == u'\\' || p[i] == u'/'); };
+    if (!separator(0) || !separator(1))
+        return {};
+    // The first name of `rest`, or the whole path when there is none
+    // (\\\host: still not this computer).
+    auto host = [&](const QString &rest) {
+        const QString name = rest.section(QRegularExpression(QStringLiteral("[\\\\/]")), 0, 0);
+        return name.isEmpty() ? p : name;
+    };
+    const bool device = p.size() > 3 && (p[2] == u'?' || p[2] == u'.') && separator(3);
+    if (!device)
+        return host(p.mid(2));
+    const QString rest = p.mid(4);
+    const auto drive = rest.size() >= 2 ? rest[0].toLatin1() : 0;
+    if (((drive >= 'A' && drive <= 'Z') || (drive >= 'a' && drive <= 'z')) && rest[1] == u':')
+        return {};
+    if (rest.startsWith(QLatin1String("UNC"), Qt::CaseInsensitive) && rest.size() > 3 &&
+        (rest[3] == u'\\' || rest[3] == u'/'))
+        return host(rest.mid(4));
+    return p;
+}
+
+// The computers (or device paths) a session's files are on, other than this one.
 QStringList networkHosts(const application::Session &session)
 {
     QStringList hosts;
     for (const auto &tab : session.tabs)
-        for (const std::string *path : {&tab.subtitles, &tab.video, &tab.audio, &tab.keyframes}) {
-            const QString p = QString::fromStdString(*path);
-            const bool unc = p.size() > 2 && (p[0] == u'\\' || p[0] == u'/') && (p[1] == u'\\' || p[1] == u'/');
-            // \\?\C:\ and \\.\ are this computer's own paths.
-            if (!unc || p.startsWith(QLatin1String("\\\\.\\")) ||
-                (p.startsWith(QLatin1String("\\\\?\\")) && !p.mid(4).startsWith(QLatin1String("UNC\\"), Qt::CaseInsensitive)))
-                continue;
-            const QString rest = p.mid(p.startsWith(QLatin1String("\\\\?\\")) ? 8 : 2);
-            const QString host = rest.section(QRegularExpression(QStringLiteral("[\\\\/]")), 0, 0);
-            if (!host.isEmpty() && !hosts.contains(host, Qt::CaseInsensitive))
-                hosts << host;
-        }
+        for (const std::string *path : {&tab.subtitles, &tab.video, &tab.audio, &tab.keyframes})
+            if (const QString target = networkTarget(QString::fromStdString(*path));
+                !target.isEmpty() && !hosts.contains(target, Qt::CaseInsensitive))
+                hosts << target;
     return hosts;
 }
 

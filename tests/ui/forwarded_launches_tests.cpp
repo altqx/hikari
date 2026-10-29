@@ -388,8 +388,19 @@ private slots:
         QObject *bar = named("startupBar");
         QVERIFY(bar);
         QTRY_VERIFY(bar->property("visible").toBool());
-        // A file that doesn't open leaves it.
+        // A file that doesn't open leaves it, and so does a session file
+        // that cannot be read (CF3: the offer ends once one is restored).
         take({dir.filePath(QStringLiteral("b/missing.ass"))});
+        QTRY_VERIFY(!forwarded->pending());
+        QTest::qWait(300);
+        QVERIFY(bar->property("visible").toBool());
+        const QString broken = dir.filePath(QStringLiteral("b/broken.hksession"));
+        {
+            QFile f(broken);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("{ not json");
+        }
+        take({broken});
         QTRY_VERIFY(!forwarded->pending());
         QTest::qWait(300);
         QVERIFY(bar->property("visible").toBool());

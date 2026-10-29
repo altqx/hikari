@@ -713,22 +713,28 @@ private slots:
         QTemporaryDir home;
         app::Application a(options(home));
         QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("here.ass")), "here")));
-        application::SessionTab share, media, local;
+        application::SessionTab share, media, local, device;
         share.subtitles = "\\\\nas\\subs\\x.ass";
         media.video = "//media-box/v/x.mkv";
         media.subtitles = "\\\\NAS\\subs\\y.ass";
         local.subtitles = "\\\\?\\C:\\subs\\z.ass";
+        local.video = "\\\\.\\d:\\v.mkv";
+        // Device paths that reach the network redirector count too.
+        device.subtitles = "\\\\?\\UNC\\far\\s\\a.ass";
+        device.audio = "\\\\.\\GLOBALROOT\\Device\\Mup\\mup\\s\\b.wav";
+        device.keyframes = "\\\\\\odd\\k.txt";
         const QString file = home.filePath(QStringLiteral("shared.hksession"));
-        writeSession(file, app::writeSessionJson(application::Session{"HikariSub", true, {share, media, local}, {}}));
+        writeSession(file, app::writeSessionJson(application::Session{"HikariSub", true, {share, media, local, device}, {}}));
         QVariantMap review = a.reviewSession(QUrl::fromLocalFile(file));
         QVERIFY(!review.value(QStringLiteral("ok")).toBool());
-        QCOMPARE(review.value(QStringLiteral("network")).toStringList(), (QStringList{"nas", "media-box"}));
+        QCOMPARE(review.value(QStringLiteral("network")).toStringList(),
+                 (QStringList{"nas", "media-box", "far", QString::fromStdString(device.audio), QString::fromStdString(device.keyframes)}));
         QCOMPARE(titles(a), (QStringList{"here.ass"}));
         review = a.reviewSession(QUrl::fromLocalFile(file), true);
         QVERIFY(review.value(QStringLiteral("ok")).toBool());
         QVERIFY(review.value(QStringLiteral("rows")).toList().isEmpty());
         a.finishClose();
-        QCOMPARE(a.tabs().size(), qsizetype(3));
+        QCOMPARE(a.tabs().size(), qsizetype(4));
         // The program's own last session is not asked about.
         QVERIFY(a.reviewSession({}).value(QStringLiteral("ok")).toBool());
     }

@@ -567,8 +567,9 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             }
             return openResult(QString());
         case application::OpenKind::Session:
-            // CF3: loaded by the shell as Load session loads it, after its review.
-            accepted = true;
+            // CF3: loaded by the shell as Load session loads it, after its
+            // review; the startup offer ends only once it is restored
+            // (sessionRestored), not for a file that fails or is cancelled.
             return openResult(QStringLiteral("session"), file);
         case application::OpenKind::Video:
             // Opened by the shell as OpenFile opens one video (openSingleVideo).
