@@ -56,15 +56,24 @@ QByteArray withoutLayout(const QByteArray &saved)
     return at < 0 ? saved : saved.left(at);
 }
 
-// Every source text the rewrite's catalogs key (i18n/migration/keys.ts, the
-// keys lupdate extracts from the sources).
+// Every source text the interface catalogs key (the Polish catalog's entries
+// lupdate keeps for the sources, so not the vanished or obsolete ones).
 QSet<QString> catalogSources()
 {
     QSet<QString> out;
-    QXmlStreamReader xml(readAll(QStringLiteral(HIKARI_SOURCE_DIR "/i18n/migration/keys.ts")));
-    while (!xml.atEnd())
-        if (xml.readNext() == QXmlStreamReader::StartElement && xml.name() == u"source")
-            out.insert(xml.readElementText());
+    QXmlStreamReader xml(readAll(QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_pl.ts")));
+    QString source;
+    while (!xml.atEnd()) {
+        if (xml.readNext() != QXmlStreamReader::StartElement)
+            continue;
+        if (xml.name() == u"source") {
+            source = xml.readElementText();
+        } else if (xml.name() == u"translation") {
+            const auto type = xml.attributes().value(QStringLiteral("type"));
+            if (type != u"vanished" && type != u"obsolete")
+                out.insert(source);
+        }
+    }
     return out;
 }
 
@@ -708,7 +717,7 @@ private slots:
             // A menu item's binding (menuItemKeys) is the hotkey's key names
             // (hotkeys.cpp's legacy names: "Left" for Previous frame), never
             // a catalog string, though "Left" and "Right" are also Grid
-            // headings since they took legacy's translations (keys.ts).
+            // headings since they took legacy's translations.
             if (sources.contains(text) && !allowed.contains(text) && o && o->objectName() != u"menuItemKeys" && !unshown(o))
             {
                 QString chain;
