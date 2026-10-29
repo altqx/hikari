@@ -8172,6 +8172,10 @@ gdy okno wyników szukania jest otwarte</translation>
         <translation>Właściwości napisów</translation>
     </message>
     <message>
+        <source>Language (program restart required)</source>
+        <translation type="vanished">Język (wymaga restartu programu)</translation>
+    </message>
+    <message>
         <source>Appearance</source>
         <translation>Wygląd</translation>
     </message>
