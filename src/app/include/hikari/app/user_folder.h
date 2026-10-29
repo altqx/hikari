@@ -6,9 +6,15 @@
 //   settings.toml   preferences (CF1 #488; hikari.ini before, kept as
 //   hotkeys.toml    hikari.ini.old once converted)
 //   state.json      window places, recents and other things the app remembers
+//   rules.toml      Fix minor errors' rules (CF2 #489; Rules.txt before,
+//                   kept as Rules.txt.old once converted, as each list)
+//   shapes.toml     the drawing tool's shapes (ShapesSettings.txt)
+//   tags.toml       the all-tags tool's tags (AllTagsSettings.txt)
 //   automation/autoload, automation/include   (?user; DependencyControl's too)
 //   dictionaries/   Hunspell .dic/.aff, UserDic.udic
-//   catalogs/       style and font catalogs
+//   catalogs/       style catalogs (.sty) and the font catalogs: fonts.toml
+//                   and fonts.autosave-0..2.toml (FontCatalogs.txt,
+//                   FontCatalogsAutosave0..2.txt)
 //   presets/        saved workspace layouts and other presets
 //   recovery/
 //
