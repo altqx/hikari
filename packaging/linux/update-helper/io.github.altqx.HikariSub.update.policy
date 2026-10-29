@@ -2,8 +2,8 @@
 <!DOCTYPE policyconfig PUBLIC
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
-<!-- HikariSub's update through pkexec, for the deb and rpm packages
-     (installers spec, 4.4). The same file on the legacy and Qt branches. -->
+<!-- HikariSub's update through pkexec, for the deb and rpm packages.
+     Same bytes on the main and legacy branches. -->
 <policyconfig>
   <vendor>altqx</vendor>
   <vendor_url>https://github.com/altqx/hikari</vendor_url>

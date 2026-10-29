@@ -1,20 +1,11 @@
 name: AUR publish
 
-# Publishes an existing release to the AUR (installers spec, 5.5), for when
-# the release job could not: no AUR account or key yet, or the AUR was
-# down. The same rules as the release jobs: a stable vX.Y.Z goes to
-# hikarisub-stable-bin and hikarisub-beta-bin, a prerelease to
-# hikarisub-beta-bin only; a package is refused when a newer release of its
-# channel exists or the AUR has a higher version. Each package follows its
-# own codebase (release-aur.sh, ADR-0021): hikarisub-beta-bin follows 0.1.0
-# and up from 0.1.0-beta.1, hikarisub-stable-bin from the first stable 0.1.0
-# or higher, and legacy (0.0.x) until then; a tag of the other codebase is
-# refused for it. Here a missing key, a refused push or a run that publishes
-# to no package fails the run.
+# Publishes an existing release to the AUR when the release job could not, by release-aur.sh's rules (ADR-0021);
+# here a missing key, a refused push or a run that publishes to no package fails the run.
 #
 #   gh workflow run aur-publish.yml -f tag=v0.0.2-rc.1 [-f dry_run=true]
 #
-# This file has the same bytes on the main and legacy branches.
+# Same bytes on the main and legacy branches.
 on:
   workflow_dispatch:
     inputs:

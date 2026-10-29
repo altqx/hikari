@@ -1,12 +1,7 @@
-# Tools that build the HikariSub NSIS installer (installers spec, 6.1).
-# The same file on the legacy and Qt branches. KEY=VALUE lines, readable by
-# bash (source) and by a line parser.
+# Tools that build the NSIS installer: KEY=VALUE lines, read by bash (source) and by a line parser.
+# Same bytes on the main and legacy branches.
 
-# NSIS, built by build-makensis.sh: the compiler from the source, the
-# stubs, plug-ins and headers from the release zip. 3.11 or later: earlier
-# releases have CVE-2025-43715 (an elevated installer's plug-ins folder can
-# be created first by a local user, who plants a DLL in it). The SHA-256s
-# are of the files SourceForge serves, whose SHA-1s match its listing.
+# NSIS 3.11 or later (earlier releases have CVE-2025-43715); the SHA-256s are of the files SourceForge serves.
 MAKENSIS_VERSION=3.13
 NSIS_ZIP_URL=https://downloads.sourceforge.net/project/nsis/NSIS%203/3.13/nsis-3.13.zip
 NSIS_ZIP_SHA256=ba63dffc4410ee89193e1cb5a41989991bd77c61068da17e3156d136b7b0b3d8

@@ -1,30 +1,14 @@
 #!/bin/sh
-# Pushes one rendered AUR package to its AUR git repository (installers
-# spec, 5.5):
+# Pushes one rendered AUR package (render-pkgbuild.sh's PKGBUILD and .SRCINFO in <dir>) to its AUR git repository,
+# with the key in $AUR_SSH_PRIVATE_KEY. Same pkgver or files already there: nothing is pushed.
 #
 #   packaging/linux/aur/publish-aur.sh [--dry-run] [--strict] [--remote <url>] <package> <version> <dir>
 #
-# <dir> holds the PKGBUILD and .SRCINFO that render-pkgbuild.sh wrote for
-# <package> and the release <version>. The script clones
-# ssh://aur@aur.archlinux.org/<package>.git with the private key in
-# $AUR_SSH_PRIVATE_KEY (written to a 0600 file, never printed), checking the
-# host against aur.known_hosts beside this script. A package the AUR does not
-# have yet clones empty, and the first push creates it. The commit, "Update
-# to <version>", is by altqx <altqx@users.noreply.github.com>.
-#
-# Running it again for the same version changes nothing: when the AUR already
-# has this pkgver (whatever its pkgrel), or the same two files, nothing is
-# committed or pushed.
-#
-#   --dry-run  everything but the push; the commit is shown instead. Without
-#              a key it clones over anonymous https, which needs no account.
+#   --dry-run  everything but the push; without a key it clones over anonymous https.
 #   --remote   another repository in place of the AUR's (tests).
-#   --strict   a missing key and a failed clone or push are errors (exit 1).
-#              Without it they are ::warning:: lines and the exit is 0: the
-#              GitHub release is out already, and the owner can publish it
-#              later with the AUR publish workflow.
+#   --strict   a missing key and a failed clone or push are errors (exit 1), not ::warning:: lines with exit 0.
 #
-# This file has the same bytes on the legacy (main) and Qt (qt) branches.
+# Same bytes on the main and legacy branches.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -54,7 +38,6 @@ pkgrel=$(srcinfo_value "$dir/.SRCINFO" pkgrel)
 [ "$(srcinfo_value "$dir/.SRCINFO" pkgbase)" = "$package" ] ||
     { echo "error: $dir/.SRCINFO is not $package" >&2; exit 2; }
 
-# What the owner does once: the AUR account, its key, then a manual publish.
 setup_hint="If the AUR account or its key is not set up yet: register at https://aur.archlinux.org/register, add the public key ~/.ssh/aur_ed25519.pub to the account (My Account, SSH Public Key), then publish the newest release with the AUR publish workflow (gh workflow run aur-publish.yml -f tag=v<newest version>)."
 give_up() { # <message>
     if [ "$strict" = true ]; then

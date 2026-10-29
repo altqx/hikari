@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-# Writes a release's update manifest, hikarisub-update.json, checks it
-# against the files and against GitHub, and uploads it (installers spec,
-# 2.3). The same file on the main and legacy branches.
+# Writes a release's update manifest, hikarisub-update.json, checks it against the files and GitHub, and
+# uploads it. Same bytes on the main and legacy branches.
 #
 #   make-update-manifest.py --tag v0.0.2 --dir release [--offer-to legacy] [--upload]
 #   make-update-manifest.py --tag v0.1.0-beta.1 --dir release \
@@ -9,17 +8,8 @@
 #   make-update-manifest.py --tag v0.1.0-beta.1 --check-offer --offer-channel ... --offer-pitch ...
 #   make-update-manifest.py --tag v0.1.0-beta.1 --verify hikarisub-update.json
 #
-# --dir holds the release's files under their asset names (2.1). Each
-# package's size and SHA-256 come from the file there, and the SHA-256 must
-# equal the digest GitHub gives the uploaded asset. --assets-json reads the
-# asset list from a file (the JSON of `gh release view --json assets`)
-# rather than from gh, for tests.
-#
-# A rewrite (0.1.0 and up) manifest names exactly ["qt"] in offer_to: legacy
-# 0.0.2-rc.1 and later install a release that names legacy without asking.
-# Legacy users are offered it through `offer` instead (ADR-0021), whose pitch
-# file is the `pitch` object: {"en": {"title", "highlights", "note"}, ...}.
-# --check-offer checks the offer alone; --verify checks a written manifest.
+# A HikariSub (0.1.0 and up) manifest names exactly ["qt"] in offer_to: HikariSub legacy 0.0.2-rc.1 and later
+# install a release that names legacy without asking, so legacy users get the `offer` instead (ADR-0021).
 
 import argparse
 import hashlib
@@ -49,7 +39,7 @@ LANGUAGE_TAG = re.compile(r"^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8})*$")
 
 
 def asset_names(version):
-    """The package kinds and their asset names (2.1)."""
+    """The package kinds and their asset names."""
     return {
         "nsis": f"HikariSub-{version}-windows-x64-setup.exe",
         "portable-windows": f"HikariSub-{version}-windows-x64.zip",
@@ -84,7 +74,7 @@ def gh(*arguments):
 
 def check_offer_to(codebase, offer_to):
     if codebase == "qt" and offer_to != ["qt"]:
-        fail(f"offer_to {offer_to} must be exactly ['qt']: legacy builds install a rewrite release that names legacy")
+        fail(f"offer_to {offer_to} must be exactly ['qt']: HikariSub legacy builds install a HikariSub release that names legacy")
     if any(entry not in ("legacy", "qt") for entry in offer_to) or codebase not in offer_to:
         fail(f"offer_to {offer_to} must be drawn from legacy and qt and name {codebase}")
 
@@ -117,7 +107,7 @@ def check_pitch(pitch):
 
 def check_offer(codebase, offer):
     if codebase != "qt":
-        fail("only a rewrite release carries an offer")
+        fail("only a HikariSub release (0.1.0 and up) carries an offer")
     if not isinstance(offer, dict) or set(offer) != {"to", "channel", "legacy_support", "pitch"}:
         fail("the offer has exactly to, channel, legacy_support and pitch")
     if offer["to"] != "legacy":
