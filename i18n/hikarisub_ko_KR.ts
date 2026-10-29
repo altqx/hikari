@@ -462,19 +462,19 @@ Output device: %2</source>
         <translation>영상 색인 중 %1%</translation>
     </message>
     <message>
-        <source>Not applied: the Line cannot take these times as it is.</source>
+        <source>Not applied: the line cannot take these times as it is.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Every Line is tapped.</source>
+        <source>Every line is tapped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid the line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 of %2 tapped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid the Line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -519,7 +519,11 @@ Output device: %2</source>
         <translation type="unfinished">%1번 줄</translation>
     </message>
     <message>
-        <source>This Line is one syllable. Split it first, then tap.</source>
+        <source>This line is one syllable. Split it first, then tap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -536,10 +540,6 @@ Output device: %2</source>
     </message>
     <message>
         <source>Space</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Revert Line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4362,7 +4362,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Audio across the top for timing Lines by ear.</source>
+        <source>Audio across the top for timing lines by ear.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backups while you work, and the checks on the line editor’s text.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4407,10 +4411,6 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Backups while you work, and the checks on the Line editor’s text.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14122,21 +14122,7 @@ Styles deleted:
         <translation type="unfinished">%1초</translation>
     </message>
     <message>
-        <source>1 Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n Lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
         <source>Preview on the video</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Loop the Line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14148,46 +14134,7 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>1 template Line</source>
-        <extracomment>The Templates section&apos;s counts: &quot;2 template Lines · 1 code Line · 18 karaoke Lines&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n template Lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>1 code Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n code Lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>1 karaoke Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n karaoke Lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
         <source>New</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This Document has no template Lines yet.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A template Line is a Comment whose Effect starts with “template”: Apply turns each karaoke Line of its Style into new Lines.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14223,14 +14170,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Code Line: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Template Line: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%1, in %2: %3</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14247,10 +14186,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Preview on Line %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Kept from the last run that worked</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14260,22 +14195,6 @@ Styles deleted:
     </message>
     <message>
         <source>No templates yet. Add one with New to preview it here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>These templates give the active Line from no karaoke Line. Apply them to the whole file to preview it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select a karaoke Line to preview the templates on it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Running the templates on Line %1…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No preview of Line %1: the templates stopped with a problem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14300,63 +14219,19 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Applied with problems: %1 Lines from %2 karaoke Lines; the log lists the problems. Undo removes them in one step.</source>
-        <extracomment>After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Applied: %1 Lines from %2 karaoke Lines in %3 s. Undo removes them in one step.</source>
-        <extracomment>After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run&apos;s time</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Changed since Apply</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1 changed since the last Apply; the generated Lines are older.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n template Lines changed since the last Apply; the generated Lines are older.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message>
         <source>Apply</source>
         <translation type="unfinished">적용</translation>
     </message>
     <message>
-        <source>Apply to every karaoke Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>More ways to apply</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Apply to the selected Lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Only the selected Lines are regenerated; the other Lines&apos; output stays as it is.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select a karaoke Line, or a Line generated from one since the file was opened.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Template for each syllable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Template for each Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Template before each Line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14372,10 +14247,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Code for each Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Code for each syllable</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14388,7 +14259,136 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The new Line goes above the first karaoke Line, with that Line&apos;s Style.</source>
+        <source>1 line</source>
+        <translation type="unfinished">1줄</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform>%n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Loop the line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 template line</source>
+        <extracomment>The Templates section&apos;s counts: &quot;2 template lines · 1 code line · 18 karaoke lines&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n template lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 code line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n code lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n karaoke lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This document has no template lines yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A template line is a Comment whose Effect starts with “template”: Apply turns each karaoke line of its Style into new lines.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code line: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template line: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview on line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These templates give the active line from no karaoke line. Apply them to the whole file to preview it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a karaoke line to preview the templates on it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running the templates on line %1…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No preview of line %1: the templates stopped with a problem.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applied with problems: %1 lines from %2 karaoke lines; the log lists the problems. Undo removes them in one step.</source>
+        <extracomment>After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applied: %1 lines from %2 karaoke lines in %3 s. Undo removes them in one step.</source>
+        <extracomment>After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run&apos;s time</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 changed since the last Apply; the generated lines are older.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n template lines changed since the last Apply; the generated lines are older.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to every karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to the selected lines</source>
+        <translation type="unfinished">선택한 줄에 적용</translation>
+    </message>
+    <message>
+        <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a karaoke line, or a line generated from one since the file was opened.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template for each line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template before each line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code for each line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14428,7 +14428,12 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the Line&apos;s override tags</source>
+        <source>Keep the line&apos;s override tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllable variables · values for line %1, syllable 1</source>
+        <extracomment>The variables list&apos;s title: their values on the current Line&apos;s first syllable</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14460,11 +14465,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Syllable variables · values for Line %1, syllable 1</source>
-        <extracomment>The variables list&apos;s title: their values on the current Line&apos;s first syllable</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>choose ·</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14485,7 +14485,7 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&lt;b&gt;Preview&lt;/b&gt; · Line %1 · %2</source>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the Template editor&apos;s preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
         <translation type="unfinished"></translation>
     </message>
@@ -14502,7 +14502,7 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The karaoke fill from left to right, fading in with the Line and out after it.</source>
+        <source>The karaoke fill from left to right, fading in with the line and out after it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14570,24 +14570,112 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Colour per Line</source>
+        <source>Colour per line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lines take turns through a short palette of fill colours, by their place in the file.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>syllable start, from the Line&apos;s start (ms)</source>
+        <source>syllable start, from the line&apos;s start (ms)</source>
         <extracomment>Template variables&apos; descriptions in the template editor&apos;s list (karaoke templater docs)</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>syllable end, from the Line&apos;s start (ms)</source>
+        <source>syllable end, from the line&apos;s start (ms)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>middle of the syllable, from the Line&apos;s start (ms)</source>
+        <source>middle of the syllable, from the line&apos;s start (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>number of the syllable in the line, from 1 (0: the text before the first \k)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the line&apos;s layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>middle of the line, from the video&apos;s start (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the line&apos;s Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the line&apos;s actor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>number of syllables in the line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>index of the line in the file, the Script Info and Style entries before it counted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>x of the line&apos;s left edge (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>x of the line&apos;s centre (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>x of the line&apos;s right edge (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>width of the line (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>y of the line&apos;s top (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>y of the line&apos;s middle (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>y of the line&apos;s bottom (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>height of the line (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>skdur; the line&apos;s duration in centiseconds in a pre-line template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>smid, from the line&apos;s start; lmid, from the video&apos;s start, in a pre-line template (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets the generated line&apos;s time, by mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets the generated line&apos;s layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets the generated line&apos;s Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the line being generated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines take turns through a short palette of fill colours, by their place in the file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14596,10 +14684,6 @@ Styles deleted:
     </message>
     <message>
         <source>syllable duration in centiseconds</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>number of the syllable in the Line, from 1 (0: the text before the first \k)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14639,10 +14723,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>the Line&apos;s layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Line start, from the video&apos;s start (ms)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14652,18 +14732,6 @@ Styles deleted:
     </message>
     <message>
         <source>Line duration (ms)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>middle of the Line, from the video&apos;s start (ms)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>the Line&apos;s Style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>the Line&apos;s actor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14687,46 +14755,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>number of syllables in the Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>index of the Line in the file, the Script Info and Style entries before it counted</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>x of the Line&apos;s left edge (px)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>x of the Line&apos;s centre (px)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>x of the Line&apos;s right edge (px)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>width of the Line (px)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>y of the Line&apos;s top (px)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>y of the Line&apos;s middle (px)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>y of the Line&apos;s bottom (px)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>height of the Line (px)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Line position for \pos, by alignment</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14740,14 +14768,6 @@ Styles deleted:
     </message>
     <message>
         <source>sdur; ldur in a pre-line template (ms)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>skdur; the Line&apos;s duration in centiseconds in a pre-line template</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>smid, from the Line&apos;s start; lmid, from the video&apos;s start, in a pre-line template (ms)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14795,18 +14815,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>sets the generated Line&apos;s time, by mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>sets the generated Line&apos;s layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>sets the generated Line&apos;s Style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>runs the template this many times</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14832,14 +14840,6 @@ Styles deleted:
     </message>
     <message>
         <source>the loop&apos;s count</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>the Line being generated</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>the karaoke Line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15375,7 +15375,7 @@ Translation - text pasted into subtitles with correct timing.</source>
         <translation>확인되지 않음</translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected Lines for review</source>
+        <source>Not confirmed: marks the selected lines for review</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15453,7 +15453,7 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
+        <source>Each line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
