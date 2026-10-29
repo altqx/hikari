@@ -48,7 +48,7 @@ so a user moving from HikariSub legacy sees the same words.
 | Comment (a commented Line) | ความคิดเห็น | legacy |
 | Dialogue | บทสนทนา | legacy |
 | Original (text) | ต้นฉบับ | legacy |
-| Translation | การแปล, คำแปล | the mode / the text |
+| Translation | การแปล, ข้อความแปล | the mode and menu / the translated text, its column and the Translation layout |
 | ASS override tag, tag | แท็ก | |
 | Karaoke | คาราโอเกะ | legacy |
 | Syllable | พยางค์ | legacy |
@@ -61,6 +61,9 @@ so a user moving from HikariSub legacy sees the same words.
 | Script (automation) | สคริปต์ | |
 | Macro | แมโคร | |
 | Visual tool | เครื่องมือภาพ | legacy |
+| Visual tool names | ตัวบ่งชี้ตำแหน่ง, การวางตำแหน่งข้อความ, เคลื่อนตำแหน่ง, ปรับขนาด, หมุนตามแกน Z, หมุนตามแกน X / Y, คลิปสี่เหลี่ยม, คลิปเวกเตอร์, ภาพวาดเวกเตอร์, เลื่อนตำแหน่ง, ไฮดรา, เพอร์สเปกทีฟ | legacy names, the same on the tool rail and the Hotkeys page |
+| Quad (Perspective tool) | สี่เหลี่ยม | outer / inner quad: สี่เหลี่ยมด้านนอก / ด้านใน |
+| Shape | รูปร่าง | |
 | Clip (vector, rectangular) | คลิป | legacy คลิปเวกเตอร์ |
 | Drawing | ภาพวาด | legacy ภาพวาดเวกเตอร์ |
 | Keyframe | คีย์เฟรม | legacy |
@@ -70,6 +73,8 @@ so a user moving from HikariSub legacy sees the same words.
 | Video | วิดีโอ | |
 | Audio | เสียง | |
 | Hotkey, shortcut | ปุ่มลัด | legacy |
+| Hotkey command name | the menu item's wording | a second binding ("… alt") adds (ทางเลือก), as legacy did |
+| Modifier key | ปุ่มปรับแต่ง | legacy |
 | Settings | การตั้งค่า | menu `&การตั้งค่า` |
 | Spell check | ตรวจการสะกด | legacy |
 | Spellchecker | ตัวตรวจการสะกด | legacy |
@@ -88,3 +93,32 @@ so a user moving from HikariSub legacy sees the same words.
 | Report (an issue) | รายงาน | |
 | Update | อัปเดต | |
 | Error, Warning | ข้อผิดพลาด, คำเตือน | legacy |
+| Template editor | ตัวแก้ไขเทมเพลต | like ตัวแก้ไขบรรทัด |
+| Templater (kara-templater) | ตัวประมวลผลเทมเพลต | |
+| template line, code line, karaoke line | บรรทัดเทมเพลต, บรรทัดโค้ด, บรรทัดคาราโอเกะ | templater keywords (template, code, syl, pre-line…) stay Latin |
+| Generated line | บรรทัดที่สร้างขึ้น | |
+| Modifier (template Effect word) | ตัวปรับแต่ง | |
+| Repeat (loop modifier) | วนซ้ำ | ทำซ้ำ is Redo |
+| Tap to time | แตะเพื่อจัดเวลา | Start / Stop tapping: เริ่มแตะ / หยุดแตะ; tap latency: ความหน่วงการแตะ |
+| Vocal onset | จุดเริ่มเสียงร้อง | |
+| Run (of an automation script) | การเรียกใช้ | the verb: เรียกใช้; Repeat last run: เรียกใช้ครั้งล่าสุดซ้ำ |
+| Run (tag run in Translation mode) | ช่วง | Place run 1: วางช่วงที่ 1 |
+| Commit (a Line's edit) | ยืนยันการแก้ไข | legacy |
+| Autoload scripts | สคริปต์ที่โหลดอัตโนมัติ | apart from Automation |
+| Dialog (script dialog) | กล่องโต้ตอบ | |
+| Layout (panel layout) | เค้าโครง | built-in layouts: แก้ไข, จัดเวลา, ข้อความแปล, ไทป์เซ็ต, คาราโอเกะ |
+| Dock, Undock, Float | ยึดติด, เลิกยึดติด, ลอย | panels |
+| Getting started | เริ่มต้นใช้งาน | |
+| User folder | โฟลเดอร์ผู้ใช้ | |
+| Legacy (HikariSub legacy, its settings) | รุ่นเดิม | Import legacy settings: นำเข้าการตั้งค่ารุ่นเดิม |
+| Lead-in, Lead-out | ช่วงนำ, ช่วงต่อท้าย | |
+| Font collector | ตัวรวบรวมแบบอักษร | |
+| Archive (zip) | ไฟล์บีบอัด | no Latin "zip" |
+| Renderer | ตัวแสดงผล | |
+| Crash, freeze | การขัดข้อง, การค้าง | crash reports |
+| Issue (GitHub) | ปัญหา | Report an issue: รายงานปัญหา |
+| Regular expression | นิพจน์ทั่วไป | |
+| Letter case | ตัวพิมพ์ | lower / upper case: ตัวพิมพ์เล็ก / ตัวพิมพ์ใหญ่ |
+| Script (writing system) | ระบบอักษร | apart from สคริปต์ (automation) |
+| Release notes | บันทึกประจำรุ่น | |
+| Romaji | โรมาจิ | |
