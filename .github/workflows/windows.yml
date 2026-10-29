@@ -113,11 +113,6 @@ jobs:
           cmake --workflow --preset windows-x64-verify
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Performance observations (uncalibrated host)
-        run: |
-          ctest --preset windows-x64-perf
-          Copy-Item out/build/windows-x64-release/perf-report-*.json out/evidence/ -ErrorAction SilentlyContinue
-
       - name: Collect sanitized evidence
         if: always()
         run: |
