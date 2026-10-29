@@ -662,7 +662,7 @@ private slots:
         const QVariantMap corrupt =
             a.reviewSession(QUrl::fromLocalFile(QStringLiteral(HIKARI_SESSION_FIXTURES "/corrupt.txt")));
         QVERIFY(!corrupt.value(QStringLiteral("ok")).toBool());
-        QCOMPARE(corrupt.value(QStringLiteral("problem")).toString(), QStringLiteral("corrupt.txt: Session file is corrupt"));
+        QCOMPARE(corrupt.value(QStringLiteral("problem")).toString(), QStringLiteral("corrupt.txt: Session file is corrupt."));
         QCOMPARE(titles(a), (QStringList{"keep.ass"}));
     }
 
@@ -892,17 +892,17 @@ private slots:
         QVERIFY(QFile::setPermissions(file, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
         QCOMPARE(readAll(file), QByteArray(R"({"version": 1, "tabs": []})"));
 
-        // With last-session.json gone, an unreadable LastSession.txt waits.
+        // With last-session.json gone, an unreadable LastSession.txt is not
+        // converted; the session written as the program ends takes its place.
         QVERIFY(QFile::remove(file));
         {
             app::Application a(options(home));
             QVERIFY(!QFile::exists(file));
             QVERIFY(!QFile::exists(legacy + QStringLiteral(".old")));
         }
-        QVERIFY(QFile::setPermissions(legacy, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
-        app::Application b(options(home));
         QVERIFY(QFile::exists(file));
-        QVERIFY(QFile::exists(legacy + QStringLiteral(".old")));
+        QVERIFY(QFile::setPermissions(legacy, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+        QCOMPARE(readAll(legacy), legacySession());
     }
 
     // CF3: last-session.json keeps its permissions when it is written again,
@@ -930,23 +930,22 @@ private slots:
     }
 
     // CF3: two HikariSubs on one folder: while one holds the conversion's
-    // lock the other leaves LastSession.txt for a later start, and both
+    // lock the other leaves LastSession.txt to it, and both
     // writing last-session.json leave one whole session.
     void twoProgramsShareTheLastSession()
     {
         QTemporaryDir home;
         const QString legacy = home.filePath(QStringLiteral("LastSession.txt"));
         writeSession(legacy, legacySession());
-        {
-            QLockFile other(home.filePath(QStringLiteral(".last-session.lock")));
-            QVERIFY(other.tryLock(0));
-            app::Application a(options(home));
-            QVERIFY(QFile::exists(legacy));
-            QVERIFY(!QFile::exists(a.lastSessionPath()));
-        }
+        QLockFile other(home.filePath(QStringLiteral(".last-session.lock")));
+        QVERIFY(other.tryLock(0));
         app::Application a(options(home));
+        QVERIFY(QFile::exists(legacy));
+        QVERIFY(!QFile::exists(a.lastSessionPath()));
+        other.unlock();
         app::Application b(options(home));
         QVERIFY(QFile::exists(legacy + QStringLiteral(".old")));
+        QCOMPARE(readSession(b.lastSessionPath()).tabs.size(), std::size_t(1));
         QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("first.ass")), "first")));
         QVERIFY(b.openFile(writeSubtitles(dir.filePath(QStringLiteral("second.ass")), "second")));
         QVERIFY(a.saveLastSession());
