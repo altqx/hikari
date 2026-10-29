@@ -49,16 +49,16 @@
     </message>
     <message>
         <source>Pitch is kept.</source>
-        <translation type="unfinished"></translation>
+        <translation>음높이는 유지됩니다.</translation>
     </message>
     <message>
         <source>and</source>
         <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>및</translation>
     </message>
     <message>
         <source>change the speed.</source>
-        <translation type="unfinished"></translation>
+        <translation>키로 속도를 바꿉니다.</translation>
     </message>
     <message>
         <source>Output device</source>
@@ -271,55 +271,55 @@
     </message>
     <message>
         <source>Tap to time</source>
-        <translation type="unfinished"></translation>
+        <translation>탭 타이밍</translation>
     </message>
     <message>
         <source>Tap options</source>
-        <translation type="unfinished"></translation>
+        <translation>탭 옵션</translation>
     </message>
     <message>
         <source>Stop tapping</source>
-        <translation type="unfinished"></translation>
+        <translation>탭 중지</translation>
     </message>
     <message>
         <source>Start tapping</source>
-        <translation type="unfinished"></translation>
+        <translation>탭 시작</translation>
     </message>
     <message>
         <source>Each syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>각 음절</translation>
     </message>
     <message>
         <source>Hold the key: releasing it leaves a gap</source>
-        <translation type="unfinished"></translation>
+        <translation>키를 누르고 있기: 떼면 간격이 생김</translation>
     </message>
     <message>
         <source>Press the key: no gaps</source>
-        <translation type="unfinished"></translation>
+        <translation>키 누르기: 간격 없음</translation>
     </message>
     <message>
         <source>Snap to vocal onsets</source>
-        <translation type="unfinished"></translation>
+        <translation>보컬 시작점에 맞추기</translation>
     </message>
     <message>
         <source>Speed</source>
         <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>속도</translation>
     </message>
     <message>
         <source>%1%</source>
         <extracomment>A playback speed in percent</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1%</translation>
     </message>
     <message>
         <source>Calibrate latency…</source>
         <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>지연 시간 보정…</translation>
     </message>
     <message>
         <source>%1 ms</source>
         <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
-        <translation type="unfinished">%1ms</translation>
+        <translation>%1ms</translation>
     </message>
     <message>
         <source>Waveform</source>
@@ -399,7 +399,7 @@ Output device: %2</source>
     <message>
         <source>Speed: %1%</source>
         <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>속도: %1%</translation>
     </message>
     <message>
         <source>Customise the audio panel</source>
@@ -463,23 +463,23 @@ Output device: %2</source>
     </message>
     <message>
         <source>Not applied: the line cannot take these times as it is.</source>
-        <translation type="unfinished"></translation>
+        <translation>적용하지 않음: 지금 상태의 줄에는 이 시간을 적용할 수 없습니다.</translation>
     </message>
     <message>
         <source>Every line is tapped.</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 줄을 탭했습니다.</translation>
     </message>
     <message>
         <source>Undid the line</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 실행 취소됨</translation>
     </message>
     <message>
         <source>%1 of %2 tapped</source>
-        <translation type="unfinished"></translation>
+        <translation>%1/%2 탭함</translation>
     </message>
     <message>
         <source>Undid “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” 실행 취소됨</translation>
     </message>
     <message>
         <source>%1 is not connected. No output device is available.</source>
@@ -503,98 +503,98 @@ Output device: %2</source>
     </message>
     <message>
         <source>Tapping</source>
-        <translation type="unfinished"></translation>
+        <translation>탭하는 중</translation>
     </message>
     <message>
         <source>Stopped</source>
-        <translation type="unfinished">중지됨</translation>
+        <translation>중지됨</translation>
     </message>
     <message>
         <source>Ready</source>
-        <translation type="unfinished"></translation>
+        <translation>준비됨</translation>
     </message>
     <message>
         <source>Line %1</source>
         <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
-        <translation type="unfinished">%1번 줄</translation>
+        <translation>%1번 줄</translation>
     </message>
     <message>
         <source>This line is one syllable. Split it first, then tap.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 줄은 음절이 하나입니다. 먼저 분할한 다음 탭하십시오.</translation>
     </message>
     <message>
         <source>Revert line</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 되돌리기</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished">실행 취소</translation>
+        <translation>실행 취소</translation>
     </message>
     <message>
         <source>Esc</source>
-        <translation type="unfinished"></translation>
+        <translation>Esc</translation>
     </message>
     <message>
         <source>Resume</source>
-        <translation type="unfinished"></translation>
+        <translation>계속</translation>
     </message>
     <message>
         <source>Space</source>
-        <translation type="unfinished"></translation>
+        <translation>Space</translation>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished"></translation>
+        <translation>시작</translation>
     </message>
     <message>
         <source>Calibrate tap latency</source>
-        <translation type="unfinished"></translation>
+        <translation>탭 지연 시간 보정</translation>
     </message>
     <message>
         <source>Press</source>
-        <translation type="unfinished"></translation>
+        <translation>신호음마다</translation>
     </message>
     <message>
         <source>on each beep.</source>
-        <translation type="unfinished"></translation>
+        <translation>키를 누르십시오.</translation>
     </message>
     <message>
         <source>16 beeps at 100 BPM; the first four are practice.</source>
-        <translation type="unfinished"></translation>
+        <translation>100 BPM으로 신호음이 16번 울리며, 처음 네 번은 연습입니다.</translation>
     </message>
     <message>
         <source>%1 of 16 beeps</source>
         <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>신호음 %1/16</translation>
     </message>
     <message>
         <source>Your presses, in ms after each beep</source>
-        <translation type="unfinished"></translation>
+        <translation>각 신호음 뒤에 누른 시점(ms)</translation>
     </message>
     <message>
         <source>Latency</source>
-        <translation type="unfinished"></translation>
+        <translation>지연 시간</translation>
     </message>
     <message>
         <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
         <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>편차 ±%1ms · 지금까지 집계한 신호음 %2/12</translation>
     </message>
     <message>
         <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
-        <translation type="unfinished"></translation>
+        <translation>편차 ±%1ms · 집계한 신호음 %2/12</translation>
     </message>
     <message>
         <source>Start again</source>
-        <translation type="unfinished"></translation>
+        <translation>다시 시작</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation>취소</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">적용</translation>
+        <translation>적용</translation>
     </message>
 </context>
 <context>
@@ -609,19 +609,19 @@ Output device: %2</source>
     </message>
     <message>
         <source>Changed from the script’s %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>스크립트 값 %1에서 변경되었습니다.</translation>
     </message>
     <message>
         <source>Delete preset</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋 삭제</translation>
     </message>
     <message>
         <source>Delete the preset “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” 프리셋을 삭제하시겠습니까?</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">삭제</translation>
+        <translation>삭제</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -629,71 +629,71 @@ Output device: %2</source>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation type="unfinished"></translation>
+        <translation>답변 및 프리셋</translation>
     </message>
     <message>
         <source>Last used</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 사용 값</translation>
     </message>
     <message>
         <source>Presets</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋</translation>
     </message>
     <message>
         <source>Save as preset…</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋으로 저장…</translation>
     </message>
     <message>
         <source>Reset to the script’s values</source>
-        <translation type="unfinished"></translation>
+        <translation>스크립트 값으로 재설정</translation>
     </message>
     <message>
         <source>Save as preset</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋으로 저장</translation>
     </message>
     <message>
         <source>Preset name</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋 이름</translation>
     </message>
     <message>
         <source>A preset named “%1” exists. Saving replaces it.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” 프리셋이 이미 있습니다. 저장하면 교체됩니다.</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">교체</translation>
+        <translation>교체</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished">저장</translation>
+        <translation>저장</translation>
     </message>
     <message>
         <source>Changed from the script’s %1. Click the bar to put it back.</source>
-        <translation type="unfinished"></translation>
+        <translation>스크립트 값 %1에서 변경되었습니다. 막대를 클릭하면 되돌립니다.</translation>
     </message>
     <message>
         <source>%1 to %2, in steps of %3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1~%2, %3 단위</translation>
     </message>
     <message>
         <source>%1 to %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1~%2</translation>
     </message>
     <message>
         <source>At least %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 이상</translation>
     </message>
     <message>
         <source>At most %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 이하</translation>
     </message>
     <message>
         <source>%1 becomes %2 when you leave the field.</source>
-        <translation type="unfinished"></translation>
+        <translation>필드를 벗어나면 %1(이)가 %2(으)로 바뀝니다.</translation>
     </message>
     <message>
         <source>Type to filter</source>
-        <translation type="unfinished"></translation>
+        <translation>입력하여 필터</translation>
     </message>
     <message>
         <source>No scripts loaded</source>
@@ -1215,39 +1215,39 @@ Output device: %2</source>
     </message>
     <message>
         <source>The last run&apos;s macro is no longer loaded, so it can&apos;t be repeated.</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막으로 실행한 매크로를 더 이상 불러온 상태가 아니어서 반복할 수 없습니다.</translation>
     </message>
     <message>
         <source>Repeated with the last answers</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 답변으로 반복함</translation>
     </message>
     <message>
         <source>Repeat last run</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 실행 반복</translation>
     </message>
     <message>
         <source>Repeat last run: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 실행 반복: %1</translation>
     </message>
     <message>
         <source>Repeat last run: %1, as %2 with the same answers</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 실행 반복: %1, 같은 답변과 %2 버튼으로</translation>
     </message>
     <message>
         <source>Repeat last run asks questions again rather than answering them for you.</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 실행 반복은 질문에 대신 답하지 않고 다시 묻습니다.</translation>
     </message>
     <message>
         <source>An earlier dialog of this run has changed, so this one is shown with your last answers filled in.</source>
-        <translation type="unfinished"></translation>
+        <translation>이번 실행의 앞선 대화 상자가 바뀌었으므로 이 대화 상자는 마지막 답변을 채운 상태로 표시됩니다.</translation>
     </message>
     <message>
         <source>This dialog has changed since the last run, so it is shown with your last answers filled in.</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 실행 이후 이 대화 상자가 바뀌었으므로 마지막 답변을 채운 상태로 표시됩니다.</translation>
     </message>
     <message>
         <source>The last run did not show this dialog, so it is shown with your last answers filled in.</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 실행에서는 이 대화 상자가 표시되지 않았으므로 마지막 답변을 채운 상태로 표시됩니다.</translation>
     </message>
     <message>
         <source>Open a document to run a macro on.</source>
@@ -1259,7 +1259,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>The subtitles were reloaded while the macro ran; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>매크로가 실행되는 동안 자막을 다시 불러와 아무것도 변경되지 않았습니다.</translation>
     </message>
     <message>
         <source>Its document was closed while the macro ran; nothing was changed.</source>
@@ -1400,15 +1400,15 @@ Output device: %2</source>
     </message>
     <message>
         <source>empty value</source>
-        <translation type="unfinished"></translation>
+        <translation>빈 값</translation>
     </message>
     <message>
         <source>ticked</source>
-        <translation type="unfinished"></translation>
+        <translation>체크됨</translation>
     </message>
     <message>
         <source>not ticked</source>
-        <translation type="unfinished"></translation>
+        <translation>체크 안 됨</translation>
     </message>
 </context>
 <context>
@@ -2610,7 +2610,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>0: the Style&apos;s (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>0: 스타일 값(%1)</translation>
     </message>
     <message>
         <source>Edit style</source>
@@ -2634,7 +2634,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Margins</source>
-        <translation type="unfinished"></translation>
+        <translation>여백</translation>
     </message>
     <message>
         <source>Left margin</source>
@@ -3281,7 +3281,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>The catalogs are saved automatically to fonts.toml in the &quot;catalogs&quot; folder of your user folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>목록은 사용자 폴더의 &quot;catalogs&quot; 폴더에 있는 fonts.toml에 자동으로 저장됩니다.</translation>
     </message>
     <message>
         <source>The catalogs are saved automatically to FontCatalogs.txt in the &quot;Config&quot; folder.</source>
@@ -4130,7 +4130,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>fonts.toml in the &quot;catalogs&quot; folder of your user folder could not be written. Saving is tried again on exit.</source>
-        <translation type="unfinished"></translation>
+        <translation>사용자 폴더의 &quot;catalogs&quot; 폴더에 있는 fonts.toml에 쓸 수 없습니다. 종료할 때 다시 저장을 시도합니다.</translation>
     </message>
     <message>
         <source>From the styles and %1 tags of the open files.</source>
@@ -4183,287 +4183,287 @@ Failed to copy %2 fonts.</source>
     <name>HikariSub.GettingStarted</name>
     <message>
         <source>Getting started</source>
-        <translation type="unfinished"></translation>
+        <translation>시작하기</translation>
     </message>
     <message>
         <source>Video</source>
-        <translation type="unfinished">영상</translation>
+        <translation>영상</translation>
     </message>
     <message>
         <source>Original text</source>
-        <translation type="unfinished">원본</translation>
+        <translation>원문</translation>
     </message>
     <message>
         <source>Line editor</source>
-        <translation type="unfinished">줄 편집기</translation>
+        <translation>줄 편집기</translation>
     </message>
     <message>
         <source>Audio</source>
-        <translation type="unfinished">소리</translation>
+        <translation>소리</translation>
     </message>
     <message>
         <source>Styles</source>
-        <translation type="unfinished">스타일</translation>
+        <translation>스타일</translation>
     </message>
     <message>
         <source>Grid</source>
-        <translation type="unfinished">자막 목록</translation>
+        <translation>자막 목록</translation>
     </message>
     <message>
         <source>Template editor</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 편집기</translation>
     </message>
     <message>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>단계 %1/%2</translation>
     </message>
     <message>
         <source>Welcome to HikariSub</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub에 오신 것을 환영합니다</translation>
     </message>
     <message>
         <source>Let’s get started by choosing your language. Nothing is saved until Finish, and every choice can be changed later.</source>
-        <translation type="unfinished"></translation>
+        <translation>먼저 언어를 선택하십시오. 마침을 누르기 전에는 아무것도 저장되지 않으며, 모든 선택은 나중에 바꿀 수 있습니다.</translation>
     </message>
     <message>
         <source>Later: Settings › General › Language</source>
-        <translation type="unfinished"></translation>
+        <translation>나중에: 설정 › 일반 › 언어</translation>
     </message>
     <message>
         <source>Interface language</source>
-        <translation type="unfinished">인터페이스 언어</translation>
+        <translation>인터페이스 언어</translation>
     </message>
     <message>
         <source>This window switches to the language you pick.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 창은 선택한 언어로 바뀝니다.</translation>
     </message>
     <message>
         <source>Choose what to bring over</source>
-        <translation type="unfinished"></translation>
+        <translation>가져올 항목 선택</translation>
     </message>
     <message>
         <source>Bring over your old settings?</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 설정을 가져오시겠습니까?</translation>
     </message>
     <message>
         <source>The next pages start from these values; a change there wins over the imported one.</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 페이지는 이 값에서 시작합니다. 거기서 변경한 값이 가져온 값보다 우선합니다.</translation>
     </message>
     <message>
         <source>HikariSub 0.0.x is installed on this computer. Nothing in it is changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
     </message>
     <message>
         <source>Later: File › Import legacy settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>나중에: 파일 › 이전 버전 설정 가져오기…</translation>
     </message>
     <message>
         <source>Import my old settings</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 설정 가져오기</translation>
     </message>
     <message>
         <source>Recommended</source>
-        <translation type="unfinished"></translation>
+        <translation>권장</translation>
     </message>
     <message>
         <source>Hotkeys, fonts, audio and video options and your dictionary words.</source>
-        <translation type="unfinished"></translation>
+        <translation>단축키, 글꼴, 소리 및 영상 옵션과 사전에 추가한 단어.</translation>
     </message>
     <message>
         <source>Set up from scratch</source>
-        <translation type="unfinished"></translation>
+        <translation>처음부터 설정</translation>
     </message>
     <message>
         <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub의 기본값으로 시작합니다. 나중에 파일 › 이전 버전 설정 가져오기…로 가져올 수도 있습니다.</translation>
     </message>
     <message>
         <source>Read again</source>
-        <translation type="unfinished"></translation>
+        <translation>다시 읽기</translation>
     </message>
     <message>
         <source>Look</source>
-        <translation type="unfinished"></translation>
+        <translation>모양</translation>
     </message>
     <message>
         <source>Choose a theme. This window changes as you choose.</source>
-        <translation type="unfinished"></translation>
+        <translation>테마를 선택하십시오. 선택하는 대로 이 창이 바뀝니다.</translation>
     </message>
     <message>
         <source>Later: Settings › Appearance</source>
-        <translation type="unfinished"></translation>
+        <translation>나중에: 설정 › 모양</translation>
     </message>
     <message>
         <source>Follow system theme</source>
-        <translation type="unfinished">시스템 테마 따르기</translation>
+        <translation>시스템 테마 따르기</translation>
     </message>
     <message>
         <source>Accent colour</source>
-        <translation type="unfinished"></translation>
+        <translation>강조 색</translation>
     </message>
     <message>
         <source>Further high contrast settings are in Settings › Appearance.</source>
-        <translation type="unfinished"></translation>
+        <translation>그 밖의 고대비 설정은 설정 › 모양에 있습니다.</translation>
     </message>
     <message>
         <source>Enable high contrast</source>
-        <translation type="unfinished"></translation>
+        <translation>고대비 사용</translation>
     </message>
     <message>
         <source>Title bar</source>
-        <translation type="unfinished"></translation>
+        <translation>제목 표시줄</translation>
     </message>
     <message>
         <source>HikariSub’s</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub 자체</translation>
     </message>
     <message>
         <source>The system’s</source>
-        <translation type="unfinished"></translation>
+        <translation>시스템</translation>
     </message>
     <message>
         <source>The system’s suits this desktop.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 데스크톱에는 시스템 제목 표시줄이 어울립니다.</translation>
     </message>
     <message>
         <source>HikariSub’s suits this desktop.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 데스크톱에는 HikariSub 자체 제목 표시줄이 어울립니다.</translation>
     </message>
     <message>
         <source>What do you mostly do?</source>
-        <translation type="unfinished"></translation>
+        <translation>주로 어떤 작업을 하십니까?</translation>
     </message>
     <message>
         <source>Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</source>
-        <translation type="unfinished"></translation>
+        <translation>하나를 고르면 첫 탭이 열릴 때의 레이아웃이 정해집니다. 고르지 않으면 모든 기능을 조금씩 갖춘 편집 레이아웃이 유지됩니다.</translation>
     </message>
     <message>
         <source>Later: View › Layout, or the layout switcher in the title bar</source>
-        <translation type="unfinished"></translation>
+        <translation>나중에: 보기 › 레이아웃 또는 제목 표시줄의 레이아웃 전환기</translation>
     </message>
     <message>
         <source>Translate</source>
-        <translation type="unfinished"></translation>
+        <translation>번역</translation>
     </message>
     <message>
         <source>Time</source>
-        <translation type="unfinished">시간</translation>
+        <translation>타이밍</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>식자</translation>
     </message>
     <message>
         <source>Karaoke</source>
-        <translation type="unfinished">노래방</translation>
+        <translation>노래방</translation>
     </message>
     <message>
         <source>The original text above your translation, with Translation mode on.</source>
-        <translation type="unfinished"></translation>
+        <translation>번역 모드를 켜고 번역문 위에 원문을 표시합니다.</translation>
     </message>
     <message>
         <source>Audio across the top for timing lines by ear.</source>
-        <translation type="unfinished"></translation>
+        <translation>위쪽에 소리를 가로로 놓고 귀로 들으며 줄 타이밍을 맞춥니다.</translation>
     </message>
     <message>
         <source>Backups while you work, and the checks on the line editor’s text.</source>
-        <translation type="unfinished"></translation>
+        <translation>작업 중 백업과 줄 편집기 글자 검사를 설정합니다.</translation>
     </message>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>큰 영상 화면에 시각 도구와 스타일 패널을 함께 둡니다.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 옆에 템플릿 편집기를 두고 소리는 노래방 모드로 표시합니다.</translation>
     </message>
     <message>
         <source>Video and audio</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 및 소리</translation>
     </message>
     <message>
         <source>How subtitles are drawn on the video, and where the sound goes.</source>
-        <translation type="unfinished"></translation>
+        <translation>영상에 자막을 그리는 방식과 소리를 출력할 장치를 정합니다.</translation>
     </message>
     <message>
         <source>Later: Settings › Video and Settings › Audio</source>
-        <translation type="unfinished"></translation>
+        <translation>나중에: 설정 › 영상, 설정 › 소리</translation>
     </message>
     <message>
         <source>Subtitles drawn by</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 렌더러</translation>
     </message>
     <message>
         <source>The only renderer here.</source>
-        <translation type="unfinished"></translation>
+        <translation>여기서 사용할 수 있는 유일한 렌더러입니다.</translation>
     </message>
     <message>
         <source>A sample frame with a subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>자막이 있는 예시 프레임</translation>
     </message>
     <message>
         <source>Sound plays on</source>
-        <translation type="unfinished"></translation>
+        <translation>소리 출력 장치</translation>
     </message>
     <message>
         <source>Test sound</source>
-        <translation type="unfinished"></translation>
+        <translation>소리 테스트</translation>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished"></translation>
+        <translation>편집</translation>
     </message>
     <message>
         <source>Later: Settings › General › Saving and Settings › Spelling &amp; grammar</source>
-        <translation type="unfinished"></translation>
+        <translation>나중에: 설정 › 일반 › 저장, 설정 › 철자 및 문법</translation>
     </message>
     <message>
         <source>Autosave files kept</source>
-        <translation type="unfinished">보관할 자동 저장 파일 수</translation>
+        <translation>보관할 자동 저장 파일 수</translation>
     </message>
     <message>
         <source>Spelling</source>
-        <translation type="unfinished">철자</translation>
+        <translation>철자</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation type="unfinished"></translation>
+        <translation>철자 검사</translation>
     </message>
     <message>
         <source>Grammar</source>
-        <translation type="unfinished">문법</translation>
+        <translation>문법</translation>
     </message>
     <message>
         <source>Off</source>
-        <translation type="unfinished">끔</translation>
+        <translation>끔</translation>
     </message>
     <message>
         <source>English (US)</source>
-        <translation type="unfinished">영어(미국)</translation>
+        <translation>영어(미국)</translation>
     </message>
     <message>
         <source>English (UK)</source>
-        <translation type="unfinished">영어(영국)</translation>
+        <translation>영어(영국)</translation>
     </message>
     <message>
         <source>English (Canada)</source>
-        <translation type="unfinished">영어(캐나다)</translation>
+        <translation>영어(캐나다)</translation>
     </message>
     <message>
         <source>English (Australia)</source>
-        <translation type="unfinished">영어(오스트레일리아)</translation>
+        <translation>영어(오스트레일리아)</translation>
     </message>
     <message>
         <source>Grammar check</source>
-        <translation type="unfinished">문법 검사</translation>
+        <translation>문법 검사</translation>
     </message>
     <message>
         <source>Example</source>
-        <translation type="unfinished"></translation>
+        <translation>예시</translation>
     </message>
     <message>
         <source>She has seen teh last episode already.</source>
-        <translation type="unfinished"></translation>
+        <translation>지난 화는 벌써 봣어요.</translation>
     </message>
     <message>
         <source>Updates and privacy</source>
@@ -4479,27 +4479,27 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Stable versions only</source>
-        <translation type="unfinished">안정 버전만</translation>
+        <translation>안정 버전만</translation>
     </message>
     <message>
         <source>Tested releases.</source>
-        <translation type="unfinished"></translation>
+        <translation>검증된 릴리스입니다.</translation>
     </message>
     <message>
         <source>Pre-releases too</source>
-        <translation type="unfinished"></translation>
+        <translation>시험판도 포함</translation>
     </message>
     <message>
         <source>Beta versions as well, to try what’s coming. They can have bugs.</source>
-        <translation type="unfinished"></translation>
+        <translation>곧 나올 기능을 미리 써 볼 수 있도록 베타 버전도 받습니다. 버그가 있을 수 있습니다.</translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
-        <translation type="unfinished">자동으로 업데이트 확인</translation>
+        <translation>자동으로 업데이트 확인</translation>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts. What’s new on Home needs it too.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub을 시작할 때 하루에 한 번까지 확인합니다. 홈의 새로운 기능에도 필요합니다.</translation>
     </message>
     <message>
         <source>Send anonymous usage data</source>
@@ -4515,55 +4515,55 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Your files</source>
-        <translation type="unfinished"></translation>
+        <translation>내 파일</translation>
     </message>
     <message>
         <source>Everything of yours is in one folder. Copy it to move your setup to another computer.</source>
-        <translation type="unfinished"></translation>
+        <translation>사용자의 모든 파일은 한 폴더에 있습니다. 다른 컴퓨터로 설정을 옮기려면 이 폴더를 복사하십시오.</translation>
     </message>
     <message>
         <source>Later: Settings › General</source>
-        <translation type="unfinished"></translation>
+        <translation>나중에: 설정 › 일반</translation>
     </message>
     <message>
         <source>Your folder</source>
-        <translation type="unfinished"></translation>
+        <translation>사용자 폴더</translation>
     </message>
     <message>
         <source>Open folder</source>
-        <translation type="unfinished"></translation>
+        <translation>폴더 열기</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">뒤로</translation>
+        <translation>뒤로</translation>
     </message>
     <message>
         <source>Skip setup</source>
-        <translation type="unfinished"></translation>
+        <translation>설정 건너뛰기</translation>
     </message>
     <message>
         <source>Finish</source>
-        <translation type="unfinished"></translation>
+        <translation>마침</translation>
     </message>
     <message>
         <source>Next</source>
-        <translation type="unfinished">다음</translation>
+        <translation>다음</translation>
     </message>
     <message>
         <source>Primary language</source>
-        <translation type="unfinished"></translation>
+        <translation>기본 언어</translation>
     </message>
     <message>
         <source>I said I’d be there by nine.</source>
-        <translation type="unfinished"></translation>
+        <translation>아홉 시까지 간다고 했잖아.</translation>
     </message>
     <message>
         <source>Default settings in use</source>
-        <translation type="unfinished"></translation>
+        <translation>기본 설정 사용 중</translation>
     </message>
     <message>
         <source>Help › Getting started opens the setup again.</source>
-        <translation type="unfinished"></translation>
+        <translation>도움말 › 시작하기에서 설정을 다시 열 수 있습니다.</translation>
     </message>
 </context>
 <context>
@@ -4846,31 +4846,31 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Line group description</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 그룹 설명</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished">이름 바꾸기</translation>
+        <translation>이름 바꾸기</translation>
     </message>
     <message>
         <source>Add description</source>
-        <translation type="unfinished"></translation>
+        <translation>설명 추가</translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
-        <translation type="unfinished"></translation>
+        <translation>이 작업을 하면 일부 줄이 줄 그룹 밖에 남게 됩니다</translation>
     </message>
     <message>
         <source>Nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>아무것도 변경되지 않았습니다.</translation>
     </message>
     <message>
         <source>This would break the line group “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 작업을 하면 “%1” 줄 그룹이 깨집니다.</translation>
     </message>
     <message>
         <source>Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
-        <translation type="unfinished"></translation>
+        <translation>아무것도 변경되지 않았습니다. 그룹을 제거한(설명 줄이 삭제됨) 후 다시 시도하거나 취소하십시오.</translation>
     </message>
     <message>
         <source>OK</source>
@@ -4990,7 +4990,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>runs not placed</source>
-        <translation type="unfinished"></translation>
+        <translation>배치하지 않은 서식 구간</translation>
     </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
@@ -5072,35 +5072,35 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Paste the clipboard into these columns of the selected line:</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄에서 클립보드를 붙여 넣을 열:</translation>
     </message>
     <message>
         <source>Paste the clipboard into these columns of the %1 selected lines:</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 %1개에서 클립보드를 붙여 넣을 열:</translation>
     </message>
     <message>
         <source>Copy these columns of the selected line:</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄에서 복사할 열:</translation>
     </message>
     <message>
         <source>Copy these columns of the %1 selected lines:</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 %1개에서 복사할 열:</translation>
     </message>
     <message>
         <source>Select all</source>
-        <translation type="unfinished">모두 선택</translation>
+        <translation>모두 선택</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished">없음</translation>
+        <translation>모두 해제</translation>
     </message>
     <message>
         <source>Paste</source>
-        <translation type="unfinished"></translation>
+        <translation>붙여 넣기</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation type="unfinished">복사</translation>
+        <translation>복사</translation>
     </message>
 </context>
 <context>
@@ -5341,17 +5341,20 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>This hotkey already exists for &quot;%1&quot;.
 What to do?</source>
-        <translation type="unfinished"></translation>
+        <translation>이 단축키는 이미 &quot;%1&quot;에 지정되어 있습니다.
+어떻게 하시겠습니까?</translation>
     </message>
     <message>
         <source>This shortcut already exists in other windows as a shortcut for &quot;%1&quot;.
 What would you like to do?</source>
-        <translation type="unfinished"></translation>
+        <translation>이 단축키는 다른 창들에서 이미 &quot;%1&quot;의 단축키로 사용되고 있습니다.
+어떻게 하시겠습니까?</translation>
     </message>
     <message>
         <source>This shortcut already exists in another window as a shortcut for &quot;%1&quot;.
 What would you like to do?</source>
-        <translation type="unfinished"></translation>
+        <translation>이 단축키는 다른 창에서 이미 &quot;%1&quot;의 단축키로 사용되고 있습니다.
+어떻게 하시겠습니까?</translation>
     </message>
     <message>
         <source>Exit</source>
@@ -5403,1031 +5406,1031 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Commit</source>
-        <translation type="unfinished">확인 후 다음 줄로</translation>
+        <translation>적용</translation>
     </message>
     <message>
         <source>Commit alt</source>
-        <translation type="unfinished"></translation>
+        <translation>적용 (보조)</translation>
     </message>
     <message>
         <source>Previous line</source>
-        <translation type="unfinished">이전 줄</translation>
+        <translation>이전 줄</translation>
     </message>
     <message>
         <source>Previous line alt</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 줄 (보조)</translation>
     </message>
     <message>
         <source>Next line</source>
-        <translation type="unfinished">다음 줄</translation>
+        <translation>다음 줄</translation>
     </message>
     <message>
         <source>Next line alt</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 줄 (보조)</translation>
     </message>
     <message>
         <source>Play</source>
-        <translation type="unfinished">재생</translation>
+        <translation>재생</translation>
     </message>
     <message>
         <source>Play alt</source>
-        <translation type="unfinished"></translation>
+        <translation>재생 (보조)</translation>
     </message>
     <message>
         <source>Play line</source>
-        <translation type="unfinished">줄 재생</translation>
+        <translation>줄 재생</translation>
     </message>
     <message>
         <source>Play line alt</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 재생 (보조)</translation>
     </message>
     <message>
         <source>Stop</source>
-        <translation type="unfinished"></translation>
+        <translation>멈춤</translation>
     </message>
     <message>
         <source>Go to selection</source>
-        <translation type="unfinished">선택 줄로 이동</translation>
+        <translation>선택 줄로 이동</translation>
     </message>
     <message>
         <source>Scroll left</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽으로 스크롤</translation>
     </message>
     <message>
         <source>Scroll right</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽으로 스크롤</translation>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation type="unfinished"></translation>
+        <translation>표시선 이전 재생</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation type="unfinished"></translation>
+        <translation>표시선 이후 재생</translation>
     </message>
     <message>
         <source>Play first 500ms</source>
-        <translation type="unfinished"></translation>
+        <translation>처음 500ms 재생</translation>
     </message>
     <message>
         <source>Play last 500ms</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 500ms 재생</translation>
     </message>
     <message>
         <source>Play 500ms before</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 전 500ms 재생</translation>
     </message>
     <message>
         <source>Play 500ms after</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 후 500ms 재생</translation>
     </message>
     <message>
         <source>Play to the end</source>
-        <translation type="unfinished">끝까지 재생</translation>
+        <translation>끝까지 재생</translation>
     </message>
     <message>
         <source>Add lead-in</source>
-        <translation type="unfinished"></translation>
+        <translation>도입부 추가</translation>
     </message>
     <message>
         <source>Add lead-out</source>
-        <translation type="unfinished"></translation>
+        <translation>종결부 추가</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation type="unfinished">테두리 색상</translation>
+        <translation>테두리 색상</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation type="unfinished">첫 번째 색상</translation>
+        <translation>기본 색상</translation>
     </message>
     <message>
         <source>Secondary color for karaoke</source>
-        <translation type="unfinished">두 번째 색상(노래방 사용 시)</translation>
+        <translation>노래방 보조 색상</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation type="unfinished">그림자 색상</translation>
+        <translation>그림자 색상</translation>
     </message>
     <message>
         <source>Font selection</source>
-        <translation type="unfinished">글꼴 선택</translation>
+        <translation>글꼴 선택</translation>
     </message>
     <message>
         <source>Strikethrough</source>
-        <translation type="unfinished">삭제(표시)선</translation>
+        <translation>취소선</translation>
     </message>
     <message>
         <source>Underline</source>
-        <translation type="unfinished">밑줄</translation>
+        <translation>밑줄</translation>
     </message>
     <message>
         <source>Apply changes</source>
-        <translation type="unfinished">적용</translation>
+        <translation>변경 사항 적용</translation>
     </message>
     <message>
         <source>Apply the changes and go to the next line</source>
-        <translation type="unfinished"></translation>
+        <translation>변경 사항 적용 후 다음 줄로 이동</translation>
     </message>
     <message>
         <source>Next unconfirmed line</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 미확인 줄</translation>
     </message>
     <message>
         <source>Next untranslated line</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 미번역 줄</translation>
     </message>
     <message>
         <source>Hide original</source>
-        <translation type="unfinished"></translation>
+        <translation>원문 숨김</translation>
     </message>
     <message>
         <source>Add bold</source>
-        <translation type="unfinished"></translation>
+        <translation>굵게 추가</translation>
     </message>
     <message>
         <source>Add italic</source>
-        <translation type="unfinished"></translation>
+        <translation>기울임 추가</translation>
     </message>
     <message>
         <source>Paste all</source>
-        <translation type="unfinished">모두 붙여 넣기</translation>
+        <translation>모두 붙여 넣기</translation>
     </message>
     <message>
         <source>Paste the selected</source>
-        <translation type="unfinished">선택 붙여 넣기</translation>
+        <translation>선택 붙여 넣기</translation>
     </message>
     <message>
         <source>Insert difference to the end</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 시간과의 차이 삽입</translation>
     </message>
     <message>
         <source>Mark as unconfirmed and go to the next line</source>
-        <translation type="unfinished"></translation>
+        <translation>미확인으로 표시 후 다음 줄로 이동</translation>
     </message>
     <message>
         <source>Add line wrap</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 바꿈 추가</translation>
     </message>
     <message>
         <source>Insert difference from the start</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 시간과의 차이 삽입</translation>
     </message>
     <message>
         <source>First tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 1</translation>
     </message>
     <message>
         <source>Second tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 2</translation>
     </message>
     <message>
         <source>Third tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 3</translation>
     </message>
     <message>
         <source>4th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 4</translation>
     </message>
     <message>
         <source>5th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 5</translation>
     </message>
     <message>
         <source>6th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 6</translation>
     </message>
     <message>
         <source>7th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 7</translation>
     </message>
     <message>
         <source>8th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 8</translation>
     </message>
     <message>
         <source>9th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 9</translation>
     </message>
     <message>
         <source>10th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 10</translation>
     </message>
     <message>
         <source>11th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 11</translation>
     </message>
     <message>
         <source>12th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 12</translation>
     </message>
     <message>
         <source>13th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 13</translation>
     </message>
     <message>
         <source>14th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 14</translation>
     </message>
     <message>
         <source>15th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 15</translation>
     </message>
     <message>
         <source>16th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 16</translation>
     </message>
     <message>
         <source>17th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 17</translation>
     </message>
     <message>
         <source>18th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 18</translation>
     </message>
     <message>
         <source>19th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 19</translation>
     </message>
     <message>
         <source>20th tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 버튼 20</translation>
     </message>
     <message>
         <source>Set times as a continuous (next line)</source>
-        <translation type="unfinished">연속으로 시간 설정 (종료-이전 줄 시작)</translation>
+        <translation>연속으로 시간 설정 (종료-다음 줄 시작)</translation>
     </message>
     <message>
         <source>Set times as a continuous (previous line)</source>
-        <translation type="unfinished">연속으로 시간 설정 (시작-이전 줄 종료)</translation>
+        <translation>연속으로 시간 설정 (시작-이전 줄 종료)</translation>
     </message>
     <message>
         <source>Copy columns</source>
-        <translation type="unfinished">구분 열 복사</translation>
+        <translation>구분 열 복사</translation>
     </message>
     <message>
         <source>Duplicate lines</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 복제</translation>
     </message>
     <message>
         <source>Hide comments</source>
-        <translation type="unfinished">주석 숨김</translation>
+        <translation>주석 숨김</translation>
     </message>
     <message>
         <source>Show unconfirmed</source>
-        <translation type="unfinished">미확인 표시</translation>
+        <translation>미확인 표시</translation>
     </message>
     <message>
         <source>Turn off filtering</source>
-        <translation type="unfinished">필터링 해제</translation>
+        <translation>필터링 해제</translation>
     </message>
     <message>
         <source>Hide selected lines</source>
-        <translation type="unfinished">선택 줄 숨김</translation>
+        <translation>선택 줄 숨김</translation>
     </message>
     <message>
         <source>Hide lines with styles</source>
-        <translation type="unfinished">스타일</translation>
+        <translation>스타일별 줄 숨김</translation>
     </message>
     <message>
         <source>Show untranslated</source>
-        <translation type="unfinished">번역되지 않음 표시</translation>
+        <translation>번역되지 않음 표시</translation>
     </message>
     <message>
         <source>Set FPS from video</source>
-        <translation type="unfinished">영상에서 프레임 가져오기</translation>
+        <translation>영상에서 프레임 속도 설정</translation>
     </message>
     <message>
         <source>Filter</source>
-        <translation type="unfinished">필터</translation>
+        <translation>필터</translation>
     </message>
     <message>
         <source>Filter after loading subtitles</source>
-        <translation type="unfinished">자막 불러온 후 필터링</translation>
+        <translation>자막 불러온 후 필터링</translation>
     </message>
     <message>
         <source>Do not reset previous filtering</source>
-        <translation type="unfinished">이전 필터링 재설정 안 함</translation>
+        <translation>이전 필터링 재설정 안 함</translation>
     </message>
     <message>
         <source>Ignore filtering in some actions</source>
-        <translation type="unfinished">일부 작업에서 필터링 무시</translation>
+        <translation>일부 작업에서 필터링 무시</translation>
     </message>
     <message>
         <source>Reverse filtering</source>
-        <translation type="unfinished">필터링 반대로 적용</translation>
+        <translation>필터링 반대로 적용</translation>
     </message>
     <message>
         <source>Hide actor</source>
-        <translation type="unfinished">배우</translation>
+        <translation>배우 열 숨김</translation>
     </message>
     <message>
         <source>Hide characters per second</source>
-        <translation type="unfinished">초당 문자</translation>
+        <translation>초당 문자 수 열 숨김</translation>
     </message>
     <message>
         <source>Hide end time</source>
-        <translation type="unfinished">종료 시간</translation>
+        <translation>종료 시간 열 숨김</translation>
     </message>
     <message>
         <source>Hide effect</source>
-        <translation type="unfinished">효과</translation>
+        <translation>효과 열 숨김</translation>
     </message>
     <message>
         <source>Hide layer</source>
-        <translation type="unfinished">레이어</translation>
+        <translation>레이어 열 숨김</translation>
     </message>
     <message>
         <source>Hide left margin</source>
-        <translation type="unfinished">왼쪽 여백</translation>
+        <translation>왼쪽 여백 열 숨김</translation>
     </message>
     <message>
         <source>Hide right margin</source>
-        <translation type="unfinished">오른쪽 여백</translation>
+        <translation>오른쪽 여백 열 숨김</translation>
     </message>
     <message>
         <source>Hide vertical margin</source>
-        <translation type="unfinished">세로 여백</translation>
+        <translation>세로 여백 열 숨김</translation>
     </message>
     <message>
         <source>Hide start time</source>
-        <translation type="unfinished">시작 시간</translation>
+        <translation>시작 시간 열 숨김</translation>
     </message>
     <message>
         <source>Hide style</source>
-        <translation type="unfinished">스타일</translation>
+        <translation>스타일 열 숨김</translation>
     </message>
     <message>
         <source>Hide line wraps</source>
-        <translation type="unfinished">글자 수</translation>
+        <translation>줄 바꿈 수 열 숨김</translation>
     </message>
     <message>
         <source>Make tree</source>
-        <translation type="unfinished">트리구조 만듦</translation>
+        <translation>트리 만들기</translation>
     </message>
     <message>
         <source>Select all lines visible on video</source>
-        <translation type="unfinished">영상에 보이는 모든 줄 선택</translation>
+        <translation>영상에 보이는 모든 줄 선택</translation>
     </message>
     <message>
         <source>Insert after</source>
-        <translation type="unfinished"></translation>
+        <translation>이후에 빈 줄 추가</translation>
     </message>
     <message>
         <source>Insert after with video time</source>
-        <translation type="unfinished">영상 시간을 뒤에 추가(빈 줄) +4초</translation>
+        <translation>영상 시간으로 뒤에 삽입</translation>
     </message>
     <message>
         <source>Insert after with video frame time</source>
-        <translation type="unfinished">영상 시간을 뒤에 추가(선택 줄 글자 포함)</translation>
+        <translation>영상 프레임 시간으로 뒤에 삽입</translation>
     </message>
     <message>
         <source>Insert before</source>
-        <translation type="unfinished"></translation>
+        <translation>이전에 빈 줄 추가</translation>
     </message>
     <message>
         <source>Insert before with video time</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 시간으로 앞에 삽입</translation>
     </message>
     <message>
         <source>Insert before with video frame time</source>
-        <translation type="unfinished">영상 시간을 앞에 추가(선택 줄 글자 포함)</translation>
+        <translation>영상 프레임 시간으로 앞에 삽입</translation>
     </message>
     <message>
         <source>Join lines</source>
-        <translation type="unfinished">줄 병합</translation>
+        <translation>줄 병합</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
-        <translation type="unfinished">줄 병합[&amp;K] (첫 줄 글자 남김)</translation>
+        <translation>줄 병합 (첫 줄 글자 남김)</translation>
     </message>
     <message>
         <source>Join lines and keep last</source>
-        <translation type="unfinished">줄 병합[&amp;H] (끝 줄 글자 남김)</translation>
+        <translation>줄 병합 (끝 줄 글자 남김)</translation>
     </message>
     <message>
         <source>Paste columns</source>
-        <translation type="unfinished">구분 열 붙여 넣기</translation>
+        <translation>구분 열 붙여 넣기</translation>
     </message>
     <message>
         <source>Paste translation text</source>
-        <translation type="unfinished">번역 파일 붙여넣기</translation>
+        <translation>번역문 붙여 넣기</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV file</source>
-        <translation type="unfinished"></translation>
+        <translation>MKV 파일에서 자막 불러오기</translation>
     </message>
     <message>
         <source>Swap lines</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 서로 바꾸기</translation>
     </message>
     <message>
         <source>Dialogue shifting window</source>
-        <translation type="unfinished">번역을 기존 자막과 일치시킵니다</translation>
+        <translation>대사 이동 창</translation>
     </message>
     <message>
         <source>Set new FPS</source>
-        <translation type="unfinished"></translation>
+        <translation>새 프레임 속도 설정</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
-        <translation type="unfinished">자막 미리보기 표시</translation>
+        <translation>자막 미리 보기 표시</translation>
     </message>
     <message>
         <source>Split line at video time</source>
-        <translation type="unfinished">영상 시간에서 줄 분할</translation>
+        <translation>영상 시간에서 줄 분할</translation>
     </message>
     <message>
         <source>Split lines into frames</source>
-        <translation type="unfinished">프레임 단위로 줄 분할</translation>
+        <translation>프레임 단위로 줄 분할</translation>
     </message>
     <message>
         <source>Split lines into characters</source>
-        <translation type="unfinished">글자 단위로 줄 분할</translation>
+        <translation>글자 단위로 줄 분할</translation>
     </message>
     <message>
         <source>Split lines into words</source>
-        <translation type="unfinished">단어 단위로 줄 분할</translation>
+        <translation>단어 단위로 줄 분할</translation>
     </message>
     <message>
         <source>Split lines by wraps</source>
-        <translation type="unfinished">줄 바꿈 기준으로 줄 분할</translation>
+        <translation>줄 바꿈 기준으로 줄 분할</translation>
     </message>
     <message>
         <source>ASS file properties</source>
-        <translation type="unfinished">ASS 파일 정보</translation>
+        <translation>ASS 파일 속성</translation>
     </message>
     <message>
         <source>Check for updates</source>
-        <translation type="unfinished">업데이트 확인</translation>
+        <translation>업데이트 확인</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished"></translation>
+        <translation>프로그램 정보</translation>
     </message>
     <message>
         <source>Report an issue</source>
-        <translation type="unfinished">문제 보고</translation>
+        <translation>문제 보고</translation>
     </message>
     <message>
         <source>Convert to ASS</source>
-        <translation type="unfinished">ASS로 변환</translation>
+        <translation>ASS로 변환</translation>
     </message>
     <message>
         <source>Convert to SRT</source>
-        <translation type="unfinished">SRT로 변환</translation>
+        <translation>SRT로 변환</translation>
     </message>
     <message>
         <source>Convert to MDVD</source>
-        <translation type="unfinished">MDVD로 변환</translation>
+        <translation>MDVD로 변환</translation>
     </message>
     <message>
         <source>Convert to MPL2</source>
-        <translation type="unfinished">MPL2로 변환</translation>
+        <translation>MPL2로 변환</translation>
     </message>
     <message>
         <source>Convert to TMP</source>
-        <translation type="unfinished">TMP로 변환</translation>
+        <translation>TMP로 변환</translation>
     </message>
     <message>
         <source>Open audio from video</source>
-        <translation type="unfinished">영상/소리 파일 열기</translation>
+        <translation>영상에서 소리 열기</translation>
     </message>
     <message>
         <source>Load script</source>
-        <translation type="unfinished">스크립트 불러오기</translation>
+        <translation>스크립트 불러오기</translation>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
-        <translation type="unfinished">자동 불러오기 스크립트 새로 고침</translation>
+        <translation>자동 불러오기 스크립트 새로 고침</translation>
     </message>
     <message>
         <source>Time shift window</source>
-        <translation type="unfinished"></translation>
+        <translation>시간 이동 창</translation>
     </message>
     <message>
         <source>Close audio</source>
-        <translation type="unfinished">소리 닫기</translation>
+        <translation>소리 닫기</translation>
     </message>
     <message>
         <source>Find and replace</source>
-        <translation type="unfinished">찾아서 바꾸기</translation>
+        <translation>찾아서 바꾸기</translation>
     </message>
     <message>
         <source>Font collector</source>
-        <translation type="unfinished">글꼴 수집</translation>
+        <translation>글꼴 수집기</translation>
     </message>
     <message>
         <source>User guide</source>
-        <translation type="unfinished"></translation>
+        <translation>사용자 가이드</translation>
     </message>
     <message>
         <source>Credits</source>
-        <translation type="unfinished"></translation>
+        <translation>만든 사람들</translation>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="unfinished">태그 숨김</translation>
+        <translation>태그 숨김</translation>
     </message>
     <message>
         <source>History</source>
-        <translation type="unfinished">기록</translation>
+        <translation>기록</translation>
     </message>
     <message>
         <source>Merge with previous line</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 줄과 병합</translation>
     </message>
     <message>
         <source>Merge with next line</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 줄과 병합</translation>
     </message>
     <message>
         <source>Open keyframes</source>
-        <translation type="unfinished">키 프레임 열기</translation>
+        <translation>키 프레임 열기</translation>
     </message>
     <message>
         <source>Open auto save</source>
-        <translation type="unfinished">자동 저장 파일 열기</translation>
+        <translation>자동 저장 파일 열기</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
-        <translation type="unfinished">최근 스크립트 실행</translation>
+        <translation>최근 스크립트 실행</translation>
     </message>
     <message>
         <source>Sort all lines by start time</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 줄 정렬 / 시작 시간</translation>
     </message>
     <message>
         <source>Sort all lines by end time</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 줄 정렬 / 종료 시간</translation>
     </message>
     <message>
         <source>Sort all lines by styles</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 줄 정렬 / 스타일</translation>
     </message>
     <message>
         <source>Sort all lines by actor</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 줄 정렬 / 배우</translation>
     </message>
     <message>
         <source>Sort all lines by effect</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 줄 정렬 / 효과</translation>
     </message>
     <message>
         <source>Sort all lines by layer</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 줄 정렬 / 레이어</translation>
     </message>
     <message>
         <source>Sort selected lines by start time</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 정렬 / 시작 시간</translation>
     </message>
     <message>
         <source>Sort selected lines by end time</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 정렬 / 종료 시간</translation>
     </message>
     <message>
         <source>Sort selected lines by styles</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 정렬 / 스타일</translation>
     </message>
     <message>
         <source>Sort selected lines by actor</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 정렬 / 배우</translation>
     </message>
     <message>
         <source>Sort selected lines by effect</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 정렬 / 효과</translation>
     </message>
     <message>
         <source>Sort selected lines by layer</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 정렬 / 레이어</translation>
     </message>
     <message>
         <source>Shift times / run time post processor</source>
-        <translation type="unfinished">시간 이동 / 포스트 프로세서</translation>
+        <translation>시간 이동 / 타이밍 후처리기 실행</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
-        <translation type="unfinished">이전 키 프레임</translation>
+        <translation>이전 키 프레임</translation>
     </message>
     <message>
         <source>Go to next keyframe</source>
-        <translation type="unfinished">다음 키 프레임</translation>
+        <translation>다음 키 프레임</translation>
     </message>
     <message>
         <source>Resample subtitles</source>
-        <translation type="unfinished">자막해상도 변경</translation>
+        <translation>자막 해상도 변경</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished">실행 취소</translation>
+        <translation>실행 취소</translation>
     </message>
     <message>
         <source>Undo to last save</source>
-        <translation type="unfinished">마지막 저장으로 돌리기</translation>
+        <translation>마지막 저장으로 돌리기</translation>
     </message>
     <message>
         <source>Zoom video</source>
-        <translation type="unfinished">영상 확대</translation>
+        <translation>영상 확대</translation>
     </message>
     <message>
         <source>Turn off video zoom</source>
-        <translation type="unfinished">영상 확대 해제</translation>
+        <translation>영상 확대 해제</translation>
     </message>
     <message>
         <source>Open new tab</source>
-        <translation type="unfinished">새 탭 열기</translation>
+        <translation>새 탭 열기</translation>
     </message>
     <message>
         <source>Close current tab</source>
-        <translation type="unfinished"></translation>
+        <translation>현재 탭 닫기</translation>
     </message>
     <message>
         <source>Clean styles of ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation>ASS 파일 스타일 정리</translation>
     </message>
     <message>
         <source>Fix minor errors (experimental)</source>
-        <translation type="unfinished">사소한 오류 수정 (실험적)</translation>
+        <translation>사소한 오류 수정 (실험적)</translation>
     </message>
     <message>
         <source>Find next</source>
-        <translation type="unfinished">다음 찾기</translation>
+        <translation>다음 찾기</translation>
     </message>
     <message>
         <source>Load last session</source>
-        <translation type="unfinished">마지막 작업 열기</translation>
+        <translation>마지막 작업 열기</translation>
     </message>
     <message>
         <source>Next frame</source>
-        <translation type="unfinished">다음 프레임</translation>
+        <translation>다음 프레임</translation>
     </message>
     <message>
         <source>Next tab</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 탭</translation>
     </message>
     <message>
         <source>Open audio</source>
-        <translation type="unfinished">소리 파일 열기</translation>
+        <translation>소리 파일 열기</translation>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 열기</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 파일 열기</translation>
     </message>
     <message>
         <source>Play / Pause</source>
-        <translation type="unfinished">재생 / 일시 정지</translation>
+        <translation>재생 / 일시 정지</translation>
     </message>
     <message>
         <source>Play active line</source>
-        <translation type="unfinished"></translation>
+        <translation>활성 줄 재생</translation>
     </message>
     <message>
         <source>Previous frame</source>
-        <translation type="unfinished">이전 프레임</translation>
+        <translation>이전 프레임</translation>
     </message>
     <message>
         <source>Previous tab</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 탭</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>다시 실행</translation>
     </message>
     <message>
         <source>Delete line</source>
-        <translation type="unfinished">줄 삭제</translation>
+        <translation>줄 삭제</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
-        <translation type="unfinished"></translation>
+        <translation>편집기에서 자막 제거</translation>
     </message>
     <message>
         <source>Delete text</source>
-        <translation type="unfinished">글자 삭제</translation>
+        <translation>글자 삭제</translation>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation type="unfinished">자막 모두 저장</translation>
+        <translation>자막 모두 저장</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished">저장</translation>
+        <translation>저장</translation>
     </message>
     <message>
         <source>Save as...</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 이름으로 저장...</translation>
     </message>
     <message>
         <source>Save translation</source>
-        <translation type="unfinished">번역 저장</translation>
+        <translation>번역본 저장</translation>
     </message>
     <message>
         <source>Save subtitles using the video name</source>
-        <translation type="unfinished">영상과 같은 이름으로 자막 저장</translation>
+        <translation>영상과 같은 이름으로 자막 저장</translation>
     </message>
     <message>
         <source>Find</source>
-        <translation type="unfinished">찾기</translation>
+        <translation>찾기</translation>
     </message>
     <message>
         <source>Select line at current video position</source>
-        <translation type="unfinished"></translation>
+        <translation>현재 영상 위치의 줄 선택</translation>
     </message>
     <message>
         <source>Select lines</source>
-        <translation type="unfinished">선택 줄</translation>
+        <translation>줄 선택</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
-        <translation type="unfinished">영상지점으로 소리 이동</translation>
+        <translation>소리 위치를 영상 시간으로 설정</translation>
     </message>
     <message>
         <source>Set audio marker to video time</source>
-        <translation type="unfinished">영상지점 소리 표시선 설정</translation>
+        <translation>소리 표시선을 영상 시간으로 설정</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation type="unfinished">영상위치-&gt;종료시간</translation>
+        <translation>영상에서 종료 시간 넣기</translation>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation type="unfinished">영상위치-&gt;시작시간</translation>
+        <translation>영상에서 시작 시간 넣기</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">설정</translation>
+        <translation>설정</translation>
     </message>
     <message>
         <source>Go to start time</source>
-        <translation type="unfinished">시작 시간으로</translation>
+        <translation>시작 시간으로</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
-        <translation type="unfinished">종료 시간으로</translation>
+        <translation>종료 시간으로</translation>
     </message>
     <message>
         <source>Change end time to nearest keyframe</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 시간을 가장 가까운 키 프레임으로 변경</translation>
     </message>
     <message>
         <source>Change start time to nearest keyframe</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 시간을 가장 가까운 키 프레임으로 변경</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation type="unfinished"></translation>
+        <translation>철자 검사</translation>
     </message>
     <message>
         <source>Style manager</source>
-        <translation type="unfinished">스타일 관리</translation>
+        <translation>스타일 관리</translation>
     </message>
     <message>
         <source>Copy frame to clipboard</source>
-        <translation type="unfinished">현재 화면 복사(클립보드)</translation>
+        <translation>현재 화면 복사(클립보드)</translation>
     </message>
     <message>
         <source>Unload video</source>
-        <translation type="unfinished">영상 닫기</translation>
+        <translation>영상 닫기</translation>
     </message>
     <message>
         <source>Save frame as PNG</source>
-        <translation type="unfinished">PNG 파일로 화면 저장</translation>
+        <translation>PNG 파일로 화면 저장</translation>
     </message>
     <message>
         <source>5 seconds backward</source>
-        <translation type="unfinished"></translation>
+        <translation>5초 뒤로</translation>
     </message>
     <message>
         <source>1 minute backward</source>
-        <translation type="unfinished"></translation>
+        <translation>1분 뒤로</translation>
     </message>
     <message>
         <source>Show / hide progress bar</source>
-        <translation type="unfinished">진행 표시 줄 보임/ 숨김</translation>
+        <translation>진행 표시줄 표시 / 숨기기</translation>
     </message>
     <message>
         <source>Next chapter</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 챕터</translation>
     </message>
     <message>
         <source>Next file</source>
-        <translation type="unfinished">다음 파일</translation>
+        <translation>다음 파일</translation>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation type="unfinished">가로/세로 비율 변경</translation>
+        <translation>가로 세로 비율 변경</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
-        <translation type="unfinished"></translation>
+        <translation>5초 앞으로</translation>
     </message>
     <message>
         <source>1 minute forward</source>
-        <translation type="unfinished"></translation>
+        <translation>1분 앞으로</translation>
     </message>
     <message>
         <source>Previous chapter</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 챕터</translation>
     </message>
     <message>
         <source>Previous file</source>
-        <translation type="unfinished">이전 파일</translation>
+        <translation>이전 파일</translation>
     </message>
     <message>
         <source>Copy frame with subtitles to clipboard</source>
-        <translation type="unfinished">현재 화면/자막 복사(클립보드)</translation>
+        <translation>현재 화면/자막 복사(클립보드)</translation>
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished">전체 화면</translation>
+        <translation>전체 화면</translation>
     </message>
     <message>
         <source>Volume up</source>
-        <translation type="unfinished"></translation>
+        <translation>음량 높이기</translation>
     </message>
     <message>
         <source>Volume down</source>
-        <translation type="unfinished"></translation>
+        <translation>음량 낮추기</translation>
     </message>
     <message>
         <source>Save frame with subtitles as PNG</source>
-        <translation type="unfinished">PNG 파일로 화면/자막 저장</translation>
+        <translation>PNG 파일로 화면/자막 저장</translation>
     </message>
     <message>
         <source>Hide tags in the line editor</source>
-        <translation type="unfinished">줄 편집기에서 태그 숨기기</translation>
+        <translation>줄 편집기에서 태그 숨기기</translation>
     </message>
     <message>
         <source>Show / hide render cost</source>
-        <translation type="unfinished">렌더링 비용 표시 / 숨기기</translation>
+        <translation>렌더링 비용 표시 / 숨기기</translation>
     </message>
     <message>
         <source>Full screen bar: Auto / Always / Never</source>
-        <translation type="unfinished"></translation>
+        <translation>전체 화면 막대: 자동 / 항상 / 안 함</translation>
     </message>
     <message>
         <source>Tap to time</source>
-        <translation type="unfinished"></translation>
+        <translation>탭 타이밍</translation>
     </message>
     <message>
         <source>Slower</source>
-        <translation type="unfinished"></translation>
+        <translation>속도 낮추기</translation>
     </message>
     <message>
         <source>Faster</source>
-        <translation type="unfinished"></translation>
+        <translation>속도 높이기</translation>
     </message>
     <message>
         <source>Translation mode</source>
-        <translation type="unfinished">번역 모드</translation>
+        <translation>번역 모드</translation>
     </message>
     <message>
         <source>Place run 1</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 1 배치</translation>
     </message>
     <message>
         <source>Place run 2</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 2 배치</translation>
     </message>
     <message>
         <source>Place run 3</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 3 배치</translation>
     </message>
     <message>
         <source>Place run 4</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 4 배치</translation>
     </message>
     <message>
         <source>Place run 5</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 5 배치</translation>
     </message>
     <message>
         <source>Place run 6</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 6 배치</translation>
     </message>
     <message>
         <source>Place run 7</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 7 배치</translation>
     </message>
     <message>
         <source>Place run 8</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 8 배치</translation>
     </message>
     <message>
         <source>Place run 9</source>
-        <translation type="unfinished"></translation>
+        <translation>서식 구간 9 배치</translation>
     </message>
     <message>
         <source>Place the next run</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 서식 구간 배치</translation>
     </message>
     <message>
         <source>Split syllable at the cursor</source>
-        <translation type="unfinished">커서 위치에서 음절 분할</translation>
+        <translation>커서 위치에서 음절 분할</translation>
     </message>
     <message>
         <source>Switch long syllables between \k and \kf</source>
-        <translation type="unfinished"></translation>
+        <translation>긴 음절을 \k와 \kf 사이에서 전환</translation>
     </message>
     <message>
         <source>Position pointer</source>
-        <translation type="unfinished"></translation>
+        <translation>위치 포인터</translation>
     </message>
     <message>
         <source>Text positioning</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 위치 지정</translation>
     </message>
     <message>
         <source>Text moving</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 이동</translation>
     </message>
     <message>
         <source>Text scaling</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 크기 조정</translation>
     </message>
     <message>
         <source>Text Z rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 Z 회전</translation>
     </message>
     <message>
         <source>Text X / Y rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 X / Y 회전</translation>
     </message>
     <message>
         <source>Rectangle clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>사각형 클립</translation>
     </message>
     <message>
         <source>Vector clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>벡터 클립</translation>
     </message>
     <message>
         <source>Vector drawing</source>
-        <translation type="unfinished"></translation>
+        <translation>도형 그리기</translation>
     </message>
     <message>
         <source>Position shifter</source>
-        <translation type="unfinished"></translation>
+        <translation>위치 일괄 이동</translation>
     </message>
     <message>
         <source>Hydra</source>
-        <translation type="unfinished"></translation>
+        <translation>히드라</translation>
     </message>
     <message>
         <source>Perspective</source>
-        <translation type="unfinished"></translation>
+        <translation>원근</translation>
     </message>
     <message>
         <source>Check karaoke</source>
-        <translation type="unfinished">노래방 검사</translation>
+        <translation>노래방 검사</translation>
     </message>
     <message>
         <source>Repeat last run</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 실행 반복</translation>
     </message>
     <message>
         <source>Kanji timer</source>
-        <translation type="unfinished">한자 타이머</translation>
+        <translation>한자 타이머</translation>
     </message>
     <message>
         <source>Getting started</source>
-        <translation type="unfinished"></translation>
+        <translation>시작하기</translation>
     </message>
     <message>
         <source>Global</source>
-        <translation type="unfinished">전역</translation>
+        <translation>전역</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished">자막</translation>
+        <translation>자막 목록</translation>
     </message>
     <message>
         <source>Editor</source>
-        <translation type="unfinished">일반 설정</translation>
+        <translation>편집기</translation>
     </message>
     <message>
         <source>Video</source>
-        <translation type="unfinished">영상</translation>
+        <translation>영상</translation>
     </message>
     <message>
         <source>Audio</source>
-        <translation type="unfinished">소리</translation>
+        <translation>소리</translation>
     </message>
     <message>
         <source>Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).</source>
-        <translation type="unfinished"></translation>
+        <translation>전역 및 편집기 단축키에는 보조 키(예: Shift, Ctrl, Alt)가 포함되어야 합니다.</translation>
     </message>
     <message>
         <source>You cannot use shortcuts for copying, cutting, and pasting.</source>
-        <translation type="unfinished"></translation>
+        <translation>복사, 잘라내기, 붙여 넣기에는 단축키를 사용할 수 없습니다.</translation>
     </message>
     <message>
         <source>You cannot use the program exit shortcut.</source>
-        <translation type="unfinished"></translation>
+        <translation>프로그램 종료 단축키는 사용할 수 없습니다.</translation>
     </message>
 </context>
 <context>
@@ -6666,7 +6669,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>The romaji style needs lines timed with %1 tags.</source>
-        <translation type="unfinished"></translation>
+        <translation>로마자 스타일에는 %1 태그로 타이밍을 맞춘 줄이 필요합니다.</translation>
     </message>
     <message>
         <source>Line pairs</source>
@@ -7309,23 +7312,23 @@ What would you like to do?</source>
     </message>
     <message>
         <source>1 step. Steps after the current one can be redone.</source>
-        <translation type="unfinished"></translation>
+        <translation>단계 1개. 현재 단계 이후의 단계는 다시 실행할 수 있습니다.</translation>
     </message>
     <message>
         <source>%1 steps. Steps after the current one can be redone.</source>
-        <translation type="unfinished"></translation>
+        <translation>단계 %1개. 현재 단계 이후의 단계는 다시 실행할 수 있습니다.</translation>
     </message>
     <message>
         <source>%1, current</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, 현재</translation>
     </message>
     <message>
         <source>Current</source>
-        <translation type="unfinished"></translation>
+        <translation>현재</translation>
     </message>
     <message>
         <source>Go to step</source>
-        <translation type="unfinished"></translation>
+        <translation>이 단계로 이동</translation>
     </message>
     <message>
         <source>Close</source>
@@ -7517,11 +7520,11 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Run the last macro again with the same answers, without its dialogs when they are unchanged</source>
-        <translation type="unfinished"></translation>
+        <translation>바뀌지 않은 대화 상자는 건너뛰고 마지막 매크로를 같은 답변으로 다시 실행합니다</translation>
     </message>
     <message>
         <source>Repeat last run</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 실행 반복</translation>
     </message>
     <message>
         <source>Cancel macro</source>
@@ -7573,11 +7576,11 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
-        <translation type="unfinished"></translation>
+        <translation>대부분의 사용자가 먼저 바꾸는 설정을 차례로 안내합니다</translation>
     </message>
     <message>
         <source>&amp;Getting started</source>
-        <translation type="unfinished"></translation>
+        <translation>시작하기[&amp;G]</translation>
     </message>
     <message>
         <source>Opens the user guide in the default browser</source>
@@ -7589,11 +7592,11 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Opens the folder that holds your settings, scripts, dictionaries and presets</source>
-        <translation type="unfinished"></translation>
+        <translation>설정, 스크립트, 사전, 프리셋이 있는 폴더를 엽니다</translation>
     </message>
     <message>
         <source>Open user &amp;folder</source>
-        <translation type="unfinished"></translation>
+        <translation>사용자 폴더 열기[&amp;F]</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -8289,97 +8292,97 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">설정</translation>
+        <translation>설정</translation>
     </message>
     <message>
         <source>%1 moved to %2. The old file is kept as %3.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1(이)가 %2(으)로 옮겨졌습니다. 이전 파일은 %3(으)로 보관됩니다.</translation>
     </message>
     <message>
         <source>%1, line %2, column %3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, %2번째 줄, %3번째 열</translation>
     </message>
     <message>
         <source>%1 could not be read, so its list is at its defaults for now. HikariSub will not write over it.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1(을)를 읽을 수 없어 지금은 해당 목록을 기본값으로 사용합니다. HikariSub은 이 파일을 덮어쓰지 않습니다.</translation>
     </message>
     <message>
         <source>%1 could not be read, so its list is back at its defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1(을)를 읽을 수 없어 해당 목록을 기본값으로 되돌렸습니다. 파일은 %2(으)로 보관됩니다. 다시 사용하려면 HikariSub이 닫혀 있을 때 파일을 고친 다음 원래 이름으로 되돌리십시오.</translation>
     </message>
     <message>
         <source>%1 could not be read, so it is kept as %2 and a new one is saved.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1(을)를 읽을 수 없어 %2(으)로 보관하고 새 파일을 저장했습니다.</translation>
     </message>
     <message>
         <source>User folder</source>
-        <translation type="unfinished"></translation>
+        <translation>사용자 폴더</translation>
     </message>
     <message>
         <source>Your settings and files moved to %1. Help &gt; Open user folder opens it.</source>
-        <translation type="unfinished"></translation>
+        <translation>설정과 파일이 %1(으)로 옮겨졌습니다. 도움말 &gt; 사용자 폴더 열기로 열 수 있습니다.</translation>
     </message>
     <message numerus="yes">
         <source>%n item(s) stayed where they were, because the user folder already had them.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>사용자 폴더에 이미 있어서 항목 %n개는 원래 위치에 남았습니다.</numerusform>
         </translation>
     </message>
     <message>
         <source>The old DependencyControl stayed behind: HikariSub brings a newer one.</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 DependencyControl은 옮기지 않았습니다. HikariSub에 더 새로운 버전이 포함되어 있습니다.</translation>
     </message>
     <message>
         <source>Moved from: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>옮겨 온 위치: %1</translation>
     </message>
     <message>
         <source>Not moved: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>옮기지 않음: %1</translation>
     </message>
     <message>
         <source>Left behind: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>남겨 둠: %1</translation>
     </message>
     <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 포터블 사본은 설정을 %1에 보관합니다. 이전 버전의 설정은 아직 %2에 있습니다. 사용하려면 HikariSub을 종료하고 그곳에서 hikari.ini를 복사한 다음 여기 있는 settings.toml을 삭제하십시오.</translation>
     </message>
     <message>
         <source>Kept your changed %1; the new bundled version was not copied over it.</source>
-        <translation type="unfinished"></translation>
+        <translation>변경한 %1(을)를 유지했습니다. 새 기본 제공 버전으로 덮어쓰지 않았습니다.</translation>
     </message>
     <message>
         <source>Could not copy the bundled %1 into the user folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>기본 제공 %1(을)를 사용자 폴더에 복사할 수 없습니다.</translation>
     </message>
     <message numerus="yes">
         <source>Removed %n bundled file(s) this version no longer brings.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>이 버전에 더 이상 포함되지 않는 기본 제공 파일 %n개를 제거했습니다.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Copied %n bundled file(s) into the user folder.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>기본 제공 파일 %n개를 사용자 폴더에 복사했습니다.</numerusform>
         </translation>
     </message>
     <message>
         <source>Your settings moved from hikari.ini to settings.toml, hotkeys.toml and state.json. The old file is kept as hikari.ini.old.</source>
-        <translation type="unfinished"></translation>
+        <translation>설정이 hikari.ini에서 settings.toml, hotkeys.toml, state.json으로 옮겨졌습니다. 이전 파일은 hikari.ini.old로 보관됩니다.</translation>
     </message>
     <message>
         <source>%1 could not be read, so its settings are at their defaults for now. HikariSub will not write over it.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1(을)를 읽을 수 없어 지금은 해당 설정을 기본값으로 사용합니다. HikariSub은 이 파일을 덮어쓰지 않습니다.</translation>
     </message>
     <message>
         <source>%1 could not be read, so its settings are back at their defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1(을)를 읽을 수 없어 해당 설정을 기본값으로 되돌렸습니다. 파일은 %2(으)로 보관됩니다. 다시 사용하려면 HikariSub이 닫혀 있을 때 파일을 고친 다음 원래 이름으로 되돌리십시오.</translation>
     </message>
     <message>
         <source>hotkeys.toml: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>hotkeys.toml: %1</translation>
     </message>
 </context>
 <context>
@@ -8489,27 +8492,27 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Case</source>
-        <translation type="unfinished"></translation>
+        <translation>대소문자</translation>
     </message>
     <message>
         <source>Like the found text</source>
-        <translation type="unfinished"></translation>
+        <translation>찾은 글자와 같게</translation>
     </message>
     <message>
         <source>Unchanged</source>
-        <translation type="unfinished"></translation>
+        <translation>변경 안 함</translation>
     </message>
     <message>
         <source>Lower case</source>
-        <translation type="unfinished"></translation>
+        <translation>소문자</translation>
     </message>
     <message>
         <source>Upper case</source>
-        <translation type="unfinished"></translation>
+        <translation>대문자</translation>
     </message>
     <message>
         <source>Case of the replacement</source>
-        <translation type="unfinished"></translation>
+        <translation>바꿀 글자의 대소문자</translation>
     </message>
     <message>
         <source>Match case</source>
@@ -8561,7 +8564,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Lines</source>
-        <translation type="unfinished"></translation>
+        <translation>줄</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -8581,135 +8584,135 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Update rule</source>
-        <translation type="unfinished"></translation>
+        <translation>규칙 수정</translation>
     </message>
     <message>
         <source>%1 of %2 rules on</source>
-        <translation type="unfinished"></translation>
+        <translation>규칙 %1/%2 켜짐</translation>
     </message>
     <message>
         <source>Rule</source>
-        <translation type="unfinished"></translation>
+        <translation>규칙</translation>
     </message>
     <message>
         <source>Find → replace</source>
-        <translation type="unfinished"></translation>
+        <translation>찾기 → 바꾸기</translation>
     </message>
     <message>
         <source>(nothing)</source>
-        <translation type="unfinished"></translation>
+        <translation>(없음)</translation>
     </message>
     <message>
         <source>Expanded</source>
-        <translation type="unfinished">펼침</translation>
+        <translation>펼침</translation>
     </message>
     <message>
         <source>Collapsed</source>
-        <translation type="unfinished">접힘</translation>
+        <translation>접힘</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished">이름</translation>
+        <translation>이름</translation>
     </message>
     <message>
         <source>Find</source>
-        <translation type="unfinished">찾기</translation>
+        <translation>찾기</translation>
     </message>
     <message>
         <source>A regular expression</source>
-        <translation type="unfinished"></translation>
+        <translation>정규식</translation>
     </message>
     <message>
         <source>Search phrase (regular expressions)</source>
-        <translation type="unfinished"></translation>
+        <translation>검색 구문 (정규식)</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>대상</translation>
     </message>
     <message>
         <source>Text and tags</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 및 태그</translation>
     </message>
     <message>
         <source>Tags only</source>
-        <translation type="unfinished"></translation>
+        <translation>태그만</translation>
     </message>
     <message>
         <source>Text only</source>
-        <translation type="unfinished"></translation>
+        <translation>글자만</translation>
     </message>
     <message>
         <source>Replace in</source>
-        <translation type="unfinished"></translation>
+        <translation>바꿀 대상</translation>
     </message>
     <message>
         <source>This tab</source>
-        <translation type="unfinished"></translation>
+        <translation>이 탭</translation>
     </message>
     <message>
         <source>All tabs</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 탭</translation>
     </message>
     <message>
         <source>Tabs to search</source>
-        <translation type="unfinished"></translation>
+        <translation>검색할 탭</translation>
     </message>
     <message>
         <source>Replace all</source>
-        <translation type="unfinished">모두 변경</translation>
+        <translation>모두 바꾸기</translation>
     </message>
     <message>
         <source>Results</source>
-        <translation type="unfinished"></translation>
+        <translation>결과</translation>
     </message>
     <message>
         <source>1 error</source>
-        <translation type="unfinished"></translation>
+        <translation>오류 1개</translation>
     </message>
     <message>
         <source>%1 errors</source>
-        <translation type="unfinished"></translation>
+        <translation>오류 %1개</translation>
     </message>
     <message>
         <source>in 1 file</source>
-        <translation type="unfinished"></translation>
+        <translation>(파일 1개)</translation>
     </message>
     <message>
         <source>in %1 files</source>
-        <translation type="unfinished"></translation>
+        <translation>(파일 %1개)</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">모두</translation>
+        <translation>모두 선택</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished">없음</translation>
+        <translation>모두 해제</translation>
     </message>
     <message>
         <source>Close the results</source>
-        <translation type="unfinished"></translation>
+        <translation>결과 닫기</translation>
     </message>
     <message>
         <source>Line %1</source>
-        <translation type="unfinished">%1번 줄</translation>
+        <translation>%1번 줄</translation>
     </message>
     <message>
         <source>Show the finds</source>
-        <translation type="unfinished"></translation>
+        <translation>찾은 항목 표시</translation>
     </message>
     <message>
         <source>Hide the finds</source>
-        <translation type="unfinished"></translation>
+        <translation>찾은 항목 숨기기</translation>
     </message>
     <message>
         <source>%1 checked</source>
-        <translation type="unfinished"></translation>
+        <translation>%1개 선택됨</translation>
     </message>
     <message>
         <source>Replace checked</source>
-        <translation type="unfinished"></translation>
+        <translation>선택 항목 바꾸기</translation>
     </message>
     <message>
         <source>Styles</source>
@@ -9548,31 +9551,31 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Clear last answers</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 답변 지우기</translation>
     </message>
     <message>
         <source>Forget the answers given in every script dialog?</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 스크립트 대화 상자에서 입력한 답변을 지우시겠습니까?</translation>
     </message>
     <message>
         <source>Repeat last run is off until a macro runs again. Presets are kept.</source>
-        <translation type="unfinished"></translation>
+        <translation>매크로를 다시 실행할 때까지 마지막 실행 반복을 사용할 수 없습니다. 프리셋은 유지됩니다.</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished"></translation>
+        <translation>지우기</translation>
     </message>
     <message>
         <source>User folder</source>
-        <translation type="unfinished"></translation>
+        <translation>사용자 폴더</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">열기</translation>
+        <translation>열기</translation>
     </message>
     <message>
         <source>Open user folder</source>
-        <translation type="unfinished"></translation>
+        <translation>사용자 폴더 열기</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -9738,23 +9741,23 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Preview subtitles at</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 미리 보기 해상도</translation>
     </message>
     <message>
         <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script&apos;s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
-        <translation type="unfinished"></translation>
+        <translation>화면 크기는 화면에 표시되는 영상 크기로 자막을 그리므로 큰 화면이나 고DPI 화면에서도 선명합니다. 어느 쪽이든 스크립트의 레이아웃은 같습니다. 스타일 관리, 글꼴 선택기, 템플릿 편집기의 미리 보기에도 사용됩니다.</translation>
     </message>
     <message>
         <source>Video resolution only with this filter.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 필터에서는 영상 해상도만 사용할 수 있습니다.</translation>
     </message>
     <message>
         <source>Video resolution (as encoded)</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 해상도 (인코딩된 그대로)</translation>
     </message>
     <message>
         <source>Screen size (sharp)</source>
-        <translation type="unfinished"></translation>
+        <translation>화면 크기 (선명)</translation>
     </message>
     <message>
         <source>Turn off the edits preview</source>
@@ -9946,31 +9949,31 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Script dialogs</source>
-        <translation type="unfinished"></translation>
+        <translation>스크립트 대화 상자</translation>
     </message>
     <message>
         <source>Fill in my last answers</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 답변 채우기</translation>
     </message>
     <message>
         <source>Script dialogs open with the answers you gave last time. A value the script works out itself, from the selection say, still wins. Off: they open with the script’s values, and ⋯ › Last used fills yours in.</source>
-        <translation type="unfinished"></translation>
+        <translation>스크립트 대화 상자가 지난번에 입력한 답변으로 열립니다. 선택 영역 등에서 스크립트가 직접 계산한 값은 여전히 우선합니다. 끄면 스크립트의 값으로 열리며, ⋯ › 마지막 사용 값으로 내 답변을 채울 수 있습니다.</translation>
     </message>
     <message>
         <source>Kept answers and presets</source>
-        <translation type="unfinished"></translation>
+        <translation>보관된 답변 및 프리셋</translation>
     </message>
     <message>
         <source>Last answers</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 답변</translation>
     </message>
     <message>
         <source>Presets are kept; delete them from a dialog’s ⋯ menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋은 유지됩니다. 대화 상자의 ⋯ 메뉴에서 삭제하십시오.</translation>
     </message>
     <message>
         <source>Clear last answers…</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 답변 지우기…</translation>
     </message>
     <message>
         <source>Set shortcuts</source>
@@ -10299,11 +10302,11 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Primary language</source>
-        <translation type="unfinished"></translation>
+        <translation>기본 언어</translation>
     </message>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 언어의 단어는 해당 문자 체계에 맞는 다른 설치된 사전으로 검사합니다. 사전이 없는 문자 체계의 단어는 표시하지 않습니다.</translation>
     </message>
 </context>
 <context>
@@ -10877,47 +10880,47 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Reached the end of the subtitles.</source>
-        <translation type="unfinished"></translation>
+        <translation>자막의 끝에 도달했습니다.</translation>
     </message>
     <message>
         <source>Search again from the first line?</source>
-        <translation type="unfinished"></translation>
+        <translation>첫 줄부터 다시 검색하시겠습니까?</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”</translation>
     </message>
     <message>
         <source>%1 or %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 또는 %2</translation>
     </message>
     <message>
         <source>, </source>
-        <translation type="unfinished"></translation>
+        <translation>, </translation>
     </message>
     <message>
         <source>%1 has no style named %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1에 %2 스타일이 없습니다.</translation>
     </message>
     <message>
         <source>The other chosen styles are there. Searching with the missing ones finds fewer lines.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 다른 스타일은 있습니다. 없는 스타일까지 포함해 검색하면 찾는 줄이 더 적어집니다.</translation>
     </message>
     <message>
         <source>%1 has none of the chosen styles.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1에 선택한 스타일이 하나도 없습니다.</translation>
     </message>
     <message>
         <source>Searching only these styles would find nothing.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 스타일만 검색하면 아무것도 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>Replace in every matching file in “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”에서 일치하는 모든 파일을 바꾸시겠습니까?</translation>
     </message>
     <message>
         <source>The files are changed on disk; Undo cannot bring them back. A copy of each file goes to the ReplaceBackup folder first.</source>
-        <translation type="unfinished"></translation>
+        <translation>파일이 디스크에서 직접 변경되며 실행 취소로 되돌릴 수 없습니다. 먼저 각 파일의 사본을 ReplaceBackup 폴더에 저장합니다.</translation>
     </message>
     <message>
         <source>Find</source>
@@ -10925,11 +10928,11 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Could not find “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”(을)를 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>The search folder “%1” does not exist.</source>
-        <translation type="unfinished"></translation>
+        <translation>검색 폴더 “%1”(이)가 없습니다.</translation>
     </message>
     <message>
         <source>In files</source>
@@ -11057,27 +11060,27 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Search from the start</source>
-        <translation type="unfinished"></translation>
+        <translation>처음부터 검색</translation>
     </message>
     <message>
         <source>Stop</source>
-        <translation type="unfinished"></translation>
+        <translation>중지</translation>
     </message>
     <message>
         <source>Drop the missing styles</source>
-        <translation type="unfinished"></translation>
+        <translation>없는 스타일 제외</translation>
     </message>
     <message>
         <source>Search every style</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 스타일 검색</translation>
     </message>
     <message>
         <source>Keep them</source>
-        <translation type="unfinished"></translation>
+        <translation>그대로 유지</translation>
     </message>
     <message>
         <source>Replace in the files</source>
-        <translation type="unfinished"></translation>
+        <translation>파일에서 바꾸기</translation>
     </message>
     <message>
         <source>Replace all</source>
@@ -11335,19 +11338,19 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Lines with or without the text</source>
-        <translation type="unfinished"></translation>
+        <translation>글자를 포함하거나 포함하지 않는 줄</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>찾을 부분</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation type="unfinished"></translation>
+        <translation>줄</translation>
     </message>
     <message>
         <source>Then</source>
-        <translation type="unfinished"></translation>
+        <translation>그다음</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -11704,31 +11707,31 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Sessions (*.hksession *.kls)</source>
-        <translation type="unfinished"></translation>
+        <translation>세션 (*.hksession *.kls)</translation>
     </message>
     <message>
         <source>Sessions (*.hksession)</source>
-        <translation type="unfinished"></translation>
+        <translation>세션 (*.hksession)</translation>
     </message>
     <message>
         <source>“%1” already exists.</source>
-        <translation type="unfinished">“%1”(이)가 이미 있습니다.</translation>
+        <translation>“%1”(이)가 이미 있습니다.</translation>
     </message>
     <message>
         <source>Sessions are saved as .hksession files. Replace the one there?</source>
-        <translation type="unfinished"></translation>
+        <translation>세션은 .hksession 파일로 저장됩니다. 기존 파일을 교체하시겠습니까?</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">교체</translation>
+        <translation>교체</translation>
     </message>
     <message>
         <source>This session opens files on another computer.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 세션은 다른 컴퓨터에 있는 파일을 엽니다.</translation>
     </message>
     <message>
         <source>“%1” names files on %2. Opening it connects to them.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”에는 %2에 있는 파일이 지정되어 있습니다. 열면 해당 파일에 연결합니다.</translation>
     </message>
     <message>
         <source>subtitles</source>
@@ -11844,27 +11847,27 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>%1, line %2: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, %2번째 줄: %3</translation>
     </message>
     <message>
         <source>%1: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: %2</translation>
     </message>
     <message>
         <source>%1 It was kept as %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 이 파일은 %2(으)로 보관되었습니다.</translation>
     </message>
     <message>
         <source>%1 No tabs were restored, and HikariSub will not write over it.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 탭을 복원하지 않았으며, HikariSub은 이 파일을 덮어쓰지 않습니다.</translation>
     </message>
     <message>
         <source>%1 It was kept as %2; no tabs were restored.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 이 파일은 %2(으)로 보관되었으며 탭을 복원하지 않았습니다.</translation>
     </message>
     <message>
         <source>It could not be read.</source>
-        <translation type="unfinished"></translation>
+        <translation>파일을 읽을 수 없습니다.</translation>
     </message>
     <message>
         <source>Restore session</source>
@@ -11932,27 +11935,27 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Session file is corrupt.</source>
-        <translation type="unfinished"></translation>
+        <translation>세션 파일이 손상되었습니다.</translation>
     </message>
     <message>
         <source>It is not a session file.</source>
-        <translation type="unfinished"></translation>
+        <translation>세션 파일이 아닙니다.</translation>
     </message>
     <message>
         <source>&quot;tabs&quot; is not a list.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;tabs&quot; 값이 목록이 아닙니다.</translation>
     </message>
     <message>
         <source>&quot;closed&quot; is not true or false.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;closed&quot; 값이 true 또는 false가 아닙니다.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
-        <translation type="unfinished"></translation>
+        <translation>탭 %1(은)는 객체가 아닙니다.</translation>
     </message>
     <message>
         <source>Tab %1: &quot;%2&quot; has the wrong type.</source>
-        <translation type="unfinished"></translation>
+        <translation>탭 %1: &quot;%2&quot;의 형식이 잘못되었습니다.</translation>
     </message>
 </context>
 <context>
@@ -12107,7 +12110,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Rolled back to the settings before the last import.</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 가져오기 전의 설정으로 되돌렸습니다.</translation>
     </message>
     <message>
         <source>Conflicts %1</source>
@@ -14136,766 +14139,766 @@ Styles deleted:
     <name>HikariSub.TemplateEditor</name>
     <message>
         <source>Template editor</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 편집기</translation>
     </message>
     <message>
         <source>%1 ms</source>
         <extracomment>A time a template took: %1 milliseconds</extracomment>
-        <translation type="unfinished">%1ms</translation>
+        <translation>%1ms</translation>
     </message>
     <message>
         <source>%1 s</source>
         <extracomment>A time a template took: %1 seconds</extracomment>
-        <translation type="unfinished">%1초</translation>
+        <translation>%1초</translation>
     </message>
     <message>
         <source>Preview on the video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상에서 미리 보기</translation>
     </message>
     <message>
         <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 템플릿 실행기는 스크립트(kara-templater.lua)를 불러온 뒤 열려 있는 자막 파일에서 실행됩니다.</translation>
     </message>
     <message>
         <source>Templates</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿</translation>
     </message>
     <message>
         <source>New</source>
-        <translation type="unfinished"></translation>
+        <translation>새로 만들기</translation>
     </message>
     <message>
         <source>Line %1, %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1번 줄, %2</translation>
     </message>
     <message>
         <source>Problem</source>
-        <translation type="unfinished"></translation>
+        <translation>문제</translation>
     </message>
     <message>
         <source>Line %1</source>
-        <translation type="unfinished">%1번 줄</translation>
+        <translation>%1번 줄</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">효과</translation>
+        <translation>효과</translation>
     </message>
     <message>
         <source>Choose what the template runs for</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 실행 단위 선택</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished">스타일</translation>
+        <translation>스타일</translation>
     </message>
     <message>
         <source>Layer</source>
-        <translation type="unfinished">레이어</translation>
+        <translation>레이어</translation>
     </message>
     <message>
         <source>Template text</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 텍스트</translation>
     </message>
     <message>
         <source>%1, in %2: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, %2에서: %3</translation>
     </message>
     <message>
         <source>inserts a variable,</source>
-        <translation type="unfinished"></translation>
+        <translation>변수를 넣고,</translation>
     </message>
     <message>
         <source>starts a Lua expression. Both open a list of what fits.</source>
-        <translation type="unfinished"></translation>
+        <translation>Lua 식을 시작합니다. 둘 다 알맞은 항목 목록을 엽니다.</translation>
     </message>
     <message>
         <source>Preview</source>
-        <translation type="unfinished"></translation>
+        <translation>미리 보기</translation>
     </message>
     <message>
         <source>Kept from the last run that worked</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막으로 성공한 실행의 결과</translation>
     </message>
     <message>
         <source>This file&apos;s templates run Lua code with your rights. Preview them if you trust the file.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 파일의 템플릿은 사용자 권한으로 Lua 코드를 실행합니다. 파일을 신뢰하는 경우에만 미리 보십시오.</translation>
     </message>
     <message>
         <source>No templates yet. Add one with New to preview it here.</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿이 아직 없습니다. 새로 만들기로 템플릿을 추가하면 여기에서 미리 볼 수 있습니다.</translation>
     </message>
     <message>
         <source>L</source>
         <extracomment>The preview&apos;s column: the Line&apos;s layer</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>L</translation>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 시간</translation>
     </message>
     <message>
         <source>End</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 시간</translation>
     </message>
     <message>
         <source>Text</source>
-        <translation type="unfinished">글자</translation>
+        <translation>글자</translation>
     </message>
     <message>
         <source>Apply is off while a template has a problem.</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿에 문제가 있는 동안에는 적용할 수 없습니다.</translation>
     </message>
     <message>
         <source>Changed since Apply</source>
-        <translation type="unfinished"></translation>
+        <translation>적용 후 변경됨</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">적용</translation>
+        <translation>적용</translation>
     </message>
     <message>
         <source>More ways to apply</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 적용 방법</translation>
     </message>
     <message>
         <source>Template for each syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>음절별 템플릿</translation>
     </message>
     <message>
         <source>Template for each character</source>
-        <translation type="unfinished"></translation>
+        <translation>글자별 템플릿</translation>
     </message>
     <message>
         <source>Template for each furigana syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>후리가나 음절별 템플릿</translation>
     </message>
     <message>
         <source>Code run once</source>
-        <translation type="unfinished"></translation>
+        <translation>한 번 실행하는 코드</translation>
     </message>
     <message>
         <source>Code for each syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>음절별 코드</translation>
     </message>
     <message>
         <source>Code for each furigana syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>후리가나 음절별 코드</translation>
     </message>
     <message>
         <source>From a preset</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋에서</translation>
     </message>
     <message>
         <source>1 line</source>
-        <translation type="unfinished">1줄</translation>
+        <translation>1줄</translation>
     </message>
     <message numerus="yes">
         <source>%n lines</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n줄</numerusform>
         </translation>
     </message>
     <message>
         <source>Loop the line</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 반복 재생</translation>
     </message>
     <message>
         <source>1 template line</source>
         <extracomment>The Templates section&apos;s counts: &quot;2 template lines · 1 code line · 18 karaoke lines&quot;</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 줄 1개</translation>
     </message>
     <message numerus="yes">
         <source>%n template lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>템플릿 줄 %n개</numerusform>
         </translation>
     </message>
     <message>
         <source>1 code line</source>
-        <translation type="unfinished"></translation>
+        <translation>코드 줄 1개</translation>
     </message>
     <message numerus="yes">
         <source>%n code lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>코드 줄 %n개</numerusform>
         </translation>
     </message>
     <message>
         <source>1 karaoke line</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 줄 1개</translation>
     </message>
     <message numerus="yes">
         <source>%n karaoke lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>노래방 줄 %n개</numerusform>
         </translation>
     </message>
     <message>
         <source>This document has no template lines yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 문서에는 아직 템플릿 줄이 없습니다.</translation>
     </message>
     <message>
         <source>A template line is a Comment whose Effect starts with “template”: Apply turns each karaoke line of its Style into new lines.</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 줄은 효과가 “template”으로 시작하는 주석 줄입니다. 적용하면 같은 스타일의 노래방 줄마다 새 줄이 만들어집니다.</translation>
     </message>
     <message>
         <source>Code line: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>코드 줄: %1</translation>
     </message>
     <message>
         <source>Template line: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 줄: %1</translation>
     </message>
     <message>
         <source>Preview on line %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1번 줄 미리 보기</translation>
     </message>
     <message>
         <source>These templates give the active line from no karaoke line. Apply them to the whole file to preview it.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 템플릿은 활성 줄을 어느 노래방 줄에서도 만들지 않습니다. 미리 보려면 템플릿을 파일 전체에 적용하십시오.</translation>
     </message>
     <message>
         <source>Select a karaoke line to preview the templates on it.</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿을 미리 보려면 노래방 줄을 선택하십시오.</translation>
     </message>
     <message>
         <source>Running the templates on line %1…</source>
-        <translation type="unfinished"></translation>
+        <translation>%1번 줄에서 템플릿을 실행하는 중…</translation>
     </message>
     <message>
         <source>No preview of line %1: the templates stopped with a problem.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1번 줄을 미리 볼 수 없습니다: 템플릿이 문제로 중단되었습니다.</translation>
     </message>
     <message>
         <source>Applied with problems: %1 lines from %2 karaoke lines; the log lists the problems. Undo removes them in one step.</source>
         <extracomment>After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>문제가 있는 채로 적용했습니다: 노래방 줄 %2개에서 줄 %1개를 만들었으며, 문제는 로그에 나와 있습니다. 실행 취소하면 한 번에 제거됩니다.</translation>
     </message>
     <message>
         <source>Applied: %1 lines from %2 karaoke lines in %3 s. Undo removes them in one step.</source>
         <extracomment>After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run&apos;s time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>적용했습니다: 노래방 줄 %2개에서 줄 %1개를 %3초 만에 만들었습니다. 실행 취소하면 한 번에 제거됩니다.</translation>
     </message>
     <message>
         <source>Line %1 changed since the last Apply; the generated lines are older.</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 적용 이후 %1번 줄이 바뀌었습니다. 생성된 줄은 그 이전 상태입니다.</translation>
     </message>
     <message numerus="yes">
         <source>%n template lines changed since the last Apply; the generated lines are older.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>마지막 적용 이후 템플릿 줄 %n개가 바뀌었습니다. 생성된 줄은 그 이전 상태입니다.</numerusform>
         </translation>
     </message>
     <message>
         <source>Apply to every karaoke line</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 노래방 줄에 적용</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>
-        <translation type="unfinished">선택한 줄에 적용</translation>
+        <translation>선택한 줄에 적용</translation>
     </message>
     <message>
         <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄만 다시 생성하며, 다른 줄의 결과는 그대로 유지됩니다.</translation>
     </message>
     <message>
         <source>Select a karaoke line, or a line generated from one since the file was opened.</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 줄이나, 파일을 연 뒤 노래방 줄에서 생성된 줄을 선택하십시오.</translation>
     </message>
     <message>
         <source>Template for each line</source>
-        <translation type="unfinished"></translation>
+        <translation>줄별 템플릿</translation>
     </message>
     <message>
         <source>Template before each line</source>
-        <translation type="unfinished"></translation>
+        <translation>각 줄 앞 템플릿</translation>
     </message>
     <message>
         <source>Code for each line</source>
-        <translation type="unfinished"></translation>
+        <translation>줄별 코드</translation>
     </message>
     <message>
         <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
-        <translation type="unfinished"></translation>
+        <translation>새 줄은 첫 번째 노래방 줄 위에 그 줄의 스타일로 추가됩니다.</translation>
     </message>
     <message>
         <source>Once</source>
-        <translation type="unfinished"></translation>
+        <translation>한 번</translation>
     </message>
     <message>
         <source>Line</source>
-        <translation type="unfinished">줄</translation>
+        <translation>줄</translation>
     </message>
     <message>
         <source>Syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>음절</translation>
     </message>
     <message>
         <source>Furigana syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>후리가나 음절</translation>
     </message>
     <message>
         <source>Line, before its syllables</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 (음절보다 먼저)</translation>
     </message>
     <message>
         <source>Character</source>
-        <translation type="unfinished"></translation>
+        <translation>글자</translation>
     </message>
     <message>
         <source>Skip blank syllables</source>
-        <translation type="unfinished"></translation>
+        <translation>빈 음절 건너뛰기</translation>
     </message>
     <message>
         <source>Every Style, not only %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1뿐 아니라 모든 스타일</translation>
     </message>
     <message>
         <source>Repeat</source>
-        <translation type="unfinished"></translation>
+        <translation>반복</translation>
     </message>
     <message>
         <source>Keep the line&apos;s override tags</source>
-        <translation type="unfinished"></translation>
+        <translation>줄의 재정의 태그 유지</translation>
     </message>
     <message>
         <source>Syllable variables · values for line %1, syllable 1</source>
         <extracomment>The variables list&apos;s title: their values on the current Line&apos;s first syllable</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>음절 변수 · %1번 줄, 1번 음절의 값</translation>
     </message>
     <message>
         <source>Only syllables marked with an effect</source>
-        <translation type="unfinished"></translation>
+        <translation>효과가 지정된 음절만</translation>
     </message>
     <message>
         <source>No text, tags only</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 없이 태그만</translation>
     </message>
     <message>
         <source>Runs for each</source>
-        <translation type="unfinished"></translation>
+        <translation>실행 단위</translation>
     </message>
     <message>
         <source>Modifiers</source>
-        <translation type="unfinished"></translation>
+        <translation>수정자</translation>
     </message>
     <message>
         <source>The Effect text stays stock syntax; this picker only writes it.</source>
-        <translation type="unfinished"></translation>
+        <translation>효과 텍스트는 표준 구문 그대로 남습니다. 이 선택기는 그 구문을 대신 써 줄 뿐입니다.</translation>
     </message>
     <message>
         <source>Template functions</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 함수</translation>
     </message>
     <message>
         <source>Syllable variables</source>
-        <translation type="unfinished"></translation>
+        <translation>음절 변수</translation>
     </message>
     <message>
         <source>choose ·</source>
-        <translation type="unfinished"></translation>
+        <translation>선택 ·</translation>
     </message>
     <message>
         <source>Enter</source>
-        <translation type="unfinished">Enter</translation>
+        <translation>Enter</translation>
     </message>
     <message>
         <source>insert ·</source>
-        <translation type="unfinished"></translation>
+        <translation>삽입 ·</translation>
     </message>
     <message>
         <source>Esc</source>
-        <translation type="unfinished"></translation>
+        <translation>Esc</translation>
     </message>
     <message>
         <source>close</source>
-        <translation type="unfinished"></translation>
+        <translation>닫기</translation>
     </message>
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the Template editor&apos;s preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>
     </message>
     <message>
         <source>last run that worked</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막으로 성공한 실행</translation>
     </message>
     <message>
         <source>not applied</source>
-        <translation type="unfinished"></translation>
+        <translation>적용 안 됨</translation>
     </message>
     <message>
         <source>Classic fill</source>
-        <translation type="unfinished"></translation>
+        <translation>클래식 채우기</translation>
     </message>
     <message>
         <source>The karaoke fill from left to right, fading in with the line and out after it.</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽에서 오른쪽으로 채워지는 노래방 효과입니다. 줄과 함께 페이드 인하고 줄이 끝나면 페이드 아웃합니다.</translation>
     </message>
     <message>
         <source>Staggered fade</source>
-        <translation type="unfinished"></translation>
+        <translation>차례로 페이드</translation>
     </message>
     <message>
         <source>Syllables fade in one after another, light up as they are sung and fade out together.</source>
-        <translation type="unfinished"></translation>
+        <translation>음절이 하나씩 차례로 페이드 인하고, 부를 때 밝아졌다가 함께 페이드 아웃합니다.</translation>
     </message>
     <message>
         <source>Colour sweep</source>
-        <translation type="unfinished"></translation>
+        <translation>색상 훑기</translation>
     </message>
     <message>
         <source>A second colour wipes across each syllable from left to right while it is sung.</source>
-        <translation type="unfinished"></translation>
+        <translation>각 음절을 부르는 동안 두 번째 색상이 그 음절을 왼쪽에서 오른쪽으로 훑고 지나갑니다.</translation>
     </message>
     <message>
         <source>Scale pop</source>
-        <translation type="unfinished"></translation>
+        <translation>크기 팝</translation>
     </message>
     <message>
         <source>Each syllable swells as it is sung and settles back to its Style&apos;s size in the sung colour.</source>
-        <translation type="unfinished"></translation>
+        <translation>각 음절은 부를 때 부풀었다가, 부른 뒤의 색상으로 스타일 크기에 맞게 다시 줄어듭니다.</translation>
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished"></translation>
+        <translation>튀어 오르기</translation>
     </message>
     <message>
         <source>Each syllable hops up and lands again while it is sung.</source>
-        <translation type="unfinished"></translation>
+        <translation>각 음절이 부르는 동안 위로 튀어 올랐다가 다시 내려앉습니다.</translation>
     </message>
     <message>
         <source>Glow</source>
-        <translation type="unfinished"></translation>
+        <translation>광채</translation>
     </message>
     <message>
         <source>A soft halo flares behind each syllable as it is sung, then fades.</source>
-        <translation type="unfinished"></translation>
+        <translation>각 음절을 부를 때 그 뒤에서 부드러운 빛이 번졌다가 사라집니다.</translation>
     </message>
     <message>
         <source>Sparkles</source>
-        <translation type="unfinished"></translation>
+        <translation>반짝임</translation>
     </message>
     <message>
         <source>Small sparks scatter from each syllable as it is sung.</source>
-        <translation type="unfinished"></translation>
+        <translation>각 음절을 부를 때 작은 불꽃이 흩어집니다.</translation>
     </message>
     <message>
         <source>Echo</source>
-        <translation type="unfinished"></translation>
+        <translation>잔상</translation>
     </message>
     <message>
         <source>A copy of each syllable grows and fades away as it is sung.</source>
-        <translation type="unfinished"></translation>
+        <translation>각 음절을 부를 때 음절의 복사본이 커지면서 사라집니다.</translation>
     </message>
     <message>
         <source>Falling letters</source>
-        <translation type="unfinished"></translation>
+        <translation>떨어지는 글자</translation>
     </message>
     <message>
         <source>Letters drop into place one by one, then light up syllable by syllable.</source>
-        <translation type="unfinished"></translation>
+        <translation>글자가 하나씩 제자리로 떨어진 다음 음절별로 밝아집니다.</translation>
     </message>
     <message>
         <source>Colour per line</source>
-        <translation type="unfinished"></translation>
+        <translation>줄마다 색상</translation>
     </message>
     <message>
         <source>syllable start, from the line&apos;s start (ms)</source>
         <extracomment>Template variables&apos; descriptions in the template editor&apos;s list (karaoke templater docs)</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>줄 시작부터의 음절 시작 시간 (ms)</translation>
     </message>
     <message>
         <source>syllable end, from the line&apos;s start (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 시작부터의 음절 종료 시간 (ms)</translation>
     </message>
     <message>
         <source>middle of the syllable, from the line&apos;s start (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 시작부터의 음절 중간 시간 (ms)</translation>
     </message>
     <message>
         <source>number of the syllable in the line, from 1 (0: the text before the first \k)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 안에서 음절의 번호, 1부터 (0: 첫 \k 앞의 텍스트)</translation>
     </message>
     <message>
         <source>the line&apos;s layer</source>
-        <translation type="unfinished"></translation>
+        <translation>줄의 레이어</translation>
     </message>
     <message>
         <source>middle of the line, from the video&apos;s start (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 시작부터의 줄 중간 시간 (ms)</translation>
     </message>
     <message>
         <source>the line&apos;s Style</source>
-        <translation type="unfinished"></translation>
+        <translation>줄의 스타일</translation>
     </message>
     <message>
         <source>the line&apos;s actor</source>
-        <translation type="unfinished"></translation>
+        <translation>줄의 배우</translation>
     </message>
     <message>
         <source>number of syllables in the line</source>
-        <translation type="unfinished"></translation>
+        <translation>줄의 음절 수</translation>
     </message>
     <message>
         <source>index of the line in the file, the Script Info and Style entries before it counted</source>
-        <translation type="unfinished"></translation>
+        <translation>파일에서 줄의 인덱스 (앞에 있는 Script Info 및 스타일 항목 포함)</translation>
     </message>
     <message>
         <source>x of the line&apos;s left edge (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 왼쪽 가장자리의 x (px)</translation>
     </message>
     <message>
         <source>x of the line&apos;s centre (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 중심의 x (px)</translation>
     </message>
     <message>
         <source>x of the line&apos;s right edge (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 오른쪽 가장자리의 x (px)</translation>
     </message>
     <message>
         <source>width of the line (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄의 너비 (px)</translation>
     </message>
     <message>
         <source>y of the line&apos;s top (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 위쪽의 y (px)</translation>
     </message>
     <message>
         <source>y of the line&apos;s middle (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 중간의 y (px)</translation>
     </message>
     <message>
         <source>y of the line&apos;s bottom (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 아래쪽의 y (px)</translation>
     </message>
     <message>
         <source>height of the line (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄의 높이 (px)</translation>
     </message>
     <message>
         <source>skdur; the line&apos;s duration in centiseconds in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>skdur; 줄 앞 템플릿에서는 센티초 단위의 줄 길이</translation>
     </message>
     <message>
         <source>smid, from the line&apos;s start; lmid, from the video&apos;s start, in a pre-line template (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>smid (줄 시작 기준); 줄 앞 템플릿에서는 lmid (영상 시작 기준) (ms)</translation>
     </message>
     <message>
         <source>sets the generated line&apos;s time, by mode</source>
-        <translation type="unfinished"></translation>
+        <translation>모드에 따라 생성되는 줄의 시간 설정</translation>
     </message>
     <message>
         <source>sets the generated line&apos;s layer</source>
-        <translation type="unfinished"></translation>
+        <translation>생성되는 줄의 레이어 설정</translation>
     </message>
     <message>
         <source>sets the generated line&apos;s Style</source>
-        <translation type="unfinished"></translation>
+        <translation>생성되는 줄의 스타일 설정</translation>
     </message>
     <message>
         <source>the line being generated</source>
-        <translation type="unfinished"></translation>
+        <translation>생성 중인 줄</translation>
     </message>
     <message>
         <source>the karaoke line</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 줄</translation>
     </message>
     <message>
         <source>Lines take turns through a short palette of fill colours, by their place in the file.</source>
-        <translation type="unfinished"></translation>
+        <translation>줄이 파일 안의 순서에 따라 몇 가지 채우기 색상을 번갈아 사용합니다.</translation>
     </message>
     <message>
         <source>syllable duration (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절 길이 (ms)</translation>
     </message>
     <message>
         <source>syllable duration in centiseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>센티초 단위의 음절 길이</translation>
     </message>
     <message>
         <source>x of the syllable&apos;s left edge (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절 왼쪽 가장자리의 x (px)</translation>
     </message>
     <message>
         <source>x of the syllable&apos;s centre (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절 중심의 x (px)</translation>
     </message>
     <message>
         <source>x of the syllable&apos;s right edge (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절 오른쪽 가장자리의 x (px)</translation>
     </message>
     <message>
         <source>width of the syllable (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절의 너비 (px)</translation>
     </message>
     <message>
         <source>y of the syllable&apos;s top (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절 위쪽의 y (px)</translation>
     </message>
     <message>
         <source>y of the syllable&apos;s middle (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절 중간의 y (px)</translation>
     </message>
     <message>
         <source>y of the syllable&apos;s bottom (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절 아래쪽의 y (px)</translation>
     </message>
     <message>
         <source>height of the syllable (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>음절의 높이 (px)</translation>
     </message>
     <message>
         <source>syllable position for \pos, by alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>정렬에 따른 \pos용 음절 위치</translation>
     </message>
     <message>
         <source>Line start, from the video&apos;s start (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 시작부터의 줄 시작 시간 (ms)</translation>
     </message>
     <message>
         <source>Line end, from the video&apos;s start (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 시작부터의 줄 종료 시간 (ms)</translation>
     </message>
     <message>
         <source>Line duration (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 길이 (ms)</translation>
     </message>
     <message>
         <source>left margin</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽 여백</translation>
     </message>
     <message>
         <source>right margin</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽 여백</translation>
     </message>
     <message>
         <source>vertical margin</source>
-        <translation type="unfinished"></translation>
+        <translation>세로 여백</translation>
     </message>
     <message>
         <source>top margin</source>
-        <translation type="unfinished"></translation>
+        <translation>위쪽 여백</translation>
     </message>
     <message>
         <source>bottom margin</source>
-        <translation type="unfinished"></translation>
+        <translation>아래쪽 여백</translation>
     </message>
     <message>
         <source>Line position for \pos, by alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>정렬에 따른 \pos용 줄 위치</translation>
     </message>
     <message>
         <source>sstart; lstart in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>sstart; 줄 앞 템플릿에서는 lstart</translation>
     </message>
     <message>
         <source>send; lend in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>send; 줄 앞 템플릿에서는 lend</translation>
     </message>
     <message>
         <source>sdur; ldur in a pre-line template (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>sdur; 줄 앞 템플릿에서는 ldur (ms)</translation>
     </message>
     <message>
         <source>si; li in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>si; 줄 앞 템플릿에서는 li</translation>
     </message>
     <message>
         <source>sleft; lleft in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>sleft; 줄 앞 템플릿에서는 lleft</translation>
     </message>
     <message>
         <source>scenter; lcenter in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>scenter; 줄 앞 템플릿에서는 lcenter</translation>
     </message>
     <message>
         <source>sright; lright in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>sright; 줄 앞 템플릿에서는 lright</translation>
     </message>
     <message>
         <source>swidth; lwidth in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>swidth; 줄 앞 템플릿에서는 lwidth</translation>
     </message>
     <message>
         <source>stop; ltop in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>stop; 줄 앞 템플릿에서는 ltop</translation>
     </message>
     <message>
         <source>smiddle; lmiddle in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>smiddle; 줄 앞 템플릿에서는 lmiddle</translation>
     </message>
     <message>
         <source>sbottom; lbottom in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>sbottom; 줄 앞 템플릿에서는 lbottom</translation>
     </message>
     <message>
         <source>sheight; lheight in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>sheight; 줄 앞 템플릿에서는 lheight</translation>
     </message>
     <message>
         <source>sx; lx in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>sx; 줄 앞 템플릿에서는 lx</translation>
     </message>
     <message>
         <source>sy; ly in a pre-line template</source>
-        <translation type="unfinished"></translation>
+        <translation>sy; 줄 앞 템플릿에서는 ly</translation>
     </message>
     <message>
         <source>runs the template this many times</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿을 이 횟수만큼 실행</translation>
     </message>
     <message>
         <source>sets the loop&apos;s counter and count</source>
-        <translation type="unfinished"></translation>
+        <translation>반복 카운터와 반복 횟수 설정</translation>
     </message>
     <message>
         <source>keeps a value for recall, and gives it</source>
-        <translation type="unfinished"></translation>
+        <translation>recall용으로 값을 저장하고 그 값을 반환</translation>
     </message>
     <message>
         <source>keeps a value when the condition holds</source>
-        <translation type="unfinished"></translation>
+        <translation>조건이 참일 때 값을 저장</translation>
     </message>
     <message>
         <source>a value kept by remember</source>
-        <translation type="unfinished"></translation>
+        <translation>remember로 저장한 값</translation>
     </message>
     <message>
         <source>the loop&apos;s counter, from 1</source>
-        <translation type="unfinished"></translation>
+        <translation>반복 카운터 (1부터)</translation>
     </message>
     <message>
         <source>the loop&apos;s count</source>
-        <translation type="unfinished"></translation>
+        <translation>반복 횟수</translation>
     </message>
     <message>
         <source>the syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>음절</translation>
     </message>
     <message>
         <source>the syllable a furigana part is on</source>
-        <translation type="unfinished"></translation>
+        <translation>후리가나가 붙은 음절</translation>
     </message>
     <message>
         <source>the script&apos;s resolution and properties</source>
-        <translation type="unfinished"></translation>
+        <translation>스크립트의 해상도와 속성</translation>
     </message>
     <message>
         <source>Lua&apos;s math library</source>
-        <translation type="unfinished"></translation>
+        <translation>Lua math 라이브러리</translation>
     </message>
     <message>
         <source>Lua&apos;s string library</source>
-        <translation type="unfinished"></translation>
+        <translation>Lua string 라이브러리</translation>
     </message>
     <message>
         <source>every global, karaskel&apos;s included</source>
-        <translation type="unfinished"></translation>
+        <translation>karaskel의 것을 포함한 모든 전역 변수</translation>
     </message>
     <message>
         <source>The templater stopped before it finished.</source>
-        <translation type="unfinished"></translation>
+        <translation>템플릿 실행기가 완료되기 전에 중단되었습니다.</translation>
     </message>
 </context>
 <context>
@@ -15269,19 +15272,19 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Translation mode</source>
-        <translation type="unfinished">번역 모드</translation>
+        <translation>번역 모드</translation>
     </message>
     <message>
         <source>Original text</source>
-        <translation type="unfinished">원본</translation>
+        <translation>원문</translation>
     </message>
     <message>
         <source>Original text: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>원문: %1</translation>
     </message>
     <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 줄: 글자 앞의 태그는 가져오지만 노래방 타이밍은 가져오지 않습니다.</translation>
     </message>
     <message>
         <source>Choose subtitle file</source>
@@ -15297,11 +15300,11 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;원본&lt;/b&gt;: 타이밍이 맞는 글자입니다. 붙여 넣은 대사를 여기에 맞추며, 나중에 삭제됩니다.</translation>
     </message>
     <message>
         <source>&lt;b&gt;Translation&lt;/b&gt;: the text pasted in, moved line by line until each one sits beside its original.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;번역본&lt;/b&gt;: 붙여 넣은 글자입니다. 각 줄이 원본 옆에 올 때까지 한 줄씩 옮깁니다.</translation>
     </message>
     <message>
         <source>Original</source>
@@ -15313,31 +15316,31 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>A blank line before the selected one; the original moves down. Time the new line.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 앞에 빈 줄을 추가하고 원본을 아래로 내립니다. 새 줄의 타이밍을 맞추십시오.</translation>
     </message>
     <message>
         <source>A blank line before the selected one; the translation moves down.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄 앞에 빈 줄을 추가하고 번역본을 아래로 내립니다.</translation>
     </message>
     <message>
         <source>Joins the selected line with the next one; the original moves up.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄을 다음 줄과 병합하고 원본을 위로 올립니다.</translation>
     </message>
     <message>
         <source>Joins the selected line with the next one; the translation moves up.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄을 다음 줄과 병합하고 번역본을 위로 올립니다.</translation>
     </message>
     <message>
         <source>Deletes the selected line; the original moves up.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄을 삭제하고 원본을 위로 올립니다.</translation>
     </message>
     <message>
         <source>Deletes the selected line; the translation moves up.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄을 삭제하고 번역본을 위로 올립니다.</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">닫기</translation>
+        <translation>닫기</translation>
     </message>
     <message>
         <source>Adds a blank line before the selected line.
@@ -15403,15 +15406,15 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Not confirmed: marks the selected lines for review</source>
-        <translation type="unfinished"></translation>
+        <translation>미확인: 선택한 줄을 검토 대상으로 표시</translation>
     </message>
     <message>
         <source>Tags from original</source>
-        <translation type="unfinished"></translation>
+        <translation>원문 태그</translation>
     </message>
     <message>
         <source>Tags from original: the translation gets the Original text&apos;s tags</source>
-        <translation type="unfinished"></translation>
+        <translation>원문 태그: 번역문에 원문의 태그를 적용</translation>
     </message>
     <message>
         <source>Moving tags</source>
@@ -15453,131 +15456,131 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
-        <translation type="unfinished"></translation>
+        <translation>구간 %1: %2, %3</translation>
     </message>
     <message>
         <source>Placed</source>
-        <translation type="unfinished"></translation>
+        <translation>배치됨</translation>
     </message>
     <message>
         <source>Not placed</source>
-        <translation type="unfinished"></translation>
+        <translation>배치 안 됨</translation>
     </message>
     <message>
         <source>Select text in the translation, then press %1 or click.</source>
-        <translation type="unfinished"></translation>
+        <translation>번역문에서 글자를 선택한 다음 %1 키를 누르거나 클릭하십시오.</translation>
     </message>
     <message>
         <source>Select text in the translation, then click.</source>
-        <translation type="unfinished"></translation>
+        <translation>번역문에서 글자를 선택한 다음 클릭하십시오.</translation>
     </message>
     <message>
         <source>Run %1: %2 (%3)</source>
-        <translation type="unfinished"></translation>
+        <translation>구간 %1: %2 (%3)</translation>
     </message>
     <message>
         <source>Turn on Translation mode for this file?</source>
-        <translation type="unfinished"></translation>
+        <translation>이 파일에서 번역 모드를 켜시겠습니까?</translation>
     </message>
     <message>
         <source>Each line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
-        <translation type="unfinished"></translation>
+        <translation>각 줄의 글자는 원문으로 유지되고 그 옆에 번역문이 추가됩니다. 모드를 끌 때까지 파일에 둘 다 저장됩니다.</translation>
     </message>
     <message>
         <source>Turn on</source>
-        <translation type="unfinished"></translation>
+        <translation>켜기</translation>
     </message>
     <message>
         <source>Not now</source>
-        <translation type="unfinished"></translation>
+        <translation>나중에</translation>
     </message>
     <message>
         <source>Turn off Translation mode?</source>
-        <translation type="unfinished"></translation>
+        <translation>번역 모드를 끄시겠습니까?</translation>
     </message>
     <message>
         <source>Each translated line keeps its Translated text; its Original text is deleted.</source>
-        <translation type="unfinished"></translation>
+        <translation>번역된 각 줄은 번역문을 유지하고 원문은 삭제됩니다.</translation>
     </message>
     <message>
         <source>Turn off</source>
-        <translation type="unfinished"></translation>
+        <translation>끄기</translation>
     </message>
     <message>
         <source>Keep it on</source>
-        <translation type="unfinished"></translation>
+        <translation>계속 켜 두기</translation>
     </message>
     <message>
         <source>Italic</source>
-        <translation type="unfinished">기울임</translation>
+        <translation>기울임</translation>
     </message>
     <message>
         <source>Bold</source>
-        <translation type="unfinished">굵게</translation>
+        <translation>굵게</translation>
     </message>
     <message>
         <source>Underline</source>
-        <translation type="unfinished">밑줄</translation>
+        <translation>밑줄</translation>
     </message>
     <message>
         <source>Strikeout</source>
-        <translation type="unfinished">취소선</translation>
+        <translation>취소선</translation>
     </message>
     <message>
         <source>Colour</source>
-        <translation type="unfinished">색상</translation>
+        <translation>색상</translation>
     </message>
     <message>
         <source>Transparency</source>
-        <translation type="unfinished">투명도</translation>
+        <translation>투명도</translation>
     </message>
     <message>
         <source>Font</source>
-        <translation type="unfinished">글꼴</translation>
+        <translation>글꼴</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished">크기</translation>
+        <translation>크기</translation>
     </message>
     <message>
         <source>Scale</source>
-        <translation type="unfinished"></translation>
+        <translation>가로·세로 크기</translation>
     </message>
     <message>
         <source>Spacing</source>
-        <translation type="unfinished">간격</translation>
+        <translation>간격</translation>
     </message>
     <message>
         <source>Rotation</source>
-        <translation type="unfinished">회전</translation>
+        <translation>회전</translation>
     </message>
     <message>
         <source>Shear</source>
-        <translation type="unfinished"></translation>
+        <translation>기울이기</translation>
     </message>
     <message>
         <source>Border</source>
-        <translation type="unfinished">테두리</translation>
+        <translation>테두리</translation>
     </message>
     <message>
         <source>Shadow</source>
-        <translation type="unfinished">그림자</translation>
+        <translation>그림자</translation>
     </message>
     <message>
         <source>Blur</source>
-        <translation type="unfinished"></translation>
+        <translation>흐림</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished"></translation>
+        <translation>애니메이션</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished">스타일</translation>
+        <translation>스타일</translation>
     </message>
     <message>
         <source>Formatting</source>
-        <translation type="unfinished"></translation>
+        <translation>서식</translation>
     </message>
 </context>
 <context>
@@ -16281,7 +16284,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>More options</source>
-        <translation type="unfinished"></translation>
+        <translation>옵션 더 보기</translation>
     </message>
     <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
@@ -16387,7 +16390,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Another tag is named “%1”. Fill in Tag first to replace it.</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 태그의 이름이 “%1”입니다. 교체하려면 먼저 태그 칸을 채우십시오.</translation>
     </message>
     <message>
         <source>A tag can&apos;t contain “,”.</source>
@@ -16889,7 +16892,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>More tools</source>
-        <translation type="unfinished"></translation>
+        <translation>도구 더 보기</translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>
@@ -16961,288 +16964,301 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Position pointer</source>
-        <translation type="unfinished"></translation>
+        <translation>위치 포인터</translation>
     </message>
     <message>
         <source>Text positioning</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 위치 지정</translation>
     </message>
     <message>
         <source>Text moving</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 이동</translation>
     </message>
     <message>
         <source>Text scaling</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 크기 조정</translation>
     </message>
     <message>
         <source>Text Z rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 Z 회전</translation>
     </message>
     <message>
         <source>Text X / Y rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 X / Y 회전</translation>
     </message>
     <message>
         <source>Rectangle clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>사각형 클립</translation>
     </message>
     <message>
         <source>Vector clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>벡터 클립</translation>
     </message>
     <message>
         <source>Vector drawing</source>
-        <translation type="unfinished"></translation>
+        <translation>도형 그리기</translation>
     </message>
     <message>
         <source>Position shifter</source>
-        <translation type="unfinished"></translation>
+        <translation>위치 일괄 이동</translation>
     </message>
     <message>
         <source>Hydra</source>
-        <translation type="unfinished"></translation>
+        <translation>히드라</translation>
     </message>
     <message>
         <source>Perspective</source>
-        <translation type="unfinished"></translation>
+        <translation>원근</translation>
     </message>
     <message>
         <source>\org mode</source>
-        <translation type="unfinished"></translation>
+        <translation>\org 모드</translation>
     </message>
     <message>
         <source>Add B-spline</source>
-        <translation type="unfinished"></translation>
+        <translation>B-스플라인 추가</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
-        <translation type="unfinished"></translation>
+        <translation>베지어 곡선 추가</translation>
     </message>
     <message>
         <source>Add line</source>
-        <translation type="unfinished">줄 추가</translation>
+        <translation>직선 추가</translation>
     </message>
     <message>
         <source>Add separate point</source>
-        <translation type="unfinished"></translation>
+        <translation>별도 점 추가</translation>
     </message>
     <message>
         <source>After-bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽 바깥 아래</translation>
     </message>
     <message>
         <source>After-center</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽 바깥 중앙</translation>
     </message>
     <message>
         <source>After-top</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽 바깥 위</translation>
     </message>
     <message>
         <source>Bad range</source>
-        <translation type="unfinished"></translation>
+        <translation>잘못된 범위</translation>
     </message>
     <message>
         <source>Before-bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽 바깥 아래</translation>
     </message>
     <message>
         <source>Before-center</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽 바깥 중앙</translation>
     </message>
     <message>
         <source>Before-top</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽 바깥 위</translation>
     </message>
     <message>
         <source>Bottom-center</source>
-        <translation type="unfinished">중앙 아래</translation>
+        <translation>중앙 아래</translation>
     </message>
     <message>
         <source>Bottom-left</source>
-        <translation type="unfinished">왼쪽 아래</translation>
+        <translation>왼쪽 아래</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation type="unfinished">오른쪽 아래</translation>
+        <translation>오른쪽 아래</translation>
     </message>
     <message>
         <source>Cannot read clip rectangle values.</source>
-        <translation type="unfinished"></translation>
+        <translation>사각형 클립 값을 읽을 수 없습니다.</translation>
     </message>
     <message>
         <source>Center</source>
-        <translation type="unfinished">중앙</translation>
+        <translation>중앙</translation>
     </message>
     <message>
         <source>Center-above</source>
-        <translation type="unfinished"></translation>
+        <translation>위 바깥 중앙</translation>
     </message>
     <message>
         <source>Center-below</source>
-        <translation type="unfinished"></translation>
+        <translation>아래 바깥 중앙</translation>
     </message>
     <message>
         <source>Change \move ending points</source>
-        <translation type="unfinished"></translation>
+        <translation>\move 끝점 변경</translation>
     </message>
     <message>
         <source>Change \move starting points</source>
-        <translation type="unfinished"></translation>
+        <translation>\move 시작점 변경</translation>
     </message>
     <message>
         <source>Change all scale tags</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 크기 조정 태그 변경</translation>
     </message>
     <message>
         <source>Changing all X/Y-rotation tags</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 X/Y 회전 태그 변경</translation>
     </message>
     <message>
         <source>Changing all Z-rotation tags</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 Z 회전 태그 변경</translation>
     </message>
     <message>
         <source>Choose</source>
-        <translation type="unfinished">선택</translation>
+        <translation>선택</translation>
     </message>
     <message>
         <source>Clip rectangle with \t animation</source>
-        <translation type="unfinished"></translation>
+        <translation>\t 애니메이션이 포함된 사각형 클립</translation>
     </message>
     <message>
         <source>Delete point</source>
-        <translation type="unfinished"></translation>
+        <translation>점 삭제</translation>
     </message>
     <message>
         <source>Double &quot;m&quot; was blocked because of Vsfilter bug</source>
-        <translation type="unfinished"></translation>
+        <translation>VSFilter 버그 때문에 연속된 &quot;m&quot;을 막았습니다</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation type="unfinished">편집</translation>
+        <translation>편집</translation>
     </message>
     <message>
         <source>Invert clip</source>
-        <translation type="unfinished"></translation>
+        <translation>클립 반전</translation>
     </message>
     <message>
         <source>Keep</source>
-        <translation type="unfinished"></translation>
+        <translation>유지</translation>
     </message>
     <message>
         <source>Left-above</source>
-        <translation type="unfinished"></translation>
+        <translation>위 바깥 왼쪽</translation>
     </message>
     <message>
         <source>Left-below</source>
-        <translation type="unfinished"></translation>
+        <translation>아래 바깥 왼쪽</translation>
     </message>
     <message>
         <source>Line is not visible on video
 or has zero duration</source>
-        <translation type="unfinished"></translation>
+        <translation>줄이 영상에 표시되지 않거나
+길이가 0입니다</translation>
     </message>
     <message>
         <source>List of ASS drawings with edit option.
 After choose drawing from list just set cursor i n place
 of start of drawing and click left mouse button and drag.</source>
-        <translation type="unfinished"></translation>
+        <translation>편집할 수 있는 ASS 도형 목록입니다.
+목록에서 도형을 고른 뒤 도형을 시작할 위치에
+커서를 두고 마우스 왼쪽 버튼을 누른 채 드래그하십시오.</translation>
     </message>
     <message>
         <source>List of tags that can edit visual tool</source>
-        <translation type="unfinished"></translation>
+        <translation>시각 도구로 편집할 수 있는 태그 목록</translation>
     </message>
     <message>
         <source>Lock outer quad
 Off: the inner quad is resized within the plane. On: the outer quad is, and the inner one sets the perspective</source>
-        <translation type="unfinished"></translation>
+        <translation>바깥 사각형 고정
+끔: 안쪽 사각형의 크기가 평면 안에서 바뀝니다. 켬: 바깥 사각형의 크기가 바뀌고, 안쪽 사각형이 원근을 정합니다</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation type="unfinished">왼쪽 중앙</translation>
+        <translation>왼쪽 중앙</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation type="unfinished">오른쪽 중앙</translation>
+        <translation>오른쪽 중앙</translation>
     </message>
     <message>
         <source>Move \org points</source>
-        <translation type="unfinished"></translation>
+        <translation>\org 점 이동</translation>
     </message>
     <message>
         <source>Move clips</source>
-        <translation type="unfinished"></translation>
+        <translation>클립 이동</translation>
     </message>
     <message>
         <source>Move drawings;
 use only when you want
 to move drawing points.
 Do not combine with the first three options</source>
-        <translation type="unfinished"></translation>
+        <translation>도형 이동.
+도형의 점을 옮기려는 경우에만
+사용하십시오.
+처음 세 옵션과 함께 쓰지 마십시오</translation>
     </message>
     <message>
         <source>Move points</source>
-        <translation type="unfinished"></translation>
+        <translation>점 이동</translation>
     </message>
     <message>
         <source>Move position points</source>
-        <translation type="unfinished"></translation>
+        <translation>위치 점 이동</translation>
     </message>
     <message>
         <source>ms</source>
-        <translation type="unfinished">ms</translation>
+        <translation>ms</translation>
     </message>
     <message>
         <source>No \fax</source>
-        <translation type="unfinished"></translation>
+        <translation>\fax 없음</translation>
     </message>
     <message>
         <source>Positioning in X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>X축 위치 지정</translation>
     </message>
     <message>
         <source>Positioning in Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Y축 위치 지정</translation>
     </message>
     <message>
         <source>Preserve proportions so that vector drawings and text
 keep their original positions after rotation.</source>
-        <translation type="unfinished"></translation>
+        <translation>벡터 도형과 텍스트가 회전 후에도 원래 위치를
+유지하도록 비율을 보존합니다.</translation>
     </message>
     <message>
         <source>Preserve proportions so that vector drawings and text
 keep their original positions after scaling.</source>
-        <translation type="unfinished"></translation>
+        <translation>벡터 도형과 텍스트가 크기 조정 후에도 원래 위치를
+유지하도록 비율을 보존합니다.</translation>
     </message>
     <message>
         <source>Right-above</source>
-        <translation type="unfinished"></translation>
+        <translation>위 바깥 오른쪽</translation>
     </message>
     <message>
         <source>Right-below</source>
-        <translation type="unfinished"></translation>
+        <translation>아래 바깥 오른쪽</translation>
     </message>
     <message>
         <source>Scale height</source>
-        <translation type="unfinished"></translation>
+        <translation>세로 크기</translation>
     </message>
     <message>
         <source>Scale width</source>
-        <translation type="unfinished"></translation>
+        <translation>가로 크기</translation>
     </message>
     <message>
         <source>Set a custom rectangle for the current scale.
 If automatic size calculation does not work correctly,
 you can set a rectangle for the original scale.</source>
-        <translation type="unfinished"></translation>
+        <translation>현재 크기에 사용할 사각형을 직접 지정합니다.
+자동 크기 계산이 제대로 작동하지 않으면
+원래 크기에 대한 사각형을 지정할 수 있습니다.</translation>
     </message>
     <message>
         <source>Set angle from 2 points.
 After setting 2 points below text on video
 it calculates angle from it.</source>
-        <translation type="unfinished"></translation>
+        <translation>두 점으로 각도를 설정합니다.
+영상의 텍스트 아래에 두 점을 놓으면
+그 점들로 각도를 계산합니다.</translation>
     </message>
     <message>
         <source>Set movement using 2 points and the video position.
@@ -17251,33 +17267,44 @@ advance the video by enough frames
 so that the same video element
 for which the start point was set remains visible.
 Movement is generated by placing the second point.</source>
-        <translation type="unfinished"></translation>
+        <translation>두 점과 영상 위치로 이동을 설정합니다.
+움직이는 텍스트 앞에 첫 번째 점을 놓은 후,
+시작 점을 지정한 영상 속 대상이
+계속 보이는 범위 안에서
+영상을 충분한 프레임만큼 진행합니다.
+두 번째 점을 놓으면 이동이 생성됩니다.</translation>
     </message>
     <message>
         <source>Set position by rectangle.
 After drawing a rectangle, the line will be
 positioned on one or both axes
 for the selected alignment.</source>
-        <translation type="unfinished"></translation>
+        <translation>사각형으로 위치를 설정합니다.
+사각형을 그리면 선택한 정렬에 맞춰
+줄이 한 축 또는 두 축에서
+배치됩니다.</translation>
     </message>
     <message>
         <source>Set scale by rectangle.
 After drawing rectangle text is scaled
 in two or one axis.</source>
-        <translation type="unfinished"></translation>
+        <translation>사각형으로 크기를 설정합니다.
+사각형을 그리면 텍스트 크기가
+두 축 또는 한 축에서 조정됩니다.</translation>
     </message>
     <message>
         <source>Shear</source>
-        <translation type="unfinished"></translation>
+        <translation>기울이기</translation>
     </message>
     <message>
         <source>Show grid</source>
-        <translation type="unfinished"></translation>
+        <translation>격자 표시</translation>
     </message>
     <message>
         <source>Show surrounding plane
 A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
-        <translation type="unfinished"></translation>
+        <translation>주변 평면 표시
+텍스트 평면의 사각형입니다. 화면 속 사각형에 맞춘 뒤 그 안에 텍스트를 배치하십시오</translation>
     </message>
     <message>
         <source>Tag change options:
@@ -17290,32 +17317,42 @@ Gradient text increasing - inserts a tag at each character, increasing the value
 Gradient text decreasing - inserts a tag at each character, decreasing the value.
 Gradient line increasing - inserts a tag in selected lines, increasing the value.
 Gradient line decreasing - inserts a tag in selected lines, decreasing the value.</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 변경 옵션:
+더하기 - 슬라이더 값을 더해 모든 태그를 변경합니다.
+삽입 - 한 줄이면 커서 위치에, 여러 줄이면
+시작 부분에 태그를 삽입합니다.
+곱하기 - 슬라이더 값에 선택한 줄 번호를 곱합니다.
+첫 번째 줄은 변경되지 않습니다.
+그라데이션 글자 증가 - 글자마다 값을 늘려 가며 태그를 삽입합니다.
+그라데이션 글자 감소 - 글자마다 값을 줄여 가며 태그를 삽입합니다.
+그라데이션 줄 증가 - 선택한 줄마다 값을 늘려 가며 태그를 삽입합니다.
+그라데이션 줄 감소 - 선택한 줄마다 값을 줄여 가며 태그를 삽입합니다.</translation>
     </message>
     <message>
         <source>Text placing works similar like in styles</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 배치는 스타일과 같은 방식으로 작동합니다</translation>
     </message>
     <message>
         <source>Top-center</source>
-        <translation type="unfinished">중앙 위</translation>
+        <translation>중앙 위</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation type="unfinished">왼쪽 위</translation>
+        <translation>왼쪽 위</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation type="unfinished">오른쪽 위</translation>
+        <translation>오른쪽 위</translation>
     </message>
     <message>
         <source>Video must be set at least one frame after the line&apos;s start time</source>
-        <translation type="unfinished"></translation>
+        <translation>영상을 줄 시작 시간보다 한 프레임 이상 뒤에 두어야 합니다</translation>
     </message>
     <message>
         <source>Visual editing tools
 do not work on comments</source>
-        <translation type="unfinished"></translation>
+        <translation>시각 편집 도구는
+주석에서 작동하지 않습니다</translation>
     </message>
 </context>
 <context>
