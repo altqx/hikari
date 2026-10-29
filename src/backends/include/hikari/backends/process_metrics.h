@@ -1,8 +1,5 @@
 #pragma once
 
-// Resident memory of a running process (A33-resources: per-script helper
-// cost). An observation for reports, not a budget check.
-
 #include <cstdint>
 
 namespace hikari::backends {

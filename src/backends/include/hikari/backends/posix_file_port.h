@@ -1,11 +1,5 @@
 #pragma once
 
-// Native write owner for Linux (F2-L; docs/proposals/application-lifecycle.md).
-// Implements the application's FilePort with an atomic replace: write a
-// temporary file beside the destination, fsync it, rename it over the
-// destination, then fsync the directory. The original file is never truncated
-// in place, so a failed or cancelled write leaves it untouched.
-
 #include "hikari/application/write_coordinator.h"
 
 #include <atomic>
@@ -17,15 +11,15 @@
 
 namespace hikari::backends {
 
+// Atomic replace: a failed or cancelled write leaves the destination untouched.
 class PosixFilePort : public application::FilePort {
 public:
-    // Receives each terminal outcome, on the worker thread. The application
-    // marshals it to its own thread before calling WriteCoordinator::complete.
+    // Called with each terminal outcome on the worker thread.
     using Completion = std::function<void(application::PermitId, application::WriteOutcome)>;
 
     struct Options {
         std::size_t chunkSize = 1 << 20; // cancellation is checked between chunks
-        // Test hook: runs on the worker just before publishing (rename).
+        // Test hook: runs on the worker just before the rename.
         std::function<void(application::PermitId)> beforePublish;
     };
 
@@ -37,7 +31,6 @@ public:
                     std::vector<std::byte> bytes) override;
     void requestCancel(application::PermitId permit) override;
 
-    // Waits for every started write to report.
     void waitIdle();
 
 private:

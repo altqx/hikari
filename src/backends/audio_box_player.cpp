@@ -21,7 +21,6 @@ double steadySeconds()
 
 } // namespace
 
-// A raw audio getter: the audio is the caller's to keep alive while it plays.
 AudioBoxPlayer::SharedAudio shareRaw(AudioBoxPlayer::Audio audio)
 {
     return [audio = std::move(audio)]() -> std::shared_ptr<const application::DisplayAudio> {
@@ -68,9 +67,6 @@ void AudioBoxPlayer::setPumping(Pumping pumping)
     m_pumping = pumping;
 }
 
-// Legacy DirectSoundPlayer2Thread::Run: while playing, the buffer is filled
-// every few milliseconds (legacy waited on its events with the wanted
-// latency's fraction); otherwise the thread sleeps until a play wakes it.
 void AudioBoxPlayer::fillThread()
 {
     std::unique_lock lock(m_lock);
@@ -84,7 +80,6 @@ void AudioBoxPlayer::fillThread()
     }
 }
 
-// Failures are reported on the owner's thread (legacy HikariLog).
 void AudioBoxPlayer::fail(const QString &message)
 {
     if (std::this_thread::get_id() == m_threadId)
@@ -109,8 +104,6 @@ void AudioBoxPlayer::close()
     m_srcFormat = m_outFormat = {0, 0};
 }
 
-// Legacy DirectSoundPlayer2::OpenStream: the stream follows the provider's
-// format (rate, channels); legacy logged a player that could not be made.
 bool AudioBoxPlayer::openOutput(const application::DisplayAudio &audio)
 {
     const application::OutputFormat want{audio.sampleRate(), audio.channels()};
@@ -128,10 +121,7 @@ bool AudioBoxPlayer::openOutput(const application::DisplayAudio &audio)
     return true;
 }
 
-// H2: the chosen device by its name in the host's list (in the default
-// device's host API), else the default. The host is rescanned first when
-// the devices changed, as PortAudio enumerates once per initialization and
-// would otherwise open the default it saw then (A10 in the H2 evidence).
+// PortAudio enumerates devices once per initialization, so a device change needs a rescan.
 std::expected<application::OutputFormat, application::OutputError>
 AudioBoxPlayer::openDevice(application::OutputFormat want)
 {
@@ -140,7 +130,7 @@ AudioBoxPlayer::openDevice(application::OutputFormat want)
         out.close();
     std::string id;
     if (m_rescan || !m_deviceName.empty()) {
-        const auto devices = out.devices(); // no stream of ours is open: a rescan
+        const auto devices = out.devices();
         m_rescan = false;
         if (!m_deviceName.empty()) {
             std::string hostApi;
@@ -155,14 +145,10 @@ AudioBoxPlayer::openDevice(application::OutputFormat want)
     }
     auto opened = out.open(id, want);
     if (!opened && !id.empty())
-        opened = out.open({}, want); // the chosen device refused: the default
+        opened = out.open({}, want);
     return opened;
 }
 
-// Legacy DirectSoundPlayer2Thread::Play and its start event: the buffer is
-// stopped and filled from the start again. A range shorter than the wanted
-// latency (100 ms of bytes, integer arithmetic) plays once, without looping;
-// an empty range loops on silence.
 void AudioBoxPlayer::play(std::int64_t start, std::int64_t count)
 {
     playAudio(nullptr, start, count);
@@ -221,7 +207,6 @@ bool AudioBoxPlayer::playingClip(const application::DisplayAudio *clip) const
     return m_playing && m_clipping && m_playingAudio.get() == clip;
 }
 
-// Legacy Stop: the buffer stops at once.
 void AudioBoxPlayer::stop()
 {
     const std::scoped_lock lock(m_lock);
@@ -267,16 +252,13 @@ void AudioBoxPlayer::switchOutput()
     m_srcFormat = m_outFormat = {0, 0};
 }
 
-// The output opens again (after a rescan) and the range goes on from source
-// frame `frame`; the rest of the range then the silence, as before. While
-// no device opens the player waits there and tries again.
 void AudioBoxPlayer::resumeLocked(std::int64_t frame)
 {
     const application::OutputFormat want = m_srcFormat;
     if (m_output)
         m_output->stop();
     if (m_reopen)
-        releaseOutput(); // a changed audio.outputHostApi applies now
+        releaseOutput();
     m_rescan = true;
     m_base = m_next = frame;
     m_written = 0;
@@ -308,8 +290,6 @@ void AudioBoxPlayer::resumeLocked(std::int64_t frame)
     fill();
 }
 
-// KA2-slowed-playback: the output stays open and the range goes on from
-// source frame `frame` at the new speed.
 void AudioBoxPlayer::restartLocked(std::int64_t frame)
 {
     output().stop();
@@ -344,8 +324,6 @@ void AudioBoxPlayer::resetStretch()
     m_stretch->setSetting(SETTING_OVERLAP_MS, kStretchOverlapMs);
 }
 
-// SoundTouch takes the chunk and hands back what it has ready (nothing at
-// first, while it fills its window).
 void AudioBoxPlayer::stretch(std::vector<float> &frames, int channels)
 {
     m_stretch->putSamples(frames.data(), static_cast<unsigned>(frames.size() / static_cast<std::size_t>(channels)));
@@ -378,9 +356,7 @@ double AudioBoxPlayer::speed() const
     return m_speed;
 }
 
-// Measured with kStretchSequenceMs 40, kStretchSeekWindowMs 15 and
-// kStretchOverlapMs 8 at 48 kHz: the mean of 20 onsets per speed, each within
-// 4 ms of it.
+// Measured at 48 kHz with the kStretch* settings: the mean of 20 onsets per speed.
 double AudioBoxPlayer::stretchLeadMs(double speed)
 {
     static constexpr std::array<std::pair<double, double>, 5> kLead{
@@ -395,9 +371,6 @@ double AudioBoxPlayer::stretchLeadMs(double speed)
     return 0;
 }
 
-// The stream ended without a stop (WASAPI's unplug; a start that failed):
-// the frames the device took are what was heard. The reopen needs a rescan,
-// which runs on the owner's thread.
 void AudioBoxPlayer::lostLocked()
 {
     m_base = heardLocked();
@@ -441,7 +414,6 @@ void AudioBoxPlayer::releaseOutput()
     m_srcFormat = m_outFormat = {0, 0};
 }
 
-// Legacy SetEndFrame: stopped when the frames written already reach the new end.
 void AudioBoxPlayer::setEndPosition(std::int64_t end)
 {
     const std::scoped_lock lock(m_lock);
@@ -508,12 +480,11 @@ void AudioBoxPlayer::pumpLocked()
     if (!m_playing || m_waiting)
         return;
     if (output().status().deviceLost) {
-        lostLocked(); // H2: reopened on the owner's thread, no failure
+        lostLocked();
         return;
     }
     if (m_attempts > 0 && m_started && consumed() > 0)
-        m_attempts = 0; // the reopened device takes frames
-    // Legacy's single-buffer playback stops once its time has passed.
+        m_attempts = 0;
     if (m_oneShot && m_started && consumed() >= m_rangeFrames) {
         stopLocked();
         return;
@@ -521,8 +492,6 @@ void AudioBoxPlayer::pumpLocked()
     fill();
 }
 
-// Legacy FillAndUnlockBuffers: the range's frames from the cache with the
-// volume applied (GetPlaybackBuffer), silence from its end on.
 void AudioBoxPlayer::fill()
 {
     const auto *audio = m_playingAudio.get();
@@ -532,9 +501,7 @@ void AudioBoxPlayer::fill()
     const double step = double(m_srcFormat.sampleRate) / double(std::max(1, m_outFormat.sampleRate));
     const auto ahead = static_cast<std::int64_t>(kAheadSeconds * m_outFormat.sampleRate);
     auto &converted = m_converted;
-    // At most `ahead` frames a call: a stream that takes frames faster than
-    // they are made (the null PCM has no clock) would otherwise keep the fill
-    // here, holding the lock, so that a stop never gets it.
+    // Bounded per call: the null PCM has no clock and would keep this loop holding the lock.
     const std::int64_t writtenBefore = m_written;
     while (m_playing) {
         if (!m_pending.empty()) {
@@ -554,8 +521,6 @@ void AudioBoxPlayer::fill()
             application::applyLegacyVolume(m_frames.data(), inRange * srcChannels, m_volume);
         }
         m_next += n;
-        // to float, each output channel from the same source channel (the
-        // last one past the source's)
         auto &source = m_source;
         source.clear();
         source.reserve(static_cast<std::size_t>(n * outChannels));
@@ -595,8 +560,6 @@ void AudioBoxPlayer::fill()
     }
     if (m_playing && !m_started && m_written > 0) {
         if (!output().start()) {
-            // H2: a device that will not start is reopened like a lost one,
-            // up to the retry limit
             if (++m_attempts >= m_maxAttempts) {
                 halt();
                 fail(QStringLiteral("Audio player failed."));
@@ -609,7 +572,6 @@ void AudioBoxPlayer::fill()
     }
 }
 
-// Output frames heard since this output run began, from the clock estimate.
 std::int64_t AudioBoxPlayer::clockFrames(const application::ClockEstimate &clock) const
 {
     const double rate = m_outFormat.sampleRate;
@@ -619,8 +581,6 @@ std::int64_t AudioBoxPlayer::clockFrames(const application::ClockEstimate &clock
     return static_cast<std::int64_t>(heard);
 }
 
-// Legacy GetCurrentPosition: 0 while stopped, the start until the output
-// reports (after a reopen, the frame it went on from).
 std::int64_t AudioBoxPlayer::position() const
 {
     const std::scoped_lock lock(m_lock);
@@ -634,9 +594,6 @@ std::int64_t AudioBoxPlayer::position() const
     return m_base + sourceFrames(clockFrames(clock));
 }
 
-// Output frames heard as frames of the audio: at its rate, and below speed 1
-// `speed` of them each, moved on by SoundTouch's lead once that much has
-// played (so the position starts at the start and never goes back).
 std::int64_t AudioBoxPlayer::sourceFrames(std::int64_t outputFrames) const
 {
     if (!m_stretch)
@@ -646,8 +603,6 @@ std::int64_t AudioBoxPlayer::sourceFrames(std::int64_t outputFrames) const
     return static_cast<std::int64_t>(heard + std::min(heard, lead));
 }
 
-// H2: where a reopen goes on: the frame being heard, or without a clock
-// estimate (a lost or stalled stream) the frames the device took.
 std::int64_t AudioBoxPlayer::heardLocked() const
 {
     if (!m_started || !m_output || m_outFormat.sampleRate <= 0 || m_srcFormat.sampleRate <= 0)

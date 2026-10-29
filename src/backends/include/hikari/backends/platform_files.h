@@ -1,7 +1,5 @@
 #pragma once
 
-// The native file reader and write owner for the current platform.
-
 #include "hikari/application/document_files.h"
 
 #include <functional>
@@ -11,7 +9,6 @@ namespace hikari::backends {
 
 class PlatformFilePort : public application::FilePort {
 public:
-    // Waits for every started write to report (shutdown and tests).
     virtual void waitIdle() = 0;
 };
 

@@ -8,7 +8,6 @@ namespace hikari::backends::dshow {
 
 namespace {
 
-// Legacy CLSID_KVideoRenderer.
 const GUID kRendererClsid = {0x269ba141, 0x1fde, 0x494b, {0x91, 0x24, 0x45, 0x3a, 0x17, 0x83, 0x8b, 0x9f}};
 
 } // namespace
@@ -20,7 +19,6 @@ VideoRenderer::VideoRenderer(std::shared_ptr<Bridge> bridge, HRESULT *phr)
 
 HRESULT VideoRenderer::CheckMediaType(const CMediaType *pmt)
 {
-    // Legacy CD2DVideoRender::CheckMediaType.
     CheckPointer(pmt, E_POINTER);
     if (pmt->majortype != MEDIATYPE_Video)
         return E_FAIL;
@@ -37,7 +35,6 @@ HRESULT VideoRenderer::CheckMediaType(const CMediaType *pmt)
 
 HRESULT VideoRenderer::SetMediaType(const CMediaType *pmt)
 {
-    // Legacy CD2DVideoRender::SetMediaType.
     CheckPointer(pmt, E_POINTER);
     CAutoLock lock(m_pLock);
     VideoInf info;
@@ -73,7 +70,7 @@ HRESULT VideoRenderer::SetMediaType(const CMediaType *pmt)
         info.subtype = Subtype::YUY2;
     else
         info.subtype = Subtype::RGB32;
-    // A positive height is a bottom-up DIB for RGB (legacy m_SwapFrame).
+    // An RGB DIB with a positive height is bottom-up.
     info.bottomUp = info.subtype == Subtype::RGB32 && height > 0;
     info.height = std::abs(static_cast<int>(height));
     if (timePerFrame < 1)
@@ -119,6 +116,7 @@ void VideoRenderer::deliver(IMediaSample *sample)
         return;
     d.frame->index = -1;
     const REFERENCE_TIME segment = m_pInputPin ? m_pInputPin->CurrentStartTime() : 0;
+    // DirectShow sample times are relative to the segment start (NewSegment).
     if (SUCCEEDED(timed)) {
         d.startUs = (segment + start) / 10;
         d.frame->pts = d.startUs;
@@ -133,7 +131,6 @@ void VideoRenderer::deliver(IMediaSample *sample)
 
 void VideoRenderer::OnReceiveFirstSample(IMediaSample *sample)
 {
-    // Legacy: the paused graph's first sample is drawn now; Render skips it.
     if (!sample || sample->IsPreroll() == S_OK)
         return;
     REFERENCE_TIME start = 0, end = 0;
@@ -145,7 +142,6 @@ void VideoRenderer::OnReceiveFirstSample(IMediaSample *sample)
 
 HRESULT VideoRenderer::Render(IMediaSample *sample)
 {
-    // Legacy CD2DVideoRender::Render.
     if (!sample || m_bStreaming == FALSE)
         return E_POINTER;
     if (sample->IsPreroll() == S_OK)
@@ -171,8 +167,6 @@ HRESULT VideoRenderer::EndOfStream()
 
 HRESULT VideoRenderer::EndFlush()
 {
-    // Samples after a flush follow the latest seek; any rendered before it
-    // carry the earlier serial.
     m_serial = m_bridge->requestedSerial.load();
     m_shownFirst = nullptr;
     return CBaseVideoRenderer::EndFlush();

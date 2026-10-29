@@ -1,13 +1,5 @@
 #pragma once
 
-// Native write owner for Windows (F2-W; docs/proposals/application-lifecycle.md).
-// Same contract as the Linux owner: write a temporary file beside the
-// destination, flush it, then publish it with one atomic rename
-// (MoveFileExW, replace + write-through). The original is never opened for
-// writing, so a failed, cancelled or blocked write leaves it untouched and
-// the temporary file is removed. ReplaceFileW is not used: when its final
-// rename fails without a backup name, the original no longer exists.
-
 #include "hikari/application/write_coordinator.h"
 
 #include <atomic>
@@ -20,10 +12,12 @@
 
 namespace hikari::backends {
 
-// UTF-8 path to a Windows path: separators become '\', and an absolute
-// drive path gets the "\\?\" prefix so deep paths are not cut at MAX_PATH.
+// Separators become '\' and an absolute drive path gets the "\\?\" prefix, so deep paths are
+// not cut at MAX_PATH.
 std::wstring windowsPath(const std::string &utf8);
 
+// ReplaceFileW is not used: when its final rename fails without a backup name, the original
+// no longer exists.
 class WinFilePort : public application::FilePort {
 public:
     using Completion = std::function<void(application::PermitId, application::WriteOutcome)>;

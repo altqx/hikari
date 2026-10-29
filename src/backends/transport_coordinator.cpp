@@ -22,7 +22,6 @@ std::int64_t TransportCoordinator::frameStartUs(int index) const
 {
     if (index < 0 || index >= static_cast<int>(m_timeline.pts.size()))
         return 0;
-    // pts * num / den seconds, in microseconds, rounded.
     const long double us = static_cast<long double>(m_timeline.pts[static_cast<std::size_t>(index)]) *
                            m_timeline.timeBaseNumerator * 1'000'000.0L / m_timeline.timeBaseDenominator;
     return static_cast<std::int64_t>(us + (us < 0 ? -0.5L : 0.5L));
@@ -33,7 +32,7 @@ int TransportCoordinator::frameAt(std::int64_t us) const
     const int count = static_cast<int>(m_timeline.pts.size());
     if (count == 0 || us < frameStartUs(0))
         return -1;
-    // The last frame starting at or before `us` (pts are presentation order).
+    // FFMS2 lists pts in presentation order.
     int lo = 0, hi = count - 1;
     while (lo < hi) {
         const int mid = (lo + hi + 1) / 2;
@@ -102,9 +101,8 @@ void TransportCoordinator::toIndexed(Acked done)
     const std::uint64_t handoff = ++m_handoff;
     m_pending = std::move(done);
     m_mode = TransportMode::Switching;
-    // The carried position is the last frame the player actually delivered.
     const std::int64_t carried = m_general.clock().mediaUs;
-    m_general.stop(); // stops its audio and video, flushes, and resolves its seeks Stale
+    m_general.stop();
     const int index = std::max(0, frameAt(carried));
     HandoffAck ack;
     ack.to = TransportMode::Indexed;
@@ -114,7 +112,7 @@ void TransportCoordinator::toIndexed(Acked done)
     ack.indexedFrameUs = frameStartUs(index);
     m_indexed.frame(index, [this, handoff, ack](std::expected<IndexedFrame, SourceError> frame) mutable {
         if (handoff != m_handoff)
-            return; // a newer switch owns the transport now
+            return;
         if (!frame) {
             m_mode = TransportMode::General;
             return settle(m_pending, std::unexpected(HandoffError::SourceFailure));
@@ -149,11 +147,11 @@ void TransportCoordinator::toGeneral(Acked done)
     if (m_mode == TransportMode::General)
         return done(std::unexpected(HandoffError::WrongMode));
     const std::uint64_t handoff = ++m_handoff;
-    settle(m_pending, std::unexpected(HandoffError::Superseded)); // a switch to indexed still in flight
+    settle(m_pending, std::unexpected(HandoffError::Superseded));
     m_pending = std::move(done);
     m_mode = TransportMode::Switching;
-    m_output.stop();       // the editor output stops and flushes
-    m_indexed.cancelReads(); // pending indexed work resolves Cancelled
+    m_output.stop();
+    m_indexed.cancelReads();
     const int index = std::max(0, m_indexedFrame);
     HandoffAck ack;
     ack.to = TransportMode::General;

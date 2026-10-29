@@ -1,12 +1,5 @@
 #pragma once
 
-// H2 (decision 60): the system's output devices through Qt Multimedia's
-// QMediaDevices: QAudioDevice::id (the endpoint id on Windows, the sound
-// server's sink name on Linux), its description and the default. Qt emits
-// audioOutputsChanged when a device is added or removed and when the default
-// output changes (on Windows from its IMMNotificationClient), on the thread
-// that made this object.
-
 #include "hikari/application/audio_devices.h"
 
 #include <QMediaDevices>
@@ -19,6 +12,7 @@ class QtAudioDevices final : public QObject, public application::AudioDevicesPor
 public:
     explicit QtAudioDevices(QObject *parent = nullptr);
     std::vector<application::SystemOutputDevice> outputs() const override;
+    // Fires on device add/remove and default change, on the thread that made this object.
     void setChangedCallback(std::function<void()> changed) override;
 
 private:

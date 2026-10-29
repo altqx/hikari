@@ -1,15 +1,5 @@
 #pragma once
 
-// Y8: the font collector's output on the file system (legacy FontCollector
-// MakeDirectory, CreateZip, SaveFont and CloseZip, FontCollector.cpp:877-1038).
-// "Copy to selected folder" writes each font into the folder, overwriting a
-// file of the same name as wxCopyFile does; "Zip" writes a deflated archive
-// with UTF-8 names (wxZipOutputStream level 9, Utf8ZipEntry). Output that is
-// not complete carries a label (the approved partial-output rule): a text
-// file in the folder, an entry in the archive. The archive is published only
-// when it is closed, so a cancelled run leaves no archive at all, and the
-// previous file of that name stays until then.
-
 #include "hikari/application/font_collector.h"
 
 #include <QSaveFile>
@@ -20,7 +10,6 @@
 
 namespace hikari::backends {
 
-// The label's file name, in the folder or the archive.
 inline constexpr const char *kIncompleteLabel = "INCOMPLETE - font collection.txt";
 
 class FolderCollectorOutput final : public application::CollectorOutput {
@@ -47,7 +36,7 @@ public:
     bool folderFailed() const override { return m_folderFailed; }
     bool put(const std::u16string &name, const std::vector<std::byte> &bytes) override;
     bool label(const std::string &utf8Text) override;
-    bool unlabel() override { return true; } // an archive is labelled only when it is closed incomplete
+    bool unlabel() override { return true; }
     bool commit() override;
     void discard() override;
 

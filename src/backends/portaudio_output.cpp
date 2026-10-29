@@ -17,9 +17,8 @@ using application::OutputStatus;
 
 namespace {
 
-// PortAudio's enumeration and stream creation are not thread-safe, and a
-// rescan (terminate + initialize) must wait until no stream is open anywhere
-// in the process.
+// PortAudio's enumeration and stream creation are not thread-safe, and a rescan (terminate +
+// initialize) needs no stream open anywhere in the process.
 struct Library {
     std::mutex mutex;
     int users = 0;
@@ -44,7 +43,6 @@ std::string deviceId(PaDeviceIndex index, const PaDeviceInfo &info)
     return std::string(api ? api->name : "?") + "/" + std::to_string(index) + "/" + info.name;
 }
 
-// The default output device of the named host API, else PortAudio's.
 PaDeviceIndex defaultOutputOf(const std::string &hostApi)
 {
     if (!hostApi.empty())
@@ -71,8 +69,6 @@ std::vector<OutputDevice> enumerate(const std::string &hostApi)
     return out;
 }
 
-// Resolves an id from any enumeration: the exact id, or the same host API and
-// name at a moved index.
 std::expected<PaDeviceIndex, OutputError> resolve(const std::string &id, const std::string &hostApi)
 {
     if (id.empty()) {
@@ -175,8 +171,7 @@ std::vector<OutputDevice> PortAudioOutput::devices()
     std::scoped_lock lock(lib.mutex);
     if (!lib.initialized)
         return {};
-    // PortAudio enumerates once per initialization; rescan while idle so
-    // added and removed devices appear.
+    // PortAudio enumerates once per initialization: rescan while idle to see device changes.
     if (lib.openStreams == 0) {
         Pa_Terminate();
         lib.initialized = Pa_Initialize() == paNoError;
@@ -218,7 +213,6 @@ std::expected<OutputFormat, OutputError> PortAudioOutput::open(const std::string
         format.sampleRate = deviceRate;
     }
 
-    // The engine must exist before the stream: it is the callback's state.
     auto engine = std::make_unique<OutputEngine>(format, params.suggestedLatency, d->options.queueSeconds);
     PaStream *stream = nullptr;
     const PaError err = Pa_OpenStream(&stream, nullptr, &params, format.sampleRate, paFramesPerBufferUnspecified,
@@ -289,9 +283,7 @@ OutputStatus PortAudioOutput::status() const
 {
     if (!d->engine)
         return {};
-    // Some host APIs end the stream on device loss without the finished
-    // callback: a stream that is no longer active although nobody stopped it
-    // was lost.
+    // Some host APIs end the stream on device loss without the finished callback.
     if (const auto s = d->engine->status(); s.running && !s.deviceLost && Pa_IsStreamActive(d->stream) == 0)
         d->engine->streamFinished();
     return d->engine->status();

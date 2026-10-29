@@ -1,15 +1,5 @@
 #pragma once
 
-// The helper side of a helper process (H1): plain C++ over binary stdin and
-// stdout. It announces its protocol version, waits for Welcome or Refuse,
-// then runs requests one at a time. A reader thread keeps receiving, so a
-// Cancel can reach a running request, including one waiting in call().
-//
-// The protocol owns the original stdout. Before anything else runs, file
-// descriptor 1 (and on Windows the process's standard output handle) is
-// pointed at stderr, so output from scripts, native modules or libraries
-// lands in the host's diagnostics and never inside a frame.
-
 #include "hikari/backends/helper_protocol.h"
 
 #include <expected>
@@ -34,12 +24,12 @@ public:
 
 using RequestHandler = std::function<void(const Frame &request, Responder &responder)>;
 
-// Runs until stdin closes or the host refuses the version. Returns the
-// process exit code: 0 after a normal end, 3 when refused.
+// Sends Hello, waits for Welcome or Refuse, then runs requests one at a time; a Cancel reaches a
+// running request. First points fd 1 (and the Windows stdout handle) at stderr, so stray output
+// never lands in a frame. Returns 0 once stdin closes, 3 when refused or the host left first.
 int runHelper(const std::string &name, std::uint32_t protocolVersion, const RequestHandler &handler);
 
-// Writes a frame on the protocol channel without any responder checks; only
-// for tests that need a misbehaving helper.
+// For tests only: writes a frame without any responder checks.
 void sendUncheckedFrame(const Frame &frame);
 
 } // namespace hikari::backends::helper

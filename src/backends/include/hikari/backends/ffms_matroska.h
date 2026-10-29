@@ -1,10 +1,7 @@
 #pragma once
 
-// Y9: MatroskaPort through the isolated FFMS2 media helper (its
-// SubtitleTracks, Subtitles and Attachments requests; media_protocol.h). A
-// helper process of its own, started at the first request and kept until it
-// ends; a lost helper resolves the running request HelperLost and the next
-// request starts a new one. Runs on its owner's thread with a Qt event loop.
+// A lost helper fails the running request with HelperLost; the next request starts a new
+// one. Needs a Qt event loop on the owner's thread.
 
 #include "hikari/application/matroska.h"
 #include "hikari/backends/helper_host.h"
@@ -29,17 +26,12 @@ public:
     void attachments(const std::string &path, Attachments done) override;
     void cancel() override;
 
-    // Tests: the helper process in use (null before the first request).
+    // Null before the first request.
     helper::HelperHost *helperHost() const { return m_host.get(); }
 
 private:
     using Handler = std::function<void(std::expected<helper::Event, helper::HostError>)>;
-    // Makes `resolveCancelled` what cancel() runs for the new operation;
-    // the flag it returns turns true on that cancel.
     std::shared_ptr<bool> begin(std::function<void()> resolveCancelled);
-    // Starts the request once the helper is ready, unless the operation was
-    // cancelled by then; `failed` resolves it when the helper cannot start or
-    // the request cannot be sent.
     void send(std::shared_ptr<bool> cancelled, std::vector<std::byte> payload, Handler handler,
               std::function<void(application::MatroskaError)> failed);
     void ensureHelper(std::function<void(bool)> ready);
@@ -47,7 +39,7 @@ private:
     QString m_program;
     std::unique_ptr<helper::HelperHost> m_host;
     std::optional<std::uint64_t> m_request;
-    std::function<void()> m_cancel; // resolves the running request as Cancelled
+    std::function<void()> m_cancel;
 };
 
 } // namespace hikari::backends

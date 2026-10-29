@@ -27,7 +27,6 @@ std::string windowsLongPath(std::string_view path)
     constexpr std::string_view unc = "\\\\";
     if (path.starts_with(prefixed) || path.starts_with(device))
         return std::string(path);
-    // \\server\share\... is \\?\UNC\server\share\...
     if (path.starts_with(unc))
         return std::string("\\\\?\\UNC\\").append(path.substr(unc.size()));
     return std::string(prefixed).append(path);
@@ -37,9 +36,7 @@ namespace {
 
 namespace fs = std::filesystem;
 
-// Hunspell opens its files with narrow paths; on Windows (MSVC) a path with
-// the long-path prefix is read as UTF-8, so any name opens. The prefix turns
-// off Windows' own normalization, so the path is normalized first.
+// Hunspell opens narrow paths; on Windows a \\?\ path is read as UTF-8 but is not normalized.
 std::string hunspellPath(const fs::path &file)
 {
 #ifdef _WIN32
@@ -61,8 +58,7 @@ struct ConverterClose {
 };
 using Converter = std::unique_ptr<UConverter, ConverterClose>;
 
-// Hunspell's SET names (ISO8859-n, microsoft-cp1251, TIS620-2533,
-// ISCII-DEVANAGARI, KOI8-R/U, UTF-8) in ICU's spelling.
+// Hunspell's SET encoding names in ICU's spelling.
 std::string icuEncodingName(std::string name)
 {
     std::string upper = name;
@@ -85,8 +81,6 @@ Converter openConverter(const std::string &encoding)
         Converter converter(ucnv_open(name.c_str(), &status));
         if (U_FAILURE(status) || !converter)
             continue;
-        // A character the encoding cannot hold fails the conversion (wxCSConv
-        // returns no buffer), it is not replaced.
         status = U_ZERO_ERROR;
         ucnv_setFromUCallBack(converter.get(), UCNV_FROM_U_CALLBACK_STOP, nullptr, nullptr, nullptr, &status);
         return converter;
@@ -104,7 +98,6 @@ public:
 
     bool spell(std::u16string_view word) override
     {
-        // CheckWord: an unconvertible or empty word is misspelled.
         const auto bytes = encode(word);
         return bytes && !bytes->empty() && m_hunspell.spell(*bytes);
     }
@@ -120,8 +113,6 @@ public:
     }
     void add(std::u16string_view word) override
     {
-        // Legacy passes a failed conversion's null buffer to std::string
-        // (undefined, a crash); such a word is not added (R3-hang-crash-loss).
         if (const auto bytes = encode(word); bytes && !bytes->empty())
             m_hunspell.add(*bytes);
     }
@@ -172,9 +163,7 @@ private:
     Converter m_converter;
 };
 
-// HikariSubFrame: boost::locale's generator over the system locale, made
-// global; legacy's segment indexes use that global locale. ICU is the
-// backend that implements boundary analysis.
+// Of boost::locale's backends only ICU implements boundary analysis.
 const std::locale &segmentationLocale()
 {
     static const std::locale locale = [] {
@@ -198,9 +187,7 @@ std::vector<core::legacy::WordSegment> segmentWords(std::u16string_view text)
     std::vector<core::legacy::WordSegment> out;
     if (text.empty())
         return out;
-    // Legacy segments std::wstring: UTF-16 on Windows. Where wchar_t is
-    // UTF-32 the text is converted and the segments mapped back to UTF-16
-    // offsets (unit[k]: the UTF-16 offset of wide character k).
+    // wchar_t is UTF-32 off Windows: unit[k] is the UTF-16 offset of wide character k.
     std::wstring wide;
     std::vector<std::size_t> unit;
     wide.reserve(text.size());
@@ -214,7 +201,6 @@ std::vector<core::legacy::WordSegment> segmentWords(std::u16string_view text)
             wide += static_cast<wchar_t>(QChar::surrogateToUcs4(c, text[i + 1]));
             ++i;
         } else {
-            // A lone surrogate is not a code point; ICU sees U+FFFD.
             wide += static_cast<wchar_t>(QChar::isSurrogate(c) ? 0xFFFD : c);
         }
     }

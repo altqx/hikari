@@ -24,8 +24,6 @@ namespace hikari::backends {
 
 QString containingFolder(const QString &path)
 {
-    // wxFileName(filename).GetPath(): everything before the last separator
-    // (on Linux '/'; on Windows '\\' or '/'), or the path when there is none.
     const QString native = QDir::fromNativeSeparators(path);
     const qsizetype at = native.lastIndexOf(u'/');
     QString folder = at > 0 ? native.left(at) : at == 0 ? QStringLiteral("/") : QString();
@@ -38,7 +36,6 @@ QString containingFolder(const QString &path)
 
 void selectInFolder(const QString &path)
 {
-    // Legacy SelectInFolder, as written (config.cpp:1050-1058).
     CoInitialize(nullptr);
     const std::wstring native = QDir::toNativeSeparators(path).toStdWString();
     if (PIDLIST_ABSOLUTE pidl = ILCreateFromPathW(native.c_str())) {

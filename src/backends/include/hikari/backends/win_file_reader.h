@@ -1,7 +1,5 @@
 #pragma once
 
-// Windows file reading for open, reload and external-change checks (A2).
-
 #include "hikari/application/document_files.h"
 
 namespace hikari::backends {

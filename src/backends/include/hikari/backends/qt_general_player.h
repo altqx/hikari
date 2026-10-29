@@ -1,16 +1,5 @@
 #pragma once
 
-// GeneralPlayer through Qt Multimedia's FFmpeg-backed QMediaPlayer (N5), in
-// the application process (ADR 0016). The player renders into its own
-// QVideoSink; a frame that sink receives is a delivered frame, which is
-// what acknowledges a seek and anchors the clock. V1: the sink's frames are
-// taken on the thread that renders them and handed to this object's thread
-// latest first: while one waits a newer one replaces it, so a busy GUI
-// thread never works through a backlog of old frames (a seek drops the one
-// waiting). Audio goes to the output device setOutputDevice names (H2): the
-// device with that id, else the system default; without a device playback is
-// silent.
-
 #include "hikari/application/general_player.h"
 
 #include <QMediaPlayer>
@@ -29,7 +18,6 @@ namespace hikari::backends {
 class QtGeneralPlayer : public QObject, public application::GeneralPlayerPort {
     Q_OBJECT
 public:
-    // useAudioOutput false: never open an audio device (silent playback).
     explicit QtGeneralPlayer(bool useAudioOutput = true, QObject *parent = nullptr);
     ~QtGeneralPlayer() override;
 
@@ -49,25 +37,18 @@ public:
     void setVolume(double linear) override;
     double volume() const { return m_volume; }
 
-    // H2 (decision 60): the output device by its QAudioDevice id (empty: the
-    // system default), applied at once, mid-playback too: Qt reopens its
-    // audio sink and playback goes on. An id the system does not list plays
-    // through the default. The application calls this again whenever the
-    // device list or the default changes (AudioOutputRouting), which moves
-    // the sound off a removed device (B7: Qt stayed on the invalidated one).
+    // Empty or unlisted id: the system default. Applies mid-playback; call it again when the
+    // device list changes, since Qt stays on a removed device.
     void setOutputDevice(const std::string &id);
-    // The last request, and the id of the device the output uses (empty
-    // without an output).
     const std::string &outputDeviceRequest() const { return m_outputRequest; }
+    // Empty without an audio output.
     std::string outputDeviceId() const;
 
-    // The player's own sink (presentation reads frames from here).
     QVideoSink *videoSink() { return &m_sink; }
     QString subtitleText() const { return m_sink.subtitleText(); }
     std::uint64_t deliveredFrames() const { return m_delivered; }
-    // Frames the sink received, and those a newer one replaced before this
-    // thread took them.
     std::uint64_t receivedFrames() const;
+    // Frames a newer one replaced before this object's thread took them.
     std::uint64_t supersededFrames() const;
 
 signals:
@@ -100,11 +81,10 @@ private:
     std::optional<PendingSeek> m_pendingSeek;
     application::PlayerClock m_clock;
     double m_volume = 1.0;
-    // The newest frame the sink received, until this thread takes it.
     struct Slot {
         std::mutex mutex;
         QVideoFrame frame;
-        bool queued = false; // a takeFrame call is on this thread's queue
+        bool queued = false;
         bool alive = true;
         std::uint64_t received = 0;
         std::uint64_t superseded = 0;

@@ -11,7 +11,7 @@ double monotonicSeconds()
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-constexpr double kAheadSeconds = 0.25; // queued beyond what the device has taken
+constexpr double kAheadSeconds = 0.25;
 constexpr double kChunkSeconds = 0.05;
 
 } // namespace
@@ -31,7 +31,7 @@ bool LineAudition::play(std::int64_t start, std::int64_t count)
     if (m_active)
         stop();
     const auto format = m_output.format();
-    m_output.stop(); // nothing queued from before
+    m_output.stop();
     const auto status = m_output.status();
     m_report = {};
     m_report.sourceStart = start;
@@ -127,8 +127,7 @@ void LineAudition::pump()
     }
     if (m_streamEnded && m_pending.empty() && !m_requestInFlight && m_report.logicalStopAt == 0)
         m_report.logicalStopAt = monotonicSeconds();
-    // Drained: the device took the last queued frame. The clock keeps where
-    // that audio ends even though callbacks continue on silence.
+    // Callbacks go on over silence, so the audible end comes from the last frame's clock.
     if (m_report.logicalStopAt != 0 && consumed >= m_written) {
         const auto clock = m_output.clock();
         if (clock.lastReadyFramesConsumed == m_baseConsumed + static_cast<std::uint64_t>(m_written)) {
@@ -145,7 +144,7 @@ void LineAudition::finish(bool drained)
 {
     m_timer.stop();
     m_active = false;
-    ++m_generation; // late answers belong to nobody
+    ++m_generation;
     const auto status = m_output.status();
     m_report.underruns = status.underruns - m_baseUnderruns;
     m_report.drained = drained;

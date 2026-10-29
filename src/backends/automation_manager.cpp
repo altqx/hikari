@@ -92,7 +92,7 @@ void AutomationManager::rebuildRegistry()
         const auto state = e.host->state();
         if (state == LuaScriptHost::State::Loading || state == LuaScriptHost::State::LoadFailed ||
             state == LuaScriptHost::State::Idle)
-            continue; // nothing registered to bind to
+            continue;
         application::AutomationRegistry::Script script;
         script.path = path;
         script.sha256 = e.sha256;
@@ -161,7 +161,7 @@ bool AutomationManager::reload(const std::string &path)
         return false;
     ++it->second.generation;
     it->second.modified = modifiedTime(path);
-    it->second.host->restart(); // a new helper: the script's top level runs again
+    it->second.host->restart();
     rebuildRegistry();
     notify();
     return true;
@@ -172,8 +172,6 @@ bool AutomationManager::modifiedSinceLoad(const std::string &path) const
     const auto it = m_entries.find(path);
     if (it == m_entries.end())
         return false;
-    // Legacy compares the last write time (GetFileTime) and treats a file it
-    // cannot open as unchanged (Automation.cpp:751-773).
     const QDateTime now = modifiedTime(path);
     return now.isValid() && now != it->second.modified;
 }
@@ -198,7 +196,7 @@ bool AutomationManager::run(const std::string &path, int ordinal, const applicat
                             bool validateFirst)
 {
     if (m_shuttingDown || busy())
-        return false; // one active macro application-wide
+        return false;
     LuaScriptHost *h = host(path);
     if (!h || !h->run(ordinal, snapshot, validateFirst))
         return false;

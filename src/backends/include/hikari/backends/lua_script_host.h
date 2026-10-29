@@ -1,13 +1,8 @@
 #pragma once
 
-// The application side of one loaded Lua script (N8; docs/automation.md):
-// one helper process and its persistent Lua state. Load registers the
-// script's macros; Run executes one macro while the event loop keeps going.
-// A dialog the script shows arrives through the dialog handler and is
-// answered once; an answer after the run ended is dropped. If the helper
-// dies, the script becomes Unavailable with its state lost, and the
-// interrupted macro is never rerun: only an explicit restart (which runs the
-// script's top-level code again) brings it back.
+// One script in its own helper process. A lost helper makes it Unavailable and its
+// interrupted macro is never rerun; only restart(), which reruns the top level, brings
+// it back. A dialog answer after the run ended is dropped.
 
 #include "hikari/application/automation.h"
 #include "hikari/backends/helper_host.h"
@@ -28,9 +23,8 @@ class LuaScriptHost : public QObject {
     Q_OBJECT
 public:
     enum class State { Idle, Loading, Ready, Running, LoadFailed, Unavailable };
-    // ForceStopped: the user chose Force stop after the grace period.
-    // NotValid: the macro's validation function answered false (or raised an
-    // error, the message) and the macro did not run (S4).
+    // ForceStopped: the user chose Force stop. NotValid: the validation function answered
+    // false or raised (the message), and the macro did not run.
     enum class RunOutcome { Ok, Failed, Cancelled, HelperLost, ForceStopped, NotValid };
 
     using DialogReply = std::function<void(application::DialogResult)>;
@@ -41,44 +35,34 @@ public:
     ~LuaScriptHost() override;
 
     void setDialogHandler(DialogHandler handler) { m_dialogHandler = std::move(handler); }
-    // Host services (L3): each request carries this script's path and the run
-    // that asked (0 for the top level while loading), and is answered at most
-    // once; an answer after the run or load ended is dropped. Without a
-    // handler every service answers Unavailable.
+    // Each request carries the script's path and the asking run (0: the top level while
+    // loading); answered at most once, late answers dropped. No handler: Unavailable.
     using ServiceReply = std::function<void(application::HostServiceReply)>;
     using ServiceHandler = std::function<void(const application::HostServiceRequest &, ServiceReply)>;
     void setServiceHandler(ServiceHandler handler) { m_serviceHandler = std::move(handler); }
     std::size_t pendingServices() const { return m_pendingServices.size(); }
 
     void load();
-    // A new helper generation that loads the script again.
+    // Starts a new helper that loads the script again.
     void restart();
-    // False unless Ready (one macro at a time per script). The snapshot is the
-    // subtitles object the macro sees; without one it sees an empty Document.
+    // False unless Ready. Without a snapshot the macro sees an empty Document.
     bool run(int macroIndex);
-    // With `validateFirst` the macro's validation function runs first, on
-    // the same subtitles object (legacy LuaCommand::Validate then Run).
+    // `validateFirst` runs the validation function first, on the same subtitles object.
     bool run(int macroIndex, const application::MacroSnapshot &snapshot, bool validateFirst = false);
-    // Only the macro's validation function (protocol Validate): finished()
-    // gives Ok when it answers true (lastResult() valid, with no lists) and
-    // NotValid otherwise; the macro does not run and nothing is staged
-    // (S4-run-validation). False unless Ready.
+    // Runs only the validation function: finished() gives Ok when it answers true
+    // (lastResult() valid, with no lists), else NotValid; nothing is staged. False unless Ready.
     bool validate(int macroIndex, const application::MacroSnapshot &snapshot);
     // What the last successful run staged and returned (set before finished()).
     const std::optional<application::MacroResult> &lastResult() const { return m_lastResult; }
-    // Latches the run as cancelled: it ends Cancelled even if the script then
-    // returns normally. If it has not stopped after the grace period, Force
-    // stop is offered (forceStopOffered); nothing is killed automatically.
+    // The run ends Cancelled even if the script returns normally. Past the grace period
+    // forceStopOffered() fires; nothing is killed automatically.
     void cancel();
     bool forceStopAvailable() const { return m_forceStopOffered; }
-    // Kills this script's helper (only after it was offered). The run ends
-    // ForceStopped; the script needs an explicit restart and nothing reruns.
+    // Only after forceStopOffered(); the run ends ForceStopped and the script needs restart().
     bool forceStop();
-    // Ends the helper now, for application quit (after its deadline).
     void terminate();
     void setGracePeriod(int ms) { m_graceMs = ms; }
-    // The helper gets it when the script loads (aegisub.debug.out drops
-    // messages above it); a loaded script keeps its level until it reloads.
+    // Read when the script loads (aegisub.debug.out drops messages above it).
     void setTraceLevel(int level) { m_traceLevel = level; }
 
     State state() const { return m_state; }
@@ -93,11 +77,10 @@ public:
 signals:
     void loaded();
     void loadFailed(const QString &message);
-    // aegisub.debug.out / aegisub.log: the text and the level it was given
-    // (0 fatal … 5 trace; -1 none).
+    // aegisub.debug.out / aegisub.log text and its level (0 fatal … 5 trace; -1 none).
     void logged(const QString &text, int level);
     void progressChanged(double percent);
-    // The macro itself begins, after its validation function (AD3).
+    // The macro itself begins, after its validation function.
     void macroStarted();
     void taskChanged(const QString &task);
     void titleChanged(const QString &title);
@@ -124,8 +107,8 @@ private:
     application::ScriptInfo m_info;
     QString m_lastError;
     std::uint64_t m_nextRun = 1;
-    std::uint64_t m_runRequest = 0;  // the request of the running macro
-    std::uint64_t m_loadRequest = 0; // the Load request while the top level runs
+    std::uint64_t m_runRequest = 0;
+    std::uint64_t m_loadRequest = 0;
     bool m_dialogOpen = false;
     bool m_cancelRequested = false;
     bool m_forceStopOffered = false;
@@ -135,7 +118,7 @@ private:
     std::int64_t m_loadStartedNs = 0;
     DialogHandler m_dialogHandler;
     ServiceHandler m_serviceHandler;
-    std::set<std::uint64_t> m_pendingServices; // call ids of the running macro
+    std::set<std::uint64_t> m_pendingServices;
     std::optional<application::MacroResult> m_lastResult;
 };
 

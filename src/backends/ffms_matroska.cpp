@@ -26,8 +26,6 @@ MatroskaError lost()
     return {MatroskaFailure::HelperLost, {}};
 }
 
-// A callback that runs at most once, whoever calls it first: the helper's
-// answer, a loss, or cancel().
 template <typename R> std::function<void(R)> once(std::function<void(R)> done)
 {
     auto shared = std::make_shared<std::function<void(R)>>(std::move(done));
@@ -61,7 +59,7 @@ void FfmsMatroska::ensureHelper(std::function<void(bool)> ready)
     connect(host, &HelperHost::refused, this, [shared] { (*shared)(false); }, Qt::SingleShotConnection);
     connect(host, &HelperHost::lost, this, [shared, host] {
         if (host->session() == 0)
-            (*shared)(false); // ended before the handshake
+            (*shared)(false);
     }, Qt::SingleShotConnection);
     if (host->state() == HelperHost::State::Idle)
         host->start();
@@ -83,7 +81,7 @@ void FfmsMatroska::send(std::shared_ptr<bool> cancelled, std::vector<std::byte> 
     ensureHelper([this, cancelled = std::move(cancelled), payload = std::move(payload), handler = std::move(handler),
                   failed = std::move(failed)](bool ok) mutable {
         if (*cancelled)
-            return; // cancelled while the helper was starting: nothing is sent
+            return;
         if (!ok)
             return failed(lost());
         auto id = std::make_shared<std::uint64_t>(0);

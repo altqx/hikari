@@ -57,12 +57,11 @@ yuv::Matrix matrixOf(const QVideoFrameFormat &format, int width, int height,
         case ffms::kSmpte240m: space = yuv::Space::Smpte240m; break;
         case 9:
         case 10: space = yuv::Space::Bt2020; break;
-        default: break; // RGB, unspecified or unknown: the frame's own
+        default: break;
         }
         if (space)
             return yuv::matrix(*space, colour->colorRange == ffms::kRangeJpeg);
     }
-    // Untagged: legacy's guess (ProviderFFMS2.cpp:393-395, video_matrix.h).
     yuv::Space space = width > 1024 || height >= 600 ? yuv::Space::Bt709 : yuv::Space::Bt601;
     switch (format.colorSpace()) {
     case QVideoFrameFormat::ColorSpace_BT601: space = yuv::Space::Bt601; break;
@@ -102,7 +101,7 @@ bool viaImage(const QVideoFrame &frame, application::IndexedFrame &out)
         auto *row = reinterpret_cast<std::uint8_t *>(out.bgra.data()) + static_cast<std::size_t>(y) * out.stride;
         std::memcpy(row, image.constScanLine(y), static_cast<std::size_t>(out.stride));
         for (int x = 3; x < out.stride; x += 4)
-            row[x] = 255; // opaque
+            row[x] = 255;
     }
     return true;
 }
@@ -133,8 +132,7 @@ bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out,
     out.ycbcr.reset();
     out.bgra.resize(static_cast<std::size_t>(out.stride) * static_cast<std::size_t>(h));
     const int cw = (w + 1) / 2;
-    // The chroma rows the mapping holds (an odd height may have one fewer):
-    // the last one serves the rows below it.
+    // An odd height may map one chroma row fewer; the last one serves the rows below it.
     auto rows = [&frame](int plane) {
         const int line = frame.bytesPerLine(plane);
         return line > 0 ? static_cast<int>(frame.mappedBytes(plane) / line) : 0;
@@ -148,7 +146,8 @@ bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out,
     }
     thread_local std::vector<std::uint8_t> yRow, uRow, vRow;
     yRow.resize(static_cast<std::size_t>(w));
-    uRow.resize(static_cast<std::size_t>(cw) + 8); // the SIMD rows read 8 samples at a time
+    // MUST KILL: +8 padding because yuv::row reads chroma 8 samples at a time
+    uRow.resize(static_cast<std::size_t>(cw) + 8);
     vRow.resize(static_cast<std::size_t>(cw) + 8);
     int chromaRow = -1;
     const std::uint8_t *u = nullptr, *v = nullptr;
@@ -191,7 +190,7 @@ bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out,
                         vRow[static_cast<std::size_t>(x)] = narrow(words(pv)[x], shape.highBits);
                     }
                 } else {
-                    // Copied: the rows are read 8 samples at a time.
+                    // MUST KILL: copied only because yuv::row reads 8 samples at a time
                     std::memcpy(uRow.data(), pu, static_cast<std::size_t>(cw));
                     std::memcpy(vRow.data(), pv, static_cast<std::size_t>(cw));
                 }
@@ -223,8 +222,6 @@ bool videoFrameToYcbcr(const QVideoFrame &source, application::IndexedFrame &out
         frame.unmap();
         return false;
     }
-    // The chroma rows the mapping holds, as videoFrameToBgra counts them: a
-    // short one's last row serves the rows below it.
     auto rows = [&frame](int plane) {
         const int line = frame.bytesPerLine(plane);
         return line > 0 ? static_cast<int>(frame.mappedBytes(plane) / line) : 0;
@@ -241,7 +238,7 @@ bool videoFrameToYcbcr(const QVideoFrame &source, application::IndexedFrame &out
     out.width = w;
     out.height = h;
     out.stride = 0;
-    out.bgra.resize(application::ycbcrBytes(p)); // a reused buffer of the same size is not cleared
+    out.bgra.resize(application::ycbcrBytes(p));
     auto *base = reinterpret_cast<std::uint8_t *>(out.bgra.data());
     for (int y = 0; y < h; ++y) {
         const uchar *luma = frame.bits(0) + static_cast<std::ptrdiff_t>(y) * frame.bytesPerLine(0);

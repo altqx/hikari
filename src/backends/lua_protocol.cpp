@@ -17,7 +17,6 @@ using helper::Writer;
 
 namespace {
 
-// A count read from the wire, bounded by what the payload could hold.
 std::optional<std::size_t> count(Reader &r, std::size_t payloadSize)
 {
     const std::int32_t n = r.i32();
@@ -171,8 +170,7 @@ std::optional<DialogResult> decodeDialogResult(const std::vector<std::byte> &pay
         case 4: v = r.u8() != 0; break;
         default: return std::nullopt;
         }
-        // The value must have the type its control returns (DialogValueType
-        // follows the DialogValue alternatives' order).
+        // MUST KILL: DialogValueType's order must match DialogValue's alternatives.
         if (v.index() != static_cast<std::size_t>(application::dialogValueType(request.controls[i].kind)))
             return std::nullopt;
         result.values.push_back(std::move(v));
@@ -329,7 +327,6 @@ std::optional<application::MacroResult> decodeMacroResult(const std::vector<std:
 
 namespace {
 
-// Each element takes at least one byte, so a count above the bytes left is malformed.
 bool plausible(std::int32_t count, const std::vector<std::byte> &payload)
 {
     return count >= 0 && static_cast<std::size_t>(count) <= payload.size();

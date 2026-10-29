@@ -67,10 +67,8 @@ std::vector<std::string> SubtitleRendererSelection::providers()
 bool SubtitleRendererSelection::select(const std::string &provider)
 {
 #ifdef _WIN32
-    // libass loads no CSRI renderer; any other name must be installed.
     const std::string chosen = provider.empty() || provider == "libass" ? std::string("libass")
                                                                         : resolveProvider(provider, providers());
-    // Logged once per name, not on every settings write that repeats it.
     if (chosen == provider || provider.empty()) {
         m_missingLogged.clear();
     } else if (provider != m_missingLogged) {
@@ -96,7 +94,7 @@ bool SubtitleRendererSelection::select(const std::string &provider)
     return true;
 #else
     (void)provider;
-    return false; // libass only
+    return false;
 #endif
 }
 

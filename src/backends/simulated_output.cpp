@@ -45,7 +45,7 @@ std::expected<void, application::OutputError> SimulatedOutput::start()
     m_running = true;
     m_startedAt = steadySeconds();
     m_rendered = 0;
-    render(); // the first buffer, as a device asks for it on start
+    render();
     return {};
 }
 
@@ -53,7 +53,7 @@ void SimulatedOutput::stop()
 {
     if (!m_engine)
         return;
-    render(); // what was due before the stop
+    render();
     if (m_running) {
         m_engine->stopRequested();
         m_engine->streamFinished();
@@ -91,9 +91,6 @@ application::ClockEstimate SimulatedOutput::clock() const
     return m_engine ? m_engine->clock(steadySeconds()) : application::ClockEstimate{};
 }
 
-// Buffers until the elapsed time is covered, stamped as a device would
-// stamp them: stream time from the frames rendered, the DAC time the latency
-// after it.
 void SimulatedOutput::render() const
 {
     if (!m_engine || !m_running)
@@ -104,7 +101,6 @@ void SimulatedOutput::render() const
     while (m_rendered < due) {
         const double stream = double(m_rendered) / format.sampleRate;
         if (!m_engine->render(m_buffer, {stream + kLatencySeconds, stream, m_startedAt + stream, false})) {
-            // an aborted stream ends, as a host ends it when its device goes
             m_engine->streamFinished();
             m_running = false;
             return;

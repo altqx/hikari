@@ -15,7 +15,6 @@
 extern "C" {
 #include <ass/ass.h>
 }
-// The font diagnostics are an altqx/libass fork API (ports/libass).
 #ifndef LIBASS_HAS_FONT_DIAGNOSTICS
 #error "libass is not the altqx fork: ass_set_font_diagnostics is missing (see ports/libass)"
 #endif
@@ -72,7 +71,6 @@ std::string decodeName(const FT_SfntName &n)
     return std::string(reinterpret_cast<const char *>(n.string), n.string_len);
 }
 
-// The face's own names, read from the bytes, and how `requested` matches them.
 void readNames(const std::vector<unsigned char> &bytes, long index, const std::string &requested,
                ResolvedFace &face)
 {
@@ -112,12 +110,12 @@ void readNames(const std::vector<unsigned char> &bytes, long index, const std::s
 }
 
 struct State {
-    FontReport report;     // faces live here in both modes
+    FontReport report;
     std::size_t current = 0;
-    std::map<int, std::size_t> uidToFace; // the renderer's selector-local ids
-    std::vector<std::pair<std::string, std::string>> attachments; // name, sha256
-    std::vector<std::pair<std::string, std::string>> externals;   // Y6: external font path, sha256
-    application::FontCollection *collection = nullptr; // set while collecting a document
+    std::map<int, std::size_t> uidToFace;
+    std::vector<std::pair<std::string, std::string>> attachments;
+    std::vector<std::pair<std::string, std::string>> externals;
+    application::FontCollection *collection = nullptr;
 };
 
 std::string codeName(std::uint32_t code)
@@ -133,7 +131,6 @@ template <typename T> void addUnique(std::vector<T> &list, const T &value)
         list.push_back(value);
 }
 
-// Collection mode: one entry per distinct byte stream, with its faces and roles.
 void collectFace(State &st, const ResolvedFace &face, const std::vector<unsigned char> &bytes)
 {
     auto &c = *st.collection;
@@ -217,7 +214,6 @@ void onSelected(void *data, const ASS_FontSelection *s)
             face.attachment = name;
             break;
         }
-    // Y6: an external font (EXTERNAL_FONTS_DIRECTORY) is named by its file.
     if (face.attachment.empty() && face.path.empty())
         for (const auto &[name, hash] : st.externals)
             if (hash == face.sha256) {
@@ -238,7 +234,7 @@ void onSelected(void *data, const ASS_FontSelection *s)
     if (s->stage != ASS_FONT_STAGE_REQUESTED)
         request.usedFallback = true;
     else if (added.nameMatch == NameMatch::None)
-        request.substituted = true; // the provider answered with a face of other names
+        request.substituted = true;
     else
         request.requestedFamilyFound = true;
 }
@@ -298,7 +294,7 @@ std::string escapeText(const std::string &text)
     std::string out;
     for (char c : text) {
         if (c == '{' || c == '}' || c == '\\')
-            continue; // no override tags or escapes from request text
+            continue;
         if (c == '\n')
             out += "\\N";
         else
@@ -307,9 +303,6 @@ std::string escapeText(const std::string &text)
     return out;
 }
 
-// Y6: EXTERNAL_FONTS_DIRECTORY's fonts, after the attachments. Legacy
-// registered them for the process (AddFontResourceExW FR_PRIVATE), so the
-// renderer saw them as installed fonts.
 void addExternalFonts(ASS_Library *library, const application::FontEnvironment &environment, State *state)
 {
     for (const auto &f : environment.externalFonts) {
@@ -361,7 +354,7 @@ std::expected<FontReport, FontError> LibassFontService::resolve(const applicatio
         state.report.requests.push_back({request, {}, false, false, false, {}});
         state.current = i;
         state.uidToFace.clear();
-        // A fresh renderer: its font cache and selector know nothing yet.
+        // A fresh renderer per request: libass's font cache would hide repeated selections.
         ASS_Renderer *renderer = ass_renderer_init(library);
         if (!renderer) {
             ass_library_done(library);
@@ -394,10 +387,7 @@ std::expected<FontReport, FontError> LibassFontService::resolve(const applicatio
 
 #ifdef _WIN32
 namespace {
-// A font file's path as the file system spells it. DirectWrite's font cache
-// hands back its paths upper-cased (C:\WINDOWS\FONTS\YUGOTHB.TTC); legacy
-// listed the font folders with FindFirstFile and so named and copied each
-// file as it is spelt on disk (FontCollector.cpp:733-786), as this does.
+// DirectWrite's font cache hands back paths upper-cased (C:\WINDOWS\FONTS\YUGOTHB.TTC).
 std::wstring onDiskPath(const std::wstring &path)
 {
     HANDLE file = CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -433,12 +423,8 @@ std::vector<SystemFace> LibassFontService::systemFaces()
                                    reinterpret_cast<IUnknown **>(&factory))))
         return out;
     IDWriteFontCollection *collection = nullptr;
-    // Every listing asks DirectWrite to check for installed and removed fonts
-    // first. Without the check the shared factory answers with the font cache
-    // service's view, which lags behind installs and can be older than a
-    // checked listing made before it; the collector names and copies the
-    // files of this listing, which legacy read from the font folders at that
-    // moment (FontCollector::CheckOrCopyFonts, FindFirstFileW).
+    // Without the update check the shared factory answers with the font cache service's view,
+    // which lags behind installs.
     if (SUCCEEDED(factory->GetSystemFontCollection(&collection, TRUE))) {
         auto utf8 = [](const wchar_t *w) { return QString::fromWCharArray(w).toStdString(); };
         auto strings = [&](IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID id) {
@@ -492,8 +478,8 @@ std::vector<SystemFace> LibassFontService::systemFaces()
                 SystemFace face;
                 // GDI-compatible family names, as libass's DirectWrite provider matches them.
                 face.families = strings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
-                // Y6: the name GDI's EnumFontFamiliesEx listed (FontEnumerator.cpp:155):
-                // the Win32 family name in the user's language, else English, else the first.
+                // The name GDI's EnumFontFamiliesEx lists: the Win32 family name in the user's
+                // language, else English, else the first.
                 face.listedFamily = localized(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
                 for (auto &name : strings(font, DWRITE_INFORMATIONAL_STRING_PREFERRED_FAMILY_NAMES))
                     if (std::find(face.families.begin(), face.families.end(), name) == face.families.end())
@@ -585,7 +571,6 @@ namespace {
 
 constexpr int kFrameWidth = 640, kFrameHeight = 360;
 
-// Composites one libass frame onto transparent black and hashes it.
 std::string frameHash(ASS_Image *image)
 {
     std::vector<unsigned char> rgba(std::size_t(kFrameWidth) * kFrameHeight * 4, 0);
@@ -617,8 +602,6 @@ struct Rendering {
     std::vector<std::string> hashes;
 };
 
-// Renders `script` at every event's midpoint in one renderer; false when
-// cancelled. Diagnostics, if installed on `library`, see every selection.
 std::expected<Rendering, FontError> renderDocument(ASS_Library *library, const std::vector<std::byte> &script,
                                                    const application::FontEnvironment &environment,
                                                    const std::atomic<bool> *cancel)
@@ -728,11 +711,6 @@ LibassFontService::verifyReimport(const std::vector<std::byte> &script, const ap
 
 namespace {
 
-// Y6: the faces of one external font (EXTERNAL_FONTS_DIRECTORY), read from
-// its bytes as the platform listed them once legacy had registered the file:
-// fontconfig's view of the face on Linux (the shim's FcConfigAppFontAddFile,
-// platform.h:1230), the GDI family name (name ID 1 in the user's language,
-// else English, else the first) on Windows.
 std::vector<SystemFace> externalFaces(const application::FontAttachment &font)
 {
     std::vector<SystemFace> out;
@@ -812,8 +790,6 @@ std::vector<SystemFace> externalFaces(const application::FontAttachment &font)
     return out;
 }
 
-// Whether `f` maps every character (U+0000 never: the shim's GetGlyphIndicesW
-// marks it missing, platform.h:1110).
 bool coversAll(FT_Face f, const std::u32string &characters)
 {
     for (const char32_t c : characters)
@@ -836,9 +812,6 @@ bool charsetCovers(const FcCharSet *set, const std::u32string &characters)
 
 std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
 {
-    // A Script's attachment can be anything: its faces, the name records
-    // looked at and the bytes of the names read are bounded together, and
-    // each name is checked against those kept in constant time.
     constexpr long kMaxFaces = 256;
     constexpr std::size_t kMaxNames = 4096, kMaxRecords = 16384, kMaxNameBytes = std::size_t(1) << 20;
     std::vector<std::string> out;
@@ -855,7 +828,6 @@ std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
     }
     std::size_t records = 0, bytesLeft = kMaxNameBytes;
     const auto open = [&] { return out.size() < kMaxNames && records < kMaxRecords && bytesLeft > 0; };
-    // Whether `length` more bytes may be read; once one may not, none is.
     const auto take = [&bytesLeft](std::size_t length) {
         if (length > bytesLeft) {
             bytesLeft = 0;
@@ -907,7 +879,6 @@ std::vector<bool> LibassFontService::facesCover(const std::vector<SystemFace> &f
     FT_Library ft = nullptr;
     if (FT_Init_FreeType(&ft))
         ft = nullptr;
-    // External fonts: their own bytes.
     for (std::size_t i = 0; i < faces.size(); ++i) {
         if (faces[i].externalFile.empty() || !ft)
             continue;
@@ -930,8 +901,6 @@ std::vector<bool> LibassFontService::facesCover(const std::vector<SystemFace> &f
         FT_Done_Face(f);
     }
 #ifdef _WIN32
-    // Installed fonts: GetGlyphIndicesW with the face selected
-    // (FontEnumerator::CheckGlyphsExists) reads its character map.
     std::map<std::string, std::vector<std::size_t>> byPath;
     for (std::size_t i = 0; i < faces.size(); ++i)
         if (faces[i].externalFile.empty() && !faces[i].path.empty())
@@ -954,8 +923,6 @@ std::vector<bool> LibassFontService::facesCover(const std::vector<SystemFace> &f
         file.unmap(data);
     }
 #else
-    // Installed fonts: the charset of the face fontconfig lists (the shim's
-    // FcCharSetHasChar on the matched face, platform.h:1106).
     if (FcInit()) {
         FcPattern *pattern = FcPatternCreate();
         FcObjectSet *objects = FcObjectSetBuild(FC_FILE, FC_INDEX, FC_CHARSET, nullptr);
@@ -989,9 +956,7 @@ std::vector<bool> LibassFontService::facesCover(const std::vector<SystemFace> &f
 void LibassFontService::refresh()
 {
 #ifndef _WIN32
-    // The listing's configuration reads the font folders again; libass makes
-    // its own configuration for each renderer. (On Windows every listing
-    // checks DirectWrite's system collection for changes.)
+    // libass builds its own fontconfig configuration per renderer; this refreshes the listing's.
     FcInitReinitialize();
 #endif
 }
@@ -1000,7 +965,6 @@ std::vector<std::string> LibassFontService::fontDirectories()
 {
     std::vector<std::string> out;
 #ifdef _WIN32
-    // FontEnumerator::CheckFontsProc's two folders (FontEnumerator.cpp:362-374).
     const QString windows = qEnvironmentVariable("WINDIR");
     if (!windows.isEmpty())
         out.push_back((windows + QStringLiteral("\\Fonts\\")).toStdString());
@@ -1008,8 +972,6 @@ std::vector<std::string> LibassFontService::fontDirectories()
     if (!local.isEmpty())
         out.push_back((local + QStringLiteral("\\Microsoft\\Windows\\Fonts\\")).toStdString());
 #else
-    // hikarisub_linux_font_directories (platform.h:1186): fontconfig's font
-    // folders, sorted and once each.
     if (!FcInit())
         return out;
     if (FcStrList *list = FcConfigGetFontDirs(FcConfigGetCurrent())) {

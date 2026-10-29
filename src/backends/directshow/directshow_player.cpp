@@ -122,13 +122,11 @@ struct DirectShowPlayer::Impl {
     void onDelivery(dshow::Delivery d);
     void applyVolume();
     MediaDescription describe() const;
-    // IAMStreamSelect's streams of one major type: their stream indices.
     std::vector<long> streamsOf(bool audioType, bool subtitleType) const;
 };
 
 void DirectShowPlayer::Impl::tearDown()
 {
-    // Legacy TearDownGraph.
     if (control && state != State::Stopped)
         control->Stop();
     streamSelect.Reset();
@@ -144,8 +142,6 @@ void DirectShowPlayer::Impl::tearDown()
 
 bool DirectShowPlayer::Impl::build(const std::string &path, std::string &error)
 {
-    // Legacy DShowPlayer::InitializeGraph and OpenFile; each failing step
-    // reports legacy's message (HR / PTR) and fails the open.
 #define W1_HR(what, message)                                                                                          \
     if (FAILED(what)) {                                                                                                \
         error = message;                                                                                               \
@@ -177,7 +173,6 @@ bool DirectShowPlayer::Impl::build(const std::string &path, std::string &error)
           "Cannot create audio renderer instance");
     W1_HR(graph->AddFilter(audioRenderer.Get(), L"Direct Sound Renderer"), "Cannot add Direct Sound renderer");
 
-    // Legacy's non-vobsub branch: connect the source's pins by major type.
     ComPtr<IEnumPins> sourcePins, rendererPins, audioPins;
     W1_HR(source->EnumPins(&sourcePins), "Cannot enumerate source pins");
     W1_HR(rendererFilter->EnumPins(&rendererPins), "Cannot enumerate renderer pins");
@@ -196,8 +191,7 @@ bool DirectShowPlayer::Impl::build(const std::string &path, std::string &error)
     while (sourcePins->Next(1, &sourcePin, nullptr) == S_OK) {
         ComPtr<IEnumMediaTypes> types;
         W1_HR(sourcePin->EnumMediaTypes(&types), "No IMediaTypes");
-        // Legacy HR failed only on an error: a pin without types (S_FALSE)
-        // went on with the previous pin's type, which here means skipping it.
+        // A pin without media types: Next gives S_FALSE and no type; skip it.
         AM_MEDIA_TYPE *info = nullptr;
         W1_HR(types->Next(1, &info, nullptr), "No track type info");
         if (!info) {
@@ -212,9 +206,8 @@ bool DirectShowPlayer::Impl::build(const std::string &path, std::string &error)
             W1_HR(graph->Connect(sourcePin.Get(), audioPin.Get()), "Cannot connect source pin to audio renderer");
             audioConnected = true;
         } else if (major == MEDIATYPE_Stream) {
-            // A byte stream: the graph inserts the splitter (and decoders) to
-            // reach the video renderer; the splitter's first audio pin goes to
-            // DirectSound, and it gives the stream selection.
+            // A byte stream: Connect inserts the splitter and decoders; the splitter's first
+            // audio pin goes to DirectSound.
             W1_HR(graph->Connect(sourcePin.Get(), rendererPin.Get()),
                   "Cannot connect source pin to audio1 renderer");
             ComPtr<IPin> splitterInput;
@@ -229,8 +222,7 @@ bool DirectShowPlayer::Impl::build(const std::string &path, std::string &error)
             while (splitterPins->Next(1, &splitterPin, nullptr) == S_OK) {
                 ComPtr<IEnumMediaTypes> splitterTypes;
                 W1_HR(splitterPin->EnumMediaTypes(&splitterTypes), "No IMediaTypes");
-                // The splitter's input pin lists no types (S_FALSE): skipped,
-                // as legacy's HR let it through with the previous type.
+                // The splitter's input pin lists no types (S_FALSE): skip it.
                 AM_MEDIA_TYPE *splitterInfo = nullptr;
                 W1_HR(splitterTypes->Next(1, &splitterInfo, nullptr), "No track type info");
                 if (!splitterInfo) {
@@ -256,8 +248,6 @@ bool DirectShowPlayer::Impl::build(const std::string &path, std::string &error)
     seeking->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
     state = State::Stopped;
     if (!hasStream && FAILED(source.As(&streamSelect))) {
-        // The splitter behind the source's first pin (legacy: no message,
-        // it "will spam on avi/wmv").
         ComPtr<IEnumPins> pins;
         ComPtr<IPin> first, connected;
         if (SUCCEEDED(source->EnumPins(&pins)) && pins->Next(1, &first, nullptr) == S_OK &&
@@ -306,9 +296,8 @@ MediaDescription DirectShowPlayer::Impl::describe() const
     LONGLONG duration = 0;
     if (seeking && SUCCEEDED(seeking->GetDuration(&duration)) && duration > 0)
         d.durationUs = duration / 10;
-    // The video's own seeking: the graph's capabilities are those every
-    // renderer shares, and legacy's DirectSound renderer stays in the graph
-    // unconnected when the file has no audio.
+    // The graph's seeking capabilities are those all its renderers share, an unconnected
+    // DirectSound renderer included: ask the video renderer.
     DWORD caps = 0;
     ComPtr<IMediaSeeking> videoSeeking;
     if (rendererFilter && SUCCEEDED(rendererFilter.As(&videoSeeking)) && SUCCEEDED(videoSeeking->GetCapabilities(&caps)))
@@ -350,7 +339,6 @@ MediaDescription DirectShowPlayer::Impl::describe() const
             }
         }
     }
-    // Without stream selection: the connected video and audio.
     if (d.videoTracks.empty() && renderer && renderer->connected()) {
         d.videoTracks.emplace_back();
         d.activeVideo = 0;
@@ -366,7 +354,7 @@ void DirectShowPlayer::Impl::applyVolume()
 {
     if (!audio || state == State::None)
         return;
-    // Legacy SetVolume(-(pos * pos)) through videoVolumeGain: 2000 * log10.
+    // put_Volume takes hundredths of a decibel, -10000 for silence.
     long value = volume <= 0 ? -10000 : static_cast<long>(std::lround(2000.0 * std::log10(volume)));
     value = value < -10000 ? -10000 : value > 0 ? 0 : value;
     if (SUCCEEDED(audio->put_Volume(value))) {
@@ -401,14 +389,10 @@ void DirectShowPlayer::Impl::onDelivery(dshow::Delivery d)
 DirectShowPlayer::DirectShowPlayer(Post post) : d(std::make_unique<Impl>())
 {
     d->post = std::move(post);
-    // Legacy: CoInitialize in the player's constructor, CoUninitialize in
-    // its destructor.
     const HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     d->comInitialized = SUCCEEDED(hr);
     const std::weak_ptr<bool> alive = d->alive;
     Impl *impl = d.get();
-    // Latest wins: a delivery still waiting for the owner's thread is
-    // replaced by a newer one (and only one task is queued at a time).
     struct Waiting {
         std::mutex mutex;
         std::optional<dshow::Delivery> delivery;
@@ -477,8 +461,6 @@ void DirectShowPlayer::open(const std::string &path, Opened done)
     if (auto seek = std::exchange(d->pendingSeek, std::nullopt))
         seek->done(std::unexpected(PlayerError::Stale));
     std::string error;
-    // A delivery from the previous graph carries an older serial; it never
-    // answers a seek on this one.
     d->bridge->requestedSerial = ++d->serial;
     const bool built = d->build(path, error);
     std::expected<MediaDescription, PlayerError> result = std::unexpected(PlayerError::BackendFailure);
@@ -494,7 +476,6 @@ void DirectShowPlayer::open(const std::string &path, Opened done)
             d->openFailed(error);
     }
     d->changed();
-    // As the Qt player, the answer comes later, on the owner's thread.
     const std::weak_ptr<bool> alive = d->alive;
     const std::uint64_t generation = d->generation;
     Impl *impl = d.get();
@@ -511,7 +492,6 @@ void DirectShowPlayer::seek(std::int64_t us, Seeked done)
 {
     if (!d->graph || d->state == Impl::State::None || !d->seeking)
         return done(std::unexpected(PlayerError::NotOpen));
-    // Legacy asked for no capabilities: SetPositions answers (below).
     if (us < 0)
         return done(std::unexpected(PlayerError::InvalidInput));
     if (auto previous = std::exchange(d->pendingSeek, std::nullopt))
@@ -523,7 +503,7 @@ void DirectShowPlayer::seek(std::int64_t us, Seeked done)
     d->pendingSeek = Impl::PendingSeek{d->generation, serial, us, std::move(done)};
     if (d->status == MediaStatus::EndOfMedia)
         d->status = MediaStatus::Loaded;
-    // Legacy DShowPlayer::SetPosition, in 100 ns units.
+    // REFERENCE_TIME is in 100 ns units.
     LONGLONG position = us * 10;
     const bool stopped = d->state == Impl::State::Stopped;
     if (stopped)
@@ -535,15 +515,13 @@ void DirectShowPlayer::seek(std::int64_t us, Seeked done)
             pending->done(std::unexpected(PlayerError::BackendFailure));
         return;
     }
-    // A stopped graph shows the new frame by pausing until it is ready, then
-    // stopping again (IMediaControl::StopWhenReady).
+    // StopWhenReady pauses until the new frame is ready, then stops.
     if (stopped)
         d->control->StopWhenReady();
 }
 
 void DirectShowPlayer::play()
 {
-    // Legacy DShowPlayer::Play.
     if (d->state == Impl::State::None || !d->graph)
         return;
     if (d->state == Impl::State::Paused || d->state == Impl::State::Stopped) {
@@ -558,7 +536,6 @@ void DirectShowPlayer::play()
 
 void DirectShowPlayer::pause()
 {
-    // Legacy DShowPlayer::Pause's paused branch; the port's pause always pauses.
     if (!d->graph || d->state == Impl::State::None || d->state == Impl::State::Paused)
         return;
     if (SUCCEEDED(d->control->Pause())) {
@@ -571,7 +548,6 @@ void DirectShowPlayer::pause()
 
 void DirectShowPlayer::stop()
 {
-    // Legacy DShowPlayer::Stop.
     if (auto seek = std::exchange(d->pendingSeek, std::nullopt))
         seek->done(std::unexpected(PlayerError::Stale));
     if (d->state != Impl::State::Playing && d->state != Impl::State::Paused)
@@ -586,7 +562,6 @@ void DirectShowPlayer::stop()
 
 bool DirectShowPlayer::selectAudioTrack(int index)
 {
-    // Legacy RendererDirectShow::EnableStream on the audio streams.
     const auto audio = d->streamsOf(true, false);
     if (audio.empty())
         return index == 0 && d->audioConnected;
@@ -664,7 +639,6 @@ void DirectShowPlayer::setYcbcrFrames(bool planes)
 
 std::vector<DirectShowPlayer::Filter> DirectShowPlayer::filters() const
 {
-    // Legacy DShowPlayer::EnumFilters.
     std::vector<Filter> out;
     if (!d->graph)
         return out;
@@ -690,7 +664,6 @@ std::vector<DirectShowPlayer::Filter> DirectShowPlayer::filters() const
 
 bool DirectShowPlayer::showFilterProperties(const std::string &name, std::uintptr_t ownerWindow, int x, int y)
 {
-    // Legacy DShowPlayer::FilterConfig.
     if (!d->graph)
         return false;
     ComPtr<IBaseFilter> filter;
@@ -738,7 +711,6 @@ std::uint64_t DirectShowPlayer::deliveredFrames() const
 
 std::vector<std::string> DirectShowPlayer::streams() const
 {
-    // Legacy DShowPlayer::GetStreams.
     std::vector<std::string> out;
     if (!d->streamSelect)
         return out;

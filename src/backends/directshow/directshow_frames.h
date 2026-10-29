@@ -1,12 +1,7 @@
 #pragma once
 
-// W1: a DirectShow video sample as a BGRA frame. Legacy uploaded the sample
-// to a DXVA surface (RendererDirectShow::DrawTexture) and let
-// VideoProcessBlt convert it with limited-range input (16-235), the script's
-// matrix and full-range output; this does the same conversion on the CPU.
-// The sample layout is legacy's: the negotiated width (made even) times its
-// bytes per pixel, the planes one after another (YV12: Y, V, U; NV12: Y,
-// then interleaved U and V).
+// A DirectShow sample: the width made even, the planes back to back (YV12: Y, V, U;
+// NV12: Y, then interleaved U and V); Y'CbCr goes from limited range to full-range BGRA.
 
 #include "hikari/application/indexed_source.h"
 
@@ -24,15 +19,12 @@ struct SampleFormat {
     bool bottomUp = false; // an RGB DIB with a positive biHeight
 };
 
-// The bytes a sample of this format holds (legacy m_Height * m_Pitch).
 std::size_t sampleBytes(const SampleFormat &format);
 // False when the sample is shorter than its format says.
 bool toBgra(const SampleFormat &format, const std::uint8_t *data, std::size_t size, bool bt709,
             application::IndexedFrame &out);
-// The same sample for a presenter that converts Y'CbCr on the GPU: YV12 and
-// NV12 are copied into the frame's planes (IndexedFrame::ycbcr) with the
-// coefficients toBgra uses, so that application::ycbcrToBgra of the result
-// is toBgra's output byte for byte; RGB32 and YUY2 are made BGRA by toBgra.
+// YV12 and NV12 are copied into IndexedFrame::ycbcr so that application::ycbcrToBgra
+// matches toBgra byte for byte; RGB32 and YUY2 go through toBgra.
 bool toYcbcr(const SampleFormat &format, const std::uint8_t *data, std::size_t size, bool bt709,
              application::IndexedFrame &out);
 const char *subtypeName(Subtype subtype);
