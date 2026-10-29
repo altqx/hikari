@@ -532,7 +532,7 @@ private slots:
     void firstStartOnAPolishSystemTakesPolish()
     {
         const QStringList polish{QStringLiteral("pl-PL"), QStringLiteral("en-US")};
-        const QString ini = dir.filePath(QStringLiteral("first-start/hikari.ini"));
+        const QString ini = dir.filePath(QStringLiteral("first-start/settings.toml"));
         QVERIFY(!QFile::exists(ini));
         start(ini, polish);
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl"));

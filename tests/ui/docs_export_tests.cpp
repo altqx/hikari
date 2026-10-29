@@ -186,7 +186,7 @@ private slots:
 
         QTemporaryDir profile;
         app::Application::Options o;
-        o.settingsFile = profile.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = profile.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = {};
         o.systemUiLanguages = {QStringLiteral("en")};
@@ -318,7 +318,7 @@ private slots:
         };
         QCOMPARE(keys(read(out.filePath(QStringLiteral("docs/settings.json")))), keys(read(first.filePath(QStringLiteral("settings.json")))));
         // Nothing of the user's: the profile was a temporary one.
-        QVERIFY(!QFile::exists(out.filePath(QStringLiteral("home/config/HikariSub/hikari.ini"))));
+        QVERIFY(!QFile::exists(out.filePath(QStringLiteral("home/config/HikariSub/settings.toml"))));
 
         program.start(QStringLiteral(HIKARI_PROGRAM), {QStringLiteral("--export-docs")});
         QVERIFY(program.waitForFinished(60000));

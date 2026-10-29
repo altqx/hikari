@@ -1534,6 +1534,7 @@ private:
     QString m_userFolder; // UD1
     // UD1: the notice of the move into the user folder and the seeding's Log lines.
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
+    void reportSettingsFiles();
     // Modification time of each Document's file when last read or written,
     // and the Documents whose removal was already noticed.
     std::map<std::uint64_t, QDateTime> m_fileTimes;

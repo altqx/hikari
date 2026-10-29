@@ -1,14 +1,14 @@
 #include "settings_store.h"
 
+#include "settings_files.h"
+
 #include <QJSValue>
-#include <QSettings>
 
 namespace hikari::ui {
 
 namespace {
 
 using application::SettingDefinition;
-using application::SettingType;
 using application::SettingValue;
 
 std::string str(const QString &s)
@@ -21,82 +21,19 @@ QString qs(std::string_view s)
     return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
 }
 
-// One QSettings over the INI file for the store's life: reads come from its
-// cache and writes are batched until Qt syncs it (at the next event loop pass
-// and when the store goes), not one file rewrite per value. Other QSettings on
-// the same file in this process share that data.
-class IniSettingsStorage final : public application::SettingsStorage {
-public:
-    explicit IniSettingsStorage(const QString &file) : m_ini(file, QSettings::IniFormat) {}
-
-    QSettings &ini() { return m_ini; }
-
-    std::optional<SettingValue> read(const SettingDefinition &setting) const override
-    {
-        const QString key = SettingsStore::keyOf(setting);
-        if (!m_ini.contains(key))
-            return std::nullopt;
-        // The QVariant conversions the interim readers used.
-        const QVariant v = m_ini.value(key);
-        switch (setting.type) {
-        case SettingType::Bool:
-            return v.toBool();
-        case SettingType::Int:
-            return static_cast<std::int64_t>(v.toLongLong());
-        case SettingType::String:
-            return str(v.toString());
-        case SettingType::StringList: {
-            std::vector<std::string> out;
-            for (const QString &entry : v.toStringList())
-                out.push_back(str(entry));
-            return out;
-        }
-        }
-        return std::nullopt;
-    }
-
-    void write(const SettingDefinition &setting, const SettingValue &value) override
-    {
-        m_ini.setValue(SettingsStore::keyOf(setting), SettingsStore::toVariant(value));
-    }
-
-    void remove(const SettingDefinition &setting) override
-    {
-        m_ini.remove(SettingsStore::keyOf(setting));
-    }
-
-private:
-    mutable QSettings m_ini;
-};
-
 } // namespace
 
 SettingsStore::SettingsStore(QString file, QObject *parent) : QObject(parent), m_file(std::move(file))
 {
     if (m_file.isEmpty())
-        m_storage = std::make_unique<application::MemorySettingsStorage>();
-    else {
-        auto ini = std::make_unique<IniSettingsStorage>(m_file);
-        migrateInterimKeys(ini->ini());
-        // K2: the withdrawn colour settings leave the profile (no saved
-        // colour overrides the theme any more); WS3: the editor switch
-        // leaves the workspace.
-        for (const auto id : application::retiredSettings())
-            for (const auto *scope : {"profile/", "workspace/"})
-                if (ini->ini().contains(QLatin1String(scope) + qs(id)))
-                    ini->ini().remove(QLatin1String(scope) + qs(id));
-        m_storage = std::move(ini);
-    }
+        m_storage = std::make_shared<application::MemorySettingsStorage>();
+    else
+        m_storage = m_files = SettingsFiles::open(m_file);
     m_settings = std::make_unique<application::Settings>(*m_storage);
     m_settings->setObserver([this](const SettingDefinition &setting) { emit changed(qs(setting.id)); });
 }
 
 SettingsStore::~SettingsStore() = default;
-
-QString SettingsStore::keyOf(const SettingDefinition &setting)
-{
-    return qs(application::scopeName(setting.scope)) + QLatin1Char('/') + qs(setting.id);
-}
 
 QVariant SettingsStore::toVariant(const SettingValue &value)
 {
@@ -179,8 +116,28 @@ void SettingsStore::resetAll()
 
 void SettingsStore::sync()
 {
-    if (auto *ini = dynamic_cast<IniSettingsStorage *>(m_storage.get()))
-        ini->ini().sync();
+    if (m_files)
+        m_files->flush();
+}
+
+std::vector<application::FileProblem> SettingsStore::problems() const
+{
+    return m_files ? m_files->problems() : std::vector<application::FileProblem>();
+}
+
+bool SettingsStore::converted() const
+{
+    return m_files && m_files->converted();
+}
+
+bool SettingsStore::filesExist(const QString &file)
+{
+    return SettingsFiles::exist(file);
+}
+
+std::vector<std::string> SettingsStore::ignored() const
+{
+    return m_files ? m_files->ignored() : std::vector<std::string>();
 }
 
 QString SettingsStore::text(const char *id) const
@@ -194,48 +151,6 @@ QStringList SettingsStore::list(const char *id) const
     for (const auto &entry : m_settings->list(id))
         out << QString::fromStdString(entry);
     return out;
-}
-
-void SettingsStore::migrateInterimKeys(QSettings &ini)
-{
-    const QString schemaKey = QStringLiteral("registry/schema");
-    if (ini.value(schemaKey, 0).toInt() >= kSchema)
-        return;
-    auto targetKey = [](std::string_view id) { return keyOf(*application::findSetting(id)); };
-    // A value already under the registry key wins; the interim key goes either way.
-    for (const auto &interim : application::interimKeys()) {
-        const QString from = qs(interim.key);
-        if (!ini.contains(from))
-            continue;
-        const QString to = targetKey(interim.setting);
-        if (!ini.contains(to))
-            ini.setValue(to, ini.value(from));
-        ini.remove(from);
-    }
-    std::int64_t options = 0;
-    bool anyBit = false;
-    for (const auto &bit : application::interimShiftOptionBits()) {
-        const QString from = qs(bit.key);
-        if (!ini.contains(from))
-            continue;
-        anyBit = true;
-        if (ini.value(from).toBool())
-            options |= bit.bit;
-        ini.remove(from);
-    }
-    if (anyBit && !ini.contains(targetKey("shiftTimes.options")))
-        ini.setValue(targetKey("shiftTimes.options"), QVariant::fromValue<qlonglong>(options));
-    ini.beginGroup(qs(application::kInterimAutomationHotkeysGroup));
-    QStringList rows;
-    for (const QString &name : ini.childKeys()) {
-        const QStringList v = ini.value(name).toStringList();
-        rows << QStringList{name, v.value(0), v.value(1), v.value(2)}.join(QLatin1Char('\t'));
-    }
-    ini.endGroup();
-    if (!rows.isEmpty() && !ini.contains(targetKey(application::kAutomationHotkeysSetting)))
-        ini.setValue(targetKey(application::kAutomationHotkeysSetting), rows);
-    ini.remove(qs(application::kInterimAutomationHotkeysGroup));
-    ini.setValue(schemaKey, kSchema);
 }
 
 } // namespace hikari::ui

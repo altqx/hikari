@@ -65,7 +65,7 @@ class CrashReportSessionTest : public QObject {
         endpoint = std::make_unique<test::AnalyticsEndpoint>();
         QVERIFY(endpoint->listening());
         app::Application::Options options;
-        options.settingsFile = path("hikari.ini");
+        options.settingsFile = path("settings.toml");
         options.playbackAudio = false;
         options.analytics.key = QStringLiteral("phc_test");
         options.analytics.endpoint = endpoint->url();

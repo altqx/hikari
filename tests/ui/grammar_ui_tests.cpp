@@ -102,7 +102,7 @@ class GrammarUiTests : public QObject {
     void start(bool hunspell = false)
     {
         app::Application::Options o;
-        o.settingsFile = home() + QStringLiteral("/hikari.ini");
+        o.settingsFile = home() + QStringLiteral("/settings.toml");
         o.playbackAudio = false;
         o.harperLs = QStringLiteral(HIKARI_HARPER_LS);
         o.grammarDir = grammarDir();

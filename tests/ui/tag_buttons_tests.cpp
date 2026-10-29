@@ -54,7 +54,7 @@ private slots:
     void definitionsPersist()
     {
         QTemporaryDir dir;
-        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        const QString ini = dir.filePath(QStringLiteral("settings.toml"));
         {
             TagButtonsController buttons(ini);
             buttons.setCount(3);
@@ -91,7 +91,7 @@ private slots:
     void addRemoveMoveAndReplacePersist()
     {
         QTemporaryDir dir;
-        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        const QString ini = dir.filePath(QStringLiteral("settings.toml"));
         {
             TagButtonsController buttons(ini);
             QSignalSpy changed(&buttons, &TagButtonsController::changed);

@@ -5,7 +5,7 @@
 // listed, never combined; the chosen root's files copied to a preserved
 // snapshot with their hashes and encoding evidence; staged generations of
 // the complete destination profile (registry values and the authored
-// collections beside hikari.ini) under <settings folder>/Import; activation
+// collections beside settings.toml) under <settings folder>/Import; activation
 // through one manifest switch; rollback to the previous complete generation.
 //
 // A generation activates at the next start (recover(), before anything
@@ -43,7 +43,7 @@ namespace hikari::app {
 class SettingsImportStore {
 public:
     // `settings` is the live registry; `folder` the settings folder (beside
-    // hikari.ini: Rules.txt, Dictionary/).
+    // settings.toml: Rules.txt, Dictionary/).
     SettingsImportStore(ui::SettingsStore &settings, QString folder, QString profileName = QStringLiteral("default"));
     // UD1: the user's dictionaries are elsewhere (the user folder's
     // dictionaries); a profile still names them Dictionary/<name>. The

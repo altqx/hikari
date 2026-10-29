@@ -981,7 +981,7 @@ private slots:
     void presetsAreKeptPerScriptAndDialog()
     {
         QTemporaryDir dir;
-        const QString file = dir.filePath(QStringLiteral("hikari.ini"));
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
         hikari::ui::SettingsStore store(file);
         ScriptDialogMemory memory(&store);
         const DialogRequest dialog = sampleRequest();
@@ -1035,7 +1035,7 @@ private slots:
     void lastAnswersKeepTheNewestTwoHundred()
     {
         QTemporaryDir dir;
-        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("hikari.ini")));
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
         ScriptDialogMemory memory(&store);
         const DialogRequest dialog = sampleRequest();
         const auto key = [&](int i) { return ScriptDialogMemory::keyOf(QStringLiteral("/s/%1.lua").arg(i), dialog); };
@@ -1059,7 +1059,7 @@ private slots:
     void moreMenuFillsAndMarkersPutBack()
     {
         QTemporaryDir dir;
-        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("hikari.ini")));
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
         ScriptDialogMemory memory(&store);
         controller->setMemory(&memory);
         auto unset = qScopeGuard([this] { controller->setMemory(nullptr); });
@@ -1160,7 +1160,7 @@ private slots:
     void presetNamesShowAsTyped()
     {
         QTemporaryDir dir;
-        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("hikari.ini")));
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
         ScriptDialogMemory memory(&store);
         controller->setMemory(&memory);
         auto unset = qScopeGuard([this] { controller->setMemory(nullptr); });
@@ -1237,7 +1237,7 @@ private slots:
     void buttonsStayInTheWindowShownAgain()
     {
         QTemporaryDir dir;
-        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("hikari.ini")));
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
         ScriptDialogMemory memory(&store);
         controller->setMemory(&memory);
         auto unset = qScopeGuard([this] { controller->setMemory(nullptr); });

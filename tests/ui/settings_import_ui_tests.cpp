@@ -11,6 +11,7 @@
 
 #include "hikari/app/settings_import_controller.h"
 #include "hikari/app/settings_import_store.h"
+#include "hikari/application/hotkeys.h"
 
 #include "settings_store.h"
 
@@ -93,7 +94,7 @@ struct Session {
     std::unique_ptr<SettingsImportStore> store;
     explicit Session(const QString &folder)
     {
-        settings = std::make_unique<SettingsStore>(folder + QStringLiteral("/hikari.ini"));
+        settings = std::make_unique<SettingsStore>(folder + QStringLiteral("/settings.toml"));
         store = std::make_unique<SettingsImportStore>(*settings, folder);
     }
     ~Session()
@@ -149,7 +150,7 @@ private slots:
         QVERIFY(put(bundled + QStringLiteral("/en_US.dic"), "1\nword\n"));
         QVERIFY(put(dictionaries + QStringLiteral("/en_US.dic"), "1\nword\n"));
         QVERIFY(put(dictionaries + QStringLiteral("/UserDic.udic"), "mine\n"));
-        SettingsStore settings(folder + QStringLiteral("/hikari.ini"));
+        SettingsStore settings(folder + QStringLiteral("/settings.toml"));
         SettingsImportStore store(settings, folder);
         store.setDictionaryFolder(dictionaries, bundled);
         auto files = store.liveProfile().files;
@@ -239,6 +240,17 @@ private slots:
         // The foreign path is kept in the list, unresolved, not repaired.
         QCOMPARE(next.settings->list("recent.subtitles"), QStringList{QStringLiteral("D:\\media\\a.ass")});
         QVERIFY(next.settings->list(application::kHotkeysSetting.data()).contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
+        // CF1: written to the user folder's three files.
+        next.settings->sync();
+        const QString settings = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("settings.toml"))));
+        QVERIFY2(settings.contains(QStringLiteral("font = \"Arial\"")) && settings.contains(QStringLiteral("fontSize = 12")),
+                 qPrintable(settings));
+        const QString hotkeys = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("hotkeys.toml"))));
+        // Not in legacy's modifier order (Alt-Ctrl-Shift), so kept as written.
+        QVERIFY2(hotkeys.contains(QStringLiteral("GLOBAL_SAVE_SUBS = \"Ctrl-Alt-S\"")), qPrintable(hotkeys));
+        const QJsonObject state = QJsonDocument::fromJson(readFile(folder.filePath(QStringLiteral("state.json")))).object();
+        QCOMPARE(state.value(QStringLiteral("recent")).toObject().value(QStringLiteral("subtitles")).toArray().size(), 1);
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("hikari.ini"))));
         QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tteh\tthe\r\n"));
         QCOMPARE(readFile(folder.filePath(QStringLiteral("Dictionary/UserDic.udic"))),
                  QByteArray("\xEF\xBB\xBFs\xC5\x82owo\r\n"));
@@ -248,6 +260,69 @@ private slots:
                  SettingsImportStore::inspectRoot(legacy.dir.path())->path);
         // The legacy files are never written.
         QCOMPARE(legacy.bytes(), before);
+    }
+
+    // CF1: a base staged from hikari.ini could hold a setting at its default
+    // (here grid.font and the main shortcuts);
+    // the settings files never do, and that is not an edit since staging.
+    void aDefaultInTheStagedBaseIsNotAnEdit()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        QString importDir;
+        {
+            Session s(folder.path());
+            const Review r = review(*s.store, legacy.dir.path());
+            QCOMPARE(SettingsImportStore::Result(s.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot,
+                                                                   r.revision)),
+                     SettingsImportStore::Result::Activated);
+            QVERIFY(!s.settings->isSet(QStringLiteral("grid.font")));
+            importDir = s.store->importDir();
+        }
+        QDir generations(importDir + QStringLiteral("/generations"));
+        int staged = 0; // the newest generation
+        for (const QString &name : generations.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+            staged = std::max(staged, name.toInt());
+        const QString profile = generations.filePath(QString::number(staged) + QStringLiteral("/profile.json"));
+        QJsonObject o = QJsonDocument::fromJson(readFile(profile)).object();
+        QJsonObject base = o.value(QStringLiteral("baseValues")).toObject();
+        const auto font = std::get<std::string>(application::findSetting("grid.font")->defaultValue);
+        base.insert(QStringLiteral("grid.font"), QJsonObject{{QStringLiteral("string"), QString::fromStdString(font)}});
+        // and the main shortcuts with every default binding, as SaveHkeys wrote them
+        application::HotkeyMap defaults;
+        application::loadDefaultHotkeys(defaults, false);
+        QJsonArray lines;
+        for (const auto &line : application::hotkeyLines(defaults, false))
+            lines.append(QString::fromStdString(line));
+        base.insert(QString::fromLatin1(application::kHotkeysSetting.data()), QJsonObject{{QStringLiteral("list"), lines}});
+        o.insert(QStringLiteral("baseValues"), base);
+        writeFile(profile, QJsonDocument(o).toJson());
+        Session next(folder.path());
+        QVERIFY(next.store->recover());
+        QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
+        QVERIFY(next.settings->list(application::kHotkeysSetting.data()).contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
+    }
+
+    // Every audio shortcut taken away is an empty list, not the defaults: an
+    // import that leaves the audio shortcuts keeps it.
+    void noAudioShortcutsStayThroughAnImport()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        {
+            Session s(folder.path());
+            s.settings->set(application::kAudioHotkeysSetting.data(), QStringList());
+            QVERIFY(s.settings->isSet(QString::fromLatin1(application::kAudioHotkeysSetting.data())));
+            const Review r = review(*s.store, legacy.dir.path());
+            QCOMPARE(SettingsImportStore::Result(s.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot,
+                                                                   r.revision)),
+                     SettingsImportStore::Result::Activated);
+        }
+        Session next(folder.path());
+        QVERIFY(next.store->recover());
+        QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
+        QVERIFY(next.settings->isSet(QString::fromLatin1(application::kAudioHotkeysSetting.data())));
+        QVERIFY(next.settings->list(application::kAudioHotkeysSetting.data()).isEmpty());
     }
 
     void repeatedImportIsANoOp()
@@ -336,14 +411,14 @@ private slots:
             Session s(folder.path());
             QVERIFY(s.store->recover());
             s.settings->sync();
-            ini = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("hikari.ini"))));
+            ini = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("settings.toml"))));
             QVERIFY(QFile::remove(s.store->importDir() + QStringLiteral("/live")));
         }
         Session again(folder.path());
         QVERIFY(again.store->pending());
         QVERIFY(again.store->recover());
         again.settings->sync();
-        QCOMPARE(QString::fromUtf8(readFile(folder.filePath(QStringLiteral("hikari.ini")))), ini);
+        QCOMPARE(QString::fromUtf8(readFile(folder.filePath(QStringLiteral("settings.toml")))), ini);
         QCOMPARE(again.settings->text("grid.font"), QStringLiteral("Arial"));
     }
 

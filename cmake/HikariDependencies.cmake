@@ -106,6 +106,13 @@ add_library(Hikari::mecab ALIAS hikari_mecab)
 find_path(HIKARI_UNIDIC_DIR sys.dic PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/dicdir"
     NO_DEFAULT_PATH NO_CACHE REQUIRED)
 
+# CF1 (#488): toml++ (MIT, static) reads and writes the user folder's TOML
+# files (settings.toml, hotkeys.toml).
+find_package(tomlplusplus CONFIG REQUIRED)
+add_library(hikari_tomlplusplus INTERFACE)
+target_link_libraries(hikari_tomlplusplus INTERFACE tomlplusplus::tomlplusplus)
+add_library(Hikari::tomlplusplus ALIAS hikari_tomlplusplus)
+
 # LuaJIT for the isolated Lua helper only (ADR 0006). Its flags export the
 # executable's symbols (-Wl,-E), which Lua native modules need, so it must not
 # be linked into the application.
@@ -123,6 +130,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
     "portaudio_DIR=${portaudio_DIR} ${portaudio_VERSION}\n"
     "SoundTouch_DIR=${SoundTouch_DIR} ${SoundTouch_VERSION}\n"
     "mecab_DIR=${mecab_DIR} ${mecab_VERSION}\nHIKARI_UNIDIC_DIR=${HIKARI_UNIDIC_DIR}\n"
+    "tomlplusplus_DIR=${tomlplusplus_DIR} ${tomlplusplus_VERSION}\n"
     "luajit=${HIKARI_LUAJIT_VERSION} ${HIKARI_LUAJIT_LINK_LIBRARIES}\n"
     "hunspell=${HIKARI_HUNSPELL_VERSION} ${HIKARI_HUNSPELL_LINK_LIBRARIES}\n"
     "toolchain=${CMAKE_TOOLCHAIN_FILE}\ntriplet=${VCPKG_TARGET_TRIPLET}\n"

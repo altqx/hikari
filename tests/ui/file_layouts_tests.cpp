@@ -132,7 +132,7 @@ class FileLayoutsTest : public QObject {
     void start(const QString &recovery = {})
     {
         app::Application::Options options;
-        options.settingsFile = path("hikari.ini");
+        options.settingsFile = path("settings.toml");
         options.playbackAudio = false;
         options.recoveryDir = recovery;
         application = std::make_unique<app::Application>(options);
@@ -219,7 +219,7 @@ private slots:
         engine.reset();
         application.reset();
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
-                                 "layouts.json", "LastSession.txt", "hikari.ini"})
+                                 "layouts.json", "LastSession.txt", "settings.toml", "hotkeys.toml", "state.json"})
             QFile::remove(path(name));
     }
 
@@ -473,7 +473,7 @@ private slots:
         application.reset();
 
         app::Application::Options options;
-        options.settingsFile = path("hikari.ini");
+        options.settingsFile = path("settings.toml");
         options.playbackAudio = false;
         application = std::make_unique<app::Application>(options);
         QVERIFY(application->openFile(file)); // as composition.cpp does, before attachDocking

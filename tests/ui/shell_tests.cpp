@@ -56,6 +56,7 @@
 #include <QProcess>
 #include <QRasterWindow>
 #include <QScreen>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QCursor>
 #include <QFontInfo>
@@ -77,7 +78,6 @@
 #include <QQmlExpression>
 #include <QQmlProperty>
 #include <QRegularExpression>
-#include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
 #include <QTranslator>
@@ -115,6 +115,13 @@ Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 using namespace hikari;
 
 namespace {
+
+// CF1: one of the settings files in a user folder, as written.
+QByteArray settingsText(const QString &folder, const char *name)
+{
+    QFile f(folder + QLatin1Char('/') + QLatin1String(name));
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
 
 QString writeFile(const QTemporaryDir &dir, const char *name, const char *events)
 {
@@ -11836,9 +11843,8 @@ private slots:
                  QVariantList{});
         QCOMPARE(application->shell().lines()->index(2, 0).data(ui::LineTableModel::SpellMarksRole).toList(),
                  (QVariantList{4, 4}));
-        QCOMPARE(QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat)
-                     .value(QStringLiteral("profile/editor.spellchecker")).toBool(),
-                 false);
+        application->settingsStore()->sync();
+        QVERIFY(settingsText(home.path(), "settings.toml").contains("spellchecker = false"));
         application->editor().discard();
     }
 
@@ -11942,7 +11948,7 @@ private slots:
         QTemporaryDir home;
         QVERIFY(home.isValid());
         writeDictionary(home.path());
-        QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).setValue(QStringLiteral("profile/editor.spellchecker"), false);
+        ui::SettingsStore(home.filePath(QStringLiteral("settings.toml"))).set("editor.spellchecker", false);
         restartWithSpelling(home.path(), true);
         const QString path = writeFile(dir, "spelling-off.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
         QVERIFY(application->openFile(path));
@@ -12112,7 +12118,8 @@ private slots:
         QTest::qWait(50);
         QCOMPARE(application->log().warningCount() + application->log().errorCount(), 0); // no notice
         QVERIFY(application->spellingOn());
-        QVERIFY(!QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).contains(QStringLiteral("profile/editor.spellchecker")));
+        application->settingsStore()->sync();
+        QVERIFY(!settingsText(home.path(), "settings.toml").contains("spellchecker"));
 
         // Only the bundled folder has a dictionary: it loads, and the user's
         // words go to the user's folder.
@@ -18199,7 +18206,6 @@ private slots:
         QVERIFY(home.isValid());
         restartWithSpelling(home.path(), false);
         auto &settings = *application->settingsStore();
-        const QString ini = home.filePath(QStringLiteral("hikari.ini"));
         const QString path = writeFile(dir, "owners.ass",
                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,alpha\n"
                                        "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,beta\n");
@@ -18235,8 +18241,13 @@ private slots:
         QVERIFY(!settings.contains("findInSubs.recentFilters")); // only the Find in subtitles tab writes them
         QCOMPARE(settings.integer("find.options") & 1, 1);
         settings.sync();
-        QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/find.recentFinds")).toStringList(),
-                 QStringList{QStringLiteral("alpha")});
+        QCOMPARE(QJsonDocument::fromJson(settingsText(home.path(), "state.json"))
+                     .object()
+                     .value(QLatin1String("find"))
+                     .toObject()
+                     .value(QLatin1String("recentFinds"))
+                     .toArray(),
+                 QJsonArray{QStringLiteral("alpha")});
         application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("find.options"));
         QVERIFY(!settings.contains("find.recentFinds"));
@@ -18315,7 +18326,6 @@ private slots:
         writeDictionary(home.path());
         restartWithSpelling(home.path(), true);
         auto &settings = *application->settingsStore();
-        const QString ini = home.filePath(QStringLiteral("hikari.ini"));
         const QString path = writeFile(dir, "options-spelling.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
         QVERIFY(application->openFile(path));
         auto marks = [&] { return application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(); };
@@ -18328,7 +18338,7 @@ private slots:
         QCOMPARE(marks(), QVariantList{});
         QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
         settings.sync();
-        QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/editor.spellchecker")).toBool(), false);
+        QVERIFY(settingsText(home.path(), "settings.toml").contains("spellchecker = false"));
         application->applySettings({{QStringLiteral("editor.spellchecker"), true}});
         QCOMPARE(marks(), (QVariantList{0, 4}));
         QCOMPARE(application->editorSpellingMarks(0), (QVariantList{0, 5}));
@@ -18363,9 +18373,7 @@ private slots:
         QCOMPARE(audio.cacheFilesLimit, 3);
         QCOMPARE(audio.acceptedStreams, (std::vector<std::string>{"jpn", "eng"}));
         settings.sync();
-        const QSettings stored(ini, QSettings::IniFormat);
-        QCOMPARE(stored.value(QStringLiteral("profile/audio.delay")).toInt(), -250);
-        QVERIFY(!stored.contains(QStringLiteral("Audio/Delay")));
+        QVERIFY(settingsText(home.path(), "settings.toml").contains("delay = -250"));
         application->editor().discard();
     }
 
