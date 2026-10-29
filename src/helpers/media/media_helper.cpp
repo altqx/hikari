@@ -1,6 +1,4 @@
-// hikari-media-helper: the isolated FFMS2 media worker (N1; ADR 0016). One
-// process owns one indexed source; requests run one at a time, so FFMS2 calls
-// are serialized. Frames leave the process as owned BGRA copies.
+// One process owns one indexed source; requests run one at a time, so FFMS2 calls are serialized.
 
 #include "hikari/backends/helper_endpoint.h"
 #include "hikari/backends/media_protocol.h"
@@ -51,18 +49,15 @@ struct Source {
     int sampleRate = 0;
     int channels = 0;
     std::int64_t channelLayout = 0;
-    // A1: the audio box's audio, in legacy's decode format (S16, 1 or 2
-    // channels), in the box's own helper.
+    // The audio box's audio: S16, 1 or 2 channels.
     std::unique_ptr<FFMS_AudioSource, AudioDeleter> display;
     std::int64_t displaySamples = 0;
     int displayChannels = 0;
-    // A1: legacy DiskCache's `data`, the block buffer every block is decoded
-    // into; it starts zeroed with each open and keeps what the last read left.
+    // MUST KILL: reused block buffer, zeroed per open, keeps the last read's bytes
     std::vector<std::byte> block;
 };
 
-// One resampled stream over a source range (I3). Chunks continue the same
-// resampler, so they join without seams.
+// Chunks continue one resampler, so they join without seams.
 struct PcmSession {
     SwrContext *swr = nullptr;
     std::int64_t cursor = 0, end = 0;
@@ -77,13 +72,10 @@ std::string errorText(const FFMS_ErrorInfo &e)
     return e.Buffer ? std::string(e.Buffer) : std::string("unknown FFMS2 error");
 }
 
-// AV4: FFMS2 reports progress for every packet it reads, hundreds of
-// thousands for a long video. A report goes to the application only when it
-// moves the progress by a thousandth (legacy's dialog showed whole percents);
-// cancelling is still checked at every packet.
+// FFMS2 reports every packet, so only permille changes are sent; cancelling is checked every packet.
 struct Progress {
     Responder *responder;
-    std::int64_t sent = -2; // the last permille sent; none yet
+    std::int64_t sent = -2; // -2: none sent yet
 
     void report(std::int64_t current, std::int64_t total)
     {
@@ -111,9 +103,8 @@ std::filesystem::path fsPath(const std::string &utf8)
     return std::filesystem::path(std::u8string(utf8.begin(), utf8.end()));
 }
 
-// Legacy ProviderFFMS2::Init's index cache: an index file is used when it is
-// not older than the source (FFMS2 matches an index only by size and a hash
-// of the file's ends) and FFMS2 says it belongs to the file.
+// Used only when not older than the source: FFMS2 matches an index just by size and a hash of the
+// file's ends.
 FFMS_Index *readIndexFile(const std::string &path, const std::string &indexFile)
 {
     if (indexFile.empty())
@@ -126,7 +117,7 @@ FFMS_Index *readIndexFile(const std::string &path, const std::string &indexFile)
     const auto sourceTime = std::filesystem::last_write_time(fsPath(path), sourceError);
     const auto indexTime = std::filesystem::last_write_time(index, indexError);
     if (!sourceError && !indexError && sourceTime > indexTime)
-        return nullptr; // legacy: a source changed after indexing is indexed again
+        return nullptr;
     char buffer[1024];
     FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
     FFMS_Index *read = FFMS_ReadIndex(indexFile.c_str(), &err);
@@ -137,9 +128,7 @@ FFMS_Index *readIndexFile(const std::string &path, const std::string &indexFile)
     return read;
 }
 
-// Legacy: the folder is made when missing; a failed write is a debug message
-// ("Cannot save index, error %s occurred") and the open goes on. True when
-// the file was written.
+// Makes the folder; a failed write is logged, not fatal. True when written.
 bool writeIndexFile(const std::string &indexFile, FFMS_Index *index)
 {
     if (indexFile.empty())
@@ -155,9 +144,7 @@ bool writeIndexFile(const std::string &indexFile, FFMS_Index *index)
     return true;
 }
 
-// A1: legacy's box shared the video's index in memory. When the index file
-// cannot be written, the index goes to the host's temporary file instead, so
-// the box's own helper reads it rather than indexing the track again.
+// When the index file cannot be written: a temporary file for the audio box's helper to read.
 bool handOff(const std::string &handoffFile, FFMS_Index *index)
 {
     if (handoffFile.empty())
@@ -175,8 +162,7 @@ constexpr int kEveryAudioTrack = -2;
 
 enum class Stage : std::uint8_t { Indexer = 0, Indexing = 1, Source = 2, Convert = 3, Read = 4, Host = 5 };
 
-// A failure with its stage and FFMS2's text: the audio box's requests (A1)
-// and, from protocol 8, Open (V3: legacy ProviderFFMS2::Init's messages).
+// A failure with its stage and FFMS2's text.
 void failDisplay(Responder &r, Outcome outcome, Stage stage, const std::string &text)
 {
     r.terminal(outcome, Writer().u8(static_cast<std::uint8_t>(stage)).str(text).take());
@@ -200,11 +186,11 @@ void open(Source &source, Reader &in, Responder &r)
     const bool newIndex = !index;
     bool handedOff = false;
     if (index) {
-        FFMS_CancelIndexing(indexer); // legacy: the index file stands in for indexing
+        FFMS_CancelIndexing(indexer);
     } else {
         Progress progress{&r};
         FFMS_SetProgressCallback(indexer, onProgress, &progress);
-        // audio is not indexed by default; legacy indexes the chosen track alone
+        // FFMS2 indexes no audio by default.
         if (audioTrack == kEveryAudioTrack)
             FFMS_TrackTypeIndexSettings(indexer, FFMS_TYPE_AUDIO, 1, 0);
         else if (audioTrack >= 0 && audioTrack < FFMS_GetNumTracksI(indexer) &&
@@ -228,9 +214,7 @@ void open(Source &source, Reader &in, Responder &r)
     const FFMS_Frame *first = FFMS_GetFrame(video.get(), 0, &err);
     if (!first)
         return failDisplay(r, Outcome::Failed, Stage::Source, errorText(err));
-    // V4: legacy ProviderFFMS2::Init's m_CS and m_CR, read from frame 0
-    // before the output format is set (ProviderFFMS2.cpp:368-369, 378);
-    // setting it resets the frame's colour fields.
+    // Read before FFMS_SetOutputFormatV2, which resets the frame's colour fields.
     const int firstColorSpace = first->ColorSpace, firstColorRange = first->ColorRange;
     const int formats[] = {AV_PIX_FMT_BGRA, -1};
     if (FFMS_SetOutputFormatV2(video.get(), formats, first->EncodedWidth, first->EncodedHeight,
@@ -251,7 +235,7 @@ void open(Source &source, Reader &in, Responder &r)
     out.i32(static_cast<std::int32_t>(audioTracks.size()));
     for (int t : audioTracks)
         out.i32(t);
-    std::vector<int> keyframes; // V2: legacy ProviderFFMS2 reads FFMS_FrameInfo::KeyFrame
+    std::vector<int> keyframes;
     for (int i = 0; i < props->NumFrames; ++i)
         if (FFMS_GetFrameInfo(t, i)->KeyFrame)
             keyframes.push_back(i);
@@ -259,9 +243,8 @@ void open(Source &source, Reader &in, Responder &r)
     for (int k : keyframes)
         out.i32(k);
     out.u8(newIndex ? 1 : 0).u8(handedOff ? 1 : 0);
-    // T1: legacy ProviderFFMS2::Init's frame size and SAR (ProviderFFMS2.cpp:362-366).
     out.i32(first->EncodedWidth).i32(first->EncodedHeight).i32(props->SARNum).i32(props->SARDen);
-    out.i32(firstColorSpace).i32(firstColorRange); // V4
+    out.i32(firstColorSpace).i32(firstColorRange);
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);
@@ -294,8 +277,7 @@ void frame(Source &source, Reader &in, Responder &r)
     r.terminal(Outcome::Ok, out.take());
 }
 
-// V4: legacy ProviderFFMS2's FFMS_SetInputFormatV (ProviderFFMS2.cpp:401,
-// 407, 958, 960): the matrix and range, the source's pixel format kept.
+// The source's pixel format is kept.
 void inputMatrix(Source &source, Reader &in, Responder &r)
 {
     const int colorSpace = in.i32();
@@ -343,16 +325,12 @@ void openAudio(Source &source, Reader &in, Responder &r)
                                 .take());
 }
 
-// A1: failures of the audio box's requests name their stage and carry
-// FFMS2's text (media_protocol.h).
-
 std::string orEmpty(const char *text)
 {
     return text ? std::string(text) : std::string();
 }
 
-// A1: a file's tracks as legacy ProviderFFMS2::Init lists them from the
-// indexer, before anything is indexed.
+// From the indexer, before anything is indexed.
 void probe(Reader &in, Responder &r)
 {
     const std::string path = in.str();
@@ -387,8 +365,7 @@ void probe(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, std::move(head));
 }
 
-// Legacy's decode format on an audio source: S16, front left and right for
-// more than one channel, else front centre. Writes the Ok reply.
+// S16, front left and right for more than one channel, else front centre. Writes the Ok reply.
 void finishDisplay(Source &source, std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio, int track, bool newIndex,
                    Responder &r)
 {
@@ -421,11 +398,8 @@ void finishDisplay(Source &source, std::unique_ptr<FFMS_AudioSource, AudioDelete
                                 .take());
 }
 
-// A1: the audio box's file, as legacy ProviderFFMS2 opens it: the index file
-// when it can be used (an open video wrote it for the same track), else the
-// chosen audio track indexed (decode errors ignored, FFMS_IEH_IGNORE) and the
-// index written; sample 0 at the first video frame
-// (FFMS_DELAY_FIRST_VIDEO_TRACK).
+// The index file when usable, else the track indexed ignoring decode errors; sample 0 at the first
+// video frame.
 void openDisplayAudio(Source &source, Reader &in, Responder &r)
 {
     const std::string path = in.str();
@@ -466,7 +440,6 @@ void openDisplayAudio(Source &source, Reader &in, Responder &r)
     finishDisplay(source, std::move(audio), track, newIndex, r);
 }
 
-// A1: legacy ProviderFFMS2::GetAudio into a cache's buffer (media_protocol.h).
 void displayRead(Source &source, Reader &in, Responder &r)
 {
     const std::int64_t start = in.i64();
@@ -481,9 +454,8 @@ void displayRead(Source &source, Reader &in, Responder &r)
     std::vector<std::byte> newBlock;
     std::vector<std::byte> &buffer = fresh ? newBlock : source.block;
     if (buffer.size() < bytes)
-        buffer.resize(bytes); // the new part zeroed, as legacy's vector began
-    // legacy "Fill beyond with zero": short samples [decode, frames), so in
-    // stereo half of the frames past the decoded ones
+        buffer.resize(bytes);
+    // MUST KILL: zeroes samples [decode, frames), not frames, so stereo clears only half
     auto *samples = reinterpret_cast<std::int16_t *>(buffer.data());
     for (std::int64_t i = decode; i < frames; ++i)
         samples[i] = 0;
@@ -612,8 +584,7 @@ void pcmNext(Source &source, std::unique_ptr<PcmSession> &session, Reader &in, R
 
 } // namespace
 
-// Container chapters for general playback (N5), read with libavformat in this
-// process so FFmpeg stays out of the application.
+// Read here so FFmpeg stays out of the application.
 void chapters(Reader &in, Responder &r)
 {
     const std::string path = in.str();
@@ -635,20 +606,17 @@ void chapters(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, w.take());
 }
 
-// Y9: legacy Demux (Demux.cpp at 20d647c4) through the project's FFMS2
-// extensions, each request on an indexer of its own (Demux::Open,
-// Demux.cpp:34-49). Strings leave as the bytes FFMS2 gives, up to their NUL,
-// as legacy read them into wxString; the application decodes them.
+// Each request opens its own indexer. Strings leave as FFMS2's bytes up to their NUL; the
+// application decodes them.
 
 namespace {
 
 struct IndexerDeleter {
-    void operator()(FFMS_Indexer *i) const { FFMS_CancelIndexing(i); } // Demux::Close (Demux.cpp:60-63)
+    void operator()(FFMS_Indexer *i) const { FFMS_CancelIndexing(i); }
 };
 using Indexer = std::unique_ptr<FFMS_Indexer, IndexerDeleter>;
 
-// FFMS_CreateIndexer; a failure is the terminal Failed with FFMS2's text,
-// which legacy logged as "Indexing error occurred: %s" (Demux.cpp:44-47).
+// A failure is the terminal Failed with FFMS2's text.
 Indexer openIndexer(const std::string &path, Responder &r)
 {
     char buffer[1024];
@@ -670,9 +638,7 @@ struct SubtitleRead {
     std::int32_t count = 0;
 };
 
-// Demux::GetSubtitles' callback (Demux.cpp:262-315): every packet the
-// extension hands over, in its order, with its progress; a non-zero return
-// stops the read, as legacy's WasCancelled() did (Demux.cpp:314).
+// A non-zero return stops the read.
 int FFMS_CC onSubtitle(int64_t start, int64_t duration, int64_t total, const char *line, void *opaque)
 {
     auto *read = static_cast<SubtitleRead *>(opaque);
@@ -687,36 +653,24 @@ struct FormatDeleter {
     void operator()(AVFormatContext *f) const { avformat_close_input(&f); }
 };
 
-// FFMS_GetSubtitles (indexing_additional.cpp) with its times, totals and
-// skipped packets, but read from the start of the file by a demuxer of the
-// helper's own (user decision 28, 2026-10-14). The extension seeks the
-// indexer's demuxer to 0 instead, which goes to the track's first index
-// entry; libavformat keeps one entry per timestamp, at the position the last
-// cue of that time names. When a track's first blocks share a time but sit in
-// two clusters and that cue names the later one, the blocks in the earlier
-// cluster were never read: all 38 copies of a karaoke file's first line.
-// Legacy's extension now reads the same way. False when the file cannot be
-// opened as the indexer opened it.
+// Reads from the file's start with its own demuxer, not FFMS2's seek to 0: libavformat keeps one
+// index entry per timestamp at the last cue's position, which skips same-time blocks in an earlier
+// cluster. False when the file cannot be opened.
 bool readSubtitles(const std::string &path, int track, SubtitleRead &read)
 {
     AVFormatContext *opened = nullptr;
     if (avformat_open_input(&opened, path.c_str(), nullptr, nullptr) != 0)
         return false;
     const std::unique_ptr<AVFormatContext, FormatDeleter> fmt(opened);
-    // FFMS_CreateIndexer's stream numbers: it ran this too
+    // Matches FFMS_CreateIndexer's stream numbers, which ran this too.
     if (avformat_find_stream_info(fmt.get(), nullptr) < 0 || track < 0 ||
         track >= static_cast<int>(fmt->nb_streams))
         return false;
     for (unsigned i = 0; i < fmt->nb_streams; ++i)
         fmt->streams[i]->discard = static_cast<int>(i) == track ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
     const AVStream *stream = fmt->streams[track];
-    // Times in milliseconds (user decision 38d, 2026-10-14). The extension
-    // divided by AVPacket.time_base.den, which av_read_frame leaves at
-    // {0, 1}, so the times stayed in the stream's units: milliseconds only in
-    // Matroska with the default TimestampScale, and hundreds of times too
-    // large in MP4, MOV, MPEG-TS (1/90000) or a Matroska file with another
-    // TimestampScale. FFmpeg leaves a Matroska subtitle track's duration
-    // AV_NOPTS_VALUE, which passes through as before.
+    // av_read_frame leaves AVPacket.time_base at {0, 1}, so rescale from the stream's. A Matroska
+    // subtitle track's duration is AV_NOPTS_VALUE and passes through.
     constexpr AVRational ms{1, 1000};
     const std::int64_t total = av_rescale_q_rnd(stream->duration, stream->time_base, ms,
                                                 static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
@@ -725,20 +679,16 @@ bool readSubtitles(const std::string &path, int track, SubtitleRead &read)
         return false;
     while (av_read_frame(fmt.get(), packet) >= 0) {
         if (packet->stream_index == track && packet->size >= 2) {
-            // On the container's own clock, as FFMS2 gives the video's frame
-            // times: no start_time is taken off. Without a pts the dts, and
-            // without either 0, where the old arithmetic also ended up once
-            // the application cut it to an int.
+            // The container's clock, as FFMS2 gives video frame times: no start_time taken off.
             std::int64_t start = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
             if (start == AV_NOPTS_VALUE)
                 start = 0;
             std::int64_t duration = packet->duration;
             if (duration < 0 || (start > 0 && duration > std::numeric_limits<std::int64_t>::max() - start))
                 duration = 0;
-            // Both ends to the nearest millisecond, the duration between them.
             const std::int64_t startMs = av_rescale_q(start, stream->time_base, ms);
             const std::int64_t endMs = av_rescale_q(start + duration, stream->time_base, ms);
-            // up to the first NUL, as the extension handed the bytes over
+            // up to the first NUL
             const char *data = reinterpret_cast<const char *>(packet->data);
             const std::string line(data, strnlen(data, static_cast<std::size_t>(packet->size)));
             if (onSubtitle(startMs, endMs - startMs, total, line.c_str(), &read) == 1)
@@ -752,9 +702,7 @@ bool readSubtitles(const std::string &path, int track, SubtitleRead &read)
 
 } // namespace
 
-// The subtitle tracks in container order (Demux::GetSubtitles' list,
-// Demux.cpp:68-83): every FFMS_TYPE_SUBTITLE track with its name, language
-// and FFMS_GetSubtitleFormat; the application keeps the text codecs.
+// In container order; the application keeps the text codecs.
 void subtitleTracks(Reader &in, Responder &r)
 {
     const std::string path = in.str();
@@ -780,8 +728,7 @@ void subtitleTracks(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, std::move(out));
 }
 
-// One track's packets and codec-private data (Demux.cpp:121, 131); the
-// packets from readSubtitles, every one in the file.
+// Every packet of the track, and its codec-private data.
 void subtitles(Reader &in, Responder &r)
 {
     const std::string path = in.str();
@@ -807,8 +754,7 @@ void subtitles(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, std::move(out));
 }
 
-// Every attachment in container order (Demux::GetFontList, Demux.cpp:
-// 210-227), one Reply each with the bytes FFMS2's attachment holds.
+// In container order, one Reply each.
 void attachments(Reader &in, Responder &r)
 {
     const std::string path = in.str();

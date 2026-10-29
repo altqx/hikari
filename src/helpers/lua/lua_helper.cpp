@@ -1,25 +1,4 @@
-// The isolated Lua automation helper (N8; docs/automation.md, ADR 0006).
-// One process per loaded script; the script's LuaJIT state lives for the
-// process. The Lua-facing API stays synchronous: a dialog blocks the script
-// in a host service call while the application keeps running.
-//
-// Legacy behaviour reproduced here (HikariSub/Automation*.cpp at 20d647c4):
-// chunk named by the file path with a UTF-8 BOM skipped; dofile/loadfile
-// removed and `include` searching the script directory then the shared
-// include directory; package.path built from both; script_* globals read
-// with string coercion; register_macro's description read from the top of
-// the stack (so it is empty whenever a function is the last argument);
-// register_filter a stub; aegisub.progress/debug/log/dialog installed per
-// run, with progress and debug removed afterwards; dialog arguments decoded
-// with the legacy field coercions, button IDs truncated, and results typed
-// per control.
-//
-// Host services (L3) keep the legacy argument handling and return shapes and
-// are answered by the application's platform ports, also while the script's
-// top level runs.
-//
-// Not yet here, owned by the A33 automation cards: the native preloads
-// (lpeg, luabins, re/unicode/lfs) and MoonScript.
+// One process per loaded script, its LuaJIT state living for the process; Lua calls to the host block.
 
 #include "hikari/backends/helper_endpoint.h"
 #include "hikari/application/script_resolution.h"
@@ -105,7 +84,7 @@ bool readFile(const std::filesystem::path &path, std::string &out)
     return !in.bad();
 }
 
-// Legacy LoadFile: the whole file, a UTF-8 BOM skipped, the path as chunk name.
+// The whole file, a UTF-8 BOM skipped, the path as the chunk name.
 bool loadFile(lua_State *L, const std::filesystem::path &path)
 {
     std::string text;
@@ -123,8 +102,7 @@ bool loadFile(lua_State *L, const std::filesystem::path &path)
     const std::string name = toUtf8(path);
     if (!name.ends_with("moon"))
         return luaL_loadbuffer(L, data, size, name.c_str()) == 0;
-    // MoonScript: compiled by moonscript.loadstring (installed at load). The
-    // raw text is kept for mapping error lines back to the .moon source.
+    // The raw text is kept to map error lines back to the .moon source.
     lua_getfield(L, LUA_REGISTRYINDEX, "moonscript");
     lua_pushlstring(L, data, size);
     lua_pushvalue(L, -1);
@@ -154,7 +132,7 @@ std::string globalString(lua_State *L, const char *name)
     return value;
 }
 
-// Legacy check_string: a string or number, else a type error.
+// A string or number, else a type error.
 std::string checkString(lua_State *L, int index)
 {
     std::size_t len = 0;
@@ -164,8 +142,7 @@ std::string checkString(lua_State *L, int index)
     return std::string(s, len);
 }
 
-// Legacy moon_line: a .moon file's Lua line mapped through MoonScript's line
-// tables to a character offset, then to a line of the raw source.
+// A .moon file's Lua line mapped through MoonScript's line tables to a line of the raw source.
 int moonLine(lua_State *L, int luaLine, const std::string &file)
 {
     if (luaL_dostring(L, "return require 'moonscript.line_tables'")) {
@@ -197,8 +174,7 @@ int moonLine(lua_State *L, int luaLine, const std::string &file)
     return line;
 }
 
-// Legacy add_stack_trace: one "File ..., line ..." block per frame, each
-// followed by the message with its "[string ...]:N: " location removed.
+// One "File ..., line ..." block per frame, each followed by the message without its "[string ...]:N: " location.
 int addStackTrace(lua_State *L)
 {
     if (lua_touserdata(L, 1) == &g_cancelTag)
@@ -254,13 +230,12 @@ void send(lua::ProgressEvent event, const std::string &text)
     g_responder->progress(w.take());
 }
 
-// ---- aegisub table -------------------------------------------------------
-
 int registerMacro(lua_State *L)
 {
     ScriptMacro macro;
     macro.name = checkString(L, 1);
-    macro.description = stringOrEmpty(L, -1); // legacy get_string(L, 2) reads index -1
+    // MUST KILL: the description is read from the stack top, not argument 2
+    macro.description = stringOrEmpty(L, -1);
     if (!lua_isfunction(L, 3))
         return luaL_error(L, "The macro processing function must be a function");
     macro.hasValidate = lua_isfunction(L, 4);
@@ -283,11 +258,11 @@ int registerMacro(lua_State *L)
 
 int registerFilter(lua_State *)
 {
-    return 0; // legacy stub: HikariSub has no export filters
+    return 0; // no export filters
 }
 
-// S4-run-validation: a file the top level loads as Lua code (require or
-// include) joins ScriptInfo::loadedFiles, once, absolute and normalized.
+// A file the top level loads as Lua code (require or include) joins ScriptInfo::loadedFiles once, absolute and
+// normalized.
 void noteLoaded(const std::filesystem::path &file)
 {
     if (!g_topLevel)
@@ -313,7 +288,7 @@ int cancelScript(lua_State *L)
     return lua_error(L);
 }
 
-int gettext(lua_State *L); // O5: through the host's catalog (below, with the host services)
+int gettext(lua_State *L); // through the host's catalog
 
 int include(lua_State *L)
 {
@@ -335,7 +310,7 @@ int include(lua_State *L)
     }
     noteLoaded(filepath);
     if (!loadFile(L, filepath)) {
-        // Legacy appends check_string(L, 1), the include's own name, not the error.
+        // MUST KILL: the message ends with the include's name, not the load error
         lua_pushfstring(L, "Error loading Lua include \"%s\":\n%s", toUtf8(filepath).c_str(), filename.c_str());
         return lua_error(L);
     }
@@ -343,8 +318,6 @@ int include(lua_State *L)
     lua_call(L, 0, LUA_MULTRET);
     return lua_gettop(L) - before;
 }
-
-// ---- per-run sink (legacy LuaProgressSink) --------------------------------
 
 int progressSet(lua_State *L)
 {
@@ -378,7 +351,6 @@ int progressCancelled(lua_State *L)
 
 int debugOut(lua_State *L)
 {
-    // AD3: the level goes with the text, for the run log's filter.
     std::int32_t level = -1;
     if (lua_isnumber(L, 1)) {
         const lua_Integer given = lua_tointeger(L, 1);
@@ -402,8 +374,7 @@ int debugOut(lua_State *L)
     return 0;
 }
 
-// Legacy get_field coercions: a field keeps its default unless it has the
-// right Lua type (numbers accept numeric strings; strings accept numbers).
+// A field keeps its default unless it has the right Lua type; numbers accept numeric strings, strings accept numbers.
 std::string fieldString(lua_State *L, const char *name, std::string def = {})
 {
     lua_getfield(L, -1, name);
@@ -437,12 +408,7 @@ bool fieldBool(lua_State *L, const char *name, bool def)
     return def;
 }
 
-// Legacy AssColor (HikariSub/styles.cpp at 20d647c4): SetAss parses a
-// decimal SSA number, an ASS &HAABBGGRR& string or an HTML #AARRGGBB/#RRGGBB
-// string; GetHex prints #RRGGBB, or #AARRGGBB (AA = ASS transparency) when
-// alpha is wanted and non-zero. Its quirks are kept: Upper()'s result is
-// discarded, so a lowercase "&h" is not stripped, and a malformed component
-// stays 0.
+// A decimal SSA number, an ASS &HAABBGGRR& string or an HTML #AARRGGBB/#RRGGBB string.
 struct AssColor {
     long r = 0, g = 0, b = 0, a = 0;
 };
@@ -459,7 +425,7 @@ bool parseLong(const std::string &text, int base, long &out)
     return true;
 }
 
-// wxString::SubString(from, to): inclusive, clamped to the string.
+// `to` inclusive, clamped to the string.
 std::string subString(const std::string &s, std::size_t from, std::size_t to)
 {
     if (from >= s.size())
@@ -467,6 +433,7 @@ std::string subString(const std::string &s, std::size_t from, std::size_t to)
     return s.substr(from, std::min(to, s.size() - 1) - from + 1);
 }
 
+// MUST KILL: a lowercase "&h" is not stripped and a malformed component stays 0
 AssColor assColor(std::string color)
 {
     AssColor c;
@@ -508,7 +475,7 @@ std::string hexOf(const AssColor &c, bool alpha)
     return text;
 }
 
-// Aegisub's string_to_wx_id: the button ids it maps to a stock id.
+// The button ids that map to a stock button.
 bool isButtonId(const std::string &id)
 {
     static const char *const kIds[] = {"ok", "yes", "save", "apply", "close", "no", "cancel", "help", "context_help"};
@@ -538,12 +505,11 @@ DialogControl decodeControl(lua_State *L)
         c.label = fieldString(L, "label");
     if (c.kind == "edit" || c.kind == "textbox" || c.kind == "alpha") {
         c.text = fieldString(L, "value");
-        c.text = fieldString(L, "text", c.text); // undocumented legacy alias
+        c.text = fieldString(L, "text", c.text); // undocumented alias
     } else if (c.kind == "dropdown") {
         c.text = fieldString(L, "value");
     } else if (c.kind == "color" || c.kind == "coloralpha") {
-        // The picker starts from the parsed colour; an unchanged dialog
-        // returns it normalized, as legacy did.
+        // An unchanged dialog returns the colour normalized.
         c.text = hexOf(assColor(fieldString(L, "value")), c.kind == "coloralpha");
     }
     if (c.kind == "intedit") {
@@ -554,7 +520,7 @@ DialogControl decodeControl(lua_State *L)
             c.intMin = INT_MIN;
             c.intMax = INT_MAX;
         }
-        c.intValue = std::clamp(c.intValue, c.intMin, c.intMax); // NumCtrl clamps what it shows
+        c.intValue = std::clamp(c.intValue, c.intMin, c.intMax);
     } else if (c.kind == "floatedit") {
         c.number = fieldNumber(L, "value", 0.0);
         c.numberMin = fieldNumber(L, "min", -DBL_MAX);
@@ -600,9 +566,7 @@ int dialogDisplay(lua_State *L)
 {
     if (!g_responder)
         return luaL_error(L, "no macro is running");
-    // Legacy: one argument gets an empty button table. AD1-button-ids: the
-    // third, the button-ID table, is read as Aegisub reads it (legacy
-    // dropped it); arguments after it are not read.
+    // One argument gets an empty button table; the third is the button-ID table; later arguments are not read.
     if (lua_gettop(L) == 1)
         lua_newtable(L);
     if (lua_gettop(L) > 3)
@@ -629,8 +593,7 @@ int dialogDisplay(lua_State *L)
     }
     request.buttonIds.assign(request.buttons.size(), std::string());
     if (lua_gettop(L) >= 3 && lua_istable(L, 3)) {
-        // Aegisub LuaDialog: each id names the first button with that label
-        // (an error when none has it); an id it does not know names none.
+        // Each id names the first button with that label (an error when none has it); an unknown id names none.
         lua_pushvalue(L, 3);
         lua_pushnil(L);
         while (lua_next(L, -2)) {
@@ -663,8 +626,7 @@ int dialogDisplay(lua_State *L)
     if (!result)
         return luaL_error(L, "the host returned a malformed dialog result");
 
-    // Button: false when closed, for the default Cancel or for the button
-    // with the cancel id (Aegisub's wxID_CANCEL); otherwise its label.
+    // Button: false when closed, for the default Cancel or for the button with the cancel id; otherwise its label.
     const auto pressed = static_cast<std::size_t>(result->pressed);
     if (result->pressed < 0 || (request.buttons.empty() && result->pressed == 1) ||
         (pressed < request.buttonIds.size() && request.buttonIds[pressed] == "cancel"))
@@ -750,10 +712,8 @@ void installAegisub(lua_State *L)
     lua_setglobal(L, "aegisub");
 }
 
-// ---- requests -------------------------------------------------------------
-
-// Legacy module_loader (package.loaders[2]): each package.path entry with
-// "/?" replaced by the module path, a .moon file preferred over its .lua.
+// package.loaders[2]: each package.path entry with "/?" replaced by the module path, a .moon file preferred over
+// its .lua.
 int moduleLoader(lua_State *L)
 {
     const int pretop = lua_gettop(L);
@@ -787,9 +747,8 @@ int moduleLoader(lua_State *L)
     return lua_gettop(L) - pretop;
 }
 
-// Legacy Install: package.path from the include directories, the module
-// loader above, and moonscript.loadstring kept in the registry. False leaves
-// the error message on the stack.
+// package.path from the include directories, the module loader above, and moonscript.loadstring kept in the
+// registry. False leaves the error message on the stack.
 bool install(lua_State *L)
 {
     lua_getglobal(L, "package");
@@ -821,9 +780,7 @@ void load(Reader &in, Responder &r)
 
     g_script.path = fromUtf8(path);
     g_script.traceLevel = traceLevel;
-    // Legacy include directories end with a separator (wxPATH_GET_SEPARATOR).
-    // The shared ones come one per line: an installed copy's user Include
-    // folders, then the shipped one (AutomationFolders).
+    // Each include directory ends with a separator. The shared ones come one per line.
     g_script.includePath = {toUtf8(g_script.path.parent_path()) + LUA_DIRSEP};
     for (std::size_t from = 0;;) {
         const std::size_t end = sharedInclude.find('\n', from);
@@ -889,12 +846,8 @@ void load(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, lua::encodeInfo(g_script.info));
 }
 
-// ---- the subtitles object (legacy AutoToFile, HikariSub/AutomationToFile.cpp) --
-//
-// A staged copy of the Document's info, style and dialogue lists. Script
-// indices run 1-based across the three lists in that order. Reads, writes,
-// deletes, appends and inserts follow the legacy object, including its error
-// messages; nothing reaches the Document until the host applies the result.
+// A staged copy of the Document's info, style and dialogue lists; script indices run 1-based across the three in
+// that order. Nothing reaches the Document until the host applies the result.
 
 using hikari::application::MacroDialogueLine;
 using hikari::application::MacroInfoLine;
@@ -905,7 +858,7 @@ using hikari::application::MacroStyleLine;
 struct Staged {
     MacroSnapshot lists;
     bool canModify = true;
-    std::string report; // aegisub.hikari.report (KE1)
+    std::string report; // aegisub.hikari.report
     int size() const
     {
         return static_cast<int>(lists.info.size() + lists.styles.size() + lists.dialogues.size());
@@ -919,7 +872,7 @@ void checkLive(lua_State *L)
     if (!g_subs)
         luaL_error(L, "the subtitles object is no longer valid");
     if (g_responder && g_responder->cancelled()) {
-        lua_pushlightuserdata(L, &g_cancelTag); // legacy raised "cancelled"
+        lua_pushlightuserdata(L, &g_cancelTag);
         lua_error(L);
     }
 }
@@ -956,7 +909,7 @@ void setBool(lua_State *L, const char *name, bool value)
     lua_setfield(L, -2, name);
 }
 
-// AssColor::GetAss(alpha = true): "&HAABBGGRR&".
+// "&HAABBGGRR&".
 std::string assOf(const std::string &value)
 {
     const AssColor c = assColor(value);
@@ -1002,7 +955,7 @@ bool lineToLua(lua_State *L, int i)
         setNumber(L, "scale_y", std::atoi(field(s, 12).c_str()));
         setNumber(L, "spacing", toDouble(field(s, 13)));
         setNumber(L, "angle", toDouble(field(s, 14)));
-        // Legacy keeps BorderStyle as a bool (opaque box) and pushes it as a number.
+        // borderstyle is 1 for an opaque box (BorderStyle 3), else 0.
         setNumber(L, "borderstyle", std::atoi(field(s, 15).c_str()) == 3 ? 1 : 0);
         setNumber(L, "outline", toDouble(field(s, 16)));
         setNumber(L, "shadow", toDouble(field(s, 17)));
@@ -1077,7 +1030,7 @@ std::string numberText(double v)
     return text;
 }
 
-// Legacy LuaToLine: the table on the stack top; std::nullopt for an unknown class.
+// The table on the stack top; std::nullopt for an unknown class.
 std::optional<Entry> luaToLine(lua_State *L)
 {
     if (!lua_istable(L, -1))
@@ -1118,7 +1071,7 @@ std::optional<Entry> luaToLine(lua_State *L)
         const std::string bold = flag("bold"), italic = flag("italic"), underline = flag("underline"),
                           strike = flag("strikeout");
         const double sx = num("scale_x"), sy = num("scale_y"), spacing = num("spacing"), angle = num("angle");
-        // Legacy reads BorderStyle back as (borderstyle == -3).
+        // MUST KILL: BorderStyle reads back as borderstyle == -3
         const int border = static_cast<int>(num("borderstyle"));
         const double outline = num("outline"), shadow = num("shadow");
         const int align = static_cast<int>(num("align")), ml = static_cast<int>(num("margin_l")),
@@ -1225,7 +1178,7 @@ int subsAppend(lua_State *L)
         auto entry = luaToLine(L);
         lua_pop(L, 1);
         if (!entry)
-            continue; // legacy silently drops an unknown class here
+            continue; // an unknown class is dropped
         auto &l = g_subs->lists;
         std::visit([&](auto &&e) {
             using T = std::decay_t<decltype(e)>;
@@ -1282,13 +1235,8 @@ int subsLengths(lua_State *L)
     return 3;
 }
 
-// Legacy LuaGetScriptResolution answers GetASSRes, which wrote a missing
-// PlayResX/PlayResY into the file (1280x720, or a 16:9 partner) as it read
-// them. Y4-playres-ask (user decision 2026-10-13): the host is asked instead
-// (the user sets the resolution, or it comes from the video); its answer is
-// written into the staged Script Info, so the macro and its result hold it as
-// legacy's did. With no answer the script gets legacy's values and nothing is
-// written; a user who declines cancels the run.
+// A missing PlayResX/PlayResY is asked of the host and its answer written into the staged Script Info; with no
+// answer the script gets 1280x720 (or a 16:9 partner) and nothing is written. A user who declines cancels the run.
 int subsScriptResolutionAsked(lua_State *L);
 
 int subsScriptResolution(lua_State *L)
@@ -1365,8 +1313,7 @@ int subsNewIndex(lua_State *L)
     } else if (entry && i >= sinfo && i < styles && std::holds_alternative<MacroStyleLine>(*entry)) {
         l.styles[static_cast<std::size_t>(i - sinfo)] = std::get<MacroStyleLine>(*entry);
     } else if (entry && i >= styles && std::holds_alternative<MacroDialogueLine>(*entry)) {
-        // The slot keeps the identity of the Line it replaces, and the Line
-        // it was generated from (KE1).
+        // The slot keeps the identity of the Line it replaces, and the Line it was generated from.
         auto replacement = std::get<MacroDialogueLine>(*entry);
         auto &slotLine = l.dialogues[static_cast<std::size_t>(i - styles)];
         replacement.id = slotLine.id;
@@ -1426,8 +1373,7 @@ void pushSubtitles(lua_State *L)
     lua_setmetatable(L, -2);
 }
 
-// ---- aegisub.hikari (KE1): HikariSub's own additions, which Aegisub lacks --
-//
+// aegisub.hikari, HikariSub's own additions:
 // A karaoke templater keeps track of its generated output with these; they
 // work on the running macro's subtitles object.
 //   sources()             { [i] = source } for each dialogue line generated
@@ -1516,22 +1462,21 @@ void installHikari(lua_State *L)
 
 int setUndoPoint(lua_State *)
 {
-    return 0; // a legacy stub (C06): it changes nothing
+    return 0; // a stub: changes nothing
 }
 
-// Legacy `laf->was_cancelled`: a cancelled run raises the cancellation.
+// A cancelled run raises the cancellation.
 void checkCancelled(lua_State *L)
 {
     if (g_responder && g_responder->cancelled())
         cancelScript(L);
 }
 
-// ---- aegisub.parse_karaoke_data (legacy AutoToFile::LuaParseKaraokeData) ----
-// wxString arithmetic over UTF-16 units, as wxString holds them on Windows.
+// String arithmetic over UTF-16 units, as wxString holds them on Windows.
 
 using u16 = std::u16string;
 
-// wxString::Mid: out of range gives "", the count is clamped.
+// Out of range gives empty; the count is clamped.
 u16 wxMid(const u16 &s, std::size_t first, std::size_t count)
 {
     const std::size_t len = s.size();
@@ -1542,14 +1487,13 @@ u16 wxMid(const u16 &s, std::size_t first, std::size_t count)
     return s.substr(first, count);
 }
 
-// wxString::Find(ch, true): the last position, or wxNOT_FOUND (-1).
+// The last position, or -1.
 int wxFindLast(const u16 &s, char16_t ch)
 {
     const auto at = s.rfind(ch);
     return at == u16::npos ? -1 : static_cast<int>(at);
 }
 
-// wxString::Replace(old, new) for every occurrence, left to right.
 void wxReplaceAll(u16 &s, const u16 &from, const u16 &to)
 {
     u16 out;
@@ -1559,7 +1503,6 @@ void wxReplaceAll(u16 &s, const u16 &from, const u16 &to)
     s = out + s.substr(at);
 }
 
-// wxRegEx("\\{[^\\}]*\\}").ReplaceAll(&text, ""): every override block removed.
 u16 withoutBlocks(const u16 &s)
 {
     u16 out;
@@ -1575,7 +1518,7 @@ u16 withoutBlocks(const u16 &s)
     return out + s.substr(at);
 }
 
-// wxString::ToCDouble: the whole text as a C-locale number.
+// Whether the whole text is a C-locale number.
 bool wxToCDouble(const u16 &text)
 {
     std::string ascii;
@@ -1596,8 +1539,6 @@ struct KaraokeTag {
     unsigned int startTextPos = 0; // where the value starts
 };
 
-// Dialogue::ParseTags({"kf", "ko", "k", "K"}, 4) (plainText false, no \p
-// among the names): the karaoke tags inside override blocks.
 std::vector<KaraokeTag> karaokeTags(const u16 &txt)
 {
     static const u16 names[] = {u"kf", u"ko", u"k", u"K"};
@@ -1636,7 +1577,6 @@ std::vector<KaraokeTag> karaokeTags(const u16 &txt)
                 u16 value = tag.substr(name.size());
                 if (first == u'(') {
                     ++data.startTextPos;
-                    // tagValue.After('(').BeforeFirst(')')
                     const u16 after = value.substr(value.find(u'(') + 1);
                     data.value = after.substr(0, after.find(u')'));
                 } else {
@@ -1682,9 +1622,8 @@ void pushSyllable(lua_State *L, int duration, int start, int end, const std::str
     setString(L, "text_stripped", utf8Of(stripped));
 }
 
-// Legacy stores the syllables in the line table it was given (from index 0,
-// an empty syllable first) and returns that table: it never made one of its
-// own. With no karaoke tag, index 1 is the whole line as one "k" syllable.
+// Fills and returns the given line table from index 0, an empty syllable first; with no karaoke tag, index 1 is the
+// whole line as one "k" syllable.
 int parseKaraokeData(lua_State *L)
 {
     checkCancelled(L);
@@ -1694,8 +1633,6 @@ int parseKaraokeData(lua_State *L)
         return lua_error(L);
     }
     const auto &line = std::get<MacroDialogueLine>(*entry);
-    // LuaToLine keeps "text" as TextTl when "text_translation" is set; the
-    // parsed text is TextTl when it is not empty, else Text.
     const std::string &raw = line.text.empty() ? line.translation : line.text;
     const u16 text =
         hikari::core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(raw.data()), raw.size()));
@@ -1714,8 +1651,7 @@ int parseKaraokeData(lua_State *L)
             nextKstart = tags[i + 1].startTextPos;
             const u16 newtxt = wxMid(text, lastPosition, static_cast<std::size_t>(nextKstart) - lastPosition);
             const std::size_t bracketstartpos = static_cast<std::size_t>(wxFindLast(newtxt, u'{'));
-            // A part without '{' (legacy: "should not happen") ends before the
-            // first '\' after its last '}', taken as a position in the line.
+            // A part without '{' ends before the first '\' after its last '}', taken as a position in the line.
             if (bracketstartpos == static_cast<std::size_t>(-1)) {
                 const std::size_t bracketendpos = static_cast<std::size_t>(wxFindLast(newtxt, u'}'));
                 const std::size_t firstSlash = newtxt.find(u'\\', bracketendpos + 1);
@@ -1727,7 +1663,7 @@ int parseKaraokeData(lua_State *L)
         } else {
             nextKstart = static_cast<long long>(text.length());
         }
-        int kdur = std::atoi(utf8Of(tdata.value).c_str()); // wxAtoi
+        int kdur = std::atoi(utf8Of(tdata.value).c_str());
         kdur *= 10;
         u16 ktext;
         if (nextKstart >= 0) {
@@ -1750,10 +1686,8 @@ int parseKaraokeData(lua_State *L)
     return 1;
 }
 
-// ---- host services (L3; legacy HikariSub/Automation.cpp) ------------------
-// Each function keeps the legacy argument handling and return shape; the
-// application answers through its platform ports. Unavailable is the legacy
-// nil (no video, no Document, a cancelled picker).
+// Each keeps the HikariSub legacy argument handling and return shape. Unavailable is nil (no video, no Document,
+// a cancelled picker).
 
 using hikari::application::HostService;
 using hikari::application::HostServiceReply;
@@ -1877,7 +1811,7 @@ int videoSize(lua_State *L)
     lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
     lua_pushnumber(L, static_cast<double>(integerAt(*reply, 1)));
     lua_pushnumber(L, ar);
-    // Legacy's 2.35 test can never hold, so wide frames report 4.
+    // MUST KILL: there is no 2.35 band, so wide frames report 4
     lua_pushnumber(L, (ar == 1.0f)                 ? 0
                       : (ar < 1.34f && ar > 1.33f) ? 1
                       : (ar < 1.78f && ar > 1.77f) ? 2
@@ -1937,7 +1871,7 @@ int frameGetPixel(lua_State *L)
     const unsigned char *p = framePixel(L, checkFrame(L));
     if (!p)
         return pushNil(L);
-    lua_pushnumber(L, p[2] * 65536 + p[1] * 256 + p[0]); // RGB
+    lua_pushnumber(L, p[2] * 65536 + p[1] * 256 + p[0]);
     return 1;
 }
 
@@ -1946,7 +1880,7 @@ int frameGetPixelFormatted(lua_State *L)
     const unsigned char *p = framePixel(L, checkFrame(L));
     if (!p)
         return pushNil(L);
-    char text[16]; // AssColor::GetAss(false): "&HBBGGRR&"
+    char text[16];
     std::snprintf(text, sizeof text, "&H%02X%02X%02X&", p[0], p[1], p[2]);
     lua_pushstring(L, text);
     return 1;
@@ -1986,9 +1920,7 @@ int getFrame(lua_State *L)
     return 1;
 }
 
-// aegisub.get_frequency_peaks (legacy AutoToFile::LuaGetFreqencyReach): the
-// host reads the open audio's spectrum (legacy AudioSpectrum::CreateRange);
-// the argument checks and their errors keep legacy's order.
+// aegisub.get_frequency_peaks: the checks and their errors keep HikariSub legacy's order.
 int frequencyPeaks(lua_State *L)
 {
     checkCancelled(L);
@@ -2001,7 +1933,7 @@ int frequencyPeaks(lua_State *L)
     const int start = static_cast<int>(lua_tointeger(L, 1)), end = static_cast<int>(lua_tointeger(L, 2)),
               freqStart = static_cast<int>(lua_tointeger(L, 3)), freqEnd = static_cast<int>(lua_tointeger(L, 4));
     const lua_Integer asked = lua_tointeger(L, 5);
-    const int peek = static_cast<int>(asked < 0 ? 0 : asked > 1000 ? 1000 : asked); // MID(0, peek, 1000)
+    const int peek = static_cast<int>(asked < 0 ? 0 : asked > 1000 ? 1000 : asked);
     const auto reply =
         callHost(L, "get_frequency_peaks", HostService::FrequencyPeaks, {start, end, freqStart, freqEnd, peek});
     if (!reply) {
@@ -2016,7 +1948,6 @@ int frequencyPeaks(lua_State *L)
         lua_pushstring(L, "get_frequency_peaks start or end time less than zero");
         return lua_error(L);
     }
-    // push_value(std::vector<int>): a 1-based list.
     const auto pushList = [L](const auto &values, std::size_t from) {
         const std::size_t count = values.size() > from ? values.size() - from : 0;
         lua_createtable(L, static_cast<int>(count), 0);
@@ -2046,9 +1977,8 @@ int audioSelection(lua_State *L)
     return 2;
 }
 
-// Legacy looks Script Info up by the Lua field names themselves
-// (GetSInfo("automation_scripts"), ...), so these are empty unless a script
-// carries such keys.
+// Script Info looked up by the Lua field names themselves ("automation_scripts", ...), as HikariSub legacy did;
+// empty unless a script carries such keys.
 std::string scriptInfoValue(const char *key)
 {
     if (!g_subs)
@@ -2176,13 +2106,7 @@ int decodePath(lua_State *L)
     return 1;
 }
 
-// Legacy get_translation (Automation.cpp:83-88): check_string, then
-// wxGetTranslation(str) pushed with lua_pushstring, so the result ends at its
-// first NUL. O5: the application answers through the
-// HikariSub.Automation.Gettext QM of the current language (docs/localisation.md,
-// "Lua compatibility"); it decides the lookup (the legacy UTF-8 conversion
-// and the untranslated source). Without an answer the source comes back, as
-// an untranslated key does.
+// The result ends at its first NUL. Without an answer the source comes back.
 int gettext(lua_State *L)
 {
     const std::string source = checkString(L, 1);
@@ -2202,8 +2126,7 @@ int statusText(lua_State *L)
 
 int openDialog(lua_State *L)
 {
-    // Legacy reads (title, dir, file, wildcard), so the 2nd argument is the
-    // directory and the 3rd the file name.
+    // As in HikariSub legacy, the 2nd argument is the directory and the 3rd the file name.
     const std::string title = checkString(L, 1), dir = checkString(L, 2), file = checkString(L, 3),
                       wildcard = checkString(L, 4);
     const bool multiple = lua_toboolean(L, 5);
@@ -2309,14 +2232,8 @@ void installHostServices(lua_State *L)
     lua_setfield(L, -2, "gui");
 }
 
-// Legacy LuaCommand::Validate (Automation.cpp:936-969): the validation
-// function gets the subtitles object, the selected rows and the active row;
-// its first return is the answer (a second one, the help text, is not
-// shown). A runtime error answers false. The object stays the one the
-// macro then runs on, so edits made while validating reach the macro, as
-// legacy's AutoToFile edits the file both work on. When it answers false
-// those edits are dropped (S4-validation-edits; legacy kept them in the
-// file without an undo step).
+// The first return is the answer; a runtime error answers false. Edits made while validating reach the macro,
+// and are dropped when it answers false.
 bool validate(lua_State *L, int index, std::string &error)
 {
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
@@ -2324,7 +2241,7 @@ bool validate(lua_State *L, int index, std::string &error)
     lua_remove(L, -2);
     if (!lua_isfunction(L, -1)) {
         lua_pop(L, 1);
-        return true; // no COMMAND_VALIDATE: always valid
+        return true;
     }
     lua_pushcfunction(L, addStackTrace);
     lua_insert(L, -2);
@@ -2345,9 +2262,8 @@ bool validate(lua_State *L, int index, std::string &error)
     return valid;
 }
 
-// Run: the macro. RunValidated: its validation function, then the macro
-// when it answers true. Validate: the validation function only
-// (S4-run-validation, a dependency's validation before another macro runs).
+// Run: the macro. RunValidated: its validation function, then the macro when it answers true. Validate: the
+// validation function only.
 enum class RunMode { Run, RunValidated, Validate };
 
 void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
@@ -2372,8 +2288,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     g_lastProgress = kNoProgress;
     installSink(L);
     lua_getglobal(L, "aegisub");
-    // Legacy AutoToFile's constructor, made for each run: these three stay
-    // in the aegisub table after the run.
+    // These three stay in the aegisub table after the run.
     lua_pushcfunction(L, parseKaraokeData);
     lua_setfield(L, -2, "parse_karaoke_data");
     lua_pushcfunction(L, frequencyPeaks);
@@ -2382,13 +2297,12 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     lua_setfield(L, -2, "set_undo_point");
     lua_pop(L, 1);
     if (validateFirst) {
-        // Legacy validates before LuaCommand::Run makes its progress sink.
+        // Validation runs without a progress sink.
         removeSink(L);
         const int oldOffset = static_cast<int>(staged.lists.info.size() + staged.lists.styles.size()) + 1;
         std::string error;
         if (!validate(L, index, error)) {
-            // S4-validation-edits: what validation staged is dropped; the
-            // result carries no lists and applies nothing.
+            // What validation staged is dropped; the result carries no lists and applies nothing.
             MacroResult result;
             result.valid = false;
             result.validationError = std::move(error);
@@ -2406,8 +2320,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
             return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
         }
         installSink(L);
-        // Run counts the rows again against what validation left
-        // (selected_rows and currentLine + SInfoSize + StylesSize + 1).
+        // The rows shift by what validation added to Script Info and Styles.
         const int shift =
             static_cast<int>(staged.lists.info.size() + staged.lists.styles.size()) + 1 - oldOffset;
         for (int &row : staged.lists.selected)
@@ -2415,7 +2328,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
         if (staged.lists.active)
             staged.lists.active += shift;
     }
-    // AD3: the macro itself begins (its validation, if any, has answered).
+    // The macro itself begins, after any validation.
     {
         Writer w;
         w.i32(static_cast<std::int32_t>(lua::ProgressEvent::Started));
@@ -2434,7 +2347,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     lua_pushinteger(L, staged.lists.active);
     const int status = lua_pcall(L, 3, 2, -5);
     if (status == 0) {
-        // Legacy reads (selected rows, active row) from the macro's returns.
+        // The macro returns (selected rows, active row).
         MacroResult result;
         result.info = std::move(staged.lists.info);
         result.styles = std::move(staged.lists.styles);
