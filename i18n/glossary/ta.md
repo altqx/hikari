@@ -37,6 +37,8 @@ which Automation scripts read, keeps legacy's text).
 |---|---|---|
 | Line | வரி (வரிகள்) | |
 | Line editor | வரி திருத்தி | |
+| Line group | வரிக் குழு | Grid: "Make line group" வரிக் குழுவை உருவாக்கு |
+| Timing postprocessor | நேரப் பின்செயலாக்கி | |
 | Grid | கட்டம் | |
 | Document | ஆவணம் | |
 | Document tab | ஆவணத் தாவல் | |
