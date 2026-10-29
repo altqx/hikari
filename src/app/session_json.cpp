@@ -14,6 +14,7 @@ constexpr std::int64_t kVersion = 1;
 
 QString qs(const std::string &s) { return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size())); }
 
+// `text` is marked where it is written (QT_TRANSLATE_NOOP), for lupdate.
 std::string message(const char *text, const QStringList &args = {})
 {
     QString m = QCoreApplication::translate("HikariSub.Session", text);
@@ -39,7 +40,7 @@ std::optional<application::Session> readLegacy(std::string_view bytes, applicati
         return std::nullopt;
     auto session = application::parseSession(*text);
     if (!session && failure)
-        *failure = {0, 0, message("Session file is corrupt")};
+        *failure = {0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "Session file is corrupt"))};
     if (session && !session->tabs.empty())
         session->activeTab = session->tabs.size() - 1; // AddPage made each loaded tab active
     return session;
@@ -60,7 +61,7 @@ std::optional<application::Session> readJson(std::string_view bytes, application
         return fail({line, column, error.errorString().toStdString()});
     }
     if (!doc.isObject())
-        return fail({1, 1, message("it is not a session file")});
+        return fail({1, 1, message(QT_TRANSLATE_NOOP("HikariSub.Session", "it is not a session file"))});
     const QJsonObject o = doc.object();
     const QJsonValue version = o.value(QStringLiteral("version"));
     std::optional<std::int64_t> number;
@@ -69,7 +70,7 @@ std::optional<application::Session> readJson(std::string_view bytes, application
     if (auto problem = application::checkFileVersion(number, kVersion))
         return fail(std::move(*problem));
     if (!o.value(QStringLiteral("tabs")).isArray())
-        return fail({0, 0, message("\"tabs\" is not a list")});
+        return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "\"tabs\" is not a list"))});
 
     application::Session session;
     session.header = o.value(QStringLiteral("program")).toString().toStdString();
@@ -78,7 +79,7 @@ std::optional<application::Session> readJson(std::string_view bytes, application
     for (qsizetype i = 0; i < tabs.size(); ++i) {
         const QString where = QString::number(i + 1);
         if (!tabs[i].isObject())
-            return fail({0, 0, message("tab %1 is not an object", {where})});
+            return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "tab %1 is not an object"), {where})});
         const QJsonObject t = tabs[i].toObject();
         application::SessionTab tab;
         // A field of the wrong type makes the file broken; a missing one is empty.
@@ -112,7 +113,9 @@ std::optional<application::Session> readJson(std::string_view bytes, application
         if (!active.isBool() && !active.isUndefined() && wrong.empty())
             wrong = "active";
         if (!wrong.empty())
-            return fail({0, 0, message("tab %1: \"%2\" has the wrong type", {where, QString::fromStdString(wrong)})});
+            return fail({0, 0,
+                         message(QT_TRANSLATE_NOOP("HikariSub.Session", "tab %1: \"%2\" has the wrong type"),
+                                 {where, QString::fromStdString(wrong)})});
         if (active.toBool() && !session.activeTab)
             session.activeTab = static_cast<std::size_t>(i);
         session.tabs.push_back(std::move(tab));
