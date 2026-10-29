@@ -1,10 +1,5 @@
-# vcpkg's asset source (X_VCPKG_ASSET_SOURCES x-script, set by Vcpkg.cmake):
-# a GNU download is asked of gnu.org first and, when it does not answer, of
-# other mirrors of the same tree (ftp.gnu.org and ftpmirror.gnu.org were down
-# for hours on 2026-10-06, and vcpkg waits minutes on each of the port's
-# URLs). Any other download is fetched as given. Every file must have the
-# SHA512 vcpkg expects; when no source serves it, vcpkg falls back to the
-# port's own URLs.
+# vcpkg asset-source script: a GNU download tries gnu.org briefly, then mirrors of the same tree (vcpkg waits minutes
+# on each port URL while gnu.org is down); any other download is fetched as given, all checked against vcpkg's SHA512.
 #
 #   cmake -DHIKARI_ASSET_URL=<url> -DHIKARI_ASSET_SHA512=<sha512>
 #         -DHIKARI_ASSET_DST=<file> -P GnuMirrors.cmake

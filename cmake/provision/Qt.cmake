@@ -1,14 +1,7 @@
-# Official Qt from a frozen, verified local repository mirror.
-#
-# The lock (cmake/locks/qt-<platform>.lock.json, written by tools/qt-lock) is
-# the only authority. Objects are acquired into a local mirror and verified by
-# SHA-256; the official installer then installs from that mirror alone. An
-# installation is reused only while its stamp matches the lock's digest.
+# Official Qt, installed from a local mirror of the objects cmake/locks/qt-<platform>.lock.json pins by SHA-256.
 include_guard(GLOBAL)
 
-# Mutable repository metadata (indexes and metadata archives) may carry a
-# retained_url: a copy kept as a GitHub release asset, because Qt republishes
-# and deletes those files. Acquisition prefers it; the SHA-256 check is the same.
+# Qt republishes and deletes repository metadata, so a lock entry may carry a retained_url (a GitHub release asset copy).
 function(_hikari_qt_entries lock base out_var)
     set(entries "")
     string(LENGTH "${base}" base_len)
@@ -67,8 +60,7 @@ function(_hikari_json_list lock key out_var)
     set(${out_var} "${values}" PARENT_SCOPE)
 endfunction()
 
-# Acquire every locked object into <sdk>/qt-mirror-<platform>; verify-only mode
-# fails on the first missing or changed object instead of fetching it.
+# Verify-only mode fails on a missing or changed object instead of fetching it.
 function(hikari_qt_acquire platform)
     set(lock_file "${HIKARI_LOCK_DIR}/qt-${platform}.lock.json")
     file(READ "${lock_file}" lock)
@@ -128,8 +120,6 @@ function(hikari_qt_acquire platform)
             if(fetched GREATER HIKARI_QT_ACQUIRE_LIMIT)
                 message(FATAL_ERROR "Qt acquisition exceeded its bound at ${path}")
             endif()
-            # Transport errors (timeouts, resets) are retried with backoff; a
-            # completed download with the wrong bytes is rejected at once.
             foreach(attempt RANGE 1 4)
                 file(DOWNLOAD "${url}" "${dest}" TLS_VERIFY ON TIMEOUT 900 INACTIVITY_TIMEOUT 60 STATUS st)
                 list(GET st 0 rc)
@@ -157,9 +147,7 @@ function(hikari_qt_acquire platform)
     file(GLOB_RECURSE present LIST_DIRECTORIES false "${mirror}/*")
     list(REMOVE_ITEM present ${expected})
     if(present)
-        # The mirror is a cache of the lock. Verify-only mode reports leftovers;
-        # acquisition removes them (for example metadata a lock refresh dropped),
-        # so the installer still sees exactly the locked files.
+            # The installer must see exactly the locked files.
         if(HIKARI_QT_VERIFY_ONLY)
             message(FATAL_ERROR "Unlocked files in the Qt mirror: ${present}")
         endif()
@@ -174,16 +162,11 @@ function(hikari_qt_acquire platform)
     set(HIKARI_QT_INSTALLER "${installer}" PARENT_SCOPE)
 endfunction()
 
-# Install from the verified mirror into <sdk>/qt-6.11.2-<platform>.
-# Authentication: QT_INSTALLER_JWT_TOKEN if set (then a private HOME keeps the
-# account file out of the user profile and is deleted afterwards); otherwise
-# the installer uses the developer's existing Qt Account login. This code never
-# reads, prints or caches the token or the account file.
+# QT_INSTALLER_JWT_TOKEN gets a private HOME, keeping the account file out of the user profile; else the existing login.
 function(hikari_qt_install platform)
     set(lock_file "${HIKARI_LOCK_DIR}/qt-${platform}.lock.json")
     file(READ "${lock_file}" lock)
-    # The stamp identifies installed content (requested packages and every
-    # payload digest), so a metadata-only lock refresh keeps the installation.
+    # The stamp covers installed content only, so a metadata-only lock refresh keeps the installation.
     set(content_key "")
     _hikari_json_list("${lock}" requested requested_ids)
     string(APPEND content_key "requested=${requested_ids}\n")
@@ -215,7 +198,6 @@ function(hikari_qt_install platform)
         message(FATAL_ERROR "${target} exists without a completed-install stamp; remove it to reinstall")
     endif()
 
-    # Authorization covers the reviewed license bytes only.
     set(lic_dir "${HIKARI_SDK_DIR}/qt-license-check")
     file(REMOVE_RECURSE "${lic_dir}")
     string(JSON nroots LENGTH "${lock}" roots)
@@ -284,9 +266,7 @@ function(hikari_qt_install platform)
         set(ENV{TMPDIR} "${private}/tmp")
     endif()
     message(STATUS "Installing Qt 6.11.2 (${platform}) from the verified mirror; authentication: ${auth}")
-    # No --default-answer/--accept-messages: an uncharacterized prompt reads EOF
-    # or times out and the configure fails for review. Owner authorization for
-    # the locked license set: altqx/hikari#48 issuecomment-5890780519.
+    # No --default-answer/--accept-messages: an unknown installer prompt must fail the configure for review.
     execute_process(COMMAND "${HIKARI_QT_INSTALLER}"
             --root "${target}"
             --cache-path "${HIKARI_SDK_DIR}/qt-metadata-cache"
@@ -305,8 +285,7 @@ function(hikari_qt_install platform)
     set(ENV{APPDATA} "${saved_appdata}")
     set(ENV{LOCALAPPDATA} "${saved_localappdata}")
     unset(ENV{QT_QPA_PLATFORM})
-    # Restore TMPDIR: the private directory is deleted below, and later
-    # dependency builds in this configure need a working temp directory.
+    # Later dependency builds in this configure need a working TMPDIR.
     if(saved_tmpdir_defined)
         set(ENV{TMPDIR} "${saved_tmpdir}")
     else()
@@ -314,7 +293,6 @@ function(hikari_qt_install platform)
     endif()
     file(REMOVE_RECURSE "${private}/home")
 
-    # Sanitized excerpt only; the raw log stays in the private directory.
     file(STRINGS "${private}/installer.log" lines)
     set(excerpt "")
     foreach(l IN LISTS lines)
@@ -331,8 +309,7 @@ function(hikari_qt_install platform)
         message(FATAL_ERROR "Official Qt installer failed (${rc}); see ${HIKARI_EVIDENCE_DIR}/qt-installer-excerpt.log")
     endif()
 
-    # selected <= installed <= selected + conditional: the installer skips a
-    # refused (virtual) request and still exits 0.
+    # The installer skips a refused (virtual) request and still exits 0.
     if(NOT EXISTS "${target}/components.xml")
         message(FATAL_ERROR "Qt installer exited 0 but wrote no components.xml")
     endif()

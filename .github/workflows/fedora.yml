@@ -1,8 +1,6 @@
 name: Fedora
 
-# B2-F: reconstruct the pinned build on Fedora from an empty cache, in a
-# digest-pinned Fedora 44 container. Only the provisioning step receives the
-# Qt installer secret. No caches, no SDK or binary publication.
+# Rebuilds the pinned build in a digest-pinned Fedora 44 container; only the provisioning step receives the Qt installer secret.
 on:
   push:
     branches: [main]
@@ -52,8 +50,7 @@ jobs:
       - name: Declared host prerequisites
         run: |
           set -euo pipefail
-          # dbus-daemon: show_in_folder_tests runs its own private session bus
-          # (fileManagerShowsTheFileSelected skipped without it, P9).
+          # dbus-daemon: show_in_folder_tests runs its own session bus and skips without it.
           pkgs=(git cmake ninja-build gcc gcc-c++ make pkgconf-pkg-config autoconf autoconf-archive alsa-lib-devel
                 automake libtool nasm python3 curl tar zip unzip xz bzip2 patch diffutils findutils
                 which file perl
@@ -81,8 +78,7 @@ jobs:
           set -euo pipefail
           test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
           test ! -e out/sdk/qt-install-private
-          # N6: the host has no sound card. A null ALSA PCM gives the PortAudio
-          # stream tests a device: path coverage only, it has no real timing.
+          # The runner has no sound card: a null ALSA PCM gives the PortAudio tests a device (no real timing).
           printf 'pcm.hikari_null {\n    type null\n}\n' >> "$HOME/.asoundrc"
           export HIKARI_TEST_AUDIO_DEVICE=hikari_null
           cmake --workflow --preset fedora-x64-verify

@@ -1,17 +1,7 @@
-# GR1 (#364): harper-ls, the grammar checker's helper process (LSP over
-# stdio), upstream's release build pinned by SHA-256: the archive and the
-# binary in it. Linux takes the static musl build (no host libraries, so it
-# passes the package's glibc ceiling); Windows the MSVC build, whose
-# VCRUNTIME140 the package already ships. Apache-2.0: its LICENSE (pinned
-# too) and the crates' notices (packaging/licenses/harper) go in licenses/harper.
+# harper-ls, upstream's release build pinned by SHA-256 (archive and binary). Linux takes the static musl build
+# (no host libraries, under the packages' glibc ceiling); Windows the MSVC build, whose VCRUNTIME140 the package ships.
 #
-#   hikari_fetch_harper(<downloads> <out-var>)
-#
-# fetches the archive and the LICENSE into <downloads> (each kept while its
-# hash matches, so an offline configure works from a seeded folder), extracts
-# the binary beside them and checks it; <out-var> is its path and
-# <out-var>_LICENSE the licence's. Script mode:
-#
+#   hikari_fetch_harper(<downloads> <out-var>)   <out-var> is the binary's path, <out-var>_LICENSE the licence's
 #   cmake -DDOWNLOADS=<dir> -P cmake/HikariHarper.cmake
 include_guard(GLOBAL)
 
@@ -31,8 +21,7 @@ else()
     set(HIKARI_HARPER_SHA256 "f8e8d7514518c5d66437a455fbd9a8b2114412bd21b7c23cbd57341514c28626")
 endif()
 
-# hikari_harper_download(<url> <file> <sha256>): <file>, downloaded unless a
-# copy with the pinned hash is there.
+# hikari_harper_download(<url> <file> <sha256>): downloads <file> unless a copy with the pinned hash is there.
 function(hikari_harper_download url file sha256)
     if(EXISTS "${file}")
         file(SHA256 "${file}" have)

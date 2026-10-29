@@ -1,6 +1,4 @@
-# nFPM config for the deb and the rpm (installers spec 5.4).
-# make-packages.sh fills the @...@ values; the dependency lists are YAML
-# flow sequences generated from the app tree and the deps maps.
+# nFPM config for the deb and the rpm; make-packages.sh fills the @...@ values.
 name: hikarisub
 arch: amd64
 platform: linux
@@ -20,7 +18,6 @@ description: |-
   typesetting tools, spell checking and Lua automation.
 
 contents:
-  # The app tree, identical to the tar.gz and the AppImage.
   - src: "@TREE@/"
     dst: /opt/hikarisub/
     type: tree
@@ -32,8 +29,7 @@ contents:
     dst: /opt/hikarisub/package-kind.txt
     packager: rpm
     file_info: {mode: 0644}
-  # The updater's root helper and its polkit action (spec 4.4). The rpm
-  # must own libexec/, which is outside the tree, or removal leaves it.
+  # The rpm must own libexec/, which is outside the tree, or removal leaves it.
   - dst: /opt/hikarisub/libexec
     type: dir
     file_info: {mode: 0755}
@@ -46,7 +42,6 @@ contents:
   - src: /opt/hikarisub/hikarisub
     dst: /usr/bin/hikarisub
     type: symlink
-  # Desktop integration (spec 1.6).
   - src: "@GEN@/io.github.altqx.HikariSub.desktop"
     dst: /usr/share/applications/io.github.altqx.HikariSub.desktop
     file_info: {mode: 0644}
@@ -59,7 +54,6 @@ contents:
   - src: "@SOURCE@/packaging/linux/icons/hicolor/"
     dst: /usr/share/icons/hicolor/
     type: tree
-  # The license.
   - src: "@SOURCE@/LICENSE"
     dst: /usr/share/doc/hikarisub/copyright
     packager: deb

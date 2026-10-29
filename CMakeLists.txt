@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-# Provisioning runs before project(): it verifies the locked Qt mirror and
-# installation and the pinned vcpkg checkout/tool, then sets the toolchain.
+# Provisioning runs before project(): it sets the toolchain.
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/provision/Provision.cmake")
 if(HIKARI_PROVISION_ONLY OR HIKARI_QT_VERIFY_ONLY)
     project(HikariSubProvision LANGUAGES NONE)
@@ -8,8 +7,7 @@ if(HIKARI_PROVISION_ONLY OR HIKARI_QT_VERIFY_ONLY)
 endif()
 
 project(HikariSub VERSION 0.1.0 LANGUAGES C CXX)
-# ADR 0019: the version the program reports and compares, and the release tag
-# without its "v": project(VERSION) and, for a prerelease, "-" and the suffix.
+# The version the program reports and compares, and the release tag without its "v" (ADR 0019).
 set(HIKARI_VERSION_SUFFIX "" CACHE STRING "SemVer prerelease of the version, for example beta.2; empty for a release")
 if(HIKARI_VERSION_SUFFIX STREQUAL "")
     set(HIKARI_VERSION "${PROJECT_VERSION}")
@@ -25,16 +23,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include(CTest)
 # Sources are UTF-8; MSVC otherwise reads them in the system code page.
 add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/utf-8>" "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/utf-8>")
-# #320: the Linux CI job bounds-checks libstdc++ (operator[], front()/back(),
-# span, string_view); an out-of-bounds read aborts with its file and line.
-# Our targets only, not the vcpkg ports; presets and packages leave it off.
+# Our targets only, not the vcpkg ports.
 option(HIKARI_GLIBCXX_ASSERTIONS "Build with -D_GLIBCXX_ASSERTIONS (CI)" OFF)
 if(HIKARI_GLIBCXX_ASSERTIONS)
     add_compile_definitions("$<$<COMPILE_LANGUAGE:CXX>:_GLIBCXX_ASSERTIONS>")
 endif()
-# CR1 (#452): the package workflows build with debug info, which they split
-# off (Linux .debug files, Windows PDBs) and keep as the release's symbol
-# archives; the packages carry none (docs/crash-reports.md).
 option(HIKARI_DEBUG_SYMBOLS "Build with debug info kept apart from the packages (package CI)" OFF)
 if(HIKARI_DEBUG_SYMBOLS)
     if(MSVC)
@@ -46,34 +39,26 @@ if(HIKARI_DEBUG_SYMBOLS)
     endif()
 endif()
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDependencies.cmake")
-# GR1 (#364): the pinned harper-ls (HikariHarper.cmake), which every package
-# ships beside the app; the build tree runs the downloaded copy.
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariHarper.cmake")
 set(HIKARI_HARPER_DOWNLOADS "${CMAKE_BINARY_DIR}/harper-downloads" CACHE PATH
     "Folder the pinned harper-ls is fetched into (seed it to configure offline)")
 hikari_fetch_harper("${HIKARI_HARPER_DOWNLOADS}" HIKARI_HARPER_LS)
-# DK1 (#473): the pinned spell-check dictionaries every package bundles
-# (HikariDictionaries.cmake), with their notices; the tests check them too.
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDictionaries.cmake")
 set(HIKARI_DICTIONARY_DOWNLOADS "${CMAKE_BINARY_DIR}/dictionary-downloads" CACHE PATH
     "Folder the pinned dictionaries are fetched into (seed it to configure offline)")
 hikari_fetch_dictionaries("${HIKARI_DICTIONARY_DOWNLOADS}" HIKARI_BUNDLED_DICTIONARIES)
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)
-add_subdirectory(i18n) # O4: TS catalogs, QM in the build
-# installers: the app's QML is compiled into a static module under src/ui, so
-# the deploy scan for its Qt Quick imports must read that folder too.
+add_subdirectory(i18n)
+# The app's QML is a static module under src/ui, which the deploy's Qt Quick import scan must read too.
 set(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/src/ui")
 add_subdirectory(src)
 unset(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS)
-include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariInstall.cmake") # installers: the app tree and the packages
-# O4: hikari_lupdate updates the TS catalogs from the sources, on request
-# (i18n/CMakeLists.txt). The i18n test hikari_i18n_extraction_reads_every_caller
-# fails when a source under src/ calls qsTr/tr and none of these targets holds it.
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariInstall.cmake")
+# hikari_i18n_extraction_reads_every_caller fails when a qsTr/tr caller under src/ is in none of these targets.
 set(HIKARI_I18N_SOURCE_TARGETS hikarisub hikari_composition hikari_ui)
 qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_UI_TS}
     LUPDATE_TARGET hikari_lupdate NO_GLOBAL_TARGET OPTIONS -locations none)
-# #385: the English numerus catalog, with the others.
 qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_EN_TS}
     LUPDATE_TARGET hikari_lupdate_en NO_GLOBAL_TARGET OPTIONS -locations none -pluralonly -no-obsolete)
 add_dependencies(hikari_lupdate hikari_lupdate_en)
@@ -90,7 +75,7 @@ if(BUILD_TESTING)
     add_subdirectory(tests/support/fonts)
     add_subdirectory(tests/runners/image)
     add_subdirectory(tests/support/perf)
-    add_subdirectory(tests/support/desktop) # 38e: no test reaches the desktop's programs
+    add_subdirectory(tests/support/desktop)
     add_subdirectory(tests/support/i18n)
     add_subdirectory(tests/perf)
     add_subdirectory(tests/modules)
@@ -99,7 +84,7 @@ if(BUILD_TESTING)
     add_subdirectory(tests/backends)
     add_subdirectory(tests/ui)
     add_subdirectory(tests/i18n)
-    add_subdirectory(tests/tools) # evidence harness scripts
-    add_subdirectory(tools/human/h2-listening) # H2 listening driver, built on request
-    add_subdirectory(tools/native-gate) # D1/D3 native gate: gatelib's tests
+    add_subdirectory(tests/tools)
+    add_subdirectory(tools/human/h2-listening)
+    add_subdirectory(tools/native-gate)
 endif()

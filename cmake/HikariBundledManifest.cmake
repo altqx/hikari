@@ -1,8 +1,5 @@
-# UD1 (#362): bundled-files.txt in the program folder, the bundled files the
-# start seeds into the user folder (src/app/include/hikari/app/user_folder.h),
-# one "<SHA-256> <path>" line each, the path relative to the program folder:
-# every file under Automation/automation and the Dictionary folder's own
-# .dic and .aff files.
+# bundled-files.txt: a "<SHA-256> <path>" line per file under Automation/automation and per Dictionary/*.dic|.aff,
+# relative to the program folder; each start seeds the user folder from it (user_folder.h).
 #
 #   include() it and call hikari_write_bundled_manifest(<program folder>), or
 #   cmake -DROOT=<program folder> -P HikariBundledManifest.cmake

@@ -1,9 +1,5 @@
 # cmake -DEXECUTABLE=<QtTest executable> -DSPECS=<FROM..BEFORE>,... -P QtTestParts.cmake
-#
-# hikari_add_qttest's PARTS check: the parts' functions (-part <spec>
-# -functions, tests/support/qtest_parts.h), one part after the other, are the
-# executable's functions (-functions), each exactly once and in order. A part
-# naming a function the executable no longer has is refused by the executable.
+# hikari_add_qttest's PARTS check: the parts' functions, in order, are the executable's functions, each once.
 cmake_minimum_required(VERSION 3.25)
 
 function(functions_of out)

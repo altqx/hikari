@@ -1,11 +1,5 @@
-# Windows build and test through Winix (a local Windows VM). The tasks run the
-# same presets as .github/workflows/windows.yml inside the latest MSVC
-# environment. out/ (the SDK and build trees) stays in the VM between runs;
-# it is git-ignored, so `winix sync` never copies it.
-#
-# Provisioning installs Qt with the official installer, which needs a Qt
-# Account: log in once inside the VM (the installer then reuses that login).
-# The CI secret QT_INSTALLER_JWT_TOKEN is never copied into the VM.
+# Windows build and test in a Winix VM; out/ stays in the VM (git-ignored, so `winix sync` skips it).
+# The official Qt installer needs a Qt Account: log in once inside the VM.
 version: 1
 image: windows-dev
 workspace: hikari-qt
@@ -13,9 +7,7 @@ resources:
   cpus: 6
   memoryGiB: 12
   diskGiB: 180
-# An ICH9 HDA endpoint on QEMU's silent backend (N6 audio tests write silence
-# only) and two monitors for the D1 gate's mixed DPI and monitor removal
-# (both approved by the user, 2026-10-04 and 2026-10-05).
+# audio: none is QEMU's silent backend behind an ICH9 HDA endpoint.
 vm: { audio: none, displays: 2 }
 exclude: [.git, .winix, .env, '*.pfx', '*.key', out]
 pipeline: [provision, build, test]
@@ -33,139 +25,103 @@ tasks:
     timeoutSeconds: 2700
     artifacts: [out/build/windows-x64-release/results.xml, out/build/windows-x64-release/Testing/Temporary/LastTest.log]
   qttest:
-    # One QtTest executable offscreen with its output in a file, printed whole
-    # (ctest keeps none on Windows). TEST: the executable's name without .exe;
-    # ARGS: QtTest arguments (test functions, -v2, ...); TEST_TIMEOUT: seconds (300);
-    # FORMAT: QtTest's output format (txt; junitxml adds each function's time;
-    # none for a Spix workflow, which prints to the job log).
+    # Env: TEST (executable name without .exe), ARGS, TEST_TIMEOUT (s, 300), FORMAT (txt|junitxml|none); ctest keeps no output on Windows.
     script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter "$env:TEST.exe" out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output "no $env:TEST.exe"; exit 2 }; $limit = if ($env:TEST_TIMEOUT) { [int]$env:TEST_TIMEOUT } else { 300 }; $format = if ($env:FORMAT) { $env:FORMAT } else { 'txt' }; $out = "$env:TEMP/qttest-$env:TEST.$format"; Remove-Item $out -ErrorAction SilentlyContinue; $a = "$env:ARGS $(if ($format -ne 'none') { "-o $out,$format" })".Trim(); $sp = @{ FilePath = $exe.FullName; WorkingDirectory = $exe.DirectoryName; NoNewWindow = $true; PassThru = $true; RedirectStandardError = "$env:TEMP/qttest-err.txt" }; if ($a) { $sp.ArgumentList = $a }; $sw = [Diagnostics.Stopwatch]::StartNew(); $p = Start-Process @sp; $null = $p.Handle; if (-not $p.WaitForExit($limit * 1000)) { $p.Kill(); Write-Output "== $env:TEST TIMED OUT after $limit s"; $code = 1 } else { $code = $p.ExitCode; Write-Output "== $env:TEST exit $code after $([int]$sw.Elapsed.TotalSeconds) s" }; if (Test-Path $out) { Get-Content $out }; Write-Output '== stderr'; Get-Content "$env:TEMP/qttest-err.txt" -ErrorAction SilentlyContinue | Select-Object -Last 40; exit $code
     timeoutSeconds: 1200
   shell:
-    # Shell test functions one at a time (QtTest writes to a file), each limited to 90 s.
     script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-release | Select-Object -First 1; foreach ($f in 'selectLinesDialogSelectsAndActs','saveVariantsFollowTheLegacySave','aboutAndCreditsShowTheNotices','resolutionMismatchAndResample','f6AndShortcutsReachAFloatingPanel') { $out = "$env:TEMP/shell-$f.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/shell-err.txt"; if (-not $p.WaitForExit(90000)) { $p.Kill(); Write-Output "== $f TIMED OUT" } else { Write-Output "== $f exit $($p.ExitCode)" }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|Actual|Expected|PASS|SKIP|QWARN|Totals' } }
     timeoutSeconds: 900
   automation-output:
-    # The Lua helper tests (gtest) and the script dialog's QtTest functions with their output (L2, L6).
     script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $b = 'out/build/windows-x64-release'; $lua = Get-ChildItem -Recurse -Filter hikari_backends_lua_helper_tests.exe $b | Select-Object -First 1; $ErrorActionPreference = 'Continue'; & $lua.FullName --gtest_filter=LuaHelper.* 2>&1 | ForEach-Object { "$_" } | Select-String -Pattern 'RUN|OK|FAILED|error|Which is|Expected|logged|^[0-9]:|true,|You try|Cannot|PASSED'; $exe = Get-ChildItem -Recurse -Filter hikari_ui_automation_dialog_tests.exe $b | Select-Object -First 1; foreach ($f in '', 'cancelledRunWithdrawsTheDialog', 'captureProbeDialogCasesAnswer') { $out = "$env:TEMP/automation-dialog-$f.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/automation-dialog-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Output "== dialog tests [$f] TIMED OUT" } else { Write-Output "== dialog tests [$f] exit $($p.ExitCode)" }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|Actual|Expected|PASS|SKIP|Totals|QDEBUG|QFATAL|QCRITICAL' }; Get-Content "$env:TEMP/automation-dialog-err.txt" -ErrorAction SilentlyContinue | Select-Object -Last 20 }
     timeoutSeconds: 900
   shell-all:
-    # The whole shell suite in the six parts of tests/ui/CMakeLists.txt (a process each, as in CTest; keep the seams in step) with QtTest's output in files (ctest keeps none on Windows); prints the failures.
+    # MUST KILL: these six part seams duplicate tests/ui/CMakeLists.txt and must be kept in step by hand.
     script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-release | Select-Object -First 1; foreach ($part in 'documents=..panelsFloatDockHideAndKeepTheirState', 'panels=panelsFloatDockHideAndKeepTheirState..translationModeStacksOriginalAboveTranslated', 'translation=translationModeStacksOriginalAboveTranslated..hotkeysPageMapsAndOkInstalls', 'hotkeys=hotkeysPageMapsAndOkInstalls..visualToolRailCrosshairAndCopyCoordinates', 'visual=visualToolRailCrosshairAndCopyCoordinates..videoRecentListsAndDialogFolders', 'video=videoRecentListsAndDialogFolders..') { $name, $spec = $part -split '=', 2; $out = "$env:TEMP/shell-all-$name.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "-part $spec -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru; if (-not $p.WaitForExit(600000)) { $p.Kill(); Write-Output "== $name TIMED OUT" } else { Write-Output "== $name exit $($p.ExitCode)" }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL!|Loc:|Actual|Expected|Totals' -Context 0,0 } }
     timeoutSeconds: 1800
   backends:
-    # Backend adapter tests by name (a label filter on top of the preset's matched nothing).
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(LibassRenderer|WinPortTest|Reopen)[.]"
     timeoutSeconds: 600
   media:
-    # The media helper tests with failure output (N1, N2).
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(Fixture|AudioFixture)[.]" --repeat until-fail:3
     timeoutSeconds: 900
   audio:
-    # The editor output (N6), verbose so the enumerated devices are recorded.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(AudioRing|OutputEngine|PortAudioOutput|PortAudioDevice)[.]" -V
     timeoutSeconds: 600
   audio-wasapi:
-    # N6 on the VM's HDA endpoint through WASAPI (the default device is DirectSound's); only silence is written.
+    # PortAudio's default device on Windows is DirectSound's, so WASAPI is named.
     script: $env:HIKARI_TEST_AUDIO_DEVICE = 'Windows WASAPI'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudio(Output|Device)[.]" -V
     timeoutSeconds: 600
   audio-slowed:
-    # KA2 (#277): slowed playback through the VM's HDA endpoint ("Speakers (High Definition Audio Device)", WASAPI): half speed
-    # keeps the pitch on Windows too. A quiet 440 Hz tone is written to the silent audiodev.
     script: $env:HIKARI_TEST_AUDIO_DEVICE = 'High Definition Audio Device'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^BoxPlayer[.]Slowed" -V
     timeoutSeconds: 600
   audio-hotplug:
-    # N6 with real device loss: tools/winix/hotplug.sh starts this and unplugs/replugs a QEMU USB audio device through winix vm device
-    # (silent audiodev; Windows names it "Speakers (Audio Device)", "(2- Audio Device)" after a replug) when the test asks. Only silence is written.
+    # Started by tools/winix/hotplug.sh; Windows renames the USB device "(2- Audio Device)" after a replug.
     script: $env:HIKARI_TEST_AUDIO_HOTPLUG = '\((\d+- )?Audio Device\)'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows WASAPI'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
     timeoutSeconds: 600
   audio-hotplug-directsound:
-    # The same through DirectSound (tools/winix/hotplug.sh hikariusbaudio audio-hotplug-directsound),
-    # where the loss shows only as stalled callbacks.
+    # DirectSound shows the device loss only as stalled callbacks.
     script: $env:HIKARI_TEST_AUDIO_HOTPLUG = '\((\d+- )?Audio Device\)'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows DirectSound'; $env:HIKARI_TEST_AUDIO_HOTPLUG_STALL_ONLY = '1'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
     timeoutSeconds: 600
   inputs:
-    # B4: changed pinned inputs are refused by vcpkg's hash check.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^changed-input-" -V
     timeoutSeconds: 900
   player:
-    # General playback (N5), verbose so the seek observations are recorded.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "general_player" -V
     timeoutSeconds: 600
   presenter-window:
-    # N7 in a real window (the windows platform and its RHI backend), not offscreen.
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:QSG_INFO = '1'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_presenter_tests.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "running $($exe.FullName)"; & $exe.FullName -o presenter-window.txt,txt; $code = $LASTEXITCODE; Get-Content presenter-window.txt; exit $code
     timeoutSeconds: 300
   video-window:
-    # I1's Spix workflow in a real window (the windows platform and its RHI backend).
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_video_workflow.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "running $($exe.FullName)"; $ErrorActionPreference = 'Continue'; & $exe.FullName 2>&1 | ForEach-Object { "$_" }; exit $LASTEXITCODE
     timeoutSeconds: 300
   video-fullscreen-window:
-    # V5's Spix workflow on the interactive desktop (the windows platform): fullscreen on the main window's
-    # monitor and, through the context menu, on the second (MONITORS, default 2; display-layout first).
+    # Env: MONITORS (default 2); run display-layout first.
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_video_fullscreen_workflow.exe out/build/windows-x64-release | Select-Object -First 1; $m = if ($env:MONITORS) { $env:MONITORS } else { '2' }; Write-Output "running $($exe.FullName) --monitors $m"; $ErrorActionPreference = 'Continue'; & $exe.FullName --monitors $m 2>&1 | ForEach-Object { "$_" }; exit $LASTEXITCODE
     visualStudio: false
     timeoutSeconds: 300
   show-in-folder-explorer:
-    # P9 on the interactive desktop: show_in_folder_tests explorerShowsTheFileSelected (Explorer opens the folder
-    # with exactly the file selected, read back through the Shell automation objects) with the whole desktop saved
-    # while that window is open (p9-explorer/explorer-selection.png, its size in the QINFO lines). The test runs only
-    # with HIKARI_SHOW_IN_FOLDER_EXPLORER=1, set here; a skip fails the task: no desktop was reached.
     script: $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_backends_show_in_folder_tests.exe out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_backends_show_in_folder_tests.exe'; exit 2 }; $dir = "$PWD/out/build/windows-x64-release/p9-explorer"; Remove-Item -Recurse $dir -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force $dir | Out-Null; $env:HIKARI_SHOW_IN_FOLDER_EXPLORER = '1'; $env:HIKARI_SHOW_IN_FOLDER_SHOT = "$dir/explorer-selection.png"; $out = "$dir/explorerShowsTheFileSelected.txt"; $p = Start-Process -FilePath $exe.FullName -ArgumentList "explorerShowsTheFileSelected -o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$dir/stderr.txt"; $null = $p.Handle; if (-not $p.WaitForExit(120000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$dir/stderr.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; if (Select-String -Quiet -Pattern '^SKIP' $out) { Write-Output 'skipped, so not on an interactive desktop'; exit 1 }; if ($code -eq 0 -and -not (Test-Path $env:HIKARI_SHOW_IN_FOLDER_SHOT)) { Write-Output 'no screenshot'; exit 1 }; exit $code
     visualStudio: false
     timeoutSeconds: 300
     artifacts: [out/build/windows-x64-release/p9-explorer]
   fonts:
-    # Font identity (N4), collection (I5) and the collector (Y8) through DirectWrite, verbose for the provider line.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection|FontCollectorRenderer|FontFixtureFiles)[.]" -V
     timeoutSeconds: 600
   font-cleanup:
-    # Y8W: the font fixture removes what it installs, including what a run that never reached its cleanup left (tools/winix/font-cleanup.ps1).
     script: ./tools/winix/font-cleanup.ps1
     timeoutSeconds: 600
   packaging:
-    # Helper package manifests (I6), verbose so the closure is recorded.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -L packaging -V
     timeoutSeconds: 300
   imports:
-    # The media helper's direct imports (manifest development aid).
     script: ./tools/winix/msvc.ps1 dumpbin /dependents out/build/windows-x64-release/hikari-media-helper.exe
     timeoutSeconds: 120
   audition:
-    # PCM streams and Line audition (I3).
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(PcmFixture|Audition)[.]" -V
     timeoutSeconds: 600
   transport:
-    # General <-> indexed handoff (I4), verbose for the frame observations.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "transport_tests" -V
     timeoutSeconds: 600
   automation:
-    # The Lua helper, dialogs and the automation manager (N8, L1), verbose for
-    # the per-script process cost.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(LuaHelper|Manager|AutomationRegistry)[.]|automation" -V
     timeoutSeconds: 600
-    # The capture probe's records in the rewrite (S3).
     artifacts: [out/build/windows-x64-release/tests/backends/artifacts/automation-capture-corpus.json, out/build/windows-x64-release/tests/backends/artifacts/automation-capture-corpus-macro.json, out/build/windows-x64-release/tests/ui/artifacts/automation-capture-dialogs.json]
   end-setups:
-    # Ends a HikariSub setup or uninstaller left on the desktop by an installer
-    # test or an interactive session (tools/winix/end-setups.ps1); the desktop
-    # driver (gate-win-prepare) starts with it.
     script: ./tools/winix/end-setups.ps1
     visualStudio: false
     timeoutSeconds: 120
-  # D1 native gate on Windows (tools/native-gate/windows/gate_windows.py).
-  # Guest scratch: out/native-gate-win. The driver passes parameters through
-  # each task's environment (a derived config); the defaults below run alone.
+  # gate-win-*: tools/native-gate/windows/gate_windows.py passes their parameters through the environment.
   gate-win-prepare:
     script: ./tools/native-gate/windows/gate.ps1 -Action prepare
     visualStudio: false
     timeoutSeconds: 300
   gate-win-fresh:
-    # Sets the HikariSub profile aside (never deleted); `ui launch --fresh-profile` does not reach Qt's known folders.
+    # Sets the profile aside (never deleted): winix `ui launch --fresh-profile` does not reach Qt's known folders.
     script: ./tools/native-gate/windows/gate.ps1 -Action fresh
     visualStudio: false
     timeoutSeconds: 120
   gate-win-restore:
-    # Puts a set-aside profile back (GATE_PROFILE_FROM: an out/native-gate-win/old-profiles/<stamp> directory).
+    # Env: GATE_PROFILE_FROM, an out/native-gate-win/old-profiles/<stamp> directory.
     script: ./tools/native-gate/windows/gate.ps1 -Action restore
     visualStudio: false
     timeoutSeconds: 120
@@ -184,176 +140,127 @@ tasks:
     timeoutSeconds: 120
     environment: {GATE_FULLSCREEN: 'off'}
   gate-win-dpi:
-    # The guest's display scale (a guest setting); the dpi step restores 100.
     script: ./tools/native-gate/windows/gate.ps1 -Action dpi
     visualStudio: false
     timeoutSeconds: 120
     environment: {GATE_DPI_PERCENT: '100'}
   gate-win-theme:
-    # The appearance in the gate's fresh profile before HikariSub starts (GATE_THEME, GATE_FOLLOW; step dark).
     script: ./tools/native-gate/windows/gate.ps1 -Action theme
     visualStudio: false
     timeoutSeconds: 120
     environment: {GATE_THEME: dark, GATE_FOLLOW: 'false'}
   gate-win-system-theme:
-    # The system's app colour scheme, live (GATE_APPS_LIGHT 1|0|status; step dark puts the first value back).
+    # GATE_APPS_LIGHT: 1|0|status.
     script: ./tools/native-gate/windows/gate.ps1 -Action systemtheme
     visualStudio: false
     timeoutSeconds: 120
     environment: {GATE_APPS_LIGHT: status}
   title-bar-window:
-    # K2: hikari_ui_title_bar_tests windowsTitleBarFollowsTheTheme on the interactive desktop (the windows
-    # platform): the main window's and dialogs' title bars read back through DwmGetWindowAttribute while the
-    # theme switches. A skip fails the task: no desktop window manager was reached.
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_title_bar_tests.exe out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_ui_title_bar_tests.exe'; exit 2 }; $out = "$env:TEMP/title-bar-window.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "-o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/title-bar-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(120000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$env:TEMP/title-bar-err.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; if (Select-String -Quiet -Pattern '^SKIP.*windowsTitleBarFollowsTheTheme' $out) { Write-Output 'skipped, so not on an interactive desktop'; exit 1 }; exit $code
     visualStudio: false
     timeoutSeconds: 300
   k1-sheets-window:
-    # K1: hikari_ui_icon_tests contactSheets on the interactive desktop (the windows platform), where the window
-    # system keeps a window inside its monitor: the sheets go on pages that fit the screen, each drawn whole and
-    # its icons equal to their files; the sheets are written to out/build/windows-x64-release/k1-sheets-window.
     script: $env:QT_QPA_PLATFORM = 'windows'; $dir = "$PWD/out/build/windows-x64-release/k1-sheets-window"; Remove-Item -Recurse $dir -ErrorAction SilentlyContinue; $env:HIKARI_ICON_SHEET_DIR = $dir; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_icon_tests.exe out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_ui_icon_tests.exe'; exit 2 }; $out = "$env:TEMP/k1-sheets-window.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "contactSheetsFitTheScreen contactSheets -o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/k1-sheets-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$env:TEMP/k1-sheets-err.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; Get-ChildItem $dir -Filter *.png -ErrorAction SilentlyContinue | ForEach-Object { Write-Output "sheet $($_.Name)" }; exit $code
     visualStudio: false
     timeoutSeconds: 600
     artifacts: [out/build/windows-x64-release/k1-sheets-window]
   gate-win-tests:
-    # hikari_ui_shell_tests (D1 functions), docking qualification and workspace layout under the windows platform.
     script: ./tools/native-gate/windows/tests.ps1
     visualStudio: false
     timeoutSeconds: 2400
   nvda-setup:
-    # NVDA 2026.2 checked against its published SHA-256, as a portable copy under out/native-gate-win/nvda (nothing installed).
     script: ./tools/native-gate/windows/nvda.ps1 -Action setup
     visualStudio: false
     timeoutSeconds: 1200
   nvda-output:
-    # Quits NVDA and prints its speech lines; the whole log is the artifact.
     script: ./tools/native-gate/windows/nvda.ps1 -Action output
     visualStudio: false
     timeoutSeconds: 180
     artifacts: [out/native-gate-win/nvda/nvda-last.log]
   display-layout:
-    # Both QXL monitors extended at 1024x768 (vm.displays), the second right of the primary; prints the monitor rectangles.
     script: ./tools/native-gate/windows/display.ps1
     visualStudio: false
     timeoutSeconds: 180
     environment: {GATE_DISPLAY: extend}
   gate-win-display:
-    # The gate's display changes (GATE_DISPLAY extend|detach|status, GATE_SCALE2 percent); see display.ps1.
+    # GATE_DISPLAY: extend|detach|status; GATE_SCALE2: percent.
     script: ./tools/native-gate/windows/display.ps1
     visualStudio: false
     timeoutSeconds: 180
     environment: {GATE_DISPLAY: status}
-  # W2: VSFilterMod, the CSRI renderer the package ships, in its own build tree
-  # (windows-x64-vsfiltermod: HIKARI_TEST_VSFILTERMOD fetches the release
-  # cmake/HikariVsfilterMod.cmake pins and puts it beside the tests), with the
-  # program and the tests that use it. xy-VSFilter is not shipped (user 2026-10-14).
   vsfiltermod-build:
     script: ./tools/winix/msvc.ps1 cmake --preset windows-x64-vsfiltermod; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 cmake --build --preset windows-x64-vsfiltermod --target hikarisub hikari_backends_csri_tests hikari_backends_vsfiltermod_tests hikari_ui_shell_tests hikari_application_options_dialog_tests
     timeoutSeconds: 7200
     artifacts: [out/build/windows-x64-vsfiltermod/provision-evidence]
   vsfiltermod-test:
-    # The adapter and VSFilterMod through it (leased fonts, the overlay against
-    # drawing onto the frame), verbose for the per-fixture differences; the
-    # render artifacts are kept. HIKARI_VSFILTERMOD_CSRI names the folder the
-    # build fetched the pinned release into (vsfilter-task-environment checks
-    # the task sets it, as an unset one turns the VsfilterMod tests into skips).
+    # An unset HIKARI_VSFILTERMOD_CSRI turns the VSFilterMod tests into skips (vsfilter-task-environment checks it).
     script: $env:HIKARI_VSFILTERMOD_CSRI = "$PWD/out/build/windows-x64-vsfiltermod/tests/backends/vsfiltermod-csri"; ./tools/winix/msvc.ps1 ctest --preset windows-x64-vsfiltermod -R "^(Csri|RendererSelection|VsfilterMod|OptionsDialog)[.]" -V
     timeoutSeconds: 1200
     artifacts: [out/build/windows-x64-vsfiltermod/tests/backends/artifacts/vsfiltermod]
   vsfiltermod-shell:
-    # The shell functions W2 touches, in the build with VSFilterMod beside the tests.
     script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-vsfiltermod | Select-Object -First 1; Write-Output "csri $((Get-ChildItem "$($exe.DirectoryName)/Csri" | ForEach-Object Name) -join ', ')"; $code = 0; foreach ($f in 'subtitleDisplayFilterSwitchesOnTheLoadedVideo','settingsDialogAppliesChangedValuesLive','settingsDialogPagesBindTheLegacyOptions','aboutAndCreditsShowTheNotices','fontCollectorDoesNotCertifyACsriRenderer') { $out = "$env:TEMP/vsfiltermod-$f.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/vsfiltermod-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output "== $f TIMED OUT"; $code = 1 } else { Write-Output "== $f exit $($p.ExitCode)"; if ($p.ExitCode) { $code = 1 } }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|Actual|Expected|PASS|SKIP|QWARN|Totals' } }; exit $code
     timeoutSeconds: 1200
     artifacts: [out/build/windows-x64-vsfiltermod/tests/ui/artifacts/vsfiltermod-switch]
   vsfiltermod-shots:
-    # The Video page and the About notice of the build with VSFilterMod, light
-    # and dark, under the windows platform (offscreen has no fonts on Windows).
+    # Offscreen has no fonts on Windows.
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:HIKARI_SURFACE_SHOT_DIR = "$PWD/out/build/windows-x64-vsfiltermod/w2-shots"; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-vsfiltermod | Select-Object -First 1; $out = "$env:TEMP/vsfiltermod-shots.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "w2SurfaceScreenshots -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|PASS|Totals' }; exit $p.ExitCode
     timeoutSeconds: 600
     artifacts: [out/build/windows-x64-vsfiltermod/w2-shots]
   vsfilter-default:
-    # W2 in the default Windows build (no CSRI renderer in it): the CSRI adapter
-    # is built, no renderer is offered, and choosing one keeps libass drawing.
     script: ./tools/winix/msvc.ps1 cmake --preset windows-x64-release; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 cmake --build --preset windows-x64-release --target hikari_backends_csri_tests hikari_ui_shell_tests; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^Csri[.]"; $code = $LASTEXITCODE; $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "csri folder $(Test-Path "$($exe.DirectoryName)/Csri")"; foreach ($f in 'subtitleDisplayFilterSwitchesOnTheLoadedVideo','settingsDialogAppliesChangedValuesLive','settingsDialogPagesBindTheLegacyOptions','aboutAndCreditsShowTheNotices') { $out = "$env:TEMP/vsfilter-default-$f.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/vsfilter-default-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output "== $f TIMED OUT"; $code = 1 } else { Write-Output "== $f exit $($p.ExitCode)"; if ($p.ExitCode) { $code = 1 } }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|Actual|Expected|Totals' } }; exit $code
     timeoutSeconds: 3600
   w1-tests:
-    # W1: the DirectShow adapter's tests, its Spix workflow, manifest and
-    # presence checks and the options bindings, with failure output.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "directshow|OptionsDialog" --output-on-failure
     timeoutSeconds: 1200
   w1-desktop:
-    # W1: the DirectShow Spix workflow on the desktop (the windows platform,
-    # with the system's fonts) instead of offscreen; the open Filters submenu
-    # in Dark and Light is saved to C:/w1desktop.
     script: $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $env:QT_QPA_PLATFORM = 'windows'; $env:HIKARI_SCREENSHOT_DIR = 'C:/w1desktop'; $exe = Get-ChildItem -Recurse -Filter hikari_ui_directshow_workflow.exe out/build/windows-x64-release | Select-Object -First 1; $p = Start-Process -FilePath $exe.FullName -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardOutput "$env:TEMP/w1desktop.txt"; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output 'TIMED OUT' }; Get-Content "$env:TEMP/w1desktop.txt"; exit $p.ExitCode
     timeoutSeconds: 300
   w1-probe:
-    # W1: which encodings stock DirectShow plays: the graph DirectShow builds
-    # itself (--graph), then the adapter's open, seeks and one second of play.
+    # Which encodings stock DirectShow plays.
     script: $b = 'out/build/windows-x64-release'; $f = (Get-ChildItem -Recurse -Filter hikari_media_fixture.exe $b | Select-Object -First 1).FullName; $p = (Get-ChildItem -Recurse -Filter hikari_directshow_probe.exe $b | Select-Object -First 1).FullName; $d = "$env:TEMP/w1probe"; New-Item -ItemType Directory -Force $d | Out-Null; $ErrorActionPreference = 'Continue'; foreach ($k in 'dshow-cfr.avi', 'dshow-vfr.wmv', 'probe-avi-xvid.avi', 'probe-avi-fmp4.avi', 'probe-avi-m4s2.avi', 'probe-avi-mp4s.avi', 'probe-avi-div3.avi', 'probe-avi-mp43.avi', 'probe-avi-mjpeg.avi', 'probe-asf-wmv2.wmv', 'probe-asf-wmv2-vfr.wmv', 'probe-mpeg-mpeg1.mpg') { $n = $k.Substring(0, $k.LastIndexOf('.')); & $f "$d/$k" $n 2>&1 | Out-Null; Write-Output "== $k"; & $p --graph "$d/$k" 2>&1 | ForEach-Object { "$_" }; & $p "$d/$k" 1000 1500 200 1035 0 2>&1 | ForEach-Object { "$_" }; Write-Output "exit $LASTEXITCODE" }; exit 0
     timeoutSeconds: 600
   v4-clipboard-window:
-    # V4 on the interactive desktop (the windows platform): hikari_ui_shell_tests
-    # videoSnapshotsReachTheSystemClipboard copies the subbed and the plain frame and reads each back from a
-    # separate process (tools/winix/clipboard-image.ps1: System.Windows.Forms.Clipboard's GetImage, the bitmap
-    # other programs paste), compared with the copied frame. A skip fails the task: the system clipboard was not reached.
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_ui_shell_tests.exe'; exit 2 }; $f = 'videoSnapshotsReachTheSystemClipboard'; $out = "$env:TEMP/v4-clipboard.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/v4-clipboard-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$env:TEMP/v4-clipboard-err.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; if (Select-String -Quiet -Pattern "^SKIP.*$f" $out) { Write-Output 'skipped, so the system clipboard was not reached'; exit 1 }; exit $code
     visualStudio: false
     timeoutSeconds: 600
   y7-dropper-desktop:
-    # Y7 on the interactive desktop (the windows platform): the screen route reading the real screen
-    # (hikari_ui_colour_picker_tests: the session's route, the 7x7 pixels around a point of a window painting
-    # its own coordinates, the pointer tracking, the move to the pointer), then the shell's "Color picker" and
-    # "Choose color" droppers picking a colour a window shows on the desktop through the sampler's own screen
-    # source (hikari_ui_shell_tests screenDroppersReadTheScreenItself; the other dropper tests replace the
-    # screen with a stand-in, so they are not run here). A skip fails the task: no screen pixels were read.
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $b = 'out/build/windows-x64-release'; $code = 0; foreach ($run in @(@('hikari_ui_colour_picker_tests', 'theRouteOfThisSession theScreenRouteReadsThePixelsAroundThePoint trackingReportsThePointer moveToPointerFollowsLegacy'), @('hikari_ui_shell_tests', 'screenDroppersReadTheScreenItself'))) { $exe = Get-ChildItem -Recurse -Filter "$($run[0]).exe" $b | Select-Object -First 1; if (-not $exe) { Write-Output "no $($run[0]).exe"; exit 2 }; $out = "$env:TEMP/y7-$($run[0]).txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$($run[1]) -o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/y7-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Output "== $($run[0]) TIMED OUT"; $code = 1; continue }; Write-Output "== $($run[0]) exit $($p.ExitCode)"; if ($p.ExitCode) { $code = 1 }; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$env:TEMP/y7-err.txt" -ErrorAction SilentlyContinue; $code = 1; continue }; Get-Content $out; if (Select-String -Quiet -Pattern '^SKIP' $out) { Write-Output 'skipped, so no screen pixels were read'; $code = 1 } }; exit $code
     visualStudio: false
     timeoutSeconds: 900
   w2-switch-desktop:
-    # W2 on the interactive desktop (the windows platform), in the build with VSFilterMod (vsfiltermod-build
-    # first): hikari_ui_shell_tests subtitleDisplayFilterSwitchesOnTheLoadedVideo switches the loaded video's
-    # renderer from libass to VSFilterMod and back, and saves the screen under the video picture after each
-    # switch (w2-desktop-libass.png, w2-desktop-vsfiltermod.png, w2-desktop-libass-again.png): the picture
-    # changes with VSFilterMod and libass's comes back unchanged. A skip or a missing picture fails the task.
+    # Run vsfiltermod-build first.
     script: $env:QT_QPA_PLATFORM = 'windows'; $dir = "$PWD/out/build/windows-x64-vsfiltermod/w2-desktop"; Remove-Item -Recurse $dir -ErrorAction SilentlyContinue; $env:HIKARI_SURFACE_SHOT_DIR = $dir; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-vsfiltermod | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_ui_shell_tests.exe in the vsfiltermod build'; exit 2 }; Write-Output "csri $((Get-ChildItem "$($exe.DirectoryName)/Csri" | ForEach-Object Name) -join ', ')"; $f = 'subtitleDisplayFilterSwitchesOnTheLoadedVideo'; $out = "$env:TEMP/w2-switch.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/w2-switch-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$env:TEMP/w2-switch-err.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; if (Select-String -Quiet -Pattern "^SKIP.*$f" $out) { Write-Output 'skipped'; exit 1 }; foreach ($n in 'libass', 'vsfiltermod', 'libass-again') { if (-not (Test-Path "$dir/w2-desktop-$n.png")) { Write-Output "no w2-desktop-$n.png"; $code = 1 } }; exit $code
     visualStudio: false
     timeoutSeconds: 600
     artifacts: [out/build/windows-x64-vsfiltermod/w2-desktop]
   qttest-window:
-    # One QtTest executable on the interactive desktop (the windows platform, tools/winix/qttest.ps1):
-    # TEST, ARGS, TEST_TIMEOUT, FORMAT, OUT (a workspace folder for the output), REQUIRE_RUN=1 (a skip
-    # fails the task); any other --env (HIKARI_*_SHOT_DIR, ...) reaches the test.
+    # Env: TEST, ARGS, TEST_TIMEOUT, FORMAT, OUT, REQUIRE_RUN=1 (a skip fails); any other --env reaches the test.
     script: $env:QT_QPA_PLATFORM = 'windows'; ./tools/winix/qttest.ps1
     visualStudio: false
     timeoutSeconds: 1800
   ctest-regex:
-    # ctest by regex R (V=1 for -V), with the JUnit report as the artifact.
+    # Env: R (ctest regex), V=1 for -V.
     script: $v = if ($env:V) { '-V' } else { '--output-on-failure' }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "$env:R" $v --output-junit results-regex.xml
     timeoutSeconds: 2700
     artifacts: [out/build/windows-x64-release/results-regex.xml]
   review-window:
-    # The Windows counterparts of the review images (K1 sheets, K2 four themes and focus, O5 languages,
-    # D3 chrome) on the interactive desktop (tools/winix/review-window.ps1; PARTS selects).
     script: ./tools/winix/review-window.ps1
     visualStudio: false
     timeoutSeconds: 3600
     artifacts: [out/build/windows-x64-release/review-window]
   vsfiltermod-shell-all:
-    # W2: the whole shell suite (offscreen) in the build with VSFilterMod beside the program (vsfiltermod-build first).
+    # Run vsfiltermod-build first.
     script: $env:BUILD = 'windows-x64-vsfiltermod'; $env:TEST = 'hikari_ui_shell_tests'; $env:TEST_TIMEOUT = '2400'; $env:OUT = 'out/build/windows-x64-vsfiltermod/shell-all'; ./tools/winix/qttest.ps1
     visualStudio: false
     timeoutSeconds: 2700
     artifacts: [out/build/windows-x64-vsfiltermod/shell-all]
   workflow-window:
-    # One Spix workflow (TEST: its executable's name) on the interactive desktop (the windows platform),
-    # printing to the job log; ARGS are its arguments.
+    # Env: TEST (workflow executable name), ARGS.
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter "$env:TEST.exe" out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output "no $env:TEST.exe"; exit 2 }; Write-Output "running $($exe.FullName) $env:ARGS"; $ErrorActionPreference = 'Continue'; $a = if ($env:ARGS) { $env:ARGS -split ' ' } else { @() }; & $exe.FullName @a 2>&1 | ForEach-Object { "$_" }; Write-Output "exit $LASTEXITCODE"; exit $LASTEXITCODE
     visualStudio: false
     timeoutSeconds: 600
   cmd:
-    # One PowerShell command line from CMD (diagnostics: file listings, versions).
+    # Env: CMD, one PowerShell command line.
     script: $ErrorActionPreference = 'Continue'; Invoke-Expression $env:CMD
     visualStudio: false
     timeoutSeconds: 300

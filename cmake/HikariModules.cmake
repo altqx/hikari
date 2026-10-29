@@ -1,6 +1,5 @@
-# Module boundary enforcement (docs/architecture.md). Each module declares
-# the targets it may link; the check runs at configure time and fails on any
-# other hikari_*, Hikari::* or Qt6::* dependency. Entries may end in '*'.
+# Each module declares the targets it may link; configure fails on any other hikari_*, Hikari::* or Qt6::*
+# dependency. Entries may end in '*'.
 include_guard(GLOBAL)
 
 set_property(GLOBAL PROPERTY HIKARI_MODULES "")

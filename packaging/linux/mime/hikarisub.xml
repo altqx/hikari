@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  shared-mime-info already defines the subtitle types HikariSub registers for,
-  so for those this only attaches icons. The one glob is belt and braces:
-  audio/aac also claims *.ass, at weight 10 against text/x-ssa's 50, so it
-  already loses. The session type (CF3) is HikariSub's own.
+  shared-mime-info already defines the subtitle types, so for those this only attaches icons; the session type is
+  HikariSub's own. audio/aac also claims *.ass, at weight 10 against text/x-ssa's 50, so the glob is belt and braces.
 -->
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
   <mime-type type="text/x-ssa">

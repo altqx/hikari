@@ -1,22 +1,12 @@
 #!/usr/bin/env python3
-"""Collects the AppImage's `full` profile extras (installers spec 5.2).
+"""Collects the AppImage's `full` profile extras.
 
     collect-runtime.py <app tree> <out lib dir> <host-libs.txt> [<host-side list>]
 
-Copies into <out lib dir> every shared library that the ELF files of
-<app tree> need, directly or through other collected libraries, unless
-
-  - the tree provides it (file name or DT_SONAME),
-  - its name matches a glob of host-libs.txt (the host list), or
-  - a host-list library needs it, directly or indirectly (the closure rule:
-    anything a host library needs is host-side too and is never bundled).
-
-Libraries are resolved the way the build host's loader resolves them
-(`ldconfig -p`, x86-64 entries), so run this in the build container. Each
-library is copied under its soname. Prints one line per collected library
-and exits 1 when a needed library cannot be found. With a fourth argument,
-writes there the sonames left to the host (the host-list matches and their
-closure), one per line, for the package tests.
+Copies into <out lib dir>, under its soname, every shared library the tree's ELF files need (transitively),
+unless the tree provides it, it matches host-libs.txt, or a host-list library needs it (that stays host-side).
+Resolves like the build host's loader (`ldconfig -p`), so run it in the build container; exits 1 when a needed
+library is missing. The optional fourth argument receives the host-side sonames, for the package tests.
 """
 import fnmatch
 import os
@@ -27,9 +17,7 @@ import sys
 
 ELF_MAGIC = b"\x7fELF"
 
-# Qt's OpenSSL backend loads libssl with dlopen. When the bundle carries
-# libcrypto (Kerberos needs it on the floor), it must carry the libssl of the
-# same OpenSSL too, or the host's newer libssl would meet the older libcrypto.
+# Qt's OpenSSL backend dlopens libssl: a bundled libcrypto (Kerberos needs it on the floor) needs its own libssl too.
 DLOPEN_COMPANIONS = {"libcrypto.so.3": ("libssl.so.3",)}
 
 
@@ -95,8 +83,6 @@ def main():
         if soname:
             provided.add(soname)
 
-    # The closure rule: everything a host-list library needs, as the build
-    # host resolves it.
     host_side = set()
 
     def add_host_closure(name):

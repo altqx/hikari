@@ -1,10 +1,6 @@
 #!/bin/sh
-# HikariSub AppImage entry point (installers spec 5.3).
-#
-# The app tree is usr/lib/hikarisub; its qt.conf points Qt at the bundled
-# plugins and QML modules, so no QT_* variable is needed. The libraries of
-# the full profile that the host may lack (xcb utilities, xkbcommon, ...)
-# are in usr/lib/hikarisub-runtime/lib, ahead of the host's.
+# usr/lib/hikarisub's qt.conf points Qt at the bundled plugins and QML modules; usr/lib/hikarisub-runtime/lib holds
+# the libraries a host may lack, ahead of the host's.
 HERE=$(dirname "$(readlink -f "$0")")
 APPDIR=${APPDIR:-$HERE}
 export APPDIR

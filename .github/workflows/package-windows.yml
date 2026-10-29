@@ -1,12 +1,7 @@
 name: Windows packages
 
-# Installers SPEC 6 and 7: the Windows payload is built on windows-2025 (no
-# tests), then the NSIS installer and the portable zip are made on Ubuntu with
-# makensis 3.13 built from source (packaging/windows/build-makensis.sh),
-# because windows-2025 images carry no NSIS and Ubuntu's 3.09 has CVE-2025-43715. The artifact
-# hikarisub-windows-installer holds HikariSub-<V>-windows-x64-setup.exe and
-# HikariSub-<V>-windows-x64.zip under their release names. release.yml
-# calls this workflow with the release version.
+# Builds the Windows payload on windows-2025, then the NSIS installer and the portable zip on Ubuntu with makensis 3.13
+# built from source: windows-2025 images carry no NSIS and Ubuntu's 3.09 has CVE-2025-43715. release.yml calls it.
 on:
   push:
     branches: [main]
@@ -60,9 +55,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      # SPEC 1.2: SemVer, no build metadata, 0.1.0 or higher, and the part
-      # before the prerelease is the CMake project version (the prerelease
-      # becomes HIKARI_VERSION_SUFFIX).
+      # The prerelease part becomes HIKARI_VERSION_SUFFIX; the part before it must be the CMake project version.
       - name: Check the version against the project
         id: v
         env:
@@ -125,20 +118,17 @@ jobs:
       - name: Build and stage the payload without credentials
         env:
           SUFFIX: ${{ needs.version.outputs.suffix }}
-          # AN1: release builds only (test packages send nothing).
           POSTHOG_KEY: ${{ inputs.release && secrets.HIKARI_POSTHOG_KEY || '' }}
         run: |
           $ErrorActionPreference = 'Stop'
           if (Test-Path "$env:APPDATA\Qt\qtaccount.ini") { throw 'Qt account file left in the profile' }
           if (Test-Path out/sdk/qt-install-private) { throw 'Private install directory left behind' }
-          # CR1 (#452): PDBs beside the build, kept as the version's symbols.
           cmake --preset windows-x64-package "-DHIKARI_VERSION_SUFFIX=$env:SUFFIX" "-DHIKARI_POSTHOG_KEY=$env:POSTHOG_KEY" -DHIKARI_DEBUG_SYMBOLS=ON
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake --build --preset windows-x64-package
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      # The payload must not name the test feed switch (SPEC 8.4) nor carry
-      # files the installer writes itself.
+      # The installer writes package-kind.txt and install-manifest.txt itself.
       - name: Check the payload
         run: |
           $ErrorActionPreference = 'Stop'
@@ -146,7 +136,6 @@ jobs:
           foreach ($f in 'HikariSub.exe', 'hikari-media-helper.exe', 'hikari-lua-helper.exe', 'Qt6Core.dll', 'vcruntime140.dll', 'msvcp140.dll', 'Dictionary/en_US.dic', 'Automation/automation', 'Csri/VSFiltermod.dll') {
             if (-not (Test-Path "$p/$f")) { throw "payload lacks $f" }
           }
-          # xy-VSFilter is not shipped (user 2026-10-14): VSFilterMod is the only CSRI renderer.
           if (Test-Path "$p/Csri/xy-VSFilter_hikarisub.dll") { throw 'payload carries xy-VSFilter' }
           foreach ($f in 'package-kind.txt', 'install-manifest.txt') {
             if (Test-Path "$p/$f") { throw "payload carries $f" }
@@ -157,9 +146,6 @@ jobs:
           if ($hits) { throw "test feed switch in $($hits.Path -join ', ')" }
           Get-Content out/build/windows-x64-package/payload/payload-manifest.txt | Measure-Object -Line | ForEach-Object { "payload: $($_.Lines) files" }
 
-      # CR1 (#452): the symbols, a release asset of their own: each payload
-      # module the build has a PDB for, beside it. A forced crash of the
-      # payload must symbolize with them (tools/crash/symbolize.py).
       - name: Symbols and a symbolized crash
         env:
           VERSION: ${{ needs.version.outputs.version }}
@@ -242,9 +228,6 @@ jobs:
           name: hikarisub-windows-payload
           path: payload/HikariSub
 
-      # makensis itself is built by build-installer.sh (build-makensis.sh,
-      # the version and SHA-256s in tools.lock): Ubuntu's nsis is 3.09,
-      # which has CVE-2025-43715.
       - name: Install the tools to build makensis, and 7-Zip
         run: |
           set -euo pipefail
@@ -259,14 +242,10 @@ jobs:
             --icon src/app/windows/HikariLargeIcon.ico --icon-header src/app/windows/FileTypeIcons.h \
             --out "dist/HikariSub-$VERSION-windows-x64-setup.exe" --work nsis-work
 
-      # The uninstaller's elevation rule, built alone for the Windows test
-      # (tests/packaging/windows/protected-tests.ps1).
       - name: Build the elevation rule test
         run: HS_MAKENSIS="nsis-work/nsis-$(sed -n 's/^MAKENSIS_VERSION=//p' packaging/windows/tools.lock)/Bin/makensis" tests/packaging/windows/build-protected-test.sh nsis-work/protected-test.exe
 
-      # 7-Zip reads NSIS installers: every payload file is inside byte for
-      # byte, nothing else but the installer's own files, and the manifest it
-      # writes lists exactly the payload (as legacy's windows-installer job).
+      # 7-Zip can extract NSIS installers.
       - name: Check the installer contents
         run: |
           set -euo pipefail
@@ -287,7 +266,7 @@ jobs:
       - name: Make the portable zip
         run: |
           set -euo pipefail
-          # One HikariSub_x64 folder, as legacy's zip has.
+          # One HikariSub_x64 folder, the layout HikariSub legacy's zip has.
           mkdir -p zipstage
           cp -a payload/HikariSub zipstage/HikariSub_x64
           (cd zipstage && zip -qrX "../dist/HikariSub-$VERSION-windows-x64.zip" HikariSub_x64)

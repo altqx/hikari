@@ -1,8 +1,6 @@
 name: Ubuntu
 
-# B2-U: reconstruct the pinned build on a fresh Ubuntu runner through the root
-# presets. Only the provisioning step receives the Qt installer secret; the
-# build and tests run without it. No caches, no SDK or binary publication.
+# Rebuilds the pinned build on a fresh Ubuntu runner; only the provisioning step receives the Qt installer secret.
 on:
   push:
     branches: [main]
@@ -55,8 +53,7 @@ jobs:
       - name: Declared host prerequisites
         run: |
           set -euo pipefail
-          # dbus-daemon: show_in_folder_tests runs its own private session bus
-          # (fileManagerShowsTheFileSelected skipped without it, P9).
+          # dbus-daemon: show_in_folder_tests runs its own session bus and skips without it.
           pkgs=(ninja-build nasm pkg-config autoconf autoconf-archive automake libtool python3 zip unzip libasound2-dev
                 libgl1-mesa-dev libegl1 libxkbcommon0 libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libfontconfig1 libdbus-1-3 dbus-daemon
                 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-randr0
@@ -93,11 +90,10 @@ jobs:
           set -euo pipefail
           test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
           test ! -e out/sdk/qt-install-private
-          # N6: the host has no sound card. A null ALSA PCM gives the PortAudio
-          # stream tests a device: path coverage only, it has no real timing.
+          # The runner has no sound card: a null ALSA PCM gives the PortAudio tests a device (no real timing).
           printf 'pcm.hikari_null {\n    type null\n}\n' >> "$HOME/.asoundrc"
           export HIKARI_TEST_AUDIO_DEVICE=hikari_null
-          # ubuntu-x64-verify's steps, with libstdc++ bounds checks on (#320).
+          # ubuntu-x64-verify's steps, with libstdc++ bounds checks on.
           cmake --preset ubuntu-x64-release -DHIKARI_GLIBCXX_ASSERTIONS=ON
           cmake --build --preset ubuntu-x64-release
           ctest --preset ubuntu-x64-release

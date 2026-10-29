@@ -1,14 +1,8 @@
 name: Linux packages
 
-# Installers spec 5 and 8: build HikariSub on the Linux floor
-# (AlmaLinux 9 + gcc-toolset-14, glibc 2.34), make the tar.gz, AppImage, deb
-# and rpm, then test them in the distro containers of spec 8.1 and render,
-# build and install the AUR package (8.2). release.yml calls this
-# workflow and publishes the artifact hikarisub-linux-packages.
-#
-# Only the provisioning step receives the Qt installer secret. The vcpkg
-# binary cache of this workflow is its own (keyed by the floor image), never
-# shared with the developer or the other workflows' builds (spec 5.1).
+# Builds on the Linux floor (AlmaLinux 9 + gcc-toolset-14, glibc 2.34), makes the tar.gz, AppImage, deb and rpm,
+# and tests them in distro containers and the AUR package; release.yml calls it.
+# Only the provisioning step receives the Qt installer secret; the vcpkg binary cache is this workflow's own.
 on:
   push:
     branches: [main]
@@ -51,8 +45,7 @@ on:
     secrets:
       QT_INSTALLER_JWT_TOKEN:
         required: true
-      # AN1 (#404): the PostHog project key a release build sends usage data
-      # with; test packages are built without it.
+      # The PostHog project key; release builds only.
       HIKARI_POSTHOG_KEY:
         required: false
 
@@ -102,8 +95,7 @@ jobs:
           version=$core${SUFFIX:+-$SUFFIX}
           case "$version" in 0.0.*) echo "Qt versions start at 0.1.0 (spec 1.2)" >&2; exit 1 ;; esac
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          # The --version switch and the package kinds come with the update
-          # track (src/app/package_kind.cpp); until then the tests skip them.
+          # MUST KILL: src/app/package_kind.cpp always exists now, so version_switch is always 1.
           if [ -f src/app/package_kind.cpp ]; then echo "version_switch=1"; else echo "version_switch=0"; fi >> "$GITHUB_OUTPUT"
 
       - name: vcpkg binary cache (this workflow's own, keyed by the floor image)
@@ -124,14 +116,12 @@ jobs:
       - name: Configure and build on the floor
         env:
           SUFFIX: ${{ inputs.version_suffix }}
-          # AN1: release builds only (test packages send nothing).
           POSTHOG_KEY: ${{ inputs.release && secrets.HIKARI_POSTHOG_KEY || '' }}
         run: |
           set -eu
           . /etc/profile.d/hikari-floor.sh
           test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
           test ! -e out/sdk/qt-install-private
-          # CR1 (#452): debug info, split from the payload into the symbols.
           set -- --preset linux-floor-x64-release -DHIKARI_INSTALL_DICTIONARY_DIR=/usr/share/myspell -DHIKARI_DEBUG_SYMBOLS=ON
           [ -z "$SUFFIX" ] || set -- "$@" "-DHIKARI_VERSION_SUFFIX=$SUFFIX"
           [ -z "$POSTHOG_KEY" ] || set -- "$@" "-DHIKARI_POSTHOG_KEY=$POSTHOG_KEY"
@@ -158,24 +148,19 @@ jobs:
           fi
           mkdir -p out/dist out/dist-old
           cp "$B"/dist/* out/dist/
-          # An older Qt test version of the same payload, and the stand-in
-          # legacy and wrong-name packages, for the upgrade and helper tests.
+          # An older test version of the same payload, and stand-in legacy and wrong-name packages.
           core=${VERSION%%-*}
           set -- --build-dir "$B" --version "$core-0" --out out/dist-old --tools "$B/packaging-tools" --formats native
           [ $allow = OFF ] || set -- "$@" --allow-missing-update-helper
           packaging/linux/make-packages.sh "$@"
           tests/packaging/linux/make-test-packages.sh --tools "$B/packaging-tools" --out out/dist-old --version "$VERSION"
-          # DX1 (#367): the docs export the site's hotkeys and settings pages
-          # are made from, attached to the release beside the packages.
+          # The docs export the site's hotkeys and settings pages are made from.
           QT_QPA_PLATFORM=offscreen "$B/src/app/hikarisub" --export-docs out/docs
           (cd out/docs && cmake -E tar cf "$OLDPWD/out/dist/hikarisub-docs-$VERSION.zip" --format=zip -- \
             meta.json commands.json settings.json guide-links.json)
           (cd out/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
           ls -la out/dist out/dist-old
 
-      # CR1 (#452): the debug info make-packages.sh split from the payload is
-      # the version's symbols, a release asset of its own. A forced crash of
-      # the stripped payload must symbolize with them (tools/crash/symbolize.py).
       - name: Symbols and a symbolized crash
         shell: bash
         env:
@@ -328,7 +313,6 @@ jobs:
         with:
           name: hikarisub-linux-packages
           path: /tmp/dist
-      # hikarisub-beta-bin takes every version, prereleases included (spec 5.5).
       - name: Render, build, lint, install and remove (spec 8.2)
         env:
           VERSION: ${{ needs.build.outputs.version }}
@@ -339,11 +323,8 @@ jobs:
           [ "$SWITCH" = 1 ] && extra=--expect-version-switch
           bash tests/packaging/linux/aur-test.sh --dist /tmp/dist --version "$VERSION" $extra
           mkdir -p /tmp/aur && cp /home/builder/aur/pkg/PKGBUILD /home/builder/aur/pkg/.SRCINFO /tmp/aur/
-          # The version ordering of spec 1.3, with pacman's own tool.
           [ "$(vercmp 0.0.9 0.1.0)" = -1 ]
-      # Rendered from the CI tar.gz. The release workflow renders the
-      # published one and uploads that as hikarisub-aur, so this name must
-      # differ: one run cannot hold two artifacts of the same name.
+      # One run cannot hold two artifacts of the same name, and release.yml uploads hikarisub-aur.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hikarisub-aur-ci
@@ -352,9 +333,6 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  # The AUR scripts (packaging/linux/aur) without the AUR: the channel rules,
-  # pkgver and its vercmp ordering, the downgrade and newest-release
-  # refusals, and publishing to local repositories (spec 8.2).
   aur-scripts:
     name: AUR scripts (archlinux)
     runs-on: ubuntu-26.04

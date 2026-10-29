@@ -1,15 +1,4 @@
-# W1: the deployment manifest of the optional DirectShow playback adapter
-# (docs/proposals/backend-interfaces.md: manifests enumerate dynamically
-# loaded native libraries). Read from hikari_directshow_probe, the adapter
-# alone in an executable:
-# - static: the DirectShow base classes it compiles in (Thirdparty/BaseClasses,
-#   as legacy linked them);
-# - operatingSystemLibraries: its direct imports, which must all be Windows'
-#   own (the compiler runtime listed apart);
-# - comServers: the COM classes it creates itself (the filter graph manager and
-#   the DirectSound renderer) with the DLL registered for each;
-# - systemFilters: the splitters and decoders a graph adds come from the
-#   filters registered on the machine; none ships with the adapter.
+# The DirectShow adapter's deployment manifest, read from hikari_directshow_probe (the adapter alone in an executable).
 #
 #   cmake -DPROBE=<hikari_directshow_probe.exe> -DOUT=<manifest.json> -P DirectShowManifest.cmake
 cmake_minimum_required(VERSION 3.28)
@@ -42,14 +31,13 @@ foreach(dll IN LISTS dlls)
         list(APPEND problems "dynamic dependency ${dll} is not an operating-system library")
     endif()
 endforeach()
-# DirectShow itself is reached through COM, so it must be among the imports.
+# DirectShow is reached through COM, so ole32 must be among the imports.
 foreach(required ole32.dll)
     if(NOT required IN_LIST os_libs)
         list(APPEND problems "${required} is not imported")
     endif()
 endforeach()
 
-# The COM servers the adapter instantiates (CoCreateInstance).
 set(servers "FilterGraph|{E436EBB3-524F-11CE-9F53-0020AF0BA770}" "DSoundRender|{79376820-07D0-11CF-A24D-0020AFD79767}")
 set(server_json "")
 foreach(server IN LISTS servers)

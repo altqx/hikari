@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Write the codebase-specific half of the HikariSub NSIS installer.
 
-hikarisub.nsi is the same file on the legacy and Qt branches. Everything that
-differs between the two codebases, or between two builds, comes from the
-payload.nsh this script writes:
+Everything in hikarisub.nsi that differs between the two codebases, or between two
+builds, comes from the payload.nsh this script writes:
 
   HS_VERSION, HS_CODEBASE        the SemVer release version and "legacy" or "qt"
   HS_VI_VERSION                  MAJOR.MINOR.PATCH.0 for the version resource
@@ -17,7 +16,7 @@ payload.nsh this script writes:
 
 install-manifest.txt holds one payload-relative path per line, files only,
 with backslashes, sorted. The installer writes it into the install folder last,
-and the next installer or the uninstaller reads it (installers spec, 6.5/6.6).
+and the next installer or the uninstaller reads it.
 
 Usage:
   make-payload-nsh.py --payload <dir> --version <V> --codebase legacy|qt
@@ -31,9 +30,7 @@ import re
 import sys
 from pathlib import Path
 
-# The file types the installer registers (spec 1.5): never .txt. The ids are
-# the icon resource ids both codebases' HikariSub.exe carry; they are part of
-# the registry format (DefaultIcon = "<exe>",-<id>) and never move.
+# Never .txt. The icon resource ids are part of the registry format (DefaultIcon = "<exe>",-<id>) and never move.
 FILE_TYPES = [
     ("ass", 109),
     ("ssa", 110),
@@ -46,8 +43,7 @@ SEMVER = re.compile(
     r"(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)"
     r"(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?$")
 
-# Files the installer itself writes into the install folder. A payload must
-# not carry them, or the uninstaller would treat them as payload.
+# Written by the installer itself; in a payload the uninstaller would treat them as payload.
 RESERVED = {"package-kind.txt", "install-manifest.txt", "uninstall hikarisub.exe"}
 
 
@@ -83,9 +79,8 @@ def collect(payload: Path) -> list[Path]:
             continue
         rel = path.relative_to(payload)
         text = rel.as_posix()
-        # ASCII without $: makensis takes File sources literally, while the
-        # same paths are run-time strings elsewhere, and the manifest is read
-        # in the ANSI code page.
+        # makensis takes File sources literally but the same paths are run-time strings elsewhere, and the
+        # manifest is read in the ANSI code page.
         if not text.isascii() or "$" in text:
             raise SystemExit(f"payload path must be ASCII without $: {text!r}")
         if rel.name.lower() in RESERVED and len(rel.parts) == 1:
@@ -93,8 +88,7 @@ def collect(payload: Path) -> list[Path]:
         files.append(rel)
     if not files:
         raise SystemExit(f"payload is empty: {payload}")
-    # Sorted case-insensitively, then exactly, so the order does not depend on
-    # the file system the payload was staged on.
+    # Case-insensitively, then exactly, so the order does not depend on the staging file system.
     files.sort(key=lambda p: (p.as_posix().lower(), p.as_posix()))
     lowered = [p.as_posix().lower() for p in files]
     if len(set(lowered)) != len(lowered):
@@ -170,8 +164,7 @@ def main() -> int:
     lines.append("  SetOutPath \"$INSTDIR\"")
     lines.append("!macroend")
 
-    # Membership test for the upgrade's orphan sweep (6.6, step 3). StrCmp
-    # ignores case, as Windows paths do.
+    # StrCmp ignores case, as Windows paths do.
     lines += ["", "!macro HS_PAYLOAD_PATH_FUNCTION PREFIX",
               "Function ${PREFIX}HsIsPayloadPath",
               "  StrCpy $R1 1"]

@@ -1,18 +1,11 @@
-# Linux release packages (installers spec 5.3 to 5.5): the tar.gz in the
-# layout the AUR PKGBUILD relies on, the AppImage, and the deb and rpm.
-#
 #   cmake --preset linux-floor-x64-release      (HIKARI_PACKAGE_LINUX=ON)
 #   cmake --build --preset linux-floor-x64-release --target hikari_linux_packages
 #
-# The packages land in <build>/dist. packaging/linux/make-packages.sh does
-# the work from the install rules of HikariInstall.cmake; run it on the
-# build floor (packaging/linux/floor/almalinux9.sh), whose glibc 2.34 is the
+# The packages land in <build>/dist. Build on the floor (packaging/linux/floor/almalinux9.sh): its glibc 2.34 is the
 # packages' min_glibc.
 include_guard(GLOBAL)
 include("${CMAKE_CURRENT_LIST_DIR}/DesktopIntegration.cmake")
 
-# The release version (spec 1.2): the project version, with the prerelease
-# suffix when HIKARI_VERSION_SUFFIX is set.
 set(HIKARI_PACKAGE_VERSION "${PROJECT_VERSION}")
 if(DEFINED HIKARI_VERSION_SUFFIX AND NOT HIKARI_VERSION_SUFFIX STREQUAL "")
     string(APPEND HIKARI_PACKAGE_VERSION "-${HIKARI_VERSION_SUFFIX}")

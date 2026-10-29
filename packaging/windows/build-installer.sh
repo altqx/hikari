@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
-# Build the HikariSub NSIS installer from a staged Windows payload, on Linux
-# (installers spec, 6.1). The same file on the legacy and Qt branches.
+# Builds the HikariSub NSIS installer from a staged Windows payload, on Linux.
+# Same bytes on the main and legacy branches.
 #
 #   build-installer.sh --payload <dir> --version <V> --codebase legacy|qt
 #                      --out <setup.exe> [--icon <file.ico>]
 #                      [--icon-header <FileTypeIcons.h>] [--work <dir>]
 #
-# Needs python3, curl, unzip, sha256sum and what build-makensis.sh needs:
-# makensis is the one tools.lock names, built into <work>/nsis-<version>
-# (or HS_MAKENSIS, which must be that version). StdUtils is downloaded into
-# <work>/stdutils and checked against tools.lock; set HS_STDUTILS_ZIP to use
-# a local copy of the same zip.
+# HS_MAKENSIS overrides the makensis tools.lock names (same version); HS_STDUTILS_ZIP names a local StdUtils zip.
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -29,6 +25,7 @@ while (($#)); do
   esac
 done
 if [[ -z $payload || -z $version || -z $codebase || -z $out ]]; then
+  # MUST KILL: the usage text is read from lines 5-7 of this file's header.
   sed -n '5,7p' "${BASH_SOURCE[0]}" >&2
   exit 2
 fi
@@ -44,7 +41,6 @@ lock_value() {
   printf '%s' "$value"
 }
 
-# The makensis of tools.lock (build-makensis.sh), or HS_MAKENSIS.
 makensis=${HS_MAKENSIS:-$("$here/build-makensis.sh" "$work")}
 want_nsis=$(lock_value MAKENSIS_VERSION)
 have_nsis=$("$makensis" -VERSION)
