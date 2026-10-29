@@ -261,6 +261,38 @@ private slots:
         QCOMPARE(legacy.bytes(), before);
     }
 
+    // CF1: a base staged from hikari.ini could hold a setting at its default;
+    // the settings files never do, and that is not an edit since staging.
+    void aDefaultInTheStagedBaseIsNotAnEdit()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        QString importDir;
+        {
+            Session s(folder.path());
+            const Review r = review(*s.store, legacy.dir.path());
+            QCOMPARE(SettingsImportStore::Result(s.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot,
+                                                                   r.revision)),
+                     SettingsImportStore::Result::Activated);
+            QVERIFY(!s.settings->isSet(QStringLiteral("grid.font")));
+            importDir = s.store->importDir();
+        }
+        QDir generations(importDir + QStringLiteral("/generations"));
+        int staged = 0; // the newest generation
+        for (const QString &name : generations.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+            staged = std::max(staged, name.toInt());
+        const QString profile = generations.filePath(QString::number(staged) + QStringLiteral("/profile.json"));
+        QJsonObject o = QJsonDocument::fromJson(readFile(profile)).object();
+        QJsonObject base = o.value(QStringLiteral("baseValues")).toObject();
+        const auto font = std::get<std::string>(application::findSetting("grid.font")->defaultValue);
+        base.insert(QStringLiteral("grid.font"), QJsonObject{{QStringLiteral("string"), QString::fromStdString(font)}});
+        o.insert(QStringLiteral("baseValues"), base);
+        writeFile(profile, QJsonDocument(o).toJson());
+        Session next(folder.path());
+        QVERIFY(next.store->recover());
+        QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
+    }
+
     void repeatedImportIsANoOp()
     {
         LegacyRoot legacy;

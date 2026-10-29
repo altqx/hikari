@@ -206,11 +206,24 @@ void mergeInto(Map &out, const Map &base, const Map &target)
     }
 }
 
+// A setting at its default is the same as one not set: the settings files
+// hold no defaults (CF1), so a base staged from hikari.ini, which could,
+// compares equal to the converted live profile.
+si::Profile withoutDefaults(si::Profile profile)
+{
+    std::erase_if(profile.values, [](const auto &entry) {
+        const auto *def = application::findSetting(entry.first);
+        return def && application::convertSetting(entry.second, def->type) == def->defaultValue;
+    });
+    return profile;
+}
+
 si::Profile merged(const si::Profile &base, const si::Profile &target, const si::Profile &live)
 {
-    si::Profile out = live;
-    mergeInto(out.values, base.values, target.values);
-    mergeInto(out.files, base.files, target.files);
+    const si::Profile b = withoutDefaults(base), t = withoutDefaults(target);
+    si::Profile out = withoutDefaults(live);
+    mergeInto(out.values, b.values, t.values);
+    mergeInto(out.files, b.files, t.files);
     return out;
 }
 
@@ -233,7 +246,7 @@ QStringList keptAgainst(const si::Profile &base, const si::Profile &target, cons
                 out << qs(k);
         }
     };
-    collect(base.values, target.values, live.values);
+    collect(withoutDefaults(base).values, withoutDefaults(target).values, withoutDefaults(live).values);
     collect(base.files, target.files, live.files);
     return out;
 }
