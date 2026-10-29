@@ -17,6 +17,7 @@
 #include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
+#include <QLockFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSignalSpy>
@@ -65,6 +66,14 @@ void writeSession(const QString &path, const QByteArray &text)
     QFile f(path);
     QVERIFY(f.open(QIODevice::WriteOnly));
     f.write(text);
+}
+
+// A legacy LastSession.txt with one closed tab.
+QByteArray legacySession()
+{
+    application::SessionTab tab;
+    tab.subtitles = "old.ass";
+    return QByteArray::fromStdString(testing::writeLegacySession("HikariSub v0.0.2", true, {tab}));
 }
 
 application::Session readSession(const QString &path)
@@ -836,14 +845,116 @@ private slots:
         QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
         // The numbering is the shared helper's (owned_file.h): .broken-N.
         QCOMPARE(QDir(home.path()).entryList({QStringLiteral("last-session.json.broken-*")}).size(), qsizetype(1));
-        QVERIFY(a.log().history().contains(QStringLiteral("version 2")));
+        QVERIFY(a.log().history().contains(
+            QStringLiteral("last-session.json: It is version 2, newer than this HikariSub reads (1). It was kept as "
+                           "last-session.json.broken-2; no tabs were restored.")));
         writeSession(a.lastSessionPath(), R"({"version": 1, "tabs": [{"position": "soon"}]})");
         QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
-        QVERIFY(a.log().history().contains(QStringLiteral("tab 1: \"position\" has the wrong type")));
+        QVERIFY(a.log().history().contains(QStringLiteral("Tab 1: \"position\" has the wrong type.")));
         // A crash must not pass for an orderly end.
         writeSession(a.lastSessionPath(), R"({"version": 1, "closed": "false", "tabs": []})");
         QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
         QVERIFY(a.log().history().contains(QStringLiteral("\"closed\" is not true or false")));
+    }
+
+    // CF3, CF1's owned-file rules: a folder where last-session.json should be,
+    // or a file that cannot be read, stays as it is and is not written over;
+    // a LastSession.txt that cannot be read is not converted.
+    void anUnreadableLastSessionStaysAsItIs()
+    {
+        QTemporaryDir folder;
+        QVERIFY(QDir(folder.path()).mkdir(QStringLiteral("last-session.json")));
+        {
+            app::Application a(options(folder));
+            QVERIFY(a.log().history().contains(QStringLiteral(
+                "last-session.json: It could not be read. No tabs were restored, and HikariSub will not write over it.")));
+            QCOMPARE(a.startupOffer(), QString());
+            QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("folder.ass")), "folder")));
+            QVERIFY(!a.saveLastSession());
+        }
+        QVERIFY(QFileInfo(folder.filePath(QStringLiteral("last-session.json"))).isDir());
+
+        QTemporaryDir home;
+        const QString file = home.filePath(QStringLiteral("last-session.json"));
+        const QString legacy = home.filePath(QStringLiteral("LastSession.txt"));
+        writeSession(file, R"({"version": 1, "tabs": []})");
+        writeSession(legacy, legacySession());
+        // Windows keeps read access whatever setPermissions asks.
+        for (const QString &path : {file, legacy})
+            if (QFile probe(path); !QFile::setPermissions(path, {}) || probe.open(QIODevice::ReadOnly))
+                QSKIP("the file reads without permissions (Windows, root, or a file system without them)");
+        {
+            app::Application a(options(home));
+            QVERIFY(a.log().history().contains(QStringLiteral("last-session.json: It could not be read.")));
+            QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("unreadable.ass")), "unreadable")));
+            QVERIFY(!a.saveLastSession());
+        }
+        QVERIFY(QFile::setPermissions(file, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+        QCOMPARE(readAll(file), QByteArray(R"({"version": 1, "tabs": []})"));
+
+        // With last-session.json gone, an unreadable LastSession.txt waits.
+        QVERIFY(QFile::remove(file));
+        {
+            app::Application a(options(home));
+            QVERIFY(!QFile::exists(file));
+            QVERIFY(!QFile::exists(legacy + QStringLiteral(".old")));
+        }
+        QVERIFY(QFile::setPermissions(legacy, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+        app::Application b(options(home));
+        QVERIFY(QFile::exists(file));
+        QVERIFY(QFile::exists(legacy + QStringLiteral(".old")));
+    }
+
+    // CF3: last-session.json keeps its permissions when it is written again,
+    // and the converted one takes LastSession.txt's.
+    void lastSessionKeepsItsPermissions()
+    {
+#ifdef Q_OS_WIN
+        QSKIP("no POSIX permissions");
+#endif
+        const auto owner = QFileDevice::ReadOwner | QFileDevice::WriteOwner;
+        const auto ownerOnly = [&](const QString &path) {
+            return (QFile::permissions(path) & ~(QFileDevice::ReadUser | QFileDevice::WriteUser)) == owner;
+        };
+        QTemporaryDir home;
+        const QString legacy = home.filePath(QStringLiteral("LastSession.txt"));
+        writeSession(legacy, legacySession());
+        QVERIFY(QFile::setPermissions(legacy, owner));
+        app::Application a(options(home));
+        QVERIFY(QFile::exists(a.lastSessionPath()));
+        QVERIFY(ownerOnly(a.lastSessionPath()));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("private.ass")), "private")));
+        QVERIFY(a.saveLastSession());
+        QCOMPARE(readSession(a.lastSessionPath()).tabs.size(), std::size_t(1));
+        QVERIFY(ownerOnly(a.lastSessionPath()));
+    }
+
+    // CF3: two HikariSubs on one folder: while one holds the conversion's
+    // lock the other leaves LastSession.txt for a later start, and both
+    // writing last-session.json leave one whole session.
+    void twoProgramsShareTheLastSession()
+    {
+        QTemporaryDir home;
+        const QString legacy = home.filePath(QStringLiteral("LastSession.txt"));
+        writeSession(legacy, legacySession());
+        {
+            QLockFile other(home.filePath(QStringLiteral(".last-session.lock")));
+            QVERIFY(other.tryLock(0));
+            app::Application a(options(home));
+            QVERIFY(QFile::exists(legacy));
+            QVERIFY(!QFile::exists(a.lastSessionPath()));
+        }
+        app::Application a(options(home));
+        app::Application b(options(home));
+        QVERIFY(QFile::exists(legacy + QStringLiteral(".old")));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("first.ass")), "first")));
+        QVERIFY(b.openFile(writeSubtitles(dir.filePath(QStringLiteral("second.ass")), "second")));
+        QVERIFY(a.saveLastSession());
+        QVERIFY(b.saveLastSession());
+        const auto session = readSession(a.lastSessionPath());
+        QCOMPARE(session.tabs.size(), std::size_t(1));
+        QVERIFY(QString::fromStdString(session.tabs.front().subtitles).endsWith(QStringLiteral("second.ass")));
+        QVERIFY(QDir(home.path()).entryList({QStringLiteral("last-session.json?*")}).isEmpty());
     }
 
     // CF3: a broken .hksession the user opens is named in the Log with its

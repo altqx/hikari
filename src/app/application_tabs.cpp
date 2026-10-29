@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <QFile>
 #include <QFileInfo>
+#include <QLockFile>
 #include <QSaveFile>
 
 namespace hikari::app {
@@ -108,13 +109,25 @@ QString fileName(const std::filesystem::path &path)
 }
 
 // The Log's text for a session file that cannot be read: its name, the line
-// when known, and why.
+// when known, and why, as a sentence.
 QString sessionProblem(const QString &file, const application::ParseFailure &failure)
 {
-    const QString why = QString::fromStdString(failure.message);
+    QString why = QString::fromStdString(failure.message);
+    if (!why.isEmpty() && !why.endsWith(QLatin1Char('.')))
+        why += QLatin1Char('.'); // QJsonParseError's text has no full stop
     return failure.line > 0
                ? QCoreApplication::translate("HikariSub.Session", "%1, line %2: %3").arg(file).arg(failure.line).arg(why)
                : QCoreApplication::translate("HikariSub.Session", "%1: %2").arg(file, why);
+}
+
+// A session file's bytes through CF1's reader (nothing for a folder or a
+// file that cannot be read).
+std::optional<QByteArray> readSessionBytes(const QString &path)
+{
+    const auto bytes = application::readOwnedFile(fsPath(path));
+    if (!bytes)
+        return std::nullopt;
+    return QByteArray(bytes->data(), static_cast<qsizetype>(bytes->size()));
 }
 
 } // namespace
@@ -540,30 +553,40 @@ QString Application::lastSessionPath() const
 void Application::convertLastSession()
 {
     // CF3: LastSession.txt becomes last-session.json once, at the first start
-    // without one, and stays as LastSession.txt.old.
+    // without one, and stays as LastSession.txt.old. Another HikariSub
+    // starting on the same folder converts it, or finds it converted, while
+    // this one waits; a LastSession.txt that cannot be read stays for a
+    // later start.
     const QString target = lastSessionPath();
     if (target.isEmpty())
         return;
-    const QString legacy = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/LastSession.txt");
+    const QString folder = QFileInfo(m_settingsFile).absolutePath();
+    const QString legacy = folder + QStringLiteral("/LastSession.txt");
+    if (!QFileInfo::exists(legacy))
+        return;
+    QLockFile lock(folder + QStringLiteral("/.last-session.lock"));
+    if (!lock.tryLock(2000) && lock.error() == QLockFile::LockFailedError)
+        return;
     application::convertOnce(fsPath(target), fsPath(legacy), [&] {
-        QFile file(legacy);
-        if (!file.open(QIODevice::ReadOnly))
+        const auto bytes = readSessionBytes(legacy);
+        if (!bytes)
             return false;
-        const QByteArray bytes = file.readAll();
         application::ParseFailure failure;
         const auto session =
-            readSession(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), &failure);
+            readSession(std::string_view(bytes->constData(), static_cast<std::size_t>(bytes->size())), &failure);
         if (!session) {
             // Empty or corrupt: legacy restored nothing from it either.
             if (!failure.message.empty())
                 m_log->notice(ui::LogController::Warning,
                               QCoreApplication::translate("HikariSub.MainWindow", "Load last session"),
-                              QCoreApplication::translate("HikariSub.Session", "%1. It was kept as %2.")
+                              QCoreApplication::translate("HikariSub.Session", "%1 It was kept as %2.")
                                   .arg(sessionProblem(QStringLiteral("LastSession.txt"), failure),
                                        QStringLiteral("LastSession.txt.old")));
             return true;
         }
-        return application::writeFileAtomically(fsPath(target), writeSessionJson(*session, session->closed).toStdString());
+        // The new file is as private as LastSession.txt was.
+        return application::writeFileAtomically(fsPath(target), writeSessionJson(*session, session->closed).toStdString(),
+                                                fsPath(legacy));
     });
 }
 
@@ -583,12 +606,15 @@ std::optional<application::Session> Application::loadLastSession()
                 return failure;
             return std::nullopt;
         });
+    m_lastSessionWritable = !load.problem || !load.problem->keptAs.empty();
     if (load.problem) {
         const QString problem = sessionProblem(fileName(load.problem->file), load.problem->failure);
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Load last session"),
                       load.problem->keptAs.empty()
-                          ? QCoreApplication::translate("HikariSub.Session", "%1. No tabs were restored.").arg(problem)
-                          : QCoreApplication::translate("HikariSub.Session", "%1. It was kept as %2; no tabs were restored.")
+                          ? QCoreApplication::translate("HikariSub.Session",
+                                                        "%1 No tabs were restored, and HikariSub will not write over it.")
+                                .arg(problem)
+                          : QCoreApplication::translate("HikariSub.Session", "%1 It was kept as %2; no tabs were restored.")
                                 .arg(problem, fileName(load.problem->keptAs)));
         session.reset();
     }
@@ -618,7 +644,7 @@ void Application::setSessionRestore(int value)
 bool Application::saveLastSession(bool closing, const QString &path)
 {
     const QString file = path.isEmpty() ? lastSessionPath() : path;
-    if (file.isEmpty())
+    if (file.isEmpty() || (path.isEmpty() && !m_lastSessionWritable))
         return false;
     const auto target = m_workspace.editingTarget();
     registerTabArrangements(); // WS1: a tab opened since the last refresh has its own
@@ -674,6 +700,8 @@ bool Application::saveLastSession(bool closing, const QString &path)
     // Only last-session.json says whether the program closed.
     const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closing) : std::nullopt);
     QDir().mkpath(QFileInfo(file).absolutePath()); // FileWrite makes the folder
+    // QSaveFile keeps the file's permissions, and its temporary file is its
+    // own: two HikariSubs writing at once leave one whole session.
     QSaveFile out(file);
     if (!out.open(QIODevice::WriteOnly))
         return false;
@@ -712,11 +740,13 @@ std::optional<application::Session> readSessionAt(const QString &path, applicati
 {
     if (path.isEmpty())
         return std::nullopt;
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly))
+    const auto bytes = readSessionBytes(path);
+    if (!bytes) {
+        if (failure && QFileInfo::exists(path))
+            *failure = {0, 0, QCoreApplication::translate("HikariSub.Session", "It could not be read.").toStdString()};
         return std::nullopt;
-    const QByteArray bytes = file.readAll();
-    return readSession(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), failure);
+    }
+    return readSession(std::string_view(bytes->constData(), static_cast<std::size_t>(bytes->size())), failure);
 }
 
 } // namespace

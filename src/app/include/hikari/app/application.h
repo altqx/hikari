@@ -1760,6 +1760,9 @@ private:
     bool m_startedWithPaths = false;
     // PU1-startup-cards: the last session as it was when this program started.
     std::optional<application::Session> m_startSession;
+    // CF3: false while last-session.json could not be read and stays in its
+    // place (CF1's owned-file rule: it is not written over).
+    bool m_lastSessionWritable = true;
     void rememberStartSession();
     // CF3: LastSession.txt into last-session.json, once.
     void convertLastSession();
