@@ -17,8 +17,7 @@ struct Range {
     Script script;
 };
 
-// Letter blocks by start; combining diacritics (U+0300-036F), digits and
-// punctuation are in none.
+// Sorted by start; combining diacritics (U+0300-036F), digits and punctuation are in none.
 constexpr Range kRanges[] = {
     {0x0041, 0x005A, Script::Latin},      {0x0061, 0x007A, Script::Latin},      {0x00AA, 0x00AA, Script::Latin},
     {0x00BA, 0x00BA, Script::Latin},      {0x00C0, 0x00D6, Script::Latin},      {0x00D8, 0x00F6, Script::Latin},
@@ -52,8 +51,7 @@ struct Numbers {
     char32_t last;
 };
 
-// Digits and number signs inside the letter blocks, by start: not letters, so
-// "١wrold" (one ICU word) is Latin alone.
+// Digits inside the letter blocks, sorted by start: not letters, so "١wrold" (one ICU word) is Latin alone.
 constexpr Numbers kNumbers[] = {
     {0x0660, 0x0669}, {0x06F0, 0x06F9}, {0x0966, 0x096F}, {0x09E6, 0x09EF}, {0x0A66, 0x0A6F},
     {0x0AE6, 0x0AEF}, {0x0B66, 0x0B6F}, {0x0BE6, 0x0BF2}, {0x0C66, 0x0C6F}, {0x0CE6, 0x0CEF},
@@ -122,8 +120,7 @@ template <typename F> void forEachCodePoint(std::u16string_view text, F &&f)
     }
 }
 
-// Latin-script languages with Hunspell dictionaries (LibreOffice's and
-// Aegisub's), in tag order.
+// Latin-script languages with Hunspell dictionaries, in tag order.
 constexpr std::u16string_view kLatinLanguages[] = {
     u"af", u"an", u"ast", u"az", u"br", u"bs", u"ca", u"cs", u"cy", u"da", u"de", u"en", u"eo", u"es",
     u"et", u"eu", u"fi", u"fil", u"fo", u"fr", u"fur", u"fy", u"ga", u"gd", u"gl", u"gug", u"ha", u"haw",

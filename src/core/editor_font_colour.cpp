@@ -19,7 +19,6 @@ u16 ascii(const char *s)
     return out;
 }
 
-// wxString::ToLong(&value, base): strtol over the text (a partial number counts).
 long toLong(u16v text, int base)
 {
     std::string s;
@@ -28,7 +27,7 @@ long toLong(u16v text, int base)
     return std::strtol(s.c_str(), nullptr, base);
 }
 
-// wxString::SubString(from, to): inclusive, clamped to the text.
+// `to` is inclusive.
 u16 subString(u16v s, std::size_t from, std::size_t to)
 {
     if (from >= s.size())
@@ -41,7 +40,6 @@ void removeAll(u16 &s, char16_t c)
     std::erase(s, c);
 }
 
-// wxString::IsNumber: an optional sign and digits only.
 bool isNumber(u16v s)
 {
     if (s.empty())
@@ -55,7 +53,6 @@ bool isNumber(u16v s)
     return true;
 }
 
-// AssColor::SetAlphaString.
 int alphaOf(u16 alpha)
 {
     removeAll(alpha, u'&');
@@ -98,7 +95,6 @@ FontValues fontInEffect(const EditorText &state, FontValues style, long *positio
         style.underline = editor.finding() == u"1";
     if (editor.findTag(u"s(0|1)", 0, true))
         style.strikeOut = editor.finding() == u"1";
-    // GetTextResult leaves the value alone when the finding is empty.
     if (editor.findTag(u"fs([0-9.]+)", 0, true) && !editor.finding().empty())
         style.size = editor.finding();
     if (editor.findTag(u"fn(.*)", 0, true) && !editor.finding().empty())
@@ -121,7 +117,7 @@ std::vector<EditStep> fontSteps(const FontValues &edited, const FontValues &resu
     if (result.size != edited.size) {
         if (ass)
             steps.push_back({u"fs([0-9]+)", u"\\fs" + result.size, u"\\fs" + actual.size});
-        else // E1-nonass-font: the size (legacy wrote the font name)
+        else
             steps.push_back({u"S:" + result.size, u"s:([^}]*)", {}, true, true});
     }
     const auto flagStep = [&](bool changed, char16_t tag, bool on, bool actualOn) {
@@ -169,7 +165,6 @@ void applyStepsToLine(u16 &text, u16 &translation, const std::vector<EditStep> &
 {
     for (const auto &step : steps) {
         if (step.nonAss && step.flag) {
-            // Several Lines: MicroDVD bold and italic as legacy writes them.
             if (format == NonAssFormat::MicroDvd && (step.flag == u'b' || step.flag == u'i'))
                 text = putInNonAssLine(std::move(text), format, step.pattern, step.tag);
             continue;
@@ -209,7 +204,7 @@ TagColour parseAssColour(u16v text)
         c.a = static_cast<int>((v >> 24) & 0xFF);
         return c;
     }
-    // Legacy calls Upper() without using its result: a lowercase "h" stays.
+    // MUST KILL: a lowercase "h" is not stripped
     u16 colour(text);
     const bool html = colour.starts_with(u'#');
     removeAll(colour, u'&');
@@ -252,7 +247,7 @@ TagColour colourInEffect(const EditorText &state, int number_, TagColour style, 
         style.b = tag.b;
     }
     if (editor.findTag(number(number_) + u"a&|alpha(.*)", 0, true)) {
-        // GetTextResult keeps the previous result when nothing was captured.
+        // MUST KILL: an empty alpha finding reuses the colour's retTag
         if (!editor.finding().empty())
             retTag = editor.finding();
         style.a = alphaOf(retTag);

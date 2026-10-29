@@ -1,7 +1,6 @@
 #pragma once
 
-// Unicode extended grapheme clusters (UAX #29), as PCRE2's \X finds them:
-// the characters a reader sees, whatever their UTF-16 units and marks.
+// Extended grapheme clusters (UAX #29) as PCRE2's \X finds them.
 
 #include <cstddef>
 #include <string_view>

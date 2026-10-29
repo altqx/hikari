@@ -1,27 +1,5 @@
 #pragma once
 
-// Tags from the original (TM1 #232; docs/research/translation-tag-transfer.md
-// section 7). In Translation mode the Original text keeps its override tags
-// and the translator types only the translation.
-//
-// readOriginalTags splits an Original text into what goes to the translation
-// with no help from the translator, and the runs the translator places:
-//   - leading: every tag before the first visible character, plus each
-//     line-wide tag (\pos \move \org \fad \fade \clip \iclip \an \a \q) from
-//     anywhere in the line, as one block;
-//   - trailing: tags after the last visible character that undo leading
-//     tags (a whole-line wrapper's closing tags);
-//   - runs: each stretch of visible text whose formatting differs from the
-//     line's base, numbered from 1 in reading order. Run boundaries come from
-//     formatting state, not from tag names.
-// Brace comments, \N and karaoke tags are not carried, nor a run nothing in
-// the Original ends (a \t never reset). A drawing or malformed Original text
-// carries nothing.
-//
-// The saved translation is plain ASS: the leading block, the typed body with
-// each placed run's tags around its text, and the trailing block. Placements
-// are read back from it; nothing else is stored.
-
 #include <cstddef>
 #include <map>
 #include <span>
@@ -39,8 +17,7 @@ using TagState = std::map<std::u16string, std::u16string>;
 struct TagSetter {
     std::size_t order = 0; // the tag's position among the Original text's tags
     std::u16string tag;    // its spelling, "\i1"; empty when nothing can undo it
-    // False for a closing the Original did not write after the run (the
-    // leading spelling, or an empty reset): left out at the translation's end.
+    // False for a closing the Original did not write after the run: left out at the translation's end.
     bool written = true;
     bool operator==(const TagSetter &) const = default;
 };
@@ -58,9 +35,7 @@ struct TagRun {
 
 struct OriginalTags {
     std::u16string leading, trailing; // "{...}" or empty
-    // Units at the text's start before a leading tag, and at its end after a
-    // trailing one (spaces, a \h, a \N): the leading and trailing blocks
-    // carry them, where they were among their tags.
+    // Spaces, \h or \N before a leading tag and after a trailing one, which the blocks carry.
     std::size_t leadingSpaces = 0, trailingSpaces = 0;
     std::vector<TagRun> runs;
     TagState defaults; // the Style's values, and the renderer's where it has none
@@ -69,9 +44,8 @@ struct OriginalTags {
     std::map<std::u16string, TagState> named;
     bool karaoke = false;   // \k tags were left out
     bool drawing = false;   // nothing carried
-    // Nothing carried: unbalanced braces, or a text longer or with more tags
-    // than kMaxTagTransferUnits / kMaxTagTransferTags, or whose formatting
-    // (the Styles its resets name) would copy too much to read.
+    // Nothing carried: unbalanced braces, past kMaxTagTransferUnits / kMaxTagTransferTags, or resets
+    // naming Styles that would copy too much to read.
     bool malformed = false;
     bool operator==(const OriginalTags &) const = default;
 };
@@ -79,12 +53,14 @@ struct OriginalTags {
 // A text past either is read as having no runs (an Original: malformed).
 inline constexpr std::size_t kMaxTagTransferUnits = 16384; // UTF-16 code units
 inline constexpr std::size_t kMaxTagTransferTags = 1024;
-// A Document with more Styles carries nothing: each Line's runs are read
-// against them all (named resets), and the Grid reads every Line's.
+// A Document with more Styles carries nothing.
 inline constexpr std::size_t kMaxTagTransferStyles = 4096;
 
-// `style` is the Line's Style; `styles` the Document's, for named resets
-// (legacy GetStyle: the first of a name).
+// leading: tags before the first visible character plus every line-wide tag (\pos \move \org \fad
+// \fade \clip \iclip \an \a \q); trailing: tags after the last visible character that undo leading
+// ones; runs: stretches whose formatting differs from the base, numbered from 1. Brace comments,
+// \N, karaoke tags and a run the Original never ends are not carried; nor is anything from a
+// drawing or a malformed text. `styles`: the Document's, for named resets (the first of a name).
 OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *style = nullptr,
                               std::span<const StyleValues> styles = {});
 
@@ -102,18 +78,15 @@ struct TranslationDraft {
     bool carried = true;
 };
 
-// The Original text as a draft: its text (\N and \h kept, brace comments
-// left out) with each run placed on its own words. Paste all starts from it.
+// The Original's text (\N and \h kept, brace comments left out), each run placed on its own words.
 TranslationDraft draftOfOriginal(std::u16string_view original, const OriginalTags &tags);
 
 // The saved translation; empty for an empty body. `placed`, when given,
 // receives where each placement's text landed in it.
 std::u16string composeTranslation(const OriginalTags &tags, const TranslationDraft &draft,
                                   std::vector<RunPlacement> *placed = nullptr);
-// The draft that composes back to `translation` exactly. Formatting that
-// matches no run stays in the body as the translator's own tags.
-// `order`, the runs placed by position as last composed (runOrder), decides
-// a span two runs could be read as under the translator's own formatting.
+// The draft that composes back to `translation` exactly; formatting that matches no run stays in
+// the body. `order` (runOrder as last composed) decides a span two runs could be read as.
 TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view translation,
                                  std::span<const int> order = {});
 
@@ -134,39 +107,23 @@ int runWithProperty(const OriginalTags &tags, std::span<const RunPlacement> plac
 // Placements for unplaced runs whose text appears once in the body, as a
 // whole word, outside every placement.
 std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const TranslationDraft &draft);
-// Whether the draft's composed translation draws its text as the body's
-// own formatting does, with each placed run's on top: a run closed with a
-// reset (or opened under the translator's own \r) would otherwise change
-// the translator's formatting around it. A body with no tags keeps it.
+// Whether the composed translation draws the body's own formatting as written, with each placed
+// run's on top. A body with no tags keeps it.
 bool keepsOwnFormatting(const OriginalTags &tags, const TranslationDraft &draft);
-// Whether a saved translation leaves a run of the Original unplaced (the
-// Grid's "runs not placed" mark). An empty translation has none, and so has
-// one whose own leading or trailing tags differ (the translator's, shown whole).
+// An empty translation has none, nor one whose own leading or trailing tags differ.
 bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation);
-// For an Original text edited from `before` to `now`: the run of `now` each
-// run of `before` became (index number - 1), or 0 where none did. A run is
-// the one with the same formatting and text; failing that, with the runs as
-// many as before, the one in its place when its formatting or its text is
-// unchanged. One in its own place with both unchanged comes first. Run numbers alone are positions: a run put in before the others
-// renumbers them.
+// Indexed by `before`'s run number - 1: the `now` run it became, or 0. Same formatting and text
+// first; else, with as many runs, the one in its place with its formatting or text unchanged.
 std::vector<int> matchRuns(const OriginalTags &before, const OriginalTags &now);
 // The run numbers of `placements` in text order, as composeTranslation wrote them.
 std::vector<int> runOrder(std::span<const RunPlacement> placements);
-// Runs with the same formatting read back as the first unused of them, so a
-// draft read from saved text can name the wrong one of two equal runs.
-// `order` (runOrder of the placements last composed) puts back the numbers
-// the translator chose, where each still names a run of the same formatting;
-// otherwise the draft is left as read.
+// Equal-formatting runs read back as the first unused one; `order` (runOrder of the placements
+// last composed) restores the translator's numbers where each still names a run of that formatting.
 void relabelRuns(const OriginalTags &tags, TranslationDraft &draft, std::span<const int> order);
-// Whether a draft with `runs` placed in it is saved as placed: each is found
-// again, over the same text, on reading the composed translation (one past
-// the reader's limits is not, its tags left as the translator's own; one
-// opened by the translator's own tags before it reads over more), and the
+// Whether each of `runs` reads back over the same text from the composed translation, and the
 // translator's own formatting around them draws as it did.
 bool placementHolds(const OriginalTags &tags, const TranslationDraft &draft, std::span<const int> runs);
-// Takes out the placements that no longer hold after an edit of the body (a
-// reset put in after a run's opening), as placeRun would not place them:
-// their tags are not written, rather than stay as the translator's own.
+// Removes the placements that no longer hold after a body edit; their tags are not written.
 void keepHeldPlacements(const OriginalTags &tags, TranslationDraft &draft);
 
 } // namespace hikari::core

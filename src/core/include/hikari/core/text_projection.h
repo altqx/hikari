@@ -1,14 +1,6 @@
 #pragma once
 
-// Hidden-tag projection of a Line's raw ASS text (docs/ux/ass-editor.md).
-// Raw text stays authoritative: the projection maps every visible UTF-16
-// span back to its source span, and an edit in the projection rewrites only
-// the selected visible source spans. It never strips tags and rebuilds ASS.
-//
-// Accepted defaults: text typed at a hidden-tag boundary goes after the tags,
-// and a replacement across hidden tags keeps those exact tokens in order.
-// Drawing payloads and malformed braces are protected: an edit touching them
-// is refused and the raw text is left unchanged.
+// Projection of a Line's raw ASS text; edits change only the selected visible source spans.
 
 #include <cstddef>
 #include <expected>
@@ -36,7 +28,7 @@ struct ProjectionSpan {
     bool isProtected() const { return kind == SpanKind::DrawingPayload || kind == SpanKind::Malformed; }
 };
 
-// Shown for each protected span: a visible reserved marker.
+// Shown in place of each protected span.
 inline constexpr char16_t kProtectedMarker = u'\u25A1';
 
 struct Projection {
@@ -62,12 +54,10 @@ std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw,
                                                         std::size_t end, std::u16string_view inserted,
                                                         std::span<const std::size_t> graphemeBoundaries = {});
 
-// Raw offset of a projection offset. A boundary between visible text and
-// hidden tags maps after the tags (`afterTags`, the insertion default) or
-// before them (the end of a selection, so following tags stay outside it).
+// A boundary between visible text and hidden tags maps after the tags when
+// `afterTags`, else before them.
 std::size_t rawOffset(const Projection &projection, std::size_t displayOffset, bool afterTags);
-// Projection offset of a raw offset; inside a hidden or protected span it is
-// the span's display start.
+// Inside a hidden or protected span: the span's display start.
 std::size_t displayOffset(const Projection &projection, std::size_t rawOffset);
 
 std::u16string toUtf16(std::u8string_view text);

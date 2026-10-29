@@ -14,21 +14,16 @@ namespace {
 
 struct PhysicalLine {
     SourceSpan span;
-    bool valid = true; // UTF-8
-    u8sv text;         // content without terminator; empty when invalid
+    bool valid = true;
+    u8sv text;
 };
 
-// Legacy (wxStringTokenizer STRTOK) drops only zero-length lines, so a CRLF
-// blank line ("\r") or a whitespace-only line was a token that Trim() emptied,
-// adding a trailing \N to the cue. Approved C82-srt-blank-break: any line that
-// is blank after trimming adds nothing, in LF and CRLF files alike.
 bool isToken(const PhysicalLine &line)
 {
     return !line.valid || !trim(line.text).empty();
 }
 
-// SubsLoader::TrimLastNumber on the accumulated cue text: drops the trailing
-// "\r\n<digits>\r\n" (the next cue's number) or, failing that, the final CRLF.
+// Drops a trailing "\r\n<digits>\r\n" (the next cue's number), else the final CRLF.
 void trimLastNumber(std::u8string &text)
 {
     if (text.size() < 3) {
@@ -43,7 +38,8 @@ void trimLastNumber(std::u8string &text)
             text.erase(i);
             break;
         }
-        if (pos == 10) { // '\r'
+        // MUST KILL: index 10 of `digits` is '\r'
+        if (pos == 10) {
             text.erase(i - 1);
             break;
         }
@@ -56,7 +52,6 @@ struct LegacyCue {
     std::u8string startLexeme, endLexeme, text;
 };
 
-// Dialogue::SetRaw for an SRT cue built from "timing\r\ntext...".
 LegacyCue parseCue(const std::u8string &raw)
 {
     LegacyCue cue;
@@ -143,8 +138,6 @@ LoadResult loadSrt(std::span<const std::byte> bytes)
         pos = end < b.size() ? end + 1 : end;
     }
 
-    // Pass 1: the legacy algorithm, recording where each cue's timing line is
-    // and whether TrimLastNumber took a cue-number line from the previous text.
     struct Cue {
         std::size_t timingLine;
         std::optional<std::size_t> numberLine;
@@ -161,7 +154,6 @@ LoadResult loadSrt(std::span<const std::byte> bytes)
         if (token.find(u8" --> ") != u8sv::npos) {
             const std::size_t before = text1.size();
             trimLastNumber(text1);
-            // A digits-only previous token that trimLastNumber removed is this cue's number.
             std::optional<std::size_t> number;
             if (lastTokenLine && text1.size() < before) {
                 const u8sv prev = trimRight(lines[*lastTokenLine].text);
@@ -171,7 +163,7 @@ LoadResult loadSrt(std::span<const std::byte> bytes)
             if (openTiming && !text1.empty())
                 cues.back().legacy = parseCue(text1);
             else if (openTiming)
-                cues.pop_back(); // legacy adds nothing when the accumulated cue trimmed to empty
+                cues.pop_back();
             cues.push_back(Cue{i, number, {}});
             openTiming = i;
             text1.clear();
@@ -181,15 +173,13 @@ LoadResult loadSrt(std::span<const std::byte> bytes)
         lastTokenLine = i;
     }
     if (openTiming) {
-        const std::u8string finalText(trimRight(text1)); // wxString::Trim() trims the right side
+        const std::u8string finalText(trimRight(text1));
         if (!finalText.empty())
             cues.back().legacy = parseCue(finalText);
         else
             cues.pop_back();
     }
 
-    // Pass 2: records. A cue spans its number line (if any) through the line
-    // before the next cue's first line; text before the first cue is opaque.
     auto &sections = DocumentBuilder::sections(doc);
     sections.push_back(Section{SectionKind::Cues, {}, std::nullopt, {}});
     auto &records = sections.back().records;
@@ -199,8 +189,6 @@ LoadResult loadSrt(std::span<const std::byte> bytes)
         for (; next < first; ++next)
             records.push_back(OpaqueRecord{lines[next].span});
         std::size_t last = c + 1 < cues.size() ? cues[c + 1].numberLine.value_or(cues[c + 1].timingLine) : lines.size();
-        // Trailing blank separator lines stay separate opaque records, so an
-        // edited cue regenerates without swallowing the gap to the next cue.
         while (last > first + 1 && lines[last - 1].valid && trim(lines[last - 1].text).empty())
             --last;
         const SourceSpan &a = lines[first].span, &z = lines[last - 1].span;
@@ -237,7 +225,7 @@ std::vector<std::byte> encodeSrt(const Document &document)
     if (document.source().encoding == TextEncoding::Utf8WithBom)
         copy(0, 3);
     detail::NewlineTracker newlines;
-    std::optional<std::int64_t> lastNumber; // the previous cue's number
+    std::optional<std::int64_t> lastNumber;
     auto srtNumber = [](std::int64_t n) {
         const std::string s = std::to_string(n);
         return std::u8string(s.begin(), s.end());
@@ -247,8 +235,6 @@ std::vector<std::byte> encodeSrt(const Document &document)
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
             const auto *line = std::get_if<LineRecord>(&record);
             if (line && line->inserted) {
-                // A new cue after the previous one: a blank separator, the next
-                // number, timing and text.
                 const std::u8string &nl = newlines.newline;
                 std::u8string cue = newlines.openEnd ? nl + nl : nl;
                 if (lastNumber)
@@ -269,7 +255,6 @@ std::vector<std::byte> encodeSrt(const Document &document)
                 copy(span.offset, span.length + span.terminatorLength);
                 continue;
             }
-            // The cue's own newline style; the legacy writer's form otherwise.
             const std::u8string_view nl = span.terminatorLength == 1 ? u8"\n" : u8"\r\n";
             if (line->cueNumber) {
                 append(*line->cueNumber);

@@ -18,9 +18,7 @@ bool isDigit(char8_t c)
     return c >= u8'0' && c <= u8'9';
 }
 
-// The kara-templater roles that hold templates rather than lyrics, and the
-// Lines it generated (Effect "fx", kara-templater.lua is_generated_line),
-// which its next run deletes and makes again.
+// kara-templater's template, code and mixin Lines, and the "fx" Lines each run regenerates.
 bool isTemplateLine(const LineRecord &line)
 {
     if (!line.comment && line.effect == u8"fx")
@@ -35,11 +33,8 @@ bool isTemplateLine(const LineRecord &line)
     return first == u8"template" || first == u8"code" || first == u8"mixin";
 }
 
-// The karaoke tag whose backslash is at block[i]: where its value starts,
-// after "k", "K", "kf" or "ko"; npos for another tag ("\kt", which sets an
-// absolute time, or an unknown "\keep"). As the tag parser reads tags
-// (lua_helper's karaoke tags), the name is followed by its value ("(", a
-// sign, a digit or "."), or by nothing at all, a tag with no number.
+// Where the value of a \k, \K, \kf or \ko at block[i] starts; npos for another tag ("\kt", "\keep"). The
+// name is followed by "(", a sign, a digit, "." or nothing.
 std::size_t karaokeValue(u8sv block, std::size_t i)
 {
     if (i + 1 >= block.size() || block[i] != u8'\\' || (block[i + 1] != u8'k' && block[i + 1] != u8'K'))
@@ -58,7 +53,6 @@ std::size_t karaokeValue(u8sv block, std::size_t i)
     return u8sv::npos;
 }
 
-// Whether a block holds a karaoke tag.
 bool hasKaraokeTag(u8sv block)
 {
     for (std::size_t i = 0; i < block.size(); ++i)
@@ -67,10 +61,7 @@ bool hasKaraokeTag(u8sv block)
     return false;
 }
 
-// The length of the "k" the editor reads at text[i], 0 for none. It
-// lower-cases with QChar::toLower, under which one character outside
-// ASCII becomes a letter it matches: U+212A KELVIN SIGN, "k" (Qt 6.11's
-// tables; none becomes "\", "f", "o", a digit or a brace).
+// 0 for none. QChar::toLower maps U+212A KELVIN SIGN to "k" (Qt 6.11), so it counts too.
 std::size_t editorK(u8sv text, std::size_t i)
 {
     if (i < text.size() && (text[i] == u8'k' || text[i] == u8'K'))
@@ -78,10 +69,8 @@ std::size_t editorK(u8sv text, std::size_t i)
     return text.substr(std::min(i, text.size())).starts_with(u8"K") ? 3 : 0;
 }
 
-// Whether the audio editor reads a text as karaoke (AudioKaraoke's
-// hasKaraokeTag, legacy's {([^}]*)\\kf?o?[0-9]([^}]*)} on the lower-cased
-// text): a tag whose number starts at once, in a block that closes. It
-// reads none of "\k+50", "\k(50)" or "\k.5", which the renderers play.
+// A tag whose number follows at once, in a block that closes; none of "\k+50", "\k(50)" or "\k.5", which
+// the renderers play.
 bool audioEditorReads(u8sv text)
 {
     auto lower = [](char8_t c) { return c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c - u8'A' + u8'a') : c; };
@@ -105,15 +94,11 @@ bool audioEditorReads(u8sv text)
     return false;
 }
 
-// Longer syllables count as this long (over 115 days, in milliseconds), so
-// adding them up cannot overflow.
+// Caps a syllable so the sum cannot overflow.
 constexpr std::int64_t kLongestSyllable = 10'000'000'000;
 
-// The syllables of a Line the audio editor reads as karaoke, one at a time
-// (AudioKaraoke::split): every "\k" or "\K" in a block splits there, as
-// written (only its test above lower-cases), whatever follows the name;
-// the number is legacy atoi of all after the name ("k", "K", "kf" or "ko")
-// up to the next "}" or "\", so "\keep" is 0 and "\k(50)" too.
+// As the audio editor splits: every \k or \K in a block, whatever follows; the number is atoi of all up to
+// the next "}" or "\", so "\keep" and "\k(50)" are 0.
 class EditorSyllables {
 public:
     explicit EditorSyllables(u8sv text) : m_text(text) {}
@@ -146,8 +131,7 @@ private:
         const std::size_t end = std::min(m_text.find_first_of(u8"}\\", from), m_text.size());
         m_pos = end;
         if (end == m_text.size())
-            return kUnread; // the split stops at the last character, before reading it
-        // atoi: whitespace, a sign, then digits; it saturates at the int range.
+            return kUnread;
         std::size_t i = from;
         while (i < end && (m_text[i] == u8' ' || (m_text[i] >= 9 && m_text[i] <= 13)))
             ++i;
@@ -166,10 +150,8 @@ private:
 };
 
 
-// Each karaoke syllable's length in a Line's text, in order, to `each`
-// (milliseconds, whole centiseconds; nullopt for a tag with no number,
-// which plays as none), one at a time so a Line of millions of tags is
-// never held; whether a karaoke tag is unclosed or has no number.
+// Calls `each` per syllable in order (milliseconds; nullopt for a tag with no number). True when a karaoke
+// tag is unclosed or has no number.
 template <typename Each>
 bool syllablesOf(u8sv text, Each each)
 {
@@ -189,9 +171,7 @@ bool syllablesOf(u8sv text, Each each)
             std::size_t j = karaokeValue(block, i);
             if (j == u8sv::npos)
                 continue;
-            // The value: "(" optional, a sign, digits and a fraction. Inside
-            // parentheses the tag parser hands atoi all up to ")", and atoi
-            // skips leading whitespace ("\k( 100)" is 100).
+            // Inside parentheses leading whitespace is skipped ("\k( 100)" is 100).
             const bool parenthesised = j < block.size() && block[j] == u8'(';
             if (parenthesised)
                 for (++j; j < block.size() && (block[j] == u8' ' || (block[j] >= 9 && block[j] <= 13)); ++j) {
@@ -203,9 +183,7 @@ bool syllablesOf(u8sv text, Each each)
             bool digits = false;
             for (; j < block.size() && isDigit(block[j]); ++j, digits = true)
                 ms = std::min<std::int64_t>(ms * 10 + (block[j] - u8'0') * 10, kLongestSyllable);
-            // A fraction is read and dropped: the karaoke the application
-            // plays (AudioKaraoke's legacyAtoi, lua_helper's atoi) counts
-            // whole centiseconds.
+            // The fraction is dropped: playback counts whole centiseconds.
             if (j < block.size() && block[j] == u8'.')
                 for (++j; j < block.size() && isDigit(block[j]); ++j)
                     digits = true;
@@ -230,7 +208,6 @@ KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
 {
     using Kind = KaraokeProblem::Kind;
     KaraokeCheck check;
-    // Past the limit a problem is only counted.
     auto add = [&](KaraokeProblem &&p) {
         if (check.problems.size() < limit)
             check.problems.push_back(std::move(p));
@@ -249,8 +226,6 @@ KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
             p.kind = kind;
             return p;
         };
-        // Each end in whole milliseconds, as the audio display's karaoke
-        // reads the Line (Application's audio Lines), then their distance.
         const std::int64_t duration = line.end.value.microseconds() / 1000 - line.start.value.microseconds() / 1000;
         std::int64_t total = 0;
         std::size_t count = 0;
@@ -261,12 +236,7 @@ KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
                 p.syllables.push_back(number);
             ++p.syllableCount;
         };
-        // The text karaoke plays: the translation when there is one.
         const u8sv text = line.translation.empty() ? u8sv(line.text) : u8sv(line.translation);
-        // Where the audio editor reads the Line as karaoke, its syllables
-        // beside playback's: one more, one fewer or another length is
-        // karaoke the editor reads otherwise. What Unclosed reports is left
-        // to it: a tag with no number, and a block that never closes.
         const bool editorReads = audioEditorReads(text);
         const std::size_t lastClose = text.rfind(u8'}');
         const std::size_t open = text.find(u8'{', lastClose == u8sv::npos ? 0 : lastClose + 1);
@@ -288,8 +258,6 @@ KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
             if (length < 0 || start < 0 || total < 0 || start > duration || total > duration) // or it runs backward
                 note(outside, count);
         });
-        // The editor reads karaoke where playback has none too (a Kelvin
-        // sign's "\K50" alone).
         editorOnly = editorOnly || (editorReads && (count == 0 || editor.next().has_value()));
         if (count == 0 && !unclosed && !editorOnly)
             continue;

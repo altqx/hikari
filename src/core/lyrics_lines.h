@@ -1,8 +1,5 @@
 #pragma once
 
-// Internal to the lyrics importers (lyrics_import.cpp, lyrics_ttml.cpp): the
-// timed lyrics both formats read, and the ASS Document made from them.
-
 #include "hikari/core/document.h"
 #include "hikari/core/lyrics_import.h"
 
@@ -33,37 +30,30 @@ struct LyricLine {
 struct LyricSheet {
     std::optional<std::u8string> title;
     std::vector<LyricLine> lines;
-    std::size_t budget = 0; // the bytes the Lines may take (kMaxLyricsGrowth)
+    std::size_t budget = 0; // bytes the Lines may take
     std::size_t spent = 0;
 };
 
-// The budget of a sheet read from a file of `fileSize` bytes.
 inline std::size_t lyricsBudget(std::size_t fileSize)
 {
     return kMaxLyricsGrowth * fileSize + (std::size_t(1) << 20);
 }
 
-// The most Lines a lyrics file may make. A song has hundreds; each Line
-// costs the Document about a kilobyte and a half however short its text, so
-// a file of tiny lines ("[0:0]x" on each) would cost far more than its bytes.
+// Each Line costs about 1.5 KB however short, so a file of tiny lines would outgrow the byte budget.
 inline constexpr std::size_t kMaxLyricsLines = 10'000;
 
-// Takes a Line's share of the budget, before the Line is made: its text,
-// actor and words, each word's \k tag and the Dialogue's fields. False when
-// the budget is gone, or the sheet has all the Lines it may.
+// Call before making the Line. False when the budget or the Line cap is exhausted.
 inline bool spend(LyricSheet &sheet, std::size_t textBytes, std::size_t actorBytes, std::size_t words)
 {
+    // MUST KILL: 16 and 64 are guessed byte costs of a \k tag and a Dialogue's fields
     sheet.spent += textBytes + actorBytes + 16 * words + 64;
     return sheet.spent <= sheet.budget && sheet.lines.size() < kMaxLyricsLines;
 }
 
-// The latest time either format may give (100 hours), so no arithmetic on
-// a time can overflow.
+// 100 hours in ms, so time arithmetic cannot overflow.
 inline constexpr std::int64_t kLatestLyricsTime = 360'000'000;
 
-// A run of ASCII digits as a number, however many leading zeros pad it;
-// past 10^12 it stops growing (far past any time, and three clock parts
-// times 60, 60 and 1000 still fit an int64).
+// Saturates at 10^12, so clock parts times 60, 60 and 1000 still fit an int64.
 inline std::int64_t clampedNumber(std::u8string_view digits)
 {
     std::int64_t n = 0;
@@ -72,8 +62,7 @@ inline std::int64_t clampedNumber(std::u8string_view digits)
     return n;
 }
 
-// Where the line from `from` ends, and where the next one starts: a line
-// ends at LF, CRLF or a lone CR (as XML ends lines; old Mac LRC files).
+// The line's end and the next line's start; LF, CRLF or a lone CR (XML, old Mac LRC files) ends it.
 inline std::pair<std::size_t, std::size_t> lineAt(std::u8string_view text, std::size_t from)
 {
     const std::size_t end = std::min(text.find_first_of(u8"\r\n", from), text.size());
@@ -81,23 +70,15 @@ inline std::pair<std::size_t, std::size_t> lineAt(std::u8string_view text, std::
     return {end, end + (crlf ? 2 : 1)};
 }
 
-// Lyrics text as ASS shows it literally: "{" and "}" would open and close
-// override blocks, so they become "\uFF5B" and "\uFF5D", and a word joiner
-// (U+2060) after a backslash keeps \N, \n and \h from being a line break or a
-// hard space. A backslash at the end gets one too, since a syllable's
-// override block or other text may follow it.
+// For ASS: braces become U+FF5B / U+FF5D, and a word joiner (U+2060) follows every backslash,
+// including a final one, so \N, \n and \h stay literal.
 std::u8string literalText(std::u8string_view text);
 
-// A Line's text with one \k syllable per word, in centiseconds. Each word
-// lasts until it ends or the next word begins, whichever is first; an empty
-// syllable fills each pause, including one before the first word and one
-// after the last within the Line's times. `line.end` is moved out to the
-// last word's end when a word ends after it.
+// One \k syllable per word, in centiseconds; a word lasts until it ends or the next begins, and
+// empty syllables fill pauses within the Line's times. Extends `line.end` to the last word's end.
 std::u8string karaokeText(LyricLine &line);
 
-// The ASS Document of a sheet: the new-Document Script Info and Default
-// Style (as DocumentFiles::createNew, legacy LoadDefault), then one Dialogue
-// per Line in order.
+// New-Document Script Info and Default Style, then one Dialogue per Line.
 LoadResult lyricsDocument(LyricSheet sheet);
 
 } // namespace hikari::core::detail

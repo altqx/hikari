@@ -1,10 +1,7 @@
 #pragma once
 
-// Line groups (legacy trees, G9) as the Actor markers describe them: a
-// description Line ([tree_description]) followed by a contiguous run of
-// members ([tree_opened] / [tree_closed]). Accepted G56-contiguity: a command
-// may keep groups valid, but must not orphan a member or move an existing
-// member into another group; such a result is rejected before it is applied.
+// A group: a [tree_description] Line followed by a contiguous run of
+// [tree_opened] / [tree_closed] members.
 
 #include "hikari/core/document.h"
 
@@ -15,13 +12,11 @@
 namespace hikari::core {
 
 // Each member's description, or nullopt for an orphan (a member that does not
-// follow its description or another member). Imported malformed runs stay
-// as they are: they are reported, not repaired.
+// follow its description or another member).
 std::unordered_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document);
 
-// The members `after` breaks: an orphan that was not already one (new
-// malformed groups are not created either), or a member now in another
-// group than in `before`.
+// The members `after` breaks: a new orphan, or a member now in another group
+// than in `before`.
 std::vector<LineId> groupBreaks(const Document &before, const Document &after);
 
 // A description's members in Document order (empty for a standalone description).

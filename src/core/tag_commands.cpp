@@ -16,15 +16,15 @@ using u16v = std::u16string_view;
 
 constexpr long npos = -1;
 
-// wxString::Find(ch, true): last index or -1.
+// Last index or -1.
 long findLast(u16v s, char16_t ch)
 {
     const auto p = s.rfind(ch);
     return p == u16v::npos ? npos : static_cast<long>(p);
 }
 
-// wxString::SubString(from, to): inclusive, and Mid(from, to - from + 1)
-// with a size_t count, so to < from - 1 reads to the end.
+// Inclusive.
+// MUST KILL: to < from - 1 reads to the end
 u16 subString(u16v s, long from, long to)
 {
     if (from < 0 || static_cast<std::size_t>(from) > s.size())
@@ -48,15 +48,13 @@ bool endsWith(u16v s, u16v p)
     return s.size() >= p.size() && s.substr(s.size() - p.size()) == p;
 }
 
-// FindFromEnd: last occurrence as size_t, or (size_t)-1.
 std::size_t findFromEnd(u16v text, u16v what)
 {
     const auto p = text.rfind(what);
     return p == u16v::npos ? static_cast<std::size_t>(-1) : p;
 }
 
-// regex.ReplaceAll(&s, "\\1") with regex = wxRegEx("^" + pattern): the
-// anchored match (if any) replaced by its first group.
+// The anchored match, if any, replaced by its first group.
 bool replaceWithGroup(u16 &s, const LegacyRegex &re)
 {
     return re.replaceAll(s, u"\\1") > 0;
@@ -174,8 +172,7 @@ bool TagEditor::findTag(u16v pattern, int mode, bool toEndOfSelection)
     u16 found[2];
     std::pair<long, long> fpoints[2];
     const std::size_t txtlen = txt.size();
-    // Signed/unsigned comparisons as in the legacy code: a -1 start becomes
-    // the last index.
+    // MUST KILL: signed/unsigned comparisons turn a -1 start into the last index
     if (static_cast<std::size_t>(bracketEnd) == txtlen)
         bracketEnd--;
     if (static_cast<std::size_t>(bracketEnd) > txtlen)
@@ -347,7 +344,6 @@ char16_t lower(char16_t c)
     return c >= u'A' && c <= u'Z' ? static_cast<char16_t>(c - u'A' + u'a') : c;
 }
 
-// First case-insensitive occurrence of `needle` in `hay` at or after `from`.
 std::size_t findNoCase(u16v hay, u16v needle, std::size_t from = 0)
 {
     for (std::size_t i = from; i + needle.size() <= hay.size(); ++i) {
@@ -360,7 +356,7 @@ std::size_t findNoCase(u16v hay, u16v needle, std::size_t from = 0)
     return u16v::npos;
 }
 
-// wxRegEx("\\</?" + text + "\\>", icase).Matches(window): start and length.
+// A case-insensitive <text> or </text>: start and length.
 bool matchSrtTag(u16v window, char16_t text, std::size_t &start, std::size_t &len)
 {
     for (std::size_t i = 0; i < window.size(); ++i) {
@@ -378,7 +374,7 @@ bool matchSrtTag(u16v window, char16_t text, std::size_t &start, std::size_t &le
     return false;
 }
 
-// txt.SubString(from - 4, from + 4): empty when from - 4 wraps below zero.
+// [from - 4, from + 4]; empty when from < 4.
 u16 window(u16v txt, long from)
 {
     if (from < 4)
@@ -425,7 +421,7 @@ EditorText toggleNonAssTag(EditorText state, char16_t tag, bool srt)
             }
         }
     } else if (tag == u'b' || tag == u'i') {
-        // MicroDVD: PutinNonass("y:b", "Y:b") and ("y:i", "Y:i").
+        // MicroDVD
         const u16 find = u16(u"{y:") + tag + u"}";
         const u16 put = u16(u"{Y:") + tag + u"}";
         long wheres = findLast(subString(txt, 0, from), u'|');
@@ -441,7 +437,7 @@ EditorText toggleNonAssTag(EditorText state, char16_t tag, bool srt)
             where = wheres + static_cast<long>(put.size());
         }
     } else {
-        return state; // no legacy action for this tag in this format
+        return state; // no action for this tag in this format
     }
     return EditorText{txt, where, where};
 }
@@ -482,8 +478,6 @@ EditorText applyTagButton(EditorText state, u16v buttonTag, bool atTextStart,
 
 namespace {
 
-// The legacy block check before a plain-text insertion (EditBox::OnButtonTag):
-// positions of '{' and '}' after `from`, compared with `from` itself.
 long plainInsertPosition(u16v text, long from)
 {
     const u16v rest = from < static_cast<long>(text.size()) ? text.substr(static_cast<std::size_t>(from)) : u16v();
@@ -537,7 +531,7 @@ u16 putTagInLine(u16 text, u16v pattern, u16v tag)
 
 namespace {
 
-// wxRegEx(pattern, wxRE_ADVANCED | wxRE_ICASE): an invalid pattern matches nothing.
+// An invalid pattern matches nothing.
 LegacyRegex legacyRegex(u16v pattern)
 {
     return LegacyRegex(pattern, LegacyRegex::Advanced | LegacyRegex::IgnoreCase);
@@ -603,7 +597,7 @@ EditorText putInNonAss(EditorText state, NonAssFormat format, u16v text, u16v ta
             where = wheres + static_cast<long>(tag.size()) + 2;
         }
     }
-    // MPL2: the text is set back unchanged.
+    // MPL2: unchanged
     return EditorText{txt, where, where};
 }
 
@@ -614,7 +608,6 @@ u16 putInNonAssLine(u16 line, NonAssFormat format, u16v text, u16v tag)
     const bool srt = format == NonAssFormat::Srt;
     const u16 open = srt ? u"<" : u"{", close = srt ? u">" : u"}";
     if (line.starts_with(open)) {
-        // EditBox::PutinNonass: wxRegEx(chars + tag + chare).ReplaceAll(&txt, "").
         legacyRegex(open + u16(tag) + close).replaceAll(line, u"");
         return open + u16(text) + close + line;
     }

@@ -17,7 +17,6 @@ bool isAsciiDigit(char16_t c)
     return c >= u'0' && c <= u'9';
 }
 
-// SkipBracketExpression: from the '[' to its matching ']' (or the end).
 std::size_t skipBracketExpression(u16v s, std::size_t it)
 {
     const std::size_t end = s.size();
@@ -65,7 +64,6 @@ u16 pcreOptionsToString(int opts)
     return s;
 }
 
-// ConvertMetasyntax: directors and embedded options.
 u16 convertMetasyntax(u16 expr, int &flags)
 {
     using F = LegacyRegex;
@@ -155,7 +153,7 @@ u16 convertMetasyntax(u16 expr, int &flags)
     return expr;
 }
 
-// ConvertWordBoundaries: \m \M \y \Y.
+// Tcl's \m \M \y \Y.
 u16 convertWordBoundaries(u16v expr)
 {
     u16 out;
@@ -191,12 +189,9 @@ u16 convertWordBoundaries(u16v expr)
 struct LegacyRegex::Impl {
     pcre2_code *code = nullptr;
     pcre2_match_data *data = nullptr;
-    std::size_t groups = 0; // pcre2_get_ovector_count, 0 with NoSub
-    // The last match, as offsets into the subject matches() was given.
+    std::size_t groups = 0;
     mutable std::vector<std::pair<std::size_t, std::size_t>> last;
     mutable bool matched = false;
-    // The last pcre2_match error other than "no match" (wx_regexec's
-    // wxLogError path), 0 when there was none.
     mutable int error = 0;
 
     ~Impl()
@@ -205,7 +200,7 @@ struct LegacyRegex::Impl {
         pcre2_code_free(code);
     }
 
-    // wx_regexec on text[offset, end): offsets are relative to `offset`.
+    // Offsets are relative to `offset`.
     int exec(u16v text, std::size_t offset, int flags) const
     {
         uint32_t options = 0;
@@ -435,7 +430,7 @@ int LegacyRegex::replace(std::u16string &text, std::u16string_view replacement, 
                 if (replacement[p] == u'\\') {
                     ++p;
                     if (p < replacement.size() && isAsciiDigit(replacement[p])) {
-                        // wxStrtoul: every following digit.
+                        // wx reads every following digit.
                         index = 0;
                         while (p < replacement.size() && isAsciiDigit(replacement[p]))
                             index = index * 10 + static_cast<std::size_t>(replacement[p++] - u'0');
@@ -448,7 +443,7 @@ int LegacyRegex::replace(std::u16string &text, std::u16string_view replacement, 
                     index = 0;
                 }
                 if (index != u16::npos) {
-                    // An invalid back reference is eaten (wxFAIL_MSG in a debug build).
+                    // wx drops an invalid back reference.
                     if (m_impl->groups && index < m_impl->groups && m_impl->last[index].first != u16::npos) {
                         const auto [s, e] = m_impl->last[index];
                         textNew += subject.substr(matchStart + s, e - s);
@@ -466,7 +461,7 @@ int LegacyRegex::replace(std::u16string &text, std::u16string_view replacement, 
         const std::size_t len = end - start;
         matchStart += len;
         if (len == 0) {
-            // R3-hang-crash-loss: move past an empty match (one code point).
+            // Past an empty match by one code point.
             if (matchStart >= subject.size()) {
                 matchStart = subject.size() + 1;
                 break;

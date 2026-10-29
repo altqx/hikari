@@ -21,7 +21,7 @@ std::unordered_map<std::uint64_t, std::optional<LineId>> groupOwners(const Docum
         } else if (isMember(line->group)) {
             owners.emplace(line->id.value, current);
         } else {
-            current.reset(); // an ordinary Line ends the run
+            current.reset();
         }
     }
     return owners;
@@ -35,16 +35,14 @@ std::vector<LineId> groupBreaks(const Document &before, const Document &after)
     for (const auto *line : after.lines()) {
         const auto current = now.find(line->id.value);
         if (current == now.end())
-            continue; // not a member
+            continue;
         const auto old = was.find(line->id.value);
         const bool wasOrphan = old != was.end() && !old->second;
         if (!current->second) {
-            // A new orphan, made or moved here by this command (an imported
-            // one that stays where it was is not repaired or refused).
             if (!wasOrphan)
                 broken.push_back(line->id);
         } else if (old != was.end() && old->second && *old->second != *current->second) {
-            broken.push_back(line->id); // moved into another group
+            broken.push_back(line->id);
         }
     }
     return broken;
@@ -56,7 +54,6 @@ std::vector<LineId> groupMembers(const Document &document, LineId description)
     for (const auto &[id, owner] : groupOwners(document))
         if (owner && *owner == description)
             out.push_back(LineId{id});
-    // Document order.
     std::vector<LineId> ordered;
     for (const auto *line : document.lines())
         for (const auto id : out)

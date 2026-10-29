@@ -18,8 +18,6 @@ bool projected(SubtitleFormat format)
     return format == SubtitleFormat::Ass || format == SubtitleFormat::PlainText;
 }
 
-// SRT, TMPlayer, MicroDVD and MPL2 (spelling's syntaxOf): a tag is left out,
-// a break is a space over it, an unclosed tag one space to the end.
 CheckedText scanned(std::u16string_view raw, SubtitleFormat format)
 {
     const bool srt = format == SubtitleFormat::Srt;
@@ -66,7 +64,7 @@ CheckedText checkedText(std::u16string_view raw, SubtitleFormat format)
         for (std::size_t at = span.displayStart; at < span.displayEnd; ++at) {
             if (text) {
                 out.raw[at] = {span.rawStart + (at - span.displayStart), span.rawStart + (at - span.displayStart) + 1};
-            } else { // breaks, hard spaces, drawings and malformed spans
+            } else {
                 out.text[at] = u' ';
                 out.raw[at] = {span.rawStart, span.rawEnd};
             }
@@ -101,11 +99,9 @@ std::optional<Replaced> replace(std::u16string_view raw, SubtitleFormat format, 
     const std::u16string_view syntax = srt ? u"<>\\\n\r" : u"{}|\n\r";
     if (!range || replacement.find_first_of(syntax) != std::u16string_view::npos)
         return std::nullopt;
-    // An unclosed tag is never touched.
     for (std::size_t at = start; at < end; ++at)
         if (raw[text.raw[at].first] == (srt ? u'<' : u'{'))
             return std::nullopt;
-    // The tags between the range's units, in order, after the replacement.
     std::u16string out(raw.substr(0, range->first));
     out += replacement;
     for (std::size_t at = start + 1; at < end; ++at)
@@ -139,7 +135,6 @@ std::u16string contextBefore(std::u16string_view before, std::size_t most)
     if (before.size() <= most)
         return std::u16string(before);
     auto piece = before.substr(before.size() - most);
-    // Cut inside a word: from the next one.
     if (before[before.size() - most - 1] != u' ')
         if (const auto space = piece.find(u' '); space != std::u16string_view::npos && space + 1 < piece.size())
             piece.remove_prefix(space + 1);
@@ -151,7 +146,6 @@ std::u16string contextAfter(std::u16string_view after, std::size_t most)
     if (after.size() <= most)
         return std::u16string(after);
     auto piece = after.substr(0, most);
-    // Cut inside a word: up to the one before.
     if (after[most] != u' ')
         if (const auto space = piece.rfind(u' '); space != std::u16string_view::npos && space > 0)
             piece = piece.substr(0, space);

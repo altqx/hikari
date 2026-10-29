@@ -29,14 +29,13 @@ std::optional<std::u8string> Document::scriptInfo(std::u8string_view key) const
         if (section.kind == SectionKind::ScriptInfo)
             for (const auto &record : section.records)
                 if (const auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
-                    value = p->value; // AddSInfo replaces: the last one wins
+                    value = p->value; // the last one wins
     return value;
 }
 
 namespace {
 
-// Where a record added after `index` in a section starts: the end of the
-// record before it (or of the header).
+// Where a record inserted after the first `count` records starts.
 std::size_t endOfRecord(const Section &section, std::size_t count)
 {
     std::size_t offset =
@@ -86,18 +85,11 @@ bool Document::setScriptInfo(std::u8string_view key, std::u8string value)
         return true;
     }
     if (!infoSection) {
-        // E5-tlmode-needs-script-info: legacy AddSInfo pushes onto the sinfo
-        // list whether or not the file had the section, and SaveFile writes
-        // a fresh "[Script Info]" at the top (SubsFile.cpp:1020-1045,
-        // SubsGridBase.cpp:1490). An ASS Document gets the section there,
-        // with no source span (encodeAss writes its header); a PlainText one
-        // has no place for it.
         if (m_format != SubtitleFormat::Ass)
             return false;
         infoSection = &*m_sections.insert(m_sections.begin(),
                                           Section{SectionKind::ScriptInfo, u8"[Script Info]", std::nullopt, {}});
     }
-    // After the section's last property (blank lines and comments after it stay after it).
     std::size_t at = 0;
     for (std::size_t i = 0; i < infoSection->records.size(); ++i)
         if (std::holds_alternative<PropertyRecord>(infoSection->records[i]))
@@ -126,7 +118,7 @@ std::optional<std::u8string_view> Document::hikariProperty(std::u8string_view ke
         if (section.kind == SectionKind::Hikari)
             for (const auto &record : section.records)
                 if (const auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
-                    last = p; // as scriptInfo: the last one wins
+                    last = p; // the last one wins
     if (!last)
         return std::nullopt;
     return std::u8string_view(last->value);
@@ -136,10 +128,7 @@ bool Document::setHikariProperty(std::u8string_view key, std::u8string value)
 {
     if (m_format != SubtitleFormat::Ass)
         return false;
-    // A [Hikari] section inside embedded data is part of the data to libass
-    // (and, after [Fonts], to the attachment as legacy reads it): the key's
-    // lines leave it, with the section when nothing else is in it, and the
-    // value goes in a section outside the data.
+    // libass reads a [Hikari] section inside embedded data as data, so the key moves out of it.
     auto data = embeddedData(m_sections);
     for (std::size_t i = m_sections.size(); i-- > 0;) {
         auto &records = m_sections[i].records;
@@ -179,9 +168,7 @@ bool Document::setHikariProperty(std::u8string_view key, std::u8string value)
         return true;
     }
     if (!hikari) {
-        // At the end, before the embedded data that may end the file: libass
-        // keeps reading lines after [Fonts] as font data until a header it
-        // knows, so a section after them would become part of the last font.
+        // Before trailing embedded data: libass reads lines after [Fonts] as font data until a header it knows.
         std::size_t at = m_sections.size();
         while (at > 0 && data[at - 1])
             --at;
@@ -247,7 +234,6 @@ bool Document::editStyle(std::size_t index, std::vector<std::u8string> fields)
 
 bool Document::rearrangeStyles(const std::vector<StyleSlot> &slots)
 {
-    // The current Styles, in document order, with where each one sits.
     struct Position {
         Section *section;
         std::size_t record;
@@ -288,11 +274,9 @@ bool Document::rearrangeStyles(const std::vector<StyleSlot> &slots)
     const std::size_t kept = std::min(next.size(), positions.size());
     for (std::size_t i = 0; i < kept; ++i)
         positions[i].section->records[positions[i].record] = next[i];
-    // Removals from the back, so earlier positions stay valid.
     for (std::size_t i = positions.size(); i-- > kept;)
         positions[i].section->records.erase(positions[i].section->records.begin() +
                                             static_cast<std::ptrdiff_t>(positions[i].record));
-    // Extra Styles after the last Style (or the Format line) of the last Styles section.
     std::size_t at = 0;
     for (std::size_t i = 0; i < styles->records.size(); ++i)
         if (std::holds_alternative<StyleRecord>(styles->records[i]) || std::holds_alternative<FormatRecord>(styles->records[i]))
@@ -300,7 +284,7 @@ bool Document::rearrangeStyles(const std::vector<StyleSlot> &slots)
     for (std::size_t i = kept; i < next.size(); ++i) {
         StyleRecord added = next[i];
         if (!added.inserted) {
-            // A Style moved past the end keeps no position of its own: written from its fields.
+            // MUST KILL: `inserted` doubles as "write from fields" for a moved Style
             added.inserted = true;
         }
         added.span = SourceSpan{endOfRecord(*styles, at), 0, 0};
@@ -312,7 +296,6 @@ bool Document::rearrangeStyles(const std::vector<StyleSlot> &slots)
 
 bool Document::rearrangeScriptInfo(const std::vector<PropertySlot> &slots)
 {
-    // The current properties, in document order, with where each one sits.
     struct Position {
         Section *section;
         std::size_t record;
@@ -353,15 +336,13 @@ bool Document::rearrangeScriptInfo(const std::vector<PropertySlot> &slots)
     for (std::size_t i = positions.size(); i-- > kept;)
         positions[i].section->records.erase(positions[i].section->records.begin() +
                                             static_cast<std::ptrdiff_t>(positions[i].record));
-    // Extra properties after the last property of the last Script Info
-    // section (as setScriptInfo adds one).
     std::size_t at = 0;
     for (std::size_t i = 0; i < info->records.size(); ++i)
         if (std::holds_alternative<PropertyRecord>(info->records[i]))
             at = i + 1;
     for (std::size_t i = kept; i < next.size(); ++i) {
         PropertyRecord added = next[i];
-        added.inserted = true; // written from its key and value
+        added.inserted = true;
         added.span = SourceSpan{endOfRecord(*info, at), 0, 0};
         info->records.insert(info->records.begin() + static_cast<std::ptrdiff_t>(at), std::move(added));
         ++at;
@@ -523,7 +504,7 @@ bool Document::moveLine(LineId id, std::optional<LineId> before)
                 return true;
             }
     }
-    return false; // unreachable: both were checked above
+    return false;
 }
 
 bool Document::markLineChanged(LineId id)
@@ -569,7 +550,7 @@ using namespace detail;
 
 SectionKind headerKind(u8sv header)
 {
-    // Prefix rules follow the legacy loader where it has them.
+    // Prefix matches, as HikariSub legacy reads headers.
     if (startsWith(header, u8"[Script Info]"))
         return SectionKind::ScriptInfo;
     if (startsWith(header, u8"[V4+"))
@@ -605,7 +586,7 @@ std::u8string str(u8sv s)
     return std::u8string(s);
 }
 
-// Removes every occurrence of marker; true when there was one (wxString::Replace).
+// Removes every occurrence; true when there was one.
 bool replaceAll(std::u8string &text, u8sv marker)
 {
     bool found = false;
@@ -614,7 +595,7 @@ bool replaceAll(std::u8string &text, u8sv marker)
     return found;
 }
 
-// Dialogue::SetRaw's Actor handling: one marker kind, legacy order, then trim.
+// Actor markers as HikariSub legacy writes them: only the first kind found is removed, then the field is trimmed.
 std::u8string actorMarkers(u8sv field, LineRecord &line)
 {
     std::u8string actor(field);
@@ -654,7 +635,6 @@ public:
             pos = 3;
         } else if (b.size() >= 2 && ((b[0] == std::byte{0xFF} && b[1] == std::byte{0xFE}) ||
                                      (b[0] == std::byte{0xFE} && b[1] == std::byte{0xFF}))) {
-            // UTF-16 belongs to the encoding work; keep everything as bytes.
             addDiagnostic(Diagnostic::Severity::Error, Diagnostic::Kind::UnsupportedEncoding, 0, {});
             current().records.push_back(OpaqueRecord{SourceSpan{0, b.size(), 0}});
             return std::move(m_result);
@@ -671,8 +651,7 @@ public:
             m_spans.push_back(span);
             pos = end < b.size() ? end + 1 : end;
         }
-        // A TLMode pair consumes the line after its original, so lines are
-        // visited by index.
+        // MUST KILL: pair() advances m_next behind this loop
         for (m_next = 0; m_next < m_spans.size();)
             line(m_spans[m_next++]);
         return std::move(m_result);
@@ -708,8 +687,7 @@ private:
             return;
         }
         Section &section = current();
-        // LoadASS checks for events before anything else, in every section
-        // but embedded font/graphic data: a Dialogue in Script Info is a Line.
+        // Events count in every section but [Fonts] and [Graphics], as HikariSub legacy loads them.
         if ((startsWith(view, u8"Dial") || startsWith(view, u8"Comm")) && section.kind != SectionKind::Fonts &&
             section.kind != SectionKind::Graphics) {
             event(view, span);
@@ -726,7 +704,6 @@ private:
             }
             break;
         case SectionKind::Hikari:
-            // WS2: "key=value"; anything else stays as it is.
             if (!view.empty() && view.front() != u8';' && view.find(u8'=') != u8sv::npos) {
                 const auto equals = view.find(u8'=');
                 section.records.push_back(PropertyRecord{str(trim(view.substr(0, equals))),
@@ -807,11 +784,8 @@ private:
         current().records.push_back(std::move(line));
     }
 
-    // Dialogue::SetRaw. LoadASS takes any "Dial"/"Comm" line, but SetRaw reads
-    // it as an event only with a "Dialogue"/"Comment" prefix and at least 9
-    // comma tokens (wxStringTokenizer RET_EMPTY_ALL). Otherwise it falls
-    // through to the plain-text form: the whole line is the text. (Such a
-    // line containing " --> " would be read as an SRT cue; not reproduced.)
+    // An event needs a "Dialogue"/"Comment" prefix and at least 9 comma fields; otherwise the whole line is
+    // plain text.
     LineRecord parseEvent(u8sv view, const SourceSpan &span)
     {
         LineRecord line;
@@ -850,10 +824,8 @@ private:
         return line;
     }
 
-    // SubsLoader::LoadASS in TLMode: the next token, whatever it is, is the
-    // translation line. Zero-length lines are not tokens; a CRLF blank line
-    // ("\r") is. The translation line is read without left trimming.
-    // Returns false when the original stays unpaired (C87-nondialogue-partner).
+    // TLMode: the next non-empty line (a CRLF blank counts) is the translation, read without left trimming.
+    // False when the original stays unpaired.
     bool pair(LineRecord &original, u8sv originalView)
     {
         const auto &b = DocumentBuilder::source(m_result.document).bytes;
@@ -864,10 +836,6 @@ private:
         if (j < m_spans.size() && validUtf8(b.data() + m_spans[j].offset, m_spans[j].length)) {
             const SourceSpan &ps = m_spans[j];
             const u8sv raw(reinterpret_cast<const char8_t *>(b.data() + ps.offset), ps.length);
-            // Legacy took a ";..." or lone "{...}" line (SetRaw's NonDialogue)
-            // as the translation, then saved the original twice and lost it.
-            // Approved C87-nondialogue-partner: it stays a comment, and the
-            // original stays an unpaired Line.
             const bool braces = startsWith(raw, u8"{") && raw.ends_with(u8'}') &&
                                 std::ranges::count(raw, u8'{') == 1 && std::ranges::count(raw, u8'}') == 1;
             if (startsWith(raw, u8";") || braces) {
@@ -880,8 +848,7 @@ private:
                                      ps.terminatorLength};
             m_next = j + 1;
         } else {
-            // No translation line: legacy pairs with an empty plain-text line.
-            // (An undecodable one is left in place here.)
+            // No translation line: paired with an empty one.
             merged.unparsed = true;
             merged.style = u8"Default";
             merged.span = original.span;
@@ -893,9 +860,7 @@ private:
         merged.originalSpan = original.span;
         merged.translation = std::move(merged.text);
         merged.text = std::move(original.text);
-        // Legacy compared the trimmed Effect with form-feed+D, and the trim
-        // removed the form feed, so Unconfirmed was never read back. Approved
-        // C87-unconfirmed-roundtrip: the authored field itself is compared.
+        // The authored Effect "\fD" marks Unconfirmed.
         const auto fields = splitAll(originalView, u8',');
         merged.unconfirmed = fields.size() > 8 && fields[8] == u8"\fD";
         current().records.push_back(std::move(merged));
@@ -921,7 +886,7 @@ std::int64_t atoi(std::u8string_view text)
     bool negative = false;
     if (i < text.size() && (text[i] == u8'+' || text[i] == u8'-'))
         negative = text[i++] == u8'-';
-    // strtol saturates at the long range; wxAtoi then truncates to int.
+    // Saturates at the 64-bit long range, then truncates to int.
     constexpr std::uint64_t limit = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
     std::uint64_t magnitude = 0;
     bool saturated = false;
@@ -945,12 +910,11 @@ std::int64_t atoi(std::u8string_view text)
 
 std::int64_t assTimeMilliseconds(std::u8string_view lexeme)
 {
-    // SubsTime::ParseMS for ASS: raw.Trim() (right) then fixed offsets from the
-    // first ':'; each field through wxAtoi; centiseconds * 10.
     const u8sv raw = trimRight(lexeme);
     if (raw.empty())
         return 0;
-    const std::size_t colon = raw.find(u8':'); // npos wraps exactly as in the legacy code
+    // MUST KILL: without a ':' the offsets wrap from npos on purpose
+    const std::size_t colon = raw.find(u8':');
     const std::int64_t hours = atoi(wxSubString(raw, 0, colon - 1));
     const std::int64_t minutes = atoi(wxSubString(raw, colon + 1, colon + 2));
     const std::int64_t seconds = atoi(wxSubString(raw, colon + 4, colon + 5));

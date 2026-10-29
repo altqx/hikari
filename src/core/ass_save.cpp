@@ -13,7 +13,6 @@ namespace legacy {
 
 std::u8string assTimeText(std::int64_t ms)
 {
-    // Integer arithmetic exactly as SubsTime::raw (truncation toward zero).
     const std::int64_t csec = ms / 10, sec = ms / 1000, min = ms / 60000, hours = ms / 3600000;
     char buf[64];
     std::snprintf(buf, sizeof buf, "%01lld:%02lld:%02lld.%02lld", static_cast<long long>(hours),
@@ -28,10 +27,9 @@ std::u8string assLineText(const LineRecord &line)
         const std::string s = std::to_string(v);
         return std::u8string(s.begin(), s.end());
     };
-    // DocumentTime is microseconds; the legacy field is integer milliseconds.
     auto time = [](DocumentTime t) { return assTimeText(t.microseconds() / 1000); };
-    // ActorWithStates: [bookmark] first, then the group or visibility marker
-    // prepended before it (a group marker wins over visibility).
+    // [bookmark] first, then the group or visibility marker before it (a
+    // group marker wins over visibility).
     std::u8string actor = line.bookmark ? u8"[bookmark]" + line.actor : line.actor;
     switch (line.group) {
     case GroupMarker::Description: actor.insert(0, u8"[tree_description]"); break;
@@ -56,7 +54,6 @@ std::u8string assLineText(const LineRecord &line)
 
 namespace {
 
-// The original line already is a Comment (LoadASS takes any "Comm" line as one).
 bool startsWithComment(const std::vector<std::byte> &src, const SourceSpan &span)
 {
     static constexpr std::string_view prefix = "Comment";
@@ -68,7 +65,7 @@ bool startsWithComment(const std::vector<std::byte> &src, const SourceSpan &span
     return true;
 }
 
-// The source's line end: the first one in its bytes ("\n" without one).
+// The first line end in the source, "\n" without one.
 std::u8string sourceNewline(const std::vector<std::byte> &src)
 {
     for (std::size_t i = 0; i < src.size(); ++i)
@@ -83,7 +80,6 @@ struct RecordEnd {
     ~RecordEnd() { run(); }
 };
 
-// The output so far ends with an empty line ("\n\n" or "\n\r\n").
 bool endsWithBlankLine(const std::vector<std::byte> &out)
 {
     const std::size_t n = out.size();
@@ -103,12 +99,11 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
 {
     const std::u8string tlMode = document.scriptInfo(u8"TLMode").value_or(std::u8string{});
     const std::u8string tlStyle = document.scriptInfo(u8"TLMode Style").value_or(std::u8string{});
-    const bool tlYes = tlMode == u8"Yes"; // GetVisible's isTlmode
+    const bool tlYes = tlMode == u8"Yes";
     const auto &src = document.source().bytes;
     std::vector<std::byte> out;
     out.reserve(src.size() + 64);
-    // The renderer script's Lines outside an [Events] section, held for the
-    // next one (SubsGrid::GetVisible writes every Line under [Events]).
+    // The renderer script's Lines outside an [Events] section, held for the next one.
     std::vector<std::byte> held;
     std::vector<std::byte> *sink = &out;
     auto copy = [&](std::size_t from, std::size_t count) {
@@ -134,15 +129,11 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
     bool fonts = false;
     bool inEvents = false; // the last header written is an [Events] one
     for (const auto &section : document.sections()) {
-        // 38c: the renderers take the attached fonts as font leases
-        // (ass_attachments.h), so the renderer script leaves [Fonts] out,
-        // with the sections that continue them.
         fonts = section.kind == SectionKind::Fonts || (fonts && continuesAttachment(section));
         if (options.renderer && fonts)
             continue;
-        // WS2: the [Hikari] section's header and properties are the
-        // editor's, not the renderers'. A Line in it is a Line (LoadASS reads
-        // events in any section), drawn as the others are.
+        // The [Hikari] section's header and properties are the editor's; its
+        // Lines are drawn as the others are.
         const bool editorOnly = options.renderer && section.kind == SectionKind::Hikari;
         if (!editorOnly && (section.headerSpan || !section.header.empty()))
             inEvents = section.kind == SectionKind::Events;
@@ -156,10 +147,8 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         // Its own Lines before the Format line wait with the held ones, so
         // the renderers have every Line in the Document's order.
         bool holdsOwn = formatted && !held.empty();
-        // E5-tlmode-needs-script-info: a Script Info section the Document
-        // added at the top has no bytes; it is written as legacy's header is
-        // (SubsGridBase.cpp:1490-1503): the header, its properties and a
-        // blank line before the next section, in the source's line ends.
+        // A Script Info section added at the top has no bytes: its header,
+        // properties and a blank line, in the source's line ends.
         const bool added = !section.headerSpan && !section.header.empty();
         if (editorOnly) {
             // no header: its Lines continue the section before it
@@ -167,9 +156,9 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             copy(section.headerSpan->offset, section.headerSpan->length + section.headerSpan->terminatorLength);
             newlines.see(*section.headerSpan);
         } else if (added && section.kind == SectionKind::Hikari) {
-            // WS2: a [Hikari] section the Document added (at the end, or
-            // before trailing embedded data): after a blank line, in the line
-            // ends of the record before it.
+            // An added [Hikari] section (at the end, or before trailing
+            // embedded data): after a blank line, in the line ends of the
+            // record before it.
             if (newlines.openEnd)
                 append(newlines.newline);
             if (!out.empty() && !endsWithBlankLine(out))
@@ -211,7 +200,6 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                 }
             }};
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
-            // Legacy GetSInfos and Styles::GetRaw text for added or changed records.
             std::optional<std::u8string> generated;
             if (property && (property->inserted || property->edited))
                 generated = property->key + (section.kind == SectionKind::Hikari ? u8"=" : u8": ") + property->value;
@@ -229,10 +217,6 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             if (line && options.renderer &&
                 (tlYes ? line->originalSpan || !line->translation.empty() || line->unconfirmed
                        : !line->translation.empty())) {
-                // SubsGrid::GetVisible (SubsGridBase.cpp:1564-1573): with a
-                // translation, the original line (GetRaw with the TLMode
-                // Style: "\fD" when Unconfirmed) unless hidden, then the
-                // translation line; otherwise GetRaw of the text alone.
                 const std::u8string &newline = newlines.newline;
                 std::u8string lines;
                 if (tlYes && !line->translation.empty()) {
@@ -322,9 +306,8 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             } else if (line && line->originalSpan && options.hideOriginalOnVideo && !tlMode.empty() &&
                        tlMode != u8"Translated" && (!line->translation.empty() || line->unconfirmed) &&
                        !startsWithComment(src, *line->originalSpan)) {
-                // E5: SaveFile writes every original again, as a Comment with
-                // the option on (GetRaw's hideOriginalOnVideo); the
-                // translation line after it keeps its bytes.
+                // With the option on every original is written again as a
+                // Comment; the translation line after it keeps its bytes.
                 LineRecord original = *line;
                 original.style = tlStyle;
                 original.comment = true;

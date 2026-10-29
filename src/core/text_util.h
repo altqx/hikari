@@ -1,9 +1,5 @@
 #pragma once
 
-// Internal helpers shared by the core format loaders: legacy-compatible text
-// trimming and splitting, wxString::SubString arithmetic, UTF-8 validation,
-// and builder access to a Document's private state.
-
 #include "hikari/core/document.h"
 
 #include <cstddef>
@@ -14,7 +10,6 @@
 
 namespace hikari::core {
 
-// Builds a Document's private state for the loader.
 struct DocumentBuilder {
     static SourceText &source(Document &d) { return d.m_source; }
     static std::vector<Section> &sections(Document &d) { return d.m_sections; }
@@ -27,11 +22,9 @@ struct DocumentBuilder {
 
 namespace detail {
 
-// The newline style around an encoder's position, for Lines inserted in the
-// editor (they have no source bytes of their own).
 struct NewlineTracker {
     std::u8string newline = u8"\n";
-    bool openEnd = false; // the last record ended the file without a newline
+    bool openEnd = false;
 
     void see(const SourceSpan &span)
     {
@@ -42,7 +35,6 @@ struct NewlineTracker {
         if (span.length + span.terminatorLength > 0)
             openEnd = span.terminatorLength == 0;
     }
-    // An inserted record: newline-terminated, or newline-led at an open end.
     std::u8string wrap(std::u8string_view body) const
     {
         return openEnd ? newline + std::u8string(body) : std::u8string(body) + newline;
@@ -80,8 +72,7 @@ inline bool startsWith(u8sv s, u8sv prefix)
     return s.substr(0, prefix.size()) == prefix;
 }
 
-// wxString::SubString(from, to) == Mid(from, to - from + 1), with the legacy
-// code's size_t arithmetic (positions derived from npos wrap around).
+// MUST KILL: wx-named helper; to - from + 1 wraps on purpose
 inline u8sv wxSubString(u8sv s, std::size_t from, std::size_t to)
 {
     if (from > s.size())

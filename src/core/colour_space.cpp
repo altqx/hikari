@@ -2,22 +2,15 @@
 
 #include <cstdint>
 
-// Y7: a line-by-line port of legacy colorspace.cpp (20d647c4). The float and
-// unsigned steps are kept as legacy wrote them (a double `1.` included), so
-// the results are the legacy ones; tests/core/colour_space_tests.cpp checks
-// every input against the legacy source itself.
-
 namespace hikari::core::legacy {
 
 namespace {
 
-// The legacy outputs are unsigned char.
 int byte(int value)
 {
     return static_cast<unsigned char>(value);
 }
 
-// MAX and MIN (config.h:552-556) on the three channels.
 float maxOf(float a, float b)
 {
     return a > b ? a : b;
@@ -29,12 +22,9 @@ float minOf(float a, float b)
 
 bool asciiSpace(char16_t c)
 {
-    // wxSafeIsspace: below 127 and isspace.
     return c == u' ' || (c >= u'\t' && c <= u'\r');
 }
 
-// wxString::ToLong(&value, 16) (wxStringToIntType over wcstol): true only
-// when the whole, non-empty text is read.
 bool hexToLong(std::u16string_view text, long *value)
 {
     std::size_t i = 0;
@@ -61,7 +51,7 @@ bool hexToLong(std::u16string_view text, long *value)
     while (i < text.size() && digit(text[i]) >= 0)
         result = result * 16 + digit(text[i++]);
     if (i == digits || i != text.size())
-        return false; // nothing read, or the scan stopped before the end
+        return false;
     *value = negative ? -result : result;
     return true;
 }

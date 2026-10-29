@@ -11,9 +11,7 @@ bool isDigit(char16_t c)
     return c >= u'0' && c <= u'9';
 }
 
-// The wrap mark and override brackets of a format: "|" ends a wrap after SRT
-// in the format list (TMPlayer, MicroDVD, MPL2), "\N" otherwise; SRT tags are
-// <...>, every other format's {...}.
+// Line formats wrap at "|", others at "\N"; SRT tags are <...>, others {...}.
 struct Syntax {
     bool lineFormat = false;
     char16_t split = u'\\';
@@ -24,6 +22,7 @@ struct Syntax {
 Syntax syntaxOf(SubtitleFormat format)
 {
     Syntax s;
+    // MUST KILL: line formats are the SubtitleFormat values after Srt
     s.lineFormat = static_cast<int>(format) > static_cast<int>(SubtitleFormat::Srt);
     s.split = s.lineFormat ? u'|' : u'\\';
     s.open = format == SubtitleFormat::Srt ? u'<' : u'{';
@@ -31,7 +30,7 @@ Syntax syntaxOf(SubtitleFormat format)
     return s;
 }
 
-// wxSafeIsspace: ASCII whitespace only.
+// ASCII whitespace only.
 bool isSafeSpace(char16_t c)
 {
     return c == u' ' || c == u'\t' || c == u'\n' || c == u'\v' || c == u'\f' || c == u'\r';
@@ -45,8 +44,7 @@ std::u16string trimRight(std::u16string_view s)
     return std::u16string(s.substr(0, end));
 }
 
-// wxStringTokenizer(text, "\n"): whitespace delimiters behave like strtok,
-// so empty tokens are skipped.
+// Skips empty lines.
 std::vector<std::u16string_view> lines(std::u16string_view content)
 {
     std::vector<std::u16string_view> out;
@@ -62,9 +60,8 @@ std::vector<std::u16string_view> lines(std::u16string_view content)
     return out;
 }
 
-// The text CheckText and FindMisspells segment: blocks and drawings left
-// out, "\N", "\n" and "\h" as two spaces, "|" as one; one offset per
-// character of the checked text.
+// Blocks and drawings left out, "\N", "\n" and "\h" as two spaces, "|" as one; one offset per
+// checked character.
 void collectText(std::u16string_view text, SubtitleFormat format, std::u16string &checkText,
                  std::vector<std::size_t> &offsets)
 {
@@ -127,7 +124,6 @@ SpellMarks checkTextAndBrackets(std::u16string_view text, SubtitleFormat format,
     };
     std::u16string checkText;
     std::vector<std::size_t> offsets;
-    // SpellChecker::Check: one wrap's words.
     auto checkWrap = [&] {
         if (checkText.size() == offsets.size() && check) {
             for (const WordSegment &seg : segment(checkText)) {
@@ -306,7 +302,6 @@ std::vector<Misspell> findMisspells(std::u16string_view text, std::u16string_vie
     std::vector<Misspell> out;
     if (checkText.size() != offsets.size())
         return out;
-    // wxString::CmpNoCase: equal length, equal character by character in lower case.
     auto sameNoCase = [&](std::u16string_view a, std::u16string_view b) {
         if (a.size() != b.size())
             return false;
@@ -331,8 +326,7 @@ int replaceMisspell(std::u16string_view misspell, std::u16string_view replacemen
 {
     if (start < 0 || end < start || static_cast<std::size_t>(start) > text.size())
         return start;
-    // Legacy compares the length with end - start - 1 as size_t: a one-letter
-    // word (-1) also takes the path that keeps override blocks.
+    // MUST KILL: end - start - 1 wraps as size_t, so a one-letter word takes the tags path
     const bool hasTags = misspell.size() < static_cast<std::size_t>(end - start - 1);
     const std::size_t from = static_cast<std::size_t>(start);
     const std::size_t count = std::min(static_cast<std::size_t>(end - start + 1), text.size() - from);
@@ -426,7 +420,6 @@ std::vector<std::u16string> userDictionaryEntries(std::u16string_view content)
 
 std::u16string appendUserWord(std::optional<std::u16string_view> content, std::u16string_view word)
 {
-    // OpenWrite::FileOpen fails for an unreadable file and for empty text.
     if (!content || content->empty())
         return std::u16string(word);
     std::u16string out(*content);

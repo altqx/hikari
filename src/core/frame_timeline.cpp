@@ -8,8 +8,6 @@ namespace {
 
 constexpr std::int64_t kMicrosPerSecond = 1'000'000;
 
-// For a constant rate num/den fps, frame position of a relative time r (µs) is
-// r * num / (den * 1e6), rounded as the lookup requires.
 Checked<std::int64_t> framePosition(const FrameRate &rate, std::int64_t relativeUs, Rounding rounding)
 {
     const Rational &fps = rate.framesPerSecond();
@@ -71,7 +69,6 @@ Checked<VideoFrameIndex> FrameTimeline::frameAtOrAfter(DocumentTime t) const
             return std::unexpected(ArithmeticError::OutOfRange);
         return VideoFrameIndex(it - v.starts.begin());
     }
-    // Disordered starts: keep identity, scan in presentation order.
     for (std::size_t i = 0; i < v.starts.size(); ++i)
         if (v.starts[i] >= t)
             return VideoFrameIndex(static_cast<std::int64_t>(i));
@@ -102,7 +99,6 @@ Checked<VideoFrameIndex> FrameTimeline::frameContaining(DocumentTime t) const
             index = i;
     }
     if (index + 1 == v.starts.size()) {
-        // The final frame's extent is only known with a known end.
         const bool inside = v.lastFrameEnd ? t < *v.lastFrameEnd : t == v.starts.back();
         if (!inside)
             return std::unexpected(ArithmeticError::OutOfRange);
@@ -118,7 +114,6 @@ Checked<VideoFrameIndex> FrameTimeline::lastFrameStartingBefore(DocumentTime end
             return std::unexpected(rel.error());
         if (rel->microseconds() <= 0)
             return std::unexpected(ArithmeticError::OutOfRange);
-        // Last i with origin + i/fps < end is ceil(position) - 1.
         auto first = framePosition(c->rate, rel->microseconds(), Rounding::Ceil);
         if (!first)
             return std::unexpected(first.error());
@@ -151,7 +146,6 @@ Checked<Rational> FrameTimeline::frameStartMicroseconds(VideoFrameIndex frame) c
         auto seconds = c->rate.secondsAt(frame);
         if (!seconds)
             return std::unexpected(seconds.error());
-        // origin + seconds * 1e6, kept exact: (origin*den + num*1e6) / den.
         const std::int64_t den = seconds->denominator();
         auto scaledOrigin = checkedMul(c->origin.microseconds(), den);
         auto offset = checkedMul(seconds->numerator(), kMicrosPerSecond);

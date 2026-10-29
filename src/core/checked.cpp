@@ -6,7 +6,6 @@ namespace hikari::core {
 
 namespace {
 
-// Unsigned 128-bit magnitude for the portable path.
 struct U128 {
     std::uint64_t hi = 0;
     std::uint64_t lo = 0;
@@ -36,7 +35,7 @@ bool isZero(const U128 &x)
     return x.hi == 0 && x.lo == 0;
 }
 
-// Restoring long division: quotient and remainder of n / d, d != 0.
+// d != 0.
 void divMod(U128 n, const U128 &d, U128 &q, U128 &r)
 {
     q = {};
@@ -60,8 +59,6 @@ std::uint64_t magnitude(std::int64_t v)
     return v < 0 ? std::uint64_t{0} - static_cast<std::uint64_t>(v) : static_cast<std::uint64_t>(v);
 }
 
-// Applies the rounding to a truncated quotient magnitude q of a result with the
-// given sign, then converts to int64, reporting overflow.
 Checked<std::int64_t> finish(U128 q, const U128 &rem, const U128 &den, bool negative, Rounding rounding)
 {
     bool bump = false;
@@ -74,7 +71,6 @@ Checked<std::int64_t> finish(U128 q, const U128 &rem, const U128 &den, bool nega
             bump = !negative;
             break;
         case Rounding::NearestTiesAway: {
-            // Compare 2*rem with den: equal is a tie, which moves away from zero.
             const U128 twice{(rem.hi << 1) | (rem.lo >> 63), rem.lo << 1};
             bump = (rem.hi >> 63) != 0 || !less(twice, den);
             break;
@@ -107,7 +103,6 @@ namespace detail {
 
 std::strong_ordering compareProductsPortable(std::int64_t a, std::int64_t b, std::int64_t c, std::int64_t d)
 {
-    // Sign of each product, then magnitudes compared as unsigned 128-bit values.
     auto sign = [](std::int64_t x, std::int64_t y) {
         if (x == 0 || y == 0)
             return 0;
@@ -122,7 +117,6 @@ std::strong_ordering compareProductsPortable(std::int64_t a, std::int64_t b, std
     const U128 r = mul64(magnitude(c), magnitude(d));
     if (!less(l, r) && !less(r, l))
         return std::strong_ordering::equal;
-    // Larger magnitude is greater for positive products and smaller for negative.
     const bool lBigger = less(r, l);
     return (lBigger == (sl > 0)) ? std::strong_ordering::greater : std::strong_ordering::less;
 }
@@ -183,11 +177,10 @@ Checked<std::int64_t> mulDiv(std::int64_t a, std::int64_t b, std::int64_t c, std
         return std::unexpected(ArithmeticError::DivisionByZero);
     if (c < 0 || d < 0)
         return std::unexpected(ArithmeticError::InvalidRate);
-    // |a*b| < 2^126 and 0 < c*d < 2^126: both fit a signed 128-bit integer.
     const __int128 num = static_cast<__int128>(a) * b;
     const __int128 den = static_cast<__int128>(c) * d;
-    __int128 q = num / den;     // truncates toward zero
-    const __int128 r = num % den; // same sign as num
+    __int128 q = num / den;
+    const __int128 r = num % den;
     if (r != 0) {
         switch (rounding) {
         case Rounding::Floor:

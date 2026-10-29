@@ -18,7 +18,6 @@ bool isDigit(char8_t c)
     return c >= u8'0' && c <= u8'9';
 }
 
-// [0-9-]+ (min 1) or [0-9-]* (min 0) starting at pos; returns end position.
 std::optional<std::size_t> digitsOrDash(u8sv s, std::size_t pos, std::size_t min)
 {
     std::size_t e = pos;
@@ -49,7 +48,8 @@ std::optional<Timed> matchBracketed(u8sv line, char8_t open, char8_t close)
 
 // ^([0-9]+)[:;]([0-9]+)[:;]([0-9]+)[:;, ]([^\r\n]*)
 struct TmpMatch {
-    std::u8string startLexeme; // groups joined with ':' as the legacy code does
+    // MUST KILL: startLexeme rejoins the groups with ':' whatever the separators were
+    std::u8string startLexeme;
     u8sv text;
 };
 std::optional<TmpMatch> matchTmp(u8sv line)
@@ -75,7 +75,7 @@ std::optional<TmpMatch> matchTmp(u8sv line)
     return m;
 }
 
-// SubsTime::ParseMS for TMPlayer: positional h:mm:ss, no fraction.
+// Positional h:mm:ss, no fraction.
 std::int64_t tmpMilliseconds(u8sv raw)
 {
     raw = trimRight(raw);
@@ -186,7 +186,6 @@ LoadResult loadLineFormats(std::span<const std::byte> bytes)
             continue;
         }
         const u8sv raw(reinterpret_cast<const char8_t *>(b.data() + span.offset), span.length);
-        // Tokens are right-trimmed; zero-length lines are not tokens at all.
         const u8sv token = trimRight(raw);
         if (span.length == 0 && span.terminatorLength != 2) {
             records.push_back(OpaqueRecord{span});
@@ -207,7 +206,7 @@ LoadResult loadLineFormats(std::span<const std::byte> bytes)
             const std::int64_t s = legacy::atoi(m->start), e = legacy::atoi(m->end);
             line.start.lexeme = std::u8string(m->start);
             line.end.lexeme = std::u8string(m->end);
-            line.startFrame = s < 0 ? 0 : s; // legacy clamps a negative frame to 0
+            line.startFrame = s < 0 ? 0 : s;
             line.endFrame = e < 0 ? 0 : e;
             line.text = std::u8string(trimLeft(m->text));
         } else if (auto m2 = matchBracketed(token, u8'[', u8']')) {
@@ -220,10 +219,10 @@ LoadResult loadLineFormats(std::span<const std::byte> bytes)
             line.start = TimeField{t->startLexeme, DocumentTime(tmpMilliseconds(t->startLexeme) * 1000)};
             line.text = std::u8string(trimLeft(t->text));
         } else if (isNonDialogue(token)) {
-            records.push_back(OpaqueRecord{span}); // legacy hidden comment line
+            records.push_back(OpaqueRecord{span}); // a comment line
             continue;
         } else {
-            line.text = std::u8string(token); // plain text: untimed
+            line.text = std::u8string(token);
         }
         if (!detected && format != SubtitleFormat::PlainText)
             detected = format;
@@ -231,7 +230,6 @@ LoadResult loadLineFormats(std::span<const std::byte> bytes)
         records.push_back(std::move(line));
     }
 
-    // SetSubsFormat: the first timed Line decides; ASS and SRT reload.
     if (detected == SubtitleFormat::Ass)
         return loadAss(bytes);
     if (detected == SubtitleFormat::Srt)
@@ -269,7 +267,7 @@ std::vector<std::byte> encodeLineFormat(const Document &document)
             std::u8string body;
             switch (document.format()) {
             case SubtitleFormat::MicroDvd:
-                // A missing end frame is written empty (MicroDVD's open end).
+                // MicroDVD's open end: an empty end frame
                 body = u8"{" + number(line->startFrame.value_or(0)) + u8"}{" +
                        (line->endFrame ? number(*line->endFrame) : std::u8string()) + u8"}" + line->text;
                 break;

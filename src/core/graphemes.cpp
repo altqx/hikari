@@ -37,11 +37,9 @@ std::size_t graphemeEnd(std::u16string_view text, std::size_t at)
         code ? pcre2_match_data_create_from_pattern(code, nullptr) : nullptr);
     if (!code || !data)
         return at + 1;
-    // pcre2_match reads the whole subject's UTF-16 first, so it gets a window
-    // from `at`, wider while the grapheme reaches near its end (long Lines
-    // stay linear). An end is trusted with a whole character, two units,
-    // after it in the window: a window that cuts a surrogate pair leaves a
-    // lone high surrogate that \X would stop before.
+    // pcre2_match reads the whole subject's UTF-16 first, so it gets a growing
+    // window from `at`. An end needs two units after it in the window: a cut
+    // surrogate pair leaves a lone high surrogate that \X stops before.
     const std::size_t rest = text.size() - at;
     for (std::size_t window = 64;; window *= 2) {
         const std::size_t length = std::min(rest, window);
