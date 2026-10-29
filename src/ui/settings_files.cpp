@@ -5,9 +5,11 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QLockFile>
 #include <QPointer>
 #include <QSettings>
 #include <QStringList>
@@ -719,10 +721,36 @@ std::string jsonDocumentText(const QJsonObject &state)
     return text.toStdString();
 }
 
-std::mutex &registryMutex()
+// Recursive: a SettingsFiles whose load throws goes inside open()'s lock.
+std::recursive_mutex &registryMutex()
 {
-    static std::mutex m;
+    static std::recursive_mutex m;
     return m;
+}
+
+// state.json's text into `into`, else where it fails.
+std::optional<application::ParseFailure> parseStateText(std::string_view text, QJsonObject &into)
+{
+    QJsonParseError error;
+    const QJsonDocument document =
+        QJsonDocument::fromJson(QByteArray(text.data(), static_cast<qsizetype>(text.size())), &error);
+    if (error.error != QJsonParseError::NoError) {
+        const auto [line, column] = application::lineColumnAt(text, static_cast<std::size_t>(error.offset));
+        return application::ParseFailure{line, column, error.errorString().toStdString()};
+    }
+    if (!document.isObject())
+        return application::ParseFailure{1, 1, "It is not a JSON object."};
+    QJsonObject object = document.object();
+    std::optional<std::int64_t> version;
+    if (const QJsonValue v = object.value(QLatin1String("version")); v.isDouble() && std::floor(v.toDouble()) == v.toDouble())
+        version = static_cast<std::int64_t>(v.toDouble());
+    else if (!v.isUndefined())
+        return application::ParseFailure{0, 0, "Its version is not a whole number."};
+    if (auto failure = application::checkFileVersion(version, SettingsFiles::kVersion))
+        return failure;
+    object.remove(QLatin1String("version"));
+    into = object;
+    return std::nullopt;
 }
 
 std::map<QString, std::weak_ptr<SettingsFiles>> &registry()
@@ -802,7 +830,7 @@ void SettingsFiles::load()
     const auto conversion = application::convertOnce(pathOf(path(Settings)), pathOf(legacyIni()),
                                                      [this] { return convertIni(); });
     m_converted = conversion == application::Conversion::Converted;
-    m_conversionPending = conversion == application::Conversion::Failed;
+    m_conversionPending = conversion == application::Conversion::Failed && m_writable[Settings];
     if (conversion != application::Conversion::NotNeeded)
         return; // the documents are the converted ones (also when a write failed)
     const auto parseToml = [](toml::table &into) {
@@ -814,28 +842,7 @@ void SettingsFiles::load()
             return std::nullopt;
         };
     };
-    const auto parseJson = [this](std::string_view text) -> std::optional<application::ParseFailure> {
-        QJsonParseError error;
-        const QJsonDocument document =
-            QJsonDocument::fromJson(QByteArray(text.data(), static_cast<qsizetype>(text.size())), &error);
-        if (error.error != QJsonParseError::NoError) {
-            const auto [line, column] = application::lineColumnAt(text, static_cast<std::size_t>(error.offset));
-            return application::ParseFailure{line, column, error.errorString().toStdString()};
-        }
-        if (!document.isObject())
-            return application::ParseFailure{1, 1, "It is not a JSON object."};
-        QJsonObject object = document.object();
-        std::optional<std::int64_t> version;
-        if (const QJsonValue v = object.value(QLatin1String("version")); v.isDouble() && std::floor(v.toDouble()) == v.toDouble())
-            version = static_cast<std::int64_t>(v.toDouble());
-        else if (!v.isUndefined())
-            return application::ParseFailure{0, 0, "Its version is not a whole number."};
-        if (auto failure = application::checkFileVersion(version, kVersion))
-            return failure;
-        object.remove(QLatin1String("version"));
-        m_state = object;
-        return std::nullopt;
-    };
+    const auto parseJson = [this](std::string_view text) { return parseStateText(text, m_state); };
     const std::pair<File, std::function<std::optional<application::ParseFailure>(std::string_view)>> files[] = {
         {Settings, parseToml(m_settings)}, {Hotkeys, parseToml(m_hotkeys)}, {State, parseJson}};
     for (const auto &[file, parse] : files) {
@@ -861,6 +868,13 @@ void SettingsFiles::load()
 
 bool SettingsFiles::convertIni()
 {
+    // An INI that does not read is not converted to defaults: nothing is
+    // written this session, and the next start tries again.
+    if (QFile probe(legacyIni()); !probe.open(QIODevice::ReadOnly)) {
+        m_problems.push_back({pathOf(legacyIni()), {}, {0, 0, "It could not be read."}});
+        std::ranges::fill(m_writable, false);
+        return false;
+    }
     QVariantMap ini;
     {
         const QSettings file(legacyIni(), QSettings::IniFormat);
@@ -965,6 +979,13 @@ void SettingsFiles::write(const SettingDefinition &setting, const SettingValue &
         remove(setting);
         return;
     }
+    put(setting, v);
+    m_changed[fileOf(setting)].insert(std::string(setting.id));
+    changed(fileOf(setting));
+}
+
+void SettingsFiles::put(const SettingDefinition &setting, const SettingValue &v)
+{
     const auto *list = std::get_if<StringList>(&v);
     switch (fileOf(setting)) {
     case Hotkeys:
@@ -1051,10 +1072,16 @@ void SettingsFiles::write(const SettingDefinition &setting, const SettingValue &
         break;
     }
     }
-    changed(fileOf(setting));
 }
 
 void SettingsFiles::remove(const SettingDefinition &setting)
+{
+    erase(setting);
+    m_changed[fileOf(setting)].insert(std::string(setting.id));
+    changed(fileOf(setting));
+}
+
+void SettingsFiles::erase(const SettingDefinition &setting)
 {
     switch (fileOf(setting)) {
     case Hotkeys:
@@ -1086,7 +1113,6 @@ void SettingsFiles::remove(const SettingDefinition &setting)
         eraseToml(m_settings, setting.id);
         break;
     }
-    changed(fileOf(setting));
 }
 
 void SettingsFiles::changed(File file)
@@ -1122,6 +1148,12 @@ bool SettingsFiles::writeFile(File file)
 {
     if (!m_writable[file])
         return false;
+    // One writer at a time on the folder, as QSettings' lock file did; without
+    // the lock (a stuck one, a folder that cannot hold it) it writes all the same.
+    QDir().mkpath(m_folder);
+    QLockFile lock(m_folder + QStringLiteral("/.settings.lock"));
+    lock.tryLock(2000);
+    mergeFromDisk(file);
     std::string text;
     switch (file) {
     case Settings:
@@ -1138,7 +1170,41 @@ bool SettingsFiles::writeFile(File file)
     if (!application::writeFileAtomically(pathOf(path(file)), text))
         return false;
     m_dirty[file] = false;
+    m_changed[file].clear();
     return true;
+}
+
+// Another HikariSub on the folder may have written the file since this one
+// read it: the file as it is now is kept, with only what changed here put
+// over it.
+void SettingsFiles::mergeFromDisk(File file)
+{
+    if (m_changed[file].empty())
+        return;
+    const auto bytes = application::readOwnedFile(pathOf(path(file)));
+    if (!bytes)
+        return;
+    std::vector<std::pair<const SettingDefinition *, std::optional<SettingValue>>> ours;
+    for (const auto &id : m_changed[file])
+        if (const auto *setting = application::findSetting(id))
+            ours.emplace_back(setting, read(*setting));
+    if (file == State) {
+        QJsonObject state;
+        if (parseStateText(*bytes, state))
+            return;
+        m_state = std::move(state);
+    } else {
+        auto parsed = parseTomlFile(*bytes, kVersion);
+        auto *table = std::get_if<toml::table>(&parsed);
+        if (!table)
+            return;
+        (file == Settings ? m_settings : m_hotkeys) = std::move(*table);
+    }
+    for (const auto &[setting, value] : ours)
+        if (value)
+            put(*setting, *value);
+        else
+            erase(*setting);
 }
 
 } // namespace hikari::ui

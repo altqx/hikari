@@ -712,6 +712,78 @@ private slots:
         QVERIFY(readAll(state).contains("/v.mkv"));
     }
 
+    // Two HikariSubs on one folder: each writes only its own changes over
+    // what the file holds by then.
+    void anotherProcessesChangesStay()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        SettingsStore store(file);
+        auto other = std::make_shared<SettingsFiles>(dir.path()); // read before the store wrote
+        store.set("audio.volume", 70);
+        store.sync();
+        other->write(*application::findSetting("audio.delay"), std::int64_t{5});
+        other->flush();
+        QCOMPARE(readAll(file), QByteArray("version = 1\n\n[audio]\ndelay = 5\nvolume = 70\n"));
+        other->remove(*application::findSetting("audio.volume"));
+        other->flush();
+        QCOMPARE(readAll(file), QByteArray("version = 1\n\n[audio]\ndelay = 5\n"));
+    }
+
+    void aHikariIniThatCannotBeReadIsNotConverted()
+    {
+        QTemporaryDir dir;
+        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        writeAll(ini, "[profile]\naudio.volume=70\n");
+        QVERIFY(QFile::setPermissions(ini, {}));
+        if (QFile probe(ini); probe.open(QIODevice::ReadOnly))
+            QSKIP("the file reads without permissions (root, or a file system without them)");
+        {
+            SettingsStore store(file);
+            QVERIFY(!store.converted());
+            QCOMPARE(int(store.problems().size()), 1);
+            QCOMPARE(QFileInfo(QString::fromStdU16String(store.problems().front().file.u16string())).fileName(),
+                     QStringLiteral("hikari.ini"));
+            store.set("audio.delay", 5);
+        }
+        QVERIFY(!QFileInfo::exists(file));
+        QVERIFY(!QFileInfo::exists(ini + QStringLiteral(".old")));
+        QVERIFY(QFile::setPermissions(ini, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+        SettingsStore again(file);
+        QVERIFY(again.converted());
+        QCOMPARE(again.integer("audio.volume"), 70);
+    }
+
+    void aFileKeepsItsPermissions()
+    {
+#ifdef Q_OS_WIN
+        QSKIP("no POSIX permissions");
+#endif
+        QTemporaryDir dir;
+        const QString state = dir.filePath(QStringLiteral("state.json"));
+        writeAll(state, "{\"version\": 1}");
+        const auto owner = QFileDevice::ReadOwner | QFileDevice::WriteOwner;
+        QVERIFY(QFile::setPermissions(state, owner));
+        SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
+        store.set("recent.video", QStringList{QStringLiteral("/v.mkv")});
+        store.sync();
+        QVERIFY(readAll(state).contains("/v.mkv"));
+        QCOMPARE(QFile::permissions(state) & ~(QFileDevice::ReadUser | QFileDevice::WriteUser), owner);
+    }
+
+    void aFolderInAFilesPlaceIsNotRead()
+    {
+        QTemporaryDir dir;
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("state.json/x"))));
+        SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
+        QCOMPARE(int(store.problems().size()), 1);
+        QVERIFY(store.problems().front().keptAs.empty());
+        store.set("recent.video", QStringList{QStringLiteral("/v.mkv")});
+        store.sync();
+        QVERIFY(QFileInfo(dir.filePath(QStringLiteral("state.json"))).isDir());
+    }
+
     // The panel reads the legacy options (SHIFT_TIMES_TIME 2000, backward
     // when SHIFT_TIMES_OPTIONS is unset) and stores nothing until it changes.
     void shiftTimesPanelStartsFromTheLegacyOptions()

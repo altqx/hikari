@@ -62,13 +62,21 @@ std::optional<ParseFailure> checkFileVersion(std::optional<std::int64_t> version
 
 std::optional<std::string> readOwnedFile(const fs::path &path)
 {
-    std::ifstream in(path, std::ios::binary);
-    if (!in)
+    // A folder in the file's place opens on Linux, then throws on reading.
+    std::error_code ec;
+    if (!fs::is_regular_file(path, ec))
         return std::nullopt;
-    std::string bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    if (in.bad())
+    try {
+        std::ifstream in(path, std::ios::binary);
+        if (!in)
+            return std::nullopt;
+        std::string bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        if (in.bad())
+            return std::nullopt;
+        return bytes;
+    } catch (const std::ios_base::failure &) {
         return std::nullopt;
-    return bytes;
+    }
 }
 
 bool writeFileAtomically(const fs::path &path, std::string_view bytes)
@@ -77,10 +85,14 @@ bool writeFileAtomically(const fs::path &path, std::string_view bytes)
     if (path.has_parent_path())
         fs::create_directories(path.parent_path(), ec);
     const fs::path temporary = withSuffix(path, ".writing");
+    const fs::file_status existing = fs::status(path, ec);
     {
         std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
         if (!out)
             return false;
+        // The file keeps its permissions: a private state.json stays private.
+        if (fs::is_regular_file(existing))
+            fs::permissions(temporary, existing.permissions(), fs::perm_options::replace, ec);
         out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
         out.flush();
         if (!out) {

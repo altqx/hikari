@@ -18,7 +18,9 @@
 //
 // Every SettingsStore of the process on one folder shares one SettingsFiles,
 // as they shared QSettings' cache before: writes are kept until the next
-// event loop pass, flush(), or the last store going.
+// event loop pass, flush(), or the last store going. A file is written over
+// what it holds by then, with only this process's changes put in, under a
+// lock file in the folder: another HikariSub on the folder keeps its own.
 
 #include "hikari/application/owned_file.h"
 #include "hikari/application/settings.h"
@@ -29,6 +31,7 @@
 #include <QString>
 
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -69,6 +72,10 @@ public:
 private:
     void load();
     bool convertIni();
+    // write() and remove() without recording the change.
+    void put(const application::SettingDefinition &setting, const application::SettingValue &value);
+    void erase(const application::SettingDefinition &setting);
+    void mergeFromDisk(File file);
     bool writeConversion();
     QString legacyIni() const { return m_folder + QStringLiteral("/hikari.ini"); }
     void changed(File file);
@@ -79,6 +86,8 @@ private:
     toml::table m_hotkeys;
     QJsonObject m_state;
     bool m_dirty[kFiles] = {};
+    // The settings changed here since each file was last written.
+    std::set<std::string> m_changed[kFiles];
     // A broken file that could not be moved aside is never written.
     bool m_writable[kFiles] = {true, true, true};
     bool m_flushQueued = false;

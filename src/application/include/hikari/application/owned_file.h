@@ -59,9 +59,10 @@ enum class Conversion { NotNeeded, Converted, Failed };
 Conversion convertOnce(const std::filesystem::path &target, const std::filesystem::path &legacy,
                        const std::function<bool()> &convert);
 
-// The file's bytes, nothing when it cannot be read.
+// The file's bytes, nothing when it cannot be read (or is not a file).
 std::optional<std::string> readOwnedFile(const std::filesystem::path &path);
-// Writes `bytes` to a temporary file beside `path` and renames it over `path`.
+// Writes `bytes` to a temporary file beside `path` and renames it over `path`;
+// an existing file's permissions carry over.
 bool writeFileAtomically(const std::filesystem::path &path, std::string_view bytes);
 
 // A path's text for messages (UTF-8, native separators).
