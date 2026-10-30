@@ -5,6 +5,7 @@
 #include "hikari/app/application.h"
 #include "hikari/app/crash_record.h"
 #include "hikari/app/hang_watchdog.h"
+#include "hikari/app/local_only_network.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
@@ -289,6 +290,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 
     hikari::ui::theme::chooseControlsStyle();
     QQmlApplicationEngine engine;
+    refuseRemoteUrls(engine);
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());
     attachFontCatalogPreview(engine, application.fontCatalogs());

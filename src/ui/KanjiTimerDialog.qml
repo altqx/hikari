@@ -211,9 +211,9 @@ DialogWindow {
                     rightPadding: 12
                     topPadding: 5
                     bottomPadding: 5
-                    Accessible.name: qsTr("Line pair %1: %2, %3. %4").arg(modelData.number)
-                                     .arg(modelData.kanji || qsTr("no kanji line"))
-                                     .arg(modelData.romaji || qsTr("no romaji line")).arg(status.text)
+                    Accessible.name: qsTr("Line pair %1: %2, %3. %4").arg(modelData.number,
+                                          modelData.kanji || qsTr("no kanji line"),
+                                          modelData.romaji || qsTr("no romaji line"), status.text)
                     background: Rectangle {
                         color: row.isCurrent ? Theme.select : row.hovered ? Theme.raised : "transparent"
                         Rectangle { visible: row.isCurrent; width: 3; height: parent.height; color: Theme.accent }
@@ -271,8 +271,8 @@ DialogWindow {
                                      : parent.kind === "check" || parent.kind === "changed" ? Theme.warning
                                      : Theme.muted
                                 text: row.working
-                                      ? qsTr("%1 of %2 groups").arg(Math.min(row.modelData.linked + 1, row.modelData.groups))
-                                                               .arg(row.modelData.groups)
+                                      ? qsTr("%1 of %2 groups").arg(Math.min(row.modelData.linked + 1, row.modelData.groups),
+                                                                    row.modelData.groups)
                                       : dialog.statusText(row.modelData)
                             }
                         }
@@ -601,9 +601,9 @@ DialogWindow {
                     readonly property var detail: parent.detail
                     text: dialog.overRest ? qsTr("Click a kanji: the current group ends there. Click a syllable: its romaji does.")
                         : detail.romaji === undefined ? ""
-                        : detail.blank ? qsTr("blank ← %1 · %2 cs").arg(detail.romaji).arg(detail.cs)
-                        : detail.reading ? qsTr("%1 ← %2 (%3) · %4 cs").arg(detail.kanji).arg(detail.romaji).arg(detail.reading).arg(detail.cs)
-                        : qsTr("%1 ← %2 · %3 cs").arg(detail.kanji).arg(detail.romaji).arg(detail.cs)
+                        : detail.blank ? qsTr("blank ← %1 · %2 cs").arg(detail.romaji, detail.cs)
+                        : detail.reading ? qsTr("%1 ← %2 (%3) · %4 cs").arg(detail.kanji, detail.romaji, detail.reading, detail.cs)
+                        : qsTr("%1 ← %2 · %3 cs").arg(detail.kanji, detail.romaji, detail.cs)
                 }
                 RowLayout {
                     objectName: "kanjiReadingHint"
@@ -726,7 +726,7 @@ DialogWindow {
                         font.family: "monospace"
                         readonly property string plain: (dialog.pair.result || []).map(p => p.text).join("")
                         text: (dialog.pair.result || []).map(p => {
-                            const escaped = p.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                            const escaped = Qt.escapeHtml(p.text)
                             return p.tag ? "<font color=\"" + Theme.muted + "\">" + escaped + "</font>" : escaped
                         }).join("")
                     }

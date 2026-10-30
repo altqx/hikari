@@ -387,7 +387,7 @@ DialogWindow {
             Layout.topMargin: 6
             Layout.bottomMargin: 18
             Accessible.role: Accessible.StaticText
-            Accessible.name: qsTr("Step %1 of %2").arg(setup.page + 1).arg(setup.pages.length)
+            Accessible.name: qsTr("Step %1 of %2").arg(setup.page + 1, setup.pages.length)
             Repeater {
                 model: setup.pages.length
                 Rectangle {

@@ -120,7 +120,7 @@ DialogWindow {
                     text: stepItem.modelData
                     font.weight: stepItem.number === dialog.step ? Font.DemiBold : Font.Normal
                     color: stepItem.number <= dialog.step ? Theme.text : Theme.muted
-                    Accessible.name: qsTr("Step %1 of 3: %2").arg(stepItem.number).arg(stepItem.modelData)
+                    Accessible.name: qsTr("Step %1 of 3: %2").arg(stepItem.number, stepItem.modelData)
                 }
                 Rectangle {
                     visible: stepItem.number < 3

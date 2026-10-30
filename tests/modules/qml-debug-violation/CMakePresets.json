@@ -1,0 +1,19 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "dev",
+      "cacheVariables": { "HIKARI_QML_HOT_RELOAD": { "type": "BOOL", "value": "ON" } }
+    },
+    {
+      "name": "release",
+      "inherits": ["dev"]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "release",
+      "steps": [{ "type": "configure", "name": "release" }]
+    }
+  ]
+}

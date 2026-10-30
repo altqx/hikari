@@ -122,10 +122,10 @@ DialogWindow {
         border.color: Theme.line
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.minimumHeight: Math.min(list.contentHeight + header.height + 2, 120)
-        Layout.preferredHeight: Math.min(list.contentHeight + header.height + 2, 320)
+        Layout.minimumHeight: Math.min(list.contentHeight + columnHeader.height + 2, 120)
+        Layout.preferredHeight: Math.min(list.contentHeight + columnHeader.height + 2, 320)
         Rectangle {
-            id: header
+            id: columnHeader
             x: 1; y: 1
             width: parent.width - 2
             height: 28
@@ -144,9 +144,9 @@ DialogWindow {
             id: list
             objectName: "clashReviewRows"
             x: 1
-            y: header.height + 1
+            y: columnHeader.height + 1
             width: parent.width - 2
-            height: parent.height - header.height - 2
+            height: parent.height - columnHeader.height - 2
             clip: true
             model: review.rows
             activeFocusOnTab: false

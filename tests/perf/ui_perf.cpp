@@ -42,6 +42,26 @@ int main(int argc, char **argv)
         QPainter painter(&frame);
         grid.paint(&painter);
     }}));
+    ui::LineFilterModel shown;
+    shown.setLineModel(&model);
+    shown.setPredicate([](const core::LineRecord &line) { return line.visibility != core::LineVisibility::Hidden; });
+    application::Selection all, one;
+    for (int row = 0; row < model.rowCount(); ++row)
+        all.selected.insert(*model.lineAt(row));
+    one.active = *model.lineAt(0);
+    one.selected.insert(*one.active);
+    bool selectAll = false;
+    results.push_back(perf::run({"ui.grid_filter.select_all_toggle.50k_lines", 5, 200, perf::kWarmWarmup, [&] {
+        selectAll = !selectAll;
+        model.setSelection(selectAll ? all : one, one.active);
+    }}));
+    bool marks = false;
+    results.push_back(perf::run({"ui.grid_filter.run_marks_toggle.50k_lines", 5, 200, perf::kWarmWarmup, [&] {
+        marks = !marks;
+        model.setRunMarks(marks);
+    }}));
+    if (shown.rowCount() != model.rowCount())
+        return 1;
     const auto host = perf::currentHost();
     const bool calibrated = perf::isCalibrated(host, argv[2]);
     if (!perf::writeReport(argv[1], host, calibrated, results))

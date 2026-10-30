@@ -14,18 +14,18 @@ F.TabButton {
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: control.checked ? Qt.lighter(F.Fusion.tabFrameColor(control.palette), 1.04)
-                                       : Qt.darker(F.Fusion.tabFrameColor(control.palette), 1.08)
+                color: control.checked ? Color.lighter(F.Fusion.tabFrameColor(control.palette), 1.04)
+                                       : Color.darker(F.Fusion.tabFrameColor(control.palette), 1.08)
             }
             GradientStop {
                 position: control.checked ? 0 : 0.85
-                color: control.checked ? Qt.lighter(F.Fusion.tabFrameColor(control.palette), 1.04)
-                                       : Qt.darker(F.Fusion.tabFrameColor(control.palette), 1.08)
+                color: control.checked ? Color.lighter(F.Fusion.tabFrameColor(control.palette), 1.04)
+                                       : Color.darker(F.Fusion.tabFrameColor(control.palette), 1.08)
             }
             GradientStop {
                 position: 1
                 color: control.checked ? F.Fusion.tabFrameColor(control.palette)
-                                       : Qt.darker(F.Fusion.tabFrameColor(control.palette), 1.16)
+                                       : Color.darker(F.Fusion.tabFrameColor(control.palette), 1.16)
             }
         }
     }

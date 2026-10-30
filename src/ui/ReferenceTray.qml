@@ -42,7 +42,7 @@ FocusScope {
             text: !tray.shell.referenceLinked ? qsTr("Independent navigation")
                 : tray.shell.referenceNoMatch ? qsTr("No matching line")
                 : tray.shell.referenceMatchCount > 0
-                  ? qsTr("Match %1 of %2").arg(tray.shell.referenceMatchIndex + 1).arg(tray.shell.referenceMatchCount)
+                  ? qsTr("Match %1 of %2").arg(tray.shell.referenceMatchIndex + 1, tray.shell.referenceMatchCount)
                 : ""
             Accessible.role: Accessible.StaticText
             Accessible.name: text

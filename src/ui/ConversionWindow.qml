@@ -321,7 +321,7 @@ DialogWindow {
                             running: row.fresh
                             ColorAnimation { to: Theme.select; duration: 120 }
                             PauseAnimation { duration: 600 }
-                            ColorAnimation { to: Qt.rgba(0, 0, 0, 0); duration: 400 }
+                            ColorAnimation { to: Color.rgba(0, 0, 0, 0); duration: 400 }
                         }
                     }
                 }

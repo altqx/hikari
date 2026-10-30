@@ -16,7 +16,8 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     package_kind.cpp include/hikari/app/package_kind.h
     user_folder.cpp include/hikari/app/user_folder.h
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
-    kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h)
+    kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
+    local_only_network.cpp include/hikari/app/local_only_network.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core
@@ -43,6 +44,21 @@ hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_ui
 qt_add_executable(hikarisub main.cpp)
 target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations)
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
+option(HIKARI_QML_HOT_RELOAD "Development only: QML debugging and the hikarisub_qmlpreview target" OFF)
+if(HIKARI_QML_HOT_RELOAD)
+    target_compile_definitions(hikari_composition PRIVATE QT_QML_DEBUG)
+    find_program(HIKARI_QMLPREVIEW qmlpreview HINTS "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}" NO_DEFAULT_PATH REQUIRED)
+    # Qt makes <exe>_qmlpreview only for the executable that owns the QML module; ours live in libraries.
+    set(hikari_qrc_args)
+    foreach(module hikari_ui hikari_ui_style)
+        list(APPEND hikari_qrc_args "$<LIST:TRANSFORM,$<TARGET_PROPERTY:${module},_qt_generated_qrc_files>,PREPEND,--resource=>")
+    endforeach()
+    add_custom_target(hikarisub_qmlpreview
+        COMMAND "${HIKARI_QMLPREVIEW}" --interactive ${hikari_qrc_args} "$<TARGET_FILE:hikarisub>"
+        COMMAND_EXPAND_LISTS
+        DEPENDS hikarisub
+        USES_TERMINAL)
+endif()
 execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     OUTPUT_VARIABLE HIKARI_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
 # In CI's container git refuses the checkout (dubious ownership); Actions sets GITHUB_SHA.

@@ -23,11 +23,6 @@ Popup {
         if (active)
             finish(true)
         anchorRect = area || Qt.rect(0, 0, 0, 0)
-        if (anchorItem && anchorItem === pressedAnchor && Date.now() - pressedAt < 1000) {
-            pressedAnchor = null
-            return false
-        }
-        pressedAnchor = null
         anchor = anchorItem && anchorItem.visible ? anchorItem : null
         const base = anchor || host || anchorItem
         parent = anchor ? anchor : (base && base.Window.window ? base.Window.window.contentItem : base)
@@ -40,7 +35,6 @@ Popup {
         place()
         if (initialFocus)
             initialFocus.forceActiveFocus()
-        return true
     }
     function keep() { finish(true) }
     function revert() { finish(false) }
@@ -90,24 +84,7 @@ Popup {
     padding: 12
     margins: 8
     closePolicy: Popup.CloseOnPressOutside | Popup.CloseMultiple
-    // With Popup.Window, the press outside that closes it also reaches the anchor beneath (openAt skips it).
-    onClosed: {
-        const pressed = active && popupType === Popup.Window
-        const was = anchor
-        finish(true)
-        if (pressed) {
-            pressedAnchor = was
-            pressedAt = Date.now()
-            Qt.callLater(keepPressedAnchor)
-        }
-    }
-    function keepPressedAnchor() {
-        if (pressedAnchor && pressedAnchor.pressed === false)
-            pressedAnchor = null
-    }
-    // MUST KILL: pressedAnchor/pressedAt swallow an anchor reopen within 1 s of that press
-    property Item pressedAnchor: null
-    property double pressedAt: 0
+    onClosed: finish(true)
 
     background: PopoverBackground {}
 

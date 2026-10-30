@@ -387,7 +387,7 @@ DialogWindow {
                 color: Theme.muted
                 text: shapeText.error.length > 0 ? qsTr("The shape keeps its last drawing until this one can be used")
                     : previewFrame.box.width > 0 || previewFrame.box.height > 0
-                      ? qsTr("%1 × %2").arg(Math.round(previewFrame.box.width)).arg(Math.round(previewFrame.box.height))
+                      ? qsTr("%1 × %2").arg(Math.round(previewFrame.box.width), Math.round(previewFrame.box.height))
                       : ""
             }
             Item { Layout.fillHeight: true }

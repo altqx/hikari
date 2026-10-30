@@ -295,7 +295,7 @@ private slots:
     void popoverKeepsOnEnterAndOutsideAndRevertsOnEsc()
     {
         QQuickItem *anchor = findIn(root.get(), "anchorButton");
-        QVERIFY(run(QStringLiteral("popover.openAt(anchorButton)")).toBool());
+        run(QStringLiteral("popover.openAt(anchorButton)"));
         QTRY_VERIFY(run(QStringLiteral("popover.opened")).toBool());
         const QPointF at = run(QStringLiteral("popover.contentItem.mapToItem(null, 0, 0)")).toPointF();
         QVERIFY(at.y() > anchor->mapToScene(QPointF(0, anchor->height())).y());
@@ -353,6 +353,22 @@ private slots:
         QTRY_VERIFY(!run(QStringLiteral("popover.visible")).toBool());
         QTest::qWait(100);
         QVERIFY(!run(QStringLiteral("popover.visible")).toBool());
+    }
+
+    void clickingTheAnchorOfAWindowedPopoverClosesIt()
+    {
+        root->resize(150, 90);
+        QTRY_COMPARE(root->height(), 90);
+        run(QStringLiteral("toggle.x = 10; toggle.y = 10"));
+        QQuickItem *toggle = findIn(root.get(), "toggleButton");
+        click(toggle);
+        QTRY_VERIFY(run(QStringLiteral("popover.opened")).toBool());
+        QVERIFY(run(QStringLiteral("popover.popupType === Popup.Window")).toBool());
+        click(toggle);
+        QTRY_VERIFY(!run(QStringLiteral("popover.visible")).toBool());
+        QTest::qWait(300);
+        QVERIFY(!run(QStringLiteral("popover.visible")).toBool());
+        QCOMPARE(notes(), QStringList{QStringLiteral("kept")});
     }
 
     void spinBoxesOpenNoContextMenu()
@@ -584,10 +600,6 @@ private slots:
         QVERIFY2(many.elapsed() < 5000, QByteArray::number(many.elapsed()).constData());
         run(QStringLiteral("styles.revert()"));
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
-        run(QStringLiteral("styles.pressedAnchor = date.field; styles.keepPressedAnchor()"));
-        QVERIFY(run(QStringLiteral("styles.pressedAnchor === date.field")).toBool());
-        run(QStringLiteral("styles.pressedAnchor = anchorButton; styles.keepPressedAnchor()"));
-        QVERIFY(run(QStringLiteral("styles.pressedAnchor === null")).toBool());
     }
 
     void hotkeyCaptureSaysWhyAndAsksOnTheForm()

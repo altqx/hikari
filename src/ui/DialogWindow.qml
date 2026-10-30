@@ -6,7 +6,7 @@ import QtQuick.Templates as T
 import Hikari.Ui
 
 Window {
-    id: dialog
+    id: dialogWindow
     property string dialogId: ""
     property string guideId: dialogId
     property SettingsStore settings: null
@@ -113,19 +113,19 @@ Window {
             rejected()
     }
     Connections {
-        target: dialog.startFocus
+        target: dialogWindow.startFocus
         ignoreUnknownSignals: true
         function onFocusReasonChanged() {
-            const first = dialog.startFocus
+            const first = dialogWindow.startFocus
             if (!first)
                 return
-            dialog.startFocus = null
+            dialogWindow.startFocus = null
             if (first.focusReason === Qt.ActiveWindowFocusReason)
                 first.focusReason = Qt.TabFocusReason
         }
     }
     onVisibleChanged: {
-        if (visible || WindowFrame.remaking(dialog))
+        if (visible || WindowFrame.remaking(dialogWindow))
             return
         placement.remember()
         startFocus = null
@@ -141,32 +141,32 @@ Window {
         }
     }
     Connections {
-        target: dialog.transientParent
+        target: dialogWindow.transientParent
         ignoreUnknownSignals: true
         function onVisibleChanged() {
-            const opener = dialog.transientParent
-            if (dialog.visible && opener && !opener.visible && !WindowFrame.remaking(opener))
-                dialog.close()
+            const opener = dialogWindow.transientParent
+            if (dialogWindow.visible && opener && !opener.visible && !WindowFrame.remaking(opener))
+                dialogWindow.close()
         }
     }
 
     property string titleBarChoice: settings ? settings.value("appearance.titleBar") : "auto"
     Connections {
-        target: dialog.settings
+        target: dialogWindow.settings
         function onChanged(id) {
             if (id === "appearance.titleBar")
-                dialog.titleBarChoice = dialog.settings.value(id)
+                dialogWindow.titleBarChoice = dialogWindow.settings.value(id)
         }
     }
     DialogFrame {
-        id: frame
-        window: dialog
-        resizable: dialog.resizable
-        closable: dialog.closable
-        custom: WindowFrame.customAvailable && !WindowFrame.usesSystemTitleBar(dialog.titleBarChoice)
+        id: dialogFrame
+        window: dialogWindow
+        resizable: dialogWindow.resizable
+        closable: dialogWindow.closable
+        custom: WindowFrame.customAvailable && !WindowFrame.usesSystemTitleBar(dialogWindow.titleBarChoice)
         // X11 sends the frame's margins after the frame is made: refit now and again later.
         onCustomChanged: {
-            if (!dialog.visible)
+            if (!dialogWindow.visible)
                 return
             Qt.callLater(placement.refit)
             refitAgain.restart()
@@ -179,10 +179,10 @@ Window {
     }
     DialogPlacement {
         id: placement
-        window: dialog
-        dialogId: dialog.dialogId
-        settings: dialog.settings
-        resizable: dialog.resizable
+        window: dialogWindow
+        dialogId: dialogWindow.dialogId
+        settings: dialogWindow.settings
+        resizable: dialogWindow.resizable
     }
 
     FocusScope {
@@ -191,23 +191,23 @@ Window {
         anchors.fill: parent
         focus: true
         Accessible.role: Accessible.Dialog
-        Accessible.name: dialog.title
+        Accessible.name: dialogWindow.title
         Keys.onEscapePressed: event => {
             event.accepted = true
-            if (dialog.closable)
-                dialog.reject()
+            if (dialogWindow.closable)
+                dialogWindow.reject()
         }
-        Keys.onReturnPressed: event => dialog.enter(event)
-        Keys.onEnterPressed: event => dialog.enter(event)
+        Keys.onReturnPressed: event => dialogWindow.enter(event)
+        Keys.onEnterPressed: event => dialogWindow.enter(event)
 
         ColumnLayout {
             id: column
             anchors.fill: parent
             spacing: 0
             DialogTitleBar {
-                frame: frame
-                closable: dialog.closable
-                guideId: dialog.guideId
+                frame: dialogFrame
+                closable: dialogWindow.closable
+                guideId: dialogWindow.guideId
                 Layout.fillWidth: true
             }
             ColumnLayout {
@@ -216,12 +216,12 @@ Window {
                 spacing: 12
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.leftMargin: dialog.flush ? 0 : 24
-                Layout.rightMargin: dialog.flush ? 0 : 24
-                Layout.topMargin: dialog.flush ? 0 : frame.custom ? 12 : 24
+                Layout.leftMargin: dialogWindow.flush ? 0 : 24
+                Layout.rightMargin: dialogWindow.flush ? 0 : 24
+                Layout.topMargin: dialogWindow.flush ? 0 : dialogFrame.custom ? 12 : 24
             }
             Rectangle {
-                visible: dialog.footerRule && footer.visible
+                visible: dialogWindow.footerRule && footer.visible
                 color: Theme.line
                 implicitHeight: 1
                 Layout.fillWidth: true
@@ -232,7 +232,7 @@ Window {
                 visible: closing.count > 0 || leading.visibleChildren.length > 0
                 spacing: 8
                 Layout.fillWidth: true
-                Layout.margins: dialog.footerRule ? 20 : 24
+                Layout.margins: dialogWindow.footerRule ? 20 : 24
                 Layout.leftMargin: 24
                 Layout.rightMargin: 24
                 RowLayout {
@@ -260,7 +260,7 @@ Window {
 
     MainWindowEdges {
         objectName: "dialogEdges"
-        frame: frame
+        frame: dialogFrame
         anchors.fill: parent
         z: 100
     }
