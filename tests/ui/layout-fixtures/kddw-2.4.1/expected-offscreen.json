@@ -1,0 +1,925 @@
+{
+    "engine": "2.4.1",
+    "layouts": {
+        "editing": {
+            "closed": [
+                "Reference",
+                "Timing",
+                "Search",
+                "Automation",
+                "Original",
+                "Log",
+                "Styles",
+                "FixMinorErrors",
+                "Template",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+            ],
+            "groups": [
+                {
+                    "current": "Audio",
+                    "floating": false,
+                    "panels": [
+                        "Audio"
+                    ],
+                    "rect": {
+                        "height": 213,
+                        "width": 640,
+                        "x": 640,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 205,
+                        "width": 640,
+                        "x": 640,
+                        "y": 273
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                },
+                {
+                    "current": "Video",
+                    "floating": false,
+                    "panels": [
+                        "Video"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 639,
+                        "x": 0,
+                        "y": 59
+                    }
+                }
+            ],
+            "preset": "Editing",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        },
+        "floating": {
+            "closed": [
+                "Video",
+                "Reference",
+                "Timing",
+                "Automation",
+                "Original",
+                "Log",
+                "FixMinorErrors",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+                {
+                    "groups": [
+                        "Audio"
+                    ],
+                    "height": 178,
+                    "width": 1280
+                },
+                {
+                    "groups": [
+                        "Styles",
+                        "Search"
+                    ],
+                    "height": 376,
+                    "width": 1280
+                }
+            ],
+            "groups": [
+                {
+                    "current": "Audio",
+                    "floating": true,
+                    "panels": [
+                        "Audio"
+                    ],
+                    "rect": {
+                        "height": 160,
+                        "width": 1262,
+                        "x": 9,
+                        "y": 9
+                    }
+                },
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                },
+                {
+                    "current": "Search",
+                    "floating": true,
+                    "panels": [
+                        "Search"
+                    ],
+                    "rect": {
+                        "height": 323,
+                        "width": 683,
+                        "x": 588,
+                        "y": 44
+                    }
+                },
+                {
+                    "current": "Template",
+                    "floating": true,
+                    "panels": [
+                        "Styles",
+                        "Template"
+                    ],
+                    "rect": {
+                        "height": 323,
+                        "width": 578,
+                        "x": 9,
+                        "y": 44
+                    }
+                }
+            ],
+            "preset": "Editing",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        },
+        "karaoke": {
+            "closed": [
+                "Reference",
+                "Timing",
+                "Search",
+                "Automation",
+                "Original",
+                "Log",
+                "Styles",
+                "FixMinorErrors",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+            ],
+            "groups": [
+                {
+                    "current": "Audio",
+                    "floating": false,
+                    "panels": [
+                        "Audio"
+                    ],
+                    "rect": {
+                        "height": 181,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 372
+                    }
+                },
+                {
+                    "current": "Template",
+                    "floating": false,
+                    "panels": [
+                        "Editor",
+                        "Template"
+                    ],
+                    "rect": {
+                        "height": 312,
+                        "width": 640,
+                        "x": 640,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 219,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 554
+                    }
+                },
+                {
+                    "current": "Video",
+                    "floating": false,
+                    "panels": [
+                        "Video"
+                    ],
+                    "rect": {
+                        "height": 312,
+                        "width": 639,
+                        "x": 0,
+                        "y": 59
+                    }
+                }
+            ],
+            "preset": "Karaoke",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        },
+        "tabs": {
+            "closed": [
+                "Audio",
+                "Reference",
+                "Timing",
+                "Automation",
+                "Original",
+                "Log",
+                "FixMinorErrors",
+                "Template",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+            ],
+            "groups": [
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 640,
+                        "x": 640,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid",
+                        "Search",
+                        "Styles"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                },
+                {
+                    "current": "Video",
+                    "floating": false,
+                    "panels": [
+                        "Video"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 639,
+                        "x": 0,
+                        "y": 59
+                    }
+                }
+            ],
+            "preset": "Editing",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        },
+        "timing": {
+            "closed": [
+                "Video",
+                "Reference",
+                "Timing",
+                "Search",
+                "Automation",
+                "Original",
+                "Log",
+                "Styles",
+                "FixMinorErrors",
+                "Template",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+            ],
+            "groups": [
+                {
+                    "current": "Audio",
+                    "floating": false,
+                    "panels": [
+                        "Audio"
+                    ],
+                    "rect": {
+                        "height": 213,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 205,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 273
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                }
+            ],
+            "preset": "Timing",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        },
+        "translation": {
+            "closed": [
+                "Audio",
+                "Reference",
+                "Timing",
+                "Search",
+                "Automation",
+                "Original",
+                "Log",
+                "Styles",
+                "FixMinorErrors",
+                "Template",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+            ],
+            "groups": [
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 640,
+                        "x": 640,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                },
+                {
+                    "current": "Video",
+                    "floating": false,
+                    "panels": [
+                        "Video"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 639,
+                        "x": 0,
+                        "y": 59
+                    }
+                }
+            ],
+            "preset": "Translation",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        },
+        "typesetting": {
+            "closed": [
+                "Audio",
+                "Reference",
+                "Timing",
+                "Search",
+                "Automation",
+                "Original",
+                "Log",
+                "FixMinorErrors",
+                "Template",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+            ],
+            "groups": [
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 171,
+                        "width": 609,
+                        "x": 0,
+                        "y": 602
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 171,
+                        "width": 670,
+                        "x": 610,
+                        "y": 602
+                    }
+                },
+                {
+                    "current": "Styles",
+                    "floating": false,
+                    "panels": [
+                        "Styles"
+                    ],
+                    "rect": {
+                        "height": 542,
+                        "width": 319,
+                        "x": 961,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Video",
+                    "floating": false,
+                    "panels": [
+                        "Video"
+                    ],
+                    "rect": {
+                        "height": 542,
+                        "width": 960,
+                        "x": 0,
+                        "y": 59
+                    }
+                }
+            ],
+            "preset": "Typesetting",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        }
+    },
+    "saved": {
+        "Floating": {
+            "closed": [
+                "Video",
+                "Reference",
+                "Timing",
+                "Automation",
+                "Original",
+                "Log",
+                "FixMinorErrors",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+                {
+                    "groups": [
+                        "Audio"
+                    ],
+                    "height": 178,
+                    "width": 1280
+                },
+                {
+                    "groups": [
+                        "Styles",
+                        "Search"
+                    ],
+                    "height": 376,
+                    "width": 1280
+                }
+            ],
+            "groups": [
+                {
+                    "current": "Audio",
+                    "floating": true,
+                    "panels": [
+                        "Audio"
+                    ],
+                    "rect": {
+                        "height": 160,
+                        "width": 1262,
+                        "x": 9,
+                        "y": 9
+                    }
+                },
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                },
+                {
+                    "current": "Search",
+                    "floating": true,
+                    "panels": [
+                        "Search"
+                    ],
+                    "rect": {
+                        "height": 323,
+                        "width": 683,
+                        "x": 588,
+                        "y": 44
+                    }
+                },
+                {
+                    "current": "Template",
+                    "floating": true,
+                    "panels": [
+                        "Styles",
+                        "Template"
+                    ],
+                    "rect": {
+                        "height": 323,
+                        "width": 578,
+                        "x": 9,
+                        "y": 44
+                    }
+                }
+            ],
+            "preset": "Editing",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        },
+        "Tabs": {
+            "closed": [
+                "Audio",
+                "Reference",
+                "Timing",
+                "Automation",
+                "Original",
+                "Log",
+                "FixMinorErrors",
+                "Template",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+            ],
+            "groups": [
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 640,
+                        "x": 640,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid",
+                        "Search",
+                        "Styles"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                },
+                {
+                    "current": "Video",
+                    "floating": false,
+                    "panels": [
+                        "Video"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 639,
+                        "x": 0,
+                        "y": 59
+                    }
+                }
+            ],
+            "preset": "Editing",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        }
+    },
+    "section": {
+        "closed": [
+            "Audio",
+            "Reference",
+            "Timing",
+            "Automation",
+            "Original",
+            "Log",
+            "FixMinorErrors",
+            "Template",
+            "Spellchecker"
+        ],
+        "floatingWindows": [
+            {
+                "groups": [
+                    "Video"
+                ],
+                "height": 384,
+                "width": 639
+            }
+        ],
+        "groups": [
+            {
+                "current": "Editor",
+                "floating": false,
+                "panels": [
+                    "Editor"
+                ],
+                "rect": {
+                    "height": 419,
+                    "width": 1280,
+                    "x": 0,
+                    "y": 59
+                }
+            },
+            {
+                "current": "Grid",
+                "floating": false,
+                "panels": [
+                    "Grid",
+                    "Search",
+                    "Styles"
+                ],
+                "rect": {
+                    "height": 294,
+                    "width": 1280,
+                    "x": 0,
+                    "y": 479
+                }
+            },
+            {
+                "current": "Video",
+                "floating": true,
+                "panels": [
+                    "Video"
+                ],
+                "rect": {
+                    "height": 366,
+                    "width": 621,
+                    "x": 9,
+                    "y": 9
+                }
+            }
+        ],
+        "preset": "Editing",
+        "window": {
+            "height": 800,
+            "width": 1280
+        }
+    },
+    "session": [
+        {
+            "closed": [
+                "Video",
+                "Reference",
+                "Timing",
+                "Search",
+                "Automation",
+                "Original",
+                "Log",
+                "Styles",
+                "FixMinorErrors",
+                "Template",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+            ],
+            "groups": [
+                {
+                    "current": "Audio",
+                    "floating": false,
+                    "panels": [
+                        "Audio"
+                    ],
+                    "rect": {
+                        "height": 213,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 205,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 273
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                }
+            ],
+            "preset": "Timing",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        },
+        {
+            "closed": [
+                "Video",
+                "Reference",
+                "Timing",
+                "Automation",
+                "Original",
+                "Log",
+                "FixMinorErrors",
+                "Spellchecker"
+            ],
+            "floatingWindows": [
+                {
+                    "groups": [
+                        "Audio"
+                    ],
+                    "height": 178,
+                    "width": 1280
+                },
+                {
+                    "groups": [
+                        "Styles",
+                        "Search"
+                    ],
+                    "height": 376,
+                    "width": 1280
+                }
+            ],
+            "groups": [
+                {
+                    "current": "Audio",
+                    "floating": true,
+                    "panels": [
+                        "Audio"
+                    ],
+                    "rect": {
+                        "height": 160,
+                        "width": 1262,
+                        "x": 9,
+                        "y": 9
+                    }
+                },
+                {
+                    "current": "Editor",
+                    "floating": false,
+                    "panels": [
+                        "Editor"
+                    ],
+                    "rect": {
+                        "height": 419,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 59
+                    }
+                },
+                {
+                    "current": "Grid",
+                    "floating": false,
+                    "panels": [
+                        "Grid"
+                    ],
+                    "rect": {
+                        "height": 294,
+                        "width": 1280,
+                        "x": 0,
+                        "y": 479
+                    }
+                },
+                {
+                    "current": "Search",
+                    "floating": true,
+                    "panels": [
+                        "Search"
+                    ],
+                    "rect": {
+                        "height": 323,
+                        "width": 683,
+                        "x": 588,
+                        "y": 44
+                    }
+                },
+                {
+                    "current": "Template",
+                    "floating": true,
+                    "panels": [
+                        "Styles",
+                        "Template"
+                    ],
+                    "rect": {
+                        "height": 323,
+                        "width": 578,
+                        "x": 9,
+                        "y": 44
+                    }
+                }
+            ],
+            "preset": "Editing",
+            "window": {
+                "height": 800,
+                "width": 1280
+            }
+        }
+    ]
+}
