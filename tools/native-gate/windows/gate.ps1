@@ -168,7 +168,7 @@ switch ($Action) {
         Write-Output "ALIVE $(if ($procs.Count) { 'yes' } else { 'no' })"
         $procs | ForEach-Object { Write-Output "process $($_.Id) responding=$($_.Responding) $($_.MainWindowTitle)" }
         Write-Output '== layout files'
-        Get-ChildItem $profileDirs.user -Filter 'layout*.json*' -ErrorAction SilentlyContinue |
+        Get-ChildItem $profileDirs.user -Filter 'layout*.json*' -Recurse -ErrorAction SilentlyContinue |
             ForEach-Object { Write-Output "$($_.FullName) $($_.Length) $($_.LastWriteTime.ToString('s'))" }
         Write-Output '== end'
     }
