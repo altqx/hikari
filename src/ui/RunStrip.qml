@@ -33,7 +33,6 @@ Flow {
                 id: tip
                 objectName: "runChipToolTip" + chip.modelData.number
                 visible: chip.hovered
-                delay: 500
                 text: {
                     const keys = chip.symbol ? strip.shellRoot.boundKeys(chip.symbol, 2) : ""
                     const how = keys.length ? qsTr("Select text in the translation, then press %1 or click.").arg(keys)

@@ -31,5 +31,4 @@ AbstractButton {
     Accessible.name: text
     ToolTip.visible: shownHover && !shownDown
     ToolTip.text: text
-    ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
 }

@@ -2,6 +2,7 @@
 import QtQuick
 import QtQuick.Controls.Fusion as F
 import QtQuick.Controls.Fusion.impl as FI
+import QtQuick.Templates as T
 
 F.ComboBox {
     id: control
@@ -41,6 +42,11 @@ F.ComboBox {
         target: control.contentItem
         property: "Accessible.name"
         value: control.Accessible.name
+    }
+    Binding {
+        target: control.popup
+        property: "closePolicy"
+        value: T.Popup.CloseOnEscape | T.Popup.CloseOnPressOutside | T.Popup.CloseMultiple
     }
     Binding {
         target: control.popup ? control.popup.background : null

@@ -9,7 +9,6 @@ ToolTip {
     objectName: grid.objectName + "HeaderToolTip"
     visible: grid.headerToolTip.length > 0
     text: grid.headerToolTip
-    delay: 500
     x: Math.max(0, Math.min(grid.headerToolTipCell.x, grid.width - width))
     y: grid.headerToolTipCell.y + grid.headerToolTipCell.height + 2
 }
