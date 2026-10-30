@@ -398,13 +398,13 @@ def episode():
 PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Shift times", "Search"]
 
 
-def park_pointer():
+def park_pointer(x=3, y=997):
     """Park the pointer: a submenu that opens under it highlights the item there (KWin)."""
     try:
         if B.name == "x11":
-            sh(["xdotool", "mousemove", "3", "997"])
+            sh(["xdotool", "mousemove", str(x), str(y)])
         else:
-            B.pointer("move 3 997", "wait 150")
+            B.pointer(f"move {x} {y}", "wait 150")
     except Exception as e:  # noqa: BLE001
         log(f"park_pointer: {e!r}")
 
@@ -1970,6 +1970,7 @@ FS_OUTPUTS = {"sway": {"HEADLESS-1": (1600, 1000, 1), "HEADLESS-2": (800, 500, 2
               "mutter": {"Meta-0": (1600, 1000, 1), "Meta-1": (800, 500, 2)},
               "x11": {"left": (1600, 1000, 1), "right": (1600, 1000, 1)}}
 FS_OUTPUTS["sway-activate"] = FS_OUTPUTS["sway"]
+ABOVE_THE_FULLSCREEN_BAR = (800, 300)
 
 
 def fs_outputs_setup():
@@ -2052,6 +2053,7 @@ def fs_focus_video():
 
 def step_video_fullscreen():
     outputs_text = fs_outputs_setup()
+    park_pointer(*ABOVE_THE_FULLSCREEN_BAR)
     ui = os.environ["UI_TESTS"]
     r = subprocess.run([os.path.join(ui, "hikari_ui_video_fullscreen_workflow"), "--monitors", "2"],
                        capture_output=True, text=True, timeout=300)
@@ -2098,10 +2100,10 @@ def step_video_fullscreen():
     sts, fs_, _ = fs_wait(lambda f, m: f is not None and "Play" in f["buttons"], timeout=5)
     paused = fs_ is not None and "Play" in fs_["buttons"]
     before = fs_["position"] if fs_ else None
-    B.combo("right")
+    B.combo("left")
     str_, fr_, _ = fs_wait(lambda f, m: f is not None and f["position"] != before, timeout=5)
     after = fr_["position"] if fr_ else None
-    stepped = before is not None and after is not None and after == before + 1
+    stepped = before is not None and after is not None and after == before - 1
     B.combo("escape")
     st2, full2, main2 = fs_wait(lambda f, m: f is None and m is not None and m["active"])
     time.sleep(1.0)
@@ -2120,7 +2122,7 @@ def step_video_fullscreen():
             f"({st2['focusPath']})", ev0 + ev1 + ev2)
     verdict("videofs-transport-keys", "observed" if playing and paused and stepped else "failed",
             f"in fullscreen Space played (Pause button shown: {playing}) and paused (Play shown again: {paused}); "
-            f"Right stepped the seek bar's frame {before!r} -> {after!r}", ev1)
+            f"Left stepped the seek bar's frame {before!r} -> {after!r}", ev1)
 
     primary = order[0] if order else None
     second = order[1] if len(order) > 1 else None
