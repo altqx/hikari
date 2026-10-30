@@ -215,6 +215,27 @@ private slots:
         QCOMPARE(again.pending(), QStringLiteral("crash"));
     }
 
+    void theSystemIsNamedAsPeopleKnowIt()
+    {
+        using report::System;
+        QCOMPARE(System::osNameOf(QStringLiteral("Omarchy"), QStringLiteral("4.0.0.r7433.g64833fa"), QStringLiteral("linux"),
+                                  QStringLiteral("7.2.8-10-omarchy")),
+                 QStringLiteral("Omarchy 4.0.0.r7433.g64833fa (Linux 7.2)"));
+        QCOMPARE(System::osNameOf(QStringLiteral("Ubuntu 24.04.1 LTS"), QStringLiteral("24.04"), QStringLiteral("linux"),
+                                  QStringLiteral("6.8.0-45-generic")),
+                 QStringLiteral("Ubuntu 24.04.1 LTS (Linux 6.8)"));
+        QCOMPARE(System::osNameOf(QStringLiteral("Arch Linux"), QStringLiteral("unknown"), QStringLiteral("linux"),
+                                  QStringLiteral("6.17.1-arch1-1")),
+                 QStringLiteral("Arch Linux (Linux 6.17)"));
+        QCOMPARE(System::osNameOf(QStringLiteral("Windows 11 Version 24H2"), QStringLiteral("11"), QStringLiteral("winnt"),
+                                  QStringLiteral("10.0.26100")),
+                 QStringLiteral("Windows 11 Version 24H2"));
+        QCOMPARE(System::osNameOf(QStringLiteral("Odd\nName"), {}, QStringLiteral("linux"), {}), QStringLiteral("Odd Name (Linux)"));
+        const System current = System::current(QStringLiteral("0.1.0"), {}, 1, 1, {});
+        QVERIFY(!current.osName.isEmpty());
+        QVERIFY2(!current.osName.startsWith(current.os + u' '), qPrintable(current.osName));
+    }
+
     void freezeIsRecordedAndRecovered()
     {
         QProcess probe;

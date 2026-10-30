@@ -41,6 +41,7 @@ struct System {
     QString package;  // installer, portable, appimage, deb, rpm, aur, build_tree
     QString os;       // windows, linux, other
     QString osVersion;
+    QString osName;   // for people: "Omarchy 4.0.0 (Linux 7.2)", "Windows 11 Version 24H2"
     QString arch;
     QString qtVersion;
     int screens = 1;
@@ -49,6 +50,8 @@ struct System {
 
     static System current(const QString &version, const QString &package, int screens, qreal scale,
                           const QString &layout);
+    static QString osNameOf(const QString &product, const QString &version, const QString &kernelType,
+                            const QString &kernelVersion);
 };
 
 struct Setting {

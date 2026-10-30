@@ -17,7 +17,7 @@ A record holds the error (the signal, the Windows exception, or `APP_HANG` and h
 The start after a crash, or after the program was closed while frozen, turns the record into a report, kept in `reports/crash-report.json` until it is answered:
 
 - the record;
-- the system: version, channel, package, OS and its version, architecture, Qt version, screens and scale, the layout preset;
+- the system: version, channel, package, OS and its version, architecture, Qt version, screens and scale, the layout preset. The report's text names the system as people know it: the distribution and its version with the Linux kernel's version ("Omarchy 4.0.0.r7433.g64833fa (Linux 7.2)"), or the Windows edition; the sent properties keep the OS id and version;
 - a settings summary: ids and values from a fixed list (theme, language, renderer, player, autosave, usage data and so on), never a folder, font or name;
 - the last 200 Log lines.
 

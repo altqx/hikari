@@ -150,12 +150,28 @@ System System::current(const QString &version, const QString &package, int scree
     s.osVersion = QSysInfo::productVersion();
     if (!osVersion.match(s.osVersion).hasMatch())
         s.osVersion = QStringLiteral("other");
+    s.osName = osNameOf(QSysInfo::prettyProductName(), QSysInfo::productVersion(), QSysInfo::kernelType(),
+                        QSysInfo::kernelVersion());
     s.arch = Analytics::archId();
     s.qtVersion = QString::fromLatin1(qVersion());
     s.screens = screens;
     s.scale = Analytics::scaleBucket(scale);
     s.layout = layout.isEmpty() ? QStringLiteral("custom") : plain(layout.toLower());
     return s;
+}
+
+QString System::osNameOf(const QString &product, const QString &version, const QString &kernelType,
+                         const QString &kernelVersion)
+{
+    QString name = product.simplified();
+    if (!version.isEmpty() && version != QLatin1String("unknown") && !name.contains(version))
+        name += u' ' + version.simplified();
+    if (kernelType == QLatin1String("linux")) {
+        static const QRegularExpression majorMinor(QStringLiteral("^\\d+\\.\\d+"));
+        const QString kernel = majorMinor.match(kernelVersion).captured();
+        name += kernel.isEmpty() ? QStringLiteral(" (Linux)") : QStringLiteral(" (Linux %1)").arg(kernel);
+    }
+    return name.trimmed().left(80);
 }
 
 QList<Setting> settingsSummary(const ui::SettingsStore &settings)
@@ -214,8 +230,8 @@ QString Report::recordText() const
 
 QString Report::systemText() const
 {
-    return QStringLiteral("System\n  HikariSub %1 (%2) · %3\n  %4 %5 · %6 · Qt %7 · %8 screen(s) at %9 · layout %10")
-        .arg(system.version, system.channel, system.package, system.os, system.osVersion, system.arch, system.qtVersion)
+    return QStringLiteral("System\n  HikariSub %1 (%2) · %3\n  %4 · %5 · Qt %6 · %7 screen(s) at %8 · layout %9")
+        .arg(system.version, system.channel, system.package, system.osName, system.arch, system.qtVersion)
         .arg(system.screens)
         .arg(system.scale, system.layout);
 }
