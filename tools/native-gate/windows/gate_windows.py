@@ -2851,7 +2851,6 @@ def step_dialog_frame():
 
 
 def grid_cell(st):
-    """The focused Grid cell, as UI Automation's focus path names it."""
     return (st.get("focusPath") or "").rsplit(" > ", 1)[-1]
 
 
