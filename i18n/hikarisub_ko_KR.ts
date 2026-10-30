@@ -4346,6 +4346,10 @@ Failed to copy %2 fonts.</source>
         <translation>글자 수</translation>
     </message>
     <message>
+        <source>Reset column widths</source>
+        <translation>열 너비 재설정</translation>
+    </message>
+    <message>
         <source>Set new FPS</source>
         <translation>새 프레임 속도 설정</translation>
     </message>

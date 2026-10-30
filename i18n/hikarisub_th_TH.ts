@@ -4346,6 +4346,10 @@ Failed to copy %2 fonts.</source>
         <translation>ซ่อนตัวแบ่งบรรทัด</translation>
     </message>
     <message>
+        <source>Reset column widths</source>
+        <translation>รีเซ็ตความกว้างคอลัมน์</translation>
+    </message>
+    <message>
         <source>Set new FPS</source>
         <translation>กำหนดค่า FPS ใหม่</translation>
     </message>
