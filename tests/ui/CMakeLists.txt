@@ -248,6 +248,10 @@ if(Python3_Interpreter_FOUND)
 endif()
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+hikari_add_qttest(hikari_ui_layout_migration_tests SOURCES layout_migration_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
+target_compile_definitions(hikari_ui_layout_migration_tests PRIVATE
+    HIKARI_LAYOUT_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/layout-fixtures")
 hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE

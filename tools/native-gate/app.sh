@@ -3,7 +3,7 @@
 #   start  launch (QT_QPA_PLATFORM from the session), log to $XDG_RUNTIME_DIR/app.log
 #   stop   close the main window politely (SIGTERM) so the layout is saved
 #   kill   SIGKILL, nothing saved
-#   fresh  kill and set the private profile (settings, layout) aside
+#   fresh  kill, set the private profile (settings, layout) aside, and skip Getting started
 #   alive  "yes" while this session's HikariSub runs
 cmd=$1; shift
 mine() {
@@ -27,8 +27,11 @@ fresh)
     for p in $(mine); do kill -KILL $p; done; sleep 0.5
     stamp=$(date +%s%N)
     mkdir -p "$HOME/old-profiles/$stamp"
+    [ -d "$XDG_CONFIG_HOME/hikarisub" ] && mv "$XDG_CONFIG_HOME/hikarisub" "$HOME/old-profiles/$stamp/user"
     [ -d "$XDG_CONFIG_HOME/HikariSub" ] && mv "$XDG_CONFIG_HOME/HikariSub" "$HOME/old-profiles/$stamp/config"
     [ -d "$XDG_DATA_HOME/HikariSub" ] && mv "$XDG_DATA_HOME/HikariSub" "$HOME/old-profiles/$stamp/data"
+    mkdir -p "$XDG_CONFIG_HOME/hikarisub"
+    echo '{"version": 1, "workspace": {"gettingStarted": "done"}}' > "$XDG_CONFIG_HOME/hikarisub/state.json"
     true ;;
 alive) [ -n "$(mine)" ] && echo yes || echo no ;;
 esac

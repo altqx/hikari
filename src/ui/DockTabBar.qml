@@ -177,7 +177,7 @@ KDDWViews.TabBarBase {
                 Text {
                     id: label
                     x: 10
-                    width: tab.cutOff ? implicitWidth
+                    width: tab.cutOff ? undefined
                                       : Math.max(0, tab.width - x - (tab.selected ? 6 + menuButton.width + 6 : 10) - 1)
                     anchors.verticalCenter: parent.verticalCenter
                     text: tab.title
@@ -271,28 +271,29 @@ KDDWViews.TabBarBase {
         id: toolbarSlot
         objectName: "dockToolbarSlot"
         readonly property Item toolbar: !root.titleMode && Docking.headerRevision >= 0 ? Docking.toolbar(root.currentName) : null
-        property Item hosted: null
         z: root.mouseAreaZ + 2
         visible: toolbar !== null
         anchors.right: parent.right
         anchors.rightMargin: 4
         height: parent.height - 1
         width: toolbar ? Math.min(toolbar.implicitWidth, Math.max(0, root.width - root.selectedNaturalWidth - 12)) : 0
+        function release(keep: Item) {
+            for (let i = children.length - 1; i >= 0; --i) {
+                const item = children[i]
+                if (item && item !== keep)
+                    item.parent = null
+            }
+        }
         function host() {
-            if (hosted && hosted !== toolbar && hosted.parent === toolbarSlot)
-                hosted.parent = null
-            hosted = toolbar
-            if (hosted) {
-                hosted.parent = toolbarSlot
-                hosted.anchors.fill = toolbarSlot
+            release(toolbar)
+            if (toolbar) {
+                toolbar.parent = toolbarSlot
+                toolbar.anchors.fill = toolbarSlot
             }
         }
         onToolbarChanged: host()
         Component.onCompleted: host()
-        Component.onDestruction: {
-            if (hosted && hosted.parent === toolbarSlot)
-                hosted.parent = null
-        }
+        Component.onDestruction: release(null)
     }
 
     MouseArea {
