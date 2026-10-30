@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QList>
+#include <QRegularExpression>
 #include <QString>
 
 #include <optional>
@@ -12,6 +13,9 @@ constexpr int kMaxFrames = 32;
 struct Frame {
     QString module;
     quint64 offset = 0;
+    // Named modules only: the load address and symbolic's debug id of the GNU build-id or PDB GUID and age.
+    quint64 base = 0;
+    QString debugId;
 };
 
 struct Record {
@@ -37,5 +41,6 @@ std::optional<Record> read(const QString &path);
 bool write(const QString &path, const Record &record);
 // Names modules as the crash handler does (any other is "other"); needs install() first.
 QList<Frame> framesOf(const quintptr *addresses, int count);
+const QRegularExpression &debugIdPattern();
 
 }

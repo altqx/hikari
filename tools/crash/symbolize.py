@@ -15,7 +15,7 @@ import zipfile
 from pathlib import Path
 
 REPO_DEFAULT = "altqx/hikari"
-RECORD_FRAME = re.compile(r"^frame ([A-Za-z0-9_.+-]{1,80}) 0x([0-9a-f]{1,16})$")
+RECORD_FRAME = re.compile(r"^frame ([A-Za-z0-9_.+-]{1,80}) 0x([0-9a-f]{1,16})(?: 0x[0-9a-f]{1,16} [0-9a-f-]{36,45})?$")
 REPORT_FRAME = re.compile(r"^\s*#\s*(\d+)\s+([A-Za-z0-9_.+-]{1,80})\s+\+0x([0-9a-f]{1,16})\s*$")
 VERSION = r"(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.]+)?)"
 

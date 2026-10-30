@@ -53,6 +53,11 @@ QString padded(const QString &text, int width)
     return text.leftJustified(width, u' ');
 }
 
+QString hexAddress(quint64 value)
+{
+    return QStringLiteral("0x") + QString::number(value, 16);
+}
+
 }
 
 QString Scrubber::placeholder(const QString &fileName)
@@ -272,10 +277,24 @@ QJsonObject Report::exceptionProperties() const
     if (!record)
         return {};
     QJsonArray frames;
-    for (const crash::Frame &frame : record->frames)
-        frames.append(QJsonObject{{QStringLiteral("platform"), QStringLiteral("native")},
-                                  {QStringLiteral("module"), frame.module},
-                                  {QStringLiteral("offset"), QStringLiteral("0x") + QString::number(frame.offset, 16)}});
+    QJsonArray images;
+    QList<quint64> imageBases;
+    for (const crash::Frame &frame : record->frames) {
+        QJsonObject f{{QStringLiteral("platform"), QStringLiteral("native")},
+                      {QStringLiteral("module"), frame.module},
+                      {QStringLiteral("offset"), hexAddress(frame.offset)}};
+        if (!frame.debugId.isEmpty()) {
+            f.insert(QStringLiteral("instruction_addr"), hexAddress(frame.base + frame.offset));
+            f.insert(QStringLiteral("image_addr"), hexAddress(frame.base));
+            if (!imageBases.contains(frame.base)) {
+                imageBases << frame.base;
+                images.append(QJsonObject{{QStringLiteral("code_file"), frame.module},
+                                          {QStringLiteral("debug_id"), frame.debugId},
+                                          {QStringLiteral("image_addr"), hexAddress(frame.base)}});
+            }
+        }
+        frames.append(f);
+    }
     const QJsonObject exception{
         {QStringLiteral("type"), record->type},
         {QStringLiteral("value"), record->type},
@@ -289,6 +308,8 @@ QJsonObject Report::exceptionProperties() const
                     {QStringLiteral("report_id"), id}};
     if (record->freeze())
         out.insert(QStringLiteral("freeze_seconds"), record->seconds);
+    if (!images.isEmpty())
+        out.insert(QStringLiteral("$debug_images"), images);
     return out;
 }
 
@@ -322,8 +343,12 @@ QJsonObject Report::toJson() const
                     {QStringLiteral("log"), QJsonArray::fromStringList(log)}};
     if (record) {
         QJsonArray frames;
-        for (const crash::Frame &f : record->frames)
-            frames.append(QJsonArray{f.module, QStringLiteral("0x") + QString::number(f.offset, 16)});
+        for (const crash::Frame &f : record->frames) {
+            QJsonArray frame{f.module, hexAddress(f.offset)};
+            if (!f.debugId.isEmpty())
+                frame << hexAddress(f.base) << f.debugId;
+            frames.append(frame);
+        }
         out.insert(QStringLiteral("record"), QJsonObject{{QStringLiteral("type"), record->type},
                                                          {QStringLiteral("mechanism"), record->mechanism},
                                                          {QStringLiteral("version"), record->version},
@@ -350,12 +375,24 @@ std::optional<Report> Report::fromJson(const QJsonObject &json)
         crash::Record record{rec.value(QStringLiteral("type")).toString(), rec.value(QStringLiteral("mechanism")).toString(),
                              rec.value(QStringLiteral("version")).toString(), {}, rec.value(QStringLiteral("seconds")).toInt()};
         static const QRegularExpression module(QStringLiteral("^[A-Za-z0-9_.+-]{1,80}$"));
+        static const QRegularExpression address(QStringLiteral("^0x[0-9a-f]{1,16}$"));
         for (const QJsonValue &f : rec.value(QStringLiteral("frames")).toArray()) {
-            const QJsonArray pair = f.toArray();
-            const QString offset = pair.at(1).toString();
-            if (!module.match(pair.at(0).toString()).hasMatch() || !offset.startsWith(QLatin1String("0x")))
+            const QJsonArray parts = f.toArray();
+            const QString name = parts.at(0).toString();
+            const QString offset = parts.at(1).toString();
+            if ((parts.size() != 2 && parts.size() != 4) || !module.match(name).hasMatch() || !address.match(offset).hasMatch())
                 return std::nullopt;
-            record.frames.append({pair.at(0).toString(), offset.mid(2).toULongLong(nullptr, 16)});
+            crash::Frame frame{name, offset.mid(2).toULongLong(nullptr, 16)};
+            if (parts.size() == 4) {
+                const QString base = parts.at(2).toString();
+                const QString debugId = parts.at(3).toString();
+                if (name == QLatin1String("other") || !address.match(base).hasMatch() ||
+                    !crash::debugIdPattern().match(debugId).hasMatch())
+                    return std::nullopt;
+                frame.base = base.mid(2).toULongLong(nullptr, 16);
+                frame.debugId = debugId;
+            }
+            record.frames.append(frame);
         }
         if (record.frames.size() > crash::kMaxFrames)
             return std::nullopt;

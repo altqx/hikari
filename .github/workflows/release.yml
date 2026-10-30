@@ -298,6 +298,29 @@ jobs:
           sys.exit(1 if found else 0)
           PY
 
+      - name: Upload the symbols to PostHog
+        continue-on-error: true
+        env:
+          POSTHOG_CLI_API_KEY: ${{ secrets.HIKARI_POSTHOG_SYMBOLS_KEY }}
+          POSTHOG_CLI_PROJECT_ID: '323949'
+          POSTHOG_CLI_HOST: https://eu.posthog.com
+        run: |
+          set -uo pipefail
+          if [[ -z "$POSTHOG_CLI_API_KEY" ]]; then
+            echo "::warning::No HIKARI_POSTHOG_SYMBOLS_KEY: crashes in this release show unresolved frames."
+            exit 0
+          fi
+          mkdir -p posthog-symbols/linux posthog-symbols/windows
+          failed=0
+          tar -xJf "release/hikarisub-symbols-$VERSION-linux-x86_64.tar.xz" -C posthog-symbols/linux || failed=1
+          unzip -q "release/HikariSub-$VERSION-windows-x64-symbols.zip" -d posthog-symbols/windows || failed=1
+          for os in linux windows; do
+            python3 tools/crash/posthog_symbols.py "posthog-symbols/$os" || failed=1
+          done
+          if (( failed )); then
+            echo "::warning::Some symbols did not reach PostHog: their crashes show unresolved frames."
+          fi
+
       # Draft first: clients see the release only once its manifest is up; before that they fall back to the asset digests.
       - name: Create the release as a draft
         env:
@@ -391,6 +414,13 @@ jobs:
         with:
           persist-credentials: false
           submodules: false
+
+      - name: Check the symbol upload packs on this runner
+        run: |
+          set -euo pipefail
+          mkdir symbols-check
+          printf 'int main(void) { return 0; }\n' | gcc -g -Wl,--build-id -x c - -o symbols-check/probe
+          python3 tools/crash/posthog_symbols.py symbols-check --dry-run
 
       - name: Write the update manifest from stand-in packages
         run: |
