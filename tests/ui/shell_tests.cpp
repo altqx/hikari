@@ -1320,28 +1320,37 @@ private slots:
         QTRY_VERIFY(!editMenu->property("visible").toBool());
 
         const int wide = window->width();
-        window->resize(std::max(window->minimumWidth(), 660), window->height());
-        QTRY_COMPARE(qRound(bar->width()), window->width());
-        if (window->width() <= 700) {
-            QTRY_VERIFY(!title->isVisible());
-            QQuickItem *more = visualItem("titleBarMore");
-            QTRY_VERIFY(more && more->isVisible());
-            const int folded = bar->property("foldFrom").toInt();
-            const int count = menus->property("count").toInt();
-            QVERIFY(folded > 0 && folded < count);
-            QVERIFY(rect(more).right() < rect(switcher).left());
-            QVERIFY(rect(switcher).right() <= rect(minimize).left());
-            QCOMPARE(name(more), QStringLiteral("More menus"));
-            QVERIFY(QMetaObject::invokeMethod(more, "click"));
-            auto *moreMenu = named("titleBarMoreMenu");
-            QTRY_VERIFY(moreMenu && moreMenu->property("opened").toBool());
-            QTRY_COMPARE(moreMenu->property("count").toInt(), count - folded);
-            QMetaObject::invokeMethod(moreMenu, "close");
-            QTRY_VERIFY(!moreMenu->property("visible").toBool());
-        } else {
-            qWarning("the shell's minimum width (%d) leaves no narrow title bar to check", window->minimumWidth());
-        }
+        const QList<QObject *> wideDocks{item<QObject>("videoDock"), item<QObject>("editorDock")};
+        for (QObject *dock : wideDocks)
+            QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(window->minimumWidth() <= 660);
+        window->resize(660, window->height());
+        QTRY_COMPARE(qRound(bar->width()), 660);
+        QTRY_VERIFY(!title->isVisible());
+        QQuickItem *more = visualItem("titleBarMore");
+        QTRY_VERIFY(more && more->isVisible());
+        const int folded = bar->property("foldFrom").toInt();
+        const int count = menus->property("count").toInt();
+        QVERIFY(folded > 0 && folded < count);
+        QTRY_VERIFY(rect(more).right() < rect(switcher).left());
+        QTRY_VERIFY(rect(switcher).right() <= rect(minimize).left());
+        QCOMPARE(name(more), QStringLiteral("More menus"));
+        QVERIFY(QMetaObject::invokeMethod(more, "click"));
+        auto *moreMenu = named("titleBarMoreMenu");
+        QTRY_VERIFY(moreMenu && moreMenu->property("opened").toBool());
+        QTRY_COMPARE(moreMenu->property("count").toInt(), count - folded);
+        QMetaObject::invokeMethod(moreMenu, "close");
+        QTRY_VERIFY(!moreMenu->property("visible").toBool());
+        QQuickItem *foldedTitle = menuTitle(count - 1);
+        QVERIFY(!foldedTitle->isVisible());
+        auto *foldedMenu = foldedTitle->property("menu").value<QObject *>();
+        QTest::keySequence(window, QKeySequence::mnemonic(foldedTitle->property("text").toString()));
+        QTRY_VERIFY(foldedMenu->property("opened").toBool());
+        QMetaObject::invokeMethod(foldedMenu, "close");
+        QTRY_VERIFY(!foldedMenu->property("visible").toBool());
         window->resize(wide, window->height());
+        for (QObject *dock : wideDocks)
+            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
         QTRY_VERIFY(title->isVisible());
         QTRY_VERIFY(!visualItem("titleBarMore")->isVisible());
 
