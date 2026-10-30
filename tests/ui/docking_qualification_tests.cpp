@@ -13,12 +13,14 @@
 #include <QJsonObject>
 
 #include <functional>
+#include <utility>
 #include <QAccessible>
 #include <QFont>
 #include <QFontMetricsF>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QRegularExpression>
 #include <QSignalSpy>
 #include <QStyleHints>
 #include <QtQml/qqmlextensionplugin.h>
@@ -280,6 +282,11 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(window));
         QTRY_VERIFY(dock("Grid")->property("isOpen").toBool());
         initial = layout();
+    }
+    void cleanupTestCase()
+    {
+        QTest::failOnWarning(QRegularExpression(QStringLiteral("TypeError")));
+        delete std::exchange(engine, nullptr);
     }
 
     void defaultArrangementHasEveryPanelOpenAndDocked()
@@ -1482,6 +1489,7 @@ private slots:
 
     void crowdedTabsKeepTheSelectedOneWhole()
     {
+        QTest::failOnWarning(QRegularExpression(QStringLiteral("Binding loop")));
         restoreInitial();
         QVERIFY(QMetaObject::invokeMethod(window, "tabIntoVideo"));
         QQuickItem *bar = nullptr;

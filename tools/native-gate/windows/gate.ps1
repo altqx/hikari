@@ -1,6 +1,6 @@
 # Guest side of gate_windows.py (winix.yaml tasks gate-win-*); writes only under out\native-gate-win.
 #   -Action prepare     scratch documents, the media fixture, paths (GATE_LAYOUT line)
-#   -Action fresh       set the profile aside (never deleted); a HikariSub left over from
+#   -Action fresh       set the profile aside (never deleted) and skip Getting started; a HikariSub left over from
 #                       an earlier run is ended first (the harness ends its own with `winix ui kill`)
 #   -Action restore     GATE_PROFILE_FROM: put a set-aside profile back (the current one is set aside)
 #   -Action status      ALIVE yes|no, the layout files (layout.json*, layouts.json*)
@@ -21,10 +21,9 @@ $root = $PWD.Path
 $scratch = Join-Path $root 'out\native-gate-win'
 $build = Join-Path $root 'out\build\windows-x64-release'
 $qtBin = Join-Path $root 'out\sdk\qt-6.12.0-windows\6.12.0\msvc2022_64\bin'
-# QStandardPaths on Windows: AppConfigLocation (hikari.ini, layout.json) and AppDataLocation (Recovery).
 $profileDirs = [ordered]@{
-    local   = Join-Path $env:LOCALAPPDATA 'HikariSub\HikariSub'
-    roaming = Join-Path $env:APPDATA 'HikariSub\HikariSub'
+    user  = Join-Path $env:APPDATA 'HikariSub'
+    local = Join-Path $env:LOCALAPPDATA 'HikariSub'
 }
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 New-Item -ItemType Directory -Force $scratch | Out-Null
@@ -147,6 +146,11 @@ switch ($Action) {
                 Write-Output "set aside $dir -> $dest"
             }
         }
+        if ($Action -eq 'fresh') {
+            New-Item -ItemType Directory -Force $profileDirs.user | Out-Null
+            [IO.File]::WriteAllText((Join-Path $profileDirs.user 'state.json'),
+                '{"version": 1, "workspace": {"gettingStarted": "done"}}', $utf8)
+        }
         if ($Action -eq 'restore') {
             if (-not $env:GATE_PROFILE_FROM -or -not (Test-Path $env:GATE_PROFILE_FROM)) { throw "no set-aside profile at '$($env:GATE_PROFILE_FROM)'" }
             foreach ($k in $profileDirs.Keys) {
@@ -164,7 +168,7 @@ switch ($Action) {
         Write-Output "ALIVE $(if ($procs.Count) { 'yes' } else { 'no' })"
         $procs | ForEach-Object { Write-Output "process $($_.Id) responding=$($_.Responding) $($_.MainWindowTitle)" }
         Write-Output '== layout files'
-        Get-ChildItem $profileDirs.local -Filter 'layout*.json*' -ErrorAction SilentlyContinue |
+        Get-ChildItem $profileDirs.user -Filter 'layout*.json*' -ErrorAction SilentlyContinue |
             ForEach-Object { Write-Output "$($_.FullName) $($_.Length) $($_.LastWriteTime.ToString('s'))" }
         Write-Output '== end'
     }
