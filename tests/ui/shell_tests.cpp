@@ -15045,7 +15045,7 @@ private slots:
               {"audio.leadOutValue", nullptr},
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
               {"audio.dontPlayWhenLineChanges", "Don't play after changing the line"},
-              {"audio.autoFocus", "Hotkeys follow the panel under the pointer"},
+              {"audio.autoFocus", "Focus the panel under the pointer"},
               {"audio.drawTimeCursor", "Show the time beside the cursor"},
               {"audio.drawSecondaryLines", "Show seconds markers"},
               {"audio.drawSelectionBackground", "Show the selection background"},
@@ -19587,10 +19587,10 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         clickWith(item("previousFrame"), Qt::NoModifier);
         QTRY_COMPARE(video.frame(), 9);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
+        QCOMPARE(focusedPanel(), QStringLiteral("videoPanel"));
         clickWith(item("nextFrame"), Qt::NoModifier);
         QTRY_COMPARE(video.frame(), 10);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
+        QCOMPARE(focusedPanel(), QStringLiteral("videoPanel"));
         playsAndPauses("after the frame buttons");
         QVERIFY(!item("previousFrame")->hasActiveFocus() && !item("nextFrame")->hasActiveFocus());
         auto *comment = item("commentBox");
@@ -19690,7 +19690,7 @@ private slots:
         QTRY_COMPARE(session->document().lines().size(), lines.size() + 3);
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
         auto *text = item("lineText");
-        text->forceActiveFocus();
+        text->forceActiveFocus(Qt::MouseFocusReason);
         hover("audioDisplay");
         const QString typed = text->property("text").toString();
         press(Qt::Key_S);
@@ -19715,7 +19715,9 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         closeMismatchQuestion();
-        QVERIFY(QGuiApplication::applicationState() == Qt::ApplicationActive);
+        window->requestActivate();
+        QVERIFY(becomesFocusWindow(window));
+        QTest::mouseMove(window, kOverNoPanel);
         const auto hover = [&](const char *name) {
             QQuickItem *over = item(name);
             QTest::mouseMove(window, over->mapToScene(QPointF(over->width() / 2, over->height() / 2)).toPoint());
@@ -19749,7 +19751,17 @@ private slots:
         auto *text = item("lineText");
         text->forceActiveFocus();
         hover("editingGrid");
+        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        text->forceActiveFocus();
+        const auto before = text->property("text").toString().size();
+        QTest::keyClick(window, Qt::Key_S);
         hover("videoPanel");
+        QVERIFY(text->hasActiveFocus());
+        QCOMPARE(text->property("text").toString().size(), before + 1);
+        item("editingGrid")->forceActiveFocus();
+        text->forceActiveFocus(Qt::MouseFocusReason);
+        hover("editingGrid");
+        hover("audioDisplay");
         QVERIFY(text->hasActiveFocus());
         QTest::mouseClick(window, Qt::LeftButton, {}, item("editingGrid")->mapToScene(QPointF(20, 40)).toPoint());
         QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
@@ -25068,7 +25080,7 @@ private slots:
         hover("videoPanel");
         QTest::keyClick(window, Qt::Key_P);
         QTRY_COMPARE(tools.activeFamily(), 1);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
+        QCOMPARE(focusedPanel(), QStringLiteral("videoPanel"));
         auto *lineText = item("lineText");
         lineText->forceActiveFocus();
         const QString typed = lineText->property("text").toString();

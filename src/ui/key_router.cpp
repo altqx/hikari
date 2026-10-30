@@ -1,6 +1,7 @@
 #include "key_router.h"
 
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QQuickItem>
@@ -35,6 +36,35 @@ bool inPopup(const QQuickItem *item)
     return false;
 }
 
+// Qt Quick Controls' text fields record how they took the focus; a plain TextInput does not.
+bool focusedByUser(const QQuickItem *item)
+{
+    const QVariant reason = item->property("focusReason");
+    if (!reason.isValid())
+        return true;
+    switch (reason.toInt()) {
+    case Qt::MouseFocusReason:
+    case Qt::TabFocusReason:
+    case Qt::BacktabFocusReason:
+    case Qt::ShortcutFocusReason: return true;
+    default: return false;
+    }
+}
+
+bool popupOpen(const QQuickWindow *window)
+{
+    const QQuickItem *root = window->contentItem() ? window->contentItem()->parentItem() : nullptr;
+    if (!root)
+        return false;
+    for (const QQuickItem *layer : root->childItems())
+        if (layer->inherits("QQuickOverlay"))
+            for (const QQuickItem *item : layer->childItems())
+                if (item->isVisible() && item->inherits("QQuickPopupItem") && item->parent()
+                    && !item->parent()->inherits("QQuickToolTip"))
+                    return true;
+    return false;
+}
+
 bool sameKey(const QKeyEvent *event, int key, int modifiers)
 {
     return event->key() == key && int(event->modifiers()) == modifiers;
@@ -45,6 +75,10 @@ bool sameKey(const QKeyEvent *event, int key, int modifiers)
 KeyRouter::KeyRouter(QObject *parent) : QObject(parent)
 {
     QCoreApplication::instance()->installEventFilter(this);
+    connect(qGuiApp, &QGuiApplication::focusObjectChanged, this, [this](QObject *focus) {
+        if (auto *item = qobject_cast<QQuickItem *>(focus); item && item != m_typedIn)
+            m_typedIn = nullptr;
+    });
 }
 
 KeyRouter::~KeyRouter()
@@ -116,6 +150,28 @@ void KeyRouter::hoverAtPointer()
     setHovered(p ? p->panel.data() : nullptr);
 }
 
+bool KeyRouter::followingPointer() const
+{
+    return !m_followsPointer.isCallable() || m_followsPointer.call().toBool();
+}
+
+bool KeyRouter::focusStays() const
+{
+    if (QGuiApplication::applicationState() != Qt::ApplicationActive || QGuiApplication::mouseButtons() != Qt::NoButton
+        || QGuiApplication::modalWindow())
+        return true;
+    auto *window = qobject_cast<QQuickWindow *>(QGuiApplication::focusWindow());
+    if (!window || !shellWindow(window))
+        return true;
+    QQuickItem *focus = window->activeFocusItem();
+    if (takesText(focus) && (focus == m_typedIn || focusedByUser(focus)))
+        return true;
+    if (keyboardFocused(focus) || recordsKeys(focus) || inPopup(focus) || popupOpen(window))
+        return true;
+    const Panel *focused = panelOf(focus);
+    return focused && focused->panel == m_hovered;
+}
+
 bool KeyRouter::shortcutOverride(QQuickWindow *window, QKeyEvent *event)
 {
     m_routed.reset();
@@ -127,7 +183,7 @@ bool KeyRouter::shortcutOverride(QQuickWindow *window, QKeyEvent *event)
         return false;
     const Panel *focused = panelOf(focus);
     const Panel *hovered = nullptr;
-    if (!m_followsPointer.isCallable() || m_followsPointer.call().toBool())
+    if (followingPointer())
         for (const auto &p : m_panels)
             if (p.panel && p.panel == m_hovered && p.panel->isVisible())
                 hovered = &p;
@@ -212,7 +268,10 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
             return false;
         m_pointerWindow = window;
         m_pointerPos = static_cast<QMouseEvent *>(event)->scenePosition();
+        const QPointer<QQuickItem> before = m_hovered;
         hoverAtPointer();
+        if (m_hovered && m_hovered != before && followingPointer() && !focusStays())
+            emit focusRequested(m_hovered);
         return false;
     }
     case QEvent::Leave: {
@@ -246,6 +305,8 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
         return filtered;
     }
     case QEvent::KeyPress: {
+        if (auto *window = qobject_cast<QQuickWindow *>(watched); window && takesText(window->activeFocusItem()))
+            m_typedIn = window->activeFocusItem();
         // A posted key reaches the focus item without passing the window, so the route waits there.
         if (!qobject_cast<QQuickWindow *>(watched) && !(m_routed && qobject_cast<QQuickItem *>(watched)))
             return false;
