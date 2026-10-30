@@ -18,6 +18,7 @@
 #include <QStringList>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iterator>
 
@@ -475,9 +476,20 @@ void LineTableModel::emitRowChanged(int row)
 
 void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
 {
+    std::vector<bool> touched(m_rows.size());
     for (const auto &id : ids)
         if (const auto row = rowOf(id))
-            emit dataChanged(index(*row, 0), index(*row, ColumnCount - 1), {ActiveRole, SelectedRole, AnchorRole});
+            touched[static_cast<std::size_t>(*row)] = true;
+    const int rows = static_cast<int>(touched.size());
+    for (int first = 0; first < rows; ++first) {
+        if (!touched[static_cast<std::size_t>(first)])
+            continue;
+        int last = first;
+        while (last + 1 < rows && touched[static_cast<std::size_t>(last + 1)])
+            ++last;
+        emit dataChanged(index(first, 0), index(last, ColumnCount - 1), {ActiveRole, SelectedRole, AnchorRole});
+        first = last;
+    }
 }
 
 std::optional<int> LineTableModel::rowOf(core::LineId id) const
@@ -812,6 +824,17 @@ bool LineFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &) const
         return false;
     }
     return passes(sourceRow);
+}
+
+QSortFilterProxyModel::DataChangeRelevanceFlags LineFilterModel::dataChangeRelevanceFlags(
+    const QModelIndex &sourceTopLeft, const QModelIndex &sourceBottomRight, const QList<int> &roles) const
+{
+    static constexpr std::array kMarksOnly{int(LineTableModel::ActiveRole), int(LineTableModel::SelectedRole),
+                                           int(LineTableModel::AnchorRole), int(LineTableModel::SpellMarksRole),
+                                           int(LineTableModel::ComparisonRole), int(LineTableModel::UnplacedRunsRole)};
+    if (!roles.isEmpty() && std::ranges::all_of(roles, [](int role) { return std::ranges::contains(kMarksOnly, role); }))
+        return DataChangeRelevanceFlag::NotRelevant;
+    return QSortFilterProxyModel::dataChangeRelevanceFlags(sourceTopLeft, sourceBottomRight, roles);
 }
 
 bool LineFilterModel::passes(int sourceRow) const

@@ -168,7 +168,7 @@ DialogWindow {
             ask({
                 title: qsTr("Rename font catalog"),
                 text: qsTr("A catalog named “%1” already exists.").arg(existing),
-                detail: qsTr("Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.").arg(oldName).arg(existing),
+                detail: qsTr("Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.").arg(oldName, existing),
                 severity: "warning",
                 choices: [{ id: "replace", text: qsTr("Replace"), role: "destructive" },
                           { id: "merge", text: qsTr("Merge"), role: "accept", isDefault: true },
@@ -221,7 +221,7 @@ DialogWindow {
         const taken = catalogs.catalogNames.concat(r.names)
         const suggest = name => {
             for (let i = 2; ; ++i) {
-                const n = qsTr("%1 (%2)").arg(name).arg(i)
+                const n = qsTr("%1 (%2)").arg(name, i)
                 if (catalogs.sameNameIndex(taken, n) < 0)
                     return n
             }
@@ -229,7 +229,7 @@ DialogWindow {
         reviewLoader.active = true
         reviewLoader.item.review({
             title: qsTr("Load font catalogs"),
-            text: qsTr("%1 of %2 catalogs in “%3” already exist.").arg(r.rows.length).arg(r.total).arg(r.file),
+            text: qsTr("%1 of %2 catalogs in “%3” already exist.").arg(r.rows.length, r.total, r.file),
             detail: [r.total - r.rows.length - r.same > 0 ? qsTr("The file’s new catalogs are added.") : "",
                      r.same > 0 ? qsTr("Those with the same fonts as yours are left as they are.") : ""]
                     .filter(t => t.length > 0).join(" "),
@@ -238,8 +238,8 @@ DialogWindow {
             nameHeading: qsTr("Catalog"),
             differenceHeading: qsTr("Fonts"),
             rows: r.rows.map(row => ({ name: row.name,
-                                       difference: row.added > 0 ? qsTr("%1 here, +%2 new").arg(row.here).arg(row.added)
-                                                                 : qsTr("%1 here, %2 in the file").arg(row.here).arg(row.there),
+                                       difference: row.added > 0 ? qsTr("%1 here, +%2 new").arg(row.here, row.added)
+                                                                 : qsTr("%1 here, %2 in the file").arg(row.here, row.there),
                                        suggestion: suggest(row.name) })),
             added: r.total - r.rows.length - r.same,
             namePattern: /.*/,
@@ -263,7 +263,7 @@ DialogWindow {
             if (result.renamed > 0) parts.push(qsTr("%n renamed", "", result.renamed))
             notices.post("info", qsTr("Load font catalogs"),
                          result.loaded === 1 ? qsTr("Loaded 1 font catalog") : qsTr("Loaded %n font catalogs", "", result.loaded),
-                         { details: qsTr("From %1: %2.").arg(file).arg(parts.join(", ")) })
+                         { details: qsTr("From %1: %2.").arg(file, parts.join(", ")) })
         }
     }
     function ask(options, done) {
@@ -558,7 +558,7 @@ DialogWindow {
                                 padding: 0
                                 enabled: window.chosen.length > 0
                                 checked: window.members[row.modelData] === true
-                                Accessible.name: qsTr("“%1” in “%2”").arg(row.modelData).arg(window.chosen)
+                                Accessible.name: qsTr("“%1” in “%2”").arg(row.modelData, window.chosen)
                                 onToggled: window.setMembership([row.modelData], checked)
                             }
                             Label {

@@ -74,7 +74,7 @@ DialogWindow {
                 width: ListView.view.width
                 highlighted: ListView.isCurrentItem
                 focusPolicy: Qt.NoFocus
-                Accessible.name: qsTr("Line %1: %2. %3").arg(modelData.number).arg(modelData.check).arg(modelData.detail)
+                Accessible.name: qsTr("Line %1: %2. %3").arg(modelData.number, modelData.check, modelData.detail)
                 contentItem: RowLayout {
                     spacing: 12
                     Label { text: modelData.number; Layout.preferredWidth: 48 }

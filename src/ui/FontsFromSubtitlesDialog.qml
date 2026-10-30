@@ -62,7 +62,7 @@ DialogWindow {
             notices.post("info", qsTr("Add fonts from subtitles"),
                          (added === 1 ? qsTr("Added 1 font to “%1”") : qsTr("Added %n fonts to “%1”", "", added)).arg(name),
                          { details: from.currentIndex === 1 ? qsTr("From the styles and %1 tags of the open files.").arg("\\fn")
-                                                            : qsTr("From the styles and %1 tags of %2.").arg("\\fn").arg(fileName) })
+                                                            : qsTr("From the styles and %1 tags of %2.").arg("\\fn", fileName) })
         if (callback)
             callback(name)
     }
@@ -127,7 +127,7 @@ DialogWindow {
             readonly property int size: dialog.visible ? dialog.catalogs.catalogSize(dialog.target) : 0
             text: (from.currentIndex === 1 && dialog.openFiles > 1
                        ? qsTr("The fonts of every style and every %1 tag in all %n open files.", "", dialog.openFiles).arg("\\fn")
-                       : qsTr("The fonts of every style and every %1 tag in %2.").arg("\\fn").arg(dialog.fileName))
+                       : qsTr("The fonts of every style and every %1 tag in %2.").arg("\\fn", dialog.fileName))
                   + (replace.checked && size > 0 ? " " + qsTr("The fonts “%1” holds now are removed first.").arg(dialog.target) : "")
             color: Theme.muted
             font: dialog.fontAt(12)

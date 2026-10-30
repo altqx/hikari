@@ -5912,7 +5912,7 @@ private slots:
             {main, QStringLiteral(R"("recentSubtitles" + index)"), recent},
             {main, QStringLiteral(R"("recentAudio" + index)"), recent},
             {main, QStringLiteral(R"(text: qsTr("None"))"), QStringLiteral("the empty list's placeholder")},
-            {QStringLiteral("RecentFilesMenu.qml"), QStringLiteral("menu.prefix + index"), recent},
+            {QStringLiteral("RecentFilesMenu.qml"), QStringLiteral("recentMenu.prefix + index"), recent},
             {QStringLiteral("RecentFilesMenu.qml"), QStringLiteral(R"(text: qsTr("None"))"),
              QStringLiteral("the empty list's placeholder")},
             {QStringLiteral("VideoContextMenu.qml"), QStringLiteral(R"("RecentSubtitles" + index)"), recent},

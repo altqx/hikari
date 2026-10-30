@@ -55,7 +55,7 @@ Item {
             width: grid.cell
             height: grid.cell
             radius: 2
-            color: Qt.rgba(modelData.r / 255, modelData.g / 255, modelData.b / 255, 1)
+            color: Color.rgba(modelData.r / 255, modelData.g / 255, modelData.b / 255, 1)
             border.color: Theme.line
             Accessible.role: Accessible.Button
             Accessible.name: swatch.index < grid.names.length ? grid.names[swatch.index] : ""

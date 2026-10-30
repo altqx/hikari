@@ -616,7 +616,7 @@ Pane {
                         anchors.rightMargin: 8
                         anchors.verticalCenter: parent.verticalCenter
                         color: Theme.muted
-                        text: qsTr("%1 of %2").arg(runLines.count).arg(runLines.total)
+                        text: qsTr("%1 of %2").arg(runLines.count, runLines.total)
                     }
                 }
                 IconToolButton {
@@ -711,7 +711,7 @@ Pane {
         const s = ms / 1000
         if (s < 60)
             return qsTr("%1 s").arg(s < 10 ? s.toFixed(1) : Math.round(s))
-        return qsTr("%1 min %2 s").arg(Math.floor(s / 60)).arg(Math.round(s % 60))
+        return qsTr("%1 min %2 s").arg(Math.floor(s / 60), Math.round(s % 60))
     }
     Dialogs.FileDialog {
         id: saveDialog
@@ -914,7 +914,7 @@ Pane {
                 }
             }
             background: Rectangle {
-                color: macroItem.current ? Theme.select : macroItem.hovered ? Qt.alpha(Theme.select, 0.45) : "transparent"
+                color: macroItem.current ? Theme.select : macroItem.hovered ? Color.transparent(Theme.select, 0.45) : "transparent"
                 Rectangle {
                     visible: macroItem.current
                     width: 3
@@ -1050,7 +1050,7 @@ Pane {
                     text: macroItem.recordingHere
                           ? (root.refusal.length > 0 ? root.refusal
                              : holders.length > 0 ? qsTr("Already assigned to: %1").arg(holders.join(", ")) : "")
-                          : macroItem.takenBy.length > 0 ? qsTr("%1 also uses %2 and takes it.").arg(macroItem.takenBy).arg(macroItem.keys) : ""
+                          : macroItem.takenBy.length > 0 ? qsTr("%1 also uses %2 and takes it.").arg(macroItem.takenBy, macroItem.keys) : ""
                 }
             }
         }
@@ -1248,8 +1248,8 @@ Pane {
                 readonly property var holders: root.pressed && root.hotkeys && reassign.target
                                                ? root.hotkeys.holdersOf(root.pressed.accel, reassign.target.id) : []
                 text: root.pressed ? qsTr("%1 is assigned to %2. Assign it to %3 instead?")
-                                     .arg(root.pressed.keys).arg(holders.join(", "))
-                                     .arg(list.current && list.current.macro ? list.current.macro.name : root.recording)
+                                     .arg(root.pressed.keys, holders.join(", "),
+                                          list.current && list.current.macro ? list.current.macro.name : root.recording)
                                    : ""
             }
             DialogButtonBox {

@@ -80,14 +80,11 @@ DialogWindow {
         collector.chooseDirectory(value)
         path.text = value
     }
-    function escaped(text) {
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    }
     function html() {
         let out = ""
         for (const s of collector.log) {
             const colour = s.kind === 1 ? warningColour : s.kind === 2 ? successColour : Theme.text
-            out += "<span style=\"color:" + colour + "\">" + escaped(s.text) + "</span>"
+            out += "<span style=\"color:" + colour + "\">" + Qt.escapeHtml(s.text) + "</span>"
         }
         return "<div style=\"white-space: pre-wrap\">" + out + "</div>"
     }

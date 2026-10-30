@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Hikari.Ui
 
 ShellMenu {
-    id: menu
+    id: outputMenu
     required property var app
     property var audio: null
     property string slowerKey
@@ -16,19 +16,19 @@ ShellMenu {
     signal settingsRequested()
     onAboutToShow: rows = app.audioOutputMenu()
     AudioSliderRow {
-        visible: menu.audio !== null
+        visible: outputMenu.audio !== null
         height: visible ? implicitHeight : 0
-        sliderName: menu.audio !== null ? "audioVolume" : ""
+        sliderName: outputMenu.audio !== null ? "audioVolume" : ""
         text: qsTr("Volume")
         from: 1
         to: 100
-        value: menu.audio ? menu.audio.volume : 50
+        value: outputMenu.audio ? outputMenu.audio.volume : 50
         readout: Math.round(value)
-        onMoved: v => menu.audio.setVolume(v)
+        onMoved: v => outputMenu.audio.setVolume(v)
     }
     Label {
-        objectName: menu.audio !== null ? "audioVolumeLinked" : ""
-        visible: menu.audio !== null && menu.audio.linked
+        objectName: outputMenu.audio !== null ? "audioVolumeLinked" : ""
+        visible: outputMenu.audio !== null && outputMenu.audio.linked
         height: visible ? implicitHeight : 0
         leftPadding: 98
         bottomPadding: 4
@@ -37,7 +37,7 @@ ShellMenu {
         text: qsTr("Linked to vertical stretch")
     }
     Item {
-        visible: menu.audio !== null
+        visible: outputMenu.audio !== null
         width: parent ? parent.width : implicitWidth
         implicitWidth: 320
         implicitHeight: visible ? 32 : 0
@@ -72,7 +72,7 @@ ShellMenu {
                             width: speeds.width / 5
                             height: speeds.height
                             focusPolicy: Qt.NoFocus
-                            checked: menu.audio !== null && menu.audio.speedPercent === modelData
+                            checked: outputMenu.audio !== null && outputMenu.audio.speedPercent === modelData
                             //: A playback speed in percent
                             text: qsTr("%1%").arg(modelData)
                             Accessible.role: Accessible.RadioButton
@@ -80,8 +80,8 @@ ShellMenu {
                             Accessible.checked: checked
                             Accessible.name: text
                             onClicked: {
-                                menu.audio.setSpeedPercent(modelData)
-                                checked = Qt.binding(() => menu.audio !== null && menu.audio.speedPercent === modelData)
+                                outputMenu.audio.setSpeedPercent(modelData)
+                                checked = Qt.binding(() => outputMenu.audio !== null && outputMenu.audio.speedPercent === modelData)
                             }
                             background: Rectangle {
                                 color: speed.checked ? Theme.select : speed.hovered ? Theme.raised : "transparent"
@@ -113,8 +113,8 @@ ShellMenu {
     }
     Item {
         objectName: "audioSpeedHint"
-        readonly property bool keys: menu.slowerKey.length > 0 && menu.fasterKey.length > 0
-        visible: menu.audio !== null
+        readonly property bool keys: outputMenu.slowerKey.length > 0 && outputMenu.fasterKey.length > 0
+        visible: outputMenu.audio !== null
         width: parent ? parent.width : implicitWidth
         implicitWidth: hint.implicitWidth + 98 + 12
         implicitHeight: visible ? hint.implicitHeight + 6 : 0
@@ -134,14 +134,14 @@ ShellMenu {
                 visible: hint.parent.keys
                 //: %1 the key that slows the audio down, %2 the key that speeds it up
                 text: qsTr("%1 and %2 change the speed.")
-                keys: [menu.slowerKey, menu.fasterKey]
+                keys: [outputMenu.slowerKey, outputMenu.fasterKey]
                 color: Theme.muted
                 font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
             }
         }
     }
     Item {
-        visible: menu.audio !== null
+        visible: outputMenu.audio !== null
         width: parent ? parent.width : implicitWidth
         implicitWidth: heading.implicitWidth + 24
         implicitHeight: visible ? heading.implicitHeight + 10 : 0
@@ -166,7 +166,7 @@ ShellMenu {
         }
     }
     Instantiator {
-        model: menu.rows
+        model: outputMenu.rows
         delegate: ShellMenuItem {
             required property var modelData
             required property int index
@@ -176,18 +176,18 @@ ShellMenu {
             checked: modelData.checked
             keepsMenuOpen: false
             onTriggered: {
-                menu.app.chooseAudioOutput(modelData.id, modelData.name)
-                menu.rows = menu.app.audioOutputMenu()
+                outputMenu.app.chooseAudioOutput(modelData.id, modelData.name)
+                outputMenu.rows = outputMenu.app.audioOutputMenu()
             }
         }
-        onObjectAdded: (index, object) => menu.insertItem(menu.firstDevice + index, object)
-        onObjectRemoved: (index, object) => menu.removeItem(object)
+        onObjectAdded: (index, object) => outputMenu.insertItem(outputMenu.firstDevice + index, object)
+        onObjectRemoved: (index, object) => outputMenu.removeItem(object)
     }
     MenuSeparator {}
     ShellMenuItem {
         objectName: "audioOutputSettings"
         iconRole: "settings-audio"
         text: qsTr("Audio settings…")
-        onTriggered: menu.settingsRequested()
+        onTriggered: outputMenu.settingsRequested()
     }
 }

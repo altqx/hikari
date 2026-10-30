@@ -15,8 +15,8 @@ Item {
     property double before: 0
     property int sliderValue: 0
     property string label: ""
-    readonly property bool opened: popover.visible || (compactWindow !== null && compactWindow.visible)
-    readonly property alias popover: popover
+    readonly property bool opened: ratioPopover.visible || (compactWindow !== null && compactWindow.visible)
+    readonly property alias popover: ratioPopover
     readonly property DialogWindow compactWindow: windowLoader.item
     visible: false
 
@@ -30,7 +30,7 @@ Item {
     function openAtCursor(area) {
         start()
         const at = view.cursorIn(area)
-        popover.openAt(area, null, Qt.rect(at.x, at.y, 1, 1))
+        ratioPopover.openAt(area, null, Qt.rect(at.x, at.y, 1, 1))
     }
     function openWindow(from) {
         start()
@@ -51,8 +51,8 @@ Item {
         view.setAspectRatio(before)
     }
     function close() {
-        if (popover.visible)
-            popover.keep()
+        if (ratioPopover.visible)
+            ratioPopover.keep()
         if (compactWindow && compactWindow.visible)
             compactWindow.accept()
     }
@@ -66,7 +66,7 @@ Item {
     }
 
     Popover {
-        id: popover
+        id: ratioPopover
         objectName: "aspectRatioPopover"
         title: qsTr("Change aspect ratio")
         showTitle: true

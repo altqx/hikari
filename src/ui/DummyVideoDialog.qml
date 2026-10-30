@@ -38,7 +38,7 @@ DialogWindow {
         const m = /^(\d+):(\d{1,2}):(\d{1,2})(?:[.,](\d{1,2}))?$/.exec(text.trim())
         if (!m)
             return -1
-        return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
+        return ((Number(m[1]) * 60 + Number(m[2])) * 60 + Number(m[3])) * 1000 + (m[4] ? Number(m[4].padEnd(2, "0")) * 10 : 0)
     }
     // ASS colours are &H[AA]BBGGRR&, blue first.
     function rgb(text) {
@@ -112,7 +112,7 @@ DialogWindow {
                     implicitWidth: 32
                     implicitHeight: 24
                     readonly property var c: dialog.rgb(colour.text)
-                    readonly property color color: c ? Qt.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
+                    readonly property color color: c ? Color.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
                     text: qsTr("Choose the colour")
                     Accessible.name: text
                     ToolTip.visible: hovered
