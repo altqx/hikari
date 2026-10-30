@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <QInputMethodEvent>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QQuickItem>
@@ -53,15 +54,16 @@ bool focusedByUser(const QQuickItem *item)
 
 bool popupOpen(const QQuickWindow *window)
 {
-    const QQuickItem *root = window->contentItem() ? window->contentItem()->parentItem() : nullptr;
-    if (!root)
-        return false;
-    for (const QQuickItem *layer : root->childItems())
-        if (layer->inherits("QQuickOverlay"))
-            for (const QQuickItem *item : layer->childItems())
-                if (item->isVisible() && item->inherits("QQuickPopupItem") && item->parent()
-                    && !item->parent()->inherits("QQuickToolTip"))
-                    return true;
+    const QQuickItem *content = window->contentItem();
+    const QQuickItem *root = content ? content->parentItem() : nullptr;
+    for (const QQuickItem *layer : {content, root})
+        if (layer)
+            for (const QQuickItem *overlay : layer->childItems())
+                if (overlay->inherits("QQuickOverlay"))
+                    for (const QQuickItem *item : overlay->childItems())
+                        if (item->isVisible() && item->inherits("QQuickPopupItem") && item->parent()
+                            && !item->parent()->inherits("QQuickToolTip"))
+                            return true;
     return false;
 }
 
@@ -303,6 +305,13 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
         if (filtered && !event->isAccepted())
             m_withheld = event;
         return filtered;
+    }
+    case QEvent::InputMethod: {
+        const auto *input = static_cast<QInputMethodEvent *>(event);
+        auto *item = qobject_cast<QQuickItem *>(watched);
+        if (takesText(item) && !(input->preeditString().isEmpty() && input->commitString().isEmpty()))
+            m_typedIn = item;
+        return false;
     }
     case QEvent::KeyPress: {
         if (auto *window = qobject_cast<QQuickWindow *>(watched); window && takesText(window->activeFocusItem()))

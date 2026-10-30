@@ -19747,6 +19747,15 @@ private slots:
         hover("audioDisplay");
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
         toolTip.reset();
+        QQmlComponent popupComponent(engine);
+        popupComponent.setData("import QtQuick.Controls\nPopup { focus: false; visible: true; width: 10; height: 10 }", {});
+        std::unique_ptr<QObject> popup(
+            popupComponent.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(tip)}}));
+        QVERIFY2(popup, qPrintable(popupComponent.errorString()));
+        QTRY_VERIFY(popup->property("opened").toBool());
+        hover("videoPanel");
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        popup.reset();
 
         auto *text = item("lineText");
         text->forceActiveFocus();
@@ -19758,6 +19767,12 @@ private slots:
         hover("videoPanel");
         QVERIFY(text->hasActiveFocus());
         QCOMPARE(text->property("text").toString().size(), before + 1);
+        item("editingGrid")->forceActiveFocus();
+        text->forceActiveFocus();
+        sendPreedit(text, QStringLiteral("か"));
+        hover("editingGrid");
+        QVERIFY(text->hasActiveFocus());
+        sendCommit(text, QStringLiteral("か"));
         item("editingGrid")->forceActiveFocus();
         text->forceActiveFocus(Qt::MouseFocusReason);
         hover("editingGrid");
