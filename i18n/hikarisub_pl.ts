@@ -8306,8 +8306,8 @@ ponieważ została zmieniona.</translation>
         <translation>Przewijaj wykres audio przy odtwarzaniu</translation>
     </message>
     <message>
-        <source>Hotkeys follow the panel under the pointer</source>
-        <translation>Skróty klawiszowe działają w panelu pod wskaźnikiem</translation>
+        <source>Focus the panel under the pointer</source>
+        <translation>Przenoś fokus na panel pod wskaźnikiem</translation>
     </message>
     <message>
         <source>Choose external font folder</source>

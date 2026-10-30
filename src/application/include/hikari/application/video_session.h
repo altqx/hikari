@@ -29,6 +29,7 @@ public:
 
     // May come after open; it then receives the frame already shown.
     void setPresenter(PresenterPort *presenter);
+    const PresenterPort *presenter() const { return m_presenter; }
     void setObserver(std::function<void()> changed) { m_observer = std::move(changed); }
 
     // `index`: the chosen audio track and index file.

@@ -36,7 +36,7 @@ body:
     id: system
     attributes:
       label: System and settings
-      description: Filled in by HikariSub (version, package, system, settings as ids).
+      description: Filled in by HikariSub (version, package, system, settings as ids). Reporting from the web? Give the HikariSub version, how you installed it (AppImage, .deb, .rpm, Windows installer) and your OS.
       render: text
   - type: textarea
     id: log

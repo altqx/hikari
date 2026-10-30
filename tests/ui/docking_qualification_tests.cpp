@@ -4,6 +4,7 @@
 #include <kddockwidgets/Config.h>
 #include <kddockwidgets/KDDockWidgets.h>
 #include <kddockwidgets/LayoutSaver.h>
+#include <kddockwidgets/core/DockRegistry.h>
 #include <kddockwidgets/qtquick/Platform.h>
 #include <kddockwidgets/qtquick/views/FloatingWindow.h>
 
@@ -1063,6 +1064,27 @@ private slots:
             QVERIFY2(!Docking::platformUsesSystemMove(QString::fromLatin1(platform)), platform);
         QCOMPARE(Docking::platformUsesSystemMove(), Docking::platformUsesSystemMove(QGuiApplication::platformName()));
         QCOMPARE(docking()->systemMove(), Docking::platformUsesSystemMove());
+    }
+
+    void aDropBesideOrIntoTheGroupItEmptiesIsRefused()
+    {
+        using namespace KDDockWidgets;
+        const auto allowed = Config::self().dropIndicatorAllowedFunc();
+        QVERIFY(allowed);
+        Core::DockWidget *video = DockRegistry::self()->dockByName(QStringLiteral("Video"));
+        Core::DockWidget *audio = DockRegistry::self()->dockByName(QStringLiteral("Audio"));
+        QVERIFY(video && audio);
+        const Vector<Core::DockWidget *> alone{video}, pair{video, audio}, other{audio};
+        for (DropLocation inner : {DropLocation_Left, DropLocation_Top, DropLocation_Right, DropLocation_Bottom,
+                                   DropLocation_Center}) {
+            QVERIFY(!allowed(inner, alone, alone, nullptr));
+            QVERIFY(!allowed(inner, pair, pair, nullptr));
+            QVERIFY(allowed(inner, alone, pair, nullptr));
+            QVERIFY(allowed(inner, other, alone, nullptr));
+        }
+        for (DropLocation outer : {DropLocation_OutterLeft, DropLocation_OutterTop, DropLocation_OutterRight,
+                                   DropLocation_OutterBottom})
+            QVERIFY(allowed(outer, alone, alone, nullptr));
     }
 
     void wholeFloatingHeaderDocksWhereItDoesNotSplit()

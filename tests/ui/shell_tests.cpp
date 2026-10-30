@@ -15045,7 +15045,7 @@ private slots:
               {"audio.leadOutValue", nullptr},
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
               {"audio.dontPlayWhenLineChanges", "Don't play after changing the line"},
-              {"audio.autoFocus", "Hotkeys follow the panel under the pointer"},
+              {"audio.autoFocus", "Focus the panel under the pointer"},
               {"audio.drawTimeCursor", "Show the time beside the cursor"},
               {"audio.drawSecondaryLines", "Show seconds markers"},
               {"audio.drawSelectionBackground", "Show the selection background"},
@@ -19587,10 +19587,10 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         clickWith(item("previousFrame"), Qt::NoModifier);
         QTRY_COMPARE(video.frame(), 9);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
+        QCOMPARE(focusedPanel(), QStringLiteral("videoPanel"));
         clickWith(item("nextFrame"), Qt::NoModifier);
         QTRY_COMPARE(video.frame(), 10);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
+        QCOMPARE(focusedPanel(), QStringLiteral("videoPanel"));
         playsAndPauses("after the frame buttons");
         QVERIFY(!item("previousFrame")->hasActiveFocus() && !item("nextFrame")->hasActiveFocus());
         auto *comment = item("commentBox");
@@ -19636,7 +19636,7 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         hover("audioDisplay");
         QCOMPARE(hovered(), QStringLiteral("audioPanel"));
-        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Down);
         QVERIFY(audio.playing());
         QCOMPARE(session->selection().active, lines[0]->id);
@@ -19655,11 +19655,13 @@ private slots:
         QTest::mouseMove(window, kOverNoPanel);
         QCoreApplication::processEvents();
         QCOMPARE(hovered(), QString());
+        item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Down);
         QTRY_COMPARE(session->selection().active, lines[1]->id);
         QVERIFY(!audio.playing());
         hover("audioDisplay");
         QCOMPARE(hovered(), QStringLiteral("audioPanel"));
+        item("editingGrid")->forceActiveFocus();
         auto *audioPanel = item("audioPanel");
         audioPanel->setTransformOrigin(QQuickItem::TopLeft);
         audioPanel->setScale(0.1);
@@ -19673,6 +19675,7 @@ private slots:
         item("audioDisplay")->forceActiveFocus();
         hover("editingGrid");
         QCOMPARE(hovered(), QStringLiteral("gridPanel"));
+        item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_D, Qt::ControlModifier);
         QTRY_COMPARE(session->document().lines().size(), lines.size() + 1);
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
@@ -19687,7 +19690,7 @@ private slots:
         QTRY_COMPARE(session->document().lines().size(), lines.size() + 3);
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
         auto *text = item("lineText");
-        text->forceActiveFocus();
+        text->forceActiveFocus(Qt::MouseFocusReason);
         hover("audioDisplay");
         const QString typed = text->property("text").toString();
         press(Qt::Key_S);
@@ -19700,6 +19703,103 @@ private slots:
         press(Qt::Key_Up);
         QTRY_VERIFY(session->selection().active != active);
         QVERIFY(!audio.playing());
+    }
+
+    void focusFollowsThePointer()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        closeMismatchQuestion();
+        window->requestActivate();
+        QVERIFY(becomesFocusWindow(window));
+        QTest::mouseMove(window, kOverNoPanel);
+        const auto hover = [&](const char *name) {
+            QQuickItem *over = item(name);
+            QTest::mouseMove(window, over->mapToScene(QPointF(over->width() / 2, over->height() / 2)).toPoint());
+            QCoreApplication::processEvents();
+        };
+        const auto focusMark = [&](const QString &panel) {
+            QQuickItem *mark = findItem(dockHeader(panel), QStringLiteral("panelFocusMark"));
+            return mark && mark->isVisible();
+        };
+        item("editingGrid")->forceActiveFocus();
+        hover("audioDisplay");
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        QTRY_VERIFY(focusMark(QStringLiteral("Audio")));
+        QVERIFY(!focusMark(QStringLiteral("Grid")));
+        hover("videoPanel");
+        QCOMPARE(focusedPanel(), QStringLiteral("videoPanel"));
+        hover("editingGrid");
+        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        QTRY_VERIFY(focusMark(QStringLiteral("Grid")));
+
+        auto *tip = qobject_cast<QQuickItem *>(item("gridPanel"));
+        QQmlComponent tipComponent(engine);
+        tipComponent.setData("import QtQuick.Controls\nToolTip { text: \"tip\"; visible: true }", {});
+        std::unique_ptr<QObject> toolTip(tipComponent.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(tip)}}));
+        QVERIFY2(toolTip, qPrintable(tipComponent.errorString()));
+        QTRY_VERIFY(toolTip->property("opened").toBool());
+        hover("audioDisplay");
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        toolTip.reset();
+        QQmlComponent popupComponent(engine);
+        popupComponent.setData("import QtQuick.Controls\nPopup { focus: false; visible: true; width: 10; height: 10 }", {});
+        std::unique_ptr<QObject> popup(
+            popupComponent.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(tip)}}));
+        QVERIFY2(popup, qPrintable(popupComponent.errorString()));
+        QTRY_VERIFY(popup->property("opened").toBool());
+        hover("videoPanel");
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        popup.reset();
+
+        auto *text = item("lineText");
+        text->forceActiveFocus();
+        hover("editingGrid");
+        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        text->forceActiveFocus();
+        const auto before = text->property("text").toString().size();
+        QTest::keyClick(window, Qt::Key_S);
+        hover("videoPanel");
+        QVERIFY(text->hasActiveFocus());
+        QCOMPARE(text->property("text").toString().size(), before + 1);
+        item("editingGrid")->forceActiveFocus();
+        text->forceActiveFocus();
+        sendPreedit(text, QStringLiteral("か"));
+        hover("editingGrid");
+        QVERIFY(text->hasActiveFocus());
+        sendCommit(text, QStringLiteral("か"));
+        item("editingGrid")->forceActiveFocus();
+        text->forceActiveFocus(Qt::MouseFocusReason);
+        hover("editingGrid");
+        hover("audioDisplay");
+        QVERIFY(text->hasActiveFocus());
+        QTest::mouseClick(window, Qt::LeftButton, {}, item("editingGrid")->mapToScene(QPointF(20, 40)).toPoint());
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        hover("audioDisplay");
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+
+        QVERIFY(openPanelMenu(QStringLiteral("Audio")));
+        auto *menu = named("panelOptionsMenu");
+        hover("editingGrid");
+        hover("videoPanel");
+        QVERIFY(menu->property("visible").toBool());
+        QVERIFY(focusedPanel() != QStringLiteral("videoPanel"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        QVERIFY(application->settingsStore()->setValue(QStringLiteral("audio.autoFocus"), false));
+        item("editingGrid")->forceActiveFocus();
+        hover("audioDisplay");
+        hover("videoPanel");
+        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        QVERIFY(!focusMark(QStringLiteral("Video")));
+        QTest::mouseClick(window, Qt::LeftButton, {}, item("audioDisplay")->mapToScene(QPointF(10, 10)).toPoint());
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("audioPanel"));
     }
 
     void everyDefaultBindingReachesItsCommand()
@@ -24995,7 +25095,7 @@ private slots:
         hover("videoPanel");
         QTest::keyClick(window, Qt::Key_P);
         QTRY_COMPARE(tools.activeFamily(), 1);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
+        QCOMPARE(focusedPanel(), QStringLiteral("videoPanel"));
         auto *lineText = item("lineText");
         lineText->forceActiveFocus();
         const QString typed = lineText->property("text").toString();
@@ -31439,6 +31539,63 @@ private slots:
                     && session.lastPresent()->stage == application::PresentStage::Rendered);
         QCOMPARE(session.lastFrame(), shown);
         QVERIFY(fs.leave());
+    }
+
+    void theVideoPanelMovesClosesAndFloatsWhileFramesArrive()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &video = application->video();
+        const auto &session = video.session();
+        auto *videoDock = item<QObject>("videoDock");
+        QPointer<ui::VideoPresenter> presenter = qobject_cast<ui::VideoPresenter *>(item("videoPresenter"));
+        QVERIFY(presenter);
+        const auto attached = [&] { return session.presenter() == static_cast<application::PresenterPort *>(presenter.data()); };
+        QVERIFY(attached());
+        const auto rendered = [&](int frame) {
+            return QTest::qWaitFor([&] {
+                return session.shownFrame() == frame && session.lastPresent()
+                       && session.lastPresent()->outcome == application::PresentOutcome::Accepted
+                       && session.lastPresent()->stage == application::PresentStage::Rendered;
+            }, 10000);
+        };
+        auto *root = engine->rootObjects().first();
+        const auto placeBelowGrid = [&] {
+            QVariant placed;
+            QVERIFY(QMetaObject::invokeMethod(root, "placePanel", Q_RETURN_ARG(QVariant, placed),
+                                              Q_ARG(QVariant, QVariant::fromValue(videoDock)), Q_ARG(QVariant, 4),
+                                              Q_ARG(QVariant, QVariant::fromValue(item<QObject>("gridDock")))));
+            QVERIFY(placed.toBool());
+        };
+
+        QVERIFY(video.showFrameAt(5));
+        QVERIFY(videoDock->setProperty("isFloating", true));
+        QTRY_VERIFY(presenter->window() && presenter->window() != window);
+        QVERIFY(rendered(5));
+        QVERIFY(video.showFrameAt(10));
+        QVERIFY(videoDock->setProperty("isFloating", false));
+        QTRY_COMPARE(presenter->window(), window);
+        QVERIFY(rendered(10));
+        QVERIFY(video.showFrameAt(15));
+        placeBelowGrid();
+        QVERIFY(rendered(15));
+        QVERIFY(video.showFrameAt(20));
+        QVERIFY(QMetaObject::invokeMethod(videoDock, "close"));
+        QTRY_VERIFY(!videoDock->property("isOpen").toBool());
+        QTRY_COMPARE(session.shownFrame(), 20);
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowVideo"), "triggered"));
+        QTRY_VERIFY(videoDock->property("isOpen").toBool());
+        QVERIFY(video.showFrameAt(25));
+        QVERIFY(rendered(25));
+        QVERIFY(presenter);
+        QVERIFY(attached());
+
+        delete presenter.data();
+        QVERIFY(!session.presenter());
+        QVERIFY(video.showFrameAt(30));
+        QTRY_COMPARE(session.shownFrame(), 30);
+        QVERIFY(!session.lastPresent());
     }
 
     void videoFullscreenDialogsMenuKeyToolsAndMapping()
