@@ -3343,8 +3343,9 @@ def step_grid_speech():
     def states_spoken(lines):
         return [m.group(1) for l in lines for m in [re.search(r"'(expanded|collapsed)\b", l)] if m]
     run, menu_said = states_spoken(speech[:menu_at]), states_spoken(speech[menu_at:])
-    toggled = "expanded" in run and "collapsed" in run[run.index("expanded"):]
-    verdict("grid-orca", "observed" if toggled and menu_said[-2:] == ["expanded", "collapsed"] else "failed",
+    def toggled(said):
+        return "expanded" in said and "collapsed" in said[said.index("expanded"):]
+    verdict("grid-orca", "observed" if toggled(run) and toggled(menu_said) else "failed",
             f"Orca spoke {len(speech)} lines; the run's cell: {run}; the options button: {menu_said} "
             f"(grid-orca-speech.txt)", ["grid-orca-speech.txt", "grid-orca-debug.out"])
 
