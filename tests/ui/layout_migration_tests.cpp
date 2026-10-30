@@ -13,6 +13,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -150,9 +151,17 @@ QString difference(const QJsonValue &expected, const QJsonValue &actual, const Q
     return expected == actual ? QString() : mismatch();
 }
 
+QString expectationsFile()
+{
+    return QStringLiteral("expected-%1.json").arg(QGuiApplication::platformName());
+}
+
 QStringList engines()
 {
-    return QDir(QStringLiteral(HIKARI_LAYOUT_FIXTURES)).entryList({QStringLiteral("kddw-*")}, QDir::Dirs);
+    const QDir fixtures(QStringLiteral(HIKARI_LAYOUT_FIXTURES));
+    QStringList recorded = fixtures.entryList({QStringLiteral("kddw-*")}, QDir::Dirs);
+    recorded.removeIf([&](const QString &engineDir) { return !fixtures.exists(engineDir + QLatin1Char('/') + expectationsFile()); });
+    return recorded;
 }
 
 }
@@ -233,8 +242,7 @@ class LayoutMigrationTest : public QObject {
     }
     QJsonObject expectations(const QString &engineDir) const
     {
-        return QJsonDocument::fromJson(readAll(QStringLiteral(HIKARI_LAYOUT_FIXTURES "/%1/expected.json").arg(engineDir)))
-            .object();
+        return QJsonDocument::fromJson(readAll(fixture(engineDir, expectationsFile()))).object();
     }
     QString fixture(const QString &engineDir, const QString &name) const
     {
@@ -309,7 +317,7 @@ private slots:
                                    {QStringLiteral("saved"), saved},
                                    {QStringLiteral("session"), tabs},
                                    {QStringLiteral("section"), section}};
-        QVERIFY(writeAll(out + QStringLiteral("/expected.json"), QJsonDocument(expected).toJson()));
+        QVERIFY(writeAll(out + QLatin1Char('/') + expectationsFile(), QJsonDocument(expected).toJson()));
     }
 
     void anOlderEnginesLayoutFileRestores_data()
