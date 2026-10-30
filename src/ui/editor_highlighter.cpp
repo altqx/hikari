@@ -34,7 +34,8 @@ protected:
             const int s = std::max(start, from), e = std::min(end, to);
             for (int i = s; i < e; ++i) {
                 QTextCharFormat format = this->format(i - from);
-                format.setBackground(colour);
+                format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+                format.setUnderlineColor(colour);
                 setFormat(i - from, 1, format);
             }
         }
@@ -144,7 +145,7 @@ QVariantList EditorHighlighter::appliedRanges() const
         return out;
     for (QTextBlock block = m_document->textDocument()->begin(); block.isValid(); block = block.next())
         for (const QTextLayout::FormatRange &range : block.layout()->formats())
-            if (range.format.background().style() != Qt::NoBrush && range.format.background().color() == m_colour) {
+            if (range.format.underlineStyle() == QTextCharFormat::WaveUnderline && range.format.underlineColor() == m_colour) {
                 const int start = block.position() + range.start, end = start + range.length;
                 if (!out.isEmpty() && out.last().toInt() == start)
                     out.last() = end;

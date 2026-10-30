@@ -167,7 +167,7 @@ Item {
         font.pixelSize: Math.max(1, overlayItem.tools.videoRect.width / 20)
         padding: Math.max(2, font.pixelSize / 3)
         background: Rectangle {
-            color: Qt.alpha(Theme.panel, 0.85)
+            color: Color.transparent(Theme.panel, 0.85)
             border.color: Theme.line
             radius: 4
         }

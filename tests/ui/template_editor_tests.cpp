@@ -2739,16 +2739,13 @@ private slots:
         const QString problem = textOf(QStringLiteral("templateProblemText"));
         QVERIFY2(problem.contains(QStringLiteral("Template line: %1").arg(editor->currentNumber())), qPrintable(problem));
         QVERIFY2(problem.contains(QStringLiteral("!nosuch.field!")), qPrintable(problem));
-        auto *wave = item(QStringLiteral("templateProblemWave"));
-        QVERIFY(wave);
-        auto *field = item(QStringLiteral("templateText"));
-        QRectF first;
-        QVERIFY(QMetaObject::invokeMethod(field, "positionToRectangle", Q_RETURN_ARG(QRectF, first),
-                                          Q_ARG(int, editor->problemRange().front().toInt())));
-        QTRY_VERIFY(!wave->property("segments").toList().isEmpty());
-        const QVariantList segment = wave->property("segments").toList().front().toList();
-        QCOMPARE(segment.value(0).toReal(), first.x());
-        QVERIFY(segment.value(2).toReal() > 0);
+        auto *marks = object(QStringLiteral("templateTextHighlighter"));
+        const auto waved = [marks] {
+            QVariantList applied;
+            QMetaObject::invokeMethod(marks, "appliedRanges", Q_RETURN_ARG(QVariantList, applied));
+            return applied;
+        };
+        QTRY_COMPARE(waved(), editor->problemRange());
         QVERIFY(!item(QStringLiteral("templateApply"))->isEnabled());
         QCOMPARE(textOf(QStringLiteral("templateStatus")), QStringLiteral("Apply is off while a template has a problem."));
         QVERIFY(item(QStringLiteral("templatePreviewKept"))->isVisible());
@@ -2760,7 +2757,7 @@ private slots:
             }
         editor->setText(text);
         QTRY_VERIFY_WITH_TIMEOUT(!item(QStringLiteral("templateProblem"))->isVisible(), 20'000);
-        QTRY_VERIFY(wave->property("segments").toList().isEmpty());
+        QTRY_VERIFY(waved().isEmpty());
         QTRY_VERIFY(item(QStringLiteral("templateApply"))->isEnabled());
     }
 

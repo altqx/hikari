@@ -26,11 +26,11 @@ Item {
                 const lines = [qsTr("Subtitles drawn in %1 ms").arg(overlay.milliseconds(c.milliseconds))]
                 if (c.counted) {
                     //: Over the video: %1 events shown, %2 bitmaps libass drew, %3 their area in megapixels
-                    lines.push(qsTr("%1 event(s), %2 bitmap(s), %3 Mpx").arg(c.events).arg(c.images)
-                               .arg((c.area / 1e6).toFixed(2)))
+                    lines.push(qsTr("%1 event(s), %2 bitmap(s), %3 Mpx").arg(c.events, c.images,
+                                                                                    (c.area / 1e6).toFixed(2)))
                     if (c.blurred > 0 || c.vectorClips > 0)
                         //: Over the video: of the shown events, %1 use \blur or \be and %2 a drawing \clip or \iclip
-                        lines.push(qsTr("%1 with blur, %2 with a vector clip").arg(c.blurred).arg(c.vectorClips))
+                        lines.push(qsTr("%1 with blur, %2 with a vector clip").arg(c.blurred, c.vectorClips))
                 }
                 return lines
             }

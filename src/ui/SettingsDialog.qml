@@ -835,7 +835,7 @@ DialogWindow {
                             color: Theme.muted
                             linkColor: Theme.accent
                             text: qsTr("Harper %1 by Automattic, Apache License 2.0. %2 in Help › Credits.")
-                                  .arg(dialog.app.grammarVersion).arg("<a href=\"credits\">" + qsTr("Licence notice") + "</a>")
+                                  .arg(dialog.app.grammarVersion, "<a href=\"credits\">" + qsTr("Licence notice") + "</a>")
                             onLinkActivated: dialog.creditsRequested()
                             HoverHandler { cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor }
                         }
@@ -1088,7 +1088,7 @@ DialogWindow {
                             text: qsTr("Long syllables for %1").arg("\\kf")
                             SettingNumber {
                                 setting: "audio.karaokeKfThreshold"; from: 10; to: 10000; unit: qsTr("cs"); name: qsTr("Long syllables for %1").arg("\\kf")
-                                tip: qsTr("Switch long syllables between %1 and %2 changes the syllables at least this long.").arg("\\k").arg("\\kf")
+                                tip: qsTr("Switch long syllables between %1 and %2 changes the syllables at least this long.").arg("\\k", "\\kf")
                             }
                         }
                     }

@@ -268,7 +268,7 @@ Item {
                 objectName: "hotkeyQuestionText"
                 readonly property var commands: form.host.conflict ? (form.host.conflict.commands || []) : []
                 text: commands.length > 0
-                      ? qsTr("%1 is already used by %2.").arg(form.host.keys).arg(commands.join(", "))
+                      ? qsTr("%1 is already used by %2.").arg(form.host.keys, commands.join(", "))
                       : form.host.conflict ? form.host.conflict.message : ""
                 wrapMode: Text.Wrap
                 Accessible.role: Accessible.AlertMessage

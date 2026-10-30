@@ -214,7 +214,7 @@ Window {
                     //: The latency calibration's result; %1 the spread in ms, %2 the presses counted (of 12)
                     text: (calibration.audio.calibrating ? qsTr("Spread ±%1 ms · %2 of 12 counted beeps so far")
                                                          : qsTr("Spread ±%1 ms · %2 of 12 counted beeps"))
-                          .arg(calibration.audio.calibrationSpread).arg(calibration.audio.calibrationCounted)
+                          .arg(calibration.audio.calibrationSpread, calibration.audio.calibrationCounted)
                 }
             }
             RowLayout {

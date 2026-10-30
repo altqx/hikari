@@ -9,9 +9,9 @@ RowLayout {
     property var resolution: ({})
     readonly property string kind: resolution && resolution.kind ? resolution.kind : ""
     readonly property bool warning: kind === "substituted" || kind === "fallback" || kind === "missing"
-    readonly property string text: kind === "requested" ? qsTr("Drawn by the subtitle renderer with %1 (%2).").arg(resolution.family).arg(resolution.file)
-        : kind === "substituted" ? qsTr("Not installed under this name: the subtitle renderer substitutes %1 (%2).").arg(resolution.family).arg(resolution.file)
-        : kind === "fallback" ? qsTr("Not installed: the subtitle renderer falls back to %1 (%2).").arg(resolution.family).arg(resolution.file)
+    readonly property string text: kind === "requested" ? qsTr("Drawn by the subtitle renderer with %1 (%2).").arg(resolution.family, resolution.file)
+        : kind === "substituted" ? qsTr("Not installed under this name: the subtitle renderer substitutes %1 (%2).").arg(resolution.family, resolution.file)
+        : kind === "fallback" ? qsTr("Not installed: the subtitle renderer falls back to %1 (%2).").arg(resolution.family, resolution.file)
         : kind === "missing" ? qsTr("No font answers this name.")
         : ""
     spacing: 6

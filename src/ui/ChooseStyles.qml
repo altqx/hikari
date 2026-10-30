@@ -35,7 +35,7 @@ Popover {
         original = (checked || []).slice()
         search.text = ""
         styleList.currentIndex = names.length > 0 ? 0 : -1
-        return openAt(anchorItem)
+        openAt(anchorItem)
     }
     function lookup(list) {
         const set = Object.create(null)
@@ -185,7 +185,7 @@ Popover {
         Item { Layout.fillWidth: true }
         Label {
             objectName: "chooseStylesCount"
-            text: qsTr("%1 of %2 selected").arg(chooser.checkedNames.length).arg(chooser.names.length)
+            text: qsTr("%1 of %2 selected").arg(chooser.checkedNames.length, chooser.names.length)
             color: Theme.muted
         }
     }
