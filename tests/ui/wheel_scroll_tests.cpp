@@ -176,6 +176,15 @@ private slots:
         QCOMPARE(contentY(outer), aligned(notch / 3));
     }
 
+    void partsOfAPixelAddUpPastAnInnerListAtItsEnd()
+    {
+        ui::WheelScroll scroll;
+        QVERIFY(wheel({100, 50}, {}, {0, -120 * 1000}));
+        for (int i = 0; i < 40; ++i)
+            QVERIFY(wheel({100, 50}, {}, {0, -1}));
+        QCOMPARE(contentY(outer), aligned(notch / 3));
+    }
+
     void aFlickableThatIsNotInteractiveLetsTheListBelowScroll()
     {
         ui::WheelScroll scroll;

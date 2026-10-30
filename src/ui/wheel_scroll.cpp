@@ -76,13 +76,10 @@ bool WheelScroll::eventFilter(QObject *watched, QEvent *event)
 
 bool WheelScroll::scroll(QQuickItem *flickable, const QWheelEvent &event)
 {
-    if (flickable != m_flickable) {
-        m_flickable = flickable;
-        m_rest = {};
-    }
+    const QPointF rest = flickable == m_flickable ? m_rest : QPointF();
     const int direction = flickable->property("flickableDirection").toInt();
-    const Axis vertical = axis(*flickable, Qt::Vertical, m_rest.y());
-    const Axis horizontal = axis(*flickable, Qt::Horizontal, m_rest.x());
+    const Axis vertical = axis(*flickable, Qt::Vertical, rest.y());
+    const Axis horizontal = axis(*flickable, Qt::Horizontal, rest.x());
     Qt::Orientations room;
     if (direction != HorizontalFlick && vertical.last > vertical.first)
         room |= Qt::Vertical;
@@ -100,6 +97,7 @@ bool WheelScroll::scroll(QQuickItem *flickable, const QWheelEvent &event)
     if (x != horizontal.at)
         flickable->setProperty(horizontal.position, x);
     // A pixel-aligned Flickable (every ScrollView's) rounds its position; the rest carries to the next event.
+    m_flickable = flickable;
     m_rest = QPointF(x - flickable->property(horizontal.position).toReal(),
                      y - flickable->property(vertical.position).toReal());
     QMetaObject::invokeMethod(flickable, "movementEnded");
