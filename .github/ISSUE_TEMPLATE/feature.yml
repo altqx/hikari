@@ -1,4 +1,4 @@
-# Help › Report an issue fills this form through a link; keep the ids in step with src/app/crash_reports.cpp (crash_report_tests checks).
+# Help › Report an issue fills this form through a link; keep the ids in step with src/app/crash_report.cpp (crash_report_tests checks).
 name: Feature request
 description: Something HikariSub could do.
 labels: ["enhancement", "needs-triage"]
