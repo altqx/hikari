@@ -100,6 +100,7 @@ public:
     void resizeColumn(int column, double width);
     void fitColumn(int column);
     void scrollToRow(int row);
+    void scrollToColumn(int column);
     int lastPaintedRowCount() const { return m_lastPainted; }
 
     void paint(QPainter *painter) override;

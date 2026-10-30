@@ -413,6 +413,15 @@ void LineGrid::scrollToRow(int row)
         setContentY(top + m_geometry.rowHeight - body);
 }
 
+void LineGrid::scrollToColumn(int column)
+{
+    const QRectF cell = cellRect(0, column);
+    if (cell.left() < m_markWidth)
+        setContentX(m_contentX + cell.left() - m_markWidth);
+    else if (cell.right() > m_viewport.width())
+        setContentX(m_contentX + std::min(cell.right() - m_viewport.width(), cell.left() - m_markWidth));
+}
+
 void LineGrid::makeLineVisible(qulonglong id)
 {
     const int row = rowOfLine(core::LineId{id});
@@ -484,6 +493,7 @@ void LineGrid::keyPressEvent(QKeyEvent *event)
         } else {
             m_currentColumn = event->key() == Qt::Key_Left ? std::max(0, m_currentColumn - 1)
                                                            : std::min(columnCount() - 1, m_currentColumn + 1);
+            scrollToColumn(m_currentColumn);
             announceState(true);
         }
         event->accept();

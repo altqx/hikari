@@ -12,6 +12,7 @@
 #include <QGuiApplication>
 #include <QPalette>
 #include <QImage>
+#include <QKeyEvent>
 #include <QPainter>
 #include <QPicture>
 #include <QQuickWindow>
@@ -224,6 +225,37 @@ private slots:
         QVERIFY(!grid.horizontalScrollBarShown());
         QCOMPARE(grid.contentX(), 0.0);
         QCOMPARE(grid.viewportHeight(), 300.0);
+    }
+
+    void arrowKeysScrollTheCurrentColumnIntoView()
+    {
+        struct Grid : LineGrid {
+            using LineGrid::keyPressEvent;
+        };
+        LineTableModel model;
+        model.setDocument(generate(3));
+        Grid grid;
+        grid.setModel(&model);
+        grid.setSize(QSizeF(400, 300));
+        QVERIFY(grid.horizontalScrollBarShown());
+        const auto press = [&](Qt::Key key) {
+            QKeyEvent event(QEvent::KeyPress, key, Qt::NoModifier);
+            grid.keyPressEvent(&event);
+        };
+        const auto shown = [&](int column) {
+            const QRectF cell = grid.cellRect(0, column);
+            return cell.left() >= -0.5 && cell.right() <= grid.viewportWidth() + 0.5;
+        };
+        while (grid.currentColumn() > 0) {
+            press(Qt::Key_Left);
+            QVERIFY2(shown(grid.currentColumn()), qPrintable(grid.columnTitle(grid.currentColumn())));
+        }
+        QCOMPARE(grid.contentX(), 0.0);
+        while (grid.currentColumn() < grid.columnCount() - 1) {
+            press(Qt::Key_Right);
+            QVERIFY2(shown(grid.currentColumn()), qPrintable(grid.columnTitle(grid.currentColumn())));
+        }
+        QCOMPARE(grid.contentX(), grid.contentWidth() - grid.viewportWidth());
     }
 
     void dividersResizeTheColumnOnTheirLeft()
