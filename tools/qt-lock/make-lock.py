@@ -4,24 +4,26 @@ import argparse, hashlib, io, json, os, re, subprocess, sys, tempfile, urllib.re
 import xml.etree.ElementTree as ET
 
 BASE = "https://download.qt.io/online/qtsdkrepository/"
+QT_VERSION = "6.12.0"
+QT = QT_VERSION.replace(".", "")
+ADDONS = ["qtmultimedia", "qtshadertools", "qtcanvaspainter", "qthttpserver", "qtwebsockets", "qtnetworkauth"]
 PLATFORMS = {
     "linux": {
         "roots": [
-            "linux_x64/desktop/qt6_6112/qt6_6112/",
-            "all_os/qt/qt6_6112_unix_line_endings_src/",
+            f"linux_x64/desktop/qt6_{QT}/qt6_{QT}/",
+            f"all_os/qt/qt6_{QT}_unix_line_endings_src/",
             "linux_x64/desktop/tools_generic/",
             "linux_x64/desktop/sdktool/",
             "all_os/license_agreements/licenses/",
-            "all_os/qt_patchers/6112/",
+            f"all_os/qt_patchers/{QT}/",
             "all_os/unified_patching/",
             "all_os/dependencycheck/",
             "all_os/default_install/",
         ],
         "packages": [
-            "qt.qt6.6112.linux_gcc_64",
+            f"qt.qt6.{QT}.linux_gcc_64",
             # Qt's add-on leaves are virtual (refused, yet exit 0); their parents pull them in via AutoDependOn.
-            "qt.qt6.6112.addons.qtmultimedia",
-            "qt.qt6.6112.addons.qtshadertools",
+            *(f"qt.qt6.{QT}.addons.{a}" for a in ADDONS),
         ],
         "installer": {
             "url": "https://download.qt.io/archive/online_installers/4.11/qt-online-installer-linux-x64-4.11.0.run",
@@ -31,20 +33,19 @@ PLATFORMS = {
     "windows": {
         # SDKTool adds tools_vcredist nodes only when that repository is offered.
         "roots": [
-            "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/",
-            "all_os/qt/qt6_6112_windows_line_endings_src/",
+            f"windows_x86/desktop/qt6_{QT}/qt6_{QT}_msvc2022_64/",
+            f"all_os/qt/qt6_{QT}_windows_line_endings_src/",
             "windows_x86/desktop/tools_generic/",
             "windows_x86/desktop/sdktool/",
             "all_os/license_agreements/licenses/",
-            "all_os/qt_patchers/6112/",
+            f"all_os/qt_patchers/{QT}/",
             "all_os/unified_patching/",
             "all_os/dependencycheck/",
             "all_os/default_install/",
         ],
         "packages": [
-            "qt.qt6.6112.win64_msvc2022_64",
-            "qt.qt6.6112.addons.qtmultimedia",
-            "qt.qt6.6112.addons.qtshadertools",
+            f"qt.qt6.{QT}.win64_msvc2022_64",
+            *(f"qt.qt6.{QT}.addons.{a}" for a in ADDONS),
         ],
         "installer": {
             "url": "https://download.qt.io/archive/online_installers/4.11/qt-online-installer-windows-x64-4.11.0.exe",
@@ -300,6 +301,7 @@ def main():
     lock = {
         "schema": 1,
         "platform": a.platform,
+        "qt_version": QT_VERSION,
         "base": BASE,
         "requested": plat["packages"],
         "complete": all(o["sha256"] for o in objects) and bool(lock_licenses) and not problems,

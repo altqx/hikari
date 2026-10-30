@@ -27,7 +27,7 @@ qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagButton.qml TagButtonEditor.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
-find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS ShaderTools)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS ShaderTools)
 target_sources(hikari_ui PRIVATE ycbcr_node.cpp ycbcr_node.h)
 qt_add_shaders(hikari_ui "hikari_ui_shaders"
     BATCHABLE
@@ -104,7 +104,7 @@ qt_target_qml_sources(hikari_ui QML_FILES ColourPopover.qml ColourSwatchGrid.qml
 target_sources(hikari_ui PRIVATE font_faces.cpp font_faces.h)
 qt_target_qml_sources(hikari_ui QML_FILES FontFamilyRow.qml)
 if(UNIX AND NOT APPLE)
-    find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
+    find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS DBus)
     target_link_libraries(hikari_ui PRIVATE Qt6::DBus)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_SCREEN_PORTAL)
 endif()
@@ -116,7 +116,7 @@ qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.q
 # xdg-decoration names xdg-shell's xdg_toplevel, and Qt keeps its own xdg-shell code private, so both are vendored.
 target_sources(hikari_ui PRIVATE window_decorations.cpp window_decorations.h)
 if(UNIX AND NOT APPLE)
-    find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS WaylandClient)
+    find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS WaylandClient)
     find_package(WaylandScanner REQUIRED)
     qt6_generate_wayland_protocol_client_sources(hikari_ui PRIVATE_CODE
         FILES "${CMAKE_CURRENT_SOURCE_DIR}/wayland/xdg-decoration-unstable-v1.xml")
@@ -135,7 +135,7 @@ if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi shell32)
 endif()
 if(UNIX AND NOT APPLE)
-    find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS WaylandClientPrivate)
+    find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS WaylandClientPrivate)
     target_link_libraries(hikari_ui PRIVATE Qt6::WaylandClientPrivate ${CMAKE_DL_LIBS})
 endif()
 qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml TitleBarMenus.qml TitleBarMenuItem.qml

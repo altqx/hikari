@@ -5,7 +5,7 @@ $build = Join-Path $root 'out\build\windows-x64-release'
 $out = Join-Path $root 'out\native-gate-win\tests'
 New-Item -ItemType Directory -Force $out | Out-Null
 $env:QT_QPA_PLATFORM = 'windows'
-$env:PATH = "$root\out\sdk\qt-6.11.2-windows\6.11.2\msvc2022_64\bin;$env:PATH"
+$env:PATH = "$root\out\sdk\qt-6.12.0-windows\6.12.0\msvc2022_64\bin;$env:PATH"
 $runs = @(
     @{ exe = 'hikari_ui_shell_tests'; fns = @('f6AndShortcutsReachAFloatingPanel', 'panelsFloatDockHideAndKeepTheirState',
             'placementWindowMovesTabsAndResizes', 'floatF6AndShowActivateTheFloatingPanelsWindow',

@@ -12,7 +12,7 @@ This is HikariSub's specification, on the `main` branch. It began as the map of 
 | Subtitle grid | Custom-painted renderer; accepted toolbar/task review, range/group and selected-only Join outcomes | [Grid contract](ux/subtitle-grid.md), [operations and History](ux/grid-operations.md), [ADR](adr/0003-painted-subtitle-grid.md) |
 | Vocabulary | Shared domain vocabulary, including Line, Document/Session, Line group and Unconfirmed | [Root glossary](../CONTEXT.md) |
 | Compatibility | Named approval for departures; individually approved defect fixes become default | [Compatibility](compatibility.md), [ADR](adr/0005-observable-compatibility-and-defect-approval.md) |
-| Qt and platform support | Qt 6.11.2 now, verified 6.12 adoption, then newer Qt with explicit Windows 10 retirement later | [Platform policy](platform-policy.md), [ADR](adr/0004-qt-baseline-and-platform-support.md) |
+| Qt and platform support | Qt 6.12.0 LTS now (6.11.2 kept for rollback), then newer Qt with explicit Windows 10 retirement later | [Platform policy](platform-policy.md), [ADR](adr/0004-qt-baseline-and-platform-support.md) |
 | Automation boundary | Persistent process/state per loaded script; one active macro, explicit restart; remaining compatibility and qualification open | [Automation](automation.md), [ADR](adr/0006-isolated-lua-automation-host.md) |
 | Karaoke templater | Karaoke Templater 2.1.7 as Aegisub 3.2.2, locked on a template corpus; HikariSub's named improvements (KE1) | [Karaoke templater](karaoke-templater.md) |
 | Subtitle fonts | libass-authoritative previews and verified renderer/font-file agreement | [Fonts](fonts.md), [ADR](adr/0007-renderer-verified-subtitle-fonts.md); native feasibility remains required |

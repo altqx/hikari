@@ -183,7 +183,7 @@ function(hikari_qt_install platform)
     list(SORT payloads)
     string(APPEND content_key "payloads=${payloads}\n")
     string(SHA256 lock_digest "${content_key}")
-    set(target "${HIKARI_SDK_DIR}/qt-6.11.2-${platform}")
+    set(target "${HIKARI_SDK_DIR}/qt-${HIKARI_QT_VERSION}-${platform}")
     set(stamp "${target}/.hikari-lock-sha256")
     if(EXISTS "${stamp}")
         file(READ "${stamp}" installed_digest)
@@ -265,7 +265,7 @@ function(hikari_qt_install platform)
         set(ENV{QT_QPA_PLATFORM} "offscreen")
         set(ENV{TMPDIR} "${private}/tmp")
     endif()
-    message(STATUS "Installing Qt 6.11.2 (${platform}) from the verified mirror; authentication: ${auth}")
+    message(STATUS "Installing Qt ${HIKARI_QT_VERSION} (${platform}) from the verified mirror; authentication: ${auth}")
     # No --default-answer/--accept-messages: an unknown installer prompt must fail the configure for review.
     execute_process(COMMAND "${HIKARI_QT_INSTALLER}"
             --root "${target}"

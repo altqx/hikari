@@ -20,7 +20,7 @@ $ProgressPreference = 'SilentlyContinue'
 $root = $PWD.Path
 $scratch = Join-Path $root 'out\native-gate-win'
 $build = Join-Path $root 'out\build\windows-x64-release'
-$qtBin = Join-Path $root 'out\sdk\qt-6.11.2-windows\6.11.2\msvc2022_64\bin'
+$qtBin = Join-Path $root 'out\sdk\qt-6.12.0-windows\6.12.0\msvc2022_64\bin'
 # QStandardPaths on Windows: AppConfigLocation (hikari.ini, layout.json) and AppDataLocation (Recovery).
 $profileDirs = [ordered]@{
     local   = Join-Path $env:LOCALAPPDATA 'HikariSub\HikariSub'

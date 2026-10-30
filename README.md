@@ -191,7 +191,7 @@ HikariSub looks for updates only when you choose **Help > Check for updates**, o
 
 ## Build from source
 
-The build is one CMake workflow. It downloads the pinned Qt 6.11.2 SDK and vcpkg dependencies itself:
+The build is one CMake workflow. It downloads the pinned Qt 6.12.0 SDK and vcpkg dependencies itself:
 
 ```bash
 git clone https://github.com/altqx/hikari.git

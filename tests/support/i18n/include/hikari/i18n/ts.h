@@ -1,5 +1,5 @@
 #pragma once
-// TS catalogs in the layout lupdate and lconvert write (Qt 6.11.2 translator/ts.cpp).
+// TS catalogs in the layout lupdate and lconvert write (Qt 6.12.0 translator/ts.cpp).
 
 #include <QByteArray>
 #include <QList>
@@ -43,7 +43,7 @@ struct TsCatalog {
 std::expected<TsCatalog, QString> readTs(const QByteArray &bytes);
 QByteArray writeTs(const TsCatalog &catalog);
 
-// Numerus forms lupdate 6.11.2 creates for a catalog language; -1 for others.
+// Numerus forms lupdate 6.12.0 creates for a catalog language; -1 for others.
 int qtNumerusForms(const QString &language);
 
 }
