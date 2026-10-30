@@ -10,7 +10,7 @@ Nothing leaves the machine until you press **Send report** or **Open GitHub issu
 - **A freeze.** A watchdog thread checks every second that the window still answers. After 10 seconds without an answer it records the main thread's stack in `hang-record.txt` (Linux: a signal to the main thread; Windows: the thread suspended for a moment and its stack walked). The record is rewritten every 5 seconds while the window stays stuck. If the window answers again, the record is removed and the freeze is offered as a notice.
 - **The Log's last lines.** Every Log entry is scrubbed as it comes, and the last 200 lines (64 KB at most, each line cut at 1,000 characters) are kept in `reports/log-tail.txt`, so the next start has the Log of a run that crashed. The `reports` folder in the cache folder is readable by your account only. A freeze report on its way when the program closes is kept there (`crash-report-sending.json`) until an answer comes, and offered again at the next start.
 
-A record holds the error (the signal, the Windows exception, or `APP_HANG` and how long), the version and up to 32 frames, each a module name and an offset. A module is named only when it is one of the program's files or the system's; any other module is `other`.
+A record holds the error (the signal, the Windows exception, or `APP_HANG` and how long), the version and up to 32 frames, each a module name and an offset. A module is named only when it is one of the program's files or the system's; any other module is `other`. A named module's frames also hold where it was loaded and its debug id: the GNU build-id (Linux) or the GUID and age of its PDB (Windows), in the form PostHog matches uploaded symbols by.
 
 ## The report
 
@@ -57,6 +57,8 @@ Release packages carry no debug info. Package CI builds with `HIKARI_DEBUG_SYMBO
 
 - `hikarisub-symbols-<version>-linux-x86_64.tar.xz`: each ELF file's debug info, split out by `packaging/linux/make-packages.sh` (`<path>.debug`, and under `.build-id/`);
 - `HikariSub-<version>-windows-x64-symbols.zip`: each module the build has a PDB for, beside its PDB.
+
+The release workflow uploads both to PostHog's error tracking with `tools/crash/posthog_symbols.py` (secret `HIKARI_POSTHOG_SYMBOLS_KEY`), so a release's `$exception` shows functions and lines there. A failed upload is a warning; the release still goes out. The tool does what `posthog-cli` cannot: it takes PDBs, and fits `hikarisub.debug` under PostHog's 100 MB per symbol set (uncompressed sections without location lists, zstd -19: about 86 MB for 0.1.0-beta.1). Only the program's own modules have symbols there: frames in Qt and system libraries stay unresolved. Events from 0.1.0-beta.1 never resolve: they carry no debug ids.
 
 `tools/crash/symbolize.py` turns a report's frames into functions and lines:
 
