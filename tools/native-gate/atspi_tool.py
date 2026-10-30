@@ -6,7 +6,7 @@
   atspi_tool.py windows                                top-level frames/windows with states
   atspi_tool.py find ROLE NAME                         objects with that role and name
   atspi_tool.py do ROLE NAME [ACTION]                  run an action (default the first)
-  atspi_tool.py listen SECONDS                         focus and window events, one per line
+  atspi_tool.py listen SECONDS                         focus, window and expanded-state events, one per line
   atspi_tool.py text ROLE NAME                         the text of that object (Text interface)
   atspi_tool.py json                                   frames, panels, focus and texts as JSON
   atspi_tool.py press-showing NAME                     press every showing button with that name
@@ -24,6 +24,8 @@
                                                        name, description) as JSON
   atspi_tool.py apps PID                               every application process PID registered
                                                        (bus name, toolkit, windows) as JSON
+  atspi_tool.py tables                                 each showing table's interfaces, row and column
+                                                       counts and focused cell (name, row, states) as JSON
 """
 import os
 import sys
@@ -50,6 +52,8 @@ INTERESTING = [
     Atspi.StateType.FOCUSABLE,
     Atspi.StateType.CHECKED,
     Atspi.StateType.ENABLED,
+    Atspi.StateType.EXPANDABLE,
+    Atspi.StateType.EXPANDED,
 ]
 
 
@@ -188,6 +192,36 @@ def path_of(o):
     return " > ".join(reversed(parts))
 
 
+def showing_tables(o, acc=None):
+    acc = acc if acc is not None else []
+    try:
+        if o.get_role_name() == "table":
+            if o.get_state_set().contains(Atspi.StateType.SHOWING):
+                acc.append(o)
+            return acc
+        for i in range(o.get_child_count()):
+            c = o.get_child_at_index(i)
+            if c is not None:
+                showing_tables(c, acc)
+    except GLib.Error:
+        pass
+    return acc
+
+
+def table_view(t):
+    rows, columns = Atspi.Table.get_n_rows(t), Atspi.Table.get_n_columns(t)
+    view = {"name": t.get_name(), "interfaces": t.get_interfaces(), "rows": rows, "columns": columns,
+            "selectedRows": Atspi.Table.get_selected_rows(t), "focused": None}
+    for row in view["selectedRows"]:
+        for column in range(columns):
+            cell = Atspi.Table.get_accessible_at(t, row, column)
+            cs = cell.get_state_set() if cell else None
+            if cs and cs.contains(Atspi.StateType.FOCUSED):
+                view["focused"] = {"name": cell.get_name(), "description": cell.get_description(), "row": row,
+                                   "column": column, "states": sorted(st.value_nick for st in cs.get_states())}
+    return view
+
+
 def focused(a):
     for o in all_objects(a):
         try:
@@ -213,7 +247,8 @@ def main():
 
         listener = Atspi.EventListener.new(on)
         for t in ("object:state-changed:focused", "focus:", "window:activate", "window:deactivate",
-                  "window:create", "window:destroy", "object:state-changed:active", "object:children-changed"):
+                  "window:create", "window:destroy", "object:state-changed:active", "object:children-changed",
+                  "object:state-changed:expanded"):
             listener.register(t)
         loop = GLib.MainLoop()
         GLib.timeout_add(int(seconds * 1000), loop.quit)
@@ -422,6 +457,9 @@ def main():
             except GLib.Error:
                 pass
         print(json.dumps(out, indent=1))
+    elif cmd == "tables":
+        import json
+        print(json.dumps([table_view(t) for t in showing_tables(a)], indent=1))
     elif cmd == "press-showing":
         for o in all_objects(a):
             try:
