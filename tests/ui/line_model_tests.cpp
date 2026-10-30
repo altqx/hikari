@@ -267,7 +267,9 @@ private slots:
         QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
         QSignalSpy reset(&model, &QAbstractItemModel::modelReset);
         model.setSelection({core::LineId{3}, {core::LineId{2}, core::LineId{3}}}, core::LineId{2});
-        QVERIFY(changed.count() >= 2);
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 1);
+        QCOMPARE(changed.at(0).at(1).toModelIndex().row(), 2);
         QCOMPARE(reset.count(), 0);
         QCOMPARE(model.index(2, 0).data(LineTableModel::ActiveRole).toBool(), true);
         QCOMPARE(model.index(1, 0).data(LineTableModel::SelectedRole).toBool(), true);

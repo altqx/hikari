@@ -476,9 +476,20 @@ void LineTableModel::emitRowChanged(int row)
 
 void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
 {
+    std::vector<bool> touched(m_rows.size());
     for (const auto &id : ids)
         if (const auto row = rowOf(id))
-            emit dataChanged(index(*row, 0), index(*row, ColumnCount - 1), {ActiveRole, SelectedRole, AnchorRole});
+            touched[static_cast<std::size_t>(*row)] = true;
+    const int rows = static_cast<int>(touched.size());
+    for (int first = 0; first < rows; ++first) {
+        if (!touched[static_cast<std::size_t>(first)])
+            continue;
+        int last = first;
+        while (last + 1 < rows && touched[static_cast<std::size_t>(last + 1)])
+            ++last;
+        emit dataChanged(index(first, 0), index(last, ColumnCount - 1), {ActiveRole, SelectedRole, AnchorRole});
+        first = last;
+    }
 }
 
 std::optional<int> LineTableModel::rowOf(core::LineId id) const
