@@ -47,8 +47,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDictionaries.cmake")
 set(HIKARI_DICTIONARY_DOWNLOADS "${CMAKE_BINARY_DIR}/dictionary-downloads" CACHE PATH
     "Folder the pinned dictionaries are fetched into (seed it to configure offline)")
 hikari_fetch_dictionaries("${HIKARI_DICTIONARY_DOWNLOADS}" HIKARI_BUNDLED_DICTIONARIES)
-find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
-qt_standard_project_setup(REQUIRES 6.11)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS QuickControls2)
+qt_standard_project_setup(REQUIRES 6.12)
 add_subdirectory(i18n)
 # The app's QML is a static module under src/ui, which the deploy's Qt Quick import scan must read too.
 set(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/src/ui")

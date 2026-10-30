@@ -76,7 +76,6 @@ Item {
             }
             ToolTip.visible: hover.hovered && swatch.Accessible.name.length > 0
             ToolTip.text: swatch.Accessible.name
-            ToolTip.delay: 500
         }
     }
 }

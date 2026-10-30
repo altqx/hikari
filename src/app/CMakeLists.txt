@@ -22,7 +22,7 @@ target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core
     Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
 # QZipWriter is private Qt API.
-find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS CorePrivate)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 target_link_libraries(hikari_composition PRIVATE Qt6::CorePrivate)
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"

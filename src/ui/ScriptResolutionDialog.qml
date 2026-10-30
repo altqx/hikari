@@ -109,7 +109,6 @@ Window {
                 visible: window.prompt.hasVideo
                 enabled: !always.checked
                 ToolTip.visible: hovered
-                ToolTip.delay: 600
                 ToolTip.text: window.prompt.videoWidth + " × " + window.prompt.videoHeight
                 onClicked: window.useVideo()
             }

@@ -111,7 +111,6 @@ ScrollView {
                     }
                     ToolTip.visible: hoveredLink.length > 0
                     ToolTip.text: hoveredLink
-                    ToolTip.delay: 500
                 }
             }
         }

@@ -4,7 +4,7 @@ target_link_libraries(hikari_ui_test_environment PUBLIC hikari_ui Qt6::Core)
 hikari_add_qttest(hikari_ui_line_model_tests SOURCES line_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_line_grid_tests SOURCES line_grid_tests.cpp LIBRARIES hikari_ui)
 target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp LIBRARIES hikari_composition
@@ -28,7 +28,7 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
     HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json"
     HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
     hikari_lua_helper hikari_automation_stage)
 # MSVC: shell_tests.cpp outgrows an object file's default section count (C1128).
@@ -74,7 +74,7 @@ add_dependencies(hikari_ui_automation_dialog_tests hikari_lua_helper)
 hikari_add_qttest(hikari_ui_presenter_tests SOURCES presenter_tests.cpp
     LIBRARIES hikari_ui hikari_backends hikari_image_testing)
 target_compile_definitions(hikari_ui_presenter_tests PRIVATE
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/presenter"
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
@@ -90,8 +90,8 @@ add_dependencies(hikari_ui_automation_manager_tests hikari_lua_helper)
 hikari_add_qttest(hikari_ui_automation_services_tests SOURCES automation_services_ui_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
 target_compile_definitions(hikari_ui_automation_services_tests PRIVATE
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
-    HIKARI_LATE_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quick/text/fonts/content/fonts/tarzeau_ocr_a.ttf"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_LATE_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quick/text/fonts/content/fonts/tarzeau_ocr_a.ttf"
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
@@ -415,7 +415,7 @@ hikari_add_qttest(hikari_ui_language_tests SOURCES language_tests.cpp LIBRARIES 
 target_compile_definitions(hikari_ui_language_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_language_tests hikari_lua_helper hikari_automation_stage)
-find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS LinguistTools)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS LinguistTools)
 qt_add_lrelease(TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/language-fixtures/hikarisub_pl.ts
     ${CMAKE_CURRENT_SOURCE_DIR}/language-fixtures/qt_pl.ts
     QM_OUTPUT_DIRECTORY language-fixtures LRELEASE_TARGET hikari_ui_language_fixtures NO_GLOBAL_TARGET OPTIONS -silent)

@@ -1,5 +1,6 @@
 add_executable(hikari_dependency_load main.cpp)
 target_link_libraries(hikari_dependency_load PRIVATE Qt6::Gui Qt6::Qml Qt6::Quick Hikari::media_deps Hikari::portaudio)
+target_compile_definitions(hikari_dependency_load PRIVATE HIKARI_QT_VERSION="${HIKARI_QT_VERSION}")
 
 add_executable(hikari_luajit_load luajit_load.cpp)
 target_link_libraries(hikari_luajit_load PRIVATE Hikari::luajit)

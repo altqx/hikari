@@ -301,7 +301,6 @@ Item {
                         iconRole: "edit"
                         ToolTip.visible: markHover.hovered
                         ToolTip.text: qsTr("The current line's style")
-                        ToolTip.delay: 500
                         HoverHandler { id: markHover }
                     }
                     Label {

@@ -1,6 +1,6 @@
 {
  "comment": "The Qt plugins a HikariSub package carries beside the Qt libraries, per platform (docs/proposals/backend-interfaces.md: deployment manifests enumerate Qt plugins). Each entry is a plugin file name without prefix or suffix under <Qt>/plugins/<category>, the Qt module archive that provides it (checked against cmake/locks/qt-<platform>.lock.json) and why the application loads it. Checked by cmake/manifest/QtDeploymentManifest.cmake (ctest qt-deployment-manifest), which itself requires K1's imageformats/qsvg and iconengines/qsvgicon on every platform; dependency-load loads those two. The other entries are the plan for Phase 5 packaging: the check only finds each in the Qt lock and, on the platform it runs on, in the provisioned Qt; nothing yet shows the application loads it, and no package is built from this file yet. The QML modules and the Qt libraries themselves are Phase 5 packaging's.",
- "qtVersion": "6.11.2",
+ "qtVersion": "6.12.0",
  "platforms": {
   "linux": {
    "platforms": [

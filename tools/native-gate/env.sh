@@ -6,7 +6,7 @@ BUILD="$HIKARI_TREE/out/build/ubuntu-x64-release"
 APP="$BUILD/src/app/hikarisub"
 UI_TESTS="$BUILD/tests/ui"
 FIXTURES="$BUILD/tests/backends/media-fixtures"
-QT_PREFIX="$HIKARI_TREE/out/sdk/qt-6.11.2-linux/6.11.2/gcc_64"
+QT_PREFIX="$HIKARI_TREE/out/sdk/qt-6.12.0-linux/6.12.0/gcc_64"
 export HIKARI_TREE GATE_DIR EVIDENCE BUILD APP UI_TESTS FIXTURES QT_PREFIX
 
 export HOME="/tmp/gate-home-${GATE_SESSION:-x}"

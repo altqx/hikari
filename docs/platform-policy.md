@@ -4,7 +4,7 @@
 
 ## Qt adoption
 
-Pin **Qt 6.11.2** for the current prototypes and initial reproducible build. Move to **Qt 6.12 stable after its actual publication and successful qualification**, then advance to later Qt versions through the same gates. Advancement is deliberate, rather than an automatic update to every newest release.
+The build pins **Qt 6.12.0** LTS, qualified on 2026-10-30 ([#527](https://github.com/altqx/hikari/issues/527)); the 6.11.2 kit before it stays restorable for rollback ([build](build.md#qt-6120-and-the-611-rollback-kit-2026-10-30)). Qt 6.11.2 was the pin for the prototypes and the first reproducible build, with **Qt 6.12 stable after its actual publication and successful qualification** next. Later Qt versions go through the same gates. Advancement is deliberate, rather than an automatic update to every newest release.
 
 As checked on 2026-09-27, Qt's [6.11 release schedule](https://wiki.qt.io/Qt_6.11_Release) records 6.11.2 released on August 18. Its [6.12 schedule](https://wiki.qt.io/Qt_6.12_Release) records a release candidate and a September 30 final target, with no realized final date. A planned release or release candidate does not satisfy the stable-publication gate. These observations supplement the [completed Qt survey](https://github.com/altqx/hikari/blob/3c1e557af5deb52a4fcfdc3f169b9da7afa67776/docs/research/qt6.md).
 

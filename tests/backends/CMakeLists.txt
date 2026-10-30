@@ -22,19 +22,19 @@ hikari_add_gtest(hikari_backends_libass_tests SOURCES libass_renderer_tests.cpp
 target_compile_definitions(hikari_backends_libass_tests PRIVATE
     HIKARI_REFERENCE_DIR="${PROJECT_SOURCE_DIR}/tests/references"
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_LIBASS_FORK_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/libass")
 hikari_add_gtest(hikari_backends_visual_geometry_tests SOURCES visual_geometry_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
 target_compile_definitions(hikari_backends_visual_geometry_tests PRIVATE
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/visual-t3")
 
 hikari_add_gtest(hikari_backends_visual_perspective_render_tests SOURCES visual_perspective_render_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
 target_compile_definitions(hikari_backends_visual_perspective_render_tests PRIVATE
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 
 add_executable(hikari_test_helper test_helper.cpp)
 target_link_libraries(hikari_test_helper PRIVATE hikari_helper_endpoint)
@@ -192,7 +192,7 @@ add_custom_command(OUTPUT "${HIKARI_FONT_FIXTURE_DIR}/base.ttf"
     DEPENDS hikari_font_fixture
     COMMENT "Generating font fixtures")
 add_custom_target(hikari_font_fixtures ALL DEPENDS "${HIKARI_FONT_FIXTURE_DIR}/base.ttf")
-set(HIKARI_QT_EXAMPLE_FONTS "${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2")
+set(HIKARI_QT_EXAMPLE_FONTS "${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}")
 cmake_path(NORMAL_PATH HIKARI_QT_EXAMPLE_FONTS)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf"
 "<?xml version=\"1.0\"?>
@@ -315,7 +315,7 @@ hikari_add_gtest(hikari_backends_matroska_tests SOURCES matroska_tests.cpp
 target_include_directories(hikari_backends_matroska_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support/media")
 target_compile_definitions(hikari_backends_matroska_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_matroska_tests hikari_media_helper hikari_media_fixtures)
 hikari_add_gtest(hikari_backends_matroska_capture_tests SOURCES matroska_capture_tests.cpp
@@ -329,17 +329,17 @@ add_dependencies(hikari_backends_matroska_capture_tests hikari_media_helper)
 hikari_add_gtest(hikari_backends_visual_clip_render_tests SOURCES visual_clip_render_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_visual_clip_render_tests PRIVATE
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 
 hikari_add_gtest(hikari_backends_visual_drawing_render_tests SOURCES visual_drawing_render_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_visual_drawing_render_tests PRIVATE
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 
 hikari_add_gtest(hikari_backends_visual_move_render_tests SOURCES visual_move_render_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
 target_compile_definitions(hikari_backends_visual_move_render_tests PRIVATE
-    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/visual-t2")
 hikari_add_qttest(hikari_backends_show_in_folder_tests SOURCES show_in_folder_tests.cpp LIBRARIES hikari_backends)
 if(WIN32)
@@ -357,7 +357,7 @@ if(WIN32)
     target_compile_definitions(hikari_backends_vsfiltermod_tests PRIVATE
         HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfiltermod"
         HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
-        HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+        HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
         HIKARI_W2_LEGACY_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-w2-vsfiltermod-20261015")
     if(HIKARI_TEST_VSFILTERMOD_DLL)
         set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfiltermod-csri")

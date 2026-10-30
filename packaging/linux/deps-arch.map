@@ -52,6 +52,7 @@ libz.so.1 zlib
 libzstd.so.1 zstd
 libbz2.so.1 bzip2
 libbrotlidec.so.1 brotli
+libbrotlicommon.so.1 brotli
 libgssapi_krb5.so.2 krb5
 libcrypto.so.3 openssl
 libssl.so.3 openssl

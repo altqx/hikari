@@ -8,6 +8,21 @@ F.SpinBox {
         const n = parseInt(text.replace(/[^0-9-]/g, ""), 10)
         return isNaN(n) ? control.value : n
     }
+    // Fusion's TextInput without the text-editing ContextMenu Qt 6.12 gives it.
+    contentItem: TextInput {
+        z: 2
+        text: control.displayText
+        font: control.font
+        color: control.palette.text
+        selectionColor: control.palette.highlight
+        selectedTextColor: control.palette.highlightedText
+        horizontalAlignment: Qt.AlignHCenter
+        verticalAlignment: Qt.AlignVCenter
+        readOnly: !control.editable
+        validator: control.validator
+        inputMethodHints: control.inputMethodHints
+        clip: width < implicitWidth
+    }
     background: Rectangle {
         implicitWidth: 120
         implicitHeight: 24

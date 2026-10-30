@@ -7,7 +7,7 @@ foreach(variant IN ITEMS controls failing_control)
     endif()
     target_compile_definitions(hikari_image_${variant} PRIVATE HIKARI_IMAGE_FAILING=${failing}
         HIKARI_REFERENCE_DIR="${PROJECT_SOURCE_DIR}/tests/references"
-        HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+        HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
         HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/${variant}")
 endforeach()
 get_property(all_tests DIRECTORY PROPERTY TESTS)

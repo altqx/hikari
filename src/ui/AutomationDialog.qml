@@ -225,7 +225,6 @@ DialogWindow {
         Accessible.name: text
         ToolTip.visible: hovered && !moreMenu.visible
         ToolTip.text: text
-        ToolTip.delay: 600
         onClicked: moreMenu.popup(moreButton, 0, -moreMenu.implicitHeight - 4)
         Keys.onPressed: event => window.trackAlt(event, true)
         Keys.onReleased: event => window.trackAlt(event, false)

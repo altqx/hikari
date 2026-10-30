@@ -117,7 +117,6 @@ DialogWindow {
                     Accessible.name: text
                     ToolTip.visible: hovered
                     ToolTip.text: text
-                    ToolTip.delay: 500
                     background: Rectangle {
                         color: swatch.color
                         radius: 2

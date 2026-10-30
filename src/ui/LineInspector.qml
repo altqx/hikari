@@ -109,7 +109,6 @@ ColumnLayout {
         Accessible.description: pending ? inspector.pendingText : hintText
         ToolTip.visible: hovered && tip.length > 0
         ToolTip.text: pending ? tip + "\n" + inspector.pendingText : hinting ? tip + "\n" + hintText : tip
-        ToolTip.delay: 500
     }
 
     component TimeBox: TimeField {
@@ -167,7 +166,6 @@ ColumnLayout {
         Accessible.description: pending ? inspector.pendingText : ""
         ToolTip.visible: hovered && tip.length > 0
         ToolTip.text: pending ? tip + "\n" + inspector.pendingText : tip
-        ToolTip.delay: 500
     }
     function focusedTimeRole() {
         return startField.activeFocus ? 1 : endField.activeFocus ? 2 : duration.activeFocus ? 0 : -1
@@ -217,7 +215,6 @@ ColumnLayout {
         }
         ToolTip.visible: hovered && tip.length > 0
         ToolTip.text: tip
-        ToolTip.delay: 500
     }
 
     component Slot: GridLayout {
@@ -315,7 +312,6 @@ ColumnLayout {
                 Accessible.description: qsTr("Sets the line as a comment. Comments are not shown")
                 ToolTip.visible: hovered
                 ToolTip.text: Accessible.description
-                ToolTip.delay: 500
                 onToggled: {
                     inspector.editor.setComment(checked)
                     checked = Qt.binding(() => inspector.editor.comment)
@@ -419,7 +415,6 @@ ColumnLayout {
                 Accessible.description: qsTr("Line style")
                 ToolTip.visible: hovered
                 ToolTip.text: Accessible.description
-                ToolTip.delay: 500
                 onActivated: index => {
                     inspector.editor.chooseStyle(textAt(index))
                     currentIndex = Qt.binding(() => inspector.editor.styleIndex)
@@ -434,7 +429,6 @@ ColumnLayout {
                 enabled: inspector.editor.hasLine && inspector.editor.assFields
                 focusPolicy: Qt.TabFocus
                 Accessible.description: qsTr("Allows quick editing of the current line's style")
-                ToolTip.delay: 500
                 onClicked: inspector.styleEditRequested(inspector.editor.style)
             }
         }
