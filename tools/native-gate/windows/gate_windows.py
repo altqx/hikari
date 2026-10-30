@@ -374,7 +374,7 @@ def snap(name, extra=None, monitor=None):
 
 
 def prepare():
-    job, lines = W.task("gate-win-prepare")
+    job, lines = W.task("gate-win-prepare", env={"GATE_APP": os.environ["GATE_APP"]} if os.environ.get("GATE_APP") else None)
     raw = line_value(lines, "GATE_LAYOUT ")
     if job.get("state") != "succeeded" or not raw:
         raise SystemExit("gate-win-prepare failed:\n" + "\n".join(lines[-30:]))

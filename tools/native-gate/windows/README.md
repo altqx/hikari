@@ -31,6 +31,7 @@ winix sync .                                         # the scripts reach the VM 
 python3 tools/native-gate/windows/gate_windows.py    # every step except dpi
 python3 tools/native-gate/windows/gate_windows.py pointer nvda
 python3 tools/native-gate/windows/gate_windows.py --dpi dpi
+GATE_APP=payload\\HikariSub.exe python3 tools/native-gate/windows/gate_windows.py  # a release payload pushed under out/build/windows-x64-release/payload
 winix lease release
 ```
 
