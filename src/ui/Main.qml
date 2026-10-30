@@ -4880,6 +4880,8 @@ ApplicationWindow {
                     // Qt Quick puts only items with an Accessible attachment in the accessibility tree.
                     Accessible.role: Accessible.Table
                     model: shell.lines
+                    columnWidths: root.shell.gridColumnWidths
+                    onColumnWidthsEdited: root.shell.gridColumnWidths = columnWidths
                     onContentYChanged: root.app.setTargetScroll(Math.floor(contentY / rowHeight))
                     onActiveLineRequested: id => root.app.selectLine(id)
                     onActiveLineFallbackRequested: id => root.app.moveActiveLine(id)
@@ -4889,6 +4891,7 @@ ApplicationWindow {
                     onSelectAllRequested: root.app.selectAllLines()
                     onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
                     GridHeaderToolTip { grid: grid }
+                    GridScrollBars { grid: grid }
                     onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
                     onGroupToggleRequested: id => root.app.toggleGroup(id)
                     onFoldToggleRequested: id => root.app.toggleFold(id)
@@ -5212,6 +5215,13 @@ ApplicationWindow {
                                 }
                                 onObjectAdded: (index, object) => hideColumnsMenu.insertItem(2 + index, object)
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                objectName: "resetColumnWidths"
+                                text: qsTranslate("HikariSub.Grid", "Reset column widths")
+                                enabled: Object.keys(root.shell.gridColumnWidths).length > 0
+                                onTriggered: root.shell.gridColumnWidths = {}
                             }
                         }
                         ShellMenuItem { command: "GRID_SET_NEW_FPS"; iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps() }

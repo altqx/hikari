@@ -82,7 +82,10 @@ FocusScope {
             Accessible.role: Accessible.Table
             accessibleName: qsTr("Reference lines (protected, read-only)")
             model: tray.shell.referenceLines
+            columnWidths: tray.shell.gridColumnWidths
+            onColumnWidthsEdited: tray.shell.gridColumnWidths = columnWidths
             GridHeaderToolTip { grid: referenceGrid }
+            GridScrollBars { grid: referenceGrid }
             onActiveLineRequested: id => tray.app.selectReferenceLine(id)
             onExtendRequested: rows => tray.app.extendReferenceSelection(rows)
             onLineClicked: (id, modifiers) => tray.app.clickReferenceLine(id, modifiers)

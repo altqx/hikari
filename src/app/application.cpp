@@ -99,6 +99,23 @@ std::u8string toU8(const QString &text)
     return std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()));
 }
 
+QVariantMap columnWidthsFrom(const QStringList &entries)
+{
+    QVariantMap widths;
+    for (const QString &entry : entries)
+        if (const auto parts = entry.split(QLatin1Char(' ')); parts.size() == 2 && parts[1].toInt() > 0)
+            widths.insert(parts[0], parts[1].toInt());
+    return widths;
+}
+
+QStringList columnWidthEntries(const QVariantMap &widths)
+{
+    QStringList entries;
+    for (auto it = widths.begin(); it != widths.end(); ++it)
+        entries << it.key() + QLatin1Char(' ') + QString::number(it.value().toInt());
+    return entries;
+}
+
 QString mediaHelperPath(const QString &configured)
 {
     if (!configured.isEmpty())
@@ -1060,6 +1077,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
+    m_shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
+    connect(m_shell.get(), &ui::ShellController::gridColumnWidthsChanged, this,
+            [this] { m_settings->set("grid.columnWidths", columnWidthEntries(m_shell->gridColumnWidths())); });
     m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     connect(m_shell.get(), &ui::ShellController::autoHideColumnsChanged, this, [this] {
         // MUST KILL: the guard keeps Set default's re-sync from setting the key
@@ -5470,6 +5490,8 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("grid.columnWidths") && !m_resettingSettings)
+        m_shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
     else if (id == QLatin1String("grid.autoHideColumns") && !m_resettingSettings)
         m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     else if (id == QLatin1String("grid.foldGenerated") && !m_resettingSettings)
@@ -6066,6 +6088,7 @@ void Application::resetAllSettings()
     m_gridFilter->settingsReset();
     m_updates->reload();
     m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    m_shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
     m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
     if (!m_selectLinesOpened) {
         m_selectOptions = m_settings->integer("selectLines.options");

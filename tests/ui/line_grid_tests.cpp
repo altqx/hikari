@@ -8,6 +8,7 @@
 #include <QElapsedTimer>
 #include <QFont>
 #include <QFontDatabase>
+#include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QPalette>
 #include <QImage>
@@ -20,6 +21,7 @@
 #include <QWheelEvent>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -31,6 +33,13 @@ using namespace hikari::ui;
 
 namespace {
 
+core::Document load(const std::string &s)
+{
+    std::vector<std::byte> bytes(s.size());
+    std::memcpy(bytes.data(), s.data(), s.size());
+    return core::loadAss(bytes).document;
+}
+
 core::Document generate(int lines)
 {
     std::string s = "[Events]\n";
@@ -39,10 +48,49 @@ core::Document generate(int lines)
         std::snprintf(buf, sizeof buf, "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,line %d\n", i);
         s += buf;
     }
-    std::vector<std::byte> bytes(s.size());
-    std::memcpy(bytes.data(), s.data(), s.size());
-    return core::loadAss(bytes).document;
+    return load(s);
 }
+
+int columnTitled(const LineGrid &grid, const QString &title)
+{
+    for (int c = 0; c < grid.columnCount(); ++c)
+        if (grid.columnTitle(c) == title)
+            return c;
+    return -1;
+}
+
+struct MouseGrid : LineGrid {
+    using LineGrid::hoverMoveEvent;
+    using LineGrid::mouseDoubleClickEvent;
+    using LineGrid::mouseMoveEvent;
+    using LineGrid::mousePressEvent;
+    using LineGrid::mouseReleaseEvent;
+
+    void send(QEvent::Type type, QPointF at)
+    {
+        const bool move = type == QEvent::MouseMove;
+        QMouseEvent event(type, at, at, at, move ? Qt::NoButton : Qt::LeftButton,
+                          type == QEvent::MouseButtonRelease ? Qt::NoButton : Qt::LeftButton, Qt::NoModifier);
+        switch (type) {
+        case QEvent::MouseButtonPress: mousePressEvent(&event); break;
+        case QEvent::MouseMove: mouseMoveEvent(&event); break;
+        case QEvent::MouseButtonRelease: mouseReleaseEvent(&event); break;
+        default: mouseDoubleClickEvent(&event); break;
+        }
+    }
+    void drag(QPointF from, QPointF to)
+    {
+        send(QEvent::MouseButtonPress, from);
+        send(QEvent::MouseMove, to);
+        send(QEvent::MouseButtonRelease, to);
+    }
+    Qt::CursorShape hover(QPointF at)
+    {
+        QHoverEvent event(QEvent::HoverMove, at, at, at);
+        hoverMoveEvent(&event);
+        return cursor().shape();
+    }
+};
 
 int paintOnce(LineGrid &grid)
 {
@@ -94,7 +142,7 @@ private slots:
         LineTableModel model;
         model.setDocument(generate(100));
         LineGrid grid;
-        grid.setSize(QSizeF(400, 300));
+        grid.setSize(QSizeF(1600, 300));
         grid.setModel(&model);
         grid.setContentY(-50);
         QCOMPARE(grid.contentY(), 0.0);
@@ -113,7 +161,7 @@ private slots:
         grid.setModel(&model);
         const qreal rowHeight = grid.rowHeight();
         const qreal header = grid.geometry().headerHeight;
-        grid.setSize(QSizeF(400, header + 41 * rowHeight));
+        grid.setSize(QSizeF(1600, header + 41 * rowHeight));
         QCOMPARE(grid.currentRow(), 33);
         QCOMPARE(grid.contentY(), 0.0);
         grid.setHeight(header + 7 * rowHeight);
@@ -125,6 +173,185 @@ private slots:
         grid.setContentY(0);
         grid.setHeight(header + 7 * rowHeight);
         QCOMPARE(grid.contentY(), 0.0);
+    }
+
+    void scrollBarsShowOnlyWhenTheRowsOrColumnsDoNotFit()
+    {
+        LineTableModel model;
+        model.setDocument(generate(3));
+        LineGrid grid;
+        grid.setModel(&model);
+        grid.setSize(QSizeF(1600, 300));
+        QVERIFY(!grid.verticalScrollBarShown());
+        QVERIFY(!grid.horizontalScrollBarShown());
+        QCOMPARE(grid.viewportWidth(), 1600.0);
+        QCOMPARE(grid.viewportHeight(), 300.0);
+        QCOMPARE(grid.contentWidth(), 1600.0);
+        const int text = grid.columnCount() - 1;
+
+        model.setDocument(generate(200));
+        QVERIFY(grid.verticalScrollBarShown());
+        QVERIFY(!grid.horizontalScrollBarShown());
+        QCOMPARE(grid.viewportWidth(), 1600 - LineGrid::scrollBarRoom());
+        QCOMPARE(grid.cellRect(0, text).right(), grid.viewportWidth());
+        grid.setContentY(1e9);
+        QCOMPARE(grid.contentY(), grid.contentHeight() - 300);
+        QCOMPARE(grid.rowAt(299), 199);
+
+        grid.setWidth(400);
+        QVERIFY(grid.verticalScrollBarShown());
+        QVERIFY(grid.horizontalScrollBarShown());
+        QCOMPARE(grid.viewportWidth(), 400 - LineGrid::scrollBarRoom());
+        QCOMPARE(grid.viewportHeight(), 300 - LineGrid::scrollBarRoom());
+        grid.setContentY(1e9);
+        QCOMPARE(grid.contentY(), grid.contentHeight() - grid.viewportHeight());
+        QCOMPARE(grid.cellRect(0, text).width(), 120.0);
+        QCOMPARE(grid.contentWidth(), grid.cellRect(0, text).right());
+        QVERIFY(grid.contentWidth() > grid.viewportWidth());
+        grid.setContentX(1e9);
+        QCOMPARE(grid.contentX(), grid.contentWidth() - grid.viewportWidth());
+        QCOMPARE(grid.cellRect(0, text).right(), grid.viewportWidth());
+        QCOMPARE(grid.columnAt(grid.viewportWidth() - 1), text);
+        QCOMPARE(grid.columnAt(grid.viewportWidth() + 1), -1);
+        QVERIFY(grid.cellRect(0, 0).right() < 0);
+
+        model.setDocument(generate(3));
+        QVERIFY(!grid.verticalScrollBarShown());
+        QCOMPARE(grid.viewportHeight(), 300 - LineGrid::scrollBarRoom());
+        QCOMPARE(grid.contentY(), 0.0);
+        grid.setWidth(1600);
+        QVERIFY(!grid.horizontalScrollBarShown());
+        QCOMPARE(grid.contentX(), 0.0);
+        QCOMPARE(grid.viewportHeight(), 300.0);
+    }
+
+    void dividersResizeTheColumnOnTheirLeft()
+    {
+        LineTableModel model;
+        model.setDocument(generate(3));
+        MouseGrid grid;
+        grid.setModel(&model);
+        grid.setSize(QSizeF(1600, 300));
+        const int style = columnTitled(grid, QStringLiteral("Styles"));
+        const int text = grid.columnCount() - 1;
+        QVERIFY(style >= 0);
+        const QRectF before = grid.cellRect(0, style);
+        const double textBefore = grid.cellRect(0, text).width();
+        const QPointF divider(before.right(), grid.headerHeight() / 2);
+        QSignalSpy edited(&grid, &LineGrid::columnWidthsEdited);
+        QSignalSpy clicked(&grid, &LineGrid::lineClicked);
+
+        QCOMPARE(grid.dividerAt(divider), style);
+        QCOMPARE(grid.dividerAt(divider + QPointF(0, grid.headerHeight())), -1);
+        QCOMPARE(grid.dividerAt(QPointF(grid.cellRect(0, text).right() - 1, divider.y())), -1);
+        QCOMPARE(grid.hover(divider + QPointF(3, 0)), Qt::SplitHCursor);
+        QCOMPARE(grid.hover(QPointF(before.center().x(), divider.y())), Qt::ArrowCursor);
+
+        grid.send(QEvent::MouseButtonPress, divider);
+        grid.send(QEvent::MouseMove, divider + QPointF(40, 0));
+        QCOMPARE(grid.cellRect(0, style).width(), before.width() + 40);
+        QCOMPARE(grid.cellRect(0, text).width(), textBefore - 40);
+        QCOMPARE(edited.size(), 0);
+        grid.send(QEvent::MouseButtonRelease, divider + QPointF(40, 0));
+        QCOMPARE(edited.size(), 1);
+        QCOMPARE(grid.columnWidths(), (QVariantMap{{QStringLiteral("style"), qRound(before.width() + 40)}}));
+
+        grid.drag(QPointF(grid.cellRect(0, style).right(), divider.y()), QPointF(before.left() - 500, divider.y()));
+        QCOMPARE(grid.cellRect(0, style).width(), 24.0);
+        QCOMPARE(edited.size(), 2);
+        QCOMPARE(clicked.size(), 0);
+
+        grid.resizeColumn(style, 5000);
+        QVERIFY(grid.horizontalScrollBarShown());
+        QCOMPARE(grid.cellRect(0, text).width(), 120.0);
+    }
+
+    void textGivesUpNoRoomToTheTranslationColumn()
+    {
+        LineTableModel model;
+        model.setDocument(generate(3));
+        model.setShowOriginal(true);
+        MouseGrid grid;
+        grid.setModel(&model);
+        grid.setSize(QSizeF(1600, 300));
+        const int translation = grid.columnCount() - 1;
+        const int text = translation - 1;
+        QCOMPARE(grid.columnTitle(text), QStringLiteral("Original text"));
+        const double textBefore = grid.cellRect(0, text).width();
+        const double translationBefore = grid.cellRect(0, translation).width();
+        QCOMPARE(textBefore, translationBefore);
+        const QPointF divider(grid.cellRect(0, text).right(), grid.headerHeight() / 2);
+        QCOMPARE(grid.dividerAt(divider), text);
+
+        grid.drag(divider, divider + QPointF(50, 0));
+        const double translationAfter = grid.cellRect(0, translation).width();
+        QVERIFY(std::abs(translationAfter - (translationBefore - 50)) <= 0.5);
+        QCOMPARE(grid.cellRect(0, text).width(), textBefore + translationBefore - translationAfter);
+        QCOMPARE(grid.columnWidths().keys(), QStringList{QStringLiteral("translation")});
+        grid.setWidth(1800);
+        QCOMPARE(grid.cellRect(0, text).width(), textBefore + translationBefore - translationAfter + 200);
+        QCOMPARE(grid.cellRect(0, translation).width(), translationAfter);
+        grid.drag(QPointF(grid.cellRect(0, text).right(), divider.y()), QPointF(1e5, divider.y()));
+        QCOMPARE(grid.cellRect(0, translation).width(), 120.0);
+        QCOMPARE(grid.cellRect(0, translation).right(), grid.viewportWidth());
+    }
+
+    void doubleClickingADividerFitsTheColumnToItsContent()
+    {
+        LineTableModel model;
+        model.setDocument(load("[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,Ann,0,0,0,,one\n"
+                               "Dialogue: 0,0:00:02.00,0:00:03.00,Default,A rather long actor name,0,0,0,,two\n"));
+        MouseGrid grid;
+        grid.setModel(&model);
+        grid.setSize(QSizeF(1600, 300));
+        const int actor = columnTitled(grid, QStringLiteral("Actor"));
+        QVERIFY(actor >= 0);
+        QSignalSpy edited(&grid, &LineGrid::columnWidthsEdited);
+        const QPointF divider(grid.cellRect(0, actor).right(), grid.headerHeight() / 2);
+        grid.send(QEvent::MouseButtonPress, divider);
+        grid.send(QEvent::MouseButtonRelease, divider);
+        grid.send(QEvent::MouseButtonPress, divider);
+        grid.send(QEvent::MouseButtonDblClick, divider);
+        grid.send(QEvent::MouseButtonRelease, divider);
+        const QFontMetricsF metrics{QFont{}};
+        QCOMPARE(grid.cellRect(0, actor).width(),
+                 std::ceil(metrics.horizontalAdvance(QStringLiteral("A rather long actor name"))) + 8);
+        QVERIFY(edited.size() >= 1);
+        QCOMPARE(grid.columnWidths().value(QStringLiteral("actor")).toInt(), qRound(grid.cellRect(0, actor).width()));
+
+        const int number = columnTitled(grid, QStringLiteral("#"));
+        grid.fitColumn(number);
+        QCOMPARE(grid.cellRect(0, number).width(), 24.0);
+    }
+
+    void savedColumnWidthsComeBack()
+    {
+        LineTableModel model;
+        model.setDocument(generate(3));
+        LineGrid grid;
+        grid.setModel(&model);
+        grid.setSize(QSizeF(1600, 300));
+        const int style = columnTitled(grid, QStringLiteral("Styles"));
+        const int text = grid.columnCount() - 1;
+        const double styleDefault = grid.cellRect(0, style).width();
+        const double textDefault = grid.cellRect(0, text).width();
+        QSignalSpy changed(&grid, &LineGrid::columnWidthsChanged);
+        QSignalSpy edited(&grid, &LineGrid::columnWidthsEdited);
+        grid.setColumnWidths({{QStringLiteral("style"), 150}, {QStringLiteral("bogus"), 99}, {QStringLiteral("cps"), -4},
+                              {QStringLiteral("text"), 500}});
+        QCOMPARE(grid.cellRect(0, style).width(), 150.0);
+        QCOMPARE(grid.cellRect(0, text).width(), textDefault - (150 - styleDefault));
+        QCOMPARE(grid.columnWidths(), (QVariantMap{{QStringLiteral("style"), 150}}));
+        QCOMPARE(changed.size(), 1);
+        grid.setColumnWidths({{QStringLiteral("style"), 150}});
+        QCOMPARE(changed.size(), 1);
+        grid.setColumnWidths({{QStringLiteral("style"), 3}});
+        QCOMPARE(grid.cellRect(0, style).width(), 24.0);
+        grid.setColumnWidths({});
+        QCOMPARE(grid.cellRect(0, style).width(), styleDefault);
+        QCOMPARE(grid.cellRect(0, text).width(), textDefault);
+        QCOMPARE(edited.size(), 0);
     }
 
     void savesAReviewFrame()
@@ -444,7 +671,7 @@ private slots:
         LineTableModel model;
         model.setDocument(generate(200));
         Grid grid;
-        grid.setSize(QSizeF(400, 300));
+        grid.setSize(QSizeF(1600, 300));
         grid.setModel(&model);
         const qreal row = grid.rowHeight();
         const qreal notch = QGuiApplication::styleHints()->wheelScrollLines() * row;
