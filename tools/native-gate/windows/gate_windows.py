@@ -2849,6 +2849,61 @@ def step_dialog_frame():
     app_kill()
 
 
+def grid_cell(st):
+    """The focused Grid cell, as UI Automation's focus path names it."""
+    return (st.get("focusPath") or "").rsplit(" > ", 1)[-1]
+
+
+def step_grid_speech():
+    app_kill()
+    job, lines = W.task("gate-win-fresh")
+    for l in lines:
+        if l.startswith("set aside") and not PROFILE["original"]:
+            PROFILE["original"] = l.split(" -> ", 1)[1].rsplit("\\", 1)[0]
+    if job.get("state") != "succeeded":
+        raise RuntimeError("gate-win-fresh failed (the profile was not set aside): " + " | ".join(lines[-6:]))
+    W.task("gate-win-theme", env={"GATE_THEME": "dark", "GATE_SETTINGS": "grid.foldGenerated=true"})
+    app_start(LAYOUT["root"] + "\\tests\\backends\\karaoke-presets\\05-bounce.out.ass")
+    dismiss_notices()
+    nvda_log = nvda_start()
+    if not nvda_log:
+        verdict("nvda-grid", "error", "nvda-setup did not create the portable copy (nvda-setup.txt)", ["nvda-setup.txt"])
+        return
+    ev, cells, menu = [], [], {}
+    try:
+        focus_main_compositor()
+        for _ in range(6):
+            if panel_of(uia()["focusPath"]) == "Grid":
+                break
+            combo("f6")
+            time.sleep(0.6)
+        keys("end", 1.5)
+        ev0, st = snap("grid-0-folded")
+        cells.append(grid_cell(st))
+        keys("right", 2.0)
+        ev1, st = snap("grid-1-unfolded")
+        cells.append(grid_cell(st))
+        keys("left", 2.0)
+        cells.append(grid_cell(uia()))
+        ev = ev0 + ev1
+        how, menu["button"] = focus_header_control("Button", "Grid options", "Grid")
+        keys("space", 1.5)
+        ev2, st = snap("grid-2-menu-open")
+        menu["items"] = st["popupMenuItems"]
+        keys("escape", 1.5)
+        menu["after"] = uia()["focusPath"]
+        ev += ev2
+    finally:
+        speech, silent, nev = nvda_stop(nvda_log, "grid")
+    (EVID / "grid.json").write_text(json.dumps({"cells": cells, "menu": menu}, indent=1, ensure_ascii=False))
+    spoke = [l for l in speech if re.search(r"\b(expanded|collapsed)\b", l, re.I)]
+    rows = [l for l in speech if re.search(r"\brow \d+", l, re.I)]
+    verdict("nvda-grid", "observed" if spoke and silent else "failed",
+            f"NVDA's expanded/collapsed speech for the Grid's run and its options menu: {spoke[:8]}; row speech "
+            f"{rows[:4]} ({len(speech)} speech lines, silent synthesizer {silent}); focused cells {cells}",
+            ["grid.json"] + nev + ev)
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
@@ -2856,7 +2911,7 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen,
          "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
          "reference": step_reference, "titlebar": step_title_bar,
-         "dialogframe": step_dialog_frame}
+         "dialogframe": step_dialog_frame, "gridspeech": step_grid_speech}
 
 
 def main():
