@@ -444,8 +444,9 @@ def main():
             wanted = sys.argv[4] if len(sys.argv) > 4 else None
             idx = 0
             if wanted:
-                names = [act.get_action_name(i) for i in range(act.get_n_actions())]
-                idx = names.index(wanted)
+                # Qt 6.12 names the focus action "Set Focus", earlier Qt "SetFocus".
+                names = [act.get_action_name(i).replace(" ", "") for i in range(act.get_n_actions())]
+                idx = names.index(wanted.replace(" ", ""))
             print("action", act.get_action_name(idx), "->", act.do_action(idx))
     else:
         print(__doc__)
