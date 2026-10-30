@@ -37,7 +37,7 @@ Rectangle {
                 width: view.magnification
                 height: view.magnification
                 readonly property var cell: view.cellAt(pixel.index % view.size, Math.floor(pixel.index / view.size))
-                color: Qt.rgba(pixel.cell.r / 255, pixel.cell.g / 255, pixel.cell.b / 255, 1)
+                color: Color.rgba(pixel.cell.r / 255, pixel.cell.g / 255, pixel.cell.b / 255, 1)
             }
         }
     }

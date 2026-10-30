@@ -13,8 +13,8 @@ T.Button {
     focusPolicy: Qt.StrongFocus
     background: Rectangle {
         color: !button.enabled ? "transparent"
-             : button.down ? Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.24)
-             : button.hovered ? Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.12)
+             : button.down ? Color.transparent(Theme.danger, 0.24)
+             : button.hovered ? Color.transparent(Theme.danger, 0.12)
              : Theme.raised
         border.width: 1
         border.color: button.enabled ? Theme.danger : Theme.line

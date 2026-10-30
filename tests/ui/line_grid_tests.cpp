@@ -12,6 +12,7 @@
 #include <QPalette>
 #include <QImage>
 #include <QPainter>
+#include <QPicture>
 #include <QQuickWindow>
 #include <QScopeGuard>
 #include <QSignalSpy>
@@ -224,6 +225,69 @@ private slots:
         QCOMPARE(outline0, 0);
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-comparison-frame.png")));
+    }
+
+    void paintsSpellingMarksAsAWaveUnderTheWord()
+    {
+        const char *script = "[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,teh last episode\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setSpelling(LineTableModel::TagSpelling(
+            [](std::u16string_view, core::SubtitleFormat, bool, int) { return core::legacy::SpellMarks{{0, 2}, {}}; }));
+        model.setDocument(core::loadAss(bytes).document);
+        const int font = QFontDatabase::addApplicationFont(QStringLiteral(HIKARI_TEST_FONT));
+        QVERIFY(font >= 0);
+        const QFont before = QGuiApplication::font();
+        auto restore = qScopeGuard([&] { QGuiApplication::setFont(before); });
+        QFont testFont(QFontDatabase::applicationFontFamilies(font).value(0));
+        testFont.setPixelSize(20);
+        QGuiApplication::setFont(testFont);
+        LineGrid grid;
+        grid.setSize(QSizeF(1280, 100));
+        grid.setModel(&model);
+        QImage image(1280, 100, QImage::Format_ARGB32);
+        QPainter painter(&image);
+        painter.setFont(testFont);
+        grid.paint(&painter);
+        painter.end();
+        const auto isRed = [&](int x, int y) {
+            const QColor c = image.pixelColor(x, y);
+            return c.red() > std::max(c.green(), c.blue()) + 60;
+        };
+        const QRectF cell = grid.cellRect(0, grid.columnCount() - 1);
+        const QFontMetricsF metrics(testFont);
+        const double word = cell.left() + 4 + metrics.horizontalAdvance(QStringLiteral("teh"));
+        int above = 0, under = 0, after = 0;
+        for (int x = int(cell.left()); x < int(cell.right()); ++x)
+            for (int y = int(cell.top()); y < int(cell.bottom()); ++y)
+                if (isRed(x, y))
+                    ++(x > word + 1 ? after : y < cell.center().y() ? above : under);
+        QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+        QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-spelling-wave.png")));
+        QVERIFY2(under > 15 && above == 0 && after == 0,
+                 qPrintable(QStringLiteral("%1 under, %2 above, %3 after").arg(under).arg(above).arg(after)));
+    }
+
+    void aLongMisspelledWordPaintsOnlyTheVisibleWave()
+    {
+        const std::string word(50'000, 'q');
+        const std::string script = "[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,," + word + "\n";
+        std::vector<std::byte> bytes(script.size());
+        std::memcpy(bytes.data(), script.data(), bytes.size());
+        LineTableModel model;
+        const int last = int(word.size()) - 1;
+        model.setSpelling(LineTableModel::TagSpelling(
+            [last](std::u16string_view, core::SubtitleFormat, bool, int) { return core::legacy::SpellMarks{{0, last}, {}}; }));
+        model.setDocument(core::loadAss(bytes).document);
+        LineGrid grid;
+        grid.setSize(QSizeF(1280, 100));
+        grid.setModel(&model);
+        QPicture recorded;
+        QPainter painter(&recorded);
+        grid.paint(&painter);
+        painter.end();
+        QVERIFY2(recorded.size() < 100'000, QByteArray::number(recorded.size()).constData());
     }
 
     void paintsTheThemeRoles()

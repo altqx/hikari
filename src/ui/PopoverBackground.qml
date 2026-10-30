@@ -14,7 +14,7 @@ Rectangle {
             anchors.margins: -(index + 1)
             radius: 4 + index + 1
             color: "transparent"
-            border.color: Qt.rgba(0, 0, 0, 0.12 * Math.pow((8 - index) / 8, 2))
+            border.color: Color.rgba(0, 0, 0, 0.12 * Math.pow((8 - index) / 8, 2))
         }
     }
 }

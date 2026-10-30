@@ -322,9 +322,9 @@ ColumnLayout {
             id: layerSlot
             objectName: "layerSlot"
             label: qsTr("Layer")
-            minimum: layer.Layout.minimumWidth
+            minimum: layerField.Layout.minimumWidth
             Field {
-                id: layer
+                id: layerField
                 objectName: "layerField"
                 value: inspector.editor.layerText
                 enabled: inspector.editor.editable && inspector.editor.assFields

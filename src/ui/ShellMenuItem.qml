@@ -115,6 +115,6 @@ MenuItem {
         when: control.windowsStyle && control.highlighted && !control.down && !control.hovered
         target: control.background
         property: "color"
-        value: Qt.rgba(0, 0, 0, 0.0373)
+        value: Color.rgba(0, 0, 0, 0.0373)
     }
 }

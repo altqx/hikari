@@ -34,18 +34,12 @@ Popup {
     property bool portalAsked: false
     property string portalNote: ""
     property Item returnFocus: null
-    readonly property color shown: Qt.rgba(red / 255, green / 255, blue / 255, 1)
+    readonly property color shown: Color.rgba(red / 255, green / 255, blue / 255, 1)
     readonly property int compactRecent: 16
 
     function openFor(anchorItem, owner, begin, options) {
         if (active)
             finish(true)
-        // A Popup.Window lets the press that closed it through to the anchor; that click must not reopen it.
-        if (anchorItem && anchorItem === pressedAnchor && Date.now() - pressedAt < 1000) {
-            pressedAnchor = null
-            return
-        }
-        pressedAnchor = null
         const c = begin()
         if (!c || c.r === undefined)
             return
@@ -214,22 +208,7 @@ Popup {
     padding: 12
     margins: 8
     closePolicy: Popup.CloseOnPressOutside | Popup.CloseMultiple
-    onClosed: {
-        const pressed = active && popupType === Popup.Window
-        const was = anchor
-        finish(true)
-        if (pressed) {
-            pressedAnchor = was
-            pressedAt = Date.now()
-            Qt.callLater(keepPressedAnchor)
-        }
-    }
-    function keepPressedAnchor() {
-        if (pressedAnchor && pressedAnchor.pressed === false)
-            pressedAnchor = null
-    }
-    property Item pressedAnchor: null
-    property double pressedAt: 0
+    onClosed: finish(true)
 
     Timer {
         id: changeTimer
@@ -314,7 +293,7 @@ Popup {
                                 objectName: "colourBefore"
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                color: Qt.rgba(popover.original.r / 255, popover.original.g / 255, popover.original.b / 255, 1)
+                                color: Color.rgba(popover.original.r / 255, popover.original.g / 255, popover.original.b / 255, 1)
                                 Accessible.role: Accessible.Graphic
                                 Accessible.name: qsTr("Previous colour %1").arg(popover.picker.htmlText(popover.original))
                             }
@@ -491,8 +470,8 @@ Popup {
                         }
                         Rectangle {
                             anchors.fill: parent
-                            color: Qt.rgba(spectrum.hueColour[0] / 255, spectrum.hueColour[1] / 255,
-                                           spectrum.hueColour[2] / 255, 1)
+                            color: Color.rgba(spectrum.hueColour[0] / 255, spectrum.hueColour[1] / 255,
+                                              spectrum.hueColour[2] / 255, 1)
                         }
                         Rectangle {
                             anchors.fill: parent
@@ -554,13 +533,13 @@ Popup {
                         Rectangle {
                             anchors.fill: parent
                             gradient: Gradient {
-                                GradientStop { position: 0.0; color: Qt.hsva(0.0, 1, 1, 1) }
-                                GradientStop { position: 1 / 6; color: Qt.hsva(1 / 6, 1, 1, 1) }
-                                GradientStop { position: 2 / 6; color: Qt.hsva(2 / 6, 1, 1, 1) }
-                                GradientStop { position: 3 / 6; color: Qt.hsva(3 / 6, 1, 1, 1) }
-                                GradientStop { position: 4 / 6; color: Qt.hsva(4 / 6, 1, 1, 1) }
-                                GradientStop { position: 5 / 6; color: Qt.hsva(5 / 6, 1, 1, 1) }
-                                GradientStop { position: 1.0; color: Qt.hsva(0.999, 1, 1, 1) }
+                                GradientStop { position: 0.0; color: Color.hsva(0.0, 1, 1, 1) }
+                                GradientStop { position: 1 / 6; color: Color.hsva(1 / 6, 1, 1, 1) }
+                                GradientStop { position: 2 / 6; color: Color.hsva(2 / 6, 1, 1, 1) }
+                                GradientStop { position: 3 / 6; color: Color.hsva(3 / 6, 1, 1, 1) }
+                                GradientStop { position: 4 / 6; color: Color.hsva(4 / 6, 1, 1, 1) }
+                                GradientStop { position: 5 / 6; color: Color.hsva(5 / 6, 1, 1, 1) }
+                                GradientStop { position: 1.0; color: Color.hsva(0.999, 1, 1, 1) }
                             }
                         }
                         Rectangle {

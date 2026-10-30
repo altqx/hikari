@@ -13,6 +13,7 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QWheelEvent>
 
 #include <algorithm>
@@ -768,16 +769,27 @@ void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString tex
         return;
     text.replace(QLatin1Char('\t'), QLatin1Char(' '));
     const QFontMetricsF metrics(painter->font());
+    const double baseline = cell.top() + (cell.height() - metrics.height()) / 2 + metrics.ascent();
+    const double y = std::min(baseline + metrics.underlinePos() + 2, cell.bottom() - 1);
     painter->save();
     painter->setClipRect(cell, Qt::IntersectClip);
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setPen(QPen(theme::current().content.spellcheck, 1));
+    painter->setBrush(Qt::NoBrush);
     for (qsizetype s = 0; s + 1 < marks.size(); s += 2) {
         const int start = marks[s].toInt(), end = marks[s + 1].toInt();
         QString error = text.mid(start, end - start + 1);
         while (!error.isEmpty() && error.back().isSpace() && error.back().unicode() < 127)
             error.chop(1);
-        const double before = start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0;
-        painter->fillRect(QRectF(cell.x() + before, cell.y(), metrics.horizontalAdvance(error), cell.height()),
-                          theme::current().content.spellcheck);
+        const double left = cell.x() + (start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0);
+        const double right = std::min(left + metrics.horizontalAdvance(error), cell.right());
+        if (left >= right)
+            continue;
+        QPainterPath wave(QPointF(left, y));
+        bool up = true;
+        for (double x = left; x < right; x += 3, up = !up)
+            wave.lineTo(std::min(x + 3, right), up ? y - 2.5 : y);
+        painter->drawPath(wave);
     }
     painter->restore();
 }

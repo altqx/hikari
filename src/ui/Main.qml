@@ -3174,7 +3174,7 @@ ApplicationWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 color: Theme.highContrast && !span.modelData.held ? Theme.field
-                                     : Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, span.modelData.held || Theme.highContrast ? 0.9 : 0.5)
+                                     : Color.transparent(Theme.accent, span.modelData.held || Theme.highContrast ? 0.9 : 0.5)
                                 border.width: Theme.highContrast ? 1 : 0
                                 border.color: Theme.accent
                             }
@@ -3961,7 +3961,7 @@ ApplicationWindow {
                             ShellMenuItem {
                                 objectName: "audioKaraokeKf"
                                 iconRole: "karaoke"
-                                text: qsTranslate("HikariSub.Audio", "Switch long syllables between %1 and %2").arg("\\k").arg("\\kf") + "\t"
+                                text: qsTranslate("HikariSub.Audio", "Switch long syllables between %1 and %2").arg("\\k", "\\kf") + "\t"
                                       + root.boundKeys("AUDIO_KARAOKE_KF", 4)
                                 onTriggered: root.audio.switchLongSyllablesToKf()
                             }
@@ -4236,7 +4236,7 @@ ApplicationWindow {
                                     visible: audioButtons.splitArrowFolded && root.audio.karaoke
                                     checkable: false
                                     iconRole: "karaoke"
-                                    text: qsTranslate("HikariSub.Audio", "Switch long syllables between %1 and %2").arg("\\k").arg("\\kf") + "\t"
+                                    text: qsTranslate("HikariSub.Audio", "Switch long syllables between %1 and %2").arg("\\k", "\\kf") + "\t"
                                           + root.boundKeys("AUDIO_KARAOKE_KF", 4)
                                     onTriggered: root.audio.switchLongSyllablesToKf()
                                 }
@@ -4401,7 +4401,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Volume and output device")
                             //: The audio panel's speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now
                             tip: (root.app.audioOutputName.length
-                                  ? qsTranslate("HikariSub.Audio", "Volume: %1\nOutput device: %2").arg(root.audio.volume).arg(root.app.audioOutputName)
+                                  ? qsTranslate("HikariSub.Audio", "Volume: %1\nOutput device: %2").arg(root.audio.volume, root.app.audioOutputName)
                                   : qsTranslate("HikariSub.Audio", "Volume: %1").arg(root.audio.volume))
                                  //: The speaker button's tooltip, while the audio plays slowed; %1 is the speed in percent
                                  + (root.audio.speedPercent !== 100
@@ -6501,7 +6501,7 @@ ApplicationWindow {
         root.messages.ask({
             title: qsTranslate("HikariSub.Conversion", "Open video"),
             text: qsTranslate("HikariSub.Conversion", "The video is %1 × %2 and the subtitles are %3 × %4.")
-                      .arg(sizes.videoWidth).arg(sizes.videoHeight).arg(sizes.subsWidth).arg(sizes.subsHeight),
+                      .arg(sizes.videoWidth, sizes.videoHeight, sizes.subsWidth, sizes.subsHeight),
             detail: qsTranslate("HikariSub.Conversion", "Resample the subtitles to the video? Subtitles › Resample subtitles does it later too."),
             severity: "info",
             choices: choices,

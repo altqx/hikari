@@ -145,7 +145,7 @@ Loader {
                 implicitHeight: 24
                 radius: 2
                 visible: choice.asText || choice.down || choice.checked || (choice.enabled && choice.hovered)
-                color: choice.down || choice.checked ? Qt.darker(Theme.raised, 1.08) : choice.hovered ? Theme.raised
+                color: choice.down || choice.checked ? Color.darker(Theme.raised, 1.08) : choice.hovered ? Theme.raised
                        : choice.asText ? Theme.raised : "transparent"
                 border.color: choiceMenu.visible ? Theme.accent : choice.enabled ? Theme.control : Theme.line
                 border.width: 1
@@ -238,8 +238,8 @@ Loader {
                     }
                     background: Rectangle {
                         radius: 2
-                        color: segment.chosen ? Theme.accent : segment.down ? Qt.darker(Theme.raised, 1.08)
-                               : segment.hovered ? Qt.lighter(Theme.raised, 1.06) : Theme.raised
+                        color: segment.chosen ? Theme.accent : segment.down ? Color.darker(Theme.raised, 1.08)
+                               : segment.hovered ? Color.lighter(Theme.raised, 1.06) : Theme.raised
                         border.color: segment.chosen ? Theme.accent : segment.enabled ? Theme.control : Theme.line
                     }
                     z: chosen ? 1 : 0

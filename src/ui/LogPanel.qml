@@ -203,8 +203,8 @@ Pane {
                                 selectionColor: Theme.accent
                                 selectedTextColor: Theme.onAccent
                                 font: Application.font
-                                text: (row.title.length > 0 ? "<b>" + panel.escaped(row.title) + "</b> " : "")
-                                      + panel.escaped(row.text).replace(/\n/g, "<br>")
+                                text: (row.title.length > 0 ? "<b>" + Qt.escapeHtml(row.title) + "</b> " : "")
+                                      + Qt.escapeHtml(row.text).replace(/\n/g, "<br>")
                                 Layout.fillWidth: true
                             }
                             TextEdit {
@@ -235,8 +235,5 @@ Pane {
                       ? qsTr("No entries match") : qsTr("Nothing logged yet")
             }
         }
-    }
-    function escaped(s) {
-        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     }
 }

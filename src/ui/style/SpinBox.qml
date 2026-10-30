@@ -72,7 +72,7 @@ F.SpinBox {
             width: parent.width - 2
             height: parent.height - 2
             color: "transparent"
-            border.color: Qt.alpha(F.Fusion.highlightedOutline(control.palette), 40 / 255)
+            border.color: Color.transparent(F.Fusion.highlightedOutline(control.palette), 40 / 255)
             visible: control.activeFocus
             radius: 1.7
         }

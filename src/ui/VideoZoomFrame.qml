@@ -8,7 +8,7 @@ Item {
     visible: view.zoomMode
     readonly property rect hole: view.zoomFrame
     readonly property rect bounds: view.zoomBounds
-    readonly property color dim: Qt.rgba(0, 0, 0, 0x88 / 255)
+    readonly property color dim: Color.rgba(0, 0, 0, 0x88 / 255)
 
     Rectangle {
         x: 0; y: 0

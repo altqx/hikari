@@ -52,7 +52,7 @@ Rectangle {
                 }
                 background: Rectangle {
                     color: choice.checked ? Theme.select : choice.down ? Theme.raised
-                         : choice.hovered && choice.enabled ? Qt.rgba(Theme.raised.r, Theme.raised.g, Theme.raised.b, 0.6)
+                         : choice.hovered && choice.enabled ? Color.transparent(Theme.raised, 0.6)
                          : "transparent"
                     Rectangle {
                         visible: choice.index > 0

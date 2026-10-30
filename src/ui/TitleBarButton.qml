@@ -10,7 +10,7 @@ AbstractButton {
     property bool shownHover: hovered
     property bool shownDown: down
     readonly property color pressColor: Theme.highContrast
-        ? Theme.select : Qt.tint(Theme.raised, Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06))
+        ? Theme.select : Color.tint(Theme.raised, Color.transparent(Theme.text, 0.06))
     implicitWidth: 46
     implicitHeight: 32
     focusPolicy: Qt.NoFocus

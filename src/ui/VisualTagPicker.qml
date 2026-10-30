@@ -99,7 +99,7 @@ AbstractButton {
     background: Rectangle {
         implicitHeight: 24
         radius: 2
-        color: picker.down ? Qt.darker(Theme.raised, 1.08) : Theme.raised
+        color: picker.down ? Color.darker(Theme.raised, 1.08) : Theme.raised
         border.color: list.visible ? Theme.accent : picker.enabled ? Theme.control : Theme.line
         border.width: 1
     }

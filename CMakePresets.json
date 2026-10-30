@@ -50,6 +50,20 @@
       }
     },
     {
+      "name": "linux-x64-hot-reload",
+      "inherits": "base",
+      "displayName": "Linux x64 QML hot reload (development only, never shipped)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF",
+        "HIKARI_QML_HOT_RELOAD": "ON"
+      }
+    },
+    {
       "name": "windows-x64-release",
       "inherits": "base",
       "displayName": "Windows x64 release (latest MSVC)",
@@ -100,6 +114,13 @@
     {
       "name": "linux-floor-x64-release",
       "configurePreset": "linux-floor-x64-release"
+    },
+    {
+      "name": "linux-x64-hot-reload",
+      "configurePreset": "linux-x64-hot-reload",
+      "targets": [
+        "hikarisub"
+      ]
     },
     {
       "name": "windows-x64-release",

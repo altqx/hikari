@@ -84,7 +84,7 @@ DialogWindow {
                 Layout.preferredWidth: 112
                 validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
                 Accessible.name: qsTr("New FPS")
-                Accessible.description: isNaN(dialog.newValue) ? newProblem.text : scale.text
+                Accessible.description: isNaN(dialog.newValue) ? newProblem.text : scaleNote.text
             }
             Label {
                 id: newProblem
@@ -95,7 +95,7 @@ DialogWindow {
                 Accessible.role: Accessible.AlertMessage
             }
             Label {
-                id: scale
+                id: scaleNote
                 objectName: "fpsScale"
                 visible: !isNaN(dialog.oldValue) && !isNaN(dialog.newValue)
                 text: qsTr("Every start and end time × %1").arg((dialog.oldValue / dialog.newValue).toFixed(3))
