@@ -13,6 +13,8 @@ add_test(NAME modules.desktop-handoffs-violation-rejected
         -P "${CMAKE_CURRENT_SOURCE_DIR}/check_desktop_handoffs.cmake")
 set_tests_properties(modules.desktop-handoffs-violation-rejected PROPERTIES WILL_FAIL TRUE LABELS "modules;control")
 
+set(qml-idioms_rejection "QML text built the pre-6.12 way:.*Violation.qml")
+set(qml-debug_rejection "reaches CI, tests or packages:.*workflowPresets release uses release")
 foreach(check qml-idioms qml-debug)
     string(REPLACE "-" "_" script "check_${check}")
     add_test(NAME modules.${check}
@@ -21,7 +23,8 @@ foreach(check qml-idioms qml-debug)
     add_test(NAME modules.${check}-violation-rejected
         COMMAND "${CMAKE_COMMAND}" -DROOT=${CMAKE_CURRENT_SOURCE_DIR}/${check}-violation
             -P "${CMAKE_CURRENT_SOURCE_DIR}/${script}.cmake")
-    set_tests_properties(modules.${check}-violation-rejected PROPERTIES WILL_FAIL TRUE LABELS "modules;control")
+    set_tests_properties(modules.${check}-violation-rejected PROPERTIES
+        PASS_REGULAR_EXPRESSION "${${check}_rejection}" LABELS "modules;control")
 endforeach()
 
 add_test(NAME modules.qmllint

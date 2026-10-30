@@ -1,4 +1,5 @@
 #   cmake -DROOT=<tree> -P check_qml_debug.cmake
+cmake_minimum_required(VERSION 3.28)
 if(NOT ROOT)
     message(FATAL_ERROR "ROOT is required")
 endif()
