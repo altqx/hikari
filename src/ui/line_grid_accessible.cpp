@@ -153,10 +153,13 @@ QAccessibleInterface *LineGridAccessible::cellAt(int row, int column) const
         return QAccessible::accessibleInterface(it->second.first);
     }
     if (m_cache.size() >= kCellCacheCapacity) {
-        const Key oldest = m_lru.back();
-        m_lru.pop_back();
-        QAccessible::deleteAccessibleInterface(m_cache.at(oldest).first);
-        m_cache.erase(oldest);
+        auto oldest = std::prev(m_lru.end());
+        if (const auto active = g->activeLine(); active && *oldest == Key{active->value, g->currentColumn()})
+            oldest = std::prev(oldest);
+        const Key evicted = *oldest;
+        m_lru.erase(oldest);
+        QAccessible::deleteAccessibleInterface(m_cache.at(evicted).first);
+        m_cache.erase(evicted);
     }
     auto *cell = new LineGridCell(g, *line, column);
     const QAccessible::Id id = QAccessible::registerAccessibleInterface(cell);

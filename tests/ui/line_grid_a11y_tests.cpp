@@ -262,6 +262,18 @@ private slots:
         QVERIFY(!QAccessible::accessibleInterface(first));
     }
 
+    void theCurrentCellOutlivesTheCache()
+    {
+        Rig rig(1'000);
+        rig.lines.setSelection({core::LineId{500}, {core::LineId{500}}}, core::LineId{500});
+        const int column = rig.grid->currentColumn();
+        const QAccessible::Id current = QAccessible::uniqueId(rig.table()->cellAt(499, column));
+        for (int row = 0; row < 1'000; ++row)
+            QVERIFY(rig.table()->cellAt(row, row == 499 ? 0 : column));
+        QVERIFY(QAccessible::accessibleInterface(current));
+        QCOMPARE(QAccessible::uniqueId(rig.table()->cellAt(499, column)), current);
+    }
+
     void announcesTheCellFirstAndCountsOnlyWhenTheyChange()
     {
         Rig rig(100);
