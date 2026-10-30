@@ -8258,8 +8258,8 @@ because it was edited.</source>
         <translation>பிளேபேக்கின் போது ஆடியோவைப் பின்தொடரவும்</translation>
     </message>
     <message>
-        <source>Hotkeys follow the panel under the pointer</source>
-        <translation>சுட்டியின் கீழுள்ள பலகத்தைக் குறுக்குவிசைகள் பின்பற்றும்</translation>
+        <source>Focus the panel under the pointer</source>
+        <translation>சுட்டியின் கீழுள்ள பலகத்துக்குக் குவியத்தை நகர்த்து</translation>
     </message>
     <message>
         <source>Choose external font folder</source>

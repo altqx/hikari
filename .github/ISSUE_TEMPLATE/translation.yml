@@ -1,0 +1,39 @@
+name: Translation
+description: A wrong, missing or awkward translation in HikariSub.
+labels: ["translation", "needs-triage"]
+body:
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - Korean (ko_KR)
+        - Polish (pl)
+        - Tamil (ta)
+        - Thai (th_TH)
+        - English (en)
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: The window, panel, menu or message.
+      placeholder: Settings › Audio
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current text
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested text
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Optional. Drag an image here.

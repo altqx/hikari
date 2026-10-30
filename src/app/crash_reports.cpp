@@ -475,7 +475,7 @@ void CrashReports::copyIssue(const QString &kind, const QString &title, const QV
 
 QString CrashReports::systemSummary() const
 {
-    return QStringLiteral("HikariSub %1 · %2 · %3 %4").arg(m_system.version, m_system.package, m_system.os, m_system.osVersion);
+    return QStringLiteral("HikariSub %1 · %2 · %3").arg(m_system.version, m_system.package, m_system.osName);
 }
 
 QString CrashReports::subtitleFileName() const

@@ -364,6 +364,7 @@ ApplicationWindow {
         fallbackTarget: videoPanel
         fallbackAccepts: (key, modifiers) => root.hotkeys.actionFor(3, key, modifiers) === "VIDEO_PLAY_PAUSE"
         followsPointer: () => root.app.settings.value("audio.autoFocus") && !root.audio.tapOn
+        onFocusRequested: panel => root.focusPanel(panel, Qt.OtherFocusReason)
         Component.onCompleted: {
             for (const panel of root.panels)
                 keyRouter.addPanel(panel, panel.keyTarget)

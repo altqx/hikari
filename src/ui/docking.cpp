@@ -360,11 +360,21 @@ private:
 };
 
 // Not Flag_TitleBarNoFloatButton: KDDW reads it as part of Flag_AutoHideSupport and builds side bars QtQuick cannot.
+// KDDW 2.4.1 floats Wayland-dragged panels only at the drop, emptying their group first; docked against that
+// group, they stay in a temporary window that is then deleted with them.
+bool dropKeepsItsGroup(DropLocation location, const KDDockWidgets::Vector<KDDockWidgets::Core::DockWidget *> &source,
+                       const KDDockWidgets::Vector<KDDockWidgets::Core::DockWidget *> &target, KDDockWidgets::Core::DropArea *)
+{
+    return (location & DropLocation::DropLocation_Outter)
+           || std::any_of(target.begin(), target.end(), [&](auto *dock) { return !source.contains(dock); });
+}
+
 void configureEngine()
 {
     using KDDockWidgets::Config;
     Config &config = Config::self();
     config.setFlags(Config::Flag_HideTitleBarWhenTabsVisible | Config::Flag_AlwaysShowTabs);
+    config.setDropIndicatorAllowedFunc(dropKeepsItsGroup);
     config.setSeparatorThickness(1);
     config.setDraggedWindowOpacity(0.7);
     config.setInternalFlags(config.internalFlags() | Config::InternalFlag_UseTransparentFloatingWindow);

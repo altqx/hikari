@@ -8210,8 +8210,8 @@ because it was edited.</source>
         <translation>재생 중 소리 따라가기</translation>
     </message>
     <message>
-        <source>Hotkeys follow the panel under the pointer</source>
-        <translation>포인터 아래의 패널에 단축키 적용</translation>
+        <source>Focus the panel under the pointer</source>
+        <translation>포인터 아래의 패널로 포커스 이동</translation>
     </message>
     <message>
         <source>Choose external font folder</source>

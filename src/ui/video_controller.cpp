@@ -267,8 +267,10 @@ void VideoController::attachPresenter(QObject *presenter)
     if (m_presenter)
         disconnect(m_presenter, nullptr, this, nullptr);
     m_presenter = qobject_cast<VideoPresenter *>(presenter);
-    if (m_presenter)
+    if (m_presenter) {
         connect(m_presenter, &VideoPresenter::screenSizeChanged, this, &VideoController::followScreenSize);
+        connect(m_presenter, &QObject::destroyed, this, [this] { attachPresenter(nullptr); });
+    }
     m_session.setPresenter(m_presenter);
     followScreenSize();
 }

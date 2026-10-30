@@ -1052,7 +1052,7 @@ DialogWindow {
                         }
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don't play after changing the line") }
-                        SettingCheck { setting: "audio.autoFocus"; text: qsTr("Hotkeys follow the panel under the pointer") }
+                        SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
                     }
                     SettingsSection {
                         title: qsTr("Display")
