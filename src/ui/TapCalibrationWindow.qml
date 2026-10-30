@@ -77,17 +77,11 @@ Window {
             spacing: 10
             ColumnLayout {
                 spacing: 2
-                RowLayout {
+                KeycapSentence {
                     spacing: 5
-                    Label {
-                        text: qsTr("Press")
-                    }
-                    Keycap {
-                        text: qsTr("Space")
-                    }
-                    Label {
-                        text: qsTr("on each beep.")
-                    }
+                    //: %1 the Space key
+                    text: qsTr("Press %1 on each beep.")
+                    keys: [qsTr("Space")]
                 }
                 Label {
                     Layout.fillWidth: true

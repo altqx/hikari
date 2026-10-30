@@ -526,10 +526,10 @@ TEST(Hotkeys, ConflictsPerWindow)
         auto c = list.mapConflict(stop, "W", VideoHotkey, live);
         ASSERT_TRUE(c);
         EXPECT_TRUE(c->doubled);
-        EXPECT_EQ(c->message, "This hotkey already exists for \"Play 500ms after\".\nWhat to do?");
+        EXPECT_EQ(c->message, "This hotkey already exists for \"Play 500 ms after\".\nWhat to do?");
         list.map(stop, "W", VideoHotkey, HotkeyAnswer::Delete, live);
         EXPECT_EQ(list.row(stop).accel, "W");
-        EXPECT_EQ(rowNamed(list, "Audio Play 500ms after").accel, "W");
+        EXPECT_EQ(rowNamed(list, "Audio Play 500 ms after").accel, "W");
         const int insert = list.find("Subtitles Insert before");
         c = list.mapConflict(insert, "L", GridHotkey, live);
         ASSERT_TRUE(c);
@@ -680,7 +680,7 @@ TEST(Hotkeys, GestureMapsAtOnce)
     c = mapHotkeyNowConflict(live, ids().at("VIDEO_STOP"), "W", VideoHotkey);
     ASSERT_TRUE(c);
     EXPECT_FALSE(c->doubled);
-    EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play 500ms "
+    EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play 500 ms "
                           "after\".\nWhat would you like to do?");
     auto r = mapHotkeyNow(live, ids().at("VIDEO_STOP"), "Stop", "W", VideoHotkey, HotkeyAnswer::SetAnyway);
     EXPECT_TRUE(r.changed);

@@ -33,6 +33,8 @@ so a user moving from HikariSub legacy sees the same words.
 | Panel | แผง | |
 | Grid | ตาราง | legacy: ตารางคำบรรยาย (subtitle grid) |
 | Line editor | ตัวแก้ไขบรรทัด | legacy "Edit box": ตัวแก้ไข |
+| Line group | กลุ่มบรรทัด | not ทรี / โครงสร้างต้นไม้ |
+| Timing postprocessor | โพสต์โปรเซสเซอร์การจัดเวลา | |
 | Subtitles, subtitle | คำบรรยาย | |
 | File | ไฟล์ | as Windows and macOS Thai write it; replaces legacy แฟ้ม in the whole catalog (`&ไฟล์` menu) |
 | Folder | โฟลเดอร์ | |

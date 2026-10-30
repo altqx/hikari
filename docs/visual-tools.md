@@ -57,10 +57,10 @@ VT2 ([#270](https://github.com/altqx/hikari/issues/270), owner-approved audit [i
 | Text X / Y rotation | VIDEO_TOOL_ROTATION_XY (2027) | T | free | Audio Play to the end |
 | Rectangle clipping | VIDEO_TOOL_RECTANGLE_CLIP (2028) | C | free | Audio Add lead-in |
 | Vector clipping | VIDEO_TOOL_VECTOR_CLIP (2029) | V | free | Audio Add lead-out |
-| Vector drawing | VIDEO_TOOL_DRAWING (2030) | D | free (the D nudge retired) | Audio Play last 500ms |
+| Vector drawing | VIDEO_TOOL_DRAWING (2030) | D | free (the D nudge retired) | Audio Play last 500 ms |
 | Position shifter | VIDEO_TOOL_POSITION_SHIFTER (2031) | A | free (the A nudge retired) | Audio Scroll left |
 | Hydra | VIDEO_TOOL_HYDRA (2032) | H | free | Audio Stop |
-| Perspective (VT3) | VIDEO_TOOL_PERSPECTIVE (2033) | Q | free | Audio Play 500ms before |
+| Perspective (VT3) | VIDEO_TOOL_PERSPECTIVE (2033) | Q | free | Audio Play 500 ms before |
 
 The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPanel::SetAccels), not over the video, so they keep their keys.
 

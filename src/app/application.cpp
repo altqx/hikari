@@ -357,7 +357,7 @@ public:
                                        .arg(qs(line.first));
         case K::LineEdited:
             return QCoreApplication::translate("HikariSub.Search", "Line %1 cannot be replaced,\n"
-                                                               "cause it was edited.").arg(qs(line.first));
+                                                               "because it was edited.").arg(qs(line.first));
         case K::CannotBackUp: return QCoreApplication::translate("HikariSub.Search", "Cannot back up %1.").arg(qs(line.first));
         case K::OutsideReplaceTab: break;
         }
@@ -4065,7 +4065,7 @@ bool Application::addMisspellRule(const QVariantMap &rule)
 {
     if (m_misspellResultsShown) {
         m_log->notice(ui::LogController::Warning, replacerTitle(),
-                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
+                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen the find results window is open"));
         return false;
     }
     misspellRuleList().push_back(replacerRule(rule));
@@ -4076,7 +4076,7 @@ bool Application::editMisspellRule(int index, const QVariantMap &rule)
 {
     if (m_misspellResultsShown) {
         m_log->notice(ui::LogController::Warning, replacerTitle(),
-                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
+                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen the find results window is open"));
         return false;
     }
     auto &rules = misspellRuleList();
@@ -4095,7 +4095,7 @@ bool Application::removeMisspellRule(int index)
 {
     if (m_misspellResultsShown) {
         m_log->notice(ui::LogController::Warning, replacerTitle(),
-                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
+                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen the find results window is open"));
         return false;
     }
     auto &rules = misspellRuleList();
@@ -4193,14 +4193,14 @@ void Application::replaceMisspellFinds(const QVariantList &chosen)
             using K = application::ReplacerProblem::Kind;
             if (problem.kind == K::Edited)
                 m_log->notice(ui::LogController::Warning, replacerTitle(),
-                              QCoreApplication::translate("HikariSub.MisspellReplacer", "Line %1 cannot be replaced,\ncause it was edited.")
+                              QCoreApplication::translate("HikariSub.MisspellReplacer", "Line %1 cannot be replaced,\nbecause it was edited.")
                                   .arg(problem.lineNumber));
             else if (problem.kind == K::MatchError)
                 m_log->notice(ui::LogController::Warning, replacerTitle(), regexMatchError(problem.found));
             else
                 m_log->notice(ui::LogController::Warning, replacerTitle(),
                               QCoreApplication::translate("HikariSub.MisspellReplacer",
-                                                          "Cannot replace \"%1\" to \"%2\", with rule \"%3\" in line %4.")
+                                                          "Cannot replace \"%1\" with \"%2\" using rule \"%3\" in line %4.")
                                   .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
                                   .arg(problem.lineNumber));
         }

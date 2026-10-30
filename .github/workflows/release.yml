@@ -266,11 +266,11 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends rpm2cpio cpio unzip
+          sudo apt-get install -y --no-install-recommends libarchive-tools unzip
           mkdir -p scan/tar scan/deb scan/rpm scan/appimage scan/zip
           tar -xzf "release/hikarisub-$VERSION-linux-x86_64.tar.gz" -C scan/tar
           dpkg-deb -x "release/hikarisub-$VERSION-linux-amd64.deb" scan/deb
-          (cd scan/rpm && rpm2cpio "$OLDPWD/release/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet)
+          bsdtar -xf "release/hikarisub-$VERSION-linux-x86_64.rpm" -C scan/rpm
           appimage="$PWD/release/HikariSub-$VERSION-linux-x86_64.AppImage"
           chmod +x "$appimage"
           (cd scan/appimage && "$appimage" --appimage-extract > /dev/null)

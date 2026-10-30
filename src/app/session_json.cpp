@@ -56,7 +56,8 @@ std::optional<application::Session> readJson(std::string_view bytes, application
         QJsonDocument::fromJson(QByteArray(bytes.data(), static_cast<qsizetype>(bytes.size())), &error);
     if (error.error != QJsonParseError::NoError) {
         const auto [line, column] = application::lineColumnAt(bytes, static_cast<std::size_t>(error.offset));
-        return fail({line, column, error.errorString().toStdString()});
+        return fail({line, column,
+                     message(QT_TRANSLATE_NOOP("HikariSub.Session", "It is not valid JSON: %1."), {error.errorString()})});
     }
     if (!doc.isObject())
         return fail({1, 1, message(QT_TRANSLATE_NOOP("HikariSub.Session", "It is not a session file."))});

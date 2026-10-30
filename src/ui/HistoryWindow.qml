@@ -37,7 +37,8 @@ DialogWindow {
     Label {
         objectName: "historyCount"
         text: history.editor.history.length === 1 ? qsTr("1 step. Steps after the current one can be redone.")
-                                                  : qsTr("%1 steps. Steps after the current one can be redone.").arg(history.editor.history.length)
+                                                  : qsTr("%n steps. Steps after the current one can be redone.", "",
+                                                         history.editor.history.length)
         color: Theme.muted
         wrapMode: Text.Wrap
         Layout.fillWidth: true

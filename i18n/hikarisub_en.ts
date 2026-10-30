@@ -328,6 +328,45 @@
             <numerusform>Copied %n bundled files into the user folder.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n steps. Steps after the current one can be redone.</source>
+        <translation>
+            <numerusform>%n step. Steps after the current one can be redone.</numerusform>
+            <numerusform>%n steps. Steps after the current one can be redone.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.MisspellReplacer</name>
+    <message numerus="yes">
+        <source>%1 of %n rules on</source>
+        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
+        <translation>
+            <numerusform>%1 of %n rule on</numerusform>
+            <numerusform>%1 of %n rules on</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n errors</source>
+        <translation>
+            <numerusform>%n error</numerusform>
+            <numerusform>%n errors</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n files</source>
+        <translation>
+            <numerusform>in %n file</numerusform>
+            <numerusform>in %n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n checked</source>
+        <translation>
+            <numerusform>%n checked</numerusform>
+            <numerusform>%n checked</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Options</name>
@@ -560,6 +599,22 @@
         <translation>
             <numerusform>%n karaoke line</numerusform>
             <numerusform>%n karaoke lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied with problems: %n lines from %1; the log lists the problems. Undo removes them in one step.</source>
+        <extracomment>After an Apply with problems: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;)</extracomment>
+        <translation>
+            <numerusform>Applied with problems: %n line from %1; the log lists the problems. Undo removes it in one step.</numerusform>
+            <numerusform>Applied with problems: %n lines from %1; the log lists the problems. Undo removes them in one step.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2 s. Undo removes them in one step.</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;), %2 the run&apos;s time</extracomment>
+        <translation>
+            <numerusform>Applied: %n line from %1 in %2 s. Undo removes it in one step.</numerusform>
+            <numerusform>Applied: %n lines from %1 in %2 s. Undo removes them in one step.</numerusform>
         </translation>
     </message>
     <message numerus="yes">

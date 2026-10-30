@@ -135,7 +135,8 @@ Item {
             Item { Layout.fillWidth: true }
             Label {
                 objectName: "misspellRuleCount"
-                text: qsTr("%1 of %2 rules on").arg(tool.checkedRules).arg(tool.rules.length)
+                //: %1 the rules turned on, %n all the rules
+                text: qsTr("%1 of %n rules on", "", tool.rules.length).arg(tool.checkedRules)
                 color: Theme.muted
             }
         }
@@ -416,8 +417,8 @@ Item {
                 Label { text: qsTr("Results"); font.weight: Font.DemiBold }
                 Label {
                     objectName: "misspellResultCount"
-                    text: (results.finds === 1 ? qsTr("1 error") : qsTr("%1 errors").arg(results.finds)) + " "
-                          + (results.files === 1 ? qsTr("in 1 file") : qsTr("in %1 files").arg(results.files))
+                    text: (results.finds === 1 ? qsTr("1 error") : qsTr("%n errors", "", results.finds)) + " "
+                          + (results.files === 1 ? qsTr("in 1 file") : qsTr("in %n files", "", results.files))
                     color: Theme.muted
                     elide: Text.ElideRight
                     Layout.fillWidth: true
@@ -542,7 +543,7 @@ Item {
                 Layout.fillWidth: true
                 Label {
                     objectName: "misspellCheckedCount"
-                    text: qsTr("%1 checked").arg(results.checkedFinds)
+                    text: qsTr("%n checked", "", results.checkedFinds)
                     color: Theme.muted
                 }
                 Item { Layout.fillWidth: true }
