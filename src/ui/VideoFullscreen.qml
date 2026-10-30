@@ -11,7 +11,7 @@ Window {
     required property var shell
     required property VideoFullscreenController controller
     readonly property Item stage: stageHolder
-    readonly property Item keyTarget: keys
+    readonly property Item keyTarget: keyScope
     readonly property alias contextMenu: fullscreenMenu
     readonly property bool cursorHidden: controller.cursorHidden
     readonly property real pinnedPanelHeight: controller.pinned ? bar.height : 0
@@ -30,7 +30,7 @@ Window {
     transientParent: controller.ownedByMainWindow() ? shell : null
     visible: false
 
-    onActiveChanged: if (active && controller.active) keys.forceActiveFocus()
+    onActiveChanged: if (active && controller.active) keyScope.forceActiveFocus()
     onClosing: close => {
         if (fs.controller.active) {
             close.accepted = false
@@ -75,7 +75,7 @@ Window {
     }
 
     FocusScope {
-        id: keys
+        id: keyScope
         objectName: "videoFullscreenKeys"
         anchors.fill: parent
         focus: true
@@ -88,7 +88,7 @@ Window {
         }
         Keys.onShortcutOverride: event => event.accepted = fs.shell.visualTools.takesKey(event.key, event.modifiers)
                                                           || fs.shell.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
-                                                          || keys.leaves(event)
+                                                          || keyScope.leaves(event)
         Keys.onPressed: event => {
             const action = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers)
             if (fs.shell.visualTools.takesKey(event.key, event.modifiers)) {
@@ -99,7 +99,7 @@ Window {
                 event.accepted = true
             } else if (event.key === Qt.Key_Escape && fs.shell.visualTools.escape()) {
                 event.accepted = true
-            } else if (keys.leaves(event)) {
+            } else if (keyScope.leaves(event)) {
                 fs.controller.leave()
                 event.accepted = true
             } else if (event.key === Qt.Key_F) {
@@ -496,20 +496,20 @@ Window {
             onOpenVideoRequested: fs.openVideoRequested()
             onOpenSubtitlesRequested: fs.openSubtitlesRequested()
             onAspectRatioRequested: fs.aspectRatioRequested()
-            onClosed: keys.forceActiveFocus()
+            onClosed: keyScope.forceActiveFocus()
         }
         AudioOutputMenu {
             id: outputMenu
             objectName: "fullscreenAudioOutputMenu"
             app: fs.shell.app
             onSettingsRequested: fs.audioSettingsRequested()
-            onClosed: keys.forceActiveFocus()
+            onClosed: keyScope.forceActiveFocus()
         }
         ShellMenu {
             id: modeMenu
             objectName: "fullscreenBarModeMenu"
             readonly property var names: [qsTr("Auto"), qsTr("Always"), qsTr("Never")]
-            onClosed: keys.forceActiveFocus()
+            onClosed: keyScope.forceActiveFocus()
             Instantiator {
                 model: [qsTr("Show on pointer movement, hide when idle"), qsTr("Keep the bar; the picture ends above it"),
                         qsTr("Picture only")]
@@ -531,7 +531,7 @@ Window {
         ShellMenu {
             id: toolsMenu
             objectName: "fullscreenToolsMenu"
-            onClosed: keys.forceActiveFocus()
+            onClosed: keyScope.forceActiveFocus()
             Instantiator {
                 model: fs.shell.visualTools.railOrder
                 delegate: ShellMenuItem {
