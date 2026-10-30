@@ -361,7 +361,7 @@ private slots:
         QQuickItem *button = findIn(root.get(), "tipButton");
         QVERIFY(button);
         QCOMPARE(QQmlProperty(button, QStringLiteral("ToolTip.delay"), qmlContext(button)).read().toInt(),
-                 QGuiApplication::styleHints()->toolTipWakeUpDelay());
+                 int(QGuiApplication::styleHints()->toolTipWakeUpDelay().count()));
         QVERIFY(QQmlProperty(button, QStringLiteral("ToolTip.timeout"), qmlContext(button)).read().toInt() >= 10000);
         QTest::mouseMove(root.get(), centreOf(button));
         QTRY_VERIFY(QQmlProperty(button, QStringLiteral("ToolTip.toolTip"), qmlContext(button))
