@@ -51,7 +51,7 @@ bool g_everAttached = false;
 
 using KDDockWidgets::DropLocation;
 
-// KDDW 2.4.1's QtQuick frontend has no Segmented indicators, so the Classic overlay's window and rubber band are replaced.
+// KDDW's QtQuick frontend has no Segmented indicators (2.5.1), so the Classic overlay's window and rubber band are replaced.
 class DropZones final : public KDDockWidgets::Core::ClassicIndicatorWindowViewInterface {
 public:
     static constexpr int kOuterBand = 24;
@@ -360,7 +360,7 @@ private:
 };
 
 // Not Flag_TitleBarNoFloatButton: KDDW reads it as part of Flag_AutoHideSupport and builds side bars QtQuick cannot.
-// KDDW 2.4.1 floats Wayland-dragged panels only at the drop, emptying their group first; docked against that
+// KDDW (2.5.1) floats Wayland-dragged panels only at the drop, emptying their group first; docked against that
 // group, they stay in a temporary window that is then deleted with them.
 bool dropKeepsItsGroup(DropLocation location, const KDDockWidgets::Vector<KDDockWidgets::Core::DockWidget *> &source,
                        const KDDockWidgets::Vector<KDDockWidgets::Core::DockWidget *> &target, KDDockWidgets::Core::DropArea *)

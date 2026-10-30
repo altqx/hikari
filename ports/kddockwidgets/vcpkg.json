@@ -1,8 +1,8 @@
 {
   "name": "kddockwidgets",
-  "version": "2.4.1",
+  "version": "2.5.1",
   "port-version": 101,
-  "description": "KDDockWidgets, QtQuick frontend only (Hikari-owned overlay: pinned to c1d28d25, builds against the provisioned official Qt, never vcpkg's Qt)",
+  "description": "KDDockWidgets, QtQuick frontend only (Hikari-owned overlay: pinned to 674f2845, builds against the provisioned official Qt, never vcpkg's Qt)",
   "homepage": "https://github.com/KDAB/KDDockWidgets",
   "license": "GPL-2.0-only OR GPL-3.0-only",
   "supports": "!android & !ios & !uwp",

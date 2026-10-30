@@ -556,21 +556,26 @@ private slots:
 
     void aFloatingPanelInAMissingWindowIsRefused_data()
     {
+        QTest::addColumn<QString>("key");
         QTest::addColumn<QJsonValue>("parent");
-        QTest::newRow("far") << QJsonValue(2147483647);
-        QTest::newRow("second window") << QJsonValue(1);
-        QTest::newRow("below") << QJsonValue(-2);
-        QTest::newRow("not a number") << QJsonValue(QStringLiteral("0"));
+        const QString index = QStringLiteral("parentIndex"), name = QStringLiteral("parentMainWindowName");
+        QTest::newRow("far") << index << QJsonValue(2147483647);
+        QTest::newRow("second window") << index << QJsonValue(1);
+        QTest::newRow("below") << index << QJsonValue(-2);
+        QTest::newRow("not a number") << index << QJsonValue(QStringLiteral("0"));
+        QTest::newRow("another main window") << name << QJsonValue(QStringLiteral("Other"));
+        QTest::newRow("name not text") << name << QJsonValue(0);
     }
     void aFloatingPanelInAMissingWindowIsRefused()
     {
+        QFETCH(QString, key);
         QFETCH(QJsonValue, parent);
         QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(refusalBase())).object();
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
         QJsonArray floating = payload.value(QStringLiteral("floatingWindows")).toArray();
         QJsonObject window = floating.first().toObject();
         QCOMPARE(window.value(QStringLiteral("parentIndex")).toInt(-5), 0);
-        window.insert(QStringLiteral("parentIndex"), parent);
+        window.insert(key, parent);
         floating.replace(0, window);
         payload.insert(QStringLiteral("floatingWindows"), floating);
         envelope.insert(QStringLiteral("payload"), payload);
