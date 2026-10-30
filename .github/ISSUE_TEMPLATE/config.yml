@@ -1,1 +1,8 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
+contact_links:
+  - name: User guide
+    url: https://hikarisub.altqx.com
+    about: How each panel and command works.
+  - name: Website issue
+    url: https://github.com/altqx/hikari-site/issues/new
+    about: Something wrong on hikarisub.altqx.com.
