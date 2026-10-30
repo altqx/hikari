@@ -99,6 +99,7 @@
 | Filtering › Filter | filter |
 | Filtering › Turn off filtering | filter-off (new) |
 | Hide columns (submenu) | columns (new) |
+| Hide columns › Reset column widths | restore-default |
 | Set new FPS | fps (new) |
 | Set FPS from video | fps-from-video (new) |
 | Copy columns / Paste columns | columns-copy / columns-paste (new: Copy and Paste with columns) |

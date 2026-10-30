@@ -5218,6 +5218,7 @@ ApplicationWindow {
                             }
                             MenuSeparator {}
                             ShellMenuItem {
+                                iconRole: "restore-default"
                                 objectName: "resetColumnWidths"
                                 text: qsTranslate("HikariSub.Grid", "Reset column widths")
                                 enabled: Object.keys(root.shell.gridColumnWidths).length > 0
