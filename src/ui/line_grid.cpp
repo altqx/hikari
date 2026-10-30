@@ -67,6 +67,19 @@ void LineGrid::updateRowHeight()
     emit rowHeightChanged();
 }
 
+namespace {
+
+LineTableModel *sourceLines(QAbstractItemModel *model)
+{
+    if (auto *lines = qobject_cast<LineTableModel *>(model))
+        return lines;
+    if (auto *proxy = qobject_cast<QAbstractProxyModel *>(model))
+        return sourceLines(proxy->sourceModel());
+    return nullptr;
+}
+
+}
+
 void LineGrid::setModel(QAbstractItemModel *model)
 {
     if (m_model == model)
@@ -98,6 +111,8 @@ void LineGrid::setModel(QAbstractItemModel *model)
                             stateChanged();
                     }),
         };
+        if (auto *lines = sourceLines(m_model))
+            m_connections.push_back(connect(lines, &LineTableModel::runFoldChanged, this, &LineGrid::announceFold));
     }
     emit modelChanged();
     updateColumns();
@@ -116,14 +131,6 @@ namespace {
 
 constexpr double kFoldIndent = 14;
 
-LineTableModel *sourceLines(QAbstractItemModel *model)
-{
-    if (auto *lines = qobject_cast<LineTableModel *>(model))
-        return lines;
-    if (auto *proxy = qobject_cast<QAbstractProxyModel *>(model))
-        return sourceLines(proxy->sourceModel());
-    return nullptr;
-}
 
 }
 
@@ -164,7 +171,7 @@ bool LineGrid::foldsWith(int key, int modifiers) const
     const int row = currentRow();
     if (!m_model || row < 0 || modifiers != Qt::NoModifier || (key != Qt::Key_Left && key != Qt::Key_Right))
         return false;
-    return m_model->index(row, 0).data(LineTableModel::FoldRole).toInt() == (key == Qt::Key_Right ? 1 : 2);
+    return runFold(row) == (key == Qt::Key_Right ? RunFold::Folded : RunFold::Unfolded);
 }
 
 int LineGrid::currentRow() const
@@ -247,9 +254,9 @@ QString LineGrid::rowStateText(int row) const
         words << QCoreApplication::translate("HikariSub.Grid", "uncommitted");
     if (m_model->index(row, 0).data(LineTableModel::UnplacedRunsRole).toBool())
         words << QCoreApplication::translate("HikariSub.Grid", "runs not placed");
-    if (const int fold = m_model->index(row, 0).data(LineTableModel::FoldRole).toInt(); fold == 1)
+    if (const RunFold fold = runFold(row); fold == RunFold::Folded)
         words << QCoreApplication::translate("HikariSub.Grid", "folded");
-    else if (fold == 2)
+    else if (fold == RunFold::Unfolded)
         words << QCoreApplication::translate("HikariSub.Grid", "unfolded");
     return words.join(QStringLiteral(", "));
 }
@@ -257,6 +264,17 @@ QString LineGrid::rowStateText(int row) const
 QString LineGrid::columnTitle(int column) const
 {
     return m_model ? m_model->headerData(modelColumn(column), Qt::Horizontal).toString() : QString();
+}
+
+RunFold LineGrid::runFold(int row) const
+{
+    if (!m_model || row < 0 || row >= m_model->rowCount())
+        return RunFold::None;
+    switch (m_model->index(row, 0).data(LineTableModel::FoldRole).toInt()) {
+    case 1: return RunFold::Folded;
+    case 2: return RunFold::Unfolded;
+    default: return RunFold::None;
+    }
 }
 
 int LineGrid::columnCount() const
@@ -603,6 +621,22 @@ void LineGrid::announceState(bool activeMoved)
             QAccessible::updateAccessibility(&announcement);
         }
     }
+}
+
+void LineGrid::announceFold(qulonglong first)
+{
+    const int row = rowOfLine(core::LineId{first});
+    QAccessibleInterface *table = row >= 0 && QAccessible::isActive() ? QAccessible::queryAccessibleInterface(this) : nullptr;
+    auto *ti = table ? table->tableInterface() : nullptr;
+    if (!ti)
+        return;
+    QAccessible::State changed;
+    changed.expanded = true;
+    for (int column = 0; column < columnCount(); ++column)
+        if (QAccessibleInterface *cell = ti->cellAt(row, column)) {
+            QAccessibleStateChangeEvent event(cell, changed);
+            QAccessible::updateAccessibility(&event);
+        }
 }
 
 qreal LineGrid::contentHeight() const

@@ -21,6 +21,8 @@ ToolButton {
     // Qt Quick gives a menu button role no press action.
     Accessible.role: Accessible.Button
     Accessible.name: text
+    Accessible.expandable: true
+    Accessible.expanded: menuOpen
     ToolTip.visible: hovered && !menuOpen
     ToolTip.text: text
     HoverHandler {

@@ -655,6 +655,7 @@ void LineTableModel::setRunFolded(core::LineId first, bool folded)
     else
         m_unfolded.insert(first.value);
     emitRowChanged(*row);
+    emit runFoldChanged(first.value);
 }
 
 int LineTableModel::runFirstRow(int row) const
