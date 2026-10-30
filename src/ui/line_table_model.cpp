@@ -18,6 +18,7 @@
 #include <QStringList>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iterator>
 
@@ -812,6 +813,17 @@ bool LineFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &) const
         return false;
     }
     return passes(sourceRow);
+}
+
+QSortFilterProxyModel::DataChangeRelevanceFlags LineFilterModel::dataChangeRelevanceFlags(
+    const QModelIndex &sourceTopLeft, const QModelIndex &sourceBottomRight, const QList<int> &roles) const
+{
+    static constexpr std::array kMarksOnly{int(LineTableModel::ActiveRole), int(LineTableModel::SelectedRole),
+                                           int(LineTableModel::AnchorRole), int(LineTableModel::SpellMarksRole),
+                                           int(LineTableModel::ComparisonRole), int(LineTableModel::UnplacedRunsRole)};
+    if (!roles.isEmpty() && std::ranges::all_of(roles, [](int role) { return std::ranges::contains(kMarksOnly, role); }))
+        return DataChangeRelevanceFlag::NotRelevant;
+    return QSortFilterProxyModel::dataChangeRelevanceFlags(sourceTopLeft, sourceBottomRight, roles);
 }
 
 bool LineFilterModel::passes(int sourceRow) const

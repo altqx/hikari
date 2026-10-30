@@ -189,7 +189,7 @@ Item {
                     ToolTip.visible: hovered
                     // lupdate reads "\\" in a QML string as one backslash and keys the text wrongly.
                     ToolTip.text: qsTr("Shifts %1, %2, and %3 tag times\nso their positions on video do not change\n(slows down time shifting)")
-                                      .arg("\\move").arg("\\t").arg("\\fad")
+                                      .arg("\\move", "\\t", "\\fad")
                     onToggled: panel.set("tagTimes", checked)
                 }
             }

@@ -27,7 +27,7 @@ Flow {
             padding: 3
             leftPadding: 4
             rightPadding: 6
-            Accessible.name: qsTr("Run %1: %2, %3").arg(modelData.number).arg(modelData.text).arg(modelData.kind)
+            Accessible.name: qsTr("Run %1: %2, %3").arg(modelData.number, modelData.text, modelData.kind)
             Accessible.description: modelData.placed ? qsTr("Placed") : qsTr("Not placed")
             ToolTip {
                 id: tip
@@ -37,7 +37,7 @@ Flow {
                     const keys = chip.symbol ? strip.shellRoot.boundKeys(chip.symbol, 2) : ""
                     const how = keys.length ? qsTr("Select text in the translation, then press %1 or click.").arg(keys)
                                             : qsTr("Select text in the translation, then click.")
-                    return qsTr("Run %1: %2 (%3)").arg(chip.modelData.number).arg(chip.modelData.text).arg(chip.modelData.kind)
+                    return qsTr("Run %1: %2 (%3)").arg(chip.modelData.number, chip.modelData.text, chip.modelData.kind)
                            + "\n" + how
                 }
                 // Qt's AutoText would render the subtitle's markup and fetch any <img>.
@@ -55,7 +55,7 @@ Flow {
             }
             background: Rectangle {
                 radius: 3
-                color: chip.modelData.placed ? Qt.alpha(Theme.accent, chip.hovered ? 0.3 : 0.2)
+                color: chip.modelData.placed ? Color.transparent(Theme.accent, chip.hovered ? 0.3 : 0.2)
                                              : (chip.hovered ? Theme.raised : "transparent")
                 border.width: 1
                 border.color: chip.modelData.placed ? Theme.accent : Theme.line

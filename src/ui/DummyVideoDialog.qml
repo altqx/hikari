@@ -112,7 +112,7 @@ DialogWindow {
                     implicitWidth: 32
                     implicitHeight: 24
                     readonly property var c: dialog.rgb(colour.text)
-                    readonly property color color: c ? Qt.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
+                    readonly property color color: c ? Color.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
                     text: qsTr("Choose the colour")
                     Accessible.name: text
                     ToolTip.visible: hovered

@@ -78,7 +78,7 @@ ColumnLayout {
         Label {
             objectName: "settingsImportSummary"
             color: Theme.muted
-            text: qsTr("%1 of %2 chosen").arg(review.chosenCount).arg(review.conflicts.length)
+            text: qsTr("%1 of %2 chosen").arg(review.chosenCount, review.conflicts.length)
         }
     }
     Frame {

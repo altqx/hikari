@@ -235,6 +235,10 @@ public:
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+    // Not virtual until Qt 7: QSortFilterProxyModel finds this redeclaration through the meta-object.
+    Q_INVOKABLE DataChangeRelevanceFlags dataChangeRelevanceFlags(const QModelIndex &sourceTopLeft,
+                                                                  const QModelIndex &sourceBottomRight,
+                                                                  const QList<int> &roles) const;
 
 private:
     LineTableModel *m_lines = nullptr;

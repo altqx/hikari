@@ -377,7 +377,7 @@ Window {
                         clip: true
                         Accessible.role: Accessible.StaticText
                         //: The full screen bar's current line: %1 its number, %2 its times, %3 its text
-                        Accessible.name: qsTr("Line %1, %2: %3").arg(lineNumber.text).arg(fs.shell.editor.videoTimes).arg(lineText.text)
+                        Accessible.name: qsTr("Line %1, %2: %3").arg(lineNumber.text, fs.shell.editor.videoTimes, lineText.text)
                         Label {
                             id: lineNumber
                             objectName: "fullscreenLineNumber"

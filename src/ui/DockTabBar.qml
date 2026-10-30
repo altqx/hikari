@@ -195,8 +195,8 @@ KDDWViews.TabBarBase {
                     height: tab.height - 1
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: Qt.alpha(Theme.raised, 0) }
-                        GradientStop { position: 1.0; color: Qt.alpha(Theme.raised, 0.7) }
+                        GradientStop { position: 0.0; color: Color.transparent(Theme.raised, 0) }
+                        GradientStop { position: 1.0; color: Color.transparent(Theme.raised, 0.7) }
                     }
                 }
                 Rectangle {

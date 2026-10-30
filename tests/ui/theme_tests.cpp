@@ -575,16 +575,18 @@ private slots:
                                   &O::syllableText})
             QCOMPARE(actual.*member, expected.*member);
         QCOMPARE(dark.comparison, (std::array{hex(0x2700FF), hex(0x272B32), hex(0x3A3E45), hex(0x003176), hex(0x3662A1)}));
-        QCOMPARE(dark.spellcheck, hex(0x940000));
+        QCOMPARE(dark.spellcheck, hex(0xFF6B6B));
         const auto light = ui::theme::content(Code::Light, roles(Code::Light));
         QCOMPARE(light.comparison, (std::array{hex(0xFFFFFF), hex(0xFF000C), hex(0xB7AC00), hex(0x9C0000), hex(0x817900)}));
-        QCOMPARE(light.spellcheck, hex(0xFF6968));
+        QCOMPARE(light.spellcheck, hex(0xD70000));
         QCOMPARE(dark.grammar, hex(0x6EA8FE));
         QCOMPARE(light.grammar, hex(0x1A56DB));
         for (const auto code : {Code::Dark, Code::Light, Code::HighContrastWhite, Code::HighContrastBlack}) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
             const auto c = ui::theme::content(code, r);
             QVERIFY2(contrastRatio(c.grammar, r.field) >= 3.0, qPrintable(ui::theme::codeName(code)));
+            for (const QColor &under : {r.field, r.panel, c.gridAlternate})
+                QVERIFY2(contrastRatio(c.spellcheck, under) >= 3.0, qPrintable(ui::theme::codeName(code)));
             QVERIFY(c.grammar != c.spellcheck);
         }
         QCOMPARE(ui::theme::content(Code::HighContrastWhite, roles(Code::HighContrastWhite)).grammar, hex(0x0000C8));

@@ -217,10 +217,10 @@ FocusScope {
             color: Theme.muted
             font: panel.fontAt(12)
             text: panel.grammar.walking === true
-                  ? qsTr("Checking line %1 of %2…").arg(panel.grammar.checked ?? 0).arg(panel.grammar.total ?? 0)
+                  ? qsTr("Checking line %1 of %2…").arg(panel.grammar.checked ?? 0, panel.grammar.total ?? 0)
                   : panel.grammar.found === true
-                  ? qsTr("Finding %1 of %2 · %3").arg(panel.grammar.index).arg(panel.grammar.count)
-                        .arg(qsTr("%n lines checked", "", panel.grammar.checked ?? 0))
+                  ? qsTr("Finding %1 of %2 · %3").arg(panel.grammar.index, panel.grammar.count,
+                                                         qsTr("%n lines checked", "", panel.grammar.checked ?? 0))
                   : ""
         }
         Button {
@@ -330,7 +330,7 @@ FocusScope {
             Label {
                 objectName: "grammarLine"
                 visible: panel.grammarMode
-                text: qsTr("Line %1 · %2").arg(panel.grammar.line ?? 0).arg(panel.grammar.groupName ?? "")
+                text: qsTr("Line %1 · %2").arg(panel.grammar.line ?? 0, panel.grammar.groupName ?? "")
                 textFormat: Text.PlainText
                 color: Theme.muted
                 font: panel.fontAt(12)
@@ -366,12 +366,11 @@ FocusScope {
                 elide: Text.ElideRight
                 color: Theme.muted
                 textFormat: Text.StyledText
-                function escaped(s) { return (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
                 readonly property var shown: panel.grammarMode
                     ? {before: panel.grammar.before, word: panel.grammar.text, after: panel.grammar.after, colour: Theme.grammar}
                     : {before: panel.current.before, word: panel.current.word, after: panel.current.after, colour: Theme.text}
-                text: escaped(shown.before) + "<u><font color=\"" + shown.colour + "\">"
-                      + escaped(shown.word) + "</font></u>" + escaped(shown.after)
+                text: Qt.escapeHtml(shown.before ?? "") + "<u><font color=\"" + shown.colour + "\">"
+                      + Qt.escapeHtml(shown.word ?? "") + "</font></u>" + Qt.escapeHtml(shown.after ?? "")
                 Accessible.name: (shown.before ?? "") + (shown.word ?? "") + (shown.after ?? "")
             }
             RowLayout {

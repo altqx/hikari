@@ -108,7 +108,7 @@ Item {
             title: qsTr("Load session"),
             text: qsTr("This session opens files on another computer."),
             detail: qsTr("“%1” names files on %2. Opening it connects to them.")
-                .arg(windows.fileName(file)).arg(hosts.join(", ")),
+                .arg(windows.fileName(file), hosts.join(", ")),
             severity: "warning",
             choices: [
                 { id: "open", text: qsTr("Open"), role: "accept" },

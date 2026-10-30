@@ -293,7 +293,7 @@ Content content(Code code, const Roles &roles)
     selection.setAlpha(0x37);
     switch (code) {
     case Code::Dark:
-        c.spellcheck = rgb(0x940000);
+        c.spellcheck = rgb(0xFF6B6B);
         c.grammar = rgb(0x6EA8FE);
         c.gridAlternate = rgb(0x242A31);
         c.gridWarning = rgb(0x7A2E2E);
@@ -303,7 +303,7 @@ Content content(Code code, const Roles &roles)
                     rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243)};
         break;
     case Code::Light:
-        c.spellcheck = rgb(0xFF6968);
+        c.spellcheck = rgb(0xD70000);
         c.grammar = rgb(0x1A56DB);
         c.gridAlternate = rgb(0xF0F2F4);
         c.gridWarning = rgb(0xF4C7C7);
@@ -331,7 +331,7 @@ Content content(Code code, const Roles &roles)
         a.syllableText = 0xFFE0E3FF;
         break;
     case Code::HighContrastWhite:
-        c.spellcheck = rgb(0xFF9C9C);
+        c.spellcheck = rgb(0xC00000);
         c.grammar = rgb(0x0000C8);
         c.gridAlternate = rgb(0xFFFFFF);
         c.gridWarning = rgb(0xFFC0C0);
@@ -359,7 +359,7 @@ Content content(Code code, const Roles &roles)
         a.syllableText = 0xFFFFFFFF;
         break;
     case Code::HighContrastBlack:
-        c.spellcheck = rgb(0xC00000);
+        c.spellcheck = rgb(0xFF6060);
         c.grammar = rgb(0xFFFF00);
         c.gridAlternate = rgb(0x000000);
         c.gridWarning = rgb(0x800000);

@@ -10,15 +10,14 @@ MenuBarItem {
     readonly property bool letterShown: strip !== null && strip.showMnemonics
 
     function titleText(underline: bool): string {
-        const escape = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         let out = ""
         for (let i = 0; i < text.length; ++i) {
             const c = text[i]
             if (c === "&" && i + 1 < text.length) {
                 const next = text[++i]
-                out += next !== "&" && underline ? "<u>" + escape(next) + "</u>" : escape(next)
+                out += next !== "&" && underline ? "<u>" + Qt.escapeHtml(next) + "</u>" : Qt.escapeHtml(next)
             } else {
-                out += escape(c)
+                out += Qt.escapeHtml(c)
             }
         }
         return out

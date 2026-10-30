@@ -238,7 +238,7 @@ Pane {
                                     implicitHeight: rowLine.implicitHeight + 10
                                     color: current ? Theme.select : rowMouse.containsMouse ? Theme.raised : "transparent"
                                     Accessible.role: Accessible.ListItem
-                                    Accessible.name: qsTr("Line %1, %2").arg(modelData.number).arg(modelData.effect)
+                                    Accessible.name: qsTr("Line %1, %2").arg(modelData.number, modelData.effect)
                                     Accessible.selected: current
                                     Rectangle {
                                         visible: templateRow.current
@@ -291,10 +291,9 @@ Pane {
                                                 const space = effect.indexOf(" ")
                                                 const head = space < 0 ? effect : effect.slice(0, space)
                                                 const rest = space < 0 ? "" : effect.slice(space)
-                                                const escape = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
-                                                return "<b><font color=\"" + Theme.syntax[9] + "\">" + escape(head)
+                                                return "<b><font color=\"" + Theme.syntax[9] + "\">" + Qt.escapeHtml(head)
                                                        + "</font></b><font color=\"" + Theme.syntax[10] + "\">"
-                                                       + escape(rest) + "</font>"
+                                                       + Qt.escapeHtml(rest) + "</font>"
                                             }
                                         }
                                         Label {
@@ -512,64 +511,8 @@ Pane {
                                     return root.controller.colourRuns(textField.text)
                                 }
                                 colours: Theme.syntax
-                            }
-
-                            // Qt Quick's text draws no wave underline, so the problem's is painted per wrapped row.
-                            Canvas {
-                                id: problemWave
-                                objectName: "templateProblemWave"
-                                anchors.fill: parent
-                                property var segments: []
-                                function measure() {
-                                    const out = []
-                                    const range = root.controller.problemRange
-                                    if (range.length === 2 && range[0] < range[1] && range[1] <= textField.length) {
-                                        let row = null
-                                        for (let i = range[0]; i < range[1]; ++i) {
-                                            const at = textField.positionToRectangle(i)
-                                            const after = textField.positionToRectangle(i + 1)
-                                            const right = after.y === at.y ? after.x : at.x + charWidth.advanceWidth("m")
-                                            if (row && row[1] === at.y + at.height)
-                                                row[2] = right - row[0]
-                                            else
-                                                out.push(row = [at.x, at.y + at.height, right - at.x])
-                                        }
-                                    }
-                                    segments = out
-                                }
-                                FontMetrics {
-                                    id: charWidth
-                                    font: textField.font
-                                }
-                                Connections {
-                                    target: root.controller
-                                    function onPreviewChanged() { Qt.callLater(problemWave.measure) }
-                                }
-                                Connections {
-                                    target: textField
-                                    function onContentHeightChanged() { Qt.callLater(problemWave.measure) }
-                                    function onWidthChanged() { Qt.callLater(problemWave.measure) }
-                                    function onTextChanged() { Qt.callLater(problemWave.measure) }
-                                }
-                                Connections {
-                                    target: Theme
-                                    function onChanged() { problemWave.requestPaint() }
-                                }
-                                onSegmentsChanged: requestPaint()
-                                onPaint: {
-                                    const ctx = getContext("2d")
-                                    ctx.reset()
-                                    ctx.strokeStyle = Theme.danger
-                                    ctx.lineWidth = 1
-                                    for (const s of segments) {
-                                        const y = s[1] - 1
-                                        ctx.beginPath()
-                                        ctx.moveTo(s[0], y)
-                                        for (let x = s[0], up = true; x < s[0] + s[2]; x += 2, up = !up)
-                                            ctx.lineTo(Math.min(x + 2, s[0] + s[2]), up ? y - 2 : y)
-                                        ctx.stroke()
-                                    }
-                                }
+                                ranges: root.controller.problemRange
+                                colour: Theme.danger
                             }
                         }
                     }
@@ -605,7 +548,6 @@ Pane {
                                 }
                             }
                             text: {
-                                const escape = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
                                 const range = root.controller.problemRange
                                 const where = range.length === 2 ? textField.text.slice(range[0], range[1]) : ""
                                 const line = (root.controller.currentIsCode ? qsTr("Code line: %1") : qsTr("Template line: %1"))
@@ -613,9 +555,9 @@ Pane {
                                 //: A template's problem: "Template line: 3, in !math.rnd(1,5)!: attempt to call a nil value"
                                 // Lua's message without its chunk name ([string "…"]:1:).
                                 const said = root.controller.problem.split("\n")[0].replace(/\[string ".*?"\]:\d+: /, "")
-                                return where !== "" ? qsTr("%1, in %2: %3").arg("<b>" + line + "</b>")
-                                                          .arg("<tt>" + escape(where) + "</tt>").arg(escape(said))
-                                                    : "<b>" + line + "</b>: " + escape(said)
+                                return where !== "" ? qsTr("%1, in %2: %3").arg("<b>" + line + "</b>", "<tt>" + Qt.escapeHtml(where) + "</tt>",
+                                                                                  Qt.escapeHtml(said))
+                                                    : "<b>" + line + "</b>: " + Qt.escapeHtml(said)
                             }
                         }
                     }
@@ -860,7 +802,7 @@ Pane {
                     if (applied.lines !== undefined)
                         //: After Apply: %n the Lines written, %1 the karaoke Lines they came from ("1 karaoke line", "%n karaoke lines"), %2 the run's time
                         return qsTr("Applied: %n lines from %1 in %2 s. Undo removes them in one step.", "", applied.lines)
-                               .arg(root.karaokeLineCount(applied.karaokeLines)).arg(applied.seconds.toFixed(2))
+                               .arg(root.karaokeLineCount(applied.karaokeLines), applied.seconds.toFixed(2))
                     if (c.changedCount === 0)
                         return ""
                     if (root.narrow)

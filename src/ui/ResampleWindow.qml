@@ -183,8 +183,8 @@ DialogWindow {
             text: dialog.same ? qsTr("The same as the subtitles: nothing to resample.")
                 : !dialog.aspectChanges ? qsTr("Positions, sizes and margins are scaled by %1.")
                                             .arg(dialog.scale(targetWidth.value / subsWidth.value))
-                : qsTr("Scaled by %1 across and %2 down.").arg(dialog.scale(targetWidth.value / subsWidth.value))
-                                                          .arg(dialog.scale(targetHeight.value / subsHeight.value))
+                : qsTr("Scaled by %1 across and %2 down.").arg(dialog.scale(targetWidth.value / subsWidth.value),
+                                                               dialog.scale(targetHeight.value / subsHeight.value))
         }
     }
     FormSection {
@@ -203,8 +203,8 @@ DialogWindow {
                 onActivated: i => dialog.stretch = i === 1
             }
             Hint {
-                text: qsTr("The aspect ratio changes from %1 to %2.").arg(dialog.ratio(subsWidth.value, subsHeight.value))
-                                                                      .arg(dialog.ratio(targetWidth.value, targetHeight.value))
+                text: qsTr("The aspect ratio changes from %1 to %2.").arg(dialog.ratio(subsWidth.value, subsHeight.value),
+                                                                           dialog.ratio(targetWidth.value, targetHeight.value))
             }
         }
     }
