@@ -115,6 +115,16 @@ Payload retention was left open here; the move to 6.12.0 settled it (next sectio
 - **To roll back:** revert M0, then copy `cmake/locks/rollback/qt-<platform>-6.11.2.lock.json` from M0's merge over `cmake/locks/qt-<platform>.lock.json`. An existing 6.11.2 installation keeps its stamp, because the requested packages and payload digests are the same.
 - **Shared SDKs:** acquisition prunes mirror files its lock does not list. A 6.11 tree and a 6.12 tree that share one `out/sdk` therefore refetch each other's mirror on every configure; give them separate SDK folders (`-DHIKARI_SDK_DIR`).
 
+## QML hot reload (M1, 2026-10-30)
+
+A development-only Linux preset reloads QML from the source tree while the app runs ([#528](https://github.com/altqx/hikari/issues/528)).
+
+- **Configure and build:** `cmake --preset linux-x64-hot-reload`, then `cmake --build --preset linux-x64-hot-reload`. The preset turns on `HIKARI_QML_HOT_RELOAD`, which defines `QT_QML_DEBUG` in the composition root and adds the `hikarisub_qmlpreview` target. It builds no tests.
+- **Never shipped:** the QML debugger accepts connections from anything that can reach its socket. `modules.qml-debug` fails when a test or workflow preset, a file under `.github/`, `packaging/` or `cmake/`, or a preset inheriting the hot-reload one turns QML debugging on.
+- **Run:** `cmake --build --preset linux-x64-hot-reload --target hikarisub_qmlpreview` starts `qmlpreview --interactive` with the `Hikari.Ui` and style resources, and qmlpreview starts `hikarisub`. Saving a `.qml` file under `src/ui` patches the running app (the log says `Inplace updates configuration: enabled`). Type `quit` to stop.
+- **Without a desktop:** run it inside a private X server, such as `xvfb-run -a cmake --build …` (or the `vx11` wrapper on the development host), and use a throwaway `HOME` and `XDG_*_HOME` so the session's settings stay out of your own.
+- **Limits:** binding and function edits patch in place; a structural edit rebuilds its component and loses objects made inside it with `createObject` (dialogs) or by KDDockWidgets (the dock layout). When a diff cannot apply, qmlpreview restarts the app and replays input. C++ changes still need a rebuild.
+
 ## Windows builds (B2-W, 2026-10-02)
 
 - **CI:** `.github/workflows/windows.yml` runs on `windows-2025` with the newest Visual Studio's x64 developer environment (Visual Studio 18, MSVC 14.51 on the first runs). The empty-cache job provisions with the secret in one step only, rejects and repairs a corrupted mirror object, then builds and tests without credentials. It saves `out/sdk` for a second job, which reruns the verify workflow from that warm SDK with no secret at all.
