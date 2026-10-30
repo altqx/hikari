@@ -212,8 +212,11 @@ def table_view(t):
     rows, columns = Atspi.Table.get_n_rows(t), Atspi.Table.get_n_columns(t)
     view = {"name": t.get_name(), "interfaces": t.get_interfaces(), "rows": rows, "columns": columns,
             "selectedRows": Atspi.Table.get_selected_rows(t), "focused": None}
+    text = [c for c in range(columns) if Atspi.Table.get_column_description(t, c) == "Text"]
     for row in view["selectedRows"]:
-        for column in range(columns):
+        if view["focused"]:
+            break
+        for column in text or range(columns):
             cell = Atspi.Table.get_accessible_at(t, row, column)
             cs = cell.get_state_set() if cell else None
             if cs and cs.contains(Atspi.StateType.FOCUSED):

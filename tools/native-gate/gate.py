@@ -3338,10 +3338,15 @@ def step_grid_speech():
             "expanded" not in state_of(after) and len(menu_changes) >= 2 else "failed",
             f"Shift+Tab x{n_tab or 'never'} to the Grid's tab, Right: {closed}; Space: {opened}; Escape: {after}; "
             f"events {menu_changes}", ["grid-events.txt"] + ev2)
-    spoke = [l for l in speech if re.search(r"\b(expanded|collapsed)\b", l, re.I)]
-    verdict("grid-orca", "observed" if spoke else "failed",
-            f"Orca spoke {len(speech)} lines; expanded/collapsed: {spoke[:8]} (grid-orca-speech.txt)",
-            ["grid-orca-speech.txt", "grid-orca-debug.out"])
+    menu_at = next((i for i, l in enumerate(speech) if "Grid options" in l), len(speech))
+
+    def states_spoken(lines):
+        return [m.group(1) for l in lines for m in [re.search(r"'(expanded|collapsed)\b", l)] if m]
+    run, menu_said = states_spoken(speech[:menu_at]), states_spoken(speech[menu_at:])
+    toggled = "expanded" in run and "collapsed" in run[run.index("expanded"):]
+    verdict("grid-orca", "observed" if toggled and menu_said[-2:] == ["expanded", "collapsed"] else "failed",
+            f"Orca spoke {len(speech)} lines; the run's cell: {run}; the options button: {menu_said} "
+            f"(grid-orca-speech.txt)", ["grid-orca-speech.txt", "grid-orca-debug.out"])
 
 
 SWEEP_STEPS = {"tagspeech": step_tag_list_speech, "statusspeech": step_status_bar_speech,
