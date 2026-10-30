@@ -19,5 +19,4 @@
 # CF2: the legacy list files are converted byte for byte (BOM, CRLF).
 /tests/fixtures/list-files/** -text
 
-# M3: each docking engine's saved layouts, kept as it wrote them.
 /tests/ui/layout-fixtures/** -text
