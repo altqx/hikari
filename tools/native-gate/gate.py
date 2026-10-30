@@ -3306,6 +3306,8 @@ def step_grid_speech():
     B.keys("space", 1.5)
     opened = next((l for l in atspi_find("button", "Grid options") if "showing" in state_of(l)), "")
     ev2, _ = B.snap("grid-2-menu-open")
+    open(os.path.join(EVID, "grid-2-menu-tree.txt"), "w").write(sh(["python3", f"{GATE}/atspi_tool.py", "dump"]))
+    menu_items = sh(["python3", f"{GATE}/atspi_tool.py", "menu"]).strip()
     B.keys("escape", 1.5)
     _, after = focused_is("button", "Grid options")
     speech, _ = orca_stop(orca, olog, "grid")
@@ -3337,7 +3339,8 @@ def step_grid_speech():
             "expanded" not in state_of(closed) and "expanded" in state_of(opened) and
             "expanded" not in state_of(after) and len(menu_changes) >= 2 else "failed",
             f"Shift+Tab x{n_tab or 'never'} to the Grid's tab, Right: {closed}; Space: {opened}; Escape: {after}; "
-            f"events {menu_changes}", ["grid-events.txt"] + ev2)
+            f"events {menu_changes}; open menu's items over AT-SPI {menu_items}",
+            ["grid-events.txt", "grid-2-menu-tree.txt"] + ev2)
     menu_at = next((i for i, l in enumerate(speech) if "Grid options" in l), len(speech))
 
     def states_spoken(lines):
