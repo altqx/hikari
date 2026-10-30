@@ -226,6 +226,12 @@ void LineGrid::updateColumns()
                                             : static_cast<int>(m_columns.size()) - 1;
 }
 
+int LineGrid::textColumn() const
+{
+    const auto it = std::find(m_columns.begin(), m_columns.end(), LineTableModel::TextColumn);
+    return it != m_columns.end() ? static_cast<int>(it - m_columns.begin()) : -1;
+}
+
 int LineGrid::modelColumn(int column) const
 {
     return column >= 0 && column < static_cast<int>(m_columns.size()) ? m_columns[static_cast<std::size_t>(column)] : -1;
@@ -630,13 +636,12 @@ void LineGrid::announceFold(qulonglong first)
     auto *ti = table ? table->tableInterface() : nullptr;
     if (!ti)
         return;
-    QAccessible::State changed;
-    changed.expanded = true;
-    for (int column = 0; column < columnCount(); ++column)
-        if (QAccessibleInterface *cell = ti->cellAt(row, column)) {
-            QAccessibleStateChangeEvent event(cell, changed);
-            QAccessible::updateAccessibility(&event);
-        }
+    if (QAccessibleInterface *cell = ti->cellAt(row, textColumn())) {
+        QAccessible::State changed;
+        changed.expanded = true;
+        QAccessibleStateChangeEvent event(cell, changed);
+        QAccessible::updateAccessibility(&event);
+    }
 }
 
 qreal LineGrid::contentHeight() const

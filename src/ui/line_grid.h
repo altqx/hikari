@@ -75,6 +75,7 @@ public:
     QString rowStateText(int row) const;
     QString columnTitle(int column) const;
     RunFold runFold(int row) const;
+    int textColumn() const;
     int columnCount() const;
     QRectF cellRect(int row, int column) const;
     void scrollToRow(int row);

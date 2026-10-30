@@ -192,7 +192,7 @@ private slots:
         QCOMPARE(viewport->contentSize(), QSizeF(13, 900));
     }
 
-    void foldedRunsAreExpandableCells()
+    void foldedRunsAreExpandableTextCells()
     {
         Rig rig(withGeneratedRun());
         rig.filter.changeFolds([&] { rig.lines.setFoldGenerated(true); });
@@ -200,6 +200,7 @@ private slots:
         QAccessibleInterface *plain = rig.table()->cellAt(2, 12);
         QAccessibleInterface *run = rig.table()->cellAt(3, 12);
         QVERIFY(!plain->state().expandable);
+        QVERIFY(!rig.table()->cellAt(3, 0)->state().expandable);
         QVERIFY(run->state().expandable);
         QVERIFY(!run->state().expanded);
 
@@ -210,7 +211,7 @@ private slots:
         QCOMPARE(rig.table()->rowCount(), 8);
         QVERIFY(run->state().expandable);
         QVERIFY(run->state().expanded);
-        QCOMPARE(expandedRows, QList<int>(13, 3));
+        QCOMPARE(expandedRows, QList<int>{3});
         QVERIFY(!rig.table()->cellAt(4, 12)->state().expandable);
         QCOMPARE(run->text(QAccessible::Description), QStringLiteral("4, Text, unfolded"));
     }

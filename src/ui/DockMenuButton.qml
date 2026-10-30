@@ -12,7 +12,7 @@ ToolButton {
     implicitHeight: 20
     padding: 2
     display: AbstractButton.IconOnly
-    checked: menuOpen
+    down: pressed || menuOpen
     text: qsTr("%1 options").arg(panelTitle)
     contentItem: Icon {
         iconRole: "panel-menu"

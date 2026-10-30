@@ -527,10 +527,11 @@ private slots:
         expandedChanges.clear();
         QAccessible::installUpdateHandler(captureExpandedChanges);
         docking()->setOpenMenu(QStringLiteral("Video"));
-        const bool openedExpanded = menu->state().expanded;
+        const QAccessible::State opened = menu->state();
         docking()->setOpenMenu({});
         QAccessible::installUpdateHandler(nullptr);
-        QVERIFY(openedExpanded);
+        QVERIFY(opened.expanded);
+        QVERIFY(!opened.checked);
         QVERIFY(!menu->state().expanded);
         QCOMPARE(expandedChanges, (QList<QObject *>{menu->object(), menu->object()}));
         QVERIFY(!childNamed(video, QStringLiteral("dockTab0"))->isVisible());

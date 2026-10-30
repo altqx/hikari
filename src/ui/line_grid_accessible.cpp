@@ -68,7 +68,7 @@ public:
         s.readOnly = true;
         s.invisible = row < 0;
         s.selected = row >= 0 && m_grid->isRowSelected(row);
-        const RunFold fold = row >= 0 ? m_grid->runFold(row) : RunFold::None;
+        const RunFold fold = row >= 0 && m_column == m_grid->textColumn() ? m_grid->runFold(row) : RunFold::None;
         s.expandable = fold != RunFold::None;
         s.expanded = fold == RunFold::Unfolded;
         s.focused = row >= 0 && m_grid->hasActiveFocus() && row == m_grid->currentRow() &&
