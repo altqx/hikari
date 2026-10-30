@@ -378,7 +378,7 @@ def fresh(*args, env=None):
     app("fresh")
     app("start", *args, env=env)
     time.sleep(2)
-    return atspi()
+    return wait_for(lambda s: "HikariSub" in frames(s), timeout=30)
 
 
 def episode():
@@ -2092,9 +2092,11 @@ def step_video_fullscreen():
         on1 = fs_covers(full1, main_out) and where1 == main_out
     else:  # mutter does not publish the window's output
         on1 = any(fs_covers(full1, n) for n in FS_OUTPUTS[B.name])
+    start = full1["position"] if full1 else None
     B.combo("space")
-    stp, fp, _ = fs_wait(lambda f, m: f is not None and "Pause" in f["buttons"], timeout=5)
-    playing = fp is not None and "Pause" in fp["buttons"]
+    stp, fp, _ = fs_wait(lambda f, m: f is not None and ("Pause" in f["buttons"] or (
+        start is not None and f["position"] is not None and f["position"] > start)), timeout=5)
+    playing = fp is not None
     time.sleep(0.6)
     B.combo("space")
     sts, fs_, _ = fs_wait(lambda f, m: f is not None and "Play" in f["buttons"], timeout=5)
@@ -2121,7 +2123,8 @@ def step_video_fullscreen():
             f"{main2 and {k: main2[k] for k in keys}} same {same}; focus back in the Video panel: {focus_back} "
             f"({st2['focusPath']})", ev0 + ev1 + ev2)
     verdict("videofs-transport-keys", "observed" if playing and paused and stepped else "failed",
-            f"in fullscreen Space played (Pause button shown: {playing}) and paused (Play shown again: {paused}); "
+            f"in fullscreen Space played (Pause button shown or the frame past {start!r}: {playing}) "
+            f"and paused (Play shown again: {paused}); "
             f"Left stepped the seek bar's frame {before!r} -> {after!r}", ev1)
 
     primary = order[0] if order else None
@@ -2758,10 +2761,8 @@ def step_screen_dropper():
         route = "portal"
         hits = where("button", "Pick a colour from the screen")
         fr = frames().get(hits[0]["frame"]) if hits else None
-        r = origin(hits[0]["frame"]) if hits else None
-        if hits and r:
-            click(r[0] + hits[0]["x"] + hits[0]["w"] // 2, r[1] + hits[0]["y"] + hits[0]["h"] // 2, wait=2000)
-        elif hits:
+        # The colour popover sits in the main window, and AT-SPI reports the eyedropper relative to the popover.
+        if hits:
             atspi_do("button", "Pick a colour from the screen")
             time.sleep(2)
         ev2, _ = B.snap("dropper-2-portal-picking", extra=f"# portal button {hits} frame {fr}")
@@ -3183,9 +3184,10 @@ def step_gtk_bridge():
     B.combo("escape")
     time.sleep(1.5)
     speech, _ = orca_stop(orca, path, "gtkbridge")
-    said = [l.split("SPEECH OUTPUT: ", 1)[-1].split(" {")[0].strip("'") for l in speech]
-    dialog = any(w in said for w in ("Cancel", "file chooser."))
-    back = "HikariSub" in (said[said.index("Cancel") + 1:] if "Cancel" in said else [])
+    said = [m.group(1) for m in (re.search(r"SPEECH OUTPUT: '(.*?)'\s*(?:\{.*)?$", l) for l in speech) if m]
+    cancel = next((i for i, w in enumerate(said) if w in ("Cancel", "Cancel button")), None)
+    dialog = cancel is not None or "file chooser." in said
+    back = cancel is not None and "HikariSub" in said[cancel + 1:]
     verdict("gtkbridge-orca", "observed" if dialog and back else "failed",
             f"Orca with File > Open under theme {theme}: the dialog read {dialog}, HikariSub read after it "
             f"{back}; spoken: {said}", ev + ["gtkbridge-orca-speech.txt"])
