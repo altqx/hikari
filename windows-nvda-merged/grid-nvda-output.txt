@@ -1,0 +1,19 @@
+== quit
+NVDA quit
+== log C:\Winix\work\w8-m2-a11y\out\native-gate-win\nvda\nvda-20261031-011645.log 6221 bytes, 99 lines
+== synth
+INFO - synthDriverHandler.setSynth (18:16:57.521) - MainThread (9380):
+Loaded synthDriver silence
+== errors
+== speech
+Speaking [LangChangeCommand ('en'), '05-bounce.out.ass - HikariSub', 'window', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'Subtitle lines', 'table', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), '68 generated lines', 'data item', 'selected', 'collapsed', '9–76, Text, folded', 'row 9', 'column 8', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'expanded']
+Speaking [LangChangeCommand ('en'), 'collapsed']
+Speaking [LangChangeCommand ('en'), 'Panels', 'tab control', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'Grid', 'tab', 'checked', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'Grid options', 'button', 'collapsed', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'expanded']
+Speaking [LangChangeCommand ('en'), 'collapsed']
+== end

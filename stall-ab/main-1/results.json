@@ -1,0 +1,19 @@
+{
+ "nvda-grid": {
+  "status": "failed",
+  "detail": "NVDA on the run's cell: []; on the options button: []; row speech ['Speaking [LangChangeCommand (\\'en\\'), \\'!retime(\"start2syl\",-300,0)!{\\\\\\\\an5\\\\\\\\pos($center,$middle)\\\\\\\\fad(300,0)}\\', \\'data item\\', \\'selected\\', \\'1, Text\\', \\'row 1\\', \\'column 8\\', CancellableSpeech (still valid)]', \"Speaking [LangChangeCommand ('en'), '68 generated lines', 'data item', 'selected', '9–76, Text, folded', 'row 9', CancellableSpeech (still valid)]\"] (8 speech lines, silent synthesizer True); focused cells [\"DataItem:'68 generated lines'\", \"DataItem:'{\\\\an5\\\\pos(455,54)\\\\fad(300,0)}ki'\", \"DataItem:'68 generated lines'\"]; menu {'button': \"Window:'05-bounce.out.ass - HikariSub' > Group:'' > Tab:'Panels' > Button:'Grid options'\", 'items': ['Move panel…', 'Undock', 'Close', 'Fold generated lines'], 'after': \"Window:'05-bounce.out.ass - HikariSub' > Group:'' > Tab:'Panels' > Button:'Grid options'\"}",
+  "evidence": [
+   "grid.json",
+   "grid-nvda-speech.txt",
+   "grid-nvda-output.txt",
+   "grid-nvda.log",
+   "grid-0-folded.png",
+   "grid-0-folded.txt",
+   "grid-1-unfolded.png",
+   "grid-1-unfolded.txt",
+   "grid-2-menu-open.png",
+   "grid-2-menu-open.txt"
+  ],
+  "at": "2026-10-31T01:24:11"
+ }
+}

@@ -1,0 +1,6 @@
+main-1:  | == nvda-grid: failed 
+main-2:  | == nvda-grid: failed 
+m2-1:  | == nvda-grid: observed 
+m2-2:  | == nvda-grid: observed 
+
+[exited with code 0]
