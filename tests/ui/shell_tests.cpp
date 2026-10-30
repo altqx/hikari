@@ -6333,6 +6333,12 @@ private slots:
         QTest::keyClick(QGuiApplication::focusWindow(), Qt::Key_Escape);
         QTRY_VERIFY(!menu->property("visible").toBool());
         QTRY_VERIFY(button->hasActiveFocus());
+        QVERIFY(button->property("visualFocus").toBool());
+        press(Qt::Key_Space);
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QTest::keyClick(QGuiApplication::focusWindow(), Qt::Key_Escape);
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QTRY_VERIFY(button->hasActiveFocus());
         press(Qt::Key_Left);
         QTRY_VERIFY(tab->hasActiveFocus());
         press(Qt::Key_F6);

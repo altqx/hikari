@@ -7,6 +7,7 @@ ToolButton {
     id: button
     property string panelTitle
     property bool menuOpen: false
+    property bool openedFromKeyboard: false
     objectName: "dockMenuButton"
     implicitWidth: 20
     implicitHeight: 20
@@ -28,4 +29,12 @@ ToolButton {
     }
     Keys.onReturnPressed: clicked()
     Keys.onEnterPressed: clicked()
+    onClicked: openedFromKeyboard = visualFocus
+    // A closed menu gives the focus back with Qt.OtherFocusReason, which Qt Quick Controls don't count as visualFocus.
+    onFocusReasonChanged: {
+        if (activeFocus && openedFromKeyboard && !menuOpen && !visualFocus) {
+            openedFromKeyboard = false
+            focusReason = Qt.TabFocusReason
+        }
+    }
 }
