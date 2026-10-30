@@ -358,6 +358,7 @@ ApplicationWindow {
                                           misspellPanel, templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                      searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
+    WheelScroll {}
     KeyRouter {
         id: keyRouter
         objectName: "keyRouter"

@@ -452,7 +452,8 @@ private slots:
         QSignalSpy clicks(&grid, &LineGrid::lineClicked);
         auto wheel = [&](QPoint pixels, QPoint angle, Qt::KeyboardModifiers mods = Qt::NoModifier) {
             const QPointF at(200, 150);
-            QWheelEvent event(at, at, pixels, angle, Qt::NoButton, mods, Qt::NoScrollPhase, false);
+            const auto source = pixels.isNull() ? Qt::MouseEventNotSynthesized : Qt::MouseEventSynthesizedBySystem;
+            QWheelEvent event(at, at, pixels, angle, Qt::NoButton, mods, Qt::NoScrollPhase, false, source);
             event.setAccepted(false);
             grid.wheelEvent(&event);
             return event.isAccepted();
@@ -477,6 +478,10 @@ private slots:
         QCOMPARE(grid.contentY(), before + 7 + notch);
         QVERIFY(wheel({-5, 0}, {-40, 0}, Qt::ShiftModifier));
         QCOMPARE(grid.contentY(), before + 12 + notch);
+        const QPointF at(200, 150);
+        QWheelEvent wayland(at, at, {0, -15}, {0, -120}, Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+        grid.wheelEvent(&wayland);
+        QCOMPARE(grid.contentY(), before + 12 + 2 * notch);
         QVERIFY(wheel({}, {0, 120 * 1000}));
         QCOMPARE(grid.contentY(), 0.0);
         QVERIFY(wheel({}, {0, -120 * 1000}));
