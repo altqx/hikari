@@ -30,7 +30,7 @@ constexpr char kEnabled[] = "privacy.usageData";
 constexpr char kId[] = "privacy.usageDataId";
 
 struct Rule {
-    enum Kind { OneOf, Pattern, Bool, Count, ListOf, Exceptions, Text, Settings } kind;
+    enum Kind { OneOf, Pattern, Bool, Count, ListOf, Exceptions, DebugImages, Text, Settings } kind;
     QStringList values;
     QString pattern;
     // MUST KILL: max is Text's length cap but Settings' entry-count cap.
@@ -158,7 +158,8 @@ const Table &table()
                                            oneOf({QStringLiteral("fatal"), QStringLiteral("error")})},
                                           {QStringLiteral("crashed_version"), pattern(kVersion)},
                                           {QStringLiteral("report_id"), pattern(kUuid)},
-                                          {QStringLiteral("freeze_seconds"), {Rule::Count, {}, {}}}});
+                                          {QStringLiteral("freeze_seconds"), {Rule::Count, {}, {}}},
+                                          {QStringLiteral("$debug_images"), {Rule::DebugImages, {}, {}}}});
         std::map<QString, Rule> report{
             {QStringLiteral("report_id"), pattern(kUuid)},
             {QStringLiteral("kind"), oneOf({QStringLiteral("crash"), QStringLiteral("freeze")})},
@@ -179,11 +180,12 @@ bool matches(const QString &value, const QString &p)
     return QRegularExpression(p).match(value).hasMatch();
 }
 
+const QString kModule = QStringLiteral("^[A-Za-z0-9_.+-]{1,80}$");
+const QString kAddress = QStringLiteral("^0x[0-9a-f]{1,16}$");
+
 bool exceptionsConform(const QJsonValue &value)
 {
     static const QString type = QStringLiteral("^(SIG[A-Z]{2,6}|[A-Z_]{4,40}|0x[0-9a-f]{1,8})$");
-    static const QString module = QStringLiteral("^[A-Za-z0-9_.+-]{1,80}$");
-    static const QString offset = QStringLiteral("^0x[0-9a-f]{1,16}$");
     const QJsonArray list = value.toArray();
     if (!value.isArray() || list.size() != 1)
         return false;
@@ -206,12 +208,37 @@ bool exceptionsConform(const QJsonValue &value)
     const QJsonArray frames = stack.value(QStringLiteral("frames")).toArray();
     if (frames.size() > crash::kMaxFrames)
         return false;
+    const QStringList plainFrame{QStringLiteral("module"), QStringLiteral("offset"), QStringLiteral("platform")};
+    const QStringList addressedFrame{QStringLiteral("image_addr"), QStringLiteral("instruction_addr"), QStringLiteral("module"),
+                                     QStringLiteral("offset"), QStringLiteral("platform")};
     for (const QJsonValue &f : frames) {
         const QJsonObject frame = f.toObject();
-        if (frame.keys() != QStringList{QStringLiteral("module"), QStringLiteral("offset"), QStringLiteral("platform")} ||
-            frame.value(QStringLiteral("platform")) != QJsonValue(QStringLiteral("native")) ||
-            !matches(frame.value(QStringLiteral("module")).toString(), module) ||
-            !matches(frame.value(QStringLiteral("offset")).toString(), offset))
+        const QString name = frame.value(QStringLiteral("module")).toString();
+        const bool addressed = frame.keys() == addressedFrame;
+        if (!(addressed || frame.keys() == plainFrame) ||
+            frame.value(QStringLiteral("platform")) != QJsonValue(QStringLiteral("native")) || !matches(name, kModule) ||
+            !matches(frame.value(QStringLiteral("offset")).toString(), kAddress))
+            return false;
+        if (addressed && (name == QLatin1String("other") ||
+                          !matches(frame.value(QStringLiteral("instruction_addr")).toString(), kAddress) ||
+                          !matches(frame.value(QStringLiteral("image_addr")).toString(), kAddress)))
+            return false;
+    }
+    return true;
+}
+
+bool debugImagesConform(const QJsonValue &value)
+{
+    const QJsonArray images = value.toArray();
+    if (!value.isArray() || images.isEmpty() || images.size() > crash::kMaxFrames)
+        return false;
+    for (const QJsonValue &i : images) {
+        const QJsonObject image = i.toObject();
+        const QString file = image.value(QStringLiteral("code_file")).toString();
+        if (image.keys() != QStringList{QStringLiteral("code_file"), QStringLiteral("debug_id"), QStringLiteral("image_addr")} ||
+            !matches(file, kModule) || file == QLatin1String("other") ||
+            !crash::debugIdPattern().match(image.value(QStringLiteral("debug_id")).toString()).hasMatch() ||
+            !matches(image.value(QStringLiteral("image_addr")).toString(), kAddress))
             return false;
     }
     return true;
@@ -239,6 +266,8 @@ bool conformsTo(const Rule &rule, const QJsonValue &value)
     }
     case Rule::Exceptions:
         return exceptionsConform(value);
+    case Rule::DebugImages:
+        return debugImagesConform(value);
     case Rule::Text:
         return value.isString() && value.toString().size() <= rule.max;
     case Rule::Settings: {

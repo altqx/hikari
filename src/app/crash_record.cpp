@@ -16,8 +16,10 @@
 #else
 #include <csignal>
 #include <dlfcn.h>
+#include <elf.h>
 #include <execinfo.h>
 #include <fcntl.h>
+#include <link.h>
 #include <unistd.h>
 #endif
 
@@ -29,6 +31,8 @@ namespace {
 constexpr std::size_t kPathRoom = 4096;
 constexpr std::size_t kTextRoom = 64;
 constexpr std::size_t kRecordRoom = 8192;
+constexpr std::size_t kModuleRoom = 128;
+constexpr std::size_t kDebugIdRoom = 48;
 
 std::atomic<bool> g_installed{false};
 std::atomic<bool> g_writing{false};
@@ -66,6 +70,36 @@ void hex(char *out, quint64 value)
     out[2 + n] = 0;
 }
 
+// symbolic's DebugId text: the first 16 id bytes read as a little-endian GUID, then "-<age>" unless it is 0.
+void putDebugId(char *out, const unsigned char *id, std::size_t size, quint32 age)
+{
+    unsigned char bytes[16] = {};
+    std::memcpy(bytes, id, size < 16 ? size : 16);
+    constexpr int order[16] = {3, 2, 1, 0, 5, 4, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15};
+    std::size_t at = 0;
+    for (int i = 0; i < 16; ++i) {
+        if (i == 4 || i == 6 || i == 8 || i == 10)
+            out[at++] = '-';
+        out[at++] = "0123456789abcdef"[bytes[order[i]] >> 4];
+        out[at++] = "0123456789abcdef"[bytes[order[i]] & 0xF];
+    }
+    if (age) {
+        char digits[19];
+        hex(digits, age);
+        out[at++] = '-';
+        for (const char *p = digits + 2; *p; ++p)
+            out[at++] = *p;
+    }
+    out[at] = 0;
+}
+
+struct Located {
+    char module[kModuleRoom] = "other";
+    quint64 offset = 0;
+    quint64 base = 0;
+    char debugId[kDebugIdRoom] = {};
+};
+
 struct Writer {
     std::size_t at = 0;
     void put(const char *text)
@@ -89,18 +123,24 @@ struct Writer {
         put(mechanism);
         put("\n");
     }
-    void frame(const char *module, quint64 offset)
+    void frame(const Located &located)
     {
         put("frame ");
         // MUST KILL: the same character set is repeated in framesOf and read()'s module pattern.
-        for (const char *p = module; *p && at + 1 < kRecordRoom; ++p) {
+        for (const char *p = located.module; *p && at + 1 < kRecordRoom; ++p) {
             const char c = *p;
             const bool plain = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' ||
                                c == '.' || c == '+' || c == '-';
             g_record[at++] = plain ? c : '_';
         }
         put(" ");
-        putHex(offset);
+        putHex(located.offset);
+        if (located.debugId[0]) {
+            put(" ");
+            putHex(located.base);
+            put(" ");
+            put(located.debugId);
+        }
         put("\n");
     }
 };
@@ -140,16 +180,45 @@ bool startsWith(const wchar_t *path, const wchar_t *folder)
     return n > 0 && _wcsnicmp(path, folder, n) == 0 && (path[n] == L'\\' || path[n] == L'/');
 }
 
-void moduleOf(const void *address, char *name, std::size_t room, quint64 &base)
+void putPdbId(HMODULE module, char *out)
 {
-    copyInto(name, room, "other", 5);
-    base = 0;
+    const auto *image = reinterpret_cast<const unsigned char *>(module);
+    const auto *dos = reinterpret_cast<const IMAGE_DOS_HEADER *>(image);
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE || dos->e_lfanew <= 0 || dos->e_lfanew > 0x1000)
+        return;
+    const auto *nt = reinterpret_cast<const IMAGE_NT_HEADERS64 *>(image + dos->e_lfanew);
+    if (nt->Signature != IMAGE_NT_SIGNATURE || nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC ||
+        nt->OptionalHeader.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_DEBUG)
+        return;
+    const DWORD size = nt->OptionalHeader.SizeOfImage;
+    const IMAGE_DATA_DIRECTORY directory = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
+    if (!directory.VirtualAddress || directory.VirtualAddress > size || directory.Size > size - directory.VirtualAddress)
+        return;
+    const auto *entries = reinterpret_cast<const IMAGE_DEBUG_DIRECTORY *>(image + directory.VirtualAddress);
+    for (DWORD i = 0; i < directory.Size / sizeof(IMAGE_DEBUG_DIRECTORY); ++i) {
+        const IMAGE_DEBUG_DIRECTORY &entry = entries[i];
+        if (entry.Type != IMAGE_DEBUG_TYPE_CODEVIEW || !entry.AddressOfRawData || entry.SizeOfData < 24 ||
+            entry.AddressOfRawData > size || entry.SizeOfData > size - entry.AddressOfRawData)
+            continue;
+        const unsigned char *codeView = image + entry.AddressOfRawData;
+        if (std::memcmp(codeView, "RSDS", 4) != 0)
+            continue;
+        DWORD age = 0;
+        std::memcpy(&age, codeView + 20, sizeof age);
+        putDebugId(out, codeView + 4, 16, age);
+        return;
+    }
+}
+
+void locate(quint64 address, Located &out)
+{
     HMODULE module = nullptr;
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                            static_cast<LPCWSTR>(address), &module) ||
+                            reinterpret_cast<LPCWSTR>(address), &module) ||
         !module)
         return;
-    base = reinterpret_cast<quint64>(module);
+    const quint64 base = reinterpret_cast<quint64>(module);
+    out.offset = address - base;
     wchar_t path[kPathRoom];
     const DWORD n = GetModuleFileNameW(module, path, DWORD(kPathRoom));
     if (n == 0 || n >= kPathRoom || !(startsWith(path, g_program) || startsWith(path, g_system)))
@@ -159,17 +228,18 @@ void moduleOf(const void *address, char *name, std::size_t room, quint64 &base)
         if (*p == L'\\' || *p == L'/')
             file = p + 1;
     std::size_t i = 0;
-    for (; file[i] && i + 1 < room; ++i)
-        name[i] = file[i] < 128 ? char(file[i]) : '_'; // Writer::frame keeps the plain ones
-    name[i] = 0;
+    for (; file[i] && i + 1 < kModuleRoom; ++i)
+        out.module[i] = file[i] < 128 ? char(file[i]) : '_'; // Writer::frame keeps the plain ones
+    out.module[i] = 0;
+    out.base = base;
+    putPdbId(module, out.debugId);
 }
 
 void addFrame(Writer &w, quint64 address)
 {
-    char name[128];
-    quint64 base = 0;
-    moduleOf(reinterpret_cast<const void *>(address), name, sizeof name, base);
-    w.frame(name, base ? address - base : 0);
+    Located located;
+    locate(address, located);
+    w.frame(located);
 }
 
 void writeOut(const Writer &w)
@@ -256,25 +326,84 @@ bool startsWith(const char *path, const char *folder)
     return n > 0 && std::strncmp(path, folder, n) == 0 && path[n] == '/';
 }
 
-const char *moduleOf(const void *address, quint64 &offset)
+void setModule(Located &out, const char *name)
+{
+    std::size_t i = 0;
+    for (; name[i] && i + 1 < kModuleRoom; ++i)
+        out.module[i] = name[i];
+    out.module[i] = 0;
+}
+
+struct BuildIdSearch {
+    quint64 address;
+    char *out;
+};
+
+bool inLoadedSegment(const dl_phdr_info *info, quint64 from, quint64 size)
+{
+    for (int i = 0; i < info->dlpi_phnum; ++i) {
+        const ElfW(Phdr) &segment = info->dlpi_phdr[i];
+        const quint64 start = info->dlpi_addr + segment.p_vaddr;
+        if (segment.p_type == PT_LOAD && from >= start && size <= segment.p_memsz && from - start <= segment.p_memsz - size)
+            return true;
+    }
+    return false;
+}
+
+int putBuildId(dl_phdr_info *info, std::size_t, void *data)
+{
+    const auto *search = static_cast<const BuildIdSearch *>(data);
+    if (!inLoadedSegment(info, search->address, 1))
+        return 0;
+    for (int i = 0; i < info->dlpi_phnum; ++i) {
+        const ElfW(Phdr) &segment = info->dlpi_phdr[i];
+        if (segment.p_type != PT_NOTE || !inLoadedSegment(info, info->dlpi_addr + segment.p_vaddr, segment.p_memsz))
+            continue;
+        const std::size_t align = segment.p_align == 8 ? 8 : 4;
+        const auto padded = [align](std::size_t n) { return (n + align - 1) / align * align; };
+        const auto *at = reinterpret_cast<const unsigned char *>(info->dlpi_addr + segment.p_vaddr);
+        const unsigned char *end = at + segment.p_memsz;
+        while (std::size_t(end - at) >= sizeof(ElfW(Nhdr))) {
+            const auto *note = reinterpret_cast<const ElfW(Nhdr) *>(at);
+            const std::size_t length = sizeof(ElfW(Nhdr)) + padded(note->n_namesz) + padded(note->n_descsz);
+            if (length > std::size_t(end - at))
+                break;
+            const unsigned char *name = at + sizeof(ElfW(Nhdr));
+            if (note->n_type == NT_GNU_BUILD_ID && note->n_namesz == 4 && std::memcmp(name, "GNU", 4) == 0 &&
+                note->n_descsz > 0) {
+                putDebugId(search->out, name + padded(note->n_namesz), note->n_descsz, 0);
+                return 1;
+            }
+            at += length;
+        }
+    }
+    return 1;
+}
+
+void locate(quint64 address, Located &out)
 {
     Dl_info info{};
-    offset = 0;
-    if (!dladdr(address, &info) || !info.dli_fbase)
-        return "other";
-    offset = reinterpret_cast<quint64>(address) - reinterpret_cast<quint64>(info.dli_fbase);
+    if (!dladdr(reinterpret_cast<const void *>(address), &info) || !info.dli_fbase)
+        return;
+    out.offset = address - reinterpret_cast<quint64>(info.dli_fbase);
     const char *path = info.dli_fname ? info.dli_fname : "";
+    const char *module = nullptr;
     // dladdr names the executable as argv[0], which may be relative.
-    if (info.dli_fbase == g_executableBase)
-        return g_executable;
-    if (!(startsWith(path, g_program) || startsWith(path, "/usr") || startsWith(path, "/lib") ||
-          startsWith(path, "/lib64")))
-        return "other";
-    const char *module = path;
-    for (const char *p = path; *p; ++p)
-        if (*p == '/')
-            module = p + 1;
-    return module;
+    if (info.dli_fbase == g_executableBase) {
+        module = g_executable;
+    } else if (startsWith(path, g_program) || startsWith(path, "/usr") || startsWith(path, "/lib") ||
+               startsWith(path, "/lib64")) {
+        module = path;
+        for (const char *p = path; *p; ++p)
+            if (*p == '/')
+                module = p + 1;
+    }
+    if (!module)
+        return;
+    setModule(out, module);
+    out.base = reinterpret_cast<quint64>(info.dli_fbase);
+    BuildIdSearch search{address, out.debugId};
+    dl_iterate_phdr(putBuildId, &search);
 }
 
 void onSignal(int signal, siginfo_t *, void *)
@@ -286,9 +415,9 @@ void onSignal(int signal, siginfo_t *, void *)
         const int n = backtrace(stack, kMaxFrames + 2);
         // The first two are this handler and the signal trampoline.
         for (int i = 2; i < n; ++i) {
-            quint64 offset = 0;
-            const char *module = moduleOf(stack[i], offset);
-            w.frame(module, offset);
+            Located located;
+            locate(reinterpret_cast<quint64>(stack[i]), located);
+            w.frame(located);
         }
         const int fd = open(g_path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
         if (fd >= 0) {
@@ -398,9 +527,18 @@ std::optional<Record> read(const QString &path)
             record.seconds = value.toInt();
         else if (key == QLatin1String("frame") && record.frames.size() < kMaxFrames) {
             const QStringList parts = value.split(QLatin1Char(' '));
-            if (parts.size() != 2 || !module.match(parts[0]).hasMatch() || !offset.match(parts[1]).hasMatch())
+            if ((parts.size() != 2 && parts.size() != 4) || !module.match(parts[0]).hasMatch() ||
+                !offset.match(parts[1]).hasMatch())
                 return std::nullopt;
-            record.frames.append({parts[0], parts[1].mid(2).toULongLong(nullptr, 16)});
+            Frame frame{parts[0], parts[1].mid(2).toULongLong(nullptr, 16)};
+            if (parts.size() == 4) {
+                if (parts[0] == QLatin1String("other") || !offset.match(parts[2]).hasMatch() ||
+                    !debugIdPattern().match(parts[3]).hasMatch())
+                    return std::nullopt;
+                frame.base = parts[2].mid(2).toULongLong(nullptr, 16);
+                frame.debugId = parts[3];
+            }
+            record.frames.append(frame);
         } else
             return std::nullopt;
     }
@@ -417,8 +555,12 @@ bool write(const QString &path, const Record &record)
                       "\nmechanism " + record.mechanism.toLatin1() + '\n';
     if (record.freeze())
         text += "seconds " + QByteArray::number(record.seconds) + '\n';
-    for (const Frame &frame : record.frames.mid(0, kMaxFrames))
-        text += "frame " + frame.module.toLatin1() + " 0x" + QByteArray::number(frame.offset, 16) + '\n';
+    for (const Frame &frame : record.frames.mid(0, kMaxFrames)) {
+        text += "frame " + frame.module.toLatin1() + " 0x" + QByteArray::number(frame.offset, 16);
+        if (!frame.debugId.isEmpty())
+            text += " 0x" + QByteArray::number(frame.base, 16) + ' ' + frame.debugId.toLatin1();
+        text += '\n';
+    }
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly))
         return false;
@@ -430,22 +572,26 @@ QList<Frame> framesOf(const quintptr *addresses, int count)
 {
     QList<Frame> frames;
     for (int i = 0; i < count && frames.size() < kMaxFrames; ++i) {
-#ifdef _WIN32
-        char name[128];
-        quint64 base = 0;
-        moduleOf(reinterpret_cast<const void *>(addresses[i]), name, sizeof name, base);
-        Frame frame{QString::fromLatin1(name), base ? quint64(addresses[i]) - base : 0};
-#else
-        quint64 offset = 0;
-        const char *module = moduleOf(reinterpret_cast<const void *>(addresses[i]), offset);
-        Frame frame{QString::fromLatin1(module), offset};
-#endif
+        Located located;
+        locate(quint64(addresses[i]), located);
+        Frame frame{QString::fromLatin1(located.module), located.offset};
         for (QChar &c : frame.module)
             if (!(c.isLetterOrNumber() && c.unicode() < 128) && c != u'_' && c != u'.' && c != u'+' && c != u'-')
                 c = u'_';
+        if (located.debugId[0]) {
+            frame.base = located.base;
+            frame.debugId = QString::fromLatin1(located.debugId);
+        }
         frames.append(frame);
     }
     return frames;
+}
+
+const QRegularExpression &debugIdPattern()
+{
+    static const QRegularExpression id(
+        QStringLiteral("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(-[0-9a-f]{1,8})?$"));
+    return id;
 }
 
 }

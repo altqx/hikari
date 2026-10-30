@@ -16,6 +16,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QUrlQuery>
+#include <QUuid>
 #include <QtTest>
 
 #include <algorithm>
@@ -33,6 +34,7 @@ namespace report = hikari::app::report;
 namespace {
 
 const QString kStart = QStringLiteral("start");
+const crash::Frame kNamed{QStringLiteral("hikarisub"), 0x1f3a2c, 0x400000, QStringLiteral("3a4bd4d0-ff5b-4b31-3a40-e1b9d72f2ec8")};
 
 #ifdef _WIN32
 const QString kProbeModule = QStringLiteral("hikari_crash_probe.exe");
@@ -49,6 +51,43 @@ void startProbe(QProcess &probe, const QString &record, const QString &how)
     QDir::setCurrent(program.absolutePath());
     probe.start(QStringLiteral("./") + program.fileName(), {record, how});
     QDir::setCurrent(here);
+}
+
+#ifdef Q_OS_LINUX
+QString debugIdFromReadelf(const QString &file)
+{
+    QProcess readelf;
+    readelf.start(QStringLiteral("readelf"), {QStringLiteral("-n"), file});
+    if (!readelf.waitForFinished(10000))
+        return {};
+    static const QRegularExpression buildId(QStringLiteral("Build ID: ([0-9a-f]+)"));
+    QByteArray bytes = QByteArray::fromHex(buildId.match(QString::fromLatin1(readelf.readAllStandardOutput())).captured(1).toLatin1());
+    if (bytes.isEmpty())
+        return {};
+    bytes = bytes.leftJustified(16, '\0', true);
+    std::reverse(bytes.begin(), bytes.begin() + 4);
+    std::reverse(bytes.begin() + 4, bytes.begin() + 6);
+    std::reverse(bytes.begin() + 6, bytes.begin() + 8);
+    const QString hex = QString::fromLatin1(bytes.toHex());
+    return QStringList{hex.left(8), hex.mid(8, 4), hex.mid(12, 4), hex.mid(16, 4), hex.mid(20)}.join(u'-');
+}
+#endif
+
+void verifyProbeHasDebugId(const crash::Record &record)
+{
+    const auto probe = std::find_if(record.frames.begin(), record.frames.end(),
+                                    [](const crash::Frame &f) { return f.module == kProbeModule; });
+    QVERIFY(probe != record.frames.end());
+#ifdef Q_OS_LINUX
+    QVERIFY(probe->base != 0);
+    QCOMPARE(probe->debugId, debugIdFromReadelf(QStringLiteral(HIKARI_CRASH_PROBE)));
+#else
+    if (!probe->debugId.isEmpty())
+        QVERIFY2(crash::debugIdPattern().match(probe->debugId).hasMatch(), qPrintable(probe->debugId));
+#endif
+    for (const crash::Frame &frame : record.frames)
+        if (frame.module == QLatin1String("other"))
+            QVERIFY(frame.debugId.isEmpty() && frame.base == 0);
 }
 
 QStringList modulesOf(const crash::Record &record)
@@ -185,6 +224,7 @@ private slots:
         QCOMPARE(record->mechanism, QStringLiteral("signal"));
 #endif
         QVERIFY2(modulesOf(*record).contains(kProbeModule), qPrintable(modulesOf(*record).join(u',')));
+        verifyProbeHasDebugId(*record);
         writeRecord("log-tail.txt", "14:28:03 Info    Opened file1.ass\n14:32:07 Info    Visual tool: Perspective\n");
 
         AnalyticsEndpoint endpoint;
@@ -208,6 +248,12 @@ private slots:
         QCOMPARE(exception.value(QStringLiteral("$exception_level")).toString(), QStringLiteral("fatal"));
         QString why;
         QVERIFY2(AnalyticsEndpoint::closedOnly(analytics.queued(), &why), qPrintable(why));
+#ifdef Q_OS_LINUX
+        const QJsonArray images = exception.value(QStringLiteral("$debug_images")).toArray();
+        QVERIFY(std::any_of(images.begin(), images.end(), [](const QJsonValue &i) {
+            return i.toObject().value(QStringLiteral("code_file")) == QJsonValue(kProbeModule);
+        }));
+#endif
         const QByteArray payload = QJsonDocument(analytics.queued()).toJson();
         QVERIFY(!payload.contains(QFileInfo(QStringLiteral(HIKARI_CRASH_PROBE)).absolutePath().toUtf8()));
 
@@ -267,6 +313,7 @@ private slots:
         QCOMPARE(record->mechanism, QStringLiteral("watchdog"));
         QVERIFY(record->freeze());
         QVERIFY2(modulesOf(*record).contains(kProbeModule), qPrintable(modulesOf(*record).join(u',')));
+        verifyProbeHasDebugId(*record);
 
         AnalyticsEndpoint endpoint;
         hikari::ui::SettingsStore settings;
@@ -960,6 +1007,101 @@ private slots:
         QCOMPARE(back->seconds, 40);
         QCOMPARE(back->frames.size(), 2);
         QCOMPARE(back->frames.first().offset, quint64(0x31c0a8));
+
+        const QByteArray head = "hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism signal\n";
+        QVERIFY(check(head + "frame hikarisub 0x1a2b 0x400000 3a4bd4d0-ff5b-4b31-3a40-e1b9d72f2ec8\n"));
+        QVERIFY(check(head + "frame HikariSub.exe 0x1a2b 0x7ff6a0000000 0c1033f7-8a6a-4e2c-9b0b-6f2b1f6f8b3e-1\n"));
+        QVERIFY(!check(head + "frame other 0x1a2b 0x400000 3a4bd4d0-ff5b-4b31-3a40-e1b9d72f2ec8\n"));
+        QVERIFY(!check(head + "frame hikarisub 0x1a2b 0x400000 3A4BD4D0-FF5B-4B31-3A40-E1B9D72F2EC8\n"));
+        QVERIFY(!check(head + "frame hikarisub 0x1a2b 0x400000\n"));
+        QVERIFY(!check(head + "frame hikarisub 0x1a2b 0x400000 /tmp/.mount_HikariX/usr/bin/hikarisub\n"));
+        const crash::Record crashed{QStringLiteral("SIGSEGV"), QStringLiteral("signal"), QStringLiteral("0.1.0"),
+                                    {kNamed, {QStringLiteral("other"), 0x4d2a0}}};
+        QVERIFY(crash::write(path("crash-record.txt"), crashed));
+        const auto read = crash::read(path("crash-record.txt"));
+        QVERIFY(read);
+        QCOMPARE(read->frames.first().base, kNamed.base);
+        QCOMPARE(read->frames.first().debugId, kNamed.debugId);
+        QVERIFY(read->frames.last().debugId.isEmpty());
+    }
+
+    void exceptionCarriesDebugImages()
+    {
+        const crash::Frame qt{QStringLiteral("libQt6Core.so.6"), 0x2c41b8, 0x7f3a10000000,
+                              QStringLiteral("9b0c4f2e-1d3a-5e6f-7a8b-9c0d1e2f3a4b")};
+        report::Report r;
+        r.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        r.record = crash::Record{QStringLiteral("SIGSEGV"), QStringLiteral("signal"), QStringLiteral("0.1.0"),
+                                 {kNamed, qt, {QStringLiteral("other"), 0x4d2a0}, {kNamed.module, 0x10, kNamed.base, kNamed.debugId}}};
+        const QJsonObject properties = r.exceptionProperties();
+        QVERIFY(Analytics::conforms(QStringLiteral("$exception"), properties));
+        const QJsonArray frames = properties.value(QStringLiteral("$exception_list"))[0][QStringLiteral("stacktrace")]
+                                      [QStringLiteral("frames")].toArray();
+        QCOMPARE(frames.size(), 4);
+        QCOMPARE(frames[0][QStringLiteral("instruction_addr")].toString(), QStringLiteral("0x5f3a2c"));
+        QCOMPARE(frames[0][QStringLiteral("image_addr")].toString(), QStringLiteral("0x400000"));
+        QCOMPARE(frames[1][QStringLiteral("instruction_addr")].toString(), QStringLiteral("0x7f3a102c41b8"));
+        QVERIFY(!frames[2].toObject().contains(QStringLiteral("instruction_addr")));
+        QCOMPARE(frames[2].toObject().keys(), (QStringList{QStringLiteral("module"), QStringLiteral("offset"), QStringLiteral("platform")}));
+        const QJsonArray images = properties.value(QStringLiteral("$debug_images")).toArray();
+        QCOMPARE(images.size(), 2);
+        QCOMPARE(images[0].toObject(), (QJsonObject{{QStringLiteral("code_file"), QStringLiteral("hikarisub")},
+                                                    {QStringLiteral("debug_id"), kNamed.debugId},
+                                                    {QStringLiteral("image_addr"), QStringLiteral("0x400000")}}));
+        QCOMPARE(images[1][QStringLiteral("code_file")].toString(), qt.module);
+
+        const auto withImage = [&](const char *key, const QJsonValue &value) {
+            QJsonObject p = properties;
+            QJsonArray list = p.value(QStringLiteral("$debug_images")).toArray();
+            QJsonObject image = list[0].toObject();
+            image.insert(QString::fromLatin1(key), value);
+            list[0] = image;
+            p.insert(QStringLiteral("$debug_images"), list);
+            return Analytics::conforms(QStringLiteral("$exception"), p);
+        };
+        QVERIFY(withImage("code_file", QStringLiteral("hikarisub")));
+        QVERIFY(!withImage("code_file", QStringLiteral("/tmp/.mount_HikariX/usr/bin/hikarisub")));
+        QVERIFY(!withImage("code_file", QStringLiteral("C:\\Users\\me\\HikariSub.exe")));
+        QVERIFY(!withImage("code_file", QStringLiteral("other")));
+        QVERIFY(!withImage("debug_id", QStringLiteral("9B0C4F2E-1D3A-5E6F-7A8B-9C0D1E2F3A4B")));
+        QVERIFY(!withImage("debug_id", QStringLiteral("my words")));
+        QVERIFY(!withImage("image_addr", QStringLiteral("4194304")));
+        QVERIFY(!withImage("arch", QStringLiteral("x86_64")));
+        QJsonObject noImages = properties;
+        noImages.insert(QStringLiteral("$debug_images"), QJsonArray{});
+        QVERIFY(!Analytics::conforms(QStringLiteral("$exception"), noImages));
+
+        const auto withFrame = [&](int index, const char *key, const QJsonValue &value) {
+            QJsonObject p = properties;
+            QJsonArray list = p.value(QStringLiteral("$exception_list")).toArray();
+            QJsonObject e = list[0].toObject();
+            QJsonObject stack = e.value(QStringLiteral("stacktrace")).toObject();
+            QJsonArray fs = stack.value(QStringLiteral("frames")).toArray();
+            QJsonObject f = fs[index].toObject();
+            f.insert(QString::fromLatin1(key), value);
+            fs[index] = f;
+            stack.insert(QStringLiteral("frames"), fs);
+            e.insert(QStringLiteral("stacktrace"), stack);
+            list[0] = e;
+            p.insert(QStringLiteral("$exception_list"), list);
+            return Analytics::conforms(QStringLiteral("$exception"), p);
+        };
+        QVERIFY(withFrame(0, "image_addr", QStringLiteral("0x400000")));
+        QVERIFY(!withFrame(2, "image_addr", QStringLiteral("0x400000")));
+        QVERIFY(!withFrame(2, "instruction_addr", QStringLiteral("0x44d2a0")));
+        QVERIFY(!withFrame(0, "filename", QStringLiteral("/home/me/hikari/src/main.cpp")));
+        QVERIFY(!withFrame(0, "instruction_addr", QStringLiteral("/tmp/x")));
+
+        const auto back = report::Report::fromJson(r.toJson());
+        QVERIFY(back && back->record);
+        QCOMPARE(back->exceptionProperties(), properties);
+        QJsonObject stored = r.toJson();
+        QJsonObject rec = stored.value(QStringLiteral("record")).toObject();
+        QJsonArray fs = rec.value(QStringLiteral("frames")).toArray();
+        fs[2] = QJsonArray{QStringLiteral("other"), QStringLiteral("0x4d2a0"), QStringLiteral("0x400000"), kNamed.debugId};
+        rec.insert(QStringLiteral("frames"), fs);
+        stored.insert(QStringLiteral("record"), rec);
+        QVERIFY(!report::Report::fromJson(stored));
     }
 };
 
