@@ -60,7 +60,8 @@ Window {
 
     SpinBox { objectName: "spin"; x: 300; y: 400 }
     TextField { objectName: "plainField"; x: 300; y: 450; width: 120 }
-    DockMenuButton { objectName: "tipButton"; x: 500; y: 400; panelTitle: "Styles" }
+    DockMenuButton { objectName: "tipButton"; x: 500; y: 400; panelTitle: "Styles"; hoverEnabled: true }
+    Button { id: toggle; objectName: "toggleButton"; x: 600; y: 300; text: "Toggle"; onClicked: popover.openAt(toggle) }
 
     ToastStack {
         id: toasts
@@ -343,6 +344,17 @@ private slots:
         QCOMPARE(notes(), QStringList{QStringLiteral("kept")});
     }
 
+    void clickingTheAnchorAgainClosesThePopover()
+    {
+        QQuickItem *toggle = findIn(root.get(), "toggleButton");
+        click(toggle);
+        QTRY_VERIFY(run(QStringLiteral("popover.opened")).toBool());
+        click(toggle);
+        QTRY_VERIFY(!run(QStringLiteral("popover.visible")).toBool());
+        QTest::qWait(100);
+        QVERIFY(!run(QStringLiteral("popover.visible")).toBool());
+    }
+
     void spinBoxesOpenNoContextMenu()
     {
         QVERIFY(QQuickTest::qWaitForPolish(root.get()));
@@ -360,12 +372,12 @@ private slots:
     {
         QQuickItem *button = findIn(root.get(), "tipButton");
         QVERIFY(button);
-        QCOMPARE(QQmlProperty(button, QStringLiteral("ToolTip.delay"), qmlContext(button)).read().toInt(),
-                 int(QGuiApplication::styleHints()->toolTipWakeUpDelay().count()));
-        QVERIFY(QQmlProperty(button, QStringLiteral("ToolTip.timeout"), qmlContext(button)).read().toInt() >= 10000);
+        auto *tip = QQmlProperty(button, QStringLiteral("ToolTip.toolTip"), qmlContext(button)).read().value<QObject *>();
+        QVERIFY(tip);
         QTest::mouseMove(root.get(), centreOf(button));
-        QTRY_VERIFY(QQmlProperty(button, QStringLiteral("ToolTip.toolTip"), qmlContext(button))
-                        .read().value<QObject *>()->property("visible").toBool());
+        QTRY_VERIFY(tip->property("visible").toBool());
+        QCOMPARE(tip->property("delay").toInt(), int(QGuiApplication::styleHints()->toolTipWakeUpDelay().count()));
+        QVERIFY(tip->property("timeout").toInt() >= 10000);
     }
 
     void popoverOpensAboveWhenThereIsNoRoomBelow()
