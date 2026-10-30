@@ -37,6 +37,12 @@ QString engineVersion()
     return QStringLiteral("KDDockWidgets %1").arg(QStringLiteral(KDDOCKWIDGETS_VERSION_STRING));
 }
 
+bool restorableEngine(const QString &engine)
+{
+    static const QStringList migrated{QStringLiteral("KDDockWidgets 2.4.1")};
+    return engine == engineVersion() || migrated.contains(engine);
+}
+
 std::optional<QByteArray> readFile(const QString &path, bool *unreadable = nullptr)
 {
     QFile f(path);
@@ -458,7 +464,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
                                      : QCoreApplication::translate("HikariSub.Workspace", "its format is not known"));
     if (o.value(QStringLiteral("panelRegistry")).toInt(-1) > kPanelRegistry)
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it names panels from a newer version"));
-    if (o.value(QStringLiteral("engine")).toString() != engineVersion())
+    if (!restorableEngine(o.value(QStringLiteral("engine")).toString()))
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it was made with %1")
                         .arg(o.value(QStringLiteral("engine")).toString()));
     for (const auto &panel : o.value(QStringLiteral("panels")).toArray())
@@ -541,10 +547,12 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     }
     if (groups > panels)
         return fail(tooMany);
-    // KDDockWidgets takes a floating window's parent by this index unchecked (LayoutSaver::restoreLayout).
     for (const auto &f : payload.value(QStringLiteral("floatingWindows")).toArray()) {
         const QJsonValue parent = f.toObject().value(QStringLiteral("parentIndex"));
-        if (!parent.isUndefined() && !(parent.isDouble() && (parent.toDouble() == -1 || parent.toDouble() == 0)))
+        const QJsonValue parentName = f.toObject().value(QStringLiteral("parentMainWindowName"));
+        if ((!parent.isUndefined() && !(parent.isDouble() && (parent.toDouble() == -1 || parent.toDouble() == 0))) ||
+            (!parentName.isUndefined() && parentName != QJsonValue(QString()) &&
+             parentName != QJsonValue(QStringLiteral("Classic"))))
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it puts a floating panel in a window that does not exist"));
     }
     QSet<QString> docks;

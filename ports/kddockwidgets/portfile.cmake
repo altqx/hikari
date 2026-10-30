@@ -1,5 +1,5 @@
 # Owned overlay of the vcpkg kddockwidgets port (docs/docking.md, ADR 0017):
-# release v2.4.1 at commit c1d28d25ef5ba077915bcb2b6fa9e14df2a361f8, the QtQuick
+# release v2.5.1 at commit 674f28453219dddedafd4b8f33cf094e8e546be3, the QtQuick
 # frontend only, built against the provisioned official Qt (HIKARI_QT_PREFIX,
 # passed through by the Hikari triplets and part of the package ABI). Used under
 # its GPL-3.0 option with the repository's GPLv3 distribution.
@@ -9,8 +9,8 @@ endif()
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO KDAB/KDDockWidgets
-    REF c1d28d25ef5ba077915bcb2b6fa9e14df2a361f8 # v2.4.1
-    SHA512 66a3b5c041ac3b1366eba89ae3f8eac2d75ac4e15c84e5de688312db39ba836e86dbee298764f55662bdb18c2f883bb58fae85056ec20c5757e0125c7f88ae2a
+    REF 674f28453219dddedafd4b8f33cf094e8e546be3 # v2.5.1
+    SHA512 d332afb5b23072457df58c2df91982df5c6dbefb51d9d0766993d2607425f949eff66f3a6885063eae9a4397da07353fff18296387add43f44f508a48fdb9fa5
     HEAD_REF main
 )
 # The bundled third-party copies (kdbindings, nlohmann) come from vcpkg instead.
@@ -34,17 +34,6 @@ vcpkg_cmake_configure(
 )
 vcpkg_cmake_install()
 vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/KDDockWidgets-qt6" PACKAGE_NAME kddockwidgets-qt6)
-# A static build links Qt's private modules, KDBindings and nlohmann_json, but
-# the upstream package config finds none of them for its consumers.
-set(kddw_config "${CURRENT_PACKAGES_DIR}/share/kddockwidgets-qt6/KDDockWidgets-qt6Config.cmake")
-file(READ "${kddw_config}" config_text)
-string(REPLACE "include(\"\${CMAKE_CURRENT_LIST_DIR}/KDDockWidgets-qt6Targets.cmake\")"
-    "find_dependency(Qt6 COMPONENTS GuiPrivate QuickPrivate)\nfind_dependency(KDBindings)\nfind_dependency(nlohmann_json)\ninclude(\"\${CMAKE_CURRENT_LIST_DIR}/KDDockWidgets-qt6Targets.cmake\")"
-    patched_text "${config_text}")
-if(patched_text STREQUAL config_text)
-    message(FATAL_ERROR "KDDockWidgets-qt6Config.cmake no longer includes its targets file as expected; review the overlay")
-endif()
-file(WRITE "${kddw_config}" "${patched_text}")
 if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
     file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/bin" "${CURRENT_PACKAGES_DIR}/debug/bin")
 endif()

@@ -87,6 +87,8 @@ private slots:
         QVERIFY(!ui::WorkspaceLayoutController::payloadOf(edited("schema", 2), &problem));
         QVERIFY(problem.contains(QStringLiteral("newer")));
         QVERIFY(!ui::WorkspaceLayoutController::payloadOf(edited("engine", QStringLiteral("KDDockWidgets 9.0")), &problem));
+        QVERIFY(!ui::WorkspaceLayoutController::payloadOf(edited("engine", QStringLiteral("KDDockWidgets 2.4.0")), &problem));
+        QVERIFY(ui::WorkspaceLayoutController::payloadOf(edited("engine", QStringLiteral("KDDockWidgets 2.4.1")), &problem));
         QVERIFY(!ui::WorkspaceLayoutController::payloadOf(edited("panels", QJsonArray{QStringLiteral("Mystery")}), &problem));
         QVERIFY(!ui::WorkspaceLayoutController::payloadOf(edited("payload", QJsonObject{}), &problem));
         QVERIFY(!ui::WorkspaceLayoutController::payloadOf(
@@ -139,7 +141,7 @@ private slots:
         QVERIFY(f.open(QIODevice::ReadOnly));
         const QJsonObject saved = QJsonDocument::fromJson(f.readAll()).object();
         QCOMPARE(saved.value(QStringLiteral("schema")).toInt(), 1);
-        QCOMPARE(saved.value(QStringLiteral("engine")).toString(), QStringLiteral("KDDockWidgets 2.4.1"));
+        QCOMPARE(saved.value(QStringLiteral("engine")).toString(), QStringLiteral("KDDockWidgets 2.5.1"));
         QVERIFY(saved.value(QStringLiteral("payload")).isObject());
 
         start();

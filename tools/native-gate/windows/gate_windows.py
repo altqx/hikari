@@ -396,7 +396,8 @@ def main_window():
 
 def app_start(doc=None, env=None):
     r = W.ui("launch", exe=LAYOUT["app"], arguments=[doc] if doc else [], cwd=LAYOUT["docs"], noConsole=True,
-             env={"PATH": LAYOUT["qt_bin"] + ";" + LAYOUT["path"], "QT_FORCE_STDERR_LOGGING": "1", **(env or {})})
+             env={"PATH": LAYOUT["qt_bin"] + ";" + LAYOUT["path"], "QT_FORCE_STDERR_LOGGING": "1",
+                  "HIKARISUB_USER_DIR": LAYOUT["profile"]["user"], **(env or {})})
     APP["pid"], APP["log"] = r.get("pid"), r.get("log")
     log("launched", r)
     deadline = time.time() + 90

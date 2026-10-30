@@ -18,3 +18,5 @@
 
 # CF2: the legacy list files are converted byte for byte (BOM, CRLF).
 /tests/fixtures/list-files/** -text
+
+/tests/ui/layout-fixtures/** -text
