@@ -270,7 +270,7 @@ jobs:
           mkdir -p scan/tar scan/deb scan/rpm scan/appimage scan/zip
           tar -xzf "release/hikarisub-$VERSION-linux-x86_64.tar.gz" -C scan/tar
           dpkg-deb -x "release/hikarisub-$VERSION-linux-amd64.deb" scan/deb
-          (cd scan/rpm && rpm2cpio "$OLDPWD/release/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet)
+          (cd scan/rpm && rpm2cpio "$OLDPWD/release/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet --no-absolute-filenames)
           appimage="$PWD/release/HikariSub-$VERSION-linux-x86_64.AppImage"
           chmod +x "$appimage"
           (cd scan/appimage && "$appimage" --appimage-extract > /dev/null)
