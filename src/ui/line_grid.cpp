@@ -790,7 +790,9 @@ void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString tex
         while (!error.isEmpty() && error.back().isSpace() && error.back().unicode() < 127)
             error.chop(1);
         const double left = cell.x() + (start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0);
-        const double right = left + metrics.horizontalAdvance(error);
+        const double right = std::min(left + metrics.horizontalAdvance(error), cell.right());
+        if (left >= right)
+            continue;
         QPainterPath wave(QPointF(left, y));
         bool up = true;
         for (double x = left; x < right; x += 3, up = !up)
