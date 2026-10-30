@@ -267,12 +267,33 @@ private slots:
         QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
         QSignalSpy reset(&model, &QAbstractItemModel::modelReset);
         model.setSelection({core::LineId{3}, {core::LineId{2}, core::LineId{3}}}, core::LineId{2});
-        QVERIFY(changed.count() >= 2);
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 1);
+        QCOMPARE(changed.at(0).at(1).toModelIndex().row(), 2);
         QCOMPARE(reset.count(), 0);
         QCOMPARE(model.index(2, 0).data(LineTableModel::ActiveRole).toBool(), true);
         QCOMPARE(model.index(1, 0).data(LineTableModel::SelectedRole).toBool(), true);
         QCOMPARE(model.index(1, 0).data(LineTableModel::AnchorRole).toBool(), true);
         QCOMPARE(model.index(0, 0).data(LineTableModel::SelectedRole).toBool(), false);
+    }
+
+    void marksAndSelectionDoNotRefilter()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        int asked = 0;
+        filter.setPredicate([&asked](const core::LineRecord &l) { return ++asked, !l.comment; });
+        QCOMPARE(filter.rowCount(), 2);
+        asked = 0;
+        model.setSelection({core::LineId{3}, {core::LineId{1}, core::LineId{2}, core::LineId{3}}}, core::LineId{1});
+        model.setRunMarks(true);
+        model.setComparisonColours({QColor(1, 1, 1), QColor(2, 2, 2), QColor(3, 3, 3), QColor(4, 4, 4), QColor(5, 5, 5)});
+        QCOMPARE(asked, 0);
+        model.setDraft(*model.recordAt(0));
+        QVERIFY(asked > 0);
+        QCOMPARE(filter.rowCount(), 2);
     }
 
     void hiddenSelectionIsKeptAndCounted()

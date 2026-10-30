@@ -607,13 +607,10 @@ DialogWindow {
                         maximumLineCount: 3
                         elide: Text.ElideRight
                         font.family: "monospace"
-                        function escaped(text) {
-                            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-                        }
                         readonly property var preview: dialog.editor ? dialog.editor.preview : ({})
-                        text: escaped(preview.before ?? "")
-                              + "<b><font color=\"" + Theme.accent + "\">" + escaped(preview.tag ?? "") + "</font></b>"
-                              + escaped(preview.after ?? "")
+                        text: Qt.escapeHtml(preview.before ?? "")
+                              + "<b><font color=\"" + Theme.accent + "\">" + Qt.escapeHtml(preview.tag ?? "") + "</font></b>"
+                              + Qt.escapeHtml(preview.after ?? "")
                     }
                 }
                 Item { implicitHeight: 8 }

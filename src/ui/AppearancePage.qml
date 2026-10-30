@@ -156,7 +156,7 @@ ScrollView {
                             Accessible.role: Accessible.RadioButton
                             Accessible.name: text
                             Accessible.checked: checked
-                            ToolTip.text: qsTr("%1 (contrast %2:1)").arg(modelData.name).arg(modelData.contrast.toFixed(1))
+                            ToolTip.text: qsTr("%1 (contrast %2:1)").arg(modelData.name, modelData.contrast.toFixed(1))
                             ToolTip.visible: hovered
                             onClicked: page.dialog.put(page.accentSetting, modelData.key)
                             background: Rectangle {

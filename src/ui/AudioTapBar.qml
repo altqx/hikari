@@ -29,8 +29,8 @@ Rectangle {
         background: Rectangle {
             radius: 3
             color: barButton.primary
-                   ? (barButton.down ? Qt.darker(Theme.accent, Theme.dark ? 1.25 : 1.35)
-                      : barButton.hovered ? Qt.darker(Theme.accent, Theme.dark ? 1.1 : 1.15) : Theme.accent)
+                   ? (barButton.down ? Color.darker(Theme.accent, Theme.dark ? 1.25 : 1.35)
+                      : barButton.hovered ? Color.darker(Theme.accent, Theme.dark ? 1.1 : 1.15) : Theme.accent)
                    : barButton.down ? Theme.select : barButton.hovered ? Theme.field : Theme.raised
             border.color: barButton.primary ? Theme.accent : barButton.hovered ? Theme.text : Theme.control
         }

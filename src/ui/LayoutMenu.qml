@@ -5,7 +5,7 @@ import QtQuick.Controls
 import Hikari.Ui
 
 ShellMenu {
-    id: menu
+    id: layoutMenu
     required property var layouts
     property string prefix: "layout"
     readonly property var presets: ["Editing", "Timing", "Translation", "Typesetting", "Karaoke"]
@@ -30,68 +30,68 @@ ShellMenu {
         QT_TRANSLATE_NOOP("HikariSub.Workspace", "Timing"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Translation"),
         QT_TRANSLATE_NOOP("HikariSub.Workspace", "Typesetting"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Karaoke")]
     Instantiator {
-        model: menu.presets
+        model: layoutMenu.presets
         delegate: ShellMenuItem {
             id: presetItem
             required property string modelData
-            objectName: menu.prefix + "Preset" + modelData
+            objectName: layoutMenu.prefix + "Preset" + modelData
             text: qsTranslate("HikariSub.Workspace", modelData)
             checkable: true
-            checked: menu.layouts.layout.length === 0 && menu.layouts.preset === modelData
+            checked: layoutMenu.layouts.layout.length === 0 && layoutMenu.layouts.preset === modelData
             keepsMenuOpen: false
-            onParentChanged: menu.restack()
+            onParentChanged: layoutMenu.restack()
             onTriggered: {
-                checked = Qt.binding(() => menu.layouts.layout.length === 0 && menu.layouts.preset === modelData)
-                menu.presetChosen(modelData)
+                checked = Qt.binding(() => layoutMenu.layouts.layout.length === 0 && layoutMenu.layouts.preset === modelData)
+                layoutMenu.presetChosen(modelData)
             }
         }
-        onObjectAdded: (index, object) => menu.insertItem(index, object)
-        onObjectRemoved: (index, object) => menu.removeItem(object)
+        onObjectAdded: (index, object) => layoutMenu.insertItem(index, object)
+        onObjectRemoved: (index, object) => layoutMenu.removeItem(object)
     }
     MenuSeparator {
         id: savedSeparator
-        objectName: menu.prefix + "SavedSeparator"
-        visible: menu.layouts.savedLayouts.length > 0
+        objectName: layoutMenu.prefix + "SavedSeparator"
+        visible: layoutMenu.layouts.savedLayouts.length > 0
         height: visible ? implicitHeight : 0
     }
     Instantiator {
-        model: menu.layouts.savedLayouts
+        model: layoutMenu.layouts.savedLayouts
         delegate: ShellMenuItem {
             required property var modelData
             required property int index
-            objectName: menu.prefix + "Saved" + index
+            objectName: layoutMenu.prefix + "Saved" + index
             text: modelData.name
             enabled: modelData.usable
             checkable: true
-            checked: menu.layouts.layout === modelData.name
+            checked: layoutMenu.layouts.layout === modelData.name
             keepsMenuOpen: false
-            onParentChanged: menu.restack()
+            onParentChanged: layoutMenu.restack()
             onTriggered: {
-                checked = Qt.binding(() => menu.layouts.layout === modelData.name)
-                menu.savedLayoutChosen(modelData.name)
+                checked = Qt.binding(() => layoutMenu.layouts.layout === modelData.name)
+                layoutMenu.savedLayoutChosen(modelData.name)
             }
         }
-        onObjectAdded: (index, object) => menu.insertItem(menu.indexOf(savedSeparator) + 1 + index, object)
-        onObjectRemoved: (index, object) => menu.removeItem(object)
+        onObjectAdded: (index, object) => layoutMenu.insertItem(layoutMenu.indexOf(savedSeparator) + 1 + index, object)
+        onObjectRemoved: (index, object) => layoutMenu.removeItem(object)
     }
     MenuSeparator {}
     ShellMenuItem {
-        objectName: menu.prefix + "SaveAs"
+        objectName: layoutMenu.prefix + "SaveAs"
         iconRole: "layout-save"
         text: qsTr("Save layout as…")
-        onTriggered: menu.saveRequested()
+        onTriggered: layoutMenu.saveRequested()
     }
     ShellMenuItem {
-        objectName: menu.prefix + "Reset"
+        objectName: layoutMenu.prefix + "Reset"
         iconRole: "layout-reset"
         text: qsTr("Reset this layout")
-        onTriggered: menu.resetRequested()
+        onTriggered: layoutMenu.resetRequested()
     }
     ShellMenuItem {
-        objectName: menu.prefix + "Manage"
+        objectName: layoutMenu.prefix + "Manage"
         iconRole: "layout-manage"
         text: qsTr("Manage layouts…")
-        enabled: menu.layouts.savedLayouts.length > 0
-        onTriggered: menu.manageRequested()
+        enabled: layoutMenu.layouts.savedLayouts.length > 0
+        onTriggered: layoutMenu.manageRequested()
     }
 }

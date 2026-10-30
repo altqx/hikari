@@ -150,12 +150,12 @@ DialogWindow {
             let ch = s[i]
             if (ch === "&" && i + 1 < s.length) {
                 ch = s[++i]
-                const esc = ch === "<" ? "&lt;" : ch === ">" ? "&gt;" : ch === "&" ? "&amp;" : ch
+                const esc = Qt.escapeHtml(ch)
                 out += !marked && ch !== "&" ? "<u>" + esc + "</u>" : esc
                 marked = marked || ch !== "&"
                 continue
             }
-            out += ch === "<" ? "&lt;" : ch === ">" ? "&gt;" : ch === "&" ? "&amp;" : ch
+            out += Qt.escapeHtml(ch)
         }
         return out
     }
@@ -758,8 +758,8 @@ DialogWindow {
             readonly property bool truncated: isInt && !isNaN(typed) && /[.,eE]/.test(text)
             readonly property string rangeText: {
                 if (hasLo && hasHi)
-                    return steps && !isInt ? qsTr("%1 to %2, in steps of %3").arg(shown(lo)).arg(shown(hi)).arg(shown(step))
-                                           : qsTr("%1 to %2").arg(shown(lo)).arg(shown(hi))
+                    return steps && !isInt ? qsTr("%1 to %2, in steps of %3").arg(shown(lo), shown(hi), shown(step))
+                                           : qsTr("%1 to %2").arg(shown(lo), shown(hi))
                 if (hasLo)
                     return qsTr("At least %1").arg(shown(lo))
                 if (hasHi)
@@ -767,11 +767,11 @@ DialogWindow {
                 return ""
             }
             readonly property string overflowText: bad || truncated
-                ? qsTr("%1 becomes %2 when you leave the field.").arg(text)
-                      .arg(shown(outOfRange ? clamp(typed) : notANumber ? value : typed))
+                ? qsTr("%1 becomes %2 when you leave the field.").arg(text,
+                      shown(outOfRange ? clamp(typed) : notANumber ? value : typed))
                 : ""
             readonly property string overflowLongest: qsTr("%1 becomes %2 when you leave the field.")
-                .arg(shown(hasHi ? hi : hasLo ? lo : value)).arg(shown(hasHi ? hi : hasLo ? lo : value))
+                .arg(shown(hasHi ? hi : hasLo ? lo : value), shown(hasHi ? hi : hasLo ? lo : value))
             property bool holding: false
             property real wheelRest: 0
             property real oldX: 0
@@ -1180,13 +1180,13 @@ DialogWindow {
                 if (m && (!m[2] || alpha)) {
                     const v = parseInt(m[1], 16)
                     const tr = m[2] ? parseInt(m[2], 16) : 0
-                    return Qt.rgba(((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255, (255 - tr) / 255)
+                    return Color.rgba(((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255, (255 - tr) / 255)
                 }
                 m = /^&[Hh]([0-9A-Fa-f]{2})?([0-9A-Fa-f]{6})&?$/.exec(t)
                 if (m && (!m[1] || alpha)) {
                     const v = parseInt(m[2], 16)
                     const tr = m[1] ? parseInt(m[1], 16) : 0
-                    return Qt.rgba((v & 255) / 255, ((v >> 8) & 255) / 255, ((v >> 16) & 255) / 255, (255 - tr) / 255)
+                    return Color.rgba((v & 255) / 255, ((v >> 8) & 255) / 255, ((v >> 16) & 255) / 255, (255 - tr) / 255)
                 }
                 return null
             }
@@ -1197,11 +1197,11 @@ DialogWindow {
                 const row = colourRow
                 let before = null
                 colourPopover.openFor(pickButton, {
-                    changeColour: c => row.value = Qt.rgba(c.r / 255, c.g / 255, c.b / 255, row.alpha ? (255 - c.a) / 255 : 1),
+                    changeColour: c => row.value = Color.rgba(c.r / 255, c.g / 255, c.b / 255, row.alpha ? (255 - c.a) / 255 : 1),
                     endDialog: accepted => { if (!accepted) row.value = before }
                 }, () => {
                     // A copy: a QML colour read back is a live reference.
-                    before = Qt.rgba(row.value.r, row.value.g, row.value.b, row.value.a)
+                    before = Color.rgba(row.value.r, row.value.g, row.value.b, row.value.a)
                     window.colourPicker.opened("automation")
                     return { r: Math.round(before.r * 255), g: Math.round(before.g * 255), b: Math.round(before.b * 255),
                              a: row.alpha ? 255 - Math.round(before.a * 255) : 0 }

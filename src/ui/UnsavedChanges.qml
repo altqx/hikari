@@ -294,7 +294,7 @@ Item {
             }
             Label {
                 objectName: "closeReviewCount"
-                text: qsTr("Saves %1 · Discards %2").arg(unsaved.saving).arg(unsaved.rows.length - unsaved.saving)
+                text: qsTr("Saves %1 · Discards %2").arg(unsaved.saving, unsaved.rows.length - unsaved.saving)
                 color: Theme.muted
                 font: reviewWindow.fontAt(12)
             }

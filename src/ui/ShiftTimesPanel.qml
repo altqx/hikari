@@ -43,7 +43,7 @@ Item {
         const m = /^(\d+):(\d{1,2}):(\d{1,2})(?:[.,](\d{1,2}))?$/.exec(text.trim())
         if (!m)
             return -1
-        return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
+        return ((Number(m[1]) * 60 + Number(m[2])) * 60 + Number(m[3])) * 1000 + (m[4] ? Number(m[4].padEnd(2, "0")) * 10 : 0)
     }
     function amountText() {
         return settings.byFrames ? String(settings.frames) : timeText(settings.timeMs)
@@ -189,7 +189,7 @@ Item {
                     ToolTip.visible: hovered
                     // lupdate reads "\\" in a QML string as one backslash and keys the text wrongly.
                     ToolTip.text: qsTr("Shifts %1, %2, and %3 tag times\nso their positions on video do not change\n(slows down time shifting)")
-                                      .arg("\\move").arg("\\t").arg("\\fad")
+                                      .arg("\\move", "\\t", "\\fad")
                     onToggled: panel.set("tagTimes", checked)
                 }
             }

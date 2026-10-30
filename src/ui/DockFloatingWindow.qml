@@ -50,7 +50,7 @@ Item {
             radius: 3 + root.shadow - index
             color: "transparent"
             border.width: 1
-            border.color: Qt.rgba(0, 0, 0, 0.14 * Math.pow((index + 1) / root.shadow, 2))
+            border.color: Color.rgba(0, 0, 0, 0.14 * Math.pow((index + 1) / root.shadow, 2))
         }
     }
     Rectangle {

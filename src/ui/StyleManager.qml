@@ -258,7 +258,7 @@ DialogWindow {
         ask({
             title: qsTr("Edit style"),
             text: qsTr("Apply the changes to “%1”?").arg(pendingNew ? nameField.text : values.name),
-            detail: qsTr("The catalog “%1” is shown now; the changes go to “%2”.").arg(styles.catalog).arg(styles.editCatalog()),
+            detail: qsTr("The catalog “%1” is shown now; the changes go to “%2”.").arg(styles.catalog, styles.editCatalog()),
             severity: "warning",
             choices: [{ id: "discard", text: qsTr("Discard"), role: "destructive" },
                       { id: "apply", text: qsTr("Apply"), role: "accept", isDefault: true }]
@@ -463,7 +463,7 @@ DialogWindow {
         clashReviewLoader.active = true
         clashReviewLoader.item.review({
             title: qsTr("Copy styles"),
-            text: qsTr("%1 of %2 styles already exist in %3.").arg(listed.length).arg(total).arg(into),
+            text: qsTr("%1 of %2 styles already exist in %3.").arg(listed.length, total, into),
             detail: same > 0 ? qsTr("%n more are the same as the ones there and are left as they are.", "", same) : "",
             rows: listed.map(c => ({ name: c.name, occurrence: c.occurrence, difference: manager.fieldNames(c.fields), suggestion: c.suggestion })),
             added: total - clashes.length,
@@ -721,7 +721,7 @@ DialogWindow {
             if (commitValues(editor.values()) === "") {
                 if (notices)
                     notices.post("warning", qsTr("Style not renamed"),
-                                 qsTr("“%1” keeps its name; the other changes were applied. %2").arg(values.name).arg(problem),
+                                 qsTr("“%1” keeps its name; the other changes were applied. %2").arg(values.name, problem),
                                  { details: refused })
                 return
             }
@@ -929,7 +929,7 @@ DialogWindow {
             ToolTip.visible: hovered
             ToolTip.text: colourField.name
             background: Rectangle {
-                color: Qt.rgba(colourField.colour.r / 255, colourField.colour.g / 255, colourField.colour.b / 255, 1)
+                color: Color.rgba(colourField.colour.r / 255, colourField.colour.g / 255, colourField.colour.b / 255, 1)
                 border.color: swatchButton.visualFocus ? Theme.focus : Theme.control
                 border.width: swatchButton.visualFocus ? 2 : 1
                 radius: 2
@@ -1895,8 +1895,8 @@ DialogWindow {
         if (pending) {
             const c = colours.count > 0 ? colours.itemAt(0).colour : { r: 255, g: 255, b: 255 }
             const o = colours.count > 2 ? colours.itemAt(2).colour : { r: 0, g: 0, b: 0 }
-            out.push({ row: -1, name: pendingName, primary: Qt.rgba(c.r / 255, c.g / 255, c.b / 255, 1).toString(),
-                       outline: Qt.rgba(o.r / 255, o.g / 255, o.b / 255, 1).toString(), lines: 0, pending: true })
+            out.push({ row: -1, name: pendingName, primary: Color.rgba(c.r / 255, c.g / 255, c.b / 255, 1).toString(),
+                       outline: Color.rgba(o.r / 255, o.g / 255, o.b / 255, 1).toString(), lines: 0, pending: true })
         }
         return out
     }
