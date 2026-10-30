@@ -39,6 +39,8 @@ public:
 
 signals:
     void hoveredPanelChanged();
+    // The pointer entered `panel` while followsPointer() holds and nothing keeps the focus where it is.
+    void focusRequested(QQuickItem *panel);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -60,6 +62,8 @@ private:
     const Panel *panelOf(QQuickItem *item) const;
     void setHovered(QQuickItem *panel);
     void hoverAtPointer();
+    bool focusStays() const;
+    bool followingPointer() const;
     bool shortcutOverride(QQuickWindow *window, QKeyEvent *event);
     bool keyPress(QKeyEvent *event);
     bool keyRelease(QKeyEvent *event);
@@ -72,6 +76,7 @@ private:
     QJSValue m_fallbackAccepts;
     QJSValue m_followsPointer;
     QPointer<QQuickItem> m_fallbackTarget;
+    QPointer<QQuickItem> m_typedIn;
     std::optional<Routed> m_routed;
     std::map<int, QPointer<QQuickItem>> m_held;
     const QEvent *m_withheld = nullptr;

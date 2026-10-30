@@ -8210,8 +8210,8 @@ because it was edited.</source>
         <translation>เลื่อนกราฟเสียงตามในระหว่างการเล่น</translation>
     </message>
     <message>
-        <source>Hotkeys follow the panel under the pointer</source>
-        <translation>ปุ่มลัดทำงานตามแผงที่อยู่ใต้ตัวชี้</translation>
+        <source>Focus the panel under the pointer</source>
+        <translation>โฟกัสแผงที่อยู่ใต้ตัวชี้</translation>
     </message>
     <message>
         <source>Choose external font folder</source>
