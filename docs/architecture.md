@@ -58,7 +58,7 @@ FFMS2 and libass remain required by the map. Cross-platform adapters are the def
 
 No Muse module is imported by default. Selective future reuse needs a recorded source revision, licence/notices, dependency closure and maintenance owner; UI similarity is not itself a reason to adopt framework code. The [accepted docking contract](docking.md) selects pinned KDDockWidgets QtQuick behind Hikari’s layout adapter; it does not import a separate application framework.
 
-The accepted [platform policy](platform-policy.md) starts from Qt 6.11.2, adopts 6.12 after release and verification, and advances Qt with explicit Windows 10 retirement later. The [compatibility contract](compatibility.md) requires named approval for behavioral departures; an individually approved defect fix becomes the default.
+The accepted [platform policy](platform-policy.md) started from Qt 6.11.2, adopted 6.12.0 after its release and qualification (#527), and advances Qt with explicit Windows 10 retirement later. The [compatibility contract](compatibility.md) requires named approval for behavioral departures; an individually approved defect fix becomes the default.
 
 ## Open design and verification
 

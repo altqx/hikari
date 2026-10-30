@@ -53,7 +53,6 @@ RowLayout {
         HoverHandler { id: hover }
         ToolTip.visible: hover.hovered
         ToolTip.text: description
-        ToolTip.delay: 500
     }
 
     Counter {

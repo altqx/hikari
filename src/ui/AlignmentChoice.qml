@@ -97,7 +97,6 @@ IconToolButton {
                     readonly property bool keyed: grid.withKeys && modelData === grid.highlighted
                     Accessible.role: Accessible.Cell
                     Accessible.selected: checked
-                    ToolTip.delay: 300
                     onClicked: alignment.choose(modelData)
                     FocusRing {
                         control: cell

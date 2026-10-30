@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 $root = $PWD.Path
 $build = Join-Path $root "out/build/$(if ($env:BUILD) { $env:BUILD } else { 'windows-x64-release' })"
-$env:PATH = "$root/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"
+$env:PATH = "$root/out/sdk/qt-6.12.0-windows/6.12.0/msvc2022_64/bin;$env:PATH"
 if (-not $env:QT_QPA_PLATFORM) { $env:QT_QPA_PLATFORM = 'offscreen' }
 $exe = Get-ChildItem -Recurse -Filter "$env:TEST.exe" $build -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $exe) { Write-Output "no $env:TEST.exe under $build"; exit 2 }

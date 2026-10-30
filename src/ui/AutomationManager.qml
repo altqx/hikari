@@ -805,7 +805,6 @@ Pane {
                     padding: 0
                     Accessible.name: qsTr("Load %1 at start").arg(root.scriptTitle(scriptItem.script))
                     ToolTip.visible: hovered
-                    ToolTip.delay: 500
                     ToolTip.text: qsTr("Load at start")
                     onToggled: root.controller.setEnabled(scriptItem.script.path, checked)
                 }
@@ -901,7 +900,6 @@ Pane {
             Accessible.name: row.macro.name + (keys.length > 0 ? ", " + keys : "")
             Accessible.description: row.macro.description ?? ""
             ToolTip.visible: hovered && (row.macro.description ?? "") !== ""
-            ToolTip.delay: 600
             ToolTip.text: row.macro.description ?? ""
             onClicked: {
                 list.currentIndex = rowIndex

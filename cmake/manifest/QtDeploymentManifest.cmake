@@ -42,7 +42,7 @@ endforeach()
 
 set(resolved_json "")
 foreach(platform IN LISTS platforms)
-    # The Qt module archives of this platform's lock (6.11.2-0-<stamp>qtsvg-<host>.7z -> qtsvg).
+    # The Qt module archives of this platform's lock (6.12.0-0-<stamp>qtsvg-<host>.7z -> qtsvg).
     set(lock_file "${LOCKS}/qt-${platform}.lock.json")
     set(modules "")
     if(EXISTS "${lock_file}")

@@ -23,7 +23,6 @@ ToolButton {
     Accessible.name: text
     ToolTip.visible: hovered && !menuOpen
     ToolTip.text: text
-    ToolTip.delay: 600
     HoverHandler {
         cursorShape: Qt.ArrowCursor
     }

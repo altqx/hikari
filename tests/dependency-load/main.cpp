@@ -40,8 +40,8 @@ int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
     std::printf("qt=%s platform=%s\n", qVersion(), qPrintable(QGuiApplication::platformName()));
-    if (QLatin1StringView(qVersion()) != QLatin1StringView("6.11.2"))
-        return fail("Qt runtime is not 6.11.2");
+    if (QLatin1StringView(qVersion()) != QLatin1StringView(HIKARI_QT_VERSION))
+        return fail("Qt runtime is not " HIKARI_QT_VERSION);
 
     QQmlEngine engine;
     QQmlComponent component(&engine);

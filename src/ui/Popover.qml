@@ -89,7 +89,7 @@ Popup {
     focus: true
     padding: 12
     margins: 8
-    closePolicy: Popup.CloseOnPressOutside
+    closePolicy: Popup.CloseOnPressOutside | Popup.CloseMultiple
     // With Popup.Window, the press outside that closes it also reaches the anchor beneath (openAt skips it).
     onClosed: {
         const pressed = active && popupType === Popup.Window

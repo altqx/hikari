@@ -1,4 +1,4 @@
-find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS LinguistTools)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS LinguistTools)
 
 set(HIKARI_LANGUAGES pl ko_KR th_TH ta)
 

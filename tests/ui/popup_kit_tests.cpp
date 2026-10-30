@@ -3,19 +3,23 @@
 #include "theme.h"
 
 #include <QElapsedTimer>
+#include <QGuiApplication>
 #include <QJSValue>
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlExpression>
+#include <QQmlProperty>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QScopeGuard>
 #include <QSignalSpy>
+#include <QStyleHints>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtQuickTest/quicktest.h>
 #include <QtTest>
 
+#include <algorithm>
 #include <memory>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
@@ -51,7 +55,13 @@ Window {
         onKept: root.note("kept")
         onReverted: root.note("reverted")
         TextField { objectName: "popoverField"; Layout.preferredWidth: 160 }
+        ComboBox { objectName: "popoverChoice"; model: ["One", "Two", "Three"] }
     }
+
+    SpinBox { objectName: "spin"; x: 300; y: 400 }
+    TextField { objectName: "plainField"; x: 300; y: 450; width: 120 }
+    DockMenuButton { objectName: "tipButton"; x: 500; y: 400; panelTitle: "Styles"; hoverEnabled: true }
+    Button { id: toggle; objectName: "toggleButton"; x: 600; y: 300; text: "Toggle"; onClicked: popover.openAt(toggle) }
 
     ToastStack {
         id: toasts
@@ -138,6 +148,12 @@ void click(QQuickItem *item)
 {
     QVERIFY(QQuickTest::qWaitForPolish(item->window()));
     QTest::mouseClick(item->window(), Qt::LeftButton, {}, centreOf(item));
+}
+
+bool anyMenuOpen(QObject *root)
+{
+    const QList<QObject *> all = root->findChildren<QObject *>();
+    return std::ranges::any_of(all, [](QObject *o) { return o->inherits("QQuickMenu") && o->property("visible").toBool(); });
 }
 
 QString shortDate(const QDate &d)
@@ -312,6 +328,56 @@ private slots:
         const double width = run(QStringLiteral("popover.implicitWidth")).toDouble();
         QVERIFY(qAbs(x + width / 2 - root->width() / 2.0) <= 1);
         run(QStringLiteral("popover.keep()"));
+    }
+
+    void popoverClosesWithItsOpenListOnAClickOutsideBoth()
+    {
+        run(QStringLiteral("popover.openAt(anchorButton)"));
+        QTRY_VERIFY(run(QStringLiteral("popover.opened")).toBool());
+        QQuickItem *choice = findIn(root.get(), "popoverChoice");
+        QVERIFY(choice);
+        click(choice);
+        QTRY_VERIFY(choice->property("popup").value<QObject *>()->property("opened").toBool());
+        QTest::mouseClick(root.get(), Qt::LeftButton, {}, QPoint(700, 300));
+        QTRY_VERIFY(!choice->property("popup").value<QObject *>()->property("visible").toBool());
+        QTRY_VERIFY(!run(QStringLiteral("popover.visible")).toBool());
+        QCOMPARE(notes(), QStringList{QStringLiteral("kept")});
+    }
+
+    void clickingTheAnchorAgainClosesThePopover()
+    {
+        QQuickItem *toggle = findIn(root.get(), "toggleButton");
+        click(toggle);
+        QTRY_VERIFY(run(QStringLiteral("popover.opened")).toBool());
+        click(toggle);
+        QTRY_VERIFY(!run(QStringLiteral("popover.visible")).toBool());
+        QTest::qWait(100);
+        QVERIFY(!run(QStringLiteral("popover.visible")).toBool());
+    }
+
+    void spinBoxesOpenNoContextMenu()
+    {
+        QVERIFY(QQuickTest::qWaitForPolish(root.get()));
+        QTest::mouseClick(root.get(), Qt::RightButton, {}, centreOf(findIn(root.get(), "plainField")));
+        QTRY_VERIFY(anyMenuOpen(root.get()));
+        QTest::keyClick(root.get(), Qt::Key_Escape);
+        QTRY_VERIFY(!anyMenuOpen(root.get()));
+        QQuickItem *spin = findIn(root.get(), "spin");
+        QTest::mouseClick(root.get(), Qt::RightButton, {}, centreOf(spin->property("contentItem").value<QQuickItem *>()));
+        QCoreApplication::processEvents();
+        QVERIFY(!anyMenuOpen(root.get()));
+    }
+
+    void toolTipsTakeThePlatformTiming()
+    {
+        QQuickItem *button = findIn(root.get(), "tipButton");
+        QVERIFY(button);
+        auto *tip = QQmlProperty(button, QStringLiteral("ToolTip.toolTip"), qmlContext(button)).read().value<QObject *>();
+        QVERIFY(tip);
+        QTest::mouseMove(root.get(), centreOf(button));
+        QTRY_VERIFY(tip->property("visible").toBool());
+        QCOMPARE(tip->property("delay").toInt(), int(QGuiApplication::styleHints()->toolTipWakeUpDelay().count()));
+        QVERIFY(tip->property("timeout").toInt() >= 10000);
     }
 
     void popoverOpensAboveWhenThereIsNoRoomBelow()

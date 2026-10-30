@@ -184,7 +184,6 @@ Item {
                     implicitWidth: label.implicitWidth + 12 + closeMark.implicitWidth
                                    + (mark >= 0 ? modifiedMark.width + 4 : 0)
                     ToolTip.visible: hovered
-                    ToolTip.delay: 600
                     ToolTip.text: stepText.length > 0
                                   ? tabTip + "\n" + qsTr("Modified (history step %1)").arg(stepText) : tabTip
                     background: Rectangle {

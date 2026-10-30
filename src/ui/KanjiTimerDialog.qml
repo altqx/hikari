@@ -117,7 +117,6 @@ DialogWindow {
             checked: dialog.timer.multi
             onToggled: dialog.timer.multi = checked
             ToolTip.visible: hovered
-            ToolTip.delay: 600
             ToolTip.text: qsTr("Write each further syllable of a group as a # syllable, for the templater's multi effects")
         }
         CheckBox {
@@ -126,7 +125,6 @@ DialogWindow {
             checked: dialog.timer.furigana
             onToggled: dialog.timer.furigana = checked
             ToolTip.visible: hovered
-            ToolTip.delay: 600
             ToolTip.text: qsTr("Write each kanji's reading after it (漢|かん), as the romaji sings it")
         }
     }

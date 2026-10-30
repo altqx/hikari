@@ -108,7 +108,6 @@ DialogWindow {
         HoverHandler { id: hover }
         ToolTip.visible: why.length > 0 && hover.hovered
         ToolTip.text: why
-        ToolTip.delay: 500
     }
 
     GridLayout {

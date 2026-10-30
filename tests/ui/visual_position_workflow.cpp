@@ -94,10 +94,6 @@ protected:
         }
         type("mainWindow/visualValue_x2", "200");
         observed.push_back(changedFrom(observed[6]));
-        if (folded) {
-            mouseClick("mainWindow/visualToolMore");
-            wait(300ms);
-        }
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
         enterKey("mainWindow/videoPanel", Qt::Key_Down, spix::KeyModifiers::Alt);
         observed.push_back(changedFrom(observed[8]));

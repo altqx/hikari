@@ -213,7 +213,7 @@ Popup {
     focus: true
     padding: 12
     margins: 8
-    closePolicy: Popup.CloseOnPressOutside
+    closePolicy: Popup.CloseOnPressOutside | Popup.CloseMultiple
     onClosed: {
         const pressed = active && popupType === Popup.Window
         const was = anchor
@@ -362,7 +362,6 @@ Popup {
                         }
                         ToolTip.visible: eyedropperHover.hovered
                         ToolTip.text: popover.sampler.available ? Accessible.name : popover.sampler.unavailableReason
-                        ToolTip.delay: 500
                     }
                 }
                 ScreenDropperView {
@@ -444,7 +443,6 @@ Popup {
                             Accessible.name: qsTr("Alpha")
                             ToolTip.visible: hovered
                             ToolTip.text: qsTr("0 is opaque, 255 fully transparent")
-                            ToolTip.delay: 500
                             onValueModified: popover.setAlpha(value)
                         }
                     }
