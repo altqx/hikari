@@ -1,0 +1,1447 @@
+[application] 'HikariSub' desc='/home/altq/.t3/worktrees/hikari/w8-m2-a11y/out/build/m2/src/app/hikarisub' <showing,visible,enabled> @0,0 0x0
+  [frame] 'runs.ass - HikariSub' <active,showing,visible,enabled> @960,108 1280x800
+    [text] 'Menus' <showing,visible,enabled> @960,108 1280x27 actions=
+      [button] 'Window menu' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus|Press
+      [menu bar] 'Application menu' <showing,visible,enabled> @962,110 425x24 actions=
+        [menu item] 'File' <showing,visible,focusable,enabled> @962,110 37x24 actions=Press|Set Focus
+        [menu item] 'Edit' <showing,visible,focusable,enabled> @999,110 39x24 actions=Press|Set Focus
+        [menu item] 'Subtitles' <showing,visible,focusable,enabled> @1038,110 69x24 actions=Press|Set Focus
+        [menu item] 'Video' <showing,visible,focusable,enabled> @1107,110 50x24 actions=Press|Set Focus
+        [menu item] 'Audio' <showing,visible,focusable,enabled> @1157,110 52x24 actions=Press|Set Focus
+        [menu item] 'Automation' <showing,visible,focusable,enabled> @1209,110 88x24 actions=Press|Set Focus
+        [menu item] 'View' <showing,visible,focusable,enabled> @1297,110 45x24 actions=Press|Set Focus
+        [menu item] 'Help' <showing,visible,focusable,enabled> @1342,110 44x24 actions=Press|Set Focus
+      [button] 'More menus' <enabled> @0,0 0x0 actions=
+      [button] 'Layout: Editing' <showing,visible,enabled> @1395,110 89x24 actions=
+        [label] 'Editing' <showing,visible,focusable,enabled> @1421,113 43x18 actions=Set Focus
+      [label] 'runs.ass - HikariSub' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Minimise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+    [page tab list] 'Open documents' <showing,visible,enabled> @960,135 1280x32 actions=
+      [page tab] 'runs.ass' <showing,visible,focusable,checked,enabled> @964,139 85x28 actions=Set Focus
+        [label] 'runs.ass' <showing,visible,focusable,enabled> @964,144 55x18 actions=Set Focus
+        [button] 'Close runs.ass' <showing,visible,focusable,enabled> @1029,144 18x18 actions=Press|Set Focus
+      [button] 'Open new tab' <showing,visible,focusable,enabled> @1051,139 28x28 actions=Press|Set Focus
+    [panel] '' <enabled> @0,0 0x0 actions=
+      [alert] '' <enabled> @0,0 0x0 actions=
+      [button] 'Restore the previous layout' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Dismiss' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+    [alert] 'HikariSub  is ready to install' <enabled> @0,0 0x0 actions=
+      [label] 'HikariSub  is ready to install' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] "What's new" <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Restart now' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Later' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Show in folder' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Copy install command' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+    [alert] 'Restore the last session (0 documents)?' <enabled> @0,0 0x0 actions=
+      [label] 'Restore the last session (0 documents)?' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Restore' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Autosaves…' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+    [alert] 'Loading subtitles from ' <enabled> @0,0 0x0 actions=
+      [label] 'Loading subtitles from ' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [progress bar] '' <enabled> @0,0 0x0 actions=Increase|Decrease
+      [label] 'Time elapsed: 0:00:00.00' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Cancel' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+    [alert] 'runs.ass was changed by another program.' <enabled> @0,0 0x0 actions=
+      [label] 'runs.ass was changed by another program.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Reload' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Compare' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Keep mine' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+    [filler] '' <showing,visible,enabled> @960,108 1280x800 actions=
+      [panel] 'Home' <enabled> @0,0 0x0 actions=
+        [button] 'New' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Open…' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Open video…' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [panel] '' <enabled> @0,0 0x0 actions=
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [button] 'Restore' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+            [label] 'Restore' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [button] 'Autosaves…' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [check box] 'Restore it at every start' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [button] 'Dismiss' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [panel] 'Last session' <enabled> @0,0 0x0 actions=
+          [label] 'Last session' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '1 document · runs.ass' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [button] 'Restore' desc='Last session' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'Recent files' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Filter recent files' desc='Filter' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Name' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Last opened' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'No matching files' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [list] 'Recent files' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [list item] 'runs.ass, /tmp/gate-home-x11/runs.ass, last opened Today 16:38' <selected,enabled> @0,0 0x0 actions=
+            [label] 'runs.ass' <focusable,enabled> @0,0 0x0 actions=Set Focus
+            [label] 'Missing' <focusable,enabled> @0,0 0x0 actions=Set Focus
+            [label] '/tmp/gate-home-x11/runs.ass' <focusable,enabled> @0,0 0x0 actions=Set Focus
+            [button] 'Remove' desc='runs.ass' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+            [button] 'Show in folder' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+            [label] 'Today 16:38' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [page tab list] 'Panels' <showing,visible,enabled> @960,585 1280x35 actions=
+        [page tab] 'Grid' <showing,visible,focusable,checked,enabled> @960,585 71x35 actions=Set Focus|Press
+        [button] 'Grid options' <showing,visible,focusable,enabled,expandable,expanded> @1004,593 20x20 actions=Toggle|Press|Set Focus
+      [panel] 'Grid' desc='Editing: runs.ass' <showing,visible,enabled> @960,628 1280x251 actions=
+        [table] 'Subtitle lines' <showing,visible,focusable,enabled> @964,632 1272x243
+          [table cell] '1' desc='1, #' <showing,visible,focusable,enabled> @964,656 45x24 actions=Set Focus
+          [table cell] '0:00:00.00' desc='1, Start' <showing,visible,focusable,enabled> @1009,656 89x24 actions=Set Focus
+          [table cell] '0:00:00.00' desc='1, End' <showing,visible,focusable,enabled> @1098,656 89x24 actions=Set Focus
+          [table cell] 'Romaji' desc='1, Styles' <showing,visible,focusable,enabled> @1188,656 90x24 actions=Set Focus
+          [table cell] 'template syl noblank' desc='1, Effect' <showing,visible,focusable,enabled> @1278,656 60x24 actions=Set Focus
+          [table cell] '' desc='1, CPS' <showing,visible,focusable,enabled> @1338,656 33x24 actions=Set Focus
+          [table cell] '' desc='1, Wraps' <showing,visible,focusable,enabled> @1371,656 47x24 actions=Set Focus
+          [table cell] '!retime("start2syl",-300,0)!{\\an5\\pos($center,$middle)\\fad(300,0)}' desc='1, Text' <showing,visible,focusable,enabled> @1417,656 819x24 actions=Set Focus
+          [table cell] '2' desc='2, #' <showing,visible,focusable,enabled> @964,680 45x24 actions=Set Focus
+          [table cell] '0:00:00.00' desc='2, Start' <showing,visible,focusable,enabled> @1009,680 89x24 actions=Set Focus
+          [table cell] '0:00:00.00' desc='2, End' <showing,visible,focusable,enabled> @1098,680 89x24 actions=Set Focus
+          [table cell] 'Romaji' desc='2, Styles' <showing,visible,focusable,enabled> @1188,680 90x24 actions=Set Focus
+          [table cell] 'template syl noblank' desc='2, Effect' <showing,visible,focusable,enabled> @1278,680 60x24 actions=Set Focus
+          [table cell] '' desc='2, CPS' <showing,visible,focusable,enabled> @1338,680 33x24 actions=Set Focus
+          [table cell] '' desc='2, Wraps' <showing,visible,focusable,enabled> @1371,680 47x24 actions=Set Focus
+          [table cell] '!retime("sylpct",0,50)!{\\an5\\move($center,$middle,$center,!$middle-16!)\\1c&H70E8FF&}' desc='2, Text' <showing,visible,focusable,enabled> @1417,680 819x24 actions=Set Focus
+          [table cell] '3' desc='3, #' <showing,visible,focusable,enabled> @964,704 45x24 actions=Set Focus
+          [table cell] '0:00:00.00' desc='3, Start' <showing,visible,focusable,enabled> @1009,704 89x24 actions=Set Focus
+          [table cell] '0:00:00.00' desc='3, End' <showing,visible,focusable,enabled> @1098,704 89x24 actions=Set Focus
+          [table cell] 'Romaji' desc='3, Styles' <showing,visible,focusable,enabled> @1188,704 90x24 actions=Set Focus
+          [table cell] 'template syl noblank' desc='3, Effect' <showing,visible,focusable,enabled> @1278,704 60x24 actions=Set Focus
+          [table cell] '' desc='3, CPS' <showing,visible,focusable,enabled> @1338,704 33x24 actions=Set Focus
+          [table cell] '' desc='3, Wraps' <showing,visible,focusable,enabled> @1371,704 47x24 actions=Set Focus
+          [table cell] '!retime("sylpct",50,100)!{\\an5\\move($center,!$middle-16!,$center,$middle)\\1c&H70E8FF&}' desc='3, Text' <showing,visible,focusable,enabled> @1417,704 819x24 actions=Set Focus
+          [table cell] '4' desc='4, #' <showing,visible,focusable,enabled> @964,728 45x24 actions=Set Focus
+          [table cell] '0:00:00.00' desc='4, Start' <showing,visible,focusable,enabled> @1009,728 89x24 actions=Set Focus
+          [table cell] '0:00:00.00' desc='4, End' <showing,visible,focusable,enabled> @1098,728 89x24 actions=Set Focus
+          [table cell] 'Romaji' desc='4, Styles' <showing,visible,focusable,enabled> @1188,728 90x24 actions=Set Focus
+          [table cell] 'template syl noblank' desc='4, Effect' <showing,visible,focusable,enabled> @1278,728 60x24 actions=Set Focus
+          [table cell] '' desc='4, CPS' <showing,visible,focusable,enabled> @1338,728 33x24 actions=Set Focus
+          [table cell] '' desc='4, Wraps' <showing,visible,focusable,enabled> @1371,728 47x24 actions=Set Focus
+          [table cell] '!retime("syl2end",0,300)!{\\an5\\pos($center,$middle)\\1c&H70E8FF&\\fad(0,300)}' desc='4, Text' <showing,visible,focusable,enabled> @1417,728 819x24 actions=Set Focus
+          [table cell] '5' desc='5, #' <showing,visible,focusable,enabled> @964,752 45x24 actions=Set Focus
+          [table cell] '0:00:01.00' desc='5, Start' <showing,visible,focusable,enabled> @1009,752 89x24 actions=Set Focus
+          [table cell] '0:00:04.00' desc='5, End' <showing,visible,focusable,enabled> @1098,752 89x24 actions=Set Focus
+          [table cell] 'Romaji' desc='5, Styles' <showing,visible,focusable,enabled> @1188,752 90x24 actions=Set Focus
+          [table cell] 'karaoke' desc='5, Effect' <showing,visible,focusable,enabled> @1278,752 60x24 actions=Set Focus
+          [table cell] '' desc='5, CPS' <showing,visible,focusable,enabled> @1338,752 33x24 actions=Set Focus
+          [table cell] '' desc='5, Wraps' <showing,visible,focusable,enabled> @1371,752 47x24 actions=Set Focus
+          [table cell] '{\\k40}ki{\\k35}ra{\\k0} {\\k45}ki{\\k30}ra {\\k60}hi{\\k50}ka{\\k40}ru' desc='5, Text' <showing,visible,focusable,enabled> @1417,752 819x24 actions=Set Focus
+          [table cell] '6' desc='6, #' <showing,visible,focusable,enabled> @964,776 45x24 actions=Set Focus
+          [table cell] '0:00:05.00' desc='6, Start' <showing,visible,focusable,enabled> @1009,776 89x24 actions=Set Focus
+          [table cell] '0:00:07.50' desc='6, End' <showing,visible,focusable,enabled> @1098,776 89x24 actions=Set Focus
+          [table cell] 'Romaji' desc='6, Styles' <showing,visible,focusable,enabled> @1188,776 90x24 actions=Set Focus
+          [table cell] 'karaoke' desc='6, Effect' <showing,visible,focusable,enabled> @1278,776 60x24 actions=Set Focus
+          [table cell] '' desc='6, CPS' <showing,visible,focusable,enabled> @1338,776 33x24 actions=Set Focus
+          [table cell] '' desc='6, Wraps' <showing,visible,focusable,enabled> @1371,776 47x24 actions=Set Focus
+          [table cell] '{\\k50}yo{\\k25}ru{\\k25}no {\\k80}so{\\k70}ra' desc='6, Text' <showing,visible,focusable,enabled> @1417,776 819x24 actions=Set Focus
+          [table cell] '7' desc='7, #' <showing,visible,focusable,enabled> @964,800 45x24 actions=Set Focus
+          [table cell] '0:00:08.00' desc='7, Start' <showing,visible,focusable,enabled> @1009,800 89x24 actions=Set Focus
+          [table cell] '0:00:09.00' desc='7, End' <showing,visible,focusable,enabled> @1098,800 89x24 actions=Set Focus
+          [table cell] 'Other' desc='7, Styles' <showing,visible,focusable,enabled> @1188,800 90x24 actions=Set Focus
+          [table cell] '' desc='7, Effect' <showing,visible,focusable,enabled> @1278,800 60x24 actions=Set Focus
+          [table cell] '4' desc='7, CPS' <showing,visible,focusable,enabled> @1338,800 33x24 actions=Set Focus
+          [table cell] '4' desc='7, Wraps' <showing,visible,focusable,enabled> @1371,800 47x24 actions=Set Focus
+          [table cell] '{\\k50}ho{\\k50}ka' desc='7, Text' <showing,visible,focusable,enabled> @1417,800 819x24 actions=Set Focus
+          [table cell] '8' desc='8, #' <showing,visible,focusable,enabled> @964,824 45x24 actions=Set Focus
+          [table cell] '0:00:10.00' desc='8, Start' <showing,visible,focusable,enabled> @1009,824 89x24 actions=Set Focus
+          [table cell] '0:00:12.00' desc='8, End' <showing,visible,focusable,enabled> @1098,824 89x24 actions=Set Focus
+          [table cell] 'Romaji' desc='8, Styles' <showing,visible,focusable,enabled> @1188,824 90x24 actions=Set Focus
+          [table cell] 'karaoke' desc='8, Effect' <showing,visible,focusable,enabled> @1278,824 60x24 actions=Set Focus
+          [table cell] '' desc='8, CPS' <showing,visible,focusable,enabled> @1338,824 33x24 actions=Set Focus
+          [table cell] '' desc='8, Wraps' <showing,visible,focusable,enabled> @1371,824 47x24 actions=Set Focus
+          [table cell] '{\\k30}ta{\\k30}bi{\\k0} {\\k40}no{\\k0} {\\k50}to{\\k50}chu{\\k0}u' desc='8, Text' <showing,visible,focusable,enabled> @1417,824 819x24 actions=Set Focus
+          [table cell] '9–76' desc='9–76, #, folded' <showing,visible,selected,focusable,enabled> @964,848 45x24 actions=Set Focus
+          [table cell] '0:00:00.70' desc='9–76, Start, folded' <showing,visible,selected,focusable,enabled> @1009,848 89x24 actions=Set Focus
+          [table cell] '0:00:12.30' desc='9–76, End, folded' <showing,visible,selected,focusable,enabled> @1098,848 89x24 actions=Set Focus
+          [table cell] 'Romaji' desc='9–76, Styles, folded' <showing,visible,selected,focusable,enabled> @1188,848 90x24 actions=Set Focus
+          [table cell] 'fx' desc='9–76, Effect, folded' <showing,visible,selected,focusable,enabled> @1278,848 60x24 actions=Set Focus
+          [table cell] '' desc='9–76, CPS, folded' <showing,visible,selected,focusable,enabled> @1338,848 33x24 actions=Set Focus
+          [table cell] '' desc='9–76, Wraps, folded' <showing,visible,selected,focusable,enabled> @1371,848 47x24 actions=Set Focus
+          [table cell] '68 generated lines' desc='9–76, Text, folded' <showing,visible,selected,focusable,enabled,expandable> @1417,848 819x24 actions=Set Focus
+      [text] 'Video' <showing,visible,enabled> @960,167 639x35 actions=
+        [button] 'Video options' <showing,visible,focusable,enabled,expandable> @1567,175 20x20 actions=Toggle|Press|Set Focus
+      [panel] 'Video' <showing,visible,enabled> @960,202 639x382 actions=
+        [panel] '' <enabled> @0,0 0x0 actions=
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [check box] 'Apply to All' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [button] '' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [button] '' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [button] 'No' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [panel] '' <enabled> @0,0 0x0 actions=
+          [label] 'Indexing video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [progress bar] 'Indexing video' <enabled> @0,0 0x0 actions=Increase|Decrease
+          [button] 'Cancel' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [panel] '' <showing,visible,enabled> @964,206 32x305 actions=
+          [button] 'Position pointer' <showing,visible,focusable,checked,enabled> @966,208 28x28 actions=Press|Set Focus
+          [button] 'Text positioning' <showing,visible,focusable,enabled> @966,237 28x28 actions=Press|Set Focus
+          [button] 'Text moving' <showing,visible,focusable,enabled> @966,266 28x28 actions=Press|Set Focus
+          [button] 'Text scaling' <showing,visible,focusable,enabled> @966,295 28x28 actions=Press|Set Focus
+          [button] 'Text Z rotation' <showing,visible,focusable,enabled> @966,324 28x28 actions=Press|Set Focus
+          [button] 'Text X / Y rotation' <showing,visible,focusable,enabled> @966,353 28x28 actions=Press|Set Focus
+          [button] 'Perspective' <showing,visible,focusable,enabled> @966,382 28x28 actions=Press|Set Focus
+          [button] 'Rectangle clipping' <showing,visible,focusable,enabled> @966,411 28x28 actions=Press|Set Focus
+          [button] 'Vector clipping' <showing,visible,focusable,enabled> @966,440 28x28 actions=Press|Set Focus
+          [button] 'Vector drawing' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [button] 'Position shifter' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [button] 'Hydra' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [button] 'More tools' <showing,visible,focusable,enabled> @966,469 28x28 actions=Press|Set Focus
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Preview · line 5 · not applied' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '<b>Preview</b> · line 5 · not applied' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Last change' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] ' · Set · 1 line' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'Change a value to redo it in place of that step' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'No video open' <showing,visible,focusable,enabled> @1252,350 89x18 actions=Set Focus
+        [filler] '' <enabled> @0,0 0x0 actions=
+          [button] 'More options' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [button] 'Pick selected lines' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Changes the active line' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '0 lines' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [button] 'Clear picked lines' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [slider] 'Video position' <showing,visible> @964,511 631x13 actions=Increase|Decrease
+        [label] 'Video times' desc="Frame time; frame number; frames from the line's start frame; milliseconds from the line's start and end" <showing,visible,focusable,enabled> @964,529 478x18 actions=Set Focus
+        [text] 'Position pointer X' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Position pointer Y' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Copy video position' <showing,visible> @1571,526 24x24 actions=Press
+        [button] 'Previous file' <showing,visible,focusable,enabled> @964,552 28x28 actions=Press|Set Focus
+        [button] 'Play' <showing,visible> @997,552 28x28 actions=Press
+        [button] 'Play the current line' <showing,visible> @1030,552 28x28 actions=Press
+        [button] 'Stop' <showing,visible> @1063,552 28x28 actions=Press
+        [button] 'Next file' <showing,visible,focusable,enabled> @1096,552 28x28 actions=Press|Set Focus
+        [button] 'Previous frame' <showing,visible> @1129,552 28x28 actions=Press
+        [label] 'No video open' <showing,visible,focusable,enabled> @1162,557 267x18 actions=Set Focus
+        [button] 'Next frame' <showing,visible> @1434,552 28x28 actions=Press
+        [slider] 'Volume' <showing,visible> @1485,558 110x13 actions=Increase|Decrease
+      [text] 'Line editor' <showing,visible,enabled> @1600,381 640x35 actions=
+        [button] 'Line editor options' <showing,visible,focusable,enabled,expandable> @2208,389 20x20 actions=Toggle|Press|Set Focus
+      [panel] 'Line editor: runs.ass' <showing,visible,enabled> @1600,416 640x168 actions=
+        [button] 'Bold' <showing,visible,focusable,enabled> @1612,420 28x28 actions=Press|Set Focus
+        [button] 'Italic' <showing,visible,focusable,enabled> @1642,420 28x28 actions=Press|Set Focus
+        [button] 'Underline' <showing,visible,focusable,enabled> @1672,420 28x28 actions=Press|Set Focus
+        [button] 'Strikeout' <showing,visible,focusable,enabled> @1702,420 28x28 actions=Press|Set Focus
+        [separator] '' <showing,visible,enabled> @1732,425 14x18 actions=
+        [button] 'Font selection' <showing,visible,focusable,enabled> @1748,420 28x28 actions=Press|Set Focus
+        [button] 'Primary color' <showing,visible,focusable,enabled> @1778,420 28x28 actions=Press|Set Focus
+        [button] 'Secondary color for karaoke' <showing,visible,focusable,enabled> @1808,420 28x28 actions=Press|Set Focus
+        [button] 'Border color' <showing,visible,focusable,enabled> @1838,420 28x28 actions=Press|Set Focus
+        [button] 'Shadow color' <showing,visible,focusable,enabled> @1868,420 28x28 actions=Press|Set Focus
+        [separator] '' <enabled> @0,0 0x0 actions=
+        [button] 'Paste all' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Paste the selected text' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Comment out original' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [separator] '' <enabled> @0,0 0x0 actions=
+        [check box] 'Not confirmed' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [check box] 'Tags from original' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [separator] '' <showing,visible,enabled> @1898,425 14x18 actions=
+        [button] 'Text position' desc='Center (an5)' <showing,visible,focusable,enabled> @1914,420 28x28 actions=Press|Set Focus
+        [separator] '' <showing,visible,enabled> @1944,425 14x18 actions=
+        [button] 'Add a tag button' <showing,visible,focusable,enabled> @1960,420 28x28 actions=Press|Set Focus
+        [button] 'More' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'Wraps 2/43' desc='Number of characters in each line.\nNo more than 43 characters per line (maximum 2 lines).' <showing,visible,focusable,enabled> @2089,425 71x18 actions=Set Focus
+        [label] 'CPS 6/15' desc='Characters per second.\nShould not exceed 15 characters per second' <showing,visible,focusable,enabled> @2172,425 56x18 actions=Set Focus
+        [label] 'Original text' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Line text' <showing,visible,focusable,enabled> @1612,454 616x56 actions=Set Focus
+        [label] 'Translated text' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Translated text' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Karaoke line: the tags before its text are carried, the karaoke timing is not.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [alert] '' <enabled> @0,0 0x0 actions=
+        [label] 'Not applied: ' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Start' <showing,visible,focusable,enabled> @1612,521 30x18 actions=Set Focus
+        [text] 'Start' <showing,visible,focusable,enabled> @1647,517 90x26 actions=Set Focus
+        [label] 'End' <showing,visible,focusable,enabled> @1745,521 24x18 actions=Set Focus
+        [text] 'End' <showing,visible,focusable,enabled> @1774,517 90x26 actions=Set Focus
+        [label] 'Duration' <showing,visible,focusable,enabled> @1872,521 54x18 actions=Set Focus
+        [text] 'Duration' <showing,visible,focusable,enabled> @1931,517 90x26 actions=Set Focus
+        [label] 'Style' <showing,visible,focusable,enabled> @2029,521 30x18 actions=Set Focus
+        [combo box] 'Style' desc='Line style' <showing,visible,focusable,enabled> @2064,517 134x26 actions=Set Focus
+          [text] 'Style' <showing,visible> @2064,517 114x26 actions=
+        [button] 'Edit style' desc="Allows quick editing of the current line's style" <showing,visible,focusable,enabled> @2200,516 28x28 actions=Press|Set Focus
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [check box] 'Comment' desc='Sets the line as a comment. Comments are not shown' <showing,visible,focusable,enabled> @1612,550 93x30 actions=Toggle|Press|Set Focus
+        [label] 'Layer' <showing,visible,focusable,enabled> @1713,556 35x18 actions=Set Focus
+        [text] 'Layer' <showing,visible,focusable,enabled> @1753,552 42x26 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Actor' <showing,visible,focusable,enabled> @1803,556 34x18 actions=Set Focus
+        [combo box] 'Actor' <showing,visible,focusable,enabled> @1842,552 62x26 actions=Set Focus
+          [text] 'Actor' <showing,visible,focusable,enabled> @1842,552 42x26 actions=Set Focus
+        [label] 'Effect' <showing,visible,focusable,enabled> @1912,556 35x18 actions=Set Focus
+        [combo box] 'Effect' <showing,visible,focusable,enabled> @1952,552 61x26 actions=Set Focus
+          [text] 'Effect' <showing,visible,focusable,enabled> @1952,552 41x26 actions=Set Focus
+        [label] 'Margins' <showing,visible,focusable,enabled> @2021,556 50x18 actions=Set Focus
+        [text] 'Left margin' <showing,visible,focusable,enabled> @2076,552 49x26 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Right margin' <showing,visible,focusable,enabled> @2127,552 50x26 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Vertical margin' <showing,visible,focusable,enabled> @2179,552 49x26 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [text] 'Audio' <showing,visible,enabled> @1600,167 640x35 actions=
+        [button] 'Audio options' <showing,visible,focusable,enabled,expandable> @2208,175 20x20 actions=Toggle|Press|Set Focus
+      [panel] 'Audio' <showing,visible,enabled> @1600,202 640x178 actions=
+        [label] 'Ready' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line 1' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '› !retime("sylpct",0,50)!' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '⌫' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '⌫' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Undo' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Esc' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'Esc' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Stop' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Resume' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Resume' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'Space' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Revert line' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Revert line' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Auto split' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Auto split' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Space' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'Space' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Start' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [image] 'Audio display' desc='No audio open' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [slider] 'Horizontal stretching' <enabled> @0,0 0x0 actions=Increase|Decrease
+        [slider] 'Vertical stretching' <enabled> @0,0 0x0 actions=Increase|Decrease
+        [slider] 'Volume' <enabled> @0,0 0x0 actions=Increase|Decrease
+        [check box] 'Link the volume and stretch sliders' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'No audio open' <showing,visible,focusable,enabled> @1875,282 90x18 actions=Set Focus
+        [button] 'Back to line' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Back to line' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'B' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Play the previous line' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play the current syllable / line' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play the current line' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Stop playback' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play the next line' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play 500 ms before the start time' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play around' <enabled> @0,0 0x0 actions=
+        [button] 'Play before the mark' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play after the mark' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play 500 ms before the start time' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play 500 ms after the start time' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play 500 ms before the end time' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play 500 ms after the end time' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Play to the end' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Add lead-in to the active line' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Add lead-out to the active line' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Apply changes' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'A' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] '↓' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Commit options' <enabled> @0,0 0x0 actions=
+        [check box] 'Automatically apply changes' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [check box] 'Go to the next line after applying changes' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [button] 'Go to selection' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [panel] '' <enabled> @0,0 0x0 actions=
+          [radio button] 'Line timing' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [radio button] 'Enable / disable karaoke creation' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [check box] 'Enable / Disable automatic splitting of syllables' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [button] 'Syllable commands' <enabled> @0,0 0x0 actions=
+        [button] 'Tap to time' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Tap options' <enabled> @0,0 0x0 actions=
+        [panel] '' <enabled> @0,0 0x0 actions=
+          [radio button] 'Waveform mode' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [radio button] 'Spectrum mode' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [check box] 'Auto-scroll to the active line' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [check box] 'Sync the video and audio cursors' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [check box] 'Enhance speech frequencies in the spectrum' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [button] 'More audio options' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Zoom 1.0×' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] '1.0×' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Volume: 50' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] '100' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Customise the audio panel' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+    [status bar] 'Status bar' <showing,visible,enabled> @960,879 1280x29 actions=
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '68 lines selected' <showing,visible,focusable,enabled> @1232,886 85x15 actions=Set Focus
+      [label] '1280 x 720' desc='Subtitles resolution' <showing,visible,focusable,enabled> @1331,886 56x15 actions=Set Focus
+    [popup menu] '' <focused,showing,visible,enabled> @1004,613 202x125 actions=
+      [separator] '' <showing,visible,enabled> @1005,644 200x3 actions=
+      [menu item] 'Move panel…' <showing,visible,focusable,enabled> @1005,647 200x30 actions=Press|Set Focus
+      [menu item] 'Move tab left' <> @0,0 0x0 actions=Press
+      [menu item] 'Move tab right' <> @0,0 0x0 actions=Press
+      [menu item] 'Undock' <showing,visible,focusable,enabled> @1005,677 200x30 actions=Press|Set Focus
+      [menu item] 'Close' <showing,visible,focusable,enabled> @1005,707 200x30 actions=Press|Set Focus
+      [menu item] 'Fold generated lines' <showing,visible,focusable,checked,enabled> @1005,614 200x30 actions=Press|Set Focus
+      [unknown] '' <showing,visible,enabled> @1199,614 6x123 actions=
+    [panel] 'Notices' <showing,visible,enabled> @1868,754 360x113 actions=
+      [alert] 'Spellchecker' desc='No dictionary files were found in the "/tmp/gate-home-x11/.config/hikarisub/dictionaries" folder. Spell checking will be disabled' <showing,visible,enabled> @1868,754 360x113 actions=
+        [label] 'Spellchecker' <showing,visible,focusable,enabled> @1906,764 280x18 actions=Set Focus
+        [label] 'No dictionary files were found in the "/tmp/gate-home-x11/.config/hikarisub/dictionaries" folder. Spell checking will be disabled' <showing,visible,focusable,enabled> @1906,785 280x72 actions=Set Focus
+        [button] 'Details' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Dismiss' <showing,visible,focusable,enabled> @2196,764 26x26 actions=Press|Set Focus
+      [label] '0 more notices' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Open the Log' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [progress bar] '' <enabled> @0,0 0x0 actions=Increase|Decrease
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '0 %' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [progress bar] 'Progress' <enabled> @0,0 0x0 actions=Increase|Decrease
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [list] 'Log' <enabled> @0,0 0x0 actions=
+          [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [button] 'Show the log' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Open in panel' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Force stop' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Force stop' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Cancel' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+  [frame] 'Save layout as' <enabled> @0,0 372x128
+    [dialog] 'Save layout as' <enabled> @0,0 0x0 actions=
+      [text] 'Save layout as' <enabled> @0,0 0x0 actions=
+        [label] 'Save layout as' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Name' <focusable,enabled> @24,28 56x18 actions=Set Focus
+      [text] 'Name' desc='Enter a name for the layout.' <focusable,enabled> @88,24 260x26 actions=Set Focus
+      [alert] '' <enabled> @0,0 0x0 actions=
+      [panel] '' <enabled> @180,74 168x30 actions=
+        [button] 'Save' <> @180,74 80x30 actions=Press
+          [label] 'Save' <> @190,79 60x20 actions=
+        [button] 'Cancel' <focusable,enabled> @268,74 80x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Manage layouts' <enabled> @0,0 380x302
+    [dialog] 'Manage layouts' <enabled> @0,0 0x0 actions=
+      [text] 'Manage layouts' <enabled> @0,0 0x0 actions=
+        [label] 'Manage layouts' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [panel] '' <enabled> @24,24 332x200 actions=
+        [list] 'Saved layouts' <focusable,enabled> @25,25 330x198 actions=Set Focus
+      [alert] '' <enabled> @0,0 0x0 actions=
+      [panel] '' <enabled> @276,248 80x30 actions=
+        [button] 'Close' <focusable,enabled> @276,248 80x30 actions=Press|Set Focus
+          [label] 'Close' <focusable,enabled> @286,253 60x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Calibrate tap latency' <enabled> @0,0 480x253
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+    [label] 'Press' <focusable,enabled> @18,18 33x18 actions=Set Focus
+    [label] 'Space' <focusable,enabled> @56,19 37x17 actions=Set Focus
+      [label] 'Space' <focusable,enabled> @60,20 29x14 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+    [label] 'on each beep.' <focusable,enabled> @98,18 86x18 actions=Set Focus
+    [label] '16 beeps at 100 BPM; the first four are practice.' <focusable,enabled> @18,38 290x18 actions=Set Focus
+    [progress bar] '0 of 16 beeps' <enabled> @18,18 346x16 actions=Increase|Decrease
+    [label] 'Your presses, in ms after each beep' <focusable,enabled> @18,18 184x15 actions=Set Focus
+    [label] 'Latency' <focusable,enabled> @18,22 52x18 actions=Set Focus
+    [spin button] 'Latency' <focusable,enabled> @80,18 120x26 actions=Increase|Decrease|Set Focus
+      [text] '' <focusable,enabled> @84,22 96x18 actions=Set Focus
+    [label] 'Spread ±0 ms · 0 of 12 counted beeps' <focusable,enabled> @210,24 193x15 actions=Set Focus
+    [button] 'Start again' <focusable,enabled> @18,20 80x26 actions=Press|Set Focus
+    [panel] '' <enabled> @114,18 166x30 actions=
+      [button] 'Cancel' <focusable,enabled> @200,18 80x30 actions=Press|Set Focus
+      [button] 'Apply' <focusable,enabled> @114,18 80x30 actions=Press|Set Focus
+        [label] 'Apply' <focusable,enabled> @124,23 60x20 actions=Set Focus
+  [frame] 'History' <enabled> @0,0 380x462
+    [dialog] 'History' <enabled> @0,0 0x0 actions=
+      [text] 'History' <enabled> @0,0 0x0 actions=
+        [label] 'History' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'runs.ass' <focusable,enabled> @24,24 191x18 actions=Set Focus
+      [label] '1 step. Steps after the current one can be redone.' <focusable,enabled> @24,54 191x18 actions=Set Focus
+      [panel] '' <enabled> @24,84 2x2 actions=
+        [list] 'History' <enabled> @25,85 189x0 actions=
+          [list item] 'Open, current' <enabled> @25,85 189x30 actions=
+            [label] '1' <focusable,enabled> @31,91 22x18 actions=Set Focus
+            [label] 'Open' <focusable,enabled> @63,91 83x18 actions=Set Focus
+            [label] 'Current' <focusable,enabled> @156,93 52x15 actions=Set Focus
+          [scroll bar] '' <focusable,enabled> @204,85 10x10 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [panel] '' <enabled> @40,108 175x30 actions=
+        [button] 'Go to step' <focusable,enabled> @41,108 86x30 actions=Press|Set Focus
+          [label] 'Go to step' <focusable,enabled> @51,113 66x20 actions=Set Focus
+        [button] 'Close' <focusable,enabled> @135,108 80x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] '' <enabled> @0,0 64x48
+    [dialog] '' <enabled> @0,0 0x0 actions=
+      [text] '' <enabled> @0,0 0x0 actions=
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [alert] '' <enabled> @0,0 0x0 actions=
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [scroll bar] '' <focusable,enabled> @24,14 10x10 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'X' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Answers and presets' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Script resolution' <enabled> @0,0 492x126
+    [label] 'This file has no script resolution, and “” needs one.' <focusable,enabled> @16,16 306x18 actions=Set Focus
+    [spin button] 'Width' <focusable,enabled> @16,16 120x26 actions=Increase|Decrease|Set Focus
+      [text] '' <focusable,enabled> @20,20 96x18 actions=Set Focus
+    [spin button] 'Height' <focusable,enabled> @160,16 120x26 actions=Increase|Decrease|Set Focus
+      [text] '' <focusable,enabled> @164,20 96x18 actions=Set Focus
+    [button] 'Use video resolution' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+    [check box] 'Always set it from the video without asking' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+    [panel] '' <enabled> @16,16 166x26 actions=
+      [button] 'Set' <focusable,enabled> @16,16 80x26 actions=Press|Set Focus
+      [button] 'Cancel' <focusable,enabled> @102,16 80x26 actions=Press|Set Focus
+  [frame] 'Translation mode' <enabled> @0,0 468x195
+    [dialog] 'Translation mode' <enabled> @0,0 0x0 actions=
+      [text] 'Translation mode' <enabled> @0,0 0x0 actions=
+        [label] 'Translation mode' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Turn on Translation mode for this file?' <focusable,enabled> @72,36 136x21 actions=Set Focus
+      [label] 'Each line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.' <focusable,enabled> @72,63 136x54 actions=Set Focus
+      [check box] "Don't ask again" <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [button] 'Details' desc='Collapsed' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Details' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [button] 'Copy details' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [text] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @40,141 168x30 actions=
+        [button] 'Turn on' <focusable,enabled> @40,141 80x30 actions=Press|Set Focus
+          [label] 'Turn on' <focusable,enabled> @50,146 60x20 actions=Set Focus
+        [button] 'Not now' <focusable,enabled> @128,141 80x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Translation mode' <enabled> @0,0 468x177
+    [dialog] 'Translation mode' <enabled> @0,0 0x0 actions=
+      [text] 'Translation mode' <enabled> @0,0 0x0 actions=
+        [label] 'Translation mode' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Turn off Translation mode?' <focusable,enabled> @72,36 142x21 actions=Set Focus
+      [label] 'Each translated line keeps its Translated text; its Original text is deleted.' <focusable,enabled> @72,63 142x36 actions=Set Focus
+      [check box] "Don't ask again" <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [button] 'Details' desc='Collapsed' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Details' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [button] 'Copy details' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [text] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @40,123 174x30 actions=
+        [button] 'Turn off' <focusable,enabled> @41,123 80x30 actions=Press|Set Focus
+          [label] 'Turn off' <focusable,enabled> @51,128 60x20 actions=Set Focus
+        [button] 'Keep it on' <focusable,enabled> @129,123 85x30 actions=Press|Set Focus
+          [label] 'Keep it on' <focusable,enabled> @139,128 65x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] '' <enabled> @0,0 0x0
+    [panel] 'Full screen video' <enabled> @0,0 0x0 actions=
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [button] 'Position pointer' <focusable,checked,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Text positioning' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Text moving' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Text scaling' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Text Z rotation' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Text X / Y rotation' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Perspective' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Rectangle clipping' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Vector clipping' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Vector drawing' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Position shifter' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Hydra' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'More tools' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Press Esc to exit full screen' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [filler] '' <enabled> @0,0 0x0 actions=
+        [button] 'More options' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Pick selected lines' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'Changes the active line' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '0 lines' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Clear picked lines' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [slider] 'Video position' <> @0,0 0x0 actions=Increase|Decrease
+      [button] 'Previous video file' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Play' <> @0,0 0x0 actions=Press
+      [button] 'Play the current line' <> @0,0 0x0 actions=Press
+      [button] 'Stop' <> @0,0 0x0 actions=Press
+      [button] 'Next file' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [separator] '' <enabled> @0,0 0x0 actions=
+      [label] 'Video times' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [separator] '' <enabled> @0,0 0x0 actions=
+      [label] 'Line 9, 0:00:00.70 – 0:00:01.00: ki' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '9' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '0:00:00.70 – 0:00:01.00' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'ki' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Open editor' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Visual tools' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [separator] '' <enabled> @0,0 0x0 actions=
+      [button] 'Mute' <> @0,0 0x0 actions=Press
+      [slider] 'Volume' <> @0,0 0x0 actions=Increase|Decrease
+      [separator] '' <enabled> @0,0 0x0 actions=
+      [button] 'Full screen bar: Auto' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Exit full screen' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+  [frame] 'Copy columns' <enabled> @0,0 310x188
+    [dialog] 'Copy columns' <enabled> @0,0 0x0 actions=
+      [text] 'Copy columns' <enabled> @0,0 0x0 actions=
+        [label] 'Copy columns' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Copy these columns of the 0 selected lines:' <focusable,enabled> @24,24 184x18 actions=Set Focus
+      [panel] '' <enabled> @24,54 184x18 actions=
+      [button] 'Select all' <focusable,enabled> @24,84 80x26 actions=Press|Set Focus
+      [button] 'None' <focusable,enabled> @118,84 80x26 actions=Press|Set Focus
+      [panel] '' <enabled> @40,134 168x30 actions=
+        [button] 'Copy' <focusable,enabled> @40,134 80x30 actions=Press|Set Focus
+          [label] 'Copy' <focusable,enabled> @50,139 60x20 actions=Set Focus
+        [button] 'Cancel' <focusable,enabled> @128,134 80x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Move panel' <enabled> @0,0 425x374
+    [dialog] 'Move panel' <enabled> @0,0 0x0 actions=
+      [text] 'Move panel' <enabled> @0,0 0x0 actions=
+        [label] 'Move panel' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Panel' <focusable,enabled> @24,28 56x18 actions=Set Focus
+      [combo box] 'Panel' <focusable,enabled> @88,24 310x26 actions=Set Focus
+        [text] 'Panel' <> @88,24 290x26 actions=
+      [heading] 'Move' <enabled> @24,79 34x18 actions=
+      [label] 'Place' <focusable,enabled> @24,113 56x18 actions=Set Focus
+      [combo box] 'Placement' <focusable,enabled> @88,109 130x26 actions=Set Focus
+        [text] 'Placement' <> @88,109 110x26 actions=
+      [label] 'next to' <focusable,enabled> @230,113 43x18 actions=Set Focus
+      [combo box] 'Next to panel' <focusable,enabled> @281,109 117x26 actions=Set Focus
+        [text] 'Next to panel' <> @281,109 97x26 actions=
+      [button] 'Move' <focusable,enabled> @318,147 80x26 actions=Press|Set Focus
+      [heading] 'Resize' <enabled> @24,202 40x18 actions=
+      [label] 'Width' <focusable,enabled> @24,236 56x18 actions=Set Focus
+      [spin button] 'Width' <focusable,enabled> @88,232 110x26 actions=Increase|Decrease|Set Focus
+        [text] '' <focusable,enabled> @92,236 86x18 actions=Set Focus
+      [label] 'Height' <focusable,enabled> @216,236 41x18 actions=Set Focus
+      [spin button] 'Height' <focusable,enabled> @265,232 110x26 actions=Increase|Decrease|Set Focus
+        [text] '' <focusable,enabled> @269,236 86x18 actions=Set Focus
+      [label] 'px' <focusable,enabled> @383,236 15x18 actions=Set Focus
+      [button] 'Resize' <focusable,enabled> @318,270 80x26 actions=Press|Set Focus
+      [panel] '' <enabled> @318,320 80x30 actions=
+        [button] 'Close' <focusable,enabled> @318,320 80x30 actions=Press|Set Focus
+          [label] 'Close' <focusable,enabled> @328,325 60x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Translation matching options' <enabled> @0,0 966x386
+    [dialog] 'Translation matching options' <enabled> @0,0 0x0 actions=
+      [text] 'Translation matching options' <enabled> @0,0 0x0 actions=
+        [label] 'Translation matching options' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] '<b>Original</b>: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.' <focusable,enabled> @32,32 196x18 actions=Set Focus
+      [label] '<b>Translation</b>: the text pasted in, moved line by line until each one sits beside its original.' <focusable,enabled> @32,54 196x18 actions=Set Focus
+      [label] 'Original' <focusable,enabled> @24,92 96x18 actions=Set Focus
+      [label] 'Translation' <focusable,enabled> @140,92 96x18 actions=Set Focus
+      [button] 'Add line' desc='A blank line before the selected one; the original moves down. Time the new line.' <focusable,enabled> @24,122 96x26 actions=Press|Set Focus
+      [label] 'A blank line before the selected one; the original moves down. Time the new line.' <focusable,enabled> @24,152 96x36 actions=Set Focus
+      [button] 'Add line' desc='A blank line before the selected one; the translation moves down.' <focusable,enabled> @140,122 96x26 actions=Press|Set Focus
+      [label] 'A blank line before the selected one; the translation moves down.' <focusable,enabled> @140,152 96x18 actions=Set Focus
+      [button] 'Join lines' desc='Joins the selected line with the next one; the original moves up.' <focusable,enabled> @24,200 96x26 actions=Press|Set Focus
+      [label] 'Joins the selected line with the next one; the original moves up.' <focusable,enabled> @24,230 96x18 actions=Set Focus
+      [button] 'Join lines' desc='Joins the selected line with the next one; the translation moves up.' <focusable,enabled> @140,200 96x26 actions=Press|Set Focus
+      [label] 'Joins the selected line with the next one; the translation moves up.' <focusable,enabled> @140,230 96x18 actions=Set Focus
+      [button] 'Delete line' desc='Deletes the selected line; the original moves up.' <focusable,enabled> @24,260 96x26 actions=Press|Set Focus
+      [label] 'Deletes the selected line; the original moves up.' <focusable,enabled> @24,290 96x18 actions=Set Focus
+      [button] 'Delete line' desc='Deletes the selected line; the translation moves up.' <focusable,enabled> @140,260 96x26 actions=Press|Set Focus
+      [label] 'Deletes the selected line; the translation moves up.' <focusable,enabled> @140,290 96x18 actions=Set Focus
+      [panel] '' <enabled> @156,332 80x30 actions=
+        [button] 'Close' <focusable,enabled> @156,332 80x30 actions=Press|Set Focus
+          [label] 'Close' <focusable,enabled> @166,337 60x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'A new version is available' <enabled> @0,0 600x358
+    [dialog] 'A new version is available' <enabled> @0,0 0x0 actions=
+      [text] 'A new version is available' <enabled> @0,0 0x0 actions=
+        [label] 'A new version is available' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] '' <focusable,enabled> @70,24 467x26 actions=Set Focus
+      [label] 'You have version 0.1.0.' <focusable,enabled> @70,52 467x18 actions=Set Focus
+      [panel] '' <enabled> @24,84 513x96 actions=
+        [text] '' <focusable,enabled> @24,84 513x96 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @527,84 10x96 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [scroll bar] '' <focusable,enabled> @24,170 513x10 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [label] 'This version needs glibc  or later.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'The AUR package carries stable versions only. To try , use the AppImage from the release page.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Update with your AUR helper' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'You installed HikariSub from the AUR, so your package manager updates it.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [text] 'Command' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Copy' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [progress bar] '' <enabled> @0,0 0x0 actions=Increase|Decrease
+      [label] 'Downloading… 0 %' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Skip this version' <focusable,enabled> @24,206 108x26 actions=Press|Set Focus
+      [panel] '' <enabled> @148,204 389x30 actions=
+        [button] 'Open the download page' <focusable,enabled> @149,204 182x30 actions=Press|Set Focus
+          [label] 'Open the download page' <focusable,enabled> @159,209 162x20 actions=Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Close' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Remind me later' <focusable,enabled> @339,204 110x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] "What's new" <enabled> @0,0 620x502
+    [dialog] "What's new" <enabled> @0,0 0x0 actions=
+      [text] "What's new" <enabled> @0,0 0x0 actions=
+        [label] "What's new" <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Changes since version , the one you used before.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [document frame] "What's new" <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [label] 'No release notes yet' <focusable,enabled> @48,122 524x18 actions=Set Focus
+      [progress bar] '' <enabled> @0,0 0x0 actions=Increase|Decrease
+      [label] 'HikariSub fetches the release notes only while “Check for updates automatically” is on.' <focusable,enabled> @48,150 524x18 actions=Set Focus
+      [button] 'All release notes' <focusable,enabled> @24,250 130x26 actions=Press|Set Focus
+      [panel] '' <enabled> @170,248 80x30 actions=
+        [button] 'Close' <focusable,enabled> @170,248 80x30 actions=Press|Set Focus
+          [label] 'Close' <focusable,enabled> @180,253 60x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'About HikariSub' <enabled> @0,0 460x266
+    [dialog] 'About HikariSub' <enabled> @0,0 0x0 actions=
+      [text] 'About HikariSub' <enabled> @0,0 0x0 actions=
+        [label] 'About HikariSub' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'HikariSub' <focusable,enabled> @104,24 89x26 actions=Set Focus
+      [label] 'Version 0.1.0 (portable)' <focusable,enabled> @104,54 142x18 actions=Set Focus
+      [button] 'Copy version' <focusable,enabled> @250,52 22x22 actions=Press|Set Focus
+      [label] 'Subtitle editor by altqx.' <focusable,enabled> @104,80 332x18 actions=Set Focus
+      [label] 'HikariSub is free software under the GNU General Public License, version 3. It comes with no warranty.' <focusable,enabled> @24,114 412x40 actions=Set Focus
+      [link] 'HikariSub website' <focusable,enabled> @24,166 134x22 actions=Press|Set Focus
+        [label] 'HikariSub website' <focusable,enabled> @46,168 110x18 actions=Set Focus
+      [link] 'Report an issue' <focusable,enabled> @182,166 119x22 actions=Press|Set Focus
+        [label] 'Report an issue' <focusable,enabled> @204,168 95x18 actions=Set Focus
+      [panel] '' <enabled> @356,212 80x30 actions=
+        [button] 'OK' <focusable,enabled> @356,212 80x30 actions=Press|Set Focus
+          [label] 'OK' <focusable,enabled> @366,217 60x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'HikariSub closed unexpectedly' <enabled> @0,0 620x286
+    [dialog] 'HikariSub closed unexpectedly' <enabled> @0,0 0x0 actions=
+      [text] 'HikariSub closed unexpectedly' <enabled> @0,0 0x0 actions=
+        [label] 'HikariSub closed unexpectedly' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'HikariSub crashed .' <focusable,enabled> @70,24 251x21 actions=Set Focus
+      [label] 'A report helps find the cause. You can read all of it before it goes.' <focusable,enabled> @70,49 251x18 actions=Set Focus
+      [label] 'Your work' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '0 documents · ' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Restore session' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Autosaves…' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Report' <focusable,enabled> @24,85 45x18 actions=Set Focus
+      [label] 'Nothing is sent until you press Send report' <focusable,enabled> @79,86 242x17 actions=Set Focus
+      [text] 'Note' desc='What were you doing when it closed? (optional)' <focusable,enabled> @24,120 297x56 actions=Set Focus
+      [button] 'What the report contains' <focusable,enabled> @24,188 297x20 actions=Press|Set Focus
+        [label] 'What the report contains' <focusable,enabled> @44,189 163x18 actions=Set Focus
+        [label] 'crash record, system, settings, last 200 log lines' <focusable,enabled> @215,189 106x18 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [text] 'The whole report' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [button] 'Copy the report' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'File names become file1, file2… Your subtitle file, its text and your folders are never in a report.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [check box] 'Always send crash reports' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [panel] '' <enabled> @110,232 211x30 actions=
+        [button] 'Send report' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Send report' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Open GitHub issue' <focusable,enabled> @111,232 123x30 actions=Press|Set Focus
+        [button] "Don't send" <focusable,enabled> @241,232 80x30 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Close' <focusable,enabled> @0,0 0x0 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Report an issue' <enabled> @0,0 620x455
+    [dialog] 'Report an issue' <enabled> @0,0 0x0 actions=
+      [text] 'Report an issue' <enabled> @0,0 0x0 actions=
+        [label] 'Report an issue' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Kind' <focusable,enabled> @24,30 28x18 actions=Set Focus
+      [panel] 'Kind' <enabled> @157,24 360x30 actions=
+        [radio button] 'Bug' <focusable,checked,enabled> @158,25 119x28 actions=Toggle|Press|Set Focus
+          [label] 'Bug' <focusable,enabled> @158,25 119x28 actions=Set Focus
+          [label] 'Bug' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Feature request' <focusable,enabled> @277,25 120x28 actions=Toggle|Press|Set Focus
+          [label] 'Feature request' <focusable,enabled> @277,25 120x28 actions=Set Focus
+          [label] 'Feature request' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Question' <focusable,enabled> @397,25 119x28 actions=Toggle|Press|Set Focus
+          [label] 'Question' <focusable,enabled> @397,25 119x28 actions=Set Focus
+          [label] 'Question' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Title' <focusable,enabled> @24,68 26x18 actions=Set Focus
+      [text] 'Title' desc='A short summary' <focusable,enabled> @157,64 360x26 actions=Set Focus
+      [label] 'What happened' <focusable,enabled> @24,106 98x18 actions=Set Focus
+      [text] 'What happened' <focusable,enabled> @157,100 360x56 actions=Set Focus
+      [label] 'Steps to reproduce' <focusable,enabled> @24,172 116x18 actions=Set Focus
+      [text] 'Steps to reproduce' <focusable,enabled> @157,166 360x56 actions=Set Focus
+      [label] 'What you expected' <focusable,enabled> @24,238 117x18 actions=Set Focus
+      [text] 'What you expected' <focusable,enabled> @157,232 360x36 actions=Set Focus
+      [label] 'Attached' <focusable,enabled> @24,284 60x18 actions=Set Focus
+      [button] 'System and settings' <focusable,enabled> @24,319 387x20 actions=Press|Set Focus
+        [label] 'System and settings' <focusable,enabled> @44,320 367x18 actions=Set Focus
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [text] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [label] 'Always included' <focusable,enabled> @419,321 98x18 actions=Set Focus
+      [check box] 'Log excerpt' <focusable,checked,enabled> @24,347 32x30 actions=Toggle|Press|Set Focus
+      [button] 'Log excerpt' <focusable,enabled> @60,354 457x20 actions=Press|Set Focus
+        [label] 'Log excerpt' <focusable,enabled> @80,355 76x18 actions=Set Focus
+        [label] 'last 200 lines, file names replaced' <focusable,enabled> @164,355 353x18 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [text] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [check box] 'Screenshot of the window' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [check box] 'Subtitle file' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [label] ', as a .zip to drag into the issue' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Finish on GitHub' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'The Bug form opened in your browser, filled in.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Check it there and press Create. You need a GitHub account.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Copy again' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Add the screenshot' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Drag it into the description, or copy it and paste it there.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Copy image' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Show file' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Add the subtitle file' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Drag the .zip into the description. Only you choose to share it.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Show file' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Copy' <focusable,enabled> @24,403 80x26 actions=Press|Set Focus
+      [button] 'Open the form again' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [panel] '' <enabled> @305,401 212x30 actions=
+        [button] 'Open on GitHub' <> @306,401 123x30 actions=Press
+          [label] 'Open on GitHub' <> @316,406 103x20 actions=
+        [button] 'Cancel' <focusable,enabled> @437,401 80x30 actions=Press|Set Focus
+        [button] 'Done' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Done' <focusable,enabled> @0,0 0x0 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Credits' <enabled> @0,0 540x493
+    [dialog] 'Credits' <enabled> @0,0 0x0 actions=
+      [text] 'Credits' <enabled> @0,0 0x0 actions=
+        [label] 'Credits' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Development' <focusable,enabled> @24,30 71x15 actions=Set Focus
+      [label] 'altqx' <focusable,enabled> @24,51 110x18 actions=Set Focus
+      [label] 'Design and development' <focusable,enabled> @146,51 152x18 actions=Set Focus
+      [label] 'Translation' <focusable,enabled> @24,87 59x15 actions=Set Focus
+      [label] 'altqx' <focusable,enabled> @24,108 110x18 actions=Set Focus
+      [label] 'Korean, Polish, Tamil and Thai' <focusable,enabled> @146,108 182x18 actions=Set Focus
+      [label] 'Built with' <focusable,enabled> @24,144 51x15 actions=Set Focus
+      [list] 'Built with' <focusable,enabled> @25,166 120x248 actions=Set Focus
+        [list item] 'Qt, © The Qt Company Ltd. and other contributors, LGPL 3' <enabled> @25,172 120x39 actions=
+          [label] 'Qt' <focusable,enabled> @35,172 104x20 actions=Set Focus
+          [label] '© The Qt Company Ltd. and other contributors' <focusable,enabled> @149,172 165x20 actions=Set Focus
+          [label] 'LGPL 3' <focusable,enabled> @149,192 165x19 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @135,166 10x248 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [panel] '' <enabled> @66,439 80x30 actions=
+        [button] 'OK' <focusable,enabled> @66,439 80x30 actions=Press|Set Focus
+          [label] 'OK' <focusable,enabled> @76,444 60x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Style manager' <enabled> @0,0 981x746
+    [dialog] 'Style manager' <enabled> @0,0 0x0 actions=
+      [text] 'Style manager' <enabled> @0,0 0x0 actions=
+        [label] 'Style manager' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [text] 'Filter styles' desc='Filter styles' <focusable,enabled> @12,24 276x26 actions=Set Focus
+      [label] 'Catalog' <focusable,enabled> @12,67 48x18 actions=Set Focus
+      [combo box] 'Style catalog' <focusable,enabled> @70,63 154x26 actions=Set Focus
+        [text] 'Style catalog' <> @70,63 134x26 actions=
+      [button] 'New catalog' <focusable,enabled> @228,62 28x28 actions=Press|Set Focus
+      [button] 'Delete catalog' <> @260,62 28x28 actions=Press
+      [button] 'New style' <focusable,enabled> @12,96 28x28 actions=Press|Set Focus
+      [button] 'Duplicate' <> @42,96 28x28 actions=Press
+      [button] 'Delete' <> @72,96 28x28 actions=Press
+      [separator] '' <enabled> @102,104 6x12 actions=
+      [button] 'Move up' <> @110,96 28x28 actions=Press
+      [button] 'Move down' <> @140,96 28x28 actions=Press
+      [separator] '' <enabled> @170,104 6x12 actions=
+      [button] 'Load from a file…' <focusable,enabled> @178,96 28x28 actions=Press|Set Focus
+      [button] 'More' <focusable,enabled> @260,96 28x28 actions=Press|Set Focus
+      [panel] '' <enabled> @12,130 276x80 actions=
+        [list] 'Catalog styles' <focusable,enabled> @13,131 274x78 actions=Set Focus
+          [scroll bar] '' <focusable,enabled> @277,131 10x78 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [button] 'Add to file' <> @12,218 92x26 actions=Press
+      [button] 'Add to catalog' <> @110,218 118x26 actions=Press
+      [button] 'Add to all open files' <> @234,218 28x28 actions=Press
+      [label] 'This file' <focusable,enabled> @12,258 48x18 actions=Set Focus
+      [button] 'New style' <focusable,enabled> @12,282 28x28 actions=Press|Set Focus
+      [button] 'Duplicate' <> @42,282 28x28 actions=Press
+      [button] 'Delete' <> @72,282 28x28 actions=Press
+      [separator] '' <enabled> @102,290 6x12 actions=
+      [button] 'Move up' <> @110,282 28x28 actions=Press
+      [button] 'Move down' <> @140,282 28x28 actions=Press
+      [separator] '' <enabled> @170,290 6x12 actions=
+      [button] 'Load from a file…' <focusable,enabled> @178,282 28x28 actions=Press|Set Focus
+      [button] 'More' <focusable,enabled> @260,282 28x28 actions=Press|Set Focus
+      [panel] '' <enabled> @12,316 276x80 actions=
+        [list] 'Styles in this file' <focusable,enabled> @13,317 274x78 actions=Set Focus
+          [scroll bar] '' <focusable,enabled> @277,317 10x78 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [label] 'This tab has no ASS styles.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '0 styles: the preview shows ' <> @0,0 0x0 actions=
+      [text] 'Preview text' <> @325,114 372x26 actions=
+      [panel] '' <> @301,153 420x120 actions=
+        [label] 'Name' <> @325,169 38x18 actions=
+        [text] 'Name' <> @325,191 492x26 actions=
+        [label] '' <> @0,0 0x0 actions=
+        [check box] 'Rename it in the 0 lines that use it' <checked> @0,0 0x0 actions=Toggle|Press
+        [label] 'Font' <> @325,233 28x18 actions=
+        [label] 'Family' <> @325,259 366x17 actions=
+        [button] 'Reset Family' <> @0,0 0x0 actions=Press
+        [label] 'Size' <> @703,259 114x17 actions=
+        [button] 'Reset Size' <> @0,0 0x0 actions=Press
+        [combo box] 'Font' <> @325,279 366x26 actions=
+          [label] 'Multiple values' <> @0,0 0x0 actions=
+          [text] 'Font' <> @325,279 346x26 actions=
+        [text] 'Size' <> @703,279 114x26 actions=
+          [label] '' <> @0,0 0x0 actions=
+        [label] 'Font catalog' <> @325,313 240x17 actions=
+        [button] 'Reset Font catalog' <> @0,0 0x0 actions=Press
+        [label] 'Emphasis' <> @577,313 114x17 actions=
+        [button] 'Reset Emphasis' <> @0,0 0x0 actions=Press
+        [label] 'Text encoding' <> @703,313 114x17 actions=
+        [button] 'Reset Text encoding' <> @0,0 0x0 actions=Press
+        [combo box] 'Font catalogs' <> @325,335 141x26 actions=
+          [text] 'Font catalogs' <> @325,335 121x26 actions=
+        [button] 'Add' <> @471,334 28x28 actions=Press
+        [button] 'Manage' <> @504,334 28x28 actions=Press
+        [check box] 'Filter' <> @537,334 28x28 actions=Toggle|Press
+        [check box] 'Bold' <> @578,334 28x28 actions=Toggle|Press
+        [check box] 'Italic' <> @606,334 28x28 actions=Toggle|Press
+        [check box] 'Underline' <> @634,334 28x28 actions=Toggle|Press
+        [check box] 'Strikethrough' <> @662,334 28x28 actions=Toggle|Press
+        [combo box] 'Text encoding' <> @703,335 114x26 actions=
+          [text] 'Text encoding' <> @703,335 94x26 actions=
+        [label] 'Colours and transparency' <> @325,379 160x18 actions=
+        [label] 'Primary' <> @325,405 114x17 actions=
+        [button] 'Reset Primary' <> @0,0 0x0 actions=Press
+        [label] 'Secondary' <> @451,405 114x17 actions=
+        [button] 'Reset Secondary' <> @0,0 0x0 actions=Press
+        [label] 'Border' <> @577,405 114x17 actions=
+        [button] 'Reset Border' <> @0,0 0x0 actions=Press
+        [label] 'Shadow' <> @703,405 114x17 actions=
+        [button] 'Reset Shadow' <> @0,0 0x0 actions=Press
+        [button] 'Primary' desc='#000000' <> @325,425 64x26 actions=Press
+          [label] '#000000' <> @340,431 42x14 actions=
+        [text] 'Primary transparency' <> @393,425 46x26 actions=
+        [button] 'Secondary' desc='#000000' <> @451,425 64x26 actions=Press
+          [label] '#000000' <> @466,431 42x14 actions=
+        [text] 'Secondary transparency' <> @519,425 46x26 actions=
+        [button] 'Border' desc='#000000' <> @577,425 64x26 actions=Press
+          [label] '#000000' <> @592,431 42x14 actions=
+        [text] 'Border transparency' <> @645,425 46x26 actions=
+        [button] 'Shadow' desc='#000000' <> @703,425 64x26 actions=Press
+          [label] '#000000' <> @718,431 42x14 actions=
+        [text] 'Shadow transparency' <> @771,425 46x26 actions=
+        [label] 'Shape and position' <> @325,467 119x18 actions=
+        [label] 'Border' <> @325,493 114x17 actions=
+        [button] 'Reset Border' <> @0,0 0x0 actions=Press
+        [label] 'Shadow' <> @451,493 114x17 actions=
+        [button] 'Reset Shadow' <> @0,0 0x0 actions=Press
+        [label] 'Scale X' <> @577,493 114x17 actions=
+        [button] 'Reset Scale X' <> @0,0 0x0 actions=Press
+        [label] 'Scale Y' <> @703,493 114x17 actions=
+        [button] 'Reset Scale Y' <> @0,0 0x0 actions=Press
+        [text] 'Border width' <> @325,513 114x26 actions=
+          [label] '' <> @0,0 0x0 actions=
+        [text] 'Shadow distance' <> @451,513 114x26 actions=
+          [label] '' <> @0,0 0x0 actions=
+        [text] 'Scale X' <> @577,513 114x26 actions=
+          [label] '%' <> @672,517 11x18 actions=
+        [text] 'Scale Y' <> @703,513 114x26 actions=
+          [label] '%' <> @798,517 11x18 actions=
+        [label] 'Angle' <> @325,547 114x17 actions=
+        [button] 'Reset Angle' <> @0,0 0x0 actions=Press
+        [label] 'Spacing' <> @451,547 114x17 actions=
+        [button] 'Reset Spacing' <> @0,0 0x0 actions=Press
+        [label] 'Border type' <> @577,547 114x17 actions=
+        [button] 'Reset Border type' <> @0,0 0x0 actions=Press
+        [label] 'Alignment' <> @703,547 114x17 actions=
+        [button] 'Reset Alignment' <> @0,0 0x0 actions=Press
+        [text] 'Angle' <> @325,569 114x26 actions=
+          [label] '°' <> @425,573 6x18 actions=
+        [text] 'Spacing' <> @451,569 114x26 actions=
+          [label] '' <> @0,0 0x0 actions=
+        [check box] 'Opaque box' <> @577,567 114x30 actions=Toggle|Press
+        [panel] 'Alignment' <> @703,567 68x68 actions=
+          [radio button] 'Alignment 7' <> @704,568 22x22 actions=Toggle|Press
+          [radio button] 'Alignment 8' <> @726,568 22x22 actions=Toggle|Press
+          [radio button] 'Alignment 9' <> @748,568 22x22 actions=Toggle|Press
+          [radio button] 'Alignment 4' <> @704,590 22x22 actions=Toggle|Press
+          [radio button] 'Alignment 5' <> @726,590 22x22 actions=Toggle|Press
+          [radio button] 'Alignment 6' <> @748,590 22x22 actions=Toggle|Press
+          [radio button] 'Alignment 1' <> @704,612 22x22 actions=Toggle|Press
+          [radio button] 'Alignment 2' <> @726,612 22x22 actions=Toggle|Press
+          [radio button] 'Alignment 3' <> @748,612 22x22 actions=Toggle|Press
+        [label] 'Left margin' <> @325,605 114x17 actions=
+        [button] 'Reset Left margin' <> @0,0 0x0 actions=Press
+        [label] 'Right margin' <> @451,605 114x17 actions=
+        [button] 'Reset Right margin' <> @0,0 0x0 actions=Press
+        [label] 'Vertical margin' <> @577,605 114x17 actions=
+        [button] 'Reset Vertical margin' <> @0,0 0x0 actions=Press
+        [text] 'Left margin' <> @325,625 114x26 actions=
+          [label] '' <> @0,0 0x0 actions=
+        [text] 'Right margin' <> @451,625 114x26 actions=
+          [label] '' <> @0,0 0x0 actions=
+        [text] 'Vertical margin' <> @577,625 114x26 actions=
+          [label] '' <> @0,0 0x0 actions=
+        [scroll bar] '' <> @711,153 10x120 actions=Increase|Decrease|Increase|Decrease
+        [scroll bar] '' <> @301,263 420x10 actions=Increase|Decrease|Increase|Decrease
+      [button] 'Revert' <> @24,296 80x26 actions=Press
+      [panel] '' <enabled> @441,294 256x30 actions=
+        [button] 'OK' <focusable,enabled> @441,294 80x30 actions=Press|Set Focus
+          [label] 'OK' <focusable,enabled> @451,299 60x20 actions=Set Focus
+        [button] 'Cancel' <focusable,enabled> @529,294 80x30 actions=Press|Set Focus
+        [button] 'Apply' <> @617,294 80x30 actions=Press
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Import legacy settings' <enabled> @0,0 850x562
+    [dialog] 'Import legacy settings' <enabled> @0,0 0x0 actions=
+      [text] 'Import legacy settings' <enabled> @0,0 0x0 actions=
+        [label] 'Import legacy settings' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] '1' <focusable,enabled> @31,26 7x18 actions=Set Focus
+      [label] 'Step 1 of 3: Installation' <focusable,enabled> @54,26 71x18 actions=Set Focus
+      [label] '2' <focusable,enabled> @267,26 7x18 actions=Set Focus
+      [label] 'Step 2 of 3: Review' <focusable,enabled> @290,26 44x18 actions=Set Focus
+      [label] '3' <focusable,enabled> @447,26 7x18 actions=Set Focus
+      [label] 'Step 3 of 3: Import' <focusable,enabled> @470,26 43x18 actions=Set Focus
+      [label] 'Choose the legacy installation to import from' <focusable,enabled> @24,64 325x21 actions=Set Focus
+      [label] 'HikariSub 0.0.x installations found on this computer. Nothing in them is changed.' <focusable,enabled> @24,91 489x18 actions=Set Focus
+      [panel] '' <enabled> @24,121 489x54 actions=
+        [list] 'Legacy installations' <focusable,enabled> @25,122 487x52 actions=Set Focus
+        [label] 'No legacy installation was found. Choose its folder.' <focusable,enabled> @115,139 309x18 actions=Set Focus
+      [button] 'Choose folder…' <focusable,enabled> @24,183 124x26 actions=Press|Set Focus
+      [alert] '' <enabled> @0,0 0x0 actions=
+      [label] 'Files that are not UTF-8 are read as' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [combo box] 'Choose…' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Choose…' <> @0,0 0x0 actions=
+      [alert] 'The last import is in effect.' <enabled> @0,0 0x0 actions=
+      [button] 'Roll back…' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Review what to import' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [radio button] 'Conflicts 0' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [label] 'Conflicts 0' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'Conflicts 0' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'All 0' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [label] 'All 0' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'All 0' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [text] 'Search settings' desc='Search settings' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '0 of 0 chosen' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [label] 'Setting' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Legacy' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Now' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Status' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [list] 'Settings to review' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [label] 'No conflicts: the legacy settings are the same as yours or need no choice.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Choose a row to see where it comes from.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [link] 'Proposed choice' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'Proposed choice' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [link] 'All conflicts' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'All conflicts' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [link] 'None' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'None' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Nothing was imported.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Back' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [button] 'Roll back…' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [panel] '' <enabled> @116,285 397x30 actions=
+        [button] 'Next' <> @293,285 80x30 actions=Press
+          [label] 'Next' <> @303,290 60x20 actions=
+        [button] 'Import 0 settings' <> @0,0 0x0 actions=Press
+          [label] 'Import 0 settings' <> @0,0 0x0 actions=
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+          [label] 'Close' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Cancel' <focusable,enabled> @205,285 80x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Getting started' <enabled> @0,0 752x622
+    [dialog] 'Getting started' <enabled> @0,0 0x0 actions=
+      [text] 'Getting started' <enabled> @0,0 0x0 actions=
+        [label] 'Getting started' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Step 1 of 7' <focusable,enabled> @83,30 104x8 actions=Set Focus
+      [heading] 'Welcome to HikariSub' <enabled> @24,56 222x24 actions=
+      [label] 'Let’s get started by choosing your language. Nothing is saved until Finish, and every choice can be changed later.' <focusable,enabled> @24,86 222x18 actions=Set Focus
+      [list] 'Interface language' <focusable,enabled> @24,126 340x4 actions=Set Focus
+      [label] 'This window switches to the language you pick.' <focusable,enabled> @61,146 267x17 actions=Set Focus
+      [radio button] 'Import my old settings' desc='Hotkeys, fonts, audio and video options and your dictionary words.' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Import my old settings' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Recommended' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Hotkeys, fonts, audio and video options and your dictionary words.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Set up from scratch' desc='Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Set up from scratch' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [alert] '' <enabled> @0,0 0x0 actions=
+      [link] 'Read again' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'Read again' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Files that are not UTF-8 are read as' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [combo box] 'Choose…' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Choose…' <> @0,0 0x0 actions=
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [radio button] 'Conflicts 0' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [label] 'Conflicts 0' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'Conflicts 0' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'All 0' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [label] 'All 0' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'All 0' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [text] 'Search settings' desc='Search settings' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '0 of 0 chosen' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [label] 'Setting' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Legacy' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Now' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Status' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [list] 'Settings to review' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [label] 'No conflicts: the legacy settings are the same as yours or need no choice.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Choose a row to see where it comes from.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [link] 'Proposed choice' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'Proposed choice' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [link] 'All conflicts' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'All conflicts' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [link] 'None' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'None' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [check box] 'Follow system theme' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [radio button] 'Light' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Light' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Dark' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Dark' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Accent colour' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Red' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [radio button] 'Orange' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [radio button] 'Gold' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [radio button] 'Green' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [radio button] 'Blue' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [radio button] 'Purple' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [radio button] 'Pink' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [label] 'Green' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Further high contrast settings are in Settings › Appearance.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [check box] 'Enable high contrast' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [label] 'Title bar' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [radio button] 'HikariSub’s' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [label] 'HikariSub’s' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'HikariSub’s' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'The system’s' <focusable,checked,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+          [label] 'The system’s' <focusable,enabled> @0,0 0x0 actions=Set Focus
+          [label] 'The system’s' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'The system’s suits this desktop.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Time' desc='Audio across the top for timing lines by ear.' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Original text' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Styles' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Grid' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Template editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Grid' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Time' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio across the top for timing lines by ear.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Translate' desc='The original text above your translation, with Translation mode on.' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Original text' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Styles' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Grid' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Template editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Grid' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Translate' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'The original text above your translation, with Translation mode on.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Typeset' desc='A large video with the visual tools and the Styles panel.' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Original text' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Styles' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Grid' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Template editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Grid' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Typeset' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'A large video with the visual tools and the Styles panel.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Karaoke' desc='The Template editor beside the video, the audio in Karaoke mode.' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Original text' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Styles' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Line editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Grid' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Video' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Template editor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Audio' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Grid' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Karaoke' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'The Template editor beside the video, the audio in Karaoke mode.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Subtitles drawn by' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [combo box] 'Subtitles drawn by' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Subtitles drawn by' <> @0,0 0x0 actions=
+      [label] 'libass' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'The only renderer here.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [image] 'A sample frame with a subtitle' <enabled> @0,0 0x0 actions=
+      [label] 'Sound plays on' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [combo box] 'Sound plays on' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Sound plays on' <> @0,0 0x0 actions=
+      [button] 'Test sound' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Autosave files kept' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [spin button] 'Autosave files kept' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus
+        [text] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Spelling' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [check box] 'Check spelling' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [combo box] 'Primary language' <> @0,0 0x0 actions=
+        [text] 'Primary language' <> @0,0 0x0 actions=
+      [label] 'Grammar' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [combo box] 'Grammar check' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [text] 'Grammar check' <> @0,0 0x0 actions=
+      [label] 'Example' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [text] 'Example' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Stable versions only' desc='Tested releases.' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Stable versions only' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Recommended' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Tested releases.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [radio button] 'Pre-releases too' desc='Beta versions as well, to try what’s coming. They can have bugs.' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+        [label] 'Pre-releases too' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Beta versions as well, to try what’s coming. They can have bugs.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [check box] 'Check for updates automatically' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [label] 'At most once a day, when HikariSub starts. What’s new on Home needs it too.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [check box] 'Send anonymous usage data' <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [label] 'Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [link] 'What is sent' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [label] 'What is sent' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [text] 'Your folder' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [button] 'Open folder' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Later: Settings › General › Language' <focusable,enabled> @44,134 202x17 actions=Set Focus
+      [button] 'Back' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [panel] '' <enabled> @78,175 168x30 actions=
+        [button] 'Skip setup' <focusable,enabled> @166,175 80x30 actions=Press|Set Focus
+        [button] 'Next' <focusable,enabled> @78,175 80x30 actions=Press|Set Focus
+          [label] 'Next' <focusable,enabled> @88,180 60x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Select lines' <enabled> @0,0 516x328
+    [dialog] 'Select lines' <enabled> @0,0 0x0 actions=
+      [text] 'Select lines' <enabled> @0,0 0x0 actions=
+        [label] 'Select lines' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Find' <focusable,enabled> @24,30 72x18 actions=Set Focus
+      [panel] 'Lines with or without the text' <enabled> @104,24 126x30 actions=
+        [radio button] 'With' <focusable,checked,enabled> @105,25 62x28 actions=Toggle|Press|Set Focus
+          [label] 'With' <focusable,enabled> @105,25 62x28 actions=Set Focus
+          [label] 'With' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Without' <focusable,enabled> @167,25 62x28 actions=Toggle|Press|Set Focus
+          [label] 'Without' <focusable,enabled> @167,25 62x28 actions=Set Focus
+          [label] 'Without' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [combo box] 'Search text:' <focusable,enabled> @238,26 218x26 actions=Set Focus
+        [text] 'Search text:' <focusable,enabled> @238,26 198x26 actions=Set Focus
+      [button] 'Choose styles' <focusable,enabled> @464,25 28x28 actions=Press|Set Focus
+      [check box] 'Match case' <focusable,enabled> @104,64 101x30 actions=Toggle|Press|Set Focus
+      [check box] 'Regular expressions' <focusable,enabled> @223,64 156x30 actions=Toggle|Press|Set Focus
+      [label] 'In' <focusable,enabled> @24,110 72x18 actions=Set Focus
+      [panel] 'In field' <enabled> @104,104 388x30 actions=
+        [radio button] 'Text' <focusable,checked,enabled> @105,105 64x28 actions=Toggle|Press|Set Focus
+          [label] 'Text' <focusable,enabled> @105,105 64x28 actions=Set Focus
+          [label] 'Text' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Styles' <focusable,enabled> @169,105 65x28 actions=Toggle|Press|Set Focus
+          [label] 'Styles' <focusable,enabled> @169,105 65x28 actions=Set Focus
+          [label] 'Styles' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Actor' <focusable,enabled> @234,105 64x28 actions=Toggle|Press|Set Focus
+          [label] 'Actor' <focusable,enabled> @234,105 64x28 actions=Set Focus
+          [label] 'Actor' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Effect' <focusable,enabled> @298,105 64x28 actions=Toggle|Press|Set Focus
+          [label] 'Effect' <focusable,enabled> @298,105 64x28 actions=Set Focus
+          [label] 'Effect' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Start time' <focusable,enabled> @362,105 65x28 actions=Toggle|Press|Set Focus
+          [label] 'Start time' <focusable,enabled> @362,105 65x28 actions=Set Focus
+          [label] 'Start time' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'End time' <focusable,enabled> @427,105 64x28 actions=Toggle|Press|Set Focus
+          [label] 'End time' <focusable,enabled> @427,105 64x28 actions=Set Focus
+          [label] 'End time' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Lines' <focusable,enabled> @24,150 72x18 actions=Set Focus
+      [check box] 'Dialogue' <focusable,enabled> @104,144 87x30 actions=Toggle|Press|Set Focus
+      [check box] 'Comments' <focusable,enabled> @209,144 99x30 actions=Toggle|Press|Set Focus
+      [label] 'Selection' <focusable,enabled> @24,190 72x18 actions=Set Focus
+      [panel] 'Selection' <enabled> @104,184 388x30 actions=
+        [radio button] 'Select' <focusable,checked,enabled> @105,185 129x28 actions=Toggle|Press|Set Focus
+          [label] 'Select' <focusable,enabled> @105,185 129x28 actions=Set Focus
+          [label] 'Select' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Add to selection' <focusable,enabled> @234,185 128x28 actions=Toggle|Press|Set Focus
+          [label] 'Add to selection' <focusable,enabled> @234,185 128x28 actions=Set Focus
+          [label] 'Add to selection' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'Deselect' <focusable,enabled> @362,185 129x28 actions=Toggle|Press|Set Focus
+          [label] 'Deselect' <focusable,enabled> @362,185 129x28 actions=Set Focus
+          [label] 'Deselect' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Then' <focusable,enabled> @24,228 72x18 actions=Set Focus
+      [combo box] 'Action' <focusable,enabled> @104,224 214x26 actions=Set Focus
+        [text] 'Action' <> @104,224 194x26 actions=
+      [button] 'Select in all tabs' <focusable,enabled> @24,276 106x26 actions=Press|Set Focus
+      [panel] '' <enabled> @324,274 168x30 actions=
+        [button] 'Select' <focusable,enabled> @324,274 80x30 actions=Press|Set Focus
+          [label] 'Select' <focusable,enabled> @334,279 60x20 actions=Set Focus
+        [button] 'Close' <focusable,enabled> @412,274 80x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Font selection' <enabled> @0,0 574x586
+    [dialog] 'Font selection' <enabled> @0,0 0x0 actions=
+      [text] 'Font selection' <enabled> @0,0 0x0 actions=
+        [label] 'Font selection' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [text] 'Search fonts' desc='Search fonts' <focusable,enabled> @24,31 236x26 actions=Set Focus
+      [button] 'Font catalog: ' <focusable,enabled> @266,31 52x26 actions=Set Focus
+        [label] '' <focusable,enabled> @293,35 38x26 actions=Set Focus
+      [button] 'Characters filter' <focusable,enabled> @324,31 118x26 actions=Set Focus
+        [label] 'Characters' <focusable,enabled> @351,35 66x18 actions=Set Focus
+      [button] 'Add to a catalog' <> @454,30 28x28 actions=Press
+      [label] 'No fonts match' <focusable,enabled> @35,81 271x18 actions=Set Focus
+      [filler] 'Fonts' <enabled> @25,110 291x119 actions=
+        [list item] 'Use “” anyway' <enabled> @0,0 0x0 actions=
+          [label] 'Use “” anyway' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @306,110 10x119 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [label] 'Size' <focusable,enabled> @333,70 21x15 actions=Set Focus
+      [text] 'Font size' <focusable,enabled> @333,89 96x26 actions=Set Focus
+      [label] 'Style' <focusable,enabled> @333,127 25x15 actions=Set Focus
+      [check box] 'Bold' <focusable,enabled> @333,146 28x28 actions=Toggle|Press|Set Focus
+      [check box] 'Italic' <focusable,enabled> @363,146 28x28 actions=Toggle|Press|Set Focus
+      [check box] 'Underline' <focusable,enabled> @393,146 28x28 actions=Toggle|Press|Set Focus
+      [check box] 'Strikethrough' <focusable,enabled> @423,146 28x28 actions=Toggle|Press|Set Focus
+      [label] '0 fonts' <focusable,enabled> @24,238 36x15 actions=Set Focus
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Sample text' <focusable,enabled> @24,373 61x15 actions=Set Focus
+      [button] 'Manage catalogs…' <focusable,enabled> @24,414 123x26 actions=Press|Set Focus
+      [panel] '' <enabled> @314,412 168x30 actions=
+        [button] 'OK' <focusable,enabled> @314,412 80x30 actions=Press|Set Focus
+          [label] 'OK' <focusable,enabled> @324,417 60x20 actions=Set Focus
+        [button] 'Cancel' <focusable,enabled> @402,412 80x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Manage font catalogs' <enabled> @0,0 864x630
+    [dialog] 'Manage font catalogs' <enabled> @0,0 0x0 actions=
+      [text] 'Manage font catalogs' <enabled> @0,0 0x0 actions=
+        [label] 'Manage font catalogs' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Catalogs' <focusable,enabled> @24,30 45x15 actions=Set Focus
+      [button] 'New catalog' <focusable,enabled> @24,51 28x28 actions=Press|Set Focus
+      [button] 'Rename' <> @54,51 28x28 actions=Press
+      [button] 'Delete' <> @84,51 28x28 actions=Press
+      [button] 'Load from a file' <focusable,enabled> @125,51 28x28 actions=Press|Set Focus
+      [button] 'Add fonts from subtitles' <focusable,enabled> @155,51 28x28 actions=Press|Set Focus
+      [label] 'No catalogs yet' <focusable,enabled> @34,95 139x307 actions=Set Focus
+      [filler] 'Catalogs' <enabled> @25,86 157x325 actions=
+        [scroll bar] '' <focusable,enabled> @172,86 10x325 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [text] 'Search fonts' desc='Search fonts' <focusable,enabled> @199,31 8x26 actions=Set Focus
+      [button] 'Refresh fonts' <focusable,enabled> @213,30 28x28 actions=Press|Set Focus
+      [label] 'Show' <focusable,enabled> @199,72 34x18 actions=Set Focus
+      [panel] 'Show' <enabled> @241,66 310x30 actions=
+        [radio button] 'All fonts' <focusable,checked,enabled> @242,67 127x28 actions=Toggle|Press|Set Focus
+          [label] 'All fonts' <focusable,enabled> @242,67 127x28 actions=Set Focus
+          [label] 'All fonts' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'In the catalog' <> @369,67 126x28 actions=Toggle|Press
+          [label] 'In the catalog' <> @369,67 126x28 actions=
+          [label] 'In the catalog' <> @0,0 0x0 actions=
+        [radio button] 'Not in a catalog' <focusable,enabled> @495,67 127x28 actions=Toggle|Press|Set Focus
+          [label] 'Not in a catalog' <focusable,enabled> @495,67 127x28 actions=Set Focus
+          [label] 'Not in a catalog' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Font' <focusable,enabled> @240,110 170x17 actions=Set Focus
+      [label] 'Catalogs' <focusable,enabled> @420,110 130x17 actions=Set Focus
+      [label] 'Sample' <focusable,enabled> @560,110 41x17 actions=Set Focus
+      [label] 'No fonts match' <focusable,enabled> @211,140 94x18 actions=Set Focus
+      [filler] 'Fonts' <enabled> @200,131 40x172 actions=
+        [scroll bar] '' <focusable,enabled> @230,131 10x172 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [label] 'Saved' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @161,436 80x30 actions=
+        [button] 'Close' <focusable,enabled> @161,436 80x30 actions=Press|Set Focus
+          [label] 'Close' <focusable,enabled> @171,441 60x20 actions=Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] 'Add fonts from subtitles' <enabled> @0,0 365x279
+    [dialog] 'Add fonts from subtitles' <enabled> @0,0 0x0 actions=
+      [text] 'Add fonts from subtitles' <enabled> @0,0 0x0 actions=
+        [label] 'Add fonts from subtitles' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] 'Catalog' <focusable,enabled> @24,36 47x18 actions=Set Focus
+      [combo box] 'Catalog' <focusable,enabled> @81,32 260x26 actions=Set Focus
+        [text] 'Catalog' <focusable,enabled> @81,32 240x26 actions=Set Focus
+      [label] 'Choose a catalog or type a new name.' <focusable,enabled> @81,66 214x17 actions=Set Focus
+      [label] 'From' <focusable,enabled> @24,97 32x18 actions=Set Focus
+      [panel] 'From' <enabled> @81,91 176x30 actions=
+        [radio button] 'This file' <focusable,checked,enabled> @82,92 87x28 actions=Toggle|Press|Set Focus
+          [label] 'This file' <focusable,enabled> @82,92 87x28 actions=Set Focus
+          [label] 'This file' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [radio button] 'All open files' <focusable,enabled> @169,92 87x28 actions=Toggle|Press|Set Focus
+          [label] 'All open files' <focusable,enabled> @169,92 87x28 actions=Set Focus
+          [label] 'All open files' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [check box] 'Replace the catalog’s fonts' <focusable,enabled> @81,129 194x30 actions=Toggle|Press|Set Focus
+      [label] 'The fonts of every style and every \\fn tag in runs.ass.' <focusable,enabled> @81,167 260x34 actions=Set Focus
+      [panel] '' <enabled> @170,225 171x30 actions=
+        [button] 'Add fonts' <> @171,225 83x30 actions=Press
+          [label] 'Add fonts' <> @181,230 63x20 actions=
+        [button] 'Cancel' <focusable,enabled> @261,225 80x30 actions=Press|Set Focus
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+  [frame] '' <enabled> @0,0 468x88
+    [dialog] '' <enabled> @0,0 0x0 actions=
+      [text] '' <enabled> @0,0 0x0 actions=
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [button] 'Help' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Maximise' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+        [button] 'Close' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [label] '' <focusable,enabled> @72,40 0x21 actions=Set Focus
+      [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [check box] "Don't ask again" <focusable,enabled> @0,0 0x0 actions=Toggle|Press|Set Focus
+      [button] 'Details' desc='Collapsed' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [label] 'Details' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+        [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+        [scroll bar] '' <focusable,enabled> @0,0 0x0 actions=Increase|Decrease|Set Focus|Increase|Decrease
+      [button] 'Copy details' <focusable,enabled> @0,0 0x0 actions=Press|Set Focus
+      [text] '' <focusable,enabled> @0,0 0x0 actions=Set Focus
+      [panel] '' <enabled> @0,0 0x0 actions=
+    [label] '' <focusable,enabled> @0,0 0x0 actions=Set Focus

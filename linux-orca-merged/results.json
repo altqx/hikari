@@ -1,0 +1,50 @@
+{
+ "grid-rows": {
+  "status": "observed",
+  "detail": "F6 to the Grid True; AT-SPI Table rows folded 9, unfolded 76, folded again 9 (expected 9, 76, 9); the table's interfaces ['Accessible', 'Collection', 'Component', 'Selection', 'Table']",
+  "evidence": [
+   "grid-tables.json"
+  ],
+  "at": "2026-10-30T16:38:54"
+ },
+ "grid-fold-states": {
+  "status": "observed",
+  "detail": "End, Right, Left on the run's row: '68 generated lines' ['enabled', 'expandable', 'focusable', 'focused', 'read-only', 'selectable', 'selected', 'sensitive', 'showing', 'visible'], ['enabled', 'expandable', 'expanded', 'focusable', 'focused', 'read-only', 'selectable', 'selected', 'sensitive', 'showing', 'visible'], ['enabled', 'expandable', 'focusable', 'focused', 'read-only', 'selectable', 'selected', 'sensitive', 'showing', 'visible']",
+  "evidence": [
+   "grid-tables.json",
+   "grid-0-folded.png",
+   "grid-0-folded.txt",
+   "grid-1-unfolded.png",
+   "grid-1-unfolded.txt"
+  ],
+  "at": "2026-10-30T16:38:54"
+ },
+ "grid-fold-events": {
+  "status": "observed",
+  "detail": "2 object:state-changed:expanded events from cells: [\"15.703 object:state-changed:expanded detail=1 [table cell] '{\\\\\\\\an5\\\\\\\\pos(455,54)\\\\\\\\fad(300,0)}ki' desc='9, Text, unfolded' <focused,showing,visible,selected,focusable,enabled,expandable,expanded> @1417,848 819x24 actions=Set Focus\", \"21.964 object:state-changed:expanded detail=0 [table cell] '68 generated lines' desc='9\u201376, Text, folded' <focused,showing,visible,selected,focusable,enabled,expandable> @1417,848 819x24 actions=Set Focus\"]",
+  "evidence": [
+   "grid-events.txt"
+  ],
+  "at": "2026-10-30T16:38:54"
+ },
+ "dock-menu-expanded": {
+  "status": "observed",
+  "detail": "Shift+Tab x1 to the Grid's tab, Right: [button] 'Grid options' <focused,showing,visible,focusable,enabled,expandable> @1004,593 20x20 actions=Toggle|Press|Set Focus; Space: [button] 'Grid options' <showing,visible,focusable,enabled,expandable,expanded> @1004,593 20x20 actions=Toggle|Press|Set Focus | path: desktop frame:'main' > application:'HikariSub' > frame:'runs.ass - HikariSub' > filler:'' > page tab list:'Panels' > button:'Grid options'; Escape: [button] 'Grid options' <focused,showing,visible,focusable,enabled,expandable> @1004,593 20x20 actions=Toggle|Press|Set Focus; events [\"29.631 object:state-changed:expanded detail=1 [button] 'Grid options' <showing,visible,focusable,enabled,expandable,expanded> @1004,593 20x20 actions=Toggle|Press|Set Focus\", \"41.195 object:state-changed:expanded detail=0 [button] 'Grid options' <focused,showing,visible,focusable,enabled,expandable> @1004,593 20x20 actions=Toggle|Press|Set Focus\"]; open menu's items over AT-SPI [[{\"name\": \"Move panel\\u2026\", \"enabled\": true, \"focused\": false}, {\"name\": \"Move tab left\", \"enabled\": false, \"focused\": false}, {\"name\": \"Move tab right\", \"enabled\": false, \"focused\": false}, {\"name\": \"Undock\", \"enabled\": true, \"focused\": false}, {\"name\": \"Close\", \"enabled\": true, \"focused\": false}, {\"name\": \"Fold generated lines\", \"enabled\": true, \"focused\": false}]]; Down: [popup menu] '' <focused,showing,visible,enabled> @1004,613 202x125 actions=\npath: desktop frame:'main' > application:'HikariSub' > frame:'runs.ass - HikariSub' > popup menu:''",
+  "evidence": [
+   "grid-events.txt",
+   "grid-2-menu-tree.txt",
+   "grid-2-menu-open.png",
+   "grid-2-menu-open.txt"
+  ],
+  "at": "2026-10-30T16:38:54"
+ },
+ "grid-orca": {
+  "status": "observed",
+  "detail": "Orca spoke 39 lines; the run's cell: ['collapsed', 'expanded', 'collapsed']; the options button: ['collapsed', 'expanded', 'collapsed', 'collapsed'] (grid-orca-speech.txt)",
+  "evidence": [
+   "grid-orca-speech.txt",
+   "grid-orca-debug.out"
+  ],
+  "at": "2026-10-30T16:38:54"
+ }
+}
