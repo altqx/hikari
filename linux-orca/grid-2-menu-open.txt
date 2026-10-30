@@ -1,0 +1,74 @@
+# compositor windows
+4194318 'runs.ass - HikariSub' Window 4194318   Position: 960,108 (screen: 0)   Geometry: 1280x800 
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "runs.ass - HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 960,
+   "y": 108,
+   "w": 1280,
+   "h": 800
+  }
+ ],
+ "panels": [
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 520,
+   "w": 1280,
+   "h": 251
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 94,
+   "w": 639,
+   "h": 382
+  },
+  {
+   "name": "Line editor: runs.ass",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 640,
+   "y": 308,
+   "w": 640,
+   "h": 168
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "HikariSub",
+   "x": 640,
+   "y": 94,
+   "w": 640,
+   "h": 178
+  },
+  {
+   "name": "Notices",
+   "id": "Notices",
+   "frame": "HikariSub",
+   "x": 908,
+   "y": 646,
+   "w": 360,
+   "h": 113
+  }
+ ],
+ "focus": "[popup menu] '' <focused,showing,visible,enabled> @1004,613 202x125 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'runs.ass - HikariSub' > popup menu:''",
+ "texts": {
+  "Line text": "{\\an5\\pos(455,54)\\fad(300,0)}ki",
+  "Start": "0:00:00.70",
+  "End": "0:00:01.00"
+ },
+ "labels": [
+  "Editing",
+  "Video times"
+ ]
+}

@@ -1,0 +1,21 @@
+== quit
+NVDA quit
+== log C:\Winix\work\w8-m2-a11y\out\native-gate-win\nvda\nvda-20261030-232412.log 6739 bytes, 105 lines
+== synth
+INFO - synthDriverHandler.setSynth (16:24:18.474) - MainThread (16208):
+Loaded synthDriver silence
+== errors
+== speech
+Speaking [LangChangeCommand ('en'), '05-bounce.out.ass - HikariSub', 'window', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'Subtitle lines', 'table', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), '!retime("start2syl",-300,0)!{\\an5\\pos($center,$middle)\\fad(300,0)}', 'data item', 'selected', '1, Text', 'row 1', 'column 8', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), '68 generated lines', 'data item', 'selected', 'collapsed', '9–76, Text, folded', 'row 9', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), '68 selected']
+Speaking [LangChangeCommand ('en'), 'expanded']
+Speaking [LangChangeCommand ('en'), 'collapsed']
+Speaking [LangChangeCommand ('en'), 'Panels', 'tab control', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'Grid', 'tab', 'checked', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'Grid options', 'button', 'collapsed', CancellableSpeech (still valid)]
+Speaking [LangChangeCommand ('en'), 'expanded']
+Speaking [LangChangeCommand ('en'), 'collapsed']
+== end

@@ -1,0 +1,17 @@
+{
+ "cells": [
+  "DataItem:'68 generated lines'",
+  "DataItem:'{\\an5\\pos(455,54)\\fad(300,0)}ki'",
+  "DataItem:'68 generated lines'"
+ ],
+ "menu": {
+  "button": "Window:'05-bounce.out.ass - HikariSub' > Group:'' > Tab:'Panels' > Button:'Grid options'",
+  "items": [
+   "Move panel…",
+   "Undock",
+   "Close",
+   "Fold generated lines"
+  ],
+  "after": "Window:'05-bounce.out.ass - HikariSub' > Group:'' > Tab:'Panels' > Button:'Grid options'"
+ }
+}

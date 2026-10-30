@@ -1,0 +1,105 @@
+INFO - __main__ (16:24:12.973) - MainThread (16208):
+Starting NVDA version 2026.2 AMD64
+INFO - core.main (16:24:13.127) - MainThread (16208):
+Config dir: C:\Winix\work\w8-m2-a11y\out\native-gate-win\nvda\config
+INFO - config.ConfigManager._loadConfig (16:24:13.132) - MainThread (16208):
+Loading config: C:\Winix\work\w8-m2-a11y\out\native-gate-win\nvda\config\nvda.ini
+DEBUGWARNING - languageHandler._createGettextTranslation (16:24:14.243) - MainThread (16208):
+couldn't set the translation service locale to en_US
+INFO - core.main (16:24:16.601) - MainThread (16208):
+Windows version: Windows 11 25H2 (10.0.26200.9711) workstation AMD64
+INFO - core.main (16:24:16.601) - MainThread (16208):
+Using Python version 3.13.13 (tags/v3.13.13:01104ce, Apr  7 2026, 19:25:48) [MSC v.1944 64 bit (AMD64)]
+INFO - core.main (16:24:16.602) - MainThread (16208):
+Using comtypes version 1.4.13
+INFO - core.main (16:24:16.604) - MainThread (16208):
+Using configobj version 5.1.0 with validate version 1.0.1
+INFO - core.main (16:24:18.102) - MainThread (16208):
+Add-ons are disabled. Restart NVDA to enable them.
+INFO - _asyncioEventLoop.initialize (16:24:18.165) - MainThread (16208):
+Initializing asyncio event loop
+INFO - synthDriverHandler.setSynth (16:24:18.474) - MainThread (16208):
+Loaded synthDriver silence
+INFO - mathPres.MathCAT.MathCAT.MathCAT.__init__ (16:24:18.499) - MainThread (16208):
+MathCAT 0.7.2 installed. Using rules dir: C:\Winix\work\w8-m2-a11y\out\native-gate-win\nvda\portable-2026.2\include\nvda-mathcat\assets\Rules
+INFO - core._setUpWxApp (16:24:18.514) - MainThread (16208):
+Using wx version 4.2.4 msw (phoenix) wxWidgets 3.2.8
+INFO - brailleInput.initialize (16:24:18.528) - MainThread (16208):
+Braille input initialized
+INFO - braille.initialize (16:24:18.528) - MainThread (16208):
+Using liblouis version 3.37.0
+INFO - braille.initialize (16:24:18.528) - MainThread (16208):
+Using pySerial version 3.5
+INFO - braille.BrailleHandler._setDisplay (16:24:18.543) - MainThread (16208):
+Loaded braille display driver 'noBraille', current display has 0 cells.
+DEBUGWARNING - appModuleHandler.getProcessHandleFromProcessId (16:24:19.006) - MainThread (16208):
+Unable to open process for processId 824
+Traceback (most recent call last):
+  File "appModuleHandler.pyc", line 207, in getProcessHandleFromProcessId
+PermissionError: [WinError 5] Access is denied.
+DEBUGWARNING - appModuleHandler.getProcessHandleFromProcessId (16:24:19.011) - MainThread (16208):
+Unable to get process handle for process 824 using window enumeration and subsequently getting process handle from that window
+Traceback (most recent call last):
+  File "appModuleHandler.pyc", line 220, in getProcessHandleFromProcessId
+RuntimeError: No window handle found for process 824 to create process handle
+INFO - core.main (16:24:22.508) - MainThread (16208):
+Java Access Bridge support initialized
+INFO - UIAHandler.UIAHandler.MTAThreadFunc (16:24:22.855) - UIAHandler.UIAHandler.MTAThread (13352):
+UIAutomation: IUIAutomation6
+DEBUGWARNING - inputCore.InputManager.loadLocaleGestureMap (16:24:23.484) - MainThread (16208):
+No locale gesture map for language en
+DEBUGWARNING - inputCore.InputManager.loadUserGestureMap (16:24:23.484) - MainThread (16208):
+No user gesture map
+DEBUGWARNING - touchHandler.touchSupported (16:24:23.579) - MainThread (16208):
+Touch only supported on installed copies
+DEBUGWARNING - updateCheck.initialize (16:24:23.595) - MainThread (16208):
+Couldn't retrieve update state
+Traceback (most recent call last):
+  File "updateCheck.pyc", line 1041, in initialize
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Winix\\work\\w8-m2-a11y\\out\\native-gate-win\\nvda\\config\\updateCheckState.pickle'
+INFO - core.main (16:24:23.621) - MainThread (16208):
+NVDA initialized
+IO - speech.speech.speak (16:24:23.817) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), '05-bounce.out.ass - HikariSub', 'window', CancellableSpeech (still valid)]
+IO - speech.speech.speak (16:24:23.921) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), 'Subtitle lines', 'table', CancellableSpeech (still valid)]
+IO - speech.speech.speak (16:24:23.972) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), '!retime("start2syl",-300,0)!{\\an5\\pos($center,$middle)\\fad(300,0)}', 'data item', 'selected', '1, Text', 'row 1', 'column 8', CancellableSpeech (still valid)]
+IO - inputCore.InputManager.executeGesture (16:24:28.408) - winInputHook (15432):
+Input: kb(desktop):end
+IO - speech.speech.speak (16:24:28.725) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), '68 generated lines', 'data item', 'selected', 'collapsed', '9–76, Text, folded', 'row 9', CancellableSpeech (still valid)]
+IO - speech.speech.speak (16:24:28.727) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), '68 selected']
+IO - inputCore.InputManager.executeGesture (16:24:36.453) - winInputHook (15432):
+Input: kb(desktop):rightArrow
+IO - speech.speech.speak (16:24:36.502) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), 'expanded']
+IO - inputCore.InputManager.executeGesture (16:24:53.184) - winInputHook (15432):
+Input: kb(desktop):leftArrow
+IO - speech.speech.speak (16:24:53.252) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), 'collapsed']
+IO - inputCore.InputManager.executeGesture (16:25:03.324) - winInputHook (15432):
+Input: kb(desktop):shift+tab
+IO - speech.speech.speak (16:25:03.401) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), 'Panels', 'tab control', CancellableSpeech (still valid)]
+IO - speech.speech.speak (16:25:03.439) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), 'Grid', 'tab', 'checked', CancellableSpeech (still valid)]
+IO - inputCore.InputManager.executeGesture (16:25:06.789) - winInputHook (15432):
+Input: kb(desktop):rightArrow
+IO - speech.speech.speak (16:25:06.863) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), 'Grid options', 'button', 'collapsed', CancellableSpeech (still valid)]
+IO - inputCore.InputManager.executeGesture (16:25:10.634) - winInputHook (15432):
+Input: kb(desktop):space
+IO - speech.speech.speak (16:25:10.649) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), 'expanded']
+IO - inputCore.InputManager.executeGesture (16:25:16.413) - winInputHook (15432):
+Input: kb(desktop):escape
+IO - speech.speech.speak (16:25:16.483) - MainThread (16208):
+Speaking [LangChangeCommand ('en'), 'collapsed']
+INFO - core.main (16:25:24.666) - MainThread (16208):
+Exiting
+INFO - _asyncioEventLoop.terminate (16:25:24.732) - MainThread (16208):
+Terminating asyncio event loop
+INFO - __main__ (16:25:25.057) - MainThread (16208):
+NVDA exit

@@ -1,0 +1,34 @@
+14:31:25.388538 - SPEECH OUTPUT: 'Screen reader on.' {'established': False}
+14:31:25.499582 - SPEECH OUTPUT: 'runs.ass - HikariSub' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:25.569580 - SPEECH OUTPUT: 'Grid' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:25.569949 - SPEECH OUTPUT: 'Editing: runs.ass Editing: runs.ass.' {'established': False}
+14:31:33.801653 - SPEECH OUTPUT: 'Subtitle lines.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.802151 - SPEECH OUTPUT: 'table with 9 rows 8 columns' {'established': False}
+14:31:33.830934 - SPEECH OUTPUT: '9–76.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.831522 - SPEECH OUTPUT: '9–76, #, folded.' {'established': False}
+14:31:33.832250 - SPEECH OUTPUT: '0:00:00.70.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.832646 - SPEECH OUTPUT: '9–76, Start, folded.' {'established': False}
+14:31:33.833242 - SPEECH OUTPUT: '0:00:12.30.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.833618 - SPEECH OUTPUT: '9–76, End, folded.' {'established': False}
+14:31:33.834157 - SPEECH OUTPUT: 'Romaji.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.834537 - SPEECH OUTPUT: '9–76, Styles, folded.' {'established': False}
+14:31:33.835087 - SPEECH OUTPUT: 'fx.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.835444 - SPEECH OUTPUT: '9–76, Effect, folded.' {'established': False}
+14:31:33.836003 - SPEECH OUTPUT: '9–76, CPS, folded.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.863048 - SPEECH OUTPUT: '9–76, Wraps, folded.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.863699 - SPEECH OUTPUT: '68 generated lines' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:33.864067 - SPEECH OUTPUT: 'collapsed.' {'established': False}
+14:31:33.864468 - SPEECH OUTPUT: '9–76, Text, folded.' {'established': False}
+14:31:33.894765 - SPEECH OUTPUT: '68 selected' {'established': False}
+14:31:36.520058 - SPEECH OUTPUT: 'expanded.' {'established': False}
+14:31:40.291680 - SPEECH OUTPUT: 'collapsed.' {'established': False}
+14:31:43.051859 - SPEECH OUTPUT: 'left shift' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:43.132210 - SPEECH OUTPUT: 'Grid' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:43.132609 - SPEECH OUTPUT: 'page tab.' {'established': False}
+14:31:44.455031 - SPEECH OUTPUT: 'Grid options' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:44.455436 - SPEECH OUTPUT: 'collapsed button.' {'established': False}
+14:31:46.042851 - SPEECH OUTPUT: 'space' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:46.077101 - SPEECH OUTPUT: 'expanded' {'established': False}
+14:31:49.078974 - SPEECH OUTPUT: 'escape' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+14:31:49.109539 - SPEECH OUTPUT: 'collapsed' {'established': False}
+14:31:52.875362 - SPEECH OUTPUT: 'Screen reader off.' {'established': False}

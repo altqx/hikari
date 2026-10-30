@@ -1,0 +1,49 @@
+{
+ "grid-rows": {
+  "status": "observed",
+  "detail": "F6 to the Grid True; AT-SPI Table rows folded 9, unfolded 76, folded again 9 (expected 9, 76, 9); the table's interfaces ['Accessible', 'Collection', 'Component', 'Selection', 'Table']",
+  "evidence": [
+   "grid-tables.json"
+  ],
+  "at": "2026-10-30T13:49:36"
+ },
+ "grid-fold-states": {
+  "status": "observed",
+  "detail": "End, Right, Left on the run's row: '68 generated lines' ['enabled', 'expandable', 'focusable', 'focused', 'read-only', 'selectable', 'selected', 'sensitive', 'showing', 'visible'], ['enabled', 'expandable', 'expanded', 'focusable', 'focused', 'read-only', 'selectable', 'selected', 'sensitive', 'showing', 'visible'], ['enabled', 'expandable', 'focusable', 'focused', 'read-only', 'selectable', 'selected', 'sensitive', 'showing', 'visible']",
+  "evidence": [
+   "grid-tables.json",
+   "grid-0-folded.png",
+   "grid-0-folded.txt",
+   "grid-1-unfolded.png",
+   "grid-1-unfolded.txt"
+  ],
+  "at": "2026-10-30T13:49:36"
+ },
+ "grid-fold-events": {
+  "status": "observed",
+  "detail": "16 object:state-changed:expanded events from cells: [\"13.967 object:state-changed:expanded detail=1 [table cell] '9' desc='9, #, unfolded' <showing,visible,selected,focusable,enabled,expandable,expanded> @964,848 45x24 actions=Set Focus\", \"13.968 object:state-changed:expanded detail=1 [table cell] '0:00:00.70' desc='9, Start, unfolded' <showing,visible,selected,focusable,enabled,expandable,expanded> @1009,848 89x24 actions=Set Focus\", \"13.971 object:state-changed:expanded detail=1 [table cell] '0:00:01.00' desc='9, End, unfolded' <showing,visible,selected,focusable,enabled,expandable,expanded> @1098,848 89x24 actions=Set Focus\", \"13.976 object:state-changed:expanded detail=1 [table cell] 'Romaji' desc='9, Styles, unfolded' <showing,visible,selected,focusable,enabled,expandable,expanded> @1188,848 90x24 actions=Set Focus\"]",
+  "evidence": [
+   "grid-events.txt"
+  ],
+  "at": "2026-10-30T13:49:36"
+ },
+ "dock-menu-expanded": {
+  "status": "observed",
+  "detail": "Shift+Tab x1 to the Grid's tab, Right: [button] 'Grid options' <focused,showing,visible,focusable,enabled,expandable> @1004,593 20x20 actions=Toggle|Press|Set Focus; Space: [button] 'Grid options' <showing,visible,focusable,checked,enabled,expandable,expanded> @1004,593 20x20 actions=Toggle|Press|Set Focus | path: desktop frame:'main' > application:'HikariSub' > frame:'runs.ass - HikariSub' > filler:'' > page tab list:'Panels' > button:'Grid options'; Escape: [button] 'Grid options' <focused,showing,visible,focusable,enabled,expandable> @1004,593 20x20 actions=Toggle|Press|Set Focus; events [\"25.169 object:state-changed:expanded detail=1 [button] 'Grid options' <showing,visible,focusable,checked,enabled,expandable,expanded> @1004,593 20x20 actions=Toggle|Press|Set Focus\", \"28.458 object:state-changed:expanded detail=0 [button] 'Grid options' <focused,showing,visible,focusable,enabled,expandable> @1004,593 20x20 actions=Toggle|Press|Set Focus\"]",
+  "evidence": [
+   "grid-events.txt",
+   "grid-2-menu-open.png",
+   "grid-2-menu-open.txt"
+  ],
+  "at": "2026-10-30T13:49:36"
+ },
+ "grid-orca": {
+  "status": "observed",
+  "detail": "Orca spoke 49 lines; expanded/collapsed: [\"13:49:15.025396 - SPEECH OUTPUT: 'collapsed.' {'established': False}\", \"13:49:15.028534 - SPEECH OUTPUT: 'collapsed.' {'established': False}\", \"13:49:15.069251 - SPEECH OUTPUT: 'collapsed.' {'established': False}\", \"13:49:15.072074 - SPEECH OUTPUT: 'collapsed.' {'established': False}\", \"13:49:15.111668 - SPEECH OUTPUT: 'collapsed.' {'established': False}\", \"13:49:15.114653 - SPEECH OUTPUT: 'collapsed.' {'established': False}\", \"13:49:15.116726 - SPEECH OUTPUT: 'collapsed.' {'established': False}\", \"13:49:15.154755 - SPEECH OUTPUT: 'collapsed.' {'established': False}\"] (grid-orca-speech.txt)",
+  "evidence": [
+   "grid-orca-speech.txt",
+   "grid-orca-debug.out"
+  ],
+  "at": "2026-10-30T13:49:36"
+ }
+}
