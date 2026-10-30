@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QPointF>
+#include <QPointer>
 #include <QtQml/qqmlregistration.h>
 
 class QQuickItem;
@@ -26,7 +27,10 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    static bool scroll(QQuickItem *flickable, const QWheelEvent &event);
+    bool scroll(QQuickItem *flickable, const QWheelEvent &event);
+
+    QPointer<QQuickItem> m_flickable;
+    QPointF m_rest;
 };
 
 }

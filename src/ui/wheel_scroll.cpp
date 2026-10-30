@@ -24,7 +24,7 @@ struct Axis {
     qreal after(qreal pixels) const { return std::clamp(at - pixels, first, last); }
 };
 
-Axis axis(const QQuickItem &flickable, Qt::Orientation orientation)
+Axis axis(const QQuickItem &flickable, Qt::Orientation orientation, qreal rest)
 {
     const bool vertical = orientation == Qt::Vertical;
     const auto real = [&flickable](const char *name) { return flickable.property(name).toReal(); };
@@ -34,7 +34,7 @@ Axis axis(const QQuickItem &flickable, Qt::Orientation orientation)
     const qreal last = origin + real(vertical ? "contentHeight" : "contentWidth")
                        + real(vertical ? "bottomMargin" : "rightMargin")
                        - (vertical ? flickable.height() : flickable.width());
-    return {position, real(position), first, std::max(first, last)};
+    return {position, real(position) + rest, first, std::max(first, last)};
 }
 
 }
@@ -76,9 +76,13 @@ bool WheelScroll::eventFilter(QObject *watched, QEvent *event)
 
 bool WheelScroll::scroll(QQuickItem *flickable, const QWheelEvent &event)
 {
+    if (flickable != m_flickable) {
+        m_flickable = flickable;
+        m_rest = {};
+    }
     const int direction = flickable->property("flickableDirection").toInt();
-    const Axis vertical = axis(*flickable, Qt::Vertical);
-    const Axis horizontal = axis(*flickable, Qt::Horizontal);
+    const Axis vertical = axis(*flickable, Qt::Vertical, m_rest.y());
+    const Axis horizontal = axis(*flickable, Qt::Horizontal, m_rest.x());
     Qt::Orientations room;
     if (direction != HorizontalFlick && vertical.last > vertical.first)
         room |= Qt::Vertical;
@@ -89,11 +93,15 @@ bool WheelScroll::scroll(QQuickItem *flickable, const QWheelEvent &event)
     const qreal x = room.testFlag(Qt::Horizontal) ? horizontal.after(pixels.x()) : horizontal.at;
     if (y == vertical.at && x == horizontal.at)
         return false;
+    // MUST KILL: emits the Flickable's own movementStarted/movementEnded so onMovementEnded sees wheel moves
     QMetaObject::invokeMethod(flickable, "movementStarted");
     if (y != vertical.at)
         flickable->setProperty(vertical.position, y);
     if (x != horizontal.at)
         flickable->setProperty(horizontal.position, x);
+    // A pixel-aligned Flickable (every ScrollView's) rounds its position; the rest carries to the next event.
+    m_rest = QPointF(x - flickable->property(horizontal.position).toReal(),
+                     y - flickable->property(vertical.position).toReal());
     QMetaObject::invokeMethod(flickable, "movementEnded");
     return true;
 }

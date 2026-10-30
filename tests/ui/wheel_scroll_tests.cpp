@@ -11,6 +11,7 @@
 #include <QWheelEvent>
 #include <QtTest>
 
+#include <cmath>
 #include <memory>
 
 using namespace hikari;
@@ -75,6 +76,7 @@ class WheelScrollTests : public QObject {
     }
 
     static qreal contentY(const QQuickItem *flickable) { return flickable->property("contentY").toReal(); }
+    static qreal aligned(qreal pixels) { return std::round(pixels); }
 
 private slots:
     void initTestCase()
@@ -85,9 +87,9 @@ private slots:
         QVERIFY2(window, qPrintable(component.errorString()));
         window->show();
         QVERIFY(QTest::qWaitForWindowExposed(window.get()));
-        outer = window->contentItem()->findChild<QQuickItem *>(QStringLiteral("outer"))->property("contentItem").value<QQuickItem *>();
-        inner = window->contentItem()->findChild<QQuickItem *>(QStringLiteral("inner"));
-        still = window->contentItem()->findChild<QQuickItem *>(QStringLiteral("still"));
+        outer = window->findChild<QQuickItem *>(QStringLiteral("outer"))->property("contentItem").value<QQuickItem *>();
+        inner = window->findChild<QQuickItem *>(QStringLiteral("inner"));
+        still = window->findChild<QQuickItem *>(QStringLiteral("still"));
         QVERIFY(outer && outer->inherits("QQuickFlickable") && inner && still);
         notch = QGuiApplication::styleHints()->wheelScrollLines() * QFontMetricsF(QGuiApplication::font()).lineSpacing();
     }
@@ -102,7 +104,7 @@ private slots:
     {
         ui::WheelScroll scroll;
         QVERIFY(wheel({100, 200}, {}, {0, -120}));
-        QCOMPARE(contentY(outer), notch);
+        QCOMPARE(contentY(outer), aligned(notch));
         QVERIFY(wheel({100, 200}, {}, {0, 120}));
         QCOMPARE(contentY(outer), 0.0);
     }
@@ -112,7 +114,7 @@ private slots:
         ui::WheelScroll scroll;
         for (int i = 0; i < 8; ++i)
             QVERIFY(wheel({100, 200}, {}, {0, -15}));
-        QCOMPARE(contentY(outer), notch);
+        QCOMPARE(contentY(outer), aligned(notch));
     }
 
     void touchpadsScrollTheirOwnDistance()
@@ -126,16 +128,16 @@ private slots:
     {
         ui::WheelScroll scroll;
         QVERIFY(wheel({100, 200}, {0, -15}, {0, -120}));
-        QCOMPARE(contentY(outer), notch);
+        QCOMPARE(contentY(outer), aligned(notch));
     }
 
     void shiftTurnsASidewaysDeltaVertical()
     {
         ui::WheelScroll scroll;
         QVERIFY(wheel({100, 200}, {}, {-120, 0}, Qt::MouseEventNotSynthesized, Qt::ShiftModifier));
-        QCOMPARE(contentY(outer), notch);
-        QVERIFY(!wheel({100, 200}, {}, {-120, 0}));
-        QCOMPARE(contentY(outer), notch);
+        QCOMPARE(contentY(outer), aligned(notch));
+        wheel({100, 200}, {}, {-120, 0});
+        QCOMPARE(contentY(outer), aligned(notch));
     }
 
     void theInnerListScrollsUntilItsEndThenTheView()
@@ -150,25 +152,36 @@ private slots:
         QVERIFY(inner->property("atYEnd").toBool());
         QCOMPARE(contentY(outer), 0.0);
         QVERIFY(wheel({100, 50}, {}, {0, -120}));
-        QCOMPARE(contentY(outer), notch);
+        QCOMPARE(contentY(outer), aligned(notch));
         QCOMPARE(ended.size(), 2);
     }
 
     void theViewStopsAtItsEnds()
     {
         ui::WheelScroll scroll;
-        QVERIFY(!wheel({100, 200}, {}, {0, 120}));
+        wheel({100, 200}, {}, {0, 120});
         QCOMPARE(contentY(outer), 0.0);
         QVERIFY(wheel({100, 200}, {}, {0, -120 * 1000}));
-        QCOMPARE(contentY(outer), outer->property("contentHeight").toReal() - outer->height());
-        QVERIFY(!wheel({100, 200}, {}, {0, -120}));
+        const qreal end = outer->property("contentHeight").toReal() - outer->height();
+        QCOMPARE(contentY(outer), aligned(end));
+        wheel({100, 200}, {}, {0, -120});
+        QCOMPARE(contentY(outer), aligned(end));
     }
 
-    void aFlickableThatIsNotInteractiveIsLeftAlone()
+    void partsOfAPixelAddUp()
     {
         ui::WheelScroll scroll;
-        QVERIFY(!wheel({350, 50}, {}, {0, -120}));
+        for (int i = 0; i < 40; ++i)
+            QVERIFY(wheel({100, 200}, {}, {0, -1}));
+        QCOMPARE(contentY(outer), aligned(notch / 3));
+    }
+
+    void aFlickableThatIsNotInteractiveLetsTheListBelowScroll()
+    {
+        ui::WheelScroll scroll;
+        QVERIFY(wheel({350, 50}, {}, {0, -120}));
         QCOMPARE(contentY(still), 0.0);
+        QCOMPARE(contentY(inner), notch);
     }
 };
 
