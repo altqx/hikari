@@ -7,12 +7,12 @@ The Windows launcher shows this early splash before Qt loads (#584). The art is 
 | File | Pixels | Size |
 | --- | --- | --- |
 | `splash-dark.svg`, `splash-light.svg` | 480×270 logical | vector masters |
-| `splash-dark-100.png`, `splash-light-100.png` | 480×270 | 48 KB, 43 KB |
-| `splash-dark-150.png`, `splash-light-150.png` | 720×405 | 78 KB, 69 KB |
-| `splash-dark-200.png`, `splash-light-200.png` | 960×540 | 108 KB, 96 KB |
-| `splash-dark-300.png`, `splash-light-300.png` | 1440×810 | 77 KB, 72 KB |
+| `splash-dark-100.png`, `splash-light-100.png` | 480×270 | 54 KB, 43 KB |
+| `splash-dark-150.png`, `splash-light-150.png` | 720×405 | 88 KB, 71 KB |
+| `splash-dark-200.png`, `splash-light-200.png` | 960×540 | 123 KB, 98 KB |
+| `splash-dark-300.png`, `splash-light-300.png` | 1440×810 | 80 KB, 76 KB |
 
-The PNGs are opaque 8-bit sRGB, with no alpha and no gAMA, cHRM, iCCP or sRGB chunks. The 1×, 1.5× and 2× files are lossless RGB. The 3× files are 256-colour with dithering, to stay under 150 KB each. All eight come to 590 KB.
+The PNGs are opaque 8-bit sRGB, with no alpha and no gAMA, cHRM, iCCP or sRGB chunks. The 1×, 1.5× and 2× files are lossless RGB. The 3× files are 256-colour with dithering, to stay under 150 KB each. All eight come to 631 KB.
 
 ## Layout the launcher relies on
 
