@@ -23,6 +23,6 @@ Menu {
     }
     Connections {
         target: (menu.contentItem as Flickable)?.contentItem ?? null
-        function onChildrenChanged() { Qt.callLater(menu.restack) }
+        function onChildrenChanged() { menu.restack() }
     }
 }
