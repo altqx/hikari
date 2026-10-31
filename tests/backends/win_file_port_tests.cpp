@@ -13,6 +13,7 @@
 #include <fstream>
 #include <mutex>
 #include <sstream>
+#include <thread>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -120,13 +121,35 @@ TEST_F(WinPortTest, SharingViolationKeepsTheOriginalAndCleansUp)
     HANDLE holder = ::CreateFileW((dir / "busy.ass").c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
                                   FILE_ATTRIBUTE_NORMAL, nullptr);
     ASSERT_NE(holder, INVALID_HANDLE_VALUE);
-    backends::WinFilePort port(record());
+    backends::WinFilePort port(record(), {.replacePatience = std::chrono::milliseconds(200)});
     port.startWrite(PermitId{1}, {key(dir / "busy.ass")}, bytesOf("new"));
     port.waitIdle();
     ::CloseHandle(holder);
     EXPECT_EQ(only(), WriteOutcome::Failed);
     EXPECT_EQ(slurp(dir / "busy.ass"), "original");
     EXPECT_TRUE(onlyFile(dir / "busy.ass"));
+}
+
+TEST_F(WinPortTest, ReplaceWaitsOutABriefHolder)
+{
+    {
+        std::ofstream(dir / "scanned.ass", std::ios::binary) << "original";
+    }
+    // A virus scanner holds the file just written without FILE_SHARE_DELETE, as Qt's QFile does too.
+    HANDLE holder = ::CreateFileW((dir / "scanned.ass").c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                  nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    ASSERT_NE(holder, INVALID_HANDLE_VALUE);
+    std::thread scanner([holder] {
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        ::CloseHandle(holder);
+    });
+    backends::WinFilePort port(record());
+    port.startWrite(PermitId{1}, {key(dir / "scanned.ass")}, bytesOf("new"));
+    port.waitIdle();
+    scanner.join();
+    EXPECT_EQ(only(), WriteOutcome::Written);
+    EXPECT_EQ(slurp(dir / "scanned.ass"), "new");
+    EXPECT_TRUE(onlyFile(dir / "scanned.ass"));
 }
 
 TEST_F(WinPortTest, ReadOnlyDestinationIsNotOverwritten)
