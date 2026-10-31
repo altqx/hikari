@@ -398,7 +398,12 @@ if(WIN32)
         -P "${PROJECT_SOURCE_DIR}/cmake/manifest/DirectShowManifest.cmake")
     set_tests_properties(directshow-manifest PROPERTIES LABELS packaging TIMEOUT 120)
 endif()
+if(WIN32)
+    set(_hikari_app_code hikarisub_app)
+else()
+    set(_hikari_app_code hikarisub)
+endif()
 add_test(NAME directshow-adapter-presence COMMAND "${CMAKE_COMMAND}"
-    "-DEXECUTABLE=$<TARGET_FILE:hikarisub>" "-DEXPECT=$<IF:$<PLATFORM_ID:Windows>,present,absent>"
+    "-DEXECUTABLE=$<TARGET_FILE:${_hikari_app_code}>" "-DEXPECT=$<IF:$<PLATFORM_ID:Windows>,present,absent>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/directshow_presence.cmake")
 set_tests_properties(directshow-adapter-presence PROPERTIES LABELS packaging TIMEOUT 120)
