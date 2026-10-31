@@ -653,11 +653,13 @@ void AutomationShell::addFromDocument(std::function<void()> then, bool askAgain)
         return;
     }
     QStringList scripts, folders;
+    const auto fileCase = windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive;
     for (const auto &path : ask) {
         const QString absolute = absoluteScript(path);
-        scripts << absolute;
+        if (!scripts.contains(absolute, fileCase))
+            scripts << absolute;
         const QString folder = QDir::toNativeSeparators(QFileInfo(absolute).absolutePath());
-        if (!folders.contains(folder, windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive))
+        if (!folders.contains(folder, fileCase))
             folders << folder;
     }
     m_trust = TrustQuestion{++m_trustSerial, *target, std::move(ask), {}};

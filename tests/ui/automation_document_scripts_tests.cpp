@@ -714,6 +714,28 @@ private slots:
         QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{script.toStdString()});
     }
 
+    void relativePathsAreJudgedWhereTheyLoad()
+    {
+        QTemporaryDir elsewhere;
+        QVERIFY(elsewhere.isValid());
+        const QString inside = QDir::toNativeSeparators(QStringLiteral("rel-trust/inside.lua"));
+        writeFile(dir.filePath(inside), prefixScript("inside"));
+        const QString outsideFile = elsewhere.filePath(QStringLiteral("outside.lua"));
+        writeFile(outsideFile, prefixScript("outside"));
+        const QString outside = QDir::toNativeSeparators(QDir(dir.path()).relativeFilePath(outsideFile));
+        const QString sneaky = QDir::toNativeSeparators(QStringLiteral("rel-trust/../") + QDir(dir.path()).relativeFilePath(outsideFile));
+        QVERIFY(!open("relative.ass", "|" + inside.toUtf8() + "|" + outside.toUtf8() + "|" + sneaky.toUtf8()).isEmpty());
+        auto &automation = app->automation();
+        QSignalSpy asked(&automation, &app::AutomationShell::trustRequested);
+        automation.menuOpened();
+        QCOMPARE(asked.size(), 1);
+        const QString absolute = QDir::toNativeSeparators(QFileInfo(outsideFile).absoluteFilePath());
+        QCOMPARE(asked.first().at(1).toStringList(), QStringList{absolute});
+        automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("skip"));
+        QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{inside.toStdString()});
+        QVERIFY(settled());
+    }
+
     void lastScriptRunsOnceLoadIsChosen()
     {
         QTemporaryDir elsewhere;
@@ -768,9 +790,9 @@ private slots:
     {
         QTemporaryDir elsewhere;
         QVERIFY(elsewhere.isValid());
-        const QString script = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("kfx/trusted.lua")));
+        const QString script = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("kfx-ñ/trusted.lua")));
         writeFile(script, prefixScript("trusted"));
-        const QString folder = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("kfx")));
+        const QString folder = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("kfx-ñ")));
         const QString mine = QDir::toNativeSeparators(dir.path());
         QVERIFY(!open("trusted.ass", "|" + script.toUtf8()).isEmpty());
         {
@@ -826,7 +848,12 @@ private slots:
         o.automationDir = shipped.path();
         o.userAutomationDir = user.path();
         app = std::make_unique<app::Application>(o);
-        QVERIFY(!open("shipped.ass", "|" + bundled.toUtf8() + "|" + autoload.toUtf8() + "|" + userInclude.toUtf8())
+        QString named = autoload;
+#ifdef Q_OS_WIN
+        named[0] = named[0].isUpper() ? named[0].toLower() : named[0].toUpper();
+#endif
+        QVERIFY(!open("shipped.ass", "|" + QDir::fromNativeSeparators(bundled).toUtf8() + "|" + named.toUtf8() + "|" +
+                                         userInclude.toUtf8())
                      .isEmpty());
         QSignalSpy asked(&app->automation(), &app::AutomationShell::trustRequested);
         app->automation().menuOpened();
@@ -835,7 +862,7 @@ private slots:
         QCOMPARE(app->automation().documentScripts().scripts(), std::vector<std::string>{});
         app->automation().answerTrust(asked.first().at(0).toInt(), QStringLiteral("skip"));
         QCOMPARE(app->automation().documentScripts().scripts(),
-                 (std::vector<std::string>{bundled.toStdString(), autoload.toStdString()}));
+                 (std::vector<std::string>{QDir::fromNativeSeparators(bundled).toStdString(), named.toStdString()}));
         QVERIFY(settled());
     }
 
