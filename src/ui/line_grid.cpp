@@ -3,6 +3,7 @@
 #include "line_grid_accessible.h"
 #include "line_table_model.h"
 #include "theme.h"
+#include "wheel_scroll.h"
 #include "hikari/application/subtitle_comparison.h"
 
 #include <QCoreApplication>
@@ -10,12 +11,10 @@
 #include <QAbstractProxyModel>
 #include <QAccessible>
 #include <QFontMetricsF>
-#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
-#include <QStyleHints>
 #include <QWheelEvent>
 
 #include <algorithm>
@@ -536,14 +535,7 @@ void LineGrid::keyPressEvent(QKeyEvent *event)
 
 void LineGrid::wheelEvent(QWheelEvent *event)
 {
-    // Some platforms turn Shift+wheel into a sideways delta, so with Shift that delta scrolls vertically.
-    const bool shift = event->modifiers() & Qt::ShiftModifier;
-    const auto vertical = [shift](QPoint delta) { return delta.y() == 0 && shift ? delta.x() : delta.y(); };
-    const QPoint pixels = event->pixelDelta();
-    const qreal dy = !pixels.isNull()
-                         ? vertical(pixels)
-                         : vertical(event->angleDelta()) / qreal(QWheelEvent::DefaultDeltasPerStep)
-                               * QGuiApplication::styleHints()->wheelScrollLines() * m_geometry.rowHeight;
+    const qreal dy = wheelScrollPixels(*event, m_geometry.rowHeight, Qt::Vertical).y();
     if (dy == 0) {
         event->ignore();
         return;

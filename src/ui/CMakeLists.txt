@@ -14,7 +14,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     tag_list_controller.cpp tag_list_controller.h
     all_tags_editor.cpp all_tags_editor.h time_field_mask.cpp time_field_mask.h
     script_resolution_prompt.cpp script_resolution_prompt.h
-    number_field_mouse.cpp number_field_mouse.h key_router.cpp key_router.h)
+    number_field_mouse.cpp number_field_mouse.h key_router.cpp key_router.h wheel_scroll.cpp wheel_scroll.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui

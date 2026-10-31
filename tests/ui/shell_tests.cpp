@@ -59,6 +59,7 @@
 #include <QStandardPaths>
 #include <QCursor>
 #include <QFontInfo>
+#include <QFontMetricsF>
 #include <QStyleHints>
 #include <QWheelEvent>
 #include <QElapsedTimer>
@@ -2016,7 +2017,9 @@ private slots:
         const qreal notch = QGuiApplication::styleHints()->wheelScrollLines() * row;
         auto wheel = [&](QPoint pixels, QPoint angle, Qt::KeyboardModifiers mods = Qt::NoModifier) {
             const QPointF at = grid->mapToScene(QPointF(grid->width() / 2, grid->height() / 2));
-            QWheelEvent event(at, window->mapToGlobal(at), pixels, angle, Qt::NoButton, mods, Qt::NoScrollPhase, false);
+            const auto source = pixels.isNull() ? Qt::MouseEventNotSynthesized : Qt::MouseEventSynthesizedBySystem;
+            QWheelEvent event(at, window->mapToGlobal(at), pixels, angle, Qt::NoButton, mods, Qt::NoScrollPhase, false,
+                              source);
             QCoreApplication::sendEvent(window, &event);
         };
         // MUST KILL: bare processEvents so the opened tab's scroll restore runs first
@@ -8183,6 +8186,23 @@ private slots:
         window->resize(900, 680);
         QTRY_VERIFY(card->mapToScene(QPointF()).y() >= recent->mapToScene(QPointF(0, recent->height())).y());
         QTRY_COMPARE(card->width(), recent->width());
+        {
+            auto *notes = item("whatsNewNotes")->property("contentItem").value<QQuickItem *>();
+            QTRY_VERIFY(notes->property("contentHeight").toReal() > notes->height() + 100);
+            const QPointF over = notes->mapToScene(QPointF(notes->width() / 2, notes->height() / 2));
+            auto wheel = [&](QPoint pixels, QPoint angle, Qt::MouseEventSource source) {
+                QWheelEvent event(over, window->mapToGlobal(over), pixels, angle, Qt::NoButton, Qt::NoModifier,
+                                  Qt::NoScrollPhase, false, source);
+                QCoreApplication::sendEvent(window, &event);
+            };
+            wheel({}, {0, -120}, Qt::MouseEventNotSynthesized);
+            const qreal notch = QGuiApplication::styleHints()->wheelScrollLines()
+                                * QFontMetricsF(QGuiApplication::font()).lineSpacing();
+            QCOMPARE(notes->property("contentY").toReal(), std::round(notch));
+            wheel({0, -7}, {0, -56}, Qt::MouseEventSynthesizedBySystem);
+            QCOMPARE(notes->property("contentY").toReal(), std::round(notch + 7));
+            notes->setProperty("contentY", 0);
+        }
 
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
         if (!out.isEmpty()) {
