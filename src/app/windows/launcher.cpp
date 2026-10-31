@@ -33,7 +33,7 @@ struct Splash {
     HANDLE painted = nullptr;
     HICON icon = nullptr;
     HFONT font = nullptr;
-    HFONT small = nullptr;
+    HFONT versionFont = nullptr;
     HBITMAP art = nullptr;
     UINT dpi = 96;
     ULONGLONG started = 0;
@@ -212,7 +212,7 @@ void paint(HWND window, const Splash &splash)
         RECT title{0, iconTop + icon + scaled(14, splash.dpi), width, height};
         DrawTextW(dc, L"HikariSub", -1, &title, DT_CENTER | DT_TOP | DT_SINGLELINE | DT_NOPREFIX);
     }
-    SelectObject(dc, splash.small);
+    SelectObject(dc, splash.versionFont);
     SetTextColor(dc, colour(splash.look.muted));
     TEXTMETRICW metrics{};
     GetTextMetricsW(dc, &metrics);
@@ -249,7 +249,7 @@ void loadResources(Splash &splash)
                            OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
     };
     splash.font = font(26, FW_SEMIBOLD);
-    splash.small = font(12, FW_NORMAL);
+    splash.versionFont = font(12, FW_NORMAL);
 }
 
 LRESULT CALLBACK splashProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
@@ -333,7 +333,7 @@ DWORD WINAPI runSplash(void *parameter)
         DestroyIcon(splash->icon);
     if (splash->art)
         DeleteObject(splash->art);
-    for (const HFONT font : {splash->font, splash->small})
+    for (const HFONT font : {splash->font, splash->versionFont})
         if (font)
             DeleteObject(font);
     if (com)
