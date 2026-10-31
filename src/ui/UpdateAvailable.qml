@@ -162,7 +162,8 @@ DialogWindow {
     }
 
     leadingActions: [
-        Button {
+        IconTextButton {
+            iconRole: "skip-version"
             objectName: "updateSkip"
             text: qsTr("Skip this version")
             enabled: !available.downloading

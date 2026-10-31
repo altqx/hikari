@@ -103,7 +103,7 @@ DialogWindow {
         elide: Text.ElideRight
     }
 
-    leadingActions: Button { objectName: "karaokeRecheck"; text: qsTr("Re-check"); onClicked: dialog.recheck() }
+    leadingActions: IconTextButton { objectName: "karaokeRecheck"; iconRole: "refresh"; text: qsTr("Re-check"); onClicked: dialog.recheck() }
     buttons: Button {
         objectName: "karaokeClose"
         text: qsTr("Close")

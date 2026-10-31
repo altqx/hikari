@@ -403,6 +403,12 @@ def alignment_grid(chosen=None):
 for n in range(1, 10):
     icon("alignment-%d" % n, "%s (an%d)" % (ALIGN_NAMES[n], n), [], [EDITOR], alignment_grid(n))
 icon("alignment-mixed", "Text position (mixed)", [], [EDITOR], alignment_grid())
+icon("margin-left", "Left margin", [], [EDITOR],
+     stroke("M2.5 2v12") + stroke("M13.5 5.5h-6v5h6") + accent(stroke("M3.5 8h3M5 6.5l1.5 1.5-1.5 1.5")))
+icon("margin-right", "Right margin", [], [EDITOR],
+     stroke("M13.5 2v12") + stroke("M2.5 5.5h6v5h-6") + accent(stroke("M12.5 8h-3M11 6.5l-1.5 1.5 1.5 1.5")))
+icon("margin-vertical", "Vertical margin", [], [EDITOR],
+     stroke("M2 2.5h12M2 13.5h12") + stroke("M5.5 6.5h5v3h-5z") + accent(stroke("M8 3.5v2M8 10.5v2")))
 
 icon("editor", "Line editor", ["editor.png"], ["video-context-menu", "settings-dialog"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M4 6.5h5M4 9.5h7") + accent(stroke("M11.5 5v3")), mirror=True)
@@ -428,7 +434,7 @@ icon("resample", "Resample subtitles", ["subsResample.png"], [SUBS, VISUAL, "res
 icon("font-collector", "Font collector", ["FontCollector.png"], [SUBS, "font-collector", "grid-menu"],
      stroke("M1.5 9.5h3l1 2h5l1-2h3v4a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z")
      + accent(stroke("M5.5 7L8 1.5 10.5 7M6.5 5h3")))
-icon("spellchecker", "Check spelling", ["Spellchecker.png"], [SUBS, "spell-checker", "text-field-menu"],
+icon("spellchecker", "Check spelling", ["Spellchecker.png"], [SUBS, "spell-checker", "text-field-menu", "settings-dialog"],
      stroke("M1.5 3.5h9M1.5 7h6") + accent(stroke("M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"))
      + stroke("M8.5 11l2 2 4-4.5"), mirror=True)
 icon("hide-tags", "Hide tags", ["HideTags.png"], [SUBS, EDITOR],
@@ -781,7 +787,7 @@ icon("video-filters", "Filters", [], [VIDEOMENU, FULLSCREEN],
 
 icon("panels", "Panels", [], [VIEW], layout(stroke("M6.5 2.5v11M6.5 8h8")))
 icon("show", "Show", [], [VIEW], EYE + accent(dot(8, 8, 2)))
-icon("hide", "Hide", [], [VIEW, GRIDMENU], EYE + circle(8, 8, 2) + accent(stroke("M2.5 13.5l11-11")))
+icon("hide", "Hide", [], [VIEW, GRIDMENU, TEXTMENU], EYE + circle(8, 8, 2) + accent(stroke("M2.5 13.5l11-11")))
 icon("panel-float", "Float", [], [VIEW, PANELS],
      stroke("M8.5 2.5h-5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5") + accent(stroke("M9.5 6.5l5-5M10.5 1.5h4v4")))
 icon("panel-dock", "Dock", [], [VIEW, PANELS],
@@ -800,7 +806,7 @@ icon("tab-close-all", "Close all tabs", [], [TABMENU],
      + accent(stroke("M4.5 7.5l4 4M8.5 7.5l-4 4")))
 icon("fonts-from-subtitles", "Add fonts from subtitles", [], ["font-catalog"], page(True) + accent(letters("F", 11, 10)))
 
-icon("dictionary", "Installed languages", [], [TEXTMENU, "settings-dialog"],
+icon("dictionary", "Primary language", [], ["kanji-timer", "settings-dialog"],
      stroke(BOOK) + accent(stroke("M6.5 4.5h3.5M6.5 6.5h2")))
 icon("dictionary-add", "Add word to dictionary", [], [TEXTMENU],
      stroke("M3.5 13V3a1.5 1.5 0 0 1 1.5-1.5h7.5v6") + stroke("M8 11.5H5a1.5 1.5 0 0 0 0 3h3")
@@ -883,7 +889,7 @@ icon("accent-colour", "Accent color", [], ["settings-dialog"],
 icon("ui-colours", "UI colors", [], ["settings-dialog"],
      rect(1.5, 2.5, 4, 4, 0.5) + rect(1.5, 9.5, 4, 4, 0.5) + stroke("M8 4.5h6.5M8 11.5h6.5")
      + accent(frect(2, 3, 3, 3), frect(2, 10, 3, 3)), mirror=True)
-icon("restore-default", "Restore default", [], ["settings-dialog"],
+icon("restore-default", "Restore default", [], ["kanji-timer", "settings-dialog"],
      stroke("M2.5 8a5.5 5.5 0 1 0 1.75-4") + stroke("M2.5 1.5v3h3") + accent(dot(8, 8, 1.5)), mirror=True)
 icon("settings-grid", "Subtitle grid", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M1.5 5.5h13M5.5 2.5v11") + accent(stroke("M7.5 8.25h5M7.5 10.75h3")),
@@ -914,6 +920,85 @@ icon("style-apply", "Apply to the selected lines", [], ["styles-panel"],
      rect(1.5, 1.5, 6, 6, 1) + stroke("M1.5 11.5h7M1.5 14h7")
      + accent(stroke("M12 2.5v7M9.5 7.5l2.5 2.5 2.5-2.5M10.5 12.5h4M10.5 14.5h4")), mirror=True)
 
+CAMERA_TALL = stroke("M1.5 5.5a1 1 0 0 1 1-1h2l1.5-2h4l1.5 2h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z")
+COPY_FRONT = rect(2.5, 4.5, 8, 10, 1)
+icon("frame-snapshot-subtitles", "Save frame with subtitles as PNG", [], [VIDEOMENU],
+     CAMERA_TALL + circle(8, 7, 1.75) + accent(stroke("M4.5 10.5h7M6 12.5h4")))
+icon("frame-copy", "Copy frame to clipboard", [], [VIDEOMENU], COPY_BACK + COPY_FRONT + accent(circle(6.5, 9.5, 2)))
+icon("frame-copy-subtitles", "Copy frame with subtitles to clipboard", [], [VIDEOMENU],
+     COPY_BACK + COPY_FRONT + circle(6.5, 7.5, 1.5) + accent(stroke("M4.5 10.5h4M5.5 12.5h2")))
+icon("screenshot", "Add the screenshot", [], ["report-issue"],
+     rect(1.5, 2.5, 13, 11, 1) + stroke("M1.5 5.5h13")
+     + accent(stroke("M4.5 9V7.5H6M11.5 9V7.5H10M4.5 10v1.5H6M11.5 10v1.5H10")))
+icon("notice-info", "Information", [], ["dialogs", "notices", "log-panel"],
+     stroke("M2.5 2.5h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7l-3 3v-3H2.5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z")
+     + accent(stroke("M8 6.5v3"), dot(8, 4.75, 0.75)))
+icon("open-link", "Open in the browser", [], ["about", "whats-new", "report-issue"],
+     stroke("M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4") + accent(stroke("M9.5 1.5h5v5M14.5 1.5L8 8")))
+icon("font-catalogs", "Manage catalogs", [], ["font-catalog", "font-picker"], stroke(BOOK) + accent(letters("A", 7, 4)))
+icon("getting-started", "Getting started", [], [HELP],
+     stroke("M1.5 14.5h4v-4h4v-4h5") + accent(stroke("M7.5 3.5h6M11.5 1.5l2 2-2 2")), mirror=True)
+icon("kanji-timer", "Kanji timer", [], [TIMING, "kanji-timer"],
+     rect(1.5, 1.5, 13, 5, 1) + stroke("M6.5 1.5v5") + rect(1.5, 9.5, 13, 5, 1) + stroke("M9.5 9.5v5")
+     + accent(stroke("M6.5 6.5l3 3")))
+icon("karaoke-check", "Check karaoke", [], [TIMING, "karaoke-check"],
+     rect(1.5, 2.5, 13, 6, 1) + stroke("M5.5 2.5v6M10.5 2.5v6") + accent(stroke("M9.5 12.5l1.5 1.5 3-3.5")))
+icon("dialog-memory", "Last answers", [], ["settings-dialog", "automation-dialog"],
+     stroke("M8.5 13.5h-6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v5") + stroke("M1.5 5h13M4 8.5h4")
+     + clock_badge(), mirror=True)
+icon("restart", "Restart now", [], ["updates"],
+     stroke("M13.5 8a5.5 5.5 0 1 1-1.75-4") + stroke("M13.5 1.5v3h-3") + accent(solid("M6.5 5.5v5l4-2.5z")))
+icon("skip-version", "Skip this version", [], ["updates", "settings-dialog"],
+     rect(5.5, 10.5, 5, 4, 1) + accent(stroke("M2.5 10a5.5 5.5 0 0 1 11 0M11.5 8l2 2 2-2")))
+icon("tab-name-length", "Tab name length", [], ["settings-dialog"],
+     stroke("M1.5 10.5h1v-5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v5h1") + stroke("M5 7.5h6")
+     + accent(stroke("M3.5 13.5h9M5 12l-1.5 1.5L5 15M11 12l1.5 1.5L11 15")))
+icon("time-offset-start", "Start frame offset", [], ["settings-dialog"],
+     rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M2.5 4.5h6M4 3L2.5 4.5 4 6M7 3l1.5 1.5L7 6")))
+icon("time-offset-end", "End frame offset", [], ["settings-dialog"],
+     rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M9 3L7.5 4.5 9 6M12 3l1.5 1.5L12 6")))
+icon("preview-resolution", "Preview subtitles at", [], ["settings-dialog"],
+     rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
+     + accent(stroke("M4.5 9.5l2-2M4.5 9.5V8M4.5 9.5H6M11.5 4.5l-2 2M11.5 4.5V6M11.5 4.5H10")))
+icon("boundary-thickness", "Line boundaries thickness", [], ["settings-dialog"],
+     stroke("M2.5 2.5v11") + frect(5.5, 2.5, 2, 11, 0.5) + accent(frect(10, 2.5, 3.5, 11, 0.5)))
+icon("inactive-lines", "Inactive lines", [], ["settings-dialog"],
+     rect(5.5, 3.5, 5, 9, 1) + accent(stroke("M3.5 3.5h-2v9h2M12.5 3.5h2v9h-2")))
+icon("cache", "Cache files kept", [], ["settings-dialog"],
+     stroke("M2.5 4a5.5 2 0 1 0 11 0a5.5 2 0 1 0-11 0") + stroke("M2.5 4v8a5.5 2 0 0 0 11 0V4")
+     + accent(stroke("M2.5 8a5.5 2 0 0 0 11 0")))
+icon("time-per-letter", "Time per letter", [], ["settings-dialog"],
+     stroke("M1.5 11.5L4.5 2.5h1l3 9M2.75 8.5h4.5") + clock_badge())
+icon("tags-insert", "Tags at the start of each line", [], ["settings-dialog"],
+     stroke("M7.5 5.5h7M7.5 9h7M7.5 12.5h4")
+     + accent(stroke("M5 3.5h-.5a1 1 0 0 0-1 1v2L2.5 8l1 1.5v2a1 1 0 0 0 1 1H5")), mirror=True)
+icon("preview-text", "Preview text", [], ["settings-dialog"],
+     rect(1.5, 2.5, 13, 11, 1) + accent(letters("T", 4, 6)) + stroke("M9.5 6.5h2.5M9.5 9.5h2.5"), mirror=True)
+icon("resolution-from-video", "Use video resolution", [], ["script-properties", "script-resolution"],
+     video_film() + accent(stroke("M14.5 10v4.5H10M14.5 14.5l-4-4")))
+icon("select-all", "Select all", [], ["choose-styles", "columns", SEARCH, "fix-minor-errors", "settings-import"],
+     stroke("M7.5 3.5h7M7.5 8h7M7.5 12.5h7") + accent(stroke("M1.5 3.5l1 1 2-2M1.5 8l1 1 2-2M1.5 12.5l1 1 2-2")),
+     mirror=True)
+
+PUZZLE_CUT = stroke("M8.5 13.5h-6v-9h3a1.5 1.5 0 1 1 3 0h3v4")
+icon("export", "Export as", [], [FILE], page(True) + accent(stroke("M9.5 12h5M12.5 10l2 2-2 2")))
+icon("plugins", "Plugins", [], ["plugin-manager"], stroke("M2.5 4.5h3a1.5 1.5 0 1 1 3 0h3v3a1.5 1.5 0 1 1 0 3v3h-9z"))
+icon("plugin-install", "Install plugin", [], ["plugin-manager"], PUZZLE_CUT + plus_badge())
+icon("plugin-unverified", "Unverified plugin", [], ["plugin-manager"],
+     PUZZLE_CUT + accent(stroke("M12 9.5v2.5"), dot(12, 14, 0.75)))
+icon("node-editor", "Node effects", [], [VIEW, "node-editor"],
+     rect(1.5, 2.5, 4, 3.5, 1) + rect(1.5, 10, 4, 3.5, 1) + rect(10.5, 6, 4, 3.5, 1)
+     + accent(stroke("M5.5 4.25C8 4.25 8 7.75 10.5 7.75M5.5 11.75C8 11.75 8 7.75 10.5 7.75")))
+icon("ai-assistant", "Assistant", [], ["agent-panel"],
+     stroke("M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z")
+     + accent(stroke("M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z")))
+icon("ai-send", "Send", [], ["agent-panel"],
+     stroke("M1.5 7.5l13-6-4 13-3-5.5z") + accent(stroke("M7.5 9l7-7.5")), mirror=True)
+icon("review-keep", "Keep", [], ["agent-panel", "grid", EDITOR],
+     stroke("M1.5 4.5h9M1.5 8h6") + accent(stroke("M8.5 12l2 2 4-4.5")), mirror=True)
+icon("checkpoint", "Checkpoint", [], ["agent-panel"],
+     stroke("M1.5 8h3.5M11 8h3.5") + accent(diamond(8, 8, 3)))
+
 NOT_REPLACED = {
     "application and file-type icons (kept as they are)": [
         "HikariLargeIcon.ico", "HikariSmallIcon.ico", "HikariSmallIcon321.ico", "HikariSub_256x256_ass.png",
@@ -933,6 +1018,12 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
+    "EX1 #448": ["export"],
+    "PL4 #416": ["plugins", "plugin-install"],
+    "PL6 #418": ["plugin-unverified"],
+    "NE2 #424": ["node-editor"],
+    "AI7 #435": ["ai-assistant", "ai-send"],
+    "AI2 #430": ["review-keep", "checkpoint"],
 }.items():
     for role in roles:
         PENDING[role] = card

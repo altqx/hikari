@@ -72,7 +72,7 @@ DialogWindow {
         spacing: 24
         LinkButton {
             objectName: "aboutWebsite"
-            iconRole: "link"
+            iconRole: "open-link"
             text: qsTr("HikariSub website")
             onClicked: about.app.openWebsite()
         }

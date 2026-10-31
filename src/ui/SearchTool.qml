@@ -482,8 +482,8 @@ Item {
                 Layout.fillWidth: true
                 visible: search.resultsShown
                 enabled: search.resultsShown && !search.busy
-                Button { text: qsTr("Check all"); onClicked: search.app.checkFindResults(true) }
-                Button { text: qsTr("Uncheck all"); onClicked: search.app.checkFindResults(false) }
+                IconTextButton { iconRole: "select-all"; text: qsTr("Check all"); onClicked: search.app.checkFindResults(true) }
+                IconTextButton { iconRole: "clear"; text: qsTr("Uncheck all"); onClicked: search.app.checkFindResults(false) }
                 ComboBox {
                     id: resultsReplace
                     objectName: "findResultsReplace"

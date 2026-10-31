@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HTML contact sheet of the icon set: contact_sheet.py [output.html]."""
+"""HTML contact sheet of the icon set: contact_sheet.py [output.html]; HIKARI_ICON_SHEET_ROLES limits it to those roles."""
 
 import html
 import json
@@ -60,6 +60,9 @@ def inline(svg, size):
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "out", "k1", "index.html")
     manifest = json.load(open(os.path.join(ICONS, "manifest.json"), encoding="utf-8"))
+    roles = [r for r in os.environ.get("HIKARI_ICON_SHEET_ROLES", "").split(",") if r]
+    if roles:
+        manifest["icons"] = [i for i in manifest["icons"] if i["role"] in roles]
     colours = theme_colours()
     css = []
     for aid, _, _ in APPEARANCES:

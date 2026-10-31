@@ -31157,7 +31157,7 @@ private slots:
         }
         QCOMPARE(order.mid(0, 6), (QStringList{QStringLiteral("videoMenuCopyCoords"), QStringLiteral("videoMenuPlayPause"),
                                               QStringLiteral("videoMenuStop"), QStringLiteral("videoMenuFullScreen"),
-                                              QStringLiteral("videoMenuOpenEditor"), QString()}));
+                                              QString(), QStringLiteral("videoMenuOpenEditor")}));
         QVERIFY(QMetaObject::invokeMethod(named("videoMenuFullScreen"), "triggered"));
         QVERIFY(fs.active());
         QTRY_VERIFY(!menu->property("visible").toBool());
@@ -31200,6 +31200,61 @@ private slots:
         QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
         QTRY_VERIFY(editorDock->property("isOpen").toBool());
         QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+    }
+
+    void videoContextMenuPicksTheFullscreenBarMode()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        auto &settings = *application->settingsStore();
+        settings.set("video.fullscreenBar", 0);
+        auto &tools = application->visualTools();
+        auto checked = [&](const QString &name) { return named(qPrintable(name))->property("checked").toBool(); };
+        auto pick = [&](const QString &prefix, const char *mode, int expected) {
+            QVERIFY(QMetaObject::invokeMethod(named(qPrintable(prefix + QLatin1String(mode))), "triggered"));
+            QCOMPARE(settings.integer("video.fullscreenBar"), expected);
+            QCOMPARE(fs.barMode(), expected);
+            const QStringList modes{QStringLiteral("Auto"), QStringLiteral("Always"), QStringLiteral("Never")};
+            for (int i = 0; i < 3; ++i)
+                QCOMPARE(checked(prefix + modes[i]), i == expected);
+        };
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, videoPoint(tools.videoRect().center()));
+        auto *menu = named("videoContextMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        auto *panelBar = named("videoMenuFullscreenBar");
+        QVERIFY(panelBar);
+        QCOMPARE(panelBar->property("title").toString(), QStringLiteral("Full screen bar"));
+        QCOMPARE(panelBar->property("iconRole").toString(), QStringLiteral("show-toolbar"));
+        QVERIFY(checked(QStringLiteral("videoMenuFullscreenBarAuto")));
+        pick(QStringLiteral("videoMenuFullscreenBar"), "Never", 2);
+        pick(QStringLiteral("videoMenuFullscreenBar"), "Always", 1);
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(fs.pinned());
+        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Always"));
+        const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
+        auto *fsMenu = named("videoFullscreenMenu");
+        QTRY_VERIFY(fsMenu->property("opened").toBool());
+        QCOMPARE(named("fullscreenMenuFullscreenBar")->property("title").toString(), QStringLiteral("Full screen bar\tTab"));
+        QVERIFY(checked(QStringLiteral("fullscreenMenuFullscreenBarAlways")));
+        pick(QStringLiteral("fullscreenMenuFullscreenBar"), "Never", 2);
+        QVERIFY(!fs.pinned());
+        QTRY_COMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Never"));
+        QVERIFY(checked(QStringLiteral("fullscreenBarNever")));
+        pick(QStringLiteral("fullscreenMenuFullscreenBar"), "Auto", 0);
+        QTRY_COMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Auto"));
+        QTRY_VERIFY(!fsMenu->property("visible").toBool());
+        QTest::keyClick(fsWindow, Qt::Key_Tab);
+        QCOMPARE(fs.barMode(), 1);
+        QVERIFY(checked(QStringLiteral("fullscreenMenuFullscreenBarAlways")));
+        QVERIFY(checked(QStringLiteral("videoMenuFullscreenBarAlways")));
+        QVERIFY(fs.leave());
+        settings.set("video.fullscreenBar", 0);
     }
 
     void videoFullscreenDoubleClickAndVisibleLine()

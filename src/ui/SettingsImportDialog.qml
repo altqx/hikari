@@ -283,7 +283,7 @@ DialogWindow {
                     anchors.leftMargin: 10
                     anchors.rightMargin: 6
                     spacing: 8
-                    Icon { iconRole: "about" }
+                    Icon { iconRole: "notice-info" }
                     Label {
                         objectName: "settingsImportState"
                         wrapMode: Text.WordWrap
@@ -296,7 +296,8 @@ DialogWindow {
                               : qsTr("The last import is in effect.")
                         Accessible.role: Accessible.AlertMessage
                     }
-                    Button {
+                    IconTextButton {
+                        iconRole: "undo"
                         objectName: "settingsImportRollbackBar"
                         visible: dialog.importer.canRollBack
                         text: qsTr("Roll back…")
@@ -372,7 +373,8 @@ DialogWindow {
             text: qsTr("Back")
             onClicked: dialog.step = 1
         },
-        Button {
+        IconTextButton {
+            iconRole: "undo"
             objectName: "settingsImportRollback"
             visible: dialog.step === 3 && dialog.importer.canRollBack
             text: qsTr("Roll back…")

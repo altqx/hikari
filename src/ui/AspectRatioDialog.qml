@@ -76,7 +76,8 @@ Item {
             id: popoverForm
             prefix: "aspectRatio"
         }
-        Button {
+        IconTextButton {
+            iconRole: "restore-default"
             objectName: "aspectRatioReset"
             text: qsTr("Reset")
             Layout.alignment: Qt.AlignLeft
@@ -101,7 +102,8 @@ Item {
                 prefix: "aspectRatioWindow"
             }
             leadingActions: [
-                Button {
+                IconTextButton {
+                    iconRole: "restore-default"
                     objectName: "aspectRatioWindowReset"
                     text: qsTr("Reset")
                     onClicked: host.reset()

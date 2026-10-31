@@ -48,7 +48,7 @@ DialogWindow {
         Layout.leftMargin: 64
         Layout.maximumWidth: 260
         Icon {
-            iconRole: dialog.problem.length > 0 ? "notice-error" : "about"
+            iconRole: dialog.problem.length > 0 ? "notice-error" : "notice-info"
             size: 14
             color: dialog.problem.length > 0 ? Theme.danger : Theme.text
             accentColor: dialog.problem.length > 0 ? Theme.danger : IconTheme.accent

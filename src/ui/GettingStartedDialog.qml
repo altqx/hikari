@@ -773,7 +773,8 @@ DialogWindow {
                             model: setup.outputDevices
                             Accessible.name: qsTr("Sound plays on")
                         }
-                        Button {
+                        IconTextButton {
+                            iconRole: "volume"
                             objectName: "gettingStartedTestSound"
                             text: qsTr("Test sound")
                             onClicked: setup.app.playTestSound(setup.values["audio.outputDevice"] ?? 0)
@@ -921,7 +922,8 @@ DialogWindow {
                         Layout.preferredWidth: 420
                         Accessible.name: qsTr("Your folder")
                     }
-                    Button {
+                    IconTextButton {
+                        iconRole: "folder-open"
                         objectName: "gettingStartedOpenFolder"
                         text: qsTr("Open folder")
                         onClicked: setup.app.openUserFolder()

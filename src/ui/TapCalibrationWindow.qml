@@ -220,7 +220,8 @@ Window {
             RowLayout {
                 Layout.topMargin: 6
                 spacing: 8
-                Button {
+                IconTextButton {
+                    iconRole: "refresh"
                     objectName: "tapCalibrationAgain"
                     text: qsTr("Start again")
                     focusPolicy: Qt.NoFocus

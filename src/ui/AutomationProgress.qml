@@ -301,7 +301,8 @@ FocusScope {
                 }
             }
             Item { Layout.fillWidth: true }
-            Button {
+            IconTextButton {
+                iconRole: "automation-manager"
                 id: openInPanel
                 objectName: "automationOpenRun"
                 visible: card.ended
@@ -316,7 +317,8 @@ FocusScope {
                 text: qsTr("Force stop")
                 onClicked: card.automation.forceStopRun()
             }
-            Button {
+            IconTextButton {
+                iconRole: "run-cancelled"
                 id: cancelButton
                 objectName: "automationCancel"
                 visible: card.running

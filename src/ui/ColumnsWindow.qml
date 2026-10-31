@@ -81,13 +81,15 @@ DialogWindow {
     }
     RowLayout {
         spacing: 14
-        Button {
+        IconTextButton {
+            iconRole: "select-all"
             objectName: "columnsAll"
             flat: true
             text: qsTr("Select all")
             onClicked: columns.checkAll(true)
         }
-        Button {
+        IconTextButton {
+            iconRole: "clear"
             objectName: "columnsNone"
             flat: true
             text: qsTr("None")

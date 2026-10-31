@@ -199,7 +199,8 @@ FocusScope {
                                     Accessible.description: offerTitle.text
                                     onClicked: home.offer.restore()
                                 }
-                                Button {
+                                IconTextButton {
+                                    iconRole: "autosave"
                                     objectName: "homeOfferAutosaves"
                                     visible: offerCard.crash && home.offer.autosaveCount > 0
                                     text: qsTr("Autosaves…")
@@ -259,7 +260,8 @@ FocusScope {
                                       + " · " + home.sessionNames.join(", ")
                             }
                         }
-                        Button {
+                        IconTextButton {
+                            iconRole: "last-session"
                             objectName: "homeRestore"
                             text: qsTr("Restore")
                             Accessible.description: sessionTitle.text
@@ -468,7 +470,8 @@ FocusScope {
                                             Layout.fillWidth: true
                                         }
                                     }
-                                    Button {
+                                    IconTextButton {
+                                        iconRole: "remove"
                                         objectName: "homeRemove" + row.index
                                         visible: row.modelData.missing
                                         text: qsTr("Remove")
@@ -564,7 +567,7 @@ FocusScope {
         }
         ShellMenuItem {
             objectName: "homeMenuRemoveMissing"
-            iconRole: "clear"
+            iconRole: "remove"
             text: qsTr("Remove missing files")
             enabled: home.anyMissing
             onTriggered: home.app.removeMissingRecent()

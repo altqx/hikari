@@ -255,6 +255,7 @@ ScrollView {
                 }
             }
             SettingsRow {
+                iconRole: "preview-text"
                 text: qsTr("Preview text")
                 note: qsTr("The sample text of the style and font previews.")
                 TextField {

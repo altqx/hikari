@@ -1545,7 +1545,7 @@ ApplicationWindow {
                 command: "GLOBAL_CHECK_KARAOKE"
                 help: qsTr("Checks the karaoke syllables of every line")
                 id: checkKaraokeItem
-                iconRole: "karaoke"
+                iconRole: "karaoke-check"
                 objectName: "checkKaraokeMenuItem"
                 text: qsTr("Check karaoke")
                 enabled: root.shell.hasEditingTarget
@@ -1555,7 +1555,7 @@ ApplicationWindow {
                 command: "GLOBAL_KANJI_TIMER"
                 help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
                 id: kanjiTimerItem
-                iconRole: "karaoke-split"
+                iconRole: "kanji-timer"
                 objectName: "kanjiTimerMenuItem"
                 text: qsTr("Kanji timer…")
                 enabled: root.shell.hasEditingTarget
@@ -2090,7 +2090,7 @@ ApplicationWindow {
             ShellMenuItem {
                 command: "GLOBAL_GETTING_STARTED"
                 help: qsTr("Walks through the settings most people change first")
-                iconRole: "settings"
+                iconRole: "getting-started"
                 objectName: "gettingStartedMenuItem"
                 action: Action {
                     id: gettingStartedAction
@@ -5573,7 +5573,8 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Accessible.role: Accessible.AlertMessage
                 }
-                Button {
+                IconTextButton {
+                    iconRole: "layout-restore"
                     text: qsTranslate("HikariSub.Workspace", "Restore the previous layout")
                     visible: root.workspaceLayout.hasBackup
                     onClicked: root.workspaceLayout.restoreBackup()
@@ -5602,14 +5603,16 @@ ApplicationWindow {
             text: offer.barText
             Layout.fillWidth: true
             onClosed: offer.end()
-            Button {
+            IconTextButton {
+                iconRole: "last-session"
                 objectName: "startupRestore"
                 visible: startupBar.offer.restorable
                 text: startupBar.offer.kind === "crash" ? qsTranslate("HikariSub.Session", "Restore session")
                                                         : qsTranslate("HikariSub.Session", "Restore")
                 onClicked: startupBar.offer.restore()
             }
-            Button {
+            IconTextButton {
+                iconRole: "autosave"
                 objectName: "startupAutosaves"
                 visible: startupBar.offer.kind === "crash" && startupBar.offer.autosaveCount > 0
                 text: qsTranslate("HikariSub.Session", "Autosaves…")
@@ -5652,7 +5655,8 @@ ApplicationWindow {
                   ? qsTranslate("HikariSub.Documents", "%1 was changed by another program. Reloading drops the changes you made here.").arg(tab.title)
                   : qsTranslate("HikariSub.Documents", "%1 was changed by another program.").arg(tab.title)
             Layout.fillWidth: true
-            Button {
+            IconTextButton {
+                iconRole: "refresh"
                 objectName: "reloadYes"
                 text: qsTranslate("HikariSub.Documents", "Reload")
                 onClicked: {
@@ -5661,7 +5665,8 @@ ApplicationWindow {
                         root.endDiskChange(id)
                 }
             }
-            Button {
+            IconTextButton {
+                iconRole: "compare"
                 objectName: "diskChangeCompare"
                 text: qsTranslate("HikariSub.Documents", "Compare")
                 onClicked: root.app.compareWithFileOnDisk()
@@ -5695,17 +5700,20 @@ ApplicationWindow {
                     closable: false
                     text: sessionWindows.entryText(modelData)
                     Layout.fillWidth: true
-                    Button {
+                    IconTextButton {
+                        iconRole: "refresh"
                         objectName: "restoreRetry" + entryBar.index
                         text: qsTranslate("HikariSub.Session", "Retry")
                         onClicked: sessionWindows.retry(entryBar.modelData)
                     }
-                    Button {
+                    IconTextButton {
+                        iconRole: "folder-open"
                         objectName: "restoreRelink" + entryBar.index
                         text: qsTranslate("HikariSub.Session", "Relink…")
                         onClicked: sessionWindows.relink(entryBar.modelData)
                     }
-                    Button {
+                    IconTextButton {
+                        iconRole: "remove"
                         objectName: "restoreRemove" + entryBar.index
                         text: qsTranslate("HikariSub.Session", "Remove")
                         onClicked: sessionWindows.remove(entryBar.modelData)

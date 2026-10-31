@@ -145,7 +145,7 @@ Item {
                     anchors.rightMargin: 6
                     spacing: 10
                     Icon {
-                        iconRole: ({ error: "notice-error", warning: "notice-warning", info: "about" })[toast.modelData.severity] || "about"
+                        iconRole: ({ error: "notice-error", warning: "notice-warning", info: "notice-info" })[toast.modelData.severity] || "notice-info"
                         color: toast.modelData.severity === "error" ? Theme.danger
                              : toast.modelData.severity === "warning" ? Theme.warning : IconTheme.normal
                         accentColor: toast.modelData.severity === "info" ? IconTheme.accent : color
@@ -177,7 +177,8 @@ Item {
                             spacing: 4
                             Layout.leftMargin: -6
                             Layout.topMargin: 4
-                            Button {
+                            IconTextButton {
+                                iconRole: "log"
                                 objectName: "toastDetails"
                                 visible: toast.modelData.details.length > 0
                                 flat: true
@@ -229,7 +230,8 @@ Item {
                     color: Theme.muted
                     Layout.fillWidth: true
                 }
-                Button {
+                IconTextButton {
+                    iconRole: "log"
                     objectName: "toastMoreOpenLog"
                     flat: true
                     text: qsTr("Open the Log")

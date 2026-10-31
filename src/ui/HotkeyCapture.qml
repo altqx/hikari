@@ -304,7 +304,8 @@ Item {
         RowLayout {
             spacing: 6
             Layout.fillWidth: true
-            Button {
+            IconTextButton {
+                iconRole: "clear"
                 objectName: "hotkeyClear"
                 visible: form.host.clear !== null
                 text: qsTr("Clear")

@@ -234,7 +234,7 @@ DialogWindow {
         objectName: "automationDialogMenu"
         ShellMenuItem {
             objectName: "dialogLastUsed"
-            iconRole: "undo"
+            iconRole: "dialog-memory"
             text: qsTr("Last used")
             enabled: window.controller.hasLastUsed
             onTriggered: window.fill(window.controller.lastUsedValues())

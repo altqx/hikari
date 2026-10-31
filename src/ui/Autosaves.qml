@@ -288,7 +288,8 @@ Item {
             }
 
             leadingActions: [
-                Button {
+                IconTextButton {
+                    iconRole: "delete"
                     id: deleteOlderButton
                     objectName: "autosavesDeleteOlder"
                     text: qsTr("Delete older than…")

@@ -505,28 +505,11 @@ Window {
             onSettingsRequested: fs.audioSettingsRequested()
             onClosed: keyScope.forceActiveFocus()
         }
-        ShellMenu {
+        FullscreenBarMenu {
             id: modeMenu
             objectName: "fullscreenBarModeMenu"
-            readonly property var names: [qsTr("Auto"), qsTr("Always"), qsTr("Never")]
+            controller: fs.controller
             onClosed: keyScope.forceActiveFocus()
-            Instantiator {
-                model: [qsTr("Show on pointer movement, hide when idle"), qsTr("Keep the bar; the picture ends above it"),
-                        qsTr("Picture only")]
-                delegate: ShellMenuItem {
-                    required property string modelData
-                    required property int index
-                    objectName: "fullscreenBar" + ["Auto", "Always", "Never"][index]
-                    text: modeMenu.names[index]
-                    help: modelData
-                    checkable: true
-                    checked: fs.controller.barMode === index
-                    keepsMenuOpen: false
-                    onTriggered: fs.controller.barMode = index
-                }
-                onObjectAdded: (index, object) => modeMenu.insertItem(index, object)
-                onObjectRemoved: (index, object) => modeMenu.removeItem(object)
-            }
         }
         ShellMenu {
             id: toolsMenu

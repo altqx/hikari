@@ -165,14 +165,16 @@ Popover {
     RowLayout {
         spacing: 4
         Layout.fillWidth: true
-        Button {
+        IconTextButton {
+            iconRole: "select-all"
             objectName: "chooseStylesAll"
             flat: true
             text: qsTr("Select all")
             enabled: chooser.shown.length > 0
             onClicked: chooser.setChecked(chooser.checkedNames.concat(chooser.shown))
         }
-        Button {
+        IconTextButton {
+            iconRole: "clear"
             objectName: "chooseStylesNone"
             flat: true
             text: qsTr("None")

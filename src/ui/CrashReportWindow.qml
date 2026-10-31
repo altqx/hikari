@@ -130,14 +130,16 @@ DialogWindow {
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }
-        Button {
+        IconTextButton {
+            iconRole: "last-session"
             objectName: "crashReportRestore"
             visible: report.offer !== null && report.offer.restorable
             text: qsTranslate("HikariSub.Session", "Restore session")
             Layout.alignment: Qt.AlignTop
             onClicked: report.offer.restore()
         }
-        Button {
+        IconTextButton {
+            iconRole: "autosave"
             objectName: "crashReportAutosaves"
             visible: report.offer !== null && report.offer.autosaveCount > 0
             text: qsTranslate("HikariSub.Session", "Autosaves…")
