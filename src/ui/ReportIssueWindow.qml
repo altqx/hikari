@@ -252,7 +252,8 @@ DialogWindow {
                                     : qsTr("The report is too long for a link, so it is on the clipboard.")
             detail: issue.complete ? qsTr("Check it there and press Create. You need a GitHub account.")
                                    : qsTr("GitHub opened an empty %1 form. Paste into its first field (Ctrl+V).").arg(issue.kindNames[issue.kinds.indexOf(issue.kind)])
-            Button {
+            IconTextButton {
+                iconRole: "edit-copy"
                 visible: !issue.complete
                 text: qsTr("Copy again")
                 onClicked: issue.reports.copyIssue(issue.kind, titleField.text, issue.fields(), issue.bug && withLog.checked)
@@ -260,15 +261,17 @@ DialogWindow {
         }
         Step {
             visible: issue.bug && withScreenshot.checked && issue.screenshot.length > 0
-            iconRole: "frame-snapshot"
+            iconRole: "screenshot"
             heading: qsTr("Add the screenshot")
             detail: qsTr("Drag it into the description, or copy it and paste it there.")
-            Button {
+            IconTextButton {
+                iconRole: "edit-copy"
                 objectName: "reportIssueCopyImage"
                 text: qsTr("Copy image")
                 onClicked: issue.reports.copyImage(issue.screenshot)
             }
-            Button {
+            IconTextButton {
+                iconRole: "show-in-folder"
                 text: qsTr("Show file")
                 onClicked: if (issue.app) issue.app.showInFolder(issue.screenshot)
             }
@@ -278,7 +281,8 @@ DialogWindow {
             iconRole: "open-subtitles"
             heading: qsTr("Add the subtitle file")
             detail: qsTr("Drag the .zip into the description. Only you choose to share it.")
-            Button {
+            IconTextButton {
+                iconRole: "show-in-folder"
                 objectName: "reportIssueShowZip"
                 text: qsTr("Show file")
                 onClicked: if (issue.app) issue.app.showInFolder(issue.subtitleZip)
@@ -288,13 +292,15 @@ DialogWindow {
     }
 
     leadingActions: [
-        Button {
+        IconTextButton {
+            iconRole: "edit-copy"
             objectName: "reportIssueCopy"
             visible: issue.page === "form"
             text: qsTr("Copy")
             onClicked: issue.reports.copyIssue(issue.kind, titleField.text, issue.fields(), issue.bug && withLog.checked)
         },
-        Button {
+        IconTextButton {
+            iconRole: "open-link"
             objectName: "reportIssueAgain"
             visible: issue.page === "finish"
             text: qsTr("Open the form again")

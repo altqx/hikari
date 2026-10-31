@@ -430,7 +430,8 @@ DialogWindow {
     }
 
     leadingActions: [
-        Button {
+        IconTextButton {
+            iconRole: "font-catalogs"
             objectName: "fontPickerManage"
             text: qsTr("Manage catalogs…")
             onClicked: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(picker.family, picker)
@@ -485,7 +486,7 @@ DialogWindow {
         MenuSeparator {}
         ShellMenuItem {
             objectName: "fontPickerCatalogManage"
-            iconRole: "styles"
+            iconRole: "font-catalogs"
             text: qsTr("Manage catalogs…")
             onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(picker.family, picker)
         }
@@ -565,7 +566,8 @@ DialogWindow {
         }
         RowLayout {
             Layout.fillWidth: true
-            Button {
+            IconTextButton {
+                iconRole: "clear"
                 objectName: "fontPickerCharactersClear"
                 text: qsTr("Clear")
                 onClicked: {

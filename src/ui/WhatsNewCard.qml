@@ -53,7 +53,7 @@ Rectangle {
             objectName: "whatsNewAll"
             Layout.margins: 8
             Layout.leftMargin: 14
-            iconRole: "link"
+            iconRole: "open-link"
             text: qsTranslate("HikariSub.MainWindow", "All release notes")
             onClicked: card.whatsNew.openAllReleaseNotes()
         }

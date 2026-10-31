@@ -102,7 +102,7 @@ RowLayout {
     }
     IconToolButton {
         objectName: "fontCatalogManage"
-        iconRole: "settings"
+        iconRole: "font-catalogs"
         text: qsTr("Manage")
         tip: qsTr("Allows managing font catalogs")
         onClicked: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(bar.fontName, bar.Window.window)

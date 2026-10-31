@@ -91,6 +91,13 @@ ShellMenu {
         onObjectAdded: (index, object) => videoMenu.insertItem(videoMenu.indexOfItem(fullScreenItem) + 1 + index, object)
         onObjectRemoved: (index, object) => videoMenu.removeItem(object)
     }
+    FullscreenBarMenu {
+        objectName: videoMenu.itemPrefix + "FullscreenBar"
+        iconRole: "show-toolbar"
+        title: qsTr("Full screen bar") + (videoMenu.fullscreen ? videoMenu.keys("VIDEO_FULLSCREEN_BAR") : "")
+        controller: videoMenu.shell.videoFullscreen
+        itemPrefix: videoMenu.itemPrefix + "FullscreenBar"
+    }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "OpenEditor"
         iconRole: "editor"
@@ -171,14 +178,14 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "SaveSubbedFrame"
-        iconRole: "frame-snapshot"
+        iconRole: "frame-snapshot-subtitles"
         text: qsTr("Save frame with subtitles as PNG") + videoMenu.keys("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")) videoMenu.shell.videoView.snapshot("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "CopySubbedFrame"
-        iconRole: "edit-copy"
+        iconRole: "frame-copy-subtitles"
         text: qsTr("Copy frame with subtitles to clipboard") + videoMenu.keys("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
@@ -192,7 +199,7 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "CopyFrame"
-        iconRole: "edit-copy"
+        iconRole: "frame-copy"
         text: qsTr("Copy frame to clipboard") + videoMenu.keys("VIDEO_COPY_FRAME_TO_CLIPBOARD")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")

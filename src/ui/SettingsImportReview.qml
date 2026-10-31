@@ -245,7 +245,7 @@ ColumnLayout {
         }
         LinkButton {
             objectName: "settingsImportAllConflicts"
-            iconRole: "commit"
+            iconRole: "select-all"
             text: qsTr("All conflicts")
             onClicked: review.chooseShown(true)
         }

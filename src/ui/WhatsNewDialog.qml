@@ -94,7 +94,7 @@ DialogWindow {
     leadingActions: [
         IconTextButton {
             objectName: "whatsNewAllReleaseNotes"
-            iconRole: "link"
+            iconRole: "open-link"
             text: qsTr("All release notes")
             onClicked: dialog.whatsNew.openAllReleaseNotes()
         }

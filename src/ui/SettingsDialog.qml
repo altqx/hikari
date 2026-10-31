@@ -251,7 +251,7 @@ DialogWindow {
                 }
                 ShellMenuItem {
                     objectName: "settingsResetAll"
-                    iconRole: "settings"
+                    iconRole: "restore-default"
                     text: qsTr("Reset all settings…")
                     onTriggered: dialog.resetAll()
                 }
@@ -511,6 +511,7 @@ DialogWindow {
                         title: qsTr("Tabs")
                         SettingCheck { setting: "subtitles.openInNewTab"; text: qsTr("Always open subtitles in a new tab") }
                         SettingsRow {
+                            iconRole: "tab-name-length"
                             text: qsTr("Tab name length")
                             SettingNumber {
                                 setting: "program.tabTextMaxChars"; from: 20; to: 150; unit: qsTr("characters")
@@ -537,7 +538,8 @@ DialogWindow {
                         SettingsRow {
                             iconRole: "notices"
                             text: qsTr("Questions hidden with “Don’t ask again”")
-                            Button {
+                            IconTextButton {
+                                iconRole: "notices"
                                 objectName: "settingsAskAgain"
                                 text: qsTr("Ask again")
                                 enabled: (dialog.values["notices.hiddenQuestions"] || []).length > 0
@@ -560,7 +562,8 @@ DialogWindow {
                                 Layout.fillWidth: true
                                 Accessible.name: qsTr("User folder")
                             }
-                            Button {
+                            IconTextButton {
+                                iconRole: "folder-open"
                                 objectName: "settingsOpenUserFolder"
                                 text: qsTr("Open")
                                 Accessible.name: qsTr("Open user folder")
@@ -571,7 +574,8 @@ DialogWindow {
                             iconRole: "folder-open"
                             text: qsTr("Fonts folder")
                             SettingText { id: fontsFolder; setting: "fonts.externalDirectory"; Accessible.name: qsTr("Fonts folder") }
-                            Button {
+                            IconTextButton {
+                                iconRole: "folder-open"
                                 text: qsTr("Choose…")
                                 Accessible.name: qsTr("Choose external font folder")
                                 onClicked: fontsFolderDialog.open()
@@ -863,14 +867,17 @@ DialogWindow {
                     SettingsSection {
                         title: qsTr("New lines")
                         SettingsRow {
+                            iconRole: "time-offset-start"
                             text: qsTr("Start frame offset")
                             SettingNumber { setting: "grid.insertStartOffset"; from: -100000; to: 100000; unit: qsTr("ms"); name: qsTr("Start frame offset") }
                         }
                         SettingsRow {
+                            iconRole: "time-offset-end"
                             text: qsTr("End frame offset")
                             SettingNumber { setting: "grid.insertEndOffset"; from: -100000; to: 100000; unit: qsTr("ms"); name: qsTr("End frame offset") }
                         }
                         SettingsRow {
+                            iconRole: "hide-tags"
                             text: qsTr("ASS tag replacement")
                             SettingText { setting: "grid.tagsSwapCharacter"; Layout.preferredWidth: 120; Accessible.name: qsTr("ASS tag replacement") }
                         }
@@ -886,6 +893,7 @@ DialogWindow {
                         SettingCheck { setting: "video.fullScreenOnStart"; text: qsTr("Open video from the context menu in full screen") }
                         SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video at the active line's time") }
                         SettingsRow {
+                            iconRole: "video-to-start-time"
                             text: dialog.follow.seekName
                             SettingChoice {
                                 setting: "video.moveToActiveLine"
@@ -894,6 +902,7 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
+                            iconRole: "play-line"
                             text: dialog.follow.playName
                             SettingChoice {
                                 setting: "video.playAfterSelection"
@@ -935,6 +944,7 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
+                            iconRole: "preview-resolution"
                             id: previewAtRow
                             objectName: "settingsPreviewSubtitlesAt"
                             readonly property bool libass: dialog.renderers.length < 2
@@ -967,6 +977,7 @@ DialogWindow {
                         SettingCheck { setting: "video.gpuConversion"; text: qsTr("Convert video colours on the GPU") }
                         SettingNote { text: qsTr("Applies when the video opens again.") }
                         SettingsRow {
+                            iconRole: "video-streams"
                             text: qsTr("Preferred audio")
                             note: qsTr("Separated by semicolons.")
                             SettingText { setting: "video.acceptedAudioStream"; Accessible.name: qsTr("Preferred audio") }
@@ -1041,6 +1052,7 @@ DialogWindow {
                             SettingNumber { setting: "audio.delay"; from: -50000000; to: 50000000; unit: qsTr("ms"); name: qsTr("Audio delay") }
                         }
                         SettingsRow {
+                            iconRole: "play-before-mark"
                             text: qsTr("Play around the marker")
                             SettingNumber { setting: "audio.markPlayTime"; from: 400; to: 5000; unit: qsTr("ms"); name: qsTr("Play around the marker") }
                         }
@@ -1062,10 +1074,12 @@ DialogWindow {
                         SettingCheck { setting: "audio.drawVideoPosition"; text: qsTr("Show the video position") }
                         SettingCheck { setting: "audio.drawKeyframes"; text: qsTr("Show keyframes") }
                         SettingsRow {
+                            iconRole: "boundary-thickness"
                             text: qsTr("Line boundaries thickness")
                             SettingNumber { setting: "audio.lineBoundariesThickness"; from: 1; to: 5; name: qsTr("Line boundaries thickness") }
                         }
                         SettingsRow {
+                            iconRole: "inactive-lines"
                             text: qsTr("Inactive lines")
                             SettingChoice {
                                 setting: "audio.inactiveLinesDisplayMode"
@@ -1085,6 +1099,7 @@ DialogWindow {
                         SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move the syllable line after a click") }
                         SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
                         SettingsRow {
+                            iconRole: "karaoke"
                             text: qsTr("Long syllables for %1").arg("\\kf")
                             SettingNumber {
                                 setting: "audio.karaokeKfThreshold"; from: 10; to: 10000; unit: qsTr("cs"); name: qsTr("Long syllables for %1").arg("\\kf")
@@ -1096,6 +1111,7 @@ DialogWindow {
                         title: qsTr("Cache")
                         SettingCheck { setting: "audio.ramCache"; text: qsTr("Load audio into RAM") }
                         SettingsRow {
+                            iconRole: "cache"
                             text: qsTr("Cache files kept")
                             note: qsTr("0 keeps them all.")
                             SettingNumber {
@@ -1122,6 +1138,7 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
+                            iconRole: "styles"
                             text: qsTr("Style")
                             SettingChoice {
                                 setting: "convert.style"
@@ -1152,6 +1169,7 @@ DialogWindow {
                         SettingCheck { setting: "convert.fpsFromVideo"; text: qsTr("Frame rate from the video") }
                         SettingCheck { setting: "convert.newEndTimes"; text: qsTr("New end times") }
                         SettingsRow {
+                            iconRole: "time-per-letter"
                             text: qsTr("Time per letter")
                             SettingNumber { setting: "convert.timePerCharacter"; from: 30; to: 1000; unit: qsTr("ms"); name: qsTr("Time per letter") }
                         }
@@ -1166,6 +1184,7 @@ DialogWindow {
                             SettingNumber { setting: "convert.resolutionHeight"; from: 1; to: 3000; name: qsTr("Height") }
                         }
                         SettingsRow {
+                            iconRole: "tags-insert"
                             text: qsTr("Tags at the start of each line")
                             SettingText { setting: "convert.assTagsToInsertInLine"; Accessible.name: qsTr("Tags at the start of each line") }
                         }
@@ -1201,9 +1220,11 @@ DialogWindow {
                     SettingsSection {
                         title: qsTr("Kept answers and presets")
                         SettingsRow {
+                            iconRole: "dialog-memory"
                             text: qsTr("Last answers")
                             note: qsTr("Presets are kept; delete them from a dialog’s ⋯ menu.")
-                            Button {
+                            IconTextButton {
+                                iconRole: "clear"
                                 objectName: "settingsClearAnswers"
                                 text: qsTr("Clear last answers…")
                                 enabled: (dialog.values["automation.dialogAnswers"] || []).length > 0
@@ -1431,19 +1452,21 @@ DialogWindow {
                         }
                         RowLayout {
                             spacing: 8
-                            Button {
+                            IconTextButton {
+                                iconRole: "hotkeys"
                                 id: hotkeyMapButton
                                 objectName: "hotkeyMap"
                                 text: qsTr("Map hotkey…")
                                 enabled: dialog.hotkeys.mapProblem.length === 0
                                 onClicked: dialog.mapHotkey(hotkeyMapButton)
                             }
-                            Button {
+                            IconTextButton {
+                                iconRole: "restore-default"
                                 objectName: "hotkeyRestore"
                                 text: qsTr("Restore default")
                                 onClicked: dialog.hotkeys.optionsReset()
                             }
-                            Button { objectName: "hotkeyRemove"; text: qsTr("Delete"); onClicked: dialog.hotkeys.optionsDelete() }
+                            IconTextButton { objectName: "hotkeyRemove"; iconRole: "delete"; text: qsTr("Delete"); onClicked: dialog.hotkeys.optionsDelete() }
                         }
                     }
                 }
@@ -1465,6 +1488,7 @@ DialogWindow {
                             text: qsTr("Off: prereleases (beta versions) are offered too.")
                         }
                         SettingsRow {
+                            iconRole: "skip-version"
                             // MUST KILL: the docs* properties are read by name by the docs export
                             readonly property string docsSetting: "updater.skippedVersion"
                             readonly property string docsControl: "readonly"
@@ -1475,7 +1499,8 @@ DialogWindow {
                                 objectName: "settingsSkippedVersion"
                                 text: dialog.values["updater.skippedVersion"] ?? ""
                             }
-                            Button {
+                            IconTextButton {
+                                iconRole: "check-updates"
                                 objectName: "settingsOfferAgain"
                                 text: qsTr("Offer it again")
                                 onClicked: dialog.put("updater.skippedVersion", "")

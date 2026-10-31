@@ -21,7 +21,7 @@ Pane {
     }
     function iconRole(severity) {
         return severity === LogController.Error ? "notice-error"
-             : severity === LogController.Warning ? "notice-warning" : "about"
+             : severity === LogController.Warning ? "notice-warning" : "notice-info"
     }
     function showMarked() {
         const row = entries.rowOf(log.marked)

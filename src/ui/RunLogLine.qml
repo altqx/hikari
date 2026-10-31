@@ -41,7 +41,7 @@ RowLayout {
         Icon {
             visible: line.host
             size: 14
-            iconRole: line.level === -2 ? "notice-error" : "about"
+            iconRole: line.level === -2 ? "notice-error" : "notice-info"
             color: line.level === -2 ? Theme.danger : IconTheme.normal
             accentColor: line.level === -2 ? Theme.danger : IconTheme.accent
             anchors.verticalCenter: parent.verticalCenter

@@ -102,7 +102,8 @@ Window {
                 enabled: !always.checked
                 Accessible.name: qsTr("Height")
             }
-            Button {
+            IconTextButton {
+                iconRole: "resolution-from-video"
                 id: useVideoButton
                 objectName: "scriptResolutionUseVideo"
                 text: qsTr("Use video resolution")

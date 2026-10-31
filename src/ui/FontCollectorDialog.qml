@@ -218,7 +218,7 @@ DialogWindow {
             anchors.rightMargin: 6
             spacing: 10
             Icon {
-                iconRole: dialog.collector.reviewIncomplete ? "notice-warning" : "about"
+                iconRole: dialog.collector.reviewIncomplete ? "notice-warning" : "notice-info"
                 color: dialog.collector.reviewIncomplete ? Theme.warning : IconTheme.normal
                 accentColor: dialog.collector.reviewIncomplete ? Theme.warning : IconTheme.accent
             }
@@ -245,8 +245,9 @@ DialogWindow {
         }
     }
 
-    leadingActions: Button {
+    leadingActions: IconTextButton {
         objectName: "fontCollectorSaveFolder"
+        iconRole: "show-in-folder"
         text: qsTr("Show folder")
         visible: dialog.collector.action !== 0
         enabled: dialog.collector.canSaveFolder && !dialog.working

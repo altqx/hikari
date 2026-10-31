@@ -28,7 +28,7 @@ Pane {
         spacing: 8
         Icon {
             objectName: "inlineBarIcon"
-            iconRole: bar.iconRole.length > 0 ? bar.iconRole : ({ error: "notice-error", warning: "notice-warning", info: "about" })[bar.severity] || "about"
+            iconRole: bar.iconRole.length > 0 ? bar.iconRole : ({ error: "notice-error", warning: "notice-warning", info: "notice-info" })[bar.severity] || "notice-info"
             color: bar.iconRole.length > 0 || bar.severity === "info" ? IconTheme.normal
                  : bar.severity === "error" ? Theme.danger : Theme.warning
             accentColor: bar.iconRole.length > 0 || bar.severity === "info" ? IconTheme.accent : color

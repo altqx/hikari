@@ -423,13 +423,15 @@ Item {
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
-                Button {
+                IconTextButton {
+                    iconRole: "select-all"
                     objectName: "misspellCheckAll"
                     flat: true
                     text: qsTr("All")
                     onClicked: results.setChecks(true)
                 }
-                Button {
+                IconTextButton {
+                    iconRole: "clear"
                     objectName: "misspellUncheckAll"
                     flat: true
                     text: qsTr("None")

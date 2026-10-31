@@ -132,7 +132,8 @@ DialogWindow {
                 SizeBox { id: widthField; objectName: "propWidth"; Accessible.name: qsTr("Video width"); onValueModified: dialog.mark("playResX") }
                 Label { text: "×" }
                 SizeBox { id: heightField; objectName: "propHeight"; Accessible.name: qsTr("Video height"); onValueModified: dialog.mark("playResY") }
-                Button {
+                IconTextButton {
+                    iconRole: "resolution-from-video"
                     objectName: "propFromVideo"
                     text: qsTr("From video")
                     enabled: dialog.initial.videoWidth > 0
@@ -145,7 +146,8 @@ DialogWindow {
                 SizeBox { id: layoutWidthField; objectName: "propLayoutWidth"; enabled: !linkBox.checked; Accessible.name: qsTr("Layout width"); onValueModified: dialog.mark("layoutResX") }
                 Label { text: "×" }
                 SizeBox { id: layoutHeightField; objectName: "propLayoutHeight"; enabled: !linkBox.checked; Accessible.name: qsTr("Layout height"); onValueModified: dialog.mark("layoutResY") }
-                Button {
+                IconTextButton {
+                    iconRole: "resolution-from-video"
                     objectName: "propLayoutFromVideo"
                     text: qsTr("From video")
                     enabled: !linkBox.checked && dialog.initial.videoWidth > 0

@@ -71,7 +71,7 @@ Rectangle {
             }
             IconToolButton {
                 objectName: "visualLastChangeClose"
-                iconRole: "clear"
+                iconRole: "tab-close"
                 text: qsTr("Close")
                 focusPolicy: Qt.NoFocus
                 onClicked: card.tools.dismissLastChange()

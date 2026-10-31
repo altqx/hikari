@@ -24,14 +24,16 @@ InlineBar {
         target: bar.installer
         function onReady() { bar.dismissed = false }
     }
-    Button {
+    IconTextButton {
+        iconRole: "whats-new"
         objectName: "updateWhatsNew"
         visible: !bar.manual
         flat: true
         text: qsTr("What's new")
         onClicked: bar.updates.openReleasePage(bar.updates.releasePageOf(bar.installer.readyVersion))
     }
-    Button {
+    IconTextButton {
+        iconRole: "restart"
         objectName: "updateRestartNow"
         visible: !bar.manual
         highlighted: true
@@ -44,13 +46,15 @@ InlineBar {
         text: qsTr("Later")
         onClicked: bar.dismissed = true
     }
-    Button {
+    IconTextButton {
+        iconRole: "show-in-folder"
         objectName: "updateShowInFolder"
         visible: bar.manual
         text: qsTr("Show in folder")
         onClicked: bar.installer.showInFolder()
     }
-    Button {
+    IconTextButton {
+        iconRole: "edit-copy"
         objectName: "updateCopyCommand"
         visible: bar.manual
         text: qsTr("Copy install command")

@@ -80,7 +80,7 @@ DialogWindow {
         Layout.topMargin: 8
         Icon {
             objectName: "messageBoxIcon"
-            iconRole: ({ error: "notice-error", warning: "notice-warning", info: "about" })[box.severity] || "about"
+            iconRole: ({ error: "notice-error", warning: "notice-warning", info: "notice-info" })[box.severity] || "notice-info"
             size: 32
             color: box.colourOf(box.severity)
             accentColor: box.severity === "info" ? IconTheme.accent : color

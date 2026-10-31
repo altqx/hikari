@@ -1254,7 +1254,7 @@ DialogWindow {
             }
             ShellMenuItem {
                 id: cleanItem
-                iconRole: "clear"
+                iconRole: "delete"
                 objectName: "assClean"
                 text: qsTr("Delete unused styles")
                 onTriggered: manager.deleteUnused()

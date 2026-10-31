@@ -301,7 +301,7 @@ DialogWindow {
                             anchors.rightMargin: 4
                             spacing: 8
                             Icon {
-                                iconRole: row.removes ? "notice-warning" : "about"
+                                iconRole: row.removes ? "notice-warning" : "notice-info"
                                 size: 16
                                 color: row.removes ? Theme.warning : IconTheme.normal
                                 accentColor: row.removes ? Theme.warning : IconTheme.accent

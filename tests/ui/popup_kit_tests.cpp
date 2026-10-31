@@ -485,7 +485,7 @@ private slots:
     void inlineBarClosesWhenItCan()
     {
         QQuickItem *bar = findIn(root.get(), "bar");
-        QCOMPARE(findItem(bar, QStringLiteral("inlineBarIcon"))->property("iconRole").toString(), QStringLiteral("about"));
+        QCOMPARE(findItem(bar, QStringLiteral("inlineBarIcon"))->property("iconRole").toString(), QStringLiteral("notice-info"));
         QVERIFY(findItem(bar, QStringLiteral("barAction")));
         run(QStringLiteral("bar.severity = 'error'"));
         QCOMPARE(findItem(bar, QStringLiteral("inlineBarIcon"))->property("iconRole").toString(), QStringLiteral("notice-error"));
