@@ -2008,7 +2008,9 @@ private slots:
         const qreal notch = QGuiApplication::styleHints()->wheelScrollLines() * row;
         auto wheel = [&](QPoint pixels, QPoint angle, Qt::KeyboardModifiers mods = Qt::NoModifier) {
             const QPointF at = grid->mapToScene(QPointF(grid->width() / 2, grid->height() / 2));
-            QWheelEvent event(at, window->mapToGlobal(at), pixels, angle, Qt::NoButton, mods, Qt::NoScrollPhase, false);
+            const auto source = pixels.isNull() ? Qt::MouseEventNotSynthesized : Qt::MouseEventSynthesizedBySystem;
+            QWheelEvent event(at, window->mapToGlobal(at), pixels, angle, Qt::NoButton, mods, Qt::NoScrollPhase, false,
+                              source);
             QCoreApplication::sendEvent(window, &event);
         };
         // MUST KILL: bare processEvents so the opened tab's scroll restore runs first
