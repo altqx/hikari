@@ -344,6 +344,7 @@ std::optional<SettingsImportStore::Root> SettingsImportStore::inspectRoot(const 
     for (const auto &known : si::knownSources())
         if (QFileInfo(root.path + QLatin1Char('/') + qs(known.path)).isFile())
             root.files << qs(known.path);
+    const qsizetype knownFiles = root.files.size();
     const QDir dictionary(root.path + QStringLiteral("/Dictionary"));
     for (const QString &name : dictionary.entryList({QStringLiteral("*.dic"), QStringLiteral("*.aff")}, QDir::Files,
                                                     QDir::Name))
@@ -351,7 +352,7 @@ std::optional<SettingsImportStore::Root> SettingsImportStore::inspectRoot(const 
     const QDir themes(root.path + QStringLiteral("/Themes"));
     for (const QString &name : themes.entryList({QStringLiteral("*.txt")}, QDir::Files, QDir::Name))
         root.themes << QStringLiteral("Themes/") + name;
-    if (root.files.isEmpty())
+    if (knownFiles == 0)
         return std::nullopt;
     return root;
 }
