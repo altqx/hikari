@@ -1,0 +1,51 @@
+{
+ "event": "$exception",
+ "distinct_id": "sy1-symbolication-test",
+ "properties": {
+  "$exception_list": [
+   {
+    "type": "EXCEPTION_ACCESS_VIOLATION",
+    "value": "SY1 symbolication test (Windows)",
+    "mechanism": {
+     "type": "seh",
+     "handled": false
+    },
+    "stacktrace": {
+     "type": "raw",
+     "frames": [
+      {
+       "platform": "native",
+       "module": "Qt6Core.dll",
+       "offset": "0xa5238",
+       "instruction_addr": "0x7ffb100a5238",
+       "image_addr": "0x7ffb10000000"
+      },
+      {
+       "platform": "native",
+       "module": "HikariSub.exe",
+       "offset": "0x1180f8",
+       "instruction_addr": "0x7ff6a01180f8",
+       "image_addr": "0x7ff6a0000000"
+      }
+     ]
+    }
+   }
+  ],
+  "$exception_level": "fatal",
+  "crashed_version": "0.1.0-beta.2",
+  "report_id": "687dcb39-ead5-4ef9-8046-65963aba6cb7",
+  "$debug_images": [
+   {
+    "code_file": "HikariSub.exe",
+    "debug_id": "bf0f7bd2-882a-42c3-a68b-ec6388f1ca29-1",
+    "image_addr": "0x7ff6a0000000"
+   },
+   {
+    "code_file": "Qt6Core.dll",
+    "debug_id": "57cb85ac-6360-4f46-b2ad-0a5815c3565b-1",
+    "image_addr": "0x7ffb10000000"
+   }
+  ],
+  "$process_person_profile": false
+ }
+}

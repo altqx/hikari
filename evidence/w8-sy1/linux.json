@@ -1,0 +1,58 @@
+{
+ "event": "$exception",
+ "distinct_id": "sy1-symbolication-test",
+ "properties": {
+  "$exception_list": [
+   {
+    "type": "SIGSEGV",
+    "value": "SY1 symbolication test (Linux)",
+    "mechanism": {
+     "type": "signal",
+     "handled": false
+    },
+    "stacktrace": {
+     "type": "raw",
+     "frames": [
+      {
+       "platform": "native",
+       "module": "libQt6Core.so.6",
+       "offset": "0x1977b0",
+       "instruction_addr": "0x7f3a401977b0",
+       "image_addr": "0x7f3a40000000"
+      },
+      {
+       "platform": "native",
+       "module": "hikarisub",
+       "offset": "0x35ba80",
+       "instruction_addr": "0x75ba80",
+       "image_addr": "0x400000"
+      },
+      {
+       "platform": "native",
+       "module": "hikarisub",
+       "offset": "0xd52440",
+       "instruction_addr": "0x1152440",
+       "image_addr": "0x400000"
+      }
+     ]
+    }
+   }
+  ],
+  "$exception_level": "fatal",
+  "crashed_version": "0.1.0-beta.2",
+  "report_id": "c5cb423e-a4c2-4693-85b0-8d20d9df26f8",
+  "$debug_images": [
+   {
+    "code_file": "hikarisub",
+    "debug_id": "7e811ead-9b97-4d7e-1301-009dda3b680d",
+    "image_addr": "0x400000"
+   },
+   {
+    "code_file": "libQt6Core.so.6",
+    "debug_id": "d85be40c-8b5f-e912-b7df-f15aa2187f0a",
+    "image_addr": "0x7f3a40000000"
+   }
+  ],
+  "$process_person_profile": false
+ }
+}
