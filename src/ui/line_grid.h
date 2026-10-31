@@ -33,6 +33,8 @@ std::optional<QColor> comparisonBackground(int state, bool comment, bool selecte
 QColor selectionOver(const QColor &colour, const QColor &selection);
 QColor commentInk(const theme::Roles &roles, const QColor &background);
 
+enum class RunFold { None, Folded, Unfolded };
+
 class LineGrid : public QQuickPaintedItem {
     Q_OBJECT
     QML_NAMED_ELEMENT(HikariGrid)
@@ -94,6 +96,8 @@ public:
     // MUST KILL: reads LineStateRole as magic bits (&3: 1 changed, 2 saved; 4 unconfirmed; 8 bookmarked)
     QString rowStateText(int row) const;
     QString columnTitle(int column) const;
+    RunFold runFold(int row) const;
+    int textColumn() const;
     int columnCount() const;
     QRectF cellRect(int row, int column) const;
     int dividerAt(QPointF at) const;
@@ -152,6 +156,7 @@ private:
     void modelLayoutChanged();
     void stateChanged();
     void announceState(bool activeMoved);
+    void announceFold(qulonglong first);
     void updateRowHeight();
     void updateViewport();
     std::vector<double> widthsFor(double total) const;
