@@ -20,11 +20,9 @@ namespace launcher = hikari::app::launcher;
 namespace {
 
 constexpr UINT kDismiss = WM_APP + 1;
-constexpr UINT_PTR kTick = 1;
 constexpr int kWidth = 480;
 constexpr int kHeight = 270;
 constexpr int kIcon = 96;
-constexpr int kBarHeight = 3;
 
 std::atomic<HWND> g_splash = nullptr;
 
@@ -36,7 +34,6 @@ struct Splash {
     HFONT versionFont = nullptr;
     HBITMAP art = nullptr;
     UINT dpi = 96;
-    ULONGLONG started = 0;
 };
 
 COLORREF colour(std::uint32_t rgb)
@@ -220,12 +217,6 @@ void paint(HWND window, const Splash &splash)
     DrawTextW(dc, HIKARI_VERSION_W, -1, &version, DT_LEFT | DT_BOTTOM | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
     SelectObject(dc, oldFont);
 
-    const int bar = scaled(kBarHeight, splash.dpi);
-    fill(RECT{0, height - bar, width, height}, mix(splash.look.background, splash.look.muted, 20));
-    const int segment = width / 3;
-    const ULONGLONG period = 1400;
-    const int travel = int((GetTickCount64() - splash.started) % period * (width + segment) / period);
-    fill(RECT{std::max(0, travel - segment), height - bar, std::min(width, travel), height}, splash.look.accent);
     const HBRUSH border = CreateSolidBrush(colour(mix(splash.look.background, splash.look.muted, 35)));
     FrameRect(dc, &client, border);
     DeleteObject(border);
@@ -270,9 +261,6 @@ LRESULT CALLBACK splashProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         break;
     case WM_ERASEBKGND:
         return 1;
-    case WM_TIMER:
-        InvalidateRect(window, nullptr, FALSE);
-        return 0;
     case kDismiss:
         DestroyWindow(window);
         return 0;
@@ -316,13 +304,11 @@ DWORD WINAPI runSplash(void *parameter)
     DwmSetWindowAttribute(window, DWMWA_WINDOW_CORNER_PREFERENCE, &round, sizeof round);
     const int width = scaled(kWidth, splash->dpi);
     const int height = scaled(kHeight, splash->dpi);
-    splash->started = GetTickCount64();
     g_splash = window;
     // SetWindowPos, not ShowWindow: the first ShowWindow takes STARTUPINFO's show state, which is the main window's.
     SetWindowPos(window, HWND_TOP, (area.left + area.right - width) / 2, (area.top + area.bottom - height) / 2, width,
                  height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
     UpdateWindow(window);
-    SetTimer(window, kTick, 30, nullptr);
 
     MSG message;
     while (GetMessageW(&message, nullptr, 0, 0) > 0) {

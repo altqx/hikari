@@ -24,17 +24,16 @@ struct Look {
     std::uint32_t background;
     std::uint32_t text;
     std::uint32_t muted;
-    std::uint32_t accent;
     bool operator==(const Look &) const = default;
 };
-inline constexpr Look kDarkLook{0x171B20, 0xE8EDF2, 0xA5B1BD, 0x9CDBC9};
-inline constexpr Look kLightLook{0xE5E9EC, 0x202832, 0x526170, 0x145C4C};
-// Under %LOCALAPPDATA%, beside the app's cache: "#background #text #muted #accent".
+inline constexpr Look kDarkLook{0x171B20, 0xE8EDF2, 0xA5B1BD};
+inline constexpr Look kLightLook{0xE5E9EC, 0x202832, 0x526170};
+// Under %LOCALAPPDATA%, beside the app's cache: "#background #text #muted".
 inline constexpr wchar_t kLookFile[] = L"\\HikariSub\\cache\\startup-look.txt";
 
 inline std::optional<Look> parseLook(std::string_view text)
 {
-    std::array<std::uint32_t, 4> colours{};
+    std::array<std::uint32_t, 3> colours{};
     std::size_t at = 0;
     for (std::uint32_t &colour : colours) {
         while (at < text.size() && (text[at] == ' ' || text[at] == '\r' || text[at] == '\n'))
@@ -53,7 +52,7 @@ inline std::optional<Look> parseLook(std::string_view text)
         }
         at += 7;
     }
-    return Look{colours[0], colours[1], colours[2], colours[3]};
+    return Look{colours[0], colours[1], colours[2]};
 }
 
 // The starts that never show a window: --version, --export-docs and the update handoff.

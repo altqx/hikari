@@ -9,7 +9,7 @@ namespace hikari::app {
 QByteArray startupLook(const ui::theme::Roles &roles)
 {
     QByteArray out;
-    for (const QColor &colour : {roles.background, roles.text, roles.muted, roles.accent})
+    for (const QColor &colour : {roles.background, roles.text, roles.muted})
         out += colour.name(QColor::HexRgb).toLatin1() + ' ';
     out.back() = '\n';
     return out;

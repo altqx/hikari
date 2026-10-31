@@ -33,10 +33,10 @@ private slots:
     void aDamagedLookIsRefused()
     {
         QVERIFY(!launcher::parseLook(""));
-        QVERIFY(!launcher::parseLook("#171b20 #e8edf2 #a5b1bd"));
-        QVERIFY(!launcher::parseLook("#171b20 #e8edf2 #a5b1bd #9cdbcg"));
-        QVERIFY(!launcher::parseLook("171b20 #e8edf2 #a5b1bd #9cdbc9"));
-        QVERIFY(launcher::parseLook("#171B20 #e8edf2\r\n#a5b1bd #9cdbc9\n"));
+        QVERIFY(!launcher::parseLook("#171b20 #e8edf2"));
+        QVERIFY(!launcher::parseLook("#171b20 #e8edf2 #a5b1bg"));
+        QVERIFY(!launcher::parseLook("171b20 #e8edf2 #a5b1bd"));
+        QVERIFY(launcher::parseLook("#171B20 #e8edf2\r\n#a5b1bd\n"));
     }
 
     void onlyWindowStartsShowTheSplash()
