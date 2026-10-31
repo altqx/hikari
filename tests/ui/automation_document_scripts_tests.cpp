@@ -111,6 +111,11 @@ class AutomationDocumentScriptsTests : public QObject {
         return 0;
     }
 
+    void trustTheTestFolder()
+    {
+        app->settingsStore()->set("automation.trustedFolders", QStringList{QDir::toNativeSeparators(dir.path())});
+    }
+
 private slots:
     void initTestCase()
     {
@@ -119,7 +124,11 @@ private slots:
         QVERIFY(QDir::setCurrent(dir.path()));
     }
     void cleanupTestCase() { QDir::setCurrent(previousDir); }
-    void init() { app = std::make_unique<app::Application>(options()); }
+    void init()
+    {
+        app = std::make_unique<app::Application>(options());
+        trustTheTestFolder();
+    }
     void cleanup() { app.reset(); }
 
     void autoloadScriptsCanBeTurnedOff()
@@ -646,6 +655,245 @@ private slots:
         QVERIFY(app->automation().hostState().find(" audio 3500-4500") != std::string::npos);
     }
 
+    void untrustedScriptsAskBeforeLoading()
+    {
+        QTemporaryDir elsewhere;
+        QVERIFY(elsewhere.isValid());
+        const QString script = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("named.lua")));
+        writeFile(script, prefixScript("named"));
+        const QString document = open("untrusted.ass", "|" + script.toUtf8() + "|missing.lua");
+        QVERIFY(!document.isEmpty());
+        auto &automation = app->automation();
+        QSignalSpy asked(&automation, &app::AutomationShell::trustRequested);
+        QSignalSpy answered(&automation, &app::AutomationShell::trustAnswered);
+        QSignalSpy notices(&automation, &app::AutomationShell::notice);
+
+        automation.menuOpened();
+        QCOMPARE(asked.size(), 1);
+        QCOMPARE(asked.first().at(1).toStringList(), QStringList{script});
+        QCOMPARE(asked.first().at(2).toStringList(), QStringList{QDir::toNativeSeparators(elsewhere.path())});
+        QVERIFY(automation.asksTrust());
+        QVERIFY(automation.documentScripts().empty());
+        QVERIFY(automation.scripts().empty());
+        QCOMPARE(automation.documentScriptsToLoad(), (QStringList{script, QStringLiteral("missing.lua")}));
+        automation.menuOpened();
+        automation.runLastLoadedScript();
+        QCOMPARE(asked.size(), 1);
+        QVERIFY(notices.isEmpty());
+
+        automation.answerTrust(asked.first().at(0).toInt() + 1, QStringLiteral("load"));
+        QVERIFY(automation.asksTrust());
+        automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("skip"));
+        QVERIFY(!automation.asksTrust());
+        QCOMPARE(answered.size(), 1);
+        QVERIFY(automation.documentScripts().empty());
+        QVERIFY(automation.scripts().empty());
+        QCOMPARE(notices.size(), 1);
+        QCOMPARE(notices.last().at(2).toString(), QStringLiteral("This subtitle file does not have any scripts added"));
+        QCOMPARE(automation.documentScriptsToLoad(), QStringList{script});
+
+        automation.menuOpened();
+        automation.runLastLoadedScript();
+        QCOMPARE(asked.size(), 1);
+        QCOMPARE(notices.size(), 2);
+
+        automation.askToLoadDocumentScripts();
+        QCOMPARE(asked.size(), 2);
+        QCOMPARE(asked.last().at(1).toStringList(), QStringList{script});
+        automation.answerTrust(asked.last().at(0).toInt(), QStringLiteral("load"));
+        QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{script.toStdString()});
+        QVERIFY(settled());
+        QCOMPARE(automation.scripts().size(), std::size_t(1));
+        QVERIFY(automation.documentScriptsToLoad().isEmpty());
+        QCOMPARE(app->settingsStore()->list("automation.trustedFolders"),
+                 QStringList{QDir::toNativeSeparators(dir.path())});
+
+        automation.unload(script.toStdString());
+        automation.askToLoadDocumentScripts();
+        QCOMPARE(asked.size(), 2);
+        QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{script.toStdString()});
+    }
+
+    void relativePathsAreJudgedWhereTheyLoad()
+    {
+        QTemporaryDir elsewhere;
+        QVERIFY(elsewhere.isValid());
+        const QString inside = QDir::toNativeSeparators(QStringLiteral("rel-trust/inside.lua"));
+        writeFile(dir.filePath(inside), prefixScript("inside"));
+        const QString outsideFile = elsewhere.filePath(QStringLiteral("outside.lua"));
+        writeFile(outsideFile, prefixScript("outside"));
+        const QString outside = QDir::toNativeSeparators(QDir(dir.path()).relativeFilePath(outsideFile));
+        const QString sneaky = QDir::toNativeSeparators(QStringLiteral("rel-trust/../") + QDir(dir.path()).relativeFilePath(outsideFile));
+        QVERIFY(!open("relative.ass", "|" + inside.toUtf8() + "|" + outside.toUtf8() + "|" + sneaky.toUtf8()).isEmpty());
+        auto &automation = app->automation();
+        QSignalSpy asked(&automation, &app::AutomationShell::trustRequested);
+        automation.menuOpened();
+        QCOMPARE(asked.size(), 1);
+        const QString absolute = QDir::toNativeSeparators(QFileInfo(outsideFile).absoluteFilePath());
+        QCOMPARE(asked.first().at(1).toStringList(), QStringList{absolute});
+        automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("skip"));
+        QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{inside.toStdString()});
+        QVERIFY(settled());
+    }
+
+    void uncPathsAreAskedAboutAndTrustedByFolder()
+    {
+#ifndef Q_OS_WIN
+        QSKIP("UNC paths are Windows paths");
+#else
+        const QString share = qEnvironmentVariable("HIKARI_TEST_UNC_SHARE");
+        if (share.isEmpty() || !QFileInfo(share).isDir())
+            QSKIP("HIKARI_TEST_UNC_SHARE names no reachable share");
+        QTemporaryDir shared(share + QStringLiteral("/unc-XXXXXX"));
+        QVERIFY(shared.isValid());
+        const QString unc = QDir::toNativeSeparators(shared.filePath(QStringLiteral("unc.lua")));
+        writeFile(unc, prefixScript("unc"));
+        QVERIFY(unc.startsWith(QStringLiteral("\\\\")));
+        QVERIFY(!open("unc.ass", "|" + unc.toUtf8()).isEmpty());
+        auto &automation = app->automation();
+        QSignalSpy asked(&automation, &app::AutomationShell::trustRequested);
+        automation.menuOpened();
+        QCOMPARE(asked.size(), 1);
+        QCOMPARE(asked.first().at(1).toStringList(), QStringList{unc});
+        const QString folder = unc.left(unc.lastIndexOf(QLatin1Char('\\')));
+        QCOMPARE(asked.first().at(2).toStringList(), QStringList{folder});
+        automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("always"));
+        QVERIFY(app->settingsStore()->list("automation.trustedFolders").contains(folder));
+        QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{unc.toStdString()});
+        QVERIFY(settled());
+#endif
+    }
+
+    void lastScriptRunsOnceLoadIsChosen()
+    {
+        QTemporaryDir elsewhere;
+        QVERIFY(elsewhere.isValid());
+        const QString script = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("later.lua")));
+        writeFile(script, prefixScript("later"));
+        QVERIFY(!open("later.ass", "|" + script.toUtf8()).isEmpty());
+        auto &automation = app->automation();
+        QSignalSpy asked(&automation, &app::AutomationShell::trustRequested);
+        QSignalSpy done(&automation, &app::AutomationShell::runCompleted);
+        automation.runLastLoadedScript();
+        QCOMPARE(asked.size(), 1);
+        QTest::qWait(300);
+        QVERIFY(automation.scripts().empty());
+        QCOMPARE(done.size(), 0);
+        QCOMPARE(firstText(), std::string("Gate"));
+        automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("load"));
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
+        QVERIFY(done.first().at(0).toBool());
+        QCOMPARE(firstText(), std::string("later:Gate"));
+    }
+
+    void loadScriptWaitsAndAddsThePickedScriptLast()
+    {
+        QTemporaryDir elsewhere;
+        QVERIFY(elsewhere.isValid());
+        const QString named = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("named.lua")));
+        const QString picked = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("picked.lua")));
+        writeFile(named, prefixScript("named"));
+        writeFile(picked, prefixScript("picked"));
+        QVERIFY(!open("picked.ass", "|" + named.toUtf8()).isEmpty());
+        auto &automation = app->automation();
+        QSignalSpy asked(&automation, &app::AutomationShell::trustRequested);
+        automation.loadScript(QUrl::fromLocalFile(picked));
+        QCOMPARE(asked.size(), 1);
+        QCOMPARE(asked.first().at(1).toStringList(), QStringList{named});
+        QVERIFY(automation.scripts().empty());
+        const auto scriptInfo = [&](const QByteArray &value) {
+            return session().document().scriptInfo(u8"Automation Scripts") ==
+                   std::u8string(reinterpret_cast<const char8_t *>(value.constData()), static_cast<std::size_t>(value.size()));
+        };
+        QVERIFY(scriptInfo("|" + named.toUtf8()));
+        automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("skip"));
+        QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{picked.toStdString()});
+        QVERIFY(scriptInfo("|" + named.toUtf8() + "|" + picked.toUtf8()));
+        QVERIFY(settled());
+        QCOMPARE(automation.scripts().size(), std::size_t(1));
+        QCOMPARE(automation.scripts().front().path, picked.toStdString());
+    }
+
+    void alwaysTrustedFoldersPersistUntilRemoved()
+    {
+        QTemporaryDir elsewhere;
+        QVERIFY(elsewhere.isValid());
+        const QString script = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("kfx-ñ/trusted.lua")));
+        writeFile(script, prefixScript("trusted"));
+        const QString folder = QDir::toNativeSeparators(elsewhere.filePath(QStringLiteral("kfx-ñ")));
+        const QString mine = QDir::toNativeSeparators(dir.path());
+        QVERIFY(!open("trusted.ass", "|" + script.toUtf8()).isEmpty());
+        {
+            QSignalSpy asked(&app->automation(), &app::AutomationShell::trustRequested);
+            app->automation().menuOpened();
+            QCOMPARE(asked.size(), 1);
+            app->automation().answerTrust(asked.first().at(0).toInt(), QStringLiteral("always"));
+            QCOMPARE(app->automation().documentScripts().scripts(), std::vector<std::string>{script.toStdString()});
+            QCOMPARE(app->settingsStore()->list("automation.trustedFolders"), (QStringList{mine, folder}));
+            QVERIFY(settled());
+        }
+        const auto reopen = [&] {
+            app.reset();
+            app = std::make_unique<app::Application>(options());
+            return app->openFile(dir.filePath(QStringLiteral("trusted.ass")));
+        };
+        QVERIFY(reopen());
+        QCOMPARE(app->automation().trustedFolders(), (QStringList{mine, folder}));
+        {
+            QSignalSpy asked(&app->automation(), &app::AutomationShell::trustRequested);
+            app->automation().menuOpened();
+            QCOMPARE(asked.size(), 0);
+            QCOMPARE(app->automation().documentScripts().scripts(), std::vector<std::string>{script.toStdString()});
+            QVERIFY(settled());
+        }
+        app->applySettings({{QStringLiteral("automation.trustedFolders"),
+                             QStringList{mine, QDir::toNativeSeparators(QDir::tempPath())}}});
+        QCOMPARE(app->settingsStore()->list("automation.trustedFolders"), QStringList{mine});
+        QVERIFY(reopen());
+        QSignalSpy asked(&app->automation(), &app::AutomationShell::trustRequested);
+        app->automation().menuOpened();
+        QCOMPARE(asked.size(), 1);
+        QVERIFY(app->automation().documentScripts().empty());
+    }
+
+    void autoloadAndShippedFoldersAreTrusted()
+    {
+        QTemporaryDir shipped;
+        QTemporaryDir user;
+        QVERIFY(shipped.isValid() && user.isValid());
+        QVERIFY(QDir().mkpath(shipped.filePath(QStringLiteral("automation/Autoload"))));
+        QVERIFY(QDir().mkpath(shipped.filePath(QStringLiteral("automation/Include"))));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_LUA_INCLUDE "/moonscript.lua"),
+                            shipped.filePath(QStringLiteral("automation/Include/moonscript.lua"))));
+        const QString bundled = QDir::toNativeSeparators(shipped.filePath(QStringLiteral("automation/Include/lib.lua")));
+        const QString autoload = QDir::toNativeSeparators(user.filePath(QStringLiteral("automation/autoload/mine.lua")));
+        const QString userInclude = QDir::toNativeSeparators(user.filePath(QStringLiteral("automation/include/inc.lua")));
+        writeFile(bundled, prefixScript("bundled"));
+        writeFile(autoload, prefixScript("autoload"));
+        writeFile(userInclude, prefixScript("include"));
+        app.reset();
+        auto o = options();
+        o.automationDir = shipped.path();
+        o.userAutomationDir = user.path();
+        app = std::make_unique<app::Application>(o);
+        QString named = autoload;
+#ifdef Q_OS_WIN
+        named[0] = named[0].isUpper() ? named[0].toLower() : named[0].toUpper();
+#endif
+        QVERIFY(!open("shipped.ass", "|" + QDir::fromNativeSeparators(bundled).toUtf8() + "|" + named.toUtf8() + "|" +
+                                         userInclude.toUtf8())
+                     .isEmpty());
+        QSignalSpy asked(&app->automation(), &app::AutomationShell::trustRequested);
+        app->automation().menuOpened();
+        QCOMPARE(asked.size(), 1);
+        QCOMPARE(asked.first().at(1).toStringList(), QStringList{userInclude});
+        QCOMPARE(app->automation().documentScripts().scripts(), std::vector<std::string>{});
+        app->automation().answerTrust(asked.first().at(0).toInt(), QStringLiteral("skip"));
+        QCOMPARE(app->automation().documentScripts().scripts(),
+                 (std::vector<std::string>{QDir::fromNativeSeparators(bundled).toStdString(), named.toStdString()}));
+        QVERIFY(settled());
+    }
+
     void replaysTheLegacyCapture_data();
     void replaysTheLegacyCapture();
 
@@ -750,6 +998,7 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
         o.settingsFile = caseDir.filePath(QStringLiteral("settings.toml"));
         o.recoveryDir = caseDir.filePath(QStringLiteral("Recovery"));
         app = std::make_unique<app::Application>(o);
+        trustTheTestFolder();
         app->settingsStore()->set("autosave.maxFiles", 0);
         QByteArray value;
         if (!legacy["document_scripts"].isNull())

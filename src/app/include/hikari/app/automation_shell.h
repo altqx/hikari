@@ -29,6 +29,7 @@
 #include <QTimer>
 
 #include <functional>
+#include <map>
 #include <set>
 #include <memory>
 #include <optional>
@@ -119,9 +120,18 @@ public:
     void setAutoloadEnabled(const QString &script, bool enabled);
     // Also names the script in the editing target's Script Info; a no-op for one listed already.
     Q_INVOKABLE void loadScript(const QUrl &file);
-    Q_INVOKABLE void addFromDocument();
-    // Unlisted paths the editing target's Script Info names, each Script Info value only once.
-    // Never touches the file system.
+    // Loads the scripts the editing target names; one that is neither trusted nor decided for this file this
+    // session is asked about first through trustRequested, and nothing loads until answerTrust.
+    void addFromDocument(std::function<void()> then = {});
+    // The Automation manager's offer: asks again about the scripts declined for this file.
+    Q_INVOKABLE void askToLoadDocumentScripts();
+    // answer: "load", "always" (trust the scripts' folders too) or anything else for don't load.
+    Q_INVOKABLE void answerTrust(int id, const QString &answer);
+    bool asksTrust() const { return m_trust.has_value(); }
+    // Settings › Automation's list; the shipped and autoload folders are trusted without it.
+    QStringList trustedFolders() const;
+    // Unlisted paths the editing target's Script Info names: each Script Info value only once, then only the
+    // scripts declined for this file. Never touches the file system.
     Q_INVOKABLE QStringList documentScriptsToLoad();
     // Loads the Document's scripts and reloads every script whose file changed.
     Q_INVOKABLE void menuOpened();
@@ -181,6 +191,9 @@ signals:
     // severity: "info" (a toast) or "error" (a message box).
     void notice(const QString &severity, const QString &title, const QString &text, const QString &details);
     void chooseScriptEditor(const QString &script);
+    // Full native paths of the scripts, and the folders "always" would trust.
+    void trustRequested(int id, const QStringList &scripts, const QStringList &folders);
+    void trustAnswered();
     // `report`: the karaoke report as JSON.
     void karaokeApplied(quint64 document, const QByteArray &report);
 
@@ -221,6 +234,19 @@ private:
     void karaokeReport(const ui::KaraokeReport &report);
     application::EditSession *session(application::DocumentId id) { return m_files.session(id); }
     void loadDocumentScript(const std::string &path);
+    struct TrustQuestion {
+        int id = 0;
+        application::DocumentId document;
+        std::vector<std::string> scripts;
+        std::vector<std::function<void()>> then;
+    };
+    void addFromDocument(std::function<void()> then, bool askAgain);
+    void readDocumentScripts(application::DocumentId document);
+    std::string trustKey(application::DocumentId document, const std::string &script) const;
+    bool trusted(const std::string &script) const;
+    bool permitted(application::DocumentId document, const std::string &script) const;
+    void addPickedScript(const std::string &path);
+    void finishRunLastLoadedScript();
     void continueLastScript();
     void startEditor(const QString &editor, const QString &script);
     bool waitingForUser() const;
@@ -254,6 +280,9 @@ private:
     application::DocumentScripts m_documentScripts;
     std::set<std::string> m_readScriptInfo;
     std::optional<std::string> m_pendingLast;
+    std::optional<TrustQuestion> m_trust;
+    int m_trustSerial = 0;
+    std::map<std::string, bool> m_trustDecisions;
     std::function<void(const QString &, LogLine)> m_logLine;
     ui::SettingsStore *m_settings = nullptr;
     QString m_title, m_task, m_log, m_lastMessage, m_lastOutcome;

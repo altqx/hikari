@@ -119,11 +119,16 @@ std::string decodeAutomationPath(std::string path, const AutomationPathContext &
 // folders come before the shipped Include.
 struct AutomationFolders {
     std::vector<std::string> autoload; // the shipped one first
-    std::vector<std::string> include;  // searched in this order after the script's own
+    // Searched in this order after the script's own; the shipped one is always last, and the Lua helper
+    // loads its stock modules from there first.
+    std::vector<std::string> include;
     std::vector<std::string> made;     // made at start: log, temp, autosave, autoload, include
 };
 // user empty or the same folder as shipped: a portable copy.
 AutomationFolders automationFolders(const std::string &shipped, const std::string &user, bool windows);
+// True when the absolute script path lies inside folder or below it, compared by case on Windows; a "." or
+// ".." step in the rest refuses.
+bool scriptInFolder(const std::string &script, const std::string &folder, bool windows);
 // A later folder's script replaces an earlier one of the same name (by case on
 // Windows) in its place. Only .lua and .moon files.
 std::vector<std::string> chooseAutoloadScripts(

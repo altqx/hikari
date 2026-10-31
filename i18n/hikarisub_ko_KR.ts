@@ -1064,6 +1064,28 @@ Output device: %2</source>
         <source>Keep both</source>
         <translation>모두 유지</translation>
     </message>
+    <message numerus="yes">
+        <source>This subtitle file wants to run %n script(s) on your computer.</source>
+        <translation>
+            <numerusform>이 자막 파일이 컴퓨터에서 스크립트 %n개를 실행하려고 합니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Scripts can read, change and delete your files. Load them only if you trust where this subtitle file came from.</source>
+        <translation>스크립트는 파일을 읽고, 변경하고, 삭제할 수 있습니다. 이 자막 파일의 출처를 신뢰하는 경우에만 불러오십시오.</translation>
+    </message>
+    <message>
+        <source>Always trust scripts in this folder</source>
+        <translation>이 폴더의 스크립트 항상 신뢰</translation>
+    </message>
+    <message>
+        <source>Always trust scripts in these folders</source>
+        <translation>이 폴더들의 스크립트 항상 신뢰</translation>
+    </message>
+    <message>
+        <source>Don&apos;t load</source>
+        <translation>불러오지 않음</translation>
+    </message>
     <message>
         <source>Select a script editor</source>
         <translation>스크립트 편집기 선택</translation>
@@ -8856,6 +8878,26 @@ removing audio cache files.</source>
     <message>
         <source>Clear last answers…</source>
         <translation>마지막 답변 지우기…</translation>
+    </message>
+    <message>
+        <source>Trusted script folders</source>
+        <translation>신뢰하는 스크립트 폴더</translation>
+    </message>
+    <message>
+        <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
+        <translation>자막 파일에 지정된 스크립트가 이 폴더 중 하나에 있으면 묻지 않고 불러옵니다.</translation>
+    </message>
+    <message>
+        <source>No trusted folders</source>
+        <translation>신뢰하는 폴더 없음</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Stop trusting %1</source>
+        <translation>%1 신뢰 해제</translation>
     </message>
     <message>
         <source>Set shortcuts</source>

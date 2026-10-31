@@ -99,6 +99,30 @@ TEST(AutomationFolders, InstalledCopyAddsTheUsersFolders)
                                                     "C:\\Program Files\\HikariSub\\Automation\\automation\\Include"}));
 }
 
+TEST(AutomationFolders, AScriptIsInAFolderOrBelowIt)
+{
+    EXPECT_TRUE(scriptInFolder("/home/a/subs/fx.lua", "/home/a/subs", false));
+    EXPECT_TRUE(scriptInFolder("/home/a/subs/fx.lua", "/home/a/subs/", false));
+    EXPECT_TRUE(scriptInFolder("/home/a/subs/kfx/deep/fx.moon", "/home/a/subs", false));
+    EXPECT_FALSE(scriptInFolder("/home/a/subs", "/home/a/subs", false));
+    EXPECT_FALSE(scriptInFolder("/home/a/subs/", "/home/a/subs", false));
+    EXPECT_FALSE(scriptInFolder("/home/a/subsidiary/fx.lua", "/home/a/subs", false));
+    EXPECT_FALSE(scriptInFolder("/home/a/Subs/fx.lua", "/home/a/subs", false));
+    EXPECT_FALSE(scriptInFolder("/home/a/subs/../evil/fx.lua", "/home/a/subs", false));
+    EXPECT_FALSE(scriptInFolder("/home/a/subs/./fx.lua", "/home/a/subs", false));
+    EXPECT_FALSE(scriptInFolder("/home/a/subs/fx.lua", "", false));
+    EXPECT_FALSE(scriptInFolder("/home/a/subs\\fx.lua", "/home/a/subs", false));
+
+    EXPECT_TRUE(scriptInFolder("C:\\Users\\A\\Subs\\fx.lua", "c:\\users\\a\\subs", true));
+    EXPECT_TRUE(scriptInFolder("C:\\Users\\A\\Subs/kfx\\fx.lua", "c:\\users\\a\\subs\\", true));
+    EXPECT_FALSE(scriptInFolder("C:\\Users\\A\\Subs2\\fx.lua", "C:\\Users\\A\\Subs", true));
+    EXPECT_FALSE(scriptInFolder("C:\\Users\\A\\Subs\\..\\fx.lua", "C:\\Users\\A\\Subs", true));
+    EXPECT_TRUE(scriptInFolder("\\\\Server\\Share\\kfx\\fx.lua", "\\\\server\\share", true));
+    EXPECT_FALSE(scriptInFolder("\\\\server\\share2\\fx.lua", "\\\\server\\share", true));
+    EXPECT_FALSE(scriptInFolder("\\\\other\\share\\fx.lua", "\\\\server\\share", true));
+    EXPECT_FALSE(scriptInFolder("\\\\server\\share\\fx.lua", "C:\\server\\share", true));
+}
+
 TEST(AutomationFolders, AUserScriptReplacesTheShippedOne)
 {
     const std::string s = "/opt/hikarisub/Automation/automation/Autoload";

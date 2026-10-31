@@ -25,8 +25,9 @@ public:
     // False when the same path text is listed already.
     bool add(const std::string &path);
     void remove(const std::string &path);
-    // False (nothing read) for an empty value, or for the value read last
-    // while scripts are listed; otherwise adds every unlisted token naming an
+    // False for an empty value, or for the value read last while scripts are listed.
+    bool reads(const std::string &value) const { return !value.empty() && (value != m_lastValue || m_scripts.empty()); }
+    // False (nothing read) when it doesn't read the value; otherwise adds every unlisted token naming an
     // existing file, `added` receiving the new ones.
     bool readScriptInfo(const std::string &value, const std::function<bool(const std::string &)> &isFile,
                         std::vector<std::string> *added = nullptr);

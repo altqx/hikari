@@ -55,9 +55,7 @@ void DocumentScripts::remove(const std::string &path)
 bool DocumentScripts::readScriptInfo(const std::string &value, const std::function<bool(const std::string &)> &isFile,
                                      std::vector<std::string> *added)
 {
-    if (value.empty())
-        return false;
-    if (value == m_lastValue && !m_scripts.empty())
+    if (!reads(value))
         return false;
     for (const std::string &path : scriptInfoScriptPaths(value)) {
         if (!isFile(path))

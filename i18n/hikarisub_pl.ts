@@ -1076,6 +1076,30 @@ Urządzenie wyjściowe: %2</translation>
         <source>Keep both</source>
         <translation>Zachowaj oba</translation>
     </message>
+    <message numerus="yes">
+        <source>This subtitle file wants to run %n script(s) on your computer.</source>
+        <translation>
+            <numerusform>Ten plik napisów chce uruchomić %n skrypt na Twoim komputerze.</numerusform>
+            <numerusform>Ten plik napisów chce uruchomić %n skrypty na Twoim komputerze.</numerusform>
+            <numerusform>Ten plik napisów chce uruchomić %n skryptów na Twoim komputerze.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Scripts can read, change and delete your files. Load them only if you trust where this subtitle file came from.</source>
+        <translation>Skrypty mogą odczytywać, zmieniać i usuwać Twoje pliki. Wczytuj je tylko wtedy, gdy ufasz źródłu tego pliku napisów.</translation>
+    </message>
+    <message>
+        <source>Always trust scripts in this folder</source>
+        <translation>Zawsze ufaj skryptom w tym folderze</translation>
+    </message>
+    <message>
+        <source>Always trust scripts in these folders</source>
+        <translation>Zawsze ufaj skryptom w tych folderach</translation>
+    </message>
+    <message>
+        <source>Don&apos;t load</source>
+        <translation>Nie wczytuj</translation>
+    </message>
     <message>
         <source>Select a script editor</source>
         <translation>Wybierz edytor skryptów</translation>
@@ -8954,6 +8978,26 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     <message>
         <source>Clear last answers…</source>
         <translation>Wyczyść ostatnie odpowiedzi…</translation>
+    </message>
+    <message>
+        <source>Trusted script folders</source>
+        <translation>Zaufane foldery skryptów</translation>
+    </message>
+    <message>
+        <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
+        <translation>Skrypty wymienione w pliku napisów wczytują się bez pytania, gdy leżą w jednym z tych folderów.</translation>
+    </message>
+    <message>
+        <source>No trusted folders</source>
+        <translation>Brak zaufanych folderów</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Stop trusting %1</source>
+        <translation>Przestań ufać folderowi %1</translation>
     </message>
     <message>
         <source>Set shortcuts</source>
