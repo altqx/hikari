@@ -133,7 +133,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $p = 'out/build/windows-x64-package/payload/HikariSub'
-          foreach ($f in 'HikariSub.exe', 'hikari-media-helper.exe', 'hikari-lua-helper.exe', 'Qt6Core.dll', 'vcruntime140.dll', 'msvcp140.dll', 'Dictionary/en_US.dic', 'Automation/automation', 'Csri/VSFiltermod.dll') {
+          foreach ($f in 'HikariSub.exe', 'HikariSubApp.dll', 'hikari-media-helper.exe', 'hikari-lua-helper.exe', 'Qt6Core.dll', 'vcruntime140.dll', 'msvcp140.dll', 'Dictionary/en_US.dic', 'Automation/automation', 'Csri/VSFiltermod.dll') {
             if (-not (Test-Path "$p/$f")) { throw "payload lacks $f" }
           }
           if (Test-Path "$p/Csri/xy-VSFilter_hikarisub.dll") { throw 'payload carries xy-VSFilter' }
@@ -165,7 +165,9 @@ jobs:
             Copy-Item $m.FullName, $pdb.FullName $dir
             "symbols: $rel/$($m.Name) + $($pdb.Name)"
           }
-          if (-not (Test-Path "$s/HikariSub.pdb")) { throw 'no PDB for HikariSub.exe' }
+          foreach ($m in 'HikariSub.exe', 'HikariSubApp.dll') {
+            if (-not (Test-Path "$s/$([IO.Path]::GetFileNameWithoutExtension($m)).pdb")) { throw "no PDB for $m" }
+          }
           Compress-Archive -Path "$s/*" -DestinationPath "out/symbols/HikariSub-$env:VERSION-windows-x64-symbols.zip"
           Remove-Item -Recurse -Force $s
           Get-ChildItem out/symbols | Format-Table Name, Length

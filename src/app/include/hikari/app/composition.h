@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 class QObject;
 class QString;
 
@@ -12,7 +14,8 @@ enum class StartupMode {
     ExitAfterWindowCreated,
 };
 
-int run(int argc, char **argv, StartupMode mode);
+// windowShown is called once the main window has drawn its first frame (Windows only).
+int run(int argc, char **argv, StartupMode mode, const std::function<void()> &windowShown = {});
 
 // Opens anything but a video before the main window exists. Returns true for a video, which
 // openStartVideo opens once the window is up.

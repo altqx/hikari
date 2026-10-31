@@ -31,6 +31,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
         COMMAND "${CMAKE_COMMAND}"
             "-DSTAGE=${HIKARI_PAYLOAD_DIR}"
             "-DAPP=$<TARGET_FILE:hikarisub>"
+            "-DAPP_LIBRARY=$<TARGET_FILE:hikarisub_app>"
             "-DHELPERS=$<TARGET_FILE:hikari_media_helper>|$<TARGET_FILE:hikari_lua_helper>"
             "-DAUTOMATION=${HIKARI_AUTOMATION_STAGE}"
             "-DCRT=${_hikari_crt_arg}"
@@ -46,14 +47,14 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DHARPER_LICENSE=${HIKARI_HARPER_LS_LICENSE}"
             "-DHARPER_NOTICES=${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt"
             -P "${CMAKE_CURRENT_LIST_FILE}"
-        DEPENDS hikarisub hikari_media_helper hikari_lua_helper hikari_automation_stage
+        DEPENDS hikarisub hikarisub_app hikari_media_helper hikari_lua_helper hikari_automation_stage
         COMMENT "Staging the Windows payload in ${HIKARI_PAYLOAD_DIR}"
         USES_TERMINAL VERBATIM)
     return()
 endif()
 
 cmake_minimum_required(VERSION 3.28)
-foreach(var STAGE APP HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS DICTIONARIES UNIDIC
+foreach(var STAGE APP APP_LIBRARY HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS DICTIONARIES UNIDIC
         MECAB_LICENSE UNIDIC_LICENSE)
     if(NOT DEFINED ${var} OR "${${var}}" STREQUAL "")
         message(FATAL_ERROR "HikariPackageWindows: ${var} is required")
@@ -65,7 +66,7 @@ string(REPLACE "|" ";" CRT "${CRT}")
 file(REMOVE_RECURSE "${STAGE}")
 file(MAKE_DIRECTORY "${STAGE}")
 
-file(COPY "${APP}" ${HELPERS} DESTINATION "${STAGE}")
+file(COPY "${APP}" "${APP_LIBRARY}" ${HELPERS} DESTINATION "${STAGE}")
 get_filename_component(app_name "${APP}" NAME)
 if(NOT app_name STREQUAL "HikariSub.exe")
     message(FATAL_ERROR "HikariPackageWindows: the program is ${app_name}, not HikariSub.exe (SPEC 1.4)")
@@ -100,7 +101,7 @@ hikari_write_bundled_manifest("${STAGE}")
 
 execute_process(
     COMMAND "${WINDEPLOYQT}" --release --no-compiler-runtime --skip-plugin-types qmltooling --qmldir "${QMLDIR}"
-        --dir "${STAGE}" "${STAGE}/HikariSub.exe"
+        --dir "${STAGE}" "${STAGE}/HikariSubApp.dll"
     RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE out)
 file(WRITE "${STAGE}/../windeployqt.log" "${out}")
 if(NOT rc EQUAL 0)
@@ -149,7 +150,7 @@ foreach(entry IN LISTS HIKARI_DICTIONARY_FILES)
     list(GET entry 0 path)
     list(APPEND pinned "${path}")
 endforeach()
-foreach(required HikariSub.exe hikari-media-helper.exe hikari-lua-helper.exe LICENSE bundled-files.txt ${pinned}
+foreach(required HikariSub.exe HikariSubApp.dll hikari-media-helper.exe hikari-lua-helper.exe LICENSE bundled-files.txt ${pinned}
         Csri/VSFiltermod.dll Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin
         Dictionary/unidic-lite/char.bin Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc
         Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE
