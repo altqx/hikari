@@ -312,10 +312,14 @@ jobs:
           fi
           mkdir -p posthog-symbols/linux posthog-symbols/windows
           failed=0
+          sudo apt-get install -y --no-install-recommends dwz p7zip-full || failed=1
           tar -xJf "release/hikarisub-symbols-$VERSION-linux-x86_64.tar.xz" -C posthog-symbols/linux || failed=1
           unzip -q "release/HikariSub-$VERSION-windows-x64-symbols.zip" -d posthog-symbols/windows || failed=1
-          for os in linux windows; do
-            python3 tools/crash/posthog_symbols.py "posthog-symbols/$os" || failed=1
+          python3 tools/crash/qt_symbols.py linux scan/tar posthog-symbols/qt-linux || failed=1
+          python3 tools/crash/qt_symbols.py windows scan/zip posthog-symbols/qt-windows || failed=1
+          for set in linux windows qt-linux qt-windows; do
+            [[ -d "posthog-symbols/$set" ]] || continue
+            python3 tools/crash/posthog_symbols.py "posthog-symbols/$set" || failed=1
           done
           if (( failed )); then
             echo "::warning::Some symbols did not reach PostHog: their crashes show unresolved frames."
@@ -418,9 +422,21 @@ jobs:
       - name: Check the symbol upload packs on this runner
         run: |
           set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends dwz p7zip-full
           mkdir symbols-check
           printf 'int main(void) { return 0; }\n' | gcc -g -Wl,--build-id -x c - -o symbols-check/probe
           python3 tools/crash/posthog_symbols.py symbols-check --dry-run
+
+      - name: Check Qt's pinned debug archives are still there
+        run: |
+          set -euo pipefail
+          jq -r '.platforms[][] | "\(.length) \(.url)"' tools/crash/qt-symbols.lock.json | while read -r length url; do
+            got=$(curl -sfIL "$url" | tr -d '\r' | awk 'tolower($1) == "content-length:" { n = $2 } END { print n }')
+            if [[ "$got" != "$length" ]]; then
+              echo "::warning::$url is ${got:-gone}, not the pinned $length bytes: Qt frames will stay unresolved."
+            fi
+          done
 
       - name: Write the update manifest from stand-in packages
         run: |
