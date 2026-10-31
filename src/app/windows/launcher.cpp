@@ -7,6 +7,7 @@
 #endif
 #include <windows.h>
 #include <dwmapi.h>
+#include <wincodec.h>
 
 #include <algorithm>
 #include <atomic>
@@ -33,6 +34,7 @@ struct Splash {
     HICON icon = nullptr;
     HFONT font = nullptr;
     HFONT small = nullptr;
+    HBITMAP art = nullptr;
     UINT dpi = 96;
     ULONGLONG started = 0;
 };
@@ -95,6 +97,86 @@ int scaled(int logical, UINT dpi)
     return MulDiv(logical, int(dpi), 96);
 }
 
+template <typename T>
+struct Com {
+    T *p = nullptr;
+    Com() = default;
+    Com(const Com &) = delete;
+    Com &operator=(const Com &) = delete;
+    ~Com()
+    {
+        if (p)
+            p->Release();
+    }
+    T *operator->() const { return p; }
+    T **operator&() { return &p; }
+};
+
+std::optional<int> artFirstResource(const launcher::Look &look)
+{
+    if (look.background == launcher::kDarkLook.background)
+        return HIKARI_SPLASH_DARK_FIRST;
+    if (look.background == launcher::kLightLook.background)
+        return HIKARI_SPLASH_LIGHT_FIRST;
+    return std::nullopt;
+}
+
+HBITMAP decodeArt(int resource, int width, int height)
+{
+    const HMODULE module = GetModuleHandleW(nullptr);
+    const HRSRC found = FindResourceW(module, MAKEINTRESOURCEW(resource), MAKEINTRESOURCEW(10));
+    const HGLOBAL loaded = found ? LoadResource(module, found) : nullptr;
+    auto *bytes = static_cast<BYTE *>(loaded ? LockResource(loaded) : nullptr);
+    if (!bytes)
+        return nullptr;
+    Com<IWICImagingFactory> factory;
+    Com<IWICStream> stream;
+    Com<IWICBitmapDecoder> decoder;
+    Com<IWICBitmapFrameDecode> frame;
+    Com<IWICBitmapScaler> scaler;
+    Com<IWICFormatConverter> converter;
+    if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory))) ||
+        FAILED(factory->CreateStream(&stream)) ||
+        FAILED(stream->InitializeFromMemory(bytes, SizeofResource(module, found))) ||
+        FAILED(factory->CreateDecoderFromStream(stream.p, nullptr, WICDecodeMetadataCacheOnDemand, &decoder)) ||
+        FAILED(decoder->GetFrame(0, &frame)) || FAILED(factory->CreateBitmapScaler(&scaler)) ||
+        FAILED(scaler->Initialize(frame.p, UINT(width), UINT(height), WICBitmapInterpolationModeHighQualityCubic)) ||
+        FAILED(factory->CreateFormatConverter(&converter)) ||
+        FAILED(converter->Initialize(scaler.p, GUID_WICPixelFormat32bppBGR, WICBitmapDitherTypeNone, nullptr, 0,
+                                     WICBitmapPaletteTypeCustom)))
+        return nullptr;
+    BITMAPINFO info{};
+    info.bmiHeader.biSize = sizeof info.bmiHeader;
+    info.bmiHeader.biWidth = width;
+    info.bmiHeader.biHeight = -height;
+    info.bmiHeader.biPlanes = 1;
+    info.bmiHeader.biBitCount = 32;
+    info.bmiHeader.biCompression = BI_RGB;
+    void *pixels = nullptr;
+    const HBITMAP bitmap = CreateDIBSection(nullptr, &info, DIB_RGB_COLORS, &pixels, nullptr, 0);
+    if (!bitmap)
+        return nullptr;
+    if (FAILED(converter->CopyPixels(nullptr, UINT(width) * 4, UINT(width) * UINT(height) * 4,
+                                     static_cast<BYTE *>(pixels)))) {
+        DeleteObject(bitmap);
+        return nullptr;
+    }
+    return bitmap;
+}
+
+HBITMAP loadArt(const launcher::Look &look, UINT dpi)
+{
+    const std::optional<int> first = artFirstResource(look);
+    if (!first)
+        return nullptr;
+    constexpr int kScales[] = {100, 150, 200, 300};
+    const int wanted = MulDiv(100, int(dpi), 96);
+    int index = 0;
+    while (index < 3 && kScales[index] < wanted)
+        ++index;
+    return decodeArt(*first + index, scaled(kWidth, dpi), scaled(kHeight, dpi));
+}
+
 void paint(HWND window, const Splash &splash)
 {
     PAINTSTRUCT ps;
@@ -112,16 +194,24 @@ void paint(HWND window, const Splash &splash)
         FillRect(dc, &r, brush);
         DeleteObject(brush);
     };
-    fill(client, splash.look.background);
-    const int icon = scaled(kIcon, splash.dpi);
-    const int iconTop = scaled(56, splash.dpi);
-    if (splash.icon)
-        DrawIconEx(dc, (width - icon) / 2, iconTop, splash.icon, icon, icon, 0, nullptr, DI_NORMAL);
     const HGDIOBJ oldFont = SelectObject(dc, splash.font);
     SetBkMode(dc, TRANSPARENT);
-    SetTextColor(dc, colour(splash.look.text));
-    RECT title{0, iconTop + icon + scaled(14, splash.dpi), width, height};
-    DrawTextW(dc, L"HikariSub", -1, &title, DT_CENTER | DT_TOP | DT_SINGLELINE | DT_NOPREFIX);
+    if (splash.art) {
+        const HDC art = CreateCompatibleDC(dc);
+        const HGDIOBJ oldArt = SelectObject(art, splash.art);
+        BitBlt(dc, 0, 0, width, height, art, 0, 0, SRCCOPY);
+        SelectObject(art, oldArt);
+        DeleteDC(art);
+    } else {
+        fill(client, splash.look.background);
+        const int icon = scaled(kIcon, splash.dpi);
+        const int iconTop = scaled(56, splash.dpi);
+        if (splash.icon)
+            DrawIconEx(dc, (width - icon) / 2, iconTop, splash.icon, icon, icon, 0, nullptr, DI_NORMAL);
+        SetTextColor(dc, colour(splash.look.text));
+        RECT title{0, iconTop + icon + scaled(14, splash.dpi), width, height};
+        DrawTextW(dc, L"HikariSub", -1, &title, DT_CENTER | DT_TOP | DT_SINGLELINE | DT_NOPREFIX);
+    }
     SelectObject(dc, splash.small);
     SetTextColor(dc, colour(splash.look.muted));
     TEXTMETRICW metrics{};
@@ -150,9 +240,11 @@ void paint(HWND window, const Splash &splash)
 
 void loadResources(Splash &splash)
 {
+    splash.art = loadArt(splash.look, splash.dpi);
     const int icon = scaled(kIcon, splash.dpi);
-    splash.icon = static_cast<HICON>(LoadImageW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_HIKARISUB_APP),
-                                                IMAGE_ICON, icon, icon, LR_DEFAULTCOLOR));
+    if (!splash.art)
+        splash.icon = static_cast<HICON>(LoadImageW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_HIKARISUB_APP),
+                                                    IMAGE_ICON, icon, icon, LR_DEFAULTCOLOR));
     const auto font = [&splash](int pixels, int weight) {
         return CreateFontW(-scaled(pixels, splash.dpi), 0, 0, 0, weight, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
                            OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
@@ -197,6 +289,7 @@ DWORD WINAPI runSplash(void *parameter)
 {
     auto *splash = static_cast<Splash *>(parameter);
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    const bool com = SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
     const HINSTANCE instance = GetModuleHandleW(nullptr);
     WNDCLASSEXW windowClass{sizeof windowClass};
     windowClass.lpfnWndProc = splashProc;
@@ -214,6 +307,8 @@ DWORD WINAPI runSplash(void *parameter)
                                         area.top, 1, 1, nullptr, nullptr, instance, splash);
     if (!window) {
         SetEvent(splash->painted);
+        if (com)
+            CoUninitialize();
         return 0;
     }
     splash->dpi = GetDpiForWindow(window);
@@ -237,9 +332,13 @@ DWORD WINAPI runSplash(void *parameter)
     }
     if (splash->icon)
         DestroyIcon(splash->icon);
+    if (splash->art)
+        DeleteObject(splash->art);
     for (const HFONT font : {splash->font, splash->small})
         if (font)
             DeleteObject(font);
+    if (com)
+        CoUninitialize();
     return 0;
 }
 
