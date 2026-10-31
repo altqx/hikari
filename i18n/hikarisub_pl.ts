@@ -4410,6 +4410,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ukryj łamania wierszy</translation>
     </message>
     <message>
+        <source>Reset column widths</source>
+        <translation>Resetuj szerokości kolumn</translation>
+    </message>
+    <message>
         <source>Set new FPS</source>
         <translation>Ustaw nowy FPS</translation>
     </message>

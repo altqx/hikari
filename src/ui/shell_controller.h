@@ -6,6 +6,7 @@
 #include "hikari/application/workspace.h"
 
 #include <QObject>
+#include <QVariantMap>
 
 #include <functional>
 #include <QtQml/qqmlregistration.h>
@@ -29,6 +30,7 @@ class ShellController : public QObject {
     // MUST KILL: hiddenColumns is a bitmask of legacy GRID_HIDE_* column bits
     Q_PROPERTY(int hiddenColumns READ hiddenColumns WRITE setHiddenColumns NOTIFY hiddenColumnsChanged)
     Q_PROPERTY(bool autoHideColumns READ autoHideColumns WRITE setAutoHideColumns NOTIFY autoHideColumnsChanged)
+    Q_PROPERTY(QVariantMap gridColumnWidths READ gridColumnWidths WRITE setGridColumnWidths NOTIFY gridColumnWidthsChanged)
     Q_PROPERTY(bool foldGenerated READ foldGenerated WRITE setFoldGenerated NOTIFY foldGeneratedChanged)
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
@@ -103,6 +105,14 @@ public:
         emit autoHideColumnsChanged();
     }
     Q_INVOKABLE void toggleColumn(int bit) { setHiddenColumns(hiddenColumns() ^ bit); }
+    QVariantMap gridColumnWidths() const { return m_gridColumnWidths; }
+    void setGridColumnWidths(const QVariantMap &widths)
+    {
+        if (widths == m_gridColumnWidths)
+            return;
+        m_gridColumnWidths = widths;
+        emit gridColumnWidthsChanged();
+    }
     void setFrameTimebase(std::optional<application::LegacyTimebase> frames) { m_lines.setFrameTimebase(std::move(frames)); }
     bool assColumns() const { return m_assFormat; }
     bool endColumn() const { return m_endColumn; }
@@ -170,6 +180,7 @@ signals:
     void statusTextChanged();
     void hiddenColumnsChanged();
     void autoHideColumnsChanged();
+    void gridColumnWidthsChanged();
     void foldGeneratedChanged();
     void hideTagsChanged();
     void referenceNavigationChanged();
@@ -189,6 +200,7 @@ private:
     QString m_selectionStatus;
     qsizetype m_selectedCount = 0, m_hiddenCount = 0;
     QString m_statusText;
+    QVariantMap m_gridColumnWidths;
     QString m_progressTitle;
     qint64 m_progressStart = 0;
     std::function<qint64()> m_progressClock;

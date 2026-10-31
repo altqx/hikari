@@ -6,6 +6,7 @@
 #include "hikari/application/subtitle_comparison.h"
 
 #include <QCoreApplication>
+#include <QCursor>
 #include <QAbstractProxyModel>
 #include <QAccessible>
 #include <QFontMetricsF>
@@ -18,7 +19,9 @@
 #include <QWheelEvent>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <numeric>
 
 namespace hikari::ui {
 
@@ -56,7 +59,6 @@ LineGrid::LineGrid(QQuickItem *parent) : QQuickPaintedItem(parent)
     setFlag(ItemIsFocusScope, false);
     installGridAccessibility();
     updateRowHeight();
-    connect(this, &QQuickItem::heightChanged, this, [this] { setContentY(m_contentY); });
     theme::onChanged(this, [this] { update(); });
 }
 
@@ -102,6 +104,7 @@ void LineGrid::setModel(QAbstractItemModel *model)
             connect(m_model, &QAbstractItemModel::layoutChanged, this, relayout),
             connect(m_model, &QAbstractItemModel::headerDataChanged, this, [this] {
                 updateColumns();
+                updateViewport();
                 setHeaderToolTip(-1);
                 update();
             }),
@@ -123,7 +126,7 @@ void LineGrid::setModel(QAbstractItemModel *model)
 void LineGrid::modelLayoutChanged()
 {
     emit contentHeightChanged();
-    setContentY(m_contentY);
+    updateViewport();
     update();
     stateChanged();
 }
@@ -131,6 +134,20 @@ void LineGrid::modelLayoutChanged()
 namespace {
 
 constexpr double kFoldIndent = 14;
+constexpr double kMinColumnWidth = 24;
+constexpr double kMinFlexibleWidth = 120;
+constexpr double kDividerGrip = 4;
+
+constexpr std::array<const char *, LineTableModel::ColumnCount> kColumnKeys{
+    "number", "layer", "start", "end", "style", "actor", "marginLeft", "marginRight", "marginVertical",
+    "effect", "cps", "wraps", "text", "translation"};
+static_assert(kColumnKeys.back() != nullptr);
+
+double minimumWidth(int column)
+{
+    return column == LineTableModel::TextColumn || column == LineTableModel::TranslationColumn ? kMinFlexibleWidth
+                                                                                               : kMinColumnWidth;
+}
 
 
 }
@@ -291,22 +308,142 @@ int LineGrid::columnCount() const
 
 QRectF LineGrid::cellRect(int row, int column) const
 {
-    const auto widths = columnWidths(width() - m_markWidth);
-    double x = m_markWidth;
-    for (int c = 0; c < column && c < static_cast<int>(widths.size()); ++c)
-        x += widths[static_cast<std::size_t>(c)];
-    const double w = column < static_cast<int>(widths.size()) ? widths[static_cast<std::size_t>(column)] : 0;
-    return QRectF(x, m_geometry.headerHeight + row * m_geometry.rowHeight - m_contentY, w, m_geometry.rowHeight);
+    const auto widths = layoutWidths();
+    const double w = column >= 0 && column < static_cast<int>(widths.size()) ? widths[static_cast<std::size_t>(column)] : 0;
+    return QRectF(columnLeft(widths, column), m_geometry.headerHeight + row * m_geometry.rowHeight - m_contentY, w,
+                  m_geometry.rowHeight);
+}
+
+double LineGrid::columnLeft(const std::vector<double> &widths, int column) const
+{
+    const auto end = widths.begin() + std::clamp<std::ptrdiff_t>(column, 0, static_cast<std::ptrdiff_t>(widths.size()));
+    return std::accumulate(widths.begin(), end, m_markWidth - m_contentX);
+}
+
+int LineGrid::dividerAt(QPointF at) const
+{
+    if (at.y() < 0 || at.y() >= m_geometry.headerHeight || at.x() < m_markWidth || at.x() >= m_viewport.width())
+        return -1;
+    const auto widths = layoutWidths();
+    for (int c = 0; c + 1 < static_cast<int>(widths.size()); ++c)
+        if (std::abs(at.x() - columnLeft(widths, c + 1)) <= kDividerGrip)
+            return c;
+    return -1;
+}
+
+void LineGrid::resizeColumn(int column, double width)
+{
+    const int mc = modelColumn(column);
+    if (mc < 0 || column + 1 >= columnCount())
+        return;
+    width = std::round(width);
+    if (flexible(mc)) {
+        const auto widths = layoutWidths();
+        const int next = modelColumn(column + 1);
+        const double pair = widths[std::size_t(column)] + widths[std::size_t(column) + 1];
+        m_userWidths[next] = std::max(minimumWidth(next), pair - std::max(minimumWidth(mc), width));
+    } else {
+        m_userWidths[mc] = std::max(minimumWidth(mc), width);
+    }
+    emit columnWidthsChanged();
+    updateViewport();
+    update();
+}
+
+void LineGrid::fitColumn(int column)
+{
+    const int mc = modelColumn(column);
+    if (mc < 0 || !m_model)
+        return;
+    const QFontMetricsF metrics(QFont{});
+    QFont bold;
+    bold.setBold(true);
+    const QFontMetricsF boldMetrics(bold);
+    double width = metrics.horizontalAdvance(columnTitle(column)) + 8;
+    for (int row = 0, rows = m_model->rowCount(); row < rows; ++row) {
+        const QString text = m_model->index(row, mc).data().toString();
+        const int fold = mc == LineTableModel::TextColumn ? m_model->index(row, 0).data(LineTableModel::FoldRole).toInt() : 0;
+        const double advance = (fold == 1 ? boldMetrics : metrics).horizontalAdvance(text);
+        width = std::max(width, std::ceil(advance) + 8 + (fold != 0 ? kFoldIndent : 0));
+    }
+    resizeColumn(column, width);
+}
+
+QVariantMap LineGrid::columnWidths() const
+{
+    QVariantMap widths;
+    for (const auto &[column, width] : m_userWidths)
+        widths.insert(QLatin1String(kColumnKeys[std::size_t(column)]), qRound(width));
+    return widths;
+}
+
+void LineGrid::setColumnWidths(const QVariantMap &widths)
+{
+    std::map<int, double> parsed;
+    for (auto it = widths.begin(); it != widths.end(); ++it) {
+        const auto key = std::find_if(kColumnKeys.begin(), kColumnKeys.end(),
+                                      [&](const char *k) { return it.key() == QLatin1String(k); });
+        const int column = static_cast<int>(key - kColumnKeys.begin());
+        if (const double width = it.value().toDouble(); column != LineTableModel::TextColumn && key != kColumnKeys.end() && width > 0)
+            parsed[column] = width;
+    }
+    if (parsed == m_userWidths)
+        return;
+    m_userWidths = std::move(parsed);
+    emit columnWidthsChanged();
+    updateViewport();
+    update();
+}
+
+bool LineGrid::flexible(int column) const
+{
+    return column == LineTableModel::TextColumn ||
+           (column == LineTableModel::TranslationColumn && !m_userWidths.contains(column));
+}
+
+void LineGrid::updateViewport()
+{
+    const auto overflows = [this](double available) {
+        const auto widths = widthsFor(available - m_markWidth);
+        return std::accumulate(widths.begin(), widths.end(), m_markWidth) > available + 0.5;
+    };
+    const bool rows = m_model && m_model->rowCount() > 0;
+    bool vertical = rows && contentHeight() > height();
+    const bool horizontal = overflows(width() - (vertical ? scrollBarRoom() : 0));
+    vertical = vertical || (rows && horizontal && contentHeight() > height() - scrollBarRoom());
+    const QSizeF viewport(std::max<qreal>(0, width() - (vertical ? scrollBarRoom() : 0)),
+                          std::max<qreal>(0, height() - (horizontal ? scrollBarRoom() : 0)));
+    const auto widths = widthsFor(viewport.width() - m_markWidth);
+    const double content = std::accumulate(widths.begin(), widths.end(), m_markWidth);
+    if (viewport != m_viewport || vertical != m_verticalBar || horizontal != m_horizontalBar || content != m_contentWidth) {
+        m_viewport = viewport;
+        m_verticalBar = vertical;
+        m_horizontalBar = horizontal;
+        m_contentWidth = content;
+        emit viewportChanged();
+        update();
+    }
+    setContentX(m_contentX);
+    setContentY(m_contentY);
 }
 
 void LineGrid::scrollToRow(int row)
 {
     const double top = row * m_geometry.rowHeight;
-    const double body = height() - m_geometry.headerHeight;
+    const double body = m_viewport.height() - m_geometry.headerHeight;
     if (top < m_contentY)
         setContentY(top);
     else if (top + m_geometry.rowHeight > m_contentY + body)
         setContentY(top + m_geometry.rowHeight - body);
+}
+
+void LineGrid::scrollToColumn(int column)
+{
+    const QRectF cell = cellRect(0, column);
+    if (cell.left() < m_markWidth)
+        setContentX(m_contentX + cell.left() - m_markWidth);
+    else if (cell.right() > m_viewport.width())
+        setContentX(m_contentX + std::min(cell.right() - m_viewport.width(), cell.left() - m_markWidth));
 }
 
 void LineGrid::makeLineVisible(qulonglong id)
@@ -314,7 +451,7 @@ void LineGrid::makeLineVisible(qulonglong id)
     const int row = rowOfLine(core::LineId{id});
     if (row < 0 || m_geometry.rowHeight <= 0)
         return;
-    const int rows = static_cast<int>(height() / m_geometry.rowHeight);
+    const int rows = static_cast<int>(m_viewport.height() / m_geometry.rowHeight);
     const int top = static_cast<int>(m_contentY / m_geometry.rowHeight);
     if (top > row || top + rows < row + 2)
         setContentY(std::max(0, row - rows / 2 + 1) * m_geometry.rowHeight);
@@ -324,10 +461,12 @@ void LineGrid::geometryChange(const QRectF &newGeometry, const QRectF &oldGeomet
 {
     const int row = currentRow();
     const double top = row * m_geometry.rowHeight;
+    const double oldHeight = m_viewport.height();
     const bool shown = row >= 0 && top >= m_contentY &&
-                       top + m_geometry.rowHeight <= m_contentY + oldGeometry.height() - m_geometry.headerHeight;
+                       top + m_geometry.rowHeight <= m_contentY + oldHeight - m_geometry.headerHeight;
     QQuickPaintedItem::geometryChange(newGeometry, oldGeometry);
-    if (shown && newGeometry.height() < oldGeometry.height())
+    updateViewport();
+    if (shown && m_viewport.height() < oldHeight)
         scrollToRow(row);
 }
 
@@ -338,7 +477,7 @@ void LineGrid::keyPressEvent(QKeyEvent *event)
         event->ignore();
         return;
     }
-    const int page = std::max(1, m_geometry.visibleRowCount(m_contentY, height(), rows) - 1);
+    const int page = std::max(1, m_geometry.visibleRowCount(m_contentY, m_viewport.height(), rows) - 1);
     const auto mods = event->modifiers();
     if (event->matches(QKeySequence::SelectAll)) {
         emit selectAllRequested();
@@ -378,6 +517,7 @@ void LineGrid::keyPressEvent(QKeyEvent *event)
         } else {
             m_currentColumn = event->key() == Qt::Key_Left ? std::max(0, m_currentColumn - 1)
                                                            : std::min(columnCount() - 1, m_currentColumn + 1);
+            scrollToColumn(m_currentColumn);
             announceState(true);
         }
         event->accept();
@@ -414,6 +554,10 @@ void LineGrid::wheelEvent(QWheelEvent *event)
 
 void LineGrid::mousePressEvent(QMouseEvent *event)
 {
+    if (!QRectF(QPointF(), m_viewport).contains(event->position())) {
+        event->accept();
+        return;
+    }
     if (event->button() == Qt::RightButton) {
         forceActiveFocus(Qt::MouseFocusReason);
         const int row = rowAt(event->position().y());
@@ -433,6 +577,12 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
         return;
     }
     forceActiveFocus(Qt::MouseFocusReason);
+    if (const int divider = dividerAt(event->position()); divider >= 0) {
+        m_resize = ColumnResize{divider, event->position().x(), layoutWidths()[std::size_t(divider)]};
+        setHeaderToolTip(-1);
+        event->accept();
+        return;
+    }
     if (m_markWidth > 0 && event->position().x() < m_markWidth) {
         const int row = rowAt(event->position().y() + m_geometry.rowHeight / 2) - 1;
         int mark = 0, documentRow = -1;
@@ -470,8 +620,16 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
 
 void LineGrid::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    if (event->button() != Qt::LeftButton || (m_markWidth > 0 && event->position().x() < m_markWidth)) {
+    if (event->button() != Qt::LeftButton || (m_markWidth > 0 && event->position().x() < m_markWidth) ||
+        !QRectF(QPointF(), m_viewport).contains(event->position())) {
         event->ignore();
+        return;
+    }
+    if (const int divider = dividerAt(event->position()); divider >= 0) {
+        m_resize.reset();
+        fitColumn(divider);
+        emit columnWidthsEdited();
+        event->accept();
         return;
     }
     const int row = rowAt(event->position().y());
@@ -494,11 +652,7 @@ bool LineGrid::onFoldArrow(qreal x) const
     const int column = columnAt(x);
     if (modelColumn(column) != LineTableModel::TextColumn)
         return false;
-    const auto widths = columnWidths(width() - m_markWidth);
-    double left = m_markWidth;
-    for (int c = 0; c < column; ++c)
-        left += widths[std::size_t(c)];
-    return x < left + 4 + kFoldIndent;
+    return x < columnLeft(layoutWidths(), column) + 4 + kFoldIndent;
 }
 
 void LineGrid::drawFoldArrow(QPainter *painter, const QRectF &cell, bool folded) const
@@ -515,8 +669,10 @@ void LineGrid::drawFoldArrow(QPainter *painter, const QRectF &cell, bool folded)
 
 int LineGrid::columnAt(qreal x) const
 {
-    const auto widths = columnWidths(width() - m_markWidth);
-    double left = m_markWidth;
+    if (x < m_markWidth || x >= m_viewport.width())
+        return -1;
+    const auto widths = layoutWidths();
+    double left = columnLeft(widths, 0);
     for (std::size_t c = 0; c < widths.size(); ++c) {
         if (x >= left && x < left + widths[c])
             return static_cast<int>(c);
@@ -527,11 +683,17 @@ int LineGrid::columnAt(qreal x) const
 
 void LineGrid::hoverMoveEvent(QHoverEvent *event)
 {
+    if (dividerAt(event->position()) >= 0)
+        setCursor(Qt::SplitHCursor);
+    else
+        unsetCursor();
     setHeaderToolTip(event->position().y() < m_geometry.headerHeight ? columnAt(event->position().x()) : -1);
 }
 
 void LineGrid::hoverLeaveEvent(QHoverEvent *event)
 {
+    if (!m_resize)
+        unsetCursor();
     setHeaderToolTip(-1);
     QQuickPaintedItem::hoverLeaveEvent(event);
 }
@@ -555,6 +717,11 @@ void LineGrid::setHeaderToolTip(int column)
 
 void LineGrid::mouseMoveEvent(QMouseEvent *event)
 {
+    if (m_resize && (event->buttons() & Qt::LeftButton)) {
+        resizeColumn(m_resize->column, m_resize->startWidth + event->position().x() - m_resize->pressX);
+        event->accept();
+        return;
+    }
     if (!(event->buttons() & Qt::LeftButton) || event->modifiers() != Qt::NoModifier || !m_dragLine) {
         event->ignore();
         return;
@@ -571,6 +738,10 @@ void LineGrid::mouseMoveEvent(QMouseEvent *event)
 
 void LineGrid::mouseReleaseEvent(QMouseEvent *event)
 {
+    if (m_resize) {
+        m_resize.reset();
+        emit columnWidthsEdited();
+    }
     m_dragLine.reset();
     event->accept();
 }
@@ -650,9 +821,19 @@ qreal LineGrid::contentHeight() const
     return m_geometry.contentHeight(m_model ? m_model->rowCount() : 0);
 }
 
+void LineGrid::setContentX(qreal x)
+{
+    const qreal clamped = std::clamp<qreal>(x, 0, std::max<qreal>(0, m_contentWidth - m_viewport.width()));
+    if (clamped == m_contentX)
+        return;
+    m_contentX = clamped;
+    emit contentXChanged();
+    update();
+}
+
 void LineGrid::setContentY(qreal y)
 {
-    const qreal maxY = std::max<qreal>(0, contentHeight() - height());
+    const qreal maxY = std::max<qreal>(0, contentHeight() - m_viewport.height());
     const qreal clamped = std::clamp<qreal>(y, 0, maxY);
     if (clamped == m_contentY)
         return;
@@ -666,7 +847,7 @@ int LineGrid::rowAt(qreal y) const
     return m_geometry.rowAt(y, m_contentY, m_model ? m_model->rowCount() : 0);
 }
 
-std::vector<double> LineGrid::columnWidths(double total) const
+std::vector<double> LineGrid::widthsFor(double total) const
 {
     const QFontMetricsF m(QFont{});
     auto fit = [&](const char *sample, double pad) { return m.horizontalAdvance(QLatin1String(sample)) + pad; };
@@ -674,6 +855,11 @@ std::vector<double> LineGrid::columnWidths(double total) const
     double used = 0;
     for (const int c : m_columns) {
         double width = 0;
+        if (const auto user = m_userWidths.find(c); user != m_userWidths.end() && !flexible(c)) {
+            w.push_back(std::max(minimumWidth(c), user->second));
+            used += w.back();
+            continue;
+        }
         switch (c) {
         case LineTableModel::NumberColumn: width = fit("00000", 8); break;
         case LineTableModel::LayerColumn: width = fit("000", 8); break;
@@ -697,7 +883,7 @@ std::vector<double> LineGrid::columnWidths(double total) const
     const auto rest = static_cast<double>(std::count_if(w.begin(), w.end(), [](double v) { return v < 0; }));
     for (double &v : w)
         if (v < 0)
-            v = std::max(40.0, (total - used) / rest);
+            v = std::max(kMinFlexibleWidth, (total - used) / rest);
     return w;
 }
 
@@ -850,27 +1036,34 @@ void LineGrid::paint(QPainter *painter)
     m_lastPainted = 0;
     const int rows = m_model ? m_model->rowCount() : 0;
     const int columns = columnCount();
-    const auto widths = columnWidths(bounds.width() - m_markWidth);
+    const auto widths = layoutWidths();
     const double rh = m_geometry.rowHeight;
+    const double viewWidth = m_viewport.width();
+    const QRectF columnsArea(m_markWidth, 0, viewWidth - m_markWidth, m_viewport.height());
 
     painter->fillRect(QRectF(0, 0, bounds.width(), m_geometry.headerHeight), roles.raised);
-    painter->setPen(roles.muted);
-    double x = m_markWidth;
+    painter->save();
+    painter->setClipRect(columnsArea.intersected(QRectF(0, 0, viewWidth, m_geometry.headerHeight)));
+    double x = columnLeft(widths, 0);
     for (int c = 0; c < columns; ++c) {
-        painter->drawText(QRectF(x + 4, 0, widths[c] - 8, m_geometry.headerHeight), Qt::AlignVCenter,
-                          columnTitle(c));
+        painter->setPen(roles.muted);
+        painter->drawText(QRectF(x + 4, 0, widths[c] - 8, m_geometry.headerHeight), Qt::AlignVCenter | Qt::TextSingleLine,
+                          QFontMetricsF(painter->font()).elidedText(columnTitle(c), Qt::ElideRight, widths[c] - 8));
         x += widths[c];
+        if (c + 1 < columns)
+            painter->fillRect(QRectF(std::round(x) - 1, 4, 1, m_geometry.headerHeight - 8), roles.line);
     }
+    painter->restore();
 
     const int first = m_geometry.firstVisibleRow(m_contentY);
-    const int count = m_geometry.visibleRowCount(m_contentY, bounds.height(), rows);
+    const int count = m_geometry.visibleRowCount(m_contentY, m_viewport.height(), rows);
     const QVariantList comparisonColours =
         m_model ? m_model->headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList() : QVariantList();
     const QVariantList labelColours =
         m_model ? m_model->headerData(0, Qt::Horizontal, LineTableModel::LabelColoursRole).toList() : QVariantList();
     const bool numberShown = columns > 0 && modelColumn(0) == LineTableModel::NumberColumn;
     painter->save();
-    painter->setClipRect(QRectF(0, m_geometry.headerHeight, bounds.width(), bounds.height() - m_geometry.headerHeight));
+    painter->setClipRect(QRectF(0, m_geometry.headerHeight, viewWidth, m_viewport.height() - m_geometry.headerHeight));
     for (int row = first; row < first + count; ++row) {
         const double top = m_geometry.headerHeight + row * rh - m_contentY;
         const QModelIndex idx = m_model->index(row, 0);
@@ -885,26 +1078,29 @@ void LineGrid::paint(QPainter *painter)
         else if (selected)
             background = roles.select;
         const int comparison = idx.data(LineTableModel::ComparisonRole).toInt();
-        painter->fillRect(QRectF(0, top, bounds.width(), rh), background);
+        painter->fillRect(QRectF(0, top, viewWidth, rh), background);
         const auto compared =
             comparisonBackground(comparison, comment, selected, comparisonColours, content.comparisonSelection);
         if (compared) {
-            const double from = m_markWidth + (numberShown ? widths[0] : 0);
-            painter->fillRect(QRectF(from, top, bounds.width() - from, rh), *compared);
+            const double from = std::max(m_markWidth, columnLeft(widths, numberShown ? 1 : 0));
+            painter->fillRect(QRectF(from, top, viewWidth - from, rh), *compared);
         }
+        painter->save();
+        painter->setClipRect(columnsArea, Qt::IntersectClip);
         if (numberShown)
-            drawLabel(painter, QRectF(m_markWidth, top, widths[0], rh), idx.data(LineTableModel::LineStateRole).toInt(),
-                      idx.data(LineTableModel::DraftRole).toBool(), labelColours);
+            drawLabel(painter, QRectF(columnLeft(widths, 0), top, widths[0], rh),
+                      idx.data(LineTableModel::LineStateRole).toInt(), idx.data(LineTableModel::DraftRole).toBool(),
+                      labelColours);
         painter->setPen(comment ? commentInk(roles, compared.value_or(background)) : roles.text);
         if (fold == 1) {
             painter->save();
             painter->setPen(QPen(roles.control, 1, Qt::DashLine));
-            painter->drawLine(QPointF(0, top + 0.5), QPointF(bounds.width(), top + 0.5));
-            painter->drawLine(QPointF(0, top + rh - 0.5), QPointF(bounds.width(), top + rh - 0.5));
+            painter->drawLine(QPointF(0, top + 0.5), QPointF(viewWidth, top + 0.5));
+            painter->drawLine(QPointF(0, top + rh - 0.5), QPointF(viewWidth, top + rh - 0.5));
             painter->restore();
             painter->setPen(selected ? roles.text : roles.muted);
         }
-        x = m_markWidth;
+        x = columnLeft(widths, 0);
         for (int c = 0; c < columns; ++c) {
             const int mc = modelColumn(c);
             if ((mc == LineTableModel::CpsColumn && idx.data(LineTableModel::CpsTooHighRole).toBool()) ||
@@ -960,8 +1156,9 @@ void LineGrid::paint(QPainter *painter)
             }
             x += widths[c];
         }
+        painter->restore();
         if (active && hasActiveFocus()) {
-            const double w = bounds.width();
+            const double w = viewWidth;
             painter->fillRect(QRectF(1, top + 1, w - 2, 1), roles.focus);
             painter->fillRect(QRectF(1, top + rh - 2, w - 2, 1), roles.focus);
             painter->fillRect(QRectF(1, top + 2, 1, rh - 4), roles.focus);
@@ -972,15 +1169,15 @@ void LineGrid::paint(QPainter *painter)
         if (active) {
             painter->setPen(roles.accent);
             painter->setBrush(Qt::NoBrush);
-            painter->drawRect(QRectF(0.5, top + 0.5, bounds.width() - 1, rh - 1));
+            painter->drawRect(QRectF(0.5, top + 0.5, viewWidth - 1, rh - 1));
         }
         ++m_lastPainted;
         if (m_markWidth > 0)
-            drawBlockMark(painter, top + rh, idx.data(LineTableModel::HiddenBlockRole).toInt(), bounds.width());
+            drawBlockMark(painter, top + rh, idx.data(LineTableModel::HiddenBlockRole).toInt(), viewWidth);
     }
     if (m_markWidth > 0)
         drawBlockMark(painter, m_geometry.headerHeight,
-                      m_model->headerData(0, Qt::Horizontal, LineTableModel::HeaderBlockRole).toInt(), bounds.width());
+                      m_model->headerData(0, Qt::Horizontal, LineTableModel::HeaderBlockRole).toInt(), viewWidth);
     painter->restore();
     emit painted();
 }

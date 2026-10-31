@@ -295,6 +295,7 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
+        {"grid.columnWidths", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
         // Setting ids the Karaoke layout turned on and nobody changed since.
         {"workspace.karaokeTurnedOn", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},

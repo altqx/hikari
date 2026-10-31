@@ -6,10 +6,12 @@
 #include <QAbstractItemModel>
 #include <QColor>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QPointer>
 #include <QQuickPaintedItem>
 #include <QtQml/qqmlregistration.h>
 
+#include <map>
 #include <optional>
 #include <vector>
 
@@ -39,7 +41,16 @@ class LineGrid : public QQuickPaintedItem {
     Q_PROPERTY(QAbstractItemModel *model READ model WRITE setModel NOTIFY modelChanged)
     Q_PROPERTY(qreal contentY READ contentY WRITE setContentY NOTIFY contentYChanged)
     Q_PROPERTY(qreal contentHeight READ contentHeight NOTIFY contentHeightChanged)
+    Q_PROPERTY(qreal contentX READ contentX WRITE setContentX NOTIFY contentXChanged)
+    Q_PROPERTY(qreal contentWidth READ contentWidth NOTIFY viewportChanged)
+    Q_PROPERTY(qreal viewportWidth READ viewportWidth NOTIFY viewportChanged)
+    Q_PROPERTY(qreal viewportHeight READ viewportHeight NOTIFY viewportChanged)
+    Q_PROPERTY(bool verticalScrollBarShown READ verticalScrollBarShown NOTIFY viewportChanged)
+    Q_PROPERTY(bool horizontalScrollBarShown READ horizontalScrollBarShown NOTIFY viewportChanged)
+    Q_PROPERTY(qreal scrollBarRoom READ scrollBarRoom CONSTANT)
+    Q_PROPERTY(QVariantMap columnWidths READ columnWidths WRITE setColumnWidths NOTIFY columnWidthsChanged)
     Q_PROPERTY(qreal rowHeight READ rowHeight NOTIFY rowHeightChanged)
+    Q_PROPERTY(qreal headerHeight READ headerHeight NOTIFY rowHeightChanged)
     Q_PROPERTY(int lastPaintedRowCount READ lastPaintedRowCount NOTIFY painted)
     Q_PROPERTY(QString accessibleName MEMBER m_accessibleName NOTIFY accessibleNameChanged)
     Q_PROPERTY(QString headerToolTip READ headerToolTip NOTIFY headerToolTipChanged)
@@ -53,7 +64,18 @@ public:
     qreal contentY() const { return m_contentY; }
     void setContentY(qreal y);
     qreal contentHeight() const;
+    qreal contentX() const { return m_contentX; }
+    void setContentX(qreal x);
+    qreal contentWidth() const { return m_contentWidth; }
+    qreal viewportWidth() const { return m_viewport.width(); }
+    qreal viewportHeight() const { return m_viewport.height(); }
+    bool verticalScrollBarShown() const { return m_verticalBar; }
+    bool horizontalScrollBarShown() const { return m_horizontalBar; }
+    static constexpr qreal scrollBarRoom() { return 10; }
+    QVariantMap columnWidths() const;
+    void setColumnWidths(const QVariantMap &widths);
     qreal rowHeight() const { return m_geometry.rowHeight; }
+    qreal headerHeight() const { return m_geometry.headerHeight; }
     const GridGeometry &geometry() const { return m_geometry; }
 
     Q_INVOKABLE int rowAt(qreal y) const;
@@ -78,7 +100,11 @@ public:
     int textColumn() const;
     int columnCount() const;
     QRectF cellRect(int row, int column) const;
+    int dividerAt(QPointF at) const;
+    void resizeColumn(int column, double width);
+    void fitColumn(int column);
     void scrollToRow(int row);
+    void scrollToColumn(int column);
     int lastPaintedRowCount() const { return m_lastPainted; }
 
     void paint(QPainter *painter) override;
@@ -104,6 +130,10 @@ signals:
     void modelChanged();
     void contentYChanged();
     void contentHeightChanged();
+    void contentXChanged();
+    void viewportChanged();
+    void columnWidthsChanged();
+    void columnWidthsEdited();
     void rowHeightChanged();
     void painted();
     void accessibleNameChanged();
@@ -128,7 +158,11 @@ private:
     void announceState(bool activeMoved);
     void announceFold(qulonglong first);
     void updateRowHeight();
-    std::vector<double> columnWidths(double total) const;
+    void updateViewport();
+    std::vector<double> widthsFor(double total) const;
+    std::vector<double> layoutWidths() const { return widthsFor(m_viewport.width() - m_markWidth); }
+    double columnLeft(const std::vector<double> &widths, int column) const;
+    bool flexible(int modelColumn) const;
     // MUST KILL: mark is a magic int (0 none, 1 hidden block '+', else revealed '-')
     void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
     void drawLabel(QPainter *painter, const QRectF &cell, int state, bool draft, const QVariantList &colours) const;
@@ -144,6 +178,19 @@ private:
     std::vector<QMetaObject::Connection> m_connections;
     GridGeometry m_geometry;
     qreal m_contentY = 0;
+    qreal m_contentX = 0;
+    qreal m_contentWidth = 0;
+    QSizeF m_viewport;
+    bool m_verticalBar = false;
+    bool m_horizontalBar = false;
+    std::map<int, double> m_userWidths;
+    struct ColumnResize {
+        int column;
+        double pressX;
+        double startWidth;
+        bool changed = false;
+    };
+    std::optional<ColumnResize> m_resize;
     int m_lastPainted = 0;
     int m_currentColumn = -1;
     std::vector<int> m_columns;

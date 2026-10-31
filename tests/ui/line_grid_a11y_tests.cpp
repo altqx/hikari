@@ -179,7 +179,7 @@ private slots:
         QVERIFY(viewport->isIndexed());
         QCOMPARE(viewport->contentSize(), QSizeF(13, 1'000));
         QCOMPARE(viewport->position(), QPointF(0, 0));
-        const int shown = rig.grid->geometry().visibleRowCount(0, rig.grid->height(), 1'000);
+        const int shown = rig.grid->geometry().visibleRowCount(0, rig.grid->viewportHeight(), 1'000);
         QVERIFY(shown > 1 && shown < 1'000);
         QCOMPARE(viewport->viewportSize(), QSizeF(1, shown / 1'000.0));
 
@@ -190,6 +190,15 @@ private slots:
 
         rig.filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
         QCOMPARE(viewport->contentSize(), QSizeF(13, 900));
+    }
+
+    void viewportLeavesOutTheRowsUnderTheHorizontalBar()
+    {
+        Rig rig(1'000);
+        rig.grid->setSize(QSizeF(400, rig.grid->headerHeight() + 10 * rig.grid->rowHeight() + 5));
+        QVERIFY(rig.grid->horizontalScrollBarShown());
+        QAccessibleViewportInterface *viewport = QAccessible::queryAccessibleInterface(rig.grid)->viewportInterface();
+        QCOMPARE(viewport->viewportSize(), QSizeF(1, 10 / 1'000.0));
     }
 
     void foldedRunsAreExpandableTextCells()

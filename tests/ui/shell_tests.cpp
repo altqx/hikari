@@ -2043,6 +2043,148 @@ private slots:
         QTRY_COMPARE(grid->property("contentY").toReal(), topRow * row);
     }
 
+    void gridScrollBarFollowsWheelDragAndTrack()
+    {
+        std::string many;
+        for (int i = 0; i < 300; ++i)
+            many += "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,line " + std::to_string(i) + "\n";
+        QVERIFY(application->openFile(writeFile(dir, "scrollbar.ass", many.c_str())));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *bar = qobject_cast<QQuickItem *>(named("editingGridVerticalScrollBar"));
+        QVERIFY(bar);
+        QTRY_VERIFY(bar->isVisible());
+        QCOMPARE(bar->x(), grid->viewportWidth() + (ui::LineGrid::scrollBarRoom() - bar->width()) / 2);
+        // MUST KILL: bare processEvents so the opened tab's scroll restore runs first
+        QCoreApplication::processEvents();
+        grid->setContentY(0);
+        const qreal range = grid->contentHeight() - grid->headerHeight();
+        const auto agree = [&] { return qAbs(bar->property("position").toReal() * range - grid->contentY()) < 0.5; };
+        QCOMPARE(bar->property("size").toReal(), (grid->viewportHeight() - grid->headerHeight()) / range);
+
+        const QPointF onBar = bar->mapToScene(QPointF(bar->width() / 2, bar->height() / 2));
+        QWheelEvent wheel(onBar, window->mapToGlobal(onBar), {}, {0, -120}, Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &wheel);
+        QCOMPARE(grid->contentY(), QGuiApplication::styleHints()->wheelScrollLines() * grid->rowHeight());
+        QVERIFY(agree());
+
+        grid->setContentY(0);
+        const QPoint handle = bar->mapToScene(QPointF(bar->width() / 2, 4)).toPoint();
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, handle);
+        QTest::mouseMove(window, handle + QPoint(0, 20));
+        QTest::mouseMove(window, handle + QPoint(0, int(bar->height() / 2)));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, handle + QPoint(0, int(bar->height() / 2)));
+        QTRY_VERIFY(grid->contentY() > range / 4);
+        QVERIFY(agree());
+
+        grid->setContentY(0);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                          bar->mapToScene(QPointF(bar->width() / 2, bar->height() - 4)).toPoint());
+        QTRY_VERIFY(grid->contentY() > 0);
+        QVERIFY(agree());
+        grid->setContentY(range);
+        QVERIFY(agree());
+        QCOMPARE(grid->contentY(), grid->contentHeight() - grid->viewportHeight());
+
+        application->addPage();
+        QVERIFY(application->openFile(episode));
+        QTRY_VERIFY(!bar->isVisible());
+        QVERIFY(!named("editingGridHorizontalScrollBar")->property("visible").toBool());
+    }
+
+    void gridColumnWidthsAreSavedAndReset()
+    {
+        const QString ini = dir.filePath(QStringLiteral("gs1-widths.ini"));
+        restartWithSettings(ini);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        const auto widths = [&] { return application->settingsStore()->list("grid.columnWidths"); };
+        QVERIFY(widths().isEmpty());
+        QVERIFY(application->openFile(episode));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        int style = -1;
+        QTRY_VERIFY((style = [&] {
+            for (int c = 0; c < grid->columnCount(); ++c)
+                if (grid->columnTitle(c) == QLatin1String("Styles"))
+                    return c;
+            return -1;
+        }()) >= 0);
+        const double before = grid->cellRect(0, style).width();
+        const QPoint divider =
+            grid->mapToScene(QPointF(grid->cellRect(0, style).right(), grid->headerHeight() / 2)).toPoint();
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, divider);
+        QTest::mouseMove(window, divider + QPoint(20, 0));
+        QTest::mouseMove(window, divider + QPoint(40, 0));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, divider + QPoint(40, 0));
+        QTRY_COMPARE(grid->cellRect(0, style).width(), std::round(before + 40));
+        const QString saved = QStringLiteral("style %1").arg(std::round(before + 40));
+        QCOMPARE(widths(), QStringList{saved});
+
+        restartWithSettings(ini);
+        QVERIFY(application->openFile(episode));
+        grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QTRY_COMPARE(grid->cellRect(0, style).width(), std::round(before + 40));
+
+        QObject *reset = named("resetColumnWidths");
+        QVERIFY(reset);
+        QVERIFY(reset->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(reset, "triggered"));
+        QVERIFY(widths().isEmpty());
+        QTRY_COMPARE(grid->cellRect(0, style).width(), before);
+        QTRY_VERIFY(!reset->property("enabled").toBool());
+
+        application->settingsStore()->set("grid.columnWidths", QStringList{QStringLiteral("style 150")});
+        QTRY_COMPARE(grid->cellRect(0, style).width(), 150.0);
+        QVERIFY(application->openReference(original));
+        auto *reference = qobject_cast<ui::LineGrid *>(item("referenceGrid"));
+        QVERIFY(reference);
+        QCOMPARE(reference->columnWidths(), grid->columnWidths());
+        application->settingsStore()->set("grid.columnWidths", QStringList{});
+        QTRY_COMPARE(grid->cellRect(0, style).width(), before);
+        QVERIFY(reference->columnWidths().isEmpty());
+    }
+
+    void gridScrollBarScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            application->settingsStore()->set("grid.columnWidths", QStringList{});
+            window->resize(1280, 800);
+        });
+        std::string many;
+        for (int i = 0; i < 300; ++i)
+            many += "Dialogue: 0,0:00:" + std::to_string(10 + i % 50) + ".00,0:00:" + std::to_string(11 + i % 48) +
+                    ".00,Default," + (i % 3 ? "Ann" : "Bob") + ",0,0,0,,Line " + std::to_string(i) +
+                    " of the episode, long enough to need the room the Text column keeps\n";
+        application->addPage();
+        QVERIFY(application->openFile(writeFile(dir, "shots.ass", many.c_str())));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        auto *root = engine->rootObjects().first();
+        for (const QSize size : {QSize(1280, 800), QSize(760, 640)}) {
+            window->resize(size);
+            const bool narrow = size.width() < 1000;
+            settings.set("grid.columnWidths", narrow ? QStringList{QStringLiteral("style 260"), QStringLiteral("actor 200")}
+                                                     : QStringList{QStringLiteral("style 140")});
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                grid->setContentY(grid->contentHeight() / 3);
+                grid->setContentX(narrow ? 120 : 0);
+                QTest::qWait(300);
+                const QString name = narrow ? QStringLiteral("/gs1-narrow-") : QStringLiteral("/gs1-");
+                QVERIFY(window->grabWindow().save(out + name + ui::theme::codeName(code) + QStringLiteral(".png")));
+            }
+        }
+    }
+
     void deleteTextEmptiesTheSelectedLines()
     {
         QVERIFY(application->openFile(episode));

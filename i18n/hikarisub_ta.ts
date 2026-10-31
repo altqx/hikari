@@ -4378,6 +4378,10 @@ Failed to copy %2 fonts.</source>
         <translation>வரி மடக்குகளை மறைக்கவும்</translation>
     </message>
     <message>
+        <source>Reset column widths</source>
+        <translation>நெடுவரிசை அகலங்களை மீட்டமை</translation>
+    </message>
+    <message>
         <source>Set new FPS</source>
         <translation>புதிய FPS ஐ அமைக்கவும்</translation>
     </message>

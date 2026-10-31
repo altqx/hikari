@@ -377,7 +377,7 @@ QSizeF LineGridAccessible::viewportSize() const
     const int rows = rowCount();
     if (!g || rows == 0)
         return {1, 1};
-    return {1, qreal(g->geometry().visibleRowCount(g->contentY(), g->height(), rows)) / rows};
+    return {1, qreal(g->geometry().visibleRowCount(g->contentY(), g->viewportHeight(), rows)) / rows};
 }
 
 void LineGridAccessible::setPosition(QPointF position)
