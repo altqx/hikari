@@ -6,6 +6,7 @@
 #include <cctype>
 #include <initializer_list>
 #include <memory>
+#include <string_view>
 
 namespace hikari::application {
 
@@ -75,6 +76,27 @@ void addUnique(std::vector<std::string> &folders, const std::string &folder, boo
     folders.push_back(folder);
 }
 
+}
+
+bool scriptInFolder(const std::string &script, const std::string &folder, bool windows)
+{
+    const auto separator = [&](char ch) { return ch == '/' || (windows && ch == '\\'); };
+    std::string dir = folded(folder, windows);
+    while (!dir.empty() && separator(dir.back()))
+        dir.pop_back();
+    const std::string path = folded(script, windows);
+    if (dir.empty() || path.size() <= dir.size() + 1 || !path.starts_with(dir) || !separator(path[dir.size()]))
+        return false;
+    std::string_view rest(path);
+    rest.remove_prefix(dir.size() + 1);
+    for (std::size_t from = 0; from <= rest.size();) {
+        const auto end = std::find_if(rest.begin() + from, rest.end(), separator) - rest.begin();
+        const auto part = rest.substr(from, end - from);
+        if (part == ".." || part == ".")
+            return false;
+        from = end + 1;
+    }
+    return true;
 }
 
 AutomationFolders automationFolders(const std::string &shipped, const std::string &user, bool windows)

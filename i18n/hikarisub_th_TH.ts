@@ -1064,6 +1064,28 @@ Output device: %2</source>
         <source>Keep both</source>
         <translation>เก็บไว้ทั้งสอง</translation>
     </message>
+    <message numerus="yes">
+        <source>This subtitle file wants to run %n script(s) on your computer.</source>
+        <translation>
+            <numerusform>ไฟล์คำบรรยายนี้ต้องการเรียกใช้สคริปต์ %n รายการบนคอมพิวเตอร์ของคุณ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Scripts can read, change and delete your files. Load them only if you trust where this subtitle file came from.</source>
+        <translation>สคริปต์สามารถอ่าน แก้ไข และลบไฟล์ของคุณได้ โหลดเฉพาะเมื่อคุณเชื่อถือแหล่งที่มาของไฟล์คำบรรยายนี้</translation>
+    </message>
+    <message>
+        <source>Always trust scripts in this folder</source>
+        <translation>เชื่อถือสคริปต์ในโฟลเดอร์นี้เสมอ</translation>
+    </message>
+    <message>
+        <source>Always trust scripts in these folders</source>
+        <translation>เชื่อถือสคริปต์ในโฟลเดอร์เหล่านี้เสมอ</translation>
+    </message>
+    <message>
+        <source>Don&apos;t load</source>
+        <translation>ไม่โหลด</translation>
+    </message>
     <message>
         <source>Select a script editor</source>
         <translation>เลือกตัวแก้ไขสคริปต์</translation>
@@ -8856,6 +8878,26 @@ removing audio cache files.</source>
     <message>
         <source>Clear last answers…</source>
         <translation>ล้างคำตอบล่าสุด…</translation>
+    </message>
+    <message>
+        <source>Trusted script folders</source>
+        <translation>โฟลเดอร์สคริปต์ที่เชื่อถือ</translation>
+    </message>
+    <message>
+        <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
+        <translation>สคริปต์ที่ไฟล์คำบรรยายระบุจะโหลดโดยไม่ถามเมื่ออยู่ในโฟลเดอร์ใดโฟลเดอร์หนึ่งเหล่านี้</translation>
+    </message>
+    <message>
+        <source>No trusted folders</source>
+        <translation>ไม่มีโฟลเดอร์ที่เชื่อถือ</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>นำออก</translation>
+    </message>
+    <message>
+        <source>Stop trusting %1</source>
+        <translation>เลิกเชื่อถือ %1</translation>
     </message>
     <message>
         <source>Set shortcuts</source>

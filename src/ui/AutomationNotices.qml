@@ -12,6 +12,13 @@ Item {
 
     property int asking: 0
     property string pendingScript: ""
+    function answered() {
+        if (--asking === 0 && pendingScript.length > 0) {
+            editorDialog.script = pendingScript
+            pendingScript = ""
+            editorDialog.open()
+        }
+    }
 
     Connections {
         target: notices.automation
@@ -24,12 +31,30 @@ Item {
             if (!notices.messages)
                 return
             ++notices.asking
-            notices.messages.ask({ title: title, text: text, details: details, severity: severity }, () => {
-                if (--notices.asking === 0 && notices.pendingScript.length > 0) {
-                    editorDialog.script = notices.pendingScript
-                    notices.pendingScript = ""
-                    editorDialog.open()
-                }
+            notices.messages.ask({ title: title, text: text, details: details, severity: severity }, notices.answered)
+        }
+        function onTrustRequested(id, scripts, folders) {
+            if (!notices.messages) {
+                notices.automation.answerTrust(id, "skip")
+                return
+            }
+            ++notices.asking
+            notices.messages.ask({
+                title: qsTr("Automation"),
+                text: qsTr("This subtitle file wants to run %n script(s) on your computer.", "", scripts.length),
+                detail: qsTr("Scripts can read, change and delete your files. Load them only if you trust where this subtitle file came from."),
+                details: scripts.join("\n"),
+                plainText: true,
+                severity: "warning",
+                choices: [
+                    { id: "load", text: qsTr("Load"), role: "accept" },
+                    { id: "always", text: folders.length === 1 ? qsTr("Always trust scripts in this folder")
+                                                              : qsTr("Always trust scripts in these folders"), role: "action" },
+                    { id: "skip", text: qsTr("Don't load"), role: "reject", isDefault: true }
+                ]
+            }, answer => {
+                notices.automation.answerTrust(id, answer)
+                notices.answered()
             })
         }
         function onChooseScriptEditor(script) {

@@ -65,6 +65,11 @@ Pane {
         target: root.controller
         function onChanged() { Qt.callLater(root.readDocumentScripts) }
     }
+    Connections {
+        target: root.automation
+        ignoreUnknownSignals: true
+        function onTrustAnswered() { Qt.callLater(root.readDocumentScripts) }
+    }
 
     function runnable(row) {
         return row.script.state === "ready" && !root.controller.busy
@@ -281,7 +286,7 @@ Pane {
                     text: qsTr("Load")
                     Accessible.description: qsTr("Load the scripts this file names")
                     onClicked: {
-                        root.automation.addFromDocument()
+                        root.automation.askToLoadDocumentScripts()
                         root.readDocumentScripts()
                     }
                 }

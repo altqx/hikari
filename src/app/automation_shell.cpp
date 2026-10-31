@@ -540,8 +540,16 @@ void AutomationShell::loadScript(const QUrl &file)
     if (local.isEmpty())
         return;
     const std::string path = QDir::toNativeSeparators(local).toStdString();
+    if (const auto target = m_workspace.editingTarget())
+        m_trustDecisions[trustKey(*target, path)] = true;
     if (m_documentScripts.empty())
-        addFromDocument();
+        addFromDocument([this, path] { addPickedScript(path); });
+    else
+        addPickedScript(path);
+}
+
+void AutomationShell::addPickedScript(const std::string &path)
+{
     if (!m_documentScripts.add(path)) {
         loadDocumentScript(path);
         return;
@@ -562,17 +570,145 @@ void AutomationShell::loadScript(const QUrl &file)
         m_documentChanged();
 }
 
-void AutomationShell::addFromDocument()
+std::string AutomationShell::trustKey(application::DocumentId document, const std::string &script) const
 {
+    const auto destination = m_files.destination(document);
+    const std::string file = destination && !destination->value.empty() ? destination->value
+                                                                        : '#' + std::to_string(document.value);
+    return file + '\n' + script;
+}
+
+QStringList AutomationShell::trustedFolders() const
+{
+    return m_settings ? m_settings->list("automation.trustedFolders") : QStringList();
+}
+
+namespace {
+
+QString absoluteScript(const std::string &script)
+{
+    return QDir::toNativeSeparators(QDir::cleanPath(QFileInfo(QString::fromStdString(script)).absoluteFilePath()));
+}
+
+}
+
+bool AutomationShell::trusted(const std::string &script) const
+{
+    const std::string path = absoluteScript(script).toStdString();
+    const auto f = folders(m_paths);
+    std::vector<std::string> trusted = f.autoload;
+    trusted.push_back(f.include.back());
+    for (const QString &folder : trustedFolders())
+        trusted.push_back(folder.toStdString());
+    return std::ranges::any_of(trusted, [&](const std::string &folder) {
+        return application::scriptInFolder(path, folder, windowsPaths());
+    });
+}
+
+bool AutomationShell::permitted(application::DocumentId document, const std::string &script) const
+{
+    const auto decided = m_trustDecisions.find(trustKey(document, script));
+    return (decided != m_trustDecisions.end() && decided->second) || trusted(script);
+}
+
+void AutomationShell::addFromDocument(std::function<void()> then)
+{
+    addFromDocument(std::move(then), false);
+}
+
+void AutomationShell::askToLoadDocumentScripts()
+{
+    addFromDocument({}, true);
+}
+
+void AutomationShell::addFromDocument(std::function<void()> then, bool askAgain)
+{
+    if (m_trust) {
+        if (then)
+            m_trust->then.push_back(std::move(then));
+        return;
+    }
     const auto target = m_workspace.editingTarget();
     const auto *s = target ? session(*target) : nullptr;
+    const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
+    std::vector<std::string> ask;
+    if (value && (askAgain || m_documentScripts.reads(narrow(*value)))) {
+        const auto &listed = m_documentScripts.scripts();
+        for (std::string &path : application::scriptInfoScriptPaths(narrow(*value))) {
+            if (path.empty() || std::ranges::find(listed, path) != listed.end() ||
+                std::ranges::find(ask, path) != ask.end() || trusted(path))
+                continue;
+            const auto decided = m_trustDecisions.find(trustKey(*target, path));
+            if (decided != m_trustDecisions.end() && (decided->second || !askAgain))
+                continue;
+            if (QFileInfo(QString::fromStdString(path)).isFile())
+                ask.push_back(std::move(path));
+        }
+    }
+    if (ask.empty()) {
+        if (target)
+            readDocumentScripts(*target);
+        if (then)
+            then();
+        return;
+    }
+    QStringList scripts, folders;
+    for (const auto &path : ask) {
+        const QString absolute = absoluteScript(path);
+        scripts << absolute;
+        const QString folder = QDir::toNativeSeparators(QFileInfo(absolute).absolutePath());
+        if (!folders.contains(folder, windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive))
+            folders << folder;
+    }
+    m_trust = TrustQuestion{++m_trustSerial, *target, std::move(ask), {}};
+    if (then)
+        m_trust->then.push_back(std::move(then));
+    emit trustRequested(m_trust->id, scripts, folders);
+}
+
+void AutomationShell::answerTrust(int id, const QString &answer)
+{
+    if (!m_trust || m_trust->id != id)
+        return;
+    TrustQuestion question = std::move(*m_trust);
+    m_trust.reset();
+    const bool load = answer == QLatin1String("load") || answer == QLatin1String("always");
+    for (const auto &script : question.scripts)
+        m_trustDecisions[trustKey(question.document, script)] = load;
+    if (answer == QLatin1String("always") && m_settings) {
+        QStringList folders = trustedFolders();
+        for (const auto &script : question.scripts) {
+            const QString folder = QDir::toNativeSeparators(QFileInfo(absoluteScript(script)).absolutePath());
+            if (!folders.contains(folder, windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive))
+                folders << folder;
+        }
+        m_settings->set("automation.trustedFolders", folders);
+        m_settings->sync();
+    }
+    if (session(question.document)) {
+        readDocumentScripts(question.document);
+        for (const auto &script : question.scripts)
+            if (load && m_documentScripts.add(script))
+                loadDocumentScript(script);
+        for (auto &then : question.then)
+            then();
+    }
+    emit trustAnswered();
+}
+
+void AutomationShell::readDocumentScripts(application::DocumentId document)
+{
+    const auto *s = session(document);
     const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
     std::vector<std::string> added;
     if (value)
         m_readScriptInfo.insert(narrow(*value));
     m_documentScripts.readScriptInfo(
         value ? narrow(*value) : std::string(),
-        [](const std::string &path) { return QFileInfo(QString::fromStdString(path)).isFile(); }, &added);
+        [&](const std::string &path) {
+            return QFileInfo(QString::fromStdString(path)).isFile() && permitted(document, path);
+        },
+        &added);
     for (const auto &path : added)
         loadDocumentScript(path);
 }
@@ -583,14 +719,19 @@ QStringList AutomationShell::documentScriptsToLoad()
     const auto *s = target ? session(*target) : nullptr;
     const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
     QStringList out;
-    if (!value || m_readScriptInfo.contains(narrow(*value)))
+    if (!value)
         return out;
+    const bool read = m_readScriptInfo.contains(narrow(*value));
+    const auto declined = [&](const std::string &path) {
+        const auto decided = m_trustDecisions.find(trustKey(*target, path));
+        return decided != m_trustDecisions.end() && !decided->second;
+    };
     // No file check: checking a UNC path contacts its server.
     const auto &listed = m_documentScripts.scripts();
     const std::unordered_set<std::string_view> loaded(listed.begin(), listed.end());
     std::unordered_set<std::string> offered;
     for (std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
-        if (!path.empty() && !loaded.contains(path) && offered.insert(path).second)
+        if (!path.empty() && !loaded.contains(path) && (!read || declined(path)) && offered.insert(path).second)
             out << QString::fromStdString(path);
     return out;
 }
@@ -608,7 +749,13 @@ void AutomationShell::menuOpened()
 void AutomationShell::runLastLoadedScript()
 {
     if (m_documentScripts.empty())
-        addFromDocument();
+        addFromDocument([this] { finishRunLastLoadedScript(); });
+    else
+        finishRunLastLoadedScript();
+}
+
+void AutomationShell::finishRunLastLoadedScript()
+{
     if (m_documentScripts.empty()) {
         emit notice(QStringLiteral("info"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
                     QCoreApplication::translate("HikariSub.Automation", "This subtitle file does not have any scripts added"), {});

@@ -79,6 +79,12 @@ Shortcuts go through the shortcut editor's gesture path, so they are the same bi
 
 The Automation menu lists the macros after its commands, in load and registration order. A "/" in a macro's name opens submenus as in Aegisub ([AS1](https://github.com/altqx/hikari/issues/471)): `Group/Sub/Macro` shows Macro under Group ▸ Sub, names sharing a prefix share its submenus, and empty pieces stay (an untitled submenu, an item with no text). Two departures from Aegisub (`src/menu.cpp` AutomationMenu): a macro and a submenu of the same name both show in either order (Aegisub drops the macros under the name when the macro registers first), and each level keeps load order (Aegisub sorts it alphabetically). A macro with an empty name stays as an empty item, where Aegisub leaves it out. Shortcuts, the panel and Settings → Hotkeys keep the full name.
 
+### Scripts a subtitle file names (2026-10-31)
+
+Legacy and Aegisub load every script a file's `Automation Scripts` names when the Automation menu opens. HikariSub asks first. The Automation menu, Run the last loaded script, Load script and the panel's "This file names scripts" offer all go through one question that lists the scripts' full paths: **Load** (for this file, this session), **Don't load** (remembered for this file for the session; Escape too) or **Always trust scripts in this folder** (Load, and the folders join Settings › Automation › Trusted script folders, where they can be removed). The panel's offer keeps the declined scripts and asks again. Scripts in the shipped Autoload and Include and in the user's autoload folders never ask. Load script still loads the file picked.
+
+Stock modules always load from the shipped Include: a module or `include` file whose top-level name is in the shipped Include comes from there before the script's folder and the user's Include. The DependencyControl-managed packages (`l0`, `a-mo`, `BM`, `DM`, `PT`, `requireffi`, `SubInspector`, `json`, `Yutils`, `lyger`) keep the script folder → user Include → shipped order, so DependencyControl's updates win, and a module the shipped Include lacks resolves as before. This covers `moonscript` as Aegisub 3.5 does by loading its support files by exact path.
+
 ## Accepted cancellation and transaction policy (2026-09-29)
 
 altqx settled the remaining host choices in a live review, closing [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33).

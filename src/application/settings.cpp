@@ -294,6 +294,8 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // Native absolute folders whose scripts a subtitle file may load without asking.
+        {"automation.trustedFolders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
         {"grid.columnWidths", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},

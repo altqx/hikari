@@ -1070,6 +1070,29 @@ Output device: %2</source>
         <source>Keep both</source>
         <translation>இரண்டையும் வை</translation>
     </message>
+    <message numerus="yes">
+        <source>This subtitle file wants to run %n script(s) on your computer.</source>
+        <translation>
+            <numerusform>இந்த வசனக் கோப்பு உங்கள் கணினியில் %n ச்கிரிப்டை இயக்க விரும்புகிறது.</numerusform>
+            <numerusform>இந்த வசனக் கோப்பு உங்கள் கணினியில் %n ச்கிரிப்ட்களை இயக்க விரும்புகிறது.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Scripts can read, change and delete your files. Load them only if you trust where this subtitle file came from.</source>
+        <translation>ச்கிரிப்ட்கள் உங்கள் கோப்புகளைப் படிக்கவும், மாற்றவும், நீக்கவும் முடியும். இந்த வசனக் கோப்பு வந்த இடத்தை நீங்கள் நம்பினால் மட்டுமே அவற்றை ஏற்றவும்.</translation>
+    </message>
+    <message>
+        <source>Always trust scripts in this folder</source>
+        <translation>இந்தக் கோப்புறையில் உள்ள ச்கிரிப்ட்களை எப்போதும் நம்பு</translation>
+    </message>
+    <message>
+        <source>Always trust scripts in these folders</source>
+        <translation>இந்தக் கோப்புறைகளில் உள்ள ச்கிரிப்ட்களை எப்போதும் நம்பு</translation>
+    </message>
+    <message>
+        <source>Don&apos;t load</source>
+        <translation>ஏற்ற வேண்டாம்</translation>
+    </message>
     <message>
         <source>Select a script editor</source>
         <translation>ச்கிரிப்ட் எடிட்டரைத் தேர்ந்தெடுக்கவும்</translation>
@@ -8905,6 +8928,26 @@ removing audio cache files.</source>
     <message>
         <source>Clear last answers…</source>
         <translation>கடைசி பதில்களை அழி…</translation>
+    </message>
+    <message>
+        <source>Trusted script folders</source>
+        <translation>நம்பகமான ச்கிரிப்ட் கோப்புறைகள்</translation>
+    </message>
+    <message>
+        <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
+        <translation>வசனக் கோப்பு குறிப்பிடும் ச்கிரிப்ட்கள் இந்தக் கோப்புறைகளில் ஒன்றில் இருந்தால் கேட்காமல் ஏற்றப்படும்.</translation>
+    </message>
+    <message>
+        <source>No trusted folders</source>
+        <translation>நம்பகமான கோப்புறைகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>அகற்று</translation>
+    </message>
+    <message>
+        <source>Stop trusting %1</source>
+        <translation>%1 ஐ நம்புவதை நிறுத்து</translation>
     </message>
     <message>
         <source>Set shortcuts</source>

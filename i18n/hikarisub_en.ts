@@ -69,6 +69,13 @@
             <numerusform>Template line %1 (%2, %3): %4, %n lines generated</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>This subtitle file wants to run %n script(s) on your computer.</source>
+        <translation>
+            <numerusform>This subtitle file wants to run %n script on your computer.</numerusform>
+            <numerusform>This subtitle file wants to run %n scripts on your computer.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Conversion</name>
