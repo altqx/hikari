@@ -3254,10 +3254,112 @@ def step_dialog_frame():
     app("kill")
 
 
+def grid_tables():
+    try:
+        return json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "tables"]))
+    except ValueError:
+        return []
+
+
+def grid_view(tag):
+    tables = grid_tables()
+    grid = tables[0] if tables else {}
+    focused = grid.get("focused") or {}
+    log(f"{tag}: rows {grid.get('rows')}, focused {focused.get('name')!r} row {focused.get('row')} "
+        f"states {focused.get('states')}")
+    return grid, focused
+
+
+def runs_document():
+    path = os.path.join(HOME, "runs.ass")
+    shutil.copy(os.path.join(os.environ["HIKARI_TREE"], "tests/backends/karaoke-presets/05-bounce.out.ass"), path)
+    return path
+
+
+def step_grid_speech():
+    app("fresh")
+    conf = os.path.join(os.environ["XDG_CONFIG_HOME"], "HikariSub", "HikariSub")
+    os.makedirs(conf, exist_ok=True)
+    with open(os.path.join(conf, "hikari.ini"), "w") as f:
+        f.write("[registry]\nschema=1\n\n[profile]\ngrid.foldGenerated=true\n")
+    app("start", runs_document())
+    time.sleep(2)
+    dismiss_notices()
+    events_path = os.path.join(EVID, "grid-events.txt")
+    events = subprocess.Popen(["python3", f"{GATE}/atspi_tool.py", "listen", "150"],
+                              stdout=open(events_path, "w"), stderr=subprocess.STDOUT)
+    time.sleep(1)
+    orca, olog = orca_start("grid")
+    focus_main_compositor()
+    in_grid = f6_to("Grid")
+    B.keys("end", 1.5)
+    folded, cell0 = grid_view("folded")
+    ev0, _ = B.snap("grid-0-folded")
+    B.keys("right", 2.0)
+    unfolded, cell1 = grid_view("unfolded")
+    ev1, _ = B.snap("grid-1-unfolded")
+    B.keys("left", 2.0)
+    refolded, cell2 = grid_view("refolded")
+    n_tab = shift_tab_to("page tab", "Grid")
+    B.keys("right", 0.8)
+    _, closed = focused_is("button", "Grid options")
+    B.keys("space", 1.5)
+    opened = next((l for l in atspi_find("button", "Grid options") if "showing" in state_of(l)), "")
+    ev2, _ = B.snap("grid-2-menu-open")
+    open(os.path.join(EVID, "grid-2-menu-tree.txt"), "w").write(sh(["python3", f"{GATE}/atspi_tool.py", "dump"]))
+    menu_items = sh(["python3", f"{GATE}/atspi_tool.py", "menu"]).strip()
+    B.keys("down", 1.5)
+    menu_focus = sh(["python3", f"{GATE}/atspi_tool.py", "focus"]).strip()
+    B.keys("escape", 1.5)
+    _, after = focused_is("button", "Grid options")
+    speech, _ = orca_stop(orca, olog, "grid")
+    events.terminate()
+    events.wait(5)
+    changes = [l.strip() for l in open(events_path, errors="replace") if "state-changed:expanded" in l]
+    json.dump({"folded": folded, "unfolded": unfolded, "refolded": refolded},
+              open(os.path.join(EVID, "grid-tables.json"), "w"), indent=1)
+
+    def has(cell, state):
+        return state in cell.get("states", [])
+
+    verdict("grid-rows", "observed" if folded.get("rows") == 9 and unfolded.get("rows") == 76 and
+            refolded.get("rows") == 9 else "failed",
+            f"F6 to the Grid {in_grid}; AT-SPI Table rows folded {folded.get('rows')}, unfolded "
+            f"{unfolded.get('rows')}, folded again {refolded.get('rows')} (expected 9, 76, 9); the table's interfaces "
+            f"{folded.get('interfaces')}", ["grid-tables.json"])
+    verdict("grid-fold-states", "observed" if has(cell0, "expandable") and not has(cell0, "expanded") and
+            has(cell1, "expanded") and has(cell2, "expandable") and not has(cell2, "expanded") else "failed",
+            f"End, Right, Left on the run's row: {cell0.get('name')!r} {cell0.get('states')}, "
+            f"{cell1.get('states')}, {cell2.get('states')}", ["grid-tables.json"] + ev0 + ev1)
+    grid_changes = [l for l in changes if "[table cell]" in l]
+    verdict("grid-fold-events", "observed" if any("detail=1" in l for l in grid_changes) and
+            any("detail=0" in l for l in grid_changes) else "failed",
+            f"{len(grid_changes)} object:state-changed:expanded events from cells: {grid_changes[:4]}",
+            ["grid-events.txt"])
+    menu_changes = [l for l in changes if "'Grid options'" in l]
+    verdict("dock-menu-expanded", "observed" if n_tab and "expandable" in state_of(closed) and
+            "expanded" not in state_of(closed) and "expanded" in state_of(opened) and
+            "expanded" not in state_of(after) and len(menu_changes) >= 2 else "failed",
+            f"Shift+Tab x{n_tab or 'never'} to the Grid's tab, Right: {closed}; Space: {opened}; Escape: {after}; "
+            f"events {menu_changes}; open menu's items over AT-SPI {menu_items}; Down: {menu_focus}",
+            ["grid-events.txt", "grid-2-menu-tree.txt"] + ev2)
+    menu_at = next((i for i, l in enumerate(speech) if "Grid options" in l), len(speech))
+
+    def states_spoken(lines):
+        return [m.group(1) for l in lines for m in [re.search(r"'(expanded|collapsed)\b", l)] if m]
+    run, menu_said = states_spoken(speech[:menu_at]), states_spoken(speech[menu_at:])
+    def toggled(said):
+        return "expanded" in said and "collapsed" in said[said.index("expanded"):]
+    verdict("grid-orca", "observed" if toggled(run) and toggled(menu_said) else "failed",
+            f"Orca spoke {len(speech)} lines; the run's cell: {run}; the options button: {menu_said} "
+            f"(grid-orca-speech.txt)", ["grid-orca-speech.txt", "grid-orca-debug.out"])
+
+
 SWEEP_STEPS = {"tagspeech": step_tag_list_speech, "statusspeech": step_status_bar_speech,
                "refspeech": step_reference_speech, "icons": step_icon_names, "ime": step_ime,
                "scheme": step_follow_system, "dropper": step_screen_dropper, "edgetile": step_edge_tiling,
-               "titlebar": step_title_bar, "gtkbridge": step_gtk_bridge, "dialogframe": step_dialog_frame}
+               "titlebar": step_title_bar, "gtkbridge": step_gtk_bridge, "dialogframe": step_dialog_frame,
+               "gridspeech": step_grid_speech}
 
 
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,

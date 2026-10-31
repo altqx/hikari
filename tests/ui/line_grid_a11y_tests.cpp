@@ -17,6 +17,13 @@ using namespace hikari::ui;
 
 namespace {
 
+core::Document load(const std::string &s)
+{
+    std::vector<std::byte> bytes(s.size());
+    std::memcpy(bytes.data(), s.data(), s.size());
+    return core::loadAss(bytes).document;
+}
+
 core::Document generate(int lines)
 {
     std::string s = "[Events]\n";
@@ -26,9 +33,16 @@ core::Document generate(int lines)
                       i % 10 == 1 ? "Comment" : "Dialogue", i + 1);
         s += buf;
     }
-    std::vector<std::byte> bytes(s.size());
-    std::memcpy(bytes.data(), s.data(), s.size());
-    return core::loadAss(bytes).document;
+    return load(s);
+}
+
+core::Document withGeneratedRun()
+{
+    std::string s = "[Events]\n";
+    for (int i = 0; i < 8; ++i)
+        s += "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0," + std::string(i >= 3 ? "fx" : "") + ",line " +
+             std::to_string(i + 1) + "\n";
+    return load(s);
 }
 
 struct Captured {
@@ -36,6 +50,17 @@ struct Captured {
     QString text;
 };
 QList<Captured> captured;
+
+QList<int> expandedRows;
+
+void captureExpandedRows(QAccessibleEvent *event)
+{
+    if (event->type() != QAccessible::StateChanged ||
+        !static_cast<QAccessibleStateChangeEvent *>(event)->changedStates().expanded)
+        return;
+    if (auto *cell = event->accessibleInterface() ? event->accessibleInterface()->tableCellInterface() : nullptr)
+        expandedRows.append(cell->rowIndex());
+}
 
 void captureUpdates(QAccessibleEvent *event)
 {
@@ -53,9 +78,10 @@ struct Rig {
     LineFilterModel filter;
     LineGrid *grid = nullptr;
 
-    explicit Rig(int count)
+    explicit Rig(int count) : Rig(generate(count)) {}
+    explicit Rig(core::Document document)
     {
-        lines.setDocument(generate(count));
+        lines.setDocument(std::move(document));
         filter.setLineModel(&lines);
         window.resize(800, 400);
         grid = new LineGrid(window.contentItem());
@@ -145,6 +171,51 @@ private slots:
         QCOMPARE(fromWindow, focused);
     }
 
+    void viewportReportsTheShownRows()
+    {
+        Rig rig(1'000);
+        QAccessibleViewportInterface *viewport = QAccessible::queryAccessibleInterface(rig.grid)->viewportInterface();
+        QVERIFY(viewport);
+        QVERIFY(viewport->isIndexed());
+        QCOMPARE(viewport->contentSize(), QSizeF(13, 1'000));
+        QCOMPARE(viewport->position(), QPointF(0, 0));
+        const int shown = rig.grid->geometry().visibleRowCount(0, rig.grid->height(), 1'000);
+        QVERIFY(shown > 1 && shown < 1'000);
+        QCOMPARE(viewport->viewportSize(), QSizeF(1, shown / 1'000.0));
+
+        rig.grid->scrollToTopRow(500);
+        QCOMPARE(viewport->position(), QPointF(0, 0.5));
+        viewport->setPosition(QPointF(0, 0.25));
+        QCOMPARE(rig.grid->contentY(), 250 * rig.grid->rowHeight());
+
+        rig.filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
+        QCOMPARE(viewport->contentSize(), QSizeF(13, 900));
+    }
+
+    void foldedRunsAreExpandableTextCells()
+    {
+        Rig rig(withGeneratedRun());
+        rig.filter.changeFolds([&] { rig.lines.setFoldGenerated(true); });
+        QCOMPARE(rig.table()->rowCount(), 4);
+        QAccessibleInterface *plain = rig.table()->cellAt(2, 12);
+        QAccessibleInterface *run = rig.table()->cellAt(3, 12);
+        QVERIFY(!plain->state().expandable);
+        QVERIFY(!rig.table()->cellAt(3, 0)->state().expandable);
+        QVERIFY(run->state().expandable);
+        QVERIFY(!run->state().expanded);
+
+        expandedRows.clear();
+        QAccessible::installUpdateHandler(captureExpandedRows);
+        rig.filter.changeFolds([&] { rig.lines.setRunFolded(core::LineId{4}, false); });
+        QAccessible::installUpdateHandler(nullptr);
+        QCOMPARE(rig.table()->rowCount(), 8);
+        QVERIFY(run->state().expandable);
+        QVERIFY(run->state().expanded);
+        QCOMPARE(expandedRows, QList<int>{3});
+        QVERIFY(!rig.table()->cellAt(4, 12)->state().expandable);
+        QCOMPARE(run->text(QAccessible::Description), QStringLiteral("4, Text, unfolded"));
+    }
+
     void hiddenColumnsLeaveTheTable()
     {
         Rig rig(10);
@@ -189,6 +260,18 @@ private slots:
         QCOMPARE(a11y->cellsCreated(), std::size_t{1'000});
         QCOMPARE(a11y->cachedCellCount(), LineGridAccessible::kCellCacheCapacity);
         QVERIFY(!QAccessible::accessibleInterface(first));
+    }
+
+    void theCurrentCellOutlivesTheCache()
+    {
+        Rig rig(1'000);
+        rig.lines.setSelection({core::LineId{500}, {core::LineId{500}}}, core::LineId{500});
+        const int column = rig.grid->currentColumn();
+        const QAccessible::Id current = QAccessible::uniqueId(rig.table()->cellAt(499, column));
+        for (int row = 0; row < 1'000; ++row)
+            QVERIFY(rig.table()->cellAt(row, row == 499 ? 0 : column));
+        QVERIFY(QAccessible::accessibleInterface(current));
+        QCOMPARE(QAccessible::uniqueId(rig.table()->cellAt(499, column)), current);
     }
 
     void announcesTheCellFirstAndCountsOnlyWhenTheyChange()

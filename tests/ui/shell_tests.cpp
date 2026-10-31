@@ -6162,11 +6162,11 @@ private slots:
         const QStringList videoOwn{QStringLiteral("Show times (off) (on)"), QStringLiteral("Show frames (off)"),
                                    QStringLiteral("Seek on"), QStringLiteral("Then play"), QStringLiteral("|")};
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
-        QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
+        QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("down").toBool());
         QCOMPARE(panelMenuItems(),
                  (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
-        QTRY_VERIFY(!findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
+        QTRY_VERIFY(!findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("down").toBool());
 
         auto *videoDock = item<QObject>("videoDock");
         QVERIFY(videoDock->setProperty("options", 1));

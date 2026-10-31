@@ -149,6 +149,9 @@ public:
     void retranslate() { emit headerDataChanged(Qt::Horizontal, 0, ColumnCount - 1); }
     QHash<int, QByteArray> roleNames() const override;
 
+signals:
+    void runFoldChanged(qulonglong first);
+
 private:
     struct Measures {
         QString cps, wraps;

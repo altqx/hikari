@@ -15,7 +15,8 @@ void installGridAccessibility();
 
 class LineGridAccessible : public QAccessibleObject,
                            public QAccessibleTableInterface,
-                           public QAccessibleSelectionInterface {
+                           public QAccessibleSelectionInterface,
+                           public QAccessibleViewportInterface {
 public:
     static constexpr std::size_t kCellCacheCapacity = 256;
 
@@ -64,6 +65,12 @@ public:
     bool unselect(QAccessibleInterface *) override { return false; }
     bool selectAll() override { return false; }
     bool clear() override { return false; }
+
+    QSizeF contentSize() const override;
+    QPointF position() const override;
+    QSizeF viewportSize() const override;
+    bool isIndexed() const override { return true; }
+    void setPosition(QPointF position) override;
 
     std::size_t cachedCellCount() const { return m_cache.size(); }
     std::size_t cellsCreated() const { return m_created; }
