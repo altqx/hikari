@@ -1,10 +1,13 @@
+#include "hikari/application/audio_devices.h"
 #include "hikari/backends/ffms_indexed_source.h"
+#include "hikari/backends/qt_audio_devices.h"
 #include "hikari/backends/qt_general_player.h"
 #include "hikari/backends/video_frame_bgra.h"
 
 #include <QAudioDevice>
 #include <QImage>
 #include <QMediaDevices>
+#include <QProcess>
 #include <QSignalSpy>
 #include <QVideoFrame>
 #include <QtTest>
@@ -15,11 +18,14 @@
 #include <optional>
 #include <thread>
 
+using hikari::application::AudioOutputRouting;
 using hikari::application::Chapter;
 using hikari::application::MediaDescription;
+using hikari::application::OutputRoute;
 using hikari::application::PlayerError;
 using hikari::application::SeekResult;
 using hikari::backends::FfmsIndexedSource;
+using hikari::backends::QtAudioDevices;
 using hikari::backends::QtGeneralPlayer;
 
 namespace {
@@ -55,6 +61,16 @@ int barcode(const hikari::application::IndexedFrame &frame)
                 value |= 1 << (by * 4 + bx);
         }
     return value;
+}
+
+std::optional<QString> runSinks(const QStringList &arguments)
+{
+    QProcess process;
+    process.setProcessChannelMode(QProcess::ForwardedErrorChannel);
+    process.start(qEnvironmentVariable("HIKARI_AUDIO_REMOVAL"), arguments);
+    if (!process.waitForFinished(60'000) || process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0)
+        return std::nullopt;
+    return QString::fromUtf8(process.readAllStandardOutput()).trimmed();
 }
 
 std::int64_t cfrStartUs(int index)
@@ -327,6 +343,61 @@ private slots:
         }
         player.setOutputDevice("");
         QCOMPARE(player.outputDeviceId(), defaultId);
+    }
+
+    void playbackFollowsTheRouteWhenItsDeviceGoesAway_data()
+    {
+        QTest::addColumn<bool>("picked");
+        QTest::newRow("system default") << false;
+        QTest::newRow("picked device") << true;
+    }
+
+    void playbackFollowsTheRouteWhenItsDeviceGoesAway()
+    {
+        if (qEnvironmentVariableIsEmpty("HIKARI_AUDIO_REMOVAL"))
+            QSKIP("HIKARI_AUDIO_REMOVAL is unset: tools/audio-removal sets it where the playing device can be removed: a container, or winix");
+        QFETCH(bool, picked);
+        const auto media = runSinks({QStringLiteral("media")});
+        QVERIFY(media);
+        QtAudioDevices devices;
+        QtGeneralPlayer player(true);
+        std::string chosen;
+        if (picked) {
+            const auto pick = runSinks({QStringLiteral("pick")});
+            QVERIFY(pick);
+            for (const QAudioDevice &device : QMediaDevices::audioOutputs())
+                if (QString::fromUtf8(device.id()).compare(*pick, Qt::CaseInsensitive) == 0)
+                    chosen = device.id().toStdString();
+            QVERIFY2(!chosen.empty(), qPrintable(*pick));
+        }
+        AudioOutputRouting routing(devices, [&] { return chosen; },
+                                   [&](const OutputRoute &route) { player.setOutputDevice(route.id); });
+        player.setOutputDevice(routing.route().id);
+        const OutputRoute first = routing.route();
+        QVERIFY(!first.id.empty());
+        std::optional<std::expected<MediaDescription, PlayerError>> opened;
+        player.open(media->toStdString(), [&](auto r) { opened = std::move(r); });
+        QVERIFY(QTest::qWaitFor([&] { return opened.has_value(); }, 10'000));
+        QVERIFY(opened->has_value());
+        player.play();
+        const auto heard = [&](const std::string &id) { return runSinks({QStringLiteral("heard"), QString::fromStdString(id)}).has_value(); };
+        QVERIFY(QTest::qWaitFor([&] { return player.clock().valid && player.clock().mediaUs > 1'000'000; }, 10'000));
+        QVERIFY2(heard(first.id), first.id.c_str());
+
+        const std::int64_t beforeUs = player.clock().mediaUs;
+        const auto streams = runSinks({QStringLiteral("remove"), QString::fromStdString(first.id)});
+        QVERIFY(streams);
+        QVERIFY2(QTest::qWaitFor([&] { return !routing.route().id.empty() && routing.route().id != first.id; }, 10'000),
+                 "the route moves off the removed device");
+        const OutputRoute next = routing.route();
+        QVERIFY(next.systemDefault);
+        QVERIFY2(QTest::qWaitFor([&] { return heard(next.id); }, 10'000), next.id.c_str());
+        QCOMPARE(player.outputDeviceId(), next.id);
+        QCOMPARE(player.playbackState(), hikari::application::PlaybackState::Playing);
+        QVERIFY(player.clock().mediaUs > beforeUs);
+        std::fprintf(stderr, "audio removal: %s -> %s, before %lld us, now %lld us, streams %s\n", first.id.c_str(),
+                     next.id.c_str(), static_cast<long long>(beforeUs), static_cast<long long>(player.clock().mediaUs),
+                     qPrintable(*streams));
     }
 
     void chaptersComeFromTheMediaHelper()

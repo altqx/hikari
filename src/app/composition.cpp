@@ -64,14 +64,6 @@ void openStartVideo(QObject *mainWindow, const QString &path)
     QMetaObject::invokeMethod(mainWindow, "openSingleVideo", Q_ARG(QVariant, path));
 }
 
-void preferPulseAudioBackend()
-{
-#ifdef Q_OS_LINUX
-    if (!qEnvironmentVariableIsSet("QT_AUDIO_BACKEND"))
-        qputenv("QT_AUDIO_BACKEND", "pulseaudio");
-#endif
-}
-
 namespace {
 
 int crashTestSink = 0;
@@ -180,7 +172,6 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 {
     QElapsedTimer started;
     started.start();
-    preferPulseAudioBackend();
     // Read before QGuiApplication, which takes and unsets XDG_ACTIVATION_TOKEN.
     const QString activationToken = qEnvironmentVariable("XDG_ACTIVATION_TOKEN");
     QGuiApplication app(argc, argv);

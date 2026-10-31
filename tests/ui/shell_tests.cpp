@@ -22178,28 +22178,6 @@ private slots:
         QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
     }
 
-    void linuxAudioPrefersPulseAudio()
-    {
-#ifndef Q_OS_LINUX
-        QSKIP("Linux only");
-#else
-        const QByteArray before = qgetenv("QT_AUDIO_BACKEND");
-        const bool wasSet = qEnvironmentVariableIsSet("QT_AUDIO_BACKEND");
-        const auto restore = qScopeGuard([&] {
-            if (wasSet)
-                qputenv("QT_AUDIO_BACKEND", before);
-            else
-                qunsetenv("QT_AUDIO_BACKEND");
-        });
-        qunsetenv("QT_AUDIO_BACKEND");
-        app::preferPulseAudioBackend();
-        QCOMPARE(qgetenv("QT_AUDIO_BACKEND"), QByteArray("pulseaudio"));
-        qputenv("QT_AUDIO_BACKEND", "pipewire");
-        app::preferPulseAudioBackend();
-        QCOMPARE(qgetenv("QT_AUDIO_BACKEND"), QByteArray("pipewire"));
-#endif
-    }
-
     void audioPanelOutputDeviceMenu()
     {
         delete engine;
@@ -22323,20 +22301,29 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(checkedRow(), 1);
         QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, false}));
-        QCOMPARE(application->shell().statusText(), QString());
+        QSignalSpy noticed(&application->log(), &ui::LogController::noticed);
+        const int warnings = application->log().warningCount();
         list.erase(list.begin());
         list[0].isDefault = true;
         changed();
         QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
-        QCOMPARE(application->shell().statusText(),
-                 QString::fromStdString(monitor.name) + QStringLiteral(" is not connected. Audio plays through ") +
-                     QString::fromStdString(headset.name) + QStringLiteral("."));
-        {
-            auto *status = item<QObject>("statusText");
-            QTRY_COMPARE(status->property("text").toString(), application->shell().statusText());
-            QCOMPARE(status->property("tip").toString(),
-                     status->property("truncated").toBool() ? application->shell().statusText() : QString());
-        }
+        QCOMPARE(noticed.size(), 1);
+        QCOMPARE(noticed[0][1].value<ui::LogController::Severity>(), ui::LogController::Warning);
+        QCOMPARE(noticed[0][3].toString(), QString::fromStdString(monitor.name) +
+                                               QStringLiteral(" is not connected. Audio plays through ") +
+                                               QString::fromStdString(headset.name) + QStringLiteral("."));
+        QCOMPARE(application->log().warningCount(), warnings + 1);
+        QCOMPARE(application->shell().statusText(), QString());
+        const application::SystemOutputDevice spdif{"dev-spdif", "Digital Output (S/PDIF)", true};
+        list[0].isDefault = false;
+        list.push_back(spdif);
+        changed();
+        QCOMPARE(application->audioRoute(), (Route{spdif.id, spdif.name, true}));
+        list.pop_back();
+        list[0].isDefault = true;
+        changed();
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
+        QCOMPARE(noticed.size(), 1);
         QCOMPARE(labels(), (QStringList{QStringLiteral("System default"), QString::fromStdString(headset.name),
                                         QString::fromStdString(monitor.name) + QStringLiteral(" (not connected)")}));
         QCOMPARE(checkedRow(), 2);
@@ -22344,17 +22331,12 @@ private slots:
         list.insert(list.begin(), monitor);
         changed();
         QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, false}));
-        QCOMPARE(application->shell().statusText(), QString());
-        QTest::qWait(3000);
+        QCOMPARE(noticed.size(), 1);
         list.erase(list.begin());
         list[0].isDefault = true;
         changed();
-        const QString notice = application->shell().statusText();
-        QVERIFY(notice.startsWith(QString::fromStdString(monitor.name)));
-        // MUST KILL: real 3 s waits (with the one above) to outlast the first notice's 5 s
-        QTest::qWait(3000);
-        QCOMPARE(application->shell().statusText(), notice);
-        QTRY_COMPARE_WITH_TIMEOUT(application->shell().statusText(), QString(), 4000);
+        QCOMPARE(noticed.size(), 2);
+        QCOMPARE(application->log().warningCount(), warnings + 2);
         QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
         QTRY_COMPARE(named("audioOutput1")->property("text").toString(), QString::fromStdString(headset.name));
         const application::SystemOutputDevice hdmi{"dev-hdmi", "HDMI (Intel Display Audio)", false};

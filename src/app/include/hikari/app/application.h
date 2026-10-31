@@ -1216,8 +1216,6 @@ private:
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
     void noticeOnsets();
     application::OutputRoute m_noticedRoute;
-    QString m_audioRouteNotice;
-    int m_audioRouteNoticeSerial = 0;
     void syncAudioWithVideo();
     static QString dummyVideoAudio(const QString &videoPath);
     static bool isVideoAudio(const QString &audio, const QString &videoPath);
