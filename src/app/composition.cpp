@@ -5,10 +5,12 @@
 #include "hikari/app/application.h"
 #include "hikari/app/crash_record.h"
 #include "hikari/app/hang_watchdog.h"
+#include "hikari/app/launcher.h"
 #include "hikari/app/local_only_network.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
+#include "hikari/app/startup_look.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/update_apply.h"
 #include "hikari/app/user_folder.h"
@@ -34,7 +36,9 @@
 
 #include <cstdio>
 #include <functional>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -147,6 +151,23 @@ void startForHandedOn(const UpdateInstaller::ExitAction &exitAction, bool update
     QProcess::startDetached(program, files);
 }
 
+// A window started minimized draws no frame until it is restored.
+void whenFirstShown(QQuickWindow *window, QObject *context, std::function<void()> shown)
+{
+    auto once = std::make_shared<std::function<void()>>(std::move(shown));
+    const auto fire = [once] {
+        if (*once)
+            std::exchange(*once, {})();
+    };
+    QObject::connect(window, &QQuickWindow::frameSwapped, context, fire, Qt::SingleShotConnection);
+    QObject::connect(window, &QWindow::visibilityChanged, context, [fire](QWindow::Visibility visibility) {
+        if (visibility == QWindow::Minimized)
+            fire();
+    });
+    if (window->visibility() == QWindow::Minimized)
+        fire();
+}
+
 QString usagePackage(application::PackageKind kind, bool portableCopy)
 {
     switch (kind) {
@@ -168,7 +189,7 @@ QString usagePackage(application::PackageKind kind, bool portableCopy)
 }
 
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
-              UpdateInstaller::ExitAction &exitAction)
+              UpdateInstaller::ExitAction &exitAction, const std::function<void()> &windowShown)
 {
     QElapsedTimer started;
     started.start();
@@ -209,7 +230,6 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     }
 
     Application::Options options;
-    options.autoload = true;
     if (folderEnvironment.userDirOverride.isEmpty())
         options.userFolderMove = userFolder.moveIn(oldFolders, folderEnvironment.portable);
     options.userFolderSeed = userFolder.seed(bundledFolder());
@@ -330,6 +350,14 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                 });
             },
             Qt::SingleShotConnection);
+    if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first()))
+        whenFirstShown(window, &application,
+                       [&application, windowShown, look = userFolder.cache() + QStringLiteral("/startup-look.txt")] {
+                           if (windowShown)
+                               windowShown();
+                           keepStartupLook(&application, look);
+                           application.automation().autoload();
+                       });
     if (!startup.healthFile.empty())
         application.updates().installer().expectHealthReport();
     if (!startup.healthFile.empty())
@@ -369,7 +397,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 
 }
 
-int run(int argc, char **argv, StartupMode mode)
+int run(int argc, char **argv, StartupMode mode, const std::function<void()> &windowShown)
 {
 #ifdef _WIN32
     if (argc >= 2 && std::string_view(argv[1]) == application::kApplyUpdateSwitch) {
@@ -417,10 +445,10 @@ int run(int argc, char **argv, StartupMode mode)
         }
     }
     // MUST KILL: handle leaked on purpose; the installer waits while this mutex exists.
-    CreateMutexW(nullptr, FALSE, L"Global\\io.github.altqx.HikariSub.Running");
+    CreateMutexW(nullptr, FALSE, launcher::kRunningMutex);
 #endif
     UpdateInstaller::ExitAction exitAction;
-    const int code = runWindow(argc, argv, mode, startup, exitAction);
+    const int code = runWindow(argc, argv, mode, startup, exitAction, windowShown);
 #ifndef _WIN32
     if (!exitAction.program.isEmpty()) {
         std::vector<QByteArray> held{QFile::encodeName(exitAction.program)};
