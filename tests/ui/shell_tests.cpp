@@ -18836,6 +18836,8 @@ private slots:
         QTRY_VERIFY(messageBox("messages") && messageBox("messages")->isVisible());
         QCOMPARE(messageBox("messages")->property("details").toString(),
                  QDir::toNativeSeparators(scripts.filePath(QStringLiteral("First.lua"))));
+        QVERIFY(messageBox("messages")->property("detail").toString().endsWith(
+            QStringLiteral("\n\n") + QDir::toNativeSeparators(scripts.filePath(QStringLiteral("First.lua")))));
         answerMessage("messages", QStringLiteral("Automation"),
                       QStringLiteral("This subtitle file wants to run 1 script(s) on your computer."), QStringLiteral("load"));
         QVERIFY(listed("First"));
@@ -18907,15 +18909,22 @@ private slots:
     void automationTrustPromptDeclinesWhenClosed()
     {
         QTemporaryDir scripts;
-        const QString script = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("Named.lua")));
-        QFile lua(script);
-        QVERIFY(lua.open(QIODevice::WriteOnly));
-        lua.write("aegisub.register_macro(\"Named\", \"\", function() end)\n");
-        lua.close();
+        QStringList paths;
+        QByteArray named;
+        for (int i = 0; i < 10; ++i) {
+            const QString name = i < 9 ? QStringLiteral("s%1.lua").arg(i) : QStringLiteral("más/ünïcode.lua");
+            const QString script = QDir::toNativeSeparators(scripts.filePath(name));
+            QVERIFY(QDir().mkpath(QFileInfo(script).absolutePath()));
+            QFile lua(script);
+            QVERIFY(lua.open(QIODevice::WriteOnly));
+            lua.write("aegisub.register_macro(\"Named\", \"\", function() end)\n");
+            paths << script;
+            named += "|" + script.toUtf8();
+        }
         const QString ass = scripts.filePath(QStringLiteral("Named.ass"));
         QFile f(ass);
         QVERIFY(f.open(QIODevice::WriteOnly));
-        f.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: |" + script.toUtf8() +
+        f.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: " + named +
                 "\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
         f.close();
@@ -18925,19 +18934,26 @@ private slots:
         QQuickWindow *box = nullptr;
         QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
         QCOMPARE(box->property("severity").toString(), QStringLiteral("warning"));
-        QCOMPARE(box->property("details").toString(), script);
+        QCOMPARE(box->property("text").toString(),
+                 QStringLiteral("This subtitle file wants to run 10 script(s) on your computer."));
+        QCOMPARE(box->property("detail").toString(),
+                 QStringLiteral("Scripts can read, change and delete your files. Load them only if you trust where "
+                                "this subtitle file came from.\n\n") +
+                     paths.mid(0, 8).join(QLatin1Char('\n')) + QStringLiteral("\nand 2 more"));
+        QVERIFY(messageBoxItem("messageBoxDetail")->isVisible());
+        QCOMPARE(box->property("details").toString(), paths.join(QLatin1Char('\n')));
         QStringList choices;
         for (const QVariant &choice : box->property("choices").toList())
             choices << choice.toMap().value(QStringLiteral("id")).toString();
         QCOMPARE(choices, (QStringList{QStringLiteral("load"), QStringLiteral("always"), QStringLiteral("skip")}));
         QCOMPARE(messageBoxItem("messageBoxChoice_always")->property("text").toString(),
-                 QStringLiteral("Always trust scripts in this folder"));
+                 QStringLiteral("Always trust scripts in these folders"));
         QVERIFY(QMetaObject::invokeMethod(box, "reject"));
         QTRY_VERIFY(!box->isVisible());
         QVERIFY(!automation.asksTrust());
         QVERIFY(automation.documentScripts().empty());
-        QVERIFY(automation.scripts().empty() || std::ranges::none_of(automation.scripts(), [&](const auto &s) {
-            return s.path == script.toStdString();
+        QVERIFY(std::ranges::none_of(automation.scripts(), [&](const auto &s) {
+            return paths.contains(QString::fromStdString(s.path));
         }));
         QVERIFY(application->settingsStore()->list("automation.trustedFolders").isEmpty());
     }

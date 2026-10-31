@@ -12,6 +12,12 @@ Item {
 
     property int asking: 0
     property string pendingScript: ""
+    readonly property int pathsShown: 8
+    function shownPaths(paths) {
+        const extra = paths.length - pathsShown
+        const shown = paths.slice(0, pathsShown).join("\n")
+        return extra > 0 ? shown + "\n" + qsTr("and %n more", "", extra) : shown
+    }
     function answered() {
         if (--asking === 0 && pendingScript.length > 0) {
             editorDialog.script = pendingScript
@@ -42,7 +48,8 @@ Item {
             notices.messages.ask({
                 title: qsTr("Automation"),
                 text: qsTr("This subtitle file wants to run %n script(s) on your computer.", "", scripts.length),
-                detail: qsTr("Scripts can read, change and delete your files. Load them only if you trust where this subtitle file came from."),
+                detail: qsTr("Scripts can read, change and delete your files. Load them only if you trust where this subtitle file came from.")
+                        + "\n\n" + notices.shownPaths(scripts),
                 details: scripts.join("\n"),
                 plainText: true,
                 severity: "warning",
