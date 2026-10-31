@@ -227,7 +227,7 @@ class QtSymbols(unittest.TestCase):
             (root / "Qt6Core.debug").write_bytes(elf_with_build_id(BUILD_ID))
             matched = qt_symbols.place(root / "Qt6Core.debug", modules["qt6core.debug"], root / "package",
                                        root / "out", "linux")
-            placed = sorted(str(p.relative_to(root / "out")) for p in (root / "out").rglob("*") if p.is_file())
+            placed = sorted(p.relative_to(root / "out").as_posix() for p in (root / "out").rglob("*") if p.is_file())
         self.assertEqual((stale, matched), (0, 1))
         self.assertEqual(placed, ["lib/libQt6Core.so.6.12.0.debug"])
 
