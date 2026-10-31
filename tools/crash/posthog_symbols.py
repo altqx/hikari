@@ -3,9 +3,10 @@
 
 posthog_symbols.py DIR [--dry-run]
 
-Each goes up as the symbol set posthog-cli makes for an ELF, under the debug id the app sends in `$debug_images`.
+Each goes up as the symbol set posthog-cli makes for an ELF, under the debug id the app sends in `$debug_images`,
+unless PostHog already has one under that id.
 posthog-cli takes no PDB, and packs at a zstd level that leaves hikarisub.debug over PostHog's 100 MB.
-Needs objcopy for ELF and zstd. Reads POSTHOG_CLI_API_KEY, POSTHOG_CLI_PROJECT_ID and POSTHOG_CLI_HOST.
+Needs objcopy, dwz and zstd. Reads POSTHOG_CLI_API_KEY, POSTHOG_CLI_PROJECT_ID and POSTHOG_CLI_HOST.
 """
 
 import argparse
@@ -18,6 +19,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 import urllib.request
 import uuid
 import zipfile
@@ -62,6 +64,12 @@ def elf_debug_id(data):
 
 def pe_debug_id(data):
     """The debug id of a PE image's RSDS CodeView record, or None."""
+    codeview = pe_codeview(data)
+    return debug_id(codeview[0], codeview[1]) if codeview else None
+
+
+def pe_codeview(data):
+    """(GUID, age, PDB file name) from a PE image's RSDS CodeView record, or None."""
     if data[:2] != b"MZ":
         return None
     pe, = struct.unpack_from("<I", data, 0x3C)
@@ -92,7 +100,8 @@ def pe_debug_id(data):
         kind, data_size, _, raw_at = struct.unpack_from("<IIII", data, at + entry * 28 + 12)
         if kind == 2 and data_size >= 24 and data[raw_at:raw_at + 4] == b"RSDS":
             age, = struct.unpack_from("<I", data, raw_at + 20)
-            return debug_id(data[raw_at + 4:raw_at + 20], age)
+            path = data[raw_at + 24:raw_at + data_size].split(b"\0")[0].decode(errors="replace")
+            return bytes(data[raw_at + 4:raw_at + 20]), age, path.replace("\\", "/").rsplit("/", 1)[-1]
     return None
 
 
@@ -118,13 +127,18 @@ def symbol_sets(folder):
 
 
 def debug_data(path):
-    """The file's bytes; an ELF's with its debug sections uncompressed, so zstd can pack them, and no location lists."""
+    """The file's bytes; an ELF's uncompressed, so zstd can pack them, deduplicated by dwz, and without location lists."""
     if path.suffix.lower() == ".pdb":
         return path.read_bytes()
     with tempfile.TemporaryDirectory() as scratch:
-        out = Path(scratch) / "debug"
+        plain, shared, out = (Path(scratch) / name for name in ("plain", "shared", "out"))
+        subprocess.run(["objcopy", "--decompress-debug-sections", str(path), str(plain)], check=True)
+        # dwz refuses a file whose location lists are already gone, and leaves one it cannot shrink as it was.
+        deduplicated = subprocess.run(["dwz", "-q", "-L", "none", "-l", "none", "-o", str(shared), str(plain)],
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
         removed = [arg for name in NOT_FOR_SYMBOLS for arg in ("--remove-section", name)]
-        subprocess.run(["objcopy", "--decompress-debug-sections", *removed, str(path), str(out)], check=True)
+        source = shared if deduplicated and shared.is_file() else plain
+        subprocess.run(["objcopy", *removed, str(source), str(out)], check=True)
         return out.read_bytes()
 
 
@@ -142,6 +156,12 @@ class Api:
     def __init__(self, host, project, key):
         self.base = f"{host.rstrip('/')}/api/projects/{project}/error_tracking/symbol_sets/"
         self.key = key
+
+    def has(self, chunk_id):
+        request = urllib.request.Request(f"{self.base}?{urllib.parse.urlencode({'ref': chunk_id, 'status': 'valid'})}",
+                                         headers={"Authorization": f"Bearer {self.key}"})
+        with urllib.request.urlopen(request, timeout=120) as response:
+            return json.loads(response.read()).get("count", 0) > 0
 
     def post(self, path, body):
         request = urllib.request.Request(self.base + path, data=json.dumps(body).encode(), method="POST",
@@ -195,7 +215,7 @@ def main(argv):
             print("::warning::POSTHOG_CLI_API_KEY and POSTHOG_CLI_PROJECT_ID are needed")
             return 1
         api = Api(os.environ.get("POSTHOG_CLI_HOST") or DEFAULT_HOST, project, key)
-    for tool in ("zstd", "objcopy"):
+    for tool in ("zstd", "objcopy", "dwz"):
         if not shutil.which(tool):
             print(f"::warning::{tool} is needed")
             return 1
@@ -203,6 +223,9 @@ def main(argv):
     for chunk_id, path in sets:
         name = path.relative_to(args.folder)
         try:
+            if api is not None and api.has(chunk_id):
+                print(f"{chunk_id} {name}: already there")
+                continue
             data = container(debug_data(path))
             if len(data) > MAX_UPLOAD:
                 print(f"::warning::{name} packs to {len(data)} bytes, over PostHog's {MAX_UPLOAD}; skipped")

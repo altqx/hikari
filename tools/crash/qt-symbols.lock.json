@@ -1,0 +1,54 @@
+{
+  "qt_version": "6.12.0",
+  "platforms": {
+    "linux": [
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.debug_info.linux_gcc_64/6.12.0-0-202609280346qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z",
+        "length": 290707587,
+        "sha256": "cd47faf431c8e4c47bc09251f75be28272a5fa95a6b57bdfa596e8ce2108fe2d"
+      },
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.debug_info.linux_gcc_64/6.12.0-0-202609280346qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z",
+        "length": 6642383,
+        "sha256": "4b7cc12c27d292ab75933f0ccc3e47d82a4e850023f8aee01a9162c84271c364"
+      },
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.debug_info.linux_gcc_64/6.12.0-0-202609280346qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z",
+        "length": 600760882,
+        "sha256": "6045c8bf5edf0cb43963785d271bf768828da5620c0d5d930bf18bf417ed1953"
+      },
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.debug_info.linux_gcc_64/6.12.0-0-202609280346qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z",
+        "length": 24681425,
+        "sha256": "1eaec6169785670f7e3a682cf5f37aa35a20ff347baa999a2c32820b6c8eb4d5"
+      },
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.addons.qtmultimedia.debug_information.linux_gcc_64/6.12.0-0-202609280346qtmultimedia-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z",
+        "length": 41705456,
+        "sha256": "0c7df614f1c55c3d6823ed89530b72631e39a260e1fe41b365f4516bdf095be8"
+      }
+    ],
+    "windows": [
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/qt.qt6.6120.debug_info.win64_msvc2022_64/6.12.0-0-202609280346qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64-debug-symbols.7z",
+        "length": 176666994,
+        "sha256": "9ddc386401efef47b590a1e95ca281cd74390daebb2f800104e5b43b4a847256"
+      },
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/qt.qt6.6120.debug_info.win64_msvc2022_64/6.12.0-0-202609280346qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64-debug-symbols.7z",
+        "length": 6184749,
+        "sha256": "473d62eabe205bf24eff4de1e8df2723529004ec2c0a2d62668149e391e73dcc"
+      },
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/qt.qt6.6120.debug_info.win64_msvc2022_64/6.12.0-0-202609280346qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64-debug-symbols.7z",
+        "length": 350442281,
+        "sha256": "ad33c0f0d1a4a8352382ee8481b12eedc2bf1053fdba24b088d65f2a7f6e3833"
+      },
+      {
+        "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/qt.qt6.6120.addons.qtmultimedia.debug_information.win64_msvc2022_64/6.12.0-0-202609280346qtmultimedia-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64-debug-symbols.7z",
+        "length": 32931743,
+        "sha256": "4b84c97dfc72094d14b23c4e1c095a9f0c380a6b5a48b97e968fec0c412d41f0"
+      }
+    ]
+  }
+}

@@ -58,7 +58,14 @@ Release packages carry no debug info. Package CI builds with `HIKARI_DEBUG_SYMBO
 - `hikarisub-symbols-<version>-linux-x86_64.tar.xz`: each ELF file's debug info, split out by `packaging/linux/make-packages.sh` (`<path>.debug`, and under `.build-id/`);
 - `HikariSub-<version>-windows-x64-symbols.zip`: each module the build has a PDB for, beside its PDB.
 
-The release workflow uploads both to PostHog's error tracking with `tools/crash/posthog_symbols.py` (secret `HIKARI_POSTHOG_SYMBOLS_KEY`), so a release's `$exception` shows functions and lines there. A failed upload is a warning; the release still goes out. The tool does what `posthog-cli` cannot: it takes PDBs, and fits `hikarisub.debug` under PostHog's 100 MB per symbol set (uncompressed sections without location lists, zstd -19: about 86 MB for 0.1.0-beta.1). Only the program's own modules have symbols there: frames in Qt and system libraries stay unresolved. Events from 0.1.0-beta.1 never resolve: they carry no debug ids.
+The release workflow uploads both to PostHog's error tracking with `tools/crash/posthog_symbols.py` (secret `HIKARI_POSTHOG_SYMBOLS_KEY`), so a release's `$exception` shows functions and lines there. A failed upload is a warning; the release still goes out. The tool does what `posthog-cli` cannot: it takes PDBs, and fits `hikarisub.debug` under PostHog's 100 MB per symbol set. The uploaded copy is uncompressed, deduplicated by `dwz`, without location lists, and packed with zstd -19: 0.1.0-beta.2's comes to about 89 MB, against 108 MB without `dwz`. The build-id stays the same. A symbol set PostHog already has under that debug id is not packed or uploaded again. Anything still over 100 MB is skipped with a warning.
+
+Qt's frames resolve too. `tools/crash/qt_symbols.py` downloads Qt's debug-information archives for the Qt build we ship (pinned by length and SHA-256 in `tools/crash/qt-symbols.lock.json`, from the Qt online repository), and keeps the debug file of each Qt library and plugin a package carries:
+
+- Linux: the `.debug` file with the same build-id as the library in the tar.gz;
+- Windows: the PDB with the same GUID as the DLL in the zip, beside that DLL.
+
+Those go up the same way, once per Qt build. When Qt changes, regenerate the lock for the new version; `crash_tools` fails until its Qt version matches `cmake/locks`. The libraries vcpkg builds (libass, ffms2…) are linked into `hikarisub` and `HikariSub.exe` without debug info, so their frames get at most a function name from the program's symbol table, and no line. Frames in system libraries, and in Qt's prebuilt FFmpeg and ICU, stay unresolved. Events from 0.1.0-beta.1 never resolve: they carry no debug ids.
 
 `tools/crash/symbolize.py` turns a report's frames into functions and lines:
 
