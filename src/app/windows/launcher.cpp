@@ -216,9 +216,8 @@ void paint(HWND window, const Splash &splash)
     SetTextColor(dc, colour(splash.look.muted));
     TEXTMETRICW metrics{};
     GetTextMetricsW(dc, &metrics);
-    RECT version{scaled(320, splash.dpi), 0, width - scaled(16, splash.dpi),
-                 height - scaled(14, splash.dpi) + metrics.tmDescent};
-    DrawTextW(dc, HIKARI_VERSION_W, -1, &version, DT_RIGHT | DT_BOTTOM | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+    RECT version{scaled(32, splash.dpi), 0, scaled(240, splash.dpi), scaled(238, splash.dpi) + metrics.tmDescent};
+    DrawTextW(dc, HIKARI_VERSION_W, -1, &version, DT_LEFT | DT_BOTTOM | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
     SelectObject(dc, oldFont);
 
     const int bar = scaled(kBarHeight, splash.dpi);
