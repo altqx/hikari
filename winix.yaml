@@ -264,3 +264,7 @@ tasks:
     script: $ErrorActionPreference = 'Continue'; Invoke-Expression $env:CMD
     visualStudio: false
     timeoutSeconds: 300
+  audio-removal:
+    # Unplug hikariusbaudio on HOTPLUG-READY (tools/audio-removal/sinks.ps1); out/audio-removal/tone.mkv is pushed first.
+    script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.12.0-windows/6.12.0/msvc2022_64/bin;$env:PATH"; $env:HIKARI_AUDIO_REMOVAL = "$PWD/tools/audio-removal/sinks.cmd"; $env:AUDIO_REMOVAL_MEDIA = "$PWD/out/audio-removal/tone.mkv"; $exe = Get-ChildItem -Recurse -Filter hikari_backends_general_player_tests.exe out/build/windows-x64-release | Select-Object -First 1; & $exe.FullName "playbackFollowsTheRouteWhenItsDeviceGoesAway:picked device" 2>&1 | ForEach-Object { "$_" }; exit $LASTEXITCODE
+    timeoutSeconds: 300

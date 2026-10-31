@@ -42,8 +42,6 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
     if (before == after)
         return;
     emit audioOutputChanged();
-    if (!m_audioRouteNotice.isEmpty() && m_shell->statusText() == std::exchange(m_audioRouteNotice, QString()))
-        m_shell->setStatusText(QString());
     if (before.systemDefault || !after.systemDefault || m_settings->settings().text("audio.outputDevice").empty())
         return;
     const QString name = QString::fromStdString(m_settings->settings().text("audio.outputDeviceName"));
@@ -55,15 +53,7 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
         //: The output device chosen on the audio panel or in Settings > Audio was unplugged; %1 is its name, %2 the system default that plays instead
         text = QCoreApplication::translate("HikariSub.Audio", "%1 is not connected. Audio plays through %2.")
                    .arg(name, QString::fromStdString(after.name));
-    m_shell->setStatusText(text);
-    m_audioRouteNotice = text;
-    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, text, serial = ++m_audioRouteNoticeSerial] {
-        if (serial != m_audioRouteNoticeSerial)
-            return;
-        if (m_shell->statusText() == text)
-            m_shell->setStatusText(QString());
-        m_audioRouteNotice.clear();
-    });
+    m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Options", "Audio"), text);
 }
 
 void Application::noticeOnsets()
