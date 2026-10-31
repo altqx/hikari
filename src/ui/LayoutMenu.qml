@@ -20,11 +20,6 @@ ShellMenu {
                 return i
         return -1
     }
-    // AT-SPI and UI Automation list a menu's items in item order; the list view puts an item added later last.
-    function restack() {
-        for (let i = count - 2; i >= 0; --i)
-            ShellMenus.stackBefore(itemAt(i), itemAt(i + 1))
-    }
 
     readonly property var presetTexts: [QT_TRANSLATE_NOOP("HikariSub.Workspace", "Editing"),
         QT_TRANSLATE_NOOP("HikariSub.Workspace", "Timing"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Translation"),
@@ -39,7 +34,6 @@ ShellMenu {
             checkable: true
             checked: layoutMenu.layouts.layout.length === 0 && layoutMenu.layouts.preset === modelData
             keepsMenuOpen: false
-            onParentChanged: layoutMenu.restack()
             onTriggered: {
                 checked = Qt.binding(() => layoutMenu.layouts.layout.length === 0 && layoutMenu.layouts.preset === modelData)
                 layoutMenu.presetChosen(modelData)
@@ -65,7 +59,6 @@ ShellMenu {
             checkable: true
             checked: layoutMenu.layouts.layout === modelData.name
             keepsMenuOpen: false
-            onParentChanged: layoutMenu.restack()
             onTriggered: {
                 checked = Qt.binding(() => layoutMenu.layouts.layout === modelData.name)
                 layoutMenu.savedLayoutChosen(modelData.name)

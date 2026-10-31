@@ -6499,6 +6499,105 @@ private slots:
         QTRY_COMPARE(focusedPanel(), QStringLiteral("referencePanel"));
     }
 
+    static QString accessibleEntry(QQuickItem *entry)
+    {
+        QAccessibleInterface *a = QAccessible::queryAccessibleInterface(entry);
+        return a->role() == QAccessible::Separator ? QStringLiteral("|") : a->text(QAccessible::Name);
+    }
+    QList<QQuickItem *> shownMenuEntries(QObject *menu) const
+    {
+        QList<QQuickItem *> out;
+        const int count = menu->property("count").toInt();
+        for (int i = 0; i < count; ++i) {
+            QQuickItem *entry = nullptr;
+            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i));
+            if (entry && entry->isVisible() && entry->height() > 0)
+                out << entry;
+        }
+        return out;
+    }
+    QStringList menuOnScreen(QObject *menu) const
+    {
+        QList<QQuickItem *> entries = shownMenuEntries(menu);
+        std::ranges::stable_sort(entries, {}, [](QQuickItem *e) { return e->mapToScene(QPointF(0, 0)).y(); });
+        QStringList out;
+        for (QQuickItem *entry : entries)
+            out << accessibleEntry(entry);
+        return out;
+    }
+    QStringList menuToScreenReaders(QObject *menu) const
+    {
+        const QList<QQuickItem *> entries = shownMenuEntries(menu);
+        if (entries.isEmpty())
+            return {};
+        QAccessibleInterface *list = QAccessible::queryAccessibleInterface(entries.first())->parent();
+        QStringList out;
+        for (int i = 0; i < list->childCount(); ++i)
+            if (auto *entry = qobject_cast<QQuickItem *>(list->child(i)->object()); entries.contains(entry))
+                out << accessibleEntry(entry);
+        return out;
+    }
+
+    void panelMenusReadInTheOrderTheyShow()
+    {
+        QAccessible::setActive(true);
+        const auto inactive = qScopeGuard([] { QAccessible::setActive(false); });
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
+        QObject *root = engine->rootObjects().first();
+        auto *menu = named("panelOptionsMenu");
+        const auto readsAsShown = [&](const QString &panel) {
+            QTRY_VERIFY2(openPanelMenu(panel), qPrintable(panel));
+            QTRY_VERIFY2(shownMenuEntries(menu).size() > 1, qPrintable(panel));
+            QTRY_COMPARE(menuToScreenReaders(menu).size(), shownMenuEntries(menu).size());
+            QTRY_COMPARE(menuToScreenReaders(menu), menuOnScreen(menu));
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        };
+        const QVariantList docks = root->property("dockList").value<QJSValue>().toVariant().toList();
+        QVERIFY(docks.size() > 10);
+        QStringList withOwnItems;
+        for (const QVariant &value : docks) {
+            auto *dock = value.value<QObject *>();
+            QVariant available;
+            QVERIFY(QMetaObject::invokeMethod(root, "panelAvailable", Q_RETURN_ARG(QVariant, available),
+                                              Q_ARG(QVariant, QVariant::fromValue(dock))));
+            if (!available.toBool())
+                continue;
+            const bool wasOpen = dock->property("isOpen").toBool();
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QTRY_VERIFY(dock->property("isOpen").toBool());
+            const QString panel = dock->property("uniqueName").toString();
+            readsAsShown(panel);
+            QVERIFY(!QTest::currentTestFailed());
+            QVariant own;
+            QVERIFY(QMetaObject::invokeMethod(root, "panelOwnItems", Q_RETURN_ARG(QVariant, own),
+                                              Q_ARG(QVariant, QVariant::fromValue(dock))));
+            if (own.value<QJSValue>().property(QStringLiteral("length")).toInt() > 0)
+                withOwnItems << panel;
+            if (!wasOpen) {
+                QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+                QTRY_VERIFY(!dock->property("isOpen").toBool());
+            }
+        }
+        QVERIFY2(withOwnItems.contains(QStringLiteral("Grid")) && withOwnItems.contains(QStringLiteral("Video")),
+                 qPrintable(withOwnItems.join(QLatin1Char(','))));
+
+        auto *gridDock = item<QObject>("gridDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "setPanelFloating", Q_ARG(QVariant, QVariant::fromValue(gridDock)),
+                                          Q_ARG(QVariant, true)));
+        QTRY_VERIFY(gridDock->property("isFloating").toBool());
+        QTRY_VERIFY(dockHeader(QStringLiteral("Grid")) && dockHeader(QStringLiteral("Grid"))->window() != window);
+        readsAsShown(QStringLiteral("Audio"));
+        QVERIFY(!QTest::currentTestFailed());
+        readsAsShown(QStringLiteral("Grid"));
+        QVERIFY(!QTest::currentTestFailed());
+        QVERIFY(QMetaObject::invokeMethod(root, "setPanelFloating", Q_ARG(QVariant, QVariant::fromValue(gridDock)),
+                                          Q_ARG(QVariant, false)));
+        QTRY_VERIFY(!gridDock->property("isFloating").toBool());
+    }
+
     void doubleClickOnAHeaderFloatsAndDocks()
     {
         QVERIFY(application->openFile(episode));

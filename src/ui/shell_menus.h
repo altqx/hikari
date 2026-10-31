@@ -21,7 +21,12 @@ public:
     }
     Q_INVOKABLE bool stackBefore(QQuickItem *item, QQuickItem *next) const
     {
-        if (!item || !next || item == next || item->parentItem() != next->parentItem())
+        QQuickItem *parent = item ? item->parentItem() : nullptr;
+        if (!parent || !next || item == next || next->parentItem() != parent)
+            return false;
+        // QQuickItem emits childrenChanged from removeChild before it clears the child's parentItem.
+        const QList<QQuickItem *> siblings = parent->childItems();
+        if (!siblings.contains(item) || !siblings.contains(next))
             return false;
         item->stackBefore(next);
         return true;
