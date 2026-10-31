@@ -6,6 +6,8 @@
 #include <QQuickWindow>
 #include <QWindow>
 
+#include <algorithm>
+
 namespace hikari::ui {
 
 namespace {
@@ -66,6 +68,9 @@ public:
         s.readOnly = true;
         s.invisible = row < 0;
         s.selected = row >= 0 && m_grid->isRowSelected(row);
+        const RunFold fold = row >= 0 && m_column == m_grid->textColumn() ? m_grid->runFold(row) : RunFold::None;
+        s.expandable = fold != RunFold::None;
+        s.expanded = fold == RunFold::Unfolded;
         s.focused = row >= 0 && m_grid->hasActiveFocus() && row == m_grid->currentRow() &&
                     m_column == m_grid->currentColumn();
         return s;
@@ -148,10 +153,13 @@ QAccessibleInterface *LineGridAccessible::cellAt(int row, int column) const
         return QAccessible::accessibleInterface(it->second.first);
     }
     if (m_cache.size() >= kCellCacheCapacity) {
-        const Key oldest = m_lru.back();
-        m_lru.pop_back();
-        QAccessible::deleteAccessibleInterface(m_cache.at(oldest).first);
-        m_cache.erase(oldest);
+        auto oldest = std::prev(m_lru.end());
+        if (const auto active = g->activeLine(); active && *oldest == Key{active->value, g->currentColumn()})
+            oldest = std::prev(oldest);
+        const Key evicted = *oldest;
+        m_lru.erase(oldest);
+        QAccessible::deleteAccessibleInterface(m_cache.at(evicted).first);
+        m_cache.erase(evicted);
     }
     auto *cell = new LineGridCell(g, *line, column);
     const QAccessible::Id id = QAccessible::registerAccessibleInterface(cell);
@@ -270,6 +278,8 @@ void *LineGridAccessible::interface_cast(QAccessible::InterfaceType type)
         return static_cast<QAccessibleTableInterface *>(this);
     if (type == QAccessible::SelectionInterface)
         return static_cast<QAccessibleSelectionInterface *>(this);
+    if (type == QAccessible::ViewportInterface)
+        return static_cast<QAccessibleViewportInterface *>(this);
     return QAccessibleObject::interface_cast(type);
 }
 
@@ -344,6 +354,36 @@ bool LineGridAccessible::isSelected(QAccessibleInterface *child) const
 {
     auto *cell = child ? child->tableCellInterface() : nullptr;
     return cell && cell->isSelected();
+}
+
+QSizeF LineGridAccessible::contentSize() const
+{
+    const int rows = rowCount();
+    return rows > 0 ? QSizeF(columnCount(), rows) : QSizeF(0, 0);
+}
+
+QPointF LineGridAccessible::position() const
+{
+    LineGrid *g = grid();
+    const int rows = rowCount();
+    if (!g || rows == 0)
+        return {0, 0};
+    return {0, qreal(std::min(g->geometry().firstVisibleRow(g->contentY()), rows - 1)) / rows};
+}
+
+QSizeF LineGridAccessible::viewportSize() const
+{
+    LineGrid *g = grid();
+    const int rows = rowCount();
+    if (!g || rows == 0)
+        return {1, 1};
+    return {1, qreal(g->geometry().visibleRowCount(g->contentY(), g->height(), rows)) / rows};
+}
+
+void LineGridAccessible::setPosition(QPointF position)
+{
+    if (LineGrid *g = grid())
+        g->scrollToTopRow(static_cast<int>(std::clamp<qreal>(position.y(), 0, 1) * rowCount()));
 }
 
 }

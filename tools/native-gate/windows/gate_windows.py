@@ -394,10 +394,10 @@ def main_window():
     return None
 
 
-def app_start(doc=None):
+def app_start(doc=None, env=None):
     r = W.ui("launch", exe=LAYOUT["app"], arguments=[doc] if doc else [], cwd=LAYOUT["docs"], noConsole=True,
              env={"PATH": LAYOUT["qt_bin"] + ";" + LAYOUT["path"], "QT_FORCE_STDERR_LOGGING": "1",
-                  "HIKARISUB_USER_DIR": LAYOUT["profile"]["user"]})
+                  "HIKARISUB_USER_DIR": LAYOUT["profile"]["user"], **(env or {})})
     APP["pid"], APP["log"] = r.get("pid"), r.get("log")
     log("launched", r)
     deadline = time.time() + 90
@@ -2850,6 +2850,66 @@ def step_dialog_frame():
     app_kill()
 
 
+def grid_cell(st):
+    return (st.get("focusPath") or "").rsplit(" > ", 1)[-1]
+
+
+def step_grid_speech():
+    app_kill()
+    user = LAYOUT["scratch"] + "\\grid-user-" + time.strftime("%Y%m%d-%H%M%S")
+    W.task("cmd", env={"CMD": f"New-Item -ItemType Directory -Force '{user}' | Out-Null; "
+                              f"Set-Content -Encoding ascii '{user}\\settings.toml' "
+                              f"@('version = 1', '', '[grid]', 'foldGenerated = true')"})
+    app_start(LAYOUT["root"] + "\\tests\\backends\\karaoke-presets\\05-bounce.out.ass",
+              env={"HIKARISUB_USER_DIR": user})
+    dismiss_notices()
+    nvda_log = nvda_start()
+    if not nvda_log:
+        verdict("nvda-grid", "error", "nvda-setup did not create the portable copy (nvda-setup.txt)", ["nvda-setup.txt"])
+        return
+    ev, cells, menu = [], [], {}
+    try:
+        focus_main_compositor()
+        for _ in range(6):
+            if panel_of(uia()["focusPath"]) == "Grid":
+                break
+            combo("f6")
+            time.sleep(0.6)
+        keys("end", 1.5)
+        ev0, st = snap("grid-0-folded")
+        cells.append(grid_cell(st))
+        keys("right", 2.0)
+        ev1, st = snap("grid-1-unfolded")
+        cells.append(grid_cell(st))
+        keys("left", 2.0)
+        cells.append(grid_cell(uia()))
+        ev = ev0 + ev1
+        how, _ = focus_header_control("TabItem", "Grid", "Grid")
+        keys("right", 0.8)
+        menu["button"] = uia()["focusPath"]
+        keys("space", 1.5)
+        ev2, st = snap("grid-2-menu-open")
+        menu["items"] = st["popupMenuItems"]
+        keys("escape", 1.5)
+        menu["after"] = uia()["focusPath"]
+        ev += ev2
+    finally:
+        speech, silent, nev = nvda_stop(nvda_log, "grid")
+    (EVID / "grid.json").write_text(json.dumps({"cells": cells, "menu": menu}, indent=1, ensure_ascii=False))
+    menu_at = next((i for i, l in enumerate(speech) if "'Grid options'" in l), len(speech))
+
+    def states_spoken(lines):
+        return [m.group(1) for l in lines for m in re.finditer(r"'(expanded|collapsed)'", l)]
+    run, menu_said = states_spoken(speech[:menu_at]), states_spoken(speech[menu_at:])
+    def toggled(said):
+        return "expanded" in said and "collapsed" in said[said.index("expanded"):]
+    rows = [l for l in speech if re.search(r"'row \d+'", l)]
+    verdict("nvda-grid", "observed" if toggled(run) and toggled(menu_said) and silent else "failed",
+            f"NVDA on the run's cell: {run}; on the options button: {menu_said}; row speech {rows[:3]} "
+            f"({len(speech)} speech lines, silent synthesizer {silent}); focused cells {cells}; menu {menu}",
+            ["grid.json"] + nev + ev)
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
@@ -2857,7 +2917,7 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen,
          "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
          "reference": step_reference, "titlebar": step_title_bar,
-         "dialogframe": step_dialog_frame}
+         "dialogframe": step_dialog_frame, "gridspeech": step_grid_speech}
 
 
 def main():

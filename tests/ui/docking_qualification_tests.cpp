@@ -83,6 +83,15 @@ ApplicationWindow {
 }
 )";
 
+QList<QObject *> expandedChanges;
+
+void captureExpandedChanges(QAccessibleEvent *event)
+{
+    if (event->type() == QAccessible::StateChanged &&
+        static_cast<QAccessibleStateChangeEvent *>(event)->changedStates().expanded)
+        expandedChanges.append(event->object());
+}
+
 QStringList arrangement(const QByteArray &layout)
 {
     const QJsonObject main = QJsonDocument::fromJson(layout).object().value(QStringLiteral("mainWindows")).toArray().first().toObject();
@@ -520,6 +529,18 @@ private slots:
         QCOMPARE(menu->role(), QAccessible::Button);
         QCOMPARE(menu->text(QAccessible::Name), QStringLiteral("Video options"));
         QVERIFY(menu->actionInterface());
+        QVERIFY(menu->state().expandable);
+        QVERIFY(!menu->state().expanded);
+        expandedChanges.clear();
+        QAccessible::installUpdateHandler(captureExpandedChanges);
+        docking()->setOpenMenu(QStringLiteral("Video"));
+        const QAccessible::State opened = menu->state();
+        docking()->setOpenMenu({});
+        QAccessible::installUpdateHandler(nullptr);
+        QVERIFY(opened.expanded);
+        QVERIFY(!opened.checked);
+        QVERIFY(!menu->state().expanded);
+        QCOMPARE(expandedChanges, (QList<QObject *>{menu->object(), menu->object()}));
         QVERIFY(!childNamed(video, QStringLiteral("dockTab0"))->isVisible());
 
         QQuickItem *grid = header(QStringLiteral("Grid"));
