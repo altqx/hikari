@@ -156,16 +156,34 @@ Rectangle {
             folded.item = null
         }
     }
+    function mnemonicOf(index: int): string {
+        const item = menus.itemAt(index)
+        const at = item ? item.text.indexOf("&") : -1
+        return at >= 0 && at + 1 < item.text.length ? item.text[at + 1].toLowerCase() : ""
+    }
     function mnemonicIndex(letter: string): int {
         const wanted = letter.toLowerCase()
         for (let i = 0; i < menus.count; ++i) {
             const item = menus.itemAt(i)
-            const at = item ? item.text.indexOf("&") : -1
-            if (item && item.enabled && at >= 0 && at + 1 < item.text.length
-                    && item.text[at + 1].toLowerCase() === wanted)
+            if (item && item.enabled && mnemonicOf(i) === wanted)
                 return i
         }
         return -1
+    }
+    // Qt Quick ungrabs a hidden button's Alt+letter shortcut, so a folded menu's title loses it.
+    Repeater {
+        model: Math.max(0, bar.menus.count - bar.foldFrom)
+        delegate: Item {
+            id: foldedMnemonic
+            required property int index
+            readonly property int menuIndex: bar.foldFrom + index
+            readonly property string letter: bar.mnemonicOf(menuIndex)
+            Shortcut {
+                sequence: foldedMnemonic.letter !== "" ? "Alt+" + foldedMnemonic.letter : ""
+                enabled: foldedMnemonic.letter !== "" && bar.menus.itemAt(foldedMnemonic.menuIndex).enabled
+                onActivated: bar.openFolded(foldedMnemonic.menuIndex)
+            }
+        }
     }
 
     activeFocusOnTab: false

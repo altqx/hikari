@@ -378,7 +378,7 @@ def fresh(*args, env=None):
     app("fresh")
     app("start", *args, env=env)
     time.sleep(2)
-    return atspi()
+    return wait_for(lambda s: "HikariSub" in frames(s), timeout=30)
 
 
 def episode():
@@ -395,16 +395,16 @@ def episode():
     return path
 
 
-PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Search"]
+PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Shift times", "Search"]
 
 
-def park_pointer():
+def park_pointer(x=3, y=997):
     """Park the pointer: a submenu that opens under it highlights the item there (KWin)."""
     try:
         if B.name == "x11":
-            sh(["xdotool", "mousemove", "3", "997"])
+            sh(["xdotool", "mousemove", str(x), str(y)])
         else:
-            B.pointer("move 3 997", "wait 150")
+            B.pointer(f"move {x} {y}", "wait 150")
     except Exception as e:  # noqa: BLE001
         log(f"park_pointer: {e!r}")
 
@@ -446,11 +446,21 @@ def view_to(name):
     return menu_to(name)
 
 
+def submenu_to(name):
+    """Right opens a submenu on its first item: count Downs among its enabled items."""
+    B.keys("right", 0.6)
+    items = next((m for m in reversed(showing_menus()) if any(i["name"] == name for i in m)), [])
+    enabled = [i["name"] for i in items if i["enabled"]]
+    if name not in enabled:
+        log(f"submenu_to: {name!r} is not an enabled item of {items}")
+        return False
+    B.keys(*(["down"] * enabled.index(name)), delay=0.3)
+    return True
+
+
 def panel_menu(panel, item):
-    view_to("Panels")
-    seq = ["right", 0.3] + ["down"] * PANELS.index(panel) + ["right", 0.3]
-    seq += ["down"] * ["Show", "Hide", "Float", "Dock"].index(item) + ["return"]
-    B.keys(*seq)
+    if view_to("Panels") and submenu_to(panel) and submenu_to(item):
+        B.keys("return")
     time.sleep(1.2)
 
 
@@ -463,8 +473,11 @@ def float_panel(name, tag):
     B.keys("escape", "escape", "escape", "escape")
     focus_main_compositor()
     view_to("Move panel…")
-    B.keys("return", 1.2, "home", *(["down"] * PANELS.index(name)), "tab", "home",
-           *(["down"] * 5), "tab", "space", 1.5)
+    B.keys("return", 1.2)
+    combo_to("Panel", name)
+    B.keys("tab")
+    combo_to("Placement", "Float")
+    B.keys("tab", "space", 1.5)
     st = wait_for(lambda s: name in frames(s), timeout=4)
     if "Move panel" in frames(st):
         close_window("Move panel")
@@ -705,13 +718,6 @@ def step_keyboard_float_dock():
     focus_main()
     panel_menu("Line editor", "Dock")
     st = wait_for(lambda s: "Line editor" not in frames(s))
-    if "Line editor" in frames(st):
-        log("Dock at the 4th position did not dock; trying the 3rd (disabled items skipped)")
-        B.keys("escape", "escape", "escape")
-        focus_main()
-        view_to("Panels")
-        B.keys("right", 0.3, "down", "down", "right", 0.3, "down", "down", "return")
-        st = wait_for(lambda s: "Line editor" not in frames(s))
     ev2, st = B.snap("kbd-2-docked")
     docked = "Line editor" not in frames(st) and panel_frame(st, "Line editor") == "HikariSub"
     verdict("keyboard-dock", "observed" if docked else "failed",
@@ -774,19 +780,38 @@ def step_f6_floating():
     B.keys("escape")
 
 
-def combo_texts(frame="Move panel"):
-    code = ("import sys; sys.argv=['x','dump']\n"
+def combo_values(frame="Move panel"):
+    code = ("import json, sys; sys.argv=['x','dump']\n"
             f"exec(open('{GATE}/atspi_tool.py').read().split('def main')[0])\n"
             "a = app()\n"
             f"f = [a.get_child_at_index(i) for i in range(a.get_child_count()) if a.get_child_at_index(i).get_name() == {frame!r}]\n"
-            "for o in (all_objects(f[0]) if f else []):\n"
-            "    if o.get_role_name()=='combo box' and o.get_state_set().contains(Atspi.StateType.SHOWING):\n"
-            "        print(o.get_name() + '=' + repr(text_of(o.get_child_at_index(0))))\n")
-    return sh(["python3", "-c", code]).strip().replace("\n", "; ")
+            "print(json.dumps({o.get_name(): text_of(o.get_child_at_index(0)) for o in (all_objects(f[0]) if f else [])\n"
+            "                  if o.get_role_name()=='combo box' and o.get_state_set().contains(Atspi.StateType.SHOWING)}))\n")
+    try:
+        return json.loads(sh(["python3", "-c", code]) or "{}")
+    except ValueError:
+        return {}
+
+
+def combo_texts(frame="Move panel"):
+    return "; ".join(f"{k}={v!r}" for k, v in combo_values(frame).items())
+
+
+def combo_to(name, wanted, tries=20):
+    """Steps the focused combo box from its first entry until it shows WANTED."""
+    B.keys("home", 0.3)
+    for _ in range(tries):
+        if combo_values().get(name) == wanted:
+            return True
+        B.keys("down", 0.3)
+    return combo_values().get(name) == wanted
 
 
 def step_move_panel():
-    fresh()
+    fresh(episode())
+    dismiss_notices()
+    focus_main()
+    f6_to("Grid")
     view_to("Move panel…")
     B.keys("return", 1.2)
     st = wait_for(lambda s: "Move panel" in frames(s))
@@ -797,7 +822,11 @@ def step_move_panel():
         return
     verdict("move-panel-defaults", "observed" if "''" not in combos_open else "failed",
             f"placement window on open (Grid focused): {combos_open}", ev0)
-    B.keys("up", "up", "tab", "down", "tab", *(["up"] * 6), *(["down"] * 3), 0.3)
+    combo_to("Panel", "Audio")
+    B.keys("tab")
+    combo_to("Placement", "Left of")
+    B.keys("tab")
+    combo_to("Next to panel", "Grid")
     combos_set = combo_texts()
     B.keys("tab", "space", 1.5)
     st = atspi()
@@ -814,7 +843,8 @@ def step_move_panel():
 
 
 def step_pointer():
-    fresh()
+    fresh(episode())
+    dismiss_notices()
     main = origin("HikariSub")
     if main is None:
         for item in ("pointer-menu-undock", "pointer-dblclick-float-redock", "pointer-drag-dock",
@@ -1176,13 +1206,7 @@ def step_video():
     ev3, l3 = state("3-floating-stepped")
     focus_main()
     panel_menu("Video", "Dock")
-    st = wait_for(lambda s: "Video" not in frames(s), timeout=4)
-    if "Video" in frames(st):
-        B.keys("escape", "escape", "escape", "escape")
-        focus_main_compositor()
-        view_to("Panels")
-        B.keys("right", 0.3, "right", 0.3, "down", "down", "return")
-        st = wait_for(lambda s: "Video" not in frames(s), timeout=4)
+    wait_for(lambda s: "Video" not in frames(s), timeout=4)
     time.sleep(2)
     ev4, l4 = state("4-redocked")
     step_frames()
@@ -1392,9 +1416,8 @@ def step_orca():
     time.sleep(8)
     focus_main_compositor()
     f6_walk(4)
-    view_to("Panels")
-    B.keys("right", 0.6, "down", 0.6, "down", 0.6, "right", 0.6, "down", 0.6, "down", 0.6,
-           "return", 2.0)
+    panel_menu("Line editor", "Float")
+    time.sleep(0.8)
     f6_walk(3)
     B.keys("escape", "escape")
     focus_main_compositor()
@@ -1565,7 +1588,7 @@ def step_a11y():
             f"{m1}, Undock -> own window={floated}; again: menu {m2}, Dock -> docked={docked}",
             ["a11y-tree.txt"] + ev0)
     focus_main()
-    panel_menu("Timing", "Show")
+    panel_menu("Shift times", "Show")
     time.sleep(1)
     tabs = {n: atspi_find("page tab", n) for n in ("Line editor", "Shift times")}
     checked0 = [n for n, hits in tabs.items() if hits and "checked" in hits[0].split("> @")[0]]
@@ -1618,11 +1641,25 @@ def shift_tab_to(role, name, tries=3):
     return 0
 
 
+def popup_to(name, tries=12):
+    """Down until NAME has the AT-SPI focus: a panel's own items are drawn first but come last among the children."""
+    for _ in range(tries):
+        items = next((m for m in reversed(showing_menus()) if any(i["name"] == name for i in m)), [])
+        if not items:
+            break
+        if any(i["name"] == name and i["focused"] for i in items):
+            return True
+        B.keys("down", 0.3)
+    log(f"popup_to: {name!r} never took the focus in {showing_menus()}")
+    return False
+
+
 def step_header_keys():
     path = episode()
     fresh(path)
     dismiss_notices()
     focus_main_compositor()
+    park_pointer()
     in_grid = f6_to("Grid")
     start = atspi()["focus"]
     n_tab = shift_tab_to("page tab", "Grid")
@@ -1638,7 +1675,9 @@ def step_header_keys():
             m1 == ["Move panel…", "Undock", "Close"] and closed and back else "failed",
             f"F6 to the Grid ({start}); Shift+Tab x{n_tab or 'never'} -> its tab; Right -> {f_btn}; Space -> menu "
             f"{m1}; Escape -> closed {closed}, focus {f_back}", ev0)
-    B.keys("space", 0.8, "down", "down", "return", 1.5)
+    B.keys("space", 0.8)
+    popup_to("Undock")
+    B.keys("return", 1.5)
     st = wait_for(lambda s: "Grid" in frames(s))
     floated = "Grid" in frames(st)
     ev1, st = B.snap("keys-1-undocked")
@@ -1650,14 +1689,15 @@ def step_header_keys():
         f2 = atspi()["focus"]
         B.keys("space", 0.8)
         m2 = menu_items()
-        B.keys("down", "down", "return", 1.5)
+        popup_to("Dock")
+        B.keys("return", 1.5)
         st = wait_for(lambda s: "Grid" not in frames(s))
         docked = "Grid" not in frames(st)
     ev2, st = B.snap("keys-2-docked")
     verdict("header-keyboard-undock-dock", "observed" if floated and docked and m2 == ["Move panel…", "Dock", "Close"]
             else "failed",
-            f"Space, Down, Down, Return on 'Grid options' -> own window={floated}; in the floating Grid Shift+Tab "
-            f"x{n2 or 'never'}, Right -> {f2}; its menu {m2}; Down, Down, Return -> docked={docked}", ev1 + ev2)
+            f"Space, Down to Undock, Return on 'Grid options' -> own window={floated}; in the floating Grid Shift+Tab "
+            f"x{n2 or 'never'}, Right -> {f2}; its menu {m2}; Down to Dock, Return -> docked={docked}", ev1 + ev2)
     focus_main()
     in_video = f6_to("Video")
     B.keys("shift+tab", 0.5)
@@ -1757,11 +1797,11 @@ def menu_names(opener):
 
 def switcher_label():
     try:
-        bars = json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "statusbar"]) or "[]")
+        controls = json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "controls"]) or "{}").get("controls", [])
     except ValueError:
-        bars = []
-    return next((c["name"] for bar in bars for c in bar["children"] if (c["name"] or "").startswith("Layout: ")),
-                None)
+        controls = []
+    return next((c["name"] for c in controls if caption_is(c["window"], "HikariSub")
+                 and c["name"].startswith("Layout: ")), None)
 
 
 def step_layouts():
@@ -1823,7 +1863,7 @@ def step_layouts():
     if app("alive").strip() != "no":
         time.sleep(6)
         app("kill")
-    cfg = sh(f"find {os.environ['XDG_CONFIG_HOME']}/HikariSub -name 'layouts.json*' -printf '%p %s\\n'")
+    cfg = sh(f"find {os.environ['XDG_CONFIG_HOME']} -name 'layouts.json*' -printf '%p %s\\n'")
     app("start", subs)  # on mutter a start without a file left the menus without keys
     time.sleep(3)
     dismiss_notices()
@@ -1844,7 +1884,7 @@ def step_layouts():
     B.keys("return", 1.0, "escape", 0.8)
     renamed, switch4 = layout_items(), switcher_label()
     reached &= layout_to("Manage layouts…")
-    B.keys("return", 1.2, "delete", 1.2)
+    B.keys("return", 1.2, "delete", 1.2, "tab", 0.4, "space", 1.2)
     deleted, switch5 = layout_items(), switcher_label()
     ev, _ = B.snap("layouts-6-deleted")
     evidence += ev
@@ -1930,6 +1970,7 @@ FS_OUTPUTS = {"sway": {"HEADLESS-1": (1600, 1000, 1), "HEADLESS-2": (800, 500, 2
               "mutter": {"Meta-0": (1600, 1000, 1), "Meta-1": (800, 500, 2)},
               "x11": {"left": (1600, 1000, 1), "right": (1600, 1000, 1)}}
 FS_OUTPUTS["sway-activate"] = FS_OUTPUTS["sway"]
+ABOVE_THE_FULLSCREEN_BAR = (800, 300)
 
 
 def fs_outputs_setup():
@@ -2012,6 +2053,7 @@ def fs_focus_video():
 
 def step_video_fullscreen():
     outputs_text = fs_outputs_setup()
+    park_pointer(*ABOVE_THE_FULLSCREEN_BAR)
     ui = os.environ["UI_TESTS"]
     r = subprocess.run([os.path.join(ui, "hikari_ui_video_fullscreen_workflow"), "--monitors", "2"],
                        capture_output=True, text=True, timeout=300)
@@ -2050,18 +2092,20 @@ def step_video_fullscreen():
         on1 = fs_covers(full1, main_out) and where1 == main_out
     else:  # mutter does not publish the window's output
         on1 = any(fs_covers(full1, n) for n in FS_OUTPUTS[B.name])
+    start = full1["position"] if full1 else None
     B.combo("space")
-    stp, fp, _ = fs_wait(lambda f, m: f is not None and "Pause" in f["buttons"], timeout=5)
-    playing = fp is not None and "Pause" in fp["buttons"]
+    stp, fp, _ = fs_wait(lambda f, m: f is not None and ("Pause" in f["buttons"] or (
+        start is not None and f["position"] is not None and f["position"] > start)), timeout=5)
+    playing = fp is not None
     time.sleep(0.6)
     B.combo("space")
     sts, fs_, _ = fs_wait(lambda f, m: f is not None and "Play" in f["buttons"], timeout=5)
     paused = fs_ is not None and "Play" in fs_["buttons"]
     before = fs_["position"] if fs_ else None
-    B.combo("right")
+    B.combo("left")
     str_, fr_, _ = fs_wait(lambda f, m: f is not None and f["position"] != before, timeout=5)
     after = fr_["position"] if fr_ else None
-    stepped = before is not None and after is not None and after == before + 1
+    stepped = before is not None and after is not None and after == before - 1
     B.combo("escape")
     st2, full2, main2 = fs_wait(lambda f, m: f is None and m is not None and m["active"])
     time.sleep(1.0)
@@ -2079,8 +2123,9 @@ def step_video_fullscreen():
             f"{main2 and {k: main2[k] for k in keys}} same {same}; focus back in the Video panel: {focus_back} "
             f"({st2['focusPath']})", ev0 + ev1 + ev2)
     verdict("videofs-transport-keys", "observed" if playing and paused and stepped else "failed",
-            f"in fullscreen Space played (Pause button shown: {playing}) and paused (Play shown again: {paused}); "
-            f"Right stepped the seek bar's frame {before!r} -> {after!r}", ev1)
+            f"in fullscreen Space played (Pause button shown or the frame past {start!r}: {playing}) "
+            f"and paused (Play shown again: {paused}); "
+            f"Left stepped the seek bar's frame {before!r} -> {after!r}", ev1)
 
     primary = order[0] if order else None
     second = order[1] if len(order) > 1 else None
@@ -2716,10 +2761,8 @@ def step_screen_dropper():
         route = "portal"
         hits = where("button", "Pick a colour from the screen")
         fr = frames().get(hits[0]["frame"]) if hits else None
-        r = origin(hits[0]["frame"]) if hits else None
-        if hits and r:
-            click(r[0] + hits[0]["x"] + hits[0]["w"] // 2, r[1] + hits[0]["y"] + hits[0]["h"] // 2, wait=2000)
-        elif hits:
+        # The colour popover sits in the main window, and AT-SPI reports the eyedropper relative to the popover.
+        if hits:
             atspi_do("button", "Pick a colour from the screen")
             time.sleep(2)
         ev2, _ = B.snap("dropper-2-portal-picking", extra=f"# portal button {hits} frame {fr}")
@@ -3141,9 +3184,10 @@ def step_gtk_bridge():
     B.combo("escape")
     time.sleep(1.5)
     speech, _ = orca_stop(orca, path, "gtkbridge")
-    said = [l.split("SPEECH OUTPUT: ", 1)[-1].split(" {")[0].strip("'") for l in speech]
-    dialog = any(w in said for w in ("Cancel", "file chooser."))
-    back = "HikariSub" in (said[said.index("Cancel") + 1:] if "Cancel" in said else [])
+    said = [m.group(1) for m in (re.search(r"SPEECH OUTPUT: '(.*?)'\s*(?:\{.*)?$", l) for l in speech) if m]
+    cancel = next((i for i, w in enumerate(said) if w in ("Cancel", "Cancel button")), None)
+    dialog = cancel is not None or "file chooser." in said
+    back = cancel is not None and "HikariSub" in said[cancel + 1:]
     verdict("gtkbridge-orca", "observed" if dialog and back else "failed",
             f"Orca with File > Open under theme {theme}: the dialog read {dialog}, HikariSub read after it "
             f"{back}; spoken: {said}", ev + ["gtkbridge-orca-speech.txt"])

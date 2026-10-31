@@ -1,5 +1,6 @@
 # Guest side of gate_windows.py (winix.yaml tasks gate-win-*); writes only under out\native-gate-win.
 #   -Action prepare     scratch documents, the media fixture, paths (GATE_LAYOUT line)
+#                       GATE_APP: the app under out\build\windows-x64-release (a payload's HikariSub.exe)
 #   -Action fresh       set the profile aside (never deleted) and skip Getting started; a HikariSub left over from
 #                       an earlier run is ended first (the harness ends its own with `winix ui kill`)
 #   -Action restore     GATE_PROFILE_FROM: put a set-aside profile back (the current one is set aside)
@@ -97,8 +98,9 @@ switch ($Action) {
         $ended = & (Join-Path $root 'tools\winix\end-setups.ps1')
         $ended | ForEach-Object { Write-Output "end-setups: $_" }
         if ($LASTEXITCODE) { throw 'a setup or uninstaller is still running (end-setups.ps1)' }
-        $exe = Get-ChildItem -Recurse -Filter hikarisub.exe $build -ErrorAction SilentlyContinue |
-            Sort-Object { $_.FullName -notlike '*\src\app\*' } | Select-Object -First 1
+        $exe = if ($env:GATE_APP) { Get-Item (Join-Path $build $env:GATE_APP) } else {
+            Get-ChildItem -Recurse -Filter hikarisub.exe $build -ErrorAction SilentlyContinue |
+                Sort-Object { $_.FullName -notlike '*\src\app\*' } | Select-Object -First 1 }
         $docs = Join-Path $scratch 'docs'
         New-Item -ItemType Directory -Force $docs | Out-Null
         $head = "[Script Info]`r`nScriptType: v4.00+`r`n"
@@ -168,7 +170,7 @@ switch ($Action) {
         Write-Output "ALIVE $(if ($procs.Count) { 'yes' } else { 'no' })"
         $procs | ForEach-Object { Write-Output "process $($_.Id) responding=$($_.Responding) $($_.MainWindowTitle)" }
         Write-Output '== layout files'
-        Get-ChildItem $profileDirs.user -Filter 'layout*.json*' -ErrorAction SilentlyContinue |
+        Get-ChildItem $profileDirs.user -Filter 'layout*.json*' -Recurse -ErrorAction SilentlyContinue |
             ForEach-Object { Write-Output "$($_.FullName) $($_.Length) $($_.LastWriteTime.ToString('s'))" }
         Write-Output '== end'
     }

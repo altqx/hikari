@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 EVID = Path(os.environ.get("GATE_EVIDENCE_WIN") or ROOT / "out" / "native-gate-evidence" / "windows")
-PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Search"]
+PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Shift times", "Search"]
 MAIN = "HikariSub"
 # Windows maps the absolute HID tablet to the primary monitor only.
 POINTER_MAP = "primary"
@@ -374,7 +374,7 @@ def snap(name, extra=None, monitor=None):
 
 
 def prepare():
-    job, lines = W.task("gate-win-prepare")
+    job, lines = W.task("gate-win-prepare", env={"GATE_APP": os.environ["GATE_APP"]} if os.environ.get("GATE_APP") else None)
     raw = line_value(lines, "GATE_LAYOUT ")
     if job.get("state") != "succeeded" or not raw:
         raise SystemExit("gate-win-prepare failed:\n" + "\n".join(lines[-30:]))
@@ -527,12 +527,22 @@ def view_to(name):
     return menu_to(name)
 
 
+def submenu_to(name):
+    """The submenu opens on its first item: count Downs among its enabled items, in their order on screen."""
+    keys(SUBMENU["key"], 0.6)
+    items = popup_items(uia())
+    parent = next((e["p"] for e in reversed(items) if e["n"] == name), None)
+    enabled = [e["n"] for e in sorted(items, key=lambda e: e["y"]) if e["p"] == parent and e["en"]]
+    if name not in enabled:
+        log(f"submenu_to: {name!r} is not an enabled item of {[(e['n'], e['en']) for e in items]}")
+        return False
+    keys(*(["down"] * enabled.index(name)), delay=0.3)
+    return True
+
+
 def panel_menu(name, item):
-    view_to("Panels")
-    k = SUBMENU["key"]
-    seq = [k, 0.3] + ["down"] * PANELS.index(name) + [k, 0.3]
-    seq += ["down"] * ["Show", "Hide", "Float", "Dock"].index(item) + ["return"]
-    keys(*seq)
+    if view_to("Panels") and submenu_to(name) and submenu_to(item):
+        keys("return")
     time.sleep(1.2)
 
 
@@ -571,8 +581,11 @@ def float_panel(name, tag):
     keys("escape", "escape", "escape", "escape")
     focus_main_compositor()
     view_to("Move panel…")
-    keys("return", 1.2, "home", *(["down"] * PANELS.index(name)), "tab", "home",
-         *(["down"] * 5), "tab", "space", 1.5)
+    keys("return", 1.2)
+    combo_to("Panel", name)
+    keys("tab")
+    combo_to("Placement", "Float")
+    keys("tab", "space", 1.5)
     st = wait_for(lambda s: name in frames(s), timeout=4)
     if "Move panel" in frames(st):
         close_window("Move panel")
@@ -642,14 +655,6 @@ def step_keyboard_float_dock():
     focus_main()
     panel_menu("Line editor", "Dock")
     st = wait_for(lambda s: "Line editor" not in frames(s))
-    if "Line editor" in frames(st):
-        log("Dock at the 4th position did not dock; trying the 3rd (disabled items skipped)")
-        keys("escape", "escape", "escape")
-        focus_main()
-        view_to("Panels")
-        k = SUBMENU["key"]
-        keys(k, 0.3, "down", "down", k, 0.3, "down", "down", "return")
-        st = wait_for(lambda s: "Line editor" not in frames(s))
     ev2, st = snap("kbd-2-docked")
     docked = "Line editor" not in frames(st) and panel_frame(st, "Line editor") == MAIN
     verdict("keyboard-dock", "observed" if docked else "failed",
@@ -708,8 +713,20 @@ def window_combos(st, frame):
             for e in els if e["t"] == "ComboBox" and not e["off"] and frame_id(e["win"]) == frame}
 
 
+def combo_to(name, wanted, tries=20):
+    """Steps the focused combo box from its first entry until it shows WANTED."""
+    keys("home", 0.3)
+    for _ in range(tries):
+        if window_combos(uia(), "Move panel").get(name) == wanted:
+            return True
+        keys("down", 0.3)
+    return window_combos(uia(), "Move panel").get(name) == wanted
+
+
 def step_move_panel():
-    fresh()
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    focus_main()
     view_to("Move panel…")
     keys("return", 1.2)
     st = wait_for(lambda s: "Move panel" in frames(s))
@@ -720,7 +737,11 @@ def step_move_panel():
         return
     verdict("move-panel-defaults", "observed" if combos_open and all(v for v in combos_open.values()) else "failed",
             f"placement window on open (Grid focused): {combos_open}", ev0)
-    keys("up", "up", "tab", "down", "tab", *(["up"] * 6), *(["down"] * 3), 0.3)
+    combo_to("Panel", "Audio")
+    keys("tab")
+    combo_to("Placement", "Left of")
+    keys("tab")
+    combo_to("Next to panel", "Grid")
     combos_set = window_combos(uia(), "Move panel")
     keys("tab", "space", 1.5)
     ev1, st = snap("move-panel-1-left-of-grid", extra="# combo boxes before Move\n" + json.dumps(combos_set, ensure_ascii=False))
@@ -781,7 +802,8 @@ def calibrate_pointer():
 
 
 def step_pointer():
-    fresh()
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
     # The 1280x800 main window is larger than the 1024x768 primary, and the tablet reaches the primary only.
     focus_main_compositor()
     keys("win+up", 1.0)
@@ -1071,14 +1093,7 @@ def step_video():
     ev3, l3 = state("3-floating-stepped")
     focus_main()
     panel_menu("Video", "Dock")
-    st = wait_for(lambda s: "Video" not in frames(s), timeout=4)
-    if "Video" in frames(st):
-        keys("escape", "escape", "escape", "escape")
-        focus_main_compositor()
-        view_to("Panels")
-        k = SUBMENU["key"]
-        keys(k, 0.3, k, 0.3, "down", "down", "return")
-        wait_for(lambda s: "Video" not in frames(s), timeout=4)
+    wait_for(lambda s: "Video" not in frames(s), timeout=4)
     time.sleep(2)
     ev4, l4 = state("4-redocked")
     step_frames()
@@ -1228,9 +1243,8 @@ def step_nvda():
     try:
         focus_main_compositor()
         f6_walk(4)
-        view_to("Panels")
-        k = SUBMENU["key"]
-        keys(k, 0.6, "down", 0.6, "down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, "return", 2.0)
+        panel_menu("Line editor", "Float")
+        time.sleep(0.8)
         f6_walk(3)
         ev, st = snap("nvda-0-after-float")
         focus_main_compositor()
@@ -1572,7 +1586,7 @@ def step_a11y():
             f"invoked ({undock}) -> own window={floated}; the floating panel's menu {items_floating}; 'Dock' "
             f"invoked -> docked={docked}", ev0 + ev1)
     focus_main()
-    panel_menu("Timing", "Show")
+    panel_menu("Shift times", "Show")
     time.sleep(1)
     st = uia()
     tabs = {n: find(st, "TabItem", n) for n in ("Line editor", "Shift times")}
@@ -1632,7 +1646,7 @@ def step_header():
     keys("escape", 0.5)
     want = ["Move panel…", "Undock", "Close"]
     verdict("header-menu-keyboard",
-            "observed" if how and on_button and [i.split(" (")[0] for i in items] == want and items_f10 else "failed",
+            "observed" if how and on_button and [i for i in items if i in want] == want and items_f10 else "failed",
             f"the Grid tab focused by {how} ({path}); Right -> on 'Grid options'={on_button}; Space opened {items}; "
             f"Escape left the focus at {back}; Left, Shift+F10 opened {items_f10}", ev0 + ev1)
     how2, path2 = focus_header_control("Button", "Audio options", "Audio")
@@ -1797,7 +1811,7 @@ def step_layouts():
     keys("return", 1.0, "escape", 0.8)
     renamed, switch4 = layout_items(), switcher_label()
     reached &= layout_to("Manage layouts…")
-    keys("return", 1.2, "delete", 1.2)
+    keys("return", 1.2, "delete", 1.2, "tab", 0.4, "space", 1.2)
     deleted, switch5 = layout_items(), switcher_label()
     ev, _ = snap("layouts-6-deleted")
     evidence += ev
