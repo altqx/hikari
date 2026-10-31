@@ -15,36 +15,47 @@ import zipfile
 from pathlib import Path
 
 REPO_DEFAULT = "altqx/hikari"
-RECORD_FRAME = re.compile(r"^frame ([A-Za-z0-9_.+-]{1,80}) 0x([0-9a-f]{1,16})(?: 0x[0-9a-f]{1,16} [0-9a-f-]{36,45})?$")
+RECORD_FRAME = re.compile(r"^(frame|render-frame) ([A-Za-z0-9_.+-]{1,80}) 0x([0-9a-f]{1,16})(?: 0x[0-9a-f]{1,16} [0-9a-f-]{36,45})?$")
 REPORT_FRAME = re.compile(r"^\s*#\s*(\d+)\s+([A-Za-z0-9_.+-]{1,80})\s+\+0x([0-9a-f]{1,16})\s*$")
 VERSION = r"(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.]+)?)"
+MAIN, RENDER = "main thread", "render thread"
 
 
 def parse(text):
-    """The frames [(module, offset)] and the version a report names."""
-    text = text.lstrip("﻿")
+    """The stacks {thread: [(module, offset)]}, main thread first, and the version a report names."""
+    text = text.lstrip("\ufeff")
     try:
         data = json.loads(text)
     except ValueError:
         data = None
     if isinstance(data, dict):
         props = data.get("properties", data)
-        exc = (props.get("$exception_list") or [{}])[0]
-        frames = [(f["module"], int(f["offset"], 16)) for f in exc.get("stacktrace", {}).get("frames", [])]
-        return frames, props.get("crashed_version")
-    frames, version = [], None
+        stacks = {}
+        for exc in props.get("$exception_list") or []:
+            thread = RENDER if exc.get("type") == "APP_HANG_RENDER_THREAD" else MAIN
+            stacks[thread] = [(f["module"], int(f["offset"], 16)) for f in exc.get("stacktrace", {}).get("frames", [])]
+        return stacks, props.get("crashed_version")
+    stacks, version, thread = {}, None, MAIN
     for line in text.splitlines():
-        m = RECORD_FRAME.match(line.strip()) or REPORT_FRAME.match(line)
+        if line.strip() == "Render thread:":
+            thread = RENDER
+            continue
+        m = RECORD_FRAME.match(line.strip())
+        if m:
+            key, module, offset = m.groups()
+            stacks.setdefault(RENDER if key == "render-frame" else MAIN, []).append((module, int(offset, 16)))
+            continue
+        m = REPORT_FRAME.match(line)
         if m:
             module, offset = m.groups()[-2:]
-            frames.append((module, int(offset, 16)))
+            stacks.setdefault(thread, []).append((module, int(offset, 16)))
             continue
         m = re.match(r"^version " + VERSION + r"$", line.strip())
         m = m or re.search(r"\) in " + VERSION + r"\s*$", line)
         m = m or re.search(r"\b\d+ s, " + VERSION + r"\s*$", line)
         if m and not version:
             version = m.group(1)
-    return frames, version
+    return dict(sorted(stacks.items(), key=lambda s: s[0] != MAIN)), version
 
 
 def windows(frames):
@@ -162,8 +173,9 @@ def main():
     ap.add_argument("--version", help="the version that crashed (default: read from the report)")
     ap.add_argument("--repo", default=REPO_DEFAULT)
     a = ap.parse_args()
-    frames, version = parse(Path(a.report).read_text(encoding="utf-8", errors="replace"))
+    stacks, version = parse(Path(a.report).read_text(encoding="utf-8", errors="replace"))
     version = a.version or version
+    frames = [f for stack in stacks.values() for f in stack]
     if not frames:
         sys.exit("no frames in the report")
     symbols = a.symbols
@@ -172,7 +184,11 @@ def main():
             sys.exit("no version in the report; give --version")
         symbols = download(version, "windows" if windows(frames) else "linux", a.repo)
     print(f"HikariSub {version or '(version unknown)'}, {len(frames)} frames")
-    resolved = symbolize(frames, symbols, sys.stdout)
+    resolved = 0
+    for thread, stack in stacks.items():
+        if len(stacks) > 1:
+            print(f"{thread}:")
+        resolved += symbolize(stack, symbols, sys.stdout)
     print(f"{resolved} of {len(frames)} frames resolved")
     return 0 if resolved else 1
 

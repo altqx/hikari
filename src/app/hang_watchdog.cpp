@@ -55,37 +55,45 @@ void onStackSignal(int)
 
 #ifdef _WIN32
 
+struct HangWatchdog::Thread {
+    HANDLE handle = nullptr;
+    quintptr stackBase = 0;
+    Thread()
+        : handle(OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION, FALSE,
+                            GetCurrentThreadId())),
+          stackBase(reinterpret_cast<quintptr>(reinterpret_cast<NT_TIB *>(NtCurrentTeb())->StackBase))
+    {
+    }
+    ~Thread()
+    {
+        if (handle)
+            CloseHandle(handle);
+    }
+};
+
 // The stack is copied and unwound after the thread resumes: the unwinder may take locks
 // the suspended thread holds (the QML JIT's dynamic function tables).
-struct HangWatchdog::Target {
-    HANDLE thread = nullptr;
-    quintptr stackBase = 0;
+struct HangWatchdog::Stacks {
     std::vector<char> copy = std::vector<char>(1024 * 1024);
-    ~Target()
-    {
-        if (thread)
-            CloseHandle(thread);
-    }
 };
 
 #else
 
-struct HangWatchdog::Target {
-    pthread_t thread{};
+struct HangWatchdog::Thread {
+    pthread_t handle = pthread_self();
+};
+
+struct HangWatchdog::Stacks {
     struct sigaction previous{};
 };
 
 #endif
 
 HangWatchdog::HangWatchdog(Config config, QObject *parent)
-    : QObject(parent), m_config(std::move(config)), m_target(std::make_unique<Target>()), m_beat(nowMs())
+    : QObject(parent), m_config(std::move(config)), m_stacks(std::make_unique<Stacks>()),
+      m_watched(std::make_unique<Thread>()), m_beat(nowMs())
 {
-#ifdef _WIN32
-    m_target->thread = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION, FALSE,
-                                  GetCurrentThreadId());
-    m_target->stackBase = reinterpret_cast<quintptr>(reinterpret_cast<NT_TIB *>(NtCurrentTeb())->StackBase);
-#else
-    m_target->thread = pthread_self();
+#ifndef _WIN32
     // glibc's first backtrace() call loads libgcc, which a signal handler must not do.
     void *warm[1];
     backtrace(warm, 1);
@@ -93,7 +101,7 @@ HangWatchdog::HangWatchdog(Config config, QObject *parent)
     action.sa_handler = onStackSignal;
     action.sa_flags = SA_RESTART;
     sigemptyset(&action.sa_mask);
-    sigaction(stackSignal(), &action, &m_target->previous);
+    sigaction(stackSignal(), &action, &m_stacks->previous);
 #endif
     m_heartbeat.setInterval(m_config.tickMs);
     connect(&m_heartbeat, &QTimer::timeout, this, [this] { m_beat.store(nowMs()); });
@@ -110,8 +118,27 @@ HangWatchdog::~HangWatchdog()
     m_wake.notify_all();
     m_thread.join();
 #ifndef _WIN32
-    sigaction(stackSignal(), &m_target->previous, nullptr);
+    sigaction(stackSignal(), &m_stacks->previous, nullptr);
 #endif
+}
+
+void HangWatchdog::recordRenderThread()
+{
+    const std::thread::id self = std::this_thread::get_id();
+    if (m_renderId.load(std::memory_order_relaxed) == self || thread() == QThread::currentThread())
+        return;
+    std::lock_guard lock(m_mutex);
+    m_render = std::make_unique<Thread>();
+    m_renderId.store(self);
+}
+
+void HangWatchdog::forgetRenderThread()
+{
+    if (m_renderId.load() != std::this_thread::get_id())
+        return;
+    std::lock_guard lock(m_mutex);
+    m_render.reset();
+    m_renderId.store({});
 }
 
 void HangWatchdog::watch()
@@ -134,8 +161,10 @@ void HangWatchdog::watch()
                 continue;
             frozen = true;
             frozenFrom = beat;
-            record = {QLatin1String(crash::kFreezeType), QStringLiteral("watchdog"), m_config.version, captureStack(),
-                      int((now - beat) / 1000)};
+            record = {QLatin1String(crash::kFreezeType), QStringLiteral("watchdog"), m_config.version,
+                      captureStack(*m_watched), int((now - beat) / 1000)};
+            if (m_render)
+                record.renderFrames = captureStack(*m_render);
             crash::write(m_config.recordPath, record);
             written = now;
         } else if (beat > frozenFrom) {
@@ -153,31 +182,31 @@ void HangWatchdog::watch()
 
 #ifdef _WIN32
 
-QList<crash::Frame> HangWatchdog::captureStack()
+QList<crash::Frame> HangWatchdog::captureStack(Thread &t)
 {
 #if defined(_M_X64)
-    Target &t = *m_target;
-    if (!t.thread || SuspendThread(t.thread) == DWORD(-1))
+    std::vector<char> &copy = m_stacks->copy;
+    if (!t.handle || SuspendThread(t.handle) == DWORD(-1))
         return {};
     CONTEXT context{};
     context.ContextFlags = CONTEXT_FULL;
-    const bool ok = GetThreadContext(t.thread, &context);
+    const bool ok = GetThreadContext(t.handle, &context);
     const quintptr top = context.Rsp;
     std::size_t size = 0;
     if (ok && top < t.stackBase) {
-        size = std::min<std::size_t>(t.stackBase - top, t.copy.size());
-        std::memcpy(t.copy.data(), reinterpret_cast<const void *>(top), size);
+        size = std::min<std::size_t>(t.stackBase - top, copy.size());
+        std::memcpy(copy.data(), reinterpret_cast<const void *>(top), size);
     }
-    ResumeThread(t.thread);
+    ResumeThread(t.handle);
     if (!ok || size < 8)
         return {};
-    const quintptr copyAt = reinterpret_cast<quintptr>(t.copy.data());
+    const quintptr copyAt = reinterpret_cast<quintptr>(copy.data());
     const auto rebase = [&](DWORD64 &value) {
         if (value >= top && value < top + size)
             value = value - top + copyAt;
     };
     for (std::size_t at = 0; at + 8 <= size; at += 8)
-        rebase(*reinterpret_cast<DWORD64 *>(t.copy.data() + at));
+        rebase(*reinterpret_cast<DWORD64 *>(copy.data() + at));
     for (DWORD64 *reg : {&context.Rsp, &context.Rbp, &context.Rax, &context.Rbx, &context.Rcx, &context.Rdx,
                          &context.Rsi, &context.Rdi, &context.R8, &context.R9, &context.R10, &context.R11,
                          &context.R12, &context.R13, &context.R14, &context.R15})
@@ -208,10 +237,10 @@ QList<crash::Frame> HangWatchdog::captureStack()
 
 #else
 
-QList<crash::Frame> HangWatchdog::captureStack()
+QList<crash::Frame> HangWatchdog::captureStack(Thread &t)
 {
     g_count.store(-1);
-    if (pthread_kill(m_target->thread, stackSignal()) != 0)
+    if (pthread_kill(t.handle, stackSignal()) != 0)
         return {};
     for (int i = 0; i < 200 && g_count.load() < 0; ++i)
         QThread::msleep(5);

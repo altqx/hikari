@@ -183,13 +183,9 @@ bool matches(const QString &value, const QString &p)
 const QString kModule = QStringLiteral("^[A-Za-z0-9_.+-]{1,80}$");
 const QString kAddress = QStringLiteral("^0x[0-9a-f]{1,16}$");
 
-bool exceptionsConform(const QJsonValue &value)
+bool exceptionConforms(const QJsonObject &e)
 {
     static const QString type = QStringLiteral("^(SIG[A-Z]{2,6}|[A-Z_]{4,40}|0x[0-9a-f]{1,8})$");
-    const QJsonArray list = value.toArray();
-    if (!value.isArray() || list.size() != 1)
-        return false;
-    const QJsonObject e = list.first().toObject();
     if (e.keys() != QStringList{QStringLiteral("mechanism"), QStringLiteral("stacktrace"), QStringLiteral("type"),
                                 QStringLiteral("value")} ||
         !matches(e.value(QStringLiteral("type")).toString(), type) || e.value(QStringLiteral("value")) != e.value(QStringLiteral("type")))
@@ -227,10 +223,23 @@ bool exceptionsConform(const QJsonValue &value)
     return true;
 }
 
+bool exceptionsConform(const QJsonValue &value)
+{
+    const QJsonArray list = value.toArray();
+    if (!value.isArray() || list.isEmpty() || list.size() > 2)
+        return false;
+    for (const QJsonValue &e : list)
+        if (!exceptionConforms(e.toObject()))
+            return false;
+    const auto typeOf = [&list](int i) { return list.at(i).toObject().value(QStringLiteral("type")).toString(); };
+    return list.size() == 1 ||
+           (typeOf(0) == QLatin1String(crash::kFreezeType) && typeOf(1) == QLatin1String(crash::kFreezeRenderThreadType));
+}
+
 bool debugImagesConform(const QJsonValue &value)
 {
     const QJsonArray images = value.toArray();
-    if (!value.isArray() || images.isEmpty() || images.size() > crash::kMaxFrames)
+    if (!value.isArray() || images.isEmpty() || images.size() > 2 * crash::kMaxFrames)
         return false;
     for (const QJsonValue &i : images) {
         const QJsonObject image = i.toObject();

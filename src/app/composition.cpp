@@ -303,6 +303,12 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     if (startVideo)
         openStartVideo(engine.rootObjects().first(), startPath);
     forwarded.setWindow(qobject_cast<QWindow *>(engine.rootObjects().first()));
+    if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first()); window && watchdog) {
+        QObject::connect(window, &QQuickWindow::beforeSynchronizing, watchdog.get(),
+                         [dog = watchdog.get()] { dog->recordRenderThread(); }, Qt::DirectConnection);
+        QObject::connect(window, &QQuickWindow::sceneGraphInvalidated, watchdog.get(),
+                         [dog = watchdog.get()] { dog->forgetRenderThread(); }, Qt::DirectConnection);
+    }
     if (mode == StartupMode::ExitAfterWindowCreated) {
         QTimer::singleShot(0, &app, [] { QCoreApplication::exit(0); });
         return app.exec();

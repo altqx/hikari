@@ -224,12 +224,19 @@ QString Report::recordText() const
               << QStringLiteral("  Main thread:");
     else
         lines << QStringLiteral("Crash") << QStringLiteral("  %1 (%2) in %3").arg(record->type, record->mechanism, record->version);
-    for (qsizetype i = 0; i < record->frames.size(); ++i)
-        lines << QStringLiteral("  #%1 %2 +0x%3")
-                     .arg(padded(QString::number(i), 2), padded(record->frames[i].module, 18),
-                          QString::number(record->frames[i].offset, 16));
-    if (record->frames.isEmpty())
-        lines << QStringLiteral("  (no frames)");
+    const auto add = [&lines](const QList<crash::Frame> &frames) {
+        for (qsizetype i = 0; i < frames.size(); ++i)
+            lines << QStringLiteral("  #%1 %2 +0x%3")
+                         .arg(padded(QString::number(i), 2), padded(frames[i].module, 18),
+                              QString::number(frames[i].offset, 16));
+        if (frames.isEmpty())
+            lines << QStringLiteral("  (no frames)");
+    };
+    add(record->frames);
+    if (!record->renderFrames.isEmpty()) {
+        lines << QStringLiteral("  Render thread:");
+        add(record->renderFrames);
+    }
     return lines.join(u'\n');
 }
 
@@ -292,33 +299,38 @@ QJsonObject Report::exceptionProperties() const
 {
     if (!record)
         return {};
-    QJsonArray frames;
     QJsonArray images;
     QList<quint64> imageBases;
-    for (const crash::Frame &frame : record->frames) {
-        QJsonObject f{{QStringLiteral("platform"), QStringLiteral("native")},
-                      {QStringLiteral("module"), frame.module},
-                      {QStringLiteral("offset"), hexAddress(frame.offset)}};
-        if (!frame.debugId.isEmpty()) {
-            f.insert(QStringLiteral("instruction_addr"), hexAddress(frame.base + frame.offset));
-            f.insert(QStringLiteral("image_addr"), hexAddress(frame.base));
-            if (!imageBases.contains(frame.base)) {
-                imageBases << frame.base;
-                images.append(QJsonObject{{QStringLiteral("code_file"), frame.module},
-                                          {QStringLiteral("debug_id"), frame.debugId},
-                                          {QStringLiteral("image_addr"), hexAddress(frame.base)}});
+    const auto exception = [&](const QString &type, const QList<crash::Frame> &stack) {
+        QJsonArray frames;
+        for (const crash::Frame &frame : stack) {
+            QJsonObject f{{QStringLiteral("platform"), QStringLiteral("native")},
+                          {QStringLiteral("module"), frame.module},
+                          {QStringLiteral("offset"), hexAddress(frame.offset)}};
+            if (!frame.debugId.isEmpty()) {
+                f.insert(QStringLiteral("instruction_addr"), hexAddress(frame.base + frame.offset));
+                f.insert(QStringLiteral("image_addr"), hexAddress(frame.base));
+                if (!imageBases.contains(frame.base)) {
+                    imageBases << frame.base;
+                    images.append(QJsonObject{{QStringLiteral("code_file"), frame.module},
+                                              {QStringLiteral("debug_id"), frame.debugId},
+                                              {QStringLiteral("image_addr"), hexAddress(frame.base)}});
+                }
             }
+            frames.append(f);
         }
-        frames.append(f);
-    }
-    const QJsonObject exception{
-        {QStringLiteral("type"), record->type},
-        {QStringLiteral("value"), record->type},
-        {QStringLiteral("mechanism"),
-         QJsonObject{{QStringLiteral("type"), record->mechanism}, {QStringLiteral("handled"), false}}},
-        {QStringLiteral("stacktrace"),
-         QJsonObject{{QStringLiteral("type"), QStringLiteral("raw")}, {QStringLiteral("frames"), frames}}}};
-    QJsonObject out{{QStringLiteral("$exception_list"), QJsonArray{exception}},
+        return QJsonObject{
+            {QStringLiteral("type"), type},
+            {QStringLiteral("value"), type},
+            {QStringLiteral("mechanism"),
+             QJsonObject{{QStringLiteral("type"), record->mechanism}, {QStringLiteral("handled"), false}}},
+            {QStringLiteral("stacktrace"),
+             QJsonObject{{QStringLiteral("type"), QStringLiteral("raw")}, {QStringLiteral("frames"), frames}}}};
+    };
+    QJsonArray exceptions{exception(record->type, record->frames)};
+    if (!record->renderFrames.isEmpty())
+        exceptions.append(exception(QLatin1String(crash::kFreezeRenderThreadType), record->renderFrames));
+    QJsonObject out{{QStringLiteral("$exception_list"), exceptions},
                     {QStringLiteral("$exception_level"), recovered ? QStringLiteral("error") : QStringLiteral("fatal")},
                     {QStringLiteral("crashed_version"), record->version},
                     {QStringLiteral("report_id"), id}};
@@ -358,18 +370,24 @@ QJsonObject Report::toJson() const
                     {QStringLiteral("recovered"), recovered},
                     {QStringLiteral("log"), QJsonArray::fromStringList(log)}};
     if (record) {
-        QJsonArray frames;
-        for (const crash::Frame &f : record->frames) {
-            QJsonArray frame{f.module, hexAddress(f.offset)};
-            if (!f.debugId.isEmpty())
-                frame << hexAddress(f.base) << f.debugId;
-            frames.append(frame);
-        }
-        out.insert(QStringLiteral("record"), QJsonObject{{QStringLiteral("type"), record->type},
-                                                         {QStringLiteral("mechanism"), record->mechanism},
-                                                         {QStringLiteral("version"), record->version},
-                                                         {QStringLiteral("seconds"), record->seconds},
-                                                         {QStringLiteral("frames"), frames}});
+        const auto json = [](const QList<crash::Frame> &stack) {
+            QJsonArray frames;
+            for (const crash::Frame &f : stack) {
+                QJsonArray frame{f.module, hexAddress(f.offset)};
+                if (!f.debugId.isEmpty())
+                    frame << hexAddress(f.base) << f.debugId;
+                frames.append(frame);
+            }
+            return frames;
+        };
+        QJsonObject rec{{QStringLiteral("type"), record->type},
+                        {QStringLiteral("mechanism"), record->mechanism},
+                        {QStringLiteral("version"), record->version},
+                        {QStringLiteral("seconds"), record->seconds},
+                        {QStringLiteral("frames"), json(record->frames)}};
+        if (!record->renderFrames.isEmpty())
+            rec.insert(QStringLiteral("renderFrames"), json(record->renderFrames));
+        out.insert(QStringLiteral("record"), rec);
     }
     return out;
 }
@@ -392,26 +410,37 @@ std::optional<Report> Report::fromJson(const QJsonObject &json)
                              rec.value(QStringLiteral("version")).toString(), {}, rec.value(QStringLiteral("seconds")).toInt()};
         static const QRegularExpression module(QStringLiteral("^[A-Za-z0-9_.+-]{1,80}$"));
         static const QRegularExpression address(QStringLiteral("^0x[0-9a-f]{1,16}$"));
-        for (const QJsonValue &f : rec.value(QStringLiteral("frames")).toArray()) {
-            const QJsonArray parts = f.toArray();
-            const QString name = parts.at(0).toString();
-            const QString offset = parts.at(1).toString();
-            if ((parts.size() != 2 && parts.size() != 4) || !module.match(name).hasMatch() || !address.match(offset).hasMatch())
-                return std::nullopt;
-            crash::Frame frame{name, offset.mid(2).toULongLong(nullptr, 16)};
-            if (parts.size() == 4) {
-                const QString base = parts.at(2).toString();
-                const QString debugId = parts.at(3).toString();
-                if (name == QLatin1String("other") || !address.match(base).hasMatch() ||
-                    !crash::debugIdPattern().match(debugId).hasMatch())
+        const auto stack = [](const QJsonArray &json) -> std::optional<QList<crash::Frame>> {
+            QList<crash::Frame> frames;
+            for (const QJsonValue &f : json) {
+                const QJsonArray parts = f.toArray();
+                const QString name = parts.at(0).toString();
+                const QString offset = parts.at(1).toString();
+                if ((parts.size() != 2 && parts.size() != 4) || !module.match(name).hasMatch() ||
+                    !address.match(offset).hasMatch())
                     return std::nullopt;
-                frame.base = base.mid(2).toULongLong(nullptr, 16);
-                frame.debugId = debugId;
+                crash::Frame frame{name, offset.mid(2).toULongLong(nullptr, 16)};
+                if (parts.size() == 4) {
+                    const QString base = parts.at(2).toString();
+                    const QString debugId = parts.at(3).toString();
+                    if (name == QLatin1String("other") || !address.match(base).hasMatch() ||
+                        !crash::debugIdPattern().match(debugId).hasMatch())
+                        return std::nullopt;
+                    frame.base = base.mid(2).toULongLong(nullptr, 16);
+                    frame.debugId = debugId;
+                }
+                frames.append(frame);
             }
-            record.frames.append(frame);
-        }
-        if (record.frames.size() > crash::kMaxFrames)
+            if (frames.size() > crash::kMaxFrames)
+                return std::nullopt;
+            return frames;
+        };
+        const auto frames = stack(rec.value(QStringLiteral("frames")).toArray());
+        const auto renderFrames = stack(rec.value(QStringLiteral("renderFrames")).toArray());
+        if (!frames || !renderFrames || (!record.freeze() && !renderFrames->isEmpty()))
             return std::nullopt;
+        record.frames = *frames;
+        record.renderFrames = *renderFrames;
         r.record = record;
     }
     return r;

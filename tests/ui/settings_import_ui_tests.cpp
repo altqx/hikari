@@ -191,6 +191,17 @@ private slots:
         QCOMPARE(roots[0].themes, QStringList{"Themes/Mine.txt"});
         QVERIFY(!SettingsImportStore::inspectRoot(empty.path()));
     }
+    void dictionariesAloneAreNoLegacyRoot()
+    {
+        QTemporaryDir program;
+        QVERIFY(QDir().mkpath(program.filePath(QStringLiteral("Dictionary"))));
+        for (const char *name : {"Dictionary/en_US.dic", "Dictionary/en_US.aff"}) {
+            QFile f(program.filePath(QString::fromLatin1(name)));
+            QVERIFY(f.open(QIODevice::WriteOnly) && f.write("1\nword\n") > 0);
+        }
+        QVERIFY(!SettingsImportStore::inspectRoot(program.path()));
+        QVERIFY(SettingsImportStore::discoverRoots({program.path()}).isEmpty());
+    }
 
     void snapshotKeepsTheBytesAndTheirHashes()
     {
