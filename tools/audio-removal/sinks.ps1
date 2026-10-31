@@ -2,7 +2,7 @@
 # remove waits for tools/winix/hotplug.sh to unplug the USB device on its marker; heard cannot listen.
 param([string]$Command, [string]$Id)
 $usb = Get-PnpDevice -Class AudioEndpoint -PresentOnly -ErrorAction SilentlyContinue |
-    Where-Object FriendlyName -Match '\((\d+- )?Audio Device\)' | Select-Object -First 1
+    Where-Object FriendlyName -Match '\((\d+- )?(USB )?Audio Device\)' | Select-Object -First 1
 switch ($Command) {
     'media' { $env:AUDIO_REMOVAL_MEDIA }
     'pick' { if (-not $usb) { exit 1 }; $usb.InstanceId -replace '^SWD\\MMDEVAPI\\', '' }
