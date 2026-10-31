@@ -2221,6 +2221,10 @@ void Application::writeFinished(const application::WriteResult &result)
         emit documentWritten(result.document.value);
     } else if (result.outcome == application::WriteOutcome::Failed ||
                result.outcome == application::WriteOutcome::Cancelled) {
+        if (result.outcome == application::WriteOutcome::Failed)
+            m_log->notice(ui::LogController::Error, fileTitle(result.destination.value),
+                          QCoreApplication::translate("HikariSub.Editor", "Save failed; the file on disk is unchanged"),
+                          QDir::toNativeSeparators(QString::fromStdString(result.destination.value)));
         emit documentWriteFailed(result.document.value);
     }
     if (result.outcome == application::WriteOutcome::Written) {

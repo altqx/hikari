@@ -3,6 +3,7 @@
 #include "hikari/application/write_coordinator.h"
 
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -24,6 +25,8 @@ public:
 
     struct Options {
         std::size_t chunkSize = 1 << 20; // cancellation is checked between chunks
+        // A virus scanner or the indexer may hold the file open briefly; the replace is retried this long.
+        std::chrono::milliseconds replacePatience{3000};
         // Test hook: runs on the worker just before publishing (rename).
         std::function<void(application::PermitId)> beforePublish;
     };

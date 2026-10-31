@@ -13,10 +13,12 @@
 #include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
 #include <algorithm>
+#include <functional>
 #include <set>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
@@ -125,6 +127,19 @@ class TemplateEditorShellTests : public QObject {
                 return true;
             }
         return false;
+    }
+
+    bool writes(const std::function<bool()> &save)
+    {
+        QSignalSpy written(application, &app::Application::documentWritten);
+        QSignalSpy failed(application, &app::Application::documentWriteFailed);
+        return save() && QTest::qWaitFor([&] { return !written.isEmpty() || !failed.isEmpty(); }, 10'000) &&
+               failed.isEmpty();
+    }
+    bool fileHas(const char *name, const char *tag) const
+    {
+        QFile f(dir.filePath(QLatin1String(name)));
+        return f.open(QIODevice::ReadOnly) && f.readAll().contains(tag);
     }
 
 private slots:
@@ -309,23 +324,28 @@ private slots:
     {
         QVERIFY(openSong("stock-tutorials.ass", false));
         showPanel("templateDock");
-        const QString path = dir.filePath(QStringLiteral("stock-tutorials.ass"));
-        const auto saved = [&](const char *tag) {
-            QFile f(path);
-            return f.open(QIODevice::ReadOnly) && f.readAll().contains(tag);
-        };
+        editor().setDelays(150, 60'000);
         QVERIFY(!session()->isDirty());
         editor().setText(editor().text() + QStringLiteral("{\\bord8}"));
-        application->saveAll();
-        QTRY_VERIFY_WITH_TIMEOUT(saved("bord8"), 10'000);
-        QTRY_VERIFY(!session()->isDirty());
-        QTest::qWait(1'000);
+        QVERIFY(writes([&] { return application->saveAll().isEmpty(); }));
+        QVERIFY(fileHas("stock-tutorials.ass", "bord8"));
         QVERIFY(!session()->isDirty());
         editor().setText(editor().text() + QStringLiteral("{\\bord9}"));
-        QVERIFY(application->editor().save());
-        QTRY_VERIFY_WITH_TIMEOUT(saved("bord9"), 10'000);
-        QTest::qWait(1'000);
+        QVERIFY(writes([&] { return application->editor().save(); }));
+        QVERIFY(fileHas("stock-tutorials.ass", "bord9"));
         QVERIFY(!session()->isDirty());
+    }
+
+    void aSaveLandsWhileAnotherProgramBrieflyReadsTheFile()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        showPanel("templateDock");
+        editor().setText(editor().text() + QStringLiteral("{\\bord9}"));
+        QFile reader(dir.filePath(QStringLiteral("stock-tutorials.ass")));
+        QVERIFY(reader.open(QIODevice::ReadOnly));
+        QTimer::singleShot(300, &reader, &QFile::close);
+        QVERIFY(writes([&] { return application->editor().save(); }));
+        QVERIFY(fileHas("stock-tutorials.ass", "bord9"));
     }
 
     void aFileRunsNoCodeUntilTheUserPreviewsIt()

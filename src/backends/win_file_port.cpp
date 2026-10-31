@@ -5,9 +5,17 @@
 #endif
 #include <windows.h>
 
+#include <QLoggingCategory>
+#include <QString>
+
 #include <algorithm>
+#include <chrono>
 
 namespace hikari::backends {
+
+namespace {
+Q_LOGGING_CATEGORY(lcFiles, "hikari.files")
+}
 
 using application::PermitId;
 using application::WriteOutcome;
@@ -118,13 +126,25 @@ WriteOutcome WinFilePort::writeFile(PermitId permit, const std::string &path, co
     file = INVALID_HANDLE_VALUE;
     if (!closed)
         return abandon(WriteOutcome::Failed);
-    // MoveFileExW fails onto a read-only destination, so that one is never overwritten.
     const DWORD attributes = ::GetFileAttributesW(target.c_str());
-    if (attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_READONLY))
+    if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_READONLY))
+        return abandon(WriteOutcome::Failed);
+    if (attributes != INVALID_FILE_ATTRIBUTES)
         ::SetFileAttributesW(temp.c_str(), attributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_ARCHIVE |
                                                          FILE_ATTRIBUTE_NOT_CONTENT_INDEXED));
-    if (!::MoveFileExW(temp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-        return abandon(WriteOutcome::Failed); // e.g. a sharing violation: the original stays
+    const auto giveUp = std::chrono::steady_clock::now() + m_options.replacePatience;
+    while (!::MoveFileExW(temp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+        const DWORD error = ::GetLastError();
+        if (cancel)
+            return abandon(WriteOutcome::Cancelled);
+        if ((error != ERROR_SHARING_VIOLATION && error != ERROR_ACCESS_DENIED) ||
+            std::chrono::steady_clock::now() >= giveUp) {
+            qCWarning(lcFiles) << "Replacing" << QString::fromStdWString(target) << "failed with Windows error"
+                               << error;
+            return abandon(WriteOutcome::Failed);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
     return WriteOutcome::Written;
 }
 
