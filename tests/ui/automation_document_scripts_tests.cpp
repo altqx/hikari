@@ -736,6 +736,34 @@ private slots:
         QVERIFY(settled());
     }
 
+    void uncPathsAreAskedAboutAndTrustedByFolder()
+    {
+#ifndef Q_OS_WIN
+        QSKIP("UNC paths are Windows paths");
+#else
+        const QString share = qEnvironmentVariable("HIKARI_TEST_UNC_SHARE");
+        if (share.isEmpty() || !QFileInfo(share).isDir())
+            QSKIP("HIKARI_TEST_UNC_SHARE names no reachable share");
+        QTemporaryDir shared(share + QStringLiteral("/unc-XXXXXX"));
+        QVERIFY(shared.isValid());
+        const QString unc = QDir::toNativeSeparators(shared.filePath(QStringLiteral("unc.lua")));
+        writeFile(unc, prefixScript("unc"));
+        QVERIFY(unc.startsWith(QStringLiteral("\\\\")));
+        QVERIFY(!open("unc.ass", "|" + unc.toUtf8()).isEmpty());
+        auto &automation = app->automation();
+        QSignalSpy asked(&automation, &app::AutomationShell::trustRequested);
+        automation.menuOpened();
+        QCOMPARE(asked.size(), 1);
+        QCOMPARE(asked.first().at(1).toStringList(), QStringList{unc});
+        const QString folder = unc.left(unc.lastIndexOf(QLatin1Char('\\')));
+        QCOMPARE(asked.first().at(2).toStringList(), QStringList{folder});
+        automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("always"));
+        QVERIFY(app->settingsStore()->list("automation.trustedFolders").contains(folder));
+        QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{unc.toStdString()});
+        QVERIFY(settled());
+#endif
+    }
+
     void lastScriptRunsOnceLoadIsChosen()
     {
         QTemporaryDir elsewhere;

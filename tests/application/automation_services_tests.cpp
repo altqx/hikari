@@ -117,6 +117,10 @@ TEST(AutomationFolders, AScriptIsInAFolderOrBelowIt)
     EXPECT_TRUE(scriptInFolder("C:\\Users\\A\\Subs/kfx\\fx.lua", "c:\\users\\a\\subs\\", true));
     EXPECT_FALSE(scriptInFolder("C:\\Users\\A\\Subs2\\fx.lua", "C:\\Users\\A\\Subs", true));
     EXPECT_FALSE(scriptInFolder("C:\\Users\\A\\Subs\\..\\fx.lua", "C:\\Users\\A\\Subs", true));
+    EXPECT_TRUE(scriptInFolder("\\\\Server\\Share\\kfx\\fx.lua", "\\\\server\\share", true));
+    EXPECT_FALSE(scriptInFolder("\\\\server\\share2\\fx.lua", "\\\\server\\share", true));
+    EXPECT_FALSE(scriptInFolder("\\\\other\\share\\fx.lua", "\\\\server\\share", true));
+    EXPECT_FALSE(scriptInFolder("\\\\server\\share\\fx.lua", "C:\\server\\share", true));
 }
 
 TEST(AutomationFolders, AUserScriptReplacesTheShippedOne)
