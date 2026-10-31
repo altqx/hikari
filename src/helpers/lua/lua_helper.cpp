@@ -29,6 +29,7 @@ extern "C" {
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace hikari::backends::helper;
@@ -45,6 +46,7 @@ struct Script {
     lua_State *L = nullptr;
     std::filesystem::path path;
     std::vector<std::string> includePath; // the script's directory, then the shared ones
+    std::string shippedInclude;
     int traceLevel = 3;
     ScriptInfo info;
     std::vector<int> features; // registry refs of {run, validate, isactive}
@@ -290,6 +292,27 @@ int cancelScript(lua_State *L)
 
 int gettext(lua_State *L); // through the host's catalog
 
+// DependencyControl updates these in the user's Include, so a user copy wins over the shipped one.
+bool userMayReplace(std::string_view name)
+{
+    static constexpr std::string_view kDependencyControlPackages[] = {
+        "l0", "a-mo", "BM", "DM", "PT", "requireffi", "SubInspector", "json", "Yutils", "lyger"};
+    const std::string_view top = name.substr(0, name.find_first_of("./\\"));
+    const auto same = [&](std::string_view package) {
+        return std::ranges::equal(top, package, [](unsigned char a, unsigned char b) {
+            return std::tolower(a) == std::tolower(b);
+        });
+    };
+    return std::ranges::any_of(kDependencyControlPackages, same);
+}
+
+std::filesystem::path shippedFile(const std::string &name)
+{
+    if (g_script.shippedInclude.empty() || userMayReplace(name))
+        return {};
+    return fromUtf8(g_script.shippedInclude) / fromUtf8(name);
+}
+
 int include(lua_State *L)
 {
     const std::string filename = checkString(L, 1);
@@ -297,6 +320,8 @@ int include(lua_State *L)
     const bool fullpath = filename.find_first_of("\\/") != std::string::npos;
     if (fullpath)
         filepath = fromUtf8(filename);
+    if (!std::filesystem::exists(filepath))
+        filepath = shippedFile(filename);
     if (!std::filesystem::exists(filepath)) {
         for (const auto &dir : g_script.includePath) {
             filepath = fromUtf8(dir) / fromUtf8(filename);
@@ -717,12 +742,25 @@ void installAegisub(lua_State *L)
 int moduleLoader(lua_State *L)
 {
     const int pretop = lua_gettop(L);
-    std::string module = checkString(L, -1);
+    const std::string name = checkString(L, -1);
+    std::string module = name;
     std::replace(module.begin(), module.end(), '.', LUA_DIRSEP[0]);
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "path");
-    const std::string paths = checkString(L, -1);
+    std::string paths = checkString(L, -1);
     lua_pop(L, 2);
+    if (!shippedFile(name).empty()) {
+        const std::string shipped = g_script.shippedInclude + LUA_DIRSEP;
+        for (const char *pattern : {"/?.lua", "/?/init.lua"}) {
+            std::string candidate = shipped + pattern;
+            candidate.replace(candidate.find("/?"), 2, module);
+            const std::string moon = candidate.substr(0, candidate.rfind('.')) + ".moon";
+            if (std::filesystem::exists(fromUtf8(candidate)) || std::filesystem::exists(fromUtf8(moon))) {
+                paths = shipped + pattern;
+                break;
+            }
+        }
+    }
     std::size_t from = 0;
     while (from <= paths.size()) {
         const std::size_t to = std::min(paths.find(';', from), paths.size());
@@ -780,14 +818,16 @@ void load(Reader &in, Responder &r)
 
     g_script.path = fromUtf8(path);
     g_script.traceLevel = traceLevel;
-    // Each include directory ends with a separator. The shared ones come one per line.
+    // Each include directory ends with a separator. The shared ones come one per line, the shipped Include last.
     g_script.includePath = {toUtf8(g_script.path.parent_path()) + LUA_DIRSEP};
     for (std::size_t from = 0;;) {
         const std::size_t end = sharedInclude.find('\n', from);
         const std::string dir = sharedInclude.substr(from, end == std::string::npos ? std::string::npos : end - from);
         g_script.includePath.push_back(dir + LUA_DIRSEP);
-        if (end == std::string::npos)
+        if (end == std::string::npos) {
+            g_script.shippedInclude = dir;
             break;
+        }
         from = end + 1;
     }
     lua_State *L = luaL_newstate();

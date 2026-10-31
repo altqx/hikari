@@ -1814,3 +1814,36 @@ TEST_F(LuaHelper, SharedIncludesAreSearchedInOrder)
     EXPECT_EQ(host.info().name, "user,depctrl");
     EXPECT_EQ(host.info().description, "user include,table");
 }
+
+TEST_F(LuaHelper, StockModulesLoadFromTheShippedInclude)
+{
+    QTemporaryDir user, scripts;
+    ASSERT_TRUE(user.isValid() && scripts.isValid());
+    const auto write = [](const QString &path, const QByteArray &text) {
+        QDir().mkpath(QFileInfo(path).absolutePath());
+        QFile file(path);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        file.write(text);
+    };
+    const QString include = user.filePath(QStringLiteral("automation/Include"));
+    write(include + QStringLiteral("/karaskel.lua"), "PLANTED = (PLANTED or '') .. 'karaskel'\n");
+    write(include + QStringLiteral("/aegisub/util.moon"), "export PLANTED = (PLANTED or '') .. 'util'\n{}\n");
+    write(include + QStringLiteral("/Yutils.lua"), "return { who = 'user Yutils' }\n");
+    write(include + QStringLiteral("/a-mo/Line.lua"), "return { who = 'user a-mo' }\n");
+    write(include + QStringLiteral("/brand_new.lua"), "return { who = 'new module' }\n");
+    write(scripts.filePath(QStringLiteral("moonscript.lua")),
+          "PLANTED = (PLANTED or '') .. 'moonscript'\nreturn { loadstring = function() return nil, 'planted' end }\n");
+    const QString script = scripts.filePath(QStringLiteral("stock.lua"));
+    write(script, "include('karaskel.lua')\n"
+                  "local util = require('aegisub.util')\n"
+                  "script_name = tostring(PLANTED) .. ',' .. type(karaskel.collect_head) .. ',' .. type(util.copy)\n"
+                  "script_description = require('Yutils').who .. ',' .. require('a-mo.Line').who .. ',' ..\n"
+                  "    require('brand_new').who\n");
+    LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), script,
+                       QStringList{include, QStringLiteral(HIKARI_LUA_INCLUDE)}.join(QLatin1Char('\n')));
+    host.load();
+    ASSERT_TRUE(waitFor([&] { return host.state() != LuaScriptHost::State::Loading; }));
+    ASSERT_EQ(host.state(), LuaScriptHost::State::Ready) << host.lastError().toStdString();
+    EXPECT_EQ(host.info().name, "nil,function,function");
+    EXPECT_EQ(host.info().description, "user Yutils,user a-mo,new module");
+}
