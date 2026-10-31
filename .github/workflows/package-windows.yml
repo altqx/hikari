@@ -171,9 +171,11 @@ jobs:
           Get-ChildItem out/symbols | Format-Table Name, Length
           Expand-Archive "out/symbols/HikariSub-$env:VERSION-windows-x64-symbols.zip" out/symbols-check
           $env:HIKARISUB_CRASH_TEST = 'segv'
+          $env:HIKARISUB_USER_DIR = Join-Path $env:RUNNER_TEMP 'crash-user'
           $proc = Start-Process -FilePath "$p/HikariSub.exe" -PassThru -RedirectStandardError out/evidence/crash/stderr.txt -RedirectStandardOutput out/evidence/crash/stdout.txt
           if (-not $proc.WaitForExit(180000)) { $proc.Kill(); throw 'the forced crash did not end the app' }
-          Remove-Item Env:HIKARISUB_CRASH_TEST
+          Remove-Item Env:HIKARISUB_CRASH_TEST, Env:HIKARISUB_USER_DIR
+          if (Test-Path "$p/user") { throw 'the forced crash left a user folder in the payload' }
           "exit $($proc.ExitCode)"
           $line = Select-String -Path out/evidence/crash/stderr.txt -Pattern '^HIKARISUB_CRASH_TEST=segv: record at (.+)$' | Select-Object -First 1
           if (-not $line) { Get-Content out/evidence/crash/stderr.txt; throw 'no record path on stderr' }
