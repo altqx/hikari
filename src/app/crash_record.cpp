@@ -525,7 +525,8 @@ std::optional<Record> read(const QString &path)
             record.mechanism = value;
         else if (key == QLatin1String("seconds") && seconds.match(value).hasMatch())
             record.seconds = value.toInt();
-        else if (key == QLatin1String("frame") && record.frames.size() < kMaxFrames) {
+        else if ((key == QLatin1String("frame") && record.frames.size() < kMaxFrames) ||
+                 (key == QLatin1String("render-frame") && record.renderFrames.size() < kMaxFrames)) {
             const QStringList parts = value.split(QLatin1Char(' '));
             if ((parts.size() != 2 && parts.size() != 4) || !module.match(parts[0]).hasMatch() ||
                 !offset.match(parts[1]).hasMatch())
@@ -538,13 +539,14 @@ std::optional<Record> read(const QString &path)
                 frame.base = parts[2].mid(2).toULongLong(nullptr, 16);
                 frame.debugId = parts[3];
             }
-            record.frames.append(frame);
+            (key == QLatin1String("frame") ? record.frames : record.renderFrames).append(frame);
         } else
             return std::nullopt;
     }
     if (record.type.isEmpty() || record.mechanism.isEmpty() || record.version.isEmpty())
         return std::nullopt;
-    if (record.freeze() != (record.type == QLatin1String(kFreezeType)) || (!record.freeze() && record.seconds))
+    if (record.freeze() != (record.type == QLatin1String(kFreezeType)) ||
+        (!record.freeze() && (record.seconds || !record.renderFrames.isEmpty())))
         return std::nullopt;
     return record;
 }
@@ -555,12 +557,17 @@ bool write(const QString &path, const Record &record)
                       "\nmechanism " + record.mechanism.toLatin1() + '\n';
     if (record.freeze())
         text += "seconds " + QByteArray::number(record.seconds) + '\n';
-    for (const Frame &frame : record.frames.mid(0, kMaxFrames)) {
-        text += "frame " + frame.module.toLatin1() + " 0x" + QByteArray::number(frame.offset, 16);
-        if (!frame.debugId.isEmpty())
-            text += " 0x" + QByteArray::number(frame.base, 16) + ' ' + frame.debugId.toLatin1();
-        text += '\n';
-    }
+    const auto add = [&text](const QByteArray &key, const QList<Frame> &frames) {
+        for (const Frame &frame : frames.mid(0, kMaxFrames)) {
+            text += key + ' ' + frame.module.toLatin1() + " 0x" + QByteArray::number(frame.offset, 16);
+            if (!frame.debugId.isEmpty())
+                text += " 0x" + QByteArray::number(frame.base, 16) + ' ' + frame.debugId.toLatin1();
+            text += '\n';
+        }
+    };
+    add("frame", record.frames);
+    if (record.freeze())
+        add("render-frame", record.renderFrames);
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly))
         return false;

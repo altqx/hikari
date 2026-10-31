@@ -24,10 +24,13 @@ struct Record {
     QString version;
     QList<Frame> frames;
     int seconds = 0;   // a freeze only: how long the window has not answered
+    QList<Frame> renderFrames; // a freeze only: the window's render thread, when it has one
     bool freeze() const { return mechanism == QLatin1String("watchdog"); }
 };
 
 inline constexpr char kFreezeType[] = "APP_HANG";
+// The type of a freeze event's second exception entry: the stack of the window's render thread.
+inline constexpr char kFreezeRenderThreadType[] = "APP_HANG_RENDER_THREAD";
 
 // Writes recordPath when the process crashes; programFolder marks the program's own modules.
 // A second call does nothing.

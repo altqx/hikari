@@ -297,6 +297,21 @@ private slots:
         QVERIFY(!QFile::exists(path("hang-record.txt")));
     }
 
+    void freezeRecordsTheRenderThreadToo()
+    {
+        QProcess probe;
+        startProbe(probe, path("hang-record.txt"), QStringLiteral("hang-render"));
+        QVERIFY(probe.waitForFinished(30000));
+        const QString out = QString::fromLocal8Bit(probe.readAllStandardOutput());
+        QVERIFY2(probe.exitStatus() == QProcess::NormalExit && probe.exitCode() == 0,
+                 qPrintable(QStringLiteral("exit %1: %2 %3").arg(probe.exitCode()).arg(out, probe.readAllStandardError())));
+        const QStringList parts = out.trimmed().split(u' ');
+        QCOMPARE(parts.value(0), QStringLiteral("recovered"));
+        QCOMPARE(parts.size(), 4);
+        QVERIFY2(parts.value(2).split(u',').contains(kProbeModule), qPrintable(out));
+        QVERIFY2(parts.value(3).split(u',').contains(kProbeModule), qPrintable(out));
+    }
+
     void freezeKilledLeadsToReportAtNextStart()
     {
         QProcess probe;
@@ -1023,6 +1038,47 @@ private slots:
         QCOMPARE(read->frames.first().base, kNamed.base);
         QCOMPARE(read->frames.first().debugId, kNamed.debugId);
         QVERIFY(read->frames.last().debugId.isEmpty());
+    }
+
+    void freezeRecordKeepsTheRenderThread()
+    {
+        crash::Record freeze{QStringLiteral("APP_HANG"), QStringLiteral("watchdog"), QStringLiteral("0.1.0"),
+                             {{QStringLiteral("Qt6Core.dll"), 0x8263e}}, 11};
+        freeze.renderFrames = {kNamed, {QStringLiteral("d3d11.dll"), 0x20}};
+        QVERIFY(crash::write(path("hang-record.txt"), freeze));
+        const auto back = crash::read(path("hang-record.txt"));
+        QVERIFY(back);
+        QCOMPARE(back->frames.size(), 1);
+        QCOMPARE(back->renderFrames.size(), 2);
+        QCOMPARE(back->renderFrames.first().debugId, kNamed.debugId);
+        QCOMPARE(back->renderFrames.last().module, QStringLiteral("d3d11.dll"));
+        writeRecord("crash-record.txt", "hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism signal\n"
+                                        "frame hikarisub 0x1\nrender-frame hikarisub 0x2\n");
+        QVERIFY(!crash::read(path("crash-record.txt")));
+
+        report::Report r;
+        r.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        r.recovered = true;
+        r.record = *back;
+        const QJsonObject properties = r.exceptionProperties();
+        QVERIFY(Analytics::conforms(QStringLiteral("$exception"), properties));
+        const QJsonArray list = properties.value(QStringLiteral("$exception_list")).toArray();
+        QCOMPARE(list.size(), 2);
+        QCOMPARE(list[0][QStringLiteral("type")].toString(), QStringLiteral("APP_HANG"));
+        QCOMPARE(list[1][QStringLiteral("type")].toString(), QStringLiteral("APP_HANG_RENDER_THREAD"));
+        QCOMPARE(list[1][QStringLiteral("stacktrace")][QStringLiteral("frames")].toArray().size(), 2);
+        QCOMPARE(properties.value(QStringLiteral("$debug_images")).toArray().size(), 1);
+        QVERIFY(r.recordText().contains(QStringLiteral("Render thread:\n  #0  hikarisub")));
+        const auto stored = report::Report::fromJson(r.toJson());
+        QVERIFY(stored && stored->record);
+        QCOMPARE(stored->exceptionProperties(), properties);
+
+        QJsonObject swapped = properties;
+        swapped.insert(QStringLiteral("$exception_list"), QJsonArray{list[1], list[0]});
+        QVERIFY(!Analytics::conforms(QStringLiteral("$exception"), swapped));
+        QJsonObject three = properties;
+        three.insert(QStringLiteral("$exception_list"), QJsonArray{list[0], list[1], list[1]});
+        QVERIFY(!Analytics::conforms(QStringLiteral("$exception"), three));
     }
 
     void exceptionCarriesDebugImages()

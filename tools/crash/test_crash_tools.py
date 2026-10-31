@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """python3 -m unittest discover -s tools/crash -p 'test_*.py'"""
 import io
+import json
 import os
 import shutil
 import struct
@@ -114,9 +115,27 @@ class Symbolize(unittest.TestCase):
                   "frame hikarisub 0x1316e0 0x400000 1251dbf9-ff35-761a-90ff-786534e30872\n"
                   "frame HikariSub.exe 0x14420 0x7ff6a0000000 23d051e4-93db-40b7-8ab2-7072163144b9-1\n"
                   "frame other 0x4d2a0\n")
-        frames, version = symbolize.parse(record)
-        self.assertEqual(frames, [("hikarisub", 0x1316E0), ("HikariSub.exe", 0x14420), ("other", 0x4D2A0)])
+        stacks, version = symbolize.parse(record)
+        self.assertEqual(stacks, {symbolize.MAIN: [("hikarisub", 0x1316E0), ("HikariSub.exe", 0x14420),
+                                                   ("other", 0x4D2A0)]})
         self.assertEqual(version, "0.1.0")
+
+    def test_freeze_keeps_the_render_thread_apart(self):
+        record = ("hikari-crash 1\nversion 0.1.0\ntype APP_HANG\nmechanism watchdog\nseconds 11\n"
+                  "frame Qt6Core.dll 0x8263e\nrender-frame Qt6Quick.dll 0x10\nrender-frame d3d11.dll 0x20\n")
+        stacks, _ = symbolize.parse(record)
+        self.assertEqual(stacks, {symbolize.MAIN: [("Qt6Core.dll", 0x8263E)],
+                                  symbolize.RENDER: [("Qt6Quick.dll", 0x10), ("d3d11.dll", 0x20)]})
+        report = ("Freeze\n  The window did not respond for 11 s, 0.1.0\n  Main thread:\n  #0  Qt6Core.dll        +0x8263e\n"
+                  "  Render thread:\n  #0  Qt6Quick.dll       +0x10\n")
+        stacks, version = symbolize.parse(report)
+        self.assertEqual(stacks, {symbolize.MAIN: [("Qt6Core.dll", 0x8263E)], symbolize.RENDER: [("Qt6Quick.dll", 0x10)]})
+        self.assertEqual(version, "0.1.0")
+        event = {"properties": {"crashed_version": "0.1.0", "$exception_list": [
+            {"type": "APP_HANG", "stacktrace": {"frames": [{"module": "Qt6Core.dll", "offset": "0x8263e"}]}},
+            {"type": "APP_HANG_RENDER_THREAD", "stacktrace": {"frames": [{"module": "d3d11.dll", "offset": "0x20"}]}}]}}
+        stacks, _ = symbolize.parse(json.dumps(event))
+        self.assertEqual(stacks, {symbolize.MAIN: [("Qt6Core.dll", 0x8263E)], symbolize.RENDER: [("d3d11.dll", 0x20)]})
 
 
 if __name__ == "__main__":
