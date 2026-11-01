@@ -91,7 +91,7 @@ jobs:
           tar -czf out/windows-sdk.tar.gz -C out sdk
           if ($LASTEXITCODE -ne 0) { throw "SDK archive failed ($LASTEXITCODE)" }
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: windows-sdk-${{ github.run_id }}
           path: out/windows-sdk.tar.gz
@@ -168,7 +168,7 @@ jobs:
             if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV }
           }
 
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: windows-sdk-${{ github.run_id }}
           path: out/
