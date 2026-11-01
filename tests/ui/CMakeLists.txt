@@ -16,6 +16,14 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           visual=visualToolRailCrosshairAndCopyCoordinates
           video=videoRecentListsAndDialogFolders
     PART_TIMEOUT 600)
+foreach(part documents visual)
+    foreach(mode offscreen xvfb)
+        if(TEST hikari_ui_shell_tests.${part}.${mode})
+            set_property(TEST hikari_ui_shell_tests.${part}.${mode} APPEND PROPERTY
+                RESOURCE_LOCK hikari_ui_shell_main_window_shots)
+        endif()
+    endforeach()
+endforeach()
 hikari_add_qttest(hikari_ui_log_controller_tests SOURCES log_controller_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_command_names_tests SOURCES command_names_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_tag_buttons_tests SOURCES tag_buttons_tests.cpp LIBRARIES hikari_ui)
@@ -117,12 +125,12 @@ if(NOT WIN32)
         COMMAND $<TARGET_FILE:hikari_ui_video_fullscreen_workflow> --monitors 2)
     set_tests_properties(hikari_ui_video_fullscreen_workflow.twoscreens PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/fullscreen-two-screens.json"
-        LABELS "ui;offscreen" TIMEOUT 120)
+        LABELS "ui;offscreen" TIMEOUT 120 RESOURCE_LOCK hikari_ui_video_fullscreen_workflow)
     add_test(NAME hikari_ui_video_fullscreen_workflow.secondprimary
         COMMAND $<TARGET_FILE:hikari_ui_video_fullscreen_workflow> --monitors 2 --primary-second)
     set_tests_properties(hikari_ui_video_fullscreen_workflow.secondprimary PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/fullscreen-two-screens.json"
-        LABELS "ui;offscreen" TIMEOUT 120)
+        LABELS "ui;offscreen" TIMEOUT 120 RESOURCE_LOCK hikari_ui_video_fullscreen_workflow)
 endif()
 hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"

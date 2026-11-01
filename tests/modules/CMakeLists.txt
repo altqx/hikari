@@ -29,17 +29,21 @@ endforeach()
 
 add_test(NAME modules.qmllint
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target hikari_ui_qmllint)
-set_tests_properties(modules.qmllint PROPERTIES LABELS "modules;qml" TIMEOUT 120)
+set_tests_properties(modules.qmllint PROPERTIES LABELS "modules;qml" TIMEOUT 120 RUN_SERIAL TRUE)
 
 add_executable(hikari_app_startup startup.cpp)
 target_link_libraries(hikari_app_startup PRIVATE hikari_composition
     hikari_test_url_recorder hikari_test_desktop_routes)
 _hikari_add_qt_modes(hikari_app_startup app $<TARGET_FILE:hikari_app_startup>)
 foreach(mode offscreen xvfb)
-    if(TEST app.${mode})
-        set_property(TEST app.${mode} APPEND PROPERTY ENVIRONMENT
+    if(TEST hikari_app_startup.${mode})
+        set_property(TEST hikari_app_startup.${mode} APPEND PROPERTY ENVIRONMENT
             "HIKARISUB_USER_DIR=${CMAKE_CURRENT_BINARY_DIR}/app-${mode}/user"
             "XDG_CACHE_HOME=${CMAKE_CURRENT_BINARY_DIR}/app-${mode}/cache")
+        if(WIN32)
+            set_property(TEST hikari_app_startup.${mode} APPEND PROPERTY ENVIRONMENT
+                "LOCALAPPDATA=${CMAKE_CURRENT_BINARY_DIR}/app-${mode}/local")
+        endif()
     endif()
 endforeach()
 

@@ -140,8 +140,8 @@
   ],
   "testPresets": [
     {
-      "name": "ubuntu-x64-release",
-      "configurePreset": "ubuntu-x64-release",
+      "name": "functional",
+      "hidden": true,
       "output": {
         "outputOnFailure": true
       },
@@ -149,49 +149,37 @@
         "exclude": {
           "label": "perf"
         }
+      },
+      "execution": {
+        "jobs": 2,
+        "noTestsAction": "error"
       }
+    },
+    {
+      "name": "ubuntu-x64-release",
+      "configurePreset": "ubuntu-x64-release",
+      "inherits": "functional"
     },
     {
       "name": "fedora-x64-release",
       "configurePreset": "fedora-x64-release",
-      "output": {
-        "outputOnFailure": true
-      },
-      "filter": {
-        "exclude": {
-          "label": "perf"
-        }
-      }
+      "inherits": "functional"
     },
     {
       "name": "windows-x64-release",
       "configurePreset": "windows-x64-release",
-      "output": {
-        "outputOnFailure": true
-      },
-      "filter": {
-        "exclude": {
-          "label": "perf"
-        }
-      },
       "environment": {
         "PATH": "${sourceDir}/out/sdk/qt-6.12.0-windows/6.12.0/msvc2022_64/bin;$penv{PATH}"
-      }
+      },
+      "inherits": "functional"
     },
     {
       "name": "windows-x64-vsfiltermod",
       "configurePreset": "windows-x64-vsfiltermod",
-      "output": {
-        "outputOnFailure": true
-      },
-      "filter": {
-        "exclude": {
-          "label": "perf"
-        }
-      },
       "environment": {
         "PATH": "${sourceDir}/out/sdk/qt-6.12.0-windows/6.12.0/msvc2022_64/bin;$penv{PATH}"
-      }
+      },
+      "inherits": "functional"
     },
     {
       "name": "ubuntu-x64-perf",
