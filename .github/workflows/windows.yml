@@ -197,6 +197,8 @@ jobs:
 
           with tarfile.open('out/windows-sdk.tar.gz', 'r:gz', errorlevel=2) as archive:
               archive.extractall('out', filter='data')
+              while archive.fileobj.read(1024 * 1024):
+                  pass
           '@ | python -
           if ($LASTEXITCODE -ne 0) { throw "SDK extraction failed ($LASTEXITCODE)" }
           Remove-Item out/windows-sdk.tar.gz
