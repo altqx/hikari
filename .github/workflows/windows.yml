@@ -88,7 +88,23 @@ jobs:
           $ErrorActionPreference = 'Stop'
           if (Test-Path "$env:APPDATA\Qt\qtaccount.ini") { throw 'Qt account file left in the profile' }
           if (Test-Path out/sdk/qt-install-private) { throw 'Private install directory left behind' }
-          tar -czf out/windows-sdk.tar.gz -C out sdk
+          @'
+          from pathlib import Path
+          import sys
+          import tarfile
+
+          sdk_root = Path('out').resolve() / 'sdk'
+
+          def sdk_member(member):
+              if not (Path('out') / member.name).resolve().is_relative_to(sdk_root):
+                  raise ValueError(f'SDK entry resolves outside out/sdk: {member.name}')
+              return member
+
+          with tarfile.open('out/windows-sdk.tar.gz', 'w|gz', format=tarfile.PAX_FORMAT,
+                            dereference=False, compresslevel=6) as archive:
+              archive.add('out/sdk', arcname='sdk', filter=sdk_member)
+          print(f'SDK archive: Python {sys.version.split()[0]}, {Path("out/windows-sdk.tar.gz").stat().st_size} bytes')
+          '@ | python -
           if ($LASTEXITCODE -ne 0) { throw "SDK archive failed ($LASTEXITCODE)" }
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -176,7 +192,12 @@ jobs:
       - name: Extract the warm SDK
         run: |
           $ErrorActionPreference = 'Stop'
-          tar -xzf out/windows-sdk.tar.gz -C out
+          @'
+          import tarfile
+
+          with tarfile.open('out/windows-sdk.tar.gz', 'r:gz', errorlevel=2) as archive:
+              archive.extractall('out', filter='data')
+          '@ | python -
           if ($LASTEXITCODE -ne 0) { throw "SDK extraction failed ($LASTEXITCODE)" }
           Remove-Item out/windows-sdk.tar.gz
 
