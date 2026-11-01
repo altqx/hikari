@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+if [ "${HIKARI_SKIP_LOCAL_CHECK-}" = 1 ]; then
+    echo 'WARNING: HIKARI_SKIP_LOCAL_CHECK=1 bypasses local checks; CI is still required.' >&2
+    exit 0
+fi
+
+root=$(git rev-parse --show-toplevel) || exit 1
+if [ "${HIKARI_LOCAL_CHECK_PRESET+x}" = x ]; then
+    preset=$HIKARI_LOCAL_CHECK_PRESET
+else
+    preset=$(git config --local --get hikari.localCheckPreset) || preset=
+fi
+if [ -z "$preset" ]; then
+    echo 'Local checks require HIKARI_LOCAL_CHECK_PRESET or git config --local hikari.localCheckPreset <configured-preset>. See docs/build.md.' >&2
+    exit 1
+fi
+
+if [ "${HIKARI_LOCAL_CHECK_TEST_REGEX+x}" = x ]; then
+    exec cmake "-DPRESET=$preset" "-DTEST_REGEX=$HIKARI_LOCAL_CHECK_TEST_REGEX" -P "$root/tools/local-check.cmake"
+fi
+exec cmake "-DPRESET=$preset" -P "$root/tools/local-check.cmake"

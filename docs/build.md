@@ -12,6 +12,45 @@ The current workstation has VS2026/MSVC19.51 and official Qt6.11.2 kits at `C:/Q
 
 Use Ninja and CMake orchestration. Do not add project shell/PowerShell/Python bootstrap scripts, `.sln`/`.vcxproj` build paths or checked-in output. Dependency recipes may invoke their upstream build tools.
 
+## Check a configured tree before pushing
+
+From the repository root, incrementally build and test an existing configured preset in its native compiler environment.
+
+```sh
+cmake -DPRESET=ubuntu-x64-release -P tools/local-check.cmake
+cmake -DPRESET=ubuntu-x64-release '-DTEST_REGEX=^(modules[.]|hikari_app_startup[.])' -P tools/local-check.cmake
+```
+
+Use the matching Fedora or Windows build/test preset on those hosts. Omit `TEST_REGEX` to run the full preset selection, including its existing filters. An explicit regex gives narrower local feedback and never replaces CI qualification. An explicitly empty regex fails.
+
+The command builds through `cmake --build --preset`, validates CTest discovery, then runs the same preset and regex through `ctest --preset`. Build, discovery, empty or unresolved selection, and test failures stop the check. It does not configure a missing tree or acquire a toolchain. Prepare the tree with the documented workflow first. A native build can still trigger CMake regeneration when configuration inputs change.
+
+### Opt in to the pre-push hook
+
+The tracked [pre-push hook](../.githooks/pre-push) refuses pushes without an explicit preset. Choose the preset in local Git config or set `HIKARI_LOCAL_CHECK_PRESET` in the push environment. The environment variable takes precedence. Set `HIKARI_LOCAL_CHECK_TEST_REGEX` only for focused feedback.
+
+```sh
+git config --local hikari.localCheckPreset ubuntu-x64-release
+git config --show-origin --get core.hooksPath
+git rev-parse --git-path hooks/pre-push
+```
+
+Inspect your active hook directory before installing. If you already use a hook manager or a pre-push hook, add this call to it and preserve its existing checks and stdin handling.
+
+```sh
+sh "$(git rev-parse --show-toplevel)/.githooks/pre-push" "$@" || exit $?
+```
+
+If you have no existing hooks or hook manager, opt in with `git config --local core.hooksPath .githooks`. Do not replace an existing `core.hooksPath` value blindly. On Unix, the tracked hook is executable. Git for Windows runs it through `sh`; CMake, CTest, Ninja, and the native compiler must be available in the push environment.
+
+For an intentional one-push bypass, set `HIKARI_SKIP_LOCAL_CHECK=1` in that push's environment. The hook prints a warning. This bypass does not affect CI requirements. No hook is enabled by cloning or running the local check.
+
+Run the runner and hook regression fixtures without the Hikari SDK or dependencies.
+
+```sh
+cmake -DWORK=out/local-check-tests -P tests/tools/local_check_tests.cmake
+```
+
 ## Dependency ownership and provisioning
 
 Use vcpkg manifest mode with repository-owned overlay ports/triplets and a separate pinned official Qt SDK. Pin the vcpkg Git revision, compatible executable/digest, registry baseline, package versions/features, overlays and compiler/runtime inputs. Assign one owner per dependency; do not silently fall back to system libraries or a second Qt. A registry baseline alone does not pin all machine inputs or promise bit-identical binaries.
