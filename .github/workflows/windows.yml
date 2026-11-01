@@ -83,11 +83,25 @@ jobs:
           QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
         run: cmake --workflow --preset provision
 
-      # The provisioned SDK for the warm job below; no credential is stored in it.
-      - uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - name: Archive the credential-free SDK before corruption
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (Test-Path "$env:APPDATA\Qt\qtaccount.ini") { throw 'Qt account file left in the profile' }
+          if (Test-Path out/sdk/qt-install-private) { throw 'Private install directory left behind' }
+          tar -czf out/windows-sdk.tar.gz -C out sdk
+          if ($LASTEXITCODE -ne 0) { throw "SDK archive failed ($LASTEXITCODE)" }
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          path: out/sdk
-          key: windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
+          name: windows-sdk-${{ github.run_id }}
+          path: out/windows-sdk.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          overwrite: true
+          retention-days: 1
+
+      - name: Remove the uploaded SDK archive
+        run: Remove-Item out/windows-sdk.tar.gz
 
       - name: Reject a corrupted mirror object, then repair it
         run: |
@@ -154,11 +168,17 @@ jobs:
             if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV }
           }
 
-      - uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          path: out/sdk
-          key: windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
-          fail-on-cache-miss: true
+          name: windows-sdk-${{ github.run_id }}
+          path: out/
+
+      - name: Extract the warm SDK
+        run: |
+          $ErrorActionPreference = 'Stop'
+          tar -xzf out/windows-sdk.tar.gz -C out
+          if ($LASTEXITCODE -ne 0) { throw "SDK extraction failed ($LASTEXITCODE)" }
+          Remove-Item out/windows-sdk.tar.gz
 
       # No secret in this job: the stamped Qt installation and built packages are reused, the mirror only verified.
       - name: Configure, build and test from the warm SDK
