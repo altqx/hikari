@@ -211,4 +211,60 @@ execute_process(COMMAND "${CMAKE_COMMAND}" --preset fixture -DFAIL_TEST=ON
     WORKING_DIRECTORY "${fixture}" COMMAND_ERROR_IS_FATAL ANY)
 expect(hook-failed-test fail "CTest execution failed" "pass.one;pass.two" ${clean_env}
     HIKARI_LOCAL_CHECK_PRESET=fixture ${push})
+
+file(WRITE "${fixture}/consume-input.sh" [=[
+#!/bin/sh
+while IFS= read -r line; do
+    printf '%s\n' "$line"
+done > "$1"
+]=])
+file(APPEND "${fixture}/CMakeLists.txt" [=[
+find_program(SH_EXECUTABLE NAMES sh REQUIRED)
+add_custom_target(read-stdin ALL
+    COMMAND "${SH_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/consume-input.sh" "${CMAKE_SOURCE_DIR}/consumed"
+    USES_TERMINAL VERBATIM)
+]=])
+file(MAKE_DIRECTORY "${fixture}/manager")
+file(WRITE "${fixture}/manager/pre-push" [=[
+#!/bin/sh
+set -eu
+sh "$(git rev-parse --show-toplevel)/.githooks/pre-push" "$@" || exit $?
+sh ./consume-input.sh remaining
+]=])
+file(CHMOD "${fixture}/manager/pre-push" PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+execute_process(COMMAND "${CMAKE_COMMAND}" --preset fixture -DFAIL_TEST=OFF
+    WORKING_DIRECTORY "${fixture}" COMMAND_ERROR_IS_FATAL ANY)
+set(push "${GIT_EXECUTABLE}" -c "core.hooksPath=${fixture}/manager"
+    push --quiet "${work}/remote.git" HEAD:refs/heads/checked)
+execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD WORKING_DIRECTORY "${fixture}"
+    OUTPUT_VARIABLE head OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
+string(LENGTH "${head}" hash_length)
+string(REPEAT "0" ${hash_length} missing_ref)
+foreach(mode IN ITEMS full filtered)
+    file(REMOVE "${fixture}/ran" "${fixture}/remaining")
+    set(selection)
+    set(expected_tests "pass.one;pass.two")
+    if(mode STREQUAL "filtered")
+        set(selection "HIKARI_LOCAL_CHECK_TEST_REGEX=^pass[.]two$")
+        set(expected_tests "pass.two")
+    endif()
+    expect(hook-stdin-${mode} pass "selected tests" "${expected_tests}" ${clean_env}
+        HIKARI_LOCAL_CHECK_PRESET=fixture ${selection} ${push})
+    file(READ "${fixture}/consumed" consumed)
+    file(READ "${fixture}/remaining" remaining)
+    if(NOT consumed STREQUAL "" OR
+            NOT remaining STREQUAL "HEAD ${head} refs/heads/checked ${missing_ref}\n")
+        message(FATAL_ERROR "The ${mode} local check consumed or changed the next hook's ref-list input")
+    endif()
+    git_fixture(--git-dir=${work}/remote.git update-ref -d refs/heads/checked)
+endforeach()
+file(REMOVE "${fixture}/ran" "${fixture}/remaining")
+execute_process(COMMAND "${CMAKE_COMMAND}" --preset fixture -DFAIL_TEST=ON
+    WORKING_DIRECTORY "${fixture}" COMMAND_ERROR_IS_FATAL ANY)
+expect(hook-stdin-failed-test fail "CTest execution failed" "pass.one;pass.two" ${clean_env}
+    HIKARI_LOCAL_CHECK_PRESET=fixture ${push})
+if(EXISTS "${fixture}/remaining")
+    message(FATAL_ERROR "The next hook ran after a rejected local check")
+endif()
 message(STATUS "Local check regression fixtures passed. Logs: ${work}")

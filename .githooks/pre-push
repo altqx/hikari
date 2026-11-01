@@ -18,6 +18,6 @@ if [ -z "$preset" ]; then
 fi
 
 if [ "${HIKARI_LOCAL_CHECK_TEST_REGEX+x}" = x ]; then
-    exec cmake "-DPRESET=$preset" "-DTEST_REGEX=$HIKARI_LOCAL_CHECK_TEST_REGEX" -P "$root/tools/local-check.cmake"
+    exec cmake "-DPRESET=$preset" "-DTEST_REGEX=$HIKARI_LOCAL_CHECK_TEST_REGEX" -P "$root/tools/local-check.cmake" </dev/null
 fi
-exec cmake "-DPRESET=$preset" -P "$root/tools/local-check.cmake"
+exec cmake "-DPRESET=$preset" -P "$root/tools/local-check.cmake" </dev/null
