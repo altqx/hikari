@@ -56,6 +56,10 @@ First infrastructure work must qualify the tool integrations, native sessions, f
 
 [`cmake/HikariTesting.cmake`](../cmake/HikariTesting.cmake) registers every runner with CTest labels and a bounded run time. Select a family with `ctest --preset <preset> -L <label>`.
 
+Functional test presets run at most two CTest entries at once and fail on an empty selection. Performance presets keep their existing scheduling. Sibling offscreen and Xvfb entries share a resource lock for their output family. The manual fullscreen variants use the same lock. Windows QtTest logs include the mode in `qttest-<name>.<mode>.txt`. Existing `RUN_SERIAL` tests, including the nested `modules.qmllint` build, run alone. These constraints apply within one CTest invocation. Do not run concurrent CTest invocations in the same build directory.
+
+Startup environment overrides are scoped to `hikari_app_startup.<mode>`, with private `HIKARISUB_USER_DIR` and `XDG_CACHE_HOME`, plus `LOCALAPPDATA` on Windows. Other tests retain their directory-resolution contracts. Qualify the two-entry schedule on standard Ubuntu, Fedora, and Windows runners with the full existing inventory, skip checks, timeouts, and cold and warm checks.
+
 | Runner | Helper | Labels | Modes |
 | --- | --- | --- | --- |
 | GoogleTest 1.18.0 (plain C++) | `hikari_add_gtest(target SOURCES … [LIBRARIES …] [LABELS …])`; each test case is its own CTest entry | `gtest` | none needed |

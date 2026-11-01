@@ -64,16 +64,26 @@ cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL _hikari_check_xvfb_sui
 # 120 s: UI suites take 40-51 s on the shared Windows MSVC runners.
 function(_hikari_add_qt_modes name label)
     cmake_parse_arguments(mode "OFFSCREEN_ONLY" "" "" ${ARGN})
-    set(ARGN ${mode_UNPARSED_ARGUMENTS})
     set_property(GLOBAL APPEND PROPERTY HIKARI_QT_MODE_NAMES ${name})
-    add_test(NAME ${name}.offscreen COMMAND ${ARGN})
-    set_tests_properties(${name}.offscreen PROPERTIES
-        ENVIRONMENT "QT_QPA_PLATFORM=offscreen" LABELS "${label};offscreen" TIMEOUT 120)
+    set(modes offscreen)
     if(HIKARI_XVFB_RUN AND NOT mode_OFFSCREEN_ONLY AND name IN_LIST HIKARI_XVFB_SUITES)
-        add_test(NAME ${name}.xvfb COMMAND "${HIKARI_XVFB_RUN}" -a ${ARGN})
-        set_tests_properties(${name}.xvfb PROPERTIES
-            ENVIRONMENT "QT_QPA_PLATFORM=xcb" LABELS "${label};xvfb" TIMEOUT 120)
+        list(APPEND modes xvfb)
     endif()
+    foreach(platform IN LISTS modes)
+        set(command ${mode_UNPARSED_ARGUMENTS})
+        set(qpa offscreen)
+        if(platform STREQUAL "xvfb")
+            list(PREPEND command "${HIKARI_XVFB_RUN}" -a)
+            set(qpa xcb)
+        endif()
+        if(WIN32 AND label STREQUAL "qttest")
+            list(APPEND command -o "${CMAKE_BINARY_DIR}/qttest-${name}.${platform}.txt,txt" -o "-,txt")
+        endif()
+        add_test(NAME ${name}.${platform} COMMAND ${command})
+        set_tests_properties(${name}.${platform} PROPERTIES
+            ENVIRONMENT "QT_QPA_PLATFORM=${qpa}" LABELS "${label};${platform}" TIMEOUT 120
+            RESOURCE_LOCK "${name}")
+    endforeach()
 endfunction()
 
 # hikari_add_qttest(<target> SOURCES <src>... [LIBRARIES <lib>...] [OFFSCREEN_ONLY]
@@ -91,7 +101,7 @@ function(hikari_add_qttest target)
         set(modes OFFSCREEN_ONLY)
     endif()
     if(NOT arg_PARTS)
-        _hikari_add_qttest_run(${target} ${target} "${modes}")
+        _hikari_add_qt_modes(${target} qttest ${modes} $<TARGET_FILE:${target}>)
         return()
     endif()
     set(names)
@@ -132,7 +142,7 @@ function(hikari_add_qttest target)
             list(GET firsts ${i} before)
         endif()
         list(APPEND specs "${from}..${before}")
-        _hikari_add_qttest_run(${target}.${name} ${target} "${modes}" -part "${from}..${before}")
+        _hikari_add_qt_modes(${target}.${name} qttest ${modes} $<TARGET_FILE:${target}> -part "${from}..${before}")
         foreach(mode offscreen xvfb)
             if(TEST ${target}.${name}.${mode} AND arg_PART_TIMEOUT)
                 set_tests_properties(${target}.${name}.${mode} PROPERTIES TIMEOUT ${arg_PART_TIMEOUT})
@@ -145,15 +155,6 @@ function(hikari_add_qttest target)
         "-DSPECS=${specs}" -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/QtTestParts.cmake")
     set_tests_properties(${target}.parts PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen" LABELS "qttest;offscreen" TIMEOUT 60)
-endfunction()
-
-function(_hikari_add_qttest_run name target modes)
-    # ctest keeps no QtTest output on Windows, so it also goes to a file (CI collects qttest-*.txt).
-    set(output)
-    if(WIN32)
-        set(output -o "${CMAKE_BINARY_DIR}/qttest-${name}.txt,txt" -o "-,txt")
-    endif()
-    _hikari_add_qt_modes(${name} qttest ${modes} $<TARGET_FILE:${target}> ${ARGN} ${output})
 endfunction()
 
 # hikari_add_quicktest(<target> QML_DIR <dir>) — Qt Quick Test over tst_*.qml files.
