@@ -16,6 +16,14 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           visual=visualToolRailCrosshairAndCopyCoordinates
           video=videoRecentListsAndDialogFolders
     PART_TIMEOUT 600)
+foreach(part documents visual)
+    foreach(mode offscreen xvfb)
+        if(TEST hikari_ui_shell_tests.${part}.${mode})
+            set_property(TEST hikari_ui_shell_tests.${part}.${mode} APPEND PROPERTY
+                RESOURCE_LOCK hikari_ui_shell_main_window_shots)
+        endif()
+    endforeach()
+endforeach()
 hikari_add_qttest(hikari_ui_log_controller_tests SOURCES log_controller_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_command_names_tests SOURCES command_names_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_tag_buttons_tests SOURCES tag_buttons_tests.cpp LIBRARIES hikari_ui)
