@@ -20,3 +20,4 @@
 /tests/fixtures/list-files/** -text
 
 /tests/ui/layout-fixtures/** -text
+/.githooks/pre-push text eol=lf
