@@ -6786,8 +6786,54 @@ ApplicationWindow {
         }
     }
 
+    function apiCommand(symbol, run) {
+        const target = root.globalActions()[symbol] ?? root.globalItems()[symbol]
+        if (!target)
+            return null
+        if (!run)
+            return { enabled: target.enabled, reason: "" }
+        if (!target.enabled)
+            return false
+        if (target.trigger)
+            target.trigger()
+        else
+            target.triggered()
+        return true
+    }
+    function apiPanels(name, action) {
+        if (action === "list")
+            return root.dockList.map(dock => ({ panel: dock.uniqueName, title: dock.title, open: dock.isOpen,
+                                                floating: dock.isFloating, focused: dock.isFocused }))
+        const i = root.dockList.findIndex(dock => dock.uniqueName === name)
+        if (i < 0)
+            return false
+        const dock = root.dockList[i]
+        if (action === "open")
+            root.showPanel(dock)
+        else if (action === "close")
+            root.closePanel(dock)
+        else if (dock.isOpen)
+            root.focusPanel(root.panels[i], Qt.OtherFocusReason)
+        else
+            return false
+        return true
+    }
+    function connectApi() {
+        const api = root.app.apiHost
+        api.commandHandler = root.apiCommand
+        api.panelHandler = root.apiPanels
+        for (const symbols of [root.globalActions(), root.globalItems()])
+            for (const symbol in symbols)
+                symbols[symbol].triggered.connect(() => api.commandRan(symbol, true))
+        for (const dock of root.dockList) {
+            dock.isOpenChanged.connect(() => api.panelChanged(dock.uniqueName))
+            dock.isFloatingChanged.connect(() => api.panelChanged(dock.uniqueName))
+        }
+    }
+
     Component.onCompleted: {
         root.applyMenuShortcuts()
+        root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
         root.foldTurnedOn = turnedOn.indexOf("grid.foldGenerated") >= 0
