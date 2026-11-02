@@ -59,7 +59,7 @@ private:
     using RouteResult = std::variant<Route, app::Error>;
     void route(const QUrl &url, bool hasKey, std::function<void(RouteResult)> done);
     void send(app::StreamId id, const Route &route, const HttpCall &call);
-    void fetchModels(const Route &route, const HttpCall &call, std::function<void(ModelsResult)> done);
+    void fetchModels(const Route &route, const HttpCall &call, app::Wire wire, std::function<void(ModelsResult)> done);
     void end(app::StreamId id, const std::vector<app::Event> &events);
 
     QNetworkAccessManager m_network;

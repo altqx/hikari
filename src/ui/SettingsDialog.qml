@@ -1637,6 +1637,8 @@ DialogWindow {
                             text: qsTr("Include the file name")
                             Layout.leftMargin: 22
                         }
+                        SettingCheck { setting: "privacy.starPrompt"; text: qsTr("Suggest starring HikariSub on GitHub") }
+                        SettingNote { text: qsTr("At most twice, after you have used HikariSub on several days. The counts stay on this computer.") }
                     }
                 }
             }

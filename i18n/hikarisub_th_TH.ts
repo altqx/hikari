@@ -5467,6 +5467,14 @@ What would you like to do?</source>
         <translation>จัดเรียงทุกบรรทัดตามชั้น</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>จัดเรียงทุกบรรทัดตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>จัดเรียงทุกบรรทัดตามข้อความที่ไม่มีแท็ก</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>จัดเรียงบรรทัดที่เลือกตามเวลาเริ่มต้น</translation>
     </message>
@@ -5489,6 +5497,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>จัดเรียงบรรทัดที่เลือกตามชั้น</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>จัดเรียงบรรทัดที่เลือกตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>จัดเรียงบรรทัดที่เลือกตามข้อความที่ไม่มีแท็ก</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6867,6 +6883,22 @@ What would you like to do?</source>
         <translation>จัดเรียงตามชั้น</translation>
     </message>
     <message>
+        <source>Text</source>
+        <translation>ข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>จัดเรียงตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>ข้อความที่ไม่มีแท็ก</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>จัดเรียงตามข้อความที่ไม่มีแท็ก</translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
@@ -7105,6 +7137,22 @@ What would you like to do?</source>
     <message>
         <source>Open user &amp;folder</source>
         <translation>เปิด&amp;โฟลเดอร์ผู้ใช้</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>ชอบ HikariSub ไหม</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>การให้ดาวบน GitHub ช่วยให้คนอื่นค้นพบได้</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>ให้ดาวบน GitHub</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>ไว้ทีหลัง</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -9105,6 +9153,14 @@ removing audio cache files.</source>
     <message>
         <source>Include the file name</source>
         <translation>รวมชื่อไฟล์</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>แนะนำให้ให้ดาว HikariSub บน GitHub</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

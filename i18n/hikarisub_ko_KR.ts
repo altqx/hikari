@@ -5467,6 +5467,14 @@ What would you like to do?</source>
         <translation>모든 줄 정렬 / 레이어</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>모든 줄 정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>모든 줄 정렬 / 태그가 없는 글자</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>선택한 줄 정렬 / 시작 시간</translation>
     </message>
@@ -5489,6 +5497,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>선택한 줄 정렬 / 레이어</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>선택한 줄 정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>선택한 줄 정렬 / 태그가 없는 글자</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6867,6 +6883,22 @@ What would you like to do?</source>
         <translation>정렬 / 레이어</translation>
     </message>
     <message>
+        <source>Text</source>
+        <translation>글자</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>태그가 없는 글자</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>정렬 / 태그가 없는 글자</translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>자막 파일 열기</translation>
     </message>
@@ -7105,6 +7137,22 @@ What would you like to do?</source>
     <message>
         <source>Open user &amp;folder</source>
         <translation>사용자 폴더 열기[&amp;F]</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>HikariSub가 마음에 드시나요?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>GitHub에서 별표를 주시면 다른 사람들이 찾는 데 도움이 됩니다.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>GitHub에서 별표 주기</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>나중에</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -9105,6 +9153,14 @@ removing audio cache files.</source>
     <message>
         <source>Include the file name</source>
         <translation>파일 이름 포함</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>GitHub에서 HikariSub에 별표 주기 제안</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

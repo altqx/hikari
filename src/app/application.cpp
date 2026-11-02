@@ -891,6 +891,18 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_settings, options.updateFeed,
         options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.updateEnvironment);
     m_whatsNew = std::make_unique<WhatsNew>(*m_updates, WhatsNew::cacheFileIn(options.updateEnvironment));
+    StarPrompt::Config starPrompt = options.starPrompt;
+    if (!starPrompt.editing)
+        starPrompt.editing = [this] {
+            return QGuiApplication::applicationState() == Qt::ApplicationActive && !home();
+        };
+    m_starPrompt = std::make_unique<StarPrompt>(*m_settings, *m_analytics, std::move(starPrompt));
+    if (gettingStartedDue())
+        m_starPrompt->quietRun();
+    connect(m_whatsNew.get(), &WhatsNew::changed, m_starPrompt.get(), [this] {
+        if (m_whatsNew->updated())
+            m_starPrompt->quietRun();
+    });
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
                                    : !m_settingsFile.isEmpty()   ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Catalog")
@@ -5373,7 +5385,9 @@ bool Application::sortLines(const QString &key, bool selectedOnly)
     using application::SortKey;
     static const std::pair<const char *, SortKey> keys[] = {{"start", SortKey::Start}, {"end", SortKey::End},
                                                             {"style", SortKey::Style}, {"actor", SortKey::Actor},
-                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer}};
+                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer},
+                                                            {"text", SortKey::Text},
+                                                            {"textWithoutTags", SortKey::TextWithoutTags}};
     auto *session = targetSession();
     const auto *found = std::find_if(std::begin(keys), std::end(keys),
                                      [&](const auto &k) { return key == QLatin1String(k.first); });
@@ -5506,6 +5520,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
+            {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},

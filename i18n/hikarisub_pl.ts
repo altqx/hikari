@@ -5541,6 +5541,14 @@ Co chcesz zrobić?</translation>
         <translation>Sortuj wszystkie linijki według warstwy</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>Sortuj wszystkie linijki według tekstu</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>Sortuj wszystkie linijki według tekstu bez tagów</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>Sortuj zaznaczone linijki według czasu początkowego</translation>
     </message>
@@ -5563,6 +5571,14 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>Sortuj zaznaczone linijki według warstwy</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>Sortuj zaznaczone linijki według tekstu</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>Sortuj zaznaczone linijki według tekstu bez tagów</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6947,6 +6963,22 @@ Co chcesz zrobić?</translation>
         <translation>Sortuj według warstwy</translation>
     </message>
     <message>
+        <source>Text</source>
+        <translation>Tekst</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>Sortuj według tekstu</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>Tekst bez tagów</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>Sortuj według tekstu bez tagów</translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>Otwórz plik napisów</translation>
     </message>
@@ -7185,6 +7217,22 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Open user &amp;folder</source>
         <translation>Otwórz &amp;folder użytkownika</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>Podoba ci się HikariSub?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>Gwiazdka na GitHubie pomaga innym go znaleźć.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>Daj gwiazdkę na GitHubie</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>Nie teraz</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -9205,6 +9253,14 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     <message>
         <source>Include the file name</source>
         <translation>Dołącz nazwę pliku</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

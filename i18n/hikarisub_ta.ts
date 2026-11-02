@@ -5504,6 +5504,14 @@ What would you like to do?</source>
         <translation>அனைத்து வரிகளையும் அடுக்குப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>அனைத்து வரிகளையும் உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>அனைத்து வரிகளையும் குறிச்சொற்கள் இல்லாத உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>தேர்ந்தெடுத்த வரிகளைத் தொடக்க நேரப்படி வரிசைப்படுத்து</translation>
     </message>
@@ -5526,6 +5534,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>தேர்ந்தெடுத்த வரிகளை அடுக்குப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை குறிச்சொற்கள் இல்லாத உரைப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6907,6 +6923,22 @@ What would you like to do?</source>
         <translation>அடுக்கு மூலம் வரிசைப்படுத்துங்கள்</translation>
     </message>
     <message>
+        <source>Text</source>
+        <translation>உரை</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>உரை மூலம் வரிசைப்படுத்துங்கள்</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>குறிச்சொற்கள் இல்லாமல் உரை</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>குறிச்சொற்கள் இல்லாத உரை மூலம் வரிசைப்படுத்துங்கள்</translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>வசனக் கோப்பைத் திற</translation>
     </message>
@@ -7145,6 +7177,22 @@ What would you like to do?</source>
     <message>
         <source>Open user &amp;folder</source>
         <translation>பயனர் கோப்புறையைத் திற (&amp;f)</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>HikariSub பிடித்திருக்கிறதா?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>GitHub-இல் ஒரு நட்சத்திரம் மற்றவர்கள் இதைக் கண்டறிய உதவும்.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>GitHub-இல் நட்சத்திரம் இடு</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>இப்போது வேண்டாம்</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -9155,6 +9203,14 @@ removing audio cache files.</source>
     <message>
         <source>Include the file name</source>
         <translation>கோப்பின் பெயரைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>GitHub-இல் HikariSub-க்கு நட்சத்திரம் இடப் பரிந்துரை</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

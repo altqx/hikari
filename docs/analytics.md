@@ -69,6 +69,8 @@ Time buckets: `<250ms`, `250-500ms`, `0.5-1s`, `1-2s`, `2-5s`, `5-15s`, `15-60s`
 | `layout_changed` | You choose a layout | `layout`: `editing`, `timing`, `translation`, `typesetting`, `karaoke`, or `saved` (one of your saved layouts; its name is not sent) |
 | `getting_started_finished` | Getting started's Finish | `pages_changed`: the pages whose settings Finish changed, from `language`, `import`, `look`, `layout`, `media`, `editing`, `updates`, `files`. Which values you chose is not sent. Getting started has no setting on its layout and files pages yet, so those two are not sent today. |
 | `getting_started_skipped` | Getting started's Skip | (none) |
+| `star_prompt_shown` | The suggestion to star HikariSub on GitHub shows ([star-prompt.md](star-prompt.md)), at most twice ever | (none) |
+| `star_prompt_clicked` | Its Star on GitHub | (none) |
 
 Where `command_used` is reported:
 - `via: key`: every command a key runs. The shell reports it through `HotkeysController::ran`.
