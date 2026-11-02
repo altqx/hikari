@@ -650,6 +650,7 @@ public:
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
+    Q_INVOKABLE bool centerTimesInFrames();
     Q_INVOKABLE bool commitAndAdvance();
 
     ui::ShellController &shell() { return *m_shell; }

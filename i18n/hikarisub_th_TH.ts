@@ -5951,6 +5951,10 @@ What would you like to do?</source>
         <translation>เริ่มต้นใช้งาน</translation>
     </message>
     <message>
+        <source>Center times within frames</source>
+        <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -6981,6 +6985,14 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines&apos; start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>ย้ายเวลาเริ่มและสิ้นสุดของบรรทัดที่เลือกไปไว้กลางเฟรม เพื่อให้การเลื่อนตามเวลาในภายหลังยังคงอยู่บนเฟรมเต็ม</translation>
+    </message>
+    <message>
+        <source>Center times within frames</source>
+        <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
     <message>
         <source>Load script</source>

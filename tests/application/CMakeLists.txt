@@ -188,6 +188,8 @@ hikari_add_gtest(hikari_application_video_timing_tests SOURCES video_timing_test
 target_compile_definitions(hikari_application_video_timing_tests PRIVATE
     HIKARI_VIDEO_TIMING_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/video-timing-cases.txt"
     HIKARI_VIDEO_TIMING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v6-video-timing-20261005/observations.jsonl")
+hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_translation_mode_tests PRIVATE

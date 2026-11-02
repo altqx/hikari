@@ -6025,6 +6025,10 @@ Co chcesz zrobić?</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
+        <source>Center times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -7061,6 +7065,14 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>Znajduje kolejne wystąpienie frazy w tekście</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines&apos; start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>Przesuwa czasy początku i końca zaznaczonych linii na środek ich klatek, aby późniejsze przesunięcie o czas zostawiło je na pełnych klatkach</translation>
+    </message>
+    <message>
+        <source>Center times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
         <source>Load script</source>

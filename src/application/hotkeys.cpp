@@ -291,6 +291,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         {"GLOBAL_KANJI_TIMER", 5174},
         {"GLOBAL_GETTING_STARTED", 5176},
+        {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
 };
 
 struct NameRow {
@@ -553,6 +554,7 @@ constexpr NameRow kNames[] = {
         {5173, "Repeat last run"},
         {5174, "Kanji timer"},
         {5176, "Getting started"},
+        {5229, "Center times within frames"},
 };
 
 struct DefaultRow {
