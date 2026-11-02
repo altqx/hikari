@@ -115,6 +115,12 @@ void addDefinitions(Registry &registry)
     ]})"));
     registry.define("SettingValue", schema(R"({"anyOf": [{"type": "boolean"}, {"type": "integer"}, {"type": "string"},
         {"type": "array", "items": {"type": "string"}}]})"));
+    registry.define("NodePort", schema(R"({"type": "object", "properties": {"name": {"type": "string"},
+        "type": {"type": "string"}}, "required": ["name", "type"], "additionalProperties": false})"));
+    registry.define("GrantedFile", schema(R"({"type": "object", "properties": {
+        "file": {"type": "string", "description": "The handle files.read and files.write take."},
+        "name": {"type": "string"}, "access": {"enum": ["read", "write"]}},
+        "required": ["file", "name", "access"], "additionalProperties": false})"));
 }
 
 }

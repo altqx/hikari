@@ -75,7 +75,7 @@ Item {
             return qsTr("No matches")
         if (count.current > 0)
             //: The live match count: the current match, then all matches
-            return qsTr("%1 of %2").arg(count.current).arg(count.total)
+            return qsTr("%1 of %2").arg(count.current, count.total)
         return qsTr("%n match(es)", "", count.total)
     }
     readonly property string countSpoken: count.current > 0 && patternError.length === 0
@@ -833,7 +833,7 @@ Item {
                     Accessible.role: Accessible.ListItem
                     Accessible.name: modelData.header
                                      ? modelData.text
-                                     : qsTr("Line %1: %2").arg(modelData.line).arg(modelData.text)
+                                     : qsTr("Line %1: %2").arg(modelData.line, modelData.text)
                     CheckBox {
                         checked: resultRow.modelData.checked
                         Layout.leftMargin: resultRow.modelData.header ? 2 : 18

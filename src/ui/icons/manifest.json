@@ -1330,7 +1330,8 @@
    ],
    "surfaces": [
     "menu:timing",
-    "menu:subtitles"
+    "menu:subtitles",
+    "menu:video"
    ]
   },
   {
@@ -3197,6 +3198,42 @@
    ]
   },
   {
+   "role": "tab-switch",
+   "file": "tab-switch.svg",
+   "label": "Switch to",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ],
+   "pending": "CX6 #582"
+  },
+  {
+   "role": "tab-close-others",
+   "file": "tab-close-others.svg",
+   "label": "Close other tabs",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ],
+   "pending": "CX6 #582"
+  },
+  {
+   "role": "tab-close-right",
+   "file": "tab-close-right.svg",
+   "label": "Close tabs to the right",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ],
+   "pending": "CX6 #582"
+  },
+  {
    "role": "fonts-from-subtitles",
    "file": "fonts-from-subtitles.svg",
    "label": "Add fonts from subtitles",
@@ -3304,7 +3341,8 @@
    "mirror": true,
    "legacy": [],
    "surfaces": [
-    "grid-menu"
+    "grid-menu",
+    "menu:audio"
    ]
   },
   {
@@ -3494,6 +3532,18 @@
    "surfaces": [
     "grid-menu"
    ]
+  },
+  {
+   "role": "paste-special",
+   "file": "paste-special.svg",
+   "label": "Paste special",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ],
+   "pending": "CX4 #580"
   },
   {
    "role": "fps",
@@ -3899,7 +3949,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "settings-dialog"
+    "settings-dialog",
+    "menu:video"
    ]
   },
   {
@@ -3910,7 +3961,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "settings-dialog"
+    "settings-dialog",
+    "menu:video"
    ]
   },
   {
