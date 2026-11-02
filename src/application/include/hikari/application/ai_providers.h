@@ -36,6 +36,8 @@ struct Price {
     double input = 0;
     double output = 0;
     std::optional<double> cachedInput;
+    std::optional<double> cacheWrite;
+    std::optional<double> cacheWriteHour;
     bool operator==(const Price &) const = default;
 };
 
@@ -89,8 +91,12 @@ struct Config {
 struct Usage {
     std::int64_t inputTokens = 0;
     std::int64_t outputTokens = 0;
-    /// Part of inputTokens.
+    /// Part of inputTokens: read from the provider's cache.
     std::int64_t cachedInputTokens = 0;
+    /// Part of inputTokens: written to the provider's cache.
+    std::int64_t cacheWriteTokens = 0;
+    /// Part of cacheWriteTokens: kept for an hour.
+    std::int64_t cacheWriteHourTokens = 0;
     /// What the provider says the request cost, when it says.
     std::optional<double> reportedCost;
     bool operator==(const Usage &) const = default;
@@ -134,11 +140,20 @@ struct ToolDefinition {
     std::string parametersJson;
 };
 
+enum class CacheLifetime { Minutes, Hour };
+
+/// Sent as system, tools (by name), context, then messages, so that everything before the messages is
+/// a prefix the provider can cache. Nothing that changes per turn belongs in system, tools or context.
 struct Request {
     std::string model;
     std::string system;
     std::vector<Message> messages;
     std::vector<ToolDefinition> tools;
+    /// Pinned material that changes rarely, such as the document summary or the style list.
+    std::string context;
+    /// The same for every turn of one conversation, so the provider routes its turns to one cache.
+    std::string cacheKey;
+    CacheLifetime cacheLifetime = CacheLifetime::Minutes;
     std::optional<int> maxOutputTokens;
 };
 

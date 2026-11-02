@@ -127,8 +127,12 @@ std::optional<double> costOf(const Usage &usage, const std::optional<Price> &pri
     if (!price)
         return std::nullopt;
     const double cached = static_cast<double>(usage.cachedInputTokens);
-    const double uncached = static_cast<double>(usage.inputTokens - usage.cachedInputTokens);
-    return (uncached * price->input + cached * price->cachedInput.value_or(price->input) +
+    const double writtenHour = static_cast<double>(usage.cacheWriteHourTokens);
+    const double written = static_cast<double>(usage.cacheWriteTokens - usage.cacheWriteHourTokens);
+    const double uncached = static_cast<double>(usage.inputTokens - usage.cachedInputTokens - usage.cacheWriteTokens);
+    const double writePrice = price->cacheWrite.value_or(price->input);
+    return (uncached * price->input + cached * price->cachedInput.value_or(price->input) + written * writePrice +
+            writtenHour * price->cacheWriteHour.value_or(writePrice) +
             static_cast<double>(usage.outputTokens) * price->output) /
            1'000'000.0;
 }

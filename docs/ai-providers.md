@@ -27,7 +27,7 @@ With no provider, `Providers::stream` fails at once with `NoProvider`. It reads 
 - Custom endpoints cover local servers (Ollama, LM Studio, vLLM) and any OpenAI-compatible service. A custom provider needs no key unless the user gives one.
 - Every request streams. Text arrives as `TextDelta`, tool calls as `ToolCallStarted` and `ToolCallArguments`, and the request ends with exactly one `Finished` (stop reason, the whole text, the tool calls, usage) or `Failed`.
 - A user message carries text, images (base64, sent as a data URL or an Anthropic image block) and tool results. An assistant message carries text and tool calls.
-- Redirects are refused, and nothing is cached.
+- Redirects are refused, and no response is cached on this machine. Prompt caching happens on the provider; see [Caching](#caching).
 
 ## Keys
 
@@ -44,6 +44,20 @@ With no provider, `Providers::stream` fails at once with `NoProvider`. It reads 
 ## Usage and cost
 
 `Usage` holds input, output and cached input tokens. Cost is the provider's own figure when it reports one (OpenRouter's `usage.cost`), else the model's price per million tokens times the tokens, else unknown. Caps, the meter and estimates belong to the agent.
+
+## Caching
+
+Prompt caching runs on the provider the user chose, so that long agent sessions and repeated translation and review passes don't pay full price for the same prefix every turn ([AI19 #640](https://github.com/altqx/hikari/issues/640)).
+
+- **Stable prefix.** A request is sent as the system prompt, the tools sorted by name, `Request::context` (pinned material such as the document summary or the style list), then the conversation. Nothing that changes per turn (timestamps, ids, the playhead) belongs in the first three. JSON keys go out sorted, so the same prefix is the same bytes every turn.
+- **Anthropic.** Two `cache_control` breakpoints, within Anthropic's limit of four. The first goes on the last block of the stable prefix: the context block, else the system block, else the last tool. The second goes on the last block of the last message. The system prompt and context go as `system` text blocks. `CacheLifetime::Minutes` sends `{"type": "ephemeral"}` (five minutes), and `CacheLifetime::Hour` adds `"ttl": "1h"`. A prompt shorter than the model's minimum is sent without caching and without an error. Reads are `cache_read_input_tokens`, and writes are `cache_creation_input_tokens`, of which `cache_creation.ephemeral_1h_input_tokens` were for an hour.
+- **OpenAI.** Caching is automatic. `Request::cacheKey` goes out as `prompt_cache_key`, the same for every turn of one thread, which helps routing. Retention is left to OpenAI's default. Reads are `input_tokens_details.cached_tokens`, and writes are `input_tokens_details.cache_write_tokens`, which newer models charge for.
+- **OpenRouter.** `Request::cacheKey` goes out as `prompt_cache_key`, which OpenRouter uses for sticky routing. For `anthropic/` and `google/` models, which need explicit markers, `cache_control` goes on the last system text block and on the last part of the latest user message. Other models cache on their own. Reads are `prompt_tokens_details.cached_tokens`, and writes are `prompt_tokens_details.cache_write_tokens`.
+- **Custom endpoints** get nothing extra: no key, no markers.
+- **Cost.** `Usage` carries cache reads (`cachedInputTokens`), cache writes (`cacheWriteTokens`) and the one-hour part of the writes (`cacheWriteHourTokens`), all within `inputTokens`. `costOf` prices reads at `Price::cachedInput`, writes at `Price::cacheWrite` and one-hour writes at `Price::cacheWriteHour`, each falling back to the input price. OpenRouter's catalogue gives all three (`input_cache_read`, `input_cache_write`, `input_cache_write_1h`), and its own `usage.cost` still wins when it reports one. The difference from the uncached price is the saving the agent's meter can show.
+- **Privacy.** Nothing new is stored on this machine, and no answer is ever replayed from a local cache. Analytics are unchanged ([ADR 0024](adr/0024-hikari-ai.md)).
+
+Sources, read on 2026-11-02: Anthropic's [prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), OpenAI's [prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching), OpenRouter's [prompt caching](https://openrouter.ai/docs/features/prompt-caching) and its [models list](https://openrouter.ai/api/v1/models) for the price fields.
 
 ## Errors
 
@@ -63,7 +77,7 @@ With no provider, `Providers::stream` fails at once with `NoProvider`. It reads 
 
 ## Tests
 
-- `hikari_application_ai_providers_tests`: role fallback, capabilities, cost, keychain failures, cancellation, removal.
-- `hikari_backends_ai_provider_tests`: a local mock server for each wire, covering streaming split at awkward bytes, tool calls, vision and history encoding, HTTP and in-stream errors, early ends, timeouts, cancellation, catalogues, the key rules and the provider file.
+- `hikari_application_ai_providers_tests`: role fallback, capabilities, cost with cache reads and writes, keychain failures, cancellation, removal.
+- `hikari_backends_ai_provider_tests`: a local mock server for each wire, covering streaming split at awkward bytes, tool calls, vision and history encoding, cache markers and keys on the wire, a stable prefix that is byte-identical across two turns, cache reads and writes in usage, HTTP and in-stream errors, early ends, timeouts, cancellation, catalogues, the key rules and the provider file.
 
 No test talks to a real provider.

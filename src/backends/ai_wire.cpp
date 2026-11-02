@@ -4,6 +4,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+#include <algorithm>
+
 namespace hikari::backends::ai {
 
 namespace {
@@ -31,6 +33,36 @@ void forEach(const app::Message &message, F &&f)
 
 QByteArray compact(const QJsonObject &o) { return QJsonDocument(o).toJson(QJsonDocument::Compact); }
 
+std::vector<app::ToolDefinition> sortedTools(const app::Request &request)
+{
+    std::vector<app::ToolDefinition> tools = request.tools;
+    std::ranges::stable_sort(tools, {}, &app::ToolDefinition::name);
+    return tools;
+}
+
+QJsonObject cacheControl(app::CacheLifetime lifetime)
+{
+    QJsonObject control{{QStringLiteral("type"), QStringLiteral("ephemeral")}};
+    if (lifetime == app::CacheLifetime::Hour)
+        control.insert(QStringLiteral("ttl"), QStringLiteral("1h"));
+    return control;
+}
+
+void markLast(QJsonArray &blocks, const QJsonObject &control)
+{
+    if (blocks.isEmpty())
+        return;
+    QJsonObject last = blocks.last().toObject();
+    last.insert(QStringLiteral("cache_control"), control);
+    blocks.replace(blocks.size() - 1, last);
+}
+
+bool openRouterTakesCacheMarks(const app::Provider &provider, const std::string &model)
+{
+    return provider.preset == app::Preset::OpenRouter &&
+           (model.starts_with("anthropic/") || model.starts_with("google/"));
+}
+
 std::vector<std::pair<QByteArray, QByteArray>> authHeaders(const app::Provider &provider, const QByteArray &key)
 {
     std::vector<std::pair<QByteArray, QByteArray>> headers;
@@ -48,12 +80,22 @@ std::vector<std::pair<QByteArray, QByteArray>> authHeaders(const app::Provider &
     return headers;
 }
 
-QJsonArray chatMessages(const app::Request &request)
+QJsonArray chatMessages(const app::Request &request, bool markCache)
 {
     QJsonArray out;
-    if (!request.system.empty())
+    QJsonArray prefix;
+    for (const std::string &text : {request.system, request.context})
+        if (!text.empty())
+            prefix.append(QJsonObject{{QStringLiteral("type"), QStringLiteral("text")}, {QStringLiteral("text"), q(text)}});
+    if (markCache)
+        markLast(prefix, cacheControl(request.cacheLifetime));
+    for (const QJsonValue &block : prefix) {
+        const QJsonObject b = block.toObject();
         out.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("system")},
-                               {QStringLiteral("content"), q(request.system)}});
+                               {QStringLiteral("content"), b.contains(QStringLiteral("cache_control"))
+                                                               ? QJsonValue(QJsonArray{b})
+                                                               : b.value(QStringLiteral("text"))}});
+    }
     for (const app::Message &message : request.messages) {
         if (message.author == app::Author::Assistant) {
             QString text;
@@ -91,21 +133,35 @@ QJsonArray chatMessages(const app::Request &request)
         if (!content.isEmpty())
             out.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("user")}, {QStringLiteral("content"), content}});
     }
+    if (markCache)
+        for (qsizetype i = out.size() - 1; i >= 0; --i) {
+            QJsonObject m = out[i].toObject();
+            if (m.value(QStringLiteral("role")).toString() != QLatin1String("user"))
+                continue;
+            QJsonArray content = m.value(QStringLiteral("content")).toArray();
+            markLast(content, cacheControl(request.cacheLifetime));
+            m.insert(QStringLiteral("content"), content);
+            out.replace(i, m);
+            break;
+        }
     return out;
 }
 
 QByteArray chatBody(const app::Provider &provider, const app::Request &request)
 {
     QJsonObject body{{QStringLiteral("model"), q(request.model)},
-                     {QStringLiteral("messages"), chatMessages(request)},
+                     {QStringLiteral("messages"), chatMessages(request, openRouterTakesCacheMarks(provider, request.model))},
                      {QStringLiteral("stream"), true},
                      {QStringLiteral("stream_options"), QJsonObject{{QStringLiteral("include_usage"), true}}}};
-    if (provider.preset == app::Preset::OpenRouter)
+    if (provider.preset == app::Preset::OpenRouter) {
         body.insert(QStringLiteral("usage"), QJsonObject{{QStringLiteral("include"), true}});
+        if (!request.cacheKey.empty())
+            body.insert(QStringLiteral("prompt_cache_key"), q(request.cacheKey));
+    }
     if (request.maxOutputTokens)
         body.insert(QStringLiteral("max_tokens"), *request.maxOutputTokens);
     QJsonArray tools;
-    for (const app::ToolDefinition &tool : request.tools)
+    for (const app::ToolDefinition &tool : sortedTools(request))
         tools.append(QJsonObject{{QStringLiteral("type"), QStringLiteral("function")},
                                  {QStringLiteral("function"),
                                   QJsonObject{{QStringLiteral("name"), q(tool.name)},
@@ -116,9 +172,14 @@ QByteArray chatBody(const app::Provider &provider, const app::Request &request)
     return compact(body);
 }
 
-QByteArray responsesBody(const app::Request &request)
+QByteArray responsesBody(const app::Provider &provider, const app::Request &request)
 {
     QJsonArray input;
+    if (!request.context.empty())
+        input.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("developer")},
+                                 {QStringLiteral("content"),
+                                  QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("input_text")},
+                                                         {QStringLiteral("text"), q(request.context)}}}}});
     for (const app::Message &message : request.messages) {
         if (message.author == app::Author::Assistant) {
             for (const app::Part &part : message.parts) {
@@ -159,10 +220,12 @@ QByteArray responsesBody(const app::Request &request)
                      {QStringLiteral("store"), false}};
     if (!request.system.empty())
         body.insert(QStringLiteral("instructions"), q(request.system));
+    if (provider.preset == app::Preset::OpenAI && !request.cacheKey.empty())
+        body.insert(QStringLiteral("prompt_cache_key"), q(request.cacheKey));
     if (request.maxOutputTokens)
         body.insert(QStringLiteral("max_output_tokens"), *request.maxOutputTokens);
     QJsonArray tools;
-    for (const app::ToolDefinition &tool : request.tools)
+    for (const app::ToolDefinition &tool : sortedTools(request))
         tools.append(QJsonObject{{QStringLiteral("type"), QStringLiteral("function")},
                                  {QStringLiteral("name"), q(tool.name)},
                                  {QStringLiteral("description"), q(tool.description)},
@@ -212,17 +275,30 @@ QByteArray anthropicBody(const app::Request &request)
                  message.author == app::Author::User ? QStringLiteral("user") : QStringLiteral("assistant")},
                 {QStringLiteral("content"), content}});
     }
+    const QJsonObject control = cacheControl(request.cacheLifetime);
+    if (!messages.isEmpty()) {
+        QJsonObject last = messages.last().toObject();
+        QJsonArray content = last.value(QStringLiteral("content")).toArray();
+        markLast(content, control);
+        last.insert(QStringLiteral("content"), content);
+        messages.replace(messages.size() - 1, last);
+    }
     QJsonObject body{{QStringLiteral("model"), q(request.model)},
                      {QStringLiteral("max_tokens"), request.maxOutputTokens.value_or(kDefaultMaxTokens)},
                      {QStringLiteral("messages"), messages},
                      {QStringLiteral("stream"), true}};
-    if (!request.system.empty())
-        body.insert(QStringLiteral("system"), q(request.system));
     QJsonArray tools;
-    for (const app::ToolDefinition &tool : request.tools)
+    for (const app::ToolDefinition &tool : sortedTools(request))
         tools.append(QJsonObject{{QStringLiteral("name"), q(tool.name)},
                                  {QStringLiteral("description"), q(tool.description)},
                                  {QStringLiteral("input_schema"), schemaObject(tool.parametersJson)}});
+    QJsonArray system;
+    for (const std::string &text : {request.system, request.context})
+        if (!text.empty())
+            system.append(QJsonObject{{QStringLiteral("type"), QStringLiteral("text")}, {QStringLiteral("text"), q(text)}});
+    markLast(system.isEmpty() ? tools : system, control);
+    if (!system.isEmpty())
+        body.insert(QStringLiteral("system"), system);
     if (!tools.isEmpty())
         body.insert(QStringLiteral("tools"), tools);
     return compact(body);
@@ -264,8 +340,9 @@ protected:
         if (const QJsonObject u = o.value(QStringLiteral("usage")).toObject(); !u.isEmpty()) {
             m_usage.inputTokens = u.value(QStringLiteral("prompt_tokens")).toInteger();
             m_usage.outputTokens = u.value(QStringLiteral("completion_tokens")).toInteger();
-            m_usage.cachedInputTokens =
-                u.value(QStringLiteral("prompt_tokens_details")).toObject().value(QStringLiteral("cached_tokens")).toInteger();
+            const QJsonObject details = u.value(QStringLiteral("prompt_tokens_details")).toObject();
+            m_usage.cachedInputTokens = details.value(QStringLiteral("cached_tokens")).toInteger();
+            m_usage.cacheWriteTokens = details.value(QStringLiteral("cache_write_tokens")).toInteger();
             if (u.value(QStringLiteral("cost")).isDouble())
                 m_usage.reportedCost = u.value(QStringLiteral("cost")).toDouble();
         }
@@ -322,8 +399,9 @@ protected:
             const QJsonObject u = response.value(QStringLiteral("usage")).toObject();
             m_usage.inputTokens = u.value(QStringLiteral("input_tokens")).toInteger();
             m_usage.outputTokens = u.value(QStringLiteral("output_tokens")).toInteger();
-            m_usage.cachedInputTokens =
-                u.value(QStringLiteral("input_tokens_details")).toObject().value(QStringLiteral("cached_tokens")).toInteger();
+            const QJsonObject details = u.value(QStringLiteral("input_tokens_details")).toObject();
+            m_usage.cachedInputTokens = details.value(QStringLiteral("cached_tokens")).toInteger();
+            m_usage.cacheWriteTokens = details.value(QStringLiteral("cache_write_tokens")).toInteger();
             const QString incomplete =
                 response.value(QStringLiteral("incomplete_details")).toObject().value(QStringLiteral("reason")).toString();
             if (incomplete == QLatin1String("max_output_tokens"))
@@ -406,9 +484,14 @@ private:
     {
         if (u.contains(QStringLiteral("input_tokens"))) {
             const qint64 read = u.value(QStringLiteral("cache_read_input_tokens")).toInteger();
-            m_usage.inputTokens = u.value(QStringLiteral("input_tokens")).toInteger() + read +
-                                  u.value(QStringLiteral("cache_creation_input_tokens")).toInteger();
+            const qint64 written = u.value(QStringLiteral("cache_creation_input_tokens")).toInteger();
+            m_usage.inputTokens = u.value(QStringLiteral("input_tokens")).toInteger() + read + written;
             m_usage.cachedInputTokens = read;
+            m_usage.cacheWriteTokens = written;
+            m_usage.cacheWriteHourTokens = u.value(QStringLiteral("cache_creation"))
+                                               .toObject()
+                                               .value(QStringLiteral("ephemeral_1h_input_tokens"))
+                                               .toInteger();
         }
         if (u.contains(QStringLiteral("output_tokens")))
             m_usage.outputTokens = u.value(QStringLiteral("output_tokens")).toInteger();
@@ -488,7 +571,7 @@ HttpCall encodeRequest(const app::Provider &provider, const QByteArray &key, con
         break;
     case app::Wire::Responses:
         call.path = QStringLiteral("/responses");
-        call.body = responsesBody(request);
+        call.body = responsesBody(provider, request);
         break;
     case app::Wire::AnthropicMessages:
         call.path = QStringLiteral("/messages");
@@ -539,6 +622,10 @@ std::vector<app::Model> decodeModels(const QByteArray &body)
                              .output = perMillion(QStringLiteral("completion"))};
             if (pricing.contains(QStringLiteral("input_cache_read")))
                 price.cachedInput = perMillion(QStringLiteral("input_cache_read"));
+            if (pricing.contains(QStringLiteral("input_cache_write")))
+                price.cacheWrite = perMillion(QStringLiteral("input_cache_write"));
+            if (pricing.contains(QStringLiteral("input_cache_write_1h")))
+                price.cacheWriteHour = perMillion(QStringLiteral("input_cache_write_1h"));
             model.price = price;
         }
         models.push_back(std::move(model));

@@ -16,6 +16,7 @@
 #include <QTimer>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <deque>
 #include <functional>
 
@@ -405,7 +406,7 @@ TEST_F(AiProviderTest, AnthropicEncodesVisionToolsAndHistory)
     mock.replies.push_back({.chunks = {sse("message_stop", obj(R"({"type":"message_stop"})"))}});
     stream(app::Wire::AnthropicMessages, fullRequest());
     const QJsonObject body = mock.received.at(0).json();
-    EXPECT_EQ(body.value("system").toString(), "Be brief.");
+    EXPECT_EQ(body.value("system").toArray()[0].toObject().value("text").toString(), "Be brief.");
     EXPECT_EQ(body.value("max_tokens").toInt(), 100);
     const QJsonArray messages = body.value("messages").toArray();
     ASSERT_EQ(messages.size(), 3);
@@ -418,6 +419,189 @@ TEST_F(AiProviderTest, AnthropicEncodesVisionToolsAndHistory)
     EXPECT_EQ(result.value("type").toString(), "tool_result");
     EXPECT_EQ(result.value("tool_use_id").toString(), "call_1");
     EXPECT_EQ(body.value("tools").toArray()[0].toObject().value("input_schema").toObject().value("type").toString(), "object");
+}
+
+namespace {
+
+app::Request cachedTurn(int turn)
+{
+    app::Request r = fullRequest();
+    r.context = "Styles: Default, Sign. 1200 Lines.";
+    r.cacheKey = "thread-7";
+    r.tools.push_back({.name = "add_line", .description = "Adds a Line", .parametersJson = R"({"type":"object"})"});
+    if (turn == 2) {
+        std::ranges::reverse(r.tools);
+        r.messages.push_back({.author = app::Author::Assistant, .parts = {app::Text{"Line 3 is a sign."}}});
+        r.messages.push_back({.author = app::Author::User, .parts = {app::Text{"Time it."}}});
+    }
+    return r;
+}
+
+QByteArray compactValue(const QJsonValue &v)
+{
+    return QJsonDocument(v.isArray() ? QJsonDocument(v.toArray()) : QJsonDocument(v.toObject())).toJson(QJsonDocument::Compact);
+}
+
+QJsonArray withoutCacheMarks(QJsonArray messages)
+{
+    for (qsizetype i = 0; i < messages.size(); ++i) {
+        QJsonObject m = messages[i].toObject();
+        if (m.value("content").isArray()) {
+            QJsonArray content = m.value("content").toArray();
+            for (qsizetype j = 0; j < content.size(); ++j) {
+                QJsonObject block = content[j].toObject();
+                block.remove("cache_control");
+                content.replace(j, block);
+            }
+            m.insert("content", content);
+        }
+        messages.replace(i, m);
+    }
+    return messages;
+}
+
+int cacheMarks(const QByteArray &body) { return static_cast<int>(body.count("\"cache_control\"")); }
+
+QJsonArray firstOf(const QJsonArray &array, qsizetype n)
+{
+    QJsonArray out;
+    for (qsizetype i = 0; i < n && i < array.size(); ++i)
+        out.append(array[i]);
+    return out;
+}
+
+}
+
+TEST_F(AiProviderTest, AnthropicMarksTheStablePrefixAndTheLastTurn)
+{
+    app::Request request = cachedTurn(1);
+    request.cacheLifetime = app::CacheLifetime::Hour;
+    mock.replies.push_back({.chunks = {sse("message_stop", obj(R"({"type":"message_stop"})"))}});
+    stream(app::Wire::AnthropicMessages, request);
+    const QJsonObject body = mock.received.at(0).json();
+    const QJsonObject hour = obj(R"({"type":"ephemeral","ttl":"1h"})");
+    const QJsonArray system = body.value("system").toArray();
+    ASSERT_EQ(system.size(), 2);
+    EXPECT_EQ(system[0].toObject(), obj(R"({"type":"text","text":"Be brief."})"));
+    EXPECT_EQ(system[1].toObject().value("text").toString(), "Styles: Default, Sign. 1200 Lines.");
+    EXPECT_EQ(system[1].toObject().value("cache_control").toObject(), hour);
+    const QJsonArray messages = body.value("messages").toArray();
+    EXPECT_EQ(messages.last().toObject().value("content").toArray().last().toObject().value("cache_control").toObject(), hour);
+    EXPECT_EQ(cacheMarks(mock.received.at(0).body), 2) << "Anthropic allows four";
+
+    app::Request bare = cachedTurn(1);
+    bare.system.clear();
+    bare.context.clear();
+    mock.replies.push_back({.chunks = {sse("message_stop", obj(R"({"type":"message_stop"})"))}});
+    stream(app::Wire::AnthropicMessages, bare);
+    const QJsonObject second = mock.received.at(1).json();
+    EXPECT_FALSE(second.contains("system"));
+    EXPECT_EQ(second.value("tools").toArray().last().toObject().value("cache_control").toObject(),
+              obj(R"({"type":"ephemeral"})"));
+    EXPECT_EQ(cacheMarks(mock.received.at(1).body), 2);
+}
+
+TEST_F(AiProviderTest, TheStablePrefixIsByteIdenticalAcrossTurns)
+{
+    struct Case {
+        app::Wire wire;
+        app::Preset preset;
+        std::string model;
+        QByteArray end;
+    };
+    const Case cases[] = {
+        {app::Wire::AnthropicMessages, app::Preset::Anthropic, "claude", sse("message_stop", obj(R"({"type":"message_stop"})"))},
+        {app::Wire::Responses, app::Preset::OpenAI, "gpt",
+         sse("response.completed", obj(R"({"type":"response.completed","response":{"usage":{}}})"))},
+        {app::Wire::ChatCompletions, app::Preset::OpenRouter, "anthropic/claude",
+         data(obj(R"({"choices":[{"delta":{},"finish_reason":"stop"}]})")) + "data: [DONE]\n\n"},
+    };
+    for (const Case &c : cases) {
+        mock.received.clear();
+        for (const int turn : {1, 2}) {
+            mock.replies.push_back({.chunks = {c.end}});
+            app::Provider p = provider(c.wire, mock);
+            p.preset = c.preset;
+            app::Request r = cachedTurn(turn);
+            r.model = c.model;
+            Streamed run;
+            port.stream(p, kKey, r, [&](const app::Event &e) { run.events.push_back(e); });
+            ASSERT_TRUE(waitFor([&] { return run.done(); }));
+        }
+        ASSERT_EQ(mock.received.size(), 2);
+        const QJsonObject one = mock.received[0].json();
+        const QJsonObject two = mock.received[1].json();
+        SCOPED_TRACE(c.model);
+        EXPECT_EQ(compactValue(one.value("tools")), compactValue(two.value("tools")));
+        EXPECT_EQ(one.value("tools").toArray().size(), 2);
+        if (c.wire == app::Wire::AnthropicMessages) {
+            EXPECT_EQ(compactValue(one.value("system")), compactValue(two.value("system")));
+            const QJsonArray a = withoutCacheMarks(one.value("messages").toArray());
+            const QJsonArray b = withoutCacheMarks(two.value("messages").toArray());
+            EXPECT_EQ(compactValue(a), compactValue(firstOf(b, a.size())));
+        } else if (c.wire == app::Wire::Responses) {
+            EXPECT_EQ(one.value("instructions"), two.value("instructions"));
+            EXPECT_EQ(one.value("prompt_cache_key").toString(), "thread-7");
+            EXPECT_EQ(one.value("prompt_cache_key"), two.value("prompt_cache_key"));
+            const QJsonArray a = one.value("input").toArray();
+            const QJsonArray b = two.value("input").toArray();
+            EXPECT_EQ(a[0].toObject().value("role").toString(), "developer");
+            EXPECT_EQ(compactValue(a), compactValue(firstOf(b, a.size())));
+        } else {
+            EXPECT_EQ(one.value("prompt_cache_key").toString(), "thread-7");
+            const QJsonArray a = one.value("messages").toArray();
+            const QJsonArray b = two.value("messages").toArray();
+            EXPECT_EQ(compactValue(firstOf(a, 2)), compactValue(firstOf(b, 2)));
+            EXPECT_EQ(a[1].toObject().value("content").toArray()[0].toObject().value("cache_control").toObject(),
+                      obj(R"({"type":"ephemeral"})"));
+            EXPECT_EQ(compactValue(withoutCacheMarks(a)), compactValue(firstOf(withoutCacheMarks(b), a.size())));
+        }
+    }
+}
+
+TEST_F(AiProviderTest, CacheMarksGoOnlyWhereTheProviderTakesThem)
+{
+    const auto bodyFor = [&](app::Preset preset, app::Wire wire, const std::string &model) {
+        mock.replies.push_back({.chunks = {data(obj(R"({"choices":[{"delta":{},"finish_reason":"stop"}]})")), "data: [DONE]\n\n"}});
+        app::Provider p = provider(wire, mock);
+        p.preset = preset;
+        app::Request r = cachedTurn(1);
+        r.model = model;
+        Streamed run;
+        port.stream(p, kKey, r, [&](const app::Event &e) { run.events.push_back(e); });
+        EXPECT_TRUE(waitFor([&] { return run.done(); }));
+        return mock.received.last().body;
+    };
+    const QByteArray gemini = bodyFor(app::Preset::OpenRouter, app::Wire::ChatCompletions, "google/gemini-x");
+    EXPECT_EQ(cacheMarks(gemini), 2);
+    const QByteArray gpt = bodyFor(app::Preset::OpenRouter, app::Wire::ChatCompletions, "openai/gpt-x");
+    EXPECT_EQ(cacheMarks(gpt), 0);
+    EXPECT_TRUE(gpt.contains("\"prompt_cache_key\":\"thread-7\""));
+    const QByteArray custom = bodyFor(app::Preset::Custom, app::Wire::ChatCompletions, "anthropic/claude");
+    EXPECT_EQ(cacheMarks(custom), 0);
+    EXPECT_FALSE(custom.contains("prompt_cache_key"));
+    const QByteArray customResponses = bodyFor(app::Preset::Custom, app::Wire::Responses, "gpt");
+    EXPECT_FALSE(customResponses.contains("prompt_cache_key"));
+    EXPECT_EQ(cacheMarks(customResponses), 0);
+}
+
+TEST_F(AiProviderTest, CacheReadsAndWritesComeBackFromEveryWire)
+{
+    mock.replies.push_back({.chunks = {data(obj(R"({"choices":[{"delta":{"content":"a"},"finish_reason":"stop"}]})")),
+                                       data(obj(R"({"choices":[],"usage":{"prompt_tokens":3000,"completion_tokens":5,"prompt_tokens_details":{"cached_tokens":2000,"cache_write_tokens":900}}})")),
+                                       "data: [DONE]\n\n"}});
+    EXPECT_EQ(stream(app::Wire::ChatCompletions).finished().usage,
+              (app::Usage{.inputTokens = 3000, .outputTokens = 5, .cachedInputTokens = 2000, .cacheWriteTokens = 900}));
+
+    mock.replies.push_back({.chunks = {sse("response.completed", obj(R"({"type":"response.completed","response":{"usage":{"input_tokens":4000,"output_tokens":9,"input_tokens_details":{"cached_tokens":3072,"cache_write_tokens":512}}}})"))}});
+    EXPECT_EQ(stream(app::Wire::Responses).finished().usage,
+              (app::Usage{.inputTokens = 4000, .outputTokens = 9, .cachedInputTokens = 3072, .cacheWriteTokens = 512}));
+
+    mock.replies.push_back({.chunks = {sse("message_start", obj(R"({"type":"message_start","message":{"usage":{"input_tokens":50,"cache_read_input_tokens":0,"cache_creation_input_tokens":1800,"cache_creation":{"ephemeral_5m_input_tokens":1500,"ephemeral_1h_input_tokens":300},"output_tokens":1}}})")),
+                                       sse("message_delta", obj(R"({"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":4}})")),
+                                       sse("message_stop", obj(R"({"type":"message_stop"})"))}});
+    EXPECT_EQ(stream(app::Wire::AnthropicMessages).finished().usage,
+              (app::Usage{.inputTokens = 1850, .outputTokens = 4, .cachedInputTokens = 0, .cacheWriteTokens = 1800, .cacheWriteHourTokens = 300}));
 }
 
 TEST_F(AiProviderTest, HttpErrorsCarryTheProvidersMessage)
@@ -595,7 +779,7 @@ TEST_F(AiProviderTest, TheCatalogueReadsCapabilitiesAndPrices)
                             .chunks = {R"({"data":[
         {"id":"vendor/vision","name":"Vision","context_length":200000,
          "architecture":{"input_modalities":["text","image"]},"supported_parameters":["tools","temperature"],
-         "pricing":{"prompt":"0.000003","completion":"0.000015","input_cache_read":"0.0000003"}},
+         "pricing":{"prompt":"0.000003","completion":"0.000015","input_cache_read":"0.0000003","input_cache_write":"0.00000375","input_cache_write_1h":"0.000006"}},
         {"id":"vendor/plain","architecture":{"input_modalities":["text"]},"supported_parameters":[]},
         {"id":"claude-x","display_name":"Claude X","type":"model"},
         {"name":"no id"}]})"}});
@@ -610,6 +794,8 @@ TEST_F(AiProviderTest, TheCatalogueReadsCapabilitiesAndPrices)
     EXPECT_NEAR(models[0].price->input, 3.0, 1e-9);
     EXPECT_NEAR(models[0].price->output, 15.0, 1e-9);
     EXPECT_NEAR(*models[0].price->cachedInput, 0.3, 1e-9);
+    EXPECT_NEAR(*models[0].price->cacheWrite, 3.75, 1e-9);
+    EXPECT_NEAR(*models[0].price->cacheWriteHour, 6.0, 1e-9);
     EXPECT_EQ(models[1].capabilities, (app::Capabilities{.tools = false, .vision = false}));
     EXPECT_EQ(models[1].name, "vendor/plain");
     EXPECT_EQ(models[2].name, "Claude X");
@@ -654,7 +840,7 @@ TEST_F(AiProviderTest, TheConfigFileKeepsEverythingButTheKey)
     app::Providers providers(store, keys, port);
 
     app::Provider p = provider(app::Wire::ChatCompletions, mock);
-    p.models = {{.id = "m1", .name = "M1", .capabilities = app::Capabilities{.tools = true}, .price = app::Price{.input = 1, .output = 2, .cachedInput = 0.5}, .contextTokens = 8000}};
+    p.models = {{.id = "m1", .name = "M1", .capabilities = app::Capabilities{.tools = true}, .price = app::Price{.input = 1, .output = 2, .cachedInput = 0.5, .cacheWrite = 1.25, .cacheWriteHour = 2}, .contextTokens = 8000}};
     p.capabilityOverrides["m2"] = {.tools = false, .vision = true};
     std::optional<std::optional<app::SaveError>> saved;
     providers.add(p, kKey, [&](std::optional<app::SaveError> e) { saved = e; });
