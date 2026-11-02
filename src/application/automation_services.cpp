@@ -210,6 +210,7 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
             return unavailable();
         HostServiceReply out = integers({v->videoFrameShown});
         out.strings = {v->audioFile, v->videoFile, v->keyframesFile};
+        out.numbers = {v->videoZoom};
         return reply(std::move(out));
     }
     case HostService::FileName: {

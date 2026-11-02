@@ -1172,6 +1172,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_audio = std::make_unique<ui::AudioController>(*m_audioSource);
     m_automation->setAudioBox([this]() -> const application::AudioBox * { return m_audio ? &m_audio->box() : nullptr; });
+    m_automation->setProjectSources(
+        [this] {
+            const auto target = m_workspace.editingTarget();
+            const auto media = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+            return media == m_tabMedia.end() ? std::string() : media->second.keyframes.toStdString();
+        },
+        [this] { return m_visualTools ? m_visualTools->videoView().displayScale() : 1.0; });
     {
         const QString cacheDir = !options.audioCacheDir.isEmpty() ? options.audioCacheDir
                                  : !m_settingsFile.isEmpty()

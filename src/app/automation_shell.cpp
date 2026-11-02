@@ -1,5 +1,6 @@
 #include "hikari/app/automation_shell.h"
 
+#include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/karaoke_preview_runner.h"
@@ -57,25 +58,13 @@ public:
     }
     std::optional<std::int64_t> frameFromMs(std::int64_t ms) const override
     {
-        const auto &s = m_video.session();
-        if (s.state() != application::VideoSession::State::Ready)
-            return std::nullopt;
-        int frame = 0;
-        for (int i = 0; i < s.frameCount(); ++i) {
-            const auto start = s.frameStart(i);
-            if (!start || start->microseconds() > ms * 1000)
-                break;
-            frame = i;
-        }
-        return frame;
+        const auto times = frameTimes();
+        return times ? std::optional(times->frameFromMs(ms)) : std::nullopt;
     }
     std::optional<std::int64_t> msFromFrame(std::int64_t frame) const override
     {
-        const auto &s = m_video.session();
-        if (s.state() != application::VideoSession::State::Ready || s.frameCount() == 0)
-            return std::nullopt;
-        const auto start = s.frameStart(static_cast<int>(std::clamp<std::int64_t>(frame, 0, s.frameCount() - 1)));
-        return start ? std::optional<std::int64_t>(start->microseconds() / 1000) : std::nullopt;
+        const auto times = frameTimes();
+        return times ? std::optional(times->msFromFrame(frame)) : std::nullopt;
     }
     std::optional<VideoSize> videoSize() const override
     {
@@ -132,6 +121,12 @@ public:
         Project p;
         p.videoFrameShown = m_video.session().reportedFrame().value_or(0);
         p.videoFile = m_video.session().path();
+        if (const application::AudioBox *box = audioBox ? audioBox() : nullptr; box && box->isOpen())
+            p.audioFile = box->path();
+        if (keyframesFile)
+            p.keyframesFile = keyframesFile();
+        if (videoZoom)
+            p.videoZoom = videoZoom();
         return p;
     }
     std::optional<std::string> fileName() const override
@@ -148,6 +143,21 @@ public:
         if (!box || !box->isOpen())
             return std::nullopt;
         return box->audio();
+    }
+    std::optional<application::AegisubFrameTimes> frameTimes() const
+    {
+        const auto &s = m_video.session();
+        if (s.state() != application::VideoSession::State::Ready)
+            return std::nullopt;
+        std::vector<std::int64_t> starts;
+        starts.reserve(static_cast<std::size_t>(s.frameCount()));
+        for (int i = 0; i < s.frameCount(); ++i) {
+            const auto start = s.frameStart(i);
+            if (!start)
+                return std::nullopt;
+            starts.push_back(start->microseconds() / 1000);
+        }
+        return application::AegisubFrameTimes::fromFrameStarts(std::move(starts));
     }
     // MUST KILL: the video path and frame count stand in for the frame times
     std::string state() const
@@ -172,6 +182,8 @@ public:
     }
 
     std::function<const application::AudioBox *()> audioBox;
+    std::function<std::string()> keyframesFile;
+    std::function<double()> videoZoom;
 
 private:
     ui::VideoController &m_video;
@@ -367,6 +379,13 @@ std::string AutomationShell::hostState() const
 void AutomationShell::setAudioBox(std::function<const application::AudioBox *()> box)
 {
     static_cast<MediaAdapter *>(m_media.get())->audioBox = std::move(box);
+}
+
+void AutomationShell::setProjectSources(std::function<std::string()> keyframesFile, std::function<double()> videoZoom)
+{
+    auto *media = static_cast<MediaAdapter *>(m_media.get());
+    media->keyframesFile = std::move(keyframesFile);
+    media->videoZoom = std::move(videoZoom);
 }
 
 class AutomationShell::Templater final : public application::KaraokeTemplaterPort {

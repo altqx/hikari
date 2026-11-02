@@ -27,6 +27,7 @@ public:
     struct Project {
         std::int64_t videoFrameShown = 0;
         std::string audioFile, videoFile, keyframesFile;
+        double videoZoom = 1;
     };
     // nullopt everywhere: no video (or no audio) open.
     virtual std::optional<std::int64_t> frameFromMs(std::int64_t ms) const = 0;

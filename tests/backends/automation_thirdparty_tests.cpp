@@ -1,3 +1,4 @@
+#include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/backends/lua_script_host.h"
@@ -149,6 +150,24 @@ struct FixedMeasure : app::TextMeasurePort {
     }
 };
 
+// 100 s of 24000/1001 fps video, its times truncated to milliseconds as FFMS2 reports them, shown at frame 96.
+struct FixtureVideo : app::MacroMediaPort {
+    app::AegisubFrameTimes times = [] {
+        std::vector<std::int64_t> starts;
+        for (std::int64_t i = 0; i < 2398; ++i)
+            starts.push_back(i * 1001 / 24);
+        return *app::AegisubFrameTimes::fromFrameStarts(std::move(starts));
+    }();
+    std::optional<std::int64_t> frameFromMs(std::int64_t ms) const override { return times.frameFromMs(ms); }
+    std::optional<std::int64_t> msFromFrame(std::int64_t frame) const override { return times.msFromFrame(frame); }
+    std::optional<VideoSize> videoSize() const override { return VideoSize{1920, 1080, 16, 9}; }
+    std::optional<std::vector<std::int64_t>> keyframes() const override { return std::vector<std::int64_t>{0, 96, 336}; }
+    void frame(std::int64_t, bool, std::function<void(std::optional<Frame>)> reply) override { reply(std::nullopt); }
+    std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override { return std::nullopt; }
+    std::optional<Project> project() const override { return Project{96, "", "", "", 1}; }
+    std::optional<std::string> fileName() const override { return std::nullopt; }
+};
+
 class ThirdPartyCorpus : public ::testing::Test {
 protected:
     static void SetUpTestSuite()
@@ -193,8 +212,10 @@ protected:
         ASSERT_TRUE(cfg.open(QIODevice::WriteOnly));
         cfg.write(R"({"config": {"updaterEnabled": false}})");
         cfg.close();
+        clipboard.value = "fixture clipboard";
         router.setClipboard(&clipboard);
         router.setTextMeasure(&measure);
+        router.setMedia(&video);
         router.setPathContext([this] {
             app::AutomationPathContext paths;
             paths.automationDir = automation.toStdString();
@@ -229,6 +250,7 @@ protected:
     QString automation;
     MemoryClipboard clipboard;
     FixedMeasure measure;
+    FixtureVideo video;
     app::AutomationServiceRouter router;
     QStringList log;
     std::optional<LuaScriptHost::RunOutcome> outcome;
@@ -256,9 +278,28 @@ QString compact(const QJsonValue &v)
     return QString::fromUtf8(QJsonDocument(QJsonArray{v}).toJson(QJsonDocument::Compact));
 }
 
+QJsonArray withoutDrawings(const QJsonArray &events)
+{
+    static const QRegularExpression drawing(QStringLiteral(R"((\\p1[^}]*\})m [^{]*)"));
+    QJsonArray out;
+    for (const auto &value : events) {
+        QJsonObject event = value.toObject();
+        event.insert("text", event.value("text").toString().replace(drawing, QStringLiteral("\\1<drawing>")));
+        out.append(event);
+    }
+    return out;
+}
+
+bool randomDrawings(const QJsonObject &all, const QString &key)
+{
+    return all.value(QStringLiteral("random_drawings")).toObject().value(key).isString();
+}
+
 void compare(const QJsonObject &all, const QString &section, const QString &key, QJsonObject actual)
 {
     actual.remove(QStringLiteral("run"));
+    if (randomDrawings(all, key))
+        actual.insert("events", withoutDrawings(actual.value("events").toArray()));
     const auto want = expected(all, section, key);
     if (!want) {
         std::fprintf(stderr, "%s %s: recorded, not pinned on this platform\n", qPrintable(section), qPrintable(key));
@@ -358,11 +399,19 @@ QString str(const std::string &s) { return QString::fromStdString(s); }
 QJsonArray events(const app::MacroSnapshot &s)
 {
     QJsonArray out;
-    for (const auto &d : s.dialogues)
-        out.append(QJsonObject{{"comment", d.comment}, {"layer", d.layer}, {"start_time", double(d.startMs)},
-                               {"end_time", double(d.endMs)}, {"style", str(d.style)}, {"actor", str(d.actor)},
-                               {"margin_l", d.marginL}, {"margin_r", d.marginR}, {"margin_t", d.marginV},
-                               {"effect", str(d.effect)}, {"text", str(d.text)}});
+    for (const auto &d : s.dialogues) {
+        QJsonObject event{{"comment", d.comment}, {"layer", d.layer}, {"start_time", double(d.startMs)},
+                          {"end_time", double(d.endMs)}, {"style", str(d.style)}, {"actor", str(d.actor)},
+                          {"margin_l", d.marginL}, {"margin_r", d.marginR}, {"margin_t", d.marginV},
+                          {"effect", str(d.effect)}, {"text", str(d.text)}};
+        if (!d.extra.empty()) {
+            QJsonObject extra;
+            for (const auto &[key, value] : d.extra)
+                extra.insert(str(key), str(value));
+            event.insert("extra", extra);
+        }
+        out.append(event);
+    }
     return out;
 }
 
@@ -555,8 +604,10 @@ TEST_F(ThirdPartyCorpus, CaptureProbeRunsTheCorpus)
             const auto pinned = expected(all, QStringLiteral("runs"), key);
             if (!pinned || !pinned->toObject().contains("events"))
                 continue;
-            EXPECT_EQ(compact(r.toObject().value("document").toObject().value("events")),
-                      compact(pinned->toObject().value("events")))
+            QJsonArray events = r.toObject().value("document").toObject().value("events").toArray();
+            if (randomDrawings(all, key))
+                events = withoutDrawings(events);
+            EXPECT_EQ(compact(events), compact(pinned->toObject().value("events")))
                 << key.toStdString() << ": the probe's run and the host's differ";
         }
 }

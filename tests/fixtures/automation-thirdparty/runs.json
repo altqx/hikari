@@ -1,6 +1,6 @@
 {
  "document": "fixture.ass",
- "note": "Macro runs of the L6 third-party corpus on fixture.ass. selection and active are event ordinals (Dialogue and Comment lines, from 1). A dialog entry answers the macro's n-th aegisub.dialog.display: the button by its label (OK or Cancel for the default pair) and the values of the named controls (the others keep their initial values). The rewrite runs each through its host (automation_thirdparty_tests) and, with the capture probe, in both hosts (the probe answers the dialogs itself).",
+ "note": "Macro runs of the L6 third-party corpus on fixture.ass. selection and active are event ordinals (Dialogue and Comment lines, from 1). A dialog entry answers the macro's n-th aegisub.dialog.display: the button by its label (OK or Cancel for the default pair) and the values of the named controls (the others keep their initial values). The clipboard holds \"fixture clipboard\", and a 23.976 fps video is open at frame 96. The rewrite runs each through its host (automation_thirdparty_tests) and, with the capture probe, in both hosts (the probe answers the dialogs itself).",
  "runs": [
   {"script": "ua.Cycles.lua", "macro": "Cycles/Blur Cycle", "selection": [1, 2, 3, 5, 6], "active": 1},
   {"script": "ua.JumpToNext.lua", "macro": "Jump to Next/Style", "selection": [1], "active": 1},
@@ -11,6 +11,26 @@
   {"script": "lyger.LayerIncrement.lua", "macro": "Layer increment", "selection": [1, 2, 3], "active": 1,
    "dialogs": [{"button": "Go", "values": {"updown": "Count down", "int": 2}}]},
   {"script": "ua.MultiLineEditor.lua", "macro": ": Non-GUI macros :/MultiEdit: Reverse", "selection": [1, 2, 3], "active": 1,
-   "dialogs": [{"button": "OK", "values": {"rv": "text"}}]}
+   "dialogs": [{"button": "OK", "values": {"rv": "text"}}]},
+  {"script": "arch.CenterTimes.lua", "macro": "Center Times", "selection": [1, 2, 3], "active": 1},
+  {"script": "arch.ConvertFolds.moon", "macro": "Convert Folds", "selection": [1], "active": 1,
+   "dialogs": [{"button": "Apply", "values": {"foldinfo": "Line Folds: 0:1:1,2:4:0"}}]},
+  {"script": "arch.FocusLines.moon", "macro": "Focus Lines", "selection": [8], "active": 8,
+   "dialogs": [{"button": "OK", "values": {"numlines": 2, "layers": 2}}]},
+  {"script": "arch.Line2Fbf.moon", "macro": "FBF-ifier", "selection": [8], "active": 8},
+  {"script": "arch.NoteBrowser.moon", "macro": "Note Browser/Load notes", "selection": [1], "active": 1,
+   "dialogs": [{"button": "OK", "values": {"notes": "[Alice]\n0:04 timing\n0:09 typo", "mark": true, "inline": true}}]},
+  {"script": "arch.RWTools.lua", "macro": "Rewriting Tools/Prepare Rewrite", "selection": [2], "active": 2},
+  {"script": "arch.SplitSections.moon", "macro": "Split Tag Sections", "selection": [3], "active": 3},
+  {"script": "arch.AegisubChain.moon", "macro": "AegisubChain/Manage Chains", "selection": [1], "active": 1,
+   "dialogs": [{"button": "Save", "values": {}}]},
+  {"script": "arch.DerivePerspTrack.moon", "macro": "Derive Perspective Track/From Outer Quad", "selection": [8], "active": 8},
+  {"script": "arch.FixKFXBoilerplate.moon", "macro": "Fix KFX Boilerplate", "selection": [1], "active": 1},
+  {"script": "arch.GitSigns.moon", "macro": "Git Signs/Clear Markers", "selection": [1], "active": 1},
+  {"script": "arch.PerspectiveMotion.moon", "macro": "Aegisub Perspective-Motion", "selection": [8], "active": 8,
+   "dialogs": [{"button": "OK", "values": {"data": "Adobe After Effects 6.0 Keyframe Data\n\n\tUnits Per Second\t23.976\n\tSource Width\t1920\n\tSource Height\t1080\n\tSource Pixel Aspect Ratio\t1\n\tComp Pixel Aspect Ratio\t1\n\nEffects\tCC Power Pin #1\tCC Power Pin-0002\n\tFrame\tX pixels\tY pixels\n\t0\t600\t300\n\t1\t610\t300\n\t2\t620\t300\n\t3\t630\t300\n\t4\t640\t300\n\nEffects\tCC Power Pin #1\tCC Power Pin-0003\n\tFrame\tX pixels\tY pixels\n\t0\t1000\t300\n\t1\t1010\t300\n\t2\t1020\t300\n\t3\t1030\t300\n\t4\t1040\t300\n\nEffects\tCC Power Pin #1\tCC Power Pin-0004\n\tFrame\tX pixels\tY pixels\n\t0\t600\t500\n\t1\t610\t500\n\t2\t620\t500\n\t3\t630\t500\n\t4\t640\t500\n\nEffects\tCC Power Pin #1\tCC Power Pin-0005\n\tFrame\tX pixels\tY pixels\n\t0\t1000\t500\n\t1\t1010\t500\n\t2\t1020\t500\n\t3\t1030\t500\n\t4\t1040\t500\n\nEnd of Keyframe Data\n"}}]},
+  {"script": "arch.Resample.moon", "macro": "Resample Perspective", "selection": [8], "active": 8,
+   "dialogs": [{"button": "OK", "values": {"srcresx": 1280, "srcresy": 720}}]},
+  {"script": "arch.TimingBinds.lua", "macro": "Timing Binds/Snap Beginning to Frame", "selection": [2], "active": 2}
  ]
 }

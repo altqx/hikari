@@ -85,6 +85,8 @@ public:
     std::string hostState() const;
     // What aegisub.get_frequency_peaks and aegisub.get_audio_selection read; null: none.
     void setAudioBox(std::function<const application::AudioBox *()> box);
+    // What project_properties reads as keyframes_file and video_zoom.
+    void setProjectSources(std::function<std::string()> keyframesFile, std::function<double()> videoZoom);
     // QuietError: an error line a message box already reports.
     enum class LogLine { Notice, Quiet, QuietError };
     void setLog(std::function<void(const QString &, LogLine)> log) { m_logLine = std::move(log); }

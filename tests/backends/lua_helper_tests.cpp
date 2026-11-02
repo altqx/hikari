@@ -844,6 +844,7 @@ struct FakeServices {
             case HostService::ProjectProperties:
                 out.integers = {12};
                 out.strings = {"a.wav", "v.mkv", "k.txt"};
+                out.numbers = {1.5};
                 break;
             case HostService::FileName: out.strings = {"ep1.ass"}; break;
             case HostService::DecodePath: out.strings = {"/home/u/" + r.strings.at(0).substr(6)}; break;
@@ -904,9 +905,9 @@ TEST_F(LuaHelper, MediaServicesAnswerInTheLegacyShapes)
     EXPECT_EQ(run.log[1], "640,360,2,true");
     EXPECT_EQ(run.log[2], "3,24");
     EXPECT_EQ(run.log[3], "1000,2000");
-    EXPECT_EQ(run.log[4], "12,v.mkv,a.wav,k.txt,,1,,");
+    EXPECT_EQ(run.log[4], "12,v.mkv,a.wav,k.txt,,1.5,,");
     EXPECT_EQ(run.log[5], "ep1.ass,/home/u/x");
-    EXPECT_EQ(run.log[6], QStringLiteral("2,1,%1,&H102030&,nil").arg(0x30 * 65536 + 0x20 * 256 + 0x10));
+    EXPECT_EQ(run.log[6], "2,1,48,&H102030&,nil");
     for (const auto &r : services.requests) {
         EXPECT_EQ(r.script, fixture("services.lua").toStdString());
         EXPECT_EQ(r.run, services.requests.front().run);
@@ -915,6 +916,16 @@ TEST_F(LuaHelper, MediaServicesAnswerInTheLegacyShapes)
     using hikari::application::HostService;
     EXPECT_EQ(services.requests.back().service, HostService::Frame);
     EXPECT_EQ(services.requests.back().integers, (std::vector<std::int64_t>{3, 1}));
+}
+
+TEST_F(LuaHelper, VersionAndFrameDataMatchTheFork)
+{
+    FakeServices services;
+    auto host = load(fixture("services.lua"), services.handler());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Fork API"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, (QStringList{"3.5.1,3,5,1,9914", "48,32,16", "userdata,8,false,16,32,48,64"}));
 }
 
 TEST_F(LuaHelper, ScriptResolutionAsksTheHostWhileItIsMissing)
@@ -1361,9 +1372,9 @@ TEST_F(LuaHelper, NativePreloadsMatchTheLegacyModules)
     EXPECT_EQ(logOf("Unicode"), (QStringList{QStringLiteral("STRASSE,àéî,strasse"), "3,26085"}));
     EXPECT_EQ(logOf("Lpeg"), (QStringList{"4,0.10"}));
     EXPECT_EQ(logOf("Luabins"), (QStringList{"true,1,two,3"}));
-    // The bundled lfs.moon wraps mkdir, touch and rmdir in tonumber(), which turns their bool into nil.
-    EXPECT_EQ(logOf("Lfs"), (QStringList{"nil,nil", "directory,nil", "nil,nil", "file,0,nil", "a.txt", "nil,nil",
-                                         "nil,nil"}));
+    EXPECT_EQ(logOf("Lfs"), (QStringList{"true", "directory,nil", "true", "file,0,nil", "a.txt", "nil,nil",
+                                         "2,nil,string", "true,function", "true"}));
+    EXPECT_EQ(logOf("Util"), (QStringList{"true,true,true,true,1"}));
 }
 
 TEST_F(LuaHelper, MoonScriptMacrosLoadAndMapErrorLines)
@@ -1856,6 +1867,47 @@ TEST_F(LuaHelper, SharedIncludesAreSearchedInOrder)
     ASSERT_EQ(host.state(), LuaScriptHost::State::Ready) << host.lastError().toStdString();
     EXPECT_EQ(host.info().name, "user,depctrl");
     EXPECT_EQ(host.info().description, "user include,table");
+}
+
+TEST_F(LuaHelper, IncludeAndRequireFailuresNameTheFile)
+{
+    QTemporaryDir scripts, include;
+    ASSERT_TRUE(scripts.isValid() && include.isValid());
+    const auto write = [](const QString &path, const QByteArray &text) {
+        QFile file(path);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        file.write(text);
+    };
+    write(scripts.filePath(QStringLiteral("broken.lua")), "local = 1\n");
+    write(scripts.filePath(QStringLiteral("raises.lua")), "error('boom')\n");
+    write(scripts.filePath(QStringLiteral("cancels.lua")), "aegisub.cancel()\n");
+    write(include.filePath(QStringLiteral("brokenmod.lua")), "local = 1\n");
+    const QString script = scripts.filePath(QStringLiteral("includes.lua"));
+    write(script, "script_name = 'Includes'\n"
+                  "aegisub.register_macro('Broken include', '', function() include('broken.lua') end)\n"
+                  "aegisub.register_macro('Raising include', '', function() include('raises.lua') end)\n"
+                  "aegisub.register_macro('Cancelling include', '', function() include('cancels.lua') end)\n"
+                  "aegisub.register_macro('Broken module', '', function() require('brokenmod') end)\n");
+    auto host = load(script, {}, QStringList{include.path(), QStringLiteral(HIKARI_LUA_INCLUDE)}.join(QLatin1Char('\n')));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+
+    ASSERT_TRUE(runToEnd(*host, "Broken include"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(QStringLiteral("Error loading Lua include \"broken.lua\":\n"))) << run.message.toStdString();
+    EXPECT_TRUE(run.message.contains(QStringLiteral("'<name>' expected near '='"))) << run.message.toStdString();
+
+    ASSERT_TRUE(runToEnd(*host, "Raising include"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(QStringLiteral("Error running Lua include \"raises.lua\":\n"))) << run.message.toStdString();
+    EXPECT_TRUE(run.message.contains(QStringLiteral("boom"))) << run.message.toStdString();
+
+    ASSERT_TRUE(runToEnd(*host, "Cancelling include"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Cancelled) << run.message.toStdString();
+
+    ASSERT_TRUE(runToEnd(*host, "Broken module"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(QStringLiteral("Error loading Lua module \""))) << run.message.toStdString();
+    EXPECT_TRUE(run.message.contains(QStringLiteral("brokenmod.lua\":\n"))) << run.message.toStdString();
 }
 
 TEST_F(LuaHelper, StockModulesLoadFromTheShippedInclude)

@@ -163,6 +163,48 @@
      "sha256": "7a688a5b58c76519007e58011d8cdbf65200808a4abe63b96fb7bc241108518f"
     },
     {
+     "path": "macros/arch.AegisubChain.moon",
+     "role": "script",
+     "install": "Autoload/arch.AegisubChain.moon",
+     "sha256": "194b040d9b830e378c481ee3abf44ea5ee3e82565d70ef98c2d06234be44d0eb"
+    },
+    {
+     "path": "macros/arch.DerivePerspTrack.moon",
+     "role": "script",
+     "install": "Autoload/arch.DerivePerspTrack.moon",
+     "sha256": "4658c47e34673c3555718fb268049c3de7127b2539eee3048738b2e3b8fdd04f"
+    },
+    {
+     "path": "macros/arch.FixKFXBoilerplate.moon",
+     "role": "script",
+     "install": "Autoload/arch.FixKFXBoilerplate.moon",
+     "sha256": "9612f277140bf938bf6dedaa77aed5ec4fb01cb37d4bc781be06ee3284fc3fcf"
+    },
+    {
+     "path": "macros/arch.GitSigns.moon",
+     "role": "script",
+     "install": "Autoload/arch.GitSigns.moon",
+     "sha256": "d97a9fc7a3303564ca8eea3c5c4bb23cc733400c539f95f8d1f72bc46426b663"
+    },
+    {
+     "path": "macros/arch.PerspectiveMotion.moon",
+     "role": "script",
+     "install": "Autoload/arch.PerspectiveMotion.moon",
+     "sha256": "097ea487b97f2c7548388ce9fb5219bd99e4bdf26fa1d3192c321fd1a401b523"
+    },
+    {
+     "path": "macros/arch.Resample.moon",
+     "role": "script",
+     "install": "Autoload/arch.Resample.moon",
+     "sha256": "bd82546a20774b9457df025b5fd04996b069d4a14d715970f6c05e6679719b5d"
+    },
+    {
+     "path": "macros/arch.TimingBinds.lua",
+     "role": "script",
+     "install": "Autoload/arch.TimingBinds.lua",
+     "sha256": "25962e3d95b51db4c31e847b3375aabef6cf391b2c4bd9d3529206c56740bf14"
+    },
+    {
      "path": "modules/arch/Math.moon",
      "role": "module",
      "install": "Include/arch/Math.moon",
