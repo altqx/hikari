@@ -3744,7 +3744,7 @@ private slots:
         QVERIFY(box);
         QTRY_VERIFY(box->property("visible").toBool());
         QCOMPARE(box->property("title").toString(), QStringLiteral("Rename font catalogue"));
-        QCOMPARE(box->property("text").toString(), QStringLiteral("A catalog named “B” already exists."));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("A catalogue named “B” already exists."));
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!box->property("visible").toBool());
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
@@ -3776,7 +3776,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
         QTRY_VERIFY(box->property("visible").toBool());
         QCOMPARE(box->property("title").toString(), QStringLiteral("Delete font catalogue"));
-        QCOMPARE(box->property("text").toString(), QStringLiteral("Delete the catalog “Latin”?"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Delete the catalogue “Latin”?"));
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QCOMPARE(catalogs.catalogNames(), QStringList{"Latin"});
         QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
@@ -3813,7 +3813,7 @@ private slots:
         QVERIFY(review);
         QTRY_VERIFY(review->property("visible").toBool());
         QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogues"));
-        QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogs in “more-catalogs.txt” already exist."));
+        QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogues in “more-catalogs.txt” already exist."));
         QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalog"));
         const QVariantList rows = review->property("rows").toList();
         QCOMPARE(rows.size(), 1);
@@ -3844,13 +3844,13 @@ private slots:
         QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"a (2)"});
         QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 3);
         QCOMPARE(catalogs.catalogSize(QStringLiteral("B")), 1);
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 2 font catalogs|From more-catalogs.txt: 1 new, 1 renamed."));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogues|Loaded 2 font catalogues|From more-catalogs.txt: 1 new, 1 renamed."));
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
         QTRY_VERIFY(review->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
         QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 4);
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 1 font catalog|From more-catalogs.txt: 1 merged."));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogues|Loaded 1 font catalogue|From more-catalogs.txt: 1 merged."));
         const QString other = catalogFile("other-catalogs.txt", "B={\n\tArial\n}\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
         QTRY_VERIFY(review->property("visible").toBool());
@@ -3875,13 +3875,13 @@ private slots:
         catalogs.setFontsInCatalog(QStringLiteral("B"), {QStringLiteral("Tahoma")}, false);
         const QString empty = catalogFile("no-catalogs.txt", "nothing here\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(empty))));
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|The file holds no font catalog.|no-catalogs.txt"));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogues|The file holds no font catalogue.|no-catalogs.txt"));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D"}));
         const QString cased = catalogFile("cased-catalogs.txt", "N={\n\tArial\n}\nn={\n\tTahoma\n}\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(cased))));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D", "N"}));
         QCOMPARE(catalogs.catalogSize(QStringLiteral("N")), 2);
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 1 font catalog|From cased-catalogs.txt: 1 new."));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogues|Loaded 1 font catalogue|From cased-catalogs.txt: 1 new."));
         window->setProperty("show", 1);
         for (const QString &name : catalogs.catalogNames())
             catalogs.removeCatalog(name);
@@ -7297,7 +7297,7 @@ private slots:
         QTRY_COMPARE(styles.documentStyles(), QStringList{QStringLiteral("Sign")});
         const QVariantMap toast = toasts->property("entries").toList().value(0).toMap();
         QCOMPARE(toast.value(QStringLiteral("title")).toString(), QStringLiteral("Deleted 2 unused styles"));
-        QCOMPARE(toast.value(QStringLiteral("text")).toString(), QStringLiteral("Default, Alpha\nCtrl+Z puts them back."));
+        QCOMPARE(toast.value(QStringLiteral("text")).toString(), QStringLiteral("Default, Alpha\nUndo puts them back."));
         QVERIFY(toast.value(QStringLiteral("details")).toString().contains(QStringLiteral("Styles deleted:\nDefault\nAlpha\n")));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(styles.documentStyles().size(), 3);
@@ -7315,7 +7315,7 @@ private slots:
         QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("SY1 show"));
         QVERIFY(QMetaObject::invokeMethod(field("deleteCatalog"), "click"));
         QTRY_VERIFY(box() && box()->isVisible());
-        QCOMPARE(box()->property("text").toString(), QStringLiteral("Delete the catalog “SY1 show”?"));
+        QCOMPARE(box()->property("text").toString(), QStringLiteral("Delete the catalogue “SY1 show”?"));
         QCOMPARE(box()->property("defaultButton").value<QObject *>()->objectName(), QStringLiteral("messageBoxChoice_cancel"));
         answer("delete");
         QVERIFY(!styles.catalogs().contains(QStringLiteral("SY1 show")));
@@ -7409,7 +7409,7 @@ private slots:
             if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String("lists-catalog.ass"))
                 application->selectTab(i);
         QTRY_VERIFY(box() && box()->isVisible());
-        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The file shown now uses the catalog “SY1 other”."));
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The file shown now uses the catalogue “SY1 other”."));
         answer("apply");
         QCOMPARE(styles.catalog(), QStringLiteral("SY1 other"));
         QCOMPARE(styles.catalogStore().find(u8"SY1 from", u8"Sign")->fontsize, std::u8string(u8"77"));
@@ -7595,7 +7595,7 @@ private slots:
         application->openSettingsDialog();
         QCOMPARE(styles.catalog(), QStringLiteral("SY1 b"));
         QTRY_VERIFY(box() && box()->isVisible());
-        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The catalog “SY1 b” is shown now; the changes go to “SY1 a”."));
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The catalogue “SY1 b” is shown now; the changes go to “SY1 a”."));
         answer("apply");
         QCOMPARE(styles.catalogStore().find(u8"SY1 a", u8"Sign")->fontsize, std::u8string(u8"66"));
         QCOMPARE(styles.catalogStore().find(u8"SY1 b", u8"Sign")->fontsize, std::u8string(u8"41"));
