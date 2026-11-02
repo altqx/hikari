@@ -1664,12 +1664,14 @@ ApplicationWindow {
                 }
             }
             ShellMenu {
+                iconRole: "shift-times"
                 objectName: "shiftFramesToVideoMenu"
                 title: qsTr("Shift by frames to video")
                 enabled: root.video.hasVideo && root.shell.hasEditingTarget
                 ShellMenuItem {
                     command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"
                     help: qsTr("Shifts the selected lines by whole frames so the active line starts on the video frame")
+                    iconRole: "time-offset-start"
                     objectName: "shiftFramesToVideoStartMenuItem"
                     action: Action {
                         id: shiftFramesToVideoStartAction
@@ -1681,6 +1683,7 @@ ApplicationWindow {
                 ShellMenuItem {
                     command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"
                     help: qsTr("Shifts the selected lines by whole frames so the active line ends on the video frame")
+                    iconRole: "time-offset-end"
                     objectName: "shiftFramesToVideoEndMenuItem"
                     action: Action {
                         id: shiftFramesToVideoEndAction
@@ -1692,6 +1695,7 @@ ApplicationWindow {
                 ShellMenuItem {
                     command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START"
                     help: qsTr("Shifts the active line and every line after it by whole frames so the active line starts on the video frame")
+                    iconRole: "time-offset-start"
                     objectName: "shiftFollowingFramesToVideoStartMenuItem"
                     action: Action {
                         id: shiftFollowingFramesToVideoStartAction
@@ -1703,6 +1707,7 @@ ApplicationWindow {
                 ShellMenuItem {
                     command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END"
                     help: qsTr("Shifts the active line and every line after it by whole frames so the active line ends on the video frame")
+                    iconRole: "time-offset-end"
                     objectName: "shiftFollowingFramesToVideoEndMenuItem"
                     action: Action {
                         id: shiftFollowingFramesToVideoEndAction
@@ -1925,6 +1930,7 @@ ApplicationWindow {
             ShellMenuItem {
                 command: "GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"
                 help: qsTr("Gives the active line the audio selection and ends the line before it where the selection starts")
+                iconRole: "join-lines"
                 objectName: "joinPreviousAudioSelectionMenuItem"
                 action: Action {
                     id: joinPreviousAudioSelectionAction
