@@ -3848,10 +3848,6 @@ Failed to copy %2 fonts.</source>
         <translation>มี HikariSub 0.0.x ติดตั้งอยู่ในคอมพิวเตอร์นี้ จะไม่มีการเปลี่ยนแปลงใดๆ ในโปรแกรมนั้น</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>ภายหลัง: ไฟล์ › นำเข้าการตั้งค่ารุ่นเดิม…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>นำเข้าการตั้งค่าเดิมของฉัน</translation>
     </message>
@@ -3866,10 +3862,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>ตั้งค่าใหม่ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>เริ่มจากค่าเริ่มต้นของ HikariSub ไฟล์ › นำเข้าการตั้งค่ารุ่นเดิม… ยังนำการตั้งค่าเดิมมาใช้ภายหลังได้</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -3966,6 +3958,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>วิดีโอขนาดใหญ่พร้อมเครื่องมือภาพและแผงสไตล์</translation>
+    </message>
+    <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>ภายหลัง: การตั้งค่า › ทั่วไป › นำเข้าการตั้งค่ารุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>เริ่มจากค่าเริ่มต้นของ HikariSub การตั้งค่า › ทั่วไป › นำเข้าการตั้งค่ารุ่นเดิม… ยังนำการตั้งค่าเดิมมาใช้ภายหลังได้</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -5955,6 +5955,10 @@ What would you like to do?</source>
         <translation>เริ่มต้นใช้งาน</translation>
     </message>
     <message>
+        <source>Import legacy settings…</source>
+        <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -6611,10 +6615,6 @@ What would you like to do?</source>
     <message>
         <source>Open keyframes</source>
         <translation>เปิดคีย์เฟรม</translation>
-    </message>
-    <message>
-        <source>Import legacy settings...</source>
-        <translation>นำเข้าการตั้งค่ารุ่นเดิม...</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -8945,6 +8945,26 @@ removing audio cache files.</source>
     <message>
         <source>Import legacy hotkeys…</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>Legacy</source>
+        <translation>รุ่นเดิม</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>ย้อนการนำเข้าครั้งล่าสุด…</translation>
+    </message>
+    <message>
+        <source>Script hotkeys</source>
+        <translation>ปุ่มลัดสคริปต์</translation>
     </message>
     <message>
         <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>

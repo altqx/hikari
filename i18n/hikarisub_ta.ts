@@ -3881,10 +3881,6 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub 0.0.x இந்தக் கணினியில் நிறுவப்பட்டுள்ளது. அதில் எதுவும் மாற்றப்படாது.</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>பின்னர்: கோப்பு › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>எனது பழைய அமைப்புகளை இறக்குமதி செய்</translation>
     </message>
@@ -3899,10 +3895,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>புதிதாக அமை</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub இன் இயல்புநிலைகளிலிருந்து தொடங்கு. கோப்பு › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்… மூலம் பின்னரும் அவற்றைக் கொண்டுவரலாம்.</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -3999,6 +3991,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>காட்சிக் கருவிகள் மற்றும் பாணிகள் பலகத்துடன் பெரிய வீடியோ.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>பின்னர்: அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>HikariSub இன் இயல்புநிலைகளிலிருந்து தொடங்கு. அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்… மூலம் பின்னரும் அவற்றைக் கொண்டுவரலாம்.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -5992,6 +5992,10 @@ What would you like to do?</source>
         <translation>தொடங்குதல்</translation>
     </message>
     <message>
+        <source>Import legacy settings…</source>
+        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -6650,10 +6654,6 @@ What would you like to do?</source>
     <message>
         <source>Open keyframes</source>
         <translation>கீஃப்ரேம்களைத் திறக்கவும்</translation>
-    </message>
-    <message>
-        <source>Import legacy settings...</source>
-        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்...</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -8995,6 +8995,26 @@ removing audio cache files.</source>
     <message>
         <source>Import legacy hotkeys…</source>
         <translation>பழைய குறுக்குவிசைகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Legacy</source>
+        <translation>பழையது</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>கடைசி இறக்குமதியைத் திரும்பப் பெறு…</translation>
+    </message>
+    <message>
+        <source>Script hotkeys</source>
+        <translation>ஸ்கிரிப்ட் குறுக்குவிசைகள்</translation>
     </message>
     <message>
         <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>

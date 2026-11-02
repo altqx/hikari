@@ -3848,10 +3848,6 @@ Failed to copy %2 fonts.</source>
         <translation>이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>나중에: 파일 › 이전 버전 설정 가져오기…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>이전 설정 가져오기</translation>
     </message>
@@ -3866,10 +3862,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>처음부터 설정</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub의 기본값으로 시작합니다. 나중에 파일 › 이전 버전 설정 가져오기…로 가져올 수도 있습니다.</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -3966,6 +3958,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>큰 영상 화면에 시각 도구와 스타일 패널을 함께 둡니다.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>나중에: 설정 › 일반 › 이전 버전 설정 가져오기…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>HikariSub의 기본값으로 시작합니다. 나중에 설정 › 일반 › 이전 버전 설정 가져오기…로 가져올 수도 있습니다.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -5955,6 +5955,10 @@ What would you like to do?</source>
         <translation>시작하기</translation>
     </message>
     <message>
+        <source>Import legacy settings…</source>
+        <translation>이전 버전 설정 가져오기…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -6611,10 +6615,6 @@ What would you like to do?</source>
     <message>
         <source>Open keyframes</source>
         <translation>키 프레임 열기</translation>
-    </message>
-    <message>
-        <source>Import legacy settings...</source>
-        <translation>이전 버전 설정 가져오기...</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -8945,6 +8945,26 @@ removing audio cache files.</source>
     <message>
         <source>Import legacy hotkeys…</source>
         <translation>이전 버전 단축키 가져오기…</translation>
+    </message>
+    <message>
+        <source>Legacy</source>
+        <translation>이전 버전</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>이전 버전 설정 가져오기…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>마지막 가져오기 되돌리기…</translation>
+    </message>
+    <message>
+        <source>Script hotkeys</source>
+        <translation>스크립트 단축키</translation>
     </message>
     <message>
         <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>

@@ -2412,7 +2412,7 @@
    "legacy": [],
    "surfaces": [
     "style-manager",
-    "menu:file"
+    "settings-dialog"
    ]
   },
   {
