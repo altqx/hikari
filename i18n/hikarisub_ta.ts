@@ -1658,7 +1658,7 @@ Output device: %2</source>
         <translation>வசன வரிகளை வீடியோவுக்கு ஏற்ப மறுமாதிரியாக்கவா? வசன வரிகள் › வசன வரிகளை மறுமாதிரியாக்கு மூலம் பின்னரும் இதைச் செய்யலாம்.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
@@ -2885,7 +2885,7 @@ Should not exceed 15 characters per second</source>
         <translation>உங்களுடையவற்றின் அதே எழுத்துருக்களைக் கொண்டவை அப்படியே விடப்படும்.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
@@ -8769,7 +8769,7 @@ removing audio cache files.</source>
         <translation>பாணி</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
@@ -9104,7 +9104,7 @@ and will be changed to the default</source>
 அது இயல்புநிலைக்கு மாற்றப்படும்</translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>catalogue for style</source>
         <translation>பாணிக்கான பட்டியல்</translation>
     </message>
     <message>
@@ -11682,7 +11682,7 @@ because it was edited.</source>
         <translation>பாணிகளை வடிகட்டு</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
@@ -12054,7 +12054,7 @@ Styles deleted:
         <translation>இந்தப் பாணியுள்ள வரிகளைத் தேர்ந்தெடு</translation>
     </message>
     <message>
-        <source>Copy to the catalog…</source>
+        <source>Copy to the catalogue…</source>
         <translation>பட்டியலுக்கு நகலெடு…</translation>
     </message>
     <message>

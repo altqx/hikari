@@ -1648,7 +1648,7 @@ Output device: %2</source>
         <translation>เปลี่ยนความละเอียดของคำบรรยายให้ตรงกับวิดีโอหรือไม่? ทำภายหลังได้ด้วยคำบรรยาย › เปลี่ยนความละเอียดของคำบรรยาย</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
@@ -2862,7 +2862,7 @@ Should not exceed 15 characters per second</source>
         <translation>แคตตาล็อกที่มีแบบอักษรเหมือนของคุณจะคงไว้ตามเดิม</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
@@ -8719,7 +8719,7 @@ removing audio cache files.</source>
         <translation>สไตล์</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
@@ -9051,7 +9051,7 @@ and will be changed to the default</source>
 และจะถูกเปลี่ยนเป็นค่าเริ่มต้น</translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>catalogue for style</source>
         <translation>แคตตาล็อกของสไตล์</translation>
     </message>
     <message>
@@ -11610,7 +11610,7 @@ because it was edited.</source>
         <translation>กรองสไตล์</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
@@ -11980,7 +11980,7 @@ Styles deleted:
         <translation>เลือกบรรทัดที่ใช้สไตล์นี้</translation>
     </message>
     <message>
-        <source>Copy to the catalog…</source>
+        <source>Copy to the catalogue…</source>
         <translation>คัดลอกไปยังแคตตาล็อก…</translation>
     </message>
     <message>

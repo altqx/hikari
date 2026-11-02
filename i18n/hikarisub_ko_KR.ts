@@ -1648,7 +1648,7 @@ Output device: %2</source>
         <translation>자막을 영상 해상도에 맞게 변경하시겠습니까? 나중에 자막 › 자막 해상도 변경에서도 할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
@@ -2862,7 +2862,7 @@ Should not exceed 15 characters per second</source>
         <translation>내 목록과 글꼴이 같은 목록은 그대로 둡니다.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
@@ -8719,7 +8719,7 @@ removing audio cache files.</source>
         <translation>스타일</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
@@ -9051,7 +9051,7 @@ and will be changed to the default</source>
 기본값으로 변경됩니다</translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>catalogue for style</source>
         <translation>스타일 목록</translation>
     </message>
     <message>
@@ -11610,7 +11610,7 @@ because it was edited.</source>
         <translation>스타일 필터</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
@@ -11980,7 +11980,7 @@ Styles deleted:
         <translation>이 스타일을 사용하는 줄 선택</translation>
     </message>
     <message>
-        <source>Copy to the catalog…</source>
+        <source>Copy to the catalogue…</source>
         <translation>목록에 복사…</translation>
     </message>
     <message>

@@ -8,7 +8,6 @@ HikariSub.Audio	Volume: %1\nOutput device: %2	title-case	pending #596 Menus
 HikariSub.Automation	Filter the run's log	quotes	pending #596 Panels
 HikariSub.Automation	Save the run's log	quotes	pending #596 Panels
 HikariSub.Automation	The script's process ended. Reload to start it again; its macro is not rerun.	quotes	pending #596 Panels
-HikariSub.Conversion	Catalog	spelling	pending #596 Settings
 HikariSub.Documents	Subtitle file 	whitespace	pending #596 Menus
 HikariSub.Editor	Bottom-center	spelling	pending #596 Menus
 HikariSub.Editor	Center	spelling	pending #596 Menus
@@ -28,7 +27,6 @@ HikariSub.Editor	Insert Tag at text beginning	title-case	pending #596 Grid and L
 HikariSub.Editor	End is before Start.	title-case	pending #596 Grid and Line editor
 HikariSub.Editor	This document can't be saved here.	quotes	pending #596 Grid and Line editor
 HikariSub.Editor	The document can't be saved right now.	quotes	pending #596 Grid and Line editor
-HikariSub.Fonts	Catalog	spelling	pending #596 Settings
 HikariSub.Fonts	Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.	spelling	the folder on disk is named catalogs
 HikariSub.Fonts	fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.	spelling	the folder on disk is named catalogs
 HikariSub.GettingStarted	The system’s	leading-the	pending #596 Settings
@@ -68,11 +66,9 @@ HikariSub.Options	Screen size draws subtitles at the size the picture takes on s
 HikariSub.Options	Don't warn about a resolution mismatch	quotes	pending #596 Settings
 HikariSub.Options	Don't play after changing the line	quotes	pending #596 Settings
 HikariSub.Options	Merge every "n" with the previous syllable	quotes	pending #596 Settings
-HikariSub.Options	Catalog	spelling	pending #596 Settings
 HikariSub.Options	Filtering mode:	colon	pending #596 Settings
 HikariSub.Options	Choose a legacy Hotkeys.txt	title-case	pending #596 Settings
 HikariSub.Options	Put files .dic and .aff to "Dictionary" folder	quotes	pending #596 Settings
-HikariSub.Options	catalog for style	spelling	pending #596 Settings
 HikariSub.Options	Border color	spelling	pending #596 Menus
 HikariSub.Reports	Nothing is sent until you press Send report	title-case	names the Send report button
 HikariSub.Reports	The crash report could not be sent	leading-the	pending #596 Menus
@@ -93,13 +89,11 @@ HikariSub.Spelling	Grammar check no longer uses its %n rules. Turn it back on in
 HikariSub.Spelling	Ignore All	title-case	pending #596 Panels
 HikariSub.Spelling	Error. Word "%1" was not added.	quotes	pending #596 Menus
 HikariSub.Styles	Create it from Default and edit it?	title-case	Default is the style’s name
-HikariSub.Styles	Catalog	spelling	pending #596 Settings
 HikariSub.Styles	238 - Central European (Polish)	title-case	the ASS encoding’s name
 HikariSub.Styles	the current line's style	quotes	pending #596 Panels
 HikariSub.Styles	the current line's style	leading-the	pending #596 Panels
 HikariSub.Styles	The current line's style	quotes	pending #596 Panels
 HikariSub.Styles	The current line's style	leading-the	pending #596 Panels
-HikariSub.Styles	Copy to the catalog…	spelling	pending #596 Panels
 HikariSub.TagList	Primary color	spelling	pending #596 Menus
 HikariSub.TagList	Border color	spelling	pending #596 Menus
 HikariSub.TagList	Shadow color	spelling	pending #596 Menus

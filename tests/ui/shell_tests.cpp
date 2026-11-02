@@ -3814,7 +3814,7 @@ private slots:
         QTRY_VERIFY(review->property("visible").toBool());
         QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogues"));
         QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogues in “more-catalogs.txt” already exist."));
-        QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalog"));
+        QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalogue"));
         const QVariantList rows = review->property("rows").toList();
         QCOMPARE(rows.size(), 1);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("a"));
@@ -15570,7 +15570,7 @@ private slots:
         options.catalogDir = own.filePath(QStringLiteral("Catalog"));
         const QString accented = QStringLiteral(u"Ćwiczenia");
         const QString lower = QStringLiteral(u"ćwiczenia");
-        const QString missing = tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalog for style"));
+        const QString missing = tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalogue for style"));
         {
             app::Application a(options);
             auto &styles = a.styleManager();

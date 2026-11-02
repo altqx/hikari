@@ -5724,7 +5724,7 @@ QVariantMap Application::openSettingsDialog()
             .arg(QCoreApplication::translate("HikariSub.Options", what));
     };
     if (open.catalogMissing)
-        warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "catalog for style"));
+        warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "catalogue for style"));
     if (open.styleMissing)
         warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "style"));
     auto values = toVariant(open.state);

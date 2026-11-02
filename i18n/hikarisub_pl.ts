@@ -1668,7 +1668,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Przeskalować napisy do wideo? Można to zrobić także później: Napisy › Zmień rozdzielczość napisów.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>Katalog</translation>
     </message>
     <message>
@@ -2908,7 +2908,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Katalogi z takimi samymi czcionkami jak Twoje pozostaną bez zmian.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>Katalog</translation>
     </message>
     <message>
@@ -8819,7 +8819,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Styl</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>Katalog</translation>
     </message>
     <message>
@@ -9157,7 +9157,7 @@ and will be changed to the default</source>
 zostanie zmieniony na domyślny</translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>catalogue for style</source>
         <translation>katalog dla stylu</translation>
     </message>
     <message>
@@ -11754,7 +11754,7 @@ ponieważ została zmieniona.</translation>
         <translation>Filtruj style</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>Katalog</translation>
     </message>
     <message>
@@ -12128,7 +12128,7 @@ Usunięte style:
         <translation>Zaznacz linijki z tym stylem</translation>
     </message>
     <message>
-        <source>Copy to the catalog…</source>
+        <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
     </message>
     <message>
