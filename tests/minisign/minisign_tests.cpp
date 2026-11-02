@@ -67,6 +67,16 @@ TEST_F(Minisign, ALegacySignatureVerifies)
     EXPECT_EQ(result->trustedComment, "hikarisub v1.0.0 hikarisub-update.json");
 }
 
+TEST_F(Minisign, ASignatureMinisignMadeVerifies)
+{
+    const auto key = parsePublicKey(fixture("real.pub"));
+    ASSERT_TRUE(key);
+    EXPECT_EQ(key->idText(), "9CA70DD5B29BD45D");
+    const auto result = verify(message, fixture("real.minisig"), std::span(&*key, 1));
+    ASSERT_TRUE(result) << refusalText(result.error());
+    EXPECT_EQ(result->trustedComment, "made by minisign 0.12");
+}
+
 TEST_F(Minisign, CarriageReturnsAreAllowed)
 {
     std::string signature = fixture("prehashed.minisig");
