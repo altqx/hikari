@@ -801,7 +801,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                       QCoreApplication::translate("HikariSub.Options", "Hotkeys"), message);
                                                     });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
-        m_workspace, *m_files, &m_settings->settings(),
+        m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); }, [this] { refreshViews(); },
         [this](std::string_view command) {
             const QString accel = m_hotkeys->accelOf(
