@@ -301,6 +301,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START", 5219},
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END", 5220},
         {"GLOBAL_PLUGINS", 5231},
+        {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
 };
 
 struct NameRow {
@@ -573,6 +574,7 @@ constexpr NameRow kNames[] = {
         {5219, "Shift following lines by frames: start at video"},
         {5220, "Shift following lines by frames: end at video"},
         {5231, "Plugins"},
+        {5229, "Centre times within frames"},
 };
 
 struct DefaultRow {

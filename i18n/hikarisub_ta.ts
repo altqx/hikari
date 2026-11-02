@@ -5920,6 +5920,10 @@ Failed to copy %2 fonts.</source>
         <translation>செருகுநிரல்கள்</translation>
     </message>
     <message>
+        <source>Centre times within frames</source>
+        <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -7025,6 +7029,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் தொடக்க, முடிவு நேரங்களை அவற்றின் சட்டகங்களின் நடுவுக்கு நகர்த்துகிறது; பின்னர் நேரத்தால் நகர்த்தினாலும் அவை முழுச் சட்டகங்களிலேயே இருக்கும்</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
     <message>
         <source>Load script</source>

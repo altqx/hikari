@@ -5957,6 +5957,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wtyczki</translation>
     </message>
     <message>
+        <source>Centre times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -7065,6 +7069,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>Przesuwa czasy początku i końca zaznaczonych linii na środek ich klatek, aby późniejsze przesunięcie o czas zostawiło je na pełnych klatkach</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
         <source>Load script</source>

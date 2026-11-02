@@ -1661,6 +1661,18 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_CENTER_TIMES_IN_FRAMES"
+                help: qsTr("Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames")
+                iconRole: "split-frames"
+                objectName: "centerTimesInFramesMenuItem"
+                action: Action {
+                    id: centerTimesInFramesAction
+                    text: qsTr("Centre times within frames")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CENTER_TIMES_IN_FRAMES")) root.app.centerTimesInFrames()
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_SET_START_TIME"
                 iconRole: "set-start-time"
                 objectName: "setStartTimeMenuItem"
@@ -7061,6 +7073,7 @@ ApplicationWindow {
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START: shiftFollowingFramesToVideoStartAction,
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END: shiftFollowingFramesToVideoEndAction,
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
+        GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,

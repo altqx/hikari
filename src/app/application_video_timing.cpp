@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/application/center_times.h"
 
 #include <memory>
 
@@ -310,6 +311,17 @@ bool Application::openEditorFromFullScreen()
     if (!targetUntitled())
         selectLineFromVideo();
     return m_videoFullscreen->leave();
+}
+
+bool Application::centerTimesInFrames()
+{
+    auto *session = targetSession();
+    if (!session || videoState() == application::VideoState::None)
+        return false;
+    const auto done = application::centerTimesInFrames(*session, m_video->session().legacyTimebase());
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done.has_value();
 }
 
 }
