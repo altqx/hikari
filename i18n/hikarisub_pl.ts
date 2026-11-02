@@ -14591,12 +14591,12 @@ po czasie końcowym w milisekundach</translation>
         <translation>Nie można przekonwertować wideo na RGBA</translation>
     </message>
     <message>
-        <source>This video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <source>This video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
         <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
         <translation>Tego wideo nie można odtworzyć na tym komputerze. Jego klatki nadal są widoczne podczas pauzy, a przewijanie i przechodzenie o klatkę działają.</translation>
     </message>
     <message>
-        <source>%1 video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <source>%1 video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
         <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
         <translation>Wideo %1 nie można odtworzyć na tym komputerze. Jego klatki nadal są widoczne podczas pauzy, a przewijanie i przechodzenie o klatkę działają.</translation>
     </message>

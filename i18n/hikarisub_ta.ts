@@ -14509,12 +14509,12 @@ after the end time in milliseconds</source>
         <translation>வீடியோவை RGBA ஆக மாற்ற முடியாது</translation>
     </message>
     <message>
-        <source>This video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <source>This video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
         <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
         <translation>இந்தக் கணினியில் இந்த வீடியோவை இயக்க முடியாது. இடைநிறுத்தியிருக்கும்போது அதன் சட்டகங்கள் தொடர்ந்து தெரியும்; தேடுதலும் சட்டகம் சட்டகமாக நகர்தலும் வேலை செய்யும்.</translation>
     </message>
     <message>
-        <source>%1 video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <source>%1 video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
         <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
         <translation>இந்தக் கணினியில் %1 வீடியோவை இயக்க முடியாது. இடைநிறுத்தியிருக்கும்போது அதன் சட்டகங்கள் தொடர்ந்து தெரியும்; தேடுதலும் சட்டகம் சட்டகமாக நகர்தலும் வேலை செய்யும்.</translation>
     </message>

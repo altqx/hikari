@@ -15,7 +15,7 @@ Two decoders read a video: the editing path (FFMS2 on HikariSub's FFmpeg 7.1.2, 
 | Vorbis, Opus, AAC, AC-3, MP3, FLAC, PCM | Yes | Yes |
 | zlib-compressed Matroska subtitle tracks | Yes | Not applicable |
 
-Qt's player reports no error for a video stream it cannot decode: it plays the sound and shows no frame. So a seek that gets no frame within 5 seconds from a file the player has shown no frame of fails (`PlayerError::NoVideoFrame`), playback stops, and a notice says "AV1 video can't be played on this computer", repeated at each later Play. The paused frames still come from the editing path. A file that has shown a frame never gets this error, so a seek past the end does not mark it. `QMediaFormat`'s decoder list cannot predict this: Qt 6.12 lists AV1 and not VP8 or VP9.
+Qt's player reports no error for a video stream it cannot decode: it plays the sound and shows no frame. So a seek that gets no frame within 5 seconds from a file the player has shown no frame of fails (`PlayerError::NoVideoFrame`), playback stops, and a notice says "AV1 video can’t be played on this computer", repeated at each later Play. The paused frames still come from the editing path. A file that has shown a frame never gets this error, so a seek past the end does not mark it. `QMediaFormat`'s decoder list cannot predict this: Qt 6.12 lists AV1 and not VP8 or VP9.
 
 The samples are in `tests/fixtures/webm` (made by its `make-fixtures.sh`), the zlib track in `tests/fixtures/matroska-muxed/zlib.mkv`; `indexed_source_tests` (`Webm*`), `general_player_tests` (`webmPlaysFromASeekedTime`, `av1PlaysOrFailsWithoutAFrame`) and `matroska_tests` (`ZlibCompressedTracksReadAsTheirUncompressedText`) cover them.
 

@@ -99,11 +99,11 @@ void Application::logPlaybackFailure()
     QString text;
     if (codec.isEmpty())
         //: Play was pressed, but the player cannot open or decode this video; frames still show while paused
-        text = QCoreApplication::translate("HikariSub.Video", "This video can't be played on this computer. "
+        text = QCoreApplication::translate("HikariSub.Video", "This video can’t be played on this computer. "
                                                               "Its frames still show while paused, and seeking and stepping work.");
     else
         //: Play was pressed, but the player cannot decode this video's codec; %1 is the codec's name, for example AV1
-        text = QCoreApplication::translate("HikariSub.Video", "%1 video can't be played on this computer. "
+        text = QCoreApplication::translate("HikariSub.Video", "%1 video can’t be played on this computer. "
                                                               "Its frames still show while paused, and seeking and stepping work.")
                    .arg(codec);
     //: Title of the notice shown when Play cannot play the video

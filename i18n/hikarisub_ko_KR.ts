@@ -14427,12 +14427,12 @@ after the end time in milliseconds</source>
         <translation>영상을 RGBA로 변환할 수 없음</translation>
     </message>
     <message>
-        <source>This video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <source>This video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
         <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
         <translation>이 컴퓨터에서는 이 영상을 재생할 수 없습니다. 일시 정지 상태에서는 프레임이 계속 표시되며, 탐색과 프레임 이동은 작동합니다.</translation>
     </message>
     <message>
-        <source>%1 video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <source>%1 video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
         <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
         <translation>이 컴퓨터에서는 %1 영상을 재생할 수 없습니다. 일시 정지 상태에서는 프레임이 계속 표시되며, 탐색과 프레임 이동은 작동합니다.</translation>
     </message>
