@@ -5923,6 +5923,26 @@ What would you like to do?</source>
         <translation>시작하기</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>선택한 줄을 프레임 단위로 이동: 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>선택한 줄을 프레임 단위로 이동: 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>뒤따르는 줄을 프레임 단위로 이동: 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>뒤따르는 줄을 프레임 단위로 이동: 끝을 영상에</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -6957,6 +6977,50 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>텍스트에서 다음 문구 위치 찾기</translation>
+    </message>
+    <message>
+        <source>Shift by frames to video</source>
+        <translation>영상 위치로 프레임 단위 이동</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 시작하도록 선택한 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>선택한 줄, 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 끝나도록 선택한 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>선택한 줄, 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 시작하도록 활성 줄과 그 뒤의 모든 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>뒤따르는 줄, 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 끝나도록 활성 줄과 그 뒤의 모든 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>뒤따르는 줄, 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>활성 줄에 소리 선택 영역을 적용하고, 이전 줄은 선택 영역이 시작하는 곳에서 끝냅니다</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
     </message>
     <message>
         <source>Load script</source>
