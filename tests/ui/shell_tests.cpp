@@ -11517,7 +11517,7 @@ private slots:
         QVERIFY(!item("findOptions")->isVisible());
         QVERIFY(!item("findResultsPane")->isVisible());
         item("findText")->setProperty("text", QStringLiteral("BETA"));
-        QTRY_COMPARE(count(), QStringLiteral("3 matches"));
+        QTRY_COMPARE(count(), QStringLiteral("3 match(es)"));
         item("findReplaceText")->setProperty("text", QStringLiteral("B"));
         const auto steps = session->historySize();
         press(Qt::Key_Return, Qt::ControlModifier | Qt::AltModifier);
@@ -11530,7 +11530,7 @@ private slots:
         application->editor().undo();
         QCOMPARE(text(0), QStringLiteral("Alpha beta"));
         QCOMPARE(session->historySize(), steps);
-        QTRY_COMPARE(count(), QStringLiteral("3 matches"));
+        QTRY_COMPARE(count(), QStringLiteral("3 match(es)"));
         QCOMPARE(application->findReplaceSettings().value(QStringLiteral("finds")).toStringList(),
                  QStringList{QStringLiteral("BETA")});
 
@@ -11553,7 +11553,7 @@ private slots:
         QCOMPARE(application->editor().selectionEnd(), 10);
         QTRY_COMPARE(count(), QStringLiteral("1 of 3"));
         QCOMPARE(QAccessible::queryAccessibleInterface(item("findCount"))->text(QAccessible::Name),
-                 QStringLiteral("1 of 3 matches"));
+                 QStringLiteral("1 of 3 match(es)"));
         press(Qt::Key_F3);
         QCOMPARE(session->selection().active, std::optional(lines[1]->id));
         press(Qt::Key_F3);
@@ -11593,7 +11593,7 @@ private slots:
         QCOMPARE(rows[2].toMap().value(QStringLiteral("line")).toInt(), 2);
         QCOMPARE(rows[2].toMap().value(QStringLiteral("match")).toString(), QStringLiteral("beta"));
         QCOMPARE(item("findResultsList")->property("count").toInt(), 4);
-        QCOMPARE(item("findResultsSummary")->property("text").toString(), QStringLiteral("3 matches in 3 lines"));
+        QCOMPARE(item("findResultsSummary")->property("text").toString(), QStringLiteral("3 match(es) in 3 line(s)"));
         application->showFindResult(3);
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
         QCOMPARE(application->editor().selectionStart(), 6);
@@ -11670,7 +11670,7 @@ private slots:
         QVERIFY(!item("findResultsPane")->isVisible());
         item("findText")->setProperty("text", QStringLiteral("(hel+o)"));
         QTRY_VERIFY(!error->isVisible());
-        QTRY_COMPARE(item("findCount")->property("text").toString(), QStringLiteral("3 matches"));
+        QTRY_COMPARE(item("findCount")->property("text").toString(), QStringLiteral("3 match(es)"));
         QVERIFY(item("findButton")->isEnabled());
         press(Qt::Key_R, Qt::AltModifier);
         QVERIFY(!tool->property("regex").toBool());
@@ -11685,6 +11685,7 @@ private slots:
         press(Qt::Key_H, Qt::ControlModifier);
         QTRY_VERIFY(item("findText")->hasActiveFocus());
         item<QObject>("searchTool")->setProperty("optionsShown", true);
+        item("findText")->setProperty("text", QStringLiteral("a"));
         QTRY_VERIFY(item("findOptions")->isVisible());
         QStringList order;
         QQuickItem *at = item("findReplaceToggle");
@@ -16528,7 +16529,7 @@ private slots:
         const QString rules = home.filePath(QStringLiteral("rules.toml"));
         QVERIFY(!QFile::exists(rules));
 
-        matchCase->setProperty("checked", false);
+        tool->setProperty("matchCase", false);
         application->applySettings({}, true);
         QSignalSpy findDestroyed(application, &app::Application::findReplaceDestroyed);
         QSignalSpy misspellDestroyed(application, &app::Application::misspellReplacerDestroyed);
