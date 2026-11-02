@@ -9411,8 +9411,8 @@ and will be changed to the default</source>
         <translation>แทนที่ “%1” %2 ด้วยเวอร์ชันเก่ากว่า %3 หรือไม่</translation>
     </message>
     <message>
-        <source>It asks to:</source>
-        <translation>ปลั๊กอินนี้ขอ:</translation>
+        <source>It asks for these permissions</source>
+        <translation>ปลั๊กอินนี้ขอสิทธิ์เหล่านี้</translation>
     </message>
     <message>
         <source>It asks for no permissions beyond the active subtitle file.</source>

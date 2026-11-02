@@ -19597,7 +19597,8 @@ private slots:
             };
             QVERIFY(at("cancelMacroMenuItem") >= 0);
             QVERIFY(at("cancelMacroMenuItem") < at("automationManagerMenuItem"));
-            QCOMPARE(at("macrosSeparator"), at("automationManagerMenuItem") + 1);
+            QCOMPARE(at("pluginsMenuItem"), at("automationManagerMenuItem") + 1);
+            QCOMPARE(at("macrosSeparator"), at("pluginsMenuItem") + 1);
             QVERIFY(at("macro_Wait for cancel") > at("macrosSeparator"));
         }
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));

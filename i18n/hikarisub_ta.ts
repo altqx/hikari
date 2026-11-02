@@ -9464,8 +9464,8 @@ and will be changed to the default</source>
         <translation>“%1” %2 ஐ முந்தைய பதிப்பான %3 ஆல் மாற்றவா?</translation>
     </message>
     <message>
-        <source>It asks to:</source>
-        <translation>இது கேட்பவை:</translation>
+        <source>It asks for these permissions</source>
+        <translation>இது இந்த அனுமதிகளைக் கேட்கிறது</translation>
     </message>
     <message>
         <source>It asks for no permissions beyond the active subtitle file.</source>

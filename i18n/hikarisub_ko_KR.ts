@@ -9411,8 +9411,8 @@ and will be changed to the default</source>
         <translation>“%1” %2(을)를 하위 버전 %3(으)로 교체하시겠습니까?</translation>
     </message>
     <message>
-        <source>It asks to:</source>
-        <translation>요청 권한:</translation>
+        <source>It asks for these permissions</source>
+        <translation>다음 권한을 요청합니다</translation>
     </message>
     <message>
         <source>It asks for no permissions beyond the active subtitle file.</source>

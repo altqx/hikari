@@ -9517,8 +9517,8 @@ zostanie zmieniony na domyślny</translation>
         <translation>Zastąpić “%1” %2 starszą wersją %3?</translation>
     </message>
     <message>
-        <source>It asks to:</source>
-        <translation>Wtyczka chce:</translation>
+        <source>It asks for these permissions</source>
+        <translation>Prosi o te uprawnienia</translation>
     </message>
     <message>
         <source>It asks for no permissions beyond the active subtitle file.</source>
