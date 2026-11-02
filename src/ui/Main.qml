@@ -1673,6 +1673,18 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_CENTER_TIMES_IN_FRAMES"
+                help: qsTr("Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames")
+                iconRole: "split-frames"
+                objectName: "centerTimesInFramesMenuItem"
+                action: Action {
+                    id: centerTimesInFramesAction
+                    text: qsTr("Centre times within frames")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CENTER_TIMES_IN_FRAMES")) root.app.centerTimesInFrames()
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_SET_START_TIME"
                 iconRole: "set-start-time"
                 objectName: "setStartTimeMenuItem"
@@ -2047,6 +2059,18 @@ ApplicationWindow {
                 action: Action {
                     text: qsTr("Show &panel")
                     onTriggered: root.showPanel(automationDock)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_PLUGINS"
+                help: qsTr("Install, turn on and off, and uninstall plugins")
+                iconRole: "plugins"
+                objectName: "pluginsMenuItem"
+                action: Action {
+                    id: pluginsAction
+                    text: qsTr("Pl&ugins…")
+                    enabled: !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
                 }
             }
             MenuSeparator {
@@ -5947,6 +5971,11 @@ ApplicationWindow {
         layouts: root.workspaceLayout
         settings: root.app.settings
     }
+    PluginManagerDialog {
+        id: pluginManagerDialog
+        manager: root.app.pluginManager
+        settings: root.app.settings
+    }
 
     TapCalibrationWindow {
         id: tapCalibrationWindow
@@ -7066,6 +7095,7 @@ ApplicationWindow {
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START: shiftFollowingFramesToVideoStartAction,
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END: shiftFollowingFramesToVideoEndAction,
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
+        GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
@@ -7076,6 +7106,7 @@ ApplicationWindow {
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
+        GLOBAL_PLUGINS: pluginsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,

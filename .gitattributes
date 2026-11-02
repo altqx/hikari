@@ -26,3 +26,7 @@
 /tests/fixtures/export/** -text
 # FA3: the Aegisub extradata fixtures are compared byte for byte (BOM, CRLF).
 /tests/fixtures/aegisub-extradata/** -text
+
+# PL1: signed fixtures; a converted line ending breaks the signature.
+/tests/minisign/fixtures/** -text
+/tests/plugins/fixtures/** -text

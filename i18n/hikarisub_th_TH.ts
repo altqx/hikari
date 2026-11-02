@@ -6136,6 +6136,14 @@ Failed to copy %2 fonts.</source>
         <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
     </message>
     <message>
+        <source>Plugins</source>
+        <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -6950,6 +6958,14 @@ Failed to copy %2 fonts.</source>
         <translation>ตรวจการสะกด</translation>
     </message>
     <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>ติดตั้ง เปิดหรือปิด และถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>&amp;ปลั๊กอิน…</translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>ซ่อนแท็ก</translation>
     </message>
@@ -7238,6 +7254,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>ย้ายเวลาเริ่มและสิ้นสุดของบรรทัดที่เลือกไปไว้กลางเฟรม เพื่อให้การเลื่อนตามเวลาในภายหลังยังคงอยู่บนเฟรมเต็ม</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -9475,6 +9499,253 @@ and will be changed to the default</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>คำในภาษาอื่นจะตรวจด้วยพจนานุกรมอื่นที่ติดตั้งไว้สำหรับระบบอักษรของคำนั้น คำในระบบอักษรที่ไม่มีพจนานุกรมจะไม่ถูกทำเครื่องหมาย</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>ไฟล์นี้ไม่ใช่แพ็กเกจปลั๊กอิน (ไฟล์บีบอัดที่มี hikari-plugin.json)</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>แพ็กเกจมีลิงก์ ซึ่ง HikariSub จะไม่ติดตั้ง: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>แพ็กเกจใหญ่เกินไป: เมื่อแตกไฟล์แล้วมีมากกว่า %1 ไฟล์หรือเกิน %2 MB</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json ไม่ใช่ JSON ที่ถูกต้อง: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json มีรหัส “%1” ซ้ำที่ %2</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>ปลั๊กอินนี้ต้องใช้ Hikari API %1 แต่ HikariSub นี้มี API %2 อัปเดต HikariSub เพื่อติดตั้งปลั๊กอินนี้</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>hikari-plugin.json ไม่ผ่านสคีมาปลั๊กอินที่ %1: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>แพ็กเกจมีชื่อไฟล์ที่ HikariSub จะไม่ติดตั้ง: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>แพ็กเกจไม่มี hikari-plugin.json ที่ระดับบนสุด</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>แพ็กเกจไม่มีไฟล์หลัก %1</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>แพ็กเกจมีลายเซ็น แต่แมนิเฟสต์ไม่ได้ระบุ publicKey สำหรับตรวจสอบลายเซ็นนั้น</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>อ่าน plugins.json ในโฟลเดอร์ผู้ใช้ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>แพ็กเกจลงนามด้วยคีย์ที่แมนิเฟสต์ไม่ได้ระบุ</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>ลายเซ็นไม่ตรงกับแพ็กเกจ แพ็กเกจจึงอาจถูกเปลี่ยนแปลงหลังการลงนาม</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>ความคิดเห็นที่เชื่อถือได้ของลายเซ็นถูกเปลี่ยนแปลงหลังการลงนาม</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>ไฟล์ .minisig ข้างแพ็กเกจไม่ใช่ลายเซ็น minisign</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>เชื่อถือเต็มที่: อาจเรียกใช้โค้ดเนทีฟนอกขอบเขตที่ HikariSub จำกัดไว้</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>อ่านและแก้ไขไฟล์คำบรรยายทุกไฟล์ที่เปิดอยู่: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>เชื่อมต่อกับ %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>ขอโฟลเดอร์จากคุณเพื่ออ่านและเขียน %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>ขอโฟลเดอร์จากคุณเพื่ออ่าน %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub ทำงานไม่เสร็จ: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>ปลั๊กอินต้องใช้โฟลเดอร์ผู้ใช้ แต่สำเนานี้ไม่มี</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub อ่าน %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>เลือกแพ็กเกจปลั๊กอินก่อน</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>คีย์ลงนามเปลี่ยนไป สำเนาที่ติดตั้งไว้ลงนามด้วยคีย์ %1 และสำเนานี้ลงนามด้วยคีย์ %2 ติดตั้งเฉพาะเมื่อคุณเชื่อถือว่าผู้สร้างเปลี่ยนคีย์จริง</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>แพ็กเกจนี้ไม่ได้ลงนาม แต่สำเนาที่ติดตั้งไว้ลงนามด้วยคีย์ %1 ติดตั้งเฉพาะเมื่อคุณเชื่อถือแหล่งที่มาของแพ็กเกจนี้</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>แหล่งที่มาที่ยังไม่ได้ยืนยัน ลงนามด้วยคีย์ %1 การอัปเดตต้องลงนามด้วยคีย์เดียวกัน</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>ยังไม่ได้ยืนยัน: แพ็กเกจไม่ได้ลงนาม HikariSub จึงบอกไม่ได้ว่าใครเป็นผู้สร้าง</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>ไม่ได้ติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>ติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>อัปเดตปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>ติดตั้งปลั๊กอินใหม่</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>ดาวน์เกรดปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>ติดตั้ง “%1” %2 หรือไม่</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>อัปเดต “%1” จาก %2 เป็น %3 หรือไม่</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>ติดตั้ง “%1” %2 ใหม่หรือไม่</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>แทนที่ “%1” %2 ด้วยเวอร์ชันเก่ากว่า %3 หรือไม่</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>ปลั๊กอินนี้ขอสิทธิ์เหล่านี้</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>ปลั๊กอินนี้ไม่ขอสิทธิ์ใดนอกเหนือจากไฟล์คำบรรยายที่ใช้งานอยู่</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>เชื่อถือและติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>ถอนการติดตั้ง เก็บข้อมูลไว้</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>ถอนการติดตั้งและลบข้อมูล</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>ถอนการติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>ถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>ถอนการติดตั้ง “%1” หรือไม่</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>ปลั๊กอินนี้มีข้อมูลที่บันทึกไว้ในโฟลเดอร์ผู้ใช้ เก็บข้อมูลไว้เพื่อใช้อีกครั้งหากคุณติดตั้งใหม่</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>ไม่ได้ถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>ไม่มีปลั๊กอินที่ติดตั้งไว้ ติดตั้งได้จากไฟล์ .hikariplugin</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>ปลั๊กอินที่ติดตั้งไว้</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>เปิดใช้งาน</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>ยังไม่ได้ยืนยัน ลงนามด้วยคีย์ %1</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>ยังไม่ได้ยืนยัน ไม่ได้ลงนาม</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>เชื่อถือเต็มที่</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>ติดตั้งจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>เลือกแพ็กเกจปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>ปลั๊กอิน HikariSub (*.hikariplugin)</translation>
     </message>
 </context>
 <context>
