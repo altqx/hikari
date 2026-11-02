@@ -2487,8 +2487,8 @@ Should not exceed 15 characters per second</source>
         <translation>เพิ่มปุ่มแท็ก</translation>
     </message>
     <message>
-        <source>Edit...</source>
-        <translation>แก้ไข...</translation>
+        <source>Edit…</source>
+        <translation>แก้ไข…</translation>
     </message>
     <message>
         <source>Move left</source>
@@ -4318,10 +4318,6 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Grid</name>
     <message>
-        <source>Font collector</source>
-        <translation>ตัวรวบรวมแบบอักษร</translation>
-    </message>
-    <message>
         <source>Grid</source>
         <translation>ตาราง</translation>
     </message>
@@ -4334,80 +4330,8 @@ Failed to copy %2 fonts.</source>
         <translation>ไม่มีเอกสารที่เปิดอยู่</translation>
     </message>
     <message>
-        <source>Add lines</source>
-        <translation>เพิ่มบรรทัด</translation>
-    </message>
-    <message>
-        <source>Change description</source>
-        <translation>เปลี่ยนคำอธิบาย</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>ลบ</translation>
-    </message>
-    <message>
-        <source>Insert after with video time</source>
-        <translation>แทรกหลังด้วยเวลาวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Insert before with video frame time</source>
-        <translation>แทรกก่อนด้วยเฟรมวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Insert after with video frame time</source>
-        <translation>แทรกหลังด้วยเฟรมวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Join lines and keep first</source>
-        <translation>รวมบรรทัดโดยคงข้อความของบรรทัดแรก</translation>
-    </message>
-    <message>
-        <source>Join lines and keep last</source>
-        <translation>รวมบรรทัดโดยคงข้อความของบรรทัดสุดท้าย</translation>
-    </message>
-    <message>
-        <source>Split lines</source>
-        <translation>แบ่งบรรทัด</translation>
-    </message>
-    <message>
-        <source>Split line at video time</source>
-        <translation>แบ่งบรรทัดตามเวลาวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Split lines into frames</source>
-        <translation>แบ่งบรรทัดเป็นเฟรม</translation>
-    </message>
-    <message>
-        <source>Split lines into characters</source>
-        <translation>แบ่งบรรทัดเป็นอักขระ</translation>
-    </message>
-    <message>
-        <source>Split lines into words</source>
-        <translation>แบ่งบรรทัดเป็นคำ</translation>
-    </message>
-    <message>
-        <source>Split lines by wraps</source>
-        <translation>แบ่งบรรทัดตามจุดแบ่งบรรทัด</translation>
-    </message>
-    <message>
-        <source>Select all lines visible on video</source>
-        <translation>เลือกบรรทัดทั้งหมดที่ปรากฏในวิดีโอ</translation>
-    </message>
-    <message>
         <source>Show subtitles preview</source>
         <translation>แสดงตัวอย่างคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Paste translation text</source>
-        <translation>วางข้อความแปล</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>หน้าต่างเลื่อนบทสนทนา</translation>
-    </message>
-    <message>
-        <source>Hide selected lines</source>
-        <translation>ซ่อนบรรทัดที่เลือก</translation>
     </message>
     <message>
         <source>Filtering</source>
@@ -4428,6 +4352,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Hide lines with styles</source>
         <translation>ซ่อนบรรทัดตามสไตล์</translation>
+    </message>
+    <message>
+        <source>Start time</source>
+        <translation>เวลาเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>สไตล์</translation>
+    </message>
+    <message>
+        <source>Hide selected lines (filter)</source>
+        <translation>ซ่อนบรรทัดที่เลือก (ตัวกรอง)</translation>
     </message>
     <message>
         <source>Hide comments</source>
@@ -4454,68 +4390,12 @@ Failed to copy %2 fonts.</source>
         <translation>ไม่ใช้ตัวกรองกับการดำเนินการบางอย่าง</translation>
     </message>
     <message>
-        <source>Hide columns</source>
-        <translation>ซ่อนคอลัมน์</translation>
-    </message>
-    <message>
         <source>Hide empty columns</source>
         <translation>ซ่อนคอลัมน์ที่ว่าง</translation>
     </message>
     <message>
-        <source>Hide layer</source>
-        <translation>ซ่อนชั้น</translation>
-    </message>
-    <message>
-        <source>Hide start time</source>
-        <translation>ซ่อนเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Hide end time</source>
-        <translation>ซ่อนเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Hide actor</source>
-        <translation>ซ่อนผู้พูด</translation>
-    </message>
-    <message>
-        <source>Hide style</source>
-        <translation>ซ่อนสไตล์</translation>
-    </message>
-    <message>
-        <source>Hide left margin</source>
-        <translation>ซ่อนระยะขอบซ้าย</translation>
-    </message>
-    <message>
-        <source>Hide right margin</source>
-        <translation>ซ่อนระยะขอบขวา</translation>
-    </message>
-    <message>
-        <source>Hide vertical margin</source>
-        <translation>ซ่อนระยะขอบแนวตั้ง</translation>
-    </message>
-    <message>
-        <source>Hide effect</source>
-        <translation>ซ่อนเอฟเฟกต์</translation>
-    </message>
-    <message>
-        <source>Hide characters per second</source>
-        <translation>ซ่อนอักขระต่อวินาที</translation>
-    </message>
-    <message>
-        <source>Hide line wraps</source>
-        <translation>ซ่อนตัวแบ่งบรรทัด</translation>
-    </message>
-    <message>
         <source>Reset column widths</source>
         <translation>รีเซ็ตความกว้างคอลัมน์</translation>
-    </message>
-    <message>
-        <source>Set new FPS</source>
-        <translation>กำหนดค่า FPS ใหม่</translation>
-    </message>
-    <message>
-        <source>Set FPS from video</source>
-        <translation>กำหนดค่า FPS จากวิดีโอ</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -4530,8 +4410,108 @@ Failed to copy %2 fonts.</source>
         <translation>ลบข้อความ</translation>
     </message>
     <message>
-        <source>Load subtitles from an MKV/OGM file</source>
-        <translation>โหลดคำบรรยายจากไฟล์ MKV / OGM</translation>
+        <source>Before</source>
+        <translation>ก่อน</translation>
+    </message>
+    <message>
+        <source>After</source>
+        <translation>หลัง</translation>
+    </message>
+    <message>
+        <source>Before, at video time</source>
+        <translation>ก่อน ด้วยเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>After, at video time</source>
+        <translation>หลัง ด้วยเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Before, at video frame time</source>
+        <translation>ก่อน ด้วยเวลาเฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>After, at video frame time</source>
+        <translation>หลัง ด้วยเวลาเฟรมวิดีโอ</translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>สร้างบรรทัดซ้ำ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste special</source>
+        <translation>วางแบบพิเศษ</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>วางคำแปลจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>ต่อ</translation>
+    </message>
+    <message>
+        <source>Keep first</source>
+        <translation>คงข้อความของบรรทัดแรก</translation>
+    </message>
+    <message>
+        <source>Keep last</source>
+        <translation>คงข้อความของบรรทัดสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation>แบ่ง</translation>
+    </message>
+    <message>
+        <source>At video time</source>
+        <translation>ตามเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Into frames</source>
+        <translation>เป็นเฟรม</translation>
+    </message>
+    <message>
+        <source>Into characters</source>
+        <translation>เป็นอักขระ</translation>
+    </message>
+    <message>
+        <source>Into words</source>
+        <translation>เป็นคำ</translation>
+    </message>
+    <message>
+        <source>By wraps</source>
+        <translation>ตามจุดแบ่งบรรทัด</translation>
+    </message>
+    <message>
+        <source>Swap lines</source>
+        <translation>สลับบรรทัด</translation>
+    </message>
+    <message>
+        <source>Make times continuous</source>
+        <translation>กำหนดค่าเวลาให้ต่อเนื่อง</translation>
+    </message>
+    <message>
+        <source>With the previous line</source>
+        <translation>กับบรรทัดก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>With the next line</source>
+        <translation>กับบรรทัดถัดไป</translation>
+    </message>
+    <message>
+        <source>Select lines visible on video</source>
+        <translation>เลือกบรรทัดที่ปรากฏในวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>การจับคู่การแปล…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>ลบ %n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -4570,6 +4550,16 @@ Failed to copy %2 fonts.</source>
         <translation>กลุ่มบรรทัด</translation>
     </message>
     <message>
+        <source>Columns</source>
+        <translation>คอลัมน์</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>เพิ่ม %n บรรทัดที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Copy line group</source>
         <translation>คัดลอกกลุ่มบรรทัด</translation>
     </message>
@@ -4578,40 +4568,16 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกบรรทัดในกลุ่ม</translation>
     </message>
     <message>
+        <source>Change description…</source>
+        <translation>เปลี่ยนคำอธิบาย…</translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation>ยกเลิกการจัดกลุ่ม</translation>
+    </message>
+    <message>
         <source>Insert</source>
         <translation>แทรก</translation>
-    </message>
-    <message>
-        <source>Insert before</source>
-        <translation>แทรกก่อน</translation>
-    </message>
-    <message>
-        <source>Insert after</source>
-        <translation>แทรกหลัง</translation>
-    </message>
-    <message>
-        <source>Insert before with video time</source>
-        <translation>แทรกก่อนด้วยเวลาวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Duplicate lines</source>
-        <translation>สร้างบรรทัดซ้ำ</translation>
-    </message>
-    <message>
-        <source>Swap</source>
-        <translation>สลับ</translation>
-    </message>
-    <message>
-        <source>Join lines</source>
-        <translation>ต่อบรรทัด</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the previous line</source>
-        <translation>กำหนดค่าเวลาให้ต่อเนื่องกับบรรทัดก่อนหน้า</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the next line</source>
-        <translation>กำหนดค่าเวลาให้ต่อเนื่องกับบรรทัดถัดไป</translation>
     </message>
     <message>
         <source>Make line group</source>
@@ -4620,10 +4586,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Cut</source>
         <translation>ตัด</translation>
-    </message>
-    <message>
-        <source>Delete lines</source>
-        <translation>ลบบรรทัด</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5472,20 +5434,12 @@ Failed to copy %2 fonts.</source>
         <translation>วางคอลัมน์</translation>
     </message>
     <message>
-        <source>Paste translation text</source>
-        <translation>วางข้อความแปล</translation>
-    </message>
-    <message>
         <source>Load subtitles from an MKV file</source>
         <translation>โหลดคำบรรยายจากไฟล์ MKV</translation>
     </message>
     <message>
         <source>Swap lines</source>
         <translation>สลับบรรทัด</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>หน้าต่างเลื่อนบทสนทนา</translation>
     </message>
     <message>
         <source>Set new FPS</source>
@@ -5866,6 +5820,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Make line group</source>
         <translation>สร้างกลุ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>วางคำแปลจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>การจับคู่การแปล…</translation>
     </message>
     <message>
         <source>Shift times / run timing postprocessor</source>
@@ -7116,6 +7078,14 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดไฟล์วิดีโอ</translation>
     </message>
     <message>
+        <source>Imports a subtitle track from a Matroska file</source>
+        <translation>นำเข้าแทร็กคำบรรยายจากไฟล์ Matroska</translation>
+    </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>นำเข้าคำบรรยายจาก MKV…</translation>
+    </message>
+    <message>
         <source>Save current file</source>
         <translation>บันทึกไฟล์ปัจจุบัน</translation>
     </message>
@@ -7214,6 +7184,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
+    </message>
+    <message>
+        <source>Changes the frame rate of the subtitle times</source>
+        <translation>เปลี่ยนอัตราเฟรมของเวลาคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Set FPS</source>
+        <translation>กำหนดค่า FPS</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>กำหนดค่า FPS ใหม่…</translation>
+    </message>
+    <message>
+        <source>Set FPS from video</source>
+        <translation>กำหนดค่า FPS จากวิดีโอ</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -13078,6 +13064,10 @@ Styles deleted:
     <message>
         <source>Z coordinate for tags \frx and \fry</source>
         <translation>พิกัด Z ใช้สำหรับแท็ก \frx และ \fry</translation>
+    </message>
+    <message>
+        <source>Tag list options</source>
+        <translation>ตัวเลือกรายการแท็ก</translation>
     </message>
     <message>
         <source>Tag list</source>

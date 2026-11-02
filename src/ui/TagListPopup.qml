@@ -12,13 +12,18 @@ Popup {
     readonly property real rowHeight: controller.rowHeight(field.font)
     readonly property int shownRows: Math.min(controller.rows.length, controller.maxVisible)
     readonly property bool menuOpen: optionsMenu.visible
+    readonly property real headerHeight: Math.max(rowHeight, 20)
+
+    function openOptions() {
+        optionsMenu.popup(optionsButton, 0, optionsButton.height)
+    }
 
     objectName: field.objectName + "TagList"
     parent: field
     x: field.cursorRectangle.x
     y: field.cursorRectangle.y + field.cursorRectangle.height + 5
     width: controller.popupWidth(field.font)
-    height: rowHeight * shownRows + 2
+    height: headerHeight + rowHeight * shownRows + 2
     padding: 1
     focus: false
     modal: false
@@ -32,10 +37,31 @@ Popup {
 
     contentItem: Item {
         clip: true
+        IconToolButton {
+            id: optionsButton
+            objectName: popup.objectName + "OptionsButton"
+            anchors.right: parent.right
+            anchors.top: parent.top
+            width: popup.headerHeight
+            height: popup.headerHeight
+            iconRole: "panel-menu"
+            iconSize: 14
+            text: qsTr("Tag list options")
+            focusPolicy: Qt.NoFocus
+            down: optionsMenu.visible
+            onClicked: popup.openOptions()
+        }
+        Rectangle {
+            anchors.top: optionsButton.bottom
+            width: parent.width
+            height: 1
+            color: Theme.line
+        }
         ListView {
             id: rows
             objectName: popup.objectName + "Rows"
             anchors.fill: parent
+            anchors.topMargin: popup.headerHeight + 1
             anchors.rightMargin: scrollBar.visible ? scrollBar.width + 1 : 0
             model: popup.controller.rows
             interactive: false
@@ -77,7 +103,7 @@ Popup {
             objectName: popup.objectName + "ScrollBar"
             orientation: Qt.Vertical
             anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.top: rows.top
             anchors.bottom: parent.bottom
             visible: popup.controller.rows.length > popup.controller.maxVisible
             size: popup.controller.maxVisible / Math.max(1, popup.controller.rows.length)

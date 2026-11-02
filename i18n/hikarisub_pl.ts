@@ -2533,8 +2533,8 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Dodaj przycisk tagu</translation>
     </message>
     <message>
-        <source>Edit...</source>
-        <translation>Edytuj...</translation>
+        <source>Edit…</source>
+        <translation>Edytuj…</translation>
     </message>
     <message>
         <source>Move left</source>
@@ -4390,10 +4390,6 @@ Nie udało się skopiować czcionek: %2.</translation>
 <context>
     <name>HikariSub.Grid</name>
     <message>
-        <source>Font collector</source>
-        <translation>Kolekcjoner czcionek</translation>
-    </message>
-    <message>
         <source>Grid</source>
         <translation>Lista napisów</translation>
     </message>
@@ -4406,80 +4402,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Brak otwartego dokumentu</translation>
     </message>
     <message>
-        <source>Add lines</source>
-        <translation>Dodaj linijki</translation>
-    </message>
-    <message>
-        <source>Change description</source>
-        <translation>Zmień opis</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>Usuń</translation>
-    </message>
-    <message>
-        <source>Insert after with video time</source>
-        <translation>Wstaw po z czasem wideo</translation>
-    </message>
-    <message>
-        <source>Insert before with video frame time</source>
-        <translation>Wstaw przed z czasem klatki wideo</translation>
-    </message>
-    <message>
-        <source>Insert after with video frame time</source>
-        <translation>Wstaw po z czasem klatki wideo</translation>
-    </message>
-    <message>
-        <source>Join lines and keep first</source>
-        <translation>Złącz linijki i zostaw pierwszą</translation>
-    </message>
-    <message>
-        <source>Join lines and keep last</source>
-        <translation>Złącz linijki i zostaw ostatnią</translation>
-    </message>
-    <message>
-        <source>Split lines</source>
-        <translation>Podziel linijki</translation>
-    </message>
-    <message>
-        <source>Split line at video time</source>
-        <translation>Podziel linijkę w czasie wideo</translation>
-    </message>
-    <message>
-        <source>Split lines into frames</source>
-        <translation>Podziel linijki na klatki</translation>
-    </message>
-    <message>
-        <source>Split lines into characters</source>
-        <translation>Podziel linijki na znaki</translation>
-    </message>
-    <message>
-        <source>Split lines into words</source>
-        <translation>Podziel linijki na słowa</translation>
-    </message>
-    <message>
-        <source>Split lines by wraps</source>
-        <translation>Podziel linijki według łamań wierszy</translation>
-    </message>
-    <message>
-        <source>Select all lines visible on video</source>
-        <translation>Zaznacz wszystkie linijki widoczne na wideo</translation>
-    </message>
-    <message>
         <source>Show subtitles preview</source>
         <translation>Pokaż podgląd napisów</translation>
-    </message>
-    <message>
-        <source>Paste translation text</source>
-        <translation>Wklej tekst tłumaczenia</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>Okno przesuwania dialogów</translation>
-    </message>
-    <message>
-        <source>Hide selected lines</source>
-        <translation>Ukryj zaznaczone linijki</translation>
     </message>
     <message>
         <source>Filtering</source>
@@ -4500,6 +4424,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Hide lines with styles</source>
         <translation>Ukryj linijki ze stylami</translation>
+    </message>
+    <message>
+        <source>Start time</source>
+        <translation>Czas początkowy</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Styl</translation>
+    </message>
+    <message>
+        <source>Hide selected lines (filter)</source>
+        <translation>Ukryj zaznaczone linijki (filtr)</translation>
     </message>
     <message>
         <source>Hide comments</source>
@@ -4526,68 +4462,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ignoruj filtrowanie przy niektórych akcjach</translation>
     </message>
     <message>
-        <source>Hide columns</source>
-        <translation>Ukryj kolumny</translation>
-    </message>
-    <message>
         <source>Hide empty columns</source>
         <translation>Ukryj puste kolumny</translation>
     </message>
     <message>
-        <source>Hide layer</source>
-        <translation>Ukryj warstwę</translation>
-    </message>
-    <message>
-        <source>Hide start time</source>
-        <translation>Ukryj czas początkowy</translation>
-    </message>
-    <message>
-        <source>Hide end time</source>
-        <translation>Ukryj czas końcowy</translation>
-    </message>
-    <message>
-        <source>Hide actor</source>
-        <translation>Ukryj aktora</translation>
-    </message>
-    <message>
-        <source>Hide style</source>
-        <translation>Ukryj styl</translation>
-    </message>
-    <message>
-        <source>Hide left margin</source>
-        <translation>Ukryj lewy margines</translation>
-    </message>
-    <message>
-        <source>Hide right margin</source>
-        <translation>Ukryj prawy margines</translation>
-    </message>
-    <message>
-        <source>Hide vertical margin</source>
-        <translation>Ukryj pionowy margines</translation>
-    </message>
-    <message>
-        <source>Hide effect</source>
-        <translation>Ukryj efekt</translation>
-    </message>
-    <message>
-        <source>Hide characters per second</source>
-        <translation>Ukryj znaki na sekundę</translation>
-    </message>
-    <message>
-        <source>Hide line wraps</source>
-        <translation>Ukryj łamania wierszy</translation>
-    </message>
-    <message>
         <source>Reset column widths</source>
         <translation>Resetuj szerokości kolumn</translation>
-    </message>
-    <message>
-        <source>Set new FPS</source>
-        <translation>Ustaw nowy FPS</translation>
-    </message>
-    <message>
-        <source>Set FPS from video</source>
-        <translation>Ustaw FPS z wideo</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -4602,8 +4482,112 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usuń tekst</translation>
     </message>
     <message>
-        <source>Load subtitles from an MKV/OGM file</source>
-        <translation>Wczytaj napisy z pliku MKV / OGM</translation>
+        <source>Before</source>
+        <translation>Przed</translation>
+    </message>
+    <message>
+        <source>After</source>
+        <translation>Po</translation>
+    </message>
+    <message>
+        <source>Before, at video time</source>
+        <translation>Przed, z czasem wideo</translation>
+    </message>
+    <message>
+        <source>After, at video time</source>
+        <translation>Po, z czasem wideo</translation>
+    </message>
+    <message>
+        <source>Before, at video frame time</source>
+        <translation>Przed, z czasem klatki wideo</translation>
+    </message>
+    <message>
+        <source>After, at video frame time</source>
+        <translation>Po, z czasem klatki wideo</translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>Duplikuj linijkę</numerusform>
+            <numerusform>Duplikuj %n linijki</numerusform>
+            <numerusform>Duplikuj %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste special</source>
+        <translation>Wklej specjalnie</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>Wklej tłumaczenie z pliku…</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>Złącz</translation>
+    </message>
+    <message>
+        <source>Keep first</source>
+        <translation>Zostaw pierwszą</translation>
+    </message>
+    <message>
+        <source>Keep last</source>
+        <translation>Zostaw ostatnią</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation>Podziel</translation>
+    </message>
+    <message>
+        <source>At video time</source>
+        <translation>W czasie wideo</translation>
+    </message>
+    <message>
+        <source>Into frames</source>
+        <translation>Na klatki</translation>
+    </message>
+    <message>
+        <source>Into characters</source>
+        <translation>Na znaki</translation>
+    </message>
+    <message>
+        <source>Into words</source>
+        <translation>Na słowa</translation>
+    </message>
+    <message>
+        <source>By wraps</source>
+        <translation>Według łamań wierszy</translation>
+    </message>
+    <message>
+        <source>Swap lines</source>
+        <translation>Zamień linijki</translation>
+    </message>
+    <message>
+        <source>Make times continuous</source>
+        <translation>Ustaw czasy jako ciągłe</translation>
+    </message>
+    <message>
+        <source>With the previous line</source>
+        <translation>Z poprzednią linijką</translation>
+    </message>
+    <message>
+        <source>With the next line</source>
+        <translation>Z następną linijką</translation>
+    </message>
+    <message>
+        <source>Select lines visible on video</source>
+        <translation>Zaznacz linijki widoczne na wideo</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>Dopasowywanie tłumaczenia…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>Usuń linijkę</numerusform>
+            <numerusform>Usuń %n linijki</numerusform>
+            <numerusform>Usuń %n linijek</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -4642,6 +4626,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Grupa linijek</translation>
     </message>
     <message>
+        <source>Columns</source>
+        <translation>Kolumny</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>Dodaj zaznaczoną linijkę</numerusform>
+            <numerusform>Dodaj %n zaznaczone linijki</numerusform>
+            <numerusform>Dodaj %n zaznaczonych linijek</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Copy line group</source>
         <translation>Kopiuj grupę linijek</translation>
     </message>
@@ -4650,40 +4646,16 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacz linijki grupy</translation>
     </message>
     <message>
+        <source>Change description…</source>
+        <translation>Zmień opis…</translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation>Rozgrupuj</translation>
+    </message>
+    <message>
         <source>Insert</source>
         <translation>Wstaw</translation>
-    </message>
-    <message>
-        <source>Insert before</source>
-        <translation>Wstaw przed</translation>
-    </message>
-    <message>
-        <source>Insert after</source>
-        <translation>Wstaw po</translation>
-    </message>
-    <message>
-        <source>Insert before with video time</source>
-        <translation>Wstaw przed z czasem wideo</translation>
-    </message>
-    <message>
-        <source>Duplicate lines</source>
-        <translation>Duplikuj linijki</translation>
-    </message>
-    <message>
-        <source>Swap</source>
-        <translation>Zamień</translation>
-    </message>
-    <message>
-        <source>Join lines</source>
-        <translation>Złącz linijki</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the previous line</source>
-        <translation>Ustaw czasy jako ciągłe z poprzednią linijką</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the next line</source>
-        <translation>Ustaw czasy jako ciągłe z następną linijką</translation>
     </message>
     <message>
         <source>Make line group</source>
@@ -4692,10 +4664,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Cut</source>
         <translation>Wytnij</translation>
-    </message>
-    <message>
-        <source>Delete lines</source>
-        <translation>Usuń linijki</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5552,20 +5520,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wklej kolumny</translation>
     </message>
     <message>
-        <source>Paste translation text</source>
-        <translation>Wklej tekst tłumaczenia</translation>
-    </message>
-    <message>
         <source>Load subtitles from an MKV file</source>
         <translation>Wczytaj napisy z pliku MKV</translation>
     </message>
     <message>
         <source>Swap lines</source>
         <translation>Zamień linijki</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>Okno przesuwania dialogów</translation>
     </message>
     <message>
         <source>Set new FPS</source>
@@ -5946,6 +5906,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Make line group</source>
         <translation>Utwórz grupę linijek</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>Wklej tłumaczenie z pliku…</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>Dopasowywanie tłumaczenia…</translation>
     </message>
     <message>
         <source>Shift times / run timing postprocessor</source>
@@ -7202,6 +7170,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwiera plik wideo</translation>
     </message>
     <message>
+        <source>Imports a subtitle track from a Matroska file</source>
+        <translation>Importuje ścieżkę napisów z pliku Matroska</translation>
+    </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>Importuj napisy z MKV…</translation>
+    </message>
+    <message>
         <source>Save current file</source>
         <translation>Zapisz aktualny plik</translation>
     </message>
@@ -7300,6 +7276,22 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>Znajduje kolejne wystąpienie frazy w tekście</translation>
+    </message>
+    <message>
+        <source>Changes the frame rate of the subtitle times</source>
+        <translation>Zmienia liczbę klatek na sekundę czasów napisów</translation>
+    </message>
+    <message>
+        <source>Set FPS</source>
+        <translation>Ustaw FPS</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>Ustaw nowy FPS…</translation>
+    </message>
+    <message>
+        <source>Set FPS from video</source>
+        <translation>Ustaw FPS z wideo</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -13234,6 +13226,10 @@ Usunięte style:
     <message>
         <source>Z coordinate for tags \frx and \fry</source>
         <translation>Współrzędna Z dla tagów \frx i \fry</translation>
+    </message>
+    <message>
+        <source>Tag list options</source>
+        <translation>Opcje listy tagów</translation>
     </message>
     <message>
         <source>Tag list</source>
