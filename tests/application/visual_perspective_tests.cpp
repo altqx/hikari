@@ -202,14 +202,6 @@ TEST(PerspectiveMaths, ThePlaneIsWrittenAsArch1t3chtsAegisubWritesIt)
         EXPECT_FALSE(parsePlane(bad)) << std::string(bad.begin(), bad.end());
 }
 
-TEST(PerspectiveMaths, ThePlaneReplacesOnlyItsOwnExtradata)
-{
-    const std::vector<core::Extradata> extra{{u8"_aegi_perspective_ambient_plane", u8"old"}, {u8"_aegi_folddata", u8"0;0;1"}};
-    EXPECT_EQ(withExtradata(extra, kPlaneKey, u8"new"),
-              (std::vector<core::Extradata>{{u8"_aegi_folddata", u8"0;0;1"}, {u8"_aegi_perspective_ambient_plane", u8"new"}}));
-    EXPECT_EQ(withExtradata(extra, kPlaneKey, u8"old"), extra);
-}
-
 TEST(PerspectiveMaths, QuadsAndThePlane)
 {
     const Quad q{PointF{100, 100}, PointF{300, 120}, PointF{280, 260}, PointF{90, 240}};
@@ -1464,7 +1456,6 @@ TEST(PerspectiveTool, AegisubsPlanesAreShown)
     expectQuadNear(f.tool.outer(), {{{50, 50}, {400, 50}, {400, 300}, {50, 300}}}, 0.05);
 }
 
-// perspective-hikari.ass is this save; make/run.sh gives it to Aegisub 3.5.1, which saves perspective-hikari.aegisub.ass.
 TEST(PerspectiveTool, HikarisSaveOfAPlaneIsTheGoldenFile)
 {
     Fixture f;

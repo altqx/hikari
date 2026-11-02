@@ -15,6 +15,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "hikari/application/visual_perspective.h"
+#include "hikari/core/extradata.h"
 
 #include "hikari/application/automation_services.h"
 #include "hikari/application/visual_script.h"
@@ -432,18 +433,6 @@ std::optional<Quad> parsePlane(std::u8string_view value)
         from = to + 1;
     }
     return quad;
-}
-
-std::vector<core::Extradata> withExtradata(std::vector<core::Extradata> extra, std::u8string_view key,
-                                           std::u8string value)
-{
-    const auto isKey = [&](const core::Extradata &e) { return e.key == key; };
-    if (std::count_if(extra.begin(), extra.end(), isKey) == 1 &&
-        std::find_if(extra.begin(), extra.end(), isKey)->value == value)
-        return extra;
-    std::erase_if(extra, isKey);
-    extra.push_back({std::u8string(key), std::move(value)});
-    return extra;
 }
 
 PointF toUV(const Quad &quad, PointF xy)
@@ -1743,19 +1732,11 @@ void PerspectiveTool::reset(VisualHost &host)
 
 namespace {
 
-std::optional<std::u8string> planeExtradata(const core::LineRecord &line)
-{
-    for (auto it = line.extra.rbegin(); it != line.extra.rend(); ++it)
-        if (it->key == perspective::kPlaneKey)
-            return it->value;
-    return std::nullopt;
-}
-
 }
 
 std::optional<Quad> PerspectiveTool::savedPlane(const core::LineRecord &line) const
 {
-    const auto saved = planeExtradata(line);
+    const auto saved = core::extradataValue(line.extra, perspective::kPlaneKey);
     if (const auto kept = m_planes.find(line.id); kept != m_planes.end() && kept->second.second == saved)
         return kept->second.first;
     return saved ? perspective::parsePlane(*saved) : std::nullopt;
@@ -1764,7 +1745,7 @@ std::optional<Quad> PerspectiveTool::savedPlane(const core::LineRecord &line) co
 void PerspectiveTool::keepPlane(const core::LineRecord &line) const
 {
     if (m_valid && m_line == line.id)
-        m_planes[line.id] = {outer(), planeExtradata(line)};
+        m_planes[line.id] = {outer(), core::extradataValue(line.extra, perspective::kPlaneKey)};
 }
 
 void PerspectiveTool::restorePlane(const core::LineRecord &line)
@@ -1900,7 +1881,7 @@ void PerspectiveTool::rememberPlane(VisualHost &host)
     if (value.empty())
         return;
     for (const core::LineId &id : g->targets()) {
-        g->stageExtradata(id, perspective::withExtradata(g->before(id).extra, perspective::kPlaneKey, value));
+        g->stageExtradata(id, core::withExtradata(g->before(id).extra, perspective::kPlaneKey, value));
         m_planes.erase(id);
     }
 }

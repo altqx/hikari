@@ -129,6 +129,7 @@ target_compile_definitions(hikari_backends_karaoke_templater_tests PRIVATE
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus")
+target_include_directories(hikari_backends_karaoke_templater_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_backends_karaoke_templater_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_gtest(hikari_backends_karaoke_preview_tests SOURCES karaoke_preview_runner_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends)
@@ -148,6 +149,7 @@ target_compile_definitions(hikari_backends_karaoke_presets_tests PRIVATE
     HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus"
     HIKARI_KARAOKE_PRESETS="${PROJECT_SOURCE_DIR}/src/application/karaoke-presets"
     HIKARI_KARAOKE_PRESET_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-presets")
+target_include_directories(hikari_backends_karaoke_presets_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_backends_karaoke_presets_tests hikari_lua_helper hikari_automation_stage)
 
 set(_hikari_thirdparty "${PROJECT_SOURCE_DIR}/tests/fixtures/automation-thirdparty")

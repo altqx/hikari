@@ -6290,6 +6290,10 @@ What would you like to do?</source>
         <translation>한자 줄 건너뛰기</translation>
     </message>
     <message>
+        <source>Pair again</source>
+        <translation>다시 짝짓기</translation>
+    </message>
+    <message>
         <source>Previous</source>
         <translation>이전</translation>
     </message>
