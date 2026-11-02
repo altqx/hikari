@@ -21,3 +21,7 @@
 
 /tests/ui/layout-fixtures/** -text
 /.githooks/pre-push text eol=lf
+
+# SC1: the sidecar is built byte for byte the same everywhere, and NOTICES.txt is compared with what its
+# licence files generate.
+/src/ai-sidecar/** text eol=lf
