@@ -54,12 +54,6 @@ Subtitles
 Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > ASS file properties [GLOBAL_OPEN_ASS_PROPERTIES]
-Subtitles > Conversion >
-Subtitles > Conversion > Convert to ASS [GLOBAL_CONVERT_TO_ASS]
-Subtitles > Conversion > Convert to SRT [GLOBAL_CONVERT_TO_SRT]
-Subtitles > Conversion > Convert to MDVD [GLOBAL_CONVERT_TO_MDVD]
-Subtitles > Conversion > Convert to MPL2 [GLOBAL_CONVERT_TO_MPL2]
-Subtitles > Conversion > Convert to TMP [GLOBAL_CONVERT_TO_TMP]
 Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
 Subtitles > Resample subtitles [GLOBAL_OPEN_SUBS_RESAMPLE]
 Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]

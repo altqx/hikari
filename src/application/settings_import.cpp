@@ -356,6 +356,12 @@ std::string_view retiredActionReason(int id)
                                "GLOBAL_VIEW_SUBS"})
         if (id == hotkeyIdOf(symbol))
             return "retired: layout presets and saved layouts replace the View arrangements (owner decision, 2026-10-18)";
+    if (id == hotkeyIdOf("GLOBAL_CONVERT_TO_ASS"))
+        return "retired: Save as converts to ASS (owner decision, 2026-11-02, #611)";
+    for (const auto *symbol : {"GLOBAL_CONVERT_TO_SRT", "GLOBAL_CONVERT_TO_TMP", "GLOBAL_CONVERT_TO_MDVD",
+                               "GLOBAL_CONVERT_TO_MPL2"})
+        if (id == hotkeyIdOf(symbol))
+            return "retired: Export as writes a copy in that format (owner decision, 2026-11-02, #611)";
     if (id == hotkeyIdOf("GLOBAL_EDITOR"))
         return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
     return {};

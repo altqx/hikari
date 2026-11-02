@@ -429,11 +429,6 @@ constexpr NameRow kNames[] = {
         {5114, "Check for updates"},
         {5110, "About"},
         {5113, "Report an issue"},
-        {5020, "Convert to ASS"},
-        {5021, "Convert to SRT"},
-        {5023, "Convert to MDVD"},
-        {5024, "Convert to MPL2"},
-        {5022, "Convert to TMP"},
         {5018, "Open audio from video"},
         {5036, "Load script"},
         {5037, "Refresh autoload scripts"},
@@ -590,11 +585,6 @@ constexpr DefaultRow kMainDefaults[] = {
         {5301, GlobalHotkey, "Open new tab", "Ctrl-T"},
         {5302, GlobalHotkey, "Close current tab", "Ctrl-W"},
         {5030, GlobalHotkey, "Time shift window", "Ctrl-I"},
-        {5020, GlobalHotkey, "Convert to ASS", "F9"},
-        {5021, GlobalHotkey, "Convert to SRT", "F8"},
-        // No F10 for Convert to MDVD: F10 puts the keyboard on the menus.
-        {5024, GlobalHotkey, "Convert to MPL2", "F11"},
-        {5022, GlobalHotkey, "Convert to TMP", "Ctrl-F12"},
         {5026, GlobalHotkey, "Style manager", "Ctrl-M"},
         {5101, GlobalHotkey, "Open video", "Ctrl-Shift-O"},
         {5009, GlobalHotkey, "Find", "Ctrl-F"},
@@ -862,6 +852,7 @@ bool isRetiredHotkey(int id)
     return id == 5015
            || id == 5039
            || id == 5104
+           || (id >= 5020 && id <= 5024)
            || (id >= 5031 && id <= 5035)
            || id == 5109;
 }

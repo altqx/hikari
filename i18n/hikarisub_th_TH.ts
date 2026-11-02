@@ -1648,94 +1648,6 @@ Output device: %2</source>
         <translation>เปลี่ยนความละเอียดของคำบรรยายให้ตรงกับวิดีโอหรือไม่? ทำภายหลังได้ด้วยคำบรรยาย › เปลี่ยนความละเอียดของคำบรรยาย</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>แคตตาล็อก</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>ทุกบรรทัดจะใช้สไตล์นี้</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>แท็กที่ต้นบรรทัด</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>เขียนไว้ที่ต้นของทุกบรรทัด</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>ความละเอียด</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>ความกว้าง</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>ความสูง</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>ความละเอียดสคริปต์ของไฟล์ใหม่</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>อัตราเฟรม</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>เฟรม</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>ป้อนอัตราเฟรมตั้งแต่ 1 ถึง 1000</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD นับเป็นเฟรม: เวลาจะกลายเป็นเฟรมตามอัตรานี้</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>เวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>ต่ออักขระ</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>บรรทัดจะแสดงนานเท่ากับความยาว × ค่านี้ อย่างน้อย 1 วินาที และสิ้นสุดเมื่อบรรทัดถัดไปเริ่ม</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>สิ่งที่เปลี่ยน</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>ไม่มีสิ่งที่จะแสดงจนกว่าอัตราเฟรมจะถูกต้อง</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>สไตล์</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>เวลาสิ้นสุดใหม่</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>แปลง</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>คำบรรยาย</translation>
     </message>
@@ -1807,76 +1719,6 @@ Output device: %2</source>
         <source>%n value(s) could not be scaled.</source>
         <translation>
             <numerusform>ไม่สามารถปรับขนาดค่า %n ค่า</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>ไม่สามารถแปลงเอกสารนี้เป็นรูปแบบนั้น</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>ค่า FPS ไม่ถูกต้อง แก้ไขตัวเลือกแล้วลองอีกครั้ง</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>คุณสมบัติสคริปต์และสไตล์จะถูกลบ</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n comment line(s) removed.</source>
-        <translation>
-            <numerusform>ลบบรรทัดความคิดเห็น %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n drawing(s) removed.</source>
-        <translation>
-            <numerusform>ลบภาพวาด %n รายการ</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) left without text removed.</source>
-        <translation>
-            <numerusform>ลบบรรทัดที่ไม่มีข้อความเหลือ %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n duplicate line(s) removed.</source>
-        <translation>
-            <numerusform>ลบบรรทัดซ้ำ %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Lines are sorted by time.</source>
-        <translation>บรรทัดถูกเรียงตามเวลา</translation>
-    </message>
-    <message numerus="yes">
-        <source>Formatting tags converted or removed in %n line(s).</source>
-        <translation>
-            <numerusform>แปลงหรือลบแท็กจัดรูปแบบใน %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) get the conversion style “%1”.</source>
-        <translation>
-            <numerusform>%n บรรทัดได้รับสไตล์การแปลง “%1”</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>ลบชั้น สไตล์ ผู้พูด ระยะขอบ หรือเอฟเฟกต์ออกจาก %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
-        <translation>
-            <numerusform>ลบที่คั่นหน้า บรรทัดที่ซ่อน และกลุ่มออกจาก %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Times changed (rounding, frames or new end times) in %n line(s).</source>
-        <translation>
-            <numerusform>เปลี่ยนเวลา (การปัดเศษ เฟรม หรือเวลาสิ้นสุดใหม่) ใน %n บรรทัด</numerusform>
         </translation>
     </message>
 </context>
@@ -2066,6 +1908,48 @@ Output device: %2</source>
         <translation>เลือกตำแหน่งที่จะบันทึกเอกสารที่ไม่มีชื่อ</translation>
     </message>
     <message>
+        <source>Save as ASS</source>
+        <translation>บันทึกเป็น ASS</translation>
+    </message>
+    <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>อัตราเฟรมใน การตั้งค่า › การแปลง ไม่ถูกต้อง แก้ไขแล้วบันทึกอีกครั้ง</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) get the style “%1”.</source>
+        <translation>
+            <numerusform>%n บรรทัดได้รับสไตล์ “%1”</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Formatting tags converted in %n line(s).</source>
+        <translation>
+            <numerusform>แปลงแท็กจัดรูปแบบใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Times changed in %n line(s).</source>
+        <translation>
+            <numerusform>เปลี่ยนเวลาใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lines are sorted by time.</source>
+        <translation>เรียงบรรทัดตามเวลาแล้ว</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n duplicate line(s) removed.</source>
+        <translation>
+            <numerusform>ลบบรรทัดซ้ำ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) without text removed.</source>
+        <translation>
+            <numerusform>ลบบรรทัดที่ไม่มีข้อความ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>บันทึกเอกสารไม่ได้ จึงไม่ได้ปิดสิ่งใด</translation>
     </message>
@@ -2080,6 +1964,10 @@ Output device: %2</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>เปิด %1 ไม่ได้ จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>คำบรรยาย ASS (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -5080,6 +4968,26 @@ Failed to copy %2 fonts.</source>
         <translation>นำปุ่มลัด %1 ของ &quot;เปิดหน้าต่างกำหนดปุ่มลัด&quot; ออกแล้ว เนื่องจากไม่มีหน้าต่างนี้แล้ว และปุ่มลัดของแต่ละแมโครกำหนดได้ในแผงสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น ASS” ถูกนำออกแล้ว: ให้เลือก ASS ใน ไฟล์ › บันทึกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น SRT” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น TMP” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น MDVD” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น MPL2” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>นำปุ่มลัด %1 ของ &quot;เปิดเสียงเปล่ายาว 2:30 ชั่วโมง&quot; ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจำลองมีเสียงเงียบมาในตัว</translation>
     </message>
@@ -5530,26 +5438,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Report an issue</source>
         <translation>รายงานปัญหา</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>แปลงเป็น ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>แปลงเป็น SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>แปลงเป็น MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>แปลงเป็น MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>แปลงเป็น TMP</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6562,26 +6450,6 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>แปลงเป็น ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>แปลงเป็น SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>แปลงเป็น MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>แปลงเป็น MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>แปลงเป็น TMP</translation>
-    </message>
-    <message>
         <source>The starting time</source>
         <translation>เวลาเริ่มต้น</translation>
     </message>
@@ -6942,10 +6810,6 @@ Failed to copy %2 fonts.</source>
         <translation>คุณสมบัติไฟล์ ASS</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>การแปลง</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>ตัวรวบรวมแบบอักษร</translation>
     </message>
@@ -7030,26 +6894,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close</source>
         <translation>ปิด</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>แปลงเป็นรูปแบบ ASS</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>แปลงเป็นรูปแบบ SRT</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>แปลงเป็นรูปแบบ microDVD</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>แปลงเป็นรูปแบบ MPL2</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>แปลงเป็นรูปแบบ TMPlayer (ไม่แนะนำ)</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7382,10 +7226,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>ASS subtitle properties</source>
         <translation>คุณสมบัติของคำบรรยาย ASS</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>

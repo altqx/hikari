@@ -81,8 +81,9 @@ Item {
         const v = app.saveDialogValuesFor(rows[i].id)
         saveAs.row = i
         saveAs.then = then || null
+        saveAs.formats = v.formats
         saveAs.title = qsTr("Save “%1” as").arg(rows[i].title)
-        saveAs.nameFilters = [v.filter, qsTr("All files (*)")]
+        saveAs.nameFilters = v.filters.concat([qsTr("All files (*)")])
         if (v.folder.toString() !== "")
             saveAs.currentFolder = v.folder
         else if (pickerFolder("subtitles").length > 0)
@@ -163,11 +164,13 @@ Item {
         objectName: "closeSaveAs"
         property int row: -1
         property var then: null
+        property var formats: []
         fileMode: FileDialog.SaveFile
         onAccepted: {
             unsaved.rememberPickerFolder("subtitles", selectedFile)
             const list = unsaved.choices.slice()
-            list[row] = Object.assign({}, list[row], { path: unsaved.app.localPath(selectedFile) })
+            list[row] = Object.assign({}, list[row], { path: unsaved.app.localPath(selectedFile),
+                                                       format: formats[selectedNameFilter.index] ?? "" })
             unsaved.choices = list
             const next = then
             then = null

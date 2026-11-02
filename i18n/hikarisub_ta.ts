@@ -1658,94 +1658,6 @@ Output device: %2</source>
         <translation>வசன வரிகளை வீடியோவுக்கு ஏற்ப மறுமாதிரியாக்கவா? வசன வரிகள் › வசன வரிகளை மறுமாதிரியாக்கு மூலம் பின்னரும் இதைச் செய்யலாம்.</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>பட்டியல்</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>ஒவ்வொரு வரிக்கும் இந்தப் பாணி வழங்கப்படும்.</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>தொடக்கக் குறிச்சொற்கள்</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>ஒவ்வொரு வரியின் தொடக்கத்திலும் எழுதப்படும்.</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>தெளிவுத்திறன்</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>அகலம்</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>உயரம்</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>புதிய கோப்பின் ச்கிரிப்ட் தெளிவுத்திறன்.</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>சட்டக வீதம்</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>சட்டகங்கள்</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>1 முதல் 1000 வரையிலான சட்டக வீதத்தை உள்ளிடவும்.</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD சட்டகங்களை எண்ணுகிறது: நேரங்கள் இந்த வீதத்தில் சட்டகங்களாக மாறும்.</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>இறுதி நேரங்கள்</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>ஓர் எழுத்துக்கு</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>ஒரு வரி அதன் நீளம் × இந்த அளவு நீடிக்கும், குறைந்தது 1 s; அடுத்த வரி தொடங்கும் இடத்தில் முடியும்.</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>என்ன மாறும்</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>சட்டக வீதம் சரியாகும் வரை காட்ட எதுவும் இல்லை.</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>பாணி</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>புதிய இறுதி நேரங்கள்</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>மாற்று</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>வசன வரிகள்</translation>
     </message>
@@ -1818,85 +1730,6 @@ Output device: %2</source>
         <translation>
             <numerusform>%n மதிப்பை அளவிட முடியவில்லை.</numerusform>
             <numerusform>%n மதிப்புகளை அளவிட முடியவில்லை.</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>இந்த ஆவணத்தை அந்த வடிவத்துக்கு மாற்ற முடியாது.</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>தவறான FPS. அதை விருப்பங்களில் சரிசெய்து மீண்டும் முயற்சிக்கவும்.</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>ச்கிரிப்ட் பண்புகளும் பாணிகளும் நீக்கப்படும்.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n comment line(s) removed.</source>
-        <translation>
-            <numerusform>%n கருத்து வரி நீக்கப்பட்டது.</numerusform>
-            <numerusform>%n கருத்து வரிகள் நீக்கப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n drawing(s) removed.</source>
-        <translation>
-            <numerusform>%n வரைபடம் நீக்கப்பட்டது.</numerusform>
-            <numerusform>%n வரைபடங்கள் நீக்கப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) left without text removed.</source>
-        <translation>
-            <numerusform>உரை இல்லாமல் போன %n வரி நீக்கப்பட்டது.</numerusform>
-            <numerusform>உரை இல்லாமல் போன %n வரிகள் நீக்கப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n duplicate line(s) removed.</source>
-        <translation>
-            <numerusform>%n நகல் வரி நீக்கப்பட்டது.</numerusform>
-            <numerusform>%n நகல் வரிகள் நீக்கப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Lines are sorted by time.</source>
-        <translation>வரிகள் நேரப்படி வரிசைப்படுத்தப்படும்.</translation>
-    </message>
-    <message numerus="yes">
-        <source>Formatting tags converted or removed in %n line(s).</source>
-        <translation>
-            <numerusform>%n வரியில் வடிவமைப்புக் குறிச்சொற்கள் மாற்றப்பட்டன அல்லது நீக்கப்பட்டன.</numerusform>
-            <numerusform>%n வரிகளில் வடிவமைப்புக் குறிச்சொற்கள் மாற்றப்பட்டன அல்லது நீக்கப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) get the conversion style “%1”.</source>
-        <translation>
-            <numerusform>%n வரிக்கு “%1” என்ற மாற்றப் பாணி வழங்கப்படும்.</numerusform>
-            <numerusform>%n வரிகளுக்கு “%1” என்ற மாற்றப் பாணி வழங்கப்படும்.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>%n வரியிலிருந்து அடுக்கு, பாணி, நடிகர், விளிம்புகள் அல்லது விளைவு நீக்கப்பட்டது.</numerusform>
-            <numerusform>%n வரிகளிலிருந்து அடுக்கு, பாணி, நடிகர், விளிம்புகள் அல்லது விளைவு நீக்கப்பட்டது.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
-        <translation>
-            <numerusform>%n வரியிலிருந்து புத்தகக்குறிகள், மறைக்கப்பட்ட வரிகள், குழுக்கள் நீக்கப்பட்டன.</numerusform>
-            <numerusform>%n வரிகளிலிருந்து புத்தகக்குறிகள், மறைக்கப்பட்ட வரிகள், குழுக்கள் நீக்கப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Times changed (rounding, frames or new end times) in %n line(s).</source>
-        <translation>
-            <numerusform>%n வரியில் நேரங்கள் மாற்றப்பட்டன (முழுமையாக்கல், சட்டகங்கள் அல்லது புதிய இறுதி நேரங்கள்).</numerusform>
-            <numerusform>%n வரிகளில் நேரங்கள் மாற்றப்பட்டன (முழுமையாக்கல், சட்டகங்கள் அல்லது புதிய இறுதி நேரங்கள்).</numerusform>
         </translation>
     </message>
 </context>
@@ -2086,6 +1919,53 @@ Output device: %2</source>
         <translation>தலைப்பிடப்படாத ஆவணத்தைச் சேமிக்கும் இடத்தைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
+        <source>Save as ASS</source>
+        <translation>ASS ஆகச் சேமி</translation>
+    </message>
+    <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>அமைப்புகள் › மாற்றம் இல் உள்ள சட்டக வீதம் சரியில்லை. அதைத் திருத்தி மீண்டும் சேமிக்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) get the style “%1”.</source>
+        <translation>
+            <numerusform>%n வரிக்கு “%1” என்ற பாணி வழங்கப்பட்டது.</numerusform>
+            <numerusform>%n வரிகளுக்கு “%1” என்ற பாணி வழங்கப்பட்டது.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Formatting tags converted in %n line(s).</source>
+        <translation>
+            <numerusform>%n வரியில் வடிவமைப்புக் குறிச்சொற்கள் மாற்றப்பட்டன.</numerusform>
+            <numerusform>%n வரிகளில் வடிவமைப்புக் குறிச்சொற்கள் மாற்றப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Times changed in %n line(s).</source>
+        <translation>
+            <numerusform>%n வரியில் நேரங்கள் மாற்றப்பட்டன.</numerusform>
+            <numerusform>%n வரிகளில் நேரங்கள் மாற்றப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lines are sorted by time.</source>
+        <translation>வரிகள் நேரப்படி வரிசைப்படுத்தப்பட்டன.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n duplicate line(s) removed.</source>
+        <translation>
+            <numerusform>%n நகல் வரி நீக்கப்பட்டது.</numerusform>
+            <numerusform>%n நகல் வரிகள் நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) without text removed.</source>
+        <translation>
+            <numerusform>உரை இல்லாத %n வரி நீக்கப்பட்டது.</numerusform>
+            <numerusform>உரை இல்லாத %n வரிகள் நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>ஓர் ஆவணத்தைச் சேமிக்க முடியவில்லை; எதுவும் மூடப்படவில்லை.</translation>
     </message>
@@ -2100,6 +1980,10 @@ Output device: %2</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>%1 ஐத் திறக்க முடியவில்லை; எதுவும் மாற்றப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>ASS வசனங்கள் (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -5120,6 +5004,26 @@ Failed to copy %2 fonts.</source>
         <translation>&quot;குறுக்குவிசை மேப்பிங் சாளரத்தைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தச் சாளரம் இனி இல்லை; ஒவ்வொரு குறுநிரலின் குறுக்குவிசையும் தானியங்கு பலகத்தில் அமைக்கப்படும்.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>“ASS ஆக மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › எனச் சேமி இல் ASS ஐத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>“SRT க்கு மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>“TMP க்கு மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>“MDVD ஆக மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>“MPL2 ஆக மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>&quot;வெற்று 2h30m ஆடியோவைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; போலி வீடியோ தன்னுடைய ஒலியற்ற ஆடியோவைக் கொண்டுவரும்.</translation>
     </message>
@@ -5570,26 +5474,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Report an issue</source>
         <translation>சிக்கலைப் புகாரளி</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>ASS ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT க்கு மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2 ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP க்கு மாற்றவும்</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6604,26 +6488,6 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>ASS ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT க்கு மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2 ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP க்கு மாற்றவும்</translation>
-    </message>
-    <message>
         <source>The starting time</source>
         <translation>தொடக்க நேரம்</translation>
     </message>
@@ -6984,10 +6848,6 @@ Failed to copy %2 fonts.</source>
         <translation>ASS கோப்பு பண்புகள்</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>மாற்றம்</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>எழுத்துருக்கள் சேகரிப்பான்</translation>
     </message>
@@ -7073,26 +6933,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close</source>
         <translation>மூடு</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>ASS வடிவத்திற்கு மாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>SRT வடிவத்திற்கு மாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>microDVD வடிவத்திற்கு மாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>MPL2 வடிவத்திற்கு மாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>TMPlayer வடிவத்திற்கு மாற்றுகிறது (பரிந்துரைக்கப்படவில்லை)</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7425,10 +7265,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>ASS subtitle properties</source>
         <translation>ASS வசன வரிகள் பண்புகள்</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>ஒரு வடிவத்திலிருந்து இன்னொரு வடிவத்திற்கு மாற்றுகிறது</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>

@@ -154,7 +154,7 @@ qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popove
 qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
-qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ConversionWindow.qml ResampleWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ResampleWindow.qml)
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")
 qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari_app_icon}")

@@ -164,7 +164,8 @@ private slots:
             for (const QJsonValue &m : v.toObject().value(QStringLiteral("menus")).toArray())
                 menus[v.toObject().value(QStringLiteral("symbol")).toString()] << m.toString();
         QCOMPARE(menus.value(QStringLiteral("GLOBAL_SAVE_SUBS")), QStringList{QStringLiteral("File > Save")});
-        QVERIFY(menus.value(QStringLiteral("GLOBAL_CONVERT_TO_SRT")).contains(QStringLiteral("Subtitles > Conversion > Convert to SRT")));
+        QVERIFY(menus.value(QStringLiteral("GLOBAL_OPEN_ASS_PROPERTIES")).contains(QStringLiteral("Subtitles > ASS file properties")));
+        QVERIFY(!menus.contains(QStringLiteral("GLOBAL_CONVERT_TO_SRT")));
         QVERIFY(menus.value(QStringLiteral("GRID_INSERT_BEFORE")).contains(QStringLiteral("Grid menu > Insert > Insert before")));
         for (const QStringList &places : menus)
             for (const QString &place : places) {

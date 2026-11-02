@@ -30,7 +30,7 @@ Spaces at the start and end of each row are trimmed, and empty rows are dropped,
 | WebVTT | `.vtt` | `00:00:01.000`, LF | `<b>` `<i>` `<u>`; one `::cue(.Style)` rule per Style used (colour, alpha, font, bold, italic, decoration, outline as `text-shadow`, opaque box as `background-color`); colour tags as `::cue(.cRRGGBB)` classes; `line`/`position`/`align` from alignment, `\pos` and margins over PlayRes | positions (on), styles and colours (on), karaoke timestamps (off) |
 | YouTube SBV | `.sbv` | `0:00:01.000,0:00:02.000`, CRLF | text only | merge overlaps |
 | Plain text | `.txt` | none, LF | text only, one Line per row | times (tab separated), actor names |
-| MicroDVD | `.sub` | frames at the chosen rate (the video's when open, else 23.976) | `{y:i}` `{y:b}` `{y:u}` `{y:s}` and `{c:$BBGGRR}` for a whole row | frame rate, merge overlaps |
+| MicroDVD | `.sub` | frames at the chosen rate: the last one used for that file (for a file never exported, the last export's), else the video's, else 23.976 | `{y:i}` `{y:b}` `{y:u}` `{y:s}` and `{c:$BBGGRR}` for a whole row | frame rate, merge overlaps |
 | MPL2 | `.txt` | deciseconds | `/` for an italic row | merge overlaps |
 | TMPlayer | `.txt` | whole seconds, start only | text only | overlaps are always merged; an empty `hh:mm:ss:` clears the screen when no Line follows at once |
 
@@ -56,9 +56,15 @@ After writing, the window lists every Line that lost or had something approximat
 | Effect | `Banner;`, `Scroll up;`, `Scroll down;` |
 | Merged | shown in a cue with an overlapping Line |
 
+## Save as ASS
+Export as leaves the Document alone. To turn an SRT, WebVTT, SBV, MicroDVD, MPL2 or TMPlayer Document into ASS, use **File › Save as…**. For a Document in another format, it lists that format plus **ASS subtitles (\*.ass)**. A name ending in `.ass` also picks ASS. Choosing ASS runs `core::convertDocument` with the **Settings › Conversion** options (frame rate or From video, style and catalog, new end times, time per character, tags at the start of each line, resolution) as one undoable step, "Subtitles conversion". It logs what changed (Lines given the style, tags converted, times changed, sorting, duplicates and empty Lines removed) under "Save as ASS", then saves. If the frame rate is invalid, it logs an error and writes nothing. The same choice is in the save dialog on close.
+
+Subtitles › Conversion and its five commands (5020–5024, `GLOBAL_CONVERT_TO_*`) were removed in [#611](https://github.com/altqx/hikari/issues/611). Shortcut files and imported settings that bind them still load. The bindings are dropped with a Log notice that points to Save as (ASS) or Export as (other formats).
+
 ## Memory
 The last format and options are kept per document file in `export.choices` (at most 100 rows, last used first). A document without a remembered choice, or without a file, gets the last export's.
 
 ## Tests
 - `hikari_core_export_tests`: goldens for every format on `tests/fixtures/export/{plain,karaoke,typesetting}.ass` (`HIKARI_WRITE_EXPORT_GOLDENS=1` rewrites them), read-back through the SRT and line-format loaders, every option, and the report.
 - `hikari_ui_export_dialog_tests`: the window, the unchanged Document, replacing a file, the report's links, the Lines choice and the memory.
+- `hikari_ui_shell_tests`: `saveAsOffersAssForADocumentOfAnotherFormat`, `anAssFileNameConvertsWithTheDocumentsOwnFilter` and `storedConversionShortcutsAreDroppedWithANotice`; `hikari_application_hotkeys_tests` and `hikari_application_settings_import_tests` cover the retired commands.

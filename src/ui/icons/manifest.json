@@ -1251,72 +1251,7 @@
     "Convert.png"
    ],
    "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-ass",
-   "file": "convert-ass.svg",
-   "label": "Convert to ASS",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "Convass.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-srt",
-   "file": "convert-srt.svg",
-   "label": "Convert to SRT",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "ConvSRT.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-mdvd",
-   "file": "convert-mdvd.svg",
-   "label": "Convert to MDVD",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "ConvMDVD.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-mpl2",
-   "file": "convert-mpl2.svg",
-   "label": "Convert to MPL2",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "ConvMPL2.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-tmp",
-   "file": "convert-tmp.svg",
-   "label": "Convert to TMP",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "Convtmp.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
+    "settings-dialog"
    ]
   },
   {

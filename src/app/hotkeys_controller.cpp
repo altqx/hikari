@@ -229,6 +229,16 @@ QString retiredNotice(int id)
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Enable / Disable editor” was removed: the editor is always shown; hide panels or choose a layout instead.");
     case 5039:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open shortcut mapping window\" was removed: the window is gone and each macro's shortcut is set in the Automation panel.");
+    case 5020:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.");
+    case 5021:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.");
+    case 5022:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.");
+    case 5023:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.");
+    case 5024:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.");
     case 5104:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open blank 2h30m audio\" was removed: the command is retired and a dummy video brings its own silent audio.");
     default:
