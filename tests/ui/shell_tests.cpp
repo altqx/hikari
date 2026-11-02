@@ -6477,20 +6477,20 @@ private slots:
         QTRY_VERIFY(timingDock->property("isOpen").toBool());
         top = QAccessible::queryAccessibleInterface(window);
         QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Shift times")));
-        QAccessibleInterface *searchTab = find(top, QAccessible::PageTab, QStringLiteral("Search"));
+        QAccessibleInterface *searchTab = find(top, QAccessible::PageTab, QStringLiteral("Find"));
         QVERIFY(searchTab);
         QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Shift times"));
         QVERIFY(timingTab->state().checked);
         QVERIFY(!searchTab->state().checked);
         QVERIFY(find(top, QAccessible::PageTabList, QStringLiteral("Panels")));
-        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Search")));
+        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Find")));
         QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Shift times")));
         QAccessibleInterface *timingOptions = find(top, QAccessible::Button, QStringLiteral("Shift times options"));
         QVERIFY(timingOptions);
-        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Search options")));
+        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Find options")));
         QVERIFY(searchTab->actionInterface());
         searchTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
-        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Search options")));
+        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Find options")));
         timingTab = find(QAccessible::queryAccessibleInterface(window), QAccessible::PageTab, QStringLiteral("Shift times"));
         timingTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QAccessibleInterface *closeFrom = nullptr;
@@ -11921,9 +11921,11 @@ private slots:
             order << at->objectName();
             at = at->nextItemInFocusChain(true);
         }
+        const QString scope = item("searchTool")->property("wide").toBool() ? QStringLiteral("findScopeDocument")
+                                                                            : QStringLiteral("findScopeList");
         QCOMPARE(order, (QStringList{"findReplaceToggle", "findText", "findMatchCase", "findRegex", "findPreviousButton",
                                      "findButton", "findAllButton", "findOptionsButton", "findReplaceText",
-                                     "replaceNextButton", "replaceAllButton", "findScopeDocument"}));
+                                     "replaceNextButton", "replaceAllButton", scope}));
         QCOMPARE(QAccessible::queryAccessibleInterface(item("findReplaceToggle"))->text(QAccessible::Name), QStringLiteral("Show replace"));
         QCOMPARE(QAccessible::queryAccessibleInterface(item("findMatchCase"))->text(QAccessible::Name), QStringLiteral("Match case"));
         QCOMPARE(QAccessible::queryAccessibleInterface(item("findRegex"))->text(QAccessible::Name), QStringLiteral("Regular expression"));
