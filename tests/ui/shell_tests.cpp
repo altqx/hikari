@@ -20580,6 +20580,91 @@ private slots:
         QVERIFY(!chip->isVisible());
     }
 
+    void audioBackToLineHidesWhilePlaying()
+    {
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        // MUST KILL: spelling off only to keep its missing-dictionary notice off the window
+        options.spellingBackend = {};
+        const auto close = qScopeGuard([this] {
+            delete engine;
+            delete application;
+            engine = nullptr;
+            application = nullptr;
+        });
+        restartWith(options);
+        keysNeverRepeat();
+        QVERIFY(application->openFile(
+            writeFile(dir, "back-to-line.ass", "Dialogue: 0,0:00:00.10,0:00:00.30,Default,,0,0,0,,line\n")));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY(video.session().shownFrame());
+        closeMismatchQuestion();
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(audio.syncVideo());
+        auto *chip = item("audioBackToLine");
+        const auto &view = audio.view();
+        const auto scrollPastTheLine = [&] {
+            audio.setHorizontalZoom(10);
+            audio.setScrollPosition(0);
+            audio.setScrollPosition(static_cast<int>(view.xAtMs(800) / 12));
+        };
+        int playbackFrames = 0;
+        int chipFrames = 0;
+        QObject::connect(window, &QQuickWindow::afterAnimating, chip, [&] {
+            if (!audio.cursorIsPlayback())
+                return;
+            ++playbackFrames;
+            chipFrames += chip->isVisible();
+        });
+
+        scrollPastTheLine();
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+        audio.playRange(900, 1800);
+        QVERIFY(audio.playing());
+        QVERIFY(!chip->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(playbackFrames >= 3, 5000);
+        audio.stopPlayback();
+        QVERIFY(!audio.playing());
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+
+        audio.playRange(900, 1800);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        bool lineShown = false;
+        const auto watch = QObject::connect(&audio, &ui::AudioController::displayChanged, chip,
+                                            [&] { lineShown = lineShown || audio.lineOutOfView() == 0; });
+        press(Qt::Key_B);
+        QObject::disconnect(watch);
+        QVERIFY(lineShown);
+        QVERIFY(audio.playing());
+        audio.stopPlayback();
+
+        QVERIFY(video.session().seekToMs(900));
+        QTRY_VERIFY(video.session().shownFrame().value_or(0) > 0);
+        scrollPastTheLine();
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+        const int audioFrames = playbackFrames;
+        QVERIFY(video.play());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.cursorIsPlayback(), 10000);
+        QVERIFY(!audio.playing());
+        QVERIFY(!chip->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(playbackFrames >= audioFrames + 3, 5000);
+        QVERIFY(video.pause());
+        QTRY_VERIFY(!audio.cursorIsPlayback());
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+        QCOMPARE(chipFrames, 0);
+    }
+
     void audioKaraokeMode()
     {
         restartWithoutSound();
