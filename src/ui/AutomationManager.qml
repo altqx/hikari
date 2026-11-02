@@ -355,6 +355,10 @@ Pane {
             }
             Keys.onUpPressed: step(-1)
             Keys.onDownPressed: step(1)
+            MenuKey.onRequested: {
+                if (list.current?.kind === "macro")
+                    macroMenu.openFor(list.current, list.currentItem)
+            }
             Keys.onPressed: event => {
                 const row = list.current
                 if (!row || row.kind !== "macro")
@@ -364,9 +368,6 @@ Pane {
                     event.accepted = true
                 } else if (event.key === Qt.Key_F2) {
                     root.record(row.legacyName)
-                    event.accepted = true
-                } else if (event.key === Qt.Key_Menu) {
-                    macroMenu.openFor(row, list.currentItem)
                     event.accepted = true
                 }
             }

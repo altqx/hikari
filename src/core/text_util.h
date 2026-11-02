@@ -17,6 +17,7 @@ struct DocumentBuilder {
     static void setFormat(Document &d, SubtitleFormat f) { d.m_format = f; }
     static std::uint64_t peekNextLineId(const Document &d) { return d.m_nextLineId; }
     static void setNextLineId(Document &d, std::uint64_t next) { d.m_nextLineId = next; }
+    static std::vector<ExtradataEntry> &extradata(Document &d) { return d.m_extradata; }
 };
 
 

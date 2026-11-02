@@ -456,6 +456,25 @@ void LineGrid::makeLineVisible(qulonglong id)
         setContentY(std::max(0, row - rows / 2 + 1) * m_geometry.rowHeight);
 }
 
+void LineGrid::requestMenu()
+{
+    constexpr qreal kInset = 12;
+    const auto active = activeLine();
+    if (active)
+        makeLineVisible(active->value);
+    const int row = active ? rowOfLine(*active) : -1;
+    if (row < 0 || !m_model) {
+        emit contextMenuRequested(kInset, m_geometry.headerHeight);
+        return;
+    }
+    const qreal bottom = m_geometry.headerHeight + (row + 1) * m_geometry.rowHeight - std::max<qreal>(0, m_contentY);
+    const qreal y = std::clamp(bottom, m_geometry.headerHeight, m_viewport.height());
+    if (m_model->index(row, 0).data(LineTableModel::GroupRole).toInt() == 1)
+        emit groupMenuRequested(active->value, kInset, y);
+    else
+        emit contextMenuRequested(kInset, y);
+}
+
 void LineGrid::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     const int row = currentRow();

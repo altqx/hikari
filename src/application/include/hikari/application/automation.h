@@ -6,6 +6,7 @@
 #include <optional>
 #include <climits>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -113,6 +114,8 @@ struct MacroDialogueLine {
     std::string text;        // as the script sees it (the translation in TLMode)
     std::string translation; // "text_translation": the original in TLMode, else empty
     std::string raw;         // the line as ASS text (read-only)
+    // "extra": one value per key, sorted by key, as Aegisub gives it.
+    std::vector<std::pair<std::string, std::string>> extra;
     bool operator==(const MacroDialogueLine &) const = default;
 };
 

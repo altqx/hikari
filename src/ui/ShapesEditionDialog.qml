@@ -31,7 +31,7 @@ DialogWindow {
     function nameTyped() {
         const code = editor.setName(shapeName.text)
         shapeName.error = code === ShapeEditor.NameEmpty ? qsTr("Type a name.")
-                        : code === ShapeEditor.NameSeparator ? qsTr("A name can't contain “;”.")
+                        : code === ShapeEditor.NameSeparator ? qsTr("A name can’t contain “;”.")
                         : code === ShapeEditor.NameTaken
                           ? qsTr("Another shape is named “%1”. Press Enter to replace it.").arg(editor.takenName())
                         : ""
@@ -213,7 +213,7 @@ DialogWindow {
                         iconRole: "delete"
                         text: qsTr("Delete")
                         enabled: dialog.editor ? dialog.editor.canRemove : false
-                        tip: enabled ? text : qsTr("The list keeps at least one shape")
+                        tip: enabled ? text : qsTr("The list keeps at least one shape.")
                         onClicked: { dialog.editor.remove(); dialog.showFields() }
                     }
                     Item { Layout.fillWidth: true }
@@ -291,7 +291,7 @@ DialogWindow {
                         if (!dialog.editor || text === dialog.editor.shape)
                             return
                         error = dialog.editor.setShape(text) ? ""
-                              : text.indexOf(";") >= 0 ? qsTr("A drawing can't contain “;”.")
+                              : text.indexOf(";") >= 0 ? qsTr("A drawing can’t contain “;”.")
                               : qsTr("A shape needs a drawing.")
                     }
                     onActiveFocusChanged: {
@@ -308,7 +308,7 @@ DialogWindow {
                 objectName: "shapeFromLine"
                 iconRole: "tool-drawing"
                 text: qsTr("Take from the active line")
-                tip: qsTr("Put the active line's drawing in this shape")
+                tip: qsTr("Put the active line’s drawing in this shape")
                 onClicked: {
                     if (dialog.editor.takeFromLine())
                         dialog.showFields()
@@ -385,7 +385,7 @@ DialogWindow {
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 color: Theme.muted
-                text: shapeText.error.length > 0 ? qsTr("The shape keeps its last drawing until this one can be used")
+                text: shapeText.error.length > 0 ? qsTr("The shape keeps its last drawing until this one can be used.")
                     : previewFrame.box.width > 0 || previewFrame.box.height > 0
                       ? qsTr("%1 × %2").arg(Math.round(previewFrame.box.width), Math.round(previewFrame.box.height))
                       : ""

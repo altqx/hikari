@@ -1,7 +1,9 @@
 #include "theme.h"
 
 #include "settings_store.h"
+#include "menu_key.h"
 #include "style/style_colours.h"
+#include "style/text_menus.h"
 #include "title_bars.h"
 
 #include "hikari/application/settings.h"
@@ -721,6 +723,8 @@ void chooseControlsStyle()
         QQuickStyle::setStyle(QString::fromLatin1(kControlsStyle));
         QQuickStyle::setFallbackStyle(QStringLiteral("Fusion"));
     }
+    style::TextMenus::setSource(QStringLiteral("Hikari.Ui"), QStringLiteral("TextMenu"));
+    MenuKey::install();
 }
 
 }
