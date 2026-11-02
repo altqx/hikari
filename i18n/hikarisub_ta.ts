@@ -9620,6 +9620,10 @@ and will be changed to the default</source>
         <translation>தொகுப்பில் அதன் முதன்மைக் கோப்பான %1 இல்லை.</translation>
     </message>
     <message>
+        <source>The package breaks the media rules: %1 %2.</source>
+        <translation>தொகுப்பு ஊடக விதிகளை மீறுகிறது: %1 %2.</translation>
+    </message>
+    <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
         <translation>தொகுப்பில் கையொப்பம் உள்ளது, ஆனால் அதைச் சரிபார்க்க publicKey எதையும் அதன் மேனிஃபெச்ட் குறிப்பிடவில்லை.</translation>
     </message>

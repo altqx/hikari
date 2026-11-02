@@ -41,6 +41,11 @@ struct Setting {
     api::Json definition; // the manifest's object, with type and default
 };
 
+struct Screenshot {
+    std::string path;
+    std::string caption;
+};
+
 struct Manifest {
     std::string id;
     std::string name;
@@ -52,6 +57,9 @@ struct Manifest {
     std::string description;
     std::string license;
     std::string homepage;
+    std::string summary;
+    std::string icon; // a package path, or empty
+    std::vector<Screenshot> screenshots;
     std::optional<minisign::PublicKey> publicKey;
     Permissions permissions;
     std::vector<Contribution> commands;
