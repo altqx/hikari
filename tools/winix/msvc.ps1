@@ -11,6 +11,12 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         "${env:ProgramFiles}\Git\cmd") | Where-Object { Test-Path "$_\git.exe" } | Select-Object -First 1
     if ($bundled) { $env:Path = "$bundled;$env:Path" }
 }
+if (-not $env:Python3_ROOT_DIR) {
+    # The Winix image has only the Microsoft Store python stub, which FindPython3 rejects.
+    $python = Get-ChildItem -Directory "$PSScriptRoot\..\..\out\sdk\vcpkg\downloads\tools\python\python-*-x64" -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending | Select-Object -First 1
+    if ($python) { $env:Python3_ROOT_DIR = $python.FullName }
+}
 $command, $rest = $args
 & $command @rest
 exit $LASTEXITCODE
