@@ -9585,7 +9585,7 @@ zostanie zmieniony na domyślny</translation>
         <translation>Wtyczka nie jest zainstalowana, jest wyłączona albo nie ma już tego polecenia</translation>
     </message>
     <message>
-        <source>The plugin can’t start: %1</source>
+        <source>Can’t start: %1</source>
         <translation>Nie można uruchomić wtyczki: %1</translation>
     </message>
     <message>

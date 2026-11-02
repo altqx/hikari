@@ -9479,7 +9479,7 @@ and will be changed to the default</source>
         <translation>ปลั๊กอินไม่ได้ติดตั้งไว้ ถูกปิดอยู่ หรือไม่มีคำสั่งนี้แล้ว</translation>
     </message>
     <message>
-        <source>The plugin can’t start: %1</source>
+        <source>Can’t start: %1</source>
         <translation>เริ่มปลั๊กอินไม่ได้: %1</translation>
     </message>
     <message>

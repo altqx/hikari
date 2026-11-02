@@ -98,7 +98,7 @@ private slots:
         QCOMPARE(runtime.commands().size(), 2);
         const QVariantMap first = runtime.commands().first().toMap();
         QCOMPARE(first.value(QStringLiteral("id")).toString(), kGreet);
-        QCOMPARE(first.value(QStringLiteral("path")).toStringList(), (QStringList{QStringLiteral("Hello"), QStringLiteral("Say hello")}));
+        QCOMPARE(first.value(QStringLiteral("titles")).toStringList(), (QStringList{QStringLiteral("Hello"), QStringLiteral("Say hello")}));
         QVERIFY(!runtime.process(QStringLiteral("com.example.off")));
 
         QVERIFY(runtime.run(kGreet));

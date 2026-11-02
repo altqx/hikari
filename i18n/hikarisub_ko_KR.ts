@@ -9479,7 +9479,7 @@ and will be changed to the default</source>
         <translation>플러그인이 설치되어 있지 않거나, 꺼져 있거나, 더 이상 이 명령이 없습니다</translation>
     </message>
     <message>
-        <source>The plugin can’t start: %1</source>
+        <source>Can’t start: %1</source>
         <translation>플러그인을 시작할 수 없습니다: %1</translation>
     </message>
     <message>

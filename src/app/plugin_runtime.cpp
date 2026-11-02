@@ -88,7 +88,7 @@ void PluginRuntime::sync()
                 if (manifest)
                     wanted.emplace(id, std::move(*manifest));
                 else if (m_wiring.log)
-                    m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "The plugin can’t start: %1").arg(qs(manifest.error())),
+                    m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Can’t start: %1").arg(qs(manifest.error())),
                                       ui::LogController::Error, qs(id));
             }
     }
@@ -266,7 +266,7 @@ void PluginRuntime::relist()
                                     {QStringLiteral("plugin"), qs(plugin->id)},
                                     {QStringLiteral("pluginName"), name},
                                     {QStringLiteral("title"), qs(command.title)},
-                                    {QStringLiteral("path"), QStringList{name, qs(command.title)}}};
+                                    {QStringLiteral("titles"), QStringList{name, qs(command.title)}}};
     }
     if (commands == m_commands)
         return;

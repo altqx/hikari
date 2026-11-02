@@ -9532,7 +9532,7 @@ and will be changed to the default</source>
         <translation>செருகுநிரல் நிறுவப்படவில்லை, அணைக்கப்பட்டுள்ளது, அல்லது இந்தக் கட்டளை இனி அதில் இல்லை</translation>
     </message>
     <message>
-        <source>The plugin can’t start: %1</source>
+        <source>Can’t start: %1</source>
         <translation>செருகுநிரலைத் தொடங்க முடியாது: %1</translation>
     </message>
     <message>

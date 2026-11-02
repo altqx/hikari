@@ -22,7 +22,7 @@ namespace hikari::app {
 // One hikari-plugin-helper per enabled plugin, and the commands they contribute.
 class PluginRuntime : public QObject {
     Q_OBJECT
-    // [{id: "plugin.<plugin id>.<command>", plugin, pluginName, title, path: [pluginName, title]}],
+    // [{id: "plugin.<plugin id>.<command>", plugin, pluginName, title, titles: [pluginName, title]}],
     // by plugin name, then in manifest order.
     Q_PROPERTY(QVariantList commands READ commands NOTIFY commandsChanged)
 

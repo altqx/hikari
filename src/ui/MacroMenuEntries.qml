@@ -9,7 +9,7 @@ QtObject {
     required property QtObject after
     property var macros: []
     property bool enabled: true
-    // Entries name their place with `path` (a list of titles), else with `name` split at "/".
+    // Entries name their place with `titles` (a list), else with `name` split at "/".
     property string itemPrefix: "macro_"
     property string menuPrefix: "macroMenu_"
     signal triggered(var macro)
@@ -31,7 +31,7 @@ QtObject {
     function tree(list) {
         const top = []
         for (const macro of list) {
-            const pieces = macro.path !== undefined ? macro.path : macro.name.split("/")
+            const pieces = macro.titles !== undefined ? macro.titles : macro.name.split("/")
             let level = top
             let path = ""
             for (let i = 0; i < pieces.length - 1; ++i) {
