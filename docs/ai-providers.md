@@ -33,7 +33,7 @@ With no provider, `Providers::stream` fails at once with `NoProvider`. It reads 
 
 - Keys live only in the OS keychain through QtKeychain: the Secret Service (libsecret) or KWallet on Linux, the Credential Store on Windows. The entry is `ai-provider/<provider id>` under the service `HikariSub`.
 - A provider is added only once its key is in the keychain. With no keyring daemon, or when the user refuses access, it isn't added, and the caller gets `KeychainUnavailable` or `KeychainDenied` to tell the user. There is no plain-text fallback.
-- A key travels only over HTTPS, or over plain HTTP to this machine (`localhost`, `127.0.0.0/8`, `::1`) or to a Tailscale peer: a MagicDNS `*.ts.net` name, `fd7a:115c:a1e0::/48`, or `100.64.0.0/10` when this machine has an address in that range too (it is also ISPs' CGNAT space). A host name is resolved once and the request goes to the address that passed. Anything else, a LAN address included, fails with `InsecureKey` before a connection opens.
+- A key travels only over HTTPS, or over plain HTTP to this machine (`localhost`, `127.0.0.0/8`, `::1`) or to a Tailscale peer: an address in `100.64.0.0/10` or `fd7a:115c:a1e0::/48` while this machine has an address in the same range (the IPv4 range is also ISPs' CGNAT space). A host name, `*.ts.net` included, counts only by the address it resolves to: it is resolved once and the request goes to the address that passed, so DNS can't send the key elsewhere. Anything else, a LAN address included, fails with `InsecureKey` before a connection opens.
 - The provider file and the logs never hold a key. The mock-server suite checks both.
 
 ## Models and roles
