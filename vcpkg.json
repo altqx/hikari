@@ -42,6 +42,7 @@
     "hunspell",
     "uchardet",
     "tomlplusplus",
+    "libsodium",
     {
       "name": "pkgconf",
       "host": true,

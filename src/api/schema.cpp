@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <regex>
 #include <string_view>
 
 namespace hikari::api {
@@ -101,6 +102,9 @@ public:
                 return SchemaFailure{path, "shorter than " + m->dump() + " characters"};
             if (const Json *m = schema.find("maxLength"); m && length > std::size_t(m->asInt()))
                 return SchemaFailure{path, "longer than " + m->dump() + " characters"};
+            if (const Json *p = schema.find("pattern");
+                p && !std::regex_search(value.asString(), std::regex(p->asString(), std::regex::ECMAScript)))
+                return SchemaFailure{path, "does not match " + p->dump()};
         }
         if (value.isArray()) {
             const auto &items = value.asArray();
@@ -193,6 +197,16 @@ bool isCount(const Json &v)
     return v.isInt() && v.asInt() >= 0;
 }
 
+bool compiles(const std::string &pattern)
+{
+    try {
+        std::regex(pattern, std::regex::ECMAScript);
+        return true;
+    } catch (const std::regex_error &) {
+        return false;
+    }
+}
+
 std::optional<std::string> checkNode(const Json &schema, const Json &defs, const std::string &path, int depth)
 {
     if (depth > Json::kMaxDepth)
@@ -226,6 +240,9 @@ std::optional<std::string> checkNode(const Json &schema, const Json &defs, const
         } else if (m.key == "minLength" || m.key == "maxLength" || m.key == "minItems" || m.key == "maxItems") {
             if (!isCount(v))
                 return at + ": not a count";
+        } else if (m.key == "pattern") {
+            if (!v.isString() || !compiles(v.asString()))
+                return at + ": not a regular expression";
         } else if (m.key == "required") {
             if (!v.isArray() || !std::all_of(v.asArray().begin(), v.asArray().end(), [](const Json &k) { return k.isString(); }))
                 return at + ": not an array of names";
