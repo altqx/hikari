@@ -800,6 +800,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                         m_log->notice(warning ? ui::LogController::Warning : ui::LogController::Info,
                                                                       QCoreApplication::translate("HikariSub.Options", "Hotkeys"), message);
                                                     });
+    m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
+        m_workspace, *m_files, &m_settings->settings(),
+        [this](application::Selection next) { return applySelection(std::move(next)); }, [this] { refreshViews(); },
+        [this](std::string_view command) {
+            const QString accel = m_hotkeys->accelOf(
+                QString::fromUtf8(command.data(), qsizetype(command.size())),
+                application::hotkeyType(application::hotkeyIdOf(command)));
+            return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
+        }});
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
     m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
@@ -1940,6 +1949,8 @@ void Application::refreshViews()
     if (m_statusBar)
         m_statusBar->refresh();
     emit tabsChanged();
+    if (m_apiHost)
+        m_apiHost->observe();
 }
 
 bool Application::showVideoSubtitles()
@@ -2820,6 +2831,8 @@ bool Application::applySelection(application::Selection next)
         m_templateEditor->refresh();
     refreshVideo();
     followEditingLine();
+    if (m_apiHost)
+        m_apiHost->observe();
     return true;
 }
 

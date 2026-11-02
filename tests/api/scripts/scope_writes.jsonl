@@ -1,0 +1,10 @@
+{"call": "documents.get", "params": {"document": 2}, "save": {"rev": "/revision"}}
+{"call": "document.apply", "as": "plugin", "params": {"document": 2, "revision": "$rev", "name": "X", "edits": [{"op": "delete_line", "line": 1}]}, "error": "not_granted"}
+{"call": "selection.set", "as": "plugin", "params": {"document": 2, "selected": [1]}, "error": "not_granted"}
+{"call": "document.apply", "params": {"document": 2, "revision": "$rev", "name": "Background", "edits": [{"op": "set_line", "line": 1, "fields": {"text": "edited"}}]}, "result": {"changed": true}}
+{"call": "selection.set", "params": {"document": 2, "selected": [1]}, "result": {"document": 2, "active": 1}}
+{"events": [{"event": "document.changed", "data": {"document": 2, "step": "Test AI: Background"}}, {"event": "selection.changed", "data": {"document": 2}}]}
+{"events": [], "as": "plugin"}
+{"call": "documents.get", "as": "plugin", "save": {"rev1": "/revision"}}
+{"call": "document.apply", "as": "plugin", "params": {"revision": "$rev1", "name": "Mine", "edits": [{"op": "set_line", "line": 1, "fields": {"text": "plugged"}}]}, "result": {"changed": true}}
+{"events": [{"event": "document.changed", "data": {"document": 1, "step": "Test plugin: Mine"}}], "as": "plugin"}

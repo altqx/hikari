@@ -25,6 +25,22 @@ bool Registry::add(Operation operation)
     return true;
 }
 
+bool Registry::addEvent(EventType event)
+{
+    if (findEvent(event.name))
+        return false;
+    m_events.push_back(std::move(event));
+    return true;
+}
+
+const EventType *Registry::findEvent(std::string_view name) const
+{
+    for (const EventType &event : m_events)
+        if (event.name == name)
+            return &event;
+    return nullptr;
+}
+
 const Operation *Registry::find(std::string_view name) const
 {
     for (const Operation &operation : m_operations)
@@ -61,6 +77,8 @@ const Registry &Api::registry()
         detail::addDefinitions(r);
         detail::addDocumentOperations(r);
         detail::addApplicationOperations(r);
+        detail::addWriteOperations(r);
+        detail::addEvents(r);
         return r;
     }();
     return registry;
@@ -82,7 +100,19 @@ void Api::call(const Caller &caller, std::string_view name, const Json &params, 
                    Json::object({{"pointer", Json(failure->path)}})));
         return;
     }
-    operation->handler(Context{m_host, caller}, given, std::move(reply));
+    if (operation->access == Access::Read) {
+        operation->handler(Context{m_host, caller}, given, std::move(reply));
+        return;
+    }
+    if (m_writing) {
+        reply(fail(errors::kBusy, "Another write is applying; try again after it.", Json::object()));
+        return;
+    }
+    m_writing = true;
+    operation->handler(Context{m_host, caller}, given, [this, reply = std::move(reply)](Result result) {
+        m_writing = false;
+        reply(std::move(result));
+    });
 }
 
 }

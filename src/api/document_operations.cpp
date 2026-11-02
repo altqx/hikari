@@ -9,8 +9,6 @@
 
 namespace hikari::api::detail {
 
-namespace {
-
 using application::DocumentId;
 using application::EditSession;
 
@@ -18,6 +16,46 @@ std::string narrow(std::u8string_view s)
 {
     return std::string(s.begin(), s.end());
 }
+
+bool visible(const Context &context, DocumentId document)
+{
+    return context.caller.allDocuments || context.host.documents->workspace().editingTarget() == document;
+}
+
+std::expected<Target, Error> target(const Context &context, const Json &params)
+{
+    if (!context.host.documents)
+        return fail(errors::kUnavailable, "No documents are available.");
+    const DocumentHost &documents = *context.host.documents;
+    DocumentId id;
+    if (const Json *given = params.find("document")) {
+        id = DocumentId{std::uint64_t(given->asInt())};
+        if (!visible(context, id))
+            return fail(errors::kNotGranted, "Only the active Document is available without the documents.all grant.",
+                        Json::object({{"document", *given}}));
+    } else if (const auto editing = documents.workspace().editingTarget()) {
+        id = *editing;
+    } else {
+        return fail(errors::kNotFound, "No Document is open.");
+    }
+    EditSession *session = documents.session(id);
+    if (!session)
+        return fail(errors::kNotFound, "No open Document has id " + std::to_string(id.value) + ".",
+                    Json::object({{"document", Json(id.value)}}));
+    return Target{id, session};
+}
+
+Json selectionJson(const EditSession &session)
+{
+    const application::Selection &selection = session.selection();
+    Json selected = Json::array();
+    for (const core::LineRecord *line : session.document().lines())
+        if (selection.selected.contains(line->id))
+            selected.push(Json(line->id.value));
+    return Json::object({{"active", selection.active ? Json(selection.active->value) : Json(nullptr)}, {"selected", selected}});
+}
+
+namespace {
 
 std::int64_t ms(const core::DocumentTime &t)
 {
@@ -35,37 +73,6 @@ std::string_view formatName(core::SubtitleFormat format)
     case core::SubtitleFormat::PlainText: return "text";
     }
     return "text";
-}
-
-struct Target {
-    DocumentId id;
-    EditSession *session = nullptr;
-};
-
-// The Document a call names, else the editing target. A caller without
-// documents.all reaches the editing target alone.
-std::expected<Target, Error> target(const Context &context, const Json &params)
-{
-    if (!context.host.documents)
-        return fail(errors::kUnavailable, "No documents are available.");
-    const DocumentHost &documents = *context.host.documents;
-    const auto editing = documents.workspace().editingTarget();
-    DocumentId id;
-    if (const Json *given = params.find("document")) {
-        id = DocumentId{std::uint64_t(given->asInt())};
-        if (!context.caller.allDocuments && editing != id)
-            return fail(errors::kNotGranted, "Only the active Document is available without the documents.all grant.",
-                        Json::object({{"document", *given}}));
-    } else if (editing) {
-        id = *editing;
-    } else {
-        return fail(errors::kNotFound, "No Document is open.");
-    }
-    EditSession *session = documents.session(id);
-    if (!session)
-        return fail(errors::kNotFound, "No open Document has id " + std::to_string(id.value) + ".",
-                    Json::object({{"document", Json(id.value)}}));
-    return Target{id, session};
 }
 
 constexpr std::array kLineFields{"comment", "layer",  "start", "end",         "style",      "actor",        "marginL",
@@ -308,15 +315,11 @@ Result selectionGet(const Context &context, const Json &params)
     auto t = target(context, params);
     if (!t)
         return std::unexpected(t.error());
-    const application::Selection &selection = t->session->selection();
-    Json selected = Json::array();
-    for (const core::LineRecord *line : t->session->document().lines())
-        if (selection.selected.contains(line->id))
-            selected.push(Json(line->id.value));
-    return Json::object({{"document", Json(t->id.value)},
-                         {"revision", Json(t->session->revision())},
-                         {"active", selection.active ? Json(selection.active->value) : Json(nullptr)},
-                         {"selected", selected}});
+    Json out = Json::object({{"document", Json(t->id.value)}, {"revision", Json(t->session->revision())}});
+    Json selection = selectionJson(*t->session);
+    for (Json::Member &m : selection.asObject())
+        out[m.key] = std::move(m.value);
+    return out;
 }
 
 constexpr std::string_view kDocumentParam = R"("document": {"$ref": "#/$defs/DocumentId",

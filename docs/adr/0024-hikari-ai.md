@@ -20,6 +20,8 @@ On 2026-10-28 altqx settled Hikari AI in the wave-8 grilling session ([#410](htt
 - **Anthropic** through API keys. Claude subscriptions come through the ACP Claude Agent; we ask Anthropic before advertising that path.
 - **The Claude Agent SDK isn't embedded.**
 - **OpenRouter** through PKCE, **OpenAI and Anthropic** through keys, and **custom OpenAI-compatible endpoints**.
+- **Google Gemini** through Gemini API keys from Google AI Studio, on a native Gemini adapter (added by altqx on 2026-11-02, [AI18 #639](https://github.com/altqx/hikari/issues/639)). Vertex AI is not included.
+- **Prompt caching** on the user's provider: a stable prefix and each provider's own caching, with cached tokens in usage and cost. There is no local response cache (added by altqx on 2026-11-02, [AI19 #640](https://github.com/altqx/hikari/issues/640)).
 - **Keys** live in the OS keychain through QtKeychain, never in settings files or logs ([AI5 #433](https://github.com/altqx/hikari/issues/433)).
 - **Per-role models:** chat, translator, reviewer, vision and judge.
 
@@ -90,3 +92,5 @@ A soft cap per thread, a daily cap, a cost meter, and an estimate before every b
 - **Analytics** ([AN1 #404](https://github.com/altqx/hikari/issues/404)) counts AI use by feature and tool id only, never prompts, output, models or providers.
 - **Design gates:** the review ([AI2 #430](https://github.com/altqx/hikari/issues/430)), the agent panel ([AI7 #435](https://github.com/altqx/hikari/issues/435)) and the inline actions ([AI8 #436](https://github.com/altqx/hikari/issues/436)) need owner-approved light and dark mockups before production.
 - **The site** gets an AI guide with a "What is sent" section.
+
+Amended by [ADR 0026](0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md): providers, agents, the MCP server and client, and the agent loop run in a TypeScript sidecar on Bun; the Claude Agent SDK drives the user's own `claude`, fetched from npm and never shipped.
