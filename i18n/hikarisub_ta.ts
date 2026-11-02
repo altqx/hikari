@@ -2516,8 +2516,8 @@ Should not exceed 15 characters per second</source>
         <translation>குறிச்சொல் பொத்தானைச் சேர்</translation>
     </message>
     <message>
-        <source>Edit...</source>
-        <translation>திருத்து...</translation>
+        <source>Edit…</source>
+        <translation>திருத்து…</translation>
     </message>
     <message>
         <source>Move left</source>
@@ -4172,10 +4172,6 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Grid</name>
     <message>
-        <source>Font collector</source>
-        <translation>எழுத்துருக்கள் சேகரிப்பான்</translation>
-    </message>
-    <message>
         <source>Grid</source>
         <translation>கட்டம்</translation>
     </message>
@@ -4188,80 +4184,8 @@ Failed to copy %2 fonts.</source>
         <translation>ஆவணம் எதுவும் திறக்கப்படவில்லை</translation>
     </message>
     <message>
-        <source>Add lines</source>
-        <translation>வரிகளைச் சேர்க்கவும்</translation>
-    </message>
-    <message>
-        <source>Change description</source>
-        <translation>விளக்கத்தை மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>நீக்கு</translation>
-    </message>
-    <message>
-        <source>Insert after with video time</source>
-        <translation>வீடியோ நேரத்துடன் பின் செருகு</translation>
-    </message>
-    <message>
-        <source>Insert before with video frame time</source>
-        <translation>வீடியோ சட்டக நேரத்துடன் முன் செருகவும்</translation>
-    </message>
-    <message>
-        <source>Insert after with video frame time</source>
-        <translation>வீடியோ சட்டக நேரத்துடன் பின் செருகவும்</translation>
-    </message>
-    <message>
-        <source>Join lines and keep first</source>
-        <translation>வரிகளை இணைத்து முதல் வரியை வைத்திரு</translation>
-    </message>
-    <message>
-        <source>Join lines and keep last</source>
-        <translation>வரிகளை இணைத்து கடைசி வரியை வைத்திரு</translation>
-    </message>
-    <message>
-        <source>Split lines</source>
-        <translation>வரிகளைப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split line at video time</source>
-        <translation>வீடியோ நேரத்தில் வரியைப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split lines into frames</source>
-        <translation>வரிகளைச் சட்டகங்களாகப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split lines into characters</source>
-        <translation>வரிகளை எழுத்துகளாகப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split lines into words</source>
-        <translation>வரிகளைச் சொற்களாகப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split lines by wraps</source>
-        <translation>வரி மடக்குகளின்படி வரிகளைப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Select all lines visible on video</source>
-        <translation>வீடியோவில் தெரியும் அனைத்து வரிகளையும் தேர்ந்தெடுக்கவும்</translation>
-    </message>
-    <message>
         <source>Show subtitles preview</source>
         <translation>வசன வரிகள் முன்னோட்டத்தைக் காட்டு</translation>
-    </message>
-    <message>
-        <source>Paste translation text</source>
-        <translation>உரை மொழிபெயர்ப்புகளை ஒட்டவும்</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>உரையாடல் நகர்த்தல் சாளரம்</translation>
-    </message>
-    <message>
-        <source>Hide selected lines</source>
-        <translation>தேர்ந்தெடுத்த வரிகளை மறை</translation>
     </message>
     <message>
         <source>Filtering</source>
@@ -4282,6 +4206,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Hide lines with styles</source>
         <translation>பாணிகளுடன் வரிகளை மறைக்கவும்</translation>
+    </message>
+    <message>
+        <source>Start time</source>
+        <translation>தொடக்க நேரம்</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>பாணி</translation>
+    </message>
+    <message>
+        <source>Hide selected lines (filter)</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை மறை (வடிகட்டி)</translation>
     </message>
     <message>
         <source>Hide comments</source>
@@ -4308,68 +4244,12 @@ Failed to copy %2 fonts.</source>
         <translation>சில செயல்களில் வடிகட்டலை புறக்கணிக்கவும்</translation>
     </message>
     <message>
-        <source>Hide columns</source>
-        <translation>நெடுவரிசைகளை மறைக்கவும்</translation>
-    </message>
-    <message>
         <source>Hide empty columns</source>
         <translation>வெற்று நெடுவரிசைகளை மறை</translation>
     </message>
     <message>
-        <source>Hide layer</source>
-        <translation>அடுக்கை மறை</translation>
-    </message>
-    <message>
-        <source>Hide start time</source>
-        <translation>தொடக்க நேரத்தை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide end time</source>
-        <translation>இறுதி நேரத்தை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide actor</source>
-        <translation>நடிகரை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide style</source>
-        <translation>பாணியை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide left margin</source>
-        <translation>இடது விளிம்பை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide right margin</source>
-        <translation>வலது விளிம்பை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide vertical margin</source>
-        <translation>செங்குத்து விளிம்பை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide effect</source>
-        <translation>விளைவை மறை</translation>
-    </message>
-    <message>
-        <source>Hide characters per second</source>
-        <translation>ஒரு நொடிக்கு எழுத்துக்களை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide line wraps</source>
-        <translation>வரி மடக்குகளை மறைக்கவும்</translation>
-    </message>
-    <message>
         <source>Reset column widths</source>
         <translation>நெடுவரிசை அகலங்களை மீட்டமை</translation>
-    </message>
-    <message>
-        <source>Set new FPS</source>
-        <translation>புதிய FPS ஐ அமைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Set FPS from video</source>
-        <translation>வீடியோவிலிருந்து FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -4384,8 +4264,110 @@ Failed to copy %2 fonts.</source>
         <translation>உரையை நீக்கு</translation>
     </message>
     <message>
-        <source>Load subtitles from an MKV/OGM file</source>
-        <translation>MKV / OGM கோப்பின் வசன வரிகள் ஏற்றவும்</translation>
+        <source>Before</source>
+        <translation>முன்</translation>
+    </message>
+    <message>
+        <source>After</source>
+        <translation>பின்</translation>
+    </message>
+    <message>
+        <source>Before, at video time</source>
+        <translation>முன், வீடியோ நேரத்துடன்</translation>
+    </message>
+    <message>
+        <source>After, at video time</source>
+        <translation>பின், வீடியோ நேரத்துடன்</translation>
+    </message>
+    <message>
+        <source>Before, at video frame time</source>
+        <translation>முன், வீடியோ சட்டக நேரத்துடன்</translation>
+    </message>
+    <message>
+        <source>After, at video frame time</source>
+        <translation>பின், வீடியோ சட்டக நேரத்துடன்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>வரியை நகலாக்கு</numerusform>
+            <numerusform>%n வரிகளை நகலாக்கு</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste special</source>
+        <translation>சிறப்பு ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>கோப்பிலிருந்து மொழிபெயர்ப்பை ஒட்டவும்…</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>இணை</translation>
+    </message>
+    <message>
+        <source>Keep first</source>
+        <translation>முதல் வரியை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Keep last</source>
+        <translation>கடைசி வரியை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation>பிரி</translation>
+    </message>
+    <message>
+        <source>At video time</source>
+        <translation>வீடியோ நேரத்தில்</translation>
+    </message>
+    <message>
+        <source>Into frames</source>
+        <translation>சட்டகங்களாக</translation>
+    </message>
+    <message>
+        <source>Into characters</source>
+        <translation>எழுத்துகளாக</translation>
+    </message>
+    <message>
+        <source>Into words</source>
+        <translation>சொற்களாக</translation>
+    </message>
+    <message>
+        <source>By wraps</source>
+        <translation>வரி மடக்குகளின்படி</translation>
+    </message>
+    <message>
+        <source>Swap lines</source>
+        <translation>வரிகளை இடமாற்று</translation>
+    </message>
+    <message>
+        <source>Make times continuous</source>
+        <translation>நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
+    </message>
+    <message>
+        <source>With the previous line</source>
+        <translation>முந்தைய வரியுடன்</translation>
+    </message>
+    <message>
+        <source>With the next line</source>
+        <translation>அடுத்த வரியுடன்</translation>
+    </message>
+    <message>
+        <source>Select lines visible on video</source>
+        <translation>வீடியோவில் தெரியும் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>மொழிபெயர்ப்புப் பொருத்தம்…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>வரியை நீக்கு</numerusform>
+            <numerusform>%n வரிகளை நீக்கு</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -4424,6 +4406,17 @@ Failed to copy %2 fonts.</source>
         <translation>வரிக் குழு</translation>
     </message>
     <message>
+        <source>Columns</source>
+        <translation>நெடுவரிசைகள்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>தேர்ந்தெடுத்த வரியைச் சேர்க்கவும்</numerusform>
+            <numerusform>தேர்ந்தெடுத்த %n வரிகளைச் சேர்க்கவும்</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Copy line group</source>
         <translation>வரிக் குழுவை நகலெடுக்கவும்</translation>
     </message>
@@ -4432,40 +4425,16 @@ Failed to copy %2 fonts.</source>
         <translation>குழுவின் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
+        <source>Change description…</source>
+        <translation>விளக்கத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation>குழுவைக் கலை</translation>
+    </message>
+    <message>
         <source>Insert</source>
         <translation>செருகு</translation>
-    </message>
-    <message>
-        <source>Insert before</source>
-        <translation>முன் செருகு</translation>
-    </message>
-    <message>
-        <source>Insert after</source>
-        <translation>பின் செருகு</translation>
-    </message>
-    <message>
-        <source>Insert before with video time</source>
-        <translation>வீடியோ நேரத்துடன் முன் செருகு</translation>
-    </message>
-    <message>
-        <source>Duplicate lines</source>
-        <translation>வரிகளை நகலாக்கு</translation>
-    </message>
-    <message>
-        <source>Swap</source>
-        <translation>இடமாற்று</translation>
-    </message>
-    <message>
-        <source>Join lines</source>
-        <translation>வரிகளை இணை</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the previous line</source>
-        <translation>முந்தைய வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the next line</source>
-        <translation>அடுத்த வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
     </message>
     <message>
         <source>Make line group</source>
@@ -4474,10 +4443,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Cut</source>
         <translation>வெட்டு</translation>
-    </message>
-    <message>
-        <source>Delete lines</source>
-        <translation>வரிகளை நீக்கு</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5336,20 +5301,12 @@ What would you like to do?</source>
         <translation>நெடுவரிசைகளை ஒட்டு</translation>
     </message>
     <message>
-        <source>Paste translation text</source>
-        <translation>மொழிபெயர்ப்பு உரையை ஒட்டு</translation>
-    </message>
-    <message>
         <source>Load subtitles from an MKV file</source>
         <translation>MKV கோப்பிலிருந்து வசன வரிகளை ஏற்று</translation>
     </message>
     <message>
         <source>Swap lines</source>
         <translation>வரிகளை இடமாற்று</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>உரையாடல் நகர்த்தல் சாளரம்</translation>
     </message>
     <message>
         <source>Set new FPS</source>
@@ -5714,6 +5671,14 @@ What would you like to do?</source>
     <message>
         <source>Make line group</source>
         <translation>வரிக் குழுவை உருவாக்கு</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>கோப்பிலிருந்து மொழிபெயர்ப்பை ஒட்டவும்…</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>மொழிபெயர்ப்புப் பொருத்தம்…</translation>
     </message>
     <message>
         <source>Shift times / run timing postprocessor</source>
@@ -6903,6 +6868,14 @@ What would you like to do?</source>
         <translation>வீடியோ கோப்பைத் திறக்கவும்</translation>
     </message>
     <message>
+        <source>Imports a subtitle track from a Matroska file</source>
+        <translation>Matroska கோப்பிலிருந்து வசனத் தடத்தை இறக்குமதி செய்கிறது</translation>
+    </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>MKV இலிருந்து வசன வரிகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
         <source>Save current file</source>
         <translation>தற்போதைய கோப்பை சேமிக்கவும்</translation>
     </message>
@@ -6993,6 +6966,22 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>உரையில் சொற்றொடரின் அடுத்த நிகழ்வைக் கண்டறிகிறது</translation>
+    </message>
+    <message>
+        <source>Changes the frame rate of the subtitle times</source>
+        <translation>வசன நேரங்களின் சட்டக வீதத்தை மாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>Set FPS</source>
+        <translation>FPS ஐ அமைக்கவும்</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>புதிய FPS ஐ அமைக்கவும்…</translation>
+    </message>
+    <message>
+        <source>Set FPS from video</source>
+        <translation>வீடியோவிலிருந்து FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -12547,6 +12536,10 @@ Styles deleted:
     <message>
         <source>Z coordinate for tags \frx and \fry</source>
         <translation>\frx, \fry குறிச்சொற்களுக்கான Z ஆயத்தொலைவு</translation>
+    </message>
+    <message>
+        <source>Tag list options</source>
+        <translation>குறிச்சொல் பட்டியல் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Tag list</source>

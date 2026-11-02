@@ -2493,8 +2493,8 @@ Should not exceed 15 characters per second</source>
         <translation>태그 버튼 추가</translation>
     </message>
     <message>
-        <source>Edit...</source>
-        <translation>편집...</translation>
+        <source>Edit…</source>
+        <translation>편집…</translation>
     </message>
     <message>
         <source>Move left</source>
@@ -4139,10 +4139,6 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Grid</name>
     <message>
-        <source>Font collector</source>
-        <translation>글꼴 수집기</translation>
-    </message>
-    <message>
         <source>Grid</source>
         <translation>자막 목록</translation>
     </message>
@@ -4155,80 +4151,8 @@ Failed to copy %2 fonts.</source>
         <translation>열린 문서 없음</translation>
     </message>
     <message>
-        <source>Add lines</source>
-        <translation>선택 줄 하위 항목으로 추가</translation>
-    </message>
-    <message>
-        <source>Change description</source>
-        <translation>이름 지정</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>삭제</translation>
-    </message>
-    <message>
-        <source>Insert after with video time</source>
-        <translation>영상 시간으로 뒤에 삽입</translation>
-    </message>
-    <message>
-        <source>Insert before with video frame time</source>
-        <translation>영상 프레임 시간으로 앞에 삽입</translation>
-    </message>
-    <message>
-        <source>Insert after with video frame time</source>
-        <translation>영상 프레임 시간으로 뒤에 삽입</translation>
-    </message>
-    <message>
-        <source>Join lines and keep first</source>
-        <translation>줄 병합 (첫 줄 글자 남김)</translation>
-    </message>
-    <message>
-        <source>Join lines and keep last</source>
-        <translation>줄 병합 (끝 줄 글자 남김)</translation>
-    </message>
-    <message>
-        <source>Split lines</source>
-        <translation>줄 분할</translation>
-    </message>
-    <message>
-        <source>Split line at video time</source>
-        <translation>영상 시간에서 줄 분할</translation>
-    </message>
-    <message>
-        <source>Split lines into frames</source>
-        <translation>프레임 단위로 줄 분할</translation>
-    </message>
-    <message>
-        <source>Split lines into characters</source>
-        <translation>글자 단위로 줄 분할</translation>
-    </message>
-    <message>
-        <source>Split lines into words</source>
-        <translation>단어 단위로 줄 분할</translation>
-    </message>
-    <message>
-        <source>Split lines by wraps</source>
-        <translation>줄 바꿈 기준으로 줄 분할</translation>
-    </message>
-    <message>
-        <source>Select all lines visible on video</source>
-        <translation>영상에 보이는 모든 줄 선택</translation>
-    </message>
-    <message>
         <source>Show subtitles preview</source>
         <translation>자막 미리 보기 표시</translation>
-    </message>
-    <message>
-        <source>Paste translation text</source>
-        <translation>번역문 붙여 넣기</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>대사 이동 창</translation>
-    </message>
-    <message>
-        <source>Hide selected lines</source>
-        <translation>선택 줄 숨김</translation>
     </message>
     <message>
         <source>Filtering</source>
@@ -4249,6 +4173,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Hide lines with styles</source>
         <translation>스타일별 줄 숨김</translation>
+    </message>
+    <message>
+        <source>Start time</source>
+        <translation>시작 시간</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>Hide selected lines (filter)</source>
+        <translation>선택 줄 숨김 (필터)</translation>
     </message>
     <message>
         <source>Hide comments</source>
@@ -4275,68 +4211,12 @@ Failed to copy %2 fonts.</source>
         <translation>일부 작업에서 필터링 무시</translation>
     </message>
     <message>
-        <source>Hide columns</source>
-        <translation>구분 열 숨김</translation>
-    </message>
-    <message>
         <source>Hide empty columns</source>
         <translation>빈 열 숨기기</translation>
     </message>
     <message>
-        <source>Hide layer</source>
-        <translation>레이어</translation>
-    </message>
-    <message>
-        <source>Hide start time</source>
-        <translation>시작 시간</translation>
-    </message>
-    <message>
-        <source>Hide end time</source>
-        <translation>종료 시간</translation>
-    </message>
-    <message>
-        <source>Hide actor</source>
-        <translation>배우</translation>
-    </message>
-    <message>
-        <source>Hide style</source>
-        <translation>스타일</translation>
-    </message>
-    <message>
-        <source>Hide left margin</source>
-        <translation>왼쪽 여백</translation>
-    </message>
-    <message>
-        <source>Hide right margin</source>
-        <translation>오른쪽 여백</translation>
-    </message>
-    <message>
-        <source>Hide vertical margin</source>
-        <translation>세로 여백</translation>
-    </message>
-    <message>
-        <source>Hide effect</source>
-        <translation>효과</translation>
-    </message>
-    <message>
-        <source>Hide characters per second</source>
-        <translation>초당 문자</translation>
-    </message>
-    <message>
-        <source>Hide line wraps</source>
-        <translation>글자 수</translation>
-    </message>
-    <message>
         <source>Reset column widths</source>
         <translation>열 너비 재설정</translation>
-    </message>
-    <message>
-        <source>Set new FPS</source>
-        <translation>새 프레임 속도 설정</translation>
-    </message>
-    <message>
-        <source>Set FPS from video</source>
-        <translation>영상에서 프레임 속도 설정</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -4351,8 +4231,108 @@ Failed to copy %2 fonts.</source>
         <translation>글자 삭제</translation>
     </message>
     <message>
-        <source>Load subtitles from an MKV/OGM file</source>
-        <translation>MKV / OGM 파일 자막 불러오기</translation>
+        <source>Before</source>
+        <translation>앞에</translation>
+    </message>
+    <message>
+        <source>After</source>
+        <translation>뒤에</translation>
+    </message>
+    <message>
+        <source>Before, at video time</source>
+        <translation>앞에, 영상 시간으로</translation>
+    </message>
+    <message>
+        <source>After, at video time</source>
+        <translation>뒤에, 영상 시간으로</translation>
+    </message>
+    <message>
+        <source>Before, at video frame time</source>
+        <translation>앞에, 영상 프레임 시간으로</translation>
+    </message>
+    <message>
+        <source>After, at video frame time</source>
+        <translation>뒤에, 영상 프레임 시간으로</translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>줄 %n개 복제</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste special</source>
+        <translation>선택하여 붙여 넣기</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>파일에서 번역문 붙여 넣기…</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>병합</translation>
+    </message>
+    <message>
+        <source>Keep first</source>
+        <translation>첫 줄 글자 남김</translation>
+    </message>
+    <message>
+        <source>Keep last</source>
+        <translation>끝 줄 글자 남김</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation>분할</translation>
+    </message>
+    <message>
+        <source>At video time</source>
+        <translation>영상 시간에서</translation>
+    </message>
+    <message>
+        <source>Into frames</source>
+        <translation>프레임 단위로</translation>
+    </message>
+    <message>
+        <source>Into characters</source>
+        <translation>글자 단위로</translation>
+    </message>
+    <message>
+        <source>Into words</source>
+        <translation>단어 단위로</translation>
+    </message>
+    <message>
+        <source>By wraps</source>
+        <translation>줄 바꿈 기준으로</translation>
+    </message>
+    <message>
+        <source>Swap lines</source>
+        <translation>줄 서로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Make times continuous</source>
+        <translation>시간을 연속으로 설정</translation>
+    </message>
+    <message>
+        <source>With the previous line</source>
+        <translation>이전 줄과</translation>
+    </message>
+    <message>
+        <source>With the next line</source>
+        <translation>다음 줄과</translation>
+    </message>
+    <message>
+        <source>Select lines visible on video</source>
+        <translation>영상에 보이는 줄 선택</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>번역 맞추기…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>줄 %n개 삭제</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -4391,6 +4371,16 @@ Failed to copy %2 fonts.</source>
         <translation>줄 그룹</translation>
     </message>
     <message>
+        <source>Columns</source>
+        <translation>열</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>선택한 줄 %n개 추가</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Copy line group</source>
         <translation>줄 그룹 복사</translation>
     </message>
@@ -4399,40 +4389,16 @@ Failed to copy %2 fonts.</source>
         <translation>그룹의 줄 선택</translation>
     </message>
     <message>
+        <source>Change description…</source>
+        <translation>설명 변경…</translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation>그룹 해제</translation>
+    </message>
+    <message>
         <source>Insert</source>
         <translation>삽입</translation>
-    </message>
-    <message>
-        <source>Insert before</source>
-        <translation>이전에 빈 줄 추가</translation>
-    </message>
-    <message>
-        <source>Insert after</source>
-        <translation>이후에 빈 줄 추가</translation>
-    </message>
-    <message>
-        <source>Insert before with video time</source>
-        <translation>영상 시간으로 앞에 삽입</translation>
-    </message>
-    <message>
-        <source>Duplicate lines</source>
-        <translation>줄 복제</translation>
-    </message>
-    <message>
-        <source>Swap</source>
-        <translation>서로 바꾸기</translation>
-    </message>
-    <message>
-        <source>Join lines</source>
-        <translation>줄 병합</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the previous line</source>
-        <translation>이전 줄과 시간을 연속으로 설정</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the next line</source>
-        <translation>다음 줄과 시간을 연속으로 설정</translation>
     </message>
     <message>
         <source>Make line group</source>
@@ -4441,10 +4407,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Cut</source>
         <translation>잘라내기</translation>
-    </message>
-    <message>
-        <source>Delete lines</source>
-        <translation>줄 삭제</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5299,20 +5261,12 @@ What would you like to do?</source>
         <translation>구분 열 붙여 넣기</translation>
     </message>
     <message>
-        <source>Paste translation text</source>
-        <translation>번역문 붙여 넣기</translation>
-    </message>
-    <message>
         <source>Load subtitles from an MKV file</source>
         <translation>MKV 파일에서 자막 불러오기</translation>
     </message>
     <message>
         <source>Swap lines</source>
         <translation>줄 서로 바꾸기</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>대사 이동 창</translation>
     </message>
     <message>
         <source>Set new FPS</source>
@@ -5677,6 +5631,14 @@ What would you like to do?</source>
     <message>
         <source>Make line group</source>
         <translation>줄 그룹 만들기</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>파일에서 번역문 붙여 넣기…</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>번역 맞추기…</translation>
     </message>
     <message>
         <source>Shift times / run timing postprocessor</source>
@@ -6863,6 +6825,14 @@ What would you like to do?</source>
         <translation>영상 파일 열기</translation>
     </message>
     <message>
+        <source>Imports a subtitle track from a Matroska file</source>
+        <translation>Matroska 파일에서 자막 트랙을 가져옵니다</translation>
+    </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>MKV에서 자막 가져오기…</translation>
+    </message>
+    <message>
         <source>Save current file</source>
         <translation>현재 파일 저장</translation>
     </message>
@@ -6953,6 +6923,22 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>텍스트에서 다음 문구 위치 찾기</translation>
+    </message>
+    <message>
+        <source>Changes the frame rate of the subtitle times</source>
+        <translation>자막 시간의 프레임 속도를 바꿉니다</translation>
+    </message>
+    <message>
+        <source>Set FPS</source>
+        <translation>프레임 속도 설정</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>새 프레임 속도 설정…</translation>
+    </message>
+    <message>
+        <source>Set FPS from video</source>
+        <translation>영상에서 프레임 속도 설정</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -12472,6 +12458,10 @@ Styles deleted:
     <message>
         <source>Z coordinate for tags \frx and \fry</source>
         <translation>\frx 및 \fry 태그의 Z 좌표</translation>
+    </message>
+    <message>
+        <source>Tag list options</source>
+        <translation>태그 목록 옵션</translation>
     </message>
     <message>
         <source>Tag list</source>

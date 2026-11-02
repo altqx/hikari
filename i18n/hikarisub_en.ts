@@ -270,6 +270,27 @@
             <numerusform>%n generated lines</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>Add selected line</numerusform>
+            <numerusform>Add %n selected lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>Duplicate line</numerusform>
+            <numerusform>Duplicate %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>Delete line</numerusform>
+            <numerusform>Delete %n lines</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>

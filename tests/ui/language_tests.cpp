@@ -521,7 +521,7 @@ private slots:
         QVERIFY(application->openFile(episode));
         const auto &lines = application->files().session(*application->workspace().editingTarget())->document().lines();
         application->shell().selectLine(lines[1]->id.value);
-        QVERIFY(QMetaObject::invokeMethod(root()->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QVERIFY(application->hideSelectedLines());
         QTRY_VERIFY(application->shell().filtered());
         const QString english = application->shell().selectionStatus();
         QVERIFY2(english.endsWith(QStringLiteral(" (1 hidden)")), qPrintable(english));
