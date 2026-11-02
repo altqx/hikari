@@ -1887,6 +1887,17 @@ in tag &apos;%3&apos;</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Discord</name>
+    <message>
+        <source>Editing subtitles</source>
+        <translation>กำลังแก้ไขคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Get HikariSub</source>
+        <translation>รับ HikariSub</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Documents</name>
     <message>
         <source>Apply to All</source>
@@ -9030,6 +9041,18 @@ removing audio cache files.</source>
     <message>
         <source>This copy does not install updates itself: the update window opens the download page.</source>
         <translation>สำเนานี้ไม่ได้ติดตั้งอัปเดตเอง: หน้าต่างอัปเดตจะเปิดหน้าดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>Show what I am doing in Discord</source>
+        <translation>แสดงสิ่งที่ฉันกำลังทำใน Discord</translation>
+    </message>
+    <message>
+        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
+        <translation>สถานะ Discord ของคุณจะแสดง กำลังแก้ไขคำบรรยาย โหมด และระยะเวลา ไม่แสดงวิดีโอ คำบรรยาย หรือจำนวนบรรทัดของคุณ</translation>
+    </message>
+    <message>
+        <source>Include the file name</source>
+        <translation>รวมชื่อไฟล์</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

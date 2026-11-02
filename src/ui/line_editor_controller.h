@@ -10,6 +10,7 @@
 #include "hikari/core/tag_commands.h"
 #include "tag_list_controller.h"
 
+#include <QElapsedTimer>
 #include <QObject>
 #include <QStringList>
 #include <QVariantMap>
@@ -206,6 +207,10 @@ public:
     Q_INVOKABLE bool commitAndAdvance();
     Q_INVOKABLE bool nextLine(int direction);
     Q_INVOKABLE bool commit();
+    // Commits the typed draft into the step of the current typing burst; a pause
+    // over kTypingBurstGapMs between edits, or any other commit, starts a new step.
+    Q_INVOKABLE bool commitTyping();
+    static constexpr qint64 kTypingBurstGapMs = 1000;
     Q_INVOKABLE bool applyChanges();
     Q_INVOKABLE void discard();
     Q_INVOKABLE bool undo();
@@ -378,7 +383,7 @@ private:
     Options options() const { return m_options ? m_options() : Options{}; }
     std::optional<core::LineRecord> committedRecord() const;
     // MUST KILL: visual keeps the time fields' warning colour
-    bool sendDraft(bool leaving = false, bool visual = false);
+    bool sendDraft(bool leaving = false, bool visual = false, std::optional<application::ContentId> amending = std::nullopt);
     bool visualToolOn() const { return m_visualToolActive && m_visualToolActive(); }
     void rebuildLists();
     void lineShown();
@@ -431,6 +436,8 @@ private:
     std::vector<Snapshot> m_draftUndo;
     std::vector<Snapshot> m_draftRedo;
     std::function<void()> m_onCommitted;
+    std::optional<application::ContentId> m_typingStep;
+    QElapsedTimer m_lastTyped;
     bool findNext(std::size_t &cursor, const std::function<bool(const core::LineRecord &)> &match,
                   const QString &none);
     std::size_t m_nextUnconfirmed = 0;

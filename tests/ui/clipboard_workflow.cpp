@@ -48,6 +48,21 @@ protected:
             Qt::BlockingQueuedConnection);
         return out;
     }
+    std::string times()
+    {
+        (void)getStringProperty("mainWindow/selectionStatus", "text");
+        std::string out;
+        QMetaObject::invokeMethod(
+            application,
+            [&] {
+                const auto target = application->workspace().editingTarget();
+                for (const auto *l : application->files().session(*target)->document().lines())
+                    out += std::to_string(l->start.value.microseconds() / 1000) + "-" +
+                           std::to_string(l->end.value.microseconds() / 1000) + ";";
+            },
+            Qt::BlockingQueuedConnection);
+        return out;
+    }
     void executeTest() override
     {
         if (waitForItem("mainWindow/editingGrid", 5s)) {
@@ -89,6 +104,16 @@ protected:
                 wait(50ms);
             observed.push_back(texts());
             observed.push_back(getStringProperty("mainWindow/lineText", "text"));
+            QMetaObject::invokeMethod(
+                application,
+                [] { QGuiApplication::clipboard()->setText(QStringLiteral("plain one\nplain two\nplain three")); },
+                Qt::BlockingQueuedConnection);
+            invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
+            key(Qt::Key_V, spix::KeyModifiers::Control);
+            for (int i = 0; i < 100 && texts().find("plain three") == std::string::npos; ++i)
+                wait(50ms);
+            observed.push_back(texts());
+            observed.push_back(times());
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -150,8 +175,8 @@ int main(int argc, char **argv)
     const auto &o = test.observed;
     for (std::size_t i = 0; i < o.size(); ++i)
         std::printf("observed[%zu] = %s\n", i, o[i].c_str());
-    expect(o.size() == 8, "every step observed");
-    if (o.size() == 8) {
+    expect(o.size() == 10, "every step observed");
+    if (o.size() == 10) {
         expect(o[0] == "a;a;b;c;", "Ctrl+C then Ctrl+V pastes the copy before the next Line");
         expect(o[1] == "1 line selected", "the pasted Line is selected");
         expect(o[2] == "a;b;c;", "Ctrl+X cuts it");
@@ -160,6 +185,8 @@ int main(int argc, char **argv)
         expect(o[5] == "Text checked", "the click checks Text before OK (5 s)");
         expect(o[6] == "a;b;pasted text;", "only the Text column is pasted");
         expect(o[7] == "pasted text", "the editor shows the pasted text");
+        expect(o[8] == "a;b;plain one;plain two;plain three;pasted text;", "plain text pastes one Line per row");
+        expect(o[9] == "1000-2000;1000-2000;0-0;0-0;0-0;1000-2000;", "pasted plain text is untimed");
     }
     return failures == 0 ? 0 : 1;
 }
