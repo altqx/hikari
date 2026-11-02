@@ -45,6 +45,7 @@ Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
 Edit > Find and replace [GLOBAL_FIND_REPLACE]
 Edit > Find [GLOBAL_SEARCH]
 Edit > Find next [GLOBAL_FIND_NEXT]
+Edit > Insert hard space [GLOBAL_INSERT_HARD_SPACE]
 Subtitles
 Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]

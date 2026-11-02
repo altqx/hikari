@@ -712,6 +712,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
         o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
         o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
+        o.softLineBreak = m_settings->boolean("editor.softLineBreak");
         return o;
     });
     m_editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),

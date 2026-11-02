@@ -300,7 +300,8 @@ Content content(Code code, const Roles &roles)
         c.gridComment = rgb(0x253A57);
         c.comparison = {rgb(0x2700FF), rgb(0x272B32), rgb(0x3A3E45), rgb(0x003176), rgb(0x3662A1)};
         c.syntax = {QColor(), rgb(0x8791FD), rgb(0x00C3FF), rgb(0x00C3FF), rgb(0x0076FF), rgb(0xADABAB),
-                    rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243)};
+                    rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243), rgb(0x4EC9B0),
+                    rgb(0xE5A0D9)};
         break;
     case Code::Light:
         c.spellcheck = rgb(0xD70000);
@@ -310,7 +311,8 @@ Content content(Code code, const Roles &roles)
         c.gridComment = rgb(0xD6E3F5);
         c.comparison = {rgb(0xFFFFFF), rgb(0xFF000C), rgb(0xB7AC00), rgb(0x9C0000), rgb(0x817900)};
         c.syntax = {QColor(), rgb(0x7E3B00), rgb(0x787600), rgb(0x787600), rgb(0x34C200), rgb(0x817F7F),
-                    rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243)};
+                    rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243), rgb(0x00796B),
+                    rgb(0xAD1457)};
         a.background = 0xFFDDE3E8;
         a.lineStart = a.lineEnd = 0xFF940000;
         a.inactiveBoundary = 0xFF00875A;
@@ -338,7 +340,8 @@ Content content(Code code, const Roles &roles)
         c.gridComment = rgb(0xF2E2B0);
         c.comparison = {rgb(0xC000C0), rgb(0xFFD0D0), rgb(0xE0E0E0), rgb(0xD0D0FF), rgb(0xD0E8FF)};
         c.syntax = {QColor(), rgb(0x7A3E00), rgb(0x005A9E), rgb(0x005A9E), rgb(0x006400), rgb(0x595959),
-                    rgb(0x6B5E00), rgb(0xB00000), rgb(0x005A9E), rgb(0x5B2DA8), rgb(0x00663A)};
+                    rgb(0x6B5E00), rgb(0xB00000), rgb(0x005A9E), rgb(0x5B2DA8), rgb(0x00663A), rgb(0x00695C),
+                    rgb(0x9C0060)};
         a.background = 0xFFFFFFFF;
         a.lineStart = a.lineEnd = 0xFFC00000;
         a.inactiveBoundary = 0xFF007A3D;
@@ -366,7 +369,8 @@ Content content(Code code, const Roles &roles)
         c.gridComment = rgb(0x403400);
         c.comparison = {rgb(0xFF00FF), rgb(0x3A0000), rgb(0x303030), rgb(0x000060), rgb(0x003060)};
         c.syntax = {QColor(), rgb(0xFFB060), rgb(0x60D0FF), rgb(0x60D0FF), rgb(0x7CFC7C), rgb(0xBEBEBE),
-                    rgb(0xF0E68C), rgb(0xFF6060), rgb(0x60D0FF), rgb(0xC8A8FF), rgb(0xA0E0A0)};
+                    rgb(0xF0E68C), rgb(0xFF6060), rgb(0x60D0FF), rgb(0xC8A8FF), rgb(0xA0E0A0), rgb(0x40E0D0),
+                    rgb(0xFF80C0)};
         a.background = 0xFF000000;
         a.lineStart = a.lineEnd = 0xFFFF4040;
         a.inactiveBoundary = 0xFF00FF80;

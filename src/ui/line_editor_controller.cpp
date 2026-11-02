@@ -1979,30 +1979,41 @@ void LineEditorController::endDialog(bool accepted)
 
 bool LineEditorController::splitLine(int role, int selectionStart, int selectionEnd)
 {
+    const auto format = session() ? session()->document().format() : core::SubtitleFormat::Ass;
+    const bool slashBreak = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::Srt;
+    const std::u16string_view split = !slashBreak ? u"|" : options().softLineBreak ? u"\\n" : u"\\N";
+    return insertAtSelection(role, split, selectionStart, selectionEnd, true);
+}
+
+bool LineEditorController::insertHardSpace(int role, int selectionStart, int selectionEnd)
+{
+    return insertAtSelection(role, u"\\h", selectionStart, selectionEnd, false);
+}
+
+bool LineEditorController::insertAtSelection(int role, std::u16string_view inserted, int selectionStart,
+                                             int selectionEnd, bool absorbSpaces)
+{
     const auto r = record();
     if (!editable() || !r)
         return false;
-    const auto format = session()->document().format();
-    const std::u16string split = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::Srt
-                                     ? std::u16string(u"\\N")
-                                     : std::u16string(u"|");
     std::u16string raw = core::toUtf16(roleText(*r, role));
-    long start = selectionStart, end = selectionEnd;
+    long start = std::min(selectionStart, selectionEnd), end = std::max(selectionStart, selectionEnd);
     if (!m_showTags) {
         const auto p = core::project(raw);
-        start = static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(selectionStart), true));
-        end = selectionEnd == selectionStart
-                  ? start
-                  : static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(selectionEnd), false));
+        const long shownStart = start;
+        start = static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(shownStart), true));
+        end = end == shownStart ? start : static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(end), false));
     }
-    if (start > 0 && raw[static_cast<std::size_t>(start - 1)] == u' ')
+    start = std::clamp<long>(start, 0, static_cast<long>(raw.size()));
+    end = std::clamp<long>(end, start, static_cast<long>(raw.size()));
+    if (absorbSpaces && start > 0 && raw[static_cast<std::size_t>(start - 1)] == u' ')
         --start;
-    if (end < static_cast<long>(raw.size()) && raw[static_cast<std::size_t>(end)] == u' ')
+    if (absorbSpaces && end < static_cast<long>(raw.size()) && raw[static_cast<std::size_t>(end)] == u' ')
         ++end;
     if (start != end)
         raw.erase(static_cast<std::size_t>(start), static_cast<std::size_t>(end - start));
-    raw.insert(static_cast<std::size_t>(start), split);
-    const long caret = start + static_cast<long>(split.size());
+    raw.insert(static_cast<std::size_t>(start), inserted);
+    const long caret = start + static_cast<long>(inserted.size());
     if (!setRaw(role, core::toUtf8(raw)))
         return false;
     const auto after = core::project(raw);

@@ -93,6 +93,15 @@ TEST(AssSave, EditedLinesUseTheLegacySerialization)
               "Comment: 2,1:02:03.45,10:00:00.00,Default,,0,0,0,,keep\n");
 }
 
+TEST(AssSave, EditedLinesKeepTimesPastTheFieldCap)
+{
+    auto loaded = loadAss(bytesOf("[Events]\n"
+                                  "Dialogue: 0,123:00:00.00,124:30:00.50,Default,,0,0,0,,old\n"));
+    loaded.document.setLineText(loaded.document.lines().front()->id, u8"new");
+    EXPECT_EQ(text(encodeAss(loaded.document)), "[Events]\n"
+                                                "Dialogue: 0,123:00:00.00,124:30:00.50,Default,,0,0,0,,new\n");
+}
+
 TEST(AssSave, LegacyTimeText)
 {
     EXPECT_EQ(legacy::assTimeText(0), u8"0:00:00.00");

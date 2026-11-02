@@ -10,7 +10,7 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | 3013 | `EDITBOX_INSERT_ITALIC` Add italic | Ctrl+I | Ctrl+I and the I button | `tag_commands_tests` |
 | 3001 | `EDITBOX_CHANGE_UNDERLINE` Underline | none | U button | `tag_commands_tests` |
 | 3002 | `EDITBOX_CHANGE_STRIKEOUT` Strikethrough | none | S button | `tag_commands_tests` |
-| 3014 | `EDITBOX_SPLIT_LINE` Add line wrap | Shift+Enter | Shift+Enter: `\N` (ASS, SRT) or `\|` (line formats) replaces the selection and an adjacent space on each side | `shell_tests` |
+| 3014 | `EDITBOX_SPLIT_LINE` Add line wrap | Shift+Enter | Shift+Enter: `\N` (ASS, SRT) or `\|` (line formats) replaces the selection and an adjacent space on each side. With Settings › Line editor › "Shift+Enter inserts a soft line break (\n)" (`editor.softLineBreak`, FA7 [#564](https://github.com/altqx/hikari/issues/564), Aegisub 3.5) it inserts `\n` instead of `\N`; off by default | `shell_tests` |
 | 3017 | `EDITBOX_FIND_NEXT_DOUBTFUL` Next unconfirmed line | Ctrl+D | Ctrl+D, translation mode, visible Lines, wrapping once | `shell_tests` |
 | 3018 | `EDITBOX_FIND_NEXT_UNTRANSLATED` Next untranslated line | Ctrl+R | Ctrl+R, same rules | `shell_tests` |
 | 3019 | `EDITBOX_SET_DOUBTFUL` Mark as unconfirmed and go to the next line | Alt+Down | Alt+Down: toggles Unconfirmed (its own step), then Enter's behaviour | `shell_tests` |
@@ -38,5 +38,6 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | 5173 | `GLOBAL_AUTOMATION_REPEAT_LAST_RUN` Repeat last run (HikariSub's own command, AD2-repeat-last-run) | — | none: runs the last macro again with the answers given last time, without its dialogs when they are unchanged (questions, dialogs with nothing to fill in, are asked again); Automation > "Repeat last run" and the Automation panel | `shell_tests`, `hotkeys_tests` |
 | 5174 | `GLOBAL_KANJI_TIMER` Kanji timer (HikariSub's own command, KA3-window) | — | none: opens the Kanji timer window; Subtitles > "Kanji timer…" | `shell_tests`, `hotkeys_tests` |
 | 5176 | `GLOBAL_GETTING_STARTED` Getting started (HikariSub's own command, FR1) | — | none: opens the Getting started window; Help > "Getting started" | `shell_tests`, `hotkeys_tests` |
+| 5228 | `GLOBAL_INSERT_HARD_SPACE` Insert hard space (Aegisub 3.5, FA7 [#564](https://github.com/altqx/hikari/issues/564)) | — | Ctrl+Shift+Space: `\h` replaces the selection in the Line editor's edited field (the Translated text in Translation mode when it has the focus); Edit > "Insert hard space" | `shell_tests`, `hotkeys_tests`, `line_editor_options_tests` |
 
 A "Not yet" row is unfinished, not dropped: each is assigned to the card or surface named.

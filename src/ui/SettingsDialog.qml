@@ -599,6 +599,7 @@ DialogWindow {
                         title: qsTr("Editing")
                         SettingCheck { setting: "editor.dontGoToNextLineOnTimesEdit"; text: qsTr("Stay on the line when editing times") }
                         SettingCheck { setting: "editor.allowNumpadHotkeys"; text: qsTr("Use numpad shortcuts in text fields") }
+                        SettingCheck { setting: "editor.softLineBreak"; text: qsTr("Shift+Enter inserts a soft line break (\\n)") }
                     }
                     SettingsSection {
                         title: qsTr("Translation mode")

@@ -291,6 +291,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         {"GLOBAL_KANJI_TIMER", 5174},
         {"GLOBAL_GETTING_STARTED", 5176},
+        {"GLOBAL_INSERT_HARD_SPACE", 5228},
 };
 
 struct NameRow {
@@ -553,6 +554,7 @@ constexpr NameRow kNames[] = {
         {5173, "Repeat last run"},
         {5174, "Kanji timer"},
         {5176, "Getting started"},
+        {5228, "Insert hard space"},
 };
 
 struct DefaultRow {
@@ -598,6 +600,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5154, GlobalHotkey, "Next tab", "Ctrl-PgDn"},
         {5155, GlobalHotkey, "Previous tab", "Ctrl-PgUp"},
         {5166, GlobalHotkey, "Select line at current video position", "F2"},
+        {5228, GlobalHotkey, "Insert hard space", "Ctrl-Shift-Space"},
         {5112, GlobalHotkey, "User guide", "F1"},
         {4527, GridHotkey, "Duplicate lines", "Ctrl-D"},
         {4554, GridHotkey, "Copy columns", "Ctrl-Shift-C"},
