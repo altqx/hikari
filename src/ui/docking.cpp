@@ -25,8 +25,10 @@
 
 #include <QContextMenuEvent>
 #include <QDeadlineTimer>
+#include <QDragEnterEvent>
 #include <QGuiApplication>
 #include <QLoggingCategory>
+#include <QMimeData>
 #include <QPointer>
 #include <QQmlEngine>
 #include <QQuickItem>
@@ -369,6 +371,65 @@ bool dropKeepsItsGroup(DropLocation location, const KDDockWidgets::Vector<KDDock
            || std::any_of(target.begin(), target.end(), [&](auto *dock) { return !source.contains(dock); });
 }
 
+// KDDW (2.5.1) leaves a floating window in place during a Wayland drag and ignores drops on the panels it covers.
+// Hidden, not input-transparent: Hyprland (0.56) picks floating windows by their box and ignores the input region.
+class DragAside final : public QObject {
+public:
+    static void install()
+    {
+        static DragAside *filter = nullptr;
+        if (!filter && QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
+            qGuiApp->installEventFilter(filter = new DragAside(qGuiApp));
+    }
+
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (event->type() == QEvent::MouseButtonPress) {
+            if (auto *window = qobject_cast<QWindow *>(watched))
+                m_pressed = window;
+        } else if (event->type() == QEvent::DragEnter && !m_dragged) {
+            const QMimeData *mime = static_cast<QDragEnterEvent *>(event)->mimeData();
+            if (mime && mime->inherits("KDDockWidgets::Core::WaylandMimeData"))
+                stepAside(mime);
+        }
+        return false;
+    }
+
+private:
+    explicit DragAside(QObject *parent)
+        : QObject(parent)
+    {
+    }
+
+    void stepAside(const QMimeData *mime)
+    {
+        auto *window = qobject_cast<QQuickWindow *>(m_pressed.data());
+        if (!window || !floatsOneGroup(window))
+            return;
+        m_dragged = window;
+        window->hide();
+        qCDebug(lcDocking) << "hid the dragged floating window" << window->title();
+        connect(mime, &QObject::destroyed, this, [this] {
+            QQuickWindow *window = m_dragged.data();
+            m_dragged.clear();
+            if (window && floatsOneGroup(window))
+                window->show();
+        });
+    }
+
+    static bool floatsOneGroup(QQuickWindow *window)
+    {
+        const auto floating = KDDockWidgets::DockRegistry::self()->floatingWindows();
+        return std::any_of(floating.begin(), floating.end(), [window](KDDockWidgets::Core::FloatingWindow *fw) {
+            const QQuickItem *item = KDDockWidgets::QtQuick::asQQuickItem(fw->view());
+            return item && item->window() == window && fw->hasSingleGroup();
+        });
+    }
+
+    QPointer<QWindow> m_pressed;
+    QPointer<QQuickWindow> m_dragged;
+};
+
 void configureEngine()
 {
     using KDDockWidgets::Config;
@@ -385,6 +446,7 @@ void configureEngine()
         [](QQuickView *window, KDDockWidgets::QtQuick::MainWindow *) {
             windowdecorations::requestNone(window);
             new ScaleKeeper(window);
+            DragAside::install();
         });
 }
 }

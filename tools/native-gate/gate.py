@@ -933,43 +933,51 @@ def landed_beside(a, t, side):
             "top": along and a["y"] + a["h"] <= t["y"] + 2, "bottom": along and a["y"] >= t["y"] + t["h"] - 2}[side]
 
 
-def step_sides(env=None, suffix="", scale=1.0, floating=False):
-    """DK3 (#589): the Audio panel, docked or floating, dragged by its title onto each side of the Grid and of Video."""
-    for target in ("Grid", "Video"):
-        for side in ("left", "right", "top", "bottom"):
-            item = f"drop-{side}-of-{target.lower()}{suffix}"
-            fresh(episode(), env=env)
-            dismiss_notices()
-            main = origin("HikariSub")
-            st = atspi()
-            audio, t = panel(st, "Audio"), panel(st, target)
-            if main is None or not audio or not t:
-                verdict(item, "not-observable", f"{B.name}: no geometry for the main window ({main}), Audio or {target}")
+ALL_SIDES = [(target, side) for target in ("Grid", "Video") for side in ("left", "right", "top", "bottom")]
+
+
+def step_sides(env=None, suffix="", scale=1.0, floating=False, cases=ALL_SIDES, covered=False):
+    """DK3 (#589): the Audio panel, docked or floating, dragged by its title onto each side of the Grid and of Video.
+    covered: the drop point must lie under the floating Audio window itself."""
+    for target, side in cases:
+        item = f"drop-{side}-of-{target.lower()}{suffix}"
+        fresh(episode(), env=env)
+        dismiss_notices()
+        main = origin("HikariSub")
+        st = atspi()
+        audio, t = panel(st, "Audio"), panel(st, target)
+        if main is None or not audio or not t:
+            verdict(item, "not-observable", f"{B.name}: no geometry for the main window ({main}), Audio or {target}")
+            continue
+        x0, y0 = main[0], main[1]
+        # Qt's AT-SPI bridge reports device-independent coordinates; the pointer moves in the compositor's.
+        sx, sy = x0 + round((audio["x"] + 30) * scale), y0 + round((audio["y"] - HEADER // 2) * scale)
+        if floating:
+            click(sx, sy, double=True, wait=1500)
+            wait_for(lambda s: "Audio" in frames(s))
+            r = origin("Audio")
+            if r is None:
+                verdict(item, "not-observable", f"{B.name}: Audio did not float or its window has no geometry")
                 continue
-            x0, y0 = main[0], main[1]
-            # Qt's AT-SPI bridge reports device-independent coordinates; the pointer moves in the compositor's.
-            sx, sy = x0 + round((audio["x"] + 30) * scale), y0 + round((audio["y"] - HEADER // 2) * scale)
-            if floating:
-                click(sx, sy, double=True, wait=1500)
-                wait_for(lambda s: "Audio" in frames(s))
-                r = origin("Audio")
-                if r is None:
-                    verdict(item, "not-observable", f"{B.name}: Audio did not float or its window has no geometry")
-                    continue
-                sx, sy = header_point(r)
-            px, py = (round(v * scale) for v in side_point(t, side))
-            drag(sx, sy, x0 + px, y0 + py, release=False)
-            ev, _ = B.snap(f"sides{suffix}-{target.lower()}-{side}-over")
-            B.pointer("up", "wait 1500")
-            st = wait_for(lambda s: "Audio" not in frames(s))
-            ev1, st = B.snap(f"sides{suffix}-{target.lower()}-{side}-dropped")
-            a, t2 = panel(st, "Audio"), panel(st, target)
-            docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == "HikariSub"
-            ok = docked and a and t2 and landed_beside(a, t2, side)
-            verdict(item, "observed" if ok else "failed",
-                    f"drag {'floating' if floating else 'docked'} Audio by its title from {sx},{sy} to {target}'s {side} at {x0 + px},{y0 + py}: "
-                    f"docked={docked}, Audio {a and (a['x'], a['y'], a['w'], a['h'])}, "
-                    f"{target} {t2 and (t2['x'], t2['y'], t2['w'], t2['h'])}", ev + ev1)
+            sx, sy = header_point(r)
+        px, py = (round(v * scale) for v in side_point(t, side))
+        if covered and floating:
+            px = max(px, min(r[0] + 40 - x0, round((t["x"] + t["w"]) * scale) - 10))
+        if covered and not (floating and r[0] <= x0 + px < r[0] + r[2] and r[1] <= y0 + py < r[1] + r[3]):
+            verdict(item, "not-observable", f"{B.name}: the floating Audio window {r} does not cover {x0 + px},{y0 + py}")
+            continue
+        drag(sx, sy, x0 + px, y0 + py, release=False)
+        ev, _ = B.snap(f"sides{suffix}-{target.lower()}-{side}-over")
+        B.pointer("up", "wait 1500")
+        st = wait_for(lambda s: "Audio" not in frames(s))
+        ev1, st = B.snap(f"sides{suffix}-{target.lower()}-{side}-dropped")
+        a, t2 = panel(st, "Audio"), panel(st, target)
+        docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == "HikariSub"
+        ok = docked and a and t2 and landed_beside(a, t2, side)
+        verdict(item, "observed" if ok else "failed",
+                f"drag {'floating' if floating else 'docked'} Audio by its title from {sx},{sy} to {target}'s {side} at {x0 + px},{y0 + py}: "
+                f"docked={docked}, Audio {a and (a['x'], a['y'], a['w'], a['h'])}, "
+                f"{target} {t2 and (t2['x'], t2['y'], t2['w'], t2['h'])}", ev + ev1)
 
 
 def step_sides_output_scale():
@@ -983,6 +991,46 @@ def step_sides_output_scale():
     try:
         step_sides(suffix="-out125")
         step_sides(suffix="-out125-floating", floating=True)
+    finally:
+        B.hyprctl("eval", 'hl.monitor({ output = "", mode = "1600x1000", position = "0x0", scale = "1" })')
+
+
+def drag_cancel_keeps_floating():
+    fresh(episode())
+    dismiss_notices()
+    main = origin("HikariSub")
+    audio = panel(atspi(), "Audio")
+    if main is None or not audio:
+        verdict("drag-cancel-keeps-floating", "not-observable", f"{B.name}: no geometry for the main window or Audio")
+        return
+    click(main[0] + audio["x"] + 30, main[1] + audio["y"] - HEADER // 2, double=True, wait=1500)
+    wait_for(lambda s: "Audio" in frames(s))
+    r = origin("Audio")
+    if r is None:
+        verdict("drag-cancel-keeps-floating", "not-observable", f"{B.name}: Audio did not float or its window has no geometry")
+        return
+    sx, sy = header_point(r)
+    ex, ey = main[0] + main[2] - 100, main[1] + 15
+    drag(sx, sy, ex, ey)
+    st = wait_for(lambda s: "Audio" in frames(s))
+    ev, st = B.snap("drag-cancel-released")
+    r2 = origin("Audio")
+    ok = "Audio" in frames(st) and r2 is not None
+    verdict("drag-cancel-keeps-floating", "observed" if ok else "failed",
+            f"floating Audio dragged by its title from {sx},{sy} and released over the empty end of the menu bar at {ex},{ey}: "
+            f"still floating {'Audio' in frames(st)}, window {r2}", ev)
+
+
+def step_under_floating():
+    """DK3 (#589): on Wayland the dragged floating window stays put, so the drop lands under it."""
+    step_sides(suffix="-under-floating", floating=True, cases=[("Video", "bottom")], covered=True)
+    drag_cancel_keeps_floating()
+    if B.name != "hyprland":
+        return
+    B.hyprctl("eval", 'hl.monitor({ output = "", mode = "1600x1000", position = "0x0", scale = "1.25" })')
+    time.sleep(1)
+    try:
+        step_sides(suffix="-under-floating-out125", floating=True, cases=[("Video", "bottom")], covered=True)
     finally:
         B.hyprctl("eval", 'hl.monitor({ output = "", mode = "1600x1000", position = "0x0", scale = "1" })')
 
@@ -3481,6 +3529,7 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "sides150": lambda: step_sides({"QT_SCALE_FACTOR": "1.5"}, "-150", 1.5),
          "sidesfloat": lambda: step_sides(suffix="-floating", floating=True),
          "sidesout125": step_sides_output_scale,
+         "underfloat": step_under_floating,
          # last: after an output goes, sway's virtual pointer still maps over the old layout
          "outputs": step_outputs}
 
