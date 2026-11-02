@@ -197,3 +197,5 @@ hikari_add_gtest(hikari_application_associated_files_tests SOURCES associated_fi
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_associated_files_tests PRIVATE
     HIKARI_ASSOCIATION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/associations")
+hikari_add_gtest(hikari_application_ai_providers_tests SOURCES ai_providers_tests.cpp
+    LIBRARIES hikari_application LABELS application)
