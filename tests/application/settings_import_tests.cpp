@@ -327,7 +327,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 268);
+    EXPECT_EQ(bound, 273);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)

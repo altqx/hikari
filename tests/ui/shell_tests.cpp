@@ -18037,7 +18037,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 253);
+        QCOMPARE(hotkeyRows().size(), 258);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -26908,6 +26908,77 @@ private slots:
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 980'000);
         QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 1'020'000);
+    }
+
+    void timingBindsKeepJoinsAndShiftByFrames()
+    {
+        const QString path = writeFile(dir, "fa17-binds.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:00.50,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.50,0:00:01.20,Default,,0,0,0,,b\n"
+                                       "Dialogue: 0,0:00:01.50,0:00:01.90,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto line = [&](int i) { return session->document().lines()[static_cast<std::size_t>(i)]; };
+        const auto ms = [&](int i) {
+            return std::pair(line(i)->start.value.microseconds() / 1000, line(i)->end.value.microseconds() / 1000);
+        };
+        using Ms = std::pair<std::int64_t, std::int64_t>;
+        auto *join = item<QObject>("joinPreviousAudioSelectionMenuItem");
+        auto *shifts = item<QObject>("shiftFramesToVideoMenu");
+        QVERIFY(join && shifts);
+        QVERIFY(!join->property("enabled").toBool());
+        QVERIFY(!shifts->property("enabled").toBool());
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        QCOMPARE(session->selection().active, line(2)->id);
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY(join->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(join, "click"));
+        QTRY_COMPARE(ms(1), (Ms{500, 1500}));
+        QCOMPARE(ms(2), (Ms{1500, 1900}));
+        QCOMPARE(session->history().back().name, std::string("Joining with previous"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(ms(1), (Ms{500, 1200}));
+
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        closeMismatchQuestion();
+        QTRY_VERIFY(shifts->property("enabled").toBool());
+        QVERIFY(application->video().showFrameAt(10));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 10);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down);
+        QCOMPARE(session->selection().active, line(1)->id);
+        press(Qt::Key_Left, Qt::ControlModifier);
+        QTRY_COMPARE(ms(1).first, std::int64_t{400});
+        QCOMPARE(ms(0), (Ms{0, 400}));
+        press(Qt::Key_Right, Qt::ControlModifier);
+        QTRY_COMPARE(ms(1), (Ms{400, 440}));
+        QCOMPARE(ms(2), (Ms{1500, 1900}));
+
+        const auto timebase = application->video().session().legacyTimebase();
+        const auto frame = [&](std::int64_t at) { return timebase.frameAt(static_cast<int>(at)); };
+        const int cStart = frame(ms(2).first), cEnd = frame(ms(2).second);
+        QVERIFY(application->video().showFrameAt(24));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 24);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START"))));
+        QVERIFY(ran.toBool());
+        QTRY_COMPARE(frame(ms(1).first), 24);
+        QCOMPARE(session->history().back().name, std::string("Shifting times by frames"));
+        QCOMPARE(ms(0), (Ms{0, 400}));
+        QCOMPARE(frame(ms(2).first), cStart + 14);
+        QCOMPARE(frame(ms(2).second), cEnd + 14);
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"))));
+        QTRY_COMPARE(frame(ms(1).second) - 1, 24);
+        QCOMPARE(frame(ms(2).first), cStart + 14);
     }
 
     void selectLinesFromTheVideo()
