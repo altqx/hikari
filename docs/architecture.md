@@ -49,13 +49,13 @@ The accepted [backend contract](backends.md) now supplies the value/capability/g
 - Tasks/dialogs: owned progress/cancellation and errors; synchronous script-dialog semantics are implemented without allowing a worker to manipulate QML directly.
 - Localisation: TS authoring and QM runtime with unchanged script-facing lookup behavior, as specified in [localisation](localisation.md).
 
-These services are owned modules with explicit construction and narrow interfaces. The foundation does not require a general IoC container, a third-party plugin SDK or adoption of Muse's module/resource conventions.
+These services are owned modules with explicit construction and narrow interfaces. The foundation does not require a general IoC container or adoption of Muse's module/resource conventions. HikariSub plugins, a LuaJIT format on the Hikari API, are decided in [ADR 0022](adr/0022-hikarisub-plugins.md).
 
 ## Reuse and platform policy
 
 Use Qt Quick Controls as the ordinary input/control foundation. Share HikariSub-specific semantics and visual tokens in the UI module rather than cloning controls separately in each panel. A custom-drawn surface must supply the keyboard and accessibility semantics that an ordinary control would otherwise provide.
 
-FFMS2 and libass remain required by the map. Cross-platform adapters are the default; optional Windows-only backend adapters may be selected behind the same application boundary. The map's exclusion of a general plugin ecosystem does not remove those explicitly allowed backend extensions. Do not expose platform-specific types to the core or make a later macOS adapter impossible.
+FFMS2 and libass remain required by the map. Cross-platform adapters are the default; optional Windows-only backend adapters may be selected behind the same application boundary. Those backend extensions are not plugins: [ADR 0022](adr/0022-hikarisub-plugins.md) replaces the map's exclusion of a general plugin ecosystem with HikariSub plugins and leaves backend composition as it is. Do not expose platform-specific types to the core or make a later macOS adapter impossible.
 
 No Muse module is imported by default. Selective future reuse needs a recorded source revision, licence/notices, dependency closure and maintenance owner; UI similarity is not itself a reason to adopt framework code. The [accepted docking contract](docking.md) selects pinned KDDockWidgets QtQuick behind Hikari’s layout adapter; it does not import a separate application framework.
 
