@@ -1047,6 +1047,9 @@ The overflow button at the end of the audio bar, shown only when its controls fo
 - (•) Spectrum
 - [x] Speech spectrum (was “Speech (non-linear spectrum)”)
 - ──
+- Go to selection start (go-to-selection; FA10, always shown)
+- Go to selection end (go-to-selection; FA10, always shown)
+- ──
 - [x] Auto-scroll
 - [x] Sync with video
 

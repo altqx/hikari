@@ -54,6 +54,12 @@ int legacyBoundarySnap(const AudioSnapContext &context, int ms, int rangeX, bool
     bool snapKey = context.snapToKeyframes;
     if (shiftHeld)
         snapKey = !snapKey;
+    if (snapKey && context.videoFrame)
+        for (const int snapMs : {context.videoFrame->startSnapMs, context.videoFrame->endSnapMs}) {
+            const int x = static_cast<int>(view.xAtMs(snapMs));
+            if (x >= 0 && x < w)
+                boundaries.push_back(snapMs);
+        }
     if (snapKey && context.drawKeyframes) {
         for (std::size_t i = 0; i < context.keyframesMs.size(); i++) {
             const int keyX = static_cast<int>(view.xAtMs(context.keyframesMs[i]));

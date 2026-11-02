@@ -338,6 +338,14 @@
         <translation>மேலும் ஆடியோ விருப்பங்கள்</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>தேர்வின் தொடக்கத்துக்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>தேர்வின் முடிவுக்குச் செல்</translation>
+    </message>
+    <message>
         <source>Speech (non-linear spectrum)</source>
         <translation>பேச்சு (நேரியல் அல்லாத ச்பெக்ட்ரம்)</translation>
     </message>
@@ -5778,6 +5786,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Faster</source>
         <translation>வேகமாக</translation>
+    </message>
+    <message>
+        <source>Go to selection start</source>
+        <translation>தேர்வின் தொடக்கத்துக்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>தேர்வின் முடிவுக்குச் செல்</translation>
     </message>
     <message>
         <source>Translation mode</source>

@@ -4,6 +4,8 @@
 // endpoints. The waveform area is [0, width) x [0, height); the time ruler
 // takes the `timelineHeight` rows below it.
 
+#include "hikari/application/legacy_timebase.h"
+
 #include <cstdint>
 #include <filesystem>
 #include <memory>
@@ -168,6 +170,8 @@ public:
     // Centres the syllable when its start is within 50 columns of the left
     // edge or its end within 100 of the right.
     void makeVisibleKaraoke(int startMs, int endMs, int scrollbarThickness);
+    // Puts `ms` in the middle of the view, as far as the audio allows.
+    void centreOn(int ms, int scrollbarThickness);
 
     struct Scrollbar {
         int position = 0, page = 0, range = 0;
@@ -235,13 +239,22 @@ struct AudioShape {
 
 using AudioTextWidth = std::function<int(AudioShape::Font, std::string_view)>;
 
+// The paused video's frame, after Aegisub 3.5: a line at the frame's start, the
+// previous and current frames shaded, and the middle of each a snap point.
+struct AudioVideoFrame {
+    int previousMs = 0, startMs = 0, nextMs = 0; // the previous, current and next frames' starts
+    int startSnapMs = 0, endSnapMs = 0;          // a line starting or ending on the frame
+    bool operator==(const AudioVideoFrame &) const = default;
+};
+AudioVideoFrame audioVideoFrame(const LegacyTimebase &timebase, int frame);
+
 struct AudioMarks {
     int startMs = 0, endMs = 0; // the active Line's selection
     bool modified = false;      // not committed yet
     // From legacyInactiveLines.
     std::vector<std::pair<int, int>> inactive;
     std::vector<int> keyframesMs;
-    std::optional<int> videoMs;   // the paused video's time
+    std::optional<AudioVideoFrame> videoFrame;
     bool focused = false;
     std::optional<int> markMs;
     int markTextHeight = 0; // the label font's; places the mark's time and the syllables

@@ -338,6 +338,14 @@
         <translation>소리 옵션 더 보기</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>선택 영역 시작으로 이동</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>선택 영역 끝으로 이동</translation>
+    </message>
+    <message>
         <source>Speech (non-linear spectrum)</source>
         <translation>음성 (비선형 스펙트럼)</translation>
     </message>
@@ -5741,6 +5749,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Faster</source>
         <translation>속도 높이기</translation>
+    </message>
+    <message>
+        <source>Go to selection start</source>
+        <translation>선택 영역 시작으로 이동</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>선택 영역 끝으로 이동</translation>
     </message>
     <message>
         <source>Translation mode</source>

@@ -4400,6 +4400,21 @@ ApplicationWindow {
                                 }
                                 FoldedSeparator {}
                                 ShellMenuItem {
+                                    objectName: "audioMoreGotoStart"
+                                    iconRole: "video-to-start-time"
+                                    text: qsTranslate("HikariSub.Audio", "Go to selection start")
+                                    command: "AUDIO_GOTO_START"
+                                    onTriggered: if (!root.hotkeyGesture("AUDIO_GOTO_START", 4, true, false)) root.audio.goToSelectionStart()
+                                }
+                                ShellMenuItem {
+                                    objectName: "audioMoreGotoEnd"
+                                    iconRole: "video-to-end-time"
+                                    text: qsTranslate("HikariSub.Audio", "Go to selection end")
+                                    command: "AUDIO_GOTO_END"
+                                    onTriggered: if (!root.hotkeyGesture("AUDIO_GOTO_END", 4, true, false)) root.audio.goToSelectionEnd()
+                                }
+                                MenuSeparator {}
+                                ShellMenuItem {
                                     objectName: "audioMoreAutoScroll"
                                     iconRole: "auto-scroll"
                                     text: qsTranslate("HikariSub.Audio", "Auto-scroll")

@@ -16977,6 +16977,49 @@ private slots:
         application->editor().discard();
     }
 
+    void audioGoesToTheSelectionStartAndEndFromItsKeys()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        const QString path =
+            writeFile(dir, "fa10-goto.ass", "Dialogue: 0,0:01:00.00,0:01:20.00,Default,,0,0,0,,long line\n");
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(audio.marks().startMs, 60000);
+        QCOMPARE(audio.marks().endMs, 80000);
+        audio.setHorizontalZoom(10);
+        auto &hotkeys = application->hotkeys();
+        hotkeys.gestureMap(application::hotkeyIdOf("AUDIO_GOTO_START"), QStringLiteral("Go to selection start"),
+                           QStringLiteral("Ctrl-Alt-U"), application::AudioHotkey, QStringLiteral("cancel"));
+        hotkeys.gestureMap(application::hotkeyIdOf("AUDIO_GOTO_END"), QStringLiteral("Go to selection end"),
+                           QStringLiteral("Ctrl-Alt-I"), application::AudioHotkey, QStringLiteral("cancel"));
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("AUDIO_GOTO_START"), application::AudioHotkey), QStringLiteral("Ctrl-Alt-U"));
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("AUDIO_GOTO_END"), application::AudioHotkey), QStringLiteral("Ctrl-Alt-I"));
+        const auto centred = [&](int ms) { return std::abs(audio.view().xAtMs(ms) - audio.view().width() / 2.f) <= 1.f; };
+        audio.setScrollPosition(0);
+        QVERIFY(!centred(60000));
+
+        // MUST KILL: parks the pointer over no panel again so the key goes by the focus
+        QTest::mouseMove(window, kOverNoPanel);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        press(Qt::Key_U, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY(centred(60000));
+        press(Qt::Key_I, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY(centred(80000));
+        QVERIFY(!centred(60000));
+
+        audio.setScrollPosition(0);
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("audioMoreGotoStart"), "triggered"));
+        QVERIFY(centred(60000));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("audioMoreGotoEnd"), "triggered"));
+        QVERIFY(centred(80000));
+    }
+
     void audioPanelRowFoldsItsControls()
     {
         // MUST KILL: restarts without sound so our playback-failure log window can't steal activation and keys
@@ -17947,7 +17990,7 @@ private slots:
         QTRY_VERIFY(!audio.marks().keyframesMs.empty());
         QCOMPARE(audio.marks().keyframesMs.front(), 0);
         QCOMPARE(audio.marks().keyframesMs[1], timebase.msAt(12));
-        QTRY_COMPARE(audio.marks().videoMs.value_or(-1),
+        QTRY_COMPARE(audio.marks().videoFrame.value_or(application::AudioVideoFrame{}).startMs,
                      timebase.msAt(application->video().session().shownFrame().value_or(-1)));
         QVERIFY(audio.box().fromVideo());
         QCOMPARE(audio.view().position(), 0);
@@ -17963,7 +18006,7 @@ private slots:
         const int shown = application->video().session().shownFrame().value_or(-1);
         QVERIFY(application->video().stepFrames(1));
         QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), shown + 1);
-        QCOMPARE(audio.marks().videoMs.value_or(-1), timebase.msAt(shown + 1));
+        QCOMPARE(audio.marks().videoFrame, application::audioVideoFrame(timebase, shown + 1));
         QCOMPARE(redraws.count(), 1);
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
@@ -18335,7 +18378,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 263);
+        QCOMPARE(hotkeyRows().size(), 265);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
