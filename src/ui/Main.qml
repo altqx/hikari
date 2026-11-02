@@ -1164,7 +1164,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_EXPORT_SUBS_AS"
-                    help: qsTr("Writes a copy in another format; the open subtitles stay as they are")
+                    help: qsTr("Writes a copy of the document in another format")
                     iconRole: "export"
                     objectName: "exportAsMenuItem"
                     action: Action {

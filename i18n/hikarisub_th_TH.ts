@@ -2817,15 +2817,15 @@ Should not exceed 15 characters per second</source>
         <translation>ป้อนพาธเต็มของไฟล์ หรือเลือกด้วยปุ่ม เลือก…</translation>
     </message>
     <message>
-        <source>%1 is a folder.</source>
-        <translation>%1 เป็นโฟลเดอร์</translation>
+        <source>“%1” is a folder.</source>
+        <translation>“%1” เป็นโฟลเดอร์</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>ป้อนอัตราเฟรมระหว่าง 1 ถึง 1000</translation>
     </message>
     <message>
-        <source>Couldn&apos;t write %1: %2</source>
+        <source>Couldn’t write %1: %2</source>
         <translation>เขียน %1 ไม่ได้: %2</translation>
     </message>
     <message>
@@ -2897,8 +2897,8 @@ Should not exceed 15 characters per second</source>
         <translation>ตัวเลือก</translation>
     </message>
     <message>
-        <source>Keep alignment as %1 tags</source>
-        <translation>คงการจัดตำแหน่งไว้เป็นแท็ก %1</translation>
+        <source>Alignment as %1 tags</source>
+        <translation>การจัดตำแหน่งเป็นแท็ก %1</translation>
     </message>
     <message>
         <source>Text colours as font tags</source>
@@ -2937,8 +2937,8 @@ Should not exceed 15 characters per second</source>
         <translation>fps</translation>
     </message>
     <message>
-        <source>From video</source>
-        <translation>จากวิดีโอ</translation>
+        <source>Use video frame rate</source>
+        <translation>ใช้อัตราเฟรมของวิดีโอ</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -2949,9 +2949,9 @@ Should not exceed 15 characters per second</source>
         <translation>จะไม่คงรูปแบบข้อความ สี และตำแหน่งไว้</translation>
     </message>
     <message numerus="yes">
-        <source>Exported %n line(s) to %1.</source>
+        <source>Exported %n line(s) to “%1”.</source>
         <translation>
-            <numerusform>ส่งออก %n บรรทัดไปยัง %1 แล้ว</numerusform>
+            <numerusform>ส่งออก %n บรรทัดไปยัง “%1” แล้ว</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -7157,8 +7157,8 @@ What would you like to do?</source>
         <translation>บันทึกเป็น</translation>
     </message>
     <message>
-        <source>Writes a copy in another format; the open subtitles stay as they are</source>
-        <translation>เขียนสำเนาในรูปแบบอื่น คำบรรยายที่เปิดอยู่จะไม่เปลี่ยนแปลง</translation>
+        <source>Writes a copy of the document in another format</source>
+        <translation>เขียนสำเนาของเอกสารในรูปแบบอื่น</translation>
     </message>
     <message>
         <source>&amp;Export as…</source>

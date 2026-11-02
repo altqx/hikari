@@ -2840,15 +2840,15 @@ Should not exceed 15 characters per second</source>
         <translation>கோப்பின் முழுப் பாதையை உள்ளிடு, அல்லது உலாவு… மூலம் தேர்ந்தெடு</translation>
     </message>
     <message>
-        <source>%1 is a folder.</source>
-        <translation>%1 ஒரு கோப்புறை.</translation>
+        <source>“%1” is a folder.</source>
+        <translation>“%1” ஒரு கோப்புறை.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>1 முதல் 1000 வரையிலான சட்டக வீதத்தை உள்ளிடு.</translation>
     </message>
     <message>
-        <source>Couldn&apos;t write %1: %2</source>
+        <source>Couldn’t write %1: %2</source>
         <translation>%1 ஐ எழுத முடியவில்லை: %2</translation>
     </message>
     <message>
@@ -2920,8 +2920,8 @@ Should not exceed 15 characters per second</source>
         <translation>விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>Keep alignment as %1 tags</source>
-        <translation>சீரமைப்பை %1 குறிகளாக வைத்திரு</translation>
+        <source>Alignment as %1 tags</source>
+        <translation>%1 குறிகளாக சீரமைப்பு</translation>
     </message>
     <message>
         <source>Text colours as font tags</source>
@@ -2960,8 +2960,8 @@ Should not exceed 15 characters per second</source>
         <translation>fps</translation>
     </message>
     <message>
-        <source>From video</source>
-        <translation>காணொளியிலிருந்து</translation>
+        <source>Use video frame rate</source>
+        <translation>காணொளியின் சட்டக வீதத்தைப் பயன்படுத்து</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -2972,10 +2972,10 @@ Should not exceed 15 characters per second</source>
         <translation>வடிவமைப்பு, நிறங்கள், நிலைகள் வைக்கப்படாது.</translation>
     </message>
     <message numerus="yes">
-        <source>Exported %n line(s) to %1.</source>
+        <source>Exported %n line(s) to “%1”.</source>
         <translation>
-            <numerusform>%n வரி %1 க்கு ஏற்றுமதி செய்யப்பட்டது.</numerusform>
-            <numerusform>%n வரிகள் %1 க்கு ஏற்றுமதி செய்யப்பட்டன.</numerusform>
+            <numerusform>%n வரி “%1” க்கு ஏற்றுமதி செய்யப்பட்டது.</numerusform>
+            <numerusform>%n வரிகள் “%1” க்கு ஏற்றுமதி செய்யப்பட்டன.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -7200,8 +7200,8 @@ What would you like to do?</source>
         <translation>எனச் சேமி</translation>
     </message>
     <message>
-        <source>Writes a copy in another format; the open subtitles stay as they are</source>
-        <translation>வேறு வடிவில் ஒரு நகலை எழுதும்; திறந்த வசனங்கள் அப்படியே இருக்கும்</translation>
+        <source>Writes a copy of the document in another format</source>
+        <translation>ஆவணத்தின் நகலை வேறு வடிவில் எழுதும்</translation>
     </message>
     <message>
         <source>&amp;Export as…</source>

@@ -157,7 +157,7 @@ private slots:
         QCOMPARE(contents(out), QByteArray("WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<i>first</i>\n"
                                            "\n00:00:02.000 --> 00:00:03.000\nsecond\n"
                                            "\n00:00:03.000 --> 00:00:04.000\nthird\n"));
-        QCOMPARE(part("exportSummary")->property("text").toString(), QStringLiteral("Exported 3 lines to episode.vtt."));
+        QCOMPARE(part("exportSummary")->property("text").toString(), QStringLiteral("Exported 3 lines to “episode.vtt”."));
         QCOMPARE(part("exportSkipped")->property("text").toString(), QStringLiteral("1 comment line skipped."));
         QCOMPARE(session()->revision(), revision);
         QCOMPARE(session()->document().format(), core::SubtitleFormat::Ass);

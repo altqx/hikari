@@ -2817,15 +2817,15 @@ Should not exceed 15 characters per second</source>
         <translation>파일의 전체 경로를 입력하거나 찾아보기…로 고르세요</translation>
     </message>
     <message>
-        <source>%1 is a folder.</source>
-        <translation>%1은(는) 폴더입니다.</translation>
+        <source>“%1” is a folder.</source>
+        <translation>“%1”은(는) 폴더입니다.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>1에서 1000 사이의 프레임 속도를 입력하세요.</translation>
     </message>
     <message>
-        <source>Couldn&apos;t write %1: %2</source>
+        <source>Couldn’t write %1: %2</source>
         <translation>%1 파일을 쓸 수 없습니다: %2</translation>
     </message>
     <message>
@@ -2897,8 +2897,8 @@ Should not exceed 15 characters per second</source>
         <translation>옵션</translation>
     </message>
     <message>
-        <source>Keep alignment as %1 tags</source>
-        <translation>정렬을 %1 태그로 유지</translation>
+        <source>Alignment as %1 tags</source>
+        <translation>%1 태그로 정렬 유지</translation>
     </message>
     <message>
         <source>Text colours as font tags</source>
@@ -2937,8 +2937,8 @@ Should not exceed 15 characters per second</source>
         <translation>fps</translation>
     </message>
     <message>
-        <source>From video</source>
-        <translation>비디오에서</translation>
+        <source>Use video frame rate</source>
+        <translation>비디오 프레임 속도 사용</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -2949,9 +2949,9 @@ Should not exceed 15 characters per second</source>
         <translation>서식, 색, 위치는 유지되지 않습니다.</translation>
     </message>
     <message numerus="yes">
-        <source>Exported %n line(s) to %1.</source>
+        <source>Exported %n line(s) to “%1”.</source>
         <translation>
-            <numerusform>%1에 %n줄을 내보냈습니다.</numerusform>
+            <numerusform>“%1”에 %n줄을 내보냈습니다.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -7157,8 +7157,8 @@ What would you like to do?</source>
         <translation>다른 이름으로 저장</translation>
     </message>
     <message>
-        <source>Writes a copy in another format; the open subtitles stay as they are</source>
-        <translation>다른 형식으로 사본을 씁니다. 열린 자막은 그대로 남습니다</translation>
+        <source>Writes a copy of the document in another format</source>
+        <translation>문서의 사본을 다른 형식으로 씁니다</translation>
     </message>
     <message>
         <source>&amp;Export as…</source>

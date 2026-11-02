@@ -2863,15 +2863,15 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Wpisz pełną ścieżkę pliku albo wybierz go przyciskiem Przeglądaj…</translation>
     </message>
     <message>
-        <source>%1 is a folder.</source>
-        <translation>%1 jest folderem.</translation>
+        <source>“%1” is a folder.</source>
+        <translation>„%1” jest folderem.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
     </message>
     <message>
-        <source>Couldn&apos;t write %1: %2</source>
+        <source>Couldn’t write %1: %2</source>
         <translation>Nie można zapisać %1: %2</translation>
     </message>
     <message>
@@ -2943,8 +2943,8 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Opcje</translation>
     </message>
     <message>
-        <source>Keep alignment as %1 tags</source>
-        <translation>Zachowaj wyrównanie jako tagi %1</translation>
+        <source>Alignment as %1 tags</source>
+        <translation>Wyrównanie jako tagi %1</translation>
     </message>
     <message>
         <source>Text colours as font tags</source>
@@ -2983,8 +2983,8 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>fps</translation>
     </message>
     <message>
-        <source>From video</source>
-        <translation>Z wideo</translation>
+        <source>Use video frame rate</source>
+        <translation>Użyj liczby klatek wideo</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -2995,11 +2995,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Formatowanie, kolory i położenie nie są zachowywane.</translation>
     </message>
     <message numerus="yes">
-        <source>Exported %n line(s) to %1.</source>
+        <source>Exported %n line(s) to “%1”.</source>
         <translation>
-            <numerusform>Wyeksportowano %n linijkę do %1.</numerusform>
-            <numerusform>Wyeksportowano %n linijki do %1.</numerusform>
-            <numerusform>Wyeksportowano %n linijek do %1.</numerusform>
+            <numerusform>Wyeksportowano %n linijkę do „%1”.</numerusform>
+            <numerusform>Wyeksportowano %n linijki do „%1”.</numerusform>
+            <numerusform>Wyeksportowano %n linijek do „%1”.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -7243,8 +7243,8 @@ Co chcesz zrobić?</translation>
         <translation>Zapisz jako</translation>
     </message>
     <message>
-        <source>Writes a copy in another format; the open subtitles stay as they are</source>
-        <translation>Zapisuje kopię w innym formacie; otwarte napisy pozostają bez zmian</translation>
+        <source>Writes a copy of the document in another format</source>
+        <translation>Zapisuje kopię dokumentu w innym formacie</translation>
     </message>
     <message>
         <source>&amp;Export as…</source>

@@ -177,10 +177,10 @@
 <context>
     <name>HikariSub.Export</name>
     <message numerus="yes">
-        <source>Exported %n line(s) to %1.</source>
+        <source>Exported %n line(s) to “%1”.</source>
         <translation>
-            <numerusform>Exported %n line to %1.</numerusform>
-            <numerusform>Exported %n lines to %1.</numerusform>
+            <numerusform>Exported %n line to “%1”.</numerusform>
+            <numerusform>Exported %n lines to “%1”.</numerusform>
         </translation>
     </message>
     <message numerus="yes">

@@ -190,7 +190,7 @@ DialogWindow {
                 objectName: "exportSrtAlignment"
                 visible: dialog.format === "srt"
                 // lupdate reads "\\a" in a QML string as a bell character.
-                text: qsTr("Keep alignment as %1 tags").arg("{\\an}")
+                text: qsTr("Alignment as %1 tags").arg("{\\an}")
             }
             CheckBox {
                 id: srtColour
@@ -252,7 +252,7 @@ DialogWindow {
                 Button {
                     objectName: "exportFpsFromVideo"
                     visible: (dialog.setup.videoFps ?? 0) > 0
-                    text: qsTr("From video")
+                    text: qsTr("Use video frame rate")
                     onClicked: fps.text = Number(dialog.setup.videoFps).toFixed(3).replace(/\.?0+$/, "")
                 }
             }
@@ -284,7 +284,7 @@ DialogWindow {
             objectName: "exportSummary"
             Layout.fillWidth: true
             wrapMode: Text.Wrap
-            text: dialog.reported ? qsTr("Exported %n line(s) to %1.", "", dialog.report.written)
+            text: dialog.reported ? qsTr("Exported %n line(s) to “%1”.", "", dialog.report.written)
                                         .arg(dialog.app.localPath(dialog.report.file).replace(/^.*[\\/]/, "")) : ""
         }
         Hint {

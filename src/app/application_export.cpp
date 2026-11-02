@@ -205,7 +205,7 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     if (QFileInfo(path).suffix().isEmpty())
         path += u'.' + QLatin1String(format->extension);
     if (QFileInfo(path).isDir())
-        return problem(QCoreApplication::translate("HikariSub.Export", "%1 is a folder.").arg(QDir::toNativeSeparators(path)));
+        return problem(QCoreApplication::translate("HikariSub.Export", "“%1” is a folder.").arg(QDir::toNativeSeparators(path)));
     if (QFileInfo::exists(path) && !values.value(QStringLiteral("replace")).toBool())
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("exists"), true},
@@ -237,7 +237,7 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
         out.write(reinterpret_cast<const char *>(result.bytes.data()), qint64(result.bytes.size())) !=
             qint64(result.bytes.size()) ||
         !out.commit())
-        return problem(QCoreApplication::translate("HikariSub.Export", "Couldn't write %1: %2").arg(QFileInfo(path).fileName(), out.errorString()));
+        return problem(QCoreApplication::translate("HikariSub.Export", "Couldn’t write %1: %2").arg(QFileInfo(path).fileName(), out.errorString()));
 
     QJsonObject choice{{QStringLiteral("format"), formatId},
                        {QStringLiteral("lines"), lines.isEmpty() ? QStringLiteral("all") : lines}};
