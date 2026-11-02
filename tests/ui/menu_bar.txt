@@ -46,7 +46,8 @@ Edit > Find and replace [GLOBAL_FIND_REPLACE]
 Edit > Find [GLOBAL_SEARCH]
 Edit > Find next [GLOBAL_FIND_NEXT]
 Subtitles
-Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
+Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
+Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > ASS file properties [GLOBAL_OPEN_ASS_PROPERTIES]
 Subtitles > Conversion >
@@ -125,6 +126,7 @@ View > Panels > Line editor >
 View > Panels > Grid >
 View > Panels > Reference >
 View > Panels > Shift times >
+View > Panels > Timing postprocessor >
 View > Panels > Search >
 View > Panels > Automation >
 View > Panels > Spellchecker >

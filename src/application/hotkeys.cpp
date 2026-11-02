@@ -291,6 +291,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         {"GLOBAL_KANJI_TIMER", 5174},
         {"GLOBAL_GETTING_STARTED", 5176},
+        {"GLOBAL_SHOW_TIMING_POSTPROCESSOR", 5214},
+        {"GLOBAL_TIMING_POSTPROCESSOR", 5215},
 };
 
 struct NameRow {
@@ -450,7 +452,7 @@ constexpr NameRow kNames[] = {
         {5209, "Sort selected lines by actor"},
         {5210, "Sort selected lines by effect"},
         {5211, "Sort selected lines by layer"},
-        {5300, "Shift times / run timing postprocessor"},
+        {5300, "Shift times with the last values"},
         {5050, "Go to previous keyframe"},
         {5049, "Go to next keyframe"},
         {5027, "Resample subtitles"},
@@ -553,6 +555,8 @@ constexpr NameRow kNames[] = {
         {5173, "Repeat last run"},
         {5174, "Kanji timer"},
         {5176, "Getting started"},
+        {5214, "Timing postprocessor panel"},
+        {5215, "Timing postprocessor with the last values"},
 };
 
 struct DefaultRow {

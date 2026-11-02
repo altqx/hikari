@@ -540,7 +540,7 @@ private slots:
         QVERIFY(!shift.settings().moveToVideoTime);
         QCOMPARE(shift.settings().timeMs, 1500);
         QCOMPARE(shift.settings().postprocessor, 19);
-        QCOMPARE(shift.profileNames(), QStringList{QStringLiteral("p1")});
+        QCOMPARE(shift.shiftPresetNames(), QStringList{QStringLiteral("p1")});
     }
 
     void withdrawnColourSettingsLeaveTheProfile()
@@ -804,24 +804,49 @@ private slots:
         QCOMPARE(SettingsStore(file).integer("shiftTimes.options"), 128 | 4);
     }
 
-    void shiftTimesRemembersCollapsedSections()
+    void shiftProfilesBecomePresetsOnce()
     {
         QTemporaryDir dir;
         const QString file = dir.filePath(QStringLiteral("settings.toml"));
         {
             SettingsStore store(file);
+            application::ShiftTimesSettings startOnly;
+            startOnly.timeMs = 1500;
+            startOnly.whichTimes = 1;
+            store.set("shiftTimes.profiles",
+                      QStringList{QString::fromStdString(application::shiftProfileText("Start only", startOnly))});
+            store.set("shiftTimes.whichLines", 2);
             ui::ShiftTimesController shift(store);
-            QVERIFY(shift.collapsedSections().isEmpty());
-            QSignalSpy spy(&shift, &ui::ShiftTimesController::collapsedSectionsChanged);
-            shift.setCollapsedSections({QStringLiteral("amount"), QStringLiteral("snap")});
-            QCOMPARE(spy.count(), 1);
-            shift.setCollapsedSections({QStringLiteral("amount"), QStringLiteral("snap")});
-            QCOMPARE(spy.count(), 1);
-            QVERIFY(!store.contains("shiftTimes.options"));
-            QVERIFY(!store.contains("shiftTimes.time"));
+            QCOMPARE(shift.shiftPresetNames(), QStringList{QStringLiteral("Start only")});
+            QVERIFY(!store.contains("shiftTimes.profiles"));
+            QCOMPARE(store.list("shiftTimes.presets").size(), 1);
+            QCOMPARE(shift.settingsMap().value(QStringLiteral("ppWhichLines")).toInt(), 2);
+            QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Start only")));
+            QCOMPARE(shift.settings().timeMs, 1500);
+            QCOMPARE(shift.settings().whichTimes, 1);
+            QCOMPARE(shift.shiftPreset(), QStringLiteral("Start only"));
+            auto map = shift.settingsMap();
+            map.insert(QStringLiteral("postprocessor"), 1);
+            map.insert(QStringLiteral("leadIn"), 150);
+            shift.setSettingsMap(map);
+            QCOMPARE(shift.shiftPreset(), QStringLiteral("Start only"));
+            QVERIFY(shift.savePreset(QStringLiteral("postprocessor"), QStringLiteral("TV")));
+            shift.setTimingPreset(QStringLiteral("TV"));
+            QVERIFY(!shift.savePreset(QStringLiteral("other"), QStringLiteral("TV")));
         }
-        ui::ShiftTimesController shift(file);
-        QCOMPARE(shift.collapsedSections(), (QStringList{QStringLiteral("amount"), QStringLiteral("snap")}));
+        SettingsStore store(file);
+        store.set("shiftTimes.profiles", QStringList{QStringLiteral("Late: Time: 9000")});
+        ui::ShiftTimesController shift(store);
+        QCOMPARE(shift.shiftPresetNames(), QStringList{QStringLiteral("Start only")});
+        QCOMPARE(shift.postprocessorPresetNames(), QStringList{QStringLiteral("TV")});
+        QCOMPARE(shift.shiftPreset(), QStringLiteral("Start only"));
+        QCOMPARE(shift.postprocessorPreset(), QStringLiteral("TV"));
+        QCOMPARE(shift.timingPreset(), QStringLiteral("TV"));
+        QVERIFY(shift.renamePreset(QStringLiteral("postprocessor"), QStringLiteral("TV"), QStringLiteral("Fansub TV")));
+        QCOMPARE(shift.timingPreset(), QStringLiteral("Fansub TV"));
+        QVERIFY(shift.deletePreset(QStringLiteral("postprocessor"), QStringLiteral("Fansub TV")));
+        QVERIFY(shift.timingPreset().isEmpty());
+        QVERIFY(shift.postprocessorPreset().isEmpty());
     }
 };
 

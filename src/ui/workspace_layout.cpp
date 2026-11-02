@@ -126,7 +126,7 @@ const QStringList &WorkspaceLayoutController::panelIds()
                                  QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original"),
                                  QStringLiteral("Log"), QStringLiteral("Styles"),
                                  QStringLiteral("FixMinorErrors"), QStringLiteral("Template"),
-                                 QStringLiteral("Spellchecker")};
+                                 QStringLiteral("Spellchecker"), QStringLiteral("Postprocessor")};
     return ids;
 }
 
@@ -770,6 +770,7 @@ bool WorkspaceLayoutController::applyPreset(const QString &name)
     if (!applyPresetArrangement(name))
         return false;
     choseMode();
+    emit presetApplied(name);
     return true;
 }
 

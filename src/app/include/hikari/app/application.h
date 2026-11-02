@@ -380,8 +380,15 @@ public:
     Q_INVOKABLE QUrl targetFolder() const;
     Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);
     Q_INVOKABLE bool canShiftTranslation() const;
-    // Empty when shifted, else the message; frames need an exact (indexed) timebase.
-    Q_INVOKABLE QString shiftTimes();
+    // tool: "shift" or "postprocessor", with the remembered values. One step named after the panel.
+    // Empty when done, else the message; frames, end fixes and the postprocessor need an exact timebase.
+    Q_INVOKABLE QString applyShift(const QString &tool);
+    // What applyShift would do: {problem (empty when it can run), changed, total, amount (ms, or frames
+    // when byFrames), targetMs (the video or audio mark time, -1 without), rows: [{line (1-based),
+    // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "snappedStart",
+    // "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed, snapped}}.
+    Q_INVOKABLE QVariantMap shiftPreview(const QString &tool);
+    Q_INVOKABLE bool hasKeyframes() const;
     // 0: none. Ids are never reused.
     Q_INVOKABLE qulonglong editingTargetId() const;
     Q_INVOKABLE bool exactTimebase() const;
@@ -858,6 +865,8 @@ private:
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
     application::LineVisible actionLines(const application::EditSession &session) const;
+    application::ShiftContext shiftContext(application::LegacyTimebase &timebase) const;
+    application::ShiftTimesSettings shiftRunSettings(const QString &tool) const;
     void rememberColumns(bool paste, int columns);
     void protectReference();
     void refreshViews();

@@ -5528,6 +5528,18 @@ What would you like to do?</source>
         <translation>தேர்ந்தெடுத்த வரிகளை அடுக்குப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
+        <source>Shift times with the last values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing postprocessor panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing postprocessor with the last values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to previous keyframe</source>
         <translation>முந்தைய கீஃப்ரேமுக்குச் செல்லவும்</translation>
     </message>
@@ -5717,7 +5729,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift times / run timing postprocessor</source>
-        <translation>நேரங்களை நகர்த்து / நேரப் பின்செயலாக்கியை இயக்கு</translation>
+        <translation type="vanished">நேரங்களை நகர்த்து / நேரப் பின்செயலாக்கியை இயக்கு</translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -6749,7 +6761,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift &amp;times...</source>
-        <translation>நேரங்களை நகர்த்து... (&amp;t)</translation>
+        <translation type="vanished">நேரங்களை நகர்த்து... (&amp;t)</translation>
     </message>
     <message>
         <source>Style &amp;manager</source>
@@ -6997,6 +7009,18 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>உரையில் சொற்றொடரின் அடுத்த நிகழ்வைக் கண்டறிகிறது</translation>
+    </message>
+    <message>
+        <source>Shift &amp;times…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves line times by the lead-in, lead-out, gap and keyframe rules</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing &amp;postprocessor…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Load script</source>
@@ -13413,19 +13437,119 @@ Styles deleted:
     <name>HikariSub.TimeShift</name>
     <message>
         <source>The starting time</source>
-        <translation>தொடக்க நேரம்</translation>
+        <translation type="vanished">தொடக்க நேரம்</translation>
     </message>
     <message>
         <source>End time</source>
-        <translation>இறுதி நேரம்</translation>
+        <translation type="vanished">இறுதி நேரம்</translation>
     </message>
     <message>
         <source>Styles</source>
-        <translation>பாணிகள்</translation>
+        <translation type="vanished">பாணிகள்</translation>
+    </message>
+    <message>
+        <source>Shift by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the active line to the video’s frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To audio mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the active line to the audio mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the active line’s</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>End</source>
         <translation>முடிவு</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To the video at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To the audio mark at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation type="unfinished">வீடியோவைத் திற…</translation>
+    </message>
+    <message>
+        <source>Direction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation type="unfinished">பிறகு</translation>
+    </message>
+    <message>
+        <source>Earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation type="unfinished">இறுதி நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Leave as they are</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix overlaps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recalculate from text length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs a video.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tag times too (%1, %2, %3)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Shift times</source>
@@ -13441,59 +13565,173 @@ Styles deleted:
     </message>
     <message>
         <source>Shift subtitle times</source>
-        <translation>வசன வரி நேரங்களை நகர்த்து</translation>
+        <translation type="vanished">வசன வரி நேரங்களை நகர்த்து</translation>
     </message>
     <message>
         <source>Shift</source>
         <translation>நகர்த்து</translation>
     </message>
     <message>
+        <source>Apply</source>
+        <translation type="unfinished">பயன்படுத்து</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %1 of %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-in</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-out</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n gap(s) closed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n snapped</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>gap closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>snapped start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>snapped end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>no change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1, start %2 to %3, end %4 to %5, %6</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more line(s) change.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>One undo step: “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Forward</source>
-        <translation>முன்னோக்கி</translation>
+        <translation type="vanished">முன்னோக்கி</translation>
     </message>
     <message>
         <source>Backward</source>
-        <translation>பின்னோக்கி</translation>
+        <translation type="vanished">பின்னோக்கி</translation>
     </message>
     <message>
         <source>Tag times</source>
-        <translation>குறிச்சொல் நேரங்கள்</translation>
+        <translation type="vanished">குறிச்சொல் நேரங்கள்</translation>
     </message>
     <message>
         <source>Move according to the following styles (separated by a comma)</source>
-        <translation>பின்வரும் பாணிகளின்படி நகர்த்து (காற்புள்ளியால் பிரிக்கவும்)</translation>
+        <translation type="vanished">பின்வரும் பாணிகளின்படி நகர்த்து (காற்புள்ளியால் பிரிக்கவும்)</translation>
     </message>
     <message>
         <source>End time correction</source>
-        <translation>முடிவு நேரத் திருத்தம்</translation>
+        <translation type="vanished">முடிவு நேரத் திருத்தம்</translation>
     </message>
     <message>
         <source>Corrects end times that are improper or overlap each other</source>
-        <translation>முறையற்ற அல்லது ஒன்றுடன் ஒன்று மேற்பொருந்தும் முடிவு நேரங்களைத் திருத்தும்</translation>
+        <translation type="vanished">முறையற்ற அல்லது ஒன்றுடன் ஒன்று மேற்பொருந்தும் முடிவு நேரங்களைத் திருத்தும்</translation>
     </message>
     <message>
         <source>Shift by video / audio</source>
-        <translation>வீடியோ / ஆடியோ மூலம் நகர்த்து</translation>
+        <translation type="vanished">வீடியோ / ஆடியோ மூலம் நகர்த்து</translation>
     </message>
     <message>
         <source>Beginning</source>
-        <translation>தொடக்கம்</translation>
+        <translation type="vanished">தொடக்கம்</translation>
     </message>
     <message>
         <source>Moves the start time to the video/audio time</source>
-        <translation>தொடக்க நேரத்தை வீடியோ/ஆடியோ நேரத்துக்கு நகர்த்தும்</translation>
+        <translation type="vanished">தொடக்க நேரத்தை வீடியோ/ஆடியோ நேரத்துக்கு நகர்த்தும்</translation>
     </message>
     <message>
         <source>Move the marker to video time</source>
-        <translation>குறிப்பானை வீடியோ நேரத்துக்கு நகர்த்து</translation>
+        <translation type="vanished">குறிப்பானை வீடியோ நேரத்துக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>Move the marker to audio time</source>
-        <translation>குறிப்பானை ஆடியோ நேரத்துக்கு நகர்த்து</translation>
+        <translation type="vanished">குறிப்பானை ஆடியோ நேரத்துக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>Which lines</source>
-        <translation>எந்த வரிகள்</translation>
+        <translation type="vanished">எந்த வரிகள்</translation>
     </message>
     <message>
         <source>Timing postprocessor</source>
@@ -13505,25 +13743,25 @@ Styles deleted:
     </message>
     <message>
         <source>Time shifts</source>
-        <translation>நேர நகர்த்தல்கள்</translation>
+        <translation type="vanished">நேர நகர்த்தல்கள்</translation>
     </message>
     <message>
         <source>Shift times by time / frames</source>
-        <translation>நேரம் / சட்டகங்கள் அளவில் நேரங்களை நகர்த்து</translation>
+        <translation type="vanished">நேரம் / சட்டகங்கள் அளவில் நேரங்களை நகர்த்து</translation>
     </message>
     <message>
         <source>Delays subtitles</source>
-        <translation>வசன வரிகளைத் தாமதப்படுத்துகிறது</translation>
+        <translation type="vanished">வசன வரிகளைத் தாமதப்படுத்துகிறது</translation>
     </message>
     <message>
         <source>Speeds up subtitles</source>
-        <translation>வசன வரிகளைத் துரிதப்படுத்துகிறது</translation>
+        <translation type="vanished">வசன வரிகளைத் துரிதப்படுத்துகிறது</translation>
     </message>
     <message>
         <source>Shifts %1, %2, and %3 tag times
 so their positions on video do not change
 (slows down time shifting)</source>
-        <translation>%1, %2, %3 குறிச்சொல் நேரங்களையும் நகர்த்தும்
+        <translation type="vanished">%1, %2, %3 குறிச்சொல் நேரங்களையும் நகர்த்தும்
 இதனால் வீடியோவில் அவற்றின் நிலைகள் மாறாது
 (நேர நகர்த்தலை மெதுவாக்கும்)</translation>
     </message>
@@ -13533,7 +13771,7 @@ so their positions on video do not change
     </message>
     <message>
         <source>The choice of lines to move</source>
-        <translation>நகர்த்த வேண்டிய வரிகளின் தேர்வு</translation>
+        <translation type="vanished">நகர்த்த வேண்டிய வரிகளின் தேர்வு</translation>
     </message>
     <message>
         <source>All lines</source>
@@ -13544,140 +13782,232 @@ so their positions on video do not change
         <translation>தேர்ந்தெடுக்கப்பட்ட வரிகள்</translation>
     </message>
     <message>
+        <source>Selected line and below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting at or after the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting at or before the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines in chosen styles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose styles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>From the selected line</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரியிலிருந்து</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட வரியிலிருந்து</translation>
     </message>
     <message>
         <source>All times higher and equal</source>
-        <translation>சமமான அல்லது அதிகமான எல்லா நேரங்களும்</translation>
+        <translation type="vanished">சமமான அல்லது அதிகமான எல்லா நேரங்களும்</translation>
     </message>
     <message>
         <source>All times lower and equal</source>
-        <translation>சமமான அல்லது குறைவான எல்லா நேரங்களும்</translation>
+        <translation type="vanished">சமமான அல்லது குறைவான எல்லா நேரங்களும்</translation>
     </message>
     <message>
         <source>According to the selected styles</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளின்படி</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட பாணிகளின்படி</translation>
     </message>
     <message>
         <source>Select a style from the list</source>
-        <translation>பட்டியலிலிருந்து ஒரு பாணியைத் தேர்ந்தெடுக்கவும்</translation>
+        <translation type="vanished">பட்டியலிலிருந்து ஒரு பாணியைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
         <source>Styles, separated by commas</source>
-        <translation>காற்புள்ளிகளால் பிரிக்கப்பட்ட பாணிகள்</translation>
+        <translation type="vanished">காற்புள்ளிகளால் பிரிக்கப்பட்ட பாணிகள்</translation>
     </message>
     <message>
         <source>Run timing postprocessor</source>
-        <translation>நேரப் பின்செயலாக்கியை இயக்கவும்</translation>
+        <translation type="vanished">நேரப் பின்செயலாக்கியை இயக்கவும்</translation>
     </message>
     <message>
         <source>A method of time shift</source>
-        <translation>நேர நகர்த்தல் முறை</translation>
+        <translation type="vanished">நேர நகர்த்தல் முறை</translation>
     </message>
     <message>
         <source>The choice of times to move</source>
-        <translation>நகர்த்த வேண்டிய நேரங்களின் தேர்வு</translation>
+        <translation type="vanished">நகர்த்த வேண்டிய நேரங்களின் தேர்வு</translation>
     </message>
     <message>
         <source>Both times</source>
-        <translation>இரு நேரங்களும்</translation>
+        <translation type="vanished">இரு நேரங்களும்</translation>
     </message>
     <message>
         <source>Leave unchanged</source>
-        <translation>மாறாமல் விடுங்கள்</translation>
+        <translation type="vanished">மாறாமல் விடுங்கள்</translation>
     </message>
     <message>
         <source>Adjust overlapping times</source>
-        <translation>ஒன்றுடன் ஒன்று மேற்பொருந்தும் நேரங்களைச் சரிசெய்யவும்</translation>
+        <translation type="vanished">ஒன்றுடன் ஒன்று மேற்பொருந்தும் நேரங்களைச் சரிசெய்யவும்</translation>
     </message>
     <message>
         <source>New times</source>
-        <translation>புதிய நேரங்கள்</translation>
+        <translation type="vanished">புதிய நேரங்கள்</translation>
     </message>
     <message>
         <source>Moves the end time to the video/audio time</source>
-        <translation>முடிவு நேரத்தை வீடியோ/ஆடியோ நேரத்துக்கு நகர்த்தும்</translation>
+        <translation type="vanished">முடிவு நேரத்தை வீடியோ/ஆடியோ நேரத்துக்கு நகர்த்தும்</translation>
     </message>
     <message>
         <source>Lead-in/lead-out</source>
-        <translation>லீட்-இன்/லீட்-அவுட்</translation>
+        <translation type="vanished">லீட்-இன்/லீட்-அவுட்</translation>
     </message>
     <message>
         <source>Inserts introduction to the start time (good when using fad)</source>
-        <translation>தொடக்க நேரத்துக்கு முன் லீட்-இன் சேர்க்கும் (fad பயன்படுத்தும்போது பயனுள்ளது)</translation>
+        <translation type="vanished">தொடக்க நேரத்துக்கு முன் லீட்-இன் சேர்க்கும் (fad பயன்படுத்தும்போது பயனுள்ளது)</translation>
     </message>
     <message>
         <source>Introduction time in milliseconds</source>
-        <translation>லீட்-இன் நேரம் (மில்லிவிநாடிகளில்)</translation>
+        <translation type="vanished">லீட்-இன் நேரம் (மில்லிவிநாடிகளில்)</translation>
     </message>
     <message>
         <source>Inserts introduction to the end time (good when using fad)</source>
-        <translation>முடிவு நேரத்துக்குப் பின் லீட்-அவுட் சேர்க்கும் (fad பயன்படுத்தும்போது பயனுள்ளது)</translation>
+        <translation type="vanished">முடிவு நேரத்துக்குப் பின் லீட்-அவுட் சேர்க்கும் (fad பயன்படுத்தும்போது பயனுள்ளது)</translation>
     </message>
     <message>
         <source>Enable</source>
-        <translation>இயக்கு</translation>
+        <translation type="vanished">இயக்கு</translation>
     </message>
     <message>
         <source>Start time extension threshold</source>
-        <translation>தொடக்க நேர நீட்டிப்பு வரம்பு</translation>
+        <translation type="vanished">தொடக்க நேர நீட்டிப்பு வரம்பு</translation>
     </message>
     <message>
         <source>End time extension threshold</source>
-        <translation>முடிவு நேர நீட்டிப்பு வரம்பு</translation>
+        <translation type="vanished">முடிவு நேர நீட்டிப்பு வரம்பு</translation>
     </message>
     <message>
         <source>Before the start time</source>
-        <translation>தொடக்க நேரத்திற்கு முன்</translation>
+        <translation type="vanished">தொடக்க நேரத்திற்கு முன்</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
 before the start time in milliseconds</source>
-        <translation>தொடக்க நேரத்துக்கு முன் கீஃப்ரேமுக்கான 
+        <translation type="vanished">தொடக்க நேரத்துக்கு முன் கீஃப்ரேமுக்கான 
 அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
 after the start time in milliseconds</source>
-        <translation>தொடக்க நேரத்துக்குப் பின் கீஃப்ரேமுக்கான 
+        <translation type="vanished">தொடக்க நேரத்துக்குப் பின் கீஃப்ரேமுக்கான 
 அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
 before the end time in milliseconds</source>
-        <translation>முடிவு நேரத்துக்கு முன் கீஃப்ரேமுக்கான 
+        <translation type="vanished">முடிவு நேரத்துக்கு முன் கீஃப்ரேமுக்கான 
 அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
 after the end time in milliseconds</source>
-        <translation>முடிவு நேரத்துக்குப் பின் கீஃப்ரேமுக்கான 
+        <translation type="vanished">முடிவு நேரத்துக்குப் பின் கீஃப்ரேமுக்கான 
 அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <translation type="unfinished">%1 ms</translation>
+    </message>
+    <message>
+        <source>The rules need a video.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Lead-in</source>
         <translation>லீட்-இன்</translation>
     </message>
     <message>
+        <source>Start earlier by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Lead-out</source>
         <translation>லீட்-அவுட்</translation>
     </message>
     <message>
+        <source>End later by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close small gaps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start back to the previous end if within</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End on to the next start if within</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Both gap limits are 0 ms. Raise one to close gaps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start within</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start within, before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start within, after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End within</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End within, before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End within, after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs keyframes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Lead-out time in milliseconds</source>
-        <translation>லீட்-அவுட் நேரம் (மில்லிவிநாடிகளில்)</translation>
+        <translation type="vanished">லீட்-அவுட் நேரம் (மில்லிவிநாடிகளில்)</translation>
     </message>
     <message>
         <source>Set times as continuous</source>
-        <translation>நேரங்களை தொடர்ச்சியாக அமைக்கவும்</translation>
+        <translation type="vanished">நேரங்களை தொடர்ச்சியாக அமைக்கவும்</translation>
     </message>
     <message>
         <source>Start time threshold</source>
-        <translation>தொடக்க நேர வரம்பு</translation>
+        <translation type="vanished">தொடக்க நேர வரம்பு</translation>
     </message>
     <message>
         <source>End time threshold</source>
-        <translation>முடிவு நேர வரம்பு</translation>
+        <translation type="vanished">முடிவு நேர வரம்பு</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -13685,27 +14015,27 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>After the start time</source>
-        <translation>தொடக்க நேரத்திற்குப் பிறகு</translation>
+        <translation type="vanished">தொடக்க நேரத்திற்குப் பிறகு</translation>
     </message>
     <message>
         <source>Before the end time</source>
-        <translation>இறுதி நேரத்திற்கு முன்</translation>
+        <translation type="vanished">இறுதி நேரத்திற்கு முன்</translation>
     </message>
     <message>
         <source>After the end time</source>
-        <translation>இறுதி நேரத்திற்குப் பிறகு</translation>
+        <translation type="vanished">இறுதி நேரத்திற்குப் பிறகு</translation>
     </message>
     <message>
         <source>Profiles</source>
-        <translation>சுயவிவரங்கள்</translation>
+        <translation type="vanished">சுயவிவரங்கள்</translation>
     </message>
     <message>
         <source>Adding and editing profiles</source>
-        <translation>சுயவிவரங்களைச் சேர்ப்பது மற்றும் திருத்துதல்</translation>
+        <translation type="vanished">சுயவிவரங்களைச் சேர்ப்பது மற்றும் திருத்துதல்</translation>
     </message>
     <message>
         <source>Removing profiles</source>
-        <translation>சுயவிவரங்களை நீக்குதல்</translation>
+        <translation type="vanished">சுயவிவரங்களை நீக்குதல்</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -13729,31 +14059,107 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Shift only the start times?</source>
-        <translation>தொடக்க நேரங்களை மட்டும் நகர்த்தவா?</translation>
+        <translation type="vanished">தொடக்க நேரங்களை மட்டும் நகர்த்தவா?</translation>
     </message>
     <message>
         <source>Shift only the end times?</source>
-        <translation>முடிவு நேரங்களை மட்டும் நகர்த்தவா?</translation>
+        <translation type="vanished">முடிவு நேரங்களை மட்டும் நகர்த்தவா?</translation>
     </message>
     <message>
         <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
-        <translation>முடிவு நேரங்கள் அப்படியே இருக்கும், எனவே அதன் முடிவைத் தாண்டி நகர்த்தப்பட்ட வரி தொடங்கும் முன்பே முடிந்துவிடும்.</translation>
+        <translation type="vanished">முடிவு நேரங்கள் அப்படியே இருக்கும், எனவே அதன் முடிவைத் தாண்டி நகர்த்தப்பட்ட வரி தொடங்கும் முன்பே முடிந்துவிடும்.</translation>
     </message>
     <message>
         <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
-        <translation>தொடக்க நேரங்கள் அப்படியே இருக்கும், எனவே அதன் தொடக்கத்துக்கு முன் நகர்த்தப்பட்ட வரி தொடங்கும் முன்பே முடிந்துவிடும்.</translation>
+        <translation type="vanished">தொடக்க நேரங்கள் அப்படியே இருக்கும், எனவே அதன் தொடக்கத்துக்கு முன் நகர்த்தப்பட்ட வரி தொடங்கும் முன்பே முடிந்துவிடும்.</translation>
     </message>
     <message>
         <source>Shift start times</source>
-        <translation>தொடக்க நேரங்களை நகர்த்து</translation>
+        <translation type="vanished">தொடக்க நேரங்களை நகர்த்து</translation>
     </message>
     <message>
         <source>Shift end times</source>
-        <translation>முடிவு நேரங்களை நகர்த்து</translation>
+        <translation type="vanished">முடிவு நேரங்களை நகர்த்து</translation>
+    </message>
+    <message>
+        <source>%1 (Timing default)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete preset</source>
+        <translation type="unfinished">முன்னமைவை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Delete the preset “%1”?</source>
+        <translation type="unfinished">“%1” முன்னமைவை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">நீக்கு</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>last used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as preset…</source>
+        <translation type="unfinished">முன்னமைவாகச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Rename preset…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete preset…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use in the Timing layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as preset</source>
+        <translation type="unfinished">முன்னமைவாகச் சேமி</translation>
+    </message>
+    <message>
+        <source>Preset name</source>
+        <translation type="unfinished">முன்னமைவுப் பெயர்</translation>
+    </message>
+    <message>
+        <source>A preset named “%1” exists. Saving replaces it.</source>
+        <translation type="unfinished">“%1” என்ற பெயரில் ஒரு முன்னமைவு உள்ளது. சேமித்தால் அது மாற்றப்படும்.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">மாற்று</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">சேமி</translation>
     </message>
 </context>
 <context>
