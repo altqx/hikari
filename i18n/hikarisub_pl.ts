@@ -3816,10 +3816,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Na tym komputerze jest zainstalowany HikariSub 0.0.x. Nic w nim nie zostanie zmienione.</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>Później: Plik › Importuj ustawienia starej wersji…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>Importuj moje dawne ustawienia</translation>
     </message>
@@ -3834,10 +3830,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Set up from scratch</source>
         <translation>Skonfiguruj od zera</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>Zacznij od ustawień domyślnych HikariSub. Plik › Importuj ustawienia starej wersji… pozwoli przenieść je później.</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -3934,6 +3926,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>Duże wideo z narzędziami wizualnymi i panelem Style.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>Później: Ustawienia › Ogólne › Importuj ustawienia starej wersji…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>Zacznij od ustawień domyślnych HikariSub. Ustawienia › Ogólne › Importuj ustawienia starej wersji… pozwoli przenieść je później.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -5953,6 +5953,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przesuń następne linijki o klatki: koniec na wideo</translation>
     </message>
     <message>
+        <source>Import legacy settings…</source>
+        <translation>Importuj ustawienia starej wersji…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -6609,10 +6613,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Open keyframes</source>
         <translation>Otwórz klatki kluczowe</translation>
-    </message>
-    <message>
-        <source>Import legacy settings...</source>
-        <translation>Importuj ustawienia starej wersji...</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -9045,6 +9045,26 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     <message>
         <source>Import legacy hotkeys…</source>
         <translation>Importuj skróty ze starej wersji…</translation>
+    </message>
+    <message>
+        <source>Legacy</source>
+        <translation>Starsza wersja</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>Importuj ustawienia starej wersji…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>Wycofaj ostatni import…</translation>
+    </message>
+    <message>
+        <source>Script hotkeys</source>
+        <translation>Skróty skryptów</translation>
     </message>
     <message>
         <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>

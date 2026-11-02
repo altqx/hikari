@@ -1310,13 +1310,6 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
-                    iconRole: "import"
-                    objectName: "importSettingsMenuItem"
-                    text: qsTr("Import legacy settings...")
-                    enabled: root.settingsImport.available
-                    onTriggered: settingsImportDialog.openDialog()
-                }
-                ShellMenuItem {
                     help: qsTr("Exit the program")
                     iconRole: "exit"
                     objectName: "exitMenuItem"
@@ -6703,7 +6696,10 @@ ApplicationWindow {
                 crashReports: root.crashReports
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
+                importer: root.settingsImport
                 onCreditsRequested: creditsDialog.open()
+                onLegacyImportRequested: root.importLegacySettings()
+                onLegacyRollBackRequested: settingsImportDialog.openRollBack()
             }
         }
     }
@@ -6712,6 +6708,10 @@ ApplicationWindow {
         return settingsLoader.item
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
+    function importLegacySettings() {
+        if (root.settingsImport.available)
+            settingsImportDialog.openDialog()
+    }
     Loader {
         id: fontCollectorLoader
         active: false
@@ -7198,6 +7198,7 @@ ApplicationWindow {
         const editing = root.shell.hasEditingTarget
         switch (symbol) {
         case "GLOBAL_QUIT": root.close(); return true
+        case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
                 root.focusPanel(lineText, Qt.OtherFocusReason)

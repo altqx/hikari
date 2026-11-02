@@ -15309,6 +15309,25 @@ private slots:
         return dialog;
     }
     QVariantMap settingsValues(QObject *dialog) const { return dialog->property("values").toMap(); }
+    QQuickItem *legacySettingsButton(const char *name)
+    {
+        auto *dialog = openSettings();
+        if (!dialog || !QTest::qWaitFor([&] { return dialog->property("visible").toBool(); }))
+            return nullptr;
+        showSettingsPage("general");
+        return dialogItem("settingsDialog", name);
+    }
+    QObject *importWizard() const
+    {
+        return engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+    }
+    bool importLegacySettingsByHotkey()
+    {
+        QVariant ran;
+        return QMetaObject::invokeMethod(engine->rootObjects().first(), "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                         Q_ARG(QVariant, QStringLiteral("GLOBAL_IMPORT_LEGACY_SETTINGS")))
+               && ran.toBool();
+    }
 
     void settingsUpdatesPageKeepsTheUpdateOptions()
     {
@@ -15828,12 +15847,16 @@ private slots:
             f.write(bytes);
         }
         restartWithSpelling(home.path(), false);
-        auto *menuItem = named("importSettingsMenuItem");
-        QVERIFY(menuItem);
-        QVERIFY(QByteArray(menuItem->metaObject()->className()).startsWith("ShellMenuItem"));
-        QVERIFY(menuItem->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
-        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QVERIFY(!named("importSettingsMenuItem"));
+        auto *importButton = legacySettingsButton("settingsImportLegacy");
+        QVERIFY(importButton);
+        QVERIFY(importButton->isVisible() && importButton->isEnabled());
+        QVERIFY(!dialogItem("settingsDialog", "settingsRollBackImport")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "settingsLegacyNotFound")->isVisible(),
+                 application->settingsImport().roots().isEmpty());
+        QVERIFY(dialogItem("settingsDialog", "hotkeyImportLegacy")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(importButton, "click"));
+        auto *dialog = importWizard();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
@@ -15944,15 +15967,17 @@ private slots:
                     .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
         QVERIFY(!application->settingsStore()->isSet(QStringLiteral("program.theme")));
 
-        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
-        dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        auto *rollBack = legacySettingsButton("settingsRollBackImport");
+        QVERIFY(rollBack);
+        QTRY_VERIFY(rollBack->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(rollBack, "click"));
+        dialog = importWizard();
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(dialog->property("step").toInt(), 1);
-        QTRY_VERIFY(visibleNamed("settingsImportRollbackBar"));
-        QCOMPARE(control("settingsImportState")->property("text").toString(), QStringLiteral("The last import is in effect."));
-        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
         answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
                       QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("cancel"));
+        QTRY_VERIFY(visibleNamed("settingsImportRollbackBar"));
+        QCOMPARE(control("settingsImportState")->property("text").toString(), QStringLiteral("The last import is in effect."));
         QVERIFY(!application->settingsImport().pending());
         QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
         answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
@@ -15960,6 +15985,7 @@ private slots:
         QVERIFY(application->settingsImport().pending());
         QTRY_COMPARE(control("settingsImportState")->property("text").toString(),
                      QStringLiteral("An import waits for the next start."));
+        QTRY_VERIFY(!rollBack->isVisible());
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
         QVERIFY(!application->settingsStore()->isSet(application::kHotkeysSetting.data()));
@@ -15983,8 +16009,8 @@ private slots:
             f.write(config);
         }
         restartWithSpelling(home.path(), false);
-        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
-        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QVERIFY(importLegacySettingsByHotkey());
+        auto *dialog = importWizard();
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
         // a closed FolderDialog keeps no folder set from outside: call addFolder instead
@@ -18335,7 +18361,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 263);
+        QCOMPARE(hotkeyRows().size(), 264);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -29636,7 +29662,7 @@ private slots:
             grab(settingsDialog, file("settings-hotkeys"));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!settingsDialog->isVisible());
-            QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+            QVERIFY(importLegacySettingsByHotkey());
             auto *wizard = windowNamed("settingsImportDialog");
             QTRY_VERIFY(wizard && wizard->isVisible());
             QVERIFY(importer.addRoot(legacy.path()));
