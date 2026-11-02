@@ -176,16 +176,19 @@ class ReferenceTest : public QObject {
             QCOMPARE(hash(path), before);
         };
         application->setFindQuestionHandler([](int, const QString &) { return 0; });
-        auto replace = application->findReplaceSettings(1);
+        auto replace = application->findReplaceSettings();
+        replace[QStringLiteral("scope")] = QStringLiteral("openDocuments");
+        replace[QStringLiteral("replaceShown")] = true;
         replace[QStringLiteral("find")] = QStringLiteral("0");
         replace[QStringLiteral("replace")] = QStringLiteral("X");
-        application->runFindReplace(QStringLiteral("replaceAllTabs"), replace);
+        application->runFindReplace(QStringLiteral("replaceAll"), replace);
         unchanged();
         const auto thirdId = tab(2);
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session(thirdId).document().lines()[0]->text.data())),
                  QStringLiteral("tX"));
-        application->runFindReplace(QStringLiteral("findAllTabs"),
-                                    {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("r")}});
+        application->runFindReplace(QStringLiteral("findAll"),
+                                    {{QStringLiteral("scope"), QStringLiteral("openDocuments")},
+                                     {QStringLiteral("find"), QStringLiteral("r")}});
         bool listed = false;
         for (const QVariant &row : application->findResults())
             listed = listed || (row.toMap().value(QStringLiteral("header")).toBool() &&

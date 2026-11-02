@@ -424,6 +424,51 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Search</name>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n match</numerusform>
+            <numerusform>%n matches</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n match(es)</source>
+        <translation>
+            <numerusform>%1 of %n match</numerusform>
+            <numerusform>%1 of %n matches</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace in %n file(s)…</source>
+        <translation>
+            <numerusform>Replace in %n file…</numerusform>
+            <numerusform>Replace in %n files…</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n file(s)</source>
+        <translation>
+            <numerusform>%1 in %n file</numerusform>
+            <numerusform>%1 in %n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n line(s)</source>
+        <translation>
+            <numerusform>%1 in %n line</numerusform>
+            <numerusform>%1 in %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace %n checked</source>
+        <translation>
+            <numerusform>Replace %n checked</numerusform>
+            <numerusform>Replace %n checked</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Session</name>
     <message numerus="yes">
         <source>Delete %n autosaves</source>

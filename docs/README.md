@@ -26,6 +26,7 @@ This is HikariSub's specification, on the `main` branch. It began as the map of 
 | Document model | Ordered source-preserving records, stable Line IDs and core value types with external Qt adapters | [Document model](document-model.md), [ADR](adr/0013-source-preserving-document-model.md) |
 | Time semantics | Signed microsecond values, rational media time and distinct interval/frame lookup operations; named fixes only | [Time semantics](time-semantics.md), [ADR](adr/0014-typed-time-and-frame-semantics.md) |
 | Verification | CTest/GoogleTest, QtTest/Quick Test, test-only Spix, native accessibility/render/performance evidence; evidence-gated completion | [Testing](testing.md), [ADR](adr/0015-behavioral-and-native-test-evidence.md) |
+| Find panel | One Find panel with a Replace toggle, folded options and a Search in scope; a live count, Find previous, and wrapping without asking ([#597](https://github.com/altqx/hikari/issues/597)) | [Find](ux/find.md) |
 | Translation/comparison layout | Stacked fields, bottom reference tray and independent navigation by default; remaining operation policies open | [Translation/comparison](ux/translation-comparison.md) |
 | Beta and cutover | Bounded opt-in betas, isolated profiles and tested rollback; `main` is the app since wave 6 ended; every stable gate plus owner approval before the first stable release | [Readiness policy](proposals/cutover-readiness.md), [ADR](adr/0018-bounded-beta-and-owner-approved-cutover.md), [ADR-0021](adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md) |
 

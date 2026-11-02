@@ -444,14 +444,13 @@ ApplicationWindow {
     onKaraokeTurnedOnChanged: root.keepKaraokeTurnedOn()
     onFoldTurnedOnChanged: root.keepKaraokeTurnedOn()
 
-    // MUST KILL: which is a magic int search tab (0 Search, 1 Find and replace)
-    function openSearch(which) {
-        if (searchDock.isOpen && searchPanel.activeFocus && searchTool.tab === which) {
+    function openFind(withReplace) {
+        if (searchDock.isOpen && searchPanel.activeFocus && (!withReplace || searchTool.replaceShown)) {
             searchDock.close()
             root.focusPanel(editorPanel, Qt.OtherFocusReason)
             return
         }
-        searchTool.showTab(which)
+        searchTool.open(withReplace)
         root.showPanel(searchDock)
         searchTool.focusFind()
     }
@@ -1413,39 +1412,51 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
-                command: "GLOBAL_FIND_REPLACE"
-                help: qsTr("Searches for the specified text phrases and replaces them")
-                iconRole: "find-replace"
-                objectName: "findReplaceMenuItem"
-                action: Action {
-                    id: findReplaceAction
-                    text: qsTr("Find and re&place")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openSearch(1)
-                }
-            }
-            ShellMenuItem {
                 command: "GLOBAL_SEARCH"
-                help: qsTr("Searches for the specified text phrase")
+                help: qsTr("Opens the Find panel")
                 iconRole: "search"
                 objectName: "findMenuItem"
                 action: Action {
                     id: findAction
-                    text: qsTr("&Find")
+                    text: qsTr("&Find…")
                     enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openSearch(0)
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openFind(false)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_REPLACE"
+                help: qsTr("Opens the Find panel with the replace row shown")
+                iconRole: "find-replace"
+                objectName: "findReplaceMenuItem"
+                action: Action {
+                    id: findReplaceAction
+                    text: qsTr("Re&place…")
+                    enabled: root.editor.hasLine
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openFind(true)
                 }
             }
             ShellMenuItem {
                 command: "GLOBAL_FIND_NEXT"
-                help: qsTr("Finds the next occurrence of the phrase in the text")
-                iconRole: "search"
+                help: qsTr("Selects the next match")
+                iconRole: "match-next"
                 objectName: "findNextMenuItem"
                 action: Action {
                     id: findNextAction
                     text: qsTr("Find next")
                     enabled: root.editor.hasLine && !root.app.findBusy
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_PREVIOUS"
+                help: qsTr("Selects the previous match")
+                iconRole: "match-previous"
+                objectName: "findPreviousMenuItem"
+                action: Action {
+                    id: findPreviousAction
+                    text: qsTr("Find previous")
+                    enabled: root.editor.hasLine && !root.app.findBusy
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_PREVIOUS")) root.app.findPrevious()
                 }
             }
         }
@@ -5322,7 +5333,7 @@ ApplicationWindow {
             id: searchDock
             objectName: "searchDock"
             uniqueName: "Search"
-            title: qsTranslate("HikariSub.Search", "Search")
+            title: qsTranslate("HikariSub.Search", "Find")
             onIsOpenChanged: if (!isOpen) searchTool.save()
             Panel {
                 id: searchPanel
@@ -5330,12 +5341,14 @@ ApplicationWindow {
                 dockName: "Search"
                 minimumBodySize: searchTool.minimumSize
                 anchors.fill: parent
-                title: qsTranslate("HikariSub.Search", "Find and replace")
+                title: qsTranslate("HikariSub.Search", "Find")
                 onActiveFocusChanged: if (activeFocus) searchTool.activated()
                 SearchTool {
                     id: searchTool
                     anchors.fill: parent
                     app: root.app
+                    editor: root.editor
+                    onEscaped: root.focusPanel(editorPanel, Qt.OtherFocusReason)
                 }
             }
         }
@@ -6856,7 +6869,8 @@ ApplicationWindow {
         GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
         GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
         GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,
-        GLOBAL_FIND_NEXT: findNextAction, GLOBAL_MISSPELLS_REPLACER: misspellAction,
+        GLOBAL_FIND_NEXT: findNextAction, GLOBAL_FIND_PREVIOUS: findPreviousAction,
+        GLOBAL_MISSPELLS_REPLACER: misspellAction,
         GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,

@@ -113,9 +113,9 @@ signals:
     void grammarWalkChanged();
     void playbackPlayerChanged();
     void audioOutputChanged();
-    // kind: 0 message, 1 "Reached end", 2 missing styles, 3 no style found, 4 replace in
-    // files; kinds 1-4 wait for answerFindQuestion(id, ...).
-    void findQuestion(int id, int kind, const QVariantMap &question);
+    // kind: "styles" (some chosen styles missing), "noStyles" or "confirmFiles"
+    // (replace in files); each waits for answerFindQuestion(id, ...).
+    void findQuestion(int id, const QString &kind, const QVariantMap &question);
     void findResultsChanged();
     // Also after its questions; settings: the tab as it is now, with the recent lists.
     void findFinished(const QVariantMap &settings);
@@ -507,22 +507,28 @@ public:
     Q_INVOKABLE QVariantMap checkKaraoke() const;
     // False when the target changed, lacks the Line, or the editor refuses to leave it.
     Q_INVOKABLE bool showKaraokeLine(qulonglong document, qulonglong line);
-    // A tab: {tab (0 Find, 1 Find and replace, 2 Find in subtitles), find, replace,
-    // styles, filters, folder, field, lines, matchCase, regex, startOfText, endOfText,
-    // includeComments, skipTags, skipText, subfolders, hiddenFolders} plus the recent
-    // lists {finds, replacements, filterList, paths}. openFindReplace reads the recent
-    // lists; switchFindReplaceTab saves `settings` and returns tab `tab`.
-    Q_INVOKABLE QVariantMap openFindReplace(int tab);
-    Q_INVOKABLE QVariantMap findReplaceSettings(int tab) const;
-    Q_INVOKABLE QVariantMap switchFindReplaceTab(const QVariantMap &settings, int tab);
+    // The panel's values: {scope ("document", "openDocuments", "folder"),
+    // replaceShown, find, replace, styles, filters, folder, field ("text", "style",
+    // "actor", "effect"), lines ("all", "selected", "fromSelection"), matchCase, regex,
+    // matchAt ("anywhere", "start", "end"), inText ("all", "outsideTags",
+    // "insideTags"), includeComments, subfolders, hiddenFolders} plus the recent lists
+    // {finds, replacements, filterList, paths}. openFindReplace reads the recent lists.
+    Q_INVOKABLE QVariantMap openFindReplace();
+    Q_INVOKABLE QVariantMap findReplaceSettings() const;
     Q_INVOKABLE void saveFindReplaceSettings(const QVariantMap &settings);
-    // action: "find", "findAllCurrent", "findAllTabs", "replace", "replaceAll",
-    // "replaceAllTabs", "findInFiles" or "replaceInFiles"; findFinished ends it.
-    // Ignored while findBusy.
+    // action: "find", "findPrevious", "findAll", "replace" or "replaceAll"; Find all
+    // and Replace all work in the values' scope. findFinished ends it. Ignored while
+    // findBusy.
     Q_INVOKABLE void runFindReplace(const QString &action, const QVariantMap &settings);
+    // {total, current} in the editing target; current is 0 when the last match is not
+    // one of them.
+    Q_INVOKABLE QVariantMap findCount(const QVariantMap &settings);
+    // Empty unless the values hold an invalid regular expression.
+    Q_INVOKABLE QString findPatternError(const QVariantMap &settings) const;
     Q_INVOKABLE void findNext();
-    // answer: 0 Ok, 1 Yes, 2 No, 3 Cancel.
-    Q_INVOKABLE void answerFindQuestion(int id, int answer);
+    Q_INVOKABLE void findPrevious();
+    // answer: "ok", "yes", "no" or "cancel".
+    Q_INVOKABLE void answerFindQuestion(int id, const QString &answer);
     bool findBusy() const;
     // The text selected in the Line editor, or find as it is.
     Q_INVOKABLE QString findReplaceActivated(const QString &find);
@@ -997,7 +1003,7 @@ private:
     std::function<void(bool)> m_findOpenDone;
     int m_findProcessors = 0;
     void endFindOpen(bool opened);
-    void saveFindRecent(application::FindReplaceSettings::Tab tab);
+    void saveFindRecent(const application::FindReplaceSettings &window);
     void findFinished();
     QString m_pendingKeyframes;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;

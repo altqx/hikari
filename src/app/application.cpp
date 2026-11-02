@@ -63,6 +63,7 @@
 #include <QStringList>
 #include <QVariantMap>
 
+#include <array>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -265,6 +266,7 @@ public:
     {
         const QVariantMap shown = questionMap(question);
         const int kind = static_cast<int>(question.kind);
+        const QString kindName = questionKind(question.kind);
         const auto reply = [&](int code) {
             if (answer)
                 answer(static_cast<application::FindAnswer>(std::clamp(code, 0, 3)));
@@ -290,21 +292,28 @@ public:
         const int id = ++m_app.m_findQuestionId;
         if (answer)
             m_app.m_findAnswers.emplace(id, std::move(answer));
-        emit m_app.findQuestion(id, kind, shown);
+        emit m_app.findQuestion(id, kindName, shown);
         emit m_app.findBusyChanged();
+    }
+    static QString questionKind(application::FindQuestion::Kind kind)
+    {
+        using K = application::FindQuestion::Kind;
+        switch (kind) {
+        case K::Styles: return QStringLiteral("styles");
+        case K::NoStyles: return QStringLiteral("noStyles");
+        case K::ConfirmFiles: return QStringLiteral("confirmFiles");
+        case K::Message: break;
+        }
+        return QStringLiteral("message");
     }
     static QVariantMap questionMap(const application::FindQuestion &q)
     {
         using K = application::FindQuestion::Kind;
         using I = application::FindQuestion::Info;
-        const QString findAndReplace = QCoreApplication::translate("HikariSub.Search", "Find and replace");
         const QString document = qs(q.document);
-        QString title = findAndReplace, text, detail, severity = QStringLiteral("info");
+        QString title = QCoreApplication::translate("HikariSub.Search", "Find"), text, detail,
+                severity = QStringLiteral("info");
         switch (q.kind) {
-        case K::Wrap:
-            text = QCoreApplication::translate("HikariSub.Search", "Reached the end of the subtitles.");
-            detail = QCoreApplication::translate("HikariSub.Search", "Search again from the first line?");
-            break;
         case K::Styles: {
             QStringList quoted;
             for (const auto &name : q.missing)
@@ -325,7 +334,7 @@ public:
             severity = QStringLiteral("warning");
             break;
         case K::ConfirmFiles:
-            title = QCoreApplication::translate("HikariSub.Search", "Replace in subtitles");
+            title = QCoreApplication::translate("HikariSub.Search", "Replace in files");
             text = QCoreApplication::translate("HikariSub.Search", "Replace in every matching file in “%1”?")
                        .arg(qs(q.folder));
             detail = QCoreApplication::translate("HikariSub.Search",
@@ -344,7 +353,7 @@ public:
                 text = QCoreApplication::translate("HikariSub.Search", "Replaced %1 times.").arg(qs(q.argument));
                 break;
             case I::InvalidPath:
-                title = QCoreApplication::translate("HikariSub.Search", "Find in files");
+                title = QCoreApplication::translate("HikariSub.Search", "Find");
                 text = QCoreApplication::translate("HikariSub.Search", "The search folder “%1” does not exist.")
                            .arg(qs(q.folder));
                 severity = QStringLiteral("warning");
@@ -360,9 +369,9 @@ public:
     void logLine(const application::FindLog &line) override
     {
         using K = application::FindLog::Kind;
-        const bool error = line.kind == K::InvalidRegex || line.kind == K::OutsideReplaceTab;
+        const bool error = line.kind == K::InvalidRegex || line.kind == K::ReplaceHidden;
         m_app.m_log->notice(error ? ui::LogController::Error : ui::LogController::Warning,
-                            QCoreApplication::translate("HikariSub.Search", "Find and replace"), logText(line));
+                            QCoreApplication::translate("HikariSub.Search", "Find"), logText(line));
     }
     static QString logText(const application::FindLog &line)
     {
@@ -376,11 +385,11 @@ public:
             return QCoreApplication::translate("HikariSub.Search", "Line %1 cannot be replaced,\n"
                                                                "because it was edited.").arg(qs(line.first));
         case K::CannotBackUp: return QCoreApplication::translate("HikariSub.Search", "Cannot back up %1.").arg(qs(line.first));
-        case K::OutsideReplaceTab: break;
+        case K::ReplaceHidden: break;
         }
         return qs(line.text);
     }
-    void recentAdded(application::FindReplaceSettings::Tab tab) override { m_app.saveFindRecent(tab); }
+    void recentAdded(const application::FindReplaceSettings &window) override { m_app.saveFindRecent(window); }
     void showLine(application::DocumentId document, core::LineId line, bool keepSelection, int role, int start,
                   int end) override
     {
@@ -445,7 +454,7 @@ public:
         {
             QFile in(name);
             if (!in.open(QIODevice::ReadOnly)) {
-                m_app.m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Search", "Find and replace"),
+                m_app.m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Search", "Replace in files"),
                                     QCoreApplication::translate("HikariSub.Search", "Cannot open file %1.").arg(name));
                 return false;
             }
@@ -463,7 +472,7 @@ public:
         };
         if (write(bytes))
             return true;
-        const QString title = QCoreApplication::translate("HikariSub.Search", "Find and replace");
+        const QString title = QCoreApplication::translate("HikariSub.Search", "Replace in files");
         m_app.m_log->notice(ui::LogController::Error, title,
                             QCoreApplication::translate("HikariSub.Search", "Cannot write file %1; it was left as it was.").arg(name));
         if (!write(original))
@@ -3910,25 +3919,46 @@ QString findQs(std::u8string_view s)
     return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
 }
 
+template <typename E, std::size_t N>
+E findChoice(const QVariantMap &m, const char *key, const std::array<const char *, N> &names)
+{
+    const QString value = m.value(QLatin1String(key)).toString();
+    for (std::size_t i = 0; i < N; ++i)
+        if (value == QLatin1String(names[i]))
+            return static_cast<E>(i);
+    return E{};
+}
+
+template <typename E, std::size_t N>
+QString findChoiceName(E value, const std::array<const char *, N> &names)
+{
+    return QLatin1String(names[static_cast<std::size_t>(value)]);
+}
+
+constexpr std::array<const char *, 3> kFindScopes{"document", "openDocuments", "folder"};
+constexpr std::array<const char *, 4> kFindFields{"text", "style", "actor", "effect"};
+constexpr std::array<const char *, 3> kFindLines{"all", "selected", "fromSelection"};
+constexpr std::array<const char *, 3> kFindInText{"all", "outsideTags", "insideTags"};
+constexpr std::array<const char *, 3> kFindMatchAt{"anywhere", "start", "end"};
+
 application::FindReplaceSettings findSettings(const QVariantMap &m)
 {
     using S = application::FindReplaceSettings;
     S s;
-    s.tab = static_cast<S::Tab>(std::clamp(m.value(QStringLiteral("tab")).toInt(), 0, 2));
+    s.scope = findChoice<S::Scope>(m, "scope", kFindScopes);
+    s.replaceShown = m.value(QStringLiteral("replaceShown")).toBool();
     s.find = toU8(m.value(QStringLiteral("find")).toString());
     s.replace = toU8(m.value(QStringLiteral("replace")).toString());
     s.styles = toU8(m.value(QStringLiteral("styles")).toString());
     s.filters = toU8(m.value(QStringLiteral("filters")).toString());
     s.folder = toU8(m.value(QStringLiteral("folder")).toString());
-    s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field")).toInt(), 0, 3));
-    s.lines = static_cast<S::Lines>(std::clamp(m.value(QStringLiteral("lines")).toInt(), 0, 3));
+    s.field = findChoice<S::Field>(m, "field", kFindFields);
+    s.lines = findChoice<S::Lines>(m, "lines", kFindLines);
     s.matchCase = m.value(QStringLiteral("matchCase")).toBool();
     s.regex = m.value(QStringLiteral("regex")).toBool();
-    s.startOfText = m.value(QStringLiteral("startOfText")).toBool();
-    s.endOfText = m.value(QStringLiteral("endOfText")).toBool();
+    s.matchAt = findChoice<S::MatchAt>(m, "matchAt", kFindMatchAt);
+    s.inText = findChoice<S::InText>(m, "inText", kFindInText);
     s.includeComments = m.value(QStringLiteral("includeComments")).toBool();
-    s.skipTags = m.value(QStringLiteral("skipTags")).toBool();
-    s.skipText = m.value(QStringLiteral("skipText")).toBool();
     s.subfolders = m.value(QStringLiteral("subfolders")).toBool();
     s.hiddenFolders = m.value(QStringLiteral("hiddenFolders")).toBool();
     return s;
@@ -3945,21 +3975,20 @@ QStringList findList(const std::vector<std::u8string> &list)
 QVariantMap findMap(const application::FindReplaceSettings &s, const application::FindReplace::Recent &recent)
 {
     const auto q = [](const std::u8string &v) { return findQs(v); };
-    return {{QStringLiteral("tab"), static_cast<int>(s.tab)},
+    return {{QStringLiteral("scope"), findChoiceName(s.scope, kFindScopes)},
+            {QStringLiteral("replaceShown"), s.replaceShown},
             {QStringLiteral("find"), q(s.find)},
             {QStringLiteral("replace"), q(s.replace)},
             {QStringLiteral("styles"), q(s.styles)},
             {QStringLiteral("filters"), q(s.filters)},
             {QStringLiteral("folder"), q(s.folder)},
-            {QStringLiteral("field"), static_cast<int>(s.field)},
-            {QStringLiteral("lines"), static_cast<int>(s.lines)},
+            {QStringLiteral("field"), findChoiceName(s.field, kFindFields)},
+            {QStringLiteral("lines"), findChoiceName(s.lines, kFindLines)},
             {QStringLiteral("matchCase"), s.matchCase},
             {QStringLiteral("regex"), s.regex},
-            {QStringLiteral("startOfText"), s.startOfText},
-            {QStringLiteral("endOfText"), s.endOfText},
+            {QStringLiteral("matchAt"), findChoiceName(s.matchAt, kFindMatchAt)},
+            {QStringLiteral("inText"), findChoiceName(s.inText, kFindInText)},
             {QStringLiteral("includeComments"), s.includeComments},
-            {QStringLiteral("skipTags"), s.skipTags},
-            {QStringLiteral("skipText"), s.skipText},
             {QStringLiteral("subfolders"), s.subfolders},
             {QStringLiteral("hiddenFolders"), s.hiddenFolders},
             {QStringLiteral("finds"), findList(recent.finds)},
@@ -4684,7 +4713,7 @@ void Application::createFindReplace()
     m_find = std::make_unique<application::FindReplace>(*m_findHost, unicodeFold);
 }
 
-QVariantMap Application::openFindReplace(int tab)
+QVariantMap Application::openFindReplace()
 {
     if (!m_findOpened) {
         const auto list = [this](const char *id) {
@@ -4697,13 +4726,12 @@ QVariantMap Application::openFindReplace(int tab)
                            list("findInSubs.recentPaths")});
         m_findOpened = true;
     }
-    return findReplaceSettings(tab);
+    return findReplaceSettings();
 }
 
-QVariantMap Application::findReplaceSettings(int tab) const
+QVariantMap Application::findReplaceSettings() const
 {
     auto s = application::findReplaceFromOptions(m_settings->integer("find.options"));
-    s.tab = static_cast<application::FindReplaceSettings::Tab>(std::clamp(tab, 0, 2));
     findFirstEntries(s, m_find->recent());
     s.styles = toU8(m_settings->text("find.styles"));
     return findMap(s, m_find->recent());
@@ -4712,29 +4740,17 @@ QVariantMap Application::findReplaceSettings(int tab) const
 void Application::saveFindReplaceSettings(const QVariantMap &settings)
 {
     const auto s = findSettings(settings);
-    m_settings->set("find.options", application::findReplaceOptions(s, m_settings->integer("find.options")));
-    if (s.tab != application::FindReplaceSettings::Tab::FindInFiles)
-        m_settings->set("find.styles", findQs(s.styles));
+    m_settings->set("find.options", application::findReplaceOptions(s));
+    m_settings->set("find.styles", findQs(s.styles));
 }
 
-QVariantMap Application::switchFindReplaceTab(const QVariantMap &settings, int tab)
+void Application::saveFindRecent(const application::FindReplaceSettings &window)
 {
-    saveFindReplaceSettings(settings);
-    auto next = application::findReplaceSetValues(m_settings->integer("find.options"), findSettings(settings));
-    next.tab = static_cast<application::FindReplaceSettings::Tab>(std::clamp(tab, 0, 2));
-    findFirstEntries(next, m_find->recent());
-    next.styles = toU8(m_settings->text("find.styles"));
-    return findMap(next, m_find->recent());
-}
-
-void Application::saveFindRecent(application::FindReplaceSettings::Tab tab)
-{
-    using Tab = application::FindReplaceSettings::Tab;
     const auto &r = m_find->recent();
     m_settings->set("find.recentFinds", findList(r.finds));
-    if (tab != Tab::Find)
+    if (window.replaceShown)
         m_settings->set("find.recentReplacements", findList(r.replacements));
-    if (tab == Tab::FindInFiles) {
+    if (window.scope == application::FindReplaceSettings::Scope::Folder) {
         m_settings->set("findInSubs.recentFilters", findList(r.filters));
         m_settings->set("findInSubs.recentPaths", findList(r.paths));
     }
@@ -4742,23 +4758,42 @@ void Application::saveFindRecent(application::FindReplaceSettings::Tab tab)
 
 void Application::runFindReplace(const QString &action, const QVariantMap &settings)
 {
+    using Scope = application::FindReplaceSettings::Scope;
     const auto s = findSettings(settings);
-    if (action == QLatin1String("find"))
+    if (action == QLatin1String("find")) {
         m_find->find(s);
-    else if (action == QLatin1String("findAllCurrent"))
-        m_find->findAllInCurrent(s);
-    else if (action == QLatin1String("findAllTabs"))
-        m_find->findInAllOpened(s);
-    else if (action == QLatin1String("replace"))
+    } else if (action == QLatin1String("findPrevious")) {
+        m_find->findPrevious(s);
+    } else if (action == QLatin1String("findAll")) {
+        switch (s.scope) {
+        case Scope::Document: m_find->findAllInCurrent(s); break;
+        case Scope::OpenDocuments: m_find->findInAllOpened(s); break;
+        case Scope::Folder: m_find->findInFiles(s); break;
+        }
+    } else if (action == QLatin1String("replace")) {
         m_find->replace(s);
-    else if (action == QLatin1String("replaceAll"))
-        m_find->replaceAll(s);
-    else if (action == QLatin1String("replaceAllTabs"))
-        m_find->replaceInAllOpened(s);
-    else if (action == QLatin1String("findInFiles"))
-        m_find->findInFiles(s);
-    else if (action == QLatin1String("replaceInFiles"))
-        m_find->replaceInFiles(s);
+    } else if (action == QLatin1String("replaceAll")) {
+        switch (s.scope) {
+        case Scope::Document: m_find->replaceAll(s); break;
+        case Scope::OpenDocuments: m_find->replaceInAllOpened(s); break;
+        case Scope::Folder: m_find->replaceInFiles(s); break;
+        }
+    }
+}
+
+QVariantMap Application::findCount(const QVariantMap &settings)
+{
+    const auto count = m_find->count(findSettings(settings));
+    return {{QStringLiteral("total"), count.total}, {QStringLiteral("current"), count.current}};
+}
+
+QString Application::findPatternError(const QVariantMap &settings) const
+{
+    const std::u16string error = m_find->patternError(findSettings(settings));
+    QString text = QString::fromStdU16String(error);
+    if (!text.isEmpty())
+        text[0] = text[0].toUpper();
+    return text;
 }
 
 void Application::findFinished()
@@ -4773,19 +4808,29 @@ void Application::findNext()
     m_find->findNext();
 }
 
+void Application::findPrevious()
+{
+    m_find->findPrevious();
+}
+
 bool Application::findBusy() const
 {
     return m_find && m_find->busy();
 }
 
-void Application::answerFindQuestion(int id, int answer)
+void Application::answerFindQuestion(int id, const QString &answer)
 {
+    using A = application::FindAnswer;
     const auto it = m_findAnswers.find(id);
     if (it == m_findAnswers.end())
         return;
     auto resume = std::move(it->second);
     m_findAnswers.erase(it);
-    resume(static_cast<application::FindAnswer>(std::clamp(answer, 0, 3)));
+    const A chosen = answer == QLatin1String("ok")    ? A::Ok
+                     : answer == QLatin1String("yes") ? A::Yes
+                     : answer == QLatin1String("no")  ? A::No
+                                                      : A::Cancel;
+    resume(chosen);
     emit findBusyChanged();
 }
 
@@ -4833,7 +4878,8 @@ QVariantList Application::findResults() const
                         {QStringLiteral("checked"), r.checked},
                         {QStringLiteral("visible"), r.visible}};
         if (!r.header) {
-            row.insert(QStringLiteral("line"), QCoreApplication::translate("HikariSub.Search", "Line %1: ").arg(r.idLine));
+            row.insert(QStringLiteral("line"), r.idLine);
+            row.insert(QStringLiteral("file"), !r.document.has_value());
             row.insert(QStringLiteral("before"), text.left(r.start));
             row.insert(QStringLiteral("match"), text.mid(r.start, r.length));
             row.insert(QStringLiteral("after"), text.mid(r.start + r.length));

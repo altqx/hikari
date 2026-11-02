@@ -3,14 +3,28 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
 import QtQuick.Layouts
+import QtQuick.Templates as T
 import Hikari.Ui
 
 Item {
     id: search
     objectName: "searchTool"
     required property var app
+    property var editor: null
     readonly property alias question: question
-    property int tab: 0
+    property bool replaceShown: false
+    property string scope: "document"
+    property bool optionsShown: false
+    property string field: "text"
+    property string lines: "all"
+    property string inText: "all"
+    property string matchAt: "anywhere"
+    property bool matchCase: false
+    property bool regex: false
+    property bool includeComments: false
+    property bool subfolders: false
+    property bool hiddenFolders: false
+    property string styles: ""
     property var finds: []
     property var replacements: []
     property var filterList: []
@@ -18,24 +32,113 @@ Item {
     property var rows: []
     property bool opened: false
     property bool resultsShown: false
-    property bool showResults: false
+    property bool resultsClosed: false
+    property bool canReplaceChecked: false
+    property var count: ({ total: 0, current: 0 })
+    property string patternError: ""
     // MUST KILL: skipActivation makes the next activated() skip taking the editor's selection
     property bool skipActivation: false
     readonly property bool busy: app.findBusy
-    readonly property size minimumSize: Qt.size(220 + 6 + 200, 160)
-
-    function showTab(which) {
-        if (!opened) {
-            apply(app.openFindReplace(which))
-            opened = true
-        } else if (which !== tab) {
-            apply(app.switchFindReplaceTab(settings(), which))
+    readonly property bool wide: width >= 640
+    readonly property bool inFolder: scope === "folder"
+    readonly property bool canSearch: findText.text.length > 0 && patternError.length === 0 && !busy
+    readonly property var nonDefaults: {
+        const out = []
+        if (scope !== "document")
+            out.push(scopeChoices.find(c => c.value === scope).text)
+        if (field !== "text")
+            out.push(fieldChoices.find(c => c.value === field).text)
+        if (scope === "document" && lines === "selected")
+            out.push(qsTr("Selected lines"))
+        if (scope === "document" && lines === "fromSelection")
+            out.push(qsTr("From the selection"))
+        if (!inFolder && styles.length > 0)
+            out.push(styles.split(",").map(n => n.trim()).join(", "))
+        if (inText !== "all")
+            out.push(inTextChoices.find(c => c.value === inText).text)
+        if (matchAt === "start")
+            out.push(qsTr("Match at start"))
+        if (matchAt === "end")
+            out.push(qsTr("Match at end"))
+        if (includeComments)
+            out.push(qsTr("Comments too"))
+        if (inFolder && subfolders)
+            out.push(qsTr("Subfolders"))
+        if (inFolder && hiddenFolders)
+            out.push(qsTr("Hidden folders"))
+        return out
+    }
+    readonly property string countText: {
+        if (findText.text.length === 0 || inFolder)
+            return ""
+        if (patternError.length > 0 || count.total === 0)
+            return qsTr("No matches")
+        if (count.current > 0)
+            //: The live match count: the current match, then all matches
+            return qsTr("%1 of %2").arg(count.current).arg(count.total)
+        return qsTr("%n match(es)", "", count.total)
+    }
+    readonly property string countSpoken: count.current > 0 && patternError.length === 0
+                                          ? qsTr("%1 of %n match(es)", "", count.total).arg(count.current)
+                                          : countText
+    readonly property int matchCount: rows.filter(r => !r.header).length
+    readonly property int checkedCount: rows.filter(r => !r.header && r.checked).length
+    readonly property int groupCount: rows.filter(r => r.header).length
+    readonly property int lineCount: {
+        const seen = new Set()
+        let group = -1
+        for (let i = 0; i < rows.length; ++i) {
+            if (rows[i].header)
+                ++group
+            else
+                seen.add(group + ":" + rows[i].line)
         }
-        tab = which
-        modes.currentIndex = which
+        return seen.size
+    }
+    readonly property bool resultsInFiles: rows.some(r => !r.header && r.file)
+    readonly property size minimumSize: Qt.size(300, 120)
+    signal escaped()
+
+    readonly property var scopeChoices: [
+        { value: "document", name: "findScopeDocument", text: qsTr("This document") },
+        { value: "openDocuments", name: "findScopeOpen", text: qsTr("Open documents") },
+        { value: "folder", name: "findScopeFolder", text: qsTr("Folder") }
+    ]
+    readonly property var fieldChoices: [
+        { value: "text", name: "findFieldText", text: qsTr("Text") },
+        { value: "style", name: "findFieldStyle", text: qsTr("Style") },
+        { value: "actor", name: "findFieldActor", text: qsTr("Actor") },
+        { value: "effect", name: "findFieldEffect", text: qsTr("Effect") }
+    ]
+    readonly property var linesChoices: [
+        { value: "all", name: "findLinesAll", text: qsTr("All") },
+        { value: "selected", name: "findLinesSelected", text: qsTr("Selected") },
+        { value: "fromSelection", name: "findLinesFromSelection", text: qsTr("From selected") }
+    ]
+    readonly property var inTextChoices: [
+        { value: "all", name: "findInTextAll", text: qsTr("All text") },
+        { value: "outsideTags", name: "findOutsideTags", text: qsTr("Outside tags") },
+        { value: "insideTags", name: "findInsideTags", text: qsTr("Inside tags") }
+    ]
+    readonly property var matchAtChoices: [
+        { value: "anywhere", name: "findMatchAnywhere", text: qsTr("Anywhere") },
+        { value: "start", name: "findMatchStart", text: qsTr("Start") },
+        { value: "end", name: "findMatchEnd", text: qsTr("End") }
+    ]
+
+    function open(withReplace) {
+        if (!opened) {
+            apply(app.openFindReplace())
+            opened = true
+        }
+        if (withReplace)
+            replaceShown = true
+        resultsClosed = false
+        refreshCount()
     }
     function focusFind() {
         findText.forceActiveFocus()
+        findText.selectAll()
     }
     function activated() {
         if (skipActivation) {
@@ -43,7 +146,8 @@ Item {
             return
         }
         if (opened)
-            findText.editText = app.findReplaceActivated(findText.editText)
+            findText.text = app.findReplaceActivated(findText.text)
+        refreshCount()
     }
     function save() {
         if (opened)
@@ -52,8 +156,6 @@ Item {
     function destroyTool() {
         save()
         opened = false
-        showResults = false
-        resultsReplace.initialized = false
         refreshResults()
     }
     function apply(s) {
@@ -61,55 +163,112 @@ Item {
         replacements = s.replacements
         filterList = s.filterList
         paths = s.paths
-        findText.editText = s.find
-        replaceText.editText = s.replace
+        findText.text = s.find
+        replaceText.text = s.replace
         filtersText.editText = s.filters
         folderText.editText = s.folder
-        styles.text = s.styles
-        fields.itemAt(s.field).checked = true
-        for (let i = 0; i < lineButtons.count; ++i)
-            lineButtons.itemAt(i).checked = i === s.lines
-        matchCase.checked = s.matchCase
-        regex.checked = s.regex
-        startOfText.checked = s.startOfText
-        endOfText.checked = s.endOfText
-        includeComments.checked = s.includeComments
-        skipTags.checked = s.skipTags
-        skipText.checked = s.skipText
-        if (!opened) {
-            subfolders.checked = s.subfolders
-            hiddenFolders.checked = s.hiddenFolders
-        }
+        styles = s.styles
+        field = s.field
+        lines = s.lines
+        matchCase = s.matchCase
+        regex = s.regex
+        matchAt = s.matchAt
+        inText = s.inText
+        includeComments = s.includeComments
+        subfolders = s.subfolders
+        hiddenFolders = s.hiddenFolders
     }
     function settings() {
-        let field = 0, lines = 3
-        for (let i = 0; i < fields.count; ++i) if (fields.itemAt(i).checked) field = i
-        for (let i = 0; i < lineButtons.count; ++i) if (lineButtons.itemAt(i).checked) lines = i
-        return {tab: tab, find: findText.editText, replace: replaceText.editText, styles: styles.text,
-                filters: filtersText.editText, folder: folderText.editText, field: field, lines: lines,
-                matchCase: matchCase.checked, regex: regex.checked, startOfText: startOfText.checked,
-                endOfText: endOfText.checked, includeComments: includeComments.checked,
-                skipTags: skipTags.checked, skipText: skipText.checked, subfolders: subfolders.checked,
-                hiddenFolders: hiddenFolders.checked}
+        return { scope: scope, replaceShown: replaceShown, find: findText.text, replace: replaceText.text,
+                 styles: styles, filters: filtersText.editText, folder: folderText.editText, field: field,
+                 lines: lines, matchCase: matchCase, regex: regex, matchAt: matchAt, inText: inText,
+                 includeComments: includeComments, subfolders: subfolders, hiddenFolders: hiddenFolders }
     }
     function run(action) {
-        if (busy)
+        if (busy || patternError.length > 0)
             return
-        if (action === "findAllCurrent" || action === "findAllTabs" || action === "findInFiles")
-            showResults = true
+        if (action === "findAll")
+            resultsClosed = false
         app.saveFindReplaceSettings(settings())
         app.runFindReplace(action, settings())
     }
-    function confirm() {
-        if (tab !== 0 && replaceText.activeFocus)
-            run(tab === 2 ? "replaceInFiles" : "replace")
-        else
-            run(tab === 2 ? "findInFiles" : "find")
-    }
+    function next() { run(inFolder ? "findAll" : "find") }
+    function previous() { if (!inFolder) run("findPrevious") }
+    function replaceOne() { if (inFolder) run("replaceAll"); else run("replace") }
     function refreshResults() {
         rows = app.findResults()
         resultsShown = app.findResultsShown()
-        replaceChecked.enabled = app.canReplaceFindResults()
+        canReplaceChecked = app.canReplaceFindResults()
+    }
+    function refreshCount() {
+        if (opened && visible)
+            countTimer.restart()
+    }
+    function countNow() {
+        countTimer.stop()
+        const s = settings()
+        patternError = app.findPatternError(s)
+        const before = countSpoken
+        count = findText.text.length > 0 ? app.findCount(s) : { total: 0, current: 0 }
+        if (countSpoken !== before && countSpoken.length > 0)
+            countLabel.Accessible.announce(countSpoken)
+    }
+    function setLines(value) {
+        lines = value
+        app.resetFindReplace()
+    }
+    function handleKey(event, inReplace) {
+        const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+        const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
+        if (enter && mods === (Qt.ControlModifier | Qt.AltModifier)) {
+            if (replaceShown)
+                run("replaceAll")
+        } else if (enter && mods === Qt.AltModifier) {
+            run("findAll")
+        } else if (enter && mods === Qt.ShiftModifier) {
+            previous()
+        } else if (enter && mods === 0) {
+            if (inReplace)
+                replaceOne()
+            else
+                next()
+        } else if (event.key === Qt.Key_C && mods === Qt.AltModifier) {
+            matchCase = !matchCase
+        } else if (event.key === Qt.Key_R && mods === Qt.AltModifier) {
+            regex = !regex
+        } else if (event.key === Qt.Key_Escape && mods === 0) {
+            escaped()
+        } else {
+            return false
+        }
+        event.accepted = true
+        return true
+    }
+    function ownsKey(event) {
+        const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+        const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
+        return (enter && [0, Qt.ShiftModifier, Qt.AltModifier, Qt.ControlModifier | Qt.AltModifier].includes(mods))
+               || (mods === Qt.AltModifier && (event.key === Qt.Key_C || event.key === Qt.Key_R))
+               || (event.key === Qt.Key_Escape && mods === 0)
+    }
+
+    onScopeChanged: refreshCount()
+    onFieldChanged: refreshCount()
+    onLinesChanged: refreshCount()
+    onInTextChanged: refreshCount()
+    onMatchAtChanged: refreshCount()
+    onMatchCaseChanged: refreshCount()
+    onRegexChanged: refreshCount()
+    onIncludeCommentsChanged: refreshCount()
+    onStylesChanged: refreshCount()
+    onVisibleChanged: refreshCount()
+    Keys.onShortcutOverride: event => event.accepted = search.ownsKey(event)
+    Keys.onPressed: event => search.handleKey(event, false)
+
+    Timer {
+        id: countTimer
+        interval: 150
+        onTriggered: search.countNow()
     }
 
     Connections {
@@ -121,326 +280,548 @@ Item {
             search.replacements = s.replacements
             search.filterList = s.filterList
             search.paths = s.paths
-            findText.editText = s.find
-            replaceText.editText = s.replace
-            filtersText.editText = s.filters
-            folderText.editText = s.folder
-            styles.text = s.styles
-            if (search.showResults && !resultsReplace.initialized) {
-                resultsReplace.editText = s.replacements.length > 0 ? s.replacements[0] : ""
-                resultsReplace.initialized = true
-            }
-            search.showResults = false
+            search.styles = s.styles
+            search.countNow()
         }
         function onFindResultsChanged() { search.refreshResults() }
         function onFindQuestion(id, kind, shown) { question.push(id, kind, shown) }
+        function onTabsChanged() { search.refreshCount() }
+    }
+    Connections {
+        target: search.editor
+        enabled: search.editor !== null && search.visible
+        function onChanged() { search.refreshCount() }
     }
 
-    RowLayout {
+    component RecentField: TextField {
+        id: recentField
+        property var recent: []
+        property int recentAt: -1
+        selectByMouse: true
+        onTextEdited: recentAt = -1
+        function step(by) {
+            if (recent.length === 0)
+                return
+            recentAt = Math.max(-1, Math.min(recent.length - 1, recentAt + by))
+            if (recentAt >= 0)
+                text = recent[recentAt]
+        }
+    }
+    component Toggle: T.Button {
+        id: toggle
+        property string tip
+        checkable: true
+        focusPolicy: Qt.StrongFocus
+        implicitWidth: Math.max(24, implicitContentWidth + 8)
+        implicitHeight: 22
+        Accessible.name: tip
+        Accessible.checkable: true
+        Accessible.checked: checked
+        ToolTip.visible: hovered
+        ToolTip.text: tip
+        background: Rectangle {
+            radius: 2
+            color: toggle.checked ? Theme.select : toggle.hovered ? Theme.raised : "transparent"
+            border.width: toggle.checked ? 1 : 0
+            border.color: Theme.accent
+            FocusRing { control: toggle }
+        }
+        contentItem: Label {
+            text: toggle.text
+            font.bold: true
+            font.pixelSize: 11
+            color: toggle.checked ? Theme.text : Theme.muted
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+    }
+    component Chip: Label {
+        leftPadding: 8
+        rightPadding: 8
+        topPadding: 1
+        bottomPadding: 1
+        background: Rectangle {
+            radius: height / 2
+            color: Theme.raised
+            border.width: 1
+            border.color: Theme.line
+        }
+    }
+    component OptionLabel: Label {
+        color: Theme.muted
+    }
+
+    GridLayout {
         anchors.fill: parent
-        spacing: 6
+        columns: search.wide && search.resultsVisible ? 2 : 1
+        columnSpacing: 0
+        rowSpacing: 0
 
         ColumnLayout {
-            Layout.preferredWidth: 360
-            Layout.minimumWidth: 220
-            Layout.fillWidth: false
-            Layout.fillHeight: true
+            id: controls
+            Layout.fillWidth: true
+            Layout.fillHeight: search.wide || !search.resultsVisible
+            Layout.preferredWidth: search.wide ? Math.min(460, search.width * 0.5) : -1
+            Layout.maximumWidth: search.wide && search.resultsVisible ? Math.max(380, search.width * 0.5) : -1
+            Layout.margins: 8
             spacing: 4
-            ScrollView {
-                id: rail
-                objectName: "searchRail"
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                contentWidth: availableWidth - (ScrollBar.vertical.visible ? ScrollBar.vertical.width + 2 : 0)
-                ScrollBar.vertical.policy: contentHeight > availableHeight ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
 
-                ColumnLayout {
-                    width: rail.availableWidth - (rail.ScrollBar.vertical.visible ? rail.ScrollBar.vertical.width + 2 : 0)
-                    spacing: 4
-                    TabBar {
-                        id: modes
-                        objectName: "findTabs"
-                        Layout.fillWidth: true
-                        IconTabButton {
-                            objectName: "findTab"
-                            iconRole: "search"
-                            text: qsTr("Find")
-                        }
-                        IconTabButton {
-                            objectName: "replaceTab"
-                            iconRole: "find-replace"
-                            text: qsTr("Replace")
-                            Accessible.name: qsTr("Find and replace")
-                            ToolTip.visible: hovered
-                            ToolTip.text: qsTr("Find and replace")
-                        }
-                        IconTabButton {
-                            objectName: "findInFilesTab"
-                            iconRole: "find-in-files"
-                            text: qsTr("In files")
-                            Accessible.name: qsTr("Find in subtitles")
-                            ToolTip.visible: hovered
-                            ToolTip.text: qsTr("Find in subtitles")
-                        }
-                        onCurrentIndexChanged: {
-                            if (search.opened && currentIndex !== search.tab) {
-                                search.apply(search.app.switchFindReplaceTab(search.settings(), currentIndex))
-                                search.tab = currentIndex
-                            }
-                        }
-                    }
-                    GridLayout {
-                        columns: 2
-                        Layout.fillWidth: true
-                        Label { text: qsTr("Search text:") }
-                        ComboBox {
-                            id: findText
-                            objectName: "findText"
-                            editable: true
-                            model: search.finds
-                            Layout.fillWidth: true
-                            Accessible.name: qsTr("Search text:")
-                            Keys.onReturnPressed: search.confirm()
-                            Keys.onEnterPressed: search.confirm()
-                        }
-                        Label { text: qsTr("Replace with:"); visible: search.tab !== 0 }
-                        ComboBox {
-                            id: replaceText
-                            objectName: "findReplaceText"
-                            editable: true
-                            visible: search.tab !== 0
-                            model: search.replacements
-                            Layout.fillWidth: true
-                            Accessible.name: qsTr("Replace with:")
-                            Keys.onReturnPressed: search.confirm()
-                            Keys.onEnterPressed: search.confirm()
-                        }
-                        Label { text: qsTr("Filters:"); visible: search.tab === 2 }
-                        ComboBox {
-                            id: filtersText
-                            objectName: "findFilters"
-                            editable: true
-                            visible: search.tab === 2
-                            model: search.filterList
-                            Layout.fillWidth: true
-                            ToolTip.text: qsTr("Windows search filters separated by semicolons, e.g. \"*.ass; *.srt\".")
-                            ToolTip.visible: hovered
-                            Accessible.name: qsTr("Filters:")
-                            Keys.onReturnPressed: search.confirm()
-                        }
-                        Label { text: qsTr("Catalog:"); visible: search.tab === 2 }
-                        RowLayout {
-                            visible: search.tab === 2
-                            Layout.fillWidth: true
-                            ComboBox {
-                                id: folderText
-                                objectName: "findFolder"
-                                editable: true
-                                model: search.paths
-                                Layout.fillWidth: true
-                                Accessible.name: qsTr("Subtitle search folder:")
-                                Keys.onReturnPressed: search.confirm()
-                            }
-                            IconToolButton {
-                                objectName: "findChooseFolder"
-                                iconRole: "folder-open"
-                                text: qsTr("Choose subtitle search folder")
-                                onClicked: {
-                                    search.skipActivation = true
-                                    folderDialog.open()
-                                }
-                            }
-                        }
-                    }
-                    GridLayout {
-                        columns: 2
-                        Layout.fillWidth: true
-                        CheckBox { id: matchCase; objectName: "findMatchCase"; text: qsTr("Match case") }
-                        CheckBox { id: includeComments; objectName: "findIncludeComments"; text: qsTr("Include comments") }
-                        CheckBox { id: regex; objectName: "findRegex"; text: qsTr("Regular expressions") }
-                        CheckBox {
-                            id: skipTags
-                            objectName: "findSkipTags"
-                            text: qsTr("Skip tags")
-                            onToggled: if (checked) skipText.checked = false
-                        }
-                        CheckBox {
-                            id: startOfText
-                            objectName: "findStartOfText"
-                            text: qsTr("Beginning of text")
-                            onToggled: if (checked) endOfText.checked = false
-                        }
-                        CheckBox {
-                            id: skipText
-                            objectName: "findSkipText"
-                            text: qsTr("Skip text")
-                            onToggled: if (checked) skipTags.checked = false
-                        }
-                        CheckBox {
-                            id: endOfText
-                            objectName: "findEndOfText"
-                            text: qsTr("End of text")
-                            onToggled: if (checked) startOfText.checked = false
-                        }
-                    }
-                    GroupBox {
-                        title: qsTr("In field")
-                        Layout.fillWidth: true
-                        RowLayout {
-                            ButtonGroup { id: fieldGroup }
-                            Repeater {
-                                id: fields
-                                model: [qsTr("Text"), qsTr("Styles"), qsTr("Actor"), qsTr("Effect")]
-                                RadioButton { text: modelData; ButtonGroup.group: fieldGroup }
-                            }
-                        }
-                    }
-                    GroupBox {
-                        title: qsTr("Lines")
-                        visible: search.tab !== 2
-                        Layout.fillWidth: true
-                        ColumnLayout {
-                            anchors.fill: parent
-                            RowLayout {
-                                ButtonGroup { id: linesGroup }
-                                Repeater {
-                                    id: lineButtons
-                                    model: [qsTr("All lines"), qsTr("Selected lines"), qsTr("From selected")]
-                                    RadioButton { text: modelData; ButtonGroup.group: linesGroup; onClicked: search.app.resetFindReplace() }
-                                }
-                            }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                IconToolButton {
-                                    id: findChooseStylesButton
-                                    objectName: "findChooseStyles"
-                                    iconRole: "styles"
-                                    text: qsTr("Choose styles")
-                                    onClicked: {
-                                        search.skipActivation = true
-                                        stylesChooser.before = styles.text
-                                        stylesChooser.openFor(findChooseStylesButton, search.app.styleNames(),
-                                                              styles.text.split(",").map(n => n.trim()),
-                                                              { counts: search.app.styleLineCounts() })
-                                    }
-                                }
-                                TextField {
-                                    id: styles
-                                    objectName: "findStyles"
-                                    Layout.fillWidth: true
-                                    placeholderText: qsTr("Styles")
-                                    Accessible.name: qsTr("Styles")
-                                }
-                            }
-                        }
-                    }
-                    RowLayout {
-                        visible: search.tab === 2
-                        CheckBox { id: subfolders; objectName: "findSubfolders"; text: qsTr("Search in subfolders") }
-                        CheckBox { id: hiddenFolders; objectName: "findHiddenFolders"; text: qsTr("Search in hidden folders") }
-                    }
-                }
-            }
             GridLayout {
-                columns: 2
+                id: rowsGrid
                 Layout.fillWidth: true
-                enabled: !search.busy
-                Button {
-                    objectName: "findButton"
-                    text: qsTr("Find")
-                    visible: search.tab !== 2
-                    Layout.fillWidth: true
-                    onClicked: search.run("find")
+                columns: search.wide ? 3 : 2
+                columnSpacing: 4
+                rowSpacing: 4
+
+                ToolButton {
+                    id: foldButton
+                    objectName: "findReplaceToggle"
+                    Layout.row: 0
+                    Layout.column: 0
+                    focusPolicy: Qt.StrongFocus
+                    checkable: true
+                    checked: search.replaceShown
+                    onToggled: search.replaceShown = checked
+                    implicitWidth: 22
+                    contentItem: Icon {
+                        iconRole: search.replaceShown ? "chevron-down" : "chevron-right"
+                        size: 16
+                    }
+                    text: qsTr("Show replace")
+                    Accessible.name: qsTr("Show replace")
+                    Accessible.checkable: true
+                    Accessible.checked: checked
+                    ToolTip.visible: hovered
+                    ToolTip.text: search.replaceShown ? qsTr("Hide replace") : qsTr("Show replace")
                 }
-                Button {
-                    objectName: "findAllTabsButton"
-                    text: qsTr("Find in all open subtitles")
-                    visible: search.tab === 0
+
+                RecentField {
+                    id: findText
+                    objectName: "findText"
+                    Layout.row: 0
+                    Layout.column: 1
                     Layout.fillWidth: true
-                    onClicked: search.run("findAllTabs")
+                    Layout.minimumWidth: 120
+                    recent: search.finds
+                    placeholderText: qsTr("Find")
+                    font.family: search.regex ? "monospace" : Qt.application.font.family
+                    rightPadding: findToggles.width + 6
+                    Accessible.name: qsTr("Find")
+                    Accessible.description: search.patternError
+                    onTextChanged: search.refreshCount()
+                    Keys.onShortcutOverride: event => event.accepted = search.ownsKey(event)
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Up && event.modifiers === Qt.NoModifier) {
+                            findText.step(1)
+                            event.accepted = true
+                        } else if (event.key === Qt.Key_Down && event.modifiers === Qt.NoModifier) {
+                            findText.step(-1)
+                            event.accepted = true
+                        } else {
+                            search.handleKey(event, false)
+                        }
+                    }
+                    background: Rectangle {
+                        color: Theme.field
+                        radius: 2
+                        border.width: findText.activeFocus || search.patternError.length > 0 ? 2 : 1
+                        border.color: search.patternError.length > 0 ? Theme.danger
+                                    : findText.activeFocus ? Theme.accent : Theme.line
+                    }
+                    Row {
+                        id: findToggles
+                        anchors.right: parent.right
+                        anchors.rightMargin: 3
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+                        Toggle {
+                            objectName: "findMatchCase"
+                            text: "Aa"
+                            tip: qsTr("Match case")
+                            checked: search.matchCase
+                            onToggled: search.matchCase = checked
+                        }
+                        Toggle {
+                            objectName: "findRegex"
+                            text: ".*"
+                            tip: qsTr("Regular expression")
+                            checked: search.regex
+                            onToggled: search.regex = checked
+                        }
+                    }
                 }
-                Button {
-                    objectName: "findAllCurrentButton"
-                    text: qsTr("Find all in current subtitles")
-                    visible: search.tab === 0
-                    Layout.fillWidth: true
-                    onClicked: search.run("findAllCurrent")
+
+                RowLayout {
+                    id: findButtons
+                    Layout.row: search.wide ? 0 : 2
+                    Layout.column: search.wide ? 2 : 1
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    spacing: 2
+                    Label {
+                        id: countLabel
+                        objectName: "findCount"
+                        visible: !search.inFolder
+                        text: search.countText
+                        color: search.countText === qsTr("No matches") ? Theme.danger : Theme.muted
+                        horizontalAlignment: Text.AlignHCenter
+                        Layout.minimumWidth: 64
+                        Accessible.role: Accessible.StaticText
+                        Accessible.name: search.countSpoken
+                    }
+                    IconToolButton {
+                        objectName: "findPreviousButton"
+                        visible: !search.inFolder
+                        enabled: search.canSearch
+                        focusPolicy: Qt.StrongFocus
+                        iconRole: "match-previous"
+                        text: qsTr("Find previous")
+                        onClicked: search.previous()
+                    }
+                    IconToolButton {
+                        objectName: "findButton"
+                        visible: !search.inFolder
+                        enabled: search.canSearch
+                        focusPolicy: Qt.StrongFocus
+                        iconRole: "match-next"
+                        text: qsTr("Find next")
+                        onClicked: search.next()
+                    }
+                    IconToolButton {
+                        objectName: "findAllButton"
+                        enabled: search.canSearch
+                        focusPolicy: Qt.StrongFocus
+                        iconRole: "find-in-files"
+                        text: qsTr("Find all")
+                        onClicked: search.run("findAll")
+                    }
+                    IconToolButton {
+                        objectName: "findOptionsButton"
+                        focusPolicy: Qt.StrongFocus
+                        checkable: true
+                        checked: search.optionsShown
+                        onToggled: search.optionsShown = checked
+                        iconRole: "filter"
+                        text: qsTr("Options")
+                        Accessible.checkable: true
+                        Accessible.checked: checked
+                        Accessible.description: search.nonDefaults.join(", ")
+                        Rectangle {
+                            visible: search.nonDefaults.length > 0 && !search.optionsShown
+                            width: 6
+                            height: 6
+                            radius: 3
+                            color: Theme.accent
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 3
+                        }
+                    }
                 }
-                Button {
-                    objectName: "replaceNextButton"
-                    text: qsTr("Replace next")
-                    visible: search.tab === 1
+
+                FieldError {
+                    objectName: "findPatternError"
+                    Layout.row: 1
+                    Layout.column: 1
+                    Layout.columnSpan: search.wide ? 2 : 1
                     Layout.fillWidth: true
-                    onClicked: search.run("replace")
+                    text: search.patternError
                 }
-                Button {
-                    objectName: "replaceAllButton"
-                    text: qsTr("Replace all")
-                    visible: search.tab === 1
+
+                Flow {
+                    objectName: "findOptionChips"
+                    visible: !search.optionsShown && search.nonDefaults.length > 0
+                    Layout.row: search.wide ? 2 : 3
+                    Layout.column: 1
+                    Layout.columnSpan: search.wide ? 2 : 1
                     Layout.fillWidth: true
-                    onClicked: search.run("replaceAll")
+                    spacing: 6
+                    Accessible.role: Accessible.Grouping
+                    Accessible.name: qsTr("Options that differ from the defaults")
+                    Repeater {
+                        model: search.nonDefaults
+                        Chip {
+                            required property string modelData
+                            text: modelData
+                            Accessible.name: modelData
+                        }
+                    }
                 }
-                Button {
-                    objectName: "replaceAllTabsButton"
-                    text: qsTr("Replace in all open subtitles")
-                    visible: search.tab === 1
+
+                RecentField {
+                    id: replaceText
+                    objectName: "findReplaceText"
+                    visible: search.replaceShown
+                    Layout.row: search.wide ? 3 : 4
+                    Layout.column: 1
                     Layout.fillWidth: true
-                    onClicked: search.run("replaceAllTabs")
+                    recent: search.replacements
+                    placeholderText: qsTr("Replace with")
+                    font.family: search.regex ? "monospace" : Qt.application.font.family
+                    Accessible.name: qsTr("Replace with")
+                    Keys.onShortcutOverride: event => event.accepted = search.ownsKey(event)
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Up && event.modifiers === Qt.NoModifier) {
+                            replaceText.step(1)
+                            event.accepted = true
+                        } else if (event.key === Qt.Key_Down && event.modifiers === Qt.NoModifier) {
+                            replaceText.step(-1)
+                            event.accepted = true
+                        } else {
+                            search.handleKey(event, true)
+                        }
+                    }
                 }
-                Button {
-                    objectName: "findInFilesButton"
-                    text: qsTr("Find in subtitles")
-                    visible: search.tab === 2
-                    Layout.fillWidth: true
-                    onClicked: search.run("findInFiles")
-                }
-                Button {
-                    objectName: "replaceInFilesButton"
-                    text: qsTr("Replace in subtitles")
-                    visible: search.tab === 2
-                    Layout.fillWidth: true
-                    onClicked: search.run("replaceInFiles")
+
+                RowLayout {
+                    visible: search.replaceShown
+                    Layout.row: search.wide ? 3 : 5
+                    Layout.column: search.wide ? 2 : 1
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    spacing: 4
+                    Button {
+                        objectName: "replaceNextButton"
+                        visible: !search.inFolder
+                        enabled: search.canSearch
+                        text: qsTr("Replace")
+                        onClicked: search.run("replace")
+                    }
+                    Button {
+                        objectName: "replaceAllButton"
+                        visible: !search.inFolder
+                        enabled: search.canSearch
+                        text: qsTr("Replace all")
+                        onClicked: search.run("replaceAll")
+                    }
+                    DangerButton {
+                        objectName: "replaceInFilesButton"
+                        visible: search.inFolder
+                        enabled: search.canSearch
+                        text: search.resultsInFiles ? qsTr("Replace in %n file(s)…", "", search.groupCount)
+                                                    : qsTr("Replace in files…")
+                        onClicked: search.run("replaceAll")
+                    }
                 }
             }
-        }
 
-        ToolSeparator {
-            orientation: Qt.Vertical
-            Layout.fillHeight: true
+            ScrollView {
+                id: optionsScroll
+                objectName: "findOptions"
+                visible: search.optionsShown
+                Layout.fillWidth: true
+                Layout.fillHeight: search.wide || !search.resultsVisible
+                Layout.preferredHeight: search.wide || !search.resultsVisible ? -1
+                                        : Math.min(optionsGrid.implicitHeight, search.height * 0.45)
+                Layout.leftMargin: foldButton.width + rowsGrid.columnSpacing
+                contentWidth: availableWidth
+                clip: true
+
+                GridLayout {
+                    id: optionsGrid
+                    width: optionsScroll.availableWidth
+                    columns: search.wide ? 2 : 1
+                    columnSpacing: 8
+                    rowSpacing: search.wide ? 6 : 2
+
+                    OptionLabel { text: qsTr("Search in") }
+                    SegmentedButtons {
+                        objectName: "findScope"
+                        visible: search.wide
+                        choices: search.scopeChoices
+                        currentIndex: search.scopeChoices.findIndex(c => c.value === search.scope)
+                        onActivated: index => search.scope = search.scopeChoices[index].value
+                        Accessible.name: qsTr("Search in")
+                    }
+                    ComboBox {
+                        objectName: "findScopeList"
+                        visible: !search.wide
+                        Layout.fillWidth: true
+                        model: search.scopeChoices
+                        textRole: "text"
+                        currentIndex: search.scopeChoices.findIndex(c => c.value === search.scope)
+                        onActivated: index => search.scope = search.scopeChoices[index].value
+                        Accessible.name: qsTr("Search in")
+                    }
+
+                    OptionLabel { text: qsTr("Folder"); visible: search.inFolder }
+                    RowLayout {
+                        visible: search.inFolder
+                        Layout.fillWidth: true
+                        ComboBox {
+                            id: folderText
+                            objectName: "findFolder"
+                            editable: true
+                            model: search.paths
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Folder")
+                            Keys.onReturnPressed: search.run("findAll")
+                        }
+                        IconToolButton {
+                            objectName: "findChooseFolder"
+                            focusPolicy: Qt.StrongFocus
+                            iconRole: "folder-open"
+                            text: qsTr("Choose folder…")
+                            onClicked: {
+                                search.skipActivation = true
+                                folderDialog.open()
+                            }
+                        }
+                    }
+
+                    OptionLabel { text: qsTr("Files"); visible: search.inFolder }
+                    ComboBox {
+                        id: filtersText
+                        objectName: "findFilters"
+                        visible: search.inFolder
+                        editable: true
+                        model: search.filterList
+                        Layout.fillWidth: true
+                        ToolTip.text: qsTr("File patterns separated by semicolons, such as *.ass; *.srt")
+                        ToolTip.visible: hovered
+                        Accessible.name: qsTr("Files")
+                        Keys.onReturnPressed: search.run("findAll")
+                    }
+
+                    Item { visible: search.inFolder && search.wide; implicitWidth: 1; implicitHeight: 1 }
+                    RowLayout {
+                        visible: search.inFolder
+                        CheckBox {
+                            objectName: "findSubfolders"
+                            text: qsTr("Subfolders")
+                            checked: search.subfolders
+                            onToggled: search.subfolders = checked
+                        }
+                        CheckBox {
+                            objectName: "findHiddenFolders"
+                            text: qsTr("Hidden folders")
+                            checked: search.hiddenFolders
+                            onToggled: search.hiddenFolders = checked
+                        }
+                    }
+
+                    OptionLabel { text: qsTr("Field") }
+                    SegmentedButtons {
+                        objectName: "findField"
+                        choices: search.fieldChoices
+                        currentIndex: search.fieldChoices.findIndex(c => c.value === search.field)
+                        onActivated: index => search.field = search.fieldChoices[index].value
+                        Accessible.name: qsTr("Field")
+                    }
+
+                    OptionLabel { text: qsTr("Lines"); visible: search.scope === "document" }
+                    SegmentedButtons {
+                        objectName: "findLines"
+                        visible: search.scope === "document"
+                        choices: search.linesChoices
+                        currentIndex: search.linesChoices.findIndex(c => c.value === search.lines)
+                        onActivated: index => search.setLines(search.linesChoices[index].value)
+                        Accessible.name: qsTr("Lines")
+                    }
+
+                    OptionLabel { text: qsTr("Styles"); visible: !search.inFolder }
+                    Button {
+                        id: stylesButton
+                        objectName: "findStyles"
+                        visible: !search.inFolder
+                        Layout.fillWidth: !search.wide
+                        Layout.preferredWidth: search.wide ? 240 : -1
+                        text: search.styles.length > 0 ? search.styles.split(",").map(n => n.trim()).join(", ")
+                                                       : qsTr("All styles")
+                        Accessible.name: qsTr("Styles")
+                        Accessible.description: text
+                        onClicked: {
+                            search.skipActivation = true
+                            stylesChooser.before = search.styles
+                            stylesChooser.openFor(stylesButton, search.app.styleNames(),
+                                                  search.styles.split(",").map(n => n.trim()).filter(n => n.length > 0),
+                                                  { counts: search.app.styleLineCounts() })
+                        }
+                    }
+
+                    OptionLabel { text: qsTr("In text") }
+                    SegmentedButtons {
+                        objectName: "findInText"
+                        choices: search.inTextChoices
+                        currentIndex: search.inTextChoices.findIndex(c => c.value === search.inText)
+                        onActivated: index => search.inText = search.inTextChoices[index].value
+                        Accessible.name: qsTr("In text")
+                    }
+
+                    OptionLabel { text: qsTr("Match at") }
+                    SegmentedButtons {
+                        objectName: "findMatchAt"
+                        choices: search.matchAtChoices
+                        currentIndex: search.matchAtChoices.findIndex(c => c.value === search.matchAt)
+                        onActivated: index => search.matchAt = search.matchAtChoices[index].value
+                        Accessible.name: qsTr("Match at")
+                    }
+
+                    Item { visible: search.wide; implicitWidth: 1; implicitHeight: 1 }
+                    CheckBox {
+                        objectName: "findIncludeComments"
+                        text: qsTr("Include comments")
+                        checked: search.includeComments
+                        onToggled: search.includeComments = checked
+                    }
+                }
+            }
+
+            Item {
+                visible: !search.optionsShown && (search.wide || !search.resultsVisible)
+                Layout.fillHeight: true
+            }
         }
 
         ColumnLayout {
             objectName: "findResultsPane"
+            visible: search.resultsVisible
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 4
+            spacing: 0
             Accessible.role: Accessible.Pane
-            Accessible.name: qsTr("Search results")
-            Label {
-                objectName: "findResultsEmpty"
-                visible: !search.resultsShown
+            Accessible.name: qsTr("Results")
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                wrapMode: Text.WordWrap
-                color: Theme.muted
-                text: qsTr("No results yet")
-                ToolTip.visible: emptyHover.hovered
-                ToolTip.text: qsTr("Find all, Find in all open subtitles and Find in subtitles list their matches here; " +
-                                   "check the ones to change and replace them.")
-                HoverHandler { id: emptyHover }
+                Layout.preferredHeight: 1
+                visible: !search.wide
+                color: Theme.line
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: 6
+                Label {
+                    objectName: "findResultsSummary"
+                    Layout.fillWidth: true
+                    font.bold: true
+                    //: %1 is the number of matches, such as "5 matches"
+                    text: search.resultsInFiles
+                          ? qsTr("%1 in %n file(s)", "", search.groupCount)
+                                .arg(qsTr("%n match(es)", "", search.matchCount))
+                          : qsTr("%1 in %n line(s)", "", search.lineCount)
+                                .arg(qsTr("%n match(es)", "", search.matchCount))
+                    Accessible.role: Accessible.StaticText
+                    Accessible.name: text
+                }
+                IconToolButton {
+                    objectName: "findResultsClose"
+                    focusPolicy: Qt.StrongFocus
+                    iconRole: "window-close"
+                    text: qsTr("Close results")
+                    onClicked: search.resultsClosed = true
+                }
             }
             ListView {
                 id: resultsList
                 objectName: "findResultsList"
-                visible: search.resultsShown
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
+                activeFocusOnTab: true
                 model: search.rows
                 ScrollBar.vertical: ScrollBar {}
+                Accessible.role: Accessible.List
+                Accessible.name: qsTr("Results")
+                Keys.onSpacePressed: if (currentIndex >= 0) search.app.toggleFindResult(currentIndex)
+                Keys.onReturnPressed: if (currentIndex >= 0) search.app.showFindResult(currentIndex)
                 delegate: RowLayout {
                     id: resultRow
                     required property var modelData
@@ -448,10 +829,16 @@ Item {
                     width: resultsList.width
                     visible: modelData.header || modelData.visible
                     height: visible ? implicitHeight : 0
+                    spacing: 4
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: modelData.header
+                                     ? modelData.text
+                                     : qsTr("Line %1: %2").arg(modelData.line).arg(modelData.text)
                     CheckBox {
                         checked: resultRow.modelData.checked
-                        Accessible.name: resultRow.modelData.header ? resultRow.modelData.text
-                                                                    : (resultRow.modelData.line || "") + resultRow.modelData.text
+                        Layout.leftMargin: resultRow.modelData.header ? 2 : 18
+                        focusPolicy: Qt.NoFocus
+                        Accessible.name: resultRow.Accessible.name
                         onClicked: search.app.toggleFindResult(resultRow.index)
                     }
                     Label {
@@ -462,16 +849,31 @@ Item {
                         elide: Text.ElideMiddle
                         TapHandler { onTapped: search.app.toggleFindGroup(resultRow.index) }
                     }
+                    Label {
+                        visible: !resultRow.modelData.header
+                        text: resultRow.modelData.header ? "" : resultRow.modelData.line
+                        color: Theme.muted
+                        horizontalAlignment: Text.AlignRight
+                        Layout.preferredWidth: 40
+                    }
                     Row {
                         visible: !resultRow.modelData.header
                         Layout.fillWidth: true
                         clip: true
-                        Label { text: (resultRow.modelData.line || "") + (resultRow.modelData.before || "") }
+                        readonly property bool showsReplacement: search.replaceShown
+                        Label { text: resultRow.modelData.before || "" }
                         Label {
                             id: matchLabel
                             text: resultRow.modelData.match || ""
+                            font.strikeout: parent.showsReplacement
                             background: Rectangle { color: matchLabel.palette.highlight }
                             color: matchLabel.palette.highlightedText
+                        }
+                        Label {
+                            visible: parent.showsReplacement
+                            text: replaceText.text
+                            font.bold: true
+                            color: Theme.accent
                         }
                         Label { text: resultRow.modelData.after || "" }
                         TapHandler { onDoubleTapped: search.app.showFindResult(resultRow.index) }
@@ -480,35 +882,28 @@ Item {
             }
             RowLayout {
                 Layout.fillWidth: true
-                visible: search.resultsShown
-                enabled: search.resultsShown && !search.busy
-                IconTextButton { iconRole: "select-all"; text: qsTr("Check all"); onClicked: search.app.checkFindResults(true) }
-                IconTextButton { iconRole: "clear"; text: qsTr("Uncheck all"); onClicked: search.app.checkFindResults(false) }
-                ComboBox {
-                    id: resultsReplace
-                    objectName: "findResultsReplace"
-                    property bool initialized: false
-                    editable: true
-                    model: search.replacements
-                    Layout.fillWidth: true
-                    Accessible.name: qsTr("Replace with:")
-                    ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Replace with:")
-                }
-                Button {
+                Layout.margins: 6
+                enabled: !search.busy
+                IconTextButton { objectName: "findCheckAll"; iconRole: "select-all"; text: qsTr("Check all"); onClicked: search.app.checkFindResults(true) }
+                IconTextButton { objectName: "findUncheckAll"; iconRole: "clear"; text: qsTr("Uncheck all"); onClicked: search.app.checkFindResults(false) }
+                Item { Layout.fillWidth: true }
+                PrimaryButton {
                     id: replaceChecked
                     objectName: "replaceCheckedButton"
-                    text: qsTr("Replace")
-                    onClicked: search.app.replaceFindResults(resultsReplace.editText)
+                    visible: search.replaceShown
+                    enabled: search.canReplaceChecked && search.checkedCount > 0
+                    text: qsTr("Replace %n checked", "", search.checkedCount)
+                    onClicked: search.app.replaceFindResults(replaceText.text)
                 }
             }
         }
     }
+    readonly property bool resultsVisible: resultsShown && !resultsClosed && opened
 
     Dialogs.FolderDialog {
         id: folderDialog
         objectName: "findFolderDialog"
-        title: qsTr("Choose subtitle search folder")
+        title: qsTr("Choose folder")
         onAccepted: folderText.editText = search.app.localPath(selectedFolder)
     }
 
@@ -516,7 +911,7 @@ Item {
         id: stylesChooser
         objectName: "findStylesChooser"
         property string before: ""
-        onChanged: (names, reverted) => styles.text = reverted ? before : names.join(",")
+        onChanged: (names, reverted) => search.styles = reverted ? before : names.join(",")
     }
 
     Item {
@@ -525,27 +920,23 @@ Item {
         visible: false
         property var queue: []
         property int questionId: 0
-        property int kind: 0
+        property string kind: ""
         property string text: ""
         readonly property bool opened: boxLoader.item !== null && boxLoader.item.visible
         readonly property MessageBox box: boxLoader.item
-        // MUST KILL: question kinds are magic ints (1 end reached, 2 some styles missing, 3 no chosen style, else replace in files), answer codes too (0 Ok, 1 Yes, 2 No, 3 Cancel)
         function choicesFor(k) {
             switch (k) {
-            case 1:
-                return [{ id: "fromStart", text: qsTr("Search from the start"), role: "accept", isDefault: true, code: 1 },
-                        { id: "stop", text: qsTr("Stop"), role: "reject", code: 2 }]
-            case 2:
-                return [{ id: "dropMissing", text: qsTr("Drop the missing styles"), role: "accept", isDefault: true, code: 0 },
-                        { id: "everyStyle", text: qsTr("Search every style"), role: "action", code: 1 },
-                        { id: "keepStyles", text: qsTr("Keep them"), role: "action", code: 2 },
-                        { id: "cancel", text: qsTr("Cancel"), role: "reject", code: 3 }]
-            case 3:
-                return [{ id: "everyStyle", text: qsTr("Search every style"), role: "accept", isDefault: true, code: 1 },
-                        { id: "cancel", text: qsTr("Cancel"), role: "reject", code: 3 }]
+            case "styles":
+                return [{ id: "dropMissing", text: qsTr("Drop the missing styles"), role: "accept", isDefault: true, answer: "ok" },
+                        { id: "everyStyle", text: qsTr("Search every style"), role: "action", answer: "yes" },
+                        { id: "keepStyles", text: qsTr("Keep them"), role: "action", answer: "no" },
+                        { id: "cancel", text: qsTr("Cancel"), role: "reject", answer: "cancel" }]
+            case "noStyles":
+                return [{ id: "everyStyle", text: qsTr("Search every style"), role: "accept", isDefault: true, answer: "yes" },
+                        { id: "cancel", text: qsTr("Cancel"), role: "reject", answer: "cancel" }]
             default:
-                return [{ id: "replaceInFiles", text: qsTr("Replace in the files"), role: "destructive", code: 1 },
-                        { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true, code: 2 }]
+                return [{ id: "replaceInFiles", text: qsTr("Replace in the files"), role: "destructive", answer: "yes" },
+                        { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true, answer: "no" }]
             }
         }
         function push(id, k, shown) {
@@ -567,7 +958,7 @@ Item {
             box.ask({ title: q.shown.title, text: q.shown.text, detail: q.shown.detail, severity: q.shown.severity,
                       choices: choices }, answer => {
                 const choice = choices.find(c => c.id === answer)
-                search.app.answerFindQuestion(id, choice ? choice.code : choices.find(c => c.role === "reject").code)
+                search.app.answerFindQuestion(id, choice ? choice.answer : choices.find(c => c.role === "reject").answer)
                 Qt.callLater(question.next)
             })
         }

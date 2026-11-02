@@ -291,6 +291,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         {"GLOBAL_KANJI_TIMER", 5174},
         {"GLOBAL_GETTING_STARTED", 5176},
+        {"GLOBAL_FIND_PREVIOUS", 5213},
 };
 
 struct NameRow {
@@ -553,6 +554,7 @@ constexpr NameRow kNames[] = {
         {5173, "Repeat last run"},
         {5174, "Kanji timer"},
         {5176, "Getting started"},
+        {5213, "Find previous"},
 };
 
 struct DefaultRow {
@@ -591,6 +593,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5150, GlobalHotkey, "Previous line", "Ctrl-Up"},
         {5151, GlobalHotkey, "Next line", "Ctrl-Down"},
         {5011, GlobalHotkey, "Find next", "F3"},
+        {5213, GlobalHotkey, "Find previous", "Shift-F3"},
         {5152, GlobalHotkey, "Merge with previous line", "F4"},
         {5153, GlobalHotkey, "Merge with next line", "F5"},
         {5158, GlobalHotkey, "Change start time to nearest keyframe", "Shift-Left"},

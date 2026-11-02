@@ -195,7 +195,7 @@ struct Find : ::testing::Test {
     void SetUp() override
     {
         session = &host.add(std::string(kHeader) + std::string(kLines));
-        window.tab = S::Tab::Find;
+        window.replaceShown = false;
     }
     core::LineId row(std::size_t i) const { return session->document().lines()[i]->id; }
     std::size_t activeRow() const
@@ -236,7 +236,7 @@ using Match = std::tuple<std::size_t, int, int, int>;
 
 }
 
-TEST(FindReplaceOptions, ReadAsTheConstructorAndSetValuesDo)
+TEST(FindReplaceOptions, ReadTheLegacyBits)
 {
     S s = findReplaceFromOptions(16 | 64 | 1024 | 2048 | 1 | 2 | (1 << 14) | (1 << 16));
     EXPECT_EQ(s.field, S::Field::Style);
@@ -244,44 +244,45 @@ TEST(FindReplaceOptions, ReadAsTheConstructorAndSetValuesDo)
     EXPECT_TRUE(s.matchCase);
     EXPECT_TRUE(s.regex);
     EXPECT_TRUE(s.includeComments);
-    EXPECT_FALSE(s.skipTags);
-    EXPECT_TRUE(s.skipText);
+    EXPECT_EQ(s.inText, S::InText::InsideTags);
     s = findReplaceFromOptions(0);
     EXPECT_EQ(s.field, S::Field::Text);
     EXPECT_EQ(s.lines, S::Lines::All);
+    EXPECT_EQ(s.matchAt, S::MatchAt::Anywhere);
+    EXPECT_EQ(s.inText, S::InText::All);
+    s = findReplaceFromOptions(4 | 8 | (1 << 15) | (1 << 16));
+    EXPECT_EQ(s.matchAt, S::MatchAt::End);
+    EXPECT_EQ(s.inText, S::InText::OutsideTags);
     s = findReplaceFromOptions(4096);
-    EXPECT_FALSE(s.subfolders);
-    s = findReplaceFromOptions(8192);
     EXPECT_TRUE(s.subfolders);
     EXPECT_FALSE(s.hiddenFolders);
-    S current;
-    current.subfolders = true;
-    current.hiddenFolders = true;
-    s = findReplaceSetValues(16, current);
-    EXPECT_EQ(s.lines, S::Lines::None);
-    EXPECT_TRUE(s.subfolders);
+    s = findReplaceFromOptions(8192);
+    EXPECT_FALSE(s.subfolders);
     EXPECT_TRUE(s.hiddenFolders);
 }
 
-TEST(FindReplaceOptions, SaveValuesPerTab)
+TEST(FindReplaceOptions, EveryValueRoundTrips)
 {
     S s;
-    s.tab = S::Tab::Find;
     s.field = S::Field::Actor;
     s.lines = S::Lines::Selected;
-    s.endOfText = true;
-    s.skipTags = true;
+    s.matchAt = S::MatchAt::End;
+    s.inText = S::InText::OutsideTags;
     s.subfolders = true;
-    EXPECT_EQ(findReplaceOptions(s, 0xFFFFF), 128 | 1024 | 8 | (1 << 15));
-    s.tab = S::Tab::FindInFiles;
+    EXPECT_EQ(findReplaceOptions(s), 128 | 1024 | 8 | (1 << 15) | 4096);
     s.lines = S::Lines::All;
-    s.includeComments = false;
+    s.includeComments = true;
     s.hiddenFolders = true;
-    const int previous = 512 | (1 << 14) | 4096 | 1 | 16;
-    EXPECT_EQ(findReplaceOptions(s, previous), 512 | (1 << 14) | 4096 | 8192 | 128 | 8 | (1 << 15));
-    s.lines = S::Lines::None;
-    s.tab = S::Tab::Replace;
-    EXPECT_EQ(findReplaceOptions(s, 0) & (512 | 1024 | 2048), 0);
+    s.matchAt = S::MatchAt::Start;
+    s.inText = S::InText::InsideTags;
+    const S back = findReplaceFromOptions(findReplaceOptions(s));
+    EXPECT_EQ(back.field, s.field);
+    EXPECT_EQ(back.lines, s.lines);
+    EXPECT_EQ(back.matchAt, s.matchAt);
+    EXPECT_EQ(back.inText, s.inText);
+    EXPECT_TRUE(back.includeComments);
+    EXPECT_TRUE(back.subfolders);
+    EXPECT_TRUE(back.hiddenFolders);
 }
 
 TEST_F(Find, NextWalksMatchesSkippingCommentsAndSelectsTheRow)
@@ -296,18 +297,13 @@ TEST_F(Find, NextWalksMatchesSkippingCommentsAndSelectsTheRow)
     EXPECT_EQ(last(), Match(2, 1, 5, 10));
     fr.find(window);
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
-    EXPECT_TRUE(host.questions.empty());
-    host.answers = {FindAnswer::No};
-    fr.find(window);
-    ASSERT_EQ(host.questions.size(), 1u);
-    EXPECT_EQ(host.questions[0].kind, K::Wrap);
-    EXPECT_EQ(host.shown.size(), 4u);
     fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 5));
+    EXPECT_TRUE(host.questions.empty());
     EXPECT_EQ(str(fr.recent().finds[0]), "HELLO");
 }
 
-TEST_F(Find, WrapYesStartsAtTheSelectionAndTheNextEndJustReportsNotFound)
+TEST_F(Find, WrapsFromTheSelectionWithoutAskingAndReportsNothingFound)
 {
     window.find = u8"hello";
     window.lines = S::Lines::FromSelection;
@@ -316,13 +312,110 @@ TEST_F(Find, WrapYesStartsAtTheSelectionAndTheNextEndJustReportsNotFound)
     EXPECT_EQ(last(), Match(2, 1, 5, 10));
     fr.find(window);
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
-    host.answers = {FindAnswer::Yes};
     fr.find(window);
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
+    EXPECT_TRUE(host.questions.empty());
+    window.find = u8"zzz";
+    const int finished = host.finishedCount;
     fr.find(window);
-    ASSERT_EQ(host.questions.size(), 2u);
-    EXPECT_EQ(host.questions[1].kind, K::Message);
-    EXPECT_EQ(str(host.questions[1].text), "Could not find the specified phrase \"hello\".");
+    ASSERT_EQ(host.questions.size(), 1u);
+    EXPECT_EQ(host.questions[0].kind, K::Message);
+    EXPECT_EQ(host.questions[0].info, FindQuestion::Info::NotFound);
+    EXPECT_EQ(str(host.questions[0].text), "Could not find the specified phrase \"zzz\".");
+    EXPECT_EQ(host.finishedCount, finished + 1);
+    EXPECT_FALSE(fr.busy());
+}
+
+TEST_F(Find, PreviousWalksBackAndWrapsToTheLastMatch)
+{
+    window.find = u8"hello";
+    fr.findPrevious(window);
+    EXPECT_EQ(last(), Match(3, 1, 8, 13));
+    fr.findPrevious(window);
+    EXPECT_EQ(last(), Match(2, 1, 5, 10));
+    fr.findPrevious(window);
+    EXPECT_EQ(last(), Match(0, 1, 6, 11));
+    fr.find(window);
+    EXPECT_EQ(last(), Match(2, 1, 5, 10));
+    fr.findPrevious();
+    EXPECT_EQ(last(), Match(0, 1, 6, 11));
+    fr.findPrevious();
+    EXPECT_EQ(last(), Match(0, 1, 0, 5));
+    fr.findPrevious();
+    EXPECT_EQ(last(), Match(3, 1, 8, 13));
+    EXPECT_TRUE(host.questions.empty());
+    EXPECT_EQ(str(fr.recent().finds[0]), "hello");
+    window.find = u8"zzz";
+    fr.findPrevious(window);
+    ASSERT_EQ(host.questions.size(), 1u);
+    EXPECT_EQ(host.questions[0].info, FindQuestion::Info::NotFound);
+}
+
+TEST_F(Find, PreviousStartsFromTheActiveLineAfterANewPhrase)
+{
+    window.find = u8"end";
+    select({3}, 3);
+    fr.find(window);
+    EXPECT_EQ(last(), Match(3, 1, 4, 7));
+    window.find = u8"hello";
+    select({2}, 2);
+    fr.findPrevious(window);
+    EXPECT_EQ(last(), Match(0, 1, 6, 11));
+}
+
+TEST_F(Find, CountFollowsWhatNextWalksAndPlacesTheLastMatch)
+{
+    window.find = u8"hello";
+    EXPECT_EQ(fr.count(window).total, 4);
+    EXPECT_EQ(fr.count(window).current, 0);
+    fr.find(window);
+    fr.find(window);
+    EXPECT_EQ(fr.count(window).total, 4);
+    EXPECT_EQ(fr.count(window).current, 2);
+    window.includeComments = true;
+    EXPECT_EQ(fr.count(window).total, 5);
+    window.includeComments = false;
+    window.inText = S::InText::InsideTags;
+    EXPECT_EQ(fr.count(window).total, 0);
+    window.inText = S::InText::All;
+    window.styles = u8"Sign";
+    EXPECT_EQ(fr.count(window).total, 1);
+    window.styles.clear();
+    window.find = u8"hel";
+    EXPECT_EQ(fr.count(window).total, 4);
+    EXPECT_EQ(fr.count(window).current, 0);
+    window.find = u8"(";
+    window.regex = true;
+    EXPECT_EQ(fr.count(window).total, 0);
+    window.scope = S::Scope::Folder;
+    window.find = u8"hello";
+    window.regex = false;
+    EXPECT_EQ(fr.count(window).total, 0);
+    EXPECT_TRUE(host.questions.empty());
+    EXPECT_TRUE(host.logs.empty());
+    EXPECT_EQ(host.shown.size(), 2u);
+}
+
+TEST_F(Find, CountOfEmptyMatchesEnds)
+{
+    window.find = u8"x*";
+    window.regex = true;
+    EXPECT_EQ(fr.count(window).total, 12 + 16 + 14);
+    window.find = u8"";
+    window.regex = false;
+    window.matchAt = S::MatchAt::End;
+    EXPECT_EQ(fr.count(window).total, 3);
+}
+
+TEST_F(Find, PatternErrorNamesTheProblemWithoutLogging)
+{
+    window.find = u8"(hel+o";
+    EXPECT_TRUE(fr.patternError(window).empty());
+    window.regex = true;
+    EXPECT_EQ(str(fr.patternError(window)), "missing closing parenthesis");
+    window.find = u8"hel+o";
+    EXPECT_TRUE(fr.patternError(window).empty());
+    EXPECT_TRUE(host.logs.empty());
 }
 
 TEST_F(Find, TranslationModeMarksTheOriginalOrTheTranslation)
@@ -343,7 +436,7 @@ TEST_F(Find, TranslationModeMarksTheOriginalOrTheTranslation)
     EXPECT_EQ(host.shown[1].role, 1);
     EXPECT_EQ(host.shown[1].start, 11);
     EXPECT_EQ(host.shown[1].end, 13);
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.replace = u8"b";
     fr.replace(window);
     const auto &line = *host.docs[1].session->document().lines()[0];
@@ -354,7 +447,7 @@ TEST_F(Find, TranslationModeMarksTheOriginalOrTheTranslation)
 TEST_F(Find, BeginningOfTextWithoutRegexFindsTheFirstMatchAnywhere)
 {
     window.find = u8"hello";
-    window.startOfText = true;
+    window.matchAt = S::MatchAt::Start;
     fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 5));
     fr.find(window);
@@ -364,15 +457,15 @@ TEST_F(Find, BeginningOfTextWithoutRegexFindsTheFirstMatchAnywhere)
     window.regex = true;
     fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 5));
-    host.answers = {FindAnswer::No};
     fr.find(window);
-    EXPECT_EQ(host.questions.back().kind, K::Wrap);
+    EXPECT_EQ(last(), Match(0, 1, 0, 5));
+    EXPECT_TRUE(host.questions.empty());
 }
 
 TEST_F(Find, EndOfTextAndRegexOnTheRestOfTheText)
 {
     window.find = u8"HELLO";
-    window.endOfText = true;
+    window.matchAt = S::MatchAt::End;
     fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 6, 11));
     fr.find(window);
@@ -393,14 +486,12 @@ TEST_F(Find, SkipTagsChecksOnlyTheFirstMatchOfALine)
 {
     window.find = u8"b";
     window.includeComments = true;
-    window.skipTags = true;
+    window.inText = S::InText::OutsideTags;
     window.lines = S::Lines::FromSelection;
     select({2}, 2);
-    host.answers = {FindAnswer::No};
     fr.find(window);
     EXPECT_TRUE(host.shown.empty());
-    window.skipTags = false;
-    window.skipText = true;
+    window.inText = S::InText::InsideTags;
     fr.reset();
     fr.find(window);
     EXPECT_EQ(last(), Match(2, 1, 12, 13));
@@ -475,10 +566,9 @@ TEST_F(Find, RegularExpressionsRunAsWxRegExOverPcre2)
     EXPECT_EQ(host.shown[1].start, 5);
     EXPECT_EQ(host.shown[1].end, 9);
     window.matchCase = true;
-    host.answers = {FindAnswer::No};
     fr.find(window);
     EXPECT_EQ(host.shown.size(), 2u);
-    EXPECT_EQ(host.questions.back().kind, K::Wrap);
+    EXPECT_EQ(host.questions.back().info, FindQuestion::Info::NotFound);
     EXPECT_EQ(str(unicode.document().lines()[0]->text), "żółw ŁÓDŹ");
     host.add("[Script Info]\nTLMode: Yes\nTLMode Style: TLmode\n\n[V4+ Styles]\nFormat: Name\nStyle: Default\nStyle: "
              "TLmode\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
@@ -503,13 +593,12 @@ TEST_F(Find, RegexMatchErrorsAreLoggedAsNoMatch)
     host.target = 1;
     window.find = u8"(a+)+$";
     window.regex = true;
-    host.answers = {FindAnswer::No};
     fr.find(window);
     EXPECT_TRUE(host.shown.empty());
     ASSERT_FALSE(host.logs.empty());
     EXPECT_TRUE(host.logs[0].starts_with("Failed to find match for regular expression: ")) << host.logs[0];
-    EXPECT_EQ(host.questions.back().kind, K::Wrap);
-    window.tab = S::Tab::Replace;
+    EXPECT_EQ(host.questions.back().info, FindQuestion::Info::NotFound);
+    window.replaceShown = true;
     window.replace = u8"x";
     fr.replaceAll(window);
     EXPECT_EQ(str(host.questions.back().text), "Replaced 0 times.");
@@ -521,14 +610,14 @@ TEST_F(Find, EmptyRegexMatchesMoveOnInsteadOfHanging)
 {
     host.add(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ab\n", u8"e.ass");
     host.target = 1;
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"x*";
     window.regex = true;
     window.replace = u8"-";
     fr.replaceAll(window);
     EXPECT_EQ(str(host.docs[1].session->document().lines()[0]->text), "-ab");
     EXPECT_EQ(str(host.questions.back().text), "Replaced 1 times.");
-    window.tab = S::Tab::Find;
+    window.replaceShown = false;
     window.find = u8"b*";
     fr.findAllInCurrent(window);
     ASSERT_FALSE(fr.results().empty());
@@ -538,7 +627,7 @@ TEST_F(Find, EmptyRegexMatchesMoveOnInsteadOfHanging)
 
 TEST_F(Find, ReplaceNextReplacesTheMatchAsOneStepAndMovesOn)
 {
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"hello";
     window.replace = u8"bye";
     fr.replace(window);
@@ -556,10 +645,9 @@ TEST_F(Find, ReplaceNextReplacesTheMatchAsOneStepAndMovesOn)
     EXPECT_EQ(texts()[2], "{\\i1}hi{\\b1}");
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
     select({0}, 0);
-    host.answers = {FindAnswer::No};
     fr.replace(window);
     EXPECT_EQ(texts()[3], "the end hi");
-    EXPECT_EQ(host.questions.back().kind, K::Wrap);
+    EXPECT_EQ(host.questions.back().info, FindQuestion::Info::NotFound);
     const auto asked = host.questions.size();
     fr.findNext();
     EXPECT_EQ(host.questions.size(), asked + 1);
@@ -571,17 +659,15 @@ TEST_F(Find, ReplaceNextNeverReplacesAStaleMatch)
     host.target = 1;
     auto &s = *host.docs[1].session;
     const auto text = [&] { return str(s.document().lines()[0]->text); };
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"cat";
     window.replace = u8"c";
     fr.replace(window);
     EXPECT_EQ(text(), "c dog cat x");
-    host.answers = {FindAnswer::No};
     fr.replace(window);
     EXPECT_EQ(text(), "c dog c x");
-    EXPECT_EQ(host.questions.back().kind, K::Wrap);
+    EXPECT_EQ(host.questions.back().info, FindQuestion::Info::NotFound);
     const auto steps = s.historySize();
-    host.answers = {FindAnswer::No};
     fr.replace(window);
     EXPECT_EQ(text(), "c dog c x");
     EXPECT_EQ(s.historySize(), steps);
@@ -593,7 +679,6 @@ TEST_F(Find, ReplaceNextNeverReplacesAStaleMatch)
     s.run(Command{"e", s.revision(), {s.document().lines()[0]->id}, [&](core::Document &d) {
                       return d.editLine(s.document().lines()[0]->id, [](core::LineRecord &l) { l.text = u8"xyz cat"; });
                   }});
-    host.answers = {FindAnswer::Yes};
     fr.replace(window);
     EXPECT_EQ(text(), "xyz c");
 }
@@ -602,14 +687,15 @@ TEST_F(Find, QuestionsWaitWithoutBlockingAndRefuseOtherWork)
 {
     host.hold = true;
     window.find = u8"zzz";
+    window.styles = u8"Sign,Nope";
     fr.find(window);
     ASSERT_TRUE(fr.busy());
     ASSERT_EQ(host.questions.size(), 1u);
-    EXPECT_EQ(host.questions[0].kind, K::Wrap);
+    EXPECT_EQ(host.questions[0].kind, K::Styles);
     const int finished = host.finishedCount;
     fr.findNext();
     fr.find(window);
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     fr.replaceAll(window);
     fr.replaceChecked(u8"x");
     EXPECT_EQ(host.questions.size(), 1u);
@@ -628,7 +714,7 @@ TEST_F(Find, QuestionsWaitWithoutBlockingAndRefuseOtherWork)
 TEST_F(Find, ADocumentClosedDuringAQuestionIsNotTouched)
 {
     host.hold = true;
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"hello";
     window.replace = u8"X";
     window.styles = u8"Nope";
@@ -664,7 +750,7 @@ TEST_F(Find, FromSelectedWithOnlyHiddenLinesSelectedStartsThere)
     fr.findAllInCurrent(window);
     ASSERT_EQ(fr.results().size(), 2u);
     EXPECT_EQ(fr.results()[1].keyLine, 3);
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.replace = u8"X";
     fr.replaceAll(window);
     // MUST KILL: the test Host ignores filtering, so the hidden row 2 is replaced too.
@@ -673,7 +759,7 @@ TEST_F(Find, FromSelectedWithOnlyHiddenLinesSelectedStartsThere)
 
 TEST_F(Find, ReplaceAllIsOneStepWithTheLegacyCount)
 {
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"hello";
     window.replace = u8"bye";
     fr.replaceAll(window);
@@ -692,7 +778,7 @@ TEST_F(Find, ReplaceAllIsOneStepWithTheLegacyCount)
 
 TEST_F(Find, ReplaceAllScopesStylesHiddenAndComments)
 {
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"hello";
     window.replace = u8"X";
     window.includeComments = true;
@@ -718,28 +804,26 @@ TEST_F(Find, ReplaceAllScopesStylesHiddenAndComments)
 
 TEST_F(Find, ReplaceAllAnchoredRegexReplacesNothingAndThePatternLengthQuirk)
 {
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.replace = u8"X";
     window.find = u8"hello";
     window.regex = true;
-    window.endOfText = true;
+    window.matchAt = S::MatchAt::End;
     fr.replaceAll(window);
     EXPECT_EQ(str(host.questions.back().text), "Replaced 0 times.");
     window.regex = false;
-    window.endOfText = false;
-    window.startOfText = true;
+    window.matchAt = S::MatchAt::Start;
     window.find = u8"the";
     fr.replaceAll(window);
     EXPECT_EQ(texts()[3], "X end hello");
-    window.startOfText = false;
-    window.endOfText = true;
+    window.matchAt = S::MatchAt::End;
     window.find = u8"";
     window.replace = u8"!";
     fr.replaceAll(window);
     EXPECT_EQ(texts()[0], "Hello hello!");
     EXPECT_EQ(str(host.questions.back().text), "Replaced 3 times.");
     window = {};
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"(l)";
     window.regex = true;
     window.replace = u8"L";
@@ -753,7 +837,7 @@ TEST_F(Find, ReplaceInAllOpenDocumentsIsOneStepEach)
 {
     auto &second = host.add(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,hello again\n",
                             u8"b.ass");
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"hello";
     window.replace = u8"bye";
     fr.replaceInAllOpened(window);
@@ -768,7 +852,7 @@ TEST_F(Find, AllTabsReplacementsNeverWriteTheProtectedReference)
     auto &reference = host.add(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,hello again\n",
                                u8"b.ass");
     reference.setProtected(true);
-    window.tab = S::Tab::Replace;
+    window.replaceShown = true;
     window.find = u8"hello";
     window.replace = u8"bye";
     fr.replaceInAllOpened(window);
@@ -833,7 +917,7 @@ TEST_F(Find, FindAllListsOverlappingMatchesWithShownRowNumbers)
 TEST_F(Find, FindAllEndOfTextRecordsALineOnce)
 {
     window.find = u8"hello";
-    window.endOfText = true;
+    window.matchAt = S::MatchAt::End;
     fr.findAllInCurrent(window);
     ASSERT_EQ(fr.results().size(), 3u);
     EXPECT_EQ(fr.results()[1].keyLine, 0);
@@ -927,7 +1011,8 @@ struct Files : Find {
     void SetUp() override
     {
         Find::SetUp();
-        window.tab = S::Tab::FindInFiles;
+        window.scope = S::Scope::Folder;
+        window.replaceShown = true;
         window.folder = u8"/subs";
         host.files[u8"/subs/a.ass"] =
             u16("[Script Info]\nTitle: x\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, "
@@ -967,6 +1052,10 @@ TEST_F(Files, ReplaceInFilesWritesOnlyChangedTargetsAfterABackup)
 {
     window.find = u8"cat";
     window.replace = u8"dog";
+    window.replaceShown = false;
+    fr.replaceInFiles(window);
+    EXPECT_TRUE(host.questions.empty());
+    window.replaceShown = true;
     host.answers = {FindAnswer::No};
     fr.replaceInFiles(window);
     EXPECT_TRUE(host.writes.empty());
