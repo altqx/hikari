@@ -173,8 +173,8 @@ DialogWindow {
                     if (slash > 0)
                         picker.currentFolder = dialog.app.fileUrl(path.slice(0, slash))
                     picker.selectedFile = dialog.app.fileUrl(path)
-                    picker.nameFilters = [qsTr("%1 files (*.%2)").arg(dialog.formats[formatChoice.currentIndex].text)
-                                              .arg(dialog.extension(dialog.format)),
+                    picker.nameFilters = [qsTr("%1 files (*.%2)").arg(dialog.formats[formatChoice.currentIndex].text,
+                                                                         dialog.extension(dialog.format)),
                                           qsTr("All files (*)")]
                     picker.open()
                 }
@@ -342,7 +342,7 @@ DialogWindow {
                     width: ListView.view.width
                     highlighted: ListView.isCurrentItem
                     focusPolicy: Qt.NoFocus
-                    Accessible.name: qsTr("Line %1: %2").arg(modelData.number).arg(modelData.losses)
+                    Accessible.name: qsTr("Line %1: %2").arg(modelData.number, modelData.losses)
                     contentItem: RowLayout {
                         spacing: 12
                         Label { text: modelData.number; Layout.preferredWidth: 48 }
