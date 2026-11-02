@@ -78,8 +78,9 @@ TEST_F(ApiScripts, EveryOperationAnswersEmptyParams)
 {
     for (const Operation &op : Api::registry().operations()) {
         const Result result = client.call(aiCaller(), op.name, Json::object());
-        if (!result)
+        if (!result) {
             EXPECT_EQ(result.error().code, errors::kInvalidParams) << op.name << ": " << result.error().message;
+        }
     }
 }
 
