@@ -317,6 +317,11 @@ add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_me
     hikari_automation_stage)
 hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp LIBRARIES hikari_composition LABELS ui)
+target_compile_definitions(hikari_ui_ai_features_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
+    HIKARI_MENU_LEDGER="${CMAKE_CURRENT_SOURCE_DIR}/menu_bar.txt")
+add_dependencies(hikari_ui_ai_features_tests hikari_fake_ai_sidecar)
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC.

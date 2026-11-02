@@ -809,6 +809,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
         }});
+    m_ai = std::make_unique<AiFeatures>(
+        *m_settings, options.aiPorts ? std::move(*options.aiPorts)
+                                     : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
+                                                                options.appVersion.isEmpty()
+                                                                    ? QStringLiteral(HIKARI_VERSION)
+                                                                    : options.appVersion));
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
     m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);

@@ -62,6 +62,7 @@
 #include "status_bar_controller.h"
 #include "video_fullscreen_controller.h"
 #include "settings_store.h"
+#include "hikari/app/ai_features.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 #include "audio_controller.h"
@@ -205,6 +206,8 @@ public:
         // Empty paths keep nothing on disk.
         CrashReports::Config crashReports;
         DiscordPresence::Config presence;
+        // Unset: the keychain and <userFolder>/ai.
+        std::optional<AiFeatures::Ports> aiPorts;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -711,6 +714,7 @@ public:
     application::Workspace &workspace() { return m_workspace; }
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
     ApiHost *apiHost() const { return m_apiHost.get(); }
+    AiFeatures *ai() const { return m_ai.get(); }
     QVariantMap qmlProperties();
     // Waits for running writes and delivers their results.
     void waitForWrites();
@@ -936,6 +940,7 @@ private:
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
+    std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
