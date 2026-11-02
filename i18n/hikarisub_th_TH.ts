@@ -2433,36 +2433,12 @@ Should not exceed 15 characters per second</source>
         <translation>เอฟเฟกต์ของบรรทัด ใช้ระบุบรรทัดที่จะใช้เอฟเฟกต์คาราโอเกะหรือ VSFilter</translation>
     </message>
     <message>
-        <source>&amp;Copy</source>
-        <translation>&amp;คัดลอก</translation>
-    </message>
-    <message>
-        <source>Cu&amp;t</source>
-        <translation>ตั&amp;ด</translation>
-    </message>
-    <message>
-        <source>&amp;Paste</source>
-        <translation>&amp;วาง</translation>
-    </message>
-    <message>
-        <source>Spellchecker</source>
-        <translation>ตัวตรวจการสะกด</translation>
-    </message>
-    <message>
-        <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation>เ&amp;พิ่มคำว่า &quot;%1&quot; ไปยังพจนานุกรม</translation>
-    </message>
-    <message>
         <source>Add word to dictionary</source>
         <translation>เพิ่มคำไปยังพจนานุกรม</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
         <translation>เกิดข้อผิดพลาด ไม่ได้เพิ่มคำว่า &quot;%1&quot;</translation>
-    </message>
-    <message>
-        <source>&amp;Delete</source>
-        <translation>&amp;ลบ</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2531,6 +2507,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>Remove</source>
         <translation>นำออก</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>ตรวจการสะกด</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -4187,22 +4167,6 @@ Failed to copy %2 fonts.</source>
         <translation>ลบ</translation>
     </message>
     <message>
-        <source>&amp;Insert</source>
-        <translation>แ&amp;ทรก</translation>
-    </message>
-    <message>
-        <source>Insert &amp;before</source>
-        <translation>แทรก&amp;ก่อน</translation>
-    </message>
-    <message>
-        <source>Insert &amp;after</source>
-        <translation>แทรก&amp;หลัง</translation>
-    </message>
-    <message>
-        <source>Insert before with &amp;video time</source>
-        <translation>แทรกก่อนด้วย&amp;เวลาวิดีโอ</translation>
-    </message>
-    <message>
         <source>Insert after with video time</source>
         <translation>แทรกหลังด้วยเวลาวิดีโอ</translation>
     </message>
@@ -4213,18 +4177,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Insert after with video frame time</source>
         <translation>แทรกหลังด้วยเฟรมวิดีโอ</translation>
-    </message>
-    <message>
-        <source>&amp;Duplicate lines</source>
-        <translation>&amp;สร้างบรรทัดซ้ำ</translation>
-    </message>
-    <message>
-        <source>&amp;Swap</source>
-        <translation>&amp;สลับ</translation>
-    </message>
-    <message>
-        <source>Join &amp;lines</source>
-        <translation>ต่อ&amp;บรรทัด</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
@@ -4387,18 +4339,6 @@ Failed to copy %2 fonts.</source>
         <translation>กำหนดค่า FPS จากวิดีโอ</translation>
     </message>
     <message>
-        <source>Copy	Ctrl+C</source>
-        <translation>คัดลอก	Ctrl+C</translation>
-    </message>
-    <message>
-        <source>Cut	Ctrl+X</source>
-        <translation>ตัด	Ctrl+X</translation>
-    </message>
-    <message>
-        <source>Paste	Ctrl+V</source>
-        <translation>วาง	Ctrl+V</translation>
-    </message>
-    <message>
         <source>Copy columns</source>
         <translation>คัดลอกคอลัมน์</translation>
     </message>
@@ -4409,10 +4349,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Delete text</source>
         <translation>ลบข้อความ</translation>
-    </message>
-    <message>
-        <source>Delete lines	Shift+Del</source>
-        <translation>ลบบรรทัด	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4463,6 +4399,34 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกบรรทัดในกลุ่ม</translation>
     </message>
     <message>
+        <source>Insert</source>
+        <translation>แทรก</translation>
+    </message>
+    <message>
+        <source>Insert before</source>
+        <translation>แทรกก่อน</translation>
+    </message>
+    <message>
+        <source>Insert after</source>
+        <translation>แทรกหลัง</translation>
+    </message>
+    <message>
+        <source>Insert before with video time</source>
+        <translation>แทรกก่อนด้วยเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Duplicate lines</source>
+        <translation>สร้างบรรทัดซ้ำ</translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation>สลับ</translation>
+    </message>
+    <message>
+        <source>Join lines</source>
+        <translation>ต่อบรรทัด</translation>
+    </message>
+    <message>
         <source>Make times continuous with the previous line</source>
         <translation>กำหนดค่าเวลาให้ต่อเนื่องกับบรรทัดก่อนหน้า</translation>
     </message>
@@ -4473,6 +4437,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Make line group</source>
         <translation>สร้างกลุ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>ตัด</translation>
+    </message>
+    <message>
+        <source>Delete lines</source>
+        <translation>ลบบรรทัด</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5951,6 +5923,26 @@ What would you like to do?</source>
         <translation>เริ่มต้นใช้งาน</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>เลื่อนบรรทัดที่เลือกทีละเฟรม: จุดเริ่มต้นที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>เลื่อนบรรทัดที่เลือกทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดเริ่มต้นที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
@@ -6729,6 +6721,10 @@ What would you like to do?</source>
         <translation>สร้างด้วย</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>รูปแบบไฟล์และแนวคิดจาก</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>คืนค่าเค้าโครงก่อนหน้า</translation>
     </message>
@@ -6985,6 +6981,50 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
+    </message>
+    <message>
+        <source>Shift by frames to video</source>
+        <translation>เลื่อนทีละเฟรมไปยังวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>เลื่อนบรรทัดที่เลือกเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันเริ่มที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>บรรทัดที่เลือก เริ่มที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>เลื่อนบรรทัดที่เลือกเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันสิ้นสุดที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>บรรทัดที่เลือก สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>เลื่อนบรรทัดปัจจุบันและทุกบรรทัดหลังจากนั้นเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันเริ่มที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>บรรทัดถัดไปทั้งหมด เริ่มที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>เลื่อนบรรทัดปัจจุบันและทุกบรรทัดหลังจากนั้นเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันสิ้นสุดที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>ให้บรรทัดปัจจุบันใช้ส่วนที่เลือกของเสียง และให้บรรทัดก่อนหน้าสิ้นสุดตรงจุดเริ่มของส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
     </message>
     <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
@@ -13302,6 +13342,65 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>ตัวประมวลผลเทมเพลตหยุดก่อนทำงานเสร็จ</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.TextMenu</name>
+    <message>
+        <source>Undo</source>
+        <translation>เลิกทำ</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>ทำซ้ำ</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>ตัด</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>วาง</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>เลือกทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Undoes the last change to the text</source>
+        <translation>เลิกทำการเปลี่ยนแปลงข้อความครั้งล่าสุด</translation>
+    </message>
+    <message>
+        <source>Redoes the last change you undid</source>
+        <translation>ทำการเปลี่ยนแปลงล่าสุดที่เลิกทำไปแล้วซ้ำ</translation>
+    </message>
+    <message>
+        <source>Moves the selected text to the clipboard</source>
+        <translation>ย้ายข้อความที่เลือกไปยังคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Copies the selected text to the clipboard</source>
+        <translation>คัดลอกข้อความที่เลือกไปยังคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Inserts the text from the clipboard</source>
+        <translation>แทรกข้อความจากคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Deletes the selected text</source>
+        <translation>ลบข้อความที่เลือก</translation>
+    </message>
+    <message>
+        <source>Selects all the text in the field</source>
+        <translation>เลือกข้อความทั้งหมดในช่อง</translation>
     </message>
 </context>
 <context>

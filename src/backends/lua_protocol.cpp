@@ -196,10 +196,13 @@ void writeLists(Writer &w, const std::vector<application::MacroInfoLine> &info,
             w.str(f);
     }
     w.i32(static_cast<std::int32_t>(dialogues.size()));
-    for (const auto &d : dialogues)
+    for (const auto &d : dialogues) {
         w.i64(static_cast<std::int64_t>(d.id)).i64(static_cast<std::int64_t>(d.generatedFrom)).u8(d.comment).i32(d.layer).i64(d.startMs).i64(d.endMs).str(d.style)
             .str(d.actor).i32(d.marginL).i32(d.marginR).i32(d.marginV).str(d.effect).str(d.text).str(d.translation)
-            .str(d.raw);
+            .str(d.raw).i32(static_cast<std::int32_t>(d.extra.size()));
+        for (const auto &[key, value] : d.extra)
+            w.str(key).str(value);
+    }
 }
 
 bool readLists(Reader &r, std::size_t size, std::vector<application::MacroInfoLine> &info,
@@ -246,6 +249,13 @@ bool readLists(Reader &r, std::size_t size, std::vector<application::MacroInfoLi
         d.text = r.str();
         d.translation = r.str();
         d.raw = r.str();
+        const auto ne = count(r, size);
+        if (!ne)
+            return false;
+        for (std::size_t k = 0; k < *ne && r.ok(); ++k) {
+            std::string key = r.str();
+            d.extra.emplace_back(std::move(key), r.str());
+        }
         dialogues.push_back(std::move(d));
     }
     return r.ok();

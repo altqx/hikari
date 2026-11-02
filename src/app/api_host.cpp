@@ -1,6 +1,8 @@
 #include "hikari/app/api_host.h"
 
+#include <QFile>
 #include <QJSValueIterator>
+#include <QSaveFile>
 
 namespace hikari::app {
 
@@ -14,7 +16,7 @@ QString qs(std::string_view s)
 }
 
 ApiHost::ApiHost(Wiring wiring, QObject *parent)
-    : QObject(parent), m_wiring(std::move(wiring)), m_api(api::Host{this, this, this, m_wiring.settings})
+    : QObject(parent), m_wiring(std::move(wiring)), m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this})
 {
 }
 
@@ -148,6 +150,21 @@ bool ApiHost::setOpen(std::string_view panel, bool open)
 bool ApiHost::focus(std::string_view panel)
 {
     return callPanels(panel, "focus").toBool();
+}
+
+std::optional<std::string> ApiHost::read(const std::string &path, std::size_t atMost) const
+{
+    QFile file(QString::fromStdString(path));
+    if (!file.open(QIODevice::ReadOnly))
+        return std::nullopt;
+    return file.read(qint64(atMost)).toStdString();
+}
+
+bool ApiHost::write(const std::string &path, std::string_view bytes)
+{
+    QSaveFile file(QString::fromStdString(path));
+    return file.open(QIODevice::WriteOnly) && file.write(bytes.data(), qint64(bytes.size())) == qint64(bytes.size()) &&
+           file.commit();
 }
 
 }

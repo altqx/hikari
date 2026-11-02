@@ -2456,36 +2456,12 @@ Should not exceed 15 characters per second</source>
         <translation>வரி விளைவு. கரோக்கி அல்லது VSFilter விளைவுகள் பயன்படுத்தப்பட வேண்டிய வரிகளைக் குறிக்கப் பயன்படுகிறது</translation>
     </message>
     <message>
-        <source>&amp;Copy</source>
-        <translation>நகலெடு (&amp;c)</translation>
-    </message>
-    <message>
-        <source>Cu&amp;t</source>
-        <translation>வெட்டு (&amp;t)</translation>
-    </message>
-    <message>
-        <source>&amp;Paste</source>
-        <translation>ஒட்டு (&amp;p)</translation>
-    </message>
-    <message>
-        <source>Spellchecker</source>
-        <translation>எழுத்துப்பிழை சரிபார்ப்பி</translation>
-    </message>
-    <message>
-        <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation>&quot;%1&quot; என்ற சொல்லை அகராதியில் சேர் (&amp;a)</translation>
-    </message>
-    <message>
         <source>Add word to dictionary</source>
         <translation>சொல்லை அகராதியில் சேர்</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
         <translation>பிழை. &quot;%1&quot; என்ற சொல் சேர்க்கப்படவில்லை.</translation>
-    </message>
-    <message>
-        <source>&amp;Delete</source>
-        <translation>நீக்கு (&amp;d)</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2554,6 +2530,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>Remove</source>
         <translation>அகற்று</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -4220,22 +4200,6 @@ Failed to copy %2 fonts.</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
-        <source>&amp;Insert</source>
-        <translation>செருகு (&amp;i)</translation>
-    </message>
-    <message>
-        <source>Insert &amp;before</source>
-        <translation>முன் செருகவும் (&amp;b)</translation>
-    </message>
-    <message>
-        <source>Insert &amp;after</source>
-        <translation>பின் செருகவும் (&amp;a)</translation>
-    </message>
-    <message>
-        <source>Insert before with &amp;video time</source>
-        <translation>வீடியோ நேரத்துடன் முன் செருகவும் (&amp;v)</translation>
-    </message>
-    <message>
         <source>Insert after with video time</source>
         <translation>வீடியோ நேரத்துடன் பின் செருகு</translation>
     </message>
@@ -4246,18 +4210,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Insert after with video frame time</source>
         <translation>வீடியோ சட்டக நேரத்துடன் பின் செருகவும்</translation>
-    </message>
-    <message>
-        <source>&amp;Duplicate lines</source>
-        <translation>வரிகளை நகலாக்கு (&amp;d)</translation>
-    </message>
-    <message>
-        <source>&amp;Swap</source>
-        <translation>இடமாற்று (&amp;s)</translation>
-    </message>
-    <message>
-        <source>Join &amp;lines</source>
-        <translation>வரிகளை இணை (&amp;l)</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
@@ -4420,18 +4372,6 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவிலிருந்து FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
-        <source>Copy	Ctrl+C</source>
-        <translation>நகலெடு	Ctrl+C</translation>
-    </message>
-    <message>
-        <source>Cut	Ctrl+X</source>
-        <translation>வெட்டு	Ctrl+X</translation>
-    </message>
-    <message>
-        <source>Paste	Ctrl+V</source>
-        <translation>ஒட்டு	Ctrl+V</translation>
-    </message>
-    <message>
         <source>Copy columns</source>
         <translation>நெடுவரிசைகளை நகலெடுக்கவும்</translation>
     </message>
@@ -4442,10 +4382,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Delete text</source>
         <translation>உரையை நீக்கு</translation>
-    </message>
-    <message>
-        <source>Delete lines	Shift+Del</source>
-        <translation>வரிகளை நீக்கு	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4496,6 +4432,34 @@ Failed to copy %2 fonts.</source>
         <translation>குழுவின் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
+        <source>Insert</source>
+        <translation>செருகு</translation>
+    </message>
+    <message>
+        <source>Insert before</source>
+        <translation>முன் செருகு</translation>
+    </message>
+    <message>
+        <source>Insert after</source>
+        <translation>பின் செருகு</translation>
+    </message>
+    <message>
+        <source>Insert before with video time</source>
+        <translation>வீடியோ நேரத்துடன் முன் செருகு</translation>
+    </message>
+    <message>
+        <source>Duplicate lines</source>
+        <translation>வரிகளை நகலாக்கு</translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation>இடமாற்று</translation>
+    </message>
+    <message>
+        <source>Join lines</source>
+        <translation>வரிகளை இணை</translation>
+    </message>
+    <message>
         <source>Make times continuous with the previous line</source>
         <translation>முந்தைய வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
     </message>
@@ -4506,6 +4470,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Make line group</source>
         <translation>வரிக் குழுவை உருவாக்கவும்</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>வெட்டு</translation>
+    </message>
+    <message>
+        <source>Delete lines</source>
+        <translation>வரிகளை நீக்கு</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5988,6 +5960,26 @@ What would you like to do?</source>
         <translation>தொடங்குதல்</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>தேர்ந்தெடுத்த வரிகளைச் சட்டகங்களாக நகர்த்து: தொடக்கம் வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>தேர்ந்தெடுத்த வரிகளைச் சட்டகங்களாக நகர்த்து: முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>அடுத்து வரும் வரிகளைச் சட்டகங்களாக நகர்த்து: தொடக்கம் வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>அடுத்து வரும் வரிகளைச் சட்டகங்களாக நகர்த்து: முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
@@ -6768,6 +6760,10 @@ What would you like to do?</source>
         <translation>இவற்றைக் கொண்டு உருவாக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>கோப்பு வடிவங்களும் யோசனைகளும் இவற்றிலிருந்து</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>முந்தைய தளவமைப்பை மீட்டமை</translation>
     </message>
@@ -7025,6 +7021,50 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>உரையில் சொற்றொடரின் அடுத்த நிகழ்வைக் கண்டறிகிறது</translation>
+    </message>
+    <message>
+        <source>Shift by frames to video</source>
+        <translation>சட்டகங்களாக வீடியோவுக்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>செயலில் உள்ள வரி வீடியோ சட்டகத்தில் தொடங்கும்படி தேர்ந்தெடுத்த வரிகளை முழுச் சட்டகங்களாக நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>தேர்ந்தெடுத்த வரிகள், தொடக்கம் வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>செயலில் உள்ள வரி வீடியோ சட்டகத்தில் முடியும்படி தேர்ந்தெடுத்த வரிகளை முழுச் சட்டகங்களாக நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>தேர்ந்தெடுத்த வரிகள், முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>செயலில் உள்ள வரி வீடியோ சட்டகத்தில் தொடங்கும்படி அந்த வரியையும் அதற்குப் பிந்தைய எல்லா வரிகளையும் முழுச் சட்டகங்களாக நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>அடுத்து வரும் வரிகள், தொடக்கம் வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>செயலில் உள்ள வரி வீடியோ சட்டகத்தில் முடியும்படி அந்த வரியையும் அதற்குப் பிந்தைய எல்லா வரிகளையும் முழுச் சட்டகங்களாக நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>செயலில் உள்ள வரிக்கு ஆடியோ தேர்வை அளித்து, முந்தைய வரியைத் தேர்வு தொடங்கும் இடத்தில் முடிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
     </message>
     <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
@@ -13384,6 +13424,65 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>வார்ப்புரு இயக்கி முடிப்பதற்கு முன்பே நின்றுவிட்டது.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.TextMenu</name>
+    <message>
+        <source>Undo</source>
+        <translation>செயல்தவிர்</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>மீண்டும்செய்</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>வெட்டு</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>அனைத்தையும் தெரிவுசெய்</translation>
+    </message>
+    <message>
+        <source>Undoes the last change to the text</source>
+        <translation>உரையின் கடைசி மாற்றத்தைச் செயல்தவிர்க்கிறது</translation>
+    </message>
+    <message>
+        <source>Redoes the last change you undid</source>
+        <translation>கடைசியாகச் செயல்தவிர்த்த மாற்றத்தை மீண்டும் செய்கிறது</translation>
+    </message>
+    <message>
+        <source>Moves the selected text to the clipboard</source>
+        <translation>தேர்ந்தெடுத்த உரையைக் கிளிப்போர்டுக்கு நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Copies the selected text to the clipboard</source>
+        <translation>தேர்ந்தெடுத்த உரையைக் கிளிப்போர்டுக்கு நகலெடுக்கிறது</translation>
+    </message>
+    <message>
+        <source>Inserts the text from the clipboard</source>
+        <translation>கிளிப்போர்டிலிருந்து உரையைச் செருகுகிறது</translation>
+    </message>
+    <message>
+        <source>Deletes the selected text</source>
+        <translation>தேர்ந்தெடுத்த உரையை நீக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Selects all the text in the field</source>
+        <translation>புலத்திலுள்ள எல்லா உரையையும் தேர்ந்தெடுக்கிறது</translation>
     </message>
 </context>
 <context>

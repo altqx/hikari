@@ -34,8 +34,8 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
 namespace legacy {
 // "%01i:%02i:%02i.%02i", truncated to centiseconds.
 std::u8string assTimeText(std::int64_t milliseconds);
-// Without the line terminator.
-std::u8string assLineText(const LineRecord &line);
+// Without the line terminator. `textPrefix` goes before the text, e.g. an extradata block.
+std::u8string assLineText(const LineRecord &line, std::u8string_view textPrefix = {});
 }
 
 }

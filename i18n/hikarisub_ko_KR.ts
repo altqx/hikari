@@ -2433,36 +2433,12 @@ Should not exceed 15 characters per second</source>
         <translation>줄에 들어가는 효과. 노래방 또는 VSFilter 효과를 적용할 줄을 표시하는 데 사용됩니다</translation>
     </message>
     <message>
-        <source>&amp;Copy</source>
-        <translation>복사[&amp;C]</translation>
-    </message>
-    <message>
-        <source>Cu&amp;t</source>
-        <translation>잘라내기[&amp;T]</translation>
-    </message>
-    <message>
-        <source>&amp;Paste</source>
-        <translation>붙여넣기[&amp;P]</translation>
-    </message>
-    <message>
-        <source>Spellchecker</source>
-        <translation>철자 검사기</translation>
-    </message>
-    <message>
-        <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation>사전에 &quot;%1&quot; 단어 추가[&amp;A]</translation>
-    </message>
-    <message>
         <source>Add word to dictionary</source>
         <translation>사전에 단어 추가</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
         <translation>오류: &quot;%1&quot; 단어를 추가하지 못했습니다.</translation>
-    </message>
-    <message>
-        <source>&amp;Delete</source>
-        <translation>삭제[&amp;D]</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2531,6 +2507,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>Remove</source>
         <translation>제거</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>철자 검사</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -4187,22 +4167,6 @@ Failed to copy %2 fonts.</source>
         <translation>삭제</translation>
     </message>
     <message>
-        <source>&amp;Insert</source>
-        <translation>삽입[&amp;I]</translation>
-    </message>
-    <message>
-        <source>Insert &amp;before</source>
-        <translation>이전에 빈 줄 추가[&amp;B]</translation>
-    </message>
-    <message>
-        <source>Insert &amp;after</source>
-        <translation>이후에 빈 줄 추가[&amp;A]</translation>
-    </message>
-    <message>
-        <source>Insert before with &amp;video time</source>
-        <translation>영상 시간으로 앞에 삽입[&amp;V]</translation>
-    </message>
-    <message>
         <source>Insert after with video time</source>
         <translation>영상 시간으로 뒤에 삽입</translation>
     </message>
@@ -4213,18 +4177,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Insert after with video frame time</source>
         <translation>영상 프레임 시간으로 뒤에 삽입</translation>
-    </message>
-    <message>
-        <source>&amp;Duplicate lines</source>
-        <translation>줄 복제[&amp;D]</translation>
-    </message>
-    <message>
-        <source>&amp;Swap</source>
-        <translation>서로 바꾸기[&amp;S]</translation>
-    </message>
-    <message>
-        <source>Join &amp;lines</source>
-        <translation>줄 병합[&amp;L]</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
@@ -4387,18 +4339,6 @@ Failed to copy %2 fonts.</source>
         <translation>영상에서 프레임 속도 설정</translation>
     </message>
     <message>
-        <source>Copy	Ctrl+C</source>
-        <translation>복사	Ctrl+C</translation>
-    </message>
-    <message>
-        <source>Cut	Ctrl+X</source>
-        <translation>잘라내기	Ctrl+X</translation>
-    </message>
-    <message>
-        <source>Paste	Ctrl+V</source>
-        <translation>붙여넣기	Ctrl+V</translation>
-    </message>
-    <message>
         <source>Copy columns</source>
         <translation>구분 열 복사</translation>
     </message>
@@ -4409,10 +4349,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Delete text</source>
         <translation>글자 삭제</translation>
-    </message>
-    <message>
-        <source>Delete lines	Shift+Del</source>
-        <translation>줄 삭제	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4463,6 +4399,34 @@ Failed to copy %2 fonts.</source>
         <translation>그룹의 줄 선택</translation>
     </message>
     <message>
+        <source>Insert</source>
+        <translation>삽입</translation>
+    </message>
+    <message>
+        <source>Insert before</source>
+        <translation>이전에 빈 줄 추가</translation>
+    </message>
+    <message>
+        <source>Insert after</source>
+        <translation>이후에 빈 줄 추가</translation>
+    </message>
+    <message>
+        <source>Insert before with video time</source>
+        <translation>영상 시간으로 앞에 삽입</translation>
+    </message>
+    <message>
+        <source>Duplicate lines</source>
+        <translation>줄 복제</translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation>서로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Join lines</source>
+        <translation>줄 병합</translation>
+    </message>
+    <message>
         <source>Make times continuous with the previous line</source>
         <translation>이전 줄과 시간을 연속으로 설정</translation>
     </message>
@@ -4473,6 +4437,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Make line group</source>
         <translation>줄 그룹 만들기</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>잘라내기</translation>
+    </message>
+    <message>
+        <source>Delete lines</source>
+        <translation>줄 삭제</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5951,6 +5923,26 @@ What would you like to do?</source>
         <translation>시작하기</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>선택한 줄을 프레임 단위로 이동: 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>선택한 줄을 프레임 단위로 이동: 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>뒤따르는 줄을 프레임 단위로 이동: 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>뒤따르는 줄을 프레임 단위로 이동: 끝을 영상에</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
@@ -6729,6 +6721,10 @@ What would you like to do?</source>
         <translation>사용한 기술</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>파일 형식과 아이디어를 가져온 곳</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>이전 레이아웃 복원</translation>
     </message>
@@ -6985,6 +6981,50 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>텍스트에서 다음 문구 위치 찾기</translation>
+    </message>
+    <message>
+        <source>Shift by frames to video</source>
+        <translation>영상 위치로 프레임 단위 이동</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 시작하도록 선택한 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>선택한 줄, 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 끝나도록 선택한 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>선택한 줄, 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 시작하도록 활성 줄과 그 뒤의 모든 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>뒤따르는 줄, 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 끝나도록 활성 줄과 그 뒤의 모든 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>뒤따르는 줄, 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>활성 줄에 소리 선택 영역을 적용하고, 이전 줄은 선택 영역이 시작하는 곳에서 끝냅니다</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
     </message>
     <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
@@ -13302,6 +13342,65 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>템플릿 실행기가 완료되기 전에 중단되었습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.TextMenu</name>
+    <message>
+        <source>Undo</source>
+        <translation>실행 취소</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>다시 실행</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>잘라내기</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>붙여 넣기</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>모두 선택</translation>
+    </message>
+    <message>
+        <source>Undoes the last change to the text</source>
+        <translation>텍스트의 마지막 변경을 취소합니다</translation>
+    </message>
+    <message>
+        <source>Redoes the last change you undid</source>
+        <translation>마지막으로 취소한 변경을 다시 실행합니다</translation>
+    </message>
+    <message>
+        <source>Moves the selected text to the clipboard</source>
+        <translation>선택한 텍스트를 클립보드로 옮깁니다</translation>
+    </message>
+    <message>
+        <source>Copies the selected text to the clipboard</source>
+        <translation>선택한 텍스트를 클립보드에 복사합니다</translation>
+    </message>
+    <message>
+        <source>Inserts the text from the clipboard</source>
+        <translation>클립보드의 텍스트를 넣습니다</translation>
+    </message>
+    <message>
+        <source>Deletes the selected text</source>
+        <translation>선택한 텍스트를 삭제합니다</translation>
+    </message>
+    <message>
+        <source>Selects all the text in the field</source>
+        <translation>필드의 텍스트를 모두 선택합니다</translation>
     </message>
 </context>
 <context>

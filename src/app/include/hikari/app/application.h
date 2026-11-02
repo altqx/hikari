@@ -641,6 +641,8 @@ public:
     // Centres the audio box on the video's time (0 without video); mark: the mark too.
     Q_INVOKABLE void setAudioFromVideo(bool mark);
     Q_INVOKABLE bool setTimeFromVideo(bool end);
+    Q_INVOKABLE bool joinPreviousToAudioSelection();
+    Q_INVOKABLE bool shiftFramesToVideo(bool byEnd, bool following);
     Q_INVOKABLE bool selectLineFromVideo();
     // Commits the Line editor's change first; acts only with
     // GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN on and a Document with a file.

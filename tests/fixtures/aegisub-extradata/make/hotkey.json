@@ -1,0 +1,8 @@
+{
+	"Default" : {
+		"app/exit" : [ "Ctrl-Q" ],
+		"subtitle/save" : [ "Ctrl-S" ],
+		"automation/lua/fa3/fa3 dump" : [ "Ctrl-Shift-F11" ],
+		"automation/lua/fa3/fa3 edit" : [ "Ctrl-Shift-F10" ]
+	}
+}

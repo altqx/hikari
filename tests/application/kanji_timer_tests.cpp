@@ -130,10 +130,10 @@ TEST(KanjiTimer, KanjiTextDropsItsKaraokeTagsOnly)
 {
     const auto k = kanjiText(u("{\\i1\\k10}星{\\k20}を\\N数"));
     EXPECT_EQ(s(k.text), "{\\i1}星を\\N数");
-    ASSERT_EQ(k.units.size(), 4u);
+    ASSERT_EQ(k.units.size(), 3u);
     EXPECT_EQ(s(k.units[0].text), "星");
     EXPECT_EQ(k.units[0].begin, 5u);
-    EXPECT_EQ(s(k.units[2].text), "\\N");
+    EXPECT_EQ(s(k.units[2].text), "数");
     EXPECT_EQ(s(kanjiText(u("{\\kt5}a")).text), "{\\kt5}a");
 }
 
@@ -175,7 +175,7 @@ TEST(KanjiTimer, ALineBreakInASyllableIsASpace)
         const auto syls = kanjiSyllables(u(std::string("{\\k10}a") + esc + "{\\k20}b"), 0, 0);
         const auto kanji = kanjiText(u(std::string("a") + esc + "b"));
         const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
-        EXPECT_EQ(groups(sug.groups), "1:2 1:1 ") << esc;
+        EXPECT_EQ(groups(sug.groups), "1:1 1:1 ") << esc;
         EXPECT_TRUE(sug.clean) << esc;
         EXPECT_EQ(s(kanjiOutput(syls, kanji, sug.groups)), std::string("{\\k10}a") + esc + "{\\k20}b") << esc;
     }
@@ -971,4 +971,107 @@ TEST(KanjiTimer, AReadingOfManyKanjiAndKanaReadsBackQuickly)
     ASSERT_EQ(read.readings.size(), 1u);
     EXPECT_EQ(read.readings[0].begin, 0u);
     EXPECT_EQ(read.readings[0].end, 4000u);
+}
+
+namespace {
+
+const std::vector<std::string> kSpaces = {" ", "\xE3\x80\x80", "\xC2\xA0", "\t", "\\h", "\\N", "\\n"};
+
+}
+
+TEST(KanjiSpaces, EverySpaceInTheKanjiLineSeparatesButIsNoUnit)
+{
+    const auto syls = kanjiSyllables(u("{\\k20}ki{\\k20}mi{\\k30}no"), 0, 0);
+    for (const auto &space : kSpaces) {
+        const std::string line = "君" + space + "の";
+        const auto kanji = kanjiText(u(line));
+        ASSERT_EQ(kanji.units.size(), 2u) << space;
+        EXPECT_EQ(s(kanji.units[1].text), "の") << space;
+        const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
+        EXPECT_EQ(groups(sug.groups), "2:1 1:1 ") << space;
+        EXPECT_TRUE(sug.clean) << space;
+        EXPECT_EQ(s(kanjiOutput(syls, kanji, sug.groups)), "{\\k40}君" + space + "{\\k30}の") << space;
+    }
+}
+
+TEST(KanjiSpaces, LeadingTrailingAndDoubledSpacesStayWhereTheyWere)
+{
+    const auto syls = kanjiSyllables(u("{\\k20}ki{\\k20}mi{\\k30}no"), 0, 0);
+    for (const auto &space : kSpaces) {
+        const std::string line = space + "君" + space + space + "の" + space;
+        const auto kanji = kanjiText(u(line));
+        ASSERT_EQ(kanji.units.size(), 2u) << space;
+        const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
+        EXPECT_EQ(groups(sug.groups), "2:1 1:1 ") << space;
+        EXPECT_TRUE(sug.clean) << space;
+        EXPECT_EQ(s(kanjiOutput(syls, kanji, sug.groups)),
+                  space + "{\\k40}君" + space + space + "{\\k30}の" + space)
+            << space;
+    }
+}
+
+TEST(KanjiSpaces, ASpaceSyllableJoinsTheGroupBeforeIt)
+{
+    const auto kanji = kanjiText(u("君の"));
+    for (const auto &space : kSpaces) {
+        const auto syls = kanjiSyllables(u("{\\k20}ki{\\k20}mi{\\k10}" + space + "{\\k30}no"), 0, 0);
+        const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
+        EXPECT_EQ(groups(sug.groups), "3:1 1:1 ") << space;
+        EXPECT_TRUE(sug.clean) << space;
+        EXPECT_EQ(s(kanjiOutput(syls, kanji, sug.groups)), "{\\k50}君{\\k30}の") << space;
+    }
+}
+
+TEST(KanjiSpaces, ALeadingSpaceSyllableJoinsTheFirstGroup)
+{
+    const auto kanji = kanjiText(u("君の"));
+    for (const auto &space : kSpaces) {
+        const auto syls = kanjiSyllables(u("{\\k10}" + space + "{\\k20}ki{\\k20}mi{\\k30}no"), 0, 0);
+        const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
+        EXPECT_EQ(groups(sug.groups), "3:1 1:1 ") << space;
+        EXPECT_TRUE(sug.clean) << space;
+    }
+}
+
+TEST(KanjiSpaces, SteppingCharactersStepsOverSpaces)
+{
+    for (const auto &space : kSpaces) {
+        KanjiTimer timer(classes());
+        timer.setSuggest(false);
+        timer.setLines({line(1, "{\\k20}ki{\\k20}mi{\\k30}no", 0, 700)}, {line(2, "君" + space + space + "の", 0, 700)});
+        ASSERT_TRUE(timer.view()) << space;
+        EXPECT_EQ(timer.view()->selection.characters, 1u) << space;
+        EXPECT_TRUE(timer.growCharacters()) << space;
+        EXPECT_EQ(timer.view()->selection.characters, 2u) << space;
+        EXPECT_FALSE(timer.growCharacters()) << space;
+    }
+}
+
+TEST(KanjiSpaces, AReadingSplitsAtEverySpaceAndNoneIsAReading)
+{
+    for (const auto &space : kSpaces) {
+        if (space.starts_with("\\"))
+            continue;
+        KanjiTimer timer(classes());
+        timer.setFurigana(true);
+        timer.setSuggest(false);
+        timer.setLines({line(1, "{\\k10}u{\\k10}ma{\\k10}re{\\k10}ka{\\k10}wa", 0, 500)},
+                       {line(2, "生まれ" + space + "変わ", 0, 500)});
+        for (int i = 0; i < 4; ++i) {
+            EXPECT_TRUE(timer.growSyllables()) << space;
+            EXPECT_TRUE(timer.growCharacters()) << space;
+        }
+        EXPECT_TRUE(timer.setReading(u(space + "い" + space + space + "が" + space))) << space;
+        EXPECT_EQ(readings(timer), "生|い* 変|が* ") << space;
+    }
+}
+
+TEST(KanjiSpaces, FuriganaKeepsTheSpacesOfTheLine)
+{
+    for (const auto &space : kSpaces) {
+        auto timer = furiganaTimer("{\\k20}ki{\\k20}mi{\\k30}no{\\k45}ko{\\k35}e", "君" + space + "の声");
+        EXPECT_EQ(readings(timer), "君|きみ* 声|こえ* ") << space;
+        EXPECT_TRUE(timer.acceptLine()) << space;
+        EXPECT_EQ(s(timer.pending()[0].second), "{\\k40}君|きみ" + space + "{\\k30}の{\\k80}声|こえ") << space;
+    }
 }
