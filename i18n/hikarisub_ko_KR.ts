@@ -7107,6 +7107,22 @@ What would you like to do?</source>
         <translation>사용자 폴더 열기[&amp;F]</translation>
     </message>
     <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>HikariSub가 마음에 드시나요?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>GitHub에서 별표를 주시면 다른 사람들이 찾는 데 도움이 됩니다.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>GitHub에서 별표 주기</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>나중에</translation>
+    </message>
+    <message>
         <source>Install update</source>
         <translation>업데이트 설치</translation>
     </message>
@@ -9085,6 +9101,14 @@ removing audio cache files.</source>
     <message>
         <source>Include the file name</source>
         <translation>파일 이름 포함</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>GitHub에서 HikariSub에 별표 주기 제안</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

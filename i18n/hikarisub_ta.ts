@@ -7147,6 +7147,22 @@ What would you like to do?</source>
         <translation>பயனர் கோப்புறையைத் திற (&amp;f)</translation>
     </message>
     <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>HikariSub பிடித்திருக்கிறதா?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>GitHub-இல் ஒரு நட்சத்திரம் மற்றவர்கள் இதைக் கண்டறிய உதவும்.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>GitHub-இல் நட்சத்திரம் இடு</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>இப்போது வேண்டாம்</translation>
+    </message>
+    <message>
         <source>Install update</source>
         <translation>புதுப்பிப்பை நிறுவு</translation>
     </message>
@@ -9135,6 +9151,14 @@ removing audio cache files.</source>
     <message>
         <source>Include the file name</source>
         <translation>கோப்பின் பெயரைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>GitHub-இல் HikariSub-க்கு நட்சத்திரம் இடப் பரிந்துரை</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

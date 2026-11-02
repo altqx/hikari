@@ -7187,6 +7187,22 @@ Co chcesz zrobić?</translation>
         <translation>Otwórz &amp;folder użytkownika</translation>
     </message>
     <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>Podoba ci się HikariSub?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>Gwiazdka na GitHubie pomaga innym go znaleźć.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>Daj gwiazdkę na GitHubie</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>Nie teraz</translation>
+    </message>
+    <message>
         <source>Install update</source>
         <translation>Zainstaluj aktualizację</translation>
     </message>
@@ -9185,6 +9201,14 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     <message>
         <source>Include the file name</source>
         <translation>Dołącz nazwę pliku</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>
