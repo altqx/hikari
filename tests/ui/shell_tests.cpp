@@ -6252,24 +6252,25 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
 
         auto *timingDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("timingDock"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowSearch"), "triggered"));
         QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
         QTRY_VERIFY(timingDock->property("isOpen").toBool());
         top = QAccessible::queryAccessibleInterface(window);
         QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Shift times")));
-        QAccessibleInterface *editorTab = find(top, QAccessible::PageTab, QStringLiteral("Line editor"));
-        QVERIFY(editorTab);
+        QAccessibleInterface *searchTab = find(top, QAccessible::PageTab, QStringLiteral("Search"));
+        QVERIFY(searchTab);
         QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Shift times"));
         QVERIFY(timingTab->state().checked);
-        QVERIFY(!editorTab->state().checked);
+        QVERIFY(!searchTab->state().checked);
         QVERIFY(find(top, QAccessible::PageTabList, QStringLiteral("Panels")));
-        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Line editor")));
+        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Search")));
         QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Shift times")));
         QAccessibleInterface *timingOptions = find(top, QAccessible::Button, QStringLiteral("Shift times options"));
         QVERIFY(timingOptions);
-        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Line editor options")));
-        QVERIFY(editorTab->actionInterface());
-        editorTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
-        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Line editor options")));
+        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Search options")));
+        QVERIFY(searchTab->actionInterface());
+        searchTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Search options")));
         timingTab = find(QAccessible::queryAccessibleInterface(window), QAccessible::PageTab, QStringLiteral("Shift times"));
         timingTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QAccessibleInterface *closeFrom = nullptr;
@@ -18917,7 +18918,7 @@ private slots:
         QVERIFY(!dock->property("isOpen").toBool());
         QTest::qWait(100);
         QVERIFY(!listed("First"));
-        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         auto *offer = visualItem("documentScriptsOffer");
         QVERIFY(offer);
         QTRY_VERIFY(offer->isVisible());
@@ -19102,7 +19103,7 @@ private slots:
         const auto unbound = macros.unboundMacros();
         QVERIFY(std::ranges::find(unbound, legacyName.toStdString()) == unbound.end());
         auto *dock = item<QObject>("automationDock");
-        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
+        QVERIFY(dock && QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *tool = named("automationTool");
         auto *recorder = visualItem("automationRecorder");
@@ -19129,7 +19130,7 @@ private slots:
         application->automation().load(QDir::toNativeSeparators(fixture).toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Prefix from dialog"), 30000);
         auto *dock = item<QObject>("automationDock");
-        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
+        QVERIFY(dock && QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *tool = named("automationTool");
         auto *recorder = visualItem("automationRecorder");
@@ -19290,7 +19291,7 @@ private slots:
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY_WITH_TIMEOUT(automation.running(), 30000);
         QTRY_VERIFY(cancel->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *list = visualItem("scripts");
         QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
@@ -19519,7 +19520,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(dock, "open"));
         auto *dock = item<QObject>("automationDock");
         if (!dock->property("isOpen").toBool())
-            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+            QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         dock->setProperty("isFloating", true);
         auto *panel = item("automationPanel");
