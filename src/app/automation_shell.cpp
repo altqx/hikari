@@ -237,8 +237,8 @@ QString refusalText(const application::MacroApplyFailure &failure)
     case application::CommandRefusal::StaleRevision:
         return QCoreApplication::translate("HikariSub.Automation", "The document changed while the macro ran; nothing was changed.");
     case application::CommandRefusal::Protected:
-        return QCoreApplication::translate("HikariSub.Automation", "The protected reference can't be changed.");
-    default: return QCoreApplication::translate("HikariSub.Automation", "The macro's changes could not be applied; nothing was changed.");
+        return QCoreApplication::translate("HikariSub.Automation", "The protected reference can’t be changed.");
+    default: return QCoreApplication::translate("HikariSub.Automation", "The macro’s changes could not be applied; nothing was changed.");
     }
 }
 
@@ -801,7 +801,7 @@ void AutomationShell::continueLastScript()
     }
     if (!run(path, 0, RunOrigin::LastScript) && host->state() == State::Unavailable)
         emit notice(QStringLiteral("error"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
-                    QCoreApplication::translate("HikariSub.Automation", "The script's helper ended; reload the script to use it again."),
+                    QCoreApplication::translate("HikariSub.Automation", "The script’s helper ended; reload the script to use it again."),
                     {});
 }
 
@@ -874,7 +874,7 @@ bool AutomationShell::repeatLast()
     if (!ordinal) {
         m_repeat.reset();
         m_lastMessage = QCoreApplication::translate("HikariSub.Automation",
-                                                    "The last run's macro is no longer loaded, so it can't be repeated.");
+                                                    "The last run’s macro is no longer loaded, so it can’t be repeated.");
         emit progressChanged();
         return false;
     }
@@ -1067,7 +1067,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_editor.reloadFromSession();
     if (!snapshot) {
         m_lastMessage = QCoreApplication::translate("HikariSub.Automation",
-                                                    "The line being edited can't be committed, so the macro can't start.");
+                                                    "The line being edited can’t be committed, so the macro can’t start.");
         emit progressChanged();
         return false;
     }
@@ -1233,7 +1233,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                                                "Its document was closed while the macro ran; nothing was changed.");
         } else {
             text = QCoreApplication::translate("HikariSub.Automation",
-                                               "The macro's changes could not be applied; nothing was changed.");
+                                               "The macro’s changes could not be applied; nothing was changed.");
         }
         ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
         break;
@@ -1251,7 +1251,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
             text = QCoreApplication::translate("HikariSub.Automation", "The macro was cancelled; nothing was changed.");
         break;
     case Outcome::HelperLost:
-        text = QCoreApplication::translate("HikariSub.Automation", "The script's helper ended; reload the script to use it again.");
+        text = QCoreApplication::translate("HikariSub.Automation", "The script’s helper ended; reload the script to use it again.");
         ended = QStringLiteral("lost");
         break;
     case Outcome::ForceStopped:
@@ -1268,7 +1268,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                         run.origin == RunOrigin::LastScript
                             ? QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script")
                             : QCoreApplication::translate("HikariSub.Automation", "Automation"),
-                        QCoreApplication::translate("HikariSub.Automation", "Validation Lua script '%1' failed")
+                        QCoreApplication::translate("HikariSub.Automation", "Validation Lua script “%1” failed")
                             .arg(prettyName(run.active)),
                         message);
         break;

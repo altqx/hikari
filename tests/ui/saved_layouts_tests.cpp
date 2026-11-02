@@ -808,10 +808,10 @@ private slots:
         stop();
         start();
         const QString log = application->log().history();
-        QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-Alt-1 of \"View all\" was removed")), qPrintable(log));
-        QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-E of \"Enable / Disable editor\" was removed")),
+        QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-Alt-1 of “View all” was removed")), qPrintable(log));
+        QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-E of “Enable / Disable editor” was removed")),
                  qPrintable(log));
-        QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-Alt-5 of \"View only subtitles\" was removed")),
+        QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-Alt-5 of “View only subtitles” was removed")),
                  qPrintable(log));
         for (const char *list : {"shortcuts.hotkeys", "shortcuts.audioHotkeys"})
             for (const QString &line : application->settingsStore()->list(list))

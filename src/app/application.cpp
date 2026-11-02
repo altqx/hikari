@@ -1024,7 +1024,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return out;
         };
         hooks.log = [this](const QString &text) {
-            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogs"), text);
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogues"), text);
         };
         hooks.documentFonts = [this] { return attachedFontLeases(m_workspace.editingTarget()); };
         const auto report = listFileReport(*m_log);
@@ -1395,7 +1395,7 @@ void Application::reportUserFolder(const UserFolder::MoveReport &moved, const Us
     if (!moved.earlierSettings.isEmpty())
         m_log->notice(ui::LogController::Info, title,
                       QCoreApplication::translate("HikariSub.MainWindow",
-                                                  "This portable copy keeps its settings in %1. An earlier version's "
+                                                  "This portable copy keeps its settings in %1. An earlier version’s "
                                                   "settings are still in %2: to use them, quit HikariSub, copy "
                                                   "hikari.ini from there and delete settings.toml here.")
                           .arg(folder, moved.earlierSettings));
@@ -1747,7 +1747,7 @@ QString Application::openProblem(const QString &path, const application::StageFa
     switch (problem.kind) {
     case Kind::NotUtf8: what = QCoreApplication::translate("HikariSub.Documents", "the text is not UTF-8"); break;
     case Kind::UnreadableTime:
-        what = QCoreApplication::translate("HikariSub.Documents", "\"%1\" is not a time").arg(excerpt);
+        what = QCoreApplication::translate("HikariSub.Documents", "“%1” is not a time").arg(excerpt);
         break;
     case Kind::TimeGoesBack:
         what = QCoreApplication::translate("HikariSub.Documents", "the word at %1 starts before the word before it").arg(excerpt);
@@ -1760,19 +1760,19 @@ QString Application::openProblem(const QString &path, const application::StageFa
                    .arg(excerpt);
         break;
     case Kind::MissingTime:
-        what = QCoreApplication::translate("HikariSub.Documents", "\"%1\" has no time").arg(excerpt);
+        what = QCoreApplication::translate("HikariSub.Documents", "“%1” has no time").arg(excerpt);
         break;
     case Kind::RepeatedWordLine:
         what = QCoreApplication::translate("HikariSub.Documents", "a line with word times can have only one line time");
         break;
     case Kind::NotWellFormed:
-        what = QCoreApplication::translate("HikariSub.Documents", "the XML is broken at \"%1\"").arg(excerpt);
+        what = QCoreApplication::translate("HikariSub.Documents", "the XML is broken at “%1”").arg(excerpt);
         break;
     case Kind::NotTtml:
         what = QCoreApplication::translate("HikariSub.Documents", "%1 is not a TTML document").arg(excerpt);
         break;
     case Kind::TooDeep:
-        what = QCoreApplication::translate("HikariSub.Documents", "the elements are nested more than %1 deep at \"%2\"")
+        what = QCoreApplication::translate("HikariSub.Documents", "the elements are nested more than %1 deep at “%2”")
                    .arg(QString::number(core::kMaxTtmlDepth), excerpt);
         break;
     case Kind::TooLarge:
@@ -3879,7 +3879,7 @@ application::ReplacerRule replacerRule(const QVariantMap &m)
 
 QString unscaledValue(int row, const std::u16string &value, const std::u16string &tag)
 {
-    return QCoreApplication::translate("HikariSub.Conversion", "In line %1, value '%2' cannot be scaled\nin tag '%3'")
+    return QCoreApplication::translate("HikariSub.Conversion", "In line %1, value “%2” cannot be scaled in tag “%3”.")
         .arg(row)
         .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag))
         .replace(QLatin1Char('\n'), QLatin1Char(' '));
@@ -4246,7 +4246,7 @@ void Application::replaceMisspellFinds(const QVariantList &chosen)
             else
                 m_log->notice(ui::LogController::Warning, replacerTitle(),
                               QCoreApplication::translate("HikariSub.MisspellReplacer",
-                                                          "Cannot replace \"%1\" with \"%2\" using rule \"%3\" in line %4.")
+                                                          "Cannot replace “%1” with “%2” using rule “%3” in line %4.")
                                   .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
                                   .arg(problem.lineNumber));
         }
@@ -4289,10 +4289,9 @@ application::SpellChecker *Application::spellChecker()
                 const QString message =
                     status == application::SpellChecker::Status::NoDictionary
                         ? QCoreApplication::translate("HikariSub.Spelling",
-                                                      "No dictionary files were found in the \"%1\" folder.\n"
-                                                      "Spell checking will be disabled")
+                                                      "No dictionary files were found in the “%1” folder. Spell checking will be disabled.")
                               .arg(QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absoluteFilePath()))
-                        : QCoreApplication::translate("HikariSub.Spelling", "Failed to initialize spell checker.");
+                        : QCoreApplication::translate("HikariSub.Spelling", "Failed to initialise the spellchecker.");
                 QMetaObject::invokeMethod(this, [this, message, noDictionary] {
                     m_log->notice(noDictionary ? ui::LogController::Warning : ui::LogController::Error,
                                   QCoreApplication::translate("HikariSub.Spelling", "Spellchecker"),
@@ -5078,7 +5077,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
     if (!session || !target || !conversionTargets().contains(targetName))
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This document can't be converted to that format.")}};
+                 QCoreApplication::translate("HikariSub.Conversion", "This document can’t be converted to that format.")}};
     const QVariantMap o = conversionOptions();
     core::ConversionOptions options;
     const auto &video = m_video->session();
@@ -5111,7 +5110,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
     if (!result)
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This document can't be converted to that format.")}};
+                 QCoreApplication::translate("HikariSub.Conversion", "This document can’t be converted to that format.")}};
     const auto &r = result->report;
     QStringList losses;
     QStringList kinds;
@@ -5137,7 +5136,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
             *target != core::SubtitleFormat::Ass);
     if (r.fieldsDropped)
         add(*target == core::SubtitleFormat::Ass
-                ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style \"%1\".", nullptr,
+                ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style “%1”.", nullptr,
                                               r.fieldsDropped)
                       .arg(o.value(QStringLiteral("style")).toString())
                 : QCoreApplication::translate("HikariSub.Conversion",
