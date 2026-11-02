@@ -126,3 +126,37 @@ TEST_F(GridClipboardTest, CommandsAreRefusedOnAReadOnlyTarget)
     EXPECT_EQ(pasteColumns(session, u8"x", core::column::Text).error(), CommandRefusal::ReadOnly);
     EXPECT_FALSE(copyRows(session).empty());
 }
+
+TEST(GridClipboardExtradata, PastedRowsTakeTheCopiedValuesIntoAnotherDocument)
+{
+    EditSession from{load("[Events]\n"
+                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{=1}a\n"
+                          "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,b\n"
+                          "\n[Aegisub Extradata]\nData: 1,k,ea#2Cb\n")};
+    const auto lines = from.document().lines();
+    from.setSelection(Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+    const auto rows = copyRows(from);
+    const auto extradata = copyRowsExtradata(from);
+    from.setSelection(Selection{lines[1]->id, {lines[1]->id}, lines[1]->id, {}});
+    EXPECT_TRUE(copyRowsExtradata(from).empty());
+
+    EditSession to{load("[Events]\n"
+                        "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,{=1}c\n"
+                        "\n[Aegisub Extradata]\nData: 1,other,ex\n")};
+    const auto c = to.document().lines()[0]->id;
+    to.setSelection(Selection{c, {c}, c, {}});
+    ASSERT_TRUE(pasteRows(to, rows, {}, {}, extradata));
+    auto pasted = to.document().lines();
+    ASSERT_EQ(pasted.size(), 3u);
+    EXPECT_EQ(pasted[0]->text, u8"a");
+    EXPECT_EQ(pasted[0]->extra, (std::vector<core::Extradata>{{u8"k", u8"a,b"}}));
+    EXPECT_TRUE(pasted[1]->extra.empty());
+    EXPECT_EQ(pasted[2]->extra, (std::vector<core::Extradata>{{u8"other", u8"x"}}));
+
+    ASSERT_TRUE(to.undo());
+    to.setSelection(Selection{c, {c}, c, {}});
+    ASSERT_TRUE(pasteRows(to, rows, {}, {}, u8"k:v\n"));
+    pasted = to.document().lines();
+    ASSERT_EQ(pasted.size(), 3u);
+    EXPECT_TRUE(pasted[0]->extra.empty());
+}

@@ -6775,6 +6775,10 @@ Co chcesz zrobić?</translation>
         <translation>Zbudowano przy użyciu</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>Formaty plików i pomysły zaczerpnięto z</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>Przywróć poprzedni układ</translation>
     </message>

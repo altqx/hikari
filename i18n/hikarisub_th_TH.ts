@@ -6697,6 +6697,10 @@ What would you like to do?</source>
         <translation>สร้างด้วย</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>รูปแบบไฟล์และแนวคิดจาก</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>คืนค่าเค้าโครงก่อนหน้า</translation>
     </message>

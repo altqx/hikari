@@ -6697,6 +6697,10 @@ What would you like to do?</source>
         <translation>사용한 기술</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>파일 형식과 아이디어를 가져온 곳</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>이전 레이아웃 복원</translation>
     </message>
