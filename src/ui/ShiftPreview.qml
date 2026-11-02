@@ -160,7 +160,7 @@ ColumnLayout {
         Label {
             text: qsTr("One undo step: “%1”").arg(preview.stepName)
             color: Theme.muted
-            elide: Text.ElideRight
+            wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }
         PrimaryButton {

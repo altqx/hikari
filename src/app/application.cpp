@@ -3759,7 +3759,7 @@ QString shiftFailureText(const application::ShiftFailure &failure)
         case application::ShiftProblem::NoLinesSelected:
             return QCoreApplication::translate("HikariSub.TimeShift", "No lines selected for shifting");
         case application::ShiftProblem::NoExactTimebase:
-            return QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2");
+            return QCoreApplication::translate("HikariSub.TimeShift", "Needs a video.");
         }
     }
     return QCoreApplication::translate("HikariSub.TimeShift", "The times could not be shifted.");
