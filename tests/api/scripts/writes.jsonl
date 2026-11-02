@@ -1,0 +1,48 @@
+{"call": "documents.get", "save": {"rev": "/revision"}}
+{"events": []}
+{"call": "document.apply", "params": {"revision": "$rev", "name": "Fix", "edits": [{"op": "set_line", "line": 1, "fields": {"text": "Hi", "actor": ""}}, {"op": "set_line", "line": 3, "fields": {"start": 4500, "comment": true}}, {"op": "insert_line", "after": 1, "fields": {"text": "new", "style": "Sign", "start": 2000, "end": 2500}}, {"op": "delete_line", "line": 2}]}, "result": {"inserted": [4], "changed": true}, "save": {"rev2": "/revision"}}
+{"events": [{"event": "document.changed", "data": {"document": 1, "revision": "$rev2", "step": "Test AI: Fix"}}]}
+{"events": [{"event": "document.changed", "data": {"document": 1, "revision": "$rev2", "step": "Test AI: Fix"}}], "as": "plugin"}
+{"call": "lines.list", "params": {"fields": ["text", "start", "end", "style", "actor", "comment"]}, "exact": {"revision": "$rev2", "total": 3, "lines": [{"id": 1, "row": 1, "comment": false, "start": 1000, "end": 2000, "style": "Default", "actor": "", "text": "Hi"}, {"id": 4, "row": 2, "comment": false, "start": 2000, "end": 2500, "style": "Sign", "actor": "", "text": "new"}, {"id": 3, "row": 3, "comment": true, "start": 4500, "end": 6500, "style": "Default", "actor": "Bob", "text": "General Kenobi"}]}}
+{"call": "document.apply", "params": {"revision": "$rev", "name": "Late", "edits": [{"op": "set_line", "line": 1, "fields": {"text": "stale"}}]}, "error": "stale_revision", "errorData": {"current": "$rev2"}}
+{"call": "lines.get", "params": {"ids": [1], "fields": ["text"]}, "result": {"revision": "$rev2", "lines": [{"text": "Hi"}]}}
+{"events": []}
+{"call": "document.apply", "params": {"revision": "$rev2", "name": "Same", "edits": [{"op": "set_line", "line": 1, "fields": {"text": "Hi"}}, {"op": "move_line", "line": 3, "before": null}]}, "exact": {"revision": "$rev2", "inserted": [], "changed": false}}
+{"events": []}
+{"call": "commands.run", "params": {"command": "GLOBAL_UNDO"}, "exact": {"command": "GLOBAL_UNDO", "ran": true}}
+{"events": [{"event": "document.changed", "data": {"document": 1}}, {"event": "command.ran", "data": {"command": "GLOBAL_UNDO", "ok": true}}]}
+{"call": "lines.list", "params": {"fields": ["text"]}, "result": {"total": 3, "lines": [{"id": 1, "text": "Hello there"}, {"id": 2, "text": "a sign note"}, {"id": 3, "text": "General Kenobi"}]}, "save": {"rev3": "/revision"}}
+{"call": "commands.run", "params": {"command": "GLOBAL_UNDO"}, "error": "refused", "errorData": {"reason": "disabled"}}
+{"call": "commands.run", "params": {"command": "NOT_A_COMMAND"}, "error": "not_found", "errorData": {"command": "NOT_A_COMMAND"}}
+{"call": "commands.run", "params": {"command": "GLOBAL_QUIT"}, "error": "not_found"}
+{"call": "document.apply", "params": {"revision": "$rev3", "name": "Order", "edits": [{"op": "move_line", "line": 3, "before": 1}, {"op": "move_line", "line": 2, "before": null}, {"op": "insert_line"}]}, "result": {"inserted": [4], "changed": true}, "save": {"rev4": "/revision"}}
+{"call": "lines.list", "params": {"fields": ["text", "style", "start", "end", "layer"]}, "result": {"lines": [{"id": 3, "row": 1}, {"id": 1, "row": 2}, {"id": 2, "row": 3}, {"id": 4, "row": 4, "text": "", "style": "Default", "start": 0, "end": 0, "layer": 0}]}}
+{"call": "document.apply", "params": {"revision": "$rev4", "name": "Styles", "edits": [{"op": "set_style", "name": "Sign", "fields": {"fontsize": "40", "bold": false, "borderStyle": 1, "primaryColour": "&H00112233"}}, {"op": "set_style", "name": "Song", "fields": {"fontname": "Noto Sans"}}, {"op": "set_style", "name": "Default", "fields": {"name": "Dialogue"}}, {"op": "set_info", "key": "Title", "value": "renamed"}, {"op": "set_info", "key": "PlayResX", "value": null}, {"op": "set_info", "key": "YCbCr Matrix", "value": "TV.709"}]}, "result": {"changed": true}, "save": {"rev5": "/revision"}}
+{"call": "styles.list", "result": {"revision": "$rev5", "styles": [{"name": "Dialogue", "fontname": "Arial"}, {"name": "Sign", "fontname": "Verdana", "fontsize": "40", "bold": false, "borderStyle": 1, "primaryColour": "&H00112233"}, {"name": "Song", "fontname": "Noto Sans", "fontsize": "48", "borderStyle": 1}]}}
+{"call": "info.list", "result": {"info": [{"key": "Title", "value": "renamed"}, {"key": "ScriptType", "value": "v4.00+"}, {"key": "YCbCr Matrix", "value": "TV.709"}]}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Clash", "edits": [{"op": "set_style", "name": "Sign", "fields": {"name": "Song"}}]}, "error": "refused", "errorData": {"style": "Song", "edit": 0}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Gone", "edits": [{"op": "delete_style", "name": "Nope"}]}, "error": "not_found", "errorData": {"style": "Nope", "edit": 0}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Gone", "edits": [{"op": "set_line", "line": 1, "fields": {"text": "x"}}, {"op": "delete_line", "line": 1}, {"op": "set_line", "line": 1, "fields": {"text": "y"}}]}, "error": "not_found", "errorData": {"line": 1, "edit": 2}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Gone", "edits": [{"op": "set_line", "line": 99, "fields": {"text": "x"}}]}, "error": "not_found", "errorData": {"line": 99}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Bad", "edits": [{"op": "frobnicate"}]}, "error": "invalid_params", "errorData": {"pointer": "/edits/0"}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Bad", "edits": [{"op": "set_line", "line": 1}]}, "error": "invalid_params", "errorData": {"pointer": "/edits/0"}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Bad", "edits": [{"op": "set_line", "line": 1, "fields": {"colour": 1}}]}, "error": "invalid_params", "errorData": {"pointer": "/edits/0/fields/colour"}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Bad", "edits": [{"op": "set_line", "line": 1, "fields": {"start": "1s"}}]}, "error": "invalid_params", "errorData": {"pointer": "/edits/0/fields/start"}}
+{"call": "document.apply", "params": {"revision": "$rev5", "name": "Bad", "edits": []}, "error": "invalid_params", "errorData": {"pointer": "/edits"}}
+{"call": "document.apply", "params": {"name": "Bad", "edits": [{"op": "delete_line", "line": 1}]}, "error": "invalid_params", "errorData": {"pointer": ""}}
+{"call": "lines.list", "params": {"fields": []}, "result": {"revision": "$rev5", "total": 4}}
+{"events": [{"event": "document.changed", "data": {"revision": "$rev4", "step": "Test AI: Order"}}, {"event": "document.changed", "data": {"revision": "$rev5", "step": "Test AI: Styles"}}]}
+{"call": "selection.set", "params": {"selected": [3, 1]}, "exact": {"document": 1, "revision": "$rev5", "active": 3, "selected": [3, 1]}}
+{"call": "selection.set", "params": {"selected": [2], "active": 1}, "exact": {"document": 1, "revision": "$rev5", "active": 1, "selected": [2]}}
+{"call": "selection.set", "params": {"selected": [99]}, "error": "not_found", "errorData": {"line": 99}}
+{"call": "selection.set", "params": {"selected": [], "active": null}, "exact": {"document": 1, "revision": "$rev5", "active": null, "selected": []}}
+{"events": [{"event": "selection.changed", "data": {"document": 1, "active": 3, "selected": [3, 1]}}, {"event": "selection.changed", "data": {"active": 1, "selected": [2]}}, {"event": "selection.changed", "data": {"active": null, "selected": []}}]}
+{"call": "panels.open", "params": {"panel": "Video"}, "exact": {"panel": "Video", "title": "Video", "open": true, "floating": false, "focused": false}}
+{"call": "panels.focus", "params": {"panel": "Video"}, "result": {"focused": true}}
+{"call": "panels.close", "params": {"panel": "Grid"}, "result": {"open": false}}
+{"call": "panels.close", "params": {"panel": "Nope"}, "error": "not_found", "errorData": {"panel": "Nope"}}
+{"events": [{"event": "panel.changed", "data": {"panel": "Video", "open": true}}, {"event": "panel.changed", "data": {"panel": "Grid", "focused": false}}, {"event": "panel.changed", "data": {"panel": "Video", "focused": true}}, {"event": "panel.changed", "data": {"panel": "Grid", "open": false}}]}
+{"call": "settings.set", "params": {"setting": "grid.copyColumns", "value": 3}, "exact": {"setting": "grid.copyColumns", "value": 3}}
+{"call": "settings.get", "params": {"settings": ["grid.copyColumns"]}, "exact": {"values": {"grid.copyColumns": 3}}}
+{"call": "settings.set", "params": {"setting": "grid.copyColumns", "value": "three"}, "error": "invalid_params", "errorData": {"pointer": "/value"}}
+{"call": "settings.set", "params": {"setting": "grid.noSuchSetting", "value": 1}, "error": "not_found"}
