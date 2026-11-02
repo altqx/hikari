@@ -1663,6 +1663,55 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_END_TIME")) root.app.setTimeFromVideo(true)
                 }
             }
+            ShellMenu {
+                objectName: "shiftFramesToVideoMenu"
+                title: qsTr("Shift by frames to video")
+                enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                ShellMenuItem {
+                    command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"
+                    help: qsTr("Shifts the selected lines by whole frames so the active line starts on the video frame")
+                    objectName: "shiftFramesToVideoStartMenuItem"
+                    action: Action {
+                        id: shiftFramesToVideoStartAction
+                        text: qsTr("Selected lines, start at video")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START")) root.app.shiftFramesToVideo(false, false)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"
+                    help: qsTr("Shifts the selected lines by whole frames so the active line ends on the video frame")
+                    objectName: "shiftFramesToVideoEndMenuItem"
+                    action: Action {
+                        id: shiftFramesToVideoEndAction
+                        text: qsTr("Selected lines, end at video")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, false)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START"
+                    help: qsTr("Shifts the active line and every line after it by whole frames so the active line starts on the video frame")
+                    objectName: "shiftFollowingFramesToVideoStartMenuItem"
+                    action: Action {
+                        id: shiftFollowingFramesToVideoStartAction
+                        text: qsTr("Following lines, start at video")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START")) root.app.shiftFramesToVideo(false, true)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END"
+                    help: qsTr("Shifts the active line and every line after it by whole frames so the active line ends on the video frame")
+                    objectName: "shiftFollowingFramesToVideoEndMenuItem"
+                    action: Action {
+                        id: shiftFollowingFramesToVideoEndAction
+                        text: qsTr("Following lines, end at video")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, true)
+                    }
+                }
+            }
             ShellMenuItem {
                 command: "GLOBAL_PREVIOUS_FRAME"
                 help: qsTr("Go to previous frame")
@@ -1871,6 +1920,17 @@ ApplicationWindow {
                     text: qsTr("Set audio marker to video time")
                     enabled: root.audio.hasAudio && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"
+                help: qsTr("Gives the active line the audio selection and ends the line before it where the selection starts")
+                objectName: "joinPreviousAudioSelectionMenuItem"
+                action: Action {
+                    id: joinPreviousAudioSelectionAction
+                    text: qsTr("Join with previous line using the audio selection")
+                    enabled: root.audio.ready && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION")) root.app.joinPreviousToAudioSelection()
                 }
             }
         }
@@ -6866,6 +6926,11 @@ ApplicationWindow {
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
         GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction,
+        GLOBAL_SHIFT_FRAMES_TO_VIDEO_START: shiftFramesToVideoStartAction,
+        GLOBAL_SHIFT_FRAMES_TO_VIDEO_END: shiftFramesToVideoEndAction,
+        GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START: shiftFollowingFramesToVideoStartAction,
+        GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END: shiftFollowingFramesToVideoEndAction,
+        GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
