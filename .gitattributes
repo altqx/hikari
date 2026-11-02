@@ -21,3 +21,6 @@
 
 /tests/ui/layout-fixtures/** -text
 /.githooks/pre-push text eol=lf
+
+# FA3: the Aegisub extradata fixtures are compared byte for byte (BOM, CRLF).
+/tests/fixtures/aegisub-extradata/** -text

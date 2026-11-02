@@ -13,7 +13,7 @@ DialogWindow {
     readonly property bool failed: state === "failed"
     dialogId: "whatsNew"
     resizable: true
-    title: qsTr("What's new")
+    title: qsTr("What’s new")
     defaultButton: closeButton
 
     onVisibleChanged: if (visible) dialog.whatsNew.fetchIfNeeded()

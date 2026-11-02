@@ -189,7 +189,7 @@ DialogWindow {
                     readOnly: true
                     selectByMouse: true
                     font.family: "monospace"
-                    Accessible.name: qsTr("The whole report")
+                    Accessible.name: qsTr("Report text")
                     background: Rectangle {
                         color: Theme.field
                         border.width: 1
@@ -252,7 +252,7 @@ DialogWindow {
         FooterButton {
             objectName: "crashReportDontSend"
             visible: !report.sent
-            text: qsTr("Don't send")
+            text: qsTr("Don’t send")
             DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
             onClicked: report.close()
         },

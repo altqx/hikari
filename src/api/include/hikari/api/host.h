@@ -21,6 +21,12 @@ public:
     virtual application::EditSession *session(application::DocumentId document) const = 0;
     // nullopt: never saved.
     virtual std::optional<std::string> path(application::DocumentId document) const = 0;
+    // As the Grid would: the views follow and selectionChanged is reported. False
+    // when the Document cannot take it.
+    virtual bool select(application::DocumentId document, const application::Selection &selection) = 0;
+    // The API committed a step on `document`; the views refresh and
+    // documentChanged is reported.
+    virtual void committed(application::DocumentId document) = 0;
 };
 
 struct CommandState {
@@ -34,6 +40,8 @@ public:
     virtual ~CommandHost() = default;
     // nullopt: the shell has no handler for the command.
     virtual std::optional<CommandState> state(std::string_view command) const = 0;
+    // Runs an enabled command as its menu item would; false when it did not run.
+    virtual bool run(std::string_view command) = 0;
 };
 
 struct PanelState {
@@ -48,6 +56,9 @@ class PanelHost {
 public:
     virtual ~PanelHost() = default;
     virtual std::vector<PanelState> panels() const = 0;
+    // False for an unknown panel.
+    virtual bool setOpen(std::string_view panel, bool open) = 0;
+    virtual bool focus(std::string_view panel) = 0;
 };
 
 // A missing port makes its operations answer unavailable.

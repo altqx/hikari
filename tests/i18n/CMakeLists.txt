@@ -32,3 +32,6 @@ if(WIN32)
     set_tests_properties(hikari_i18n_contexts_are_semantic PROPERTIES
         ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${HIKARI_QT_PREFIX}/bin")
 endif()
+
+hikari_add_gtest(hikari_i18n_text_style_tests SOURCES text_style_tests.cpp LIBRARIES hikari_i18n LABELS i18n)
+target_compile_definitions(hikari_i18n_text_style_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
