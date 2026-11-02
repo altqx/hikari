@@ -1213,8 +1213,7 @@ def step_test_executables():
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", text))
     skips = re.findall(r"SKIP\s*:.*", text)
     known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
-             "the window follows a declined system move only where the platform declines it",
-             "X11 only (the .xvfb run)", "HIKARI_SURFACE_SHOT_DIR is not set",
+             "HIKARI_SURFACE_SHOT_DIR is not set",
              "the screen's scale changes through the offscreen platform",
              "screens come and go through the offscreen platform's configuration")
     unexpected = [k for k in skips if not any(reason in k for reason in known)]

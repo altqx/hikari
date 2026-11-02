@@ -287,7 +287,7 @@ private slots:
         QCOMPARE(notices.size(), 1);
         QCOMPARE(notices.first().at(0).toString(), QStringLiteral("error"));
         QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Run the last loaded script"));
-        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("Validation Lua script 'invalid.lua' failed"));
+        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("Validation Lua script “invalid.lua” failed"));
         QVERIFY(notices.first().at(3).toString().contains(QStringLiteral("no way")));
         QVERIFY(app->log().history().contains(QStringLiteral("Runtime error in Lua macro validation function:")));
         QVERIFY(app->log().history().contains(QStringLiteral("no way")));
@@ -312,7 +312,7 @@ private slots:
         QCOMPARE(notices.size(), 2);
         QCOMPARE(notices.last().at(0).toString(), QStringLiteral("error"));
         QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Automation"));
-        QCOMPARE(notices.last().at(2).toString(), QStringLiteral("Validation Lua script 'invalid.lua' failed"));
+        QCOMPARE(notices.last().at(2).toString(), QStringLiteral("Validation Lua script “invalid.lua” failed"));
         QCOMPARE(firstText(), std::string("Gate"));
         QCOMPARE(session().historySize(), steps);
     }
@@ -338,7 +338,7 @@ private slots:
         QVERIFY(!done.first().at(0).toBool());
         QCOMPARE(notices.size(), 1);
         QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Run the last loaded script"));
-        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("Validation Lua script 'editing.lua' failed"));
+        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("Validation Lua script “editing.lua” failed"));
         app->automation().run(QDir::toNativeSeparators(script).toStdString(), 0);
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 2, 30'000);
         QVERIFY(!done.last().at(0).toBool());
@@ -456,7 +456,7 @@ private slots:
             QCOMPARE(taken(), expected);
             QCOMPARE(notices.size(), boxes);
             QCOMPARE(notices.last().at(0).toString(), QStringLiteral("error"));
-            QCOMPARE(notices.last().at(2).toString(), QStringLiteral("Validation Lua script '%1' failed").arg(file));
+            QCOMPARE(notices.last().at(2).toString(), QStringLiteral("Validation Lua script “%1” failed").arg(file));
             QCOMPARE(firstText(), std::string("main:Gate"));
             QCOMPARE(session().historySize(), changed);
             QVERIFY(!session().isReadOnly());
@@ -963,8 +963,8 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
     const std::map<QString, QString> boxText{
         {QStringLiteral("no-scripts"), QStringLiteral("This subtitle file does not have any scripts added")},
         {QStringLiteral("only-missing"), QStringLiteral("This subtitle file does not have any scripts added")},
-        {QStringLiteral("validation-false"), QStringLiteral("Validation Lua script 'invalid.lua' failed")},
-        {QStringLiteral("validation-error"), QStringLiteral("Validation Lua script 'raising.lua' failed")},
+        {QStringLiteral("validation-false"), QStringLiteral("Validation Lua script “invalid.lua” failed")},
+        {QStringLiteral("validation-error"), QStringLiteral("Validation Lua script “raising.lua” failed")},
         {QStringLiteral("load-error"), QStringLiteral("Error loading Lua script: broken.lua\n")},
     };
     const QStringList addedOnLoad{QStringLiteral("YCbCr Matrix"), QStringLiteral("PlayResX"), QStringLiteral("PlayResY")};

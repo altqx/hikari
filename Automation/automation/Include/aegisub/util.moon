@@ -32,8 +32,11 @@ deep_copy = (tbl) ->
   copy = (val) ->
     return val if type(val) != 'table'
     return seen[val] if seen[val]
-    seen[val] = val
-    {k, copy(v) for k, v in pairs val}
+    result = {}
+    seen[val] = result
+    for k, v in pairs val
+      result[k] = copy(v)
+    result
   copy tbl
 
 -- Generates ASS hexadecimal string from R, G, B integer components, in &HBBGGRR& format

@@ -18,6 +18,7 @@
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/app/plugin_manager.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/grammar.h"
@@ -200,6 +201,8 @@ public:
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
+        // Empty: no plugins can be installed.
+        PluginManager::Folders plugins;
         // Empty: beside the settings file.
         QString presetsDir;
         // The default has no key: nothing is queued or sent.
@@ -720,6 +723,8 @@ public:
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
     ApiHost *apiHost() const { return m_apiHost.get(); }
     AiFeatures *ai() const { return m_ai.get(); }
+    Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
+    PluginManager *pluginManager() const { return m_pluginManager.get(); }
     QVariantMap qmlProperties();
     // Waits for running writes and delivers their results.
     void waitForWrites();
@@ -946,6 +951,7 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
+    std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;

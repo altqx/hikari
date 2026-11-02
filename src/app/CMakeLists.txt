@@ -19,12 +19,13 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
-    ai_features.cpp include/hikari/app/ai_features.h)
+    ai_features.cpp include/hikari/app/ai_features.h
+    plugin_manager.cpp include/hikari/app/plugin_manager.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
-target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_ai hikari_api hikari_application
-    hikari_core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
-# QZipWriter is private Qt API.
+target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_ai hikari_plugins hikari_api
+    hikari_application hikari_core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
+# QZipWriter and QZipReader are private Qt API.
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 target_link_libraries(hikari_composition PRIVATE Qt6::CorePrivate)
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
@@ -45,7 +46,7 @@ if(WIN32)
     target_link_libraries(hikari_composition PRIVATE shell32 winhttp bcrypt crypt32 advapi32)
 endif()
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends hikari_ai
-    hikari_api hikari_application hikari_core "Qt6::*" "hikari_ui*")
+    hikari_plugins hikari_api hikari_application hikari_core "Qt6::*" "hikari_ui*")
 
 target_sources(hikari_composition PRIVATE startup_look.cpp include/hikari/app/startup_look.h
     include/hikari/app/launcher.h)

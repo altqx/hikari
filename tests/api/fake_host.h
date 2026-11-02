@@ -68,6 +68,7 @@ public:
     {
         return videoOpen ? std::optional(frame * 40) : std::nullopt;
     }
+    std::optional<std::vector<std::int64_t>> frameStartsMs() const override { return std::nullopt; }
     std::optional<VideoSize> videoSize() const override
     {
         return videoOpen ? std::optional(VideoSize{64, 36, 16, 9}) : std::nullopt;

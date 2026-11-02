@@ -98,13 +98,13 @@ DialogWindow {
                     columnSpacing: 12
                     rowSpacing: 6
                     Layout.fillWidth: true
-                    Label { text: qsTr("Catalog"); Layout.preferredWidth: 92 }
+                    Label { text: qsTr("Catalogue"); Layout.preferredWidth: 92 }
                     ComboBox {
                         id: catalog
                         objectName: "convCatalog"
                         model: dialog.catalogs
                         Layout.preferredWidth: 200
-                        Accessible.name: qsTr("Catalog")
+                        Accessible.name: qsTr("Catalogue")
                         onActivated: i => {
                             dialog.set("styleCatalog", dialog.catalogs[i])
                             styleBox.editText = dialog.app.conversionOptions().style
