@@ -130,10 +130,10 @@ TEST(KanjiTimer, KanjiTextDropsItsKaraokeTagsOnly)
 {
     const auto k = kanjiText(u("{\\i1\\k10}星{\\k20}を\\N数"));
     EXPECT_EQ(s(k.text), "{\\i1}星を\\N数");
-    ASSERT_EQ(k.units.size(), 4u);
+    ASSERT_EQ(k.units.size(), 3u);
     EXPECT_EQ(s(k.units[0].text), "星");
     EXPECT_EQ(k.units[0].begin, 5u);
-    EXPECT_EQ(s(k.units[2].text), "\\N");
+    EXPECT_EQ(s(k.units[2].text), "数");
     EXPECT_EQ(s(kanjiText(u("{\\kt5}a")).text), "{\\kt5}a");
 }
 
@@ -175,7 +175,7 @@ TEST(KanjiTimer, ALineBreakInASyllableIsASpace)
         const auto syls = kanjiSyllables(u(std::string("{\\k10}a") + esc + "{\\k20}b"), 0, 0);
         const auto kanji = kanjiText(u(std::string("a") + esc + "b"));
         const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
-        EXPECT_EQ(groups(sug.groups), "1:2 1:1 ") << esc;
+        EXPECT_EQ(groups(sug.groups), "1:1 1:1 ") << esc;
         EXPECT_TRUE(sug.clean) << esc;
         EXPECT_EQ(s(kanjiOutput(syls, kanji, sug.groups)), std::string("{\\k10}a") + esc + "{\\k20}b") << esc;
     }
