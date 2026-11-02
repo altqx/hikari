@@ -41,6 +41,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DUNIDIC=${HIKARI_UNIDIC_DIR}"
             "-DMECAB_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyright"
             "-DUNIDIC_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
+            "-DDAV1D_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/dav1d/copyright"
             "-DDOWNLOADS=${CMAKE_BINARY_DIR}/payload-downloads"
             "-DDICTIONARIES=${HIKARI_BUNDLED_DICTIONARIES}"
             "-DHARPER=${HIKARI_HARPER_LS}"
@@ -55,7 +56,7 @@ endif()
 
 cmake_minimum_required(VERSION 3.28)
 foreach(var STAGE APP APP_LIBRARY HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS DICTIONARIES UNIDIC
-        MECAB_LICENSE UNIDIC_LICENSE)
+        MECAB_LICENSE UNIDIC_LICENSE DAV1D_LICENSE)
     if(NOT DEFINED ${var} OR "${${var}}" STREQUAL "")
         message(FATAL_ERROR "HikariPackageWindows: ${var} is required")
     endif()
@@ -89,9 +90,10 @@ file(COPY "${DICTIONARIES}/Dictionary" "${DICTIONARIES}/licenses" DESTINATION "$
 file(COPY ${CRT} DESTINATION "${STAGE}")
 file(COPY_FILE "${LICENSE}" "${STAGE}/LICENSE")
 file(COPY "${UNIDIC}/" DESTINATION "${STAGE}/Dictionary/unidic-lite")
-file(MAKE_DIRECTORY "${STAGE}/licenses/mecab" "${STAGE}/licenses/unidic")
+file(MAKE_DIRECTORY "${STAGE}/licenses/mecab" "${STAGE}/licenses/unidic" "${STAGE}/licenses/dav1d")
 file(COPY_FILE "${MECAB_LICENSE}" "${STAGE}/licenses/mecab/LICENSE")
 file(COPY_FILE "${UNIDIC_LICENSE}" "${STAGE}/licenses/unidic/LICENSE")
+file(COPY_FILE "${DAV1D_LICENSE}" "${STAGE}/licenses/dav1d/LICENSE")
 file(COPY_FILE "${HARPER}" "${STAGE}/harper-ls.exe")
 file(MAKE_DIRECTORY "${STAGE}/licenses/harper")
 file(COPY_FILE "${HARPER_LICENSE}" "${STAGE}/licenses/harper/LICENSE")
@@ -154,7 +156,7 @@ foreach(required HikariSub.exe HikariSubApp.dll hikari-media-helper.exe hikari-l
         Csri/VSFiltermod.dll Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin
         Dictionary/unidic-lite/char.bin Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc
         Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE
-        harper-ls.exe licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt)
+        licenses/dav1d/LICENSE harper-ls.exe licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt)
     if(NOT required IN_LIST everything)
         message(FATAL_ERROR "HikariPackageWindows: the payload lacks ${required}")
     endif()

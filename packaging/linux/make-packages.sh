@@ -57,7 +57,7 @@ cmake --install "$build_dir" --prefix "$tree" --component hikari_app
 [ -x "$tree/harper-ls" ] || { echo "error: the install produced no harper-ls" >&2; exit 1; }
 for f in Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin Dictionary/unidic-lite/char.bin \
     Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc Dictionary/unidic-lite/mecabrc \
-    Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE \
+    Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE licenses/dav1d/LICENSE \
     licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt; do
     [ -f "$tree/$f" ] || { echo "error: the install produced no $f" >&2; exit 1; }
 done
