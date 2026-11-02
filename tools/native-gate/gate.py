@@ -920,6 +920,49 @@ def step_pointer():
             f"docked={docked}, windows {list(frames(st))}", ev5 + ev6)
 
 
+def side_point(p, side):
+    x, y, w, h = p["x"], p["y"], p["w"], p["h"]
+    return {"left": (x + w // 6, y + h // 2), "right": (x + w - w // 6, y + h // 2),
+            "top": (x + w // 2, y + h // 6), "bottom": (x + w // 2, y + h - h // 6)}[side]
+
+
+def landed_beside(a, t, side):
+    across = a["y"] < t["y"] + t["h"] and a["y"] + a["h"] > t["y"]
+    along = a["x"] < t["x"] + t["w"] and a["x"] + a["w"] > t["x"]
+    return {"left": across and a["x"] + a["w"] <= t["x"] + 2, "right": across and a["x"] >= t["x"] + t["w"] - 2,
+            "top": along and a["y"] + a["h"] <= t["y"] + 2, "bottom": along and a["y"] >= t["y"] + t["h"] - 2}[side]
+
+
+def step_sides():
+    """DK3 (#589): the docked Audio panel dragged by its title onto each side of the Grid and of Video."""
+    for target in ("Grid", "Video"):
+        for side in ("left", "right", "top", "bottom"):
+            item = f"drop-{side}-of-{target.lower()}"
+            fresh(episode())
+            dismiss_notices()
+            main = origin("HikariSub")
+            st = atspi()
+            audio, t = panel(st, "Audio"), panel(st, target)
+            if main is None or not audio or not t:
+                verdict(item, "not-observable", f"{B.name}: no geometry for the main window ({main}), Audio or {target}")
+                continue
+            x0, y0 = main[0], main[1]
+            sx, sy = x0 + audio["x"] + 30, y0 + audio["y"] - HEADER // 2
+            px, py = side_point(t, side)
+            drag(sx, sy, x0 + px, y0 + py, release=False)
+            ev, _ = B.snap(f"sides-{target.lower()}-{side}-over")
+            B.pointer("up", "wait 1500")
+            st = wait_for(lambda s: "Audio" not in frames(s))
+            ev1, st = B.snap(f"sides-{target.lower()}-{side}-dropped")
+            a, t2 = panel(st, "Audio"), panel(st, target)
+            docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == "HikariSub"
+            ok = docked and a and t2 and landed_beside(a, t2, side)
+            verdict(item, "observed" if ok else "failed",
+                    f"drag docked Audio by its title from {sx},{sy} to {target}'s {side} at {x0 + px},{y0 + py}: "
+                    f"docked={docked}, Audio {a and (a['x'], a['y'], a['w'], a['h'])}, "
+                    f"{target} {t2 and (t2['x'], t2['y'], t2['w'], t2['h'])}", ev + ev1)
+
+
 def step_floating():
     fresh(env={"QT_LOGGING_RULES": "hikari.decorations.debug=true"})
     how = float_panel("Audio", "floating")
@@ -3410,7 +3453,7 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "menutext": step_menu_from_text, "tests": step_test_executables, "orca": step_orca,
          "a11y": step_a11y, "floating": step_floating, "header": step_header_keys,
-         "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen,
+         "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen, "sides": step_sides,
          # last: after an output goes, sway's virtual pointer still maps over the old layout
          "outputs": step_outputs}
 

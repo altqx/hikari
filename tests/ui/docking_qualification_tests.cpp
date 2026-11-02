@@ -1115,6 +1115,107 @@ private slots:
             QVERIFY(allowed(outer, alone, alone, nullptr));
     }
 
+    void everyDropLandsWhereItsHighlightShows_data()
+    {
+        QTest::addColumn<QString>("target");
+        QTest::addColumn<QString>("side");
+        QTest::addColumn<bool>("floating");
+        for (bool floating : {false, true})
+            for (const char *target : {"Video", "Editor", "Grid"})
+                for (const char *side : {"left", "right", "top", "bottom", "tab"})
+                    QTest::addRow("%s %s %s", floating ? "floating" : "docked", target, side)
+                        << QString::fromLatin1(target) << QString::fromLatin1(side) << floating;
+    }
+
+    void everyDropLandsWhereItsHighlightShows()
+    {
+        if (QGuiApplication::platformName() != QLatin1String("offscreen"))
+            QSKIP("a synthetic drag between windows needs the offscreen platform (the native gate drags for real)");
+        QFETCH(QString, target);
+        QFETCH(QString, side);
+        QFETCH(bool, floating);
+        restoreInitial();
+        if (floating) {
+            QVERIFY(dock("Audio")->setProperty("isFloating", true));
+            QTRY_VERIFY(header(QStringLiteral("Audio")) && header(QStringLiteral("Audio"))->window() != window);
+            QTRY_VERIFY(header(QStringLiteral("Audio"))->window()->isExposed());
+        }
+        QQuickItem *bar = header(QStringLiteral("Audio"));
+        QWindow *receiver = bar->window();
+        const QPoint start = receiver->mapToGlobal(bar->mapToScene(QPointF(30, bar->height() / 2)).toPoint());
+        sendMouse(receiver, QEvent::MouseButtonPress, start, Qt::LeftButton);
+        auto release = qScopeGuard([&] { sendMouse(receiver, QEvent::MouseButtonRelease, QCursor::pos(), Qt::NoButton); });
+        for (int i = 1; i <= 4; ++i)
+            sendMouse(receiver, QEvent::MouseMove, start + QPoint(0, 8 * i), Qt::LeftButton);
+        QTRY_VERIFY(dock("Audio")->property("isFloating").toBool());
+        receiver = header(QStringLiteral("Audio"))->window();
+
+        const auto sceneRect = [](QQuickItem *item) {
+            return item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+        };
+        const QRectF g = sceneRect(groupOf(header(target)));
+        const qreal headerHeight = hikari::ui::dockchrome::kHeaderHeight;
+        QPointF at = g.center();
+        if (side == QLatin1String("left"))
+            at.setX(g.left() + g.width() / 6);
+        else if (side == QLatin1String("right"))
+            at.setX(g.right() - g.width() / 6);
+        else if (side == QLatin1String("top"))
+            at.setY(g.top() + std::max(headerHeight + 4, g.height() / 6));
+        else if (side == QLatin1String("bottom"))
+            at.setY(g.bottom() - g.height() / 6);
+        const QPoint to = window->mapToGlobal(at.toPoint());
+        const QPoint from = QCursor::pos();
+        for (int i = 1; i <= 12; ++i)
+            sendMouse(receiver, QEvent::MouseMove, from + (to - from) * i / 12, Qt::LeftButton);
+        const auto report = [&](const QRectF &r) {
+            return QStringLiteral("%1,%2 %3x%4 over %5 %6,%7 %8x%9 at %10,%11")
+                .arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height()).arg(target)
+                .arg(g.x()).arg(g.y()).arg(g.width()).arg(g.height()).arg(at.x()).arg(at.y());
+        };
+        QTRY_VERIFY2(!itemsNamed(window, QStringLiteral("dockDropHighlight")).isEmpty(), qPrintable(report({})));
+        const QRectF h = sceneRect(itemsNamed(window, QStringLiteral("dockDropHighlight")).first());
+        // KDDW's highlight for a side straddles the edge, taking room from the neighbour beyond it too.
+        if (side == QLatin1String("left"))
+            QVERIFY2(h.left() <= g.left() + 1 && h.right() > g.left() && h.right() <= g.center().x() + g.width() / 4 + 2,
+                     qPrintable(report(h)));
+        else if (side == QLatin1String("right"))
+            QVERIFY2(h.right() >= g.right() - 1 && h.left() < g.right() && h.left() >= g.center().x() - g.width() / 4 - 2,
+                     qPrintable(report(h)));
+        else if (side == QLatin1String("top"))
+            QVERIFY2(h.top() <= g.top() + 1 && h.bottom() > g.top() && h.bottom() <= g.center().y() + g.height() / 4 + 2,
+                     qPrintable(report(h)));
+        else if (side == QLatin1String("bottom"))
+            QVERIFY2(h.bottom() >= g.bottom() - 1 && h.top() < g.bottom() && h.top() >= g.center().y() - g.height() / 4 - 2,
+                     qPrintable(report(h)));
+        else
+            QVERIFY2(qAbs(h.width() - g.width()) <= 2 && qAbs(h.height() - g.height()) <= 2, qPrintable(report(h)));
+
+        release.dismiss();
+        sendMouse(receiver, QEvent::MouseButtonRelease, to, Qt::NoButton);
+        QTRY_VERIFY(!dock("Audio")->property("isFloating").toBool());
+        if (side == QLatin1String("tab")) {
+            QCOMPARE(docking()->tabCount(QStringLiteral("Audio")), 2);
+            QCOMPARE(docking()->tabCount(target), 2);
+            restoreInitial();
+            return;
+        }
+        const QRectF a = sceneRect(groupOf(header(QStringLiteral("Audio"))));
+        const QRectF t = sceneRect(groupOf(header(target)));
+        const QString landed = QStringLiteral("Audio %1,%2 %3x%4 %5 %6,%7 %8x%9")
+                                   .arg(a.x()).arg(a.y()).arg(a.width()).arg(a.height()).arg(target)
+                                   .arg(t.x()).arg(t.y()).arg(t.width()).arg(t.height());
+        if (side == QLatin1String("left"))
+            QVERIFY2(a.right() <= t.left() + 2 && a.top() < t.bottom() && a.bottom() > t.top(), qPrintable(landed));
+        else if (side == QLatin1String("right"))
+            QVERIFY2(a.left() >= t.right() - 2 && a.top() < t.bottom() && a.bottom() > t.top(), qPrintable(landed));
+        else if (side == QLatin1String("top"))
+            QVERIFY2(a.bottom() <= t.top() + 2 && a.left() < t.right() && a.right() > t.left(), qPrintable(landed));
+        else
+            QVERIFY2(a.top() >= t.bottom() - 2 && a.left() < t.right() && a.right() > t.left(), qPrintable(landed));
+        restoreInitial();
+    }
+
     void wholeFloatingHeaderDocksWhereItDoesNotSplit()
     {
         if (QGuiApplication::platformName() != QLatin1String("offscreen"))
