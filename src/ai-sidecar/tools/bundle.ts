@@ -5,6 +5,9 @@ export const kRoot = join(import.meta.dir, "..");
 export const kNoticesFile = join(kRoot, "NOTICES.txt");
 const kNeverShipped = "@anthropic-ai/claude-agent-sdk";
 
+/** Without the two autoload flags a `.env` or `bunfig.toml` in the working directory reaches the binary. */
+export const kCompileFlags = ["--compile", "--bytecode", "--no-compile-autoload-dotenv", "--no-compile-autoload-bunfig"];
+
 export interface Metafile {
     inputs: Record<string, unknown>;
 }

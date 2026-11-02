@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { bundledPackages, forbiddenInputs, kNoticesFile, kRoot, notices, readMetafile } from "./bundle";
+import { bundledPackages, forbiddenInputs, kCompileFlags, kNoticesFile, kRoot, notices, readMetafile } from "./bundle";
 
 const { values } = parseArgs({
     options: {
@@ -21,8 +21,8 @@ if (!target || !runtime || !out || !values["build-id"] || values["api-version"] 
 
 mkdirSync(dirname(out), { recursive: true });
 const metafile = `${out}.meta.json`;
-const build = Bun.spawnSync([process.execPath, "build", join("src", "main.ts"), "--compile", "--bytecode",
-    "--no-compile-autoload-dotenv", "--no-compile-autoload-bunfig", `--target=bun-${target}-baseline`,
+const build = Bun.spawnSync([process.execPath, "build", join("src", "main.ts"), ...kCompileFlags,
+    `--target=bun-${target}-baseline`,
     `--compile-executable-path=${runtime}`, `--define=HIKARI_BUILD_ID=${JSON.stringify(values["build-id"])}`,
     `--define=HIKARI_API_VERSION=${Number(values["api-version"])}`, `--metafile=${metafile}`, `--outfile=${out}`],
     { cwd: kRoot, stdio: ["ignore", "inherit", "inherit"] });

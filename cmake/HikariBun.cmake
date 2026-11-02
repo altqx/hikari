@@ -72,6 +72,26 @@ function(hikari_fetch_bun downloads platform out)
     set(${out} "${binary}" PARENT_SCOPE)
 endfunction()
 
+# The id the app and its sidecar must share: the version, plus the commit when the build knows it.
+function(hikari_ai_build_id out)
+    set(id "${HIKARI_VERSION}")
+    if(HIKARI_COMMIT)
+        string(SUBSTRING "${HIKARI_COMMIT}" 0 12 commit)
+        string(APPEND id "+${commit}")
+    endif()
+    set(${out} "${id}" PARENT_SCOPE)
+endfunction()
+
+# HA1's kApiVersion, which the sidecar reports in `initialize`.
+function(hikari_api_version out)
+    file(STRINGS "${PROJECT_SOURCE_DIR}/src/api/include/hikari/api/api.h" line
+        REGEX "inline constexpr int kApiVersion = [0-9]+")
+    if(NOT line MATCHES "kApiVersion = ([0-9]+)")
+        message(FATAL_ERROR "Bun: no kApiVersion in src/api/include/hikari/api/api.h")
+    endif()
+    set(${out} "${CMAKE_MATCH_1}" PARENT_SCOPE)
+endfunction()
+
 if(CMAKE_SCRIPT_MODE_FILE STREQUAL CMAKE_CURRENT_LIST_FILE)
     if(NOT DOWNLOADS)
         message(FATAL_ERROR "usage: cmake -DDOWNLOADS=<dir> [-DPLATFORM=<platform>] -P ${CMAKE_CURRENT_LIST_FILE}")

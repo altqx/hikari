@@ -74,12 +74,6 @@ if(HIKARI_QML_HOT_RELOAD)
         DEPENDS hikarisub
         USES_TERMINAL)
 endif()
-execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    OUTPUT_VARIABLE HIKARI_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
-# In CI's container git refuses the checkout (dubious ownership); Actions sets GITHUB_SHA.
-if(NOT HIKARI_COMMIT AND DEFINED ENV{GITHUB_SHA})
-    set(HIKARI_COMMIT "$ENV{GITHUB_SHA}")
-endif()
 target_sources(hikari_composition PRIVATE docs_export.cpp include/hikari/app/docs_export.h)
 set_source_files_properties(docs_export.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_COMMIT=\"${HIKARI_COMMIT}\"")
 set(HIKARI_POSTHOG_KEY "" CACHE STRING "PostHog project key for anonymous usage data (release builds only)")
