@@ -171,12 +171,12 @@ bool DirectShowPlayer::Impl::build(const std::string &path, std::string &error)
     ComPtr<IBaseFilter> audioRenderer;
     W1_HR(CoCreateInstance(CLSID_DSoundRender, nullptr, CLSCTX_INPROC, IID_PPV_ARGS(&audioRenderer)),
           "Cannot create audio renderer instance");
-    W1_HR(graph->AddFilter(audioRenderer.Get(), L"Direct Sound Renderer"), "Cannot add Direct Sound renderer");
+    W1_HR(graph->AddFilter(audioRenderer.Get(), L"Direct Sound Renderer"), "Cannot add DirectSound renderer");
 
     ComPtr<IEnumPins> sourcePins, rendererPins, audioPins;
     W1_HR(source->EnumPins(&sourcePins), "Cannot enumerate source pins");
     W1_HR(rendererFilter->EnumPins(&rendererPins), "Cannot enumerate renderer pins");
-    W1_HR(audioRenderer->EnumPins(&audioPins), "Cannot enumerate Direct Sound pins");
+    W1_HR(audioRenderer->EnumPins(&audioPins), "Cannot enumerate DirectSound pins");
     ComPtr<IPin> rendererPin, audioPin;
     if (rendererPins->Next(1, &rendererPin, nullptr) != S_OK) {
         error = "Cannot get renderer pin";

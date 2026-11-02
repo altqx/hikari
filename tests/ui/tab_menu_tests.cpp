@@ -624,7 +624,7 @@ private slots:
         QVERIFY(application->video().offering());
         QCOMPARE(application->video().offer(),
                  QStringLiteral("Associated files:\nVideo: %1%2ep.mkv\nAudio: %1%2audio%2ep.mka\nKeyframes: %1%2ep_keyframes.txt\n"
-                                "\nVideo from directory:\nep.mkv")
+                                "\nVideo from directory: ep.mkv")
                      .arg(n, sep));
         QCOMPARE(application->video().offerAssociatedLabel(), QStringLiteral("Load associated"));
         QCOMPARE(application->video().offerDirectoryLabel(), QStringLiteral("Load from directory"));
@@ -661,7 +661,7 @@ private slots:
         QVariantMap result = application->openDropped({QUrl::fromLocalFile(one), QUrl::fromLocalFile(two)});
         QCOMPARE(titles(), (QStringList{QStringLiteral("one.ass"), QStringLiteral("two.ass")}));
         QVERIFY(application->video().offering());
-        QCOMPARE(application->video().offer(), QStringLiteral("Video from directory:\ntwo.mkv"));
+        QCOMPARE(application->video().offer(), QStringLiteral("Video from directory: two.mkv"));
         QCOMPARE(application->video().offerAssociatedLabel(), QString());
         QCOMPARE(application->video().offerDirectoryLabel(), QStringLiteral("Yes"));
         application->video().setOfferApplyToAll(true);
@@ -675,7 +675,7 @@ private slots:
         QVERIFY(result.value(QStringLiteral("rows")).toList().isEmpty());
         application->finishClose();
         QVERIFY(application->video().offering());
-        QCOMPARE(application->video().offer(), QStringLiteral("Video from directory:\none.mkv"));
+        QCOMPARE(application->video().offer(), QStringLiteral("Video from directory: one.mkv"));
         application->video().loadFromDirectory();
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         QCOMPARE(QFileInfo(QString::fromStdString(application->video().session().path())).fileName(), QStringLiteral("one.mkv"));
@@ -694,7 +694,7 @@ private slots:
         QVERIFY(application->openFile(lrc.fileName()));
         QCOMPARE(titles().last(), QStringLiteral("song.ass"));
         QVERIFY(application->video().offering());
-        QCOMPARE(application->video().offer(), QStringLiteral("Video from directory:\nsong.mkv"));
+        QCOMPARE(application->video().offer(), QStringLiteral("Video from directory: song.mkv"));
         application->video().dismissOffer();
         QVERIFY(!application->video().offering());
     }
