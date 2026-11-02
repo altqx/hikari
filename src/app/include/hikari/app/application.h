@@ -7,6 +7,7 @@
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/analytics.h"
 #include "hikari/app/discord_presence.h"
+#include "hikari/app/star_prompt.h"
 #include "hikari/app/crash_reports.h"
 #include "hikari/app/update_checker.h"
 #include "hikari/app/whats_new.h"
@@ -208,6 +209,7 @@ public:
         // Empty paths keep nothing on disk.
         CrashReports::Config crashReports;
         DiscordPresence::Config presence;
+        StarPrompt::Config starPrompt;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -682,6 +684,7 @@ public:
     UpdateChecker &updates() { return *m_updates; }
     Analytics &analytics() { return *m_analytics; }
     DiscordPresence &presence() { return *m_presence; }
+    StarPrompt &starPrompt() { return *m_starPrompt; }
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
@@ -948,6 +951,7 @@ private:
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
     std::unique_ptr<DiscordPresence> m_presence;
+    std::unique_ptr<StarPrompt> m_starPrompt;
     application::VideoSession::State m_videoUsageState = application::VideoSession::State::Closed;
     application::AudioBox::State m_audioUsageState = application::AudioBox::State::Closed;
     QElapsedTimer m_videoOpenClock;
