@@ -5573,6 +5573,14 @@ Co chcesz zrobić?</translation>
         <translation>Sortuj wszystkie linijki według warstwy</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>Sortuj wszystkie linijki według tekstu</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>Sortuj wszystkie linijki według tekstu bez tagów</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>Sortuj zaznaczone linijki według czasu początkowego</translation>
     </message>
@@ -5595,6 +5603,14 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>Sortuj zaznaczone linijki według warstwy</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>Sortuj zaznaczone linijki według tekstu</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>Sortuj zaznaczone linijki według tekstu bez tagów</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6953,6 +6969,22 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Sort by layer</source>
         <translation>Sortuj według warstwy</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>Tekst</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>Sortuj według tekstu</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>Tekst bez tagów</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>Sortuj według tekstu bez tagów</translation>
     </message>
     <message>
         <source>Open subtitle file</source>

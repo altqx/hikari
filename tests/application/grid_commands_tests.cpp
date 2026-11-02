@@ -339,6 +339,72 @@ TEST(SortLines, TextKeysUseTheGivenCollation)
     EXPECT_EQ(order(session), u8"rpqs");
 }
 
+namespace {
+
+constexpr std::string_view kTexts = "[Events]\n"
+                                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,a,0,0,0,,{\\b1}zeta\n"
+                                    "Comment: 0,0:00:01.00,0:00:02.00,Default,b,0,0,0,,alpha\n"
+                                    "Dialogue: 0,0:00:04.00,0:00:05.00,Default,c,0,0,0,,{\\i1}beta\n"
+                                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,d,0,0,0,,{a note}alpha\n"
+                                    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,e,0,0,0,,gamma{\\b0}\n"
+                                    "Dialogue: 0,0:00:00.00,0:00:01.00,Default,f,0,0,0,,alpha\n";
+
+std::u8string actors(const EditSession &s)
+{
+    std::u8string out;
+    for (const auto *l : s.document().lines())
+        out += l->actor;
+    return out;
+}
+
+}
+
+TEST(SortLines, TextSortsTheWholeTextTagsIncludedAndKeepsEqualTextsInOrder)
+{
+    EditSession session{load(kTexts)};
+    const auto steps = session.historySize();
+    ASSERT_TRUE(sortLines(session, SortKey::Text, false));
+    EXPECT_EQ(actors(session), u8"bfeacd");
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Sorting subtitles");
+    EXPECT_TRUE(session.document().lines()[0]->comment);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(actors(session), u8"abcdef");
+}
+
+TEST(SortLines, TextWithoutTagsIgnoresEveryBlockAndKeepsEqualTextsInOrder)
+{
+    EditSession session{load(kTexts)};
+    const auto steps = session.historySize();
+    ASSERT_TRUE(sortLines(session, SortKey::TextWithoutTags, false));
+    EXPECT_EQ(actors(session), u8"bdfcea");
+    EXPECT_EQ(order(session), u8"alpha{a note}alphaalpha{\\i1}betagamma{\\b0}{\\b1}zeta");
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_TRUE(session.document().lines()[0]->comment);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(actors(session), u8"abcdef");
+}
+
+TEST(SortLines, TextKeysSortTheSelectedLinesAmongTheirOwnRows)
+{
+    EditSession session{load(kTexts)};
+    const auto lines = session.document().lines();
+    session.setSelection(Selection{lines[0]->id, {lines[0]->id, lines[2]->id, lines[3]->id}, lines[0]->id, {}});
+    ASSERT_TRUE(sortLines(session, SortKey::TextWithoutTags, true));
+    EXPECT_EQ(actors(session), u8"dbcaef");
+    ASSERT_TRUE(sortLines(session, SortKey::Text, true));
+    EXPECT_EQ(actors(session), u8"abcdef");
+}
+
+TEST(SortLines, AnUnclosedBraceIsText)
+{
+    EditSession session{load("[Events]\n"
+                             "Dialogue: 0,0:00:00.00,0:00:01.00,Default,a,0,0,0,,{open b\n"
+                             "Dialogue: 0,0:00:00.00,0:00:01.00,Default,b,0,0,0,,{x}c\n")};
+    ASSERT_TRUE(sortLines(session, SortKey::TextWithoutTags, false));
+    EXPECT_EQ(actors(session), u8"ba");
+}
+
 TEST_F(GridCommandsTest, FpsFromVideoScalesFromTheFirstSelectedLine)
 {
     select({a, b}, a);

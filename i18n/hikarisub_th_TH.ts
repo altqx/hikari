@@ -5499,6 +5499,14 @@ What would you like to do?</source>
         <translation>จัดเรียงทุกบรรทัดตามชั้น</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>จัดเรียงทุกบรรทัดตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>จัดเรียงทุกบรรทัดตามข้อความที่ไม่มีแท็ก</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>จัดเรียงบรรทัดที่เลือกตามเวลาเริ่มต้น</translation>
     </message>
@@ -5521,6 +5529,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>จัดเรียงบรรทัดที่เลือกตามชั้น</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>จัดเรียงบรรทัดที่เลือกตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>จัดเรียงบรรทัดที่เลือกตามข้อความที่ไม่มีแท็ก</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6873,6 +6889,22 @@ What would you like to do?</source>
     <message>
         <source>Sort by layer</source>
         <translation>จัดเรียงตามชั้น</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>ข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>จัดเรียงตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>ข้อความที่ไม่มีแท็ก</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>จัดเรียงตามข้อความที่ไม่มีแท็ก</translation>
     </message>
     <message>
         <source>Open subtitle file</source>

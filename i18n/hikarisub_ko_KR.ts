@@ -5499,6 +5499,14 @@ What would you like to do?</source>
         <translation>모든 줄 정렬 / 레이어</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>모든 줄 정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>모든 줄 정렬 / 태그가 없는 글자</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>선택한 줄 정렬 / 시작 시간</translation>
     </message>
@@ -5521,6 +5529,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>선택한 줄 정렬 / 레이어</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>선택한 줄 정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>선택한 줄 정렬 / 태그가 없는 글자</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6873,6 +6889,22 @@ What would you like to do?</source>
     <message>
         <source>Sort by layer</source>
         <translation>정렬 / 레이어</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>글자</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>태그가 없는 글자</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>정렬 / 태그가 없는 글자</translation>
     </message>
     <message>
         <source>Open subtitle file</source>
