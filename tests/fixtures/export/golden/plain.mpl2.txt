@@ -1,0 +1,6 @@
+[10][35]Good morning.
+[40][62]You're late again.|We start at eight.
+[70][90]/Why does he always say that?
+[85][100]Hurry & bring the <notes>!
+[110][130]Chapter one
+[150][173]Wrong Right, see you tomorrow.

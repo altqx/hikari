@@ -268,6 +268,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Repeat last run"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Kanji timer"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Getting started"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Export as"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Join with previous line using the audio selection"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shift selected lines by frames: start at video"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shift selected lines by frames: end at video"),

@@ -282,6 +282,8 @@ hikari_add_qttest(hikari_ui_translation_preset_tests SOURCES translation_preset_
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+hikari_add_qttest(hikari_ui_export_dialog_tests SOURCES export_dialog_tests.cpp
+    LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_karaoke_preset_tests SOURCES karaoke_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_karaoke_preset_tests PRIVATE

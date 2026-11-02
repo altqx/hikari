@@ -1191,6 +1191,18 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_EXPORT_SUBS_AS"
+                    help: qsTr("Writes a copy of the document in another format")
+                    iconRole: "export"
+                    objectName: "exportAsMenuItem"
+                    action: Action {
+                        id: exportAsAction
+                        text: qsTr("&Export as…")
+                        enabled: root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXPORT_SUBS_AS")) root.openExportDialog()
+                    }
+                }
+                ShellMenuItem {
                     command: "GLOBAL_SAVE_TRANSLATION"
                     help: qsTr("Save translation")
                     iconRole: "save-translation"
@@ -6784,6 +6796,15 @@ ApplicationWindow {
         karaokeCheckLoader.item.openDialog()
     }
     Loader {
+        id: exportLoader
+        active: false
+        sourceComponent: ExportDialog { app: root.app }
+    }
+    function openExportDialog() {
+        exportLoader.active = true
+        exportLoader.item.openDialog()
+    }
+    Loader {
         id: kanjiTimerLoader
         active: false
         sourceComponent: KanjiTimerDialog {
@@ -7055,6 +7076,7 @@ ApplicationWindow {
     function globalActions() {
         return {
         GLOBAL_SAVE_SUBS: saveAction, GLOBAL_SAVE_ALL_SUBS: saveAllAction, GLOBAL_SAVE_SUBS_AS: saveAsAction,
+        GLOBAL_EXPORT_SUBS_AS: exportAsAction,
         GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
         GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
         GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,

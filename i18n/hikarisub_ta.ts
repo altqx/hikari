@@ -2751,6 +2751,262 @@ Should not exceed 15 characters per second</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>வரைபடம் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>கிளிப் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>அசைவூட்டம் (\t) நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>நகர்வு அதன் தொடக்க நிலையாக வைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>நகர்வு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>மங்கல் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>சுழற்சி அல்லது சாய்வு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>எழுத்துரு, அளவு, அளவீடு அல்லது இடைவெளிக் குறிகள் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>கரை, நிழல், மங்கலாக்கம், ஒளிபுகுதன்மை அல்லது பிற நிறங்கள் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>உரை நிறம் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>சில தடிப்பு, சாய்வு, அடிக்கோடு அல்லது அடித்தல் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>நிலை அல்லது சீரமைப்பு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>கரோக்கி நேரமிடல் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>உருளும் விளைவு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>ஒன்றின்மேல் வரும் வரிகளுடன் ஒன்றிணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>ஏற்றுமதி செய்ய எதுவும் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>கோப்பின் முழுப் பாதையை உள்ளிடு, அல்லது உலாவு… மூலம் தேர்ந்தெடு</translation>
+    </message>
+    <message>
+        <source>“%1” is a folder.</source>
+        <translation>“%1” ஒரு கோப்புறை.</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>1 முதல் 1000 வரையிலான சட்டக வீதத்தை உள்ளிடு.</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>%1 ஐ எழுத முடியவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>வேறு வடிவில் ஏற்றுமதி</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>சாதாரண உரை</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>தலைப்பிடப்படாத</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>“%1” ஐ மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>இந்தப் பெயரில் ஒரு கோப்பு ஏற்கனவே உள்ளது.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>மாற்று</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>வடிவம்</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>அனைத்தும் (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>தேர்ந்தெடுத்தவை (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>காட்டப்படுபவை (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>சேமிக்கும் இடம்</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>உலாவு…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>%1 கோப்புகள் (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>Alignment as %1 tags</source>
+        <translation>%1 குறிகளாக சீரமைப்பு</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>உரை நிறங்களை font குறிகளாக</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>நிலைகளும் சீரமைப்பும்</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>பாணிகளும் நிறங்களும்</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>கரோக்கி நேரமிடல்</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>தொடக்க, முடிவு நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>நடிகர் பெயர்கள்</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகளை ஒரே வசனமாக ஒன்றிணை</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>Use video frame rate</source>
+        <translation>காணொளியின் சட்டக வீதத்தைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer இல் முடிவு நேரங்கள் இல்லை: ஒன்றின்மேல் ஒன்று வரும் வரிகள் ஒன்றிணைக்கப்படும், வெற்று வசனம் திரையை அழிக்கும்.</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>வடிவமைப்பு, நிறங்கள், நிலைகள் வைக்கப்படாது.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to “%1”.</source>
+        <translation>
+            <numerusform>%n வரி “%1” க்கு ஏற்றுமதி செய்யப்பட்டது.</numerusform>
+            <numerusform>%n வரிகள் “%1” க்கு ஏற்றுமதி செய்யப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>%n குறிப்பு வரி தவிர்க்கப்பட்டது.</numerusform>
+            <numerusform>%n குறிப்பு வரிகள் தவிர்க்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>காட்ட எதுவும் இல்லாத %n வரி தவிர்க்கப்பட்டது.</numerusform>
+            <numerusform>காட்ட எதுவும் இல்லாத %n வரிகள் தவிர்க்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>இந்த வடிவம் வைத்திருக்க முடியாதவை. ஒரு வரியைக் காட்ட அதைத் தேர்ந்தெடு.</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>எதுவும் விடுபடவோ தோராயமாக்கப்படவோ இல்லை</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>ஏற்றுமதி அறிக்கை</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>வரி</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>விடுபட்டவை அல்லது தோராயமானவை</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>வரி %1: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>ஏற்றுமதி செய்</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message>
         <source>Font catalogues</source>
@@ -5896,6 +6152,10 @@ Failed to copy %2 fonts.</source>
         <translation>தொடங்குதல்</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>வேறு வடிவில் ஏற்றுமதி</translation>
+    </message>
+    <message>
         <source>Join with previous line using the audio selection</source>
         <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
     </message>
@@ -6905,6 +7165,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Save as</source>
         <translation>எனச் சேமி</translation>
+    </message>
+    <message>
+        <source>Writes a copy of the document in another format</source>
+        <translation>ஆவணத்தின் நகலை வேறு வடிவில் எழுதும்</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>வேறு வடிவில் ஏற்றுமதி… (&amp;E)</translation>
     </message>
     <message>
         <source>Save translation</source>

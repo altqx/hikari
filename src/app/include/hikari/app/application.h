@@ -515,6 +515,13 @@ public:
     Q_INVOKABLE QVariantMap checkKaraoke() const;
     // False when the target changed, lacks the Line, or the editor refuses to leave it.
     Q_INVOKABLE bool showKaraokeLine(qulonglong document, qulonglong line);
+    // {format, options (export flags, lines "all"/"selected"/"shown", fps), extensions (by format),
+    // all, selected, shown (Dialogue counts), videoFps (0 without video), folder, name}: the editing
+    // target's last export choice, else the last export's; empty without an editing target.
+    Q_INVOKABLE QVariantMap exportSetup() const;
+    // Writes a copy of the editing target (its Document is never changed) and remembers the choice.
+    // {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number, losses}]}.
+    Q_INVOKABLE QVariantMap exportTo(const QUrl &file, const QString &format, const QVariantMap &options);
     // A tab: {tab (0 Find, 1 Find and replace, 2 Find in subtitles), find, replace,
     // styles, filters, folder, field, lines, matchCase, regex, startOfText, endOfText,
     // includeComments, skipTags, skipText, subfolders, hiddenFolders} plus the recent
@@ -868,6 +875,7 @@ private:
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
+    QString exportKey(application::DocumentId document) const;
     application::LineVisible actionLines(const application::EditSession &session) const;
     void rememberColumns(bool paste, int columns);
     void protectReference();

@@ -4079,8 +4079,7 @@
    "legacy": [],
    "surfaces": [
     "menu:file"
-   ],
-   "pending": "EX1 #448"
+   ]
   },
   {
    "role": "plugins",
