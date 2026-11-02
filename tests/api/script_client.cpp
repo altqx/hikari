@@ -69,6 +69,37 @@ const Json *pointer(const Json &value, std::string_view at)
     return current;
 }
 
+ScriptClient::ScriptClient(Api &api) : m_api(api)
+{
+    const Caller callers[2] = {aiCaller(), pluginCaller()};
+    for (int i = 0; i < 2; ++i) {
+        m_heard[i] = Json::array();
+        m_subscriptions[i] = m_api.subscribe(callers[i], {}, [this, i](const Event &event) {
+            const Registry &registry = Api::registry();
+            const EventType *type = registry.findEvent(event.name);
+            EXPECT_TRUE(type) << event.name;
+            if (const auto failure = type ? validate(type->data, event.data, registry.defs()) : std::nullopt)
+                ADD_FAILURE() << event.name << " breaks its schema at " << failure->path << ": " << failure->message;
+            m_heard[i].push(Json::object({{"event", Json(event.name)}, {"data", event.data}}));
+        });
+    }
+}
+
+ScriptClient::~ScriptClient()
+{
+    for (const std::uint64_t id : m_subscriptions)
+        m_api.unsubscribe(id);
+}
+
+void ScriptClient::checkEvents(const Json &line, const std::string &where)
+{
+    const Json *as = line.find("as");
+    Json &heard = m_heard[as && as->asString() == "plugin" ? 1 : 0];
+    if (auto problem = mismatch(substitute(*line.find("events")), heard))
+        ADD_FAILURE() << where << " events: " << *problem << "\n" << heard.dump(2);
+    heard = Json::array();
+}
+
 Result ScriptClient::call(const Caller &caller, std::string_view operation, const Json &params)
 {
     std::optional<Result> answer;
@@ -80,9 +111,9 @@ Result ScriptClient::call(const Caller &caller, std::string_view operation, cons
         return fail("test_no_reply", std::string(operation) + " did not reply before returning");
     if (*answer) {
         const Registry &registry = Api::registry();
-        if (const Operation *op = registry.find(operation))
-            if (auto failure = validate(op->result, **answer, registry.defs()))
-                ADD_FAILURE() << operation << " result breaks its schema at " << failure->path << ": "
+        const Operation *op = registry.find(operation);
+        if (const auto failure = op ? validate(op->result, **answer, registry.defs()) : std::nullopt)
+            ADD_FAILURE() << operation << " result breaks its schema at " << failure->path << ": "
                               << failure->message << "\n"
                               << (*answer)->dump(2);
     }
@@ -112,6 +143,10 @@ Json ScriptClient::substitute(const Json &value) const
 
 void ScriptClient::step(const Json &line, const std::string &where)
 {
+    if (line.find("events")) {
+        checkEvents(line, where);
+        return;
+    }
     const Json *operation = line.find("call");
     if (!operation || !operation->isString()) {
         ADD_FAILURE() << where << ": a step needs \"call\"";
@@ -129,20 +164,22 @@ void ScriptClient::step(const Json &line, const std::string &where)
         }
         EXPECT_EQ(result.error().code, code->asString()) << what << ": " << result.error().message;
         EXPECT_FALSE(result.error().message.empty()) << what;
-        if (const Json *data = line.find("errorData"))
-            if (auto problem = mismatch(*data, result.error().data))
-                ADD_FAILURE() << what << ": error data " << *problem;
+        const Json *data = line.find("errorData");
+        if (const auto problem = data ? mismatch(substitute(*data), result.error().data) : std::nullopt)
+            ADD_FAILURE() << what << ": error data " << *problem;
         return;
     }
     if (!result) {
         ADD_FAILURE() << what << ": " << result.error().code << ": " << result.error().message;
         return;
     }
-    if (const Json *expected = line.find("result"))
+    if (const Json *expected = line.find("result")) {
         if (auto problem = mismatch(substitute(*expected), *result))
             ADD_FAILURE() << what << ": " << *problem << "\n" << result->dump(2);
-    if (const Json *exact = line.find("exact"))
+    }
+    if (const Json *exact = line.find("exact")) {
         EXPECT_EQ(result->dump(), substitute(*exact).dump()) << what;
+    }
     if (const Json *save = line.find("save"))
         for (const Json::Member &m : save->asObject()) {
             const Json *value = pointer(*result, m.value.asString());
