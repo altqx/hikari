@@ -10540,7 +10540,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation>Pliki audio i wideo (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
+        <translation type="vanished">Pliki audio i wideo (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -14539,6 +14539,21 @@ po czasie końcowym w milisekundach</translation>
     <message>
         <source>Cannot convert video to RGBA</source>
         <translation>Nie można przekonwertować wideo na RGBA</translation>
+    </message>
+    <message>
+        <source>This video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
+        <translation>Tego wideo nie można odtworzyć na tym komputerze. Jego klatki nadal są widoczne podczas pauzy, a przewijanie i przechodzenie o klatkę działają.</translation>
+    </message>
+    <message>
+        <source>%1 video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
+        <translation>Wideo %1 nie można odtworzyć na tym komputerze. Jego klatki nadal są widoczne podczas pauzy, a przewijanie i przechodzenie o klatkę działają.</translation>
+    </message>
+    <message>
+        <source>Play video</source>
+        <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
+        <translation>Odtwarzanie wideo</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

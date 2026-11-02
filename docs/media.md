@@ -2,6 +2,23 @@
 
 **Accepted pipeline proposal, 2026-09-27.** [Altqx approved the current proposal](https://github.com/altqx/hikari/issues/25#issuecomment-5853349062), including FFMS2 indexed editing, Qt Multimedia as the first general-player implementation to qualify, the CPU/libass reference followed by scene-graph presentation, and optional Windows adapters. In the live review, altqx accepted general-player ownership of audio and clock while that mode is active, and **PortAudio editor output with QSG waveform geometry and cached spectrum tiles**. [ADR 0009](adr/0009-active-mode-media-transport.md) and [ADR 0010](adr/0010-portaudio-editor-output.md) record the choices for [Choose the video decode, playback and presentation pipeline](https://github.com/altqx/hikari/issues/25) and [Choose the audio output backend and waveform renderer](https://github.com/altqx/hikari/issues/26). They select responsibilities and implementation direction; they do not certify a native pipeline, timing accuracy or complete player parity.
 
+## Containers and codecs
+
+Two decoders read a video: the editing path (FFMS2 on HikariSub's FFmpeg 7.1.2, which has every FFmpeg software decoder, plus dav1d for AV1 and zlib for compressed Matroska tracks) gives the paused frames, seeking, stepping, keyframes and the audio box; playback goes through Qt Multimedia, which brings its own FFmpeg (n9.0.1 in Qt 6.12, Windows and Linux alike, without dav1d).
+
+| | Editing (paused frames, seek, step, audio box) | Playback |
+| --- | --- | --- |
+| Containers | Matroska (`.mkv`, `.mka`), WebM (`.webm`), MP4/QuickTime (`.mp4`, `.m4a`, `.mov`), AVI, MPEG-TS (`.ts`, `.m2ts`), Ogg (`.ogg`, `.opus`, `.ogm`), ASF/WMV, and WAV, W64, FLAC, AC-3, AAC, MP3 audio | The same |
+| H.264, HEVC, MPEG-1/2/4, VP8, VP9 | Yes | Yes |
+| AV1 | Yes (dav1d) | Only with a hardware AV1 decoder: VAAPI or NVDEC on Linux, D3D11VA, D3D12VA or DXVA2 on Windows |
+| VP9 with alpha | The colour planes; transparency is ignored | The same |
+| Vorbis, Opus, AAC, AC-3, MP3, FLAC, PCM | Yes | Yes |
+| zlib-compressed Matroska subtitle tracks | Yes | Not applicable |
+
+Qt's player reports no error for a video stream it cannot decode: it plays the sound and shows no frame. So a seek that gets no frame within 5 seconds from a file the player has shown no frame of fails (`PlayerError::NoVideoFrame`), playback stops, and a notice says "AV1 video can't be played on this computer", repeated at each later Play. The paused frames still come from the editing path. A file that has shown a frame never gets this error, so a seek past the end does not mark it. `QMediaFormat`'s decoder list cannot predict this: Qt 6.12 lists AV1 and not VP8 or VP9.
+
+The samples are in `tests/fixtures/webm` (made by its `make-fixtures.sh`), the zlib track in `tests/fixtures/matroska-muxed/zlib.mkv`; `indexed_source_tests` (`Webm*`), `general_player_tests` (`webmPlaysFromASeekedTime`, `av1PlaysOrFailsWithoutAFrame`) and `matroska_tests` (`ZlibCompressedTracksReadAsTheirUncompressedText`) cover them.
+
 ## Active mode owns sound and playback time
 
 HikariSub's application transport coordinates two modes behind explicit backend ports:

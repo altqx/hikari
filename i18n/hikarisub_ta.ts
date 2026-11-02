@@ -10484,7 +10484,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation>ஆடியோ மற்றும் வீடியோ கோப்புகள் (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
+        <translation type="vanished">ஆடியோ மற்றும் வீடியோ கோப்புகள் (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -14457,6 +14457,21 @@ after the end time in milliseconds</source>
     <message>
         <source>Cannot convert video to RGBA</source>
         <translation>வீடியோவை RGBA ஆக மாற்ற முடியாது</translation>
+    </message>
+    <message>
+        <source>This video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
+        <translation>இந்தக் கணினியில் இந்த வீடியோவை இயக்க முடியாது. இடைநிறுத்தியிருக்கும்போது அதன் சட்டகங்கள் தொடர்ந்து தெரியும்; தேடுதலும் சட்டகம் சட்டகமாக நகர்தலும் வேலை செய்யும்.</translation>
+    </message>
+    <message>
+        <source>%1 video can&apos;t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
+        <translation>இந்தக் கணினியில் %1 வீடியோவை இயக்க முடியாது. இடைநிறுத்தியிருக்கும்போது அதன் சட்டகங்கள் தொடர்ந்து தெரியும்; தேடுதலும் சட்டகம் சட்டகமாக நகர்தலும் வேலை செய்யும்.</translation>
+    </message>
+    <message>
+        <source>Play video</source>
+        <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
+        <translation>வீடியோவை இயக்கு</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

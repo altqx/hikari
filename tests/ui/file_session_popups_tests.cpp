@@ -230,6 +230,16 @@ private slots:
         QVERIFY(!differs());
     }
 
+    void theAudioPickerListsWebmMatroskaAudioAndOpus()
+    {
+        start();
+        QObject *dialog = named("audioDialog");
+        QVERIFY(dialog);
+        const QString audio = dialog->property("nameFilters").toStringList().value(0);
+        for (const char *pattern : {"*.webm", "*.mka", "*.opus"})
+            QVERIFY2(audio.contains(QLatin1String(pattern)), qPrintable(audio));
+    }
+
     void pickersStartWhereTheirKindWasLeft()
     {
         start();

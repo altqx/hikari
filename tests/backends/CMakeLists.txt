@@ -95,7 +95,8 @@ hikari_add_gtest(hikari_backends_indexed_source_tests SOURCES indexed_source_tes
 target_compile_definitions(hikari_backends_indexed_source_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
-    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
+    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}"
+    HIKARI_WEBM_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/webm")
 add_executable(hikari_failing_media_helper failing_media_helper.cpp)
 target_link_libraries(hikari_failing_media_helper PRIVATE hikari_helper_endpoint)
 add_dependencies(hikari_backends_indexed_source_tests hikari_media_helper hikari_failing_media_helper
@@ -178,7 +179,8 @@ hikari_add_qttest(hikari_backends_general_player_tests SOURCES general_player_te
     LIBRARIES hikari_backends Qt6::Gui Qt6::Multimedia)
 target_compile_definitions(hikari_backends_general_player_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
-    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
+    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}"
+    HIKARI_WEBM_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/webm")
 add_dependencies(hikari_backends_general_player_tests hikari_media_helper hikari_media_fixtures)
 
 hikari_add_qttest(hikari_backends_video_frame_bgra_tests SOURCES video_frame_bgra_tests.cpp
@@ -316,7 +318,8 @@ target_include_directories(hikari_backends_matroska_tests PRIVATE "${PROJECT_SOU
 target_compile_definitions(hikari_backends_matroska_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
-    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
+    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}"
+    HIKARI_MUXED_MKV="${PROJECT_SOURCE_DIR}/tests/fixtures/matroska-muxed")
 add_dependencies(hikari_backends_matroska_tests hikari_media_helper hikari_media_fixtures)
 hikari_add_gtest(hikari_backends_matroska_capture_tests SOURCES matroska_capture_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends)
