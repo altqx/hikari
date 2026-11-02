@@ -210,8 +210,6 @@ ApplicationWindow {
     }
 
     function defaultLayout() {
-        dockingArea.addDockWidget(searchDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 280))
-        searchDock.close()
         dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
         dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 520))
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
@@ -221,13 +219,9 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        editorDock.addDockWidgetAsTab(timingDock)
-        editorDock.addDockWidgetAsTab(automationDock)
         editorDock.addDockWidgetAsTab(stylesDock)
         editorDock.addDockWidgetAsTab(templateDock)
         editorDock.setAsCurrentTab()
-        timingDock.close()
-        automationDock.close()
         stylesDock.close()
         templateDock.close()
         dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
@@ -346,6 +340,22 @@ ApplicationWindow {
             dockingArea.addDockWidget(templateDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
 
+    function addRightOfGrid(dock) {
+        const grid = gridDock.isOpen && !gridDock.isFloating
+        const left = Docking.placeInLayout("Grid").x
+        const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf("Grid"))
+        if (column) {
+            column.addDockWidgetAsTab(dock)
+        } else {
+            const third = Math.round((grid ? root.workspaceLayout.panelSize(gridDock).width : dockingArea.width) / 3)
+            const width = Math.min(Docking.minimumSize(dock.uniqueName).width, third)
+            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnRight, grid ? gridDock : null, Qt.size(width, 0))
+        }
+        const moved = Docking.placeInLayout("Grid").x - left
+        if (grid && moved !== 0)
+            Docking.resizeInLayout("Grid", moved, 0, 0, 0)
+    }
+
     function openAutomationRun(runId) {
         if (root.videoFullscreen.active)
             root.videoFullscreen.leave()
@@ -358,6 +368,14 @@ ApplicationWindow {
                                           misspellPanel, templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                      searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
+    Instantiator {
+        model: root.dockList
+        delegate: Connections {
+            required property var modelData
+            target: modelData
+            function onOpenedWithoutPlace() { root.openAtFirstPlace(modelData) }
+        }
+    }
     WheelScroll {}
     KeyRouter {
         id: keyRouter
@@ -541,6 +559,14 @@ ApplicationWindow {
         if (!root.panelAvailable(dock))
             return
         root.analytics.panelOpened(dock.uniqueName)
+        root.openAtFirstPlace(dock)
+        root.workspaceLayout.keepFloatingPanelsOnScreen()
+        dock.raise()
+        if (dock === spellDock && !spellTool.checking)
+            spellTool.start()
+        root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
+    }
+    function openAtFirstPlace(dock) {
         if (dock === originalDock)
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace("Log"))
@@ -553,13 +579,10 @@ ApplicationWindow {
             dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         else if (dock === templateDock && !Docking.hasPlace("Template"))
             root.addTemplate()
+        else if (!Docking.hasPlace(dock.uniqueName))
+            root.addRightOfGrid(dock)
         else
             dock.open()
-        root.workspaceLayout.keepFloatingPanelsOnScreen()
-        dock.raise()
-        if (dock === spellDock && !spellTool.checking)
-            spellTool.start()
-        root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
 
     function panelOf(item) {
@@ -2826,7 +2849,7 @@ ApplicationWindow {
         uniqueName: "Classic"
         enabled: !homePage.visible
 
-        KDDW.DockWidget {
+        PanelDock {
             id: videoDock
             objectName: "videoDock"
             uniqueName: "Video"
@@ -3109,7 +3132,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: audioDock
             objectName: "audioDock"
             uniqueName: "Audio"
@@ -4597,7 +4620,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: originalDock
             objectName: "originalDock"
             uniqueName: "Original"
@@ -4635,7 +4658,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: editorDock
             objectName: "editorDock"
             uniqueName: "Editor"
@@ -4879,7 +4902,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: gridDock
             objectName: "gridDock"
             uniqueName: "Grid"
@@ -5287,7 +5310,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: referenceDock
             objectName: "referenceDock"
             uniqueName: "Reference"
@@ -5314,7 +5337,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: timingDock
             objectName: "timingDock"
             uniqueName: "Timing"
@@ -5338,7 +5361,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: searchDock
             objectName: "searchDock"
             uniqueName: "Search"
@@ -5360,7 +5383,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: automationDock
             objectName: "automationDock"
             uniqueName: "Automation"
@@ -5390,7 +5413,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: spellDock
             objectName: "spellDock"
             uniqueName: "Spellchecker"
@@ -5417,7 +5440,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: stylesDock
             objectName: "stylesDock"
             uniqueName: "Styles"
@@ -5445,7 +5468,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: templateDock
             objectName: "templateDock"
             uniqueName: "Template"
@@ -5472,7 +5495,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: logDock
             objectName: "logDock"
             uniqueName: "Log"
@@ -5492,7 +5515,7 @@ ApplicationWindow {
                 }
             }
         }
-        KDDW.DockWidget {
+        PanelDock {
             id: misspellDock
             objectName: "misspellDock"
             uniqueName: "FixMinorErrors"
