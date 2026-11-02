@@ -280,6 +280,8 @@ const std::vector<SettingDefinition> &definitions()
         {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
         {"privacy.usageDataId", "", String, Profile, Mapped, false, std::string()},
         {"privacy.alwaysSendCrashReports", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordPresence", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordFileName", "", Bool, Profile, Mapped, false, false},
         {"audio.kanjiTimerMulti", "", Bool, Profile, Mapped, false, false},
         {"audio.kanjiTimerFurigana", "", Bool, Profile, Mapped, false, false},
         // Windows only: 0 the built-in player, 1 the DirectShow adapter; never a fallback.

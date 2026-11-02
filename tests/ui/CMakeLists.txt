@@ -281,6 +281,9 @@ hikari_add_qttest(hikari_ui_export_dialog_tests SOURCES export_dialog_tests.cpp
     LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_karaoke_preset_tests SOURCES karaoke_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+target_compile_definitions(hikari_ui_karaoke_preset_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_karaoke_preset_tests hikari_media_helper hikari_media_fixtures)
 hikari_add_qttest(hikari_ui_saved_layouts_tests SOURCES saved_layouts_tests.cpp
     LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets
     PARTS layouts kept=unusableLayoutsAreKept)
@@ -297,6 +300,7 @@ add_executable(hikari_crash_probe crash_probe.cpp)
 target_link_libraries(hikari_crash_probe PRIVATE hikari_composition)
 hikari_add_qttest(hikari_ui_analytics_tests SOURCES analytics_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_analytics_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+hikari_add_qttest(hikari_ui_discord_presence_tests OFFSCREEN_ONLY SOURCES discord_presence_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_launcher_tests SOURCES launcher_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_crash_report_tests SOURCES crash_report_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_crash_report_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

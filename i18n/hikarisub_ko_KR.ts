@@ -1887,6 +1887,17 @@ in tag &apos;%3&apos;</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Discord</name>
+    <message>
+        <source>Editing subtitles</source>
+        <translation>자막 편집 중</translation>
+    </message>
+    <message>
+        <source>Get HikariSub</source>
+        <translation>HikariSub 받기</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Documents</name>
     <message>
         <source>Apply to All</source>
@@ -6799,10 +6810,6 @@ What would you like to do?</source>
         <translation>다음 찾기</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>시간 이동 / 타이밍 후처리기 실행</translation>
-    </message>
-    <message>
         <source>Go to start time of line</source>
         <translation>줄 시작 시간으로</translation>
     </message>
@@ -9295,6 +9302,18 @@ removing audio cache files.</source>
     <message>
         <source>This copy does not install updates itself: the update window opens the download page.</source>
         <translation>이 사본은 업데이트를 직접 설치하지 않으며, 업데이트 창에서 다운로드 페이지를 엽니다.</translation>
+    </message>
+    <message>
+        <source>Show what I am doing in Discord</source>
+        <translation>Discord에 내 활동 표시</translation>
+    </message>
+    <message>
+        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
+        <translation>Discord 상태에 자막 편집 중, 모드와 경과 시간이 표시됩니다. 동영상, 자막 내용이나 줄 수는 표시되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Include the file name</source>
+        <translation>파일 이름 포함</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

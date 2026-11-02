@@ -1907,6 +1907,17 @@ in tag &apos;%3&apos;</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Discord</name>
+    <message>
+        <source>Editing subtitles</source>
+        <translation>வசனங்களைத் திருத்துகிறார்</translation>
+    </message>
+    <message>
+        <source>Get HikariSub</source>
+        <translation>HikariSub-ஐப் பெறுக</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Documents</name>
     <message>
         <source>Apply to All</source>
@@ -6841,10 +6852,6 @@ What would you like to do?</source>
         <translation>அடுத்ததை தேடு</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>நேரங்களை நகர்த்தவும் / நேரப் பின்செயலாக்கியை இயக்கவும்</translation>
-    </message>
-    <message>
         <source>Go to start time of line</source>
         <translation>வரியின் தொடக்க நேரத்திற்குச் செல்லுங்கள்</translation>
     </message>
@@ -9348,6 +9355,18 @@ removing audio cache files.</source>
     <message>
         <source>This copy does not install updates itself: the update window opens the download page.</source>
         <translation>இந்த நகல் புதுப்பிப்புகளைத் தானே நிறுவாது: புதுப்பிப்புச் சாளரம் பதிவிறக்கப் பக்கத்தைத் திறக்கும்.</translation>
+    </message>
+    <message>
+        <source>Show what I am doing in Discord</source>
+        <translation>நான் செய்வதை Discord-இல் காட்டு</translation>
+    </message>
+    <message>
+        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
+        <translation>உங்கள் Discord நிலையில் வசனங்களைத் திருத்துகிறார், பயன்முறை மற்றும் எவ்வளவு நேரம் என்பது காட்டப்படும். காணொளி, உங்கள் வசனங்கள் அல்லது வரி எண்ணிக்கை ஒருபோதும் காட்டப்படாது.</translation>
+    </message>
+    <message>
+        <source>Include the file name</source>
+        <translation>கோப்பின் பெயரைச் சேர்</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

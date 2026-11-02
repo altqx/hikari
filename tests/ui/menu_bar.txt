@@ -48,7 +48,6 @@ Edit > Find [GLOBAL_SEARCH]
 Edit > Find next [GLOBAL_FIND_NEXT]
 Subtitles
 Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
-Subtitles > Shift times / run timing postprocessor [GLOBAL_SHIFT_TIMES]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > ASS file properties [GLOBAL_OPEN_ASS_PROPERTIES]
 Subtitles > Conversion >

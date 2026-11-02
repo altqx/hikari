@@ -45,6 +45,9 @@ libfontconfig.so.1 fontconfig
 libfreetype.so.6 freetype2
 libglib-2.0.so.0 glib2
 libgthread-2.0.so.0 glib2
+libgio-2.0.so.0 glib2
+libgobject-2.0.so.0 glib2
+libsecret-1.so.0 libsecret
 libdbus-1.so.3 dbus
 libasound.so.2 alsa-lib
 libpulse.so.0 libpulse

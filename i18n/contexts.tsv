@@ -4,6 +4,7 @@ HikariSub.Audio	The audio panel: waveform and spectrum, playback, audio files an
 HikariSub.Automation	Automation: the manager, script notices and dialogs, macros and their shortcuts
 HikariSub.Colours	The colour pickers and the screen dropper
 HikariSub.Conversion	Format conversion, the FPS change and resampling (subtitle resolution)
+HikariSub.Discord	What Discord shows while Discord presence is on (Settings › Updates and privacy)
 HikariSub.Documents	Opening, saving, closing and reloading Documents; Untitled Documents, associated files, refused commands
 HikariSub.Editor	The line editor panel: text fields and their menu, the line inspector, counters, alignment, tag buttons
 HikariSub.Fonts	The font collector, font catalogs, fonts from subtitles and the font chooser
