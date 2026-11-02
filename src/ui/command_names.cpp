@@ -273,6 +273,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shift selected lines by frames: end at video"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shift following lines by frames: start at video"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shift following lines by frames: end at video"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Plugins"),
 };
 
 constexpr const char *kHotkeyWindows[] = {
