@@ -2793,6 +2793,265 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>Usunięto rysunek</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>Usunięto wycinek</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>Usunięto animację (\t)</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>Ruch zachowany jako położenie początkowe</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>Usunięto ruch</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>Usunięto zanikanie</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>Usunięto obrót lub pochylenie</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>Usunięto tagi czcionki, rozmiaru, skali lub odstępów</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>Usunięto obramowanie, cień, rozmycie, przezroczystość lub inne kolory</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>Usunięto kolor tekstu</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>Usunięto część pogrubienia, kursywy, podkreślenia lub przekreślenia</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>Usunięto położenie lub wyrównanie</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>Usunięto timing karaoke</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>Usunięto efekt przewijania</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>Scalono z nakładającymi się linijkami</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>Nie ma nic do wyeksportowania.</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>Wpisz pełną ścieżkę pliku albo wybierz go przyciskiem Przeglądaj…</translation>
+    </message>
+    <message>
+        <source>%1 is a folder.</source>
+        <translation>%1 jest folderem.</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t write %1: %2</source>
+        <translation>Nie można zapisać %1: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>Eksportuj jako</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>Zwykły tekst</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>Bez nazwy</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>Zastąpić „%1”?</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>Plik o tej nazwie już istnieje.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Zastąp</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>Wszystkie (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>Zaznaczone (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>Widoczne (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>Zapisz w</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>Przeglądaj…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>Pliki %1 (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>Opcje</translation>
+    </message>
+    <message>
+        <source>Keep alignment as %1 tags</source>
+        <translation>Zachowaj wyrównanie jako tagi %1</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>Kolory tekstu jako tagi font</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>Położenie i wyrównanie</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>Style i kolory</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>Timing karaoke</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>Czas początku i końca</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>Nazwy aktorów</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>Scal nakładające się linijki w jeden napis</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>Z wideo</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer nie ma czasów końca: nakładające się linijki są scalane, a pusty napis czyści ekran.</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>Formatowanie, kolory i położenie nie są zachowywane.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to %1.</source>
+        <translation>
+            <numerusform>Wyeksportowano %n linijkę do %1.</numerusform>
+            <numerusform>Wyeksportowano %n linijki do %1.</numerusform>
+            <numerusform>Wyeksportowano %n linijek do %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>Pominięto %n linijkę komentarza.</numerusform>
+            <numerusform>Pominięto %n linijki komentarza.</numerusform>
+            <numerusform>Pominięto %n linijek komentarza.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>Pominięto %n linijkę bez treści do wyświetlenia.</numerusform>
+            <numerusform>Pominięto %n linijki bez treści do wyświetlenia.</numerusform>
+            <numerusform>Pominięto %n linijek bez treści do wyświetlenia.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>Czego format nie mógł zachować. Wybierz linijkę, aby ją pokazać.</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>Nic nie zostało pominięte ani przybliżone</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>Raport eksportu</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>Linijka</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>Pominięte lub przybliżone</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Linijka %1: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Eksportuj</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message>
         <source>Font catalogs</source>
@@ -6018,6 +6277,10 @@ Co chcesz zrobić?</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>Eksportuj jako</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -6978,6 +7241,14 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Save as</source>
         <translation>Zapisz jako</translation>
+    </message>
+    <message>
+        <source>Writes a copy in another format; the open subtitles stay as they are</source>
+        <translation>Zapisuje kopię w innym formacie; otwarte napisy pozostają bez zmian</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>&amp;Eksportuj jako…</translation>
     </message>
     <message>
         <source>Save translation</source>

@@ -175,6 +175,30 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message numerus="yes">
+        <source>Exported %n line(s) to %1.</source>
+        <translation>
+            <numerusform>Exported %n line to %1.</numerusform>
+            <numerusform>Exported %n lines to %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>%n comment line skipped.</numerusform>
+            <numerusform>%n comment lines skipped.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>%n line with nothing to show skipped.</numerusform>
+            <numerusform>%n lines with nothing to show skipped.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message numerus="yes">
         <source>%1 of %n fonts</source>

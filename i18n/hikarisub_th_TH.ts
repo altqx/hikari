@@ -2747,6 +2747,259 @@ Should not exceed 15 characters per second</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>ลบรูปวาดแล้ว</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>ลบคลิปแล้ว</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>ลบภาพเคลื่อนไหว (\t) แล้ว</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>คงการเคลื่อนที่ไว้เป็นตำแหน่งเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>ลบการเคลื่อนที่แล้ว</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>ลบการจางแล้ว</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>ลบการหมุนหรือการเอียงแล้ว</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>ลบแท็กฟอนต์ ขนาด สเกล หรือระยะห่างแล้ว</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>ลบขอบ เงา ความเบลอ ความโปร่งใส หรือสีอื่นแล้ว</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>ลบสีข้อความแล้ว</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>ลบตัวหนา ตัวเอียง ขีดเส้นใต้ หรือขีดฆ่าบางส่วนแล้ว</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>ลบตำแหน่งหรือการจัดตำแหน่งแล้ว</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>ลบการจัดเวลาคาราโอเกะแล้ว</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>ลบเอฟเฟกต์เลื่อนแล้ว</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>รวมกับบรรทัดที่ซ้อนกันแล้ว</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>ไม่มีอะไรให้ส่งออก</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>ป้อนพาธเต็มของไฟล์ หรือเลือกด้วยปุ่ม เลือก…</translation>
+    </message>
+    <message>
+        <source>%1 is a folder.</source>
+        <translation>%1 เป็นโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>ป้อนอัตราเฟรมระหว่าง 1 ถึง 1000</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t write %1: %2</source>
+        <translation>เขียน %1 ไม่ได้: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>ส่งออกเป็น</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>ข้อความธรรมดา</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>ไม่มีชื่อ</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>แทนที่ “%1” หรือไม่</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>มีไฟล์ชื่อนี้อยู่แล้ว</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>แทนที่</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>รูปแบบ</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>ทั้งหมด (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>ที่เลือก (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>ที่แสดง (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>บันทึกที่</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>เลือก…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>ไฟล์ %1 (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>ตัวเลือก</translation>
+    </message>
+    <message>
+        <source>Keep alignment as %1 tags</source>
+        <translation>คงการจัดตำแหน่งไว้เป็นแท็ก %1</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>สีข้อความเป็นแท็ก font</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>ตำแหน่งและการจัดตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>สไตล์และสี</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>จัดเวลาคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>เวลาเริ่มและเวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>ชื่อผู้พูด</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>รวมบรรทัดที่ซ้อนกันเป็นคำบรรยายเดียว</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>อัตราเฟรม</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>จากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer ไม่มีเวลาสิ้นสุด: บรรทัดที่ซ้อนกันจะถูกรวม และคำบรรยายว่างจะล้างหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>จะไม่คงรูปแบบข้อความ สี และตำแหน่งไว้</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to %1.</source>
+        <translation>
+            <numerusform>ส่งออก %n บรรทัดไปยัง %1 แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>ข้ามบรรทัดหมายเหตุ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>ข้าม %n บรรทัดที่ไม่มีอะไรให้แสดง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>สิ่งที่รูปแบบนี้เก็บไว้ไม่ได้ เลือกบรรทัดเพื่อแสดงบรรทัดนั้น</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>ไม่มีสิ่งใดถูกตัดทิ้งหรือประมาณค่า</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>รายงานการส่งออก</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>ตัดทิ้งหรือประมาณค่า</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>ส่งออก</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message>
         <source>Font catalogs</source>
@@ -5944,6 +6197,10 @@ What would you like to do?</source>
         <translation>เริ่มต้นใช้งาน</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>ส่งออกเป็น</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -6898,6 +7155,14 @@ What would you like to do?</source>
     <message>
         <source>Save as</source>
         <translation>บันทึกเป็น</translation>
+    </message>
+    <message>
+        <source>Writes a copy in another format; the open subtitles stay as they are</source>
+        <translation>เขียนสำเนาในรูปแบบอื่น คำบรรยายที่เปิดอยู่จะไม่เปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>&amp;ส่งออกเป็น…</translation>
     </message>
     <message>
         <source>Save translation</source>

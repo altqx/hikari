@@ -6,6 +6,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_reference.cpp
     application_tab_menu.cpp
     application_karaoke.cpp
+    application_export.cpp
     automation_shell.cpp include/hikari/app/automation_shell.h
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h

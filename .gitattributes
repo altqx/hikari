@@ -21,3 +21,6 @@
 
 /tests/ui/layout-fixtures/** -text
 /.githooks/pre-push text eol=lf
+
+# EX1: the export goldens are compared byte for byte (CRLF and LF).
+/tests/fixtures/export/** -text

@@ -1018,7 +1018,6 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
-    "EX1 #448": ["export"],
     "PL4 #416": ["plugins", "plugin-install"],
     "PL6 #418": ["plugin-unverified"],
     "NE2 #424": ["node-editor"],

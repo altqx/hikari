@@ -2747,6 +2747,259 @@ Should not exceed 15 characters per second</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>도형 제거됨</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>클립 제거됨</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>애니메이션(\t) 제거됨</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>이동은 시작 위치로 유지됨</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>이동 제거됨</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>페이드 제거됨</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>회전 또는 기울이기 제거됨</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>글꼴, 크기, 비율 또는 자간 태그 제거됨</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>테두리, 그림자, 흐림, 투명도 또는 다른 색 제거됨</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>글자 색 제거됨</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>일부 굵게, 기울임, 밑줄 또는 취소선 제거됨</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>위치 또는 정렬 제거됨</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>노래방 시간 제거됨</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>스크롤 효과 제거됨</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>겹치는 줄과 병합됨</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>내보낼 내용이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>파일의 전체 경로를 입력하거나 찾아보기…로 고르세요</translation>
+    </message>
+    <message>
+        <source>%1 is a folder.</source>
+        <translation>%1은(는) 폴더입니다.</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>1에서 1000 사이의 프레임 속도를 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t write %1: %2</source>
+        <translation>%1 파일을 쓸 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>다른 형식으로 내보내기</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>일반 텍스트</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>새 자막</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>“%1” 파일을 바꿀까요?</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>같은 이름의 파일이 이미 있습니다.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>바꾸기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>형식</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>전체 (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>선택한 줄 (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>표시된 줄 (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>저장 위치</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>찾아보기…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>%1 파일 (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>옵션</translation>
+    </message>
+    <message>
+        <source>Keep alignment as %1 tags</source>
+        <translation>정렬을 %1 태그로 유지</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>글자 색을 font 태그로</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>위치와 정렬</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>스타일과 색</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>노래방 시간</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>시작 및 종료 시간</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>배우 이름</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>겹치는 줄을 자막 하나로 병합</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>프레임 속도</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>비디오에서</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer에는 종료 시간이 없으므로 겹치는 줄은 병합되고, 빈 자막이 화면을 지웁니다.</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>서식, 색, 위치는 유지되지 않습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to %1.</source>
+        <translation>
+            <numerusform>%1에 %n줄을 내보냈습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>주석 %n줄을 건너뛰었습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>표시할 내용이 없는 %n줄을 건너뛰었습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>이 형식이 유지하지 못한 내용입니다. 줄을 고르면 해당 줄을 보여 줍니다.</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>빠지거나 근사된 내용이 없습니다</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>내보내기 보고서</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>빠지거나 근사됨</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번 줄: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>내보내기</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message>
         <source>Font catalogs</source>
@@ -5944,6 +6197,10 @@ What would you like to do?</source>
         <translation>시작하기</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>다른 형식으로 내보내기</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -6898,6 +7155,14 @@ What would you like to do?</source>
     <message>
         <source>Save as</source>
         <translation>다른 이름으로 저장</translation>
+    </message>
+    <message>
+        <source>Writes a copy in another format; the open subtitles stay as they are</source>
+        <translation>다른 형식으로 사본을 씁니다. 열린 자막은 그대로 남습니다</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>다른 형식으로 내보내기…[&amp;E]</translation>
     </message>
     <message>
         <source>Save translation</source>
