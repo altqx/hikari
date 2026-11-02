@@ -3530,17 +3530,6 @@
    ]
   },
   {
-   "role": "shift-times-run",
-   "file": "shift-times-run.svg",
-   "label": "Shift times / run time post processor",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
    "role": "language",
    "file": "language.svg",
    "label": "Language",

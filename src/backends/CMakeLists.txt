@@ -60,3 +60,12 @@ target_sources(hikari_backends PRIVATE font_collector_output.cpp include/hikari/
 if(WIN32)
     add_subdirectory(directshow)
 endif()
+
+add_library(hikari_ai STATIC ai_wire.cpp include/hikari/backends/ai_wire.h ai_network.cpp
+    include/hikari/backends/ai_network.h ai_keychain.cpp include/hikari/backends/ai_keychain.h)
+target_include_directories(hikari_ai PUBLIC include)
+target_link_libraries(hikari_ai PUBLIC hikari_application Qt6::Core Qt6::Network PRIVATE Qt6Keychain::Qt6Keychain)
+if(NOT WIN32)
+    target_link_libraries(hikari_ai PRIVATE Qt6::DBus)
+endif()
+hikari_module(hikari_ai ALLOW hikari_application hikari_core "Qt6::*")

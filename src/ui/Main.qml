@@ -1485,15 +1485,6 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
             }
             ShellMenuItem {
-                command: "GLOBAL_SHIFT_TIMES"
-                id: runShiftTimesItem
-                iconRole: "shift-times-run"
-                objectName: "runShiftTimes"
-                text: qsTr("Shift times / run timing postprocessor")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
-            }
-            ShellMenuItem {
                 command: "GLOBAL_OPEN_STYLE_MANAGER"
                 help: qsTr("Is used to manage ASS styles")
                 id: styleManagerItem
@@ -2290,8 +2281,26 @@ ApplicationWindow {
             else
                 root.editor.translationEdited(text, cursorPosition)
         }
+        readonly property bool commitsTyping: root.workspaceLayout.preset === "Karaoke"
+        Timer {
+            id: typingCommit
+            interval: 300
+            onTriggered: field.commitTyping()
+        }
+        function commitTyping() {
+            typingCommit.stop()
+            field.report()
+            root.editor.commitTyping()
+        }
+        onCommitsTypingChanged: if (typingCommit.running) field.commitTyping()
         Component.onCompleted: sync()
-        onTextChanged: if (!syncing) Qt.callLater(field.report)
+        onTextChanged: {
+            if (syncing)
+                return
+            Qt.callLater(field.report)
+            if (commitsTyping)
+                typingCommit.restart()
+        }
         onSelectionStartChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
         onSelectionEndChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
         onCursorPositionChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
@@ -2615,9 +2624,11 @@ ApplicationWindow {
         property double compositionEndedAt: -1
         onInputMethodComposingChanged: compositionEndedAt = inputMethodComposing ? -1 : Date.now()
         onActiveFocusChanged: {
-            if (!activeFocus)
+            if (!activeFocus) {
                 compositionEndedAt = -1
-            else if (focusReason !== Qt.ActiveWindowFocusReason && focusReason !== Qt.PopupFocusReason)
+                if (typingCommit.running)
+                    field.commitTyping()
+            } else if (focusReason !== Qt.ActiveWindowFocusReason && focusReason !== Qt.PopupFocusReason)
                 root.lastTextField = field
         }
         onPressed: compositionEndedAt = -1
@@ -6910,7 +6921,7 @@ ApplicationWindow {
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
-        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
+        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
@@ -7056,6 +7067,7 @@ ApplicationWindow {
             if (editing)
                 styleManagerWindow.deleteUnused()
             return true
+        case "GLOBAL_SHIFT_TIMES": if (editing) root.runShiftTimes(); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
