@@ -395,3 +395,38 @@ TEST_F(MacroTest, AResultThatFailedValidationChangesNothing)
     EXPECT_EQ(session.historySize(), steps);
     EXPECT_EQ(session.isDirty(), dirty);
 }
+
+TEST(MacroExtradata, ScriptsReadAndWriteLineExtraAsOneUndoStep)
+{
+    EditSession session{load("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{=0=1}one\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                             "\n[Aegisub Extradata]\nData: 0,k,efirst\nData: 1,k,esecond\n")};
+    const std::string loaded = save(session);
+    auto s = snapshotForMacro(session);
+    ASSERT_TRUE(s);
+    using Extra = std::vector<std::pair<std::string, std::string>>;
+    EXPECT_EQ(s->dialogues[0].extra, (Extra{{"k", "second"}}));
+    EXPECT_EQ(s->dialogues[0].text, "one");
+    EXPECT_TRUE(s->dialogues[1].extra.empty());
+    ASSERT_TRUE(applyMacroResult(session, *s, unchanged(*s), "Nothing"));
+    EXPECT_EQ(save(session), loaded);
+
+    const auto steps = session.historySize();
+    MacroResult r = unchanged(*s);
+    r.dialogues[1].extra = {{"_aegi_folddata", "0;0;1"}};
+    ASSERT_TRUE(applyMacroResult(session, *s, r, "Fold"));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    const std::string folded = save(session);
+    EXPECT_NE(folded.find(",,{=0=1}one\n"), std::string::npos);
+    EXPECT_NE(folded.find(",,{=2}two\n"), std::string::npos);
+    EXPECT_NE(folded.find("Data: 1,k,esecond\nData: 2,_aegi_folddata,e0;0;1\n"), std::string::npos);
+    s = snapshotForMacro(session);
+    ASSERT_TRUE(s);
+    EXPECT_EQ(s->dialogues[1].extra, (Extra{{"_aegi_folddata", "0;0;1"}}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(save(session), loaded);
+    ASSERT_TRUE(session.redo());
+    EXPECT_EQ(save(session), folded);
+}

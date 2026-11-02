@@ -112,7 +112,7 @@ DialogWindow {
                 id: dontAskBox
                 objectName: "messageBoxDontAsk"
                 visible: box.offerDontAsk
-                text: qsTr("Don't ask again")
+                text: qsTr("Don’t ask again")
                 Layout.topMargin: 8
             }
         }

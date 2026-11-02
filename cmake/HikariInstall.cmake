@@ -56,6 +56,9 @@ install(FILES "${HIKARI_HARPER_LS_LICENSE}" DESTINATION licenses/harper RENAME L
 install(FILES "${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt" DESTINATION licenses/harper
     COMPONENT hikari_app)
 
+install(FILES "${PROJECT_SOURCE_DIR}/packaging/licenses/aegisub/LICENSE" DESTINATION licenses/aegisub
+    COMPONENT hikari_app)
+
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION . COMPONENT hikari_app)
 
 install(CODE "include(\"${PROJECT_SOURCE_DIR}/cmake/HikariBundledManifest.cmake\")

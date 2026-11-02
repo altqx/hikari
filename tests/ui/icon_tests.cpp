@@ -246,7 +246,7 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        QCOMPARE(pending, 9);
+        QCOMPARE(pending, 13);
     }
 
     static bool isStandInGlyph(const QString &literal)
@@ -807,7 +807,7 @@ Rectangle {
             QStringLiteral("settings-grid"), QStringLiteral("notices"),
             QStringLiteral("select-all"), QStringLiteral("tags-insert"), QStringLiteral("preview-text"),
             QStringLiteral("dialog-memory"), QStringLiteral("getting-started"), QStringLiteral("ai-send"),
-            QStringLiteral("review-keep")};
+            QStringLiteral("review-keep"), QStringLiteral("tab-close-right")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();

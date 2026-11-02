@@ -80,6 +80,7 @@ public:
 
     Q_INVOKABLE int rowAt(qreal y) const;
     Q_INVOKABLE void makeLineVisible(qulonglong id);
+    Q_INVOKABLE void requestMenu();
     Q_INVOKABLE bool foldsWith(int key, int modifiers) const;
     Q_INVOKABLE void scrollToTopRow(int row) { setContentY(row * m_geometry.rowHeight); }
 

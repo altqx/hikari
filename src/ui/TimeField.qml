@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
+import HikariStyle as Style
 
 TextField {
     id: field
@@ -41,11 +42,15 @@ TextField {
         typed()
     }
     MouseArea {
+        property point pressedAt
+        property bool moved: false
         objectName: field.objectName + "Mouse"
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
         onPressed: mouse => {
             field.rightHeld = true
+            pressedAt = Qt.point(mouse.x, mouse.y)
+            moved = false
             const column = field.positionAt(mouse.x, mouse.y, TextInput.CursorOnCharacter)
             field.forceActiveFocus(Qt.MouseFocusReason)
             field.select(column, column)
@@ -53,15 +58,19 @@ TextField {
             field.drag = TimeFieldMask.dragBegin(field.mouseForm, field.frames, field.text, column, at.x, at.y)
         }
         onPositionChanged: mouse => {
+            moved = moved || Math.hypot(mouse.x - pressedAt.x, mouse.y - pressedAt.y) >= Application.styleHints.startDragDistance
             if (!field.drag.step)
                 return
             const at = mapToItem(null, mouse.x, mouse.y)
-            const moved = TimeFieldMask.dragMove(field.mouseForm, field.frames, field.drag, at.x, at.y)
-            field.drag = moved.drag
-            field.step(moved.text)
+            const next = TimeFieldMask.dragMove(field.mouseForm, field.frames, field.drag, at.x, at.y)
+            field.drag = next.drag
+            moved = moved || next.text.length > 0
+            field.step(next.text)
         }
-        onReleased: {
+        onReleased: mouse => {
             field.drag = ({})
+            if (!moved)
+                Style.TextMenus.menuFor(field)?.popup(field, Qt.point(mouse.x, mouse.y))
             // Qt may make its context menu event during the release's delivery.
             Qt.callLater(() => field.rightHeld = false)
         }

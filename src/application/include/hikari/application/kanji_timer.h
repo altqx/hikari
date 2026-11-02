@@ -38,7 +38,8 @@ struct KanjiGroup {
 };
 
 // The kanji Line's text without its \k tags (a block they leave empty goes too)
-// and its units: graphemes outside override blocks (\N \n \h one each).
+// and its units: graphemes outside override blocks. Whitespace (space, U+3000,
+// U+00A0, tab, \h, \N, \n) is never a unit; it stays in `text`.
 // A syllable whose text is "#" or "＃" (karaskel's extra highlight) goes with its
 // tag. `tagged`: the groups its tags make, when no character precedes the first
 // tag. `readings`: its furigana (漢|かん, #|ん, full-width forms), in hiragana.
@@ -59,8 +60,9 @@ struct KanjiText {
 };
 KanjiText kanjiText(std::u16string_view text);
 
-// The group starting at syllable `from` and character `at`. `ranOut`: the
-// characters ran out with more than one syllable left, all in this group.
+// The group starting at syllable `from` and character `at`; whitespace-only
+// syllables before or after it are in it. `ranOut`: the characters ran out with
+// more than one syllable left, all in this group.
 KanjiGroup suggestGroup(const std::vector<KanjiSyllable> &syllables, std::size_t from, const KanjiText &kanji,
                         std::size_t at, const KaraokeCharClass &classes, bool *ranOut = nullptr);
 
@@ -172,7 +174,7 @@ public:
     bool unlink();
     bool enter();
     bool acceptLine();
-    // The current group's reading (split at spaces over its kanji runs), or its
+    // The current group's reading (split at whitespace over its kanji runs), or its
     // suggestion again. Undo steps.
     bool setReading(std::u16string_view reading);
     bool useSuggestion();

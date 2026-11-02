@@ -7,6 +7,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
+#include "style/text_menus.h"
 #include "window_decorations.h"
 #include "window_frame.h"
 #include "line_grid.h"
@@ -675,6 +676,17 @@ class ShellTest : public QObject {
             if (o->objectName() == QLatin1String(name))
                 return o;
         return nullptr;
+    }
+    QQuickItem *stylesFilter()
+    {
+        if (!QMetaObject::invokeMethod(named("panelShowStyles"), "triggered"))
+            return nullptr;
+        QQuickItem *filter = nullptr;
+        QTest::qWaitFor([&] {
+            filter = qobject_cast<QQuickItem *>(named("stylesFilter"));
+            return filter && filter->isVisible();
+        });
+        return filter && filter->isVisible() ? filter : nullptr;
     }
     QString panelAccessible(const char *panel, QAccessible::Text text = QAccessible::Name) const
     {
@@ -1646,6 +1658,53 @@ private slots:
         window->resize(1600, 900);
         QTest::qWait(200);
         QVERIFY(window->grabWindow().copy(crop(visualItem("statusBar"))).save(out + QStringLiteral("/status-bar-empty.png")));
+    }
+
+    void contextMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1400, 860);
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        QQuickItem *filter = stylesFilter();
+        QVERIFY(filter);
+        filter->setProperty("text", QStringLiteral("Default"));
+        const auto shoot = [&](QQuickItem *focus, const QString &name, const std::function<QObject *()> &menu) {
+            focus->forceActiveFocus();
+            QTest::keyClick(window, Qt::Key_Menu);
+            QObject *open = nullptr;
+            QTRY_VERIFY((open = menu()) && open->property("opened").toBool());
+            QTest::qWait(300);
+            const QRect frame = window->frameGeometry();
+            QVERIFY(window->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
+            QMetaObject::invokeMethod(open, "close");
+            QTRY_VERIFY(!open->property("visible").toBool());
+        };
+        for (const char *code : {"light", "dark"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            auto *grid = item("editingGrid");
+            grid->forceActiveFocus();
+            press(Qt::Key_Home);
+            shoot(grid, QStringLiteral("/menu-grid") + suffix, [&] { return named("gridMenu"); });
+            auto *lineText = item("lineText");
+            QVERIFY(QMetaObject::invokeMethod(named("panelShowEditor"), "triggered"));
+            QTRY_VERIFY(lineText->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(lineText, "selectAll"));
+            shoot(lineText, QStringLiteral("/menu-line-editor") + suffix, [&] { return named("lineTextMenu"); });
+            QVERIFY(stylesFilter() == filter);
+            QVERIFY(QMetaObject::invokeMethod(filter, "selectAll"));
+            shoot(filter, QStringLiteral("/menu-text-field") + suffix, [&] {
+                return filter->findChild<QObject *>(QStringLiteral("textMenu"), Qt::FindDirectChildrenOnly);
+            });
+        }
     }
 
     void gridActivationShowsTheLineInTheEditor()
@@ -3010,7 +3069,7 @@ private slots:
         QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("20"));
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
         QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(),
-                 QStringLiteral("The line’s selected text"));
+                 QStringLiteral("Selected text"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerBold"), "click"));
         QTRY_COMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftText().value_or(u8"").c_str())),
                      QStringLiteral("{\\b1}abc{\\b0}"));
@@ -3029,7 +3088,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
         QTRY_VERIFY(picker->property("visible").toBool());
         QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("30"));
-        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("Line text"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerItalic"), "click"));
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\i1")));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCancel"), "click"));
@@ -3133,7 +3192,7 @@ private slots:
         QStringList sizes;
         for (QQuickItem *entry : menuItems(menu))
             if (entry && entry->objectName() == QLatin1String("fontPickerCatalogItem"))
-                sizes << entry->property("text").toString() + QLatin1Char(' ') + entry->property("shortcutText").toString();
+                sizes << entry->property("text").toString() + QLatin1Char(' ') + entry->property("detailText").toString();
         QCOMPARE(sizes, (QStringList{"All fonts 5", "Without catalog 2", "A 3", "B 1"}));
         QVERIFY(menuEntry(menu, QStringLiteral("fontPickerCatalogManage")));
         QVERIFY(QMetaObject::invokeMethod(menuEntry(menu, QStringLiteral("fontPickerCatalogItem"), QStringLiteral("A")), "triggered"));
@@ -3280,7 +3339,7 @@ private slots:
         auto *picker = openFontPicker(fontAss("drawing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10{\\p0}abc\n"));
         QVERIFY(picker);
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
-        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("Line text"));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         QTRY_VERIFY(!picker->property("visible").toBool());
         application->editor().setShowTags(true);
@@ -3294,7 +3353,7 @@ private slots:
         };
         QVERIFY(openOn(5, 25));
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("ab"));
-        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s selected text"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("Selected text"));
         QTRY_VERIFY(!picker->property("resolution").toMap().isEmpty());
         const int request = picker->property("resolveRequest").toInt();
         QSignalSpy drawn(&catalogs, &app::FontCatalogsController::sampleChanged);
@@ -3307,7 +3366,7 @@ private slots:
         QTRY_VERIFY(!picker->property("visible").toBool());
         QVERIFY(openOn(5, 15));
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
-        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("Line text"));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         QTRY_VERIFY(!picker->property("visible").toBool());
         catalogs.waitResolved();
@@ -3662,7 +3721,7 @@ private slots:
         QCOMPARE(in("fontCatalogCatalogs")->property("currentIndex").toInt(), 0);
         auto *load = window->findChild<QObject *>(QStringLiteral("fontCatalogLoadDialog"));
         QVERIFY(load);
-        QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalog file"));
+        QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalogue file"));
         QVERIFY(!in("fontCatalogStatus")->isVisible());
 
         QVERIFY(QMetaObject::invokeMethod(in("fontCatalogNew"), "click"));
@@ -3741,7 +3800,7 @@ private slots:
         auto *renameName = named("fontCatalogRenameName");
         QCOMPARE(renameName->property("text").toString(), QStringLiteral("C"));
         renameName->setProperty("text", QStringLiteral(" "));
-        QCOMPARE(named("fontCatalogRenameProblem")->property("text").toString(), QStringLiteral("Enter a name for the catalog."));
+        QCOMPARE(named("fontCatalogRenameProblem")->property("text").toString(), QStringLiteral("Enter a name for the catalogue."));
         QVERIFY(!named("fontCatalogRenameOk")->property("enabled").toBool());
         renameName->setProperty("text", QStringLiteral("b"));
         QVERIFY(QMetaObject::invokeMethod(named("fontCatalogRenameOk"), "click"));
@@ -3749,8 +3808,8 @@ private slots:
         auto *box = named("fontCatalogMessageBox");
         QVERIFY(box);
         QTRY_VERIFY(box->property("visible").toBool());
-        QCOMPARE(box->property("title").toString(), QStringLiteral("Rename font catalog"));
-        QCOMPARE(box->property("text").toString(), QStringLiteral("A catalog named “B” already exists."));
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Rename font catalogue"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("A catalogue named “B” already exists."));
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!box->property("visible").toBool());
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
@@ -3781,8 +3840,8 @@ private slots:
         QTRY_VERIFY(window->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
         QTRY_VERIFY(box->property("visible").toBool());
-        QCOMPARE(box->property("title").toString(), QStringLiteral("Delete font catalog"));
-        QCOMPARE(box->property("text").toString(), QStringLiteral("Delete the catalog “Latin”?"));
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Delete font catalogue"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Delete the catalogue “Latin”?"));
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QCOMPARE(catalogs.catalogNames(), QStringList{"Latin"});
         QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
@@ -3818,8 +3877,8 @@ private slots:
         auto *review = named("fontCatalogClashReview");
         QVERIFY(review);
         QTRY_VERIFY(review->property("visible").toBool());
-        QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogs"));
-        QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogs in “more-catalogs.txt” already exist."));
+        QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogues"));
+        QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogues in “more-catalogs.txt” already exist."));
         QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalog"));
         const QVariantList rows = review->property("rows").toList();
         QCOMPARE(rows.size(), 1);
@@ -3850,13 +3909,13 @@ private slots:
         QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"a (2)"});
         QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 3);
         QCOMPARE(catalogs.catalogSize(QStringLiteral("B")), 1);
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 2 font catalogs|From more-catalogs.txt: 1 new, 1 renamed."));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogues|Loaded 2 font catalogues|From more-catalogs.txt: 1 new, 1 renamed."));
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
         QTRY_VERIFY(review->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
         QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 4);
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 1 font catalog|From more-catalogs.txt: 1 merged."));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogues|Loaded 1 font catalogue|From more-catalogs.txt: 1 merged."));
         const QString other = catalogFile("other-catalogs.txt", "B={\n\tArial\n}\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
         QTRY_VERIFY(review->property("visible").toBool());
@@ -3881,13 +3940,13 @@ private slots:
         catalogs.setFontsInCatalog(QStringLiteral("B"), {QStringLiteral("Tahoma")}, false);
         const QString empty = catalogFile("no-catalogs.txt", "nothing here\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(empty))));
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|The file holds no font catalog.|no-catalogs.txt"));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogues|The file holds no font catalogue.|no-catalogs.txt"));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D"}));
         const QString cased = catalogFile("cased-catalogs.txt", "N={\n\tArial\n}\nn={\n\tTahoma\n}\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(cased))));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D", "N"}));
         QCOMPARE(catalogs.catalogSize(QStringLiteral("N")), 2);
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 1 font catalog|From cased-catalogs.txt: 1 new."));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogues|Loaded 1 font catalogue|From cased-catalogs.txt: 1 new."));
         window->setProperty("show", 1);
         for (const QString &name : catalogs.catalogNames())
             catalogs.removeCatalog(name);
@@ -4088,7 +4147,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
         QTRY_VERIFY(!from->isVisible());
         QCOMPARE(lastNotice(), QStringLiteral("Add fonts from subtitles|The fonts were added to “B” but could not be saved.|"
-                                              "fonts.toml in the \"catalogs\" folder of your user folder could not be written. Saving is tried again on exit."));
+                                              "fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit."));
         QVERIFY(QDir(dirPath).rmdir(QStringLiteral("fonts.toml")));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         application->fontCatalogs().waitResolved();
@@ -5715,38 +5774,57 @@ private slots:
         history->close();
     }
 
+    static QString plainLabel(QString text)
+    {
+        text.replace(QStringLiteral("&&"), QStringLiteral("\x01"));
+        text.remove(QLatin1Char('&'));
+        return text.replace(QLatin1Char('\x01'), QLatin1Char('&'));
+    }
+    static void outlineMenu(QObject *menu, const QString &path, int depth, const QRegularExpression &byData,
+                            QStringList &shown)
+    {
+        for (QQuickItem *entry : menuItems(menu)) {
+            if (!entry)
+                continue;
+            if (entry->inherits("QQuickMenuSeparator"))
+                shown << path + QStringLiteral(" > -");
+            if (!entry->inherits("QQuickMenuItem"))
+                continue;
+            if (byData.match(entry->objectName()).hasMatch())
+                continue;
+            if (auto *sub = entry->property("subMenu").value<QObject *>()) {
+                const QString place = path + QStringLiteral(" > ") + plainLabel(sub->property("title").toString());
+                shown << place + QStringLiteral(" >");
+                if (depth < 1)
+                    outlineMenu(sub, place, depth + 1, byData, shown);
+                continue;
+            }
+            const QString command = entry->property("command").toString();
+            shown << path + QStringLiteral(" > ") + plainLabel(entry->property("text").toString())
+                         + (command.isEmpty() ? QString() : QStringLiteral(" [%1]").arg(command));
+        }
+    }
+    static void compareWithListed(const QStringList &shown, const QString &listedName)
+    {
+        QFile file(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tests/ui/") + listedName);
+        QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text)); // a Windows checkout's CRLF
+        const QStringList listed = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+        if (shown != listed) {
+            QFile actual(QDir::current().filePath(QFileInfo(listedName).completeBaseName() + QStringLiteral(".actual.txt")));
+            QVERIFY(actual.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            actual.write(shown.join(QLatin1Char('\n')).toUtf8() + '\n');
+            qsizetype at = 0;
+            while (at < shown.size() && at < listed.size() && shown[at] == listed[at])
+                ++at;
+            QFAIL(qPrintable(QStringLiteral("line %1: the menus have \"%2\", %3 \"%4\" (the menus are in %5)")
+                                 .arg(at + 1).arg(shown.value(at), listedName, listed.value(at), actual.fileName())));
+        }
+    }
+
     void menuBarIsTheListedOne()
     {
         static const QRegularExpression byData(QStringLiteral(R"(^(macro_|recent\w*\d+$|viewLayoutSaved\d+$))"));
-        const auto plain = [](QString text) {
-            text = text.section(QLatin1Char('\t'), 0, 0);
-            text.replace(QStringLiteral("&&"), QStringLiteral("\x01"));
-            text.remove(QLatin1Char('&'));
-            return text.replace(QLatin1Char('\x01'), QLatin1Char('&'));
-        };
         QStringList shown;
-        std::function<void(QObject *, const QString &, int)> walk = [&](QObject *menu, const QString &path, int depth) {
-            for (QQuickItem *entry : menuItems(menu)) {
-                if (!entry)
-                    continue;
-                if (entry->inherits("QQuickMenuSeparator"))
-                    shown << path + QStringLiteral(" > -");
-                if (!entry->inherits("QQuickMenuItem"))
-                    continue;
-                if (byData.match(entry->objectName()).hasMatch())
-                    continue;
-                if (auto *sub = entry->property("subMenu").value<QObject *>()) {
-                    const QString place = path + QStringLiteral(" > ") + plain(sub->property("title").toString());
-                    shown << place + QStringLiteral(" >");
-                    if (depth < 1)
-                        walk(sub, place, depth + 1);
-                    continue;
-                }
-                const QString command = entry->property("command").toString();
-                shown << path + QStringLiteral(" > ") + plain(entry->property("text").toString())
-                             + (command.isEmpty() ? QString() : QStringLiteral(" [%1]").arg(command));
-            }
-        };
         QObject *bar = named("appMenus");
         QVERIFY(bar);
         for (int i = 0; i < bar->property("count").toInt(); ++i) {
@@ -5754,23 +5832,144 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(bar, "itemAt", Q_RETURN_ARG(QQuickItem *, title), Q_ARG(int, i)));
             auto *menu = title->property("menu").value<QObject *>();
             QVERIFY(menu);
-            const QString name = plain(menu->property("title").toString());
+            const QString name = plainLabel(menu->property("title").toString());
             shown << name;
-            walk(menu, name, 0);
+            outlineMenu(menu, name, 0, byData, shown);
         }
-        QFile file(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tests/ui/menu_bar.txt"));
-        QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text)); // a Windows checkout's CRLF
-        const QStringList listed = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
-        if (shown != listed) {
-            QFile actual(QDir::current().filePath(QStringLiteral("menu_bar.actual.txt")));
-            QVERIFY(actual.open(QIODevice::WriteOnly | QIODevice::Truncate));
-            actual.write(shown.join(QLatin1Char('\n')).toUtf8() + '\n');
-            qsizetype at = 0;
-            while (at < shown.size() && at < listed.size() && shown[at] == listed[at])
-                ++at;
-            QFAIL(qPrintable(QStringLiteral("line %1: the menus have \"%2\", menu_bar.txt \"%3\" (the menus are in %4)")
-                                 .arg(at + 1).arg(shown.value(at), listed.value(at), actual.fileName())));
+        compareWithListed(shown, QStringLiteral("menu_bar.txt"));
+    }
+
+    void contextMenusAreTheListedOnes()
+    {
+        static const QRegularExpression byData(
+            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|^panelOptions_|Monitor\d+$))"));
+        QVERIFY(application->openFile(episode));
+        QQuickItem *field = stylesFilter();
+        QVERIFY(field);
+        auto *menus = engine->singletonInstance<hikari::ui::style::TextMenus *>("HikariStyle", "TextMenus");
+        QVERIFY(menus);
+        QObject *textMenu = menus->menuFor(field);
+        QVERIFY(textMenu);
+        auto *showAutomation = named("automationManagerMenuItem")->property("action").value<QObject *>();
+        QVERIFY(showAutomation && QMetaObject::invokeMethod(showAutomation, "trigger"));
+        QTRY_VERIFY(named("automationMacroMenu"));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(named("referenceOccurrenceMenu"));
+        const std::vector<std::pair<QString, QObject *>> listed{
+            {QStringLiteral("Line editor text"), named("lineTextMenu")},
+            {QStringLiteral("Text field"), textMenu},
+            {QStringLiteral("Grid"), named("gridMenu")},
+            {QStringLiteral("Grid group row"), named("groupMenu")},
+            {QStringLiteral("Video"), named("videoContextMenu")},
+            {QStringLiteral("Full-screen video"), named("videoFullscreenMenu")},
+            {QStringLiteral("Panel options"), named("panelOptionsMenu")},
+            {QStringLiteral("Document tab"), named("documentTabMenu")},
+            {QStringLiteral("Styles row"), named("stylesRowMenu")},
+            {QStringLiteral("Automation macro"), named("automationMacroMenu")},
+            {QStringLiteral("Home row"), named("homeRowMenu")},
+            {QStringLiteral("Reference tray"), named("referenceOccurrenceMenu")},
+            {QStringLiteral("Tag button"), named("tagButtonMenu")},
+        };
+        QStringList missing;
+        for (const auto &[name, menu] : listed)
+            if (!menu)
+                missing << name;
+        QVERIFY2(missing.isEmpty(), qPrintable(missing.join(u", ")));
+        QStringList shown;
+        for (const auto &[name, menu] : listed) {
+            shown << name;
+            outlineMenu(menu, name, 0, byData, shown);
         }
+        compareWithListed(shown, QStringLiteral("context_menus.txt"));
+    }
+
+    void menuKeyOpensTheFocusedItemsMenu()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        const auto opensWith = [&](QObject *menu, Qt::Key key, Qt::KeyboardModifiers mods = Qt::NoModifier) {
+            QTest::keyClick(window, key, mods);
+            const bool opened = QTest::qWaitFor([&] { return menu->property("opened").toBool(); });
+            QMetaObject::invokeMethod(menu, "close");
+            return opened && QTest::qWaitFor([&] { return !menu->property("visible").toBool(); });
+        };
+        auto *gridMenu = named("gridMenu");
+        QSignalSpy anchored(grid, SIGNAL(contextMenuRequested(double,double)));
+        QTest::keyClick(window, Qt::Key_Menu);
+        QTRY_VERIFY(gridMenu->property("opened").toBool());
+        QCOMPARE(anchored.size(), 1);
+        QCOMPARE(anchored.first().at(1).toReal(),
+                 grid->property("headerHeight").toReal() + grid->property("rowHeight").toReal());
+        QMetaObject::invokeMethod(gridMenu, "close");
+        QTRY_VERIFY(!gridMenu->property("visible").toBool());
+        QTRY_VERIFY(grid->hasActiveFocus());
+        QVERIFY(opensWith(gridMenu, Qt::Key_F10, Qt::ShiftModifier));
+
+        auto *lineText = item("lineText");
+        lineText->forceActiveFocus();
+        QVERIFY(opensWith(named("lineTextMenu"), Qt::Key_Menu));
+
+        QQuickItem *filter = stylesFilter();
+        QVERIFY(filter);
+        filter->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Menu);
+        QObject *textMenu = nullptr;
+        QTRY_VERIFY((textMenu = filter->findChild<QObject *>(QStringLiteral("textMenu"), Qt::FindDirectChildrenOnly))
+                    && textMenu->property("opened").toBool());
+        QMetaObject::invokeMethod(textMenu, "close");
+        QTRY_VERIFY(!textMenu->property("visible").toBool());
+
+        item("videoPanel")->forceActiveFocus();
+        QVERIFY(opensWith(named("videoContextMenu"), Qt::Key_Menu));
+    }
+
+    void textMenuRowsActOnTheirField()
+    {
+        QQuickItem *field = stylesFilter();
+        QVERIFY(field);
+        auto *menus = engine->singletonInstance<hikari::ui::style::TextMenus *>("HikariStyle", "TextMenus");
+        QObject *menu = menus->menuFor(field);
+        QVERIFY(menu);
+        QCOMPARE(menus->menuFor(field), menu);
+        const auto row = [&](const char *name) { return menu->findChild<QObject *>(QLatin1String(name)); };
+        const auto enabled = [&](const char *name) { return row(name)->property("enabled").toBool(); };
+        field->setProperty("text", QStringLiteral("abc"));
+        QVERIFY(QMetaObject::invokeMethod(field, "selectAll"));
+        QVERIFY(enabled("textCut") && enabled("textCopy") && enabled("textDelete") && enabled("textSelectAll"));
+        QCOMPARE(row("textCopy")->property("keysText").toString(),
+                 QKeySequence(QKeySequence::Copy).toString(QKeySequence::NativeText));
+        QGuiApplication::clipboard()->clear();
+        QVERIFY(QMetaObject::invokeMethod(row("textCopy"), "triggered"));
+        QCOMPARE(QGuiApplication::clipboard()->text(), QStringLiteral("abc"));
+        QVERIFY(QMetaObject::invokeMethod(row("textDelete"), "triggered"));
+        QCOMPARE(field->property("text").toString(), QString());
+        QVERIFY(enabled("textUndo"));
+        QVERIFY(QMetaObject::invokeMethod(row("textUndo"), "triggered"));
+        QCOMPARE(field->property("text").toString(), QStringLiteral("abc"));
+        field->setProperty("readOnly", true);
+        QVERIFY(QMetaObject::invokeMethod(field, "selectAll"));
+        QVERIFY(!enabled("textUndo") && !enabled("textRedo") && !enabled("textCut") && !enabled("textPaste")
+                && !enabled("textDelete"));
+        QVERIFY(enabled("textCopy") && enabled("textSelectAll"));
+    }
+
+    void menuKeyColumnFollowsTheBindings()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &hotkeys = application->hotkeys();
+        auto *duplicate = named("duplicateLines");
+        const QString was = hotkeys.accelOf(QStringLiteral("GRID_DUPLICATE_LINES"), 1);
+        QCOMPARE(duplicate->property("keysText").toString(), QString(was).replace(QLatin1Char('-'), QLatin1Char('+')));
+        const QVariantMap target = hotkeys.gestureTarget(QStringLiteral("GRID_DUPLICATE_LINES"));
+        hotkeys.gestureMap(target.value("id").toInt(), target.value("name").toString(), QStringLiteral("Ctrl-Alt-J"), 1,
+                           QStringLiteral("cancel"));
+        QTRY_COMPARE(duplicate->property("keysText").toString(), QStringLiteral("Ctrl+Alt+J"));
+        QCOMPARE(named("copyLines")->property("keysText").toString(),
+                 QKeySequence(QKeySequence::Copy).toString(QKeySequence::NativeText));
+        QCOMPARE(named("copyLines")->property("text").toString(), QStringLiteral("Copy"));
     }
 
     void shiftTimesRunsFromItsHotkeyWithoutAMenuItem()
@@ -5971,9 +6170,9 @@ private slots:
              QStringLiteral("a script dialog's preset, under Delete preset")},
             {QStringLiteral("MainTitleBar.qml"), QStringLiteral("bar.foldFrom + index"),
              QStringLiteral("a menu of the title bar folded into More (the menus have no icons)")},
-            {QStringLiteral("FontPicker.qml"), QStringLiteral(R"(text: qsTr("No catalogs yet"))"),
+            {QStringLiteral("FontPicker.qml"), QStringLiteral(R"(text: qsTr("No catalogues yet"))"),
              QStringLiteral("the empty list's placeholder")},
-            {QStringLiteral("FontCatalogBar.qml"), QStringLiteral(R"(text: qsTr("No catalogs yet"))"),
+            {QStringLiteral("FontCatalogBar.qml"), QStringLiteral(R"(text: qsTr("No catalogues yet"))"),
              QStringLiteral("the empty list's placeholder")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
@@ -6279,24 +6478,25 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
 
         auto *timingDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("timingDock"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowSearch"), "triggered"));
         QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
         QTRY_VERIFY(timingDock->property("isOpen").toBool());
         top = QAccessible::queryAccessibleInterface(window);
         QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Shift times")));
-        QAccessibleInterface *editorTab = find(top, QAccessible::PageTab, QStringLiteral("Line editor"));
-        QVERIFY(editorTab);
+        QAccessibleInterface *searchTab = find(top, QAccessible::PageTab, QStringLiteral("Search"));
+        QVERIFY(searchTab);
         QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Shift times"));
         QVERIFY(timingTab->state().checked);
-        QVERIFY(!editorTab->state().checked);
+        QVERIFY(!searchTab->state().checked);
         QVERIFY(find(top, QAccessible::PageTabList, QStringLiteral("Panels")));
-        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Line editor")));
+        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Search")));
         QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Shift times")));
         QAccessibleInterface *timingOptions = find(top, QAccessible::Button, QStringLiteral("Shift times options"));
         QVERIFY(timingOptions);
-        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Line editor options")));
-        QVERIFY(editorTab->actionInterface());
-        editorTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
-        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Line editor options")));
+        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Search options")));
+        QVERIFY(searchTab->actionInterface());
+        searchTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Search options")));
         timingTab = find(QAccessible::queryAccessibleInterface(window), QAccessible::PageTab, QStringLiteral("Shift times"));
         timingTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QAccessibleInterface *closeFrom = nullptr;
@@ -7046,11 +7246,11 @@ private slots:
             QAccessibleInterface *box = QAccessible::queryAccessibleInterface(catalog);
             QVERIFY(box);
             QCOMPARE(box->role(), QAccessible::ComboBox);
-            QCOMPARE(box->text(QAccessible::Name), QStringLiteral("Style catalog"));
+            QCOMPARE(box->text(QAccessible::Name), QStringLiteral("Style catalogue"));
             QAccessibleInterface *edit =
                 QAccessible::queryAccessibleInterface(catalog->property("contentItem").value<QQuickItem *>());
             QVERIFY(edit);
-            QCOMPARE(edit->text(QAccessible::Name), QStringLiteral("Style catalog"));
+            QCOMPARE(edit->text(QAccessible::Name), QStringLiteral("Style catalogue"));
         }
         QCOMPARE(window->property("assSelected").toList(), QVariantList{1});
         QCOMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
@@ -7324,7 +7524,7 @@ private slots:
         QTRY_COMPARE(styles.documentStyles(), QStringList{QStringLiteral("Sign")});
         const QVariantMap toast = toasts->property("entries").toList().value(0).toMap();
         QCOMPARE(toast.value(QStringLiteral("title")).toString(), QStringLiteral("Deleted 2 unused styles"));
-        QCOMPARE(toast.value(QStringLiteral("text")).toString(), QStringLiteral("Default, Alpha\nCtrl+Z puts them back."));
+        QCOMPARE(toast.value(QStringLiteral("text")).toString(), QStringLiteral("Default, Alpha\nUndo puts them back."));
         QVERIFY(toast.value(QStringLiteral("details")).toString().contains(QStringLiteral("Styles deleted:\nDefault\nAlpha\n")));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(styles.documentStyles().size(), 3);
@@ -7342,7 +7542,7 @@ private slots:
         QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("SY1 show"));
         QVERIFY(QMetaObject::invokeMethod(field("deleteCatalog"), "click"));
         QTRY_VERIFY(box() && box()->isVisible());
-        QCOMPARE(box()->property("text").toString(), QStringLiteral("Delete the catalog “SY1 show”?"));
+        QCOMPARE(box()->property("text").toString(), QStringLiteral("Delete the catalogue “SY1 show”?"));
         QCOMPARE(box()->property("defaultButton").value<QObject *>()->objectName(), QStringLiteral("messageBoxChoice_cancel"));
         answer("delete");
         QVERIFY(!styles.catalogs().contains(QStringLiteral("SY1 show")));
@@ -7436,7 +7636,7 @@ private slots:
             if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String("lists-catalog.ass"))
                 application->selectTab(i);
         QTRY_VERIFY(box() && box()->isVisible());
-        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The file shown now uses the catalog “SY1 other”."));
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The file shown now uses the catalogue “SY1 other”."));
         answer("apply");
         QCOMPARE(styles.catalog(), QStringLiteral("SY1 other"));
         QCOMPARE(styles.catalogStore().find(u8"SY1 from", u8"Sign")->fontsize, std::u8string(u8"77"));
@@ -7622,7 +7822,7 @@ private slots:
         application->openSettingsDialog();
         QCOMPARE(styles.catalog(), QStringLiteral("SY1 b"));
         QTRY_VERIFY(box() && box()->isVisible());
-        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The catalog “SY1 b” is shown now; the changes go to “SY1 a”."));
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The catalogue “SY1 b” is shown now; the changes go to “SY1 a”."));
         answer("apply");
         QCOMPARE(styles.catalogStore().find(u8"SY1 a", u8"Sign")->fontsize, std::u8string(u8"66"));
         QCOMPARE(styles.catalogStore().find(u8"SY1 b", u8"Sign")->fontsize, std::u8string(u8"41"));
@@ -8175,6 +8375,8 @@ private slots:
         for (const char *name : {"Qt", "KDDockWidgets", "FFmpeg", "FFMS2", "libass", "Hunspell", "LuaJIT", "ICU", "Boost"})
             QVERIFY2(names.contains(QLatin1String(name)), name);
         QVERIFY(!names.contains(QStringLiteral("Aegisub")));
+        QCOMPARE(credits->property("sources").toList().value(0).toStringList(),
+                 (QStringList{QStringLiteral("Aegisub"), QStringLiteral("Aegisub contributors"), QStringLiteral("BSD 3-Clause")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
         QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
@@ -8201,6 +8403,11 @@ private slots:
         QCOMPARE(first->height(), first->implicitHeight());
         QCOMPARE(second->y(), first->y() + first->height());
         QVERIFY(list->property("contentHeight").toReal() > list->height());
+        QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
+        QVERIFY(sources);
+        QCOMPARE(sources->childItems().size(), 2);
+        QVERIFY(sources->childItems().first()->height() > 0);
+        QVERIFY(sources->parentItem()->height() >= sources->y() + sources->height());
         QVERIFY(QMetaObject::invokeMethod(about, "open"));
         QTRY_VERIFY(about->isVisible());
         QVERIFY(credits->isVisible());
@@ -8249,7 +8456,7 @@ private slots:
         QCOMPARE(action->property("text").toString(), QStringLiteral("What's &new"));
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(dialog->isVisible());
-        QCOMPARE(dialog->title(), QStringLiteral("What's new"));
+        QCOMPARE(dialog->title(), QStringLiteral("What’s new"));
         QCOMPARE(dialog->modality(), Qt::NonModal);
         QVERIFY(dialog->property("resizable").toBool());
         QCOMPARE(whatsNew.state(), QStringLiteral("off"));
@@ -16500,7 +16707,7 @@ private slots:
         auto *after = item<QObject>("audioPlay500After");
         QVERIFY(!after->property("checked").toBool());
         QVERIFY(item<QObject>("audioPlay500Before")->property("checked").toBool());
-        QVERIFY(after->property("text").toString().endsWith(QStringLiteral("\tW")));
+        QCOMPARE(after->property("keysText").toString(), QStringLiteral("W"));
         QVERIFY(QMetaObject::invokeMethod(after, "triggered"));
         QCOMPARE(settings.text("audio.playAround"), QStringLiteral("AUDIO_PLAY_500MS_AFTER"));
         QCOMPARE(face->property("iconRole").toString(), QStringLiteral("play-after-end"));
@@ -16526,8 +16733,8 @@ private slots:
         auto *autoMark = visualItem("audioAutoCommitMark");
         auto *nextMark = visualItem("audioNextCommitMark");
         QVERIFY(autoMark && nextMark);
-        QCOMPARE(item<QObject>("audioCommitItem")->property("text").toString(),
-                 QStringLiteral("Commit\tEnter or G"));
+        QCOMPARE(item<QObject>("audioCommitItem")->property("text").toString(), QStringLiteral("Commit"));
+        QCOMPARE(item<QObject>("audioCommitItem")->property("keysText").toString(), QStringLiteral("Enter or G"));
         QVERIFY(settings.boolean("audio.autoCommit"));
         QVERIFY(settings.boolean("audio.nextLineOnCommit"));
         QVERIFY(autoMark->isVisible());
@@ -16830,7 +17037,8 @@ private slots:
         QVERIFY(!showGoto->property("checked").toBool());
         QVERIFY(showGoto->property("keepsMenuOpen").toBool());
         QCOMPARE(item<QObject>("audioCustomiseBefore")->property("text").toString(),
-                 QStringLiteral("Play 500 ms before the start\tQ"));
+                 QStringLiteral("Play 500 ms before the start"));
+        QCOMPARE(item<QObject>("audioCustomiseBefore")->property("keysText").toString(), QStringLiteral("Q"));
 
         toggleItem(item<QObject>("audioCustomiseFirst"));
         QCOMPARE(settings.list("audio.panelControls"),
@@ -18139,7 +18347,8 @@ private slots:
         auto *duplicate = engine->rootObjects().first()->findChild<QQuickItem *>(QStringLiteral("duplicateLines"));
         QVERIFY(duplicate);
         QTRY_VERIFY(duplicate->isVisible() && duplicate->width() > 0);
-        QCOMPARE(duplicate->property("text").toString(), QStringLiteral("&Duplicate lines\tCtrl-D"));
+        QCOMPARE(duplicate->property("text").toString(), QStringLiteral("Duplicate lines"));
+        QCOMPARE(duplicate->property("keysText").toString(), QStringLiteral("Ctrl+D"));
         const int lines = application->files().session(*application->workspace().editingTarget())->document().lines().size();
         clickWith(duplicate, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
@@ -18149,7 +18358,7 @@ private slots:
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_D, Qt::ControlModifier | Qt::ShiftModifier);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GRID_DUPLICATE_LINES"), 1), QStringLiteral("Ctrl-Shift-D"));
-        QCOMPARE(duplicate->property("text").toString(), QStringLiteral("&Duplicate lines\tCtrl-Shift-D"));
+        QTRY_COMPARE(duplicate->property("keysText").toString(), QStringLiteral("Ctrl+Shift+D"));
         openMenu();
         QTRY_VERIFY(duplicate->isVisible() && duplicate->width() > 0);
         clickWith(duplicate, Qt::ShiftModifier);
@@ -20287,6 +20496,91 @@ private slots:
         QVERIFY(!chip->isVisible());
     }
 
+    void audioBackToLineHidesWhilePlaying()
+    {
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        // MUST KILL: spelling off only to keep its missing-dictionary notice off the window
+        options.spellingBackend = {};
+        const auto close = qScopeGuard([this] {
+            delete engine;
+            delete application;
+            engine = nullptr;
+            application = nullptr;
+        });
+        restartWith(options);
+        keysNeverRepeat();
+        QVERIFY(application->openFile(
+            writeFile(dir, "back-to-line.ass", "Dialogue: 0,0:00:00.10,0:00:00.30,Default,,0,0,0,,line\n")));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY(video.session().shownFrame());
+        closeMismatchQuestion();
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(audio.syncVideo());
+        auto *chip = item("audioBackToLine");
+        const auto &view = audio.view();
+        const auto scrollPastTheLine = [&] {
+            audio.setHorizontalZoom(10);
+            audio.setScrollPosition(0);
+            audio.setScrollPosition(static_cast<int>(view.xAtMs(800) / 12));
+        };
+        int playbackFrames = 0;
+        int chipFrames = 0;
+        QObject::connect(window, &QQuickWindow::afterAnimating, chip, [&] {
+            if (!audio.cursorIsPlayback())
+                return;
+            ++playbackFrames;
+            chipFrames += chip->isVisible();
+        });
+
+        scrollPastTheLine();
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+        audio.playRange(900, 1800);
+        QVERIFY(audio.playing());
+        QVERIFY(!chip->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(playbackFrames >= 3, 5000);
+        audio.stopPlayback();
+        QVERIFY(!audio.playing());
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+
+        audio.playRange(900, 1800);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        bool lineShown = false;
+        const auto watch = QObject::connect(&audio, &ui::AudioController::displayChanged, chip,
+                                            [&] { lineShown = lineShown || audio.lineOutOfView() == 0; });
+        press(Qt::Key_B);
+        QObject::disconnect(watch);
+        QVERIFY(lineShown);
+        QVERIFY(audio.playing());
+        audio.stopPlayback();
+
+        QVERIFY(video.session().seekToMs(900));
+        QTRY_VERIFY(video.session().shownFrame().value_or(0) > 0);
+        scrollPastTheLine();
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+        const int audioFrames = playbackFrames;
+        QVERIFY(video.play());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.cursorIsPlayback(), 10000);
+        QVERIFY(!audio.playing());
+        QVERIFY(!chip->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(playbackFrames >= audioFrames + 3, 5000);
+        QVERIFY(video.pause());
+        QTRY_VERIFY(!audio.cursorIsPlayback());
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+        QCOMPARE(chipFrames, 0);
+    }
+
     void audioKaraokeMode()
     {
         restartWithoutSound();
@@ -20496,8 +20790,10 @@ private slots:
                                     .arg((1800 - boundary) / 10));
         QCOMPARE(view.position(), now);
         auto *kf = named("audioKaraokeKf");
-        QCOMPARE(kf->property("text").toString(), QStringLiteral("Switch long syllables between \\k and \\kf\tShift-K"));
-        QCOMPARE(named("audioKaraokeSplitAtCursor")->property("text").toString(), QStringLiteral("Split syllable at the cursor\tK"));
+        QCOMPARE(kf->property("text").toString(), QStringLiteral("Switch long syllables between \\k and \\kf"));
+        QCOMPARE(kf->property("keysText").toString(), QStringLiteral("Shift+K"));
+        QCOMPARE(named("audioKaraokeSplitAtCursor")->property("text").toString(), QStringLiteral("Split syllable at the cursor"));
+        QCOMPARE(named("audioKaraokeSplitAtCursor")->property("keysText").toString(), QStringLiteral("K"));
         QVERIFY(QMetaObject::invokeMethod(kf, "triggered"));
         QCOMPARE(editor.history().size(), steps + 3);
         QVERIFY(!editor.text().contains(QStringLiteral("\\kf")));
@@ -20842,13 +21138,14 @@ private slots:
         QVERIFY(face->isVisible());
         QVERIFY(!face->property("checked").toBool());
         QCOMPARE(face->property("tip").toString(), QStringLiteral("Tap to time"));
-        QCOMPARE(named("audioTapStart")->property("text").toString(), QStringLiteral("Start tapping\tY"));
+        QCOMPARE(named("audioTapStart")->property("text").toString(), QStringLiteral("Start tapping"));
+        QCOMPARE(named("audioTapStart")->property("keysText").toString(), QStringLiteral("Y"));
         QVERIFY(QMetaObject::invokeMethod(face, "clicked"));
         QVERIFY(audio.tapOn());
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
         QVERIFY(audio.playing());
         QVERIFY(face->property("checked").toBool());
-        QCOMPARE(named("audioTapStart")->property("text").toString(), QStringLiteral("Stop tapping\tY"));
+        QCOMPARE(named("audioTapStart")->property("text").toString(), QStringLiteral("Stop tapping"));
         QTRY_VERIFY(bar->isVisible());
         QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
         QCOMPARE(text("audioTapState"), QStringLiteral("Tapping"));
@@ -21145,13 +21442,13 @@ private slots:
 
         audio.toggleKaraoke();
         auto *speedMenu = named("audioTapSpeedMenu");
-        QVERIFY(speedMenu->property("title").toString().endsWith(QStringLiteral("\t75%")));
+        QCOMPARE(speedMenu->property("detailText").toString(), QStringLiteral("75%"));
         QVERIFY(named("audioTapSpeed75")->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("audioTapSpeed33"), "triggered"));
         QCOMPARE(audio.speedPercent(), 33);
         QVERIFY(named("audioTapSpeed33")->property("checked").toBool());
         QVERIFY(!named("audioTapSpeed75")->property("checked").toBool());
-        QVERIFY(speedMenu->property("title").toString().endsWith(QStringLiteral("\t33%")));
+        QCOMPARE(speedMenu->property("detailText").toString(), QStringLiteral("33%"));
         audio.toggleKaraoke();
         audio.setSpeedPercent(100);
         QVERIFY(!mark->isVisible());
@@ -21303,7 +21600,8 @@ private slots:
         QVERIFY(audio.ready());
         audio.toggleKaraoke();
         auto *calibrate = named("audioTapCalibrate");
-        QCOMPARE(calibrate->property("text").toString(), QStringLiteral("Calibrate latency…\t0 ms"));
+        QCOMPARE(calibrate->property("text").toString(), QStringLiteral("Calibrate latency…"));
+        QCOMPARE(calibrate->property("detailText").toString(), QStringLiteral("0 ms"));
         QCOMPARE(audio.tapLatency(), 0);
         QVERIFY(QMetaObject::invokeMethod(calibrate, "triggered"));
         auto *calibration = qobject_cast<QQuickWindow *>(named("tapCalibrationWindow"));
@@ -21339,7 +21637,7 @@ private slots:
         QVERIFY(!audio.calibrating());
         QCOMPARE(audio.tapLatency(), measured);
         QCOMPARE(settings.integer("audio.tapLatency"), measured);
-        QCOMPARE(calibrate->property("text").toString(), QStringLiteral("Calibrate latency…\t%1 ms").arg(measured));
+        QCOMPARE(calibrate->property("detailText").toString(), QStringLiteral("%1 ms").arg(measured));
 
         QVERIFY(QMetaObject::invokeMethod(calibrate, "triggered"));
         QTRY_VERIFY(calibration->isVisible());
@@ -24287,7 +24585,7 @@ private slots:
         QObject *shapeText = named("shapeText");
         shapeText->setProperty("text", QStringLiteral("m 0 0; l 5 5"));
         QCOMPARE(named("shapeTextErrorText")->property("text").toString(),
-                 QStringLiteral("A drawing can't contain “;”."));
+                 QStringLiteral("A drawing can’t contain “;”."));
         QCOMPARE(editor->property("shape").toString(), QStringLiteral("m 0 0 l 100 0 100 100 0 100"));
         shapeText->setProperty("text", QStringLiteral("m 0 0 l 50 0 0 50"));
         QCOMPARE(named("shapeTextErrorText")->property("text").toString(), QString());
@@ -27238,12 +27536,14 @@ private slots:
         };
         const auto shownMenus = [&](QQuickItem *field) {
             int n = 0;
-            for (auto *menu : menusOf(field))
+            const QList<QObject *> own = menusOf(field);
+            for (auto *menu : own)
                 n += menu->property("visible").toBool();
             for (auto *layer : window->contentItem()->childItems())
                 if (QByteArray(layer->metaObject()->className()) == "QQuickOverlay")
                     for (auto *child : layer->childItems())
-                        n += child->isVisible() && !(child->parent() && child->parent()->inherits("QQuickToolTip"));
+                        n += child->isVisible() && !own.contains(child->parent())
+                             && !(child->parent() && child->parent()->inherits("QQuickToolTip"));
             return n;
         };
         const auto closeMenus = [&](QQuickItem *field) {
@@ -27282,6 +27582,16 @@ private slots:
         QCOMPARE(shownPopups(), popupsBefore);
         QTest::mouseMove(window, at + QPoint(0, -40));
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
+        const auto textMenuShown = [&] {
+            auto *menu = start->findChild<QObject *>(QStringLiteral("textMenu"), Qt::FindDirectChildrenOnly);
+            return menu && menu->property("visible").toBool();
+        };
+        QTest::mouseClick(window, Qt::RightButton, {}, at);
+        QTRY_VERIFY(textMenuShown());
+        QCOMPARE(shownPopups(), popupsBefore + 1);
+        QCOMPARE(text(), QStringLiteral("0:00:02.00"));
+        closeMenus(start);
+        QTRY_COMPARE(shownPopups(), popupsBefore);
         // Windows opens the context menu on the right button's release (QStyleHints::contextMenuTrigger).
         auto *layer = item("actorBox")->property("contentItem").value<QQuickItem *>();
         const QPoint layerAt = layer->mapToScene(QPointF(layer->width() / 2, layer->height() / 2)).toPoint();
@@ -27305,13 +27615,25 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:03.00"));
         QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(0, -8));
         QCOMPARE(shownPopups(), popupsBefore);
+        QTest::mouseClick(window, Qt::RightButton, {}, at);
+        QTRY_VERIFY(textMenuShown());
+        QCOMPARE(shownPopups(), popupsBefore + 1);
+        closeMenus(start);
+        QTRY_COMPARE(shownPopups(), popupsBefore);
         hints->setContextMenuTrigger(trigger);
-        // Qt Quick aims a position-less Menu key event at the focused item's origin (QQuickDeliveryAgentPrivate::contextMenuTargets).
         start->forceActiveFocus();
-        const QPoint origin = start->mapToScene(QPointF()).toPoint();
-        QContextMenuEvent menuKey(QContextMenuEvent::Keyboard, origin, window->mapToGlobal(origin));
-        QCoreApplication::sendEvent(window, &menuKey);
-        QTRY_COMPARE(shownPopups(), popupsBefore + 1);
+        QTest::keyClick(window, Qt::Key_Menu);
+        QTRY_VERIFY(textMenuShown());
+        QContextMenuEvent platformEcho(QContextMenuEvent::Keyboard, QPoint(), QPoint());
+        QCoreApplication::sendEvent(window, &platformEcho);
+        QCOMPARE(shownPopups(), popupsBefore + 1);
+        closeMenus(start);
+        QTRY_COMPARE(shownPopups(), popupsBefore);
+        QTest::qWait(600);
+        start->forceActiveFocus();
+        QContextMenuEvent windowsMenuKey(QContextMenuEvent::Keyboard, QPoint(), QPoint());
+        QCoreApplication::sendEvent(window, &windowsMenuKey);
+        QTRY_VERIFY(textMenuShown());
         closeMenus(start);
         QTRY_COMPARE(shownPopups(), popupsBefore);
         application->editor().discard();
@@ -29945,14 +30267,14 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(context, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
         QTRY_VERIFY(context->property("opened").toBool());
         QTRY_COMPARE(entriesAfterSnapshots(context, QStringLiteral("videoMenu")), order(QStringLiteral("videoMenu")));
-        QCOMPARE(named("videoMenuUnloadVideo")->property("labelText").toString(), QStringLiteral("Unload video"));
+        QCOMPARE(named("videoMenuUnloadVideo")->property("text").toString(), QStringLiteral("Unload video"));
         QVERIFY(named("videoMenuUnloadVideo")->property("enabled").toBool());
         QCOMPARE(named("videoMenuStream0")->property("text").toString(), QStringLiteral("A: Main [eng] (pcm_s16le)"));
         QCOMPARE(named("videoMenuStream1")->property("text").toString(), QStringLiteral("A: Commentary [jpn] (pcm_s16le)"));
         QVERIFY(named("videoMenuStream0")->property("checked").toBool());
         QVERIFY(!named("videoMenuStream1")->property("checked").toBool());
-        QCOMPARE(named("videoMenuChapter1")->property("labelText").toString(), QStringLiteral("Second"));
-        QCOMPARE(named("videoMenuChapter1")->property("keysText").toString(), QStringLiteral("[0:00:01.00]"));
+        QCOMPARE(named("videoMenuChapter1")->property("text").toString(), QStringLiteral("Second"));
+        QCOMPARE(named("videoMenuChapter1")->property("detailText").toString(), QStringLiteral("[0:00:01.00]"));
         QVERIFY(named("videoMenuChapter0")->property("checked").toBool());
         QVERIFY(!named("videoMenuChapter1")->property("checked").toBool());
         const auto placed = [&](const char *name, const char *above) {
@@ -30554,14 +30876,18 @@ private slots:
         QCOMPARE(text("videoMenuRecentVideos1"), QStringLiteral("b.mkv"));
         QCOMPARE(text("videoMenuRecentVideos2"), QStringLiteral("c.mkv"));
         QVERIFY(!named("videoMenuRecentVideos3"));
-        auto label = [&](const QString &name, const char *symbol) {
-            const QString key = application->hotkeys().accelOf(QLatin1String(symbol), 0);
-            return key.isEmpty() ? name : name + QLatin1Char('\t') + key;
+        auto keys = [&](const char *name) { return named(name)->property("keysText").toString(); };
+        auto bound = [&](const char *symbol) {
+            static const QRegularExpression modifier(QStringLiteral("(Ctrl|Shift|Alt|Meta)-"));
+            return application->hotkeys().accelOf(QLatin1String(symbol), 0).replace(modifier, QStringLiteral("\\1+"));
         };
         QVERIFY(!application->hotkeys().accelOf(QStringLiteral("GLOBAL_OPEN_SUBS"), 0).isEmpty());
-        QCOMPARE(text("videoMenuOpenVideo"), label(QStringLiteral("Open video"), "GLOBAL_OPEN_VIDEO"));
-        QCOMPARE(text("videoMenuOpenSubtitles"), label(QStringLiteral("Open subtitles"), "GLOBAL_OPEN_SUBS"));
-        QCOMPARE(named("videoMenuPlayPause")->property("text").toString(), QStringLiteral("Play\tSpace"));
+        QCOMPARE(text("videoMenuOpenVideo"), QStringLiteral("Open video"));
+        QCOMPARE(keys("videoMenuOpenVideo"), bound("GLOBAL_OPEN_VIDEO"));
+        QCOMPARE(text("videoMenuOpenSubtitles"), QStringLiteral("Open subtitles"));
+        QCOMPARE(keys("videoMenuOpenSubtitles"), bound("GLOBAL_OPEN_SUBS"));
+        QCOMPARE(text("videoMenuPlayPause"), QStringLiteral("Play"));
+        QCOMPARE(keys("videoMenuPlayPause"), QStringLiteral("Space"));
         QVERIFY(enabled("videoMenuPlayPause"));
         QVERIFY(!enabled("videoMenuStop"));
         QVERIFY(!enabled("videoMenuProgressBar"));
@@ -31045,7 +31371,8 @@ private slots:
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, videoPoint(tools.videoRect().center()));
         auto *menu = named("videoContextMenu");
         QTRY_VERIFY(menu->property("opened").toBool());
-        QCOMPARE(text("videoMenuFullScreen"), QStringLiteral("Full screen\tF"));
+        QCOMPARE(text("videoMenuFullScreen"), QStringLiteral("Full screen"));
+        QCOMPARE(named("videoMenuFullScreen")->property("keysText").toString(), QStringLiteral("F"));
         QVERIFY(enabled("videoMenuFullScreen"));
         QVERIFY(!enabled("videoMenuOpenEditor"));
         QVERIFY(named("videoMenuCopyCoords")->property("visible").toBool());
@@ -31077,7 +31404,8 @@ private slots:
             if (it && it->isVisible() && !it->objectName().isEmpty())
                 QVERIFY2(it->width() >= it->implicitWidth(), qPrintable(it->objectName()));
         }
-        QCOMPARE(text("fullscreenMenuFullScreen"), QStringLiteral("Exit full screen\tEscape"));
+        QCOMPARE(text("fullscreenMenuFullScreen"), QStringLiteral("Exit full screen"));
+        QCOMPARE(named("fullscreenMenuFullScreen")->property("keysText").toString(), QStringLiteral("Esc"));
         QVERIFY(!named("fullscreenMenuCopyCoords")->property("visible").toBool());
         QVERIFY(enabled("fullscreenMenuOpenEditor"));
         QVERIFY(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR"), 0).isEmpty());
@@ -31143,7 +31471,8 @@ private slots:
         QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
         auto *fsMenu = named("videoFullscreenMenu");
         QTRY_VERIFY(fsMenu->property("opened").toBool());
-        QCOMPARE(named("fullscreenMenuFullscreenBar")->property("title").toString(), QStringLiteral("Full screen bar\tTab"));
+        QCOMPARE(named("fullscreenMenuFullscreenBar")->property("title").toString(), QStringLiteral("Full screen bar"));
+        QCOMPARE(named("fullscreenMenuFullscreenBar")->property("shortcutText").toString(), QStringLiteral("Tab"));
         QVERIFY(checked(QStringLiteral("fullscreenMenuFullscreenBarAlways")));
         pick(QStringLiteral("fullscreenMenuFullscreenBar"), "Never", 2);
         QVERIFY(!fs.pinned());
