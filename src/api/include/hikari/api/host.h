@@ -2,6 +2,7 @@
 
 // Ports the composition root implements; every call comes on the GUI thread.
 
+#include "hikari/application/automation_services.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/workspace.h"
@@ -61,12 +62,24 @@ public:
     virtual bool focus(std::string_view panel) = 0;
 };
 
+// Reads and writes the files a caller was granted, by path.
+class FileHost {
+public:
+    virtual ~FileHost() = default;
+    // At most `atMost` bytes from the start; nullopt: the file cannot be read.
+    virtual std::optional<std::string> read(const std::string &path, std::size_t atMost) const = 0;
+    // Replaces the file whole; false when it could not.
+    virtual bool write(const std::string &path, std::string_view bytes) = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
     CommandHost *commands = nullptr;
     PanelHost *panels = nullptr;
     application::Settings *settings = nullptr;
+    application::MacroMediaPort *media = nullptr;
+    FileHost *files = nullptr;
 };
 
 }

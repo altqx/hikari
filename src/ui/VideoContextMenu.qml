@@ -28,11 +28,7 @@ ShellMenu {
         chapters = shell.video.hasVideo ? shell.video.chapters() : []
     }
 
-    // MUST KILL: boundKeys and hotkeyGesture take a magic context int (3 Video window, 0 Global)
-    function keys(symbol) {
-        const key = videoMenu.shell.boundKeys(symbol, 3)
-        return key.length ? "\t" + key : ""
-    }
+    // MUST KILL: hotkeyGesture takes a magic context int (3 Video window, 0 Global)
     function gesture(symbol) {
         return videoMenu.shell.hotkeyGesture(symbol, 3)
     }
@@ -48,20 +44,23 @@ ShellMenu {
         objectName: videoMenu.itemPrefix + "CopyCoords"
         visible: !videoMenu.fullscreen
         height: visible ? implicitHeight : 0
-        text: qsTr("Copy video position") + videoMenu.keys("VIDEO_COPY_COORDS")
+        command: "VIDEO_COPY_COORDS"
+        text: qsTr("Copy video position")
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_COORDS")) videoMenu.shell.visualTools.copyCoordinates(videoMenu.at.x, videoMenu.at.y)
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "PlayPause"
         iconRole: videoMenu.shell.video.playing ? "media-pause" : "media-play"
-        text: (videoMenu.shell.video.playing ? qsTr("Pause") : qsTr("Play")) + videoMenu.keys("VIDEO_PLAY_PAUSE")
+        command: "VIDEO_PLAY_PAUSE"
+        text: (videoMenu.shell.video.playing ? qsTr("Pause") : qsTr("Play"))
         enabled: videoMenu.shell.video.hasVideo
         onTriggered: if (!videoMenu.gesture("VIDEO_PLAY_PAUSE")) videoMenu.shell.video.togglePlay()
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "Stop"
         iconRole: "media-stop"
-        text: qsTr("Stop") + videoMenu.keys("VIDEO_STOP")
+        command: "VIDEO_STOP"
+        text: qsTr("Stop")
         enabled: videoMenu.shell.video.playing
         onTriggered: if (!videoMenu.gesture("VIDEO_STOP")) videoMenu.shell.video.stop()
     }
@@ -69,11 +68,9 @@ ShellMenu {
         id: fullScreenItem
         objectName: videoMenu.itemPrefix + "FullScreen"
         iconRole: videoMenu.fullscreen ? "fullscreen-exit" : "fullscreen"
-        text: {
-            const key = videoMenu.shell.boundKeys("VIDEO_FULL_SCREEN", 3)
-            return videoMenu.fullscreen ? qsTr("Exit full screen") + "\t" + (key.length ? key : qsTr("Escape"))
-                                   : qsTr("Full screen") + "\t" + (key.length ? key : "F")
-        }
+        text: videoMenu.fullscreen ? qsTr("Exit full screen") : qsTr("Full screen")
+        command: "VIDEO_FULL_SCREEN"
+        shortcutText: MenuKeys.text(command, commandWindow) || ShellMenus.keyText(videoMenu.fullscreen ? "Esc" : "F")
         enabled: videoMenu.shell.video.hasVideo
         onTriggered: if (!videoMenu.gesture("VIDEO_FULL_SCREEN")) videoMenu.shell.videoFullscreen.toggle(0)
     }
@@ -94,7 +91,8 @@ ShellMenu {
     FullscreenBarMenu {
         objectName: videoMenu.itemPrefix + "FullscreenBar"
         iconRole: "show-toolbar"
-        title: qsTr("Full screen bar") + (videoMenu.fullscreen ? videoMenu.keys("VIDEO_FULLSCREEN_BAR") : "")
+        title: qsTr("Full screen bar")
+        shortcutText: videoMenu.fullscreen ? MenuKeys.text("VIDEO_FULLSCREEN_BAR", 3) : ""
         controller: videoMenu.shell.videoFullscreen
         itemPrefix: videoMenu.itemPrefix + "FullscreenBar"
     }
@@ -144,63 +142,69 @@ ShellMenu {
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "OpenVideo"
         iconRole: "open-video"
-        text: qsTr("Open video") + (videoMenu.shell.boundKeys("GLOBAL_OPEN_VIDEO", 0).length
-                                    ? "\t" + videoMenu.shell.boundKeys("GLOBAL_OPEN_VIDEO", 0) : "")
+        text: qsTr("Open video")
+        command: "GLOBAL_OPEN_VIDEO"
         onTriggered: videoMenu.openVideoRequested()
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "OpenSubtitles"
         iconRole: "open-subtitles"
-        text: qsTr("Open subtitles") + (videoMenu.shell.boundKeys("GLOBAL_OPEN_SUBS", 0).length
-                                        ? "\t" + videoMenu.shell.boundKeys("GLOBAL_OPEN_SUBS", 0) : "")
+        text: qsTr("Open subtitles")
+        command: "GLOBAL_OPEN_SUBS"
         onTriggered: videoMenu.openSubtitlesRequested()
     }
     ShellMenuItem {
         iconRole: "progress-bar"
         objectName: videoMenu.itemPrefix + "ProgressBar"
-        text: qsTr("Show / hide progress bar") + videoMenu.keys("VIDEO_HIDE_PROGRESS_BAR")
+        command: "VIDEO_HIDE_PROGRESS_BAR"
+        text: qsTr("Show / hide progress bar")
         enabled: videoMenu.fullscreen
         onTriggered: if (!videoMenu.gesture("VIDEO_HIDE_PROGRESS_BAR")) videoMenu.shell.videoView.toggleProgressBar()
     }
     ShellMenuItem {
         iconRole: "render-cost"
         objectName: videoMenu.itemPrefix + "RenderCost"
-        text: qsTr("Show / hide render cost") + (videoMenu.shell.boundKeys("GLOBAL_VIDEO_RENDER_COST", 0).length
-                                                 ? "\t" + videoMenu.shell.boundKeys("GLOBAL_VIDEO_RENDER_COST", 0) : "")
+        text: qsTr("Show / hide render cost")
+        command: "GLOBAL_VIDEO_RENDER_COST"
         enabled: videoMenu.shell.video.hasVideo
         onTriggered: if (!videoMenu.shell.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST", 0)) videoMenu.shell.videoView.toggleRenderCost()
     }
     ShellMenuItem {
         iconRole: "aspect-ratio"
         objectName: videoMenu.itemPrefix + "AspectRatio"
-        text: qsTr("Change aspect ratio") + videoMenu.keys("VIDEO_ASPECT_RATIO")
+        command: "VIDEO_ASPECT_RATIO"
+        text: qsTr("Change aspect ratio")
         onTriggered: if (!videoMenu.gesture("VIDEO_ASPECT_RATIO")) videoMenu.aspectRatioRequested()
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "SaveSubbedFrame"
         iconRole: "frame-snapshot-subtitles"
-        text: qsTr("Save frame with subtitles as PNG") + videoMenu.keys("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
+        command: "VIDEO_SAVE_SUBBED_FRAME_TO_PNG"
+        text: qsTr("Save frame with subtitles as PNG")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")) videoMenu.shell.videoView.snapshot("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "CopySubbedFrame"
         iconRole: "frame-copy-subtitles"
-        text: qsTr("Copy frame with subtitles to clipboard") + videoMenu.keys("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
+        command: "VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD"
+        text: qsTr("Copy frame with subtitles to clipboard")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "SaveFrame"
         iconRole: "frame-snapshot"
-        text: qsTr("Save frame as PNG") + videoMenu.keys("VIDEO_SAVE_FRAME_TO_PNG")
+        command: "VIDEO_SAVE_FRAME_TO_PNG"
+        text: qsTr("Save frame as PNG")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_SAVE_FRAME_TO_PNG")) videoMenu.shell.videoView.snapshot("VIDEO_SAVE_FRAME_TO_PNG")
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "CopyFrame"
         iconRole: "frame-copy"
-        text: qsTr("Copy frame to clipboard") + videoMenu.keys("VIDEO_COPY_FRAME_TO_CLIPBOARD")
+        command: "VIDEO_COPY_FRAME_TO_CLIPBOARD"
+        text: qsTr("Copy frame to clipboard")
         enabled: videoMenu.shell.videoView.canSnapshot
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")
     }
@@ -209,7 +213,8 @@ ShellMenu {
         id: unloadItem
         objectName: videoMenu.itemPrefix + "UnloadVideo"
         iconRole: "close-video"
-        text: qsTr("Unload video") + videoMenu.keys("VIDEO_DELETE_FILE")
+        command: "VIDEO_DELETE_FILE"
+        text: qsTr("Unload video")
         enabled: videoMenu.shell.video.loaded
         onTriggered: if (!videoMenu.gesture("VIDEO_DELETE_FILE")) videoMenu.shell.video.unloadVideo()
     }
@@ -279,7 +284,8 @@ ShellMenu {
             required property int index
             readonly property var row: videoMenu.chapters[index] ?? ({})
             objectName: videoMenu.itemPrefix + "Chapter" + index
-            text: (row.label ?? "") + "\t" + (row.time ?? "")
+            text: row.label ?? ""
+            detailText: row.time ?? ""
             checkable: true
             checked: row.checked === true
             keepsMenuOpen: false

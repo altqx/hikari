@@ -2479,36 +2479,12 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Efekt linijki. Służy do oznaczania linijek, na których zastosowane ma być karaoke bądź efekty VSFilter</translation>
     </message>
     <message>
-        <source>&amp;Copy</source>
-        <translation>&amp;Kopiuj</translation>
-    </message>
-    <message>
-        <source>Cu&amp;t</source>
-        <translation>Wy&amp;tnij</translation>
-    </message>
-    <message>
-        <source>&amp;Paste</source>
-        <translation>&amp;Wklej</translation>
-    </message>
-    <message>
-        <source>Spellchecker</source>
-        <translation>Sprawdzanie pisowni</translation>
-    </message>
-    <message>
-        <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation>&amp;Dodaj słowo &quot;%1&quot; do słownika</translation>
-    </message>
-    <message>
         <source>Add word to dictionary</source>
         <translation>Dodaj słowo do słownika</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
         <translation>Błąd. Słowo &quot;%1&quot; nie zostało dodane.</translation>
-    </message>
-    <message>
-        <source>&amp;Delete</source>
-        <translation>&amp;Usuń</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2577,6 +2553,10 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     <message>
         <source>Remove</source>
         <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>Sprawdzaj pisownię</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -4253,22 +4233,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usuń</translation>
     </message>
     <message>
-        <source>&amp;Insert</source>
-        <translation>&amp;Wstaw</translation>
-    </message>
-    <message>
-        <source>Insert &amp;before</source>
-        <translation>Wstaw &amp;przed</translation>
-    </message>
-    <message>
-        <source>Insert &amp;after</source>
-        <translation>Wstaw p&amp;o</translation>
-    </message>
-    <message>
-        <source>Insert before with &amp;video time</source>
-        <translation>Wstaw przed z &amp;czasem wideo</translation>
-    </message>
-    <message>
         <source>Insert after with video time</source>
         <translation>Wstaw po z czasem wideo</translation>
     </message>
@@ -4279,18 +4243,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Insert after with video frame time</source>
         <translation>Wstaw po z czasem klatki wideo</translation>
-    </message>
-    <message>
-        <source>&amp;Duplicate lines</source>
-        <translation>&amp;Duplikuj linijki</translation>
-    </message>
-    <message>
-        <source>&amp;Swap</source>
-        <translation>Za&amp;mień</translation>
-    </message>
-    <message>
-        <source>Join &amp;lines</source>
-        <translation>Złącz &amp;linijki</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
@@ -4453,18 +4405,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ustaw FPS z wideo</translation>
     </message>
     <message>
-        <source>Copy	Ctrl+C</source>
-        <translation>Kopiuj	Ctrl+C</translation>
-    </message>
-    <message>
-        <source>Cut	Ctrl+X</source>
-        <translation>Wytnij	Ctrl+X</translation>
-    </message>
-    <message>
-        <source>Paste	Ctrl+V</source>
-        <translation>Wklej	Ctrl+V</translation>
-    </message>
-    <message>
         <source>Copy columns</source>
         <translation>Kopiuj kolumny</translation>
     </message>
@@ -4475,10 +4415,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Delete text</source>
         <translation>Usuń tekst</translation>
-    </message>
-    <message>
-        <source>Delete lines	Shift+Del</source>
-        <translation>Usuń linijki	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4529,6 +4465,34 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacz linijki grupy</translation>
     </message>
     <message>
+        <source>Insert</source>
+        <translation>Wstaw</translation>
+    </message>
+    <message>
+        <source>Insert before</source>
+        <translation>Wstaw przed</translation>
+    </message>
+    <message>
+        <source>Insert after</source>
+        <translation>Wstaw po</translation>
+    </message>
+    <message>
+        <source>Insert before with video time</source>
+        <translation>Wstaw przed z czasem wideo</translation>
+    </message>
+    <message>
+        <source>Duplicate lines</source>
+        <translation>Duplikuj linijki</translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation>Zamień</translation>
+    </message>
+    <message>
+        <source>Join lines</source>
+        <translation>Złącz linijki</translation>
+    </message>
+    <message>
         <source>Make times continuous with the previous line</source>
         <translation>Ustaw czasy jako ciągłe z poprzednią linijką</translation>
     </message>
@@ -4539,6 +4503,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Make line group</source>
         <translation>Utwórz grupę linijek</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>Wytnij</translation>
+    </message>
+    <message>
+        <source>Delete lines</source>
+        <translation>Usuń linijki</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -6041,6 +6013,26 @@ Co chcesz zrobić?</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>Przesuń zaznaczone linijki o klatki: początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>Przesuń zaznaczone linijki o klatki: koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>Przesuń następne linijki o klatki: początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>Przesuń następne linijki o klatki: koniec na wideo</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -6819,6 +6811,10 @@ Co chcesz zrobić?</translation>
         <translation>Zbudowano przy użyciu</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>Formaty plików i pomysły zaczerpnięto z</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>Przywróć poprzedni układ</translation>
     </message>
@@ -7093,6 +7089,50 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>Znajduje kolejne wystąpienie frazy w tekście</translation>
+    </message>
+    <message>
+        <source>Shift by frames to video</source>
+        <translation>Przesuń o klatki do wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>Przesuwa zaznaczone linijki o pełne klatki tak, aby aktywna linijka zaczynała się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>Zaznaczone linijki, początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>Przesuwa zaznaczone linijki o pełne klatki tak, aby aktywna linijka kończyła się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>Zaznaczone linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>Przesuwa aktywną linijkę i wszystkie linijki po niej o pełne klatki tak, aby aktywna linijka zaczynała się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>Następne linijki, początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>Przesuwa aktywną linijkę i wszystkie linijki po niej o pełne klatki tak, aby aktywna linijka kończyła się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>Następne linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>Nadaje aktywnej linijce zaznaczenie audio i kończy poprzednią linijkę tam, gdzie zaczyna się zaznaczenie</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -13486,6 +13526,65 @@ Usunięte style:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>Templater zatrzymał się przed zakończeniem.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.TextMenu</name>
+    <message>
+        <source>Undo</source>
+        <translation>Cofnij</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>Ponów</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>Wytnij</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>Wklej</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>Zaznacz wszystko</translation>
+    </message>
+    <message>
+        <source>Undoes the last change to the text</source>
+        <translation>Cofa ostatnią zmianę tekstu</translation>
+    </message>
+    <message>
+        <source>Redoes the last change you undid</source>
+        <translation>Ponawia ostatnią cofniętą zmianę</translation>
+    </message>
+    <message>
+        <source>Moves the selected text to the clipboard</source>
+        <translation>Przenosi zaznaczony tekst do schowka</translation>
+    </message>
+    <message>
+        <source>Copies the selected text to the clipboard</source>
+        <translation>Kopiuje zaznaczony tekst do schowka</translation>
+    </message>
+    <message>
+        <source>Inserts the text from the clipboard</source>
+        <translation>Wstawia tekst ze schowka</translation>
+    </message>
+    <message>
+        <source>Deletes the selected text</source>
+        <translation>Usuwa zaznaczony tekst</translation>
+    </message>
+    <message>
+        <source>Selects all the text in the field</source>
+        <translation>Zaznacza cały tekst w polu</translation>
     </message>
 </context>
 <context>
