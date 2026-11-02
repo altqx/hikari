@@ -2,7 +2,7 @@
 
 The Hikari API is one typed, versioned set of operations over the running application. Plugins, the AI tools, the MCP server and node-editor nodes all call it ([#411](https://github.com/altqx/hikari/issues/411), wave 8 [#410](https://github.com/altqx/hikari/issues/410)). It lives in `src/api` (`hikari_api`), next to the application layer and like it free of Qt; the composition root implements its host ports.
 
-Status: in progress. The version stays **0** until the card is done, then becomes **1**.
+The current version is **1**.
 
 ## Operations
 
@@ -24,11 +24,19 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `commands.list` | read | Commands with their id (`GLOBAL_SAVE_SUBS`), name, window, enabled state, disabled reason and keys; `query` searches ids and names. |
 | `panels.list` | read | Workspace panels: open, floating, focused. |
 | `settings.list`, `settings.get` | read | Settings with type, scope, default and value. |
+| `video.info` | read | Whether a video is open; its size, aspect ratio, the frame shown and the keyframes. |
+| `video.frame_at_time`, `video.time_of_frame` | read | Converts between milliseconds and frame numbers. |
+| `video.frame` | read | One frame as BGRA in base64, with or without subtitles, optionally cropped, scaled to fit `maxEdge`. |
+| `audio.info` | read | Whether audio is open and loaded; duration, sample rate, channels. |
+| `audio.peaks` | read | The lowest and highest sample in each of `buckets` slices of a time range. |
+| `files.list`, `files.read` | read | The files granted to the caller, and their content as UTF-8 or base64 (16 MiB at most). |
+| `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
 | `document.apply` | write | One change set to one Document, as one undo step. |
 | `selection.set` | write | The selected Lines and the active Line; the Grid follows. |
 | `commands.run` | write | Runs a command as its menu item or toolbar button would. |
 | `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |
 | `settings.set` | write | One setting, type-checked. |
+| `files.write` | write | Replaces a file granted for writing. |
 
 Lines are addressed by their stable Line id, never by row ([document model](document-model.md)). Times are milliseconds. In Translation mode `text` is the original text and `translation` the translated text.
 
@@ -37,6 +45,14 @@ Lines are addressed by their stable Line id, never by row ([document model](docu
 `document.apply` takes the Document `revision` the caller read, a step `name`, and a list of `edits`: `set_line`, `insert_line`, `delete_line`, `move_line`, `set_style`, `delete_style` and `set_info`. The whole list applies as one command through `EditSession::run`, the path Automation macros use, so it is one undo step named `"<caller>: <name>"`. If the revision moved since the read, nothing changes and the call fails with `stale_revision`; read again and retry. A pending Line editor draft on a touched Line is committed first, which moves the revision. If any edit fails, the Document stays as it was and `data.edit` gives the failing edit's index. A change set that changes nothing adds no step and answers `changed: false`.
 
 One write runs at a time; another write meanwhile gets `busy`.
+
+## Files
+
+A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. The plugin and AI cards decide when the user grants files; HA1 provides the table and the operations.
+
+## Node catalogue
+
+`api::nodeCatalogue()` holds the node types of the node-effect editor (NE1): an id, a category, a summary, input and output ports, and a parameter schema. It is empty until NE1 registers its nodes; `nodes.catalogue` and the reference list them.
 
 ## Events
 
@@ -66,17 +82,23 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `invalid_params` | The parameters break the schema; `data.pointer` is the JSON pointer of the first problem. |
 | `not_found` | No such Document, Line or setting; `data` names it. |
 | `not_granted` | The caller lacks the grant. |
-| `unavailable` | The host has no such service (no Documents, commands, panels or settings). |
+| `unavailable` | The host has no such service: no Documents, commands, panels, settings, video, audio or files, or a frame that cannot be decoded. |
 | `stale_revision` | The Document changed since the given revision; `data.current` is the revision now. |
 | `read_only` | The Document can't be edited (an open Automation macro holds it). |
 | `protected` | The Document is the protected reference. |
-| `refused` | The application refused; `data.reason` says why when the caller can act on it (`disabled`, `not_run`, `group_break`, `invalid_draft`, …). |
+| `refused` | The application refused; `data.reason` says why when the caller can act on it (`disabled`, `not_run`, `group_break`, `invalid_draft`, `loading`, `too_large`, `not_text`, …). |
 | `busy` | Another write is running. |
 
 ## Versioning
 
 The version is a running number. Every release that grows the API bumps it, and each operation records the version it arrived in (`since`). Changes are add-only: an operation's name, mark and existing parameters and results stay; new optional parameters and result fields may be added. A removal is deprecated for at least one version first. A plugin declares the lowest version it needs.
 
+`tests/api/reference-v1.json` is the frozen version 1 reference. A test fails when the API breaks it: an operation, event or `$defs` entry disappears, a read/write mark changes, a parameter becomes required, a result field stops being given, or a schema changes beyond adding optional properties or, in parameters, adding alternatives. Freezing a new version writes its reference with `HIKARI_API_WRITE_REFERENCE=<path> hikari_api_tests --gtest_filter=ApiReference.*`.
+
+## Reference
+
+`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. The plugin reference (PL9) and the site build from it.
+
 ## Tests
 
-`tests/api` runs without network or Qt. A fake host holds real `Workspace` and `EditSession` objects. The **scripted test client** reads `.jsonl` scripts in `tests/api/scripts/`, one call per line, each with its expected result or error code, and checks every result against its operation's schema. The scripts double as examples of each operation. `hikari_ui_api_host_tests` drives the same API against the real application and shell: a write is one named undo step that the Undo command reverts, a stale revision is refused, the Grid follows `selection.set`, and panels open and close.
+`tests/api` runs without network or Qt. A fake host holds real `Workspace` and `EditSession` objects. The **scripted test client** reads `.jsonl` scripts in `tests/api/scripts/`, one call per line, each with its expected result or error code, and checks every result against its operation's schema. The scripts double as examples of each operation. `hikari_ui_api_host_tests` drives the same API against the real application and shell: a write is one named undo step that the Undo command reverts, a stale revision is refused, the Grid follows `selection.set`, panels open and close, and granted files are read and written on disk.

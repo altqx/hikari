@@ -16,7 +16,11 @@ namespace hikari::app {
 // The application's side of the Hikari API. The shell supplies commands and
 // panels through two QML functions; observe() turns whatever changed since
 // its last call into API events.
-class ApiHost final : public QObject, public api::DocumentHost, public api::CommandHost, public api::PanelHost {
+class ApiHost final : public QObject,
+                      public api::DocumentHost,
+                      public api::CommandHost,
+                      public api::PanelHost,
+                      public api::FileHost {
     Q_OBJECT
     // (command, run) => null for a command the shell cannot run; else
     // {enabled, reason} without run, or whether it ran.
@@ -31,6 +35,7 @@ public:
         application::Workspace &workspace;
         application::DocumentFiles &files;
         application::Settings *settings = nullptr;
+        application::MacroMediaPort *media = nullptr;
         // The editing target's selection, as the Grid sets it.
         std::function<bool(application::Selection)> selectTarget;
         std::function<void()> refresh;
@@ -60,6 +65,9 @@ public:
     std::vector<api::PanelState> panels() const override;
     bool setOpen(std::string_view panel, bool open) override;
     bool focus(std::string_view panel) override;
+
+    std::optional<std::string> read(const std::string &path, std::size_t atMost) const override;
+    bool write(const std::string &path, std::string_view bytes) override;
 
 private:
     struct Seen {

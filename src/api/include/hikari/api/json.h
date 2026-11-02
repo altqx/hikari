@@ -92,4 +92,6 @@ struct Json::Member {
     friend bool operator==(const Member &, const Member &) = default;
 };
 
+bool isUtf8(std::string_view text);
+
 }

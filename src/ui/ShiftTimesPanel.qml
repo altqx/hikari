@@ -21,7 +21,7 @@ FocusScope {
     readonly property var settings: shiftTimes.settings
     readonly property bool wide: width >= 640
     readonly property int shiftBy: settings.moveToVideoTime ? 1 : settings.moveToAudioTime ? 2 : 0
-    readonly property size minimumBodySize: Qt.size(300, 360)
+    readonly property size minimumBodySize: Qt.size(280, 160)
 
     function set(key, value) {
         const next = Object.assign({}, settings)

@@ -293,6 +293,11 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_GETTING_STARTED", 5176},
         {"GLOBAL_SHOW_TIMING_POSTPROCESSOR", 5214},
         {"GLOBAL_TIMING_POSTPROCESSOR", 5215},
+        {"GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION", 5216},
+        {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_START", 5217},
+        {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_END", 5218},
+        {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START", 5219},
+        {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END", 5220},
 };
 
 struct NameRow {
@@ -557,6 +562,11 @@ constexpr NameRow kNames[] = {
         {5176, "Getting started"},
         {5214, "Timing postprocessor panel"},
         {5215, "Timing postprocessor with the last values"},
+        {5216, "Join with previous line using the audio selection"},
+        {5217, "Shift selected lines by frames: start at video"},
+        {5218, "Shift selected lines by frames: end at video"},
+        {5219, "Shift following lines by frames: start at video"},
+        {5220, "Shift following lines by frames: end at video"},
 };
 
 struct DefaultRow {

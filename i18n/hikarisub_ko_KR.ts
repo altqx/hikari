@@ -5931,6 +5931,26 @@ What would you like to do?</source>
         <translation>시작하기</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>선택한 줄을 프레임 단위로 이동: 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>선택한 줄을 프레임 단위로 이동: 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>뒤따르는 줄을 프레임 단위로 이동: 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>뒤따르는 줄을 프레임 단위로 이동: 끝을 영상에</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -6975,6 +6995,50 @@ What would you like to do?</source>
         <translation>타이밍 후처리기…[&amp;P]</translation>
     </message>
     <message>
+        <source>Shift by frames to video</source>
+        <translation>영상 위치로 프레임 단위 이동</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 시작하도록 선택한 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>선택한 줄, 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 끝나도록 선택한 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>선택한 줄, 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 시작하도록 활성 줄과 그 뒤의 모든 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>뒤따르는 줄, 시작을 영상에</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>활성 줄이 영상 프레임에서 끝나도록 활성 줄과 그 뒤의 모든 줄을 프레임 단위로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>뒤따르는 줄, 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>활성 줄에 소리 선택 영역을 적용하고, 이전 줄은 선택 영역이 시작하는 곳에서 끝냅니다</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
         <source>Load script</source>
         <translation>스크립트 불러오기</translation>
     </message>
@@ -7057,6 +7121,22 @@ What would you like to do?</source>
     <message>
         <source>Open user &amp;folder</source>
         <translation>사용자 폴더 열기[&amp;F]</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>HikariSub가 마음에 드시나요?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>GitHub에서 별표를 주시면 다른 사람들이 찾는 데 도움이 됩니다.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>GitHub에서 별표 주기</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>나중에</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -9037,6 +9117,14 @@ removing audio cache files.</source>
     <message>
         <source>Include the file name</source>
         <translation>파일 이름 포함</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>GitHub에서 HikariSub에 별표 주기 제안</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

@@ -55,12 +55,14 @@ app::Error replyError(QNetworkReply *reply, const QByteArray &body, bool timedOu
 
 QJsonObject capabilitiesJson(const app::Capabilities &c)
 {
-    return {{QStringLiteral("tools"), c.tools}, {QStringLiteral("vision"), c.vision}};
+    return {{QStringLiteral("tools"), c.tools}, {QStringLiteral("vision"), c.vision}, {QStringLiteral("video"), c.video}};
 }
 
 app::Capabilities capabilitiesFrom(const QJsonObject &o)
 {
-    return {.tools = o.value(QStringLiteral("tools")).toBool(), .vision = o.value(QStringLiteral("vision")).toBool()};
+    return {.tools = o.value(QStringLiteral("tools")).toBool(),
+            .vision = o.value(QStringLiteral("vision")).toBool(),
+            .video = o.value(QStringLiteral("video")).toBool()};
 }
 
 }
@@ -250,15 +252,16 @@ void NetworkProviderPort::listModels(const app::Provider &provider, const std::s
 {
     const HttpCall call = modelsCall(provider, QByteArray::fromStdString(key));
     const QUrl url(QString::fromStdString(provider.baseUrl) + call.path);
-    route(url, !key.empty(), [this, call, done](const RouteResult &result) {
+    route(url, !key.empty(), [this, call, wire = provider.wire, done](const RouteResult &result) {
         if (const auto *error = std::get_if<app::Error>(&result))
             done(*error);
         else
-            fetchModels(std::get<Route>(result), call, done);
+            fetchModels(std::get<Route>(result), call, wire, done);
     });
 }
 
-void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, std::function<void(ModelsResult)> done)
+void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, app::Wire wire,
+                                      std::function<void(ModelsResult)> done)
 {
     QNetworkReply *reply = m_network.get(networkRequest(route, call));
     auto *idle = new QTimer(reply);
@@ -272,7 +275,7 @@ void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, 
         done(app::Error{.kind = app::ErrorKind::Timeout});
     });
     connect(reply, &QNetworkReply::downloadProgress, idle, [idle] { idle->start(); });
-    connect(reply, &QNetworkReply::finished, this, [reply, done, finished] {
+    connect(reply, &QNetworkReply::finished, this, [reply, wire, done, finished] {
         if (*finished)
             return;
         *finished = true;
@@ -283,7 +286,7 @@ void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, 
             done(replyError(reply, body, false));
             return;
         }
-        done(decodeModels(body));
+        done(decodeModels(wire, body));
     });
     idle->start(m_idleTimeout);
 }
