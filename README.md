@@ -174,6 +174,8 @@ HikariSub sends **anonymous usage data** to PostHog Cloud EU: which features and
 
 After a crash or a freeze, HikariSub shows the whole report it built: what crashed, your system, a settings summary and the last Log lines, with file names replaced. It is sent only when you press **Send report** (with usage data off too), or taken to a GitHub issue with **Open GitHub issue**; **Settings > Updates and privacy > Always send crash reports** sends it without asking. **Help > Report an issue** fills in a GitHub issue form for a bug, a feature request or a question. [docs/crash-reports.md](docs/crash-reports.md) has the details.
 
+**Discord presence** is off by default. **Settings > Updates and privacy > Show what I am doing in Discord** puts "Editing subtitles", the mode and the elapsed time in your Discord status, through the Discord app on your computer; **Include the file name** adds the file name. It never shows the video, your subtitles or line counts. [docs/discord-presence.md](docs/discord-presence.md) lists what is sent.
+
 HikariSub looks for updates only when you choose **Help > Check for updates**, or once a day at most after you turn on **Settings > Updates and privacy > Check for updates automatically** (settings imported from legacy keep legacy's choice). The installer, AppImage, deb and rpm download the update, check its SHA-256 and install it when you choose Restart now or quit.
 
 <details>

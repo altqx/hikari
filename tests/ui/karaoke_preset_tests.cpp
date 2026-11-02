@@ -1,8 +1,10 @@
 #include "hikari/app/application.h"
 #include "hikari/application/edit_session.h"
+#include "hikari/core/text_projection.h"
 
 #include "audio_controller.h"
 #include "docking.h"
+#include "line_editor_controller.h"
 #include "line_grid.h"
 #include "line_table_model.h"
 #include "settings_store.h"
@@ -181,6 +183,29 @@ class KaraokePresetTest : public QObject {
         grid()->forceActiveFocus();
         QTest::keyClick(window(), key);
     }
+    void type(const QString &text)
+    {
+        for (const QChar c : text)
+            QTest::sendKeyEvent(QTest::Click, window(), Qt::Key_unknown, QString(c), Qt::NoModifier);
+    }
+    static constexpr int kSong = 10;
+    QString lineText(int row) const
+    {
+        return QString::fromStdU16String(core::toUtf16(session()->document().lines()[std::size_t(row)]->text));
+    }
+    void typeAtEnd(int row, const char *typed)
+    {
+        if (active() != lineId(row))
+            application->selectLine(lineId(row).value);
+        QTRY_COMPARE(active(), std::optional(lineId(row)));
+        QVERIFY(QMetaObject::invokeMethod(dock("editorDock"), "raise"));
+        auto *field = item("lineText");
+        QTRY_VERIFY(field->isVisible());
+        field->forceActiveFocus();
+        QTRY_VERIFY(field->hasActiveFocus());
+        field->setProperty("cursorPosition", field->property("length"));
+        type(QLatin1String(typed));
+    }
 
 private slots:
     void cleanup()
@@ -227,6 +252,92 @@ private slots:
         start();
         QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Karaoke"));
         verifyKaraokeArrangement();
+        stop();
+    }
+
+    void karaokeModeCommitsTypingInOneUndoStepPerBurst()
+    {
+        start();
+        openSong();
+        applyPreset("Karaoke");
+        const QString song = lineText(kSong);
+        const auto steps = session()->historySize();
+        typeAtEnd(kSong, "ne");
+        QCOMPARE(lineText(kSong), song);
+        QTRY_COMPARE_WITH_TIMEOUT(lineText(kSong), song + QStringLiteral("ne"), 2000);
+        QVERIFY(!session()->draftLine());
+        QCOMPARE(session()->historySize(), steps + 1);
+        QTest::qWait(500);
+        type(QStringLiteral("!"));
+        QTRY_COMPARE_WITH_TIMEOUT(lineText(kSong), song + QStringLiteral("ne!"), 2000);
+        QCOMPARE(session()->historySize(), steps + 1);
+        QCOMPARE(application->editor().text(), song + QStringLiteral("ne!"));
+        QVERIFY(application->editor().undo());
+        QCOMPARE(lineText(kSong), song);
+
+        typeAtEnd(kSong, "a");
+        QTRY_COMPARE_WITH_TIMEOUT(lineText(kSong), song + QStringLiteral("a"), 2000);
+        QTest::qWait(int(ui::LineEditorController::kTypingBurstGapMs) + 300);
+        type(QStringLiteral("b"));
+        QTRY_COMPARE_WITH_TIMEOUT(lineText(kSong), song + QStringLiteral("ab"), 2000);
+        QCOMPARE(session()->historySize(), steps + 2);
+        QVERIFY(application->editor().undo());
+        QCOMPARE(lineText(kSong), song + QStringLiteral("a"));
+        stop();
+    }
+
+    void karaokeModeCommitsTypingWhenTheFieldLosesFocus()
+    {
+        start();
+        openSong();
+        applyPreset("Karaoke");
+        const QString song = lineText(kSong);
+        typeAtEnd(kSong, "x");
+        QCOMPARE(lineText(kSong), song);
+        grid()->forceActiveFocus();
+        QCOMPARE(lineText(kSong), song + QStringLiteral("x"));
+        stop();
+    }
+
+    void karaokeBarFollowsTheTypedSyllables()
+    {
+        start();
+        openSong();
+        applyPreset("Karaoke");
+        audio().openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio().ready(), 20000);
+        QVERIFY(audio().karaoke());
+        application->selectLine(lineId(kSong).value);
+        QTRY_COMPARE(audio().karaokeModel().syllables().back(), std::u16string(u"{}ru"));
+        typeAtEnd(kSong, "ne");
+        QTRY_COMPARE_WITH_TIMEOUT(audio().karaokeModel().syllables().back(), std::u16string(u"{}rune"), 2000);
+        QCOMPARE(audio().karaokeModel().count(), 2);
+        type(QStringLiteral("ko"));
+        QTRY_COMPARE_WITH_TIMEOUT(audio().karaokeModel().syllables().back(), std::u16string(u"{}runeko"), 2000);
+        QCOMPARE(application->editor().text(), lineText(kSong));
+        stop();
+    }
+
+    void otherModesLeaveTypingAsADraft()
+    {
+        start();
+        openSong();
+        const QString song = lineText(kSong);
+        for (const char *preset : {"Editing", "Timing", "Translation", "Typesetting"}) {
+            applyPreset(preset);
+            QTRY_COMPARE(application->workspaceLayout().preset(), QLatin1String(preset));
+            if (auto *question = item<QObject>("translationModeQuestion"); question && question->property("visible").toBool())
+                QVERIFY(QMetaObject::invokeMethod(question, "reject"));
+            QTest::qWait(300);
+            typeAtEnd(kSong, "z");
+            QTRY_VERIFY2(application->editor().text() == song + QStringLiteral("z"),
+                         qPrintable(QStringLiteral("%1: %2").arg(QLatin1String(preset), application->editor().text())));
+            QTest::qWait(700);
+            QVERIFY2(lineText(kSong) == song, preset);
+            QVERIFY2(session()->draftLine() == lineId(kSong), preset);
+            application->editor().discard();
+            QCOMPARE(application->editor().text(), song);
+        }
         stop();
     }
 

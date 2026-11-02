@@ -784,6 +784,8 @@ std::vector<LineRecord> parseClipboardRows(std::u8string_view text, SubtitleForm
             }
         }
         Dialogue d = setRaw(token);
+        if (d.format == Plain)
+            d.end = d.start;
         if (intoTranslation)
             d.translation = d.text;
         if (d.format != target)
