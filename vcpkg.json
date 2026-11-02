@@ -22,6 +22,7 @@
     "mecab",
     "hikari-unidic-lite",
     "kddockwidgets",
+    "qtkeychain",
     "luajit",
     {
       "name": "boost-regex",
