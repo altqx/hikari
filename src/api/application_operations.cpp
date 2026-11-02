@@ -7,6 +7,15 @@
 
 namespace hikari::api::detail {
 
+Json panelJson(const PanelState &panel)
+{
+    return Json::object({{"panel", Json(panel.id)},
+                         {"title", Json(panel.title)},
+                         {"open", Json(panel.open)},
+                         {"floating", Json(panel.floating)},
+                         {"focused", Json(panel.focused)}});
+}
+
 namespace {
 
 std::string lower(std::string_view s)
@@ -62,11 +71,7 @@ Result panelsList(const Context &context, const Json &)
         return fail(errors::kUnavailable, "No panels are available.");
     Json list = Json::array();
     for (const PanelState &panel : context.host.panels->panels())
-        list.push(Json::object({{"panel", Json(panel.id)},
-                                {"title", Json(panel.title)},
-                                {"open", Json(panel.open)},
-                                {"floating", Json(panel.floating)},
-                                {"focused", Json(panel.focused)}}));
+        list.push(panelJson(panel));
     return Json::object({{"panels", list}});
 }
 
@@ -136,6 +141,100 @@ Result settingsGet(const Context &context, const Json &params)
     return Json::object({{"values", values}});
 }
 
+Result commandsRun(const Context &context, const Json &params)
+{
+    if (!context.host.commands)
+        return fail(errors::kUnavailable, "No commands are available.");
+    const std::string &command = params.find("command")->asString();
+    const int id = application::hotkeyIdOf(command);
+    const auto state = id && !application::isRetiredHotkey(id) ? context.host.commands->state(command) : std::nullopt;
+    if (!state)
+        return fail(errors::kNotFound, "No command is named \"" + command + "\".", Json::object({{"command", Json(command)}}));
+    if (!state->enabled)
+        return fail(errors::kRefused, state->disabledReason.empty() ? "The command is disabled." : state->disabledReason,
+                    Json::object({{"reason", Json("disabled")}}));
+    if (!context.host.commands->run(command))
+        return fail(errors::kRefused, "The command did not run.", Json::object({{"reason", Json("not_run")}}));
+    return Json::object({{"command", Json(command)}, {"ran", Json(true)}});
+}
+
+std::optional<PanelState> panelNamed(const PanelHost &panels, std::string_view id)
+{
+    for (const PanelState &panel : panels.panels())
+        if (panel.id == id)
+            return panel;
+    return std::nullopt;
+}
+
+SyncHandler panelChange(std::function<bool(PanelHost &, std::string_view)> change)
+{
+    return [change = std::move(change)](const Context &context, const Json &params) -> Result {
+        if (!context.host.panels)
+            return fail(errors::kUnavailable, "No panels are available.");
+        const std::string &id = params.find("panel")->asString();
+        if (!panelNamed(*context.host.panels, id) || !change(*context.host.panels, id))
+            return fail(errors::kNotFound, "No panel is named \"" + id + "\".", Json::object({{"panel", Json(id)}}));
+        return panelJson(*panelNamed(*context.host.panels, id));
+    };
+}
+
+bool fitsType(const Json &value, application::SettingType type)
+{
+    switch (type) {
+    case application::SettingType::Bool: return value.isBool();
+    case application::SettingType::Int: return value.isInt();
+    case application::SettingType::String: return value.isString();
+    case application::SettingType::StringList:
+        return value.isArray() && std::all_of(value.asArray().begin(), value.asArray().end(), [](const Json &v) { return v.isString(); });
+    }
+    return false;
+}
+
+application::SettingValue settingValue(const Json &value)
+{
+    if (value.isBool())
+        return value.asBool();
+    if (value.isInt())
+        return value.asInt();
+    if (value.isString())
+        return value.asString();
+    std::vector<std::string> list;
+    for (const Json &item : value.asArray())
+        list.push_back(item.asString());
+    return list;
+}
+
+Result settingsSet(const Context &context, const Json &params)
+{
+    if (!context.host.settings)
+        return fail(errors::kUnavailable, "No settings are available.");
+    const std::string &id = params.find("setting")->asString();
+    const auto *definition = offered(id);
+    if (!definition)
+        return fail(errors::kNotFound, "No setting is named \"" + id + "\".", Json::object({{"setting", Json(id)}}));
+    const Json &value = *params.find("value");
+    if (!fitsType(value, definition->type))
+        return fail(errors::kInvalidParams, "Parameter /value: expected " + std::string(typeName(definition->type)) + ".",
+                    Json::object({{"pointer", Json("/value")}}));
+    if (!context.host.settings->set(id, settingValue(value)))
+        return fail(errors::kRefused, "The setting cannot be changed.", Json::object({{"reason", Json("refused")}}));
+    return Json::object({{"setting", Json(id)}, {"value", settingJson(context.host.settings->value(id))}});
+}
+
+void write(Registry &registry, std::string name, std::string summary, std::string_view params, std::string_view result,
+           SyncHandler handler)
+{
+    registry.add(Operation{std::move(name), Access::Write, std::move(summary), schema(params), schema(result), 1,
+                           std::nullopt, now(std::move(handler))});
+}
+
+constexpr std::string_view kPanelParams = R"({"type": "object", "properties": {"panel": {"type": "string",
+    "description": "A panel id from panels.list."}}, "required": ["panel"], "additionalProperties": false})";
+constexpr std::string_view kPanelResult = R"({"type": "object", "properties": {
+    "panel": {"type": "string"}, "title": {"type": "string"}, "open": {"type": "boolean"},
+    "floating": {"type": "boolean"}, "focused": {"type": "boolean"}},
+    "required": ["panel", "title", "open", "floating", "focused"], "additionalProperties": false})";
+
 void read(Registry &registry, std::string name, std::string summary, std::string_view params, std::string_view result,
           SyncHandler handler)
 {
@@ -193,6 +292,24 @@ void addApplicationOperations(Registry &registry)
          R"({"type": "object", "properties": {"values": {"type": "object", "additionalProperties": {"$ref": "#/$defs/SettingValue"}}},
              "required": ["values"], "additionalProperties": false})",
          settingsGet);
+    write(registry, "commands.run", "Runs an enabled command as its menu item, toolbar button or shortcut would.",
+          R"({"type": "object", "properties": {"command": {"type": "string", "minLength": 1,
+              "description": "A command id from commands.list."}}, "required": ["command"], "additionalProperties": false})",
+          R"({"type": "object", "properties": {"command": {"type": "string"}, "ran": {"const": true}},
+              "required": ["command", "ran"], "additionalProperties": false})",
+          commandsRun);
+    write(registry, "panels.open", "Opens a panel where the layout keeps it.", kPanelParams, kPanelResult,
+          panelChange([](PanelHost &panels, std::string_view id) { return panels.setOpen(id, true); }));
+    write(registry, "panels.close", "Closes a panel.", kPanelParams, kPanelResult,
+          panelChange([](PanelHost &panels, std::string_view id) { return panels.setOpen(id, false); }));
+    write(registry, "panels.focus", "Opens a panel if needed and gives it the keyboard focus.", kPanelParams, kPanelResult,
+          panelChange([](PanelHost &panels, std::string_view id) { return panels.focus(id); }));
+    write(registry, "settings.set", "Changes a setting; the value must have the setting's type.",
+          R"({"type": "object", "properties": {"setting": {"type": "string"}, "value": {"$ref": "#/$defs/SettingValue"}},
+              "required": ["setting", "value"], "additionalProperties": false})",
+          R"({"type": "object", "properties": {"setting": {"type": "string"}, "value": {"$ref": "#/$defs/SettingValue"}},
+              "required": ["setting", "value"], "additionalProperties": false})",
+          settingsSet);
 }
 
 }

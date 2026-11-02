@@ -1083,7 +1083,7 @@ Output device: %2</source>
         <translation>이 폴더들의 스크립트 항상 신뢰</translation>
     </message>
     <message>
-        <source>Don&apos;t load</source>
+        <source>Don’t load</source>
         <translation>불러오지 않음</translation>
     </message>
     <message>
@@ -1505,16 +1505,12 @@ Output device: %2</source>
         <translation>HTML</translation>
     </message>
     <message>
-        <source>Swap shortcuts between the color picker
-and the color selection window</source>
-        <translation>색상 선택기와 색상 선택 창의
-클릭 단축키 서로 바꾸기</translation>
+        <source>Click opens the picker, right-click the colour window</source>
+        <translation>클릭하면 색상 선택기, 오른쪽 클릭하면 색상 선택 창이 열립니다</translation>
     </message>
     <message>
-        <source>Checking this option opens the color picker on left-click,
-and the color selection window on right-click.</source>
-        <translation>이 옵션을 선택하면 왼쪽 클릭으로 색상 선택기를,
-오른쪽 클릭으로 색상 선택 창을 엽니다.</translation>
+        <source>Off: click opens the colour window, right-click the picker.</source>
+        <translation>끄면 클릭은 색상 선택 창, 오른쪽 클릭은 색상 선택기를 엽니다.</translation>
     </message>
     <message>
         <source>Red</source>
@@ -1900,7 +1896,7 @@ in tag &apos;%3&apos;</source>
 <context>
     <name>HikariSub.Documents</name>
     <message>
-        <source>Apply to All</source>
+        <source>Apply to all</source>
         <translation>모두 적용</translation>
     </message>
     <message>
@@ -2437,36 +2433,12 @@ Should not exceed 15 characters per second</source>
         <translation>줄에 들어가는 효과. 노래방 또는 VSFilter 효과를 적용할 줄을 표시하는 데 사용됩니다</translation>
     </message>
     <message>
-        <source>&amp;Copy</source>
-        <translation>복사[&amp;C]</translation>
-    </message>
-    <message>
-        <source>Cu&amp;t</source>
-        <translation>잘라내기[&amp;T]</translation>
-    </message>
-    <message>
-        <source>&amp;Paste</source>
-        <translation>붙여넣기[&amp;P]</translation>
-    </message>
-    <message>
-        <source>Spellchecker</source>
-        <translation>철자 검사기</translation>
-    </message>
-    <message>
-        <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation>사전에 &quot;%1&quot; 단어 추가[&amp;A]</translation>
-    </message>
-    <message>
         <source>Add word to dictionary</source>
         <translation>사전에 단어 추가</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
         <translation>오류: &quot;%1&quot; 단어를 추가하지 못했습니다.</translation>
-    </message>
-    <message>
-        <source>&amp;Delete</source>
-        <translation>삭제[&amp;D]</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2535,6 +2507,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>Remove</source>
         <translation>제거</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>철자 검사</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -2768,7 +2744,7 @@ Should not exceed 15 characters per second</source>
         <translation>추가</translation>
     </message>
     <message>
-        <source>Adds fonts to a previously created catalog</source>
+        <source>Adds fonts to an existing catalogue</source>
         <translation>이전에 만든 목록에 글꼴을 추가합니다</translation>
     </message>
     <message>
@@ -2776,7 +2752,7 @@ Should not exceed 15 characters per second</source>
         <translation>관리</translation>
     </message>
     <message>
-        <source>Allows managing font catalogs</source>
+        <source>Manages font catalogues</source>
         <translation>글꼴 목록을 관리할 수 있습니다</translation>
     </message>
     <message>
@@ -2792,7 +2768,7 @@ Should not exceed 15 characters per second</source>
         <translation>자막에서 글꼴 추가</translation>
     </message>
     <message>
-        <source>Manage font catalogs</source>
+        <source>Manage font catalogues</source>
         <translation>글꼴 목록 관리</translation>
     </message>
     <message>
@@ -2808,7 +2784,7 @@ Should not exceed 15 characters per second</source>
         <translation>글꼴 새로 고침: 설치된 글꼴과 외부 글꼴을 다시 읽습니다</translation>
     </message>
     <message>
-        <source>Enter a name for the catalog.</source>
+        <source>Enter a name for the catalogue.</source>
         <translation>목록 이름을 입력하십시오.</translation>
     </message>
     <message>
@@ -2816,11 +2792,11 @@ Should not exceed 15 characters per second</source>
         <translation>“%1”(이)가 이미 있습니다.</translation>
     </message>
     <message>
-        <source>Rename font catalog</source>
+        <source>Rename font catalogue</source>
         <translation>글꼴 목록 이름 바꾸기</translation>
     </message>
     <message>
-        <source>A catalog named “%1” already exists.</source>
+        <source>A catalogue named “%1” already exists.</source>
         <translation>“%1” 목록이 이미 있습니다.</translation>
     </message>
     <message>
@@ -2832,11 +2808,11 @@ Should not exceed 15 characters per second</source>
         <translation>교체</translation>
     </message>
     <message>
-        <source>Delete font catalog</source>
+        <source>Delete font catalogue</source>
         <translation>글꼴 목록 삭제</translation>
     </message>
     <message>
-        <source>Delete the catalog “%1”?</source>
+        <source>Delete the catalogue “%1”?</source>
         <translation>“%1” 목록을 삭제하시겠습니까?</translation>
     </message>
     <message>
@@ -2844,11 +2820,11 @@ Should not exceed 15 characters per second</source>
         <translation>글꼴이 없습니다.</translation>
     </message>
     <message>
-        <source>Its fonts stay installed and in their other catalogs.</source>
+        <source>Its fonts stay installed and in their other catalogues.</source>
         <translation>포함된 글꼴은 설치된 상태로 다른 목록에 그대로 남습니다.</translation>
     </message>
     <message>
-        <source>The file holds no font catalog.</source>
+        <source>The file holds no font catalogue.</source>
         <translation>파일에 글꼴 목록이 없습니다.</translation>
     </message>
     <message>
@@ -2856,15 +2832,15 @@ Should not exceed 15 characters per second</source>
         <translation>%1 (%2)</translation>
     </message>
     <message>
-        <source>Load font catalogs</source>
+        <source>Load font catalogues</source>
         <translation>글꼴 목록 불러오기</translation>
     </message>
     <message>
-        <source>%1 of %2 catalogs in “%3” already exist.</source>
+        <source>%1 of %2 catalogues in “%3” already exist.</source>
         <translation>“%3”의 목록 %2개 중 %1개가 이미 있습니다.</translation>
     </message>
     <message>
-        <source>The file’s new catalogs are added.</source>
+        <source>The file’s new catalogues are added.</source>
         <translation>파일의 새 목록이 추가됩니다.</translation>
     </message>
     <message>
@@ -2884,11 +2860,11 @@ Should not exceed 15 characters per second</source>
         <translation>현재 %1개, 파일에 %2개</translation>
     </message>
     <message>
-        <source>Load 1 catalog</source>
+        <source>Load 1 catalogue</source>
         <translation>목록 1개 불러오기</translation>
     </message>
     <message numerus="yes">
-        <source>Load %n catalogs</source>
+        <source>Load %n catalogues</source>
         <translation>
             <numerusform>목록 %n개 불러오기</numerusform>
         </translation>
@@ -2918,11 +2894,11 @@ Should not exceed 15 characters per second</source>
         </translation>
     </message>
     <message>
-        <source>Loaded 1 font catalog</source>
+        <source>Loaded 1 font catalogue</source>
         <translation>글꼴 목록 1개를 불러왔습니다</translation>
     </message>
     <message numerus="yes">
-        <source>Loaded %n font catalogs</source>
+        <source>Loaded %n font catalogues</source>
         <translation>
             <numerusform>글꼴 목록 %n개를 불러왔습니다</numerusform>
         </translation>
@@ -2932,11 +2908,11 @@ Should not exceed 15 characters per second</source>
         <translation>%1에서: %2.</translation>
     </message>
     <message>
-        <source>Catalogs</source>
+        <source>Catalogues</source>
         <translation>목록</translation>
     </message>
     <message>
-        <source>New catalog</source>
+        <source>New catalogue</source>
         <translation>새 목록</translation>
     </message>
     <message>
@@ -2956,11 +2932,11 @@ Should not exceed 15 characters per second</source>
         <translation>“%1”에 포함</translation>
     </message>
     <message>
-        <source>In the catalog</source>
+        <source>In the catalogue</source>
         <translation>목록에 포함</translation>
     </message>
     <message>
-        <source>Not in a catalog</source>
+        <source>Not in a catalogue</source>
         <translation>목록에 없음</translation>
     </message>
     <message>
@@ -2984,11 +2960,11 @@ Should not exceed 15 characters per second</source>
         <translation>저장 안 됨: 안전 사본을 쓸 수 없음</translation>
     </message>
     <message>
-        <source>The catalogs are saved automatically to fonts.toml in the &quot;catalogs&quot; folder of your user folder.</source>
+        <source>Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.</source>
         <translation>목록은 사용자 폴더의 &quot;catalogs&quot; 폴더에 있는 fonts.toml에 자동으로 저장됩니다.</translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Catalogue name</source>
         <translation>목록 이름</translation>
     </message>
     <message>
@@ -3020,7 +2996,7 @@ Should not exceed 15 characters per second</source>
         <translation>병합</translation>
     </message>
     <message>
-        <source>Choose font catalog file</source>
+        <source>Choose font catalogue file</source>
         <translation>글꼴 목록 파일 선택</translation>
     </message>
     <message>
@@ -3176,7 +3152,7 @@ Should not exceed 15 characters per second</source>
         <translation>글꼴 검색</translation>
     </message>
     <message>
-        <source>Font catalog: %1</source>
+        <source>Font catalogue: %1</source>
         <translation>글꼴 목록: %1</translation>
     </message>
     <message>
@@ -3196,11 +3172,11 @@ Should not exceed 15 characters per second</source>
         <translation>글자 필터</translation>
     </message>
     <message>
-        <source>Add to a catalog</source>
+        <source>Add to a catalogue</source>
         <translation>목록에 추가</translation>
     </message>
     <message>
-        <source>Add “%1” to a catalog</source>
+        <source>Add “%1” to a catalogue</source>
         <translation>“%1”(을)를 목록에 추가</translation>
     </message>
     <message>
@@ -3272,27 +3248,27 @@ Should not exceed 15 characters per second</source>
         <translation>예시 텍스트</translation>
     </message>
     <message>
-        <source>The line’s selected text</source>
-        <translation>줄에서 선택한 텍스트</translation>
+        <source>Selected text</source>
+        <translation>선택한 텍스트</translation>
     </message>
     <message>
-        <source>The line’s text</source>
-        <translation>줄의 텍스트</translation>
+        <source>Line text</source>
+        <translation>줄 텍스트</translation>
     </message>
     <message>
-        <source>The Style editor’s sample text</source>
-        <translation>스타일 편집기의 예시 텍스트</translation>
+        <source>Style editor sample</source>
+        <translation>스타일 편집기 견본</translation>
     </message>
     <message>
-        <source>Manage catalogs…</source>
-        <translation>목록 관리…</translation>
+        <source>Manage catalogues</source>
+        <translation>목록 관리</translation>
     </message>
     <message>
-        <source>No catalogs yet</source>
+        <source>No catalogues yet</source>
         <translation>아직 목록 없음</translation>
     </message>
     <message>
-        <source>New catalog…</source>
+        <source>New catalogue…</source>
         <translation>새 목록…</translation>
     </message>
     <message>
@@ -3723,7 +3699,7 @@ Failed to copy %2 fonts.</source>
         <translation>글꼴을 “%1”에 추가했지만 저장하지 못했습니다.</translation>
     </message>
     <message>
-        <source>fonts.toml in the &quot;catalogs&quot; folder of your user folder could not be written. Saving is tried again on exit.</source>
+        <source>fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.</source>
         <translation>사용자 폴더의 &quot;catalogs&quot; 폴더에 있는 fonts.toml에 쓸 수 없습니다. 종료할 때 다시 저장을 시도합니다.</translation>
     </message>
     <message>
@@ -3735,7 +3711,7 @@ Failed to copy %2 fonts.</source>
         <translation>%2의 스타일과 %1 태그에서 가져옵니다.</translation>
     </message>
     <message>
-        <source>Choose a catalog or type a new name.</source>
+        <source>Choose a catalogue or type a new name.</source>
         <translation>목록을 선택하거나 새 이름을 입력하십시오.</translation>
     </message>
     <message>
@@ -3751,7 +3727,7 @@ Failed to copy %2 fonts.</source>
         <translation>열린 모든 파일</translation>
     </message>
     <message>
-        <source>Replace the catalog’s fonts</source>
+        <source>Replace the catalogue’s fonts</source>
         <translation>목록의 글꼴 교체</translation>
     </message>
     <message numerus="yes">
@@ -4191,22 +4167,6 @@ Failed to copy %2 fonts.</source>
         <translation>삭제</translation>
     </message>
     <message>
-        <source>&amp;Insert</source>
-        <translation>삽입[&amp;I]</translation>
-    </message>
-    <message>
-        <source>Insert &amp;before</source>
-        <translation>이전에 빈 줄 추가[&amp;B]</translation>
-    </message>
-    <message>
-        <source>Insert &amp;after</source>
-        <translation>이후에 빈 줄 추가[&amp;A]</translation>
-    </message>
-    <message>
-        <source>Insert before with &amp;video time</source>
-        <translation>영상 시간으로 앞에 삽입[&amp;V]</translation>
-    </message>
-    <message>
         <source>Insert after with video time</source>
         <translation>영상 시간으로 뒤에 삽입</translation>
     </message>
@@ -4217,18 +4177,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Insert after with video frame time</source>
         <translation>영상 프레임 시간으로 뒤에 삽입</translation>
-    </message>
-    <message>
-        <source>&amp;Duplicate lines</source>
-        <translation>줄 복제[&amp;D]</translation>
-    </message>
-    <message>
-        <source>&amp;Swap</source>
-        <translation>서로 바꾸기[&amp;S]</translation>
-    </message>
-    <message>
-        <source>Join &amp;lines</source>
-        <translation>줄 병합[&amp;L]</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
@@ -4391,18 +4339,6 @@ Failed to copy %2 fonts.</source>
         <translation>영상에서 프레임 속도 설정</translation>
     </message>
     <message>
-        <source>Copy	Ctrl+C</source>
-        <translation>복사	Ctrl+C</translation>
-    </message>
-    <message>
-        <source>Cut	Ctrl+X</source>
-        <translation>잘라내기	Ctrl+X</translation>
-    </message>
-    <message>
-        <source>Paste	Ctrl+V</source>
-        <translation>붙여넣기	Ctrl+V</translation>
-    </message>
-    <message>
         <source>Copy columns</source>
         <translation>구분 열 복사</translation>
     </message>
@@ -4413,10 +4349,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Delete text</source>
         <translation>글자 삭제</translation>
-    </message>
-    <message>
-        <source>Delete lines	Shift+Del</source>
-        <translation>줄 삭제	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4467,6 +4399,34 @@ Failed to copy %2 fonts.</source>
         <translation>그룹의 줄 선택</translation>
     </message>
     <message>
+        <source>Insert</source>
+        <translation>삽입</translation>
+    </message>
+    <message>
+        <source>Insert before</source>
+        <translation>이전에 빈 줄 추가</translation>
+    </message>
+    <message>
+        <source>Insert after</source>
+        <translation>이후에 빈 줄 추가</translation>
+    </message>
+    <message>
+        <source>Insert before with video time</source>
+        <translation>영상 시간으로 앞에 삽입</translation>
+    </message>
+    <message>
+        <source>Duplicate lines</source>
+        <translation>줄 복제</translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation>서로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Join lines</source>
+        <translation>줄 병합</translation>
+    </message>
+    <message>
         <source>Make times continuous with the previous line</source>
         <translation>이전 줄과 시간을 연속으로 설정</translation>
     </message>
@@ -4477,6 +4437,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Make line group</source>
         <translation>줄 그룹 만들기</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>잘라내기</translation>
+    </message>
+    <message>
+        <source>Delete lines</source>
+        <translation>줄 삭제</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -6088,8 +6056,8 @@ What would you like to do?</source>
         <translation>한자 타이머</translation>
     </message>
     <message>
-        <source>The kanji timing could not be applied</source>
-        <translation>한자 타이밍을 적용하지 못했습니다</translation>
+        <source>The kanji timing could not be applied.</source>
+        <translation>한자 타이밍을 적용하지 못했습니다.</translation>
     </message>
     <message>
         <source>The subtitles are read-only.</source>
@@ -6170,7 +6138,7 @@ What would you like to do?</source>
         <translation>다중 강조 (#)</translation>
     </message>
     <message>
-        <source>Write each further syllable of a group as a # syllable, for the templater&apos;s multi effects</source>
+        <source>Write each further syllable of a group as a # syllable, for the templater’s multi effects</source>
         <translation>템플릿 실행기의 다중 효과를 위해 그룹의 두 번째 이후 음절을 # 음절로 씁니다</translation>
     </message>
     <message>
@@ -6178,7 +6146,7 @@ What would you like to do?</source>
         <translation>후리가나</translation>
     </message>
     <message>
-        <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
+        <source>Write each kanji’s reading after it (漢|かん), as the romaji sings it</source>
         <translation>로마자로 부르는 대로 각 한자 뒤에 읽는 법을 씁니다 (漢|かん)</translation>
     </message>
     <message>
@@ -6214,8 +6182,8 @@ What would you like to do?</source>
         <translation>“%1”에 노래방 줄 없음</translation>
     </message>
     <message>
-        <source>The subtitles have no styles</source>
-        <translation>자막에 스타일 없음</translation>
+        <source>The document has no styles.</source>
+        <translation>문서에 스타일이 없습니다.</translation>
     </message>
     <message>
         <source>No lines to pair</source>
@@ -7311,7 +7279,7 @@ What would you like to do?</source>
         <translation>HikariSub %1 설치 준비 완료</translation>
     </message>
     <message>
-        <source>What&apos;s new</source>
+        <source>What’s new</source>
         <translation>새로운 기능</translation>
     </message>
     <message>
@@ -7373,7 +7341,7 @@ What would you like to do?</source>
         </translation>
     </message>
     <message>
-        <source>Don&apos;t ask again</source>
+        <source>Don’t ask again</source>
         <translation>다시 묻지 않음</translation>
     </message>
     <message>
@@ -7459,8 +7427,8 @@ What would you like to do?</source>
         <translation>건너뛰기</translation>
     </message>
     <message>
-        <source>All:</source>
-        <translation>전체:</translation>
+        <source>All</source>
+        <translation>전체</translation>
     </message>
     <message>
         <source>Action for every row</source>
@@ -9346,7 +9314,7 @@ and will be changed to the default</source>
         <translation>기능을 설명하십시오.</translation>
     </message>
     <message>
-        <source>Don&apos;t send</source>
+        <source>Don’t send</source>
         <translation>보내지 않기</translation>
     </message>
     <message>
@@ -9534,8 +9502,8 @@ and will be changed to the default</source>
         <translation>이슈 내용이 클립보드에 있습니다. GitHub의 새 이슈에 붙여 넣으십시오.</translation>
     </message>
     <message>
-        <source>The whole report</source>
-        <translation>전체 보고서</translation>
+        <source>Report text</source>
+        <translation>보고서 내용</translation>
     </message>
     <message>
         <source>Title</source>
@@ -9574,7 +9542,7 @@ and will be changed to the default</source>
         <translation>예상한 결과</translation>
     </message>
     <message>
-        <source>What you&apos;d like</source>
+        <source>What you’d like</source>
         <translation>원하는 기능</translation>
     </message>
     <message>
@@ -11428,7 +11396,7 @@ Spell checking will be disabled</source>
         <translation>스타일 저장</translation>
     </message>
     <message>
-        <source>Style catalog</source>
+        <source>Style catalogue</source>
         <translation>스타일 목록</translation>
     </message>
     <message>
@@ -11504,7 +11472,7 @@ Spell checking will be disabled</source>
         <translation>“%1”에 변경 사항을 적용하시겠습니까?</translation>
     </message>
     <message>
-        <source>The catalog “%1” is shown now; the changes go to “%2”.</source>
+        <source>The catalogue “%1” is shown now; the changes go to “%2”.</source>
         <translation>지금은 “%1” 목록이 표시되어 있지만, 변경 사항은 “%2”에 적용됩니다.</translation>
     </message>
     <message>
@@ -11536,8 +11504,8 @@ Spell checking will be disabled</source>
         <translation>모든 스타일이 줄에서 사용되고 있습니다.</translation>
     </message>
     <message>
-        <source>Ctrl+Z puts them back.</source>
-        <translation>Ctrl+Z로 되돌릴 수 있습니다.</translation>
+        <source>Undo puts them back.</source>
+        <translation>실행 취소로 되돌릴 수 있습니다.</translation>
     </message>
     <message>
         <source>border</source>
@@ -11552,15 +11520,15 @@ Spell checking will be disabled</source>
         <translation>이 파일</translation>
     </message>
     <message>
-        <source>the catalog</source>
+        <source>the catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
-        <source>Delete catalog</source>
+        <source>Delete catalogue</source>
         <translation>목록 삭제</translation>
     </message>
     <message>
-        <source>Delete the catalog “%1”?</source>
+        <source>Delete the catalogue “%1”?</source>
         <translation>“%1” 목록을 삭제하시겠습니까?</translation>
     </message>
     <message>
@@ -11582,7 +11550,7 @@ Spell checking will be disabled</source>
         <translation>스타일 이름을 입력해야 합니다.</translation>
     </message>
     <message>
-        <source>The catalog already has a style named “%1”.</source>
+        <source>The catalogue already has a style named “%1”.</source>
         <translation>목록에 “%1” 스타일이 이미 있습니다.</translation>
     </message>
     <message>
@@ -11606,7 +11574,7 @@ Spell checking will be disabled</source>
         <translation>“%1”의 변경 사항이 적용되지 않음</translation>
     </message>
     <message>
-        <source>The file shown now uses the catalog “%1”.</source>
+        <source>The file shown now uses the catalogue “%1”.</source>
         <translation>지금 표시된 파일은 “%1” 목록을 사용합니다.</translation>
     </message>
     <message>
@@ -11638,7 +11606,7 @@ Spell checking will be disabled</source>
         <translation>투명도, 0(불투명)~255</translation>
     </message>
     <message>
-        <source>Catalog styles</source>
+        <source>Catalogue styles</source>
         <translation>목록 스타일</translation>
     </message>
     <message>
@@ -11708,15 +11676,15 @@ Spell checking will be disabled</source>
         <translation>파일에 추가</translation>
     </message>
     <message>
-        <source>Copy the selected catalog styles into this file</source>
+        <source>Copy the selected catalogue styles into this file</source>
         <translation>선택한 목록 스타일을 이 파일에 복사</translation>
     </message>
     <message>
-        <source>Add to catalog</source>
+        <source>Add to catalogue</source>
         <translation>목록에 추가</translation>
     </message>
     <message>
-        <source>Copy the selected file styles into the catalog</source>
+        <source>Copy the selected file styles into the catalogue</source>
         <translation>선택한 파일 스타일을 목록에 복사</translation>
     </message>
     <message>
@@ -11724,7 +11692,7 @@ Spell checking will be disabled</source>
         <translation>열린 모든 파일에 추가</translation>
     </message>
     <message>
-        <source>Copy the selected catalog styles into every open file</source>
+        <source>Copy the selected catalogue styles into every open file</source>
         <translation>선택한 목록 스타일을 열린 모든 파일에 복사</translation>
     </message>
     <message>
@@ -11732,8 +11700,8 @@ Spell checking will be disabled</source>
         <translation>이 파일</translation>
     </message>
     <message>
-        <source>This tab has no ASS styles.</source>
-        <translation>이 탭에는 ASS 스타일이 없습니다.</translation>
+        <source>This document has no ASS styles.</source>
+        <translation>이 문서에는 ASS 스타일이 없습니다.</translation>
     </message>
     <message numerus="yes">
         <source>%n styles: the preview shows %1</source>
@@ -11760,7 +11728,7 @@ Spell checking will be disabled</source>
         <translation>글꼴 이름</translation>
     </message>
     <message>
-        <source>Font catalog</source>
+        <source>Font catalogue</source>
         <translation>글꼴 목록</translation>
     </message>
     <message>
@@ -11856,7 +11824,7 @@ Spell checking will be disabled</source>
         <translation>적용</translation>
     </message>
     <message>
-        <source>New catalog</source>
+        <source>New catalogue</source>
         <translation>새 목록</translation>
     </message>
     <message>
@@ -11964,11 +11932,11 @@ Spell checking will be disabled</source>
         <translation>원래대로</translation>
     </message>
     <message>
-        <source>A catalog named “%1” already exists.</source>
+        <source>A catalogue named “%1” already exists.</source>
         <translation>“%1” 목록이 이미 있습니다.</translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Catalogue name</source>
         <translation>목록 이름</translation>
     </message>
     <message>
@@ -13301,6 +13269,65 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.TextMenu</name>
+    <message>
+        <source>Undo</source>
+        <translation>실행 취소</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>다시 실행</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>잘라내기</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>붙여 넣기</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>모두 선택</translation>
+    </message>
+    <message>
+        <source>Undoes the last change to the text</source>
+        <translation>텍스트의 마지막 변경을 취소합니다</translation>
+    </message>
+    <message>
+        <source>Redoes the last change you undid</source>
+        <translation>마지막으로 취소한 변경을 다시 실행합니다</translation>
+    </message>
+    <message>
+        <source>Moves the selected text to the clipboard</source>
+        <translation>선택한 텍스트를 클립보드로 옮깁니다</translation>
+    </message>
+    <message>
+        <source>Copies the selected text to the clipboard</source>
+        <translation>선택한 텍스트를 클립보드에 복사합니다</translation>
+    </message>
+    <message>
+        <source>Inserts the text from the clipboard</source>
+        <translation>클립보드의 텍스트를 넣습니다</translation>
+    </message>
+    <message>
+        <source>Deletes the selected text</source>
+        <translation>선택한 텍스트를 삭제합니다</translation>
+    </message>
+    <message>
+        <source>Selects all the text in the field</source>
+        <translation>필드의 텍스트를 모두 선택합니다</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TimeShift</name>
     <message>
         <source>The starting time</source>
@@ -13682,7 +13709,7 @@ after the end time in milliseconds</source>
         <translation>번역 맞추기 옵션</translation>
     </message>
     <message>
-        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</source>
+        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted translation is matched to it, and it is deleted later.</source>
         <translation>&lt;b&gt;원본&lt;/b&gt;: 타이밍이 맞는 글자입니다. 붙여 넣은 대사를 여기에 맞추며, 나중에 삭제됩니다.</translation>
     </message>
     <message>
@@ -14652,11 +14679,11 @@ or codecs or a splitter may be missing</source>
         <translation>다른 태그의 이름이 “%1”입니다. 교체하려면 먼저 태그 칸을 채우십시오.</translation>
     </message>
     <message>
-        <source>A tag can&apos;t contain “,”.</source>
+        <source>A tag can’t contain “,”.</source>
         <translation>태그에는 “,”를 넣을 수 없습니다.</translation>
     </message>
     <message>
-        <source>A name can&apos;t contain “,”.</source>
+        <source>A name can’t contain “,”.</source>
         <translation>이름에는 “,”를 넣을 수 없습니다.</translation>
     </message>
     <message>
@@ -14706,8 +14733,8 @@ or codecs or a splitter may be missing</source>
         <translation>기본 태그 22개가 범위 및 단계와 함께 복원됩니다.</translation>
     </message>
     <message>
-        <source>The list keeps at least one tag</source>
-        <translation>목록에는 태그가 하나 이상 있어야 합니다</translation>
+        <source>The list keeps at least one tag.</source>
+        <translation>목록에는 태그가 하나 이상 있어야 합니다.</translation>
     </message>
     <message>
         <source>Default</source>
@@ -14738,9 +14765,9 @@ or codecs or a splitter may be missing</source>
         <translation>개수</translation>
     </message>
     <message numerus="yes">
-        <source>The tag takes %n value(s)</source>
+        <source>The tag takes %n value(s).</source>
         <translation>
-            <numerusform>태그가 값을 %n개 받습니다</numerusform>
+            <numerusform>태그가 값을 %n개 받습니다.</numerusform>
         </translation>
     </message>
     <message>
@@ -14816,7 +14843,7 @@ or codecs or a splitter may be missing</source>
         <translation>이름을 입력하십시오.</translation>
     </message>
     <message>
-        <source>A name can&apos;t contain “;”.</source>
+        <source>A name can’t contain “;”.</source>
         <translation>이름에는 “;”를 넣을 수 없습니다.</translation>
     </message>
     <message>
@@ -14870,8 +14897,8 @@ or codecs or a splitter may be missing</source>
         <translation>삭제</translation>
     </message>
     <message>
-        <source>The list keeps at least one shape</source>
-        <translation>목록에는 도형이 하나 이상 있어야 합니다</translation>
+        <source>The list keeps at least one shape.</source>
+        <translation>목록에는 도형이 하나 이상 있어야 합니다.</translation>
     </message>
     <message>
         <source>Name</source>
@@ -14898,7 +14925,7 @@ or codecs or a splitter may be missing</source>
         <translation>그리기 명령</translation>
     </message>
     <message>
-        <source>A drawing can&apos;t contain “;”.</source>
+        <source>A drawing can’t contain “;”.</source>
         <translation>그리기 명령에는 “;”를 넣을 수 없습니다.</translation>
     </message>
     <message>
@@ -14910,7 +14937,7 @@ or codecs or a splitter may be missing</source>
         <translation>활성 줄에서 가져오기</translation>
     </message>
     <message>
-        <source>Put the active line&apos;s drawing in this shape</source>
+        <source>Put the active line’s drawing in this shape</source>
         <translation>활성 줄의 그리기 명령을 이 도형에 넣기</translation>
     </message>
     <message>
@@ -14922,8 +14949,8 @@ or codecs or a splitter may be missing</source>
         <translation>미리 보기</translation>
     </message>
     <message>
-        <source>The shape keeps its last drawing until this one can be used</source>
-        <translation>이 그리기 명령을 사용할 수 있을 때까지 도형은 마지막 그리기 명령을 유지합니다</translation>
+        <source>The shape keeps its last drawing until this one can be used.</source>
+        <translation>이 그리기 명령을 사용할 수 있을 때까지 도형은 마지막 그리기 명령을 유지합니다.</translation>
     </message>
     <message>
         <source>%1 × %2</source>

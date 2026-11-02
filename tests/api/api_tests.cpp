@@ -52,8 +52,33 @@ TEST(ApiRegistry, ReadsAreMarkedRead)
     }
 }
 
+TEST(ApiRegistry, WritesAreMarkedWrite)
+{
+    for (const char *name : {"document.apply", "selection.set", "commands.run", "panels.open", "panels.close",
+                             "panels.focus", "settings.set"}) {
+        const Operation *op = Api::registry().find(name);
+        ASSERT_TRUE(op) << name;
+        EXPECT_EQ(op->access, Access::Write) << name;
+    }
+}
+
+TEST(ApiRegistry, EveryEventIsWellFormed)
+{
+    const Registry &registry = Api::registry();
+    std::set<std::string> names;
+    for (const EventType &event : registry.events()) {
+        names.insert(event.name);
+        EXPECT_FALSE(event.summary.empty()) << event.name;
+        EXPECT_FALSE(checkSchema(event.data, registry.defs())) << event.name;
+    }
+    EXPECT_EQ(names, (std::set<std::string>{"document.changed", "selection.changed", "documents.changed", "panel.changed",
+                                            "command.ran"}));
+}
+
 class ApiScripts : public ::testing::Test {
 protected:
+    ApiScripts() { host.api = &api; }
+
     FakeHost host;
     Api api{host.host()};
     ScriptClient client{api};
@@ -72,6 +97,16 @@ TEST_F(ApiScripts, Scope)
 TEST_F(ApiScripts, Errors)
 {
     EXPECT_GT(client.run(kScripts / "errors.jsonl"), 0);
+}
+
+TEST_F(ApiScripts, Writes)
+{
+    EXPECT_GT(client.run(kScripts / "writes.jsonl"), 0);
+}
+
+TEST_F(ApiScripts, WriteScope)
+{
+    EXPECT_GT(client.run(kScripts / "scope_writes.jsonl"), 0);
 }
 
 TEST_F(ApiScripts, EveryOperationAnswersEmptyParams)
@@ -127,6 +162,177 @@ TEST_F(ApiScripts, TheDraftIsReportedNotCommitted)
     ASSERT_TRUE(line);
     EXPECT_EQ(line->find("lines")->asArray()[0].find("text")->asString(), "General Kenobi");
     EXPECT_TRUE(session->draftLine());
+}
+
+Json params(std::string_view text)
+{
+    auto value = Json::parse(text);
+    EXPECT_TRUE(value) << text;
+    return value ? *value : Json();
+}
+
+std::string documentText(const hikari::application::EditSession &session)
+{
+    std::string out;
+    for (const auto *line : session.document().lines())
+        out += std::string(line->text.begin(), line->text.end()) + "|" + std::to_string(line->start.value.microseconds()) + "\n";
+    return out;
+}
+
+Json applyAt(std::uint64_t revision, std::string_view edits)
+{
+    return params(R"({"revision": )" + std::to_string(revision) + R"(, "name": "Batch", "edits": )" + std::string(edits) + "}");
+}
+
+TEST_F(ApiScripts, OneWriteIsOneUndoStep)
+{
+    auto *session = host.target();
+    const std::string before = documentText(*session);
+    const auto steps = session->historySize();
+    const Result applied = client.call(aiCaller(), "document.apply",
+                                       applyAt(session->revision(), R"([
+        {"op": "set_line", "line": 1, "fields": {"text": "one"}},
+        {"op": "set_line", "line": 2, "fields": {"start": 0}},
+        {"op": "insert_line", "before": 1, "fields": {"text": "zero"}},
+        {"op": "delete_line", "line": 3},
+        {"op": "set_info", "key": "Title", "value": "t"}])"));
+    ASSERT_TRUE(applied) << applied.error().message;
+    EXPECT_EQ(session->historySize(), steps + 1);
+    EXPECT_EQ(session->history().back().name, "Test AI: Batch");
+    EXPECT_EQ(host.commits, 1);
+    EXPECT_NE(documentText(*session), before);
+    ASSERT_TRUE(client.call(aiCaller(), "commands.run", params(R"({"command": "GLOBAL_UNDO"})")));
+    EXPECT_EQ(documentText(*session), before);
+    EXPECT_EQ(session->document().scriptInfo(u8"Title"), std::optional<std::u8string>(u8"alpha"));
+    EXPECT_FALSE(session->canUndo());
+}
+
+TEST_F(ApiScripts, AStaleRevisionChangesNothing)
+{
+    auto *session = host.target();
+    const auto stale = session->revision();
+    ASSERT_TRUE(client.call(aiCaller(), "document.apply",
+                            applyAt(stale, R"([{"op": "set_line", "line": 1, "fields": {"text": "first"}}])")));
+    const std::string after = documentText(*session);
+    const auto steps = session->historySize();
+    const Result late = client.call(aiCaller(), "document.apply",
+                                    applyAt(stale, R"([{"op": "set_line", "line": 2, "fields": {"text": "late"}}])"));
+    ASSERT_FALSE(late);
+    EXPECT_EQ(late.error().code, errors::kStaleRevision);
+    EXPECT_EQ(*late.error().data.find("current"), Json(session->revision()));
+    EXPECT_EQ(documentText(*session), after);
+    EXPECT_EQ(session->historySize(), steps);
+    EXPECT_EQ(host.commits, 1);
+}
+
+TEST_F(ApiScripts, ARefusedEditLeavesTheDocumentAsItWas)
+{
+    auto *session = host.target();
+    const std::string before = documentText(*session);
+    const auto revision = session->revision();
+    const Result result = client.call(aiCaller(), "document.apply", applyAt(revision, R"([
+        {"op": "set_line", "line": 1, "fields": {"text": "changed"}},
+        {"op": "delete_style", "name": "Missing"}])"));
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code, errors::kNotFound);
+    EXPECT_EQ(documentText(*session), before);
+    EXPECT_EQ(session->revision(), revision);
+    EXPECT_EQ(host.commits, 0);
+}
+
+TEST_F(ApiScripts, AMacroHoldsTheDocument)
+{
+    auto *session = host.target();
+    session->setReadOnly(true);
+    const Result result = client.call(aiCaller(), "document.apply",
+                                      applyAt(session->revision(), R"([{"op": "delete_line", "line": 1}])"));
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code, errors::kReadOnly);
+    EXPECT_EQ(session->document().lines().size(), 3u);
+}
+
+TEST_F(ApiScripts, TheReferenceIsProtected)
+{
+    ASSERT_TRUE(host.workspace_.setReference(hikari::application::DocumentId{2}));
+    auto *reference = host.session(hikari::application::DocumentId{2});
+    const Result result = client.call(aiCaller(), "document.apply",
+                                      params(R"({"document": 2, "revision": )" + std::to_string(reference->revision()) +
+                                             R"(, "name": "X", "edits": [{"op": "delete_line", "line": 1}]})"));
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code, errors::kProtected);
+    EXPECT_EQ(reference->document().lines().size(), 1u);
+}
+
+TEST_F(ApiScripts, OneWriteAppliesAtATime)
+{
+    auto *session = host.target();
+    std::optional<Result> nested;
+    const auto listener = api.subscribe(pluginCaller(), {"document.changed"}, [&](const Event &) {
+        if (nested)
+            return;
+        api.call(pluginCaller(), "document.apply",
+                 applyAt(session->revision(), R"([{"op": "delete_line", "line": 2}])"), [&](Result r) { nested = r; });
+    });
+    ASSERT_NE(listener, 0u);
+    ASSERT_TRUE(client.call(aiCaller(), "document.apply",
+                            applyAt(session->revision(), R"([{"op": "set_line", "line": 1, "fields": {"text": "a"}}])")));
+    ASSERT_TRUE(nested);
+    ASSERT_FALSE(*nested);
+    EXPECT_EQ(nested->error().code, errors::kBusy);
+    EXPECT_EQ(session->document().lines().size(), 3u);
+    const Result later = client.call(pluginCaller(), "document.apply",
+                                     applyAt(session->revision(), R"([{"op": "delete_line", "line": 2}])"));
+    EXPECT_TRUE(later);
+    api.unsubscribe(listener);
+}
+
+TEST_F(ApiScripts, ADraftOnATouchedLineIsCommittedFirstAndMakesTheWriteStale)
+{
+    auto *session = host.target();
+    const auto revision = session->revision();
+    ASSERT_TRUE(session->editDraftText(hikari::core::LineId{3}, u8"typing"));
+    const Result untouched = client.call(aiCaller(), "document.apply",
+                                         applyAt(revision, R"([{"op": "set_line", "line": 1, "fields": {"text": "x"}}])"));
+    ASSERT_TRUE(untouched) << untouched.error().message;
+    EXPECT_TRUE(session->draftLine());
+    const Result touched = client.call(aiCaller(), "document.apply",
+                                       applyAt(session->revision(), R"([{"op": "set_line", "line": 3, "fields": {"text": "y"}}])"));
+    ASSERT_FALSE(touched);
+    EXPECT_EQ(touched.error().code, errors::kStaleRevision);
+    EXPECT_FALSE(session->draftLine());
+    EXPECT_EQ(session->document().lines()[2]->text, u8"typing");
+}
+
+TEST_F(ApiScripts, SubscribingToAnUnknownEventFails)
+{
+    EXPECT_EQ(api.subscribe(aiCaller(), {"lines.exploded"}, [](const Event &) {}), 0u);
+}
+
+TEST_F(ApiScripts, AListenerMayUnsubscribeWhileHearing)
+{
+    int heard = 0;
+    std::uint64_t self = 0;
+    self = api.subscribe(aiCaller(), {"command.ran"}, [&](const Event &) {
+        ++heard;
+        api.unsubscribe(self);
+    });
+    api.commandRan("GLOBAL_SAVE_SUBS", true);
+    api.commandRan("GLOBAL_SAVE_SUBS", true);
+    EXPECT_EQ(heard, 1);
+}
+
+TEST_F(ApiScripts, DocumentsChangedIsNarrowedWithoutTheGrant)
+{
+    std::vector<Json> ai, plugin;
+    const auto a = api.subscribe(aiCaller(), {"documents.changed"}, [&](const Event &e) { ai.push_back(e.data); });
+    const auto p = api.subscribe(pluginCaller(), {"documents.changed"}, [&](const Event &e) { plugin.push_back(e.data); });
+    api.documentsChanged();
+    ASSERT_EQ(ai.size(), 1u);
+    ASSERT_EQ(plugin.size(), 1u);
+    EXPECT_EQ(ai[0].dump(), R"({"documents":[1,2],"editingTarget":1})");
+    EXPECT_EQ(plugin[0].dump(), R"({"documents":[1],"editingTarget":1})");
+    api.unsubscribe(a);
+    api.unsubscribe(p);
 }
 
 }

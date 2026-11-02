@@ -2,9 +2,15 @@
 import QtQuick
 import QtQuick.Controls.Fusion as F
 import QtQuick.Controls.Fusion.impl as FI
+import QtQuick.Templates as T
 
 F.TextField {
     id: control
+    T.ContextMenu.menu: null
+    T.ContextMenu.onRequested: position => {
+        if (!T.ContextMenu.menu)
+            TextMenus.menuFor(control)?.popup(control, position)
+    }
     background: FI.TextFieldBackground {
         control: control
         border.color: control.activeFocus ? F.Fusion.highlightedOutline(control.palette)

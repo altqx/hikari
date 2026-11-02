@@ -28,7 +28,7 @@ DialogWindow {
         if (timer.apply())
             return true
         messages.ask({ title: dialog.title, severity: "error",
-                       text: qsTr("The kanji timing could not be applied"),
+                       text: qsTr("The kanji timing could not be applied."),
                        detail: qsTr("The subtitles are read-only.") })
         return false
     }
@@ -117,7 +117,7 @@ DialogWindow {
             checked: dialog.timer.multi
             onToggled: dialog.timer.multi = checked
             ToolTip.visible: hovered
-            ToolTip.text: qsTr("Write each further syllable of a group as a # syllable, for the templater's multi effects")
+            ToolTip.text: qsTr("Write each further syllable of a group as a # syllable, for the templater’s multi effects")
         }
         CheckBox {
             objectName: "kanjiFurigana"
@@ -125,7 +125,7 @@ DialogWindow {
             checked: dialog.timer.furigana
             onToggled: dialog.timer.furigana = checked
             ToolTip.visible: hovered
-            ToolTip.text: qsTr("Write each kanji's reading after it (漢|かん), as the romaji sings it")
+            ToolTip.text: qsTr("Write each kanji’s reading after it (漢|かん), as the romaji sings it")
         }
     }
     RowLayout {
@@ -173,7 +173,7 @@ DialogWindow {
                     textFormat: Text.PlainText
                     text: dialog.timer.problem === "noKaraoke"
                           ? qsTr("No karaoke lines in “%1”").arg(dialog.timer.romajiStyle)
-                          : dialog.timer.problem === "noStyles" ? qsTr("The subtitles have no styles")
+                          : dialog.timer.problem === "noStyles" ? qsTr("The document has no styles.")
                                                                 : qsTr("No lines to pair")
                 }
                 Label {
