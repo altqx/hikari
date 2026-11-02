@@ -7683,8 +7683,8 @@ because it was edited.</source>
 바꿀 수 없습니다.</translation>
     </message>
     <message>
-        <source>Cannot replace “%1” with “%2” using rule “%3” in line %4.</source>
-        <translation>“%1”(을)를 “%2”(으)로 바꿀 수 없습니다. 규칙: “%3”, 줄: %4.</translation>
+        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
+        <translation>&quot;%1&quot;(을)를 &quot;%2&quot;(으)로 바꿀 수 없습니다. 규칙: &quot;%3&quot;, 줄: %4.</translation>
     </message>
     <message>
         <source>Rule description</source>

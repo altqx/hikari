@@ -7773,8 +7773,8 @@ because it was edited.</source>
 ponieważ została zmieniona.</translation>
     </message>
     <message>
-        <source>Cannot replace “%1” with “%2” using rule “%3” in line %4.</source>
-        <translation>Nie można zamienić “%1” na “%2” przy użyciu reguły “%3” w linijce %4.</translation>
+        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
+        <translation>Nie można zamienić &quot;%1&quot; na &quot;%2&quot; przy użyciu reguły &quot;%3&quot; w linijce %4.</translation>
     </message>
     <message>
         <source>Rule description</source>

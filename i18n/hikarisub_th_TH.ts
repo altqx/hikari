@@ -7683,8 +7683,8 @@ because it was edited.</source>
 เนื่องจากถูกแก้ไข</translation>
     </message>
     <message>
-        <source>Cannot replace “%1” with “%2” using rule “%3” in line %4.</source>
-        <translation>ไม่สามารถแทนที่ “%1” ด้วย “%2” โดยใช้กฎ “%3” ในบรรทัด %4</translation>
+        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
+        <translation>ไม่สามารถแทนที่ &quot;%1&quot; ด้วย &quot;%2&quot; โดยใช้กฎ &quot;%3&quot; ในบรรทัด %4</translation>
     </message>
     <message>
         <source>Rule description</source>

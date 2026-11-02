@@ -7728,8 +7728,8 @@ because it was edited.</source>
 ஏனெனில் அது திருத்தப்பட்டுள்ளது.</translation>
     </message>
     <message>
-        <source>Cannot replace “%1” with “%2” using rule “%3” in line %4.</source>
-        <translation>வரி %4 இல், “%3” விதியைக் கொண்டு “%1” ஐ “%2” ஆக மாற்ற முடியாது.</translation>
+        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
+        <translation>வரி %4 இல், &quot;%3&quot; விதியைக் கொண்டு &quot;%1&quot; ஐ &quot;%2&quot; ஆக மாற்ற முடியாது.</translation>
     </message>
     <message>
         <source>Rule description</source>

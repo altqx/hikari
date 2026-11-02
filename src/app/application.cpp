@@ -4246,7 +4246,7 @@ void Application::replaceMisspellFinds(const QVariantList &chosen)
             else
                 m_log->notice(ui::LogController::Warning, replacerTitle(),
                               QCoreApplication::translate("HikariSub.MisspellReplacer",
-                                                          "Cannot replace “%1” with “%2” using rule “%3” in line %4.")
+                                                          "Cannot replace \"%1\" with \"%2\" using rule \"%3\" in line %4.")
                                   .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
                                   .arg(problem.lineNumber));
         }
