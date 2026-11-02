@@ -491,7 +491,7 @@ QVariantMap StyleManagerController::beginCopy(bool store, int row)
     if (!styles || row < 0 || static_cast<std::size_t>(row) >= styles->size())
         return {};
     auto copy = (*styles)[static_cast<std::size_t>(row)];
-    copy.name = u8(QCoreApplication::translate("HikariSub.Styles", "Copy of ")) + copy.name;
+    copy.name = u8(QCoreApplication::translate("HikariSub.Styles", "Copy of %1").arg(qs(copy.name)));
     pin(Edit{store, std::nullopt, copy});
     return valuesOf(copy);
 }
@@ -518,7 +518,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     const std::u8string shown = m_catalogs.current();
     const bool away = m_edit->store && m_edit->catalog != shown;
     if (away && !m_catalogs.choose(m_edit->catalog))
-        return QCoreApplication::translate("HikariSub.Styles", "The catalog “%1” no longer exists.").arg(qs(m_edit->catalog));
+        return QCoreApplication::translate("HikariSub.Styles", "The catalogue “%1” no longer exists.").arg(qs(m_edit->catalog));
     application::StyleEdit edit;
     edit.row = m_edit->row;
     edit.style = styleOf(values, m_edit->opened);
@@ -530,7 +530,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     if (!row) {
         if (away)
             m_catalogs.choose(shown);
-        return QCoreApplication::translate("HikariSub.Styles", "Style named \"%1\" already exists.").arg(qs(row.error()));
+        return QCoreApplication::translate("HikariSub.Styles", "Style named “%1” already exists.").arg(qs(row.error()));
     }
     const bool store = m_edit->store;
     const bool renames = renameLines && m_edit->row && edit.oldName != edit.style.name;

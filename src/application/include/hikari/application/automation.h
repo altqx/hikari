@@ -149,7 +149,8 @@ struct MacroResult {
 //   Keyframes                 -> integers (frame numbers)
 //   Frame                     integers {frame, withSubtitles} -> integers {width, height}, pixels (BGRA rows)
 //   AudioSelection            -> integers {startMs, endMs}
-//   ProjectProperties         -> integers {video frame shown}, strings {audio, video, keyframes file}
+//   ProjectProperties         -> integers {video frame shown}, strings {audio, video, keyframes file},
+//                             numbers {video zoom}
 //   TextExtents               style, strings {text} -> numbers {width, height, descent, external leading}
 //   ClipboardGet              -> strings {text}
 //   ClipboardSet              strings {text} -> integers {succeeded}

@@ -1,8 +1,10 @@
 Aegisub: the licence of the file formats and behaviour HikariSub follows
 ========================================================================
 
-HikariSub reads and writes Aegisub's [Aegisub Extradata] section and gives scripts line.extra as
-Aegisub 3.5.1 does, after https://github.com/TypesettingTools/Aegisub. Its licence, from LICENCE
+HikariSub reads and writes Aegisub's [Aegisub Extradata] section and gives scripts line.extra and
+the rest of the Lua API as Aegisub 3.5.1 does, after https://github.com/TypesettingTools/Aegisub,
+with the Lua API additions of arch1t3cht's fork (https://github.com/arch1t3cht/Aegisub at
+2cdf00436027383d0c7680e79890af13ef60f935, under the same licence). Its licence, from LICENCE
 there at 33a4a056a42a9e9f27618a4c3d9bebba593f540e:
 
 -------------------------------------------------------------------------------
@@ -32,3 +34,22 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
+-------------------------------------------------------------------------------
+
+The frame and time rounding scripts see (aegisub.frame_from_ms and aegisub.ms_from_frame) is
+ported from libaegisub/common/vfr.cpp there, under this licence:
+
+-------------------------------------------------------------------------------
+Copyright (c) 2010, Thomas Goyne <plorkyeran@aegisub.org>
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
