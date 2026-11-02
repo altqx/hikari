@@ -6,9 +6,11 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QHostAddress>
+#include <QHostInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QNetworkInterface>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPointer>
@@ -16,33 +18,19 @@
 #include <QTimer>
 #include <QUrl>
 
+#include <algorithm>
+
 namespace hikari::backends::ai {
 
 namespace {
 
-bool loopback(const QUrl &url)
+QNetworkRequest networkRequest(const NetworkProviderPort::Route &route, const HttpCall &call)
 {
-    const QString host = url.host();
-    if (host.compare(QLatin1String("localhost"), Qt::CaseInsensitive) == 0)
-        return true;
-    const QHostAddress address(host);
-    return !address.isNull() && address.isLoopback();
-}
-
-std::optional<app::Error> refuse(const QUrl &url, bool hasKey)
-{
-    if (!url.isValid() || (url.scheme() != QLatin1String("https") && url.scheme() != QLatin1String("http")))
-        return app::Error{.kind = app::ErrorKind::Rejected, .httpStatus = 0, .detail = "invalid endpoint"};
-    if (hasKey && url.scheme() != QLatin1String("https") && !loopback(url))
-        return app::Error{.kind = app::ErrorKind::InsecureKey};
-    return std::nullopt;
-}
-
-QNetworkRequest networkRequest(const QUrl &url, const HttpCall &call)
-{
-    QNetworkRequest request(url);
+    QNetworkRequest request(route.url);
     for (const auto &[name, value] : call.headers)
         request.setRawHeader(name, value);
+    if (!route.hostHeader.isEmpty())
+        request.setRawHeader("Host", route.hostHeader);
     request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("HikariSub"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
@@ -87,9 +75,79 @@ struct NetworkProviderPort::Run {
     bool timedOut = false;
 };
 
+bool tailscaleName(const QString &host)
+{
+    QString name = host.toLower();
+    if (name.endsWith(u'.'))
+        name.chop(1);
+    return name.endsWith(QLatin1String(".ts.net")) && name.size() > 7;
+}
+
+bool keySafeOverPlainHttp(const QHostAddress &address, const QList<QHostAddress> &localAddresses)
+{
+    bool v4 = false;
+    const QHostAddress plain(address.toIPv4Address(&v4));
+    const QHostAddress a = v4 ? plain : address;
+    if (a.isLoopback())
+        return true;
+    if (a.isInSubnet(QHostAddress(QStringLiteral("fd7a:115c:a1e0::")), 48))
+        return true;
+    const std::pair<QHostAddress, int> cgnat{QHostAddress(QStringLiteral("100.64.0.0")), 10};
+    if (!a.isInSubnet(cgnat))
+        return false;
+    return std::ranges::any_of(localAddresses, [&](const QHostAddress &local) {
+        bool localV4 = false;
+        const QHostAddress l(local.toIPv4Address(&localV4));
+        return localV4 && l.isInSubnet(cgnat);
+    });
+}
+
 NetworkProviderPort::NetworkProviderPort(QObject *parent) : QObject(parent)
 {
     m_network.setAutoDeleteReplies(false);
+    m_localAddresses = [] { return QNetworkInterface::allAddresses(); };
+    m_resolve = [this](const QString &host, std::function<void(QList<QHostAddress>)> done) {
+        QHostInfo::lookupHost(host, this, [done](const QHostInfo &info) { done(info.addresses()); });
+    };
+}
+
+void NetworkProviderPort::route(const QUrl &url, bool hasKey, std::function<void(RouteResult)> done)
+{
+    const bool https = url.scheme() == QLatin1String("https");
+    if (!url.isValid() || url.host().isEmpty() || (!https && url.scheme() != QLatin1String("http"))) {
+        done(app::Error{.kind = app::ErrorKind::Rejected, .httpStatus = 0, .detail = "invalid endpoint"});
+        return;
+    }
+    const QString host = url.host();
+    if (!hasKey || https || host.compare(QLatin1String("localhost"), Qt::CaseInsensitive) == 0 || tailscaleName(host)) {
+        done(Route{url, {}});
+        return;
+    }
+    if (const QHostAddress literal(host); !literal.isNull()) {
+        if (keySafeOverPlainHttp(literal, m_localAddresses()))
+            done(Route{url, {}});
+        else
+            done(app::Error{.kind = app::ErrorKind::InsecureKey});
+        return;
+    }
+    m_resolve(host, [this, url, done](const QList<QHostAddress> &addresses) {
+        if (addresses.isEmpty()) {
+            done(app::Error{.kind = app::ErrorKind::Network, .httpStatus = 0, .detail = "host not found"});
+            return;
+        }
+        const QList<QHostAddress> local = m_localAddresses();
+        for (const QHostAddress &address : addresses) {
+            if (!keySafeOverPlainHttp(address, local))
+                continue;
+            QUrl pinned = url;
+            pinned.setHost(address.toString());
+            const QByteArray authority =
+                url.host(QUrl::FullyEncoded).toUtf8() + (url.port() < 0 ? QByteArray() : ":" + QByteArray::number(url.port()));
+            done(Route{pinned, authority});
+            return;
+        }
+        done(app::Error{.kind = app::ErrorKind::InsecureKey});
+    });
 }
 
 NetworkProviderPort::~NetworkProviderPort()
@@ -126,19 +184,27 @@ app::StreamId NetworkProviderPort::stream(const app::Provider &provider, const s
     const app::StreamId id = m_nextId++;
     const HttpCall call = encodeRequest(provider, QByteArray::fromStdString(key), request);
     const QUrl url(QString::fromStdString(provider.baseUrl) + call.path);
-    if (const std::optional<app::Error> refused = refuse(url, !key.empty())) {
-        sink(app::Failed{*refused});
-        return id;
-    }
     auto run = std::make_unique<Run>();
     run->decoder = makeDecoder(provider.wire);
     run->sink = std::move(sink);
     run->idle.setSingleShot(true);
     run->idle.setInterval(m_idleTimeout);
-    Run *r = run.get();
     m_runs.emplace(id, std::move(run));
+    route(url, !key.empty(), [this, id, call](const RouteResult &result) {
+        if (!m_runs.contains(id))
+            return;
+        if (const auto *error = std::get_if<app::Error>(&result))
+            end(id, {app::Failed{*error}});
+        else
+            send(id, std::get<Route>(result), call);
+    });
+    return id;
+}
 
-    QNetworkReply *reply = m_network.post(networkRequest(url, call), call.body);
+void NetworkProviderPort::send(app::StreamId id, const Route &route, const HttpCall &call)
+{
+    Run *r = m_runs.at(id).get();
+    QNetworkReply *reply = m_network.post(networkRequest(route, call), call.body);
     r->reply = reply;
     connect(&r->idle, &QTimer::timeout, this, [this, id, r] {
         r->timedOut = true;
@@ -173,7 +239,6 @@ app::StreamId NetworkProviderPort::stream(const app::Provider &provider, const s
             end(id, {app::Failed{replyError(reply, r->errorBody, false)}});
     });
     r->idle.start();
-    return id;
 }
 
 void NetworkProviderPort::cancel(app::StreamId id)
@@ -186,11 +251,17 @@ void NetworkProviderPort::listModels(const app::Provider &provider, const std::s
 {
     const HttpCall call = modelsCall(provider, QByteArray::fromStdString(key));
     const QUrl url(QString::fromStdString(provider.baseUrl) + call.path);
-    if (const std::optional<app::Error> refused = refuse(url, !key.empty())) {
-        done(*refused);
-        return;
-    }
-    QNetworkReply *reply = m_network.get(networkRequest(url, call));
+    route(url, !key.empty(), [this, call, done](const RouteResult &result) {
+        if (const auto *error = std::get_if<app::Error>(&result))
+            done(*error);
+        else
+            fetchModels(std::get<Route>(result), call, done);
+    });
+}
+
+void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, std::function<void(ModelsResult)> done)
+{
+    QNetworkReply *reply = m_network.get(networkRequest(route, call));
     auto *idle = new QTimer(reply);
     idle->setSingleShot(true);
     auto finished = std::make_shared<bool>(false);

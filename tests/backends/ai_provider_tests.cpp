@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QHash>
 #include <QHostAddress>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -200,6 +201,11 @@ protected:
 
     void SetUp() override
     {
+        port.setResolver([this](const QString &host, std::function<void(QList<QHostAddress>)> done) {
+            resolved.append(host);
+            done(names.value(host));
+        });
+        port.setLocalAddresses([this] { return localAddresses; });
         s_messages.clear();
         m_previous = qInstallMessageHandler([](QtMsgType, const QMessageLogContext &, const QString &m) {
             s_messages.append(m);
@@ -222,6 +228,9 @@ protected:
 
     MockProvider mock;
     NetworkProviderPort port;
+    QHash<QString, QList<QHostAddress>> names;
+    QStringList resolved;
+    QList<QHostAddress> localAddresses{QHostAddress(QStringLiteral("192.168.1.10"))};
     static inline QStringList s_messages;
     QtMessageHandler m_previous = nullptr;
 };
@@ -492,20 +501,92 @@ TEST_F(AiProviderTest, CancelClosesTheConnection)
     EXPECT_EQ(run.terminals(), 1);
 }
 
-TEST_F(AiProviderTest, AKeyTravelsOnlyOverHttpsOrToThisMachine)
+TEST(AiKeyRoutes, TailscaleRangesAndNames)
 {
-    app::Provider remote = provider(app::Wire::ChatCompletions, mock);
-    remote.baseUrl = "http://example.invalid/v1";
-    Streamed run;
-    port.stream(remote, kKey, {.model = "m"}, [&](const app::Event &e) { run.events.push_back(e); });
-    ASSERT_TRUE(run.done());
-    EXPECT_EQ(run.error().kind, app::ErrorKind::InsecureKey);
+    using hikari::backends::ai::keySafeOverPlainHttp;
+    using hikari::backends::ai::tailscaleName;
+    const QList<QHostAddress> lanOnly{QHostAddress(QStringLiteral("192.168.1.10"))};
+    const QList<QHostAddress> onTailnet{QHostAddress(QStringLiteral("192.168.1.10")),
+                                        QHostAddress(QStringLiteral("100.101.102.103"))};
+    const auto safe = [](const char *address, const QList<QHostAddress> &local) {
+        return keySafeOverPlainHttp(QHostAddress(QString::fromLatin1(address)), local);
+    };
+
+    EXPECT_TRUE(safe("127.0.0.1", lanOnly));
+    EXPECT_TRUE(safe("::1", lanOnly));
+    EXPECT_TRUE(safe("100.64.0.1", onTailnet));
+    EXPECT_TRUE(safe("100.127.255.254", onTailnet));
+    EXPECT_TRUE(safe("::ffff:100.100.1.2", onTailnet));
+    EXPECT_FALSE(safe("100.100.1.2", lanOnly)) << "shared CGNAT space without a tailnet address here";
+    EXPECT_FALSE(safe("100.128.0.1", onTailnet));
+    EXPECT_FALSE(safe("100.63.255.255", onTailnet));
+    EXPECT_TRUE(safe("fd7a:115c:a1e0::1", lanOnly));
+    EXPECT_TRUE(safe("fd7a:115c:a1e0:ab12:4843:cd96:6258:b240", lanOnly));
+    EXPECT_FALSE(safe("fd7a:115c:a1e1::1", lanOnly));
+    EXPECT_FALSE(safe("192.168.1.20", onTailnet));
+    EXPECT_FALSE(safe("10.0.0.5", onTailnet));
+    EXPECT_FALSE(safe("203.0.113.9", onTailnet));
+
+    EXPECT_TRUE(tailscaleName(QStringLiteral("gpu-box.tail1234.ts.net")));
+    EXPECT_TRUE(tailscaleName(QStringLiteral("GPU-Box.Tail1234.TS.NET.")));
+    EXPECT_FALSE(tailscaleName(QStringLiteral("ts.net")));
+    EXPECT_FALSE(tailscaleName(QStringLiteral(".ts.net")));
+    EXPECT_FALSE(tailscaleName(QStringLiteral("evil-ts.net")));
+    EXPECT_FALSE(tailscaleName(QStringLiteral("box.ts.net.example.com")));
+}
+
+TEST_F(AiProviderTest, AKeyTravelsOnlyOverHttpsOrToThisMachineOrATailnet)
+{
+    const auto attempt = [&](const std::string &base) {
+        app::Provider p = provider(app::Wire::ChatCompletions, mock);
+        p.baseUrl = base;
+        Streamed run;
+        port.stream(p, kKey, {.model = "m"}, [&](const app::Event &e) { run.events.push_back(e); });
+        EXPECT_TRUE(waitFor([&] { return run.done(); }));
+        return run.done() ? run.error().kind : app::ErrorKind::Cancelled;
+    };
+    EXPECT_EQ(attempt("http://192.168.1.20:8000/v1"), app::ErrorKind::InsecureKey);
+    EXPECT_EQ(attempt("http://100.100.1.2:8000/v1"), app::ErrorKind::InsecureKey);
+    names.insert(QStringLiteral("box.lan"), {QHostAddress(QStringLiteral("192.168.1.20"))});
+    EXPECT_EQ(attempt("http://box.lan:8000/v1"), app::ErrorKind::InsecureKey);
+    EXPECT_EQ(attempt("http://nowhere.example/v1"), app::ErrorKind::Network);
 
     std::optional<app::ProviderPort::ModelsResult> models;
-    port.listModels(remote, kKey, [&](app::ProviderPort::ModelsResult r) { models = r; });
+    app::Provider lan = provider(app::Wire::ChatCompletions, mock);
+    lan.baseUrl = "http://192.168.1.20/v1";
+    port.listModels(lan, kKey, [&](app::ProviderPort::ModelsResult r) { models = r; });
     ASSERT_TRUE(models.has_value());
     EXPECT_EQ(std::get<app::Error>(*models).kind, app::ErrorKind::InsecureKey);
     EXPECT_EQ(mock.connections, 0);
+}
+
+TEST_F(AiProviderTest, ANameIsResolvedOnceAndTheCheckedAddressIsUsed)
+{
+    const QString port_ = QString::fromStdString(mock.base()).section(u':', 2).section(u'/', 0, 0);
+    names.insert(QStringLiteral("peer.example"), {QHostAddress(QStringLiteral("192.168.1.20")), QHostAddress::LocalHost});
+    mock.replies.push_back({.chunks = {data(obj(R"({"choices":[{"delta":{"content":"ok"},"finish_reason":"stop"}]})")), "data: [DONE]\n\n"}});
+    app::Provider p = provider(app::Wire::ChatCompletions, mock);
+    p.baseUrl = "http://peer.example:" + port_.toStdString() + "/v1";
+    Streamed run;
+    port.stream(p, kKey, {.model = "m"}, [&](const app::Event &e) { run.events.push_back(e); });
+    ASSERT_TRUE(waitFor([&] { return run.done(); }));
+    EXPECT_EQ(run.text(), "ok");
+    EXPECT_EQ(resolved, QStringList{QStringLiteral("peer.example")});
+    ASSERT_EQ(mock.received.size(), 1);
+    EXPECT_EQ(mock.received[0].headers.value("host"), "peer.example:" + port_.toLatin1());
+}
+
+TEST_F(AiProviderTest, AMagicDnsNameIsAllowedByName)
+{
+    Streamed run;
+    app::Provider p = provider(app::Wire::ChatCompletions, mock);
+    p.baseUrl = "http://gpu-box.tail1234.ts.net:1/v1";
+    const app::StreamId id = port.stream(p, kKey, {.model = "m"}, [&](const app::Event &e) { run.events.push_back(e); });
+    EXPECT_FALSE(run.done());
+    EXPECT_TRUE(resolved.isEmpty());
+    port.cancel(id);
+    ASSERT_TRUE(run.done());
+    EXPECT_EQ(run.error().kind, app::ErrorKind::Cancelled);
 }
 
 TEST_F(AiProviderTest, TheCatalogueReadsCapabilitiesAndPrices)
