@@ -43,10 +43,16 @@ Plugins call the one typed, versioned Hikari API ([HA1 #411](https://github.com/
 
 ## Distribution and signatures
 
-- Plugins are listed in a curated index repository, where additions go through PR review.
-- A `.hikariplugin` file can also be sideloaded, behind an "unverified" warning.
-- v1 has no arbitrary feeds.
-- Authors sign their packages with minisign, and HikariSub pins the author's key at first install.
+On 2026-11-02 altqx replaced the curated index repository with the HikariSub plugin marketplace. It is run only by us, and authors ship updates through it.
+
+- **One signed index.** HikariSub reads a single `index.json` with a minisign signature from our marketplace key, which is separate from the update-manifest key. The index lists each plugin, its versions, package URL, SHA-256, permissions, API number and author key. HikariSub downloads packages only from our hosts. The index first comes from a repository of ours and later from the hosted marketplace, at the same address, with no change to the app.
+- **Authors.** Authors sign every package with minisign, and HikariSub checks both the index signature and the author's key, which is pinned at first install. A plugin's first listing is reviewed by us. After that, the author publishes updates themselves, signed with the pinned key, after automatic checks. An update that asks for more permissions (network hosts, files, `documents.all`, the unrestricted tier) goes back to review. A change of author key goes through us.
+- **Updates.** Plugin updates install automatically by default, with a global switch and one per plugin. They download in the background and apply when the plugin isn't running or at the next start. An update that asks for more permissions waits for the user's consent, and the user can roll back to the previous version.
+- **Revocation.** The index can revoke a version or a whole plugin. HikariSub disables it at the next check, says why, and offers the last good version.
+- **Privacy.** "Check for plugin updates" is a setting of its own, on by default. HikariSub fetches the whole index and decides locally, so it never sends the list of installed plugins.
+- **Other sources.** There are no third-party feeds. A `.hikariplugin` file can still be sideloaded, behind an "unverified" warning, and it never updates by itself. If the same id with the same author key appears in the marketplace, HikariSub offers to move it there.
+- **v1 scope.** Free plugins only, with no ratings, reviews or payments. A listing shows the name, author, description, version, permissions, API number, screenshots and a source link.
+- **Hosting later.** The hosted marketplace (author accounts, upload, the review queue, web pages on the site) is [PL10 #664](https://github.com/altqx/hikari/issues/664), with its own grilling and ADR when altqx decides to host it.
 
 ## What we call it
 
