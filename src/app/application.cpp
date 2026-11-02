@@ -801,6 +801,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                     });
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
+    m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
+    m_presence->setMode(m_workspaceLayout->preset());
+    connect(m_workspaceLayout.get(), &ui::WorkspaceLayoutController::changed, m_presence.get(),
+            [this] { m_presence->setMode(m_workspaceLayout->preset()); });
+    connect(this, &Application::tabsChanged, m_presence.get(), [this] {
+        const auto target = m_workspace.editingTarget();
+        const std::string *title = target ? m_workspace.title(*target) : nullptr;
+        m_presence->setFileName(title ? QString::fromStdString(*title) : QString());
+    });
     m_crashReports->setKnown(
         [this] {
             QStringList names;

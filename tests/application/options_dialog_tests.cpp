@@ -246,9 +246,17 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(alwaysSend.page, OptionsPage::Updates);
     ASSERT_NE(findSetting("privacy.alwaysSendCrashReports"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("privacy.alwaysSendCrashReports")->defaultValue), false);
+    for (std::size_t i = 0; const char *id : {"privacy.discordPresence", "privacy.discordFileName"}) {
+        const auto &discord = all[std::size(kLegacy) + 36 + i++];
+        EXPECT_EQ(discord.setting, id);
+        EXPECT_EQ(discord.control, OptionsControl::Check);
+        EXPECT_EQ(discord.page, OptionsPage::Updates);
+        ASSERT_NE(findSetting(id), nullptr);
+        EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), false) << id;
+    }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 38);
-    const auto &hostApi = all[std::size(kLegacy) + 36];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 40);
+    const auto &hostApi = all[std::size(kLegacy) + 38];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -259,7 +267,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 36);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 38);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
