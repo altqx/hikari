@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shift times mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD;
+  --line:#414B57; --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --match:#5A4A1E; --matchtext:#FFE7A3;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170;
+  --line:#AAB5BE; --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --match:#FCE8A8; --matchtext:#3A2C00;
+}
+[data-theme="hc"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE;
+  --line:#FFFFFF; --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#00FFFF; --danger:#FFADAD; --match:#FFFF00; --matchtext:#000000;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+.sheet { padding:20px 24px 28px; display:grid; grid-template-columns: 900px 340px; gap:22px 24px; align-items:start; width:1312px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; }
+.cap b { color:var(--text); font-weight:600; }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+
+.dock { background:var(--panel); border:1px solid var(--line); }
+.tabs { display:flex; align-items:stretch; height:28px; background:var(--raised); border-bottom:1px solid var(--line); }
+.tab { padding:0 12px; display:flex; align-items:center; font-weight:600; background:var(--panel); border-right:1px solid var(--line); }
+.tab.off { font-weight:400; background:var(--raised); color:var(--text); }
+.tabs .sp { flex:1; }
+.more { width:28px; display:flex; align-items:center; justify-content:center; color:var(--muted); }
+.float { background:var(--panel); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 28px rgba(0,0,0,.45); }
+.titlebar { height:28px; display:flex; align-items:center; padding:0 0 0 10px; font-weight:700; }
+.titlebar .sp { flex:1; }
+.body { padding:8px; }
+
+.row { display:flex; align-items:center; gap:4px; }
+.row + .row { margin-top:4px; }
+.fold { width:20px; height:26px; display:flex; align-items:center; justify-content:center; color:var(--text); flex:none; border-radius:2px; }
+.fold.on svg { transform:rotate(90deg); }
+.input { flex:1; min-width:0; height:26px; display:flex; align-items:center; background:var(--field); border:1px solid var(--line); border-radius:2px; padding:0 2px 0 7px; gap:2px; }
+.input.focus { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.input.error { border-color:var(--danger); box-shadow:0 0 0 1px var(--danger) inset; }
+.input .val { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.input .ph { color:var(--muted); }
+.caret { display:inline-block; width:1px; height:14px; background:var(--text); vertical-align:-2px; margin-left:1px; }
+.tog { height:20px; min-width:22px; padding:0 3px; display:inline-flex; align-items:center; justify-content:center; border:1px solid transparent; border-radius:2px; color:var(--muted); font-size:11px; font-weight:600; }
+.tog.on { background:var(--select); border-color:var(--accent); color:var(--text); }
+.ib { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; color:var(--text); flex:none; position:relative; }
+.ib.dis { color:var(--muted); opacity:.55; }
+.ib.on { background:var(--select); }
+.ib .dot { position:absolute; right:3px; top:3px; width:6px; height:6px; border-radius:3px; background:var(--accent); }
+.count { min-width:58px; text-align:center; color:var(--muted); font-size:12px; white-space:nowrap; }
+.count.none { color:var(--danger); }
+.btn { height:26px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); }
+.btn.danger { background:transparent; border-color:var(--danger); color:var(--danger); }
+.ring { outline:1px solid var(--focus); outline-offset:1px; }
+.summary { margin:6px 0 0 24px; color:var(--muted); font-size:12px; display:flex; flex-wrap:wrap; gap:4px 6px; align-items:center; }
+.chip { border:1px solid var(--line); border-radius:10px; padding:0 8px; height:20px; display:inline-flex; align-items:center; color:var(--text); background:var(--raised); }
+.err { margin:4px 0 0 24px; color:var(--danger); font-size:12px; }
+
+.opts { margin:8px 0 0 24px; border-top:1px solid var(--line); padding-top:8px; display:grid; grid-template-columns: 92px 1fr; gap:6px 8px; align-items:center; }
+.opts .k { color:var(--muted); font-size:12px; }
+.seg { justify-self:start; display:inline-flex; border:1px solid var(--line); border-radius:2px; overflow:hidden; }
+.seg span { padding:0 8px; height:22px; display:inline-flex; align-items:center; border-right:1px solid var(--line); font-size:12px; white-space:nowrap; }
+.seg span:last-child { border-right:0; }
+.seg span.on { background:var(--select); font-weight:600; box-shadow: inset 0 -2px 0 var(--accent); }
+.check { display:inline-flex; align-items:center; gap:6px; font-size:12px; }
+.box { width:14px; height:14px; border:1px solid var(--line); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; }
+.box.on { background:var(--accent); border-color:var(--accent); color:var(--onaccent); }
+.combo { height:24px; border:1px solid var(--line); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; padding:0 6px 0 8px; gap:6px; font-size:12px; min-width:0; }
+.combo .val { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.split { display:grid; grid-template-columns: 420px 1fr; }
+.split > .left { padding:8px; border-right:1px solid var(--line); }
+.results { display:flex; flex-direction:column; min-height:0; }
+.rhead { height:30px; display:flex; align-items:center; padding:0 8px; gap:8px; border-bottom:1px solid var(--line); }
+.rhead .t { font-weight:600; }
+.rhead .sp { flex:1; }
+.group { display:flex; align-items:center; gap:6px; height:24px; padding:0 8px; font-weight:600; background:var(--raised); border-bottom:1px solid var(--line); }
+.group .n { color:var(--muted); font-weight:400; }
+.hit { display:flex; align-items:center; gap:8px; height:22px; padding:0 8px 0 22px; white-space:nowrap; overflow:hidden; }
+.hit.cur { background:var(--select); box-shadow: inset 2px 0 0 var(--accent); }
+.hit .ln { color:var(--muted); width:34px; text-align:right; flex:none; }
+.hit .tm { color:var(--muted); flex:none; }
+.hit .tx { overflow:hidden; text-overflow:ellipsis; }
+.m { background:var(--match); color:var(--matchtext); border-radius:2px; padding:0 1px; }
+.m.del { text-decoration:line-through; }
+.ins { color:var(--accent); font-weight:600; }
+.rfoot { display:flex; align-items:center; gap:6px; padding:6px 8px; border-top:1px solid var(--line); }
+.rfoot .sp { flex:1; }
+.empty { color:var(--muted); padding:28px 16px; text-align:center; font-size:12px; }
+.note { font-size:12px; color:var(--muted); width:900px; }
+.legend { grid-column: 1 / -1; display:flex; gap:18px; font-size:12px; color:var(--muted); }
+.kbd { font-family:inherit; border:1px solid var(--line); border-bottom-width:2px; border-radius:3px; padding:0 4px; font-size:11px; color:var(--text); background:var(--raised); }
+.tip { position:absolute; background:var(--raised); border:1px solid var(--line); color:var(--text); padding:3px 7px; font-size:12px; border-radius:2px; white-space:nowrap; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,.35); }
+svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="chev" viewBox="0 0 16 16"><path d="M6 4l4 4-4 4"/></symbol>
+  <symbol id="up" viewBox="0 0 16 16"><path d="M8 13V3M4 7l4-4 4 4"/></symbol>
+  <symbol id="down" viewBox="0 0 16 16"><path d="M8 3v10M4 9l4 4 4-4"/></symbol>
+  <symbol id="list" viewBox="0 0 16 16"><path d="M5 4h8M5 8h8M5 12h8"/><circle cx="2.5" cy="4" r=".6"/><circle cx="2.5" cy="8" r=".6"/><circle cx="2.5" cy="12" r=".6"/></symbol>
+  <symbol id="opts" viewBox="0 0 16 16"><path d="M2 4h7M12 4h2M2 12h2M7 12h7"/><circle cx="10.5" cy="4" r="1.5"/><circle cx="5.5" cy="12" r="1.5"/></symbol>
+  <symbol id="more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r=".9"/><circle cx="8" cy="8" r=".9"/><circle cx="12.5" cy="8" r=".9"/></symbol>
+  <symbol id="close" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></symbol>
+  <symbol id="folder" viewBox="0 0 16 16"><path d="M2 4.5h4l1.5 1.5H14v6.5H2z"/></symbol>
+  <symbol id="drop" viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5"/></symbol>
+  <symbol id="tick" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></symbol>
+  <symbol id="styles" viewBox="0 0 16 16"><path d="M3 3h10v3H3zM3 10h6"/><path d="M3 13h8"/></symbol>
+  <symbol id="warn" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.2"/></symbol>
+  <symbol id="save" viewBox="0 0 16 16"><path d="M3 3h8l2 2v8H3z M5.5 3v3.5h5V3 M5.5 13V9.5h5V13"/></symbol>
+</svg>
+
+<style>
+.sec { margin-top:10px; }
+.sec > .h { display:flex; align-items:center; gap:8px; font-weight:600; font-size:12px; margin-bottom:6px; }
+.sec > .h .sp { flex:1; }
+.f { display:grid; grid-template-columns: 78px 1fr; gap:6px 8px; align-items:center; }
+.f .k { color:var(--muted); font-size:12px; }
+.tf { height:24px; border:1px solid var(--line); background:var(--field); border-radius:2px; display:inline-flex; align-items:center; padding:0 8px; font-family:"JetBrains Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+.tf.focus { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.ms { width:86px; justify-content:space-between; }
+.ms .u { color:var(--muted); font-family:"Noto Sans",sans-serif; }
+.switch { width:28px; height:16px; border-radius:8px; background:var(--raised); border:1px solid var(--line); position:relative; flex:none; }
+.switch::after { content:""; position:absolute; top:2px; left:2px; width:10px; height:10px; border-radius:5px; background:var(--muted); }
+.switch.on { background:var(--accent); border-color:var(--accent); }
+.switch.on::after { left:14px; background:var(--onaccent); }
+.switch.dis { opacity:.45; }
+.rule { border-top:1px solid var(--line); padding:8px 0; }
+.rule .h { display:flex; align-items:center; gap:8px; font-weight:600; font-size:12px; }
+.rule .h .sp { flex:1; }
+.rule .vals { display:flex; flex-wrap:wrap; gap:6px 14px; margin:6px 0 0 36px; align-items:center; font-size:12px; color:var(--muted); }
+.rule .vals label { display:inline-flex; align-items:center; gap:6px; }
+.why { margin:4px 0 0 36px; font-size:12px; color:var(--muted); }
+.why a { color:var(--accent); text-decoration:underline; }
+.preview { border:1px solid var(--line); border-radius:2px; background:var(--field); }
+.pv-h { display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid var(--line); font-size:12px; }
+.pv-h b { font-size:13px; }
+.pv-h .sp { flex:1; }
+.pv-h .tag { color:var(--muted); }
+table.pv { width:100%; border-collapse:collapse; font-family:"JetBrains Mono","DejaVu Sans Mono",monospace; font-size:11.5px; }
+table.pv th { text-align:left; font:600 11px "Noto Sans",sans-serif; color:var(--muted); padding:4px 8px; border-bottom:1px solid var(--line); background:var(--raised); }
+table.pv td { padding:3px 8px; white-space:nowrap; border-bottom:1px solid color-mix(in srgb, var(--line) 40%, transparent); }
+table.pv td.n { color:var(--muted); text-align:right; width:28px; }
+.old { color:var(--muted); text-decoration:line-through; }
+.new { color:var(--text); font-weight:600; }
+.d { color:var(--accent); }
+.same { color:var(--muted); }
+.why-t { font:11px "Noto Sans",sans-serif; color:var(--muted); }
+.pv-more { padding:5px 8px; font-size:12px; color:var(--muted); }
+.applybar { display:flex; align-items:center; gap:8px; padding:8px; border-top:1px solid var(--line); }
+.applybar .sp { flex:1; }
+.applybar .hint { font-size:12px; color:var(--muted); }
+.btn.wide { flex:1; justify-content:center; }
+.btn.dis { opacity:.5; }
+.preset { display:flex; gap:4px; align-items:center; }
+</style>
+
+<div class="sheet" id="sheet">
+
+  <!-- 1. Shift times, docked wide -->
+  <div>
+    <p class="cap"><b>1 · Shift times, docked wide (900 px).</b> The choices are on the left and the preview is on the right. The preview updates as you type, and Apply names what it will do.</p>
+    <div class="dock">
+      <div class="tabs"><div class="tab">Shift times</div><div class="tab off">Styles</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="split" style="grid-template-columns: 400px 1fr;">
+        <div class="left">
+          <div class="preset"><span class="combo" style="flex:1"><span class="val">Preset: OP sync (ep01)</span><svg><use href="#drop"/></svg></span><span class="ib"><svg><use href="#save"/></svg></span><span class="ib"><svg><use href="#more"/></svg></span></div>
+          <div class="sec">
+            <div class="f">
+              <span class="k">Shift by</span>
+              <span class="seg"><span class="on">Amount</span><span>To video</span><span>To audio mark</span></span>
+              <span class="k">Amount</span>
+              <span class="row" style="margin:0"><span class="tf focus" style="width:110px">0:00:01.50</span><span class="seg"><span class="on">Time</span><span>Frames</span></span></span>
+              <span class="k">Direction</span>
+              <span class="seg"><span class="on">Later</span><span>Earlier</span></span>
+            </div>
+          </div>
+          <div class="sec">
+            <div class="f">
+              <span class="k">Lines</span>
+              <span class="combo"><span class="val">Selected line and below</span><svg><use href="#drop"/></svg></span>
+              <span class="k">Times</span>
+              <span class="seg"><span class="on">Both</span><span>Start</span><span>End</span></span>
+              <span class="k">End times</span>
+              <span class="combo"><span class="val">Leave as they are</span><svg><use href="#drop"/></svg></span>
+              <span class="k"></span>
+              <span class="check"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span>Move tag times too (\move, \t, \fad)</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; min-width:0; overflow:hidden;">
+          <div style="padding:8px; flex:1;">
+            <div class="preview">
+              <div class="pv-h"><b>Changes 214 lines</b><span class="tag">· 3 selected · 211 below them</span><span class="sp"></span><span class="tag">+1.50 s</span></div>
+              <table class="pv">
+                <tr><th></th><th>Start</th><th>End</th><th>Text</th></tr>
+                <tr><td class="n">42</td><td><span class="old">0:02:11.04</span><br><span class="new">0:02:12.54</span></td><td><span class="old">0:02:13.90</span><br><span class="new">0:02:15.40</span></td><td style="font-family:'Noto Sans',sans-serif; max-width:260px; overflow:hidden; text-overflow:ellipsis">Is anyone there?</td></tr>
+                <tr><td class="n">43</td><td><span class="old">0:02:14.10</span><br><span class="new">0:02:15.60</span></td><td><span class="old">0:02:16.02</span><br><span class="new">0:02:17.52</span></td><td style="font-family:'Noto Sans',sans-serif; max-width:260px; overflow:hidden; text-overflow:ellipsis">Over here!</td></tr>
+                <tr><td class="n">44</td><td><span class="old">0:02:16.40</span><br><span class="new">0:02:17.90</span></td><td><span class="old">0:02:19.88</span><br><span class="new">0:02:21.38</span></td><td style="font-family:'Noto Sans',sans-serif; max-width:260px; overflow:hidden; text-overflow:ellipsis">{\move(…)}Wait for me.</td></tr>
+              </table>
+              <div class="pv-more">The selection is shown; 211 more lines below move the same way.</div>
+            </div>
+          </div>
+          <div class="applybar"><span class="hint">One undo step: “Shift times”</span><span class="sp"></span><span class="btn primary">Shift 214 lines</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Shift times, narrow, to video -->
+  <div>
+    <p class="cap"><b>2 · Shift times, narrow (340 px), To video.</b> The amount comes from the active line and the video. The preview shows the result.</p>
+    <div class="dock">
+      <div class="tabs"><div class="tab">Shift times</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="body">
+        <div class="preset"><span class="combo" style="flex:1"><span class="val">Preset: none</span><svg><use href="#drop"/></svg></span><span class="ib"><svg><use href="#save"/></svg></span><span class="ib"><svg><use href="#more"/></svg></span></div>
+        <div class="sec">
+          <div class="f" style="grid-template-columns:1fr;">
+            <span class="seg" style="justify-self:stretch"><span>Amount</span><span class="on">To video</span><span>To audio mark</span></span>
+            <span class="row" style="margin:0; font-size:12px; color:var(--muted)">Move the active line’s <span class="seg" style="margin:0 4px"><span class="on">start</span><span>end</span></span></span>
+            <span style="font-size:12px">to the video at <span class="mono">0:12:03.45</span>, <b class="d">+0:00:02.13</b></span>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="f">
+            <span class="k">Lines</span>
+            <span class="combo"><span class="val">All lines</span><svg><use href="#drop"/></svg></span>
+            <span class="k">Times</span>
+            <span class="seg"><span class="on">Both</span><span>Start</span><span>End</span></span>
+            <span class="k">End times</span>
+            <span class="combo"><span class="val">Fix overlaps</span><svg><use href="#drop"/></svg></span>
+          </div>
+          <div style="margin-top:6px"><span class="check"><span class="box"></span>Move tag times too</span></div>
+        </div>
+        <div class="sec">
+          <div class="preview">
+            <div class="pv-h"><b>Changes 388 lines</b><span class="sp"></span><span class="tag">2 ends fixed</span></div>
+            <table class="pv">
+              <tr><th></th><th>Start</th><th>End</th></tr>
+              <tr><td class="n">57</td><td><span class="old">0:12:01.32</span><br><span class="new">0:12:03.45</span></td><td><span class="old">0:12:04.10</span><br><span class="new">0:12:06.23</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="applybar"><span class="btn primary wide">Shift 388 lines</span></div>
+    </div>
+  </div>
+
+  <!-- 3. Timing postprocessor, floating -->
+  <div>
+    <p class="cap"><b>3 · Timing postprocessor, floating (620 px).</b> Each rule is one row with a switch. The preview says which rule moved each time.</p>
+    <div style="display:flex; gap:24px; align-items:flex-start;">
+      <div class="float" style="width:620px;">
+        <div class="titlebar">Timing postprocessor<span class="sp"></span><span class="more"><svg><use href="#more"/></svg></span></div>
+        <div class="body" style="padding-top:2px">
+          <div class="row" style="gap:8px">
+            <span class="combo" style="flex:1"><span class="val">Preset: Fansub TV (Timing default)</span><svg><use href="#drop"/></svg></span><span class="ib"><svg><use href="#save"/></svg></span><span class="ib"><svg><use href="#more"/></svg></span>
+            <span class="combo" style="width:170px"><span class="val">Lines: Selected lines</span><svg><use href="#drop"/></svg></span>
+          </div>
+          <div style="margin-top:8px">
+            <div class="rule"><div class="h"><span class="switch on"></span>Lead-in<span class="sp"></span></div>
+              <div class="vals"><label>Start earlier by <span class="tf ms">150<span class="u">ms</span></span></label></div></div>
+            <div class="rule"><div class="h"><span class="switch on"></span>Lead-out</div>
+              <div class="vals"><label>End later by <span class="tf ms">300<span class="u">ms</span></span></label></div></div>
+            <div class="rule"><div class="h"><span class="switch on"></span>Close small gaps</div>
+              <div class="vals"><label>Start back to the previous end if within <span class="tf ms">250<span class="u">ms</span></span></label><label>End on to the next start if within <span class="tf ms">500<span class="u">ms</span></span></label></div></div>
+            <div class="rule"><div class="h"><span class="switch on"></span>Snap to keyframes</div>
+              <div class="vals" style="display:inline-grid; grid-template-columns:auto auto auto; justify-content:start; gap:6px 10px;">
+                <span></span><span>before</span><span>after</span>
+                <span>Start within</span><span class="tf ms">250<span class="u">ms</span></span><span class="tf ms">250<span class="u">ms</span></span>
+                <span>End within</span><span class="tf ms">250<span class="u">ms</span></span><span class="tf ms">500<span class="u">ms</span></span>
+              </div></div>
+          </div>
+          <div class="preview" style="margin-top:4px">
+            <div class="pv-h"><b>Changes 31 of 34 lines</b><span class="tag">· 31 lead-in · 29 lead-out · 12 gaps closed · 9 snapped</span></div>
+            <table class="pv">
+              <tr><th></th><th>Start</th><th>End</th><th></th></tr>
+              <tr><td class="n">12</td><td><span class="old">0:01:02.30</span> <span class="new">0:01:02.15</span></td><td><span class="old">0:01:04.80</span> <span class="new">0:01:05.42</span></td><td class="why-t">lead-in · snapped end</td></tr>
+              <tr><td class="n">13</td><td><span class="old">0:01:05.60</span> <span class="new">0:01:05.42</span></td><td><span class="old">0:01:07.00</span> <span class="new">0:01:07.30</span></td><td class="why-t">gap closed · lead-out</td></tr>
+              <tr><td class="n">14</td><td><span class="same">0:01:09.01</span></td><td><span class="same">0:01:10.20</span></td><td class="why-t">on a keyframe already</td></tr>
+            </table>
+            <div class="pv-more">31 more selected lines.</div>
+          </div>
+        </div>
+        <div class="applybar"><span class="hint">One undo step: “Timing postprocessor”</span><span class="sp"></span><span class="btn primary">Apply to 31 lines</span></div>
+      </div>
+      <div style="width:240px; font-size:12px; color:var(--muted);">
+        <p class="cap"><b>Where they open</b></p>
+        <div>Shift times: Subtitles › Shift times… (Ctrl+I), placed by DK2’s rule. Timing postprocessor: Timing › Timing postprocessor…, docked beside the Audio panel in the Timing layout and closed in the others.</div>
+        <p class="cap" style="margin-top:12px"><b>Keyboard</b></p>
+        <div>Ctrl+Enter applies from any field. The Shift times hotkey (5300) still shifts with the remembered values without opening the panel. Esc goes back to the Grid.</div>
+        <p class="cap" style="margin-top:12px"><b>Screen readers</b></p>
+        <div>The preview’s first line is a live status (“Changes 31 of 34 lines”). Each row reads its line, the old and new start and end, and the reason.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Postprocessor narrow, no keyframes -->
+  <div>
+    <p class="cap"><b>4 · Timing postprocessor, docked narrow, no keyframes.</b> A rule that can't run says why and gives the one command that helps. Nothing to change disables Apply.</p>
+    <div class="dock">
+      <div class="tabs"><div class="tab">Timing postprocessor</div><div class="tab off">Audio</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="body">
+        <div class="preset"><span class="combo" style="flex:1"><span class="val">Preset: last used</span><svg><use href="#drop"/></svg></span><span class="ib"><svg><use href="#save"/></svg></span><span class="ib"><svg><use href="#more"/></svg></span></div>
+        <div style="margin-top:6px" class="f"><span class="k">Lines</span><span class="combo"><span class="val">All lines</span><svg><use href="#drop"/></svg></span></div>
+        <div style="margin-top:8px">
+          <div class="rule"><div class="h"><span class="switch"></span>Lead-in</div></div>
+          <div class="rule"><div class="h"><span class="switch"></span>Lead-out</div></div>
+          <div class="rule"><div class="h"><span class="switch on"></span>Close small gaps</div>
+            <div class="vals"><label>Start <span class="tf ms">0<span class="u">ms</span></span></label><label>End <span class="tf ms">0<span class="u">ms</span></span></label></div></div>
+          <div class="rule"><div class="h"><span class="switch dis"></span><span style="color:var(--muted)">Snap to keyframes</span></div>
+            <div class="why">Needs keyframes or a video. <a>Open keyframes…</a></div></div>
+        </div>
+        <div class="preview" style="margin-top:4px">
+          <div class="pv-h"><b>No line changes</b></div>
+          <div class="pv-more">Both gap limits are 0 ms. Raise one to close gaps.</div>
+        </div>
+      </div>
+      <div class="applybar"><span class="btn primary wide dis">Apply</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const t = new URLSearchParams(location.search).get('theme');
+if (t) document.documentElement.dataset.theme = t;
+</script>
+</body>
+</html>
