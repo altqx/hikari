@@ -13,6 +13,7 @@ This is HikariSub's specification, on the `main` branch. It began as the map of 
 | Vocabulary | Shared domain vocabulary, including Line, Document/Session, Line group and Unconfirmed | [Root glossary](../CONTEXT.md) |
 | Compatibility | Named approval for departures; individually approved defect fixes become default | [Compatibility](compatibility.md), [ADR](adr/0005-observable-compatibility-and-defect-approval.md) |
 | Qt and platform support | Qt 6.12.0 LTS now (6.11.2 kept for rollback), then newer Qt with explicit Windows 10 retirement later | [Platform policy](platform-policy.md), [ADR](adr/0004-qt-baseline-and-platform-support.md) |
+| Hikari API | One typed, versioned operation surface for plugins, AI, MCP and nodes; read/write marks and JSON Schemas (in progress, #411) | [Hikari API](api.md) |
 | Automation boundary | Persistent process/state per loaded script; one active macro, explicit restart; remaining compatibility and qualification open | [Automation](automation.md), [ADR](adr/0006-isolated-lua-automation-host.md) |
 | Karaoke templater | Karaoke Templater 2.1.7 as Aegisub 3.2.2, locked on a template corpus; HikariSub's named improvements (KE1) | [Karaoke templater](karaoke-templater.md) |
 | Subtitle fonts | libass-authoritative previews and verified renderer/font-file agreement | [Fonts](fonts.md), [ADR](adr/0007-renderer-verified-subtitle-fonts.md); native feasibility remains required |

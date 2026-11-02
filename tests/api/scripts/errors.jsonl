@@ -1,0 +1,14 @@
+{"call": "lines.delete_everything", "error": "unknown_operation", "errorData": {"operation": "lines.delete_everything"}}
+{"call": "lines.list", "params": {"limit": 0}, "error": "invalid_params", "errorData": {"pointer": "/limit"}}
+{"call": "lines.list", "params": {"limit": "10"}, "error": "invalid_params", "errorData": {"pointer": "/limit"}}
+{"call": "lines.list", "params": {"bogus": 1}, "error": "invalid_params", "errorData": {"pointer": "/bogus"}}
+{"call": "lines.list", "params": {"fields": ["colour"]}, "error": "invalid_params", "errorData": {"pointer": "/fields/0"}}
+{"call": "lines.list", "params": {"document": 0}, "error": "invalid_params", "errorData": {"pointer": "/document"}}
+{"call": "lines.list", "params": [], "error": "invalid_params", "errorData": {"pointer": ""}}
+{"call": "lines.get", "params": {}, "error": "invalid_params", "errorData": {"pointer": ""}}
+{"call": "lines.get", "params": {"ids": []}, "error": "invalid_params", "errorData": {"pointer": "/ids"}}
+{"call": "lines.get", "params": {"ids": [1, 99]}, "error": "not_found", "errorData": {"line": 99}}
+{"call": "lines.find", "params": {"regex": "("}, "error": "invalid_params", "errorData": {"pointer": "/regex"}}
+{"call": "lines.find", "params": {"in": "colour"}, "error": "invalid_params", "errorData": {"pointer": "/in"}}
+{"call": "settings.get", "params": {"settings": ["grid.noSuchSetting"]}, "error": "not_found", "errorData": {"setting": "grid.noSuchSetting"}}
+{"call": "commands.list", "params": {"window": "grid"}, "error": "invalid_params", "errorData": {"pointer": "/window"}}
