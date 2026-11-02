@@ -933,8 +933,8 @@ def landed_beside(a, t, side):
             "top": along and a["y"] + a["h"] <= t["y"] + 2, "bottom": along and a["y"] >= t["y"] + t["h"] - 2}[side]
 
 
-def step_sides(env=None, suffix="", scale=1.0):
-    """DK3 (#589): the docked Audio panel dragged by its title onto each side of the Grid and of Video."""
+def step_sides(env=None, suffix="", scale=1.0, floating=False):
+    """DK3 (#589): the Audio panel, docked or floating, dragged by its title onto each side of the Grid and of Video."""
     for target in ("Grid", "Video"):
         for side in ("left", "right", "top", "bottom"):
             item = f"drop-{side}-of-{target.lower()}{suffix}"
@@ -949,6 +949,14 @@ def step_sides(env=None, suffix="", scale=1.0):
             x0, y0 = main[0], main[1]
             # Qt's AT-SPI bridge reports device-independent coordinates; the pointer moves in the compositor's.
             sx, sy = x0 + round((audio["x"] + 30) * scale), y0 + round((audio["y"] - HEADER // 2) * scale)
+            if floating:
+                click(sx, sy, double=True, wait=1500)
+                wait_for(lambda s: "Audio" in frames(s))
+                r = origin("Audio")
+                if r is None:
+                    verdict(item, "not-observable", f"{B.name}: Audio did not float or its window has no geometry")
+                    continue
+                sx, sy = header_point(r)
             px, py = (round(v * scale) for v in side_point(t, side))
             drag(sx, sy, x0 + px, y0 + py, release=False)
             ev, _ = B.snap(f"sides{suffix}-{target.lower()}-{side}-over")
@@ -959,9 +967,24 @@ def step_sides(env=None, suffix="", scale=1.0):
             docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == "HikariSub"
             ok = docked and a and t2 and landed_beside(a, t2, side)
             verdict(item, "observed" if ok else "failed",
-                    f"drag docked Audio by its title from {sx},{sy} to {target}'s {side} at {x0 + px},{y0 + py}: "
+                    f"drag {'floating' if floating else 'docked'} Audio by its title from {sx},{sy} to {target}'s {side} at {x0 + px},{y0 + py}: "
                     f"docked={docked}, Audio {a and (a['x'], a['y'], a['w'], a['h'])}, "
                     f"{target} {t2 and (t2['x'], t2['y'], t2['w'], t2['h'])}", ev + ev1)
+
+
+def step_sides_output_scale():
+    """DK3 (#589): the sides step with Hyprland's own fractional output scale, as the owner's desktop has."""
+    if B.name != "hyprland":
+        verdict("drop-sides-output-125", "not-observable", f"{B.name}: only Hyprland's session sets an output scale here")
+        return
+    B.hyprctl("eval", 'hl.monitor({ output = "", mode = "1600x1000", position = "0x0", scale = "1.25" })')
+    time.sleep(1)
+    log(f"monitors: {B.hyprctl('monitors', '-j')}")
+    try:
+        step_sides(suffix="-out125")
+        step_sides(suffix="-out125-floating", floating=True)
+    finally:
+        B.hyprctl("eval", 'hl.monitor({ output = "", mode = "1600x1000", position = "0x0", scale = "1" })')
 
 
 def step_floating():
@@ -3456,6 +3479,8 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "a11y": step_a11y, "floating": step_floating, "header": step_header_keys,
          "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen, "sides": step_sides,
          "sides150": lambda: step_sides({"QT_SCALE_FACTOR": "1.5"}, "-150", 1.5),
+         "sidesfloat": lambda: step_sides(suffix="-floating", floating=True),
+         "sidesout125": step_sides_output_scale,
          # last: after an output goes, sway's virtual pointer still maps over the old layout
          "outputs": step_outputs}
 
