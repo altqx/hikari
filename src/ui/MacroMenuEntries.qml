@@ -19,7 +19,7 @@ QtObject {
     readonly property Component itemComponent: Component {
         ShellMenuItem {
             required property var macro
-            objectName: entries.itemPrefix + (macro.id !== undefined ? macro.id : macro.name)
+            objectName: entries.itemPrefix + (macro.id ?? macro.name)
             enabled: entries.enabled
             onTriggered: entries.triggered(macro)
         }

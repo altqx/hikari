@@ -469,7 +469,7 @@ int setSetting(lua_State *L)
     return 0;
 }
 
-int translate(lua_State *L)
+int catalogText(lua_State *L)
 {
     const std::string key = luaL_checkstring(L, 1);
     const Json *found = Access::catalog(L).find(key);
@@ -645,7 +645,7 @@ std::expected<void, std::string> PluginState::open()
     lua_newtable(L);
     lua_pushstring(L, m_options.locale.empty() ? "en" : m_options.locale.c_str());
     lua_setfield(L, -2, "locale");
-    setFunction(L, this, "t", translate);
+    setFunction(L, this, "t", catalogText);
     lua_setfield(L, -2, "i18n");
 
     lua_setglobal(L, "hikari");
