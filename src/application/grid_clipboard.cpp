@@ -1,5 +1,7 @@
 #include "hikari/application/grid_clipboard.h"
 
+#include "hikari/core/extradata.h"
+
 #include <vector>
 
 namespace hikari::application {
@@ -36,6 +38,18 @@ std::u8string copyRows(const EditSession &session)
     return core::clipboardRows(session.document(), ids, translationMode(session));
 }
 
+std::u8string copyRowsExtradata(const EditSession &session)
+{
+    std::vector<std::vector<core::Extradata>> rows;
+    bool any = false;
+    for (const auto *line : session.document().lines())
+        if (session.selection().selected.contains(line->id)) {
+            rows.push_back(line->extra);
+            any = any || !line->extra.empty();
+        }
+    return any ? core::extradataClipboard(rows) : std::u8string{};
+}
+
 std::u8string copyColumns(const EditSession &session, int columns)
 {
     std::vector<core::LineId> ids;
@@ -46,7 +60,7 @@ std::u8string copyColumns(const EditSession &session, int columns)
 }
 
 std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8string_view text, const LineVisible &visible,
-                                              const core::PasteConversion &conversion)
+                                              const core::PasteConversion &conversion, std::u8string_view extradata)
 {
     const auto selected = shownSelected(session, visible);
     if (selected.empty())
@@ -54,6 +68,9 @@ std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8strin
     auto pasted = core::parseClipboardRows(text, session.document().format(), conversion);
     if (pasted.empty())
         return {};
+    if (auto extras = core::parseExtradataClipboard(extradata); extras.size() == pasted.size())
+        for (std::size_t i = 0; i < pasted.size(); ++i)
+            pasted[i].extra = std::move(extras[i]);
     const auto lines = session.document().lines();
     std::size_t row = 0;
     while (lines[row]->id != selected.front()->id)

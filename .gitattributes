@@ -25,3 +25,5 @@
 # SC1: the sidecar is built byte for byte the same everywhere, and NOTICES.txt is compared with what its
 # licence files generate.
 /src/ai-sidecar/** text eol=lf
+# FA3: the Aegisub extradata fixtures are compared byte for byte (BOM, CRLF).
+/tests/fixtures/aegisub-extradata/** -text

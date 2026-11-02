@@ -143,6 +143,7 @@ app::Provider provider(app::Wire wire, const MockProvider &mock)
     p.name = "Mock";
     p.preset = wire == app::Wire::AnthropicMessages ? app::Preset::Anthropic
                : wire == app::Wire::Responses     ? app::Preset::OpenAI
+               : wire == app::Wire::Gemini        ? app::Preset::Gemini
                                                   : app::Preset::OpenRouter;
     p.wire = wire;
     p.baseUrl = mock.base();
@@ -245,7 +246,7 @@ app::Request fullRequest()
     r.messages = {
         {.author = app::Author::User, .parts = {app::Text{"What is on screen?"}, app::Image{"image/png", "iVBORw0KGgo="}}},
         {.author = app::Author::Assistant,
-         .parts = {app::Text{"Let me look."}, app::ToolCall{"call_1", "get_line", R"({"n":3})"}}},
+         .parts = {app::Text{"Let me look."}, app::ToolCall{"call_1", "get_line", R"({"n":3})", "c2lnLTE="}}},
         {.author = app::Author::User, .parts = {app::ToolResult{"call_1", "Dialogue: 0,...", false}}},
     };
     return r;
@@ -420,6 +421,86 @@ TEST_F(AiProviderTest, AnthropicEncodesVisionToolsAndHistory)
     EXPECT_EQ(body.value("tools").toArray()[0].toObject().value("input_schema").toObject().value("type").toString(), "object");
 }
 
+TEST_F(AiProviderTest, GeminiStreamsTextToolCallsAndUsage)
+{
+    mock.replies.push_back({.chunks = ragged({
+                                data(obj(R"({"candidates":[{"content":{"role":"model","parts":[{"text":"thinking","thought":true},{"text":"On"}]}}],"usageMetadata":{"promptTokenCount":40}})")),
+                                data(obj(R"({"candidates":[{"content":{"role":"model","parts":[{"text":" it"}]}}]})")),
+                                data(obj(R"({"candidates":[{"content":{"role":"model","parts":[{"functionCall":{"id":"fc-1","name":"get_line","args":{"n":2}},"thoughtSignature":"c2lnLUE="},{"functionCall":{"name":"seek","args":{}}}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":40,"cachedContentTokenCount":32,"candidatesTokenCount":12,"thoughtsTokenCount":5,"toolUsePromptTokenCount":3,"totalTokenCount":60},"modelVersion":"the-model","responseId":"r1"})")),
+                            })});
+    const Streamed run = stream(app::Wire::Gemini, {.model = "the-model", .messages = {{.parts = {app::Text{"Hi"}}}}});
+    EXPECT_EQ(run.text(), "On it");
+    EXPECT_EQ(run.finished().reason, app::StopReason::ToolUse);
+    EXPECT_EQ(run.finished().toolCalls, (std::vector<app::ToolCall>{{"fc-1", "get_line", R"({"n":2})", "c2lnLUE="},
+                                                                    {"call_1", "seek", "{}", ""}}));
+    EXPECT_EQ(run.finished().usage, (app::Usage{.inputTokens = 43, .outputTokens = 17, .cachedInputTokens = 32}));
+    const MockProvider::Received &r = mock.received.at(0);
+    EXPECT_EQ(r.method, "POST");
+    EXPECT_EQ(r.path, "/v1/models/the-model:streamGenerateContent?alt=sse");
+    EXPECT_EQ(r.headers.value("x-goog-api-key"), kKey);
+    EXPECT_FALSE(r.headers.contains("authorization"));
+    EXPECT_FALSE(r.path.contains(kKey));
+}
+
+TEST_F(AiProviderTest, GeminiEncodesVisionToolsAndHistory)
+{
+    mock.replies.push_back({.chunks = {data(obj(R"({"candidates":[{"content":{"parts":[{"text":"ok"}]},"finishReason":"STOP"}]})"))}});
+    stream(app::Wire::Gemini, fullRequest());
+    const QJsonObject body = mock.received.at(0).json();
+    EXPECT_FALSE(body.contains("model"));
+    EXPECT_EQ(body.value("systemInstruction").toObject().value("parts").toArray()[0].toObject().value("text").toString(), "Be brief.");
+    EXPECT_EQ(body.value("generationConfig").toObject().value("maxOutputTokens").toInt(), 100);
+    const QJsonArray contents = body.value("contents").toArray();
+    ASSERT_EQ(contents.size(), 3);
+    const QJsonArray user = contents[0].toObject().value("parts").toArray();
+    EXPECT_EQ(contents[0].toObject().value("role").toString(), "user");
+    EXPECT_EQ(user[0].toObject().value("text").toString(), "What is on screen?");
+    EXPECT_EQ(user[1].toObject().value("inlineData").toObject(), obj(R"({"mimeType":"image/png","data":"iVBORw0KGgo="})"));
+    const QJsonArray model = contents[1].toObject().value("parts").toArray();
+    EXPECT_EQ(contents[1].toObject().value("role").toString(), "model");
+    EXPECT_EQ(model[0].toObject().value("text").toString(), "Let me look.");
+    EXPECT_EQ(model[1].toObject(), obj(R"({"functionCall":{"id":"call_1","name":"get_line","args":{"n":3}},"thoughtSignature":"c2lnLTE="})"));
+    EXPECT_EQ(contents[2].toObject().value("parts").toArray()[0].toObject(),
+              obj(R"({"functionResponse":{"id":"call_1","name":"get_line","response":{"result":"Dialogue: 0,..."}}})"));
+    const QJsonObject declaration =
+        body.value("tools").toArray()[0].toObject().value("functionDeclarations").toArray()[0].toObject();
+    EXPECT_EQ(declaration.value("name").toString(), "get_line");
+    EXPECT_EQ(declaration.value("parametersJsonSchema").toObject().value("type").toString(), "object");
+
+    app::Request failed = fullRequest();
+    std::get<app::ToolResult>(failed.messages[2].parts[0]).isError = true;
+    mock.replies.push_back({.chunks = {data(obj(R"({"candidates":[{"content":{"parts":[{"text":"ok"}]},"finishReason":"STOP"}]})"))}});
+    stream(app::Wire::Gemini, failed);
+    EXPECT_EQ(mock.received.at(1).json().value("contents").toArray()[2].toObject().value("parts").toArray()[0].toObject()
+                  .value("functionResponse").toObject().value("response").toObject(),
+              obj(R"({"error":"Dialogue: 0,..."})"));
+}
+
+TEST_F(AiProviderTest, GeminiSafetyBlocksAndBadCallsEndTheRequest)
+{
+    mock.replies.push_back({.chunks = {data(obj(R"({"promptFeedback":{"blockReason":"SAFETY","safetyRatings":[{"category":"HARM_CATEGORY_HARASSMENT","probability":"HIGH","blocked":true}]},"usageMetadata":{"promptTokenCount":9}})"))}});
+    Streamed run = stream(app::Wire::Gemini);
+    EXPECT_EQ(run.finished().reason, app::StopReason::Refused);
+    EXPECT_EQ(run.finished().usage.inputTokens, 9);
+
+    mock.replies.push_back({.chunks = {data(obj(R"({"candidates":[{"content":{"parts":[{"text":"Once"}]}}]})")),
+                                       data(obj(R"({"candidates":[{"finishReason":"SAFETY","safetyRatings":[{"category":"HARM_CATEGORY_DANGEROUS_CONTENT","probability":"MEDIUM","blocked":true}]}]})"))}});
+    run = stream(app::Wire::Gemini);
+    EXPECT_EQ(run.finished().reason, app::StopReason::Refused);
+    EXPECT_EQ(run.finished().text, "Once");
+
+    mock.replies.push_back({.chunks = {data(obj(R"({"candidates":[{"content":{"parts":[{"text":"x"}]},"finishReason":"MAX_TOKENS"}]})"))}});
+    EXPECT_EQ(stream(app::Wire::Gemini).finished().reason, app::StopReason::MaxTokens);
+
+    mock.replies.push_back({.chunks = {data(obj(R"({"candidates":[{"finishReason":"MALFORMED_FUNCTION_CALL","finishMessage":"bad call"}]})"))}});
+    run = stream(app::Wire::Gemini);
+    EXPECT_EQ(run.error().kind, app::ErrorKind::Malformed);
+    EXPECT_EQ(run.error().detail, "bad call");
+
+    mock.replies.push_back({.chunks = {data(obj(R"({"candidates":[{"finishReason":"MISSING_THOUGHT_SIGNATURE"}]})"))}});
+    EXPECT_EQ(stream(app::Wire::Gemini).error().kind, app::ErrorKind::Rejected);
+}
+
 TEST_F(AiProviderTest, HttpErrorsCarryTheProvidersMessage)
 {
     const std::pair<int, app::ErrorKind> cases[] = {{401, app::ErrorKind::Unauthorized},
@@ -427,7 +508,8 @@ TEST_F(AiProviderTest, HttpErrorsCarryTheProvidersMessage)
                                                     {429, app::ErrorKind::RateLimited},
                                                     {400, app::ErrorKind::Rejected},
                                                     {503, app::ErrorKind::Server}};
-    for (const app::Wire wire : {app::Wire::ChatCompletions, app::Wire::Responses, app::Wire::AnthropicMessages})
+    for (const app::Wire wire :
+         {app::Wire::ChatCompletions, app::Wire::Responses, app::Wire::AnthropicMessages, app::Wire::Gemini})
         for (const auto &[status, kind] : cases) {
             mock.replies.push_back({.status = status,
                                     .contentType = "application/json",
@@ -456,6 +538,12 @@ TEST_F(AiProviderTest, ErrorsInsideTheStreamFailTheRequest)
     EXPECT_EQ(run.error().kind, app::ErrorKind::Server);
     EXPECT_EQ(run.error().detail, "Overloaded");
     EXPECT_EQ(run.terminals(), 1);
+
+    mock.replies.push_back({.chunks = {data(obj(R"({"candidates":[{"content":{"parts":[{"text":"a"}]}}]})")),
+                                       data(obj(R"({"error":{"code":429,"message":"Resource exhausted","status":"RESOURCE_EXHAUSTED"}})"))}});
+    run = stream(app::Wire::Gemini);
+    EXPECT_EQ(run.error().kind, app::ErrorKind::RateLimited);
+    EXPECT_EQ(run.error().detail, "Resource exhausted");
 }
 
 TEST_F(AiProviderTest, AStreamThatStopsEarlyFails)
@@ -471,6 +559,10 @@ TEST_F(AiProviderTest, AStreamThatStopsEarlyFails)
 
     mock.replies.push_back({.chunks = {"data: {not json\n\n"}});
     run = stream(app::Wire::Responses);
+    EXPECT_EQ(run.error().kind, app::ErrorKind::Malformed);
+
+    mock.replies.push_back({.chunks = {data(obj(R"({"candidates":[{"content":{"parts":[{"text":"half"}]}}]})"))}});
+    run = stream(app::Wire::Gemini);
     EXPECT_EQ(run.error().kind, app::ErrorKind::Malformed);
 }
 
@@ -501,13 +593,14 @@ TEST_F(AiProviderTest, CancelClosesTheConnection)
     EXPECT_EQ(run.terminals(), 1);
 }
 
-TEST(AiKeyRoutes, TailscaleRangesAndNames)
+TEST(AiKeyRoutes, TailscaleRangesNeedALocalAddressInTheSameRange)
 {
     using hikari::backends::ai::keySafeOverPlainHttp;
-    using hikari::backends::ai::tailscaleName;
     const QList<QHostAddress> lanOnly{QHostAddress(QStringLiteral("192.168.1.10"))};
     const QList<QHostAddress> onTailnet{QHostAddress(QStringLiteral("192.168.1.10")),
-                                        QHostAddress(QStringLiteral("100.101.102.103"))};
+                                        QHostAddress(QStringLiteral("100.101.102.103")),
+                                        QHostAddress(QStringLiteral("fd7a:115c:a1e0::5"))};
+    const QList<QHostAddress> ipv4Tailnet{QHostAddress(QStringLiteral("100.101.102.103"))};
     const auto safe = [](const char *address, const QList<QHostAddress> &local) {
         return keySafeOverPlainHttp(QHostAddress(QString::fromLatin1(address)), local);
     };
@@ -520,19 +613,15 @@ TEST(AiKeyRoutes, TailscaleRangesAndNames)
     EXPECT_FALSE(safe("100.100.1.2", lanOnly)) << "shared CGNAT space without a tailnet address here";
     EXPECT_FALSE(safe("100.128.0.1", onTailnet));
     EXPECT_FALSE(safe("100.63.255.255", onTailnet));
-    EXPECT_TRUE(safe("fd7a:115c:a1e0::1", lanOnly));
-    EXPECT_TRUE(safe("fd7a:115c:a1e0:ab12:4843:cd96:6258:b240", lanOnly));
-    EXPECT_FALSE(safe("fd7a:115c:a1e1::1", lanOnly));
+    EXPECT_TRUE(safe("fd7a:115c:a1e0::1", onTailnet));
+    EXPECT_TRUE(safe("fd7a:115c:a1e0:ab12:4843:cd96:6258:b240", onTailnet));
+    EXPECT_FALSE(safe("fd7a:115c:a1e0::1", lanOnly));
+    EXPECT_FALSE(safe("fd7a:115c:a1e0::1", ipv4Tailnet));
+    EXPECT_FALSE(safe("fd7a:115c:a1e1::1", onTailnet));
     EXPECT_FALSE(safe("192.168.1.20", onTailnet));
     EXPECT_FALSE(safe("10.0.0.5", onTailnet));
     EXPECT_FALSE(safe("203.0.113.9", onTailnet));
 
-    EXPECT_TRUE(tailscaleName(QStringLiteral("gpu-box.tail1234.ts.net")));
-    EXPECT_TRUE(tailscaleName(QStringLiteral("GPU-Box.Tail1234.TS.NET.")));
-    EXPECT_FALSE(tailscaleName(QStringLiteral("ts.net")));
-    EXPECT_FALSE(tailscaleName(QStringLiteral(".ts.net")));
-    EXPECT_FALSE(tailscaleName(QStringLiteral("evil-ts.net")));
-    EXPECT_FALSE(tailscaleName(QStringLiteral("box.ts.net.example.com")));
 }
 
 TEST_F(AiProviderTest, AKeyTravelsOnlyOverHttpsOrToThisMachineOrATailnet)
@@ -576,17 +665,41 @@ TEST_F(AiProviderTest, ANameIsResolvedOnceAndTheCheckedAddressIsUsed)
     EXPECT_EQ(mock.received[0].headers.value("host"), "peer.example:" + port_.toLatin1());
 }
 
-TEST_F(AiProviderTest, AMagicDnsNameIsAllowedByName)
+TEST_F(AiProviderTest, AMagicDnsNameResolvingOutsideTheTailnetIsRefused)
 {
+    localAddresses.append(QHostAddress(QStringLiteral("100.101.102.103")));
+    names.insert(QStringLiteral("gpu-box.tail1234.ts.net"), {QHostAddress(QStringLiteral("203.0.113.9"))});
     Streamed run;
     app::Provider p = provider(app::Wire::ChatCompletions, mock);
-    p.baseUrl = "http://gpu-box.tail1234.ts.net:1/v1";
-    const app::StreamId id = port.stream(p, kKey, {.model = "m"}, [&](const app::Event &e) { run.events.push_back(e); });
-    EXPECT_FALSE(run.done());
-    EXPECT_TRUE(resolved.isEmpty());
-    port.cancel(id);
-    ASSERT_TRUE(run.done());
-    EXPECT_EQ(run.error().kind, app::ErrorKind::Cancelled);
+    p.baseUrl = "http://gpu-box.tail1234.ts.net:8000/v1";
+    port.stream(p, kKey, {.model = "m"}, [&](const app::Event &e) { run.events.push_back(e); });
+    ASSERT_TRUE(waitFor([&] { return run.done(); }));
+    EXPECT_EQ(run.error().kind, app::ErrorKind::InsecureKey);
+    EXPECT_EQ(resolved, QStringList{QStringLiteral("gpu-box.tail1234.ts.net")});
+    EXPECT_EQ(mock.connections, 0);
+}
+
+TEST(AiKeyRoutes, AMagicDnsNameResolvingIntoTheTailnetIsPinnedToThatAddress)
+{
+    using Port = hikari::backends::ai::NetworkProviderPort;
+    const QUrl url(QStringLiteral("http://gpu-box.tail1234.ts.net:8000/v1"));
+    const QList<QHostAddress> resolved{QHostAddress(QStringLiteral("203.0.113.9")),
+                                       QHostAddress(QStringLiteral("100.100.1.2"))};
+
+    const std::optional<Port::Route> route =
+        Port::pinnedRoute(url, resolved, {QHostAddress(QStringLiteral("100.101.102.103"))});
+    ASSERT_TRUE(route.has_value());
+    EXPECT_EQ(route->url, QUrl(QStringLiteral("http://100.100.1.2:8000/v1")));
+    EXPECT_EQ(route->hostHeader, "gpu-box.tail1234.ts.net:8000");
+
+    const std::optional<Port::Route> v6 =
+        Port::pinnedRoute(url, {QHostAddress(QStringLiteral("fd7a:115c:a1e0::9"))},
+                          {QHostAddress(QStringLiteral("fd7a:115c:a1e0::5"))});
+    ASSERT_TRUE(v6.has_value());
+    EXPECT_EQ(v6->url, QUrl(QStringLiteral("http://[fd7a:115c:a1e0::9]:8000/v1")));
+
+    EXPECT_FALSE(Port::pinnedRoute(url, resolved, {QHostAddress(QStringLiteral("192.168.1.10"))}).has_value())
+        << "no tailnet address on this machine";
 }
 
 TEST_F(AiProviderTest, TheCatalogueReadsCapabilitiesAndPrices)
@@ -632,6 +745,28 @@ TEST_F(AiProviderTest, TheCatalogueReadsCapabilitiesAndPrices)
     EXPECT_EQ(std::get<app::Error>(*result).detail, "bad key");
 }
 
+TEST_F(AiProviderTest, TheGeminiCatalogueListsGenerateContentModels)
+{
+    mock.replies.push_back({.contentType = "application/json",
+                            .chunks = {R"({"models":[
+        {"name":"models/gemini-x-flash","baseModelId":"gemini-x-flash","version":"001","displayName":"Gemini X Flash",
+         "inputTokenLimit":1048576,"outputTokenLimit":65536,"supportedGenerationMethods":["generateContent","countTokens","createCachedContent"],"thinking":true},
+        {"name":"models/text-embedding","displayName":"Embedding","supportedGenerationMethods":["embedContent"]},
+        {"name":"models/gemini-y","supportedGenerationMethods":["generateContent"]}],"nextPageToken":""})"}});
+    std::optional<app::ProviderPort::ModelsResult> result;
+    port.listModels(provider(app::Wire::Gemini, mock), kKey, [&](app::ProviderPort::ModelsResult r) { result = r; });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    const auto &models = std::get<std::vector<app::Model>>(*result);
+    ASSERT_EQ(models.size(), 2u);
+    EXPECT_EQ(models[0], (app::Model{.id = "gemini-x-flash", .name = "Gemini X Flash", .contextTokens = 1048576}));
+    EXPECT_EQ(models[1], (app::Model{.id = "gemini-y", .name = "gemini-y"}));
+    const MockProvider::Received &r = mock.received.at(0);
+    EXPECT_EQ(r.method, "GET");
+    EXPECT_EQ(r.path, "/v1/models?pageSize=1000");
+    EXPECT_EQ(r.headers.value("x-goog-api-key"), kKey);
+    EXPECT_FALSE(r.path.contains(kKey));
+}
+
 TEST_F(AiProviderTest, TheConfigFileKeepsEverythingButTheKey)
 {
     struct Keys final : app::KeyStore {
@@ -655,7 +790,7 @@ TEST_F(AiProviderTest, TheConfigFileKeepsEverythingButTheKey)
 
     app::Provider p = provider(app::Wire::ChatCompletions, mock);
     p.models = {{.id = "m1", .name = "M1", .capabilities = app::Capabilities{.tools = true}, .price = app::Price{.input = 1, .output = 2, .cachedInput = 0.5}, .contextTokens = 8000}};
-    p.capabilityOverrides["m2"] = {.tools = false, .vision = true};
+    p.capabilityOverrides["m2"] = {.tools = false, .vision = true, .video = true};
     std::optional<std::optional<app::SaveError>> saved;
     providers.add(p, kKey, [&](std::optional<app::SaveError> e) { saved = e; });
     ASSERT_TRUE(saved.has_value());

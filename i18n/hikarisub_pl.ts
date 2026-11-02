@@ -1097,7 +1097,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zawsze ufaj skryptom w tych folderach</translation>
     </message>
     <message>
-        <source>Don&apos;t load</source>
+        <source>Don’t load</source>
         <translation>Nie wczytuj</translation>
     </message>
     <message>
@@ -1525,16 +1525,12 @@ Urządzenie wyjściowe: %2</translation>
         <translation>HTML</translation>
     </message>
     <message>
-        <source>Swap shortcuts between the color picker
-and the color selection window</source>
-        <translation>Zamień ze sobą skróty próbnika
-i okna wyboru kolorów</translation>
+        <source>Click opens the picker, right-click the colour window</source>
+        <translation>Kliknięcie otwiera próbnik, prawy przycisk – okno wyboru kolorów</translation>
     </message>
     <message>
-        <source>Checking this option opens the color picker on left-click,
-and the color selection window on right-click.</source>
-        <translation>Zaznaczenie tej opcji uruchamia próbnik po kliknięciu lewym przyciskiem,
-a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
+        <source>Off: click opens the colour window, right-click the picker.</source>
+        <translation>Wyłączone: kliknięcie otwiera okno wyboru kolorów, prawy przycisk – próbnik.</translation>
     </message>
     <message>
         <source>Red</source>
@@ -1940,7 +1936,7 @@ w tagu &apos;%3&apos;</translation>
 <context>
     <name>HikariSub.Documents</name>
     <message>
-        <source>Apply to All</source>
+        <source>Apply to all</source>
         <translation>Zastosuj dla wszystkich</translation>
     </message>
     <message>
@@ -2483,36 +2479,12 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Efekt linijki. Służy do oznaczania linijek, na których zastosowane ma być karaoke bądź efekty VSFilter</translation>
     </message>
     <message>
-        <source>&amp;Copy</source>
-        <translation>&amp;Kopiuj</translation>
-    </message>
-    <message>
-        <source>Cu&amp;t</source>
-        <translation>Wy&amp;tnij</translation>
-    </message>
-    <message>
-        <source>&amp;Paste</source>
-        <translation>&amp;Wklej</translation>
-    </message>
-    <message>
-        <source>Spellchecker</source>
-        <translation>Sprawdzanie pisowni</translation>
-    </message>
-    <message>
-        <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation>&amp;Dodaj słowo &quot;%1&quot; do słownika</translation>
-    </message>
-    <message>
         <source>Add word to dictionary</source>
         <translation>Dodaj słowo do słownika</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
         <translation>Błąd. Słowo &quot;%1&quot; nie zostało dodane.</translation>
-    </message>
-    <message>
-        <source>&amp;Delete</source>
-        <translation>&amp;Usuń</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2581,6 +2553,10 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     <message>
         <source>Remove</source>
         <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>Sprawdzaj pisownię</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -2814,7 +2790,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Dodaj</translation>
     </message>
     <message>
-        <source>Adds fonts to a previously created catalog</source>
+        <source>Adds fonts to an existing catalogue</source>
         <translation>Dodaje czcionki do wcześniej utworzonego katalogu</translation>
     </message>
     <message>
@@ -2822,7 +2798,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Zarządzaj</translation>
     </message>
     <message>
-        <source>Allows managing font catalogs</source>
+        <source>Manages font catalogues</source>
         <translation>Umożliwia zarządzanie katalogami czcionek</translation>
     </message>
     <message>
@@ -2838,7 +2814,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Dodaj czcionki z napisów</translation>
     </message>
     <message>
-        <source>Manage font catalogs</source>
+        <source>Manage font catalogues</source>
         <translation>Zarządzanie katalogami czcionek</translation>
     </message>
     <message>
@@ -2854,7 +2830,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Odśwież czcionki: ponownie wczytuje zainstalowane i zewnętrzne czcionki</translation>
     </message>
     <message>
-        <source>Enter a name for the catalog.</source>
+        <source>Enter a name for the catalogue.</source>
         <translation>Wpisz nazwę katalogu.</translation>
     </message>
     <message>
@@ -2862,11 +2838,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>“%1” już istnieje.</translation>
     </message>
     <message>
-        <source>Rename font catalog</source>
+        <source>Rename font catalogue</source>
         <translation>Zmień nazwę katalogu czcionek</translation>
     </message>
     <message>
-        <source>A catalog named “%1” already exists.</source>
+        <source>A catalogue named “%1” already exists.</source>
         <translation>Katalog o nazwie “%1” już istnieje.</translation>
     </message>
     <message>
@@ -2878,11 +2854,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Zamień</translation>
     </message>
     <message>
-        <source>Delete font catalog</source>
+        <source>Delete font catalogue</source>
         <translation>Usuń katalog czcionek</translation>
     </message>
     <message>
-        <source>Delete the catalog “%1”?</source>
+        <source>Delete the catalogue “%1”?</source>
         <translation>Usunąć katalog “%1”?</translation>
     </message>
     <message>
@@ -2890,11 +2866,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Nie zawiera żadnych czcionek.</translation>
     </message>
     <message>
-        <source>Its fonts stay installed and in their other catalogs.</source>
+        <source>Its fonts stay installed and in their other catalogues.</source>
         <translation>Jego czcionki pozostaną zainstalowane i w innych katalogach.</translation>
     </message>
     <message>
-        <source>The file holds no font catalog.</source>
+        <source>The file holds no font catalogue.</source>
         <translation>Plik nie zawiera katalogu czcionek.</translation>
     </message>
     <message>
@@ -2902,15 +2878,15 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>%1 (%2)</translation>
     </message>
     <message>
-        <source>Load font catalogs</source>
+        <source>Load font catalogues</source>
         <translation>Wczytaj katalogi czcionek</translation>
     </message>
     <message>
-        <source>%1 of %2 catalogs in “%3” already exist.</source>
+        <source>%1 of %2 catalogues in “%3” already exist.</source>
         <translation>Już istniejące katalogi z “%3”: %1 z %2.</translation>
     </message>
     <message>
-        <source>The file’s new catalogs are added.</source>
+        <source>The file’s new catalogues are added.</source>
         <translation>Nowe katalogi z pliku zostaną dodane.</translation>
     </message>
     <message>
@@ -2930,11 +2906,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>tutaj: %1, w pliku: %2</translation>
     </message>
     <message>
-        <source>Load 1 catalog</source>
+        <source>Load 1 catalogue</source>
         <translation>Wczytaj 1 katalog</translation>
     </message>
     <message numerus="yes">
-        <source>Load %n catalogs</source>
+        <source>Load %n catalogues</source>
         <translation>
             <numerusform>Wczytaj %n katalog</numerusform>
             <numerusform>Wczytaj %n katalogi</numerusform>
@@ -2974,11 +2950,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         </translation>
     </message>
     <message>
-        <source>Loaded 1 font catalog</source>
+        <source>Loaded 1 font catalogue</source>
         <translation>Wczytano 1 katalog czcionek</translation>
     </message>
     <message numerus="yes">
-        <source>Loaded %n font catalogs</source>
+        <source>Loaded %n font catalogues</source>
         <translation>
             <numerusform>Wczytano %n katalog czcionek</numerusform>
             <numerusform>Wczytano %n katalogi czcionek</numerusform>
@@ -2990,11 +2966,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Z %1: %2.</translation>
     </message>
     <message>
-        <source>Catalogs</source>
+        <source>Catalogues</source>
         <translation>Katalogi</translation>
     </message>
     <message>
-        <source>New catalog</source>
+        <source>New catalogue</source>
         <translation>Nowy katalog</translation>
     </message>
     <message>
@@ -3014,11 +2990,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>W “%1”</translation>
     </message>
     <message>
-        <source>In the catalog</source>
+        <source>In the catalogue</source>
         <translation>W katalogu</translation>
     </message>
     <message>
-        <source>Not in a catalog</source>
+        <source>Not in a catalogue</source>
         <translation>Poza katalogiem</translation>
     </message>
     <message>
@@ -3042,11 +3018,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Nie zapisano: nie można zapisać kopii zapasowej</translation>
     </message>
     <message>
-        <source>The catalogs are saved automatically to fonts.toml in the &quot;catalogs&quot; folder of your user folder.</source>
+        <source>Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.</source>
         <translation>Katalogi są zapisywane automatycznie w pliku fonts.toml w folderze &quot;catalogs&quot; folderu użytkownika.</translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Catalogue name</source>
         <translation>Nazwa katalogu</translation>
     </message>
     <message>
@@ -3078,7 +3054,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Scal</translation>
     </message>
     <message>
-        <source>Choose font catalog file</source>
+        <source>Choose font catalogue file</source>
         <translation>Wybierz plik katalogu czcionek</translation>
     </message>
     <message>
@@ -3234,7 +3210,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Szukaj czcionek</translation>
     </message>
     <message>
-        <source>Font catalog: %1</source>
+        <source>Font catalogue: %1</source>
         <translation>Katalog czcionek: %1</translation>
     </message>
     <message>
@@ -3254,11 +3230,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Filtr znaków</translation>
     </message>
     <message>
-        <source>Add to a catalog</source>
+        <source>Add to a catalogue</source>
         <translation>Dodaj do katalogu</translation>
     </message>
     <message>
-        <source>Add “%1” to a catalog</source>
+        <source>Add “%1” to a catalogue</source>
         <translation>Dodaj “%1” do katalogu</translation>
     </message>
     <message>
@@ -3334,27 +3310,27 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Przykładowy tekst</translation>
     </message>
     <message>
-        <source>The line’s selected text</source>
-        <translation>Zaznaczony tekst linijki</translation>
+        <source>Selected text</source>
+        <translation>Zaznaczony tekst</translation>
     </message>
     <message>
-        <source>The line’s text</source>
+        <source>Line text</source>
         <translation>Tekst linijki</translation>
     </message>
     <message>
-        <source>The Style editor’s sample text</source>
-        <translation>Przykładowy tekst z edytora stylu</translation>
+        <source>Style editor sample</source>
+        <translation>Próbka edytora stylu</translation>
     </message>
     <message>
-        <source>Manage catalogs…</source>
-        <translation>Zarządzaj katalogami…</translation>
+        <source>Manage catalogues</source>
+        <translation>Zarządzaj katalogami</translation>
     </message>
     <message>
-        <source>No catalogs yet</source>
+        <source>No catalogues yet</source>
         <translation>Brak katalogów</translation>
     </message>
     <message>
-        <source>New catalog…</source>
+        <source>New catalogue…</source>
         <translation>Nowy katalog…</translation>
     </message>
     <message>
@@ -3787,7 +3763,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Czcionki zostały dodane do “%1”, ale nie można było ich zapisać.</translation>
     </message>
     <message>
-        <source>fonts.toml in the &quot;catalogs&quot; folder of your user folder could not be written. Saving is tried again on exit.</source>
+        <source>fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.</source>
         <translation>Nie można zapisać pliku fonts.toml w folderze &quot;catalogs&quot; folderu użytkownika. Zapis zostanie ponowiony przy zamykaniu programu.</translation>
     </message>
     <message>
@@ -3799,7 +3775,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ze stylów i tagów %1 w %2.</translation>
     </message>
     <message>
-        <source>Choose a catalog or type a new name.</source>
+        <source>Choose a catalogue or type a new name.</source>
         <translation>Wybierz katalog lub wpisz nową nazwę.</translation>
     </message>
     <message>
@@ -3815,7 +3791,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wszystkie otwarte pliki</translation>
     </message>
     <message>
-        <source>Replace the catalog’s fonts</source>
+        <source>Replace the catalogue’s fonts</source>
         <translation>Zastąp czcionki katalogu</translation>
     </message>
     <message numerus="yes">
@@ -4257,22 +4233,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usuń</translation>
     </message>
     <message>
-        <source>&amp;Insert</source>
-        <translation>&amp;Wstaw</translation>
-    </message>
-    <message>
-        <source>Insert &amp;before</source>
-        <translation>Wstaw &amp;przed</translation>
-    </message>
-    <message>
-        <source>Insert &amp;after</source>
-        <translation>Wstaw p&amp;o</translation>
-    </message>
-    <message>
-        <source>Insert before with &amp;video time</source>
-        <translation>Wstaw przed z &amp;czasem wideo</translation>
-    </message>
-    <message>
         <source>Insert after with video time</source>
         <translation>Wstaw po z czasem wideo</translation>
     </message>
@@ -4283,18 +4243,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Insert after with video frame time</source>
         <translation>Wstaw po z czasem klatki wideo</translation>
-    </message>
-    <message>
-        <source>&amp;Duplicate lines</source>
-        <translation>&amp;Duplikuj linijki</translation>
-    </message>
-    <message>
-        <source>&amp;Swap</source>
-        <translation>Za&amp;mień</translation>
-    </message>
-    <message>
-        <source>Join &amp;lines</source>
-        <translation>Złącz &amp;linijki</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
@@ -4457,18 +4405,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ustaw FPS z wideo</translation>
     </message>
     <message>
-        <source>Copy	Ctrl+C</source>
-        <translation>Kopiuj	Ctrl+C</translation>
-    </message>
-    <message>
-        <source>Cut	Ctrl+X</source>
-        <translation>Wytnij	Ctrl+X</translation>
-    </message>
-    <message>
-        <source>Paste	Ctrl+V</source>
-        <translation>Wklej	Ctrl+V</translation>
-    </message>
-    <message>
         <source>Copy columns</source>
         <translation>Kopiuj kolumny</translation>
     </message>
@@ -4479,10 +4415,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Delete text</source>
         <translation>Usuń tekst</translation>
-    </message>
-    <message>
-        <source>Delete lines	Shift+Del</source>
-        <translation>Usuń linijki	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4533,6 +4465,34 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacz linijki grupy</translation>
     </message>
     <message>
+        <source>Insert</source>
+        <translation>Wstaw</translation>
+    </message>
+    <message>
+        <source>Insert before</source>
+        <translation>Wstaw przed</translation>
+    </message>
+    <message>
+        <source>Insert after</source>
+        <translation>Wstaw po</translation>
+    </message>
+    <message>
+        <source>Insert before with video time</source>
+        <translation>Wstaw przed z czasem wideo</translation>
+    </message>
+    <message>
+        <source>Duplicate lines</source>
+        <translation>Duplikuj linijki</translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation>Zamień</translation>
+    </message>
+    <message>
+        <source>Join lines</source>
+        <translation>Złącz linijki</translation>
+    </message>
+    <message>
         <source>Make times continuous with the previous line</source>
         <translation>Ustaw czasy jako ciągłe z poprzednią linijką</translation>
     </message>
@@ -4543,6 +4503,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Make line group</source>
         <translation>Utwórz grupę linijek</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>Wytnij</translation>
+    </message>
+    <message>
+        <source>Delete lines</source>
+        <translation>Usuń linijki</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5573,6 +5541,14 @@ Co chcesz zrobić?</translation>
         <translation>Sortuj wszystkie linijki według warstwy</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>Sortuj wszystkie linijki według tekstu</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>Sortuj wszystkie linijki według tekstu bez tagów</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>Sortuj zaznaczone linijki według czasu początkowego</translation>
     </message>
@@ -5595,6 +5571,14 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>Sortuj zaznaczone linijki według warstwy</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>Sortuj zaznaczone linijki według tekstu</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>Sortuj zaznaczone linijki według tekstu bez tagów</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6029,6 +6013,26 @@ Co chcesz zrobić?</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>Przesuń zaznaczone linijki o klatki: początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>Przesuń zaznaczone linijki o klatki: koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>Przesuń następne linijki o klatki: początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>Przesuń następne linijki o klatki: koniec na wideo</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -6164,8 +6168,8 @@ Co chcesz zrobić?</translation>
         <translation>Timer kanji</translation>
     </message>
     <message>
-        <source>The kanji timing could not be applied</source>
-        <translation>Nie można zastosować timingu kanji</translation>
+        <source>The kanji timing could not be applied.</source>
+        <translation>Nie można zastosować timingu kanji.</translation>
     </message>
     <message>
         <source>The subtitles are read-only.</source>
@@ -6248,7 +6252,7 @@ Co chcesz zrobić?</translation>
         <translation>Wielokrotne podświetlenie (#)</translation>
     </message>
     <message>
-        <source>Write each further syllable of a group as a # syllable, for the templater&apos;s multi effects</source>
+        <source>Write each further syllable of a group as a # syllable, for the templater’s multi effects</source>
         <translation>Zapisuje każdą kolejną sylabę grupy jako sylabę #, na potrzeby efektów multi w templaterze</translation>
     </message>
     <message>
@@ -6256,7 +6260,7 @@ Co chcesz zrobić?</translation>
         <translation>Furigana</translation>
     </message>
     <message>
-        <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
+        <source>Write each kanji’s reading after it (漢|かん), as the romaji sings it</source>
         <translation>Zapisuje czytanie każdego kanji po nim (漢|かん), tak jak śpiewa je romaji</translation>
     </message>
     <message>
@@ -6292,8 +6296,8 @@ Co chcesz zrobić?</translation>
         <translation>Brak linijek karaoke w “%1”</translation>
     </message>
     <message>
-        <source>The subtitles have no styles</source>
-        <translation>Napisy nie mają stylów</translation>
+        <source>The document has no styles.</source>
+        <translation>Dokument nie ma stylów.</translation>
     </message>
     <message>
         <source>No lines to pair</source>
@@ -6807,6 +6811,10 @@ Co chcesz zrobić?</translation>
         <translation>Zbudowano przy użyciu</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>Formaty plików i pomysły zaczerpnięto z</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>Przywróć poprzedni układ</translation>
     </message>
@@ -6955,6 +6963,22 @@ Co chcesz zrobić?</translation>
         <translation>Sortuj według warstwy</translation>
     </message>
     <message>
+        <source>Text</source>
+        <translation>Tekst</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>Sortuj według tekstu</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>Tekst bez tagów</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>Sortuj według tekstu bez tagów</translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>Otwórz plik napisów</translation>
     </message>
@@ -7067,6 +7091,50 @@ Co chcesz zrobić?</translation>
         <translation>Znajduje kolejne wystąpienie frazy w tekście</translation>
     </message>
     <message>
+        <source>Shift by frames to video</source>
+        <translation>Przesuń o klatki do wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>Przesuwa zaznaczone linijki o pełne klatki tak, aby aktywna linijka zaczynała się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>Zaznaczone linijki, początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>Przesuwa zaznaczone linijki o pełne klatki tak, aby aktywna linijka kończyła się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>Zaznaczone linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>Przesuwa aktywną linijkę i wszystkie linijki po niej o pełne klatki tak, aby aktywna linijka zaczynała się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>Następne linijki, początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>Przesuwa aktywną linijkę i wszystkie linijki po niej o pełne klatki tak, aby aktywna linijka kończyła się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>Następne linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>Nadaje aktywnej linijce zaznaczenie audio i kończy poprzednią linijkę tam, gdzie zaczyna się zaznaczenie</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
         <source>Load script</source>
         <translation>Wczytaj skrypt</translation>
     </message>
@@ -7149,6 +7217,22 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Open user &amp;folder</source>
         <translation>Otwórz &amp;folder użytkownika</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>Podoba ci się HikariSub?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>Gwiazdka na GitHubie pomaga innym go znaleźć.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>Daj gwiazdkę na GitHubie</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>Nie teraz</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -7387,7 +7471,7 @@ Co chcesz zrobić?</translation>
         <translation>HikariSub %1 jest gotowy do instalacji</translation>
     </message>
     <message>
-        <source>What&apos;s new</source>
+        <source>What’s new</source>
         <translation>Co nowego</translation>
     </message>
     <message>
@@ -7451,7 +7535,7 @@ Co chcesz zrobić?</translation>
         </translation>
     </message>
     <message>
-        <source>Don&apos;t ask again</source>
+        <source>Don’t ask again</source>
         <translation>Nie pytaj ponownie</translation>
     </message>
     <message>
@@ -7539,8 +7623,8 @@ Co chcesz zrobić?</translation>
         <translation>Pomiń</translation>
     </message>
     <message>
-        <source>All:</source>
-        <translation>Wszystkie:</translation>
+        <source>All</source>
+        <translation>Wszystkie</translation>
     </message>
     <message>
         <source>Action for every row</source>
@@ -9151,6 +9235,14 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Dołącz nazwę pliku</translation>
     </message>
     <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
+    </message>
+    <message>
         <source>Choose a legacy Hotkeys.txt</source>
         <translation>Wybierz plik Hotkeys.txt starej wersji</translation>
     </message>
@@ -9448,7 +9540,7 @@ zostanie zmieniony na domyślny</translation>
         <translation>Opisz funkcję.</translation>
     </message>
     <message>
-        <source>Don&apos;t send</source>
+        <source>Don’t send</source>
         <translation>Nie wysyłaj</translation>
     </message>
     <message>
@@ -9640,8 +9732,8 @@ zostanie zmieniony na domyślny</translation>
         <translation>Zgłoszenie jest w schowku. Wklej je do nowego zgłoszenia na GitHubie.</translation>
     </message>
     <message>
-        <source>The whole report</source>
-        <translation>Cały raport</translation>
+        <source>Report text</source>
+        <translation>Tekst raportu</translation>
     </message>
     <message>
         <source>Title</source>
@@ -9680,7 +9772,7 @@ zostanie zmieniony na domyślny</translation>
         <translation>Czego oczekiwałeś</translation>
     </message>
     <message>
-        <source>What you&apos;d like</source>
+        <source>What you’d like</source>
         <translation>Czego potrzebujesz</translation>
     </message>
     <message>
@@ -11560,7 +11652,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Zapisz styl</translation>
     </message>
     <message>
-        <source>Style catalog</source>
+        <source>Style catalogue</source>
         <translation>Katalog stylów</translation>
     </message>
     <message>
@@ -11636,7 +11728,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Zastosować zmiany w stylu “%1”?</translation>
     </message>
     <message>
-        <source>The catalog “%1” is shown now; the changes go to “%2”.</source>
+        <source>The catalogue “%1” is shown now; the changes go to “%2”.</source>
         <translation>Wyświetlany jest teraz katalog “%1”; zmiany trafią do “%2”.</translation>
     </message>
     <message>
@@ -11672,8 +11764,8 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Każdy styl jest używany przez jakąś linijkę.</translation>
     </message>
     <message>
-        <source>Ctrl+Z puts them back.</source>
-        <translation>Ctrl+Z je przywróci.</translation>
+        <source>Undo puts them back.</source>
+        <translation>Cofnij przywraca je.</translation>
     </message>
     <message>
         <source>border</source>
@@ -11688,15 +11780,15 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>ten plik</translation>
     </message>
     <message>
-        <source>the catalog</source>
+        <source>the catalogue</source>
         <translation>katalog</translation>
     </message>
     <message>
-        <source>Delete catalog</source>
+        <source>Delete catalogue</source>
         <translation>Usuń katalog</translation>
     </message>
     <message>
-        <source>Delete the catalog “%1”?</source>
+        <source>Delete the catalogue “%1”?</source>
         <translation>Usunąć katalog “%1”?</translation>
     </message>
     <message>
@@ -11720,7 +11812,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Styl musi mieć nazwę.</translation>
     </message>
     <message>
-        <source>The catalog already has a style named “%1”.</source>
+        <source>The catalogue already has a style named “%1”.</source>
         <translation>Katalog ma już styl o nazwie “%1”.</translation>
     </message>
     <message>
@@ -11744,7 +11836,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Nie zastosowano zmian w stylu “%1”</translation>
     </message>
     <message>
-        <source>The file shown now uses the catalog “%1”.</source>
+        <source>The file shown now uses the catalogue “%1”.</source>
         <translation>Wyświetlany teraz plik używa katalogu “%1”.</translation>
     </message>
     <message>
@@ -11776,7 +11868,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Przezroczystość, od 0 (nieprzezroczysty) do 255</translation>
     </message>
     <message>
-        <source>Catalog styles</source>
+        <source>Catalogue styles</source>
         <translation>Style katalogu</translation>
     </message>
     <message>
@@ -11848,15 +11940,15 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Dodaj do pliku</translation>
     </message>
     <message>
-        <source>Copy the selected catalog styles into this file</source>
+        <source>Copy the selected catalogue styles into this file</source>
         <translation>Kopiuje zaznaczone style katalogu do tego pliku</translation>
     </message>
     <message>
-        <source>Add to catalog</source>
+        <source>Add to catalogue</source>
         <translation>Dodaj do katalogu</translation>
     </message>
     <message>
-        <source>Copy the selected file styles into the catalog</source>
+        <source>Copy the selected file styles into the catalogue</source>
         <translation>Kopiuje zaznaczone style pliku do katalogu</translation>
     </message>
     <message>
@@ -11864,7 +11956,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Dodaj do wszystkich otwartych plików</translation>
     </message>
     <message>
-        <source>Copy the selected catalog styles into every open file</source>
+        <source>Copy the selected catalogue styles into every open file</source>
         <translation>Kopiuje zaznaczone style katalogu do każdego otwartego pliku</translation>
     </message>
     <message>
@@ -11872,8 +11964,8 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Ten plik</translation>
     </message>
     <message>
-        <source>This tab has no ASS styles.</source>
-        <translation>Ta zakładka nie ma stylów ASS.</translation>
+        <source>This document has no ASS styles.</source>
+        <translation>Ten dokument nie ma stylów ASS.</translation>
     </message>
     <message numerus="yes">
         <source>%n styles: the preview shows %1</source>
@@ -11904,7 +11996,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Rodzina</translation>
     </message>
     <message>
-        <source>Font catalog</source>
+        <source>Font catalogue</source>
         <translation>Katalog czcionek</translation>
     </message>
     <message>
@@ -12000,7 +12092,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Zastosuj</translation>
     </message>
     <message>
-        <source>New catalog</source>
+        <source>New catalogue</source>
         <translation>Nowy katalog</translation>
     </message>
     <message>
@@ -12108,11 +12200,11 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Cofnij zmiany</translation>
     </message>
     <message>
-        <source>A catalog named “%1” already exists.</source>
+        <source>A catalogue named “%1” already exists.</source>
         <translation>Katalog o nazwie “%1” już istnieje.</translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Catalogue name</source>
         <translation>Nazwa katalogu</translation>
     </message>
     <message>
@@ -13461,6 +13553,65 @@ Usunięte style:
     </message>
 </context>
 <context>
+    <name>HikariSub.TextMenu</name>
+    <message>
+        <source>Undo</source>
+        <translation>Cofnij</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>Ponów</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>Wytnij</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>Wklej</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>Zaznacz wszystko</translation>
+    </message>
+    <message>
+        <source>Undoes the last change to the text</source>
+        <translation>Cofa ostatnią zmianę tekstu</translation>
+    </message>
+    <message>
+        <source>Redoes the last change you undid</source>
+        <translation>Ponawia ostatnią cofniętą zmianę</translation>
+    </message>
+    <message>
+        <source>Moves the selected text to the clipboard</source>
+        <translation>Przenosi zaznaczony tekst do schowka</translation>
+    </message>
+    <message>
+        <source>Copies the selected text to the clipboard</source>
+        <translation>Kopiuje zaznaczony tekst do schowka</translation>
+    </message>
+    <message>
+        <source>Inserts the text from the clipboard</source>
+        <translation>Wstawia tekst ze schowka</translation>
+    </message>
+    <message>
+        <source>Deletes the selected text</source>
+        <translation>Usuwa zaznaczony tekst</translation>
+    </message>
+    <message>
+        <source>Selects all the text in the field</source>
+        <translation>Zaznacza cały tekst w polu</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TimeShift</name>
     <message>
         <source>The starting time</source>
@@ -13842,7 +13993,7 @@ po czasie końcowym w milisekundach</translation>
         <translation>Opcje dopasowywania tłumaczenia</translation>
     </message>
     <message>
-        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</source>
+        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted translation is matched to it, and it is deleted later.</source>
         <translation>&lt;b&gt;Tekst oryginału&lt;/b&gt;: tekst z prawidłowym timingiem. Wklejone dialogi są do niego dopasowywane, a później zostaje on usunięty.</translation>
     </message>
     <message>
@@ -14820,11 +14971,11 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Inny tag ma nazwę “%1”. Najpierw wypełnij pole Tag, aby go zastąpić.</translation>
     </message>
     <message>
-        <source>A tag can&apos;t contain “,”.</source>
+        <source>A tag can’t contain “,”.</source>
         <translation>Tag nie może zawierać “,”.</translation>
     </message>
     <message>
-        <source>A name can&apos;t contain “,”.</source>
+        <source>A name can’t contain “,”.</source>
         <translation>Nazwa nie może zawierać “,”.</translation>
     </message>
     <message>
@@ -14876,8 +15027,8 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>22 domyślne tagi wrócą wraz z zakresami i przeskokami.</translation>
     </message>
     <message>
-        <source>The list keeps at least one tag</source>
-        <translation>Lista musi zawierać co najmniej jeden tag</translation>
+        <source>The list keeps at least one tag.</source>
+        <translation>Lista musi zawierać co najmniej jeden tag.</translation>
     </message>
     <message>
         <source>Default</source>
@@ -14908,11 +15059,11 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Liczba</translation>
     </message>
     <message numerus="yes">
-        <source>The tag takes %n value(s)</source>
+        <source>The tag takes %n value(s).</source>
         <translation>
-            <numerusform>Tag przyjmuje %n wartość</numerusform>
-            <numerusform>Tag przyjmuje %n wartości</numerusform>
-            <numerusform>Tag przyjmuje %n wartości</numerusform>
+            <numerusform>Tag przyjmuje %n wartość.</numerusform>
+            <numerusform>Tag przyjmuje %n wartości.</numerusform>
+            <numerusform>Tag przyjmuje %n wartości.</numerusform>
         </translation>
     </message>
     <message>
@@ -14988,7 +15139,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Wpisz nazwę.</translation>
     </message>
     <message>
-        <source>A name can&apos;t contain “;”.</source>
+        <source>A name can’t contain “;”.</source>
         <translation>Nazwa nie może zawierać “;”.</translation>
     </message>
     <message>
@@ -15044,8 +15195,8 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Usuń</translation>
     </message>
     <message>
-        <source>The list keeps at least one shape</source>
-        <translation>Lista musi zawierać co najmniej jeden kształt</translation>
+        <source>The list keeps at least one shape.</source>
+        <translation>Lista musi zawierać co najmniej jeden kształt.</translation>
     </message>
     <message>
         <source>Name</source>
@@ -15072,7 +15223,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Rysunek</translation>
     </message>
     <message>
-        <source>A drawing can&apos;t contain “;”.</source>
+        <source>A drawing can’t contain “;”.</source>
         <translation>Rysunek nie może zawierać “;”.</translation>
     </message>
     <message>
@@ -15084,7 +15235,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Pobierz z aktywnej linijki</translation>
     </message>
     <message>
-        <source>Put the active line&apos;s drawing in this shape</source>
+        <source>Put the active line’s drawing in this shape</source>
         <translation>Umieść rysunek z aktywnej linijki w tym kształcie</translation>
     </message>
     <message>
@@ -15096,8 +15247,8 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Podgląd</translation>
     </message>
     <message>
-        <source>The shape keeps its last drawing until this one can be used</source>
-        <translation>Kształt zachowuje poprzedni rysunek, dopóki tego nie można użyć</translation>
+        <source>The shape keeps its last drawing until this one can be used.</source>
+        <translation>Kształt zachowuje poprzedni rysunek, dopóki tego nie można użyć.</translation>
     </message>
     <message>
         <source>%1 × %2</source>

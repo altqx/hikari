@@ -5,7 +5,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
     automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
-    colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
+    colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h panel_dock.cpp panel_dock.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
     editor_highlighter.cpp editor_highlighter.h
     settings_store.cpp settings_store.h settings_files.cpp settings_files.h toml_file.cpp toml_file.h list_files.cpp list_files.h dialog_placement.cpp dialog_placement.h
@@ -67,9 +67,11 @@ qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.q
     VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
     ManageLayoutsDialog.qml)
-target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h)
+target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h menu_key.cpp menu_key.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)
+set_source_files_properties(MenuKeys.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+qt_target_qml_sources(hikari_ui QML_FILES MenuKeys.qml TextMenu.qml TextMenuItem.qml)
 target_sources(hikari_ui PRIVATE icon_theme.cpp icon_theme.h)
 target_link_libraries(hikari_ui PRIVATE Qt6::Svg)
 file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEPENDS

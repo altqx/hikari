@@ -238,7 +238,7 @@ jobs:
     name: Windows x64 release, warm SDK, no credentials
     needs: windows-sdk
     runs-on: windows-2025
-    timeout-minutes: 120
+    timeout-minutes: 180
     defaults:
       run:
         shell: pwsh

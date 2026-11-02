@@ -107,7 +107,7 @@ DialogWindow {
     }
     RowLayout {
         spacing: 10
-        Label { text: qsTr("All:") }
+        Label { text: qsTr("All") }
         SegmentedButtons {
             objectName: "clashReviewAll"
             choices: review.choicesFor("clashReviewAll")

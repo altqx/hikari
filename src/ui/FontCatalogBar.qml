@@ -97,14 +97,14 @@ RowLayout {
         objectName: "fontCatalogAdd"
         iconRole: "add"
         text: qsTr("Add")
-        tip: qsTr("Adds fonts to a previously created catalog")
+        tip: qsTr("Adds fonts to an existing catalogue")
         onClicked: bar.addToCatalog()
     }
     IconToolButton {
         objectName: "fontCatalogManage"
         iconRole: "font-catalogs"
         text: qsTr("Manage")
-        tip: qsTr("Allows managing font catalogs")
+        tip: qsTr("Manages font catalogues")
         onClicked: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(bar.fontName, bar.Window.window)
     }
     IconToolButton {
@@ -139,7 +139,7 @@ RowLayout {
         }
         ShellMenuItem {
             objectName: "styleEditorNoCatalogs"
-            text: qsTr("No catalogs yet")
+            text: qsTr("No catalogues yet")
             enabled: false
             visible: addMenu.names.length === 0
             height: visible ? implicitHeight : 0
@@ -147,7 +147,7 @@ RowLayout {
         ShellMenuItem {
             objectName: "styleEditorNewCatalog"
             iconRole: "add"
-            text: qsTr("New catalog…")
+            text: qsTr("New catalogue…")
             visible: addMenu.names.length === 0
             height: visible ? implicitHeight : 0
             onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.startNew(bar.fontName, bar.Window.window)

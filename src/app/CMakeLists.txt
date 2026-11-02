@@ -94,6 +94,7 @@ endif()
 set(HIKARI_DISCORD_CLIENT_ID "1566681222510411967" CACHE STRING "Discord application id for Rich Presence; empty turns it off")
 target_sources(hikari_composition PRIVATE discord_ipc.cpp include/hikari/app/discord_ipc.h
     discord_presence.cpp include/hikari/app/discord_presence.h)
+target_sources(hikari_composition PRIVATE star_prompt.cpp include/hikari/app/star_prompt.h)
 set_source_files_properties(discord_presence.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_DISCORD_CLIENT_ID=\"${HIKARI_DISCORD_CLIENT_ID}\"")
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
 target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hikari/app/settings_import_store.h

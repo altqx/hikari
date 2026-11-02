@@ -1,0 +1,11 @@
+Outer fold opens	_aegi_folddata=0;0;1
+Inner fold opens, collapsed	_aegi_folddata=0;1;2
+{\i1}Inside both{\i0}
+Inner fold closes	_aegi_folddata=1;1;2
+Outer fold closes	_aegi_folddata=1;0;1
+First adjacent fold	_aegi_folddata=0;0;3
+First adjacent fold ends	_aegi_folddata=1;0;3
+Second adjacent fold	_aegi_folddata=0;0;4
+Second adjacent fold ends, with a script value	_aegi_folddata=1;0;4	hikari.fixture=a,b,c:d|e#f,g,h,i:j|k#
+Shares the script value	hikari.fixture=a,b,c:d|e#f,g,h,i:j|k#
+Names an id with no entry

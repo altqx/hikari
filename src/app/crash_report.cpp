@@ -468,7 +468,7 @@ QString Issue::markdown() const
         {QStringLiteral("steps"), QStringLiteral("Steps to reproduce")},
         {QStringLiteral("expected"), QStringLiteral("What you expected")},
         {QStringLiteral("crash-report"), QStringLiteral("Crash or freeze report")},
-        {QStringLiteral("wanted"), QStringLiteral("What you'd like")},
+        {QStringLiteral("wanted"), QStringLiteral("What you’d like")},
         {QStringLiteral("why"), QStringLiteral("What it would help with")},
         {QStringLiteral("question"), QStringLiteral("Your question")},
         {QStringLiteral("system"), QStringLiteral("System and settings")},

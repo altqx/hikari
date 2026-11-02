@@ -57,7 +57,7 @@ DialogWindow {
         if (notices && !result.saved)
             notices.post("warning", qsTr("Add fonts from subtitles"),
                          qsTr("The fonts were added to “%1” but could not be saved.").arg(name),
-                         { details: qsTr("fonts.toml in the \"catalogs\" folder of your user folder could not be written. Saving is tried again on exit.") })
+                         { details: qsTr("fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.") })
         else if (notices)
             notices.post("info", qsTr("Add fonts from subtitles"),
                          (added === 1 ? qsTr("Added 1 font to “%1”") : qsTr("Added %n fonts to “%1”", "", added)).arg(name),
@@ -101,7 +101,7 @@ DialogWindow {
         Item { width: 1; height: 1 }
         Label {
             textFormat: Text.PlainText
-            text: qsTr("Choose a catalog or type a new name.")
+            text: qsTr("Choose a catalogue or type a new name.")
             color: Theme.muted
             font: dialog.fontAt(12)
         }
@@ -118,7 +118,7 @@ DialogWindow {
         CheckBox {
             id: replace
             objectName: "fontsFromSubtitlesReplace"
-            text: qsTr("Replace the catalog’s fonts")
+            text: qsTr("Replace the catalogue’s fonts")
         }
         Item { width: 1; height: 1 }
         Label {

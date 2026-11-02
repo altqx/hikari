@@ -44,6 +44,7 @@
 
 #include <QRegularExpression>
 #include <QClipboard>
+#include <QMimeData>
 #include <QFile>
 #include <QMetaMethod>
 #include <QSet>
@@ -801,7 +802,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                       QCoreApplication::translate("HikariSub.Options", "Hotkeys"), message);
                                                     });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
-        m_workspace, *m_files, &m_settings->settings(),
+        m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); }, [this] { refreshViews(); },
         [this](std::string_view command) {
             const QString accel = m_hotkeys->accelOf(
@@ -896,6 +897,18 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_settings, options.updateFeed,
         options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.updateEnvironment);
     m_whatsNew = std::make_unique<WhatsNew>(*m_updates, WhatsNew::cacheFileIn(options.updateEnvironment));
+    StarPrompt::Config starPrompt = options.starPrompt;
+    if (!starPrompt.editing)
+        starPrompt.editing = [this] {
+            return QGuiApplication::applicationState() == Qt::ApplicationActive && !home();
+        };
+    m_starPrompt = std::make_unique<StarPrompt>(*m_settings, *m_analytics, std::move(starPrompt));
+    if (gettingStartedDue())
+        m_starPrompt->quietRun();
+    connect(m_whatsNew.get(), &WhatsNew::changed, m_starPrompt.get(), [this] {
+        if (m_whatsNew->updated())
+            m_starPrompt->quietRun();
+    });
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
                                    : !m_settingsFile.isEmpty()   ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Catalog")
@@ -2990,6 +3003,29 @@ void setClipboardText(const std::u8string &text)
         QString::fromUtf8(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size())));
 }
 
+const QString kExtradataMime = QStringLiteral("application/x-hikarisub-extradata");
+
+QByteArray clipboardBytes(const std::u8string &text)
+{
+    return QByteArray(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size()));
+}
+
+void setClipboardRows(const std::u8string &text, const std::u8string &extradata)
+{
+    auto *data = new QMimeData;
+    data->setText(QString::fromUtf8(clipboardBytes(text)));
+    if (!extradata.empty())
+        data->setData(kExtradataMime, clipboardBytes(extradata));
+    QGuiApplication::clipboard()->setMimeData(data);
+}
+
+std::u8string clipboardExtradata()
+{
+    const QMimeData *data = QGuiApplication::clipboard()->mimeData();
+    const QByteArray bytes = data ? data->data(kExtradataMime) : QByteArray();
+    return std::u8string(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
+}
+
 }
 
 bool Application::copyLines()
@@ -2997,7 +3033,7 @@ bool Application::copyLines()
     auto *session = targetSession();
     if (!session || session->selection().selected.empty())
         return false;
-    setClipboardText(application::copyRows(*session));
+    setClipboardRows(application::copyRows(*session), application::copyRowsExtradata(*session));
     return true;
 }
 
@@ -3011,7 +3047,8 @@ bool Application::pasteLines()
     auto *session = targetSession();
     if (!session)
         return false;
-    const bool done = application::pasteRows(*session, toU8(clipboardText()), shownLines()).has_value();
+    const bool done =
+        application::pasteRows(*session, toU8(clipboardText()), shownLines(), {}, clipboardExtradata()).has_value();
     m_editor->reloadFromSession();
     refreshViews();
     return done;
@@ -5354,7 +5391,9 @@ bool Application::sortLines(const QString &key, bool selectedOnly)
     using application::SortKey;
     static const std::pair<const char *, SortKey> keys[] = {{"start", SortKey::Start}, {"end", SortKey::End},
                                                             {"style", SortKey::Style}, {"actor", SortKey::Actor},
-                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer}};
+                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer},
+                                                            {"text", SortKey::Text},
+                                                            {"textWithoutTags", SortKey::TextWithoutTags}};
     auto *session = targetSession();
     const auto *found = std::find_if(std::begin(keys), std::end(keys),
                                      [&](const auto &k) { return key == QLatin1String(k.first); });
@@ -5487,6 +5526,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
+            {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
