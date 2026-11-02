@@ -226,8 +226,14 @@ std::optional<DraftProblem> EditSession::draftProblem() const
     return record ? problemOf(*record) : std::nullopt;
 }
 
-void EditSession::pushState(core::Document document, std::string name)
+void EditSession::pushState(core::Document document, std::string name, std::optional<ContentId> amending)
 {
+    if (amending && *amending == contentId() && m_cursor > 0 && m_cursor + 1 == m_states.size()) {
+        m_states[m_cursor].document = std::move(document);
+        m_states[m_cursor].content = ContentId{m_nextContent++};
+        ++m_revision;
+        return;
+    }
     while (m_states.size() > m_cursor + 1)
         m_states.pop_back();
     m_states.push_back(State{std::move(document), ContentId{m_nextContent++}, m_selection, std::move(name)});
@@ -247,7 +253,7 @@ bool EditSession::commitDraftAs(std::string name)
     return commit(false, std::move(name));
 }
 
-bool EditSession::commit(bool leaving, std::string name)
+bool EditSession::commit(bool leaving, std::string name, std::optional<ContentId> amending)
 {
     if (!m_draft)
         return false;
@@ -287,16 +293,17 @@ bool EditSession::commit(bool leaving, std::string name)
         line.startFrame = record->startFrame;
         line.endFrame = record->endFrame;
     });
-    pushState(std::move(next), std::move(name));
+    pushState(std::move(next), std::move(name), amending);
     return true;
 }
 
-bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Companion &companion)
+bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Companion &companion,
+                                        std::optional<ContentId> amending)
 {
     if (!m_draft)
         return false;
     if (m_selection.selected.size() < 2)
-        return commit(leaving, std::move(name));
+        return commit(leaving, std::move(name), amending);
     auto record = draftRecord();
     if (!record) {
         m_draft.reset();
@@ -377,7 +384,7 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Co
     }
     if (!changed)
         return false;
-    pushState(std::move(next), std::move(name));
+    pushState(std::move(next), std::move(name), amending);
     return true;
 }
 
