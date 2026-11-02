@@ -20,6 +20,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <algorithm>
 #include <memory>
 
 using namespace hikari;
@@ -166,16 +167,26 @@ private slots:
     {
         QTest::addColumn<QString>("preset");
         QTest::addColumn<QString>("first");
+        QTest::addColumn<bool>("engineOpen");
         for (const char *preset : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke"})
-            QTest::addRow("%s, Shift times", preset) << QString::fromLatin1(preset) << QStringLiteral("timing");
+            QTest::addRow("%s, Shift times", preset) << QString::fromLatin1(preset) << QStringLiteral("timing") << false;
         for (const char *first : {"search", "automation"})
-            QTest::addRow("Editing, %s", first) << QStringLiteral("Editing") << QString::fromLatin1(first);
+            QTest::addRow("Editing, %s", first) << QStringLiteral("Editing") << QString::fromLatin1(first) << false;
+        for (const char *first : {"timing", "search", "automation"})
+            QTest::addRow("Editing, %s, the engine's open()", first) << QStringLiteral("Editing") << QString::fromLatin1(first) << true;
     }
 
     void aPanelWithoutAPlaceOpensRightOfTheGrid()
     {
         QFETCH(QString, preset);
         QFETCH(QString, first);
+        QFETCH(bool, engineOpen);
+        const auto open = [&](const char *name) {
+            if (!engineOpen)
+                return showPanel(name);
+            QVERIFY(QMetaObject::invokeMethod(dock(name), "open"));
+            QTRY_VERIFY(isOpen(name) && !isFloating(name));
+        };
         start();
         applyPreset(qPrintable(preset));
         QTRY_COMPARE(this->preset(), preset);
@@ -190,7 +201,7 @@ private slots:
         const QByteArray firstDock = (first + QLatin1String("Dock")).toLatin1();
         const QByteArray firstPanel = (first + QLatin1String("Panel")).toLatin1();
         const QString firstName = uniqueName(first);
-        showPanel(firstDock.constData());
+        open(firstDock.constData());
         QTRY_VERIFY(window()->findChild<QQuickItem *>(QLatin1String(firstPanel))->isVisible());
         QTRY_VERIFY(sceneRect(firstPanel.constData()).left() > sceneRect("gridPanel").right() - 1);
         const QRectF grid = sceneRect("gridPanel");
@@ -207,7 +218,7 @@ private slots:
         QVERIFY(docking()->tabCount(QStringLiteral("Grid")) == 1);
 
         for (qsizetype i = 1; i < order.size(); ++i) {
-            showPanel((order[i] + QLatin1String("Dock")).toLatin1().constData());
+            open((order[i] + QLatin1String("Dock")).toLatin1().constData());
             QTRY_COMPARE(docking()->tabCount(firstName), int(i + 1));
             QCOMPARE(docking()->tabCount(uniqueName(order[i])), int(i + 1));
         }
@@ -221,12 +232,39 @@ private slots:
 
         for (const QString &panel : order)
             close((panel + QLatin1String("Dock")).toLatin1().constData());
-        showPanel("timingDock");
+        open("timingDock");
         QTRY_VERIFY(sceneRect("timingPanel").left() > sceneRect("gridPanel").right() - 1);
 
         QVERIFY(application->workspaceLayout().resetCurrentLayout());
         QTRY_VERIFY(!isOpen("timingDock"));
         QTRY_VERIFY(qAbs(sceneRect("gridPanel").width() - before.width()) < 2);
+        stop();
+    }
+
+    void openingAPanelTwiceInARowLandsItOnce()
+    {
+        start();
+        applyPreset("Editing");
+        QTRY_COMPARE(preset(), QStringLiteral("Editing"));
+        const QString name = dock("searchDock")->property("uniqueName").toString();
+        QVERIFY(!docking()->hasPlace(name));
+        const auto shownBesideTheMain = [this] {
+            const QWindowList windows = QGuiApplication::topLevelWindows();
+            return std::count_if(windows.begin(), windows.end(), [this](QWindow *w) { return w != window() && w->isVisible(); });
+        };
+        const auto before = shownBesideTheMain();
+        QVERIFY(QMetaObject::invokeMethod(dock("searchDock"), "open"));
+        QCOMPARE(shownBesideTheMain(), before);
+        QVERIFY(QMetaObject::invokeMethod(dock("searchDock"), "open"));
+        QCOMPARE(shownBesideTheMain(), before);
+        QTRY_VERIFY(isOpen("searchDock") && !isFloating("searchDock"));
+        QTRY_VERIFY(sceneRect("searchPanel").left() > sceneRect("gridPanel").right() - 1);
+        const QRectF placed = sceneRect("searchPanel");
+        QTest::qWait(50);
+        QCOMPARE(sceneRect("searchPanel"), placed);
+        QCOMPARE(docking()->tabCount(name), 1);
+        QCOMPARE(floatingWindows(), 0);
+        QCOMPARE(shownBesideTheMain(), before);
         stop();
     }
 

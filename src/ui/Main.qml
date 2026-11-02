@@ -368,6 +368,14 @@ ApplicationWindow {
                                           misspellPanel, templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                      searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
+    Instantiator {
+        model: root.dockList
+        delegate: Connections {
+            required property var modelData
+            target: modelData
+            function onOpenedWithoutPlace() { root.openAtFirstPlace(modelData) }
+        }
+    }
     WheelScroll {}
     KeyRouter {
         id: keyRouter
@@ -551,6 +559,14 @@ ApplicationWindow {
         if (!root.panelAvailable(dock))
             return
         root.analytics.panelOpened(dock.uniqueName)
+        root.openAtFirstPlace(dock)
+        root.workspaceLayout.keepFloatingPanelsOnScreen()
+        dock.raise()
+        if (dock === spellDock && !spellTool.checking)
+            spellTool.start()
+        root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
+    }
+    function openAtFirstPlace(dock) {
         if (dock === originalDock)
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace("Log"))
@@ -567,11 +583,6 @@ ApplicationWindow {
             root.addRightOfGrid(dock)
         else
             dock.open()
-        root.workspaceLayout.keepFloatingPanelsOnScreen()
-        dock.raise()
-        if (dock === spellDock && !spellTool.checking)
-            spellTool.start()
-        root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
 
     function panelOf(item) {
@@ -2821,7 +2832,7 @@ ApplicationWindow {
         uniqueName: "Classic"
         enabled: !homePage.visible
 
-        KDDW.DockWidget {
+        PanelDock {
             id: videoDock
             objectName: "videoDock"
             uniqueName: "Video"
@@ -3106,7 +3117,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: audioDock
             objectName: "audioDock"
             uniqueName: "Audio"
@@ -4588,7 +4599,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: originalDock
             objectName: "originalDock"
             uniqueName: "Original"
@@ -4626,7 +4637,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: editorDock
             objectName: "editorDock"
             uniqueName: "Editor"
@@ -4870,7 +4881,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: gridDock
             objectName: "gridDock"
             uniqueName: "Grid"
@@ -5279,7 +5290,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: referenceDock
             objectName: "referenceDock"
             uniqueName: "Reference"
@@ -5306,7 +5317,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: timingDock
             objectName: "timingDock"
             uniqueName: "Timing"
@@ -5330,7 +5341,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: searchDock
             objectName: "searchDock"
             uniqueName: "Search"
@@ -5352,7 +5363,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: automationDock
             objectName: "automationDock"
             uniqueName: "Automation"
@@ -5382,7 +5393,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: spellDock
             objectName: "spellDock"
             uniqueName: "Spellchecker"
@@ -5409,7 +5420,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: stylesDock
             objectName: "stylesDock"
             uniqueName: "Styles"
@@ -5437,7 +5448,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: templateDock
             objectName: "templateDock"
             uniqueName: "Template"
@@ -5464,7 +5475,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: logDock
             objectName: "logDock"
             uniqueName: "Log"
@@ -5484,7 +5495,7 @@ ApplicationWindow {
                 }
             }
         }
-        KDDW.DockWidget {
+        PanelDock {
             id: misspellDock
             objectName: "misspellDock"
             uniqueName: "FixMinorErrors"

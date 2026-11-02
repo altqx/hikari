@@ -18920,7 +18920,7 @@ private slots:
         QVERIFY(!dock->property("isOpen").toBool());
         QTest::qWait(100);
         QVERIFY(!listed("First"));
-        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
         auto *offer = visualItem("documentScriptsOffer");
         QVERIFY(offer);
         QTRY_VERIFY(offer->isVisible());
@@ -19105,7 +19105,7 @@ private slots:
         const auto unbound = macros.unboundMacros();
         QVERIFY(std::ranges::find(unbound, legacyName.toStdString()) == unbound.end());
         auto *dock = item<QObject>("automationDock");
-        QVERIFY(dock && QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *tool = named("automationTool");
         auto *recorder = visualItem("automationRecorder");
@@ -19132,7 +19132,7 @@ private slots:
         application->automation().load(QDir::toNativeSeparators(fixture).toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Prefix from dialog"), 30000);
         auto *dock = item<QObject>("automationDock");
-        QVERIFY(dock && QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *tool = named("automationTool");
         auto *recorder = visualItem("automationRecorder");
@@ -19293,7 +19293,7 @@ private slots:
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY_WITH_TIMEOUT(automation.running(), 30000);
         QTRY_VERIFY(cancel->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *list = visualItem("scripts");
         QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
@@ -19522,7 +19522,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(dock, "open"));
         auto *dock = item<QObject>("automationDock");
         if (!dock->property("isOpen").toBool())
-            QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         dock->setProperty("isFloating", true);
         auto *panel = item("automationPanel");
