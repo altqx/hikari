@@ -251,6 +251,49 @@ TEST_F(PluginInstaller, GrantsTheManifestStillAsksForSurviveAnUpdate)
     EXPECT_EQ(entry.grants.at("fonts").path, "/fonts");
 }
 
+constexpr std::string_view kSettings =
+    R"(, "contributes": {"settings": [{"id": "count", "title": "Count", "type": "integer", "default": 3, "minimum": 1, "maximum": 10},)"
+    R"( {"id": "mode", "title": "Mode", "type": "choice", "options": ["fast", "slow"], "default": "fast"},)"
+    R"( {"id": "loud", "title": "Loud", "type": "boolean", "default": false}]})";
+
+TEST_F(PluginInstaller, SetSettingChecksTheValueAgainstTheInstalledManifest)
+{
+    using hikari::api::Json;
+    EXPECT_EQ(installer.setSetting("com.example.hello", "count", Json(4)).error(),
+              "cannot read hikari-plugin.json of com.example.hello");
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0", nullptr, kSettings)), false));
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "count", Json(7)));
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "mode", Json("slow")));
+    EXPECT_EQ(installer.setSetting("com.example.hello", "count", Json("7")).error(), "“count” takes a whole number");
+    EXPECT_EQ(installer.setSetting("com.example.hello", "count", Json(0)).error(), "“count” must be at least 1");
+    EXPECT_EQ(installer.setSetting("com.example.hello", "count", Json(11)).error(), "“count” must be at most 10");
+    EXPECT_EQ(installer.setSetting("com.example.hello", "mode", Json("medium")).error(), "“mode” must be one of: fast, slow");
+    EXPECT_EQ(installer.setSetting("com.example.hello", "loud", Json(1)).error(), "“loud” takes true or false");
+    EXPECT_EQ(installer.setSetting("com.example.hello", "other", Json(1)).error(),
+              "“other” isn't a setting of com.example.hello");
+    EXPECT_EQ(installed().settings, Json::object({{"count", 7}, {"mode", "slow"}}));
+    const auto manifest = installer.installedManifest("com.example.hello");
+    ASSERT_TRUE(manifest);
+    EXPECT_EQ(settingValues(*manifest, installed().settings),
+              Json::object({{"count", 7}, {"mode", "slow"}, {"loud", false}}));
+}
+
+TEST_F(PluginInstaller, SettingsSurviveAnUpdateWhileTheyStillFit)
+{
+    using hikari::api::Json;
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0", nullptr, kSettings)), false));
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "count", Json(7)));
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "mode", Json("slow")));
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "loud", Json(true)));
+    const std::string_view narrower =
+        R"(, "contributes": {"settings": [{"id": "count", "title": "Count", "type": "integer", "default": 3, "maximum": 5},)"
+        R"( {"id": "mode", "title": "Mode", "type": "choice", "options": ["fast", "slow"], "default": "fast"}]})";
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", nullptr, narrower)), false));
+    EXPECT_EQ(installed().settings, Json::object({{"mode", "slow"}}));
+    EXPECT_EQ(settingValues(*installer.installedManifest("com.example.hello"), installed().settings),
+              Json::object({{"count", 3}, {"mode", "slow"}}));
+}
+
 TEST_F(PluginInstaller, AnUnreadableRegistryStopsEverything)
 {
     touch(folders().registry);
@@ -271,6 +314,11 @@ TEST_F(PluginInstaller, TheRegistryRoundTripsAndRefusesIdsThatAreNotIds)
     EXPECT_EQ(loaded->at("com.example.hello").key, a.key);
     EXPECT_FALSE(loaded->at("com.example.hello").enabled);
     EXPECT_TRUE(loaded->at("com.example.hello").grants.at("fonts").writable);
+    EXPECT_EQ(loaded->at("com.example.hello").settings, hikari::api::Json::object());
+
+    registry["com.example.hello"].settings = hikari::api::Json::object({{"count", 2}});
+    ASSERT_TRUE(saveRegistry(folders().registry, registry));
+    EXPECT_EQ(loadRegistry(folders().registry)->at("com.example.hello").settings, hikari::api::Json::object({{"count", 2}}));
 
     std::ofstream(folders().registry) << R"({"format": 1, "plugins": {"..": {"version": "1.0.0", "enabled": true}}})";
     EXPECT_FALSE(loadRegistry(folders().registry));

@@ -1,6 +1,8 @@
 #include "hikari/plugins/installer.h"
 
+#include <algorithm>
 #include <fstream>
+#include <sstream>
 #include <system_error>
 
 namespace hikari::plugins {
@@ -168,9 +170,12 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
     if (error)
         return failed("cannot create", m_folders.data / manifest.id, error);
 
-    InstalledPlugin entry{manifest.version, true, review.signer, {}};
+    InstalledPlugin entry{manifest.version, true, review.signer, {}, api::Json::object()};
     if (existing != registry->end()) {
         entry.enabled = existing->second.enabled;
+        for (const Setting &setting : manifest.settings)
+            if (const api::Json *value = existing->second.settings.find(setting.id); value && !settingRefusal(setting, *value))
+                entry.settings[setting.id] = *value;
         for (const FileGrantRequest &request : manifest.permissions.files)
             if (const auto grant = existing->second.grants.find(request.id); grant != existing->second.grants.end())
                 entry.grants.insert(*grant);
@@ -190,6 +195,43 @@ std::expected<void, std::string> Installer::setEnabled(std::string_view id, bool
     if (it == registry->end())
         return std::unexpected("not installed: " + std::string(id));
     it->second.enabled = enabled;
+    if (!saveRegistry(m_folders.registry, *registry))
+        return failed("cannot write", m_folders.registry);
+    return {};
+}
+
+std::expected<Manifest, std::string> Installer::installedManifest(std::string_view id) const
+{
+    const fs::path file = m_folders.plugins / fromUtf8(id) / std::string(kManifestName);
+    std::ifstream in(file, std::ios::binary);
+    std::stringstream text;
+    text << in.rdbuf();
+    if (!in)
+        return std::unexpected("cannot read " + std::string(kManifestName) + " of " + std::string(id));
+    auto manifest = parseManifest(text.str(), m_apiVersion);
+    if (!manifest || manifest->id != id)
+        return std::unexpected("the installed " + std::string(kManifestName) + " of " + std::string(id) + " is broken");
+    return std::move(*manifest);
+}
+
+std::expected<void, std::string> Installer::setSetting(std::string_view id, std::string_view setting,
+                                                       const api::Json &value)
+{
+    auto manifest = installedManifest(id);
+    if (!manifest)
+        return std::unexpected(manifest.error());
+    const auto declared = std::ranges::find(manifest->settings, setting, &Setting::id);
+    if (declared == manifest->settings.end())
+        return std::unexpected("\xE2\x80\x9C" + std::string(setting) + "\xE2\x80\x9D isn't a setting of " + std::string(id));
+    if (auto refused = settingRefusal(*declared, value))
+        return std::unexpected(*refused);
+    auto registry = loadRegistry(m_folders.registry);
+    if (!registry)
+        return std::unexpected(registry.error());
+    const auto it = registry->find(std::string(id));
+    if (it == registry->end())
+        return std::unexpected("not installed: " + std::string(id));
+    it->second.settings[setting] = value;
     if (!saveRegistry(m_folders.registry, *registry))
         return failed("cannot write", m_folders.registry);
     return {};
