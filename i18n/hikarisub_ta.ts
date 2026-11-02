@@ -5980,6 +5980,10 @@ What would you like to do?</source>
         <translation>அடுத்து வரும் வரிகளைச் சட்டகங்களாக நகர்த்து: முடிவு வீடியோவில்</translation>
     </message>
     <message>
+        <source>Plugins</source>
+        <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -6794,6 +6798,14 @@ What would you like to do?</source>
     <message>
         <source>Check spelling</source>
         <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
+    </message>
+    <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>செருகுநிரல்களை நிறுவு, இயக்கு அல்லது முடக்கு, நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>செருகுநிரல்கள்… (&amp;u)</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -9287,6 +9299,253 @@ and will be changed to the default</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>பிற மொழிச் சொற்கள், அவற்றின் எழுத்துமுறைக்கான பிற நிறுவப்பட்ட அகராதிகளுடன் சரிபார்க்கப்படும். அகராதி இல்லாத எழுத்துமுறையில் உள்ள சொற்கள் குறிக்கப்படாது.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>இந்தக் கோப்பு ஒரு செருகுநிரல் தொகுப்பு அல்ல (hikari-plugin.json உள்ள zip காப்பகம்).</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>தொகுப்பில் ஓர் இணைப்பு உள்ளது, அதை HikariSub நிறுவாது: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>தொகுப்பு மிகப் பெரியது: பிரித்தெடுத்தால் %1 க்கும் மேற்பட்ட கோப்புகள் அல்லது %2 MB க்கும் மேல்.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json சரியான JSON அல்ல: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json இல் “%1” என்ற அடையாளம் %2 இல் மீண்டும் வருகிறது.</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>இந்தச் செருகுநிரலுக்கு Hikari API %1 தேவை, ஆனால் இந்த HikariSub இல் API %2 உள்ளது. இதை நிறுவ HikariSub ஐப் புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>%1 இல் hikari-plugin.json செருகுநிரல் ச்கீமாவுக்கு இணங்கவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>HikariSub நிறுவாத ஒரு கோப்புப் பெயர் தொகுப்பில் உள்ளது: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>தொகுப்பின் மேல் நிலையில் hikari-plugin.json இல்லை.</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>தொகுப்பில் அதன் முதன்மைக் கோப்பான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>தொகுப்பில் கையொப்பம் உள்ளது, ஆனால் அதைச் சரிபார்க்க publicKey எதையும் அதன் மேனிஃபெச்ட் குறிப்பிடவில்லை.</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>பயனர் கோப்புறையில் உள்ள plugins.json ஐப் படிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>தொகுப்பு அதன் மேனிஃபெச்ட் குறிப்பிடாத ஒரு விசையால் கையொப்பமிடப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>கையொப்பம் தொகுப்புடன் பொருந்தவில்லை, எனவே கையொப்பமிட்ட பிறகு அது மாற்றப்பட்டிருக்கலாம்.</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>கையொப்பத்தின் நம்பகமான கருத்து கையொப்பமிட்ட பிறகு மாற்றப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>தொகுப்பின் அருகிலுள்ள .minisig கோப்பு ஒரு minisign கையொப்பம் அல்ல.</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>முழு நம்பிக்கை: இது HikariSub இன் வரம்புகளுக்கு வெளியே நேட்டிவ் குறியீட்டை இயக்கக்கூடும்.</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>திறந்துள்ள ஒவ்வொரு வசனக் கோப்பையும் படித்துத் திருத்துதல்: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>%1 உடன் இணைதல்: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>படிக்கவும் எழுதவும் ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>படிக்க ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub ஆல் முடிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>செருகுநிரல்களுக்குப் பயனர் கோப்புறை தேவை, இந்தப் பிரதியில் அது இல்லை.</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub ஆல் %1 ஐப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>முதலில் ஒரு செருகுநிரல் தொகுப்பைத் தேர்வுசெய்யவும்.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>சரி</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>கையொப்ப விசை மாறிவிட்டது. நிறுவப்பட்ட பிரதி %1 விசையாலும், இது %2 விசையாலும் கையொப்பமிடப்பட்டுள்ளன. உருவாக்கியவர் விசையை மாற்றினார் என்று நீங்கள் நம்பினால் மட்டுமே இதை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>இந்தத் தொகுப்பு கையொப்பமிடப்படவில்லை, ஆனால் நிறுவப்பட்ட பிரதி %1 விசையால் கையொப்பமிடப்பட்டது. இது வந்த இடத்தை நீங்கள் நம்பினால் மட்டுமே நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>சரிபார்க்கப்படாத மூலம், %1 விசையால் கையொப்பமிடப்பட்டது. புதுப்பிப்புகள் அதே விசையால் கையொப்பமிடப்பட வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>சரிபார்க்கப்படாதது: தொகுப்பு கையொப்பமிடப்படவில்லை, எனவே அதை யார் உருவாக்கினார் என்பதை HikariSub ஆல் அறிய முடியாது.</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>செருகுநிரல் நிறுவப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>செருகுநிரலை நிறுவு</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>செருகுநிரலைப் புதுப்பி</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>செருகுநிரலை மீண்டும் நிறுவு</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>செருகுநிரலைத் தரமிறக்கு</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>“%1” %2 ஐ நிறுவவா?</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>“%1” ஐ %2 இலிருந்து %3 க்குப் புதுப்பிக்கவா?</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>“%1” %2 ஐ மீண்டும் நிறுவவா?</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>“%1” %2 ஐ முந்தைய பதிப்பான %3 ஆல் மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>It asks to:</source>
+        <translation>இது கேட்பவை:</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>செயலில் உள்ள வசனக் கோப்பைத் தவிர வேறு எந்த அனுமதியையும் இது கேட்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>நம்பி நிறுவு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>நிறுவலை நீக்கு, தரவை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>நிறுவலை நீக்கி, தரவையும் அகற்று</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>செருகுநிரலின் நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>“%1” இன் நிறுவலை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>பயனர் கோப்புறையில் இதன் சேமித்த தரவு உள்ளது. மீண்டும் நிறுவினால் அதைப் பயன்படுத்த, அதை வைத்திருக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>செருகுநிரலின் நிறுவல் நீக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>செருகுநிரல்கள் எதுவும் நிறுவப்படவில்லை. ஒரு .hikariplugin கோப்பிலிருந்து ஒன்றை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>நிறுவப்பட்ட செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>இயக்கத்தில்</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>சரிபார்க்கப்படாதது, %1 விசையால் கையொப்பமிடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>சரிபார்க்கப்படாதது, கையொப்பமிடப்படாதது</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>முழு நம்பிக்கை</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>கோப்பிலிருந்து நிறுவு…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>செருகுநிரல் தொகுப்பைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>HikariSub செருகுநிரல்கள் (*.hikariplugin)</translation>
     </message>
 </context>
 <context>
