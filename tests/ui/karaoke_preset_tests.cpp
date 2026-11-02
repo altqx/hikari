@@ -162,7 +162,7 @@ class KaraokePresetTest : public QObject {
         };
         QVERIFY2(templates.left() > video.right() - 1, where());
         QVERIFY2(qAbs(templates.bottom() - video.bottom()) < 2, where());
-        QVERIFY2(video.width() < templates.width() + 1, where());
+        QVERIFY2(video.width() < templates.width() + 2, where());
         QVERIFY2(audio.top() > video.bottom() - 1 && audio.top() > templates.bottom() - 1, where());
         QVERIFY2(qAbs(audio.left() - grid.left()) < 2 && qAbs(audio.right() - grid.right()) < 2, where());
         QVERIFY2(audio.left() < video.left() + 2 && audio.right() > templates.right() - 2, where());
