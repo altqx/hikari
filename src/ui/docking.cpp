@@ -865,6 +865,30 @@ KDDockWidgets::Core::Group *groupOf(KDDockWidgets::Core::DockWidget *dock)
 }
 }
 
+QRect Docking::placeInLayout(const QString &uniqueName) const
+{
+    KDDockWidgets::Core::Group *group = groupOf(dockByName(uniqueName));
+    return group && group->isInMainWindow() ? group->view()->geometry() : QRect();
+}
+
+QString Docking::dockRightOf(const QString &uniqueName) const
+{
+    KDDockWidgets::Core::Group *of = groupOf(dockByName(uniqueName));
+    if (!of || !of->isInMainWindow() || !of->isVisible())
+        return {};
+    const QRect left = of->view()->geometry();
+    for (KDDockWidgets::Core::Group *group : KDDockWidgets::DockRegistry::self()->groups()) {
+        if (group == of || !group->isInMainWindow() || group->mainWindow() != of->mainWindow() || !group->isVisible())
+            continue;
+        const QRect g = group->view()->geometry();
+        const int gap = g.left() - left.right() - 1;
+        if (gap >= 0 && gap <= 2 && g.top() >= left.top() - 1 && g.bottom() <= left.bottom() + 1)
+            if (KDDockWidgets::Core::DockWidget *current = group->currentDockWidget())
+                return current->uniqueName();
+    }
+    return {};
+}
+
 int Docking::tabIndex(const QString &uniqueName) const
 {
     KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);

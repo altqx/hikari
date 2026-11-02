@@ -171,6 +171,32 @@ private slots:
         QCOMPARE(missing.error().code, std::string(api::errors::kNotFound));
     }
 
+    void grantedFilesAreReadAndWrittenOnDisk()
+    {
+        const QString path = root.filePath(QStringLiteral("notes.txt"));
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("before");
+        file.close();
+        QCOMPARE(hikariApi().grantFile("test.ai", path.toStdString(), true), std::string("f1"));
+        const auto read = call("files.read", R"({"file": "f1"})");
+        QVERIFY(read);
+        QCOMPARE(read->find("data")->asString(), std::string("before"));
+        QVERIFY(call("files.write", R"({"file": "f1", "data": "after"})"));
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        QCOMPARE(file.readAll(), QByteArray("after"));
+    }
+
+    void withoutMediaVideoAndAudioAreClosed()
+    {
+        const auto video = call("video.info", "{}");
+        QVERIFY(video);
+        QVERIFY(*video == *api::Json::parse(R"({"open": false})"));
+        const auto audio = call("audio.info", "{}");
+        QVERIFY(audio);
+        QVERIFY(*audio == *api::Json::parse(R"({"open": false})"));
+    }
+
     void aUserCommandIsHeard()
     {
         shell(QStringLiteral("root.runItem(root.globalActions().GLOBAL_ABOUT)"));

@@ -4,6 +4,7 @@
 #include <climits>
 #include <cmath>
 #include <cstdlib>
+#include <map>
 #include <set>
 #include <tuple>
 
@@ -47,6 +48,44 @@ bool isShown(const ShownLine &shown, core::LineId id)
     return !shown || shown(id);
 }
 
+struct Retime {
+    std::optional<int> startMs, endMs;
+};
+
+// No change records nothing and still succeeds.
+std::expected<void, CommandRefusal> retime(EditSession &session, const char *name,
+                                           const std::map<core::LineId, Retime> &times)
+{
+    std::set<core::LineId> touches;
+    for (const auto &[id, t] : times)
+        touches.insert(id);
+    const auto fps = microDvdFps(session.document());
+    const auto selection = session.selection();
+    bool changed = false, unchanged = false;
+    const auto ran = session.run(Command{name, session.revision(), touches, [&](core::Document &d) {
+                                             for (const auto &[id, t] : times)
+                                                 if (!d.editLine(id, [&](core::LineRecord &l) {
+                                                         const auto before = std::tuple(l.start.value, l.end.value,
+                                                                                        l.startFrame, l.endFrame);
+                                                         if (t.startMs)
+                                                             newTime(l.start, l.startFrame, *t.startMs, fps);
+                                                         if (t.endMs)
+                                                             newTime(l.end, l.endFrame, *t.endMs, fps);
+                                                         changed = changed || before != std::tuple(l.start.value, l.end.value,
+                                                                                                   l.startFrame, l.endFrame);
+                                                     }))
+                                                     return false;
+                                             unchanged = !changed;
+                                             return changed;
+                                         }});
+    if (unchanged)
+        return {};
+    if (!ran)
+        return std::unexpected(ran.error());
+    session.setSelection(selection);
+    return {};
+}
+
 }
 
 int legacyFrameTime(const LegacyTimebase &timebase, int tellMs, bool start)
@@ -64,43 +103,97 @@ std::expected<void, CommandRefusal> setTimesFromVideo(EditSession &session, bool
 {
     if (session.draftLine())
         session.commitDraft();
-    std::set<core::LineId> chosen;
-    for (const auto *l : session.document().lines())
-        if (session.selection().selected.contains(l->id))
-            chosen.insert(l->id);
-    if (chosen.empty())
+    const auto lines = session.document().lines();
+    const auto &selected = session.selection().selected;
+    std::map<core::LineId, Retime> times;
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        const auto &l = *lines[i];
+        if (!selected.contains(l.id))
+            continue;
+        auto &t = times[l.id];
+        if (!end) {
+            t.startMs = ms;
+            if (msOf(l.end.value) < ms)
+                t.endMs = ms;
+        } else {
+            t.endMs = ms;
+            if (msOf(l.start.value) > ms)
+                t.startMs = ms;
+        }
+    }
+    if (times.empty())
         return std::unexpected(CommandRefusal::Invalid);
-    const auto fps = microDvdFps(session.document());
-    const auto selection = session.selection();
-    bool changed = false, unchanged = false;
-    const auto ran = session.run(Command{end ? "Setting end time" : "Setting start time", session.revision(), chosen,
-                                         [&](core::Document &d) {
-                                             for (const auto id : chosen)
-                                                 if (!d.editLine(id, [&](core::LineRecord &l) {
-                                                         const auto before = std::tuple(l.start.value, l.end.value,
-                                                                                        l.startFrame, l.endFrame);
-                                                         if (!end) {
-                                                             newTime(l.start, l.startFrame, ms, fps);
-                                                             if (msOf(l.end.value) < ms)
-                                                                 newTime(l.end, l.endFrame, ms, fps);
-                                                         } else {
-                                                             newTime(l.end, l.endFrame, ms, fps);
-                                                             if (msOf(l.start.value) > ms)
-                                                                 newTime(l.start, l.startFrame, ms, fps);
-                                                         }
-                                                         changed = changed || before != std::tuple(l.start.value, l.end.value,
-                                                                                                   l.startFrame, l.endFrame);
-                                                     }))
-                                                     return false;
-                                             unchanged = !changed;
-                                             return changed;
-                                         }});
-    if (unchanged)
-        return {};
-    if (!ran)
-        return std::unexpected(ran.error());
-    session.setSelection(selection);
-    return {};
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        const auto &l = *lines[i];
+        if (!selected.contains(l.id))
+            continue;
+        if (!end && i > 0) {
+            const auto &before = *lines[i - 1];
+            if (!selected.contains(before.id) && before.end.value == l.start.value) {
+                auto &t = times[before.id];
+                t.endMs = ms;
+                if (msOf(before.start.value) > ms)
+                    t.startMs = ms;
+            }
+        } else if (end && i + 1 < lines.size()) {
+            const auto &after = *lines[i + 1];
+            if (!selected.contains(after.id) && after.start.value == l.end.value) {
+                auto &t = times[after.id];
+                t.startMs = ms;
+                if (msOf(after.end.value) < ms)
+                    t.endMs = ms;
+            }
+        }
+    }
+    return retime(session, end ? "Setting end time" : "Setting start time", times);
+}
+
+std::expected<void, CommandRefusal> joinPreviousToAudioSelection(EditSession &session, int startMs, int endMs)
+{
+    if (session.draftLine())
+        session.commitDraft();
+    const auto active = session.selection().active;
+    if (!active || endMs < startMs)
+        return std::unexpected(CommandRefusal::Invalid);
+    const auto lines = session.document().lines();
+    const auto at = std::find_if(lines.begin(), lines.end(), [&](const core::LineRecord *l) { return l->id == *active; });
+    if (at == lines.end())
+        return std::unexpected(CommandRefusal::Invalid);
+    std::map<core::LineId, Retime> times{{*active, Retime{startMs, endMs}}};
+    if (at != lines.begin()) {
+        const auto &before = **(at - 1);
+        auto &t = times[before.id];
+        t.endMs = startMs;
+        if (msOf(before.start.value) > startMs)
+            t.startMs = startMs;
+    }
+    return retime(session, "Joining with previous", times);
+}
+
+std::expected<void, CommandRefusal> shiftFramesToVideo(EditSession &session, const LegacyTimebase &timebase,
+                                                       const FrameShift &shift)
+{
+    if (session.draftLine())
+        session.commitDraft();
+    const auto active = session.selection().active;
+    if (!active)
+        return std::unexpected(CommandRefusal::Invalid);
+    const auto lines = session.document().lines();
+    const auto at = std::find_if(lines.begin(), lines.end(), [&](const core::LineRecord *l) { return l->id == *active; });
+    if (at == lines.end())
+        return std::unexpected(CommandRefusal::Invalid);
+    const auto frameOf = [&](core::DocumentTime t) { return timebase.frameAt(msOf(t)); };
+    const int frames = shift.byEnd ? shift.videoFrame + 1 - frameOf((*at)->end.value)
+                                   : shift.videoFrame - frameOf((*at)->start.value);
+    const auto shifted = [&](core::DocumentTime t) { return zeroIt(timebase.startTimeFor(frameOf(t) + frames)); };
+    const auto activeStart = (*at)->start.value;
+    std::map<core::LineId, Retime> times;
+    for (const auto *l : lines) {
+        const bool moves = shift.following ? l->start.value >= activeStart : session.selection().selected.contains(l->id);
+        if (moves || l->id == *active)
+            times[l->id] = Retime{shifted(l->start.value), shifted(l->end.value)};
+    }
+    return retime(session, "Shifting times by frames", times);
 }
 
 std::optional<core::LineId> lineAtVideoTime(const core::Document &document, const ShownLine &shown, int tellMs,

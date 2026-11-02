@@ -39,7 +39,7 @@ struct HttpCall {
 
 HttpCall encodeRequest(const app::Provider &provider, const QByteArray &key, const app::Request &request);
 HttpCall modelsCall(const app::Provider &provider, const QByteArray &key);
-std::vector<app::Model> decodeModels(const QByteArray &body);
+std::vector<app::Model> decodeModels(app::Wire wire, const QByteArray &body);
 app::ErrorKind errorKindOfStatus(int status);
 /// The provider's error message from an error body, when it has one.
 QString errorDetail(const QByteArray &body);
@@ -60,6 +60,7 @@ protected:
     void text(const QString &delta);
     void startCall(int index, const QString &id, const QString &name);
     void callArguments(int index, const QString &delta);
+    void callSignature(int index, const QString &signature);
     void finish(app::StopReason reason);
     void fail(app::ErrorKind kind, const QString &detail);
 

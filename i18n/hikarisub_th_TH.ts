@@ -5923,6 +5923,26 @@ What would you like to do?</source>
         <translation>เริ่มต้นใช้งาน</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>เลื่อนบรรทัดที่เลือกทีละเฟรม: จุดเริ่มต้นที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>เลื่อนบรรทัดที่เลือกทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดเริ่มต้นที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -6959,6 +6979,50 @@ What would you like to do?</source>
         <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
     </message>
     <message>
+        <source>Shift by frames to video</source>
+        <translation>เลื่อนทีละเฟรมไปยังวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>เลื่อนบรรทัดที่เลือกเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันเริ่มที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>บรรทัดที่เลือก เริ่มที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>เลื่อนบรรทัดที่เลือกเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันสิ้นสุดที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>บรรทัดที่เลือก สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>เลื่อนบรรทัดปัจจุบันและทุกบรรทัดหลังจากนั้นเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันเริ่มที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>บรรทัดถัดไปทั้งหมด เริ่มที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>เลื่อนบรรทัดปัจจุบันและทุกบรรทัดหลังจากนั้นเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันสิ้นสุดที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>ให้บรรทัดปัจจุบันใช้ส่วนที่เลือกของเสียง และให้บรรทัดก่อนหน้าสิ้นสุดตรงจุดเริ่มของส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
         <source>Load script</source>
         <translation>โหลดสคริปต์</translation>
     </message>
@@ -7041,6 +7105,22 @@ What would you like to do?</source>
     <message>
         <source>Open user &amp;folder</source>
         <translation>เปิด&amp;โฟลเดอร์ผู้ใช้</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>ชอบ HikariSub ไหม</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>การให้ดาวบน GitHub ช่วยให้คนอื่นค้นพบได้</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>ให้ดาวบน GitHub</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>ไว้ทีหลัง</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -9021,6 +9101,14 @@ removing audio cache files.</source>
     <message>
         <source>Include the file name</source>
         <translation>รวมชื่อไฟล์</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>แนะนำให้ให้ดาว HikariSub บน GitHub</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

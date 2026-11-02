@@ -178,6 +178,32 @@ bool Application::setTimeFromVideo(bool end)
     return done.has_value();
 }
 
+bool Application::joinPreviousToAudioSelection()
+{
+    auto *session = targetSession();
+    if (!session || !m_audio || !m_audio->ready())
+        return false;
+    const auto done =
+        application::joinPreviousToAudioSelection(*session, m_audio->selectionStart(), m_audio->selectionEnd());
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done.has_value();
+}
+
+bool Application::shiftFramesToVideo(bool byEnd, bool following)
+{
+    auto *session = targetSession();
+    if (!session || videoState() == application::VideoState::None)
+        return false;
+    const auto &video = m_video->session();
+    const auto timebase = video.legacyTimebase();
+    const auto done = application::shiftFramesToVideo(
+        *session, timebase, application::FrameShift{timebase.frameShownAt(video.tellMs()), byEnd, following});
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done.has_value();
+}
+
 bool Application::selectLineFromVideo()
 {
     auto *session = targetSession();

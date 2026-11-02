@@ -1,0 +1,13 @@
+{"call": "video.info", "exact": {"open": true, "width": 64, "height": 36, "aspect": [16, 9], "frameShown": 7, "keyframes": [0, 10]}}
+{"call": "video.frame_at_time", "params": {"time": 1000}, "exact": {"frame": 25}}
+{"call": "video.time_of_frame", "params": {"frame": 25}, "exact": {"time": 1000}}
+{"call": "video.frame", "params": {"frame": 3, "crop": {"x": 1, "y": 0, "width": 2, "height": 1}}, "exact": {"frame": 3, "width": 2, "height": 1, "format": "bgra", "data": "AQAD/wIAA/8="}}
+{"call": "video.frame", "params": {"crop": {"x": 0, "y": 0, "width": 64, "height": 1}, "maxEdge": 16}, "result": {"frame": 7, "width": 16, "height": 1}}
+{"call": "video.frame", "params": {"crop": {"x": 64, "y": 0, "width": 1, "height": 1}}, "error": "invalid_params", "errorData": {"pointer": "/crop"}}
+{"call": "video.frame", "params": {"frame": 500}, "error": "unavailable", "errorData": {"frame": 500}}
+{"call": "video.frame", "params": {"maxEdge": 8}, "error": "invalid_params", "errorData": {"pointer": "/maxEdge"}}
+{"call": "audio.info", "exact": {"open": true, "ready": true, "duration": 1000, "sampleRate": 2000, "channels": 1}}
+{"call": "audio.peaks", "params": {"start": 0, "end": 1000, "buckets": 100}, "result": {"start": 0, "end": 1000}}
+{"call": "audio.peaks", "params": {"start": 500, "end": 510, "buckets": 2}, "exact": {"start": 500, "end": 510, "min": [0, 10], "max": [9, 19]}}
+{"call": "audio.peaks", "params": {"start": 0, "end": 1000, "buckets": 2}, "exact": {"start": 0, "end": 1000, "min": [-1000, -232], "max": [23, 999]}}
+{"call": "audio.peaks", "params": {"start": 10, "end": 10}, "error": "invalid_params", "errorData": {"pointer": "/end"}}

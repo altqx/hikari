@@ -5997,6 +5997,26 @@ Co chcesz zrobić?</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>Przesuń zaznaczone linijki o klatki: początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>Przesuń zaznaczone linijki o klatki: koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>Przesuń następne linijki o klatki: początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>Przesuń następne linijki o klatki: koniec na wideo</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -7039,6 +7059,50 @@ Co chcesz zrobić?</translation>
         <translation>Znajduje kolejne wystąpienie frazy w tekście</translation>
     </message>
     <message>
+        <source>Shift by frames to video</source>
+        <translation>Przesuń o klatki do wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>Przesuwa zaznaczone linijki o pełne klatki tak, aby aktywna linijka zaczynała się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>Zaznaczone linijki, początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>Przesuwa zaznaczone linijki o pełne klatki tak, aby aktywna linijka kończyła się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>Zaznaczone linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>Przesuwa aktywną linijkę i wszystkie linijki po niej o pełne klatki tak, aby aktywna linijka zaczynała się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>Następne linijki, początek na wideo</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>Przesuwa aktywną linijkę i wszystkie linijki po niej o pełne klatki tak, aby aktywna linijka kończyła się na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>Następne linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>Nadaje aktywnej linijce zaznaczenie audio i kończy poprzednią linijkę tam, gdzie zaczyna się zaznaczenie</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
         <source>Load script</source>
         <translation>Wczytaj skrypt</translation>
     </message>
@@ -7121,6 +7185,22 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Open user &amp;folder</source>
         <translation>Otwórz &amp;folder użytkownika</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>Podoba ci się HikariSub?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>Gwiazdka na GitHubie pomaga innym go znaleźć.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>Daj gwiazdkę na GitHubie</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>Nie teraz</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -9121,6 +9201,14 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     <message>
         <source>Include the file name</source>
         <translation>Dołącz nazwę pliku</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

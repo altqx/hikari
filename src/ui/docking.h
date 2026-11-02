@@ -88,6 +88,8 @@ public:
     Q_INVOKABLE QQuickItem *toolbar(const QString &uniqueName) const;
     Q_INVOKABLE void requestMenu(const QString &uniqueName, QQuickItem *anchor);
     Q_INVOKABLE bool toggleFloating(const QString &uniqueName);
+    Q_INVOKABLE QRect placeInLayout(const QString &uniqueName) const;
+    Q_INVOKABLE QString dockRightOf(const QString &uniqueName) const;
     Q_INVOKABLE int tabIndex(const QString &uniqueName) const;
     Q_INVOKABLE int tabCount(const QString &uniqueName) const;
     Q_INVOKABLE bool moveTab(const QString &uniqueName, int step);
