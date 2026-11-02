@@ -23,7 +23,6 @@
 | Automation › Rerun last macro | rerun-macro (new: the script with a repeat arrow) |
 | Automation › Repeat last run (AD2) | repeat-run (new: the script with a repeat loop; also the Automation panel's tool strip) |
 | Automation › Show panel | automation-manager (new: the scripts, two pages; AM1 made the window the Automation panel) |
-| Subtitles › Shift times / run timing postprocessor | shift-times-run (new: Shift times' clock with run-script's play mark) |
 
 ### Video and Audio
 

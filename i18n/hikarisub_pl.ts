@@ -6635,10 +6635,6 @@ Co chcesz zrobić?</translation>
         <translation>Znajdź następny</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>Przesuń czasy / uruchom postprocesor timingu</translation>
-    </message>
-    <message>
         <source>Go to start time of line</source>
         <translation>Przejdź do czasu początkowego linijki</translation>
     </message>

@@ -6596,10 +6596,6 @@ What would you like to do?</source>
         <translation>அடுத்ததை தேடு</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>நேரங்களை நகர்த்தவும் / நேரப் பின்செயலாக்கியை இயக்கவும்</translation>
-    </message>
-    <message>
         <source>Go to start time of line</source>
         <translation>வரியின் தொடக்க நேரத்திற்குச் செல்லுங்கள்</translation>
     </message>

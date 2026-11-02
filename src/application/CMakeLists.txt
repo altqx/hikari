@@ -14,6 +14,7 @@ target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/applic
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
 target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
+target_sources(hikari_application PRIVATE ai_providers.cpp include/hikari/application/ai_providers.h)
 target_include_directories(hikari_application PUBLIC include)
 target_sources(hikari_application PRIVATE playback_pipeline.cpp yuv_bgra.cpp
     include/hikari/application/playback_pipeline.h include/hikari/application/yuv_bgra.h)
