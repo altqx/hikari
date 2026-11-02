@@ -122,10 +122,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) get the conversion style &quot;%1&quot;.</source>
+        <source>%n line(s) get the conversion style “%1”.</source>
         <translation>
-            <numerusform>%n line gets the conversion style &quot;%1&quot;.</numerusform>
-            <numerusform>%n lines get the conversion style &quot;%1&quot;.</numerusform>
+            <numerusform>%n line gets the conversion style “%1”.</numerusform>
+            <numerusform>%n lines get the conversion style “%1”.</numerusform>
         </translation>
     </message>
     <message numerus="yes">

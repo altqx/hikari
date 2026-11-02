@@ -73,13 +73,13 @@ DialogWindow {
         columnSpacing: 10
         rowSpacing: 8
         Layout.topMargin: 8
-        Label { text: qsTr("Catalog") }
+        Label { text: qsTr("Catalogue") }
         ComboBox {
             id: catalog
             objectName: "fontsFromSubtitlesCatalog"
             editable: true
             Layout.preferredWidth: 260
-            Accessible.name: qsTr("Catalog")
+            Accessible.name: qsTr("Catalogue")
             // Fusion's delegate would read markup in a catalog name from a file.
             delegate: ItemDelegate {
                 id: catalogItem

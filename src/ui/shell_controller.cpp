@@ -195,7 +195,7 @@ QString ShellController::selectionText() const
                    : count == 1 ? QCoreApplication::translate("HikariSub.StatusBar", "1 line selected")
                                 : QCoreApplication::translate("HikariSub.StatusBar", "%1 lines selected").arg(count);
     if (m_hiddenCount > 0)
-        text += QCoreApplication::translate("HikariSub.StatusBar", " (%1 hidden)").arg(m_hiddenCount);
+        text += QStringLiteral(" ") + QCoreApplication::translate("HikariSub.StatusBar", "(%1 hidden)").arg(m_hiddenCount);
     return text;
 }
 

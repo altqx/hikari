@@ -8,37 +8,7 @@ HikariSub.Audio	Volume: %1\nOutput device: %2	title-case	pending #596 Menus
 HikariSub.Automation	Filter the run's log	quotes	pending #596 Panels
 HikariSub.Automation	Save the run's log	quotes	pending #596 Panels
 HikariSub.Automation	The script's process ended. Reload to start it again; its macro is not rerun.	quotes	pending #596 Panels
-HikariSub.Automation	The protected reference can't be changed.	quotes	pending #596 Messages
-HikariSub.Automation	The macro's changes could not be applied; nothing was changed.	quotes	pending #596 Messages
-HikariSub.Automation	Validation Lua script '%1' failed	quotes	pending #596 Messages
-HikariSub.Automation	The script's helper ended; reload the script to use it again.	quotes	pending #596 Messages
-HikariSub.Automation	The last run's macro is no longer loaded, so it can't be repeated.	quotes	pending #596 Messages
-HikariSub.Automation	The line being edited can't be committed, so the macro can't start.	quotes	pending #596 Messages
-HikariSub.Automation	The script has no such macro	leading-the	pending #596 Messages
-HikariSub.Automation	The script or its macro changed	leading-the	pending #596 Messages
-HikariSub.Colours	The desktop's screenshot portal is not in use here.	quotes	pending #596 Messages
-HikariSub.Conversion	Catalog	spelling	pending #596 Settings
-HikariSub.Conversion	In line %1, value '%2' cannot be scaled\nin tag '%3'	quotes	pending #596 Messages
-HikariSub.Conversion	This document can't be converted to that format.	quotes	pending #596 Messages
-HikariSub.Conversion	%n line(s) get the conversion style "%1".	quotes	pending #596 Messages
 HikariSub.Documents	Subtitle file 	whitespace	pending #596 Menus
-HikariSub.Documents	the text is not UTF-8	leading-the	pending #596 Messages
-HikariSub.Documents	"%1" is not a time	quotes	pending #596 Messages
-HikariSub.Documents	the end %1 is earlier than the begin	leading-the	pending #596 Messages
-HikariSub.Documents	"%1" has no time	quotes	pending #596 Messages
-HikariSub.Documents	the XML is broken at "%1"	quotes	pending #596 Messages
-HikariSub.Documents	the XML is broken at "%1"	leading-the	pending #596 Messages
-HikariSub.Documents	the elements are nested more than %1 deep at "%2"	quotes	pending #596 Messages
-HikariSub.Documents	Video: 	colon	pending #596 Messages
-HikariSub.Documents	Video: 	whitespace	pending #596 Messages
-HikariSub.Documents	Audio: 	colon	pending #596 Messages
-HikariSub.Documents	Audio: 	whitespace	pending #596 Messages
-HikariSub.Documents	Keyframes: 	colon	pending #596 Messages
-HikariSub.Documents	Keyframes: 	whitespace	pending #596 Messages
-HikariSub.Documents	Associated files:\n	colon	pending #596 Messages
-HikariSub.Documents	Associated files:\n	whitespace	pending #596 Messages
-HikariSub.Documents	Video from directory:\n	colon	pending #596 Messages
-HikariSub.Documents	Video from directory:\n	whitespace	pending #596 Messages
 HikariSub.Editor	Bottom-center	spelling	pending #596 Menus
 HikariSub.Editor	Center	spelling	pending #596 Menus
 HikariSub.Editor	Top-center	spelling	pending #596 Menus
@@ -57,74 +27,7 @@ HikariSub.Editor	Insert Tag at text beginning	title-case	pending #596 Grid and L
 HikariSub.Editor	End is before Start.	title-case	pending #596 Grid and Line editor
 HikariSub.Editor	This document can't be saved here.	quotes	pending #596 Grid and Line editor
 HikariSub.Editor	The document can't be saved right now.	quotes	pending #596 Grid and Line editor
-HikariSub.Fonts	Font catalogs	spelling	pending #596 Messages
-HikariSub.Fonts	Catalog	spelling	pending #596 Settings
 HikariSub.Fonts	Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.	spelling	the folder on disk is named catalogs
-HikariSub.Fonts	Without catalog	spelling	pending #596 Messages
-HikariSub.Fonts	Found "%1" font file.	quotes	pending #596 Messages
-HikariSub.Fonts	The renderer also used "%1" (%2); it is not collected.	quotes	pending #596 Messages
-HikariSub.Fonts	Copied font "%1".	quotes	pending #596 Messages
-HikariSub.Fonts	Added font "%1" to the archive.	quotes	pending #596 Messages
-HikariSub.Fonts	Font "%1" belongs to a style\nthat is not used.	quotes	pending #596 Messages
-HikariSub.Fonts	\nWill not be copied.	whitespace	pending #596 Messages
-HikariSub.Fonts	Font "%1" is missing normal style.	quotes	pending #596 Messages
-HikariSub.Fonts	Font "%1" is missing bold italics.	quotes	pending #596 Messages
-HikariSub.Fonts	Font "%1" is missing bold.	quotes	pending #596 Messages
-HikariSub.Fonts	Font "%1" is missing italics.	quotes	pending #596 Messages
-HikariSub.Fonts	Cannot check the characters in font "%1".	quotes	pending #596 Messages
-HikariSub.Fonts	Font "%1" does not contain characters: "%2".	quotes	pending #596 Messages
-HikariSub.Fonts	Characters "%1" were drawn by the fallback font "%2".	quotes	pending #596 Messages
-HikariSub.Fonts	Cannot get the contents of font "%1".	quotes	pending #596 Messages
-HikariSub.Fonts	Cannot open file "%1".	quotes	pending #596 Messages
-HikariSub.Fonts	Cannot find "%1" font in Fonts folder.	quotes	pending #596 Messages
-HikariSub.Fonts	Cannot copy font "%1".	quotes	pending #596 Messages
-HikariSub.Fonts	Cannot zip font "%1".	quotes	pending #596 Messages
-HikariSub.Fonts	Found font "%1"\n	quotes	pending #596 Messages
-HikariSub.Fonts	Found font "%1"\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Found font "%1".	quotes	pending #596 Messages
-HikariSub.Fonts	Font not found "	quotes	pending #596 Messages
-HikariSub.Fonts	In styles:\n	colon	pending #596 Messages
-HikariSub.Fonts	In styles:\n	whitespace	pending #596 Messages
-HikariSub.Fonts	 tabs: 	colon	pending #596 Messages
-HikariSub.Fonts	 tabs: 	whitespace	pending #596 Messages
-HikariSub.Fonts	In lines: 	colon	pending #596 Messages
-HikariSub.Fonts	In lines: 	whitespace	pending #596 Messages
-HikariSub.Fonts	Checked by the subtitle renderer (%1).\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Tab %1: the renderer could not read this document; it was not checked.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Families the renderer did not find: %1.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Families answered by a font of another name: %1.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Characters no font has: %1.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Characters drawn by a fallback font of this computer: %1.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Tab %1: with the collected fonts alone, %2 of %3 frames differ.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Different fonts with the same file name: %1. Only one of them is kept in a folder.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	The video shows the subtitles through %1, whose output this check does not verify.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	The collected fonts alone reproduce every frame.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Finished, %1 %2.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Not found %1.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Cannot copy %1.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Some fonts do not contain all glyphs used in the text.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	The output does not hold every collected font under its own name: the collection is incomplete.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Writing was cancelled.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	The output is labelled incomplete ("%1").\n	quotes	pending #596 Messages
-HikariSub.Fonts	The output is labelled incomplete ("%1").\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Completed Successfully, %1 %2.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Completed Successfully, %1 %2.\n	title-case	pending #596 Messages
-HikariSub.Fonts	Cancelled; nothing was written.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	The subtitle renderer is not available; the fonts cannot be checked.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n	spelling	pending #596 Messages
-HikariSub.Fonts	Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Retrieved sizes and names of %1 fonts, elapsed time %2ms.\n\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Ready to add %1 to the archive "%2".\n	quotes	pending #596 Messages
-HikariSub.Fonts	Ready to add %1 to the archive "%2".\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Ready to copy %1 to "%2".\n	quotes	pending #596 Messages
-HikariSub.Fonts	Ready to copy %1 to "%2".\n	whitespace	pending #596 Messages
-HikariSub.Fonts	This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Video: %1\n\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Font named "%1".\n	quotes	pending #596 Messages
-HikariSub.Fonts	Font named "%1".\n	whitespace	pending #596 Messages
-HikariSub.Fonts	Saved a font named "	quotes	pending #596 Messages
-HikariSub.Fonts	Cannot save font named "	quotes	pending #596 Messages
 HikariSub.Fonts	fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.	spelling	the folder on disk is named catalogs
 HikariSub.GettingStarted	The system’s	leading-the	pending #596 Settings
 HikariSub.GettingStarted	Later: Settings › General › Saving and Settings › Spelling & grammar	whitespace	pending #596 Settings
@@ -143,36 +46,17 @@ HikariSub.Grid	Copy these columns of the selected line:	colon	pending #596 Grid 
 HikariSub.Grid	Copy these columns of the %1 selected lines:	colon	pending #596 Grid and Line editor
 HikariSub.Hotkeys	Keys for "%1"	quotes	pending #596 Settings
 HikariSub.Hotkeys	Shortcut can be set using Shift + Click	title-case	pending #596 Menus
-HikariSub.Hotkeys	This hotkey already exists for "%1".\nWhat to do?	quotes	pending #596 Messages
-HikariSub.Hotkeys	This shortcut already exists in other windows as a shortcut for "%1".\nWhat would you like to do?	quotes	pending #596 Messages
-HikariSub.Hotkeys	This shortcut already exists in another window as a shortcut for "%1".\nWhat would you like to do?	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "View all" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "View audio and subtitles" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "View video and subtitles" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "View only video" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "View only subtitles" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "Enable / Disable editor" was removed: the editor is always shown; hide panels or choose a layout instead.	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "Open shortcut mapping window" was removed: the window is gone and each macro's shortcut is set in the Automation panel.	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "Open blank 2h30m audio" was removed: the command is retired and a dummy video brings its own silent audio.	quotes	pending #596 Messages
-HikariSub.Hotkeys	The shortcut %1 of "Open video with FFMS2" was removed: the command is retired and videos are always indexed.	quotes	pending #596 Messages
-HikariSub.Hotkeys	Shortcut "%1" is invalid	quotes	pending #596 Messages
 HikariSub.Hotkeys	Border color	spelling	pending #596 Menus
 HikariSub.Hotkeys	Primary color	spelling	pending #596 Menus
 HikariSub.Hotkeys	Secondary color for karaoke	spelling	pending #596 Menus
 HikariSub.Hotkeys	Shadow color	spelling	pending #596 Menus
-HikariSub.Karaoke	No karaoke tag's duration starts with a digit, as in \\k50, so the audio editor splits the line anew	quotes	pending #596 Messages
-HikariSub.Karaoke	The audio editor splits at every \\k tag and reads its number its own way, so a tag such as \\keep, \\kfo50 or \\k(50) gives it syllables unlike playback's	quotes	pending #596 Messages
-HikariSub.Karaoke	Syllables don't match the line	quotes	pending #596 Messages
 HikariSub.MainWindow	The starting time	leading-the	pending #596 Panels
 HikariSub.MainWindow	Shows or hides the Fix minor errors panel	title-case	pending #596 Menus
 HikariSub.MainWindow	Import legacy settings...	ellipsis	pending #596 Menus
 HikariSub.MainWindow	Shift &times...	ellipsis	pending #596 Menus
 HikariSub.MainWindow	What's &new	quotes	pending #596 Menus
-HikariSub.MainWindow	This portable copy keeps its settings in %1. An earlier version's settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.	quotes	pending #596 Messages
-HikariSub.MisspellReplacer	Cannot replace "%1" with "%2" using rule "%3" in line %4.	quotes	pending #596 Messages
 HikariSub.MisspellReplacer	Line %1: 	colon	pending #596 Panels
 HikariSub.MisspellReplacer	Line %1: 	whitespace	pending #596 Panels
-HikariSub.MisspellReplacer	Rule "%1" is invalid.	quotes	pending #596 Messages
 HikariSub.Options	Light or Dark as the system's colour scheme sets it; high contrast stays as chosen	quotes	pending #596 Settings
 HikariSub.Options	Accent color	spelling	pending #596 Settings
 HikariSub.Options	UI colors	spelling	pending #596 Settings
@@ -182,11 +66,9 @@ HikariSub.Options	Screen size draws subtitles at the size the picture takes on s
 HikariSub.Options	Don't warn about a resolution mismatch	quotes	pending #596 Settings
 HikariSub.Options	Don't play after changing the line	quotes	pending #596 Settings
 HikariSub.Options	Merge every "n" with the previous syllable	quotes	pending #596 Settings
-HikariSub.Options	Catalog	spelling	pending #596 Settings
 HikariSub.Options	Filtering mode:	colon	pending #596 Settings
 HikariSub.Options	Choose a legacy Hotkeys.txt	title-case	pending #596 Settings
 HikariSub.Options	Put files .dic and .aff to "Dictionary" folder	quotes	pending #596 Settings
-HikariSub.Options	catalog for style	spelling	pending #596 Settings
 HikariSub.Options	Border color	spelling	pending #596 Menus
 HikariSub.Reports	Nothing is sent until you press Send report	title-case	names the Send report button
 HikariSub.Reports	The crash report could not be sent	leading-the	pending #596 Menus
@@ -199,57 +81,22 @@ HikariSub.Search	Windows search filters separated by semicolons, e.g. "*.ass; *.
 HikariSub.Search	Catalog:	spelling	pending #596 Panels
 HikariSub.Search	Catalog:	colon	pending #596 Panels
 HikariSub.Search	Subtitle search folder:	colon	pending #596 Panels
-HikariSub.Search	Invalid regular expression '%1': %2	quotes	pending #596 Messages
 HikariSub.Search	Line %1: 	colon	pending #596 Panels
 HikariSub.Search	Line %1: 	whitespace	pending #596 Panels
 HikariSub.SelectLines	Search text:	colon	pending #596 Panels
-HikariSub.SelectLines	Invalid regular expression '%1': %2	quotes	pending #596 Messages
-HikariSub.Session	"tabs" is not a list.	quotes	pending #596 Messages
-HikariSub.Session	"closed" is not true or false.	quotes	pending #596 Messages
-HikariSub.Session	Tab %1: "%2" has the wrong type.	quotes	pending #596 Messages
 HikariSub.SettingsImport	%1 holds no legacy settings (Config, Dictionary).	title-case	pending #596 Settings
 HikariSub.Spelling	Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling & grammar.	whitespace	pending #596 Panels
 HikariSub.Spelling	Ignore All	title-case	pending #596 Panels
-HikariSub.Spelling	No dictionary files were found in the "%1" folder.\nSpell checking will be disabled	quotes	pending #596 Messages
-HikariSub.Spelling	Failed to initialize spell checker.	spelling	pending #596 Messages
-HikariSub.Spelling	Names of places, organizations and products keep their standard capitalization.	spelling	pending #596 Messages
-HikariSub.Spelling	Capitalization and case	spelling	pending #596 Messages
-HikariSub.Spelling	The grammar checker (harper-ls) stopped: %1	leading-the	pending #596 Messages
 HikariSub.Spelling	Error. Word "%1" was not added.	quotes	pending #596 Menus
-HikariSub.StatusBar	 (%1 hidden)	whitespace	pending #596 Messages
 HikariSub.Styles	Create it from Default and edit it?	title-case	Default is the style’s name
-HikariSub.Styles	the catalogue	leading-the	pending #596 Messages: a piece joined into a sentence
-HikariSub.Styles	Catalog	spelling	pending #596 Settings
 HikariSub.Styles	238 - Central European (Polish)	title-case	the ASS encoding’s name
-HikariSub.Styles	Copy of 	whitespace	pending #596 Messages
-HikariSub.Styles	The catalog “%1” no longer exists.	spelling	pending #596 Messages
-HikariSub.Styles	Style named "%1" already exists.	quotes	pending #596 Messages
-HikariSub.Styles	Styles used:\n%1\nStyles deleted:\n%2	title-case	pending #596 Messages
 HikariSub.Styles	the current line's style	quotes	pending #596 Panels
 HikariSub.Styles	the current line's style	leading-the	pending #596 Panels
 HikariSub.Styles	The current line's style	quotes	pending #596 Panels
 HikariSub.Styles	The current line's style	leading-the	pending #596 Panels
-HikariSub.Styles	Copy to the catalog…	spelling	pending #596 Panels
-HikariSub.TagList	Transparency of primary color	spelling	pending #596 Messages
-HikariSub.TagList	Transparency of secondary color	spelling	pending #596 Messages
-HikariSub.TagList	Transparency of border color	spelling	pending #596 Messages
-HikariSub.TagList	Transparency of shadow color	spelling	pending #596 Messages
 HikariSub.TagList	Primary color	spelling	pending #596 Menus
-HikariSub.TagList	Secondary color	spelling	pending #596 Messages
 HikariSub.TagList	Border color	spelling	pending #596 Menus
 HikariSub.TagList	Shadow color	spelling	pending #596 Menus
-HikariSub.TagList	PNG mask of primary color	spelling	pending #596 Messages
-HikariSub.TagList	PNG mask of secondary color	spelling	pending #596 Messages
-HikariSub.TagList	PNG mask of border color	spelling	pending #596 Messages
-HikariSub.TagList	PNG mask of shadow color	spelling	pending #596 Messages
-HikariSub.TagList	Transparency gradient of primary color	spelling	pending #596 Messages
-HikariSub.TagList	Transparency gradient of secondary color	spelling	pending #596 Messages
-HikariSub.TagList	Transparency gradient of border color	spelling	pending #596 Messages
-HikariSub.TagList	Transparency gradient of shadow color	spelling	pending #596 Messages
-HikariSub.TagList	Gradient of primary color	spelling	pending #596 Messages
-HikariSub.TagList	Gradient of secondary color	spelling	pending #596 Messages
-HikariSub.TagList	Gradient of border color	spelling	pending #596 Messages
-HikariSub.TagList	Gradient of shadow color	spelling	pending #596 Messages
 HikariSub.TemplateEditor	This file's templates run Lua code with your rights. Preview them if you trust the file.	quotes	pending #596 Panels
 HikariSub.TemplateEditor	Changed since Apply	title-case	pending #596 Panels
 HikariSub.TemplateEditor	Only the selected lines are regenerated; the other lines' output stays as it is.	quotes	pending #596 Panels
@@ -303,20 +150,8 @@ HikariSub.TimeShift	The starting time	leading-the	pending #596 Panels
 HikariSub.TimeShift	The choice of lines to move	leading-the	pending #596 Panels
 HikariSub.TimeShift	The choice of times to move	leading-the	pending #596 Panels
 HikariSub.Translation	Tags from original: the translation gets the Original text's tags	quotes	pending #596 Grid and Line editor
-HikariSub.Video	Failed to initialize DirectShow	spelling	pending #596 Messages
-HikariSub.Video	Cannot add Direct Sound renderer	title-case	pending #596 Messages
-HikariSub.Video	Cannot enumerate Direct Sound pins	title-case	pending #596 Messages
-HikariSub.Video	No IMediaTypes	title-case	pending #596 Messages
-HikariSub.Video	Frame time; frame number; frames from the line's start frame; milliseconds from the line's start and end	quotes	pending #596 Messages
-HikariSub.Video	the file could not be read	leading-the	pending #596 Messages
-HikariSub.Video	the file has no usable video track	leading-the	pending #596 Messages
-HikariSub.Video	the media helper ended	leading-the	pending #596 Messages
-HikariSub.Video	the video could not be opened	leading-the	pending #596 Messages
 HikariSub.Video	Move video to selected line on:	colon	pending #596 Panels
 HikariSub.Video	On moving to another line play:	colon	pending #596 Panels
-HikariSub.Video	Cannot change YCbCr matrix	title-case	pending #596 Messages
-HikariSub.Video	Cannot create VideoSource.	title-case	pending #596 Messages
-HikariSub.Video	Frame %1 of %2  %3	whitespace	pending #596 Messages
 HikariSub.Video	%1 event(s), %2 bitmap(s), %3 Mpx	title-case	pending #596 Panels
 HikariSub.VisualTools	How each line's number changes the value	quotes	pending #596 Menus
 HikariSub.VisualTools	Add B-spline	title-case	pending #596 Menus
@@ -331,6 +166,21 @@ HikariSub.VisualTools	A double "m" was blocked because of a VSFilter bug	quotes	
 HikariSub.VisualTools	Show surrounding plane\nA rectangle of the text's plane: match it to one in the shot, then place the text inside it	quotes	pending #596 Menus
 HikariSub.VisualTools	Top-center	spelling	pending #596 Menus
 HikariSub.VisualTools	Video must be set at least one frame after the line's start time	quotes	pending #596 Menus
-HikariSub.Workspace	the file is larger than %1 bytes	leading-the	pending #596 Messages
-HikariSub.Workspace	it holds no Classic arrangement	title-case	pending #596 Messages
-HikariSub.Workspace	the docking engine could not restore it	leading-the	pending #596 Messages
+HikariSub.Automation	The script has no such macro	leading-the	status line under a macro name; its siblings are sentences without a full stop
+HikariSub.Automation	The script or its macro changed	leading-the	status line under a macro name; its siblings are sentences without a full stop
+HikariSub.Documents	Associated files:	colon	heading line of the association offer; the files are listed under it
+HikariSub.Fonts	In styles:\n	colon	font collector log layout; clicking a number goes to its style or line
+HikariSub.Fonts	In styles:\n	whitespace	font collector log layout; clicking a number goes to its style or line
+HikariSub.Fonts	 tabs: 	colon	font collector log layout; clicking a number goes to its style or line
+HikariSub.Fonts	 tabs: 	whitespace	font collector log layout; clicking a number goes to its style or line
+HikariSub.Fonts	In lines: 	colon	font collector log layout; clicking a number goes to its style or line
+HikariSub.Fonts	In lines: 	whitespace	font collector log layout; clicking a number goes to its style or line
+HikariSub.Hotkeys	The shortcut %1 of "Open shortcut mapping window" was removed: the window is gone and each macro's shortcut is set in the Automation panel.	quotes	pending #596 Messages, after #634 rewrites or moves it
+HikariSub.Hotkeys	Shortcut "%1" is invalid	quotes	pending #596 Messages, after #634 rewrites or moves it
+HikariSub.MisspellReplacer	Rule "%1" is invalid.	quotes	pending #596 Messages, after #634 rewrites or moves it
+HikariSub.Search	Invalid regular expression '%1': %2	quotes	pending #596 Messages, after #634 rewrites or moves it
+HikariSub.SelectLines	Invalid regular expression '%1': %2	quotes	pending #596 Messages, after #634 rewrites or moves it
+HikariSub.Spelling	The grammar checker (harper-ls) stopped: %1	leading-the	a message, not a label; the helper’s error follows the colon
+HikariSub.Video	Frame time; frame number; frames from the line's start frame; milliseconds from the line's start and end	quotes	pending #596 Menus (Main.qml)
+HikariSub.MisspellReplacer	Cannot replace "%1" with "%2" using rule "%3" in line %4.	quotes	pending #596 Messages, after #634 rewrites or moves it
+HikariSub.Hotkeys	The shortcut %1 of "Open blank 2h30m audio" was removed: the command is retired and a dummy video brings its own silent audio.	quotes	pending #596 Messages, after #634 rewrites or moves it

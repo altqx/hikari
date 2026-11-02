@@ -63,7 +63,7 @@ SetCompressorDictSize 64
 !define HS_SETUP_MUTEX   "Global\io.github.altqx.HikariSub.Installing"
 !define HS_START_EVENT   "Global\io.github.altqx.HikariSub.StartAfterUpdate"
 !define HS_URL           "https://github.com/altqx/hikari"
-!define HS_HOMEPAGE      "https://hikarisub.altqx.com"
+!define HS_HOMEPAGE      "https://hikarisub.org"
 
 Name "${HS_NAME}"
 Caption "${HS_NAME} ${HS_VERSION} Setup"
