@@ -1,4 +1,5 @@
 #include "docking.h"
+#include "menu_key.h"
 #include "window_decorations.h"
 
 #include <kddockwidgets/Config.h>
@@ -23,7 +24,6 @@
 #include <kddockwidgets/qtquick/views/Group.h>
 #include <kddockwidgets/qtquick/views/TabBar.h>
 
-#include <QContextMenuEvent>
 #include <QDeadlineTimer>
 #include <QGuiApplication>
 #include <QLoggingCategory>
@@ -597,12 +597,7 @@ bool Docking::startSystemMove(QQuickItem *from)
 
 void Docking::requestKeyboardContextMenu()
 {
-    QWindow *window = QGuiApplication::focusWindow();
-    if (!window)
-        return;
-    // No position: Qt Quick asks the items at the focused item.
-    QContextMenuEvent request(QContextMenuEvent::Keyboard, QPoint(), QPoint());
-    QGuiApplication::sendEvent(window, &request);
+    MenuKey::request(qobject_cast<QQuickWindow *>(QGuiApplication::focusWindow()));
 }
 
 QString Docking::dockNameAt(QObject *tabBar, int index) const
@@ -868,6 +863,30 @@ KDDockWidgets::Core::Group *groupOf(KDDockWidgets::Core::DockWidget *dock)
             return group;
     return nullptr;
 }
+}
+
+QRect Docking::placeInLayout(const QString &uniqueName) const
+{
+    KDDockWidgets::Core::Group *group = groupOf(dockByName(uniqueName));
+    return group && group->isInMainWindow() ? group->view()->geometry() : QRect();
+}
+
+QString Docking::dockRightOf(const QString &uniqueName) const
+{
+    KDDockWidgets::Core::Group *of = groupOf(dockByName(uniqueName));
+    if (!of || !of->isInMainWindow() || !of->isVisible())
+        return {};
+    const QRect left = of->view()->geometry();
+    for (KDDockWidgets::Core::Group *group : KDDockWidgets::DockRegistry::self()->groups()) {
+        if (group == of || !group->isInMainWindow() || group->mainWindow() != of->mainWindow() || !group->isVisible())
+            continue;
+        const QRect g = group->view()->geometry();
+        const int gap = g.left() - left.right() - 1;
+        if (gap >= 0 && gap <= 2 && g.top() >= left.top() - 1 && g.bottom() <= left.bottom() + 1)
+            if (KDDockWidgets::Core::DockWidget *current = group->currentDockWidget())
+                return current->uniqueName();
+    }
+    return {};
 }
 
 int Docking::tabIndex(const QString &uniqueName) const

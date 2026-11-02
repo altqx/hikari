@@ -138,6 +138,11 @@ Item {
                     panel.chosen = panel.shownRows[currentIndex].name
                 }
             }
+            MenuKey.onRequested: {
+                const row = panel.shownRows[currentIndex]
+                if (row && currentItem)
+                    rowMenu.show(row, currentItem, 12, currentItem.height)
+            }
             Keys.onPressed: event => {
                 const row = panel.shownRows[currentIndex]
                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -148,10 +153,6 @@ Item {
                     if (row)
                         if (panel.canChange)
                             panel.remove(row.row)
-                    event.accepted = true
-                } else if (event.key === Qt.Key_Menu || (event.key === Qt.Key_F10 && event.modifiers & Qt.ShiftModifier)) {
-                    if (row && currentItem)
-                        rowMenu.show(row, currentItem, 12, currentItem.height)
                     event.accepted = true
                 } else if (event.key === Qt.Key_Home) {
                     currentIndex = 0
@@ -448,7 +449,8 @@ Item {
         ShellMenuItem {
             objectName: "stylesMenuApply"
             iconRole: "style-apply"
-            text: qsTr("Apply to the selected lines") + "\tEnter"
+            text: qsTr("Apply to the selected lines")
+            shortcutText: ShellMenus.keyText("Enter")
             enabled: rowMenu.name.length > 0 && panel.editor.editable && panel.editor.assFields
             onTriggered: panel.apply(rowMenu.name)
         }
@@ -471,7 +473,8 @@ Item {
             objectName: "stylesMenuDelete"
             enabled: panel.canChange
             iconRole: "delete"
-            text: qsTr("Delete") + "\tDel"
+            text: qsTr("Delete")
+            shortcutText: ShellMenus.keyText("Del")
             onTriggered: panel.remove(rowMenu.row)
         }
         MenuSeparator {}

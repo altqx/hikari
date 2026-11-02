@@ -20,6 +20,7 @@ extern "C" {
 #include <new>
 #include <filesystem>
 #include <limits>
+#include <map>
 #include <regex>
 #include <system_error>
 #include <type_traits>
@@ -1026,6 +1027,11 @@ bool lineToLua(lua_State *L, int i)
         if (!d.translation.empty())
             setString(L, "text_translation", d.translation);
         lua_newtable(L);
+        for (const auto &[key, value] : d.extra) {
+            lua_pushlstring(L, key.data(), key.size());
+            lua_pushlstring(L, value.data(), value.size());
+            lua_settable(L, -3);
+        }
         lua_setfield(L, -2, "extra");
         lua_pushstring(L, "dialogue");
     }
@@ -1070,6 +1076,29 @@ std::string numberText(double v)
     return text;
 }
 
+// As Aegisub: string keys only, a value that is no string or number becomes "<not a string>".
+std::vector<std::pair<std::string, std::string>> extraOf(lua_State *L)
+{
+    std::map<std::string, std::string> byKey;
+    lua_getfield(L, -1, "extra");
+    if (lua_istable(L, -1)) {
+        lua_pushnil(L);
+        while (lua_next(L, -2)) {
+            if (lua_type(L, -2) == LUA_TSTRING) {
+                std::size_t keySize = 0, valueSize = 0;
+                const char *key = lua_tolstring(L, -2, &keySize);
+                const char *value = lua_tolstring(L, -1, &valueSize);
+                byKey[std::string(key, keySize)] = value ? std::string(value, valueSize) : "<not a string>";
+            }
+            lua_pop(L, 1);
+        }
+    } else if (!lua_isnil(L, -1)) {
+        luaL_error(L, "dialogue extradata must be a table");
+    }
+    lua_pop(L, 1);
+    return {byKey.begin(), byKey.end()};
+}
+
 // The table on the stack top; std::nullopt for an unknown class.
 std::optional<Entry> luaToLine(lua_State *L)
 {
@@ -1098,6 +1127,7 @@ std::optional<Entry> luaToLine(lua_State *L)
         if (lua_isstring(L, -1))
             d.translation = lua_tostring(L, -1);
         lua_pop(L, 1);
+        d.extra = extraOf(L);
         return d;
     }
     if (cls == "style") {

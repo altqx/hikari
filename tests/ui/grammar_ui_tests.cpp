@@ -269,8 +269,8 @@ private slots:
         QVERIFY(entries[1]->property("font").value<QFont>().bold());
         auto *ignore = field->findChild<QQuickItem *>(QStringLiteral("lineTextIgnoreRule"));
         QVERIFY(ignore && ignore->isVisible());
-        QCOMPARE(ignore->property("shortcutText").toString(), QStringLiteral("Turns off Miscellaneous"));
-        QVERIFY(!field->findChild<QQuickItem *>(QStringLiteral("lineTextGrammarAddWord"))->isVisible());
+        QCOMPARE(ignore->property("detailText").toString(), QStringLiteral("Turns off Miscellaneous"));
+        QVERIFY(!field->findChild<QQuickItem *>(QStringLiteral("lineTextAddWord"))->isVisible());
         QSignalSpy tabs(application.get(), &app::Application::tabsChanged);
         QVERIFY(QMetaObject::invokeMethod(entries[1], "triggered"));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
@@ -341,7 +341,7 @@ private slots:
         auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
         rightClick(fieldPoint(field, word));
         QTRY_VERIFY(menu->property("visible").toBool());
-        auto *add = field->findChild<QQuickItem *>(QStringLiteral("lineTextGrammarAddWord"));
+        auto *add = field->findChild<QQuickItem *>(QStringLiteral("lineTextAddWord"));
         QVERIFY(add && add->isVisible());
         QCOMPARE(add->property("text").toString(), QStringLiteral("Add “tomorow” to dictionary"));
         QVERIFY(QMetaObject::invokeMethod(add, "triggered"));

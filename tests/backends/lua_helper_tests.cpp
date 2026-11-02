@@ -3,6 +3,7 @@
 #include "hikari/application/automation_services.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/core/ass_load.h"
+#include "hikari/core/ass_save.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -530,6 +531,48 @@ TEST_F(LuaHelper, StagedSubtitlesFollowTheLegacyObject)
     ASSERT_TRUE(applyMacroResult(session, *snapshot, result, "Edit"));
     EXPECT_EQ(texts(session), (std::vector<std::string>{"negative", "one!", "three", "appended"}));
     EXPECT_EQ(session.selection().active, session.document().lines()[0]->id);
+}
+
+TEST_F(LuaHelper, LineExtraIsReadWrittenAndSaved)
+{
+    using namespace hikari::application;
+    const std::string_view script = "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{=0=1}one\n"
+                                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{=1}two\n"
+                                    "\n[Aegisub Extradata]\nData: 0,k,efirst\nData: 1,k,esecond\n";
+    const auto open = [](std::string_view text) {
+        std::vector<std::byte> bytes(text.size());
+        std::memcpy(bytes.data(), text.data(), bytes.size());
+        return EditSession(hikari::core::loadAss(bytes).document);
+    };
+    auto session = open(script);
+    auto host = load(fixture("extra.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    const auto runMacro = [&](const char *name, const MacroSnapshot &snapshot) {
+        run = {};
+        return host->run(macro(*host, name), snapshot) && waitFor([&] { return run.outcome.has_value(); });
+    };
+    auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    ASSERT_TRUE(runMacro("Set", *snapshot));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Set"));
+    const auto bytes = hikari::core::encodeAss(session.document());
+    const std::string saved(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+    EXPECT_NE(saved.find(",,{=1=2=3}one\n"), std::string::npos) << saved;
+    EXPECT_NE(saved.find(",,two\n"), std::string::npos) << saved;
+    EXPECT_NE(saved.find("Data: 1,k,esecond\nData: 2,hikari.set,u93RC/G.]:#-\nData: 3,number,e5\n"),
+              std::string::npos) << saved;
+
+    session = open(saved);
+    snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    ASSERT_TRUE(runMacro("Check", *snapshot));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(runMacro("Not a table", *snapshot));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(QStringLiteral("dialogue extradata must be a table"))) << run.message.toStdString();
 }
 
 TEST_F(LuaHelper, GeneratedLineMarksAndTheReportRoundTrip)

@@ -346,6 +346,10 @@ FocusScope {
                                 else if (currentIndex < 0 && count > 0)
                                     currentIndex = 0
                             }
+                            MenuKey.onRequested: {
+                                if (currentItem)
+                                    rowMenu.show(home.shownRows[currentIndex], currentItem, 12, currentItem.height)
+                            }
                             Keys.onPressed: event => {
                                 const row = home.shownRows[currentIndex]
                                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -353,11 +357,6 @@ FocusScope {
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_Delete) {
                                     home.remove(row)
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Menu || (event.key === Qt.Key_F10 && event.modifiers & Qt.ShiftModifier)) {
-                                    const item = currentItem
-                                    if (item)
-                                        rowMenu.show(row, item, 12, item.height)
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_Home) {
                                     currentIndex = 0
@@ -542,7 +541,8 @@ FocusScope {
         ShellMenuItem {
             objectName: "homeMenuOpen"
             iconRole: "open-subtitles"
-            text: qsTr("Open") + "\tEnter"
+            text: qsTr("Open")
+            shortcutText: ShellMenus.keyText("Enter")
             enabled: rowMenu.row !== null && !rowMenu.row.missing
             onTriggered: home.open(rowMenu.row)
         }
@@ -562,7 +562,8 @@ FocusScope {
         ShellMenuItem {
             objectName: "homeMenuRemove"
             iconRole: "remove"
-            text: qsTr("Remove from list") + "\tDel"
+            text: qsTr("Remove from list")
+            shortcutText: ShellMenus.keyText("Del")
             onTriggered: home.remove(rowMenu.row)
         }
         ShellMenuItem {

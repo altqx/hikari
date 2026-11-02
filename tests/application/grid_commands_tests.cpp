@@ -391,3 +391,23 @@ TEST(NewFps, MicroDvdFramesFollowTheDocumentsOwnRate)
     EXPECT_EQ(l.startFrame, 12);
     EXPECT_EQ(l.endFrame, 24);
 }
+
+TEST(GridCommandsExtradata, DuplicatesKeepItAndInsertedLinesStartWithout)
+{
+    EditSession session{load("[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{=0}a\n"
+                             "\n[Aegisub Extradata]\nData: 0,k,ev\n")};
+    const auto a = session.document().lines()[0]->id;
+    const std::vector<core::Extradata> extra{{u8"k", u8"v"}};
+    session.setSelection(Selection{a, {a}, a, {}});
+    ASSERT_TRUE(duplicateLines(session));
+    ASSERT_EQ(session.document().lines().size(), 2u);
+    EXPECT_EQ(session.document().lines()[1]->extra, extra);
+    session.setSelection(Selection{a, {a}, a, {}});
+    ASSERT_TRUE(insertLine(session, InsertWhere::After));
+    const auto lines = session.document().lines();
+    ASSERT_EQ(lines.size(), 3u);
+    EXPECT_EQ(lines[0]->extra, extra);
+    EXPECT_TRUE(lines[1]->extra.empty());
+    EXPECT_TRUE(lines[1]->extradataIds.empty());
+}
