@@ -892,7 +892,8 @@ Pane {
                 required property int index
                 objectName: "templateNew_" + index
                 iconRole: modelData.code ? "run-script" : "template-editor"
-                text: modelData.text + "\t" + modelData.effect
+                text: modelData.text
+                detailText: modelData.effect
                 onTriggered: root.controller.insertTemplate(modelData.effect)
             }
             onObjectAdded: (index, object) => newMenu.insertItem(index, object)

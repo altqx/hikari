@@ -611,6 +611,7 @@ private slots:
         QCOMPARE(asked.at(4).at(0).toString(), QStringLiteral("Editor"));
         QTest::keyClick(window, Qt::Key_Menu);
         QTRY_COMPARE(asked.size(), 6);
+        QTest::qWait(600);
         // Windows delivers Shift+F10 as a keyboard context menu request (WM_CONTEXTMENU), not a key press.
         QContextMenuEvent request(QContextMenuEvent::Keyboard, QPoint(), QPoint());
         QGuiApplication::sendEvent(window, &request);

@@ -38,6 +38,8 @@ IC1 ([#226](https://github.com/altqx/hikari/issues/226)) gave every main-menu an
 
 IC2 ([#550](https://github.com/altqx/hikari/issues/550)) went past menus: [icon-gaps-2.md](icon-gaps-2.md) lists the notice bars, Home page, dialog actions and Settings rows it gave icons, the roles that had two meanings and the 34 roles it drew, nine of them `pending` for wave-8 cards. Each Settings page gives every option row an icon. The info severity of notice bars, toasts, messages and the Log is notice-info, so about is only the About command; a link that opens the browser is open-link, so link is only the chain.
 
+CX3 ([#579](https://github.com/altqx/hikari/issues/579)) drew the four roles the approved context-menu design ([#578](https://github.com/altqx/hikari/issues/578)) asked for: paste-special (the clipboard with an accent asterisk, for the Grid's Paste special ▸), and tab-switch, tab-close-others and tab-close-right for the document tab menu. They are `pending` for CX4 ([#580](https://github.com/altqx/hikari/issues/580)) and CX6 ([#582](https://github.com/altqx/hikari/issues/582)), which build those menus.
+
 KE1 ([#283](https://github.com/altqx/hikari/issues/283)) drew render-cost for "Show / hide render cost" in the Video menu and the video's context menu: a stopwatch whose accent hand marks the time the frame's subtitles took to draw.
 
 ## Geometry

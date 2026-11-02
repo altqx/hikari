@@ -96,6 +96,7 @@ FocusScope {
                 occurrences.model = tray.app.referenceOccurrences()
                 occurrenceMenu.popup(referenceGrid, x, y)
             }
+            MenuKey.onRequested: referenceGrid.requestMenu()
             Keys.onShortcutOverride: event => {
                 event.accepted = tray.clipboardKey(event) || tray.hotkeys.actionFor(1, event.key, event.modifiers) !== ""
             }

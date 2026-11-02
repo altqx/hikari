@@ -20,13 +20,19 @@ MenuItem {
     onPressed: holdMenu()
     property string iconRole
     property string command
+    property int commandWindow: MenuKeys.windowOf(command)
+    property int standardKey: StandardKey.UnknownKey
     property string shortcutText
-    readonly property int tabAt: text.indexOf("\t")
-    readonly property string labelText: tabAt >= 0 ? text.slice(0, tabAt) : text
+    property string detailText
     // Qt reads "<" or "&lt;" as rich text; an <img> would be fetched and crashes IconLabel.
-    readonly property bool plainLabel: labelText.indexOf("<") >= 0 || labelText.indexOf("&lt;") >= 0
-    readonly property string keysText: (tabAt >= 0 ? text.slice(tabAt + 1) : shortcutText)
+    readonly property bool plainLabel: text.indexOf("<") >= 0 || text.indexOf("&lt;") >= 0
+    readonly property string keysText: (shortcutText
+        || (subMenu && typeof subMenu.shortcutText === "string" ? subMenu.shortcutText : "")
+        || MenuKeys.text(command, commandWindow)
+        || (standardKey !== StandardKey.UnknownKey ? ShellMenus.standardKeyText(standardKey) : ""))
         .replace(/(Ctrl|Shift|Alt|Meta|Win|Cmd)-/g, "$1+")
+    readonly property string columnText: keysText || detailText
+        || (subMenu && typeof subMenu.detailText === "string" ? subMenu.detailText : "")
     property string help
     readonly property string shownHelp: help.length > 0 ? help
         : subMenu && typeof subMenu.help === "string" ? subMenu.help
@@ -80,7 +86,7 @@ MenuItem {
             display: control.display
             alignment: Qt.AlignLeft
             icon: control.icon
-            text: control.plainLabel ? "" : control.labelText
+            text: control.plainLabel ? "" : control.text
             font: control.font
             color: parent.textColour
         }
@@ -88,7 +94,7 @@ MenuItem {
             id: plainText
             objectName: "menuItemPlainText"
             visible: control.plainLabel
-            text: control.plainLabel ? control.labelText : ""
+            text: control.plainLabel ? control.text : ""
             textFormat: Text.PlainText
             x: label.x + parent.textStart
             width: Math.max(0, label.width - parent.textStart - parent.textEnd)
@@ -100,12 +106,16 @@ MenuItem {
         }
         Text {
             id: keys
-            objectName: "menuItemKeys"
-            text: control.keysText
+            readonly property bool detail: control.keysText.length === 0
+            objectName: detail ? "menuItemDetail" : "menuItemKeys"
+            text: control.columnText
             visible: text.length > 0
             x: control.mirrored ? parent.arrowPadding : parent.width - width - parent.arrowPadding
             anchors.verticalCenter: parent.verticalCenter
-            font: control.font
+            font.family: control.font.family
+            font.pointSize: control.font.pointSize
+            font.italic: detail
+            opacity: detail ? 0.85 : 1
             color: control.enabled && (control.down || control.highlighted) ? control.palette.highlightedText : Theme.muted
         }
     }

@@ -279,7 +279,8 @@ private slots:
         QTest::mouseClick(window, Qt::RightButton, {}, rowPoint("editingGrid", 0));
         QTRY_VERIFY(menu->property("visible").toBool());
         QVERIFY(named("showPreview")->property("enabled").toBool());
-        QCOMPARE(named("showPreview")->property("text").toString(), QStringLiteral("Show subtitles preview\tCtrl-Q"));
+        QCOMPARE(named("showPreview")->property("text").toString(), QStringLiteral("Show subtitles preview"));
+        QCOMPARE(named("showPreview")->property("keysText").toString(), QStringLiteral("Ctrl+Q"));
         QMetaObject::invokeMethod(menu, "close");
         QVERIFY(application->showPreview());
         QVERIFY(!application->canShowPreview());

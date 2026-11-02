@@ -474,7 +474,7 @@ DialogWindow {
                 required property int index
                 objectName: "fontPickerCatalogItem"
                 text: modelData
-                shortcutText: catalogMenu.counts.length > index ? String(catalogMenu.counts[index]) : ""
+                detailText: catalogMenu.counts.length > index ? String(catalogMenu.counts[index]) : ""
                 checkable: true
                 checked: picker.choice === index
                 keepsMenuOpen: false

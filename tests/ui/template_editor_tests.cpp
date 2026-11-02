@@ -3253,14 +3253,15 @@ private slots:
         QTRY_VERIFY(menu->property("opened").toBool());
         auto *first = object(QStringLiteral("templateNew_0"));
         QVERIFY(first);
-        QCOMPARE(first->property("text").toString(), QStringLiteral("Template for each syllable\ttemplate syl"));
+        QCOMPARE(first->property("text").toString(), QStringLiteral("Template for each syllable"));
+        QCOMPARE(first->property("detailText").toString(), QStringLiteral("template syl"));
         const int count = editor->templateCount();
         QVERIFY(QMetaObject::invokeMethod(first, "triggered"));
         QCOMPARE(editor->templateCount(), count + 1);
         QCOMPARE(editor->effect(), QStringLiteral("template syl"));
         QStringList effects;
         for (int i = 0; auto *o = object(QStringLiteral("templateNew_%1").arg(i)); ++i)
-            effects << o->property("text").toString().section(QLatin1Char('\t'), 1);
+            effects << o->property("detailText").toString();
         QCOMPARE(effects, (QStringList{QStringLiteral("template syl"), QStringLiteral("template line"),
                                        QStringLiteral("template pre-line"), QStringLiteral("template char"),
                                        QStringLiteral("template furi"), QStringLiteral("code once"),
