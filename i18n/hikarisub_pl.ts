@@ -3824,7 +3824,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zalecane</translation>
     </message>
     <message>
-        <source>Hotkeys, fonts, audio and video options and your dictionary words.</source>
+        <source>Shortcuts, fonts, audio and video options and your dictionary words.</source>
         <translation>Skróty klawiszowe, czcionki, opcje audio i wideo oraz słowa dodane do słownika.</translation>
     </message>
     <message>
@@ -3872,7 +3872,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>HikariSub</translation>
     </message>
     <message>
-        <source>The system’s</source>
+        <source>System</source>
         <translation>Systemowy</translation>
     </message>
     <message>
@@ -3976,7 +3976,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Edycja</translation>
     </message>
     <message>
-        <source>Later: Settings › General › Saving and Settings › Spelling &amp; grammar</source>
+        <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>Później: Ustawienia › Ogólne › Zapisywanie i Ustawienia › Pisownia i gramatyka</translation>
     </message>
     <message>
@@ -4781,27 +4781,27 @@ Nie udało się skopiować czcionek: %2.</translation>
 <context>
     <name>HikariSub.Hotkeys</name>
     <message>
-        <source>Keys for &quot;%1&quot;</source>
-        <translation>Klawisze dla &quot;%1&quot;</translation>
+        <source>Keys for “%1”</source>
+        <translation>Klawisze dla “%1”</translation>
     </message>
     <message>
-        <source>Global hotkey</source>
+        <source>Global shortcut</source>
         <translation>Skrót globalny</translation>
     </message>
     <message>
-        <source>Subtitle grid hotkey</source>
+        <source>Grid shortcut</source>
         <translation>Skrót listy napisów</translation>
     </message>
     <message>
-        <source>Edit box hotkey</source>
-        <translation>Skrót pola edycji</translation>
+        <source>Line editor shortcut</source>
+        <translation>Skrót edytora linijki</translation>
     </message>
     <message>
-        <source>Video hotkey</source>
+        <source>Video shortcut</source>
         <translation>Skrót wideo</translation>
     </message>
     <message>
-        <source>Audio hotkey</source>
+        <source>Audio shortcut</source>
         <translation>Skrót audio</translation>
     </message>
     <message>
@@ -8125,7 +8125,7 @@ ponieważ została zmieniona.</translation>
         <translation>Używaj motywu systemowego</translation>
     </message>
     <message>
-        <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
+        <source>Light or Dark as the system’s colour scheme sets it; high contrast stays as chosen</source>
         <translation>Jasny lub ciemny, zgodnie ze schematem kolorów systemu; wysoki kontrast pozostaje taki, jak wybrano</translation>
     </message>
     <message>
@@ -8133,7 +8133,7 @@ ponieważ została zmieniona.</translation>
         <translation>Wybierz…</translation>
     </message>
     <message>
-        <source>Accent color</source>
+        <source>Accent colour</source>
         <translation>Kolor akcentu</translation>
     </message>
     <message>
@@ -8169,7 +8169,7 @@ ponieważ została zmieniona.</translation>
         <translation>Domyślnie wyłączone w systemie Windows, KDE Plasma i GNOME; domyślnie włączone w kafelkowych menedżerach okien.</translation>
     </message>
     <message>
-        <source>UI colors</source>
+        <source>UI colours</source>
         <translation>Kolory interfejsu</translation>
     </message>
     <message>
@@ -8213,12 +8213,12 @@ ponieważ została zmieniona.</translation>
         <translation>Audio</translation>
     </message>
     <message>
-        <source>Hotkeys</source>
+        <source>Shortcuts</source>
         <translation>Skróty klawiszowe</translation>
     </message>
     <message>
-        <source>Subtitle properties</source>
-        <translation>Właściwości napisów</translation>
+        <source>Script properties</source>
+        <translation>Właściwości skryptu</translation>
     </message>
     <message>
         <source>Language (program restart required)</source>
@@ -8397,10 +8397,8 @@ ponieważ została zmieniona.</translation>
         <translation>Grubość linii znaczników</translation>
     </message>
     <message>
-        <source>Range from 0 to 10000, where 0 turns off
-removing audio cache files.</source>
-        <translation>Przedział od 0 do 10000, gdzie 0 wyłącza
-całkowicie usuwanie plików pamięci podręcznej audio.</translation>
+        <source>0–10000. At 0, audio cache files are never removed.</source>
+        <translation>0–10000. Przy 0 pliki pamięci podręcznej audio nigdy nie są usuwane.</translation>
     </message>
     <message>
         <source>None</source>
@@ -8431,7 +8429,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Edytor linijki</translation>
     </message>
     <message>
-        <source>Subtitle grid</source>
+        <source>Grid</source>
         <translation>Lista napisów</translation>
     </message>
     <message>
@@ -8471,7 +8469,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Przywrócić domyślne wartości wszystkich ustawień?</translation>
     </message>
     <message>
-        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
+        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
         <translation>Każda strona wróci do wartości domyślnych po naciśnięciu OK lub Zastosuj; Anuluj zachowuje ustawienia. Skróty klawiszowe i wygląd pozostają bez zmian: przywróć je na ich własnych stronach.</translation>
     </message>
     <message>
@@ -8483,7 +8481,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Przywróć stronę</translation>
     </message>
     <message>
-        <source>The settings of the page shown back to their defaults</source>
+        <source>Resets the settings on this page to their defaults</source>
         <translation>Przywraca domyślne wartości ustawień wyświetlanej strony</translation>
     </message>
     <message>
@@ -8559,7 +8557,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wyświetlanie</translation>
     </message>
     <message>
-        <source>Spelling &amp; grammar</source>
+        <source>Spelling and grammar</source>
         <translation>Pisownia i gramatyka</translation>
     </message>
     <message>
@@ -8599,7 +8597,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Pokazuj klatki wideo zamiast czasów</translation>
     </message>
     <message>
-        <source>In the line editor and the subtitle grid.</source>
+        <source>In the line editor and the grid.</source>
         <translation>W edytorze linijki i na liście napisów.</translation>
     </message>
     <message>
@@ -8743,7 +8741,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Otwieraj wideo z menu kontekstowego na pełnym ekranie</translation>
     </message>
     <message>
-        <source>Open video at the active line&apos;s time</source>
+        <source>Open video at the active line’s time</source>
         <translation>Otwieraj wideo w czasie aktywnej linijki</translation>
     </message>
     <message>
@@ -8759,7 +8757,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Rozdzielczość podglądu napisów</translation>
     </message>
     <message>
-        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script&apos;s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
+        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script’s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
         <translation>Rozmiar ekranu rysuje napisy w rozmiarze, jaki obraz zajmuje na ekranie, więc pozostają ostre na dużych ekranach i ekranach o wysokim DPI. Układ skryptu jest w obu przypadkach taki sam. Ustawienie dotyczy też podglądów w menedżerze stylów, selektorze czcionek i edytorze szablonów.</translation>
     </message>
     <message>
@@ -8823,7 +8821,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wyłącz ostrzeżenie narzędzi wizualnych</translation>
     </message>
     <message>
-        <source>Don&apos;t warn about a resolution mismatch</source>
+        <source>Don’t warn about a resolution mismatch</source>
         <translation>Nie ostrzegaj o niezgodności rozdzielczości</translation>
     </message>
     <message>
@@ -8847,7 +8845,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wstęp i zakończenie</translation>
     </message>
     <message>
-        <source>Don&apos;t play after changing the line</source>
+        <source>Don’t play after changing the line</source>
         <translation>Nie odtwarzaj po zmianie linijki</translation>
     </message>
     <message>
@@ -8879,8 +8877,8 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Karaoke</translation>
     </message>
     <message>
-        <source>Merge every &quot;n&quot; with the previous syllable</source>
-        <translation>Scalaj każde &quot;n&quot; z poprzednią sylabą</translation>
+        <source>Merge every “n” with the previous syllable</source>
+        <translation>Scalaj każde “n” z poprzednią sylabą</translation>
     </message>
     <message>
         <source>Move the syllable line after a click</source>
@@ -9019,12 +9017,12 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Skróty globalne</translation>
     </message>
     <message>
-        <source>Subtitle shortcuts</source>
-        <translation>Skróty napisów</translation>
+        <source>Grid shortcuts</source>
+        <translation>Skróty listy napisów</translation>
     </message>
     <message>
-        <source>Editor shortcuts</source>
-        <translation>Skróty edytora</translation>
+        <source>Line editor shortcuts</source>
+        <translation>Skróty edytora linijki</translation>
     </message>
     <message>
         <source>Video shortcuts</source>
@@ -9035,15 +9033,15 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Skróty automatyzacji</translation>
     </message>
     <message>
-        <source>Filtering mode:</source>
-        <translation>Rodzaj filtrowania:</translation>
+        <source>Filtering mode</source>
+        <translation>Rodzaj filtrowania</translation>
     </message>
     <message>
-        <source>Search hotkeys</source>
+        <source>Search shortcuts</source>
         <translation>Szukaj skrótów</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
+        <source>Import legacy shortcuts…</source>
         <translation>Importuj skróty ze starej wersji…</translation>
     </message>
     <message>
@@ -9063,11 +9061,11 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wycofaj ostatni import…</translation>
     </message>
     <message>
-        <source>Script hotkeys</source>
+        <source>Script shortcuts</source>
         <translation>Skróty skryptów</translation>
     </message>
     <message>
-        <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
+        <source>Adds the script shortcuts of a legacy Hotkeys.txt at once</source>
         <translation>Od razu dodaje skróty skryptów z pliku Hotkeys.txt starej wersji</translation>
     </message>
     <message>
@@ -9091,7 +9089,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Funkcja</translation>
     </message>
     <message>
-        <source>Hotkey</source>
+        <source>Shortcut</source>
         <translation>Skrót</translation>
     </message>
     <message>
@@ -9099,7 +9097,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Brakujące makro</translation>
     </message>
     <message>
-        <source>Map hotkey…</source>
+        <source>Map shortcut…</source>
         <translation>Mapuj skrót…</translation>
     </message>
     <message>
@@ -9183,11 +9181,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
     </message>
     <message>
-        <source>Choose a legacy Hotkeys.txt</source>
-        <translation>Wybierz plik Hotkeys.txt starej wersji</translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
+        <source>Shortcuts (Hotkeys.txt)</source>
         <translation>Skróty klawiszowe (Hotkeys.txt)</translation>
     </message>
     <message>
@@ -9195,7 +9189,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wszystkie pliki (*)</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys</source>
+        <source>Import legacy shortcuts</source>
         <translation>Importuj skróty ze starej wersji</translation>
     </message>
     <message>
@@ -9203,7 +9197,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Nie można odczytać pliku.</translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>Dodano %n skrót skryptu.</numerusform>
             <numerusform>Dodano %n skróty skryptów.</numerusform>
@@ -9211,7 +9205,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         </translation>
     </message>
     <message>
-        <source>No script hotkeys were added.</source>
+        <source>No script shortcuts were added.</source>
         <translation>Nie dodano żadnych skrótów skryptów.</translation>
     </message>
     <message numerus="yes">
@@ -9263,22 +9257,16 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Różowy</translation>
     </message>
     <message>
-        <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
-        <translation>Umieść pliki .dic i .aff w folderze &quot;Dictionary&quot;</translation>
+        <source>Put .dic and .aff files in the “Dictionary” folder</source>
+        <translation>Umieść pliki .dic i .aff w folderze “Dictionary”</translation>
     </message>
     <message>
-        <source>The selected %1 for conversion does not exist
-and will be changed to the default</source>
-        <translation>Wybrany %1 konwersji nie istnieje,
-zostanie zmieniony na domyślny</translation>
+        <source>The style catalogue chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>Katalog stylów wybrany do konwersji już nie istnieje. Zamiast niego używany jest domyślny.</translation>
     </message>
     <message>
-        <source>catalogue for style</source>
-        <translation>katalog dla stylu</translation>
-    </message>
-    <message>
-        <source>style</source>
-        <translation>styl</translation>
+        <source>The style chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>Styl wybrany do konwersji już nie istnieje. Zamiast niego używany jest domyślny.</translation>
     </message>
     <message>
         <source>System default</source>
@@ -11013,8 +11001,8 @@ ponieważ została zmieniona.</translation>
         <translation>Obok programu nie znaleziono ustawień starszej wersji. Wybierz folder instalacji starszej wersji.</translation>
     </message>
     <message>
-        <source>%1 holds no legacy settings (Config, Dictionary).</source>
-        <translation>%1 nie zawiera ustawień starszej wersji (Config, Dictionary).</translation>
+        <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
+        <translation>%1 nie zawiera ustawień starszej wersji (brak folderu “Config” ani “Dictionary”).</translation>
     </message>
     <message>
         <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
@@ -11060,7 +11048,7 @@ ponieważ została zmieniona.</translation>
         <translation>Wyłączono: %1</translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
             <numerusform>Sprawdzanie gramatyki nie używa już %n reguły z tej grupy. Możesz ją ponownie włączyć w Ustawienia › Pisownia i gramatyka.</numerusform>
             <numerusform>Sprawdzanie gramatyki nie używa już %n reguł z tej grupy. Możesz ją ponownie włączyć w Ustawienia › Pisownia i gramatyka.</numerusform>

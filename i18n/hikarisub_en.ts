@@ -385,7 +385,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>Added %n script hotkey.</numerusform>
             <numerusform>Added %n script hotkeys.</numerusform>
@@ -488,7 +488,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
             <numerusform>Grammar check no longer uses its %n rule. Turn it back on in Settings › Spelling &amp; grammar.</numerusform>
             <numerusform>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</numerusform>

@@ -3758,7 +3758,7 @@ Failed to copy %2 fonts.</source>
         <translation>แนะนำ</translation>
     </message>
     <message>
-        <source>Hotkeys, fonts, audio and video options and your dictionary words.</source>
+        <source>Shortcuts, fonts, audio and video options and your dictionary words.</source>
         <translation>ปุ่มลัด แบบอักษร ตัวเลือกเสียงและวิดีโอ และคำในพจนานุกรมของคุณ</translation>
     </message>
     <message>
@@ -3806,7 +3806,7 @@ Failed to copy %2 fonts.</source>
         <translation>ของ HikariSub</translation>
     </message>
     <message>
-        <source>The system’s</source>
+        <source>System</source>
         <translation>ของระบบ</translation>
     </message>
     <message>
@@ -3910,7 +3910,7 @@ Failed to copy %2 fonts.</source>
         <translation>แก้ไข</translation>
     </message>
     <message>
-        <source>Later: Settings › General › Saving and Settings › Spelling &amp; grammar</source>
+        <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>ภายหลัง: การตั้งค่า › ทั่วไป › การบันทึก และ การตั้งค่า › การสะกดและไวยากรณ์</translation>
     </message>
     <message>
@@ -4707,27 +4707,27 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Hotkeys</name>
     <message>
-        <source>Keys for &quot;%1&quot;</source>
-        <translation>ปุ่มสำหรับ &quot;%1&quot;</translation>
+        <source>Keys for “%1”</source>
+        <translation>ปุ่มสำหรับ “%1”</translation>
     </message>
     <message>
-        <source>Global hotkey</source>
+        <source>Global shortcut</source>
         <translation>ปุ่มลัดส่วนกลาง</translation>
     </message>
     <message>
-        <source>Subtitle grid hotkey</source>
-        <translation>ปุ่มลัดตารางคำบรรยาย</translation>
+        <source>Grid shortcut</source>
+        <translation>ปุ่มลัดตาราง</translation>
     </message>
     <message>
-        <source>Edit box hotkey</source>
-        <translation>ปุ่มลัดของตัวแก้ไข</translation>
+        <source>Line editor shortcut</source>
+        <translation>ปุ่มลัดของตัวแก้ไขบรรทัด</translation>
     </message>
     <message>
-        <source>Video hotkey</source>
+        <source>Video shortcut</source>
         <translation>ปุ่มลัดของวิดีโอ</translation>
     </message>
     <message>
-        <source>Audio hotkey</source>
+        <source>Audio shortcut</source>
         <translation>ปุ่มลัดของเสียง</translation>
     </message>
     <message>
@@ -8027,7 +8027,7 @@ because it was edited.</source>
         <translation>ใช้ธีมตามระบบ</translation>
     </message>
     <message>
-        <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
+        <source>Light or Dark as the system’s colour scheme sets it; high contrast stays as chosen</source>
         <translation>สว่างหรือมืดตามชุดสีของระบบ ส่วนคอนทราสต์สูงจะคงตามที่เลือกไว้</translation>
     </message>
     <message>
@@ -8035,7 +8035,7 @@ because it was edited.</source>
         <translation>เลือก…</translation>
     </message>
     <message>
-        <source>Accent color</source>
+        <source>Accent colour</source>
         <translation>สีเน้น</translation>
     </message>
     <message>
@@ -8071,7 +8071,7 @@ because it was edited.</source>
         <translation>ปิดเป็นค่าเริ่มต้นบน Windows, KDE Plasma และ GNOME และเปิดเป็นค่าเริ่มต้นบนตัวจัดการหน้าต่างแบบเรียงต่อ</translation>
     </message>
     <message>
-        <source>UI colors</source>
+        <source>UI colours</source>
         <translation>สีอินเทอร์เฟซ</translation>
     </message>
     <message>
@@ -8115,12 +8115,12 @@ because it was edited.</source>
         <translation>เสียง</translation>
     </message>
     <message>
-        <source>Hotkeys</source>
+        <source>Shortcuts</source>
         <translation>ปุ่มลัด</translation>
     </message>
     <message>
-        <source>Subtitle properties</source>
-        <translation>คุณสมบัติของคำบรรยาย</translation>
+        <source>Script properties</source>
+        <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Language (program restart required)</source>
@@ -8299,10 +8299,8 @@ because it was edited.</source>
         <translation>ความหนาของเส้นขอบ</translation>
     </message>
     <message>
-        <source>Range from 0 to 10000, where 0 turns off
-removing audio cache files.</source>
-        <translation>ป้อน 0 ถึง 10000 โดยที่ 0 จะปิด
-การลบไฟล์แคชเสียง</translation>
+        <source>0–10000. At 0, audio cache files are never removed.</source>
+        <translation>0–10000 ถ้าเป็น 0 จะไม่ลบไฟล์แคชเสียงเลย</translation>
     </message>
     <message>
         <source>None</source>
@@ -8333,8 +8331,8 @@ removing audio cache files.</source>
         <translation>ตัวแก้ไขบรรทัด</translation>
     </message>
     <message>
-        <source>Subtitle grid</source>
-        <translation>ตารางคำบรรยาย</translation>
+        <source>Grid</source>
+        <translation>ตาราง</translation>
     </message>
     <message>
         <source>Automation</source>
@@ -8373,7 +8371,7 @@ removing audio cache files.</source>
         <translation>ต้องการรีเซ็ตการตั้งค่าทั้งหมดเป็นค่าเริ่มต้นหรือไม่?</translation>
     </message>
     <message>
-        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
+        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
         <translation>ทุกหน้าจะกลับเป็นค่าเริ่มต้นเมื่อคุณกด “ตกลง” หรือ “นำไปใช้” ส่วน “ยกเลิก” จะคงการตั้งค่าของคุณไว้ ปุ่มลัดและลักษณะที่ปรากฏจะคงเดิม: รีเซ็ตได้ในหน้าของรายการนั้นเอง</translation>
     </message>
     <message>
@@ -8385,7 +8383,7 @@ removing audio cache files.</source>
         <translation>รีเซ็ตหน้า</translation>
     </message>
     <message>
-        <source>The settings of the page shown back to their defaults</source>
+        <source>Resets the settings on this page to their defaults</source>
         <translation>รีเซ็ตการตั้งค่าของหน้าที่แสดงอยู่กลับเป็นค่าเริ่มต้น</translation>
     </message>
     <message>
@@ -8461,7 +8459,7 @@ removing audio cache files.</source>
         <translation>การแสดงผล</translation>
     </message>
     <message>
-        <source>Spelling &amp; grammar</source>
+        <source>Spelling and grammar</source>
         <translation>การสะกดและไวยากรณ์</translation>
     </message>
     <message>
@@ -8501,8 +8499,8 @@ removing audio cache files.</source>
         <translation>แสดงเฟรมวิดีโอแทนเวลา</translation>
     </message>
     <message>
-        <source>In the line editor and the subtitle grid.</source>
-        <translation>ในตัวแก้ไขบรรทัดและตารางคำบรรยาย</translation>
+        <source>In the line editor and the grid.</source>
+        <translation>ในตัวแก้ไขบรรทัดและตาราง</translation>
     </message>
     <message>
         <source>Stay on the line when editing times</source>
@@ -8643,7 +8641,7 @@ removing audio cache files.</source>
         <translation>เปิดวิดีโอจากเมนูบริบทในโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
-        <source>Open video at the active line&apos;s time</source>
+        <source>Open video at the active line’s time</source>
         <translation>เปิดวิดีโอที่เวลาของบรรทัดปัจจุบัน</translation>
     </message>
     <message>
@@ -8659,7 +8657,7 @@ removing audio cache files.</source>
         <translation>แสดงตัวอย่างคำบรรยายที่</translation>
     </message>
     <message>
-        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script&apos;s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
+        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script’s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
         <translation>“ขนาดหน้าจอ” วาดคำบรรยายตามขนาดที่ภาพแสดงบนหน้าจอ คำบรรยายจึงคมชัดบนหน้าจอขนาดใหญ่และหน้าจอ DPI สูง เค้าโครงของสคริปต์เหมือนเดิมไม่ว่าจะเลือกแบบใด ตัวอย่างในตัวจัดการสไตล์ ตัวเลือกแบบอักษร และตัวแก้ไขเทมเพลตก็ใช้ค่านี้ด้วย</translation>
     </message>
     <message>
@@ -8723,7 +8721,7 @@ removing audio cache files.</source>
         <translation>ปิดคำเตือนของเครื่องมือภาพ</translation>
     </message>
     <message>
-        <source>Don&apos;t warn about a resolution mismatch</source>
+        <source>Don’t warn about a resolution mismatch</source>
         <translation>ไม่ต้องเตือนเมื่อความละเอียดไม่ตรงกัน</translation>
     </message>
     <message>
@@ -8747,7 +8745,7 @@ removing audio cache files.</source>
         <translation>ช่วงนำและช่วงต่อท้าย</translation>
     </message>
     <message>
-        <source>Don&apos;t play after changing the line</source>
+        <source>Don’t play after changing the line</source>
         <translation>ไม่ต้องเล่นหลังเปลี่ยนบรรทัด</translation>
     </message>
     <message>
@@ -8779,8 +8777,8 @@ removing audio cache files.</source>
         <translation>คาราโอเกะ</translation>
     </message>
     <message>
-        <source>Merge every &quot;n&quot; with the previous syllable</source>
-        <translation>รวม &quot;n&quot; ทุกตัวเข้ากับพยางค์ก่อนหน้า</translation>
+        <source>Merge every “n” with the previous syllable</source>
+        <translation>รวม “n” ทุกตัวเข้ากับพยางค์ก่อนหน้า</translation>
     </message>
     <message>
         <source>Move the syllable line after a click</source>
@@ -8919,12 +8917,12 @@ removing audio cache files.</source>
         <translation>ปุ่มลัดส่วนกลาง</translation>
     </message>
     <message>
-        <source>Subtitle shortcuts</source>
-        <translation>ปุ่มลัดคำบรรยาย</translation>
+        <source>Grid shortcuts</source>
+        <translation>ปุ่มลัดตาราง</translation>
     </message>
     <message>
-        <source>Editor shortcuts</source>
-        <translation>ปุ่มลัดตัวแก้ไข</translation>
+        <source>Line editor shortcuts</source>
+        <translation>ปุ่มลัดตัวแก้ไขบรรทัด</translation>
     </message>
     <message>
         <source>Video shortcuts</source>
@@ -8935,15 +8933,15 @@ removing audio cache files.</source>
         <translation>ปุ่มลัดสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
-        <source>Filtering mode:</source>
-        <translation>โหมดการกรอง:</translation>
+        <source>Filtering mode</source>
+        <translation>โหมดการกรอง</translation>
     </message>
     <message>
-        <source>Search hotkeys</source>
+        <source>Search shortcuts</source>
         <translation>ค้นหาปุ่มลัด</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
+        <source>Import legacy shortcuts…</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม…</translation>
     </message>
     <message>
@@ -8963,12 +8961,12 @@ removing audio cache files.</source>
         <translation>ย้อนการนำเข้าครั้งล่าสุด…</translation>
     </message>
     <message>
-        <source>Script hotkeys</source>
+        <source>Script shortcuts</source>
         <translation>ปุ่มลัดสคริปต์</translation>
     </message>
     <message>
-        <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
-        <translation>ปุ่มลัดสคริปต์จาก Hotkeys.txt ของรุ่นเดิม ซึ่งจะเพิ่มทันที</translation>
+        <source>Adds the script shortcuts of a legacy Hotkeys.txt at once</source>
+        <translation>เพิ่มปุ่มลัดสคริปต์จาก Hotkeys.txt ของรุ่นเดิมทันที</translation>
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
@@ -8991,7 +8989,7 @@ removing audio cache files.</source>
         <translation>ฟังก์ชัน</translation>
     </message>
     <message>
-        <source>Hotkey</source>
+        <source>Shortcut</source>
         <translation>ปุ่มลัด</translation>
     </message>
     <message>
@@ -8999,7 +8997,7 @@ removing audio cache files.</source>
         <translation>แมโครที่หายไป</translation>
     </message>
     <message>
-        <source>Map hotkey…</source>
+        <source>Map shortcut…</source>
         <translation>กำหนดปุ่มลัด…</translation>
     </message>
     <message>
@@ -9083,11 +9081,7 @@ removing audio cache files.</source>
         <translation>แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
     </message>
     <message>
-        <source>Choose a legacy Hotkeys.txt</source>
-        <translation>เลือก Hotkeys.txt ของรุ่นเดิม</translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
+        <source>Shortcuts (Hotkeys.txt)</source>
         <translation>ปุ่มลัด (Hotkeys.txt)</translation>
     </message>
     <message>
@@ -9095,7 +9089,7 @@ removing audio cache files.</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys</source>
+        <source>Import legacy shortcuts</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม</translation>
     </message>
     <message>
@@ -9103,13 +9097,13 @@ removing audio cache files.</source>
         <translation>ไม่สามารถอ่านไฟล์ได้</translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>เพิ่มปุ่มลัดสคริปต์แล้ว %n รายการ</numerusform>
         </translation>
     </message>
     <message>
-        <source>No script hotkeys were added.</source>
+        <source>No script shortcuts were added.</source>
         <translation>ไม่ได้เพิ่มปุ่มลัดสคริปต์ใดๆ</translation>
     </message>
     <message numerus="yes">
@@ -9157,22 +9151,16 @@ removing audio cache files.</source>
         <translation>ชมพู</translation>
     </message>
     <message>
-        <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
-        <translation>วางไฟล์ .dic และ .aff ลงในโฟลเดอร์ &quot;Dictionary&quot;</translation>
+        <source>Put .dic and .aff files in the “Dictionary” folder</source>
+        <translation>วางไฟล์ .dic และ .aff ลงในโฟลเดอร์ “Dictionary”</translation>
     </message>
     <message>
-        <source>The selected %1 for conversion does not exist
-and will be changed to the default</source>
-        <translation>%1 ที่เลือกสำหรับการแปลงไม่มีอยู่
-และจะถูกเปลี่ยนเป็นค่าเริ่มต้น</translation>
+        <source>The style catalogue chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>แคตตาล็อกสไตล์ที่เลือกสำหรับการแปลงไม่มีอยู่แล้ว จึงใช้ค่าเริ่มต้นแทน</translation>
     </message>
     <message>
-        <source>catalogue for style</source>
-        <translation>แคตตาล็อกของสไตล์</translation>
-    </message>
-    <message>
-        <source>style</source>
-        <translation>สไตล์</translation>
+        <source>The style chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>สไตล์ที่เลือกสำหรับการแปลงไม่มีอยู่แล้ว จึงใช้ค่าเริ่มต้นแทน</translation>
     </message>
     <message>
         <source>System default</source>
@@ -10889,8 +10877,8 @@ because it was edited.</source>
         <translation>ไม่พบการตั้งค่ารุ่นเดิมข้างโปรแกรม เลือกโฟลเดอร์ของการติดตั้งรุ่นเดิม</translation>
     </message>
     <message>
-        <source>%1 holds no legacy settings (Config, Dictionary).</source>
-        <translation>%1 ไม่มีการตั้งค่ารุ่นเดิม (Config, Dictionary)</translation>
+        <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
+        <translation>%1 ไม่มีการตั้งค่ารุ่นเดิม (ไม่มีโฟลเดอร์ “Config” หรือ “Dictionary”)</translation>
     </message>
     <message>
         <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
@@ -10936,7 +10924,7 @@ because it was edited.</source>
         <translation>ปิด %1 แล้ว</translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
             <numerusform>การตรวจไวยากรณ์ไม่ใช้กฎ %n ข้อของกลุ่มนี้แล้ว เปิดกลับได้ที่ การตั้งค่า › การสะกดและไวยากรณ์</numerusform>
         </translation>

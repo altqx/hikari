@@ -11096,7 +11096,7 @@ private slots:
             auto *made = capture->property("compactWindow").value<QQuickWindow *>();
             QVERIFY(made);
             QCOMPARE(made->objectName(), QStringLiteral("hotkeyCaptureWindow"));
-            QCOMPARE(made->title(), QStringLiteral("Keys for \"Exit\""));
+            QCOMPARE(made->title(), QStringLiteral("Keys for “Exit”"));
             QVERIFY(QMetaObject::invokeMethod(capture, "cancel", Q_ARG(QVariant, false)));
             QTRY_VERIFY(!made->isVisible());
         }
@@ -11171,7 +11171,7 @@ private slots:
         capture->setProperty("refusal", QStringLiteral("You cannot use the program exit shortcut."));
         auto *refusal = capture->property("compactWindow").value<QQuickWindow *>();
         QVERIFY(QTest::qWaitForWindowExposed(refusal));
-        QCOMPARE(refusal->title(), QStringLiteral("Keys for \"Exit\""));
+        QCOMPARE(refusal->title(), QStringLiteral("Keys for “Exit”"));
         save("hotkeyRefusal", refusal, true);
         QVERIFY(QMetaObject::invokeMethod(capture, "cancel", Q_ARG(QVariant, false)));
         QTRY_VERIFY(!refusal->isVisible());
@@ -15545,7 +15545,7 @@ private slots:
             {"settingsPageVideo",
              {{"video.pauseOnClick", "Left mouse button pauses video"},
               {"video.fullScreenOnStart", "Open video from the context menu in full screen"},
-              {"video.openAtActiveLine", "Open video at the active line's time"},
+              {"video.openAtActiveLine", "Open video at the active line’s time"},
               {"video.moveToActiveLine", nullptr},
               {"video.playAfterSelection", nullptr},
 #ifdef _WIN32
@@ -15559,7 +15559,7 @@ private slots:
               {"video.acceptedAudioStream", nullptr},
               {"video.zoomPercent", nullptr},
               {"video.visualWarningsOff", "Turn off the visual tools warning"},
-              {"video.dontAskForBadResolution", "Don't warn about a resolution mismatch"},
+              {"video.dontAskForBadResolution", "Don’t warn about a resolution mismatch"},
               {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"}}},
             {"settingsPageAudio",
              {{"audio.outputDevice", nullptr},
@@ -15571,7 +15571,7 @@ private slots:
               {"audio.leadInValue", nullptr},
               {"audio.leadOutValue", nullptr},
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
-              {"audio.dontPlayWhenLineChanges", "Don't play after changing the line"},
+              {"audio.dontPlayWhenLineChanges", "Don’t play after changing the line"},
               {"audio.autoFocus", "Focus the panel under the pointer"},
               {"audio.drawTimeCursor", "Show the time beside the cursor"},
               {"audio.drawSecondaryLines", "Show seconds markers"},
@@ -15582,7 +15582,7 @@ private slots:
               {"audio.inactiveLinesDisplayMode", nullptr},
               {"audio.snapToKeyframes", "Snap to keyframes"},
               {"audio.snapToOtherLines", "Snap to other lines"},
-              {"audio.mergeEveryNWithSyllable", "Merge every \"n\" with the previous syllable"},
+              {"audio.mergeEveryNWithSyllable", "Merge every “n” with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move the syllable line after a click"},
               {"audio.karaokeDoubleConsonantApart", "Give a double consonant its own syllable (so|ma|t|ta)"},
               {"audio.karaokeKfThreshold", nullptr},
@@ -15776,7 +15776,7 @@ private slots:
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
         QQuickItem *warning = nullptr;
-        QTRY_VERIFY((warning = toastWith(QStringLiteral("does not exist"))));
+        QTRY_VERIFY((warning = toastWith(QStringLiteral("no longer exists"))));
         QCOMPARE(partNamed(warning, "toastTitle")->property("text").toString(), QStringLiteral("Settings"));
         const auto catalogs = dialog->property("catalogs").toStringList();
         QVERIFY(catalogs.contains(QStringLiteral("Conv")));
@@ -15801,7 +15801,7 @@ private slots:
         options.catalogDir = own.filePath(QStringLiteral("Catalog"));
         const QString accented = QStringLiteral(u"Ćwiczenia");
         const QString lower = QStringLiteral(u"ćwiczenia");
-        const QString missing = tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalogue for style"));
+        const QString missing = tr("The style catalogue chosen for conversion no longer exists. The default is used instead.");
         {
             app::Application a(options);
             auto &styles = a.styleManager();
@@ -16465,7 +16465,7 @@ private slots:
             for (const auto &symbol : application::availableDictionaries(folder))
                 names << language.at(symbol);
             if (names.isEmpty())
-                names << QStringLiteral("Put files .dic and .aff to \"Dictionary\" folder");
+                names << QStringLiteral("Put .dic and .aff files in the “Dictionary” folder");
             return names;
         };
         const auto open = a.openSettingsDialog();
@@ -18357,8 +18357,8 @@ private slots:
         QStringList names;
         for (const auto &p : model)
             names << p.toMap().value(QStringLiteral("name")).toString();
-        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Spelling & grammar", "Subtitle grid",
-                                     "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
+        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Spelling and grammar", "Grid",
+                                     "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         QCOMPARE(hotkeyRows().size(), 264);
@@ -18375,7 +18375,7 @@ private slots:
         auto *mapping = captureForm("settingsHotkeyMapping");
         QVERIFY(mapping);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"History\""));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for “History”"));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 0);
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_Control, Qt::ControlModifier);
@@ -18637,7 +18637,7 @@ private slots:
         auto *mapping = captureForm("hotkeyMapping");
         QVERIFY(mapping);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Add bold\""));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for “Add bold”"));
         QVERIFY(!in(mapping, "hotkeyWindowChoice")->isVisible());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_B, Qt::ControlModifier | Qt::ShiftModifier);
         QTRY_VERIFY(!mapping->isVisible());
@@ -18971,7 +18971,7 @@ private slots:
         QTRY_VERIFY(styleItem->isVisible() && styleItem->width() > 0);
         clickWith(styleItem, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Style manager\""));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for “Style manager”"));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         auto *styles = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
         QVERIFY(!styles->isVisible());
@@ -19016,7 +19016,7 @@ private slots:
         QVERIFY(!messageBox("messages")->isVisible());
         clickWith(stop, Qt::ShiftModifier | Qt::ControlModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Stop\""));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for “Stop”"));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
@@ -19115,7 +19115,7 @@ private slots:
         QTRY_VERIFY(playLine->isVisible());
         clickWith(playLine, Qt::ControlModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Play line alt\""));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for “Play line alt”"));
         QVERIFY(!in(mapping, "hotkeyWindowChoice")->isVisible());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
         QTRY_VERIFY(!mapping->isVisible());
@@ -30702,7 +30702,7 @@ private slots:
             QTRY_VERIFY(placed("videoMenuUnloadVideo", "videoMenuCopyFrame"));
             clickWith(unload, Qt::ShiftModifier);
             QTRY_VERIFY(mapping->isVisible());
-            QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Unload video\""));
+            QCOMPARE(mapping->title(), QStringLiteral("Keys for “Unload video”"));
             QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
             keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_Escape);
             QTRY_VERIFY(!mapping->isVisible());
@@ -31337,7 +31337,7 @@ private slots:
         QTRY_VERIFY(aspectItem->isVisible() && aspectItem->width() > 0);
         clickWith(aspectItem, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Change aspect ratio\""));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for “Change aspect ratio”"));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
         QVERIFY(!named("aspectRatioDialog")->property("opened").toBool());
@@ -32584,7 +32584,7 @@ private slots:
         QVERIFY(mapping);
         QTRY_VERIFY(mapping->isVisible());
         QVERIFY(application->video().playing());
-        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Stop\""));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for “Stop”"));
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_F12, Qt::ControlModifier | Qt::ShiftModifier);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("Ctrl-Shift-F12"));
