@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QUrl>
 
 namespace hikari::backends::ai {
 
@@ -14,6 +15,11 @@ QJsonObject schemaObject(const std::string &json)
 {
     const QJsonObject parsed = QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
     return parsed.isEmpty() ? QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}} : parsed;
+}
+
+QJsonObject argumentsObject(const std::string &json)
+{
+    return QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
 }
 
 QString dataUrl(const app::Image &image)
@@ -38,6 +44,9 @@ std::vector<std::pair<QByteArray, QByteArray>> authHeaders(const app::Provider &
         headers.emplace_back("anthropic-version", "2023-06-01");
         if (!key.isEmpty())
             headers.emplace_back("x-api-key", key);
+    } else if (provider.wire == app::Wire::Gemini) {
+        if (!key.isEmpty())
+            headers.emplace_back("x-goog-api-key", key);
     } else if (!key.isEmpty()) {
         headers.emplace_back("Authorization", "Bearer " + key);
     }
@@ -228,6 +237,63 @@ QByteArray anthropicBody(const app::Request &request)
     return compact(body);
 }
 
+QByteArray geminiBody(const app::Request &request)
+{
+    std::map<std::string, std::string, std::less<>> callNames;
+    QJsonArray contents;
+    for (const app::Message &message : request.messages) {
+        QJsonArray parts;
+        forEach<app::ToolResult>(message, [&](const app::ToolResult &r) {
+            QJsonObject response{{QStringLiteral("name"), q(callNames[r.callId])},
+                                 {QStringLiteral("response"),
+                                  QJsonObject{{r.isError ? QStringLiteral("error") : QStringLiteral("result"), q(r.content)}}}};
+            if (!r.callId.empty())
+                response.insert(QStringLiteral("id"), q(r.callId));
+            parts.append(QJsonObject{{QStringLiteral("functionResponse"), response}});
+        });
+        for (const app::Part &part : message.parts) {
+            if (const auto *t = std::get_if<app::Text>(&part)) {
+                if (!t->text.empty())
+                    parts.append(QJsonObject{{QStringLiteral("text"), q(t->text)}});
+            } else if (const auto *i = std::get_if<app::Image>(&part)) {
+                parts.append(QJsonObject{{QStringLiteral("inlineData"),
+                                          QJsonObject{{QStringLiteral("mimeType"), q(i->mediaType)},
+                                                      {QStringLiteral("data"), q(i->base64)}}}});
+            } else if (const auto *c = std::get_if<app::ToolCall>(&part)) {
+                callNames[c->id] = c->name;
+                QJsonObject call{{QStringLiteral("name"), q(c->name)},
+                                 {QStringLiteral("args"), argumentsObject(c->argumentsJson)}};
+                if (!c->id.empty())
+                    call.insert(QStringLiteral("id"), q(c->id));
+                QJsonObject p{{QStringLiteral("functionCall"), call}};
+                if (!c->signature.empty())
+                    p.insert(QStringLiteral("thoughtSignature"), q(c->signature));
+                parts.append(p);
+            }
+        }
+        if (!parts.isEmpty())
+            contents.append(QJsonObject{
+                {QStringLiteral("role"),
+                 message.author == app::Author::User ? QStringLiteral("user") : QStringLiteral("model")},
+                {QStringLiteral("parts"), parts}});
+    }
+    QJsonObject body{{QStringLiteral("contents"), contents}};
+    if (!request.system.empty())
+        body.insert(QStringLiteral("systemInstruction"),
+                    QJsonObject{{QStringLiteral("parts"), QJsonArray{QJsonObject{{QStringLiteral("text"), q(request.system)}}}}});
+    QJsonArray declarations;
+    for (const app::ToolDefinition &tool : request.tools)
+        declarations.append(QJsonObject{{QStringLiteral("name"), q(tool.name)},
+                                        {QStringLiteral("description"), q(tool.description)},
+                                        {QStringLiteral("parametersJsonSchema"), schemaObject(tool.parametersJson)}});
+    if (!declarations.isEmpty())
+        body.insert(QStringLiteral("tools"), QJsonArray{QJsonObject{{QStringLiteral("functionDeclarations"), declarations}}});
+    if (request.maxOutputTokens)
+        body.insert(QStringLiteral("generationConfig"),
+                    QJsonObject{{QStringLiteral("maxOutputTokens"), *request.maxOutputTokens}});
+    return compact(body);
+}
+
 app::ErrorKind kindOfStatus(int status)
 {
     if (status == 401 || status == 403)
@@ -415,6 +481,105 @@ private:
     }
 };
 
+class GeminiDecoder final : public StreamDecoder {
+protected:
+    bool finishOnClose() const override { return m_stop.has_value(); }
+
+    void decode(const SseParser::Message &message) override
+    {
+        QJsonParseError parseError;
+        const QJsonObject o = QJsonDocument::fromJson(message.data, &parseError).object();
+        if (parseError.error != QJsonParseError::NoError) {
+            fail(app::ErrorKind::Malformed, parseError.errorString());
+            return;
+        }
+        if (o.contains(QStringLiteral("error"))) {
+            const QJsonObject e = o.value(QStringLiteral("error")).toObject();
+            const int code = e.value(QStringLiteral("code")).toInt();
+            fail(code ? kindOfStatus(code) : app::ErrorKind::Server, e.value(QStringLiteral("message")).toString());
+            return;
+        }
+        if (const QJsonObject u = o.value(QStringLiteral("usageMetadata")).toObject(); !u.isEmpty()) {
+            m_usage.inputTokens = u.value(QStringLiteral("promptTokenCount")).toInteger() +
+                                  u.value(QStringLiteral("toolUsePromptTokenCount")).toInteger();
+            m_usage.outputTokens = u.value(QStringLiteral("candidatesTokenCount")).toInteger() +
+                                   u.value(QStringLiteral("thoughtsTokenCount")).toInteger();
+            m_usage.cachedInputTokens = u.value(QStringLiteral("cachedContentTokenCount")).toInteger();
+        }
+        if (!o.value(QStringLiteral("promptFeedback")).toObject().value(QStringLiteral("blockReason")).toString().isEmpty()) {
+            finish(app::StopReason::Refused);
+            return;
+        }
+        const QJsonObject candidate = o.value(QStringLiteral("candidates")).toArray().first().toObject();
+        for (const QJsonValue &v : candidate.value(QStringLiteral("content")).toObject().value(QStringLiteral("parts")).toArray()) {
+            const QJsonObject part = v.toObject();
+            if (part.value(QStringLiteral("thought")).toBool())
+                continue;
+            if (part.contains(QStringLiteral("functionCall"))) {
+                const QJsonObject call = part.value(QStringLiteral("functionCall")).toObject();
+                const int index = m_callCount++;
+                QString id = call.value(QStringLiteral("id")).toString();
+                if (id.isEmpty())
+                    id = QStringLiteral("call_%1").arg(index);
+                startCall(index, id, call.value(QStringLiteral("name")).toString());
+                callArguments(index, QString::fromUtf8(compact(call.value(QStringLiteral("args")).toObject())));
+                callSignature(index, part.value(QStringLiteral("thoughtSignature")).toString());
+            } else {
+                text(part.value(QStringLiteral("text")).toString());
+            }
+        }
+        const QString reason = candidate.value(QStringLiteral("finishReason")).toString();
+        if (reason.isEmpty())
+            return;
+        const QString detail = candidate.value(QStringLiteral("finishMessage")).toString();
+        static const QStringList refused{
+            QStringLiteral("SAFETY"),       QStringLiteral("RECITATION"),         QStringLiteral("LANGUAGE"),
+            QStringLiteral("BLOCKLIST"),    QStringLiteral("PROHIBITED_CONTENT"), QStringLiteral("SPII"),
+            QStringLiteral("IMAGE_SAFETY"), QStringLiteral("IMAGE_PROHIBITED_CONTENT"),
+            QStringLiteral("IMAGE_RECITATION"), QStringLiteral("ESCALATION")};
+        static const QStringList malformed{QStringLiteral("MALFORMED_FUNCTION_CALL"), QStringLiteral("UNEXPECTED_TOOL_CALL"),
+                                           QStringLiteral("TOO_MANY_TOOL_CALLS"), QStringLiteral("MALFORMED_RESPONSE")};
+        if (reason == QLatin1String("MAX_TOKENS") || reason == QLatin1String("CONTINUATION"))
+            m_stop = app::StopReason::MaxTokens;
+        else if (refused.contains(reason))
+            m_stop = app::StopReason::Refused;
+        else if (malformed.contains(reason))
+            fail(app::ErrorKind::Malformed, detail.isEmpty() ? reason : detail);
+        else if (reason == QLatin1String("MISSING_THOUGHT_SIGNATURE"))
+            fail(app::ErrorKind::Rejected, detail.isEmpty() ? reason : detail);
+        else if (reason == QLatin1String("PUP_LIMITED_DISABLED"))
+            fail(app::ErrorKind::Unauthorized, detail.isEmpty() ? reason : detail);
+        else
+            m_stop = m_callCount > 0 ? app::StopReason::ToolUse : app::StopReason::End;
+    }
+
+private:
+    int m_callCount = 0;
+};
+
+std::vector<app::Model> geminiModels(const QJsonObject &root)
+{
+    std::vector<app::Model> models;
+    for (const QJsonValue &v : root.value(QStringLiteral("models")).toArray()) {
+        const QJsonObject o = v.toObject();
+        if (!o.value(QStringLiteral("supportedGenerationMethods")).toArray().contains(QStringLiteral("generateContent")))
+            continue;
+        QString id = o.value(QStringLiteral("name")).toString();
+        if (id.startsWith(QLatin1String("models/")))
+            id.remove(0, 7);
+        if (id.isEmpty())
+            continue;
+        app::Model model;
+        model.id = id.toStdString();
+        const QString name = o.value(QStringLiteral("displayName")).toString();
+        model.name = name.isEmpty() ? model.id : name.toStdString();
+        if (o.value(QStringLiteral("inputTokenLimit")).isDouble())
+            model.contextTokens = o.value(QStringLiteral("inputTokenLimit")).toInteger();
+        models.push_back(std::move(model));
+    }
+    return models;
+}
+
 }
 
 QList<SseParser::Message> SseParser::feed(const QByteArray &bytes)
@@ -494,6 +659,11 @@ HttpCall encodeRequest(const app::Provider &provider, const QByteArray &key, con
         call.path = QStringLiteral("/messages");
         call.body = anthropicBody(request);
         break;
+    case app::Wire::Gemini:
+        call.path = QStringLiteral("/models/%1:streamGenerateContent?alt=sse")
+                        .arg(QString::fromLatin1(QUrl::toPercentEncoding(q(request.model))));
+        call.body = geminiBody(request);
+        break;
     }
     return call;
 }
@@ -502,15 +672,28 @@ HttpCall modelsCall(const app::Provider &provider, const QByteArray &key)
 {
     HttpCall call;
     call.headers = authHeaders(provider, key);
-    call.path = provider.wire == app::Wire::AnthropicMessages ? QStringLiteral("/models?limit=1000")
-                                                               : QStringLiteral("/models");
+    switch (provider.wire) {
+    case app::Wire::AnthropicMessages:
+        call.path = QStringLiteral("/models?limit=1000");
+        break;
+    case app::Wire::Gemini:
+        call.path = QStringLiteral("/models?pageSize=1000");
+        break;
+    case app::Wire::ChatCompletions:
+    case app::Wire::Responses:
+        call.path = QStringLiteral("/models");
+        break;
+    }
     return call;
 }
 
-std::vector<app::Model> decodeModels(const QByteArray &body)
+std::vector<app::Model> decodeModels(app::Wire wire, const QByteArray &body)
 {
+    const QJsonObject root = QJsonDocument::fromJson(body).object();
+    if (wire == app::Wire::Gemini)
+        return geminiModels(root);
     std::vector<app::Model> models;
-    for (const QJsonValue &v : QJsonDocument::fromJson(body).object().value(QStringLiteral("data")).toArray()) {
+    for (const QJsonValue &v : root.value(QStringLiteral("data")).toArray()) {
         const QJsonObject o = v.toObject();
         app::Model model;
         model.id = o.value(QStringLiteral("id")).toString().toStdString();
@@ -599,6 +782,11 @@ void StreamDecoder::callArguments(int index, const QString &delta)
     m_out.emplace_back(app::ToolCallArguments{index, s});
 }
 
+void StreamDecoder::callSignature(int index, const QString &signature)
+{
+    m_calls[index].signature = signature.toStdString();
+}
+
 void StreamDecoder::finish(app::StopReason reason)
 {
     if (m_done)
@@ -630,6 +818,8 @@ std::unique_ptr<StreamDecoder> makeDecoder(app::Wire wire)
         return std::make_unique<ResponsesDecoder>();
     case app::Wire::AnthropicMessages:
         return std::make_unique<AnthropicDecoder>();
+    case app::Wire::Gemini:
+        return std::make_unique<GeminiDecoder>();
     }
     return nullptr;
 }
