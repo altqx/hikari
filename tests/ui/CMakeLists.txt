@@ -243,8 +243,8 @@ foreach(scale 125 150 175 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
     add_test(NAME hikari_ui_docking_qualification_tests.scale${scale}
-        COMMAND $<TARGET_FILE:hikari_ui_docking_qualification_tests> floatingHeaderDocksByItsTitleAndMovesByTheRest
-            floatingTabBarMovesRightOfItsTabs floatingTitleKeepsItsRoom)
+        COMMAND $<TARGET_FILE:hikari_ui_docking_qualification_tests> floatingHeaderDocksByItsTitle
+            wholeFloatingHeaderDocks floatingHeaderHasNoSystemMoveArea)
     set_tests_properties(hikari_ui_docking_qualification_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
@@ -299,6 +299,9 @@ target_link_libraries(hikari_crash_probe PRIVATE hikari_composition)
 hikari_add_qttest(hikari_ui_analytics_tests SOURCES analytics_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_analytics_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_discord_presence_tests OFFSCREEN_ONLY SOURCES discord_presence_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_star_prompt_tests OFFSCREEN_ONLY SOURCES star_prompt_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_star_prompt_ui_tests SOURCES star_prompt_ui_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_launcher_tests SOURCES launcher_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_crash_report_tests SOURCES crash_report_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_crash_report_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

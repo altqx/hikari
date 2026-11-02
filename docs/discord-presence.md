@@ -21,7 +21,7 @@ To the Discord app, which shows it to the people who can see your Discord status
 | Elapsed time | Since presence was turned on in this run |
 | Large image | The HikariSub icon (`hikari`), titled "HikariSub" |
 | Small image | The mode's icon (`editing`, `timing`, `translation`, `typesetting` or `karaoke`), titled with the mode |
-| Button | "Get HikariSub", opening https://hikarisub.altqx.com |
+| Button | "Get HikariSub", opening https://hikarisub.org |
 | Process id | HikariSub's, which Discord uses to clear the status when HikariSub ends |
 
 The texts are in HikariSub's interface language. The mode is the workspace layout you chose last (a saved layout keeps the layout it was made from).

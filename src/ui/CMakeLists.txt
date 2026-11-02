@@ -5,7 +5,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
     automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
-    colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
+    colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h panel_dock.cpp panel_dock.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
     editor_highlighter.cpp editor_highlighter.h
     settings_store.cpp settings_store.h settings_files.cpp settings_files.h toml_file.cpp toml_file.h list_files.cpp list_files.h dialog_placement.cpp dialog_placement.h
@@ -114,7 +114,7 @@ if(UNIX AND NOT APPLE)
     target_sources(hikari_ui PRIVATE portal_colour_scheme.cpp portal_colour_scheme.h)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_COLOUR_SCHEME_PORTAL)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml DockSystemMoveArea.qml)
+qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml)
 # xdg-decoration names xdg-shell's xdg_toplevel, and Qt keeps its own xdg-shell code private, so both are vendored.
 target_sources(hikari_ui PRIVATE window_decorations.cpp window_decorations.h)
 if(UNIX AND NOT APPLE)

@@ -51,7 +51,6 @@ class Docking : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
-    Q_PROPERTY(bool systemMove READ systemMove NOTIFY systemMoveChanged FINAL)
     Q_PROPERTY(int floatingShadow READ floatingShadow CONSTANT FINAL)
     Q_PROPERTY(int resizeGrip READ resizeGrip CONSTANT FINAL)
     Q_PROPERTY(int headerRevision READ headerRevision NOTIFY headersChanged FINAL)
@@ -60,10 +59,6 @@ class Docking : public QObject {
 public:
     explicit Docking(QObject *parent = nullptr);
 
-    static bool platformUsesSystemMove(QStringView platformName);
-    static bool platformUsesSystemMove();
-    bool systemMove() const { return m_systemMove; }
-    void setSystemMove(bool on);
     static int floatingShadow() { return dockchrome::floatingShadow(); }
     static int resizeGrip() { return dockchrome::kResizeGrip; }
     int headerRevision() const { return m_revision; }
@@ -92,6 +87,8 @@ public:
     Q_INVOKABLE QQuickItem *toolbar(const QString &uniqueName) const;
     Q_INVOKABLE void requestMenu(const QString &uniqueName, QQuickItem *anchor);
     Q_INVOKABLE bool toggleFloating(const QString &uniqueName);
+    Q_INVOKABLE QRect placeInLayout(const QString &uniqueName) const;
+    Q_INVOKABLE QString dockRightOf(const QString &uniqueName) const;
     Q_INVOKABLE int tabIndex(const QString &uniqueName) const;
     Q_INVOKABLE int tabCount(const QString &uniqueName) const;
     Q_INVOKABLE bool moveTab(const QString &uniqueName, int step);
@@ -104,7 +101,6 @@ public:
 
 signals:
     void headersChanged();
-    void systemMoveChanged();
     void systemMoveRequested(QWindow *window);
     void menuRequested(const QString &uniqueName, QQuickItem *anchor);
     void openMenuChanged();
@@ -117,7 +113,6 @@ private:
     };
     QHash<QString, Header> m_headers;
     int m_revision = 0;
-    bool m_systemMove = platformUsesSystemMove();
     QString m_openMenu;
     int m_windowTitleRevision = 0;
 };

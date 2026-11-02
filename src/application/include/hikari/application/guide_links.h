@@ -6,7 +6,7 @@
 
 namespace hikari::application {
 
-inline constexpr std::string_view kSiteUrl = "https://hikarisub.altqx.com";
+inline constexpr std::string_view kSiteUrl = "https://hikarisub.org";
 inline constexpr std::string_view kGuideHome = "/en/docs";
 
 enum class GuideSurface { Panel, Window };

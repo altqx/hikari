@@ -31,7 +31,7 @@ KDDWViews.TitleBarBase {
         objectName: "dockTitleText"
         visible: !root.systemTitle
         x: 12
-        width: Math.max(0, (systemMoveArea.enabled ? systemMoveArea.x : menuButton.x) - x - 4)
+        width: Math.max(0, menuButton.x - x - 4)
         anchors.verticalCenter: parent.verticalCenter
         text: root.title
         textFormat: Text.PlainText
@@ -74,16 +74,5 @@ KDDWViews.TitleBarBase {
     // KDDW's drag area takes the presses, so the cursor comes from a HoverHandler.
     HoverHandler {
         cursorShape: Qt.SizeAllCursor
-    }
-
-    DockSystemMoveArea {
-        id: systemMoveArea
-        z: 1
-        enabled: Docking.systemMove
-        visible: enabled
-        x: Math.max(titleText.x + 48, Math.min(titleText.x + titleText.implicitWidth + 8, menuButton.x - 2 - 48))
-        width: Math.max(0, menuButton.x - 2 - x)
-        height: parent.height
-        onDoubleClicked: root.floatButtonClicked()
     }
 }

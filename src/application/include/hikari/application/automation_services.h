@@ -27,10 +27,12 @@ public:
     struct Project {
         std::int64_t videoFrameShown = 0;
         std::string audioFile, videoFile, keyframesFile;
+        double videoZoom = 1;
     };
     // nullopt everywhere: no video (or no audio) open.
     virtual std::optional<std::int64_t> frameFromMs(std::int64_t ms) const = 0;
     virtual std::optional<std::int64_t> msFromFrame(std::int64_t frame) const = 0;
+    virtual std::optional<std::vector<std::int64_t>> frameStartsMs() const = 0;
     virtual std::optional<VideoSize> videoSize() const = 0;
     virtual std::optional<std::vector<std::int64_t>> keyframes() const = 0;
     virtual void frame(std::int64_t frame, bool withSubtitles, std::function<void(std::optional<Frame>)> reply) = 0;

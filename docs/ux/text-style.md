@@ -162,9 +162,9 @@ Each thing has one name everywhere: menu bar, context menus, ⋯ menus, the pane
 - "..." in any source;
 - a straight double quote, or an apostrophe next to a letter;
 - an American spelling from the table above (the names "GNU General Public License" and "Apache License" excepted);
-- a label that starts with "The " or "the " (a source with no full stop and at most eight words);
-- a non-first word in title case within a short label, unless it is on the test's proper-name list or follows a colon, a full stop, an opening quote, "›" or " · ";
-- a short label that ends with ":", or a source with leading, trailing or double spaces;
+- a label that starts with "The " (a source with no full stop and at most eight words). A lower-case "the …" is a clause that follows a colon in a message, as in "Not applied: the line cannot take these times";
+- a non-first word in title case within a short label, unless it is on the test's proper-name list, is all capitals or an identifier with inner capitals (YCbCr, DirectSound), or starts a new line or follows a colon, a full stop, an opening quote, "›" or " · ";
+- a short label that ends with ":", or a source with leading, trailing or double spaces or line breaks. The code adds the line break or space around the translated text;
 - a tab (a key written after the text), or "please".
 
 Its allow-list, `i18n/text-style-allow.tsv`, has one row per exception: context, source (with `\n` and `\t` for line breaks and tabs), rule and a reason. A failure prints each new violation as a row ready to paste. "pending #596 <area>" marks a string that area's PR fixes. The other reasons are lasting: a folder name on disk, a style's name, a button named in a sentence. A row whose string no longer exists does not fail, so a PR that renames a string doesn't conflict with another that removes the row.
