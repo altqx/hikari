@@ -28,9 +28,33 @@
 #include <qpa/qplatformnativeinterface.h>
 #include <qpa/qwindowsysteminterface.h>
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 namespace {
+
+// On Windows KDDW drops a separator move unless GetKeyState says the left button is down, and a synthetic press doesn't set it.
+struct LeftButtonHeld {
+#ifdef _WIN32
+    LeftButtonHeld() { setLeftButton(0x80); }
+    ~LeftButtonHeld() { setLeftButton(0); }
+    static void setLeftButton(BYTE state)
+    {
+        BYTE keys[256];
+        GetKeyboardState(keys);
+        keys[VK_LBUTTON] = state;
+        SetKeyboardState(keys);
+    }
+#else
+    LeftButtonHeld() {}
+#endif
+};
 
 constexpr auto kShell = R"(
 import QtQuick
@@ -295,6 +319,7 @@ class DockingQualification : public QObject {
     }
     void dragFrom(QPoint from, QPoint by)
     {
+        const LeftButtonHeld held;
         QTest::mousePress(window, Qt::LeftButton, {}, from);
         for (int i = 1; i <= 10; ++i)
             QTest::mouseMove(window, from + by * i / 10);
