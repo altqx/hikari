@@ -4929,8 +4929,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usunięto skrót %1 polecenia &quot;Otwórz okno mapowania skrótów&quot;: tego okna już nie ma, a skrót każdego makra ustawia się w panelu Automatyzacja.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation>Usunięto skrót %1 polecenia “Otwórz puste audio na 2:30 godziny”: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
+        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation>Usunięto skrót %1 polecenia &quot;Otwórz puste audio na 2:30 godziny&quot;: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>

@@ -4855,8 +4855,8 @@ Failed to copy %2 fonts.</source>
         <translation>&quot;단축키 설정 창 열기&quot;의 단축키 %1(이)가 제거되었습니다. 해당 창은 없어졌으며 각 매크로의 단축키는 자동화 패널에서 설정합니다.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation>“빈 2h30m 소리 열기”의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
+        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation>&quot;빈 2h30m 소리 열기&quot;의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>

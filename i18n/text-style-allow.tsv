@@ -189,3 +189,4 @@ HikariSub.SelectLines	Invalid regular expression '%1': %2	quotes	pending #596 Me
 HikariSub.Spelling	The grammar checker (harper-ls) stopped: %1	leading-the	a message, not a label; the helper’s error follows the colon
 HikariSub.Video	Frame time; frame number; frames from the line's start frame; milliseconds from the line's start and end	quotes	pending #596 Menus (Main.qml)
 HikariSub.MisspellReplacer	Cannot replace "%1" with "%2" using rule "%3" in line %4.	quotes	pending #596 Messages, after #634 rewrites or moves it
+HikariSub.Hotkeys	The shortcut %1 of "Open blank 2h30m audio" was removed: the command is retired and a dummy video brings its own silent audio.	quotes	pending #596 Messages, after #634 rewrites or moves it
