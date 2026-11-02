@@ -137,6 +137,10 @@ hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp L
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_playback_workflow hikari_media_helper hikari_media_fixtures)
+hikari_add_spix_test(hikari_ui_seek_then_play SOURCES seek_then_play.cpp LIBRARIES hikari_composition Qt6::Test
+    DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_seek_then_play hikari_media_helper hikari_media_fixtures)
 if(WIN32)
     hikari_add_spix_test(hikari_ui_directshow_workflow SOURCES directshow_workflow.cpp LIBRARIES hikari_composition
         DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
@@ -244,8 +248,8 @@ foreach(scale 125 150 175 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
     add_test(NAME hikari_ui_docking_qualification_tests.scale${scale}
-        COMMAND $<TARGET_FILE:hikari_ui_docking_qualification_tests> floatingHeaderDocksByItsTitleAndMovesByTheRest
-            floatingTabBarMovesRightOfItsTabs floatingTitleKeepsItsRoom)
+        COMMAND $<TARGET_FILE:hikari_ui_docking_qualification_tests> floatingHeaderDocksByItsTitle
+            wholeFloatingHeaderDocks floatingHeaderHasNoSystemMoveArea)
     set_tests_properties(hikari_ui_docking_qualification_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
@@ -300,6 +304,9 @@ target_link_libraries(hikari_crash_probe PRIVATE hikari_composition)
 hikari_add_qttest(hikari_ui_analytics_tests SOURCES analytics_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_analytics_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_discord_presence_tests OFFSCREEN_ONLY SOURCES discord_presence_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_star_prompt_tests OFFSCREEN_ONLY SOURCES star_prompt_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_star_prompt_ui_tests SOURCES star_prompt_ui_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_launcher_tests SOURCES launcher_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_crash_report_tests SOURCES crash_report_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_crash_report_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

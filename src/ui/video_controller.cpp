@@ -258,8 +258,9 @@ QString VideoController::status() const
     }
     const int f = frame();
     const auto start = m_session.frameStart(f);
-    return QCoreApplication::translate("HikariSub.Video", "Frame %1 of %2  %3")
-               .arg(f).arg(frameCount()).arg(start ? clock(start->microseconds()) : QString());
+    if (!start)
+        return QCoreApplication::translate("HikariSub.Video", "Frame %1 of %2").arg(f).arg(frameCount());
+    return QCoreApplication::translate("HikariSub.Video", "Frame %1 of %2 · %3").arg(f).arg(frameCount()).arg(clock(start->microseconds()));
 }
 
 void VideoController::attachPresenter(QObject *presenter)

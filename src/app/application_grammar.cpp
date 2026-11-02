@@ -25,14 +25,14 @@ constexpr std::size_t kWalkKept = std::size_t(1) << 20;
 // MUST KILL: kGroupTexts must stay in core::grammar::groupIds() order.
 constexpr std::array<std::pair<const char *, const char *>, 15> kGroupTexts{{
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Proper nouns"),
-     QT_TRANSLATE_NOOP("HikariSub.Spelling", "Names of places, organizations and products keep their standard capitalization.")},
+     QT_TRANSLATE_NOOP("HikariSub.Spelling", "Names of places, organisations and products keep their standard capitalisation.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Initialisms"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Abbreviations and initialisms use the expected letter case and punctuation.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Closed compounds"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Compound words written as one word instead of split apart.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Phrase corrections"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Common phrase-level mistakes where a standard expression is preferred.")},
-    {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Capitalization and case"),
+    {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Capitalisation and case"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Personal pronouns, titles, brands and other case-sensitive text.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Punctuation and spacing"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Punctuation marks, apostrophes, quotation marks, commas and spacing.")},

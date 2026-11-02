@@ -161,7 +161,7 @@ private slots:
         sampler.setRoute({QStringLiteral("grab"), {}});
         sampler.pickFromPortal();
         QCOMPARE(failed.count(), 2);
-        QCOMPARE(failed.at(1).at(0).toString(), QStringLiteral("The desktop's screenshot portal is not in use here."));
+        QCOMPARE(failed.at(1).at(0).toString(), QStringLiteral("The desktop’s screenshot portal is not in use here."));
         QVERIFY(!sampler.portalBusy());
     }
 

@@ -50,6 +50,11 @@ private slots:
         QFile::remove(dir.filePath(QStringLiteral("analytics-queue.json")));
     }
 
+    void whatIsSentIsOnTheSite()
+    {
+        QCOMPARE(Analytics::whatIsSentUrl(), QUrl(QStringLiteral("https://hikarisub.org/en/docs/help/what-is-sent")));
+    }
+
     void sendsAppStarted()
     {
         AnalyticsEndpoint endpoint;

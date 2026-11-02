@@ -33,7 +33,7 @@ DialogWindow {
     function trustText(review) {
         if (review.needsRetrust && review.keyId.length > 0)
             return qsTr("The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.")
-                .arg(review.pinnedKeyId).arg(review.keyId)
+                .arg(review.pinnedKeyId, review.keyId)
         if (review.needsRetrust)
             return qsTr("This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.")
                 .arg(review.pinnedKeyId)
@@ -54,13 +54,13 @@ DialogWindow {
             downgrade: qsTr("Downgrade plugin")
         }
         const questions = {
-            install: qsTr("Install “%1” %2?").arg(review.name).arg(review.version),
-            update: qsTr("Update “%1” from %2 to %3?").arg(review.name).arg(review.installedVersion).arg(review.version),
-            reinstall: qsTr("Reinstall “%1” %2?").arg(review.name).arg(review.version),
-            downgrade: qsTr("Replace “%1” %2 with the older %3?").arg(review.name).arg(review.installedVersion).arg(review.version)
+            install: qsTr("Install “%1” %2?").arg(review.name, review.version),
+            update: qsTr("Update “%1” from %2 to %3?").arg(review.name, review.installedVersion, review.version),
+            reinstall: qsTr("Reinstall “%1” %2?").arg(review.name, review.version),
+            downgrade: qsTr("Replace “%1” %2 with the older %3?").arg(review.name, review.installedVersion, review.version)
         }
         const asks = review.permissions.length > 0
-                ? qsTr("It asks to:") + "\n• " + review.permissions.join("\n• ")
+                ? qsTr("It asks for these permissions") + "\n• " + review.permissions.join("\n• ")
                 : qsTr("It asks for no permissions beyond the active subtitle file.")
         messages.ask({
             title: titles[review.change],
