@@ -25,7 +25,7 @@ British English. Use the `-ise` forms and British spellings:
 | grey | gray |
 | cancelled, labelled, travelling | canceled, labeled, traveling |
 | initialise, organise, customise, minimise, capitalisation, synchronise, analyse | initialize, organize, customize, minimize, capitalization, synchronize, analyze |
-| catalogue | catalog (see recommendation 2) |
+| catalogue | catalog (decision 2) |
 | towards, afterwards | toward, afterward |
 
 Keep these as they are:
@@ -116,7 +116,7 @@ Never build a sentence out of translated pieces ("Video: " + name, " or "). Use 
 
 ## One name per thing
 
-Each thing has one name everywhere: menu bar, context menus, ⋯ menus, the panel header, the window title, Settings, tooltips, help, messages and the site's guides. The terms follow [CONTEXT.md](../../CONTEXT.md). Where CONTEXT.md and the screen disagree, the screen changes, not the glossary, unless a recommendation below says otherwise.
+Each thing has one name everywhere: menu bar, context menus, ⋯ menus, the panel header, the window title, Settings, tooltips, help, messages and the site's guides. The terms follow [CONTEXT.md](../../CONTEXT.md). Where CONTEXT.md and the screen disagree, the screen changes, not the glossary, unless an owner decision below says otherwise.
 
 | Thing | Name | Not |
 |---|---|---|
@@ -135,52 +135,49 @@ Each thing has one name everywhere: menu bar, context menus, ⋯ menus, the pane
 | Taking a panel out of the window | Float | Undock, detach |
 | Removing a panel from view | Close | Hide (for a panel) |
 | Opening a file's folder | Show in folder; "Show video in folder", "Show subtitles in folder" when the menu has several | Open video containing folder, Open the folder containing the subtitles, Open folder |
-| A key combination | shortcut (see recommendation 1) | hotkey, key binding |
+| A key combination | shortcut (decision 1) | hotkey, key binding |
 | The settings window | Settings | Options, preferences, program settings |
 | A menu of more items | More options (tooltip of ⋯) | %1 options, More audio options |
 | The spelling tool | Spellchecker (panel); Check spelling (command) | spell checker, spell checking |
 | A recovery copy | autosave | auto save |
-| Collections of styles or fonts | Style catalogue, Font catalogue (recommendation 2) | catalog |
+| Collections of styles or fonts | Style catalogue, Font catalogue (decision 2) | catalog |
 | Full-screen video | full screen (noun), full-screen (adjective) | fullscreen |
 | Deleting versus removing | Delete destroys data (lines, files, presets, autosaves). Remove takes an item out of a list and leaves it intact (recent files, a shortcut, a font from a catalogue) | — |
 | Play or pause in one control | Play or pause (command); Play and Pause (the button's two states) | Play / Pause |
 
 ## Changing a string
 
-- **Translations:** a changed source string goes through the TR1 process in the same PR, into the ko, pl, ta and th `.ts` files.
-  - A change that leaves the meaning alone keeps its translations, carried over as finished. This covers spelling, quotes, case, the ellipsis, a removed colon or full stop, and a removed hard-coded key.
-  - A change of wording or meaning carries the old translation over as `type="unfinished"`, so translators see it as needing a check. The `.qm` files are built with `-nounfinished`, so until then the language shows English for that string.
+- **Translations:** a changed source string goes through the TR1 process in the same PR, into the ko, pl, ta and th `.ts` files. The catalogues hold no unfinished entries, and a PR keeps it that way.
+  - A change that leaves the meaning alone keeps its translations, carried over as finished. This covers spelling, quotes, case, the ellipsis, a removed colon or full stop, and a removed hard-coded key. The translation takes the same punctuation change: it loses the colon or the "…" its source lost, and gains a full stop with its source (not in Thai, which has none).
+  - A change of wording or meaning gets a new finished translation in each language, in the terms that catalogue already uses for the same things.
+  - The source is renamed in place in each catalogue. Running `hikari_lupdate` afterwards must find no new source and change no catalogue.
 - **Translator comments** (`//:`, `//~`) stay with their strings. If a rename makes a comment wrong, update the comment.
 - **The site:** each area PR lists the labels it changed that the site's guides quote, under "Site:" in its report.
 - **Tests** that look for a string by its text change with it. `tests/ui/menu_bar.txt` is regenerated, not edited by hand.
 
 ## The guard
 
-A test in CI, `hikari_i18n_text_style` (to be added with the first area PR), reads `i18n/hikarisub_pl.ts`. It fails on:
+`hikari_i18n_text_style_tests` (ctest, label i18n) reads every source in `i18n/hikarisub_pl.ts`, with mnemonics removed. It fails on:
 
 - "..." in any source;
-- a straight double quote, or an apostrophe between letters;
-- an American spelling from the table above;
+- a straight double quote, or an apostrophe next to a letter;
+- an American spelling from the table above (the names "GNU General Public License" and "Apache License" excepted);
 - a label that starts with "The " or "the " (a source with no full stop and at most eight words);
-- a non-first word in title case within a short label, unless it is on the proper-name list;
-- a label that ends with ":" or with whitespace;
-- "\t" followed by a key, or "please", in any source.
+- a non-first word in title case within a short label, unless it is on the test's proper-name list or follows a colon, a full stop, an opening quote, "›" or " · ";
+- a short label that ends with ":", or a source with leading, trailing or double spaces;
+- a tab (a key written after the text), or "please".
 
-Its allow-list (`i18n/text-style-allow.tsv`) names each exception and the reason for it. The area PRs empty that list as they go.
+Its allow-list, `i18n/text-style-allow.tsv`, has one row per exception: context, source (with `\n` and `\t` for line breaks and tabs), rule and a reason. A failure prints each new violation as a row ready to paste. "pending #596 <area>" marks a string that area's PR fixes. The other reasons are lasting: a folder name on disk, a style's name, a button named in a sentence. A row whose string no longer exists does not fail, so a PR that renames a string doesn't conflict with another that removes the row.
 
 ## Owner decisions
 
-Recommendations 1–6 below need a yes or no on [#596](https://github.com/altqx/hikari/issues/596). Everything else in this guide follows from the decisions already made.
+The owner answered yes to all six on [#596](https://github.com/altqx/hikari/issues/596) (2026-11-02), with the sample of before/after strings:
 
-1. **"Shortcut", not "hotkey".**
-   - Today: 39 strings say "shortcut" and 21 say "hotkey".
-   - Recommendation: "shortcut" everywhere the user reads it, and Settings › Hotkeys becomes Settings › Shortcuts.
-   - Unchanged: the file `hotkeys.toml` and the command ids.
-2. **"Catalogue".**
-   - Today: the app writes "catalog" in 59 strings.
-   - Recommendation: British "catalogue", with CONTEXT.md's "Style catalog" and "Font catalog" renamed to match.
-   - Unchanged: the setting keys and the folder name.
-3. **"Apply changes", not "Commit", in the audio panel.** Legacy says "commit", and its own menu already says "Automatically apply changes".
-4. **"Close" and "Float" for panels**, in View › Panels and in the panel's ⋯ menu alike. These replace "Hide" and "Undock".
-5. **No ellipsis on tool and window names.** "Kanji timer…" becomes "Kanji timer". "Script properties", "Settings" and "Style manager" stay without one.
-6. **Keep "document" on screen**, following CONTEXT.md. 31 strings already use it ("Save the changes to %n documents before quitting?"). "Subtitles" stays as the file type in File commands only.
+1. **"Shortcut", not "hotkey",** everywhere the user reads it: Settings › Hotkeys becomes Settings › Shortcuts. The file `hotkeys.toml` and the command ids stay.
+2. **"Catalogue",** with CONTEXT.md's Style catalogue and Font catalogue renamed to match. The setting keys and the `catalogs` folder keep their names.
+3. **"Apply changes", not "Commit",** in the audio panel: Apply changes, Apply changes automatically, Go to the next line after applying.
+4. **"Close" and "Float" for panels,** in View › Panels and in the panel's ⋯ menu alike.
+5. **No ellipsis on tool and window names:** "Kanji timer…" becomes "Kanji timer". "Script properties", "Settings" and "Style manager" stay without one.
+6. **"Document" on screen,** following CONTEXT.md. "Subtitles" stays as the file type in File commands only.
+
+CX2 ([#578](https://github.com/altqx/hikari/issues/578)) named the Grid's "Dialogue shifting window" command "Translation matching…".

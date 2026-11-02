@@ -1,6 +1,6 @@
 # AI providers
 
-The provider layer of Hikari AI ([ADR 0024](adr/0024-hikari-ai.md), [AI5 #433](https://github.com/altqx/hikari/issues/433)). It sends requests to the providers the user added and streams the answers back. The agent, its tools and its review come later and sit on top of it.
+The provider layer of Hikari AI ([ADR 0024](adr/0024-hikari-ai.md), [AI5 #433](https://github.com/altqx/hikari/issues/433)). It sends requests to the providers the user added and streams the answers back. The agent, its tools and its review come later and sit on top of it. This C++ layer is the reference for the TypeScript sidecar ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)), which ports it to the official SDKs; the keychain store and the keyless config stay in C++.
 
 ## Where it lives
 
