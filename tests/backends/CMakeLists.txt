@@ -420,3 +420,5 @@ target_include_directories(hikari_backends_ai_sidecar_host_tests PRIVATE "${PROJ
 target_compile_definitions(hikari_backends_ai_sidecar_host_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_backends_ai_sidecar_host_tests hikari_fake_ai_sidecar)
+hikari_add_gtest(hikari_backends_ai_sidecar_download_tests SOURCES ai_sidecar_download_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB LABELS backends)
