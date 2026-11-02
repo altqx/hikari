@@ -23,6 +23,25 @@ struct PointF {
     bool operator==(const PointF &) const = default;
 };
 
+struct PointD {
+    double x = 0, y = 0;
+    bool operator==(const PointD &) const = default;
+};
+
+struct RectD {
+    double left = 0, top = 0, width = 0, height = 0;
+    bool operator==(const RectD &) const = default;
+};
+
+// Aegisub35 scales and pans the whole picture (Aegisub 3.5's content zoom);
+// Legacy crops it through the zoom rectangle (HikariSub legacy). The values are
+// the video.zoomModel setting's.
+enum class ZoomModel { Aegisub35 = 0, Legacy = 1 };
+
+// Aegisub 3.5's wheel actions on the video, as the video.*scrollAction settings
+// store them; 3.5's "Resizes the video box" has no docked equivalent.
+enum class ScrollAction { Zoom = 0, ZoomReversed = 1, Pan = 2, PanSwapped = 3, Nothing = 4 };
+
 // FFMS2's encoded size of frame 0; SAR 0 when unknown.
 struct SourceGeometry {
     int width = 0, height = 0;
@@ -65,12 +84,37 @@ public:
     int scriptWidth() const { return m_scriptWidth; }
     int scriptHeight() const { return m_scriptHeight; }
 
+    // Switching drops the zoom and the pan of both models.
+    void setZoomModel(ZoomModel model);
+    ZoomModel zoomModel() const { return m_model; }
+
+    // Aegisub35: the picture's scale, kept to 0.125..10, and its offset from
+    // the centre in device pixels, kept within half the picture plus 0.4 of the window.
+    double contentZoom() const { return m_contentZoom; }
+    PointD pan() const { return m_pan; }
+    void panBy(double dx, double dy);
+    // The point of the unzoomed picture under (x, y), relative to its centre.
+    PointD zoomAnchor(double x, double y) const;
+    // Zooms to `zoom` and pans so that `anchor` is under (x, y).
+    void zoomAndPan(double zoom, PointD anchor, double x, double y);
+    // One wheel notch scales by 1.125 (0.875 back), the point under the pointer staying.
+    void wheelZoom(double notches, double x, double y);
+    // Notches are Qt's angleDelta / 120 on each axis; a notch pans 5 logical
+    // pixels. False for Nothing and under Legacy.
+    bool scroll(ScrollAction action, double notchesX, double notchesY, double x, double y);
+    void beginPinch(double x, double y);
+    void pinch(double factor, double x, double y);
+
+    // Where the frame, cropped to sourceRect(), is drawn: videoRect() under
+    // Legacy, the scaled and panned picture under Aegisub35.
+    RectD frameRect() const;
+
     // The tools take the zoom at once.
     void zoomAt(float percent, int x, int y);
     // Entering zoom mode unzoomed zooms by zoomPercentOption / 100 (2 outside
     // 1..11); the tools take it at once.
     void toggleZoom(int zoomPercentOption);
-    // The whole frame; the zoom mode stays as it was.
+    // The whole frame, unpanned; the zoom mode stays as it was.
     void resetZoom();
     // Zoom mode: zoomDrag moves with the left button held (pan or an edge).
     void zoomPress(int x, int y);
@@ -92,7 +136,10 @@ public:
     }
     const IntRect &sourceRect() const { return m_sourceRect; }
     const EdgeRect &zoomRect() const { return m_zoomRect; }
-    float zoomPercent() const { return m_zoomPercent; }
+    float zoomPercent() const
+    {
+        return m_model == ZoomModel::Aegisub35 ? static_cast<float>(m_contentZoom) : m_zoomPercent;
+    }
     // Logical pixels shown per video pixel, as Aegisub's video_zoom; 1 without video.
     double displayScale() const;
 
@@ -115,6 +162,8 @@ private:
     void sourceFromZoomRect(float screenWidth, float screenHeight);
     void clampZoomRect(const EdgeRect &before);
     void zoom();
+    void clampPan();
+    PointD pictureCentre() const;
 
     bool m_open = false;
     int m_clientWidth = 0, m_clientHeight = 0, m_panelHeight = 0;
@@ -131,6 +180,12 @@ private:
     PointF m_zoomMove{0, 0};
     PointF m_zoomScale{1, 1};
     double m_dpr = 1.0;
+    ZoomModel m_model = ZoomModel::Legacy;
+    double m_contentZoom = 1.0;
+    PointD m_pan;
+    double m_pinchStartZoom = 1.0;
+    PointD m_pinchAnchor;
+    int m_contentHeight = 0;
 };
 
 }

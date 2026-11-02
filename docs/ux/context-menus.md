@@ -932,7 +932,7 @@ Changes:
 Approved:
 
 - **10.1** Approve the panel video menu as drawn.
-- **10.2** Rename the menu bar's Video › “Turn off video zoom” to “Reset zoom and pan” too, so the command has one name.
+- **10.2** Rename the menu bar's Video › “Turn off video zoom” to “Reset zoom and pan” too, so the command has one name. Done by FA12 ([#569](https://github.com/altqx/hikari/issues/569)).
 
 ### 11. Video: right-click in full screen (CX5 #581; inventory R8)
 

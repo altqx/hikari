@@ -373,6 +373,16 @@ public:
         (void)event;
         return false;
     }
+    // True for the wheel with these modifiers, and for the middle button when the
+    // tool drags with it; the video's pan and zoom take the rest (a middle click
+    // that does not move still reaches the tool).
+    virtual bool takesWheel(bool shift, bool control) const
+    {
+        (void)shift;
+        (void)control;
+        return false;
+    }
+    virtual bool takesMiddleButton() const { return false; }
     // True when the tool used the key (a nudge: begin on press, commit on release).
     virtual bool key(const Key &event, VisualHost &host)
     {

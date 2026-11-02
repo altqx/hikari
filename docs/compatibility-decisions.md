@@ -29,3 +29,7 @@ A failing `include()` reports `Error loading Lua include "<name>":` or `Error ru
 ## FA4-deep-copy-cycles
 
 `aegisub.util.deep_copy` makes a table that refers to itself refer to the copy, as Aegisub 3.5 does. It used to point the copy back at the original. [FA4 #561](https://github.com/altqx/hikari/issues/561).
+
+## FA12-wheel-resize
+
+Aegisub 3.5's wheel choice "Resizes the video box" is not offered, because HikariSub's video fills a docked panel whose size the layout sets. The plain wheel on the video therefore does nothing by default, where 3.5 resized the box. Ctrl+wheel zooms and Shift+wheel pans, as in 3.5, and Settings › View lets each wheel zoom, pan or do nothing. [FA12 #569](https://github.com/altqx/hikari/issues/569).

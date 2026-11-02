@@ -470,7 +470,7 @@ constexpr NameRow kNames[] = {
         {5006, "Undo"},
         {5007, "Undo to last save"},
         {5043, "Zoom video"},
-        {5044, "Turn off video zoom"},
+        {5044, "Reset zoom and pan"},
         {5301, "Open new tab"},
         {5302, "Close current tab"},
         {5168, "Clean styles of ASS file"},
