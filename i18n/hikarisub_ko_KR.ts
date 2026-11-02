@@ -5492,15 +5492,15 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift times with the last values</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 값으로 시간 이동</translation>
     </message>
     <message>
         <source>Timing postprocessor panel</source>
-        <translation type="unfinished"></translation>
+        <translation>타이밍 후처리기 패널</translation>
     </message>
     <message>
         <source>Timing postprocessor with the last values</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 값으로 타이밍 후처리기 실행</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -5689,10 +5689,6 @@ What would you like to do?</source>
     <message>
         <source>Make line group</source>
         <translation>줄 그룹 만들기</translation>
-    </message>
-    <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation type="vanished">시간 이동 / 타이밍 후처리기 실행</translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -6721,10 +6717,6 @@ What would you like to do?</source>
         <translation>자막[&amp;S]</translation>
     </message>
     <message>
-        <source>Shift &amp;times...</source>
-        <translation type="vanished">시간 이동...[&amp;T]</translation>
-    </message>
-    <message>
         <source>Style &amp;manager</source>
         <translation>스타일 관리[&amp;M]</translation>
     </message>
@@ -6972,15 +6964,15 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift &amp;times…</source>
-        <translation type="unfinished"></translation>
+        <translation>시간 이동…[&amp;T]</translation>
     </message>
     <message>
         <source>Moves line times by the lead-in, lead-out, gap and keyframe rules</source>
-        <translation type="unfinished"></translation>
+        <translation>도입부, 종결부, 간격, 키 프레임 규칙에 따라 줄 시간을 옮깁니다</translation>
     </message>
     <message>
         <source>Timing &amp;postprocessor…</source>
-        <translation type="unfinished"></translation>
+        <translation>타이밍 후처리기…[&amp;P]</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -13354,44 +13346,32 @@ Styles deleted:
 <context>
     <name>HikariSub.TimeShift</name>
     <message>
-        <source>The starting time</source>
-        <translation type="vanished">시작 시간</translation>
-    </message>
-    <message>
-        <source>End time</source>
-        <translation type="vanished">종료 시간</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation type="vanished">스타일</translation>
-    </message>
-    <message>
         <source>Shift by</source>
-        <translation type="unfinished"></translation>
+        <translation>이동 기준</translation>
     </message>
     <message>
         <source>To video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상으로</translation>
     </message>
     <message>
         <source>Moves the active line to the video’s frame</source>
-        <translation type="unfinished"></translation>
+        <translation>활성 줄을 영상의 프레임으로 옮깁니다</translation>
     </message>
     <message>
         <source>To audio mark</source>
-        <translation type="unfinished"></translation>
+        <translation>오디오 표시로</translation>
     </message>
     <message>
         <source>Moves the active line to the audio mark</source>
-        <translation type="unfinished"></translation>
+        <translation>활성 줄을 오디오 표시로 옮깁니다</translation>
     </message>
     <message>
         <source>Move</source>
-        <translation type="unfinished">이동</translation>
+        <translation>이동</translation>
     </message>
     <message>
         <source>Move the active line’s</source>
-        <translation type="unfinished"></translation>
+        <translation>활성 줄에서 옮길 시간</translation>
     </message>
     <message>
         <source>End</source>
@@ -13399,75 +13379,75 @@ Styles deleted:
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished"></translation>
+        <translation>시작</translation>
     </message>
     <message>
         <source>To the video at %1</source>
-        <translation type="unfinished"></translation>
+        <translation>영상의 %1(으)로</translation>
     </message>
     <message>
         <source>To the audio mark at %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1의 오디오 표시로</translation>
     </message>
     <message>
         <source>Plus</source>
-        <translation type="unfinished"></translation>
+        <translation>추가</translation>
     </message>
     <message>
         <source>Unit</source>
-        <translation type="unfinished"></translation>
+        <translation>단위</translation>
     </message>
     <message>
         <source>Frames need a video.</source>
-        <translation type="unfinished"></translation>
+        <translation>프레임 단위는 영상이 있어야 합니다.</translation>
     </message>
     <message>
         <source>Open video…</source>
-        <translation type="unfinished">영상 열기…</translation>
+        <translation>영상 열기…</translation>
     </message>
     <message>
         <source>Direction</source>
-        <translation type="unfinished"></translation>
+        <translation>방향</translation>
     </message>
     <message>
         <source>Later</source>
-        <translation type="unfinished">나중에</translation>
+        <translation>나중으로</translation>
     </message>
     <message>
         <source>Earlier</source>
-        <translation type="unfinished"></translation>
+        <translation>이전으로</translation>
     </message>
     <message>
         <source>Times</source>
-        <translation type="unfinished"></translation>
+        <translation>시간</translation>
     </message>
     <message>
         <source>Both</source>
-        <translation type="unfinished"></translation>
+        <translation>둘 다</translation>
     </message>
     <message>
         <source>End times</source>
-        <translation type="unfinished">종료 시간</translation>
+        <translation>종료 시간</translation>
     </message>
     <message>
         <source>Leave as they are</source>
-        <translation type="unfinished"></translation>
+        <translation>그대로 두기</translation>
     </message>
     <message>
         <source>Fix overlaps</source>
-        <translation type="unfinished"></translation>
+        <translation>겹침 바로잡기</translation>
     </message>
     <message>
         <source>Recalculate from text length</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 길이로 다시 계산</translation>
     </message>
     <message>
         <source>Needs a video.</source>
-        <translation type="unfinished"></translation>
+        <translation>영상이 필요합니다.</translation>
     </message>
     <message>
         <source>Move tag times too (%1, %2, %3)</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 시간도 이동 (%1, %2, %3)</translation>
     </message>
     <message>
         <source>Shift times</source>
@@ -13482,164 +13462,112 @@ Styles deleted:
         <translation>시간</translation>
     </message>
     <message>
-        <source>Shift subtitle times</source>
-        <translation type="vanished">자막 시간 이동</translation>
-    </message>
-    <message>
         <source>Shift</source>
         <translation>이동</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">적용</translation>
+        <translation>적용</translation>
     </message>
     <message numerus="yes">
         <source>Apply to %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n줄에 적용</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Shift %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n줄 이동</numerusform>
         </translation>
     </message>
     <message>
         <source>No line changes</source>
-        <translation type="unfinished"></translation>
+        <translation>바뀌는 줄 없음</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n줄 변경</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Changes %1 of %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n줄 중 %1줄 변경</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n lead-in</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>도입부 %n</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n lead-out</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>종결부 %n</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n gap(s) closed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>간격 %n개 메움</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n snapped</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n개 맞춤</numerusform>
         </translation>
     </message>
     <message>
         <source>lead-in</source>
-        <translation type="unfinished"></translation>
+        <translation>도입부</translation>
     </message>
     <message>
         <source>lead-out</source>
-        <translation type="unfinished"></translation>
+        <translation>종결부</translation>
     </message>
     <message>
         <source>gap closed</source>
-        <translation type="unfinished"></translation>
+        <translation>간격 메움</translation>
     </message>
     <message>
         <source>snapped start</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 맞춤</translation>
     </message>
     <message>
         <source>snapped end</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 맞춤</translation>
     </message>
     <message numerus="yes">
         <source>%n frame(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n프레임</numerusform>
         </translation>
     </message>
     <message>
         <source>Preview</source>
-        <translation type="unfinished">미리 보기</translation>
+        <translation>미리 보기</translation>
     </message>
     <message>
         <source>no change</source>
-        <translation type="unfinished"></translation>
+        <translation>변경 없음</translation>
     </message>
     <message>
         <source>Line %1, start %2 to %3, end %4 to %5, %6</source>
-        <translation type="unfinished"></translation>
+        <translation>%1번 줄, 시작 %2에서 %3, 종료 %4에서 %5, %6</translation>
     </message>
     <message numerus="yes">
         <source>%n more line(s) change.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n줄이 더 바뀝니다.</numerusform>
         </translation>
     </message>
     <message>
         <source>One undo step: “%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Forward</source>
-        <translation type="vanished">앞으로</translation>
-    </message>
-    <message>
-        <source>Backward</source>
-        <translation type="vanished">뒤로</translation>
-    </message>
-    <message>
-        <source>Tag times</source>
-        <translation type="vanished">태그 시간</translation>
-    </message>
-    <message>
-        <source>Move according to the following styles (separated by a comma)</source>
-        <translation type="vanished">다음 스타일에 따라 이동(쉼표로 구분)</translation>
-    </message>
-    <message>
-        <source>End time correction</source>
-        <translation type="vanished">종료 시간 수정</translation>
-    </message>
-    <message>
-        <source>Corrects end times that are improper or overlap each other</source>
-        <translation type="vanished">잘못되었거나 서로 겹치는 종료 시간 수정</translation>
-    </message>
-    <message>
-        <source>Shift by video / audio</source>
-        <translation type="vanished">영상 / 소리 기준 이동</translation>
-    </message>
-    <message>
-        <source>Beginning</source>
-        <translation type="vanished">시작 시간</translation>
-    </message>
-    <message>
-        <source>Moves the start time to the video/audio time</source>
-        <translation type="vanished">시작 시간을 영상 / 소리 시간으로 이동</translation>
-    </message>
-    <message>
-        <source>Move the marker to video time</source>
-        <translation type="vanished">표시선을 영상 시간으로 이동</translation>
-    </message>
-    <message>
-        <source>Move the marker to audio time</source>
-        <translation type="vanished">표시선을 소리 시간으로 이동</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation type="vanished">대상 줄</translation>
+        <translation>실행 취소 한 단계: “%1”</translation>
     </message>
     <message>
         <source>Timing postprocessor</source>
@@ -13650,36 +13578,8 @@ Styles deleted:
         <translation>이동량</translation>
     </message>
     <message>
-        <source>Time shifts</source>
-        <translation type="vanished">시간 이동</translation>
-    </message>
-    <message>
-        <source>Shift times by time / frames</source>
-        <translation type="vanished">시간 / 프레임 단위로 시간 이동</translation>
-    </message>
-    <message>
-        <source>Delays subtitles</source>
-        <translation type="vanished">자막 늦추기</translation>
-    </message>
-    <message>
-        <source>Speeds up subtitles</source>
-        <translation type="vanished">자막 앞당기기</translation>
-    </message>
-    <message>
-        <source>Shifts %1, %2, and %3 tag times
-so their positions on video do not change
-(slows down time shifting)</source>
-        <translation type="vanished">%1, %2, %3 태그 시간을 이동하여
-영상에서의 위치가 바뀌지 않게 합니다
-(시간 이동이 느려짐)</translation>
-    </message>
-    <message>
         <source>Lines</source>
         <translation>줄</translation>
-    </message>
-    <message>
-        <source>The choice of lines to move</source>
-        <translation type="vanished">이동할 줄 선택</translation>
     </message>
     <message>
         <source>All lines</source>
@@ -13691,143 +13591,31 @@ so their positions on video do not change
     </message>
     <message>
         <source>Selected line and below</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄과 그 아래</translation>
     </message>
     <message>
         <source>Starting at or after the selection</source>
-        <translation type="unfinished"></translation>
+        <translation>선택 시점 이후에 시작하는 줄</translation>
     </message>
     <message>
         <source>Starting at or before the selection</source>
-        <translation type="unfinished"></translation>
+        <translation>선택 시점 이전에 시작하는 줄</translation>
     </message>
     <message>
         <source>Lines in chosen styles…</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 스타일의 줄…</translation>
     </message>
     <message>
         <source>Choose styles…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation type="vanished">선택한 줄부터</translation>
-    </message>
-    <message>
-        <source>All times higher and equal</source>
-        <translation type="vanished">크거나 같은 시간</translation>
-    </message>
-    <message>
-        <source>All times lower and equal</source>
-        <translation type="vanished">작거나 같은 시간</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation type="vanished">선택한 스타일에 따라</translation>
-    </message>
-    <message>
-        <source>Select a style from the list</source>
-        <translation type="vanished">목록에서 스타일을 선택하십시오</translation>
-    </message>
-    <message>
-        <source>Styles, separated by commas</source>
-        <translation type="vanished">쉼표로 구분한 스타일</translation>
-    </message>
-    <message>
-        <source>Run timing postprocessor</source>
-        <translation type="vanished">타이밍 후처리기 실행</translation>
-    </message>
-    <message>
-        <source>A method of time shift</source>
-        <translation type="vanished">시간 이동 방법</translation>
-    </message>
-    <message>
-        <source>The choice of times to move</source>
-        <translation type="vanished">이동할 시간 선택</translation>
-    </message>
-    <message>
-        <source>Both times</source>
-        <translation type="vanished">두 시간 모두</translation>
-    </message>
-    <message>
-        <source>Leave unchanged</source>
-        <translation type="vanished">변경 안 함</translation>
-    </message>
-    <message>
-        <source>Adjust overlapping times</source>
-        <translation type="vanished">겹치는 시간 조정</translation>
-    </message>
-    <message>
-        <source>New times</source>
-        <translation type="vanished">새로운 시간</translation>
-    </message>
-    <message>
-        <source>Moves the end time to the video/audio time</source>
-        <translation type="vanished">종료 시간을 영상 / 소리 시간으로 이동</translation>
-    </message>
-    <message>
-        <source>Lead-in/lead-out</source>
-        <translation type="vanished">도입부/종결부</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the start time (good when using fad)</source>
-        <translation type="vanished">시작 시간 앞에 도입부 추가 (fad 사용 시 유용)</translation>
-    </message>
-    <message>
-        <source>Introduction time in milliseconds</source>
-        <translation type="vanished">도입부 시간(ms)</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the end time (good when using fad)</source>
-        <translation type="vanished">종료 시간 뒤에 종결부 추가 (fad 사용 시 유용)</translation>
-    </message>
-    <message>
-        <source>Enable</source>
-        <translation type="vanished">사용</translation>
-    </message>
-    <message>
-        <source>Start time extension threshold</source>
-        <translation type="vanished">시작 시간 확장 임계값</translation>
-    </message>
-    <message>
-        <source>End time extension threshold</source>
-        <translation type="vanished">종료 시간 확장 임계값</translation>
-    </message>
-    <message>
-        <source>Before the start time</source>
-        <translation type="vanished">시작 시간 전</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the start time in milliseconds</source>
-        <translation type="vanished">시작 시간 이전 키 프레임까지의 
-최대 이동 시간(ms)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the start time in milliseconds</source>
-        <translation type="vanished">시작 시간 이후 키 프레임까지의 
-최대 이동 시간(ms)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the end time in milliseconds</source>
-        <translation type="vanished">종료 시간 이전 키 프레임까지의 
-최대 이동 시간(ms)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the end time in milliseconds</source>
-        <translation type="vanished">종료 시간 이후 키 프레임까지의 
-최대 이동 시간(ms)</translation>
+        <translation>스타일 선택…</translation>
     </message>
     <message>
         <source>%1 ms</source>
-        <translation type="unfinished">%1ms</translation>
+        <translation>%1ms</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
-        <translation type="unfinished"></translation>
+        <translation>규칙을 쓰려면 영상이 필요합니다.</translation>
     </message>
     <message>
         <source>Lead-in</source>
@@ -13835,7 +13623,7 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Start earlier by</source>
-        <translation type="unfinished"></translation>
+        <translation>시작을 앞당길 시간</translation>
     </message>
     <message>
         <source>Lead-out</source>
@@ -13843,107 +13631,67 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>End later by</source>
-        <translation type="unfinished"></translation>
+        <translation>종료를 늦출 시간</translation>
     </message>
     <message>
         <source>Close small gaps</source>
-        <translation type="unfinished"></translation>
+        <translation>작은 간격 메우기</translation>
     </message>
     <message>
         <source>Start back to the previous end if within</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 종료까지 이 시간 안이면 시작을 당기기</translation>
     </message>
     <message>
         <source>End on to the next start if within</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 시작까지 이 시간 안이면 종료를 늘리기</translation>
     </message>
     <message>
         <source>Both gap limits are 0 ms. Raise one to close gaps.</source>
-        <translation type="unfinished"></translation>
+        <translation>두 간격 한도가 모두 0ms입니다. 간격을 메우려면 하나를 늘리세요.</translation>
     </message>
     <message>
         <source>before</source>
-        <translation type="unfinished"></translation>
+        <translation>이전</translation>
     </message>
     <message>
         <source>after</source>
-        <translation type="unfinished"></translation>
+        <translation>이후</translation>
     </message>
     <message>
         <source>Start within</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 범위</translation>
     </message>
     <message>
         <source>Start within, before</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 범위, 이전</translation>
     </message>
     <message>
         <source>Start within, after</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 범위, 이후</translation>
     </message>
     <message>
         <source>End within</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 범위</translation>
     </message>
     <message>
         <source>End within, before</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 범위, 이전</translation>
     </message>
     <message>
         <source>End within, after</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 범위, 이후</translation>
     </message>
     <message>
         <source>Needs keyframes.</source>
-        <translation type="unfinished"></translation>
+        <translation>키 프레임이 필요합니다.</translation>
     </message>
     <message>
         <source>Open keyframes…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lead-out time in milliseconds</source>
-        <translation type="vanished">종결부 시간(ms)</translation>
-    </message>
-    <message>
-        <source>Set times as continuous</source>
-        <translation type="vanished">연속으로 시간 설정</translation>
-    </message>
-    <message>
-        <source>Start time threshold</source>
-        <translation type="vanished">시작 시간 임계값</translation>
-    </message>
-    <message>
-        <source>End time threshold</source>
-        <translation type="vanished">종료 시간 임계값</translation>
+        <translation>키 프레임 열기…</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
         <translation>키 프레임에 맞춤</translation>
-    </message>
-    <message>
-        <source>After the start time</source>
-        <translation type="vanished">시작 시간 후</translation>
-    </message>
-    <message>
-        <source>Before the end time</source>
-        <translation type="vanished">종료 시간 전</translation>
-    </message>
-    <message>
-        <source>After the end time</source>
-        <translation type="vanished">종료 시간 후</translation>
-    </message>
-    <message>
-        <source>Profiles</source>
-        <translation type="vanished">프로필</translation>
-    </message>
-    <message>
-        <source>Adding and editing profiles</source>
-        <translation type="vanished">프로필 추가 및 편집</translation>
-    </message>
-    <message>
-        <source>Removing profiles</source>
-        <translation type="vanished">프로필 삭제</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -13966,44 +13714,20 @@ after the end time in milliseconds</source>
         <translation>시간을 이동할 수 없습니다.</translation>
     </message>
     <message>
-        <source>Shift only the start times?</source>
-        <translation type="vanished">시작 시간만 이동하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Shift only the end times?</source>
-        <translation type="vanished">종료 시간만 이동하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
-        <translation type="vanished">종료 시간은 그대로이므로, 종료 시간 이후로 이동한 줄은 시작하기 전에 끝나게 됩니다.</translation>
-    </message>
-    <message>
-        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
-        <translation type="vanished">시작 시간은 그대로이므로, 시작 시간 이전으로 이동한 줄은 시작하기 전에 끝나게 됩니다.</translation>
-    </message>
-    <message>
-        <source>Shift start times</source>
-        <translation type="vanished">시작 시간 이동</translation>
-    </message>
-    <message>
-        <source>Shift end times</source>
-        <translation type="vanished">종료 시간 이동</translation>
-    </message>
-    <message>
         <source>%1 (Timing default)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (타이밍 기본값)</translation>
     </message>
     <message>
         <source>Delete preset</source>
-        <translation type="unfinished">프리셋 삭제</translation>
+        <translation>프리셋 삭제</translation>
     </message>
     <message>
         <source>Delete the preset “%1”?</source>
-        <translation type="unfinished">“%1” 프리셋을 삭제하시겠습니까?</translation>
+        <translation>“%1” 프리셋을 삭제하시겠습니까?</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">삭제</translation>
+        <translation>삭제</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -14011,63 +13735,63 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Preset</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋</translation>
     </message>
     <message>
         <source>Preset: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋: %1</translation>
     </message>
     <message>
         <source>last used</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 사용 값</translation>
     </message>
     <message>
         <source>Preset commands</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋 명령</translation>
     </message>
     <message>
         <source>Save as preset…</source>
-        <translation type="unfinished">프리셋으로 저장…</translation>
+        <translation>프리셋으로 저장…</translation>
     </message>
     <message>
         <source>Rename preset…</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋 이름 바꾸기…</translation>
     </message>
     <message>
         <source>Delete preset…</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋 삭제…</translation>
     </message>
     <message>
         <source>Use in the Timing layout</source>
-        <translation type="unfinished"></translation>
+        <translation>타이밍 레이아웃에서 사용</translation>
     </message>
     <message>
         <source>Rename preset</source>
-        <translation type="unfinished"></translation>
+        <translation>프리셋 이름 바꾸기</translation>
     </message>
     <message>
         <source>Save as preset</source>
-        <translation type="unfinished">프리셋으로 저장</translation>
+        <translation>프리셋으로 저장</translation>
     </message>
     <message>
         <source>Preset name</source>
-        <translation type="unfinished">프리셋 이름</translation>
+        <translation>프리셋 이름</translation>
     </message>
     <message>
         <source>A preset named “%1” exists. Saving replaces it.</source>
-        <translation type="unfinished">“%1” 프리셋이 이미 있습니다. 저장하면 교체됩니다.</translation>
+        <translation>“%1” 프리셋이 이미 있습니다. 저장하면 교체됩니다.</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished"></translation>
+        <translation>교체</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished">이름 바꾸기</translation>
+        <translation>이름 바꾸기</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished">저장</translation>
+        <translation>저장</translation>
     </message>
 </context>
 <context>

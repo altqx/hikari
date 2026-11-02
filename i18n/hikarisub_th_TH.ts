@@ -5492,15 +5492,15 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift times with the last values</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนเวลาด้วยค่าล่าสุด</translation>
     </message>
     <message>
         <source>Timing postprocessor panel</source>
-        <translation type="unfinished"></translation>
+        <translation>แผงโพสต์โปรเซสเซอร์การจัดเวลา</translation>
     </message>
     <message>
         <source>Timing postprocessor with the last values</source>
-        <translation type="unfinished"></translation>
+        <translation>โพสต์โปรเซสเซอร์การจัดเวลาด้วยค่าล่าสุด</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -5689,10 +5689,6 @@ What would you like to do?</source>
     <message>
         <source>Make line group</source>
         <translation>สร้างกลุ่มบรรทัด</translation>
-    </message>
-    <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation type="vanished">เลื่อนเวลา / ใช้โพสต์โปรเซสเซอร์การจัดเวลา</translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -6721,10 +6717,6 @@ What would you like to do?</source>
         <translation>&amp;คำบรรยาย</translation>
     </message>
     <message>
-        <source>Shift &amp;times...</source>
-        <translation type="vanished">เลื่อน&amp;เวลา...</translation>
-    </message>
-    <message>
         <source>Style &amp;manager</source>
         <translation>&amp;ตัวจัดการสไตล์</translation>
     </message>
@@ -6972,15 +6964,15 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Shift &amp;times…</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อน&amp;เวลา…</translation>
     </message>
     <message>
         <source>Moves line times by the lead-in, lead-out, gap and keyframe rules</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนเวลาของบรรทัดตามกฎช่วงนำ ช่วงต่อท้าย ช่องว่าง และคีย์เฟรม</translation>
     </message>
     <message>
         <source>Timing &amp;postprocessor…</source>
-        <translation type="unfinished"></translation>
+        <translation>โพสต์&amp;โปรเซสเซอร์การจัดเวลา…</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -13354,44 +13346,32 @@ Styles deleted:
 <context>
     <name>HikariSub.TimeShift</name>
     <message>
-        <source>The starting time</source>
-        <translation type="vanished">เวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>End time</source>
-        <translation type="vanished">เวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation type="vanished">สไตล์</translation>
-    </message>
-    <message>
         <source>Shift by</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนตาม</translation>
     </message>
     <message>
         <source>To video</source>
-        <translation type="unfinished"></translation>
+        <translation>ไปที่วิดีโอ</translation>
     </message>
     <message>
         <source>Moves the active line to the video’s frame</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนบรรทัดที่ใช้งานไปที่เฟรมของวิดีโอ</translation>
     </message>
     <message>
         <source>To audio mark</source>
-        <translation type="unfinished"></translation>
+        <translation>ไปที่เครื่องหมายเสียง</translation>
     </message>
     <message>
         <source>Moves the active line to the audio mark</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนบรรทัดที่ใช้งานไปที่เครื่องหมายเสียง</translation>
     </message>
     <message>
         <source>Move</source>
-        <translation type="unfinished">ย้าย</translation>
+        <translation>เลื่อน</translation>
     </message>
     <message>
         <source>Move the active line’s</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนของบรรทัดที่ใช้งาน</translation>
     </message>
     <message>
         <source>End</source>
@@ -13399,75 +13379,75 @@ Styles deleted:
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished"></translation>
+        <translation>เริ่มต้น</translation>
     </message>
     <message>
         <source>To the video at %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ไปที่วิดีโอที่ %1</translation>
     </message>
     <message>
         <source>To the audio mark at %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ไปที่เครื่องหมายเสียงที่ %1</translation>
     </message>
     <message>
         <source>Plus</source>
-        <translation type="unfinished"></translation>
+        <translation>บวก</translation>
     </message>
     <message>
         <source>Unit</source>
-        <translation type="unfinished"></translation>
+        <translation>หน่วย</translation>
     </message>
     <message>
         <source>Frames need a video.</source>
-        <translation type="unfinished"></translation>
+        <translation>การใช้เฟรมต้องมีวิดีโอ</translation>
     </message>
     <message>
         <source>Open video…</source>
-        <translation type="unfinished">เปิดวิดีโอ…</translation>
+        <translation>เปิดวิดีโอ…</translation>
     </message>
     <message>
         <source>Direction</source>
-        <translation type="unfinished"></translation>
+        <translation>ทิศทาง</translation>
     </message>
     <message>
         <source>Later</source>
-        <translation type="unfinished">ภายหลัง</translation>
+        <translation>ช้าลง</translation>
     </message>
     <message>
         <source>Earlier</source>
-        <translation type="unfinished"></translation>
+        <translation>เร็วขึ้น</translation>
     </message>
     <message>
         <source>Times</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลา</translation>
     </message>
     <message>
         <source>Both</source>
-        <translation type="unfinished"></translation>
+        <translation>ทั้งสอง</translation>
     </message>
     <message>
         <source>End times</source>
-        <translation type="unfinished">เวลาสิ้นสุด</translation>
+        <translation>เวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Leave as they are</source>
-        <translation type="unfinished"></translation>
+        <translation>คงไว้ตามเดิม</translation>
     </message>
     <message>
         <source>Fix overlaps</source>
-        <translation type="unfinished"></translation>
+        <translation>แก้ไขเวลาที่ทับซ้อน</translation>
     </message>
     <message>
         <source>Recalculate from text length</source>
-        <translation type="unfinished"></translation>
+        <translation>คำนวณใหม่จากความยาวข้อความ</translation>
     </message>
     <message>
         <source>Needs a video.</source>
-        <translation type="unfinished"></translation>
+        <translation>ต้องมีวิดีโอ</translation>
     </message>
     <message>
         <source>Move tag times too (%1, %2, %3)</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนเวลาในแท็กด้วย (%1, %2, %3)</translation>
     </message>
     <message>
         <source>Shift times</source>
@@ -13482,164 +13462,112 @@ Styles deleted:
         <translation>เวลา</translation>
     </message>
     <message>
-        <source>Shift subtitle times</source>
-        <translation type="vanished">เลื่อนเวลาคำบรรยาย</translation>
-    </message>
-    <message>
         <source>Shift</source>
         <translation>เลื่อน</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">นำไปใช้</translation>
+        <translation>นำไปใช้</translation>
     </message>
     <message numerus="yes">
         <source>Apply to %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>นำไปใช้กับ %n บรรทัด</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Shift %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>เลื่อน %n บรรทัด</numerusform>
         </translation>
     </message>
     <message>
         <source>No line changes</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่มีบรรทัดที่เปลี่ยน</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Changes %1 of %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>เปลี่ยน %1 จาก %n บรรทัด</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n lead-in</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>ช่วงนำ %n</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n lead-out</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>ช่วงต่อท้าย %n</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n gap(s) closed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>ปิดช่องว่าง %n ช่อง</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n snapped</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>ปรับให้ตรง %n</numerusform>
         </translation>
     </message>
     <message>
         <source>lead-in</source>
-        <translation type="unfinished"></translation>
+        <translation>ช่วงนำ</translation>
     </message>
     <message>
         <source>lead-out</source>
-        <translation type="unfinished"></translation>
+        <translation>ช่วงต่อท้าย</translation>
     </message>
     <message>
         <source>gap closed</source>
-        <translation type="unfinished"></translation>
+        <translation>ปิดช่องว่าง</translation>
     </message>
     <message>
         <source>snapped start</source>
-        <translation type="unfinished"></translation>
+        <translation>ปรับเวลาเริ่มให้ตรง</translation>
     </message>
     <message>
         <source>snapped end</source>
-        <translation type="unfinished"></translation>
+        <translation>ปรับเวลาสิ้นสุดให้ตรง</translation>
     </message>
     <message numerus="yes">
         <source>%n frame(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n เฟรม</numerusform>
         </translation>
     </message>
     <message>
         <source>Preview</source>
-        <translation type="unfinished">ตัวอย่าง</translation>
+        <translation>ตัวอย่าง</translation>
     </message>
     <message>
         <source>no change</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่เปลี่ยน</translation>
     </message>
     <message>
         <source>Line %1, start %2 to %3, end %4 to %5, %6</source>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัด %1 เริ่ม %2 เป็น %3 สิ้นสุด %4 เป็น %5 %6</translation>
     </message>
     <message numerus="yes">
         <source>%n more line(s) change.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>มีอีก %n บรรทัดที่เปลี่ยน</numerusform>
         </translation>
     </message>
     <message>
         <source>One undo step: “%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Forward</source>
-        <translation type="vanished">ไปข้างหน้า</translation>
-    </message>
-    <message>
-        <source>Backward</source>
-        <translation type="vanished">ย้อนกลับ</translation>
-    </message>
-    <message>
-        <source>Tag times</source>
-        <translation type="vanished">เวลาแท็ก</translation>
-    </message>
-    <message>
-        <source>Move according to the following styles (separated by a comma)</source>
-        <translation type="vanished">เลื่อนตามสไตล์ต่อไปนี้ (คั่นด้วยจุลภาค)</translation>
-    </message>
-    <message>
-        <source>End time correction</source>
-        <translation type="vanished">การแก้ไขเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Corrects end times that are improper or overlap each other</source>
-        <translation type="vanished">แก้ไขเวลาสิ้นสุดที่ไม่ถูกต้องหรือทับซ้อนกัน</translation>
-    </message>
-    <message>
-        <source>Shift by video / audio</source>
-        <translation type="vanished">เลื่อนตามเวลาวิดีโอหรือเสียง</translation>
-    </message>
-    <message>
-        <source>Beginning</source>
-        <translation type="vanished">เริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Moves the start time to the video/audio time</source>
-        <translation type="vanished">ย้ายเวลาเริ่มต้นไปยังเวลาวิดีโอหรือเสียง</translation>
-    </message>
-    <message>
-        <source>Move the marker to video time</source>
-        <translation type="vanished">ย้ายเครื่องหมายไปยังเวลาวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Move the marker to audio time</source>
-        <translation type="vanished">ย้ายเครื่องหมายไปยังเวลาเสียง</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation type="vanished">บรรทัดใด</translation>
+        <translation>การเลิกทำหนึ่งขั้น: “%1”</translation>
     </message>
     <message>
         <source>Timing postprocessor</source>
@@ -13650,36 +13578,8 @@ Styles deleted:
         <translation>ระยะเลื่อน</translation>
     </message>
     <message>
-        <source>Time shifts</source>
-        <translation type="vanished">การเลื่อนเวลา</translation>
-    </message>
-    <message>
-        <source>Shift times by time / frames</source>
-        <translation type="vanished">เลื่อนเวลาตามเวลาหรือเฟรม</translation>
-    </message>
-    <message>
-        <source>Delays subtitles</source>
-        <translation type="vanished">ทำให้คำบรรยายแสดงช้าลง</translation>
-    </message>
-    <message>
-        <source>Speeds up subtitles</source>
-        <translation type="vanished">ทำให้คำบรรยายแสดงเร็วขึ้น</translation>
-    </message>
-    <message>
-        <source>Shifts %1, %2, and %3 tag times
-so their positions on video do not change
-(slows down time shifting)</source>
-        <translation type="vanished">เลื่อนเวลาแท็ก %1, %2 และ %3
-เพื่อให้ตำแหน่งบนวิดีโอไม่เปลี่ยน
-(ทำให้การเลื่อนเวลาช้าลง)</translation>
-    </message>
-    <message>
         <source>Lines</source>
         <translation>บรรทัด</translation>
-    </message>
-    <message>
-        <source>The choice of lines to move</source>
-        <translation type="vanished">เลือกบรรทัดที่จะเลื่อน</translation>
     </message>
     <message>
         <source>All lines</source>
@@ -13691,143 +13591,31 @@ so their positions on video do not change
     </message>
     <message>
         <source>Selected line and below</source>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัดที่เลือกและด้านล่าง</translation>
     </message>
     <message>
         <source>Starting at or after the selection</source>
-        <translation type="unfinished"></translation>
+        <translation>เริ่มที่หรือหลังส่วนที่เลือก</translation>
     </message>
     <message>
         <source>Starting at or before the selection</source>
-        <translation type="unfinished"></translation>
+        <translation>เริ่มที่หรือก่อนส่วนที่เลือก</translation>
     </message>
     <message>
         <source>Lines in chosen styles…</source>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัดในสไตล์ที่เลือก…</translation>
     </message>
     <message>
         <source>Choose styles…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation type="vanished">บรรทัดที่เลือกเป็นต้นไป</translation>
-    </message>
-    <message>
-        <source>All times higher and equal</source>
-        <translation type="vanished">เวลาที่มากกว่าหรือเท่ากับ</translation>
-    </message>
-    <message>
-        <source>All times lower and equal</source>
-        <translation type="vanished">เวลาที่น้อยกว่าหรือเท่ากับ</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation type="vanished">ตามสไตล์ที่เลือก</translation>
-    </message>
-    <message>
-        <source>Select a style from the list</source>
-        <translation type="vanished">เลือกสไตล์จากรายการ</translation>
-    </message>
-    <message>
-        <source>Styles, separated by commas</source>
-        <translation type="vanished">สไตล์ คั่นด้วยจุลภาค</translation>
-    </message>
-    <message>
-        <source>Run timing postprocessor</source>
-        <translation type="vanished">เรียกใช้โพสต์โปรเซสเซอร์การจัดเวลา</translation>
-    </message>
-    <message>
-        <source>A method of time shift</source>
-        <translation type="vanished">วิธีเลื่อนเวลา</translation>
-    </message>
-    <message>
-        <source>The choice of times to move</source>
-        <translation type="vanished">เลือกเวลาที่จะเลื่อน</translation>
-    </message>
-    <message>
-        <source>Both times</source>
-        <translation type="vanished">ทั้งสองเวลา</translation>
-    </message>
-    <message>
-        <source>Leave unchanged</source>
-        <translation type="vanished">ไม่เปลี่ยนแปลง</translation>
-    </message>
-    <message>
-        <source>Adjust overlapping times</source>
-        <translation type="vanished">ปรับเวลาที่ทับซ้อนกัน</translation>
-    </message>
-    <message>
-        <source>New times</source>
-        <translation type="vanished">เวลาใหม่</translation>
-    </message>
-    <message>
-        <source>Moves the end time to the video/audio time</source>
-        <translation type="vanished">ย้ายเวลาสิ้นสุดไปยังเวลาวิดีโอหรือเสียง</translation>
-    </message>
-    <message>
-        <source>Lead-in/lead-out</source>
-        <translation type="vanished">ช่วงนำ/ช่วงต่อท้าย</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the start time (good when using fad)</source>
-        <translation type="vanished">เพิ่มช่วงนำก่อนเวลาเริ่มต้น (เหมาะเมื่อใช้ fad)</translation>
-    </message>
-    <message>
-        <source>Introduction time in milliseconds</source>
-        <translation type="vanished">เวลาช่วงนำเป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the end time (good when using fad)</source>
-        <translation type="vanished">เพิ่มช่วงต่อท้ายหลังเวลาสิ้นสุด (เหมาะเมื่อใช้ fad)</translation>
-    </message>
-    <message>
-        <source>Enable</source>
-        <translation type="vanished">เปิดใช้</translation>
-    </message>
-    <message>
-        <source>Start time extension threshold</source>
-        <translation type="vanished">เกณฑ์การขยายเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>End time extension threshold</source>
-        <translation type="vanished">เกณฑ์การขยายเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Before the start time</source>
-        <translation type="vanished">ก่อนเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the start time in milliseconds</source>
-        <translation type="vanished">ระยะเลื่อนสูงสุดไปยังคีย์เฟรม 
-ก่อนเวลาเริ่มต้น เป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the start time in milliseconds</source>
-        <translation type="vanished">ระยะเลื่อนสูงสุดไปยังคีย์เฟรม 
-หลังเวลาเริ่มต้น เป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the end time in milliseconds</source>
-        <translation type="vanished">ระยะเลื่อนสูงสุดไปยังคีย์เฟรม 
-ก่อนเวลาสิ้นสุด เป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the end time in milliseconds</source>
-        <translation type="vanished">ระยะเลื่อนสูงสุดไปยังคีย์เฟรม 
-หลังเวลาสิ้นสุด เป็นมิลลิวินาที</translation>
+        <translation>เลือกสไตล์…</translation>
     </message>
     <message>
         <source>%1 ms</source>
-        <translation type="unfinished">%1 มิลลิวินาที</translation>
+        <translation>%1 มิลลิวินาที</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
-        <translation type="unfinished"></translation>
+        <translation>กฎต้องมีวิดีโอ</translation>
     </message>
     <message>
         <source>Lead-in</source>
@@ -13835,7 +13623,7 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Start earlier by</source>
-        <translation type="unfinished"></translation>
+        <translation>เริ่มเร็วขึ้น</translation>
     </message>
     <message>
         <source>Lead-out</source>
@@ -13843,107 +13631,67 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>End later by</source>
-        <translation type="unfinished"></translation>
+        <translation>สิ้นสุดช้าลง</translation>
     </message>
     <message>
         <source>Close small gaps</source>
-        <translation type="unfinished"></translation>
+        <translation>ปิดช่องว่างเล็ก ๆ</translation>
     </message>
     <message>
         <source>Start back to the previous end if within</source>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนเวลาเริ่มกลับไปที่จุดสิ้นสุดก่อนหน้าถ้าห่างไม่เกิน</translation>
     </message>
     <message>
         <source>End on to the next start if within</source>
-        <translation type="unfinished"></translation>
+        <translation>ขยายเวลาสิ้นสุดไปถึงจุดเริ่มถัดไปถ้าห่างไม่เกิน</translation>
     </message>
     <message>
         <source>Both gap limits are 0 ms. Raise one to close gaps.</source>
-        <translation type="unfinished"></translation>
+        <translation>ขีดจำกัดช่องว่างทั้งสองเป็น 0 มิลลิวินาที เพิ่มค่าใดค่าหนึ่งเพื่อปิดช่องว่าง</translation>
     </message>
     <message>
         <source>before</source>
-        <translation type="unfinished"></translation>
+        <translation>ก่อน</translation>
     </message>
     <message>
         <source>after</source>
-        <translation type="unfinished"></translation>
+        <translation>หลัง</translation>
     </message>
     <message>
         <source>Start within</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลาเริ่มภายใน</translation>
     </message>
     <message>
         <source>Start within, before</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลาเริ่มภายใน ก่อน</translation>
     </message>
     <message>
         <source>Start within, after</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลาเริ่มภายใน หลัง</translation>
     </message>
     <message>
         <source>End within</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลาสิ้นสุดภายใน</translation>
     </message>
     <message>
         <source>End within, before</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลาสิ้นสุดภายใน ก่อน</translation>
     </message>
     <message>
         <source>End within, after</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลาสิ้นสุดภายใน หลัง</translation>
     </message>
     <message>
         <source>Needs keyframes.</source>
-        <translation type="unfinished"></translation>
+        <translation>ต้องมีคีย์เฟรม</translation>
     </message>
     <message>
         <source>Open keyframes…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lead-out time in milliseconds</source>
-        <translation type="vanished">เวลาช่วงต่อท้ายเป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>Set times as continuous</source>
-        <translation type="vanished">กำหนดค่าเวลาเป็นแบบต่อเนื่อง</translation>
-    </message>
-    <message>
-        <source>Start time threshold</source>
-        <translation type="vanished">เกณฑ์เวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>End time threshold</source>
-        <translation type="vanished">เกณฑ์เวลาสิ้นสุด</translation>
+        <translation>เปิดคีย์เฟรม…</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
         <translation>ปรับเวลาให้ตรงกับคีย์เฟรม</translation>
-    </message>
-    <message>
-        <source>After the start time</source>
-        <translation type="vanished">หลังเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Before the end time</source>
-        <translation type="vanished">ก่อนเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>After the end time</source>
-        <translation type="vanished">หลังเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Profiles</source>
-        <translation type="vanished">โปรไฟล์</translation>
-    </message>
-    <message>
-        <source>Adding and editing profiles</source>
-        <translation type="vanished">เพิ่มและแก้ไขโปรไฟล์</translation>
-    </message>
-    <message>
-        <source>Removing profiles</source>
-        <translation type="vanished">นำโปรไฟล์ออก</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -13966,44 +13714,20 @@ after the end time in milliseconds</source>
         <translation>เลื่อนเวลาไม่ได้</translation>
     </message>
     <message>
-        <source>Shift only the start times?</source>
-        <translation type="vanished">เลื่อนเฉพาะเวลาเริ่มต้นหรือไม่</translation>
-    </message>
-    <message>
-        <source>Shift only the end times?</source>
-        <translation type="vanished">เลื่อนเฉพาะเวลาสิ้นสุดหรือไม่</translation>
-    </message>
-    <message>
-        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
-        <translation type="vanished">เวลาสิ้นสุดจะอยู่ที่เดิม บรรทัดที่เลื่อนเลยเวลาสิ้นสุดจึงจะสิ้นสุดก่อนเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
-        <translation type="vanished">เวลาเริ่มต้นจะอยู่ที่เดิม บรรทัดที่เลื่อนไปก่อนเวลาเริ่มต้นจึงจะสิ้นสุดก่อนเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Shift start times</source>
-        <translation type="vanished">เลื่อนเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Shift end times</source>
-        <translation type="vanished">เลื่อนเวลาสิ้นสุด</translation>
-    </message>
-    <message>
         <source>%1 (Timing default)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (ค่าเริ่มต้นของการจัดเวลา)</translation>
     </message>
     <message>
         <source>Delete preset</source>
-        <translation type="unfinished">ลบพรีเซ็ต</translation>
+        <translation>ลบพรีเซ็ต</translation>
     </message>
     <message>
         <source>Delete the preset “%1”?</source>
-        <translation type="unfinished">ลบพรีเซ็ต “%1” หรือไม่?</translation>
+        <translation>ลบพรีเซ็ต “%1” หรือไม่?</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">ลบ</translation>
+        <translation>ลบ</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -14011,63 +13735,63 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Preset</source>
-        <translation type="unfinished"></translation>
+        <translation>พรีเซ็ต</translation>
     </message>
     <message>
         <source>Preset: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>พรีเซ็ต: %1</translation>
     </message>
     <message>
         <source>last used</source>
-        <translation type="unfinished"></translation>
+        <translation>ใช้ล่าสุด</translation>
     </message>
     <message>
         <source>Preset commands</source>
-        <translation type="unfinished"></translation>
+        <translation>คำสั่งพรีเซ็ต</translation>
     </message>
     <message>
         <source>Save as preset…</source>
-        <translation type="unfinished">บันทึกเป็นพรีเซ็ต…</translation>
+        <translation>บันทึกเป็นพรีเซ็ต…</translation>
     </message>
     <message>
         <source>Rename preset…</source>
-        <translation type="unfinished"></translation>
+        <translation>เปลี่ยนชื่อพรีเซ็ต…</translation>
     </message>
     <message>
         <source>Delete preset…</source>
-        <translation type="unfinished"></translation>
+        <translation>ลบพรีเซ็ต…</translation>
     </message>
     <message>
         <source>Use in the Timing layout</source>
-        <translation type="unfinished"></translation>
+        <translation>ใช้ในเลย์เอาต์การจัดเวลา</translation>
     </message>
     <message>
         <source>Rename preset</source>
-        <translation type="unfinished"></translation>
+        <translation>เปลี่ยนชื่อพรีเซ็ต</translation>
     </message>
     <message>
         <source>Save as preset</source>
-        <translation type="unfinished">บันทึกเป็นพรีเซ็ต</translation>
+        <translation>บันทึกเป็นพรีเซ็ต</translation>
     </message>
     <message>
         <source>Preset name</source>
-        <translation type="unfinished">ชื่อพรีเซ็ต</translation>
+        <translation>ชื่อพรีเซ็ต</translation>
     </message>
     <message>
         <source>A preset named “%1” exists. Saving replaces it.</source>
-        <translation type="unfinished">มีพรีเซ็ตชื่อ “%1” อยู่แล้ว การบันทึกจะแทนที่พรีเซ็ตนั้น</translation>
+        <translation>มีพรีเซ็ตชื่อ “%1” อยู่แล้ว การบันทึกจะแทนที่พรีเซ็ตนั้น</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">แทนที่</translation>
+        <translation>แทนที่</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished">เปลี่ยนชื่อ</translation>
+        <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished">บันทึก</translation>
+        <translation>บันทึก</translation>
     </message>
 </context>
 <context>
