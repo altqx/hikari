@@ -5899,6 +5899,10 @@ Failed to copy %2 fonts.</source>
         <translation>플러그인</translation>
     </message>
     <message>
+        <source>Centre times within frames</source>
+        <translation>프레임 안에서 시간 가운데 맞추기</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -7001,6 +7005,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>선택한 줄의 시작 및 끝 시간을 프레임의 가운데로 옮겨, 나중에 시간 단위로 이동해도 온전한 프레임에 머무르게 합니다</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
     <message>
         <source>Load script</source>

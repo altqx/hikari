@@ -5,6 +5,7 @@
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
+#include "hikari/application/center_times.h"
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
 #include "style/text_menus.h"
@@ -18430,7 +18431,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 266);
+        QCOMPARE(hotkeyRows().size(), 267);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -27432,6 +27433,45 @@ private slots:
         QCOMPARE(session->selection().selected, std::set<core::LineId>{lines[1]->id});
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("turnOffFiltering")), "triggered"));
         QTRY_VERIFY(!application->shell().filtered());
+    }
+
+    void centerTimesWithinFramesKeepsEachFrame()
+    {
+        const QString path = writeFile(dir, "fa16-center.ass",
+                                       "Dialogue: 0,0:00:00.41,0:00:01.20,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:01.53,0:00:01.91,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto ms = [&](int i) {
+            const auto *l = session->document().lines()[static_cast<std::size_t>(i)];
+            return std::pair(l->start.value.microseconds() / 1000, l->end.value.microseconds() / 1000);
+        };
+        using Ms = std::pair<std::int64_t, std::int64_t>;
+        auto *center = item<QObject>("centerTimesInFramesMenuItem");
+        QVERIFY(center);
+        QVERIFY(!center->property("enabled").toBool());
+
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        closeMismatchQuestion();
+        QTRY_VERIFY(center->property("enabled").toBool());
+        const auto timebase = application->video().session().legacyTimebase();
+        const auto frames = [&](int i) {
+            return std::pair(timebase.frameAt(static_cast<int>(ms(i).first)), timebase.frameAt(static_cast<int>(ms(i).second)));
+        };
+        const auto before = frames(0);
+        const Ms centred{application::centeredTime(timebase, 410), application::centeredTime(timebase, 1200)};
+        QVERIFY(centred != (Ms{410, 1200}));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QVERIFY(QMetaObject::invokeMethod(center, "click"));
+        QTRY_COMPARE(ms(0), centred);
+        QCOMPARE(frames(0), before);
+        QCOMPARE(ms(1), (Ms{1530, 1910}));
+        QCOMPARE(session->history().back().name, std::string("Centring times"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(ms(0), (Ms{410, 1200}));
     }
 
     void snapToKeyframeNeedsTheAudioBox()

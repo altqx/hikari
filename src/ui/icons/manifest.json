@@ -3421,7 +3421,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "grid-menu"
+    "grid-menu",
+    "menu:video"
    ]
   },
   {
