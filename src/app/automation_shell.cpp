@@ -1,6 +1,5 @@
 #include "hikari/app/automation_shell.h"
 
-#include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/karaoke_preview_runner.h"
@@ -58,13 +57,25 @@ public:
     }
     std::optional<std::int64_t> frameFromMs(std::int64_t ms) const override
     {
-        const auto times = frameTimes();
-        return times ? std::optional(times->frameFromMs(ms)) : std::nullopt;
+        const auto &s = m_video.session();
+        if (s.state() != application::VideoSession::State::Ready)
+            return std::nullopt;
+        int frame = 0;
+        for (int i = 0; i < s.frameCount(); ++i) {
+            const auto start = s.frameStart(i);
+            if (!start || start->microseconds() > ms * 1000)
+                break;
+            frame = i;
+        }
+        return frame;
     }
     std::optional<std::int64_t> msFromFrame(std::int64_t frame) const override
     {
-        const auto times = frameTimes();
-        return times ? std::optional(times->msFromFrame(frame)) : std::nullopt;
+        const auto &s = m_video.session();
+        if (s.state() != application::VideoSession::State::Ready || s.frameCount() == 0)
+            return std::nullopt;
+        const auto start = s.frameStart(static_cast<int>(std::clamp<std::int64_t>(frame, 0, s.frameCount() - 1)));
+        return start ? std::optional<std::int64_t>(start->microseconds() / 1000) : std::nullopt;
     }
     std::optional<VideoSize> videoSize() const override
     {
@@ -144,7 +155,7 @@ public:
             return std::nullopt;
         return box->audio();
     }
-    std::optional<application::AegisubFrameTimes> frameTimes() const
+    std::optional<std::vector<std::int64_t>> frameStartsMs() const override
     {
         const auto &s = m_video.session();
         if (s.state() != application::VideoSession::State::Ready)
@@ -157,7 +168,7 @@ public:
                 return std::nullopt;
             starts.push_back(start->microseconds() / 1000);
         }
-        return application::AegisubFrameTimes::fromFrameStarts(std::move(starts));
+        return starts;
     }
     // MUST KILL: the video path and frame count stand in for the frame times
     std::string state() const

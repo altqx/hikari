@@ -1,4 +1,3 @@
-#include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/backends/lua_script_host.h"
@@ -152,14 +151,15 @@ struct FixedMeasure : app::TextMeasurePort {
 
 // 100 s of 24000/1001 fps video, its times truncated to milliseconds as FFMS2 reports them, shown at frame 96.
 struct FixtureVideo : app::MacroMediaPort {
-    app::AegisubFrameTimes times = [] {
-        std::vector<std::int64_t> starts;
+    std::vector<std::int64_t> starts = [] {
+        std::vector<std::int64_t> out;
         for (std::int64_t i = 0; i < 2398; ++i)
-            starts.push_back(i * 1001 / 24);
-        return *app::AegisubFrameTimes::fromFrameStarts(std::move(starts));
+            out.push_back(i * 1001 / 24);
+        return out;
     }();
-    std::optional<std::int64_t> frameFromMs(std::int64_t ms) const override { return times.frameFromMs(ms); }
-    std::optional<std::int64_t> msFromFrame(std::int64_t frame) const override { return times.msFromFrame(frame); }
+    std::optional<std::int64_t> frameFromMs(std::int64_t) const override { return std::nullopt; }
+    std::optional<std::int64_t> msFromFrame(std::int64_t) const override { return std::nullopt; }
+    std::optional<std::vector<std::int64_t>> frameStartsMs() const override { return starts; }
     std::optional<VideoSize> videoSize() const override { return VideoSize{1920, 1080, 16, 9}; }
     std::optional<std::vector<std::int64_t>> keyframes() const override { return std::vector<std::int64_t>{0, 96, 336}; }
     void frame(std::int64_t, bool, std::function<void(std::optional<Frame>)> reply) override { reply(std::nullopt); }

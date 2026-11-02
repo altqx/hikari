@@ -14,7 +14,7 @@ Where HikariSub's automation API and file formats knowingly differ from what the
 
 `aegisub.frame_from_ms` and `aegisub.ms_from_frame` round as Aegisub 3.5.1 does. `frame_from_ms(ms)` is the first frame that starts at or after `ms`. `ms_from_frame(f)` is halfway from frame f−1 to frame f, rounded up. Past the last frame, both continue at the video's average rate.
 - Before, scripts got the frame shown at `ms` and the frame's own start time, clamped to the last frame. With those values arch.CenterTimes failed its own check, and arch.TimingBinds and arch.Line2Fbf could be off by up to half a frame.
-- Only Lua scripts see this: the app's timing commands, video seeking and the grid keep the frame shown at a time.
+- Only Lua scripts see this. The app's timing commands, video seeking, the grid and the HikariSub API's `video.frame_at_time` and `video.time_of_frame` keep the frame shown at a time and its start.
 
 [FA4 #561](https://github.com/altqx/hikari/issues/561), coordinator decision 2026-11-02.
 
