@@ -6553,10 +6553,6 @@ What would you like to do?</source>
         <translation>다음 찾기</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>시간 이동 / 타이밍 후처리기 실행</translation>
-    </message>
-    <message>
         <source>Go to start time of line</source>
         <translation>줄 시작 시간으로</translation>
     </message>
