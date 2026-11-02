@@ -1129,11 +1129,11 @@ DialogWindow {
                         ruled: false
                         SettingsRow {
                             iconRole: "styles"
-                            text: qsTr("Catalog")
+                            text: qsTr("Catalogue")
                             SettingChoice {
                                 setting: "convert.styleCatalog"
                                 model: dialog.catalogs
-                                Accessible.name: qsTr("Catalog")
+                                Accessible.name: qsTr("Catalogue")
                                 onChosen: index => dialog.chooseCatalog(index)
                             }
                         }

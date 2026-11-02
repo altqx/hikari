@@ -205,7 +205,7 @@ QStringList FontCatalogsController::catalogChoices() const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
     return list(application::catalogChoices(m_catalogs.names(), u16(QCoreApplication::translate("HikariSub.Fonts", "All fonts")),
-                                            u16(QCoreApplication::translate("HikariSub.Fonts", "Without catalog"))));
+                                            u16(QCoreApplication::translate("HikariSub.Fonts", "Without catalogue"))));
 }
 
 QStringList FontCatalogsController::fontList(int selection, const QString &value, bool filterOn, const QString &filterText)
