@@ -933,12 +933,12 @@ def landed_beside(a, t, side):
             "top": along and a["y"] + a["h"] <= t["y"] + 2, "bottom": along and a["y"] >= t["y"] + t["h"] - 2}[side]
 
 
-def step_sides():
+def step_sides(env=None, suffix="", scale=1.0):
     """DK3 (#589): the docked Audio panel dragged by its title onto each side of the Grid and of Video."""
     for target in ("Grid", "Video"):
         for side in ("left", "right", "top", "bottom"):
-            item = f"drop-{side}-of-{target.lower()}"
-            fresh(episode())
+            item = f"drop-{side}-of-{target.lower()}{suffix}"
+            fresh(episode(), env=env)
             dismiss_notices()
             main = origin("HikariSub")
             st = atspi()
@@ -947,13 +947,14 @@ def step_sides():
                 verdict(item, "not-observable", f"{B.name}: no geometry for the main window ({main}), Audio or {target}")
                 continue
             x0, y0 = main[0], main[1]
-            sx, sy = x0 + audio["x"] + 30, y0 + audio["y"] - HEADER // 2
-            px, py = side_point(t, side)
+            # Qt's AT-SPI bridge reports device-independent coordinates; the pointer moves in the compositor's.
+            sx, sy = x0 + round((audio["x"] + 30) * scale), y0 + round((audio["y"] - HEADER // 2) * scale)
+            px, py = (round(v * scale) for v in side_point(t, side))
             drag(sx, sy, x0 + px, y0 + py, release=False)
-            ev, _ = B.snap(f"sides-{target.lower()}-{side}-over")
+            ev, _ = B.snap(f"sides{suffix}-{target.lower()}-{side}-over")
             B.pointer("up", "wait 1500")
             st = wait_for(lambda s: "Audio" not in frames(s))
-            ev1, st = B.snap(f"sides-{target.lower()}-{side}-dropped")
+            ev1, st = B.snap(f"sides{suffix}-{target.lower()}-{side}-dropped")
             a, t2 = panel(st, "Audio"), panel(st, target)
             docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == "HikariSub"
             ok = docked and a and t2 and landed_beside(a, t2, side)
@@ -3454,6 +3455,7 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "menutext": step_menu_from_text, "tests": step_test_executables, "orca": step_orca,
          "a11y": step_a11y, "floating": step_floating, "header": step_header_keys,
          "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen, "sides": step_sides,
+         "sides150": lambda: step_sides({"QT_SCALE_FACTOR": "1.5"}, "-150", 1.5),
          # last: after an output goes, sway's virtual pointer still maps over the old layout
          "outputs": step_outputs}
 
