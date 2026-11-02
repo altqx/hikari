@@ -11,6 +11,8 @@
 #include <chrono>
 #include <cmath>
 #include <cstring>
+#include <fstream>
+#include <iterator>
 #include <set>
 
 using namespace hikari;
@@ -1438,6 +1440,55 @@ TEST(PerspectiveTool, ASavedPlaneIsReadAgainFromTheSavedFile)
     f.tool.reset(f.host);
     ASSERT_TRUE(f.tool.planeShown());
     expectQuadNear(f.tool.outer(), plane, 0.05);
+}
+
+std::string fixture(const char *name)
+{
+    std::ifstream in(std::string(HIKARI_EXTRADATA_FIXTURES) + "/" + name, std::ios::binary);
+    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+}
+
+TEST(PerspectiveTool, AegisubsPlanesAreShown)
+{
+    Fixture f;
+    f.host.v.setScript(1920, 1080);
+    f.host.v.refreshToolTransform();
+    f.host.script = fixture("perspective.aegisub.ass");
+    ASSERT_FALSE(f.host.script.empty());
+    f.host.reopen();
+    f.host.time = 3500;
+    f.host.s->setSelection({f.host.line(2), {f.host.line(2)}, f.host.line(2), std::nullopt});
+    f.host.targets = {f.host.line(2)};
+    f.tool.reset(f.host);
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    expectQuadNear(f.tool.outer(), {{{50, 50}, {400, 50}, {400, 300}, {50, 300}}}, 0.05);
+}
+
+// perspective-hikari.ass is this save; make/run.sh gives it to Aegisub 3.5.1, which saves perspective-hikari.aegisub.ass.
+TEST(PerspectiveTool, HikarisSaveOfAPlaneIsTheGoldenFile)
+{
+    Fixture f;
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    ASSERT_TRUE(f.tool.setOption("lockOuter", 1, f.host));
+    f.drag(f.tool.outer()[0], {80, 120});
+    f.drag(f.tool.outer()[2], {560, 250});
+    const auto bytes = core::encodeAss(f.host.s->document());
+    const std::string saved(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+    if (saved != fixture("perspective-hikari.ass"))
+        std::ofstream("perspective-hikari.actual.ass", std::ios::binary) << saved;
+    EXPECT_EQ(saved, fixture("perspective-hikari.ass"));
+}
+
+TEST(PerspectiveTool, AegisubKeepsHikarisPlane)
+{
+    Fixture f;
+    f.host.script = fixture("perspective-hikari.aegisub.ass");
+    ASSERT_FALSE(f.host.script.empty());
+    f.host.reopen();
+    f.tool.reset(f.host);
+    EXPECT_EQ(planeExtra(f.host), u8"80.00;120.00|560.00;120.00|560.00;250.00|80.00;250.00");
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    expectQuadNear(f.tool.outer(), {{{80, 120}, {560, 120}, {560, 250}, {80, 250}}}, 0.01);
 }
 
 TEST(PerspectiveTool, HidingThePlaneKeepsItsValue)

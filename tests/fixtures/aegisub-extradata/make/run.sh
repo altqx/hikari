@@ -35,5 +35,7 @@ run() {
 run folds.ass folds.aegisub dump
 run perspective.ass perspective.aegisub dump
 run folds.ass folds-edited.aegisub edit
+run perspective-hikari.ass perspective-hikari.aegisub dump
 mv "$out/folds.aegisub.lua-extra.txt" "$out/folds.lua-extra.txt"
 mv "$out/perspective.aegisub.lua-extra.txt" "$out/perspective.lua-extra.txt"
+mv "$out/perspective-hikari.aegisub.lua-extra.txt" "$out/perspective-hikari.lua-extra.txt"
