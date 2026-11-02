@@ -210,8 +210,6 @@ ApplicationWindow {
     }
 
     function defaultLayout() {
-        dockingArea.addDockWidget(searchDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 280))
-        searchDock.close()
         dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
         dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 520))
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
@@ -221,13 +219,9 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        editorDock.addDockWidgetAsTab(timingDock)
-        editorDock.addDockWidgetAsTab(automationDock)
         editorDock.addDockWidgetAsTab(stylesDock)
         editorDock.addDockWidgetAsTab(templateDock)
         editorDock.setAsCurrentTab()
-        timingDock.close()
-        automationDock.close()
         stylesDock.close()
         templateDock.close()
         dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
@@ -346,6 +340,22 @@ ApplicationWindow {
             dockingArea.addDockWidget(templateDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
 
+    function addRightOfGrid(dock) {
+        const grid = gridDock.isOpen && !gridDock.isFloating
+        const left = Docking.placeInLayout("Grid").x
+        const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf("Grid"))
+        if (column) {
+            column.addDockWidgetAsTab(dock)
+        } else {
+            const third = Math.round((grid ? root.workspaceLayout.panelSize(gridDock).width : dockingArea.width) / 3)
+            const width = Math.min(Docking.minimumSize(dock.uniqueName).width, third)
+            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnRight, grid ? gridDock : null, Qt.size(width, 0))
+        }
+        const moved = Docking.placeInLayout("Grid").x - left
+        if (grid && moved !== 0)
+            Docking.resizeInLayout("Grid", moved, 0, 0, 0)
+    }
+
     function openAutomationRun(runId) {
         if (root.videoFullscreen.active)
             root.videoFullscreen.leave()
@@ -358,6 +368,14 @@ ApplicationWindow {
                                           misspellPanel, templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                      searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
+    Instantiator {
+        model: root.dockList
+        delegate: Connections {
+            required property var modelData
+            target: modelData
+            function onOpenedWithoutPlace() { root.openAtFirstPlace(modelData) }
+        }
+    }
     WheelScroll {}
     KeyRouter {
         id: keyRouter
@@ -541,6 +559,14 @@ ApplicationWindow {
         if (!root.panelAvailable(dock))
             return
         root.analytics.panelOpened(dock.uniqueName)
+        root.openAtFirstPlace(dock)
+        root.workspaceLayout.keepFloatingPanelsOnScreen()
+        dock.raise()
+        if (dock === spellDock && !spellTool.checking)
+            spellTool.start()
+        root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
+    }
+    function openAtFirstPlace(dock) {
         if (dock === originalDock)
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace("Log"))
@@ -553,13 +579,10 @@ ApplicationWindow {
             dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         else if (dock === templateDock && !Docking.hasPlace("Template"))
             root.addTemplate()
+        else if (!Docking.hasPlace(dock.uniqueName))
+            root.addRightOfGrid(dock)
         else
             dock.open()
-        root.workspaceLayout.keepFloatingPanelsOnScreen()
-        dock.raise()
-        if (dock === spellDock && !spellTool.checking)
-            spellTool.start()
-        root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
 
     function panelOf(item) {
@@ -1647,6 +1670,60 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_END_TIME")) root.app.setTimeFromVideo(true)
                 }
             }
+            ShellMenu {
+                iconRole: "shift-times"
+                objectName: "shiftFramesToVideoMenu"
+                title: qsTr("Shift by frames to video")
+                enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                ShellMenuItem {
+                    command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"
+                    help: qsTr("Shifts the selected lines by whole frames so the active line starts on the video frame")
+                    iconRole: "time-offset-start"
+                    objectName: "shiftFramesToVideoStartMenuItem"
+                    action: Action {
+                        id: shiftFramesToVideoStartAction
+                        text: qsTr("Selected lines, start at video")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START")) root.app.shiftFramesToVideo(false, false)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"
+                    help: qsTr("Shifts the selected lines by whole frames so the active line ends on the video frame")
+                    iconRole: "time-offset-end"
+                    objectName: "shiftFramesToVideoEndMenuItem"
+                    action: Action {
+                        id: shiftFramesToVideoEndAction
+                        text: qsTr("Selected lines, end at video")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, false)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START"
+                    help: qsTr("Shifts the active line and every line after it by whole frames so the active line starts on the video frame")
+                    iconRole: "time-offset-start"
+                    objectName: "shiftFollowingFramesToVideoStartMenuItem"
+                    action: Action {
+                        id: shiftFollowingFramesToVideoStartAction
+                        text: qsTr("Following lines, start at video")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START")) root.app.shiftFramesToVideo(false, true)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END"
+                    help: qsTr("Shifts the active line and every line after it by whole frames so the active line ends on the video frame")
+                    iconRole: "time-offset-end"
+                    objectName: "shiftFollowingFramesToVideoEndMenuItem"
+                    action: Action {
+                        id: shiftFollowingFramesToVideoEndAction
+                        text: qsTr("Following lines, end at video")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, true)
+                    }
+                }
+            }
             ShellMenuItem {
                 command: "GLOBAL_PREVIOUS_FRAME"
                 help: qsTr("Go to previous frame")
@@ -1855,6 +1932,18 @@ ApplicationWindow {
                     text: qsTr("Set audio marker to video time")
                     enabled: root.audio.hasAudio && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"
+                help: qsTr("Gives the active line the audio selection and ends the line before it where the selection starts")
+                iconRole: "join-lines"
+                objectName: "joinPreviousAudioSelectionMenuItem"
+                action: Action {
+                    id: joinPreviousAudioSelectionAction
+                    text: qsTr("Join with previous line using the audio selection")
+                    enabled: root.audio.ready && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION")) root.app.joinPreviousToAudioSelection()
                 }
             }
         }
@@ -2819,7 +2908,7 @@ ApplicationWindow {
         uniqueName: "Classic"
         enabled: !homePage.visible
 
-        KDDW.DockWidget {
+        PanelDock {
             id: videoDock
             objectName: "videoDock"
             uniqueName: "Video"
@@ -3102,7 +3191,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: audioDock
             objectName: "audioDock"
             uniqueName: "Audio"
@@ -4590,7 +4679,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: originalDock
             objectName: "originalDock"
             uniqueName: "Original"
@@ -4628,7 +4717,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: editorDock
             objectName: "editorDock"
             uniqueName: "Editor"
@@ -4872,7 +4961,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: gridDock
             objectName: "gridDock"
             uniqueName: "Grid"
@@ -5280,7 +5369,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: referenceDock
             objectName: "referenceDock"
             uniqueName: "Reference"
@@ -5307,7 +5396,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: timingDock
             objectName: "timingDock"
             uniqueName: "Timing"
@@ -5331,7 +5420,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: searchDock
             objectName: "searchDock"
             uniqueName: "Search"
@@ -5353,7 +5442,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: automationDock
             objectName: "automationDock"
             uniqueName: "Automation"
@@ -5383,7 +5472,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: spellDock
             objectName: "spellDock"
             uniqueName: "Spellchecker"
@@ -5410,7 +5499,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: stylesDock
             objectName: "stylesDock"
             uniqueName: "Styles"
@@ -5438,7 +5527,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: templateDock
             objectName: "templateDock"
             uniqueName: "Template"
@@ -5465,7 +5554,7 @@ ApplicationWindow {
             }
         }
 
-        KDDW.DockWidget {
+        PanelDock {
             id: logDock
             objectName: "logDock"
             uniqueName: "Log"
@@ -5485,7 +5574,7 @@ ApplicationWindow {
                 }
             }
         }
-        KDDW.DockWidget {
+        PanelDock {
             id: misspellDock
             objectName: "misspellDock"
             uniqueName: "FixMinorErrors"
@@ -6933,6 +7022,11 @@ ApplicationWindow {
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
         GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction,
+        GLOBAL_SHIFT_FRAMES_TO_VIDEO_START: shiftFramesToVideoStartAction,
+        GLOBAL_SHIFT_FRAMES_TO_VIDEO_END: shiftFramesToVideoEndAction,
+        GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START: shiftFollowingFramesToVideoStartAction,
+        GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END: shiftFollowingFramesToVideoEndAction,
+        GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,

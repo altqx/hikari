@@ -22,11 +22,33 @@ int legacyFrameTime(const LegacyTimebase &timebase, int tellMs, bool start);
 int legacyInsertTimeFromVideo(const LegacyTimebase &timebase, int tellMs, bool start, int offsetMs);
 
 // Every selected Line (hidden ones too) gets the time in one step; a start after
-// the End moves the End, an end before the Start moves the Start. No change
-// records nothing and still succeeds. Times clamp at 0; a MicroDVD Document's
-// frames follow its own rate. The pending draft is committed first, as its own
-// step. Refused (Invalid) without a selected Line.
+// the End moves the End, an end before the Start moves the Start. An unselected
+// neighbour joined to a selected Line stays joined: the Line before it, when its
+// End equals the Start, takes the start time as its End; the Line after it, when
+// its Start equals the End, takes the end time as its Start. No change records
+// nothing and still succeeds. Times clamp at 0; a MicroDVD Document's frames
+// follow its own rate. The pending draft is committed first, as its own step.
+// Refused (Invalid) without a selected Line.
 std::expected<void, CommandRefusal> setTimesFromVideo(EditSession &session, bool end, int ms);
+
+// The active Line takes the audio selection [startMs, endMs] and the Line before
+// it, if any, ends at startMs, in one step. Refused (Invalid) without an active
+// Line or with endMs < startMs.
+std::expected<void, CommandRefusal> joinPreviousToAudioSelection(EditSession &session, int startMs, int endMs);
+
+// Shifts Lines by whole frames so that the active Line's first shown frame (its
+// last with `byEnd`) becomes `videoFrame`, in one step. Each endpoint's
+// frameAt moves by the same count and maps back through startTimeFor, truncated
+// to 10 ms, as docs/time-semantics.md defines frame shifts.
+// The selected Lines, or with `following` the active Line and every Line starting
+// at or after it. Refused (Invalid) without an active Line.
+struct FrameShift {
+    int videoFrame = 0;
+    bool byEnd = false;
+    bool following = false;
+};
+std::expected<void, CommandRefusal> shiftFramesToVideo(EditSession &session, const LegacyTimebase &timebase,
+                                                       const FrameShift &shift);
 
 // The Lines the Grid shows; every Line when empty.
 using ShownLine = std::function<bool(core::LineId)>;

@@ -169,6 +169,38 @@ void write(std::string &out, const Json &value, int indent, int depth)
     }
 }
 
+// The bytes of one well-formed UTF-8 sequence starting at `at`, or 0.
+std::size_t utf8SequenceLength(std::string_view text, std::size_t at)
+{
+    const auto byte = [&](std::size_t i) { return static_cast<unsigned char>(text[i]); };
+    const unsigned char lead = byte(at);
+    std::size_t length = 0;
+    char32_t c = 0;
+    if (lead >= 0xC2 && lead <= 0xDF) {
+        length = 2;
+        c = lead & 0x1F;
+    } else if (lead >= 0xE0 && lead <= 0xEF) {
+        length = 3;
+        c = lead & 0x0F;
+    } else if (lead >= 0xF0 && lead <= 0xF4) {
+        length = 4;
+        c = lead & 0x07;
+    } else {
+        return 0;
+    }
+    if (at + length > text.size())
+        return 0;
+    for (std::size_t i = 1; i < length; ++i) {
+        if ((byte(at + i) & 0xC0) != 0x80)
+            return 0;
+        c = (c << 6) | (byte(at + i) & 0x3F);
+    }
+    const char32_t minimum = length == 2 ? 0x80 : length == 3 ? 0x800 : 0x10000;
+    if (c < minimum || c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF))
+        return 0;
+    return length;
+}
+
 class Parser {
 public:
     explicit Parser(std::string_view text) : m_text(text) {}
@@ -345,37 +377,7 @@ private:
         }
     }
 
-    // The bytes of one well-formed UTF-8 sequence starting at m_at, or 0.
-    std::size_t utf8Length() const
-    {
-        const auto byte = [&](std::size_t i) { return static_cast<unsigned char>(m_text[i]); };
-        const unsigned char lead = byte(m_at);
-        std::size_t length = 0;
-        char32_t c = 0;
-        if (lead >= 0xC2 && lead <= 0xDF) {
-            length = 2;
-            c = lead & 0x1F;
-        } else if (lead >= 0xE0 && lead <= 0xEF) {
-            length = 3;
-            c = lead & 0x0F;
-        } else if (lead >= 0xF0 && lead <= 0xF4) {
-            length = 4;
-            c = lead & 0x07;
-        } else {
-            return 0;
-        }
-        if (m_at + length > m_text.size())
-            return 0;
-        for (std::size_t i = 1; i < length; ++i) {
-            if ((byte(m_at + i) & 0xC0) != 0x80)
-                return 0;
-            c = (c << 6) | (byte(m_at + i) & 0x3F);
-        }
-        const char32_t minimum = length == 2 ? 0x80 : length == 3 ? 0x800 : 0x10000;
-        if (c < minimum || c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF))
-            return 0;
-        return length;
-    }
+    std::size_t utf8Length() const { return utf8SequenceLength(m_text, m_at); }
 
     std::expected<std::string, Json::ParseError> parseString()
     {
@@ -498,6 +500,21 @@ std::string Json::dump(int indent) const
 std::expected<Json, Json::ParseError> Json::parse(std::string_view text)
 {
     return Parser(text).document();
+}
+
+bool isUtf8(std::string_view text)
+{
+    for (std::size_t at = 0; at < text.size();) {
+        if (static_cast<unsigned char>(text[at]) < 0x80) {
+            ++at;
+            continue;
+        }
+        const std::size_t length = utf8SequenceLength(text, at);
+        if (length == 0)
+            return false;
+        at += length;
+    }
+    return true;
 }
 
 }

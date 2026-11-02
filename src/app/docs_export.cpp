@@ -2,6 +2,7 @@
 #include "docking.h"
 #include "theme.h"
 
+#include "hikari/api/reference.h"
 #include "hikari/app/application.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/local_only_network.h"
@@ -50,16 +51,20 @@ QVariant plain(const QVariant &value)
     return value.metaType() == QMetaType::fromType<QJSValue>() ? value.value<QJSValue>().toVariant() : value;
 }
 
-bool write(const QString &dir, const QString &name, const QJsonObject &object, QString *error)
+bool write(const QString &dir, const QString &name, const QByteArray &bytes, QString *error)
 {
     QSaveFile file(QDir(dir).filePath(name));
-    if (!file.open(QIODevice::WriteOnly) || file.write(QJsonDocument(object).toJson(QJsonDocument::Indented)) < 0 ||
-        !file.commit()) {
+    if (!file.open(QIODevice::WriteOnly) || file.write(bytes) < 0 || !file.commit()) {
         if (error)
             *error = QStringLiteral("Cannot write %1: %2").arg(file.fileName(), file.errorString());
         return false;
     }
     return true;
+}
+
+bool write(const QString &dir, const QString &name, const QJsonObject &object, QString *error)
+{
+    return write(dir, name, QJsonDocument(object).toJson(QJsonDocument::Indented), error);
 }
 
 QJsonObject commands(const QVariantMap &menus)
@@ -318,8 +323,9 @@ QJsonObject meta()
             {QStringLiteral("version"), QStringLiteral(HIKARI_VERSION)},
             {QStringLiteral("commit"), QStringLiteral(HIKARI_COMMIT)},
             {QStringLiteral("site"), qs(application::kSiteUrl)},
+            {QStringLiteral("api"), api::kApiVersion},
             {QStringLiteral("files"), QJsonArray{QStringLiteral("commands.json"), QStringLiteral("settings.json"),
-                                                 QStringLiteral("guide-links.json")}}};
+                                                 QStringLiteral("guide-links.json"), QStringLiteral("api.json")}}};
 }
 
 }
@@ -370,6 +376,7 @@ bool exportDocs(const QString &dir, QString *error)
     return write(dir, QStringLiteral("commands.json"), commands(plain(menus).toMap()), error) &&
            write(dir, QStringLiteral("settings.json"), settings(application, settingsDialog), error) &&
            write(dir, QStringLiteral("guide-links.json"), guideLinks(), error) &&
+           write(dir, QStringLiteral("api.json"), QByteArray::fromStdString(api::apiReference().dump(2) + "\n"), error) &&
            write(dir, QStringLiteral("meta.json"), meta(), error);
 }
 
