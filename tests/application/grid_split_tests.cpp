@@ -230,3 +230,17 @@ TEST(SplitLines, LegacyPieces)
     EXPECT_EQ(legacy::splitByWord(u"{\\i1}ab, cd", fakeWords),
               (std::vector<std::u16string>{u"{\\i1}ab,", u" ", u"cd"}));
 }
+
+TEST(SplitLines, BothPiecesKeepTheLinesExtradata)
+{
+    EditSession session{load("[Events]\n"
+                             "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{=0}a\n"
+                             "\n[Aegisub Extradata]\nData: 0,k,ev\n")};
+    const auto a = session.document().lines()[0]->id;
+    session.setSelection(Selection{a, {a}, a, {}});
+    ASSERT_TRUE(splitAtVideoTime(session, timebase(), 410));
+    const auto lines = session.document().lines();
+    ASSERT_EQ(lines.size(), 2u);
+    for (const auto *line : lines)
+        EXPECT_EQ(line->extra, (std::vector<core::Extradata>{{u8"k", u8"v"}}));
+}

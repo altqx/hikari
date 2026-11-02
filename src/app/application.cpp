@@ -44,6 +44,7 @@
 
 #include <QRegularExpression>
 #include <QClipboard>
+#include <QMimeData>
 #include <QFile>
 #include <QMetaMethod>
 #include <QSet>
@@ -2985,6 +2986,29 @@ void setClipboardText(const std::u8string &text)
         QString::fromUtf8(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size())));
 }
 
+const QString kExtradataMime = QStringLiteral("application/x-hikarisub-extradata");
+
+QByteArray clipboardBytes(const std::u8string &text)
+{
+    return QByteArray(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size()));
+}
+
+void setClipboardRows(const std::u8string &text, const std::u8string &extradata)
+{
+    auto *data = new QMimeData;
+    data->setText(QString::fromUtf8(clipboardBytes(text)));
+    if (!extradata.empty())
+        data->setData(kExtradataMime, clipboardBytes(extradata));
+    QGuiApplication::clipboard()->setMimeData(data);
+}
+
+std::u8string clipboardExtradata()
+{
+    const QMimeData *data = QGuiApplication::clipboard()->mimeData();
+    const QByteArray bytes = data ? data->data(kExtradataMime) : QByteArray();
+    return std::u8string(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
+}
+
 }
 
 bool Application::copyLines()
@@ -2992,7 +3016,7 @@ bool Application::copyLines()
     auto *session = targetSession();
     if (!session || session->selection().selected.empty())
         return false;
-    setClipboardText(application::copyRows(*session));
+    setClipboardRows(application::copyRows(*session), application::copyRowsExtradata(*session));
     return true;
 }
 
@@ -3006,7 +3030,8 @@ bool Application::pasteLines()
     auto *session = targetSession();
     if (!session)
         return false;
-    const bool done = application::pasteRows(*session, toU8(clipboardText()), shownLines()).has_value();
+    const bool done =
+        application::pasteRows(*session, toU8(clipboardText()), shownLines(), {}, clipboardExtradata()).has_value();
     m_editor->reloadFromSession();
     refreshViews();
     return done;

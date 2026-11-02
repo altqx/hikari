@@ -56,6 +56,19 @@ struct IntField {
 enum class LineVisibility { Visible, Hidden, VisibleBlock };
 enum class GroupMarker { None, Description, Opened, Closed };
 
+// One [Aegisub Extradata] value, e.g. ("_aegi_folddata", "0;0;1").
+struct Extradata {
+    std::u8string key;
+    std::u8string value;
+    bool operator==(const Extradata &) const = default;
+};
+
+struct ExtradataEntry {
+    std::uint32_t id = 0;
+    Extradata data;
+    bool operator==(const ExtradataEntry &) const = default;
+};
+
 struct LineRecord {
     LineId id;
     bool comment = false;   // ASS Comment: rather than Dialogue:
@@ -91,6 +104,10 @@ struct LineRecord {
     std::uint64_t changeVersion = 0;
     // The karaoke Line a templater run generated this one from; 0: none. Never saved.
     LineId generatedFrom;
+    // The "{=1=2}" ids before the text as loaded, kept on save while they still name exactly `extra`.
+    std::vector<std::uint32_t> extradataIds;
+    // The values those ids name, in their order; the text never carries them.
+    std::vector<Extradata> extra;
 };
 
 // Changed gives the Line a new changeVersion; Kept leaves it.
@@ -138,6 +155,7 @@ enum class SectionKind {
     Unknown,    // retained untouched
     Hikari,     // [Hikari]: HikariSub's own "key=value" lines
     Cues,       // the single body of a sectionless format (SRT)
+    AegisubExtradata, // [Aegisub Extradata]: kept verbatim; its entries are also read into the Document
 };
 
 struct Section {
@@ -245,6 +263,9 @@ public:
     // for formats other than ASS.
     bool setHikariProperty(std::u8string_view key, std::u8string value);
 
+    // Every [Aegisub Extradata] entry as loaded, unused ones too. Lines carry their values by copy.
+    const std::vector<ExtradataEntry> &extradata() const { return m_extradata; }
+
     SubtitleFormat format() const { return m_format; }
     // MicroDVD frame rate for this Document only; nullopt while unknown.
     const std::optional<FrameRate> &frameRate() const { return m_frameRate; }
@@ -259,6 +280,7 @@ private:
     std::uint64_t m_nextLineId = 1;
     SubtitleFormat m_format = SubtitleFormat::Ass;
     std::optional<FrameRate> m_frameRate;
+    std::vector<ExtradataEntry> m_extradata;
 };
 
 struct LoadResult {

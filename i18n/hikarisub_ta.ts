@@ -1090,7 +1090,7 @@ Output device: %2</source>
         <translation>இந்தக் கோப்புறைகளில் உள்ள ச்கிரிப்ட்களை எப்போதும் நம்பு</translation>
     </message>
     <message>
-        <source>Don&apos;t load</source>
+        <source>Don’t load</source>
         <translation>ஏற்ற வேண்டாம்</translation>
     </message>
     <message>
@@ -1515,16 +1515,12 @@ Output device: %2</source>
         <translation>HTML</translation>
     </message>
     <message>
-        <source>Swap shortcuts between the color picker
-and the color selection window</source>
-        <translation>வண்ணத் தேர்வாளருக்கும் வண்ணத் தேர்வுச் சாளரத்துக்கும் இடையே
-குறுக்குவிசைகளை இடமாற்றவும்</translation>
+        <source>Click opens the picker, right-click the colour window</source>
+        <translation>சொடுக்கு வண்ணத் தேர்வாளரைத் திறக்கும், வலது சொடுக்கு வண்ணத் தேர்வுச் சாளரத்தைத் திறக்கும்</translation>
     </message>
     <message>
-        <source>Checking this option opens the color picker on left-click,
-and the color selection window on right-click.</source>
-        <translation>இந்த விருப்பத்தைத் தேர்வுசெய்தால் இடது சொடுக்கில் வண்ணத் தேர்வாளர் திறக்கும்,
-வலது சொடுக்கில் வண்ணத் தேர்வுச் சாளரம் திறக்கும்.</translation>
+        <source>Off: click opens the colour window, right-click the picker.</source>
+        <translation>அணைத்திருந்தால்: சொடுக்கு வண்ணத் தேர்வுச் சாளரத்தையும், வலது சொடுக்கு வண்ணத் தேர்வாளரையும் திறக்கும்.</translation>
     </message>
     <message>
         <source>Red</source>
@@ -1920,7 +1916,7 @@ in tag &apos;%3&apos;</source>
 <context>
     <name>HikariSub.Documents</name>
     <message>
-        <source>Apply to All</source>
+        <source>Apply to all</source>
         <translation>அனைத்துக்கும் பயன்படுத்து</translation>
     </message>
     <message>
@@ -2460,36 +2456,12 @@ Should not exceed 15 characters per second</source>
         <translation>வரி விளைவு. கரோக்கி அல்லது VSFilter விளைவுகள் பயன்படுத்தப்பட வேண்டிய வரிகளைக் குறிக்கப் பயன்படுகிறது</translation>
     </message>
     <message>
-        <source>&amp;Copy</source>
-        <translation>நகலெடு (&amp;c)</translation>
-    </message>
-    <message>
-        <source>Cu&amp;t</source>
-        <translation>வெட்டு (&amp;t)</translation>
-    </message>
-    <message>
-        <source>&amp;Paste</source>
-        <translation>ஒட்டு (&amp;p)</translation>
-    </message>
-    <message>
-        <source>Spellchecker</source>
-        <translation>எழுத்துப்பிழை சரிபார்ப்பி</translation>
-    </message>
-    <message>
-        <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation>&quot;%1&quot; என்ற சொல்லை அகராதியில் சேர் (&amp;a)</translation>
-    </message>
-    <message>
         <source>Add word to dictionary</source>
         <translation>சொல்லை அகராதியில் சேர்</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
         <translation>பிழை. &quot;%1&quot; என்ற சொல் சேர்க்கப்படவில்லை.</translation>
-    </message>
-    <message>
-        <source>&amp;Delete</source>
-        <translation>நீக்கு (&amp;d)</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2558,6 +2530,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>Remove</source>
         <translation>அகற்று</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -2791,7 +2767,7 @@ Should not exceed 15 characters per second</source>
         <translation>சேர்</translation>
     </message>
     <message>
-        <source>Adds fonts to a previously created catalog</source>
+        <source>Adds fonts to an existing catalogue</source>
         <translation>முன்பு உருவாக்கிய பட்டியலில் எழுத்துருக்களைச் சேர்க்கிறது</translation>
     </message>
     <message>
@@ -2799,7 +2775,7 @@ Should not exceed 15 characters per second</source>
         <translation>நிர்வகிக்கவும்</translation>
     </message>
     <message>
-        <source>Allows managing font catalogs</source>
+        <source>Manages font catalogues</source>
         <translation>எழுத்துரு பட்டியல்களை நிர்வகிக்க உதவுகிறது</translation>
     </message>
     <message>
@@ -2815,7 +2791,7 @@ Should not exceed 15 characters per second</source>
         <translation>வசன வரிகளிலிருந்து எழுத்துருக்களைச் சேர்க்கவும்</translation>
     </message>
     <message>
-        <source>Manage font catalogs</source>
+        <source>Manage font catalogues</source>
         <translation>எழுத்துரு பட்டியல்களை நிர்வகிக்கவும்</translation>
     </message>
     <message>
@@ -2831,7 +2807,7 @@ Should not exceed 15 characters per second</source>
         <translation>எழுத்துருக்களைப் புதுப்பி: நிறுவப்பட்ட மற்றும் வெளி எழுத்துருக்களை மீண்டும் படிக்கிறது</translation>
     </message>
     <message>
-        <source>Enter a name for the catalog.</source>
+        <source>Enter a name for the catalogue.</source>
         <translation>பட்டியலுக்கு ஒரு பெயரை உள்ளிடவும்.</translation>
     </message>
     <message>
@@ -2839,11 +2815,11 @@ Should not exceed 15 characters per second</source>
         <translation>“%1” ஏற்கெனவே உள்ளது.</translation>
     </message>
     <message>
-        <source>Rename font catalog</source>
+        <source>Rename font catalogue</source>
         <translation>எழுத்துரு பட்டியலின் பெயரை மாற்று</translation>
     </message>
     <message>
-        <source>A catalog named “%1” already exists.</source>
+        <source>A catalogue named “%1” already exists.</source>
         <translation>“%1” என்ற பெயரில் ஒரு பட்டியல் ஏற்கெனவே உள்ளது.</translation>
     </message>
     <message>
@@ -2855,11 +2831,11 @@ Should not exceed 15 characters per second</source>
         <translation>மாற்று</translation>
     </message>
     <message>
-        <source>Delete font catalog</source>
+        <source>Delete font catalogue</source>
         <translation>எழுத்துரு பட்டியலை நீக்கு</translation>
     </message>
     <message>
-        <source>Delete the catalog “%1”?</source>
+        <source>Delete the catalogue “%1”?</source>
         <translation>“%1” பட்டியலை நீக்கவா?</translation>
     </message>
     <message>
@@ -2867,11 +2843,11 @@ Should not exceed 15 characters per second</source>
         <translation>இதில் எழுத்துருக்கள் எதுவும் இல்லை.</translation>
     </message>
     <message>
-        <source>Its fonts stay installed and in their other catalogs.</source>
+        <source>Its fonts stay installed and in their other catalogues.</source>
         <translation>இதன் எழுத்துருக்கள் நிறுவப்பட்டபடியே அவற்றின் பிற பட்டியல்களிலும் இருக்கும்.</translation>
     </message>
     <message>
-        <source>The file holds no font catalog.</source>
+        <source>The file holds no font catalogue.</source>
         <translation>இந்தக் கோப்பில் எழுத்துரு பட்டியல் எதுவும் இல்லை.</translation>
     </message>
     <message>
@@ -2879,15 +2855,15 @@ Should not exceed 15 characters per second</source>
         <translation>%1 (%2)</translation>
     </message>
     <message>
-        <source>Load font catalogs</source>
+        <source>Load font catalogues</source>
         <translation>எழுத்துரு பட்டியல்களை ஏற்று</translation>
     </message>
     <message>
-        <source>%1 of %2 catalogs in “%3” already exist.</source>
+        <source>%1 of %2 catalogues in “%3” already exist.</source>
         <translation>“%3” இல் உள்ள %2 பட்டியல்களில் %1 ஏற்கெனவே உள்ளன.</translation>
     </message>
     <message>
-        <source>The file’s new catalogs are added.</source>
+        <source>The file’s new catalogues are added.</source>
         <translation>கோப்பின் புதிய பட்டியல்கள் சேர்க்கப்படும்.</translation>
     </message>
     <message>
@@ -2907,11 +2883,11 @@ Should not exceed 15 characters per second</source>
         <translation>இங்கே %1, கோப்பில் %2</translation>
     </message>
     <message>
-        <source>Load 1 catalog</source>
+        <source>Load 1 catalogue</source>
         <translation>1 பட்டியலை ஏற்று</translation>
     </message>
     <message numerus="yes">
-        <source>Load %n catalogs</source>
+        <source>Load %n catalogues</source>
         <translation>
             <numerusform>%n பட்டியலை ஏற்று</numerusform>
             <numerusform>%n பட்டியல்களை ஏற்று</numerusform>
@@ -2946,11 +2922,11 @@ Should not exceed 15 characters per second</source>
         </translation>
     </message>
     <message>
-        <source>Loaded 1 font catalog</source>
+        <source>Loaded 1 font catalogue</source>
         <translation>1 எழுத்துரு பட்டியல் ஏற்றப்பட்டது</translation>
     </message>
     <message numerus="yes">
-        <source>Loaded %n font catalogs</source>
+        <source>Loaded %n font catalogues</source>
         <translation>
             <numerusform>%n எழுத்துரு பட்டியல் ஏற்றப்பட்டது</numerusform>
             <numerusform>%n எழுத்துரு பட்டியல்கள் ஏற்றப்பட்டன</numerusform>
@@ -2961,11 +2937,11 @@ Should not exceed 15 characters per second</source>
         <translation>%1 இலிருந்து: %2.</translation>
     </message>
     <message>
-        <source>Catalogs</source>
+        <source>Catalogues</source>
         <translation>பட்டியல்கள்</translation>
     </message>
     <message>
-        <source>New catalog</source>
+        <source>New catalogue</source>
         <translation>புதிய பட்டியல்</translation>
     </message>
     <message>
@@ -2985,11 +2961,11 @@ Should not exceed 15 characters per second</source>
         <translation>“%1” இல்</translation>
     </message>
     <message>
-        <source>In the catalog</source>
+        <source>In the catalogue</source>
         <translation>பட்டியலில் உள்ளது</translation>
     </message>
     <message>
-        <source>Not in a catalog</source>
+        <source>Not in a catalogue</source>
         <translation>எந்தப் பட்டியலிலும் இல்லை</translation>
     </message>
     <message>
@@ -3013,11 +2989,11 @@ Should not exceed 15 characters per second</source>
         <translation>சேமிக்கப்படவில்லை: பாதுகாப்பு நகலை எழுத முடியவில்லை</translation>
     </message>
     <message>
-        <source>The catalogs are saved automatically to fonts.toml in the &quot;catalogs&quot; folder of your user folder.</source>
+        <source>Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.</source>
         <translation>பட்டியல்கள் உங்கள் பயனர் கோப்புறையின் &quot;catalogs&quot; கோப்புறையில் உள்ள fonts.toml இல் தானாகச் சேமிக்கப்படுகின்றன.</translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Catalogue name</source>
         <translation>பட்டியலின் பெயர்</translation>
     </message>
     <message>
@@ -3049,7 +3025,7 @@ Should not exceed 15 characters per second</source>
         <translation>ஒன்றிணை</translation>
     </message>
     <message>
-        <source>Choose font catalog file</source>
+        <source>Choose font catalogue file</source>
         <translation>எழுத்துரு பட்டியல் கோப்பைத் தேர்வுசெய்</translation>
     </message>
     <message>
@@ -3205,7 +3181,7 @@ Should not exceed 15 characters per second</source>
         <translation>எழுத்துருக்களைத் தேடு</translation>
     </message>
     <message>
-        <source>Font catalog: %1</source>
+        <source>Font catalogue: %1</source>
         <translation>எழுத்துரு பட்டியல்: %1</translation>
     </message>
     <message>
@@ -3225,11 +3201,11 @@ Should not exceed 15 characters per second</source>
         <translation>எழுத்துகள் வடிகட்டி</translation>
     </message>
     <message>
-        <source>Add to a catalog</source>
+        <source>Add to a catalogue</source>
         <translation>பட்டியலில் சேர்</translation>
     </message>
     <message>
-        <source>Add “%1” to a catalog</source>
+        <source>Add “%1” to a catalogue</source>
         <translation>“%1” ஐப் பட்டியலில் சேர்</translation>
     </message>
     <message>
@@ -3303,27 +3279,27 @@ Should not exceed 15 characters per second</source>
         <translation>மாதிரி உரை</translation>
     </message>
     <message>
-        <source>The line’s selected text</source>
-        <translation>வரியில் தேர்ந்தெடுத்த உரை</translation>
+        <source>Selected text</source>
+        <translation>தேர்ந்தெடுத்த உரை</translation>
     </message>
     <message>
-        <source>The line’s text</source>
-        <translation>வரியின் உரை</translation>
+        <source>Line text</source>
+        <translation>வரி உரை</translation>
     </message>
     <message>
-        <source>The Style editor’s sample text</source>
-        <translation>பாணி திருத்தியின் மாதிரி உரை</translation>
+        <source>Style editor sample</source>
+        <translation>பாணி திருத்தி மாதிரி</translation>
     </message>
     <message>
-        <source>Manage catalogs…</source>
-        <translation>பட்டியல்களை நிர்வகி…</translation>
+        <source>Manage catalogues</source>
+        <translation>பட்டியல்களை நிர்வகி</translation>
     </message>
     <message>
-        <source>No catalogs yet</source>
+        <source>No catalogues yet</source>
         <translation>இன்னும் பட்டியல்கள் இல்லை</translation>
     </message>
     <message>
-        <source>New catalog…</source>
+        <source>New catalogue…</source>
         <translation>புதிய பட்டியல்…</translation>
     </message>
     <message>
@@ -3755,7 +3731,7 @@ Failed to copy %2 fonts.</source>
         <translation>எழுத்துருக்கள் “%1” இல் சேர்க்கப்பட்டன, ஆனால் சேமிக்க முடியவில்லை.</translation>
     </message>
     <message>
-        <source>fonts.toml in the &quot;catalogs&quot; folder of your user folder could not be written. Saving is tried again on exit.</source>
+        <source>fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.</source>
         <translation>உங்கள் பயனர் கோப்புறையின் &quot;catalogs&quot; கோப்புறையில் உள்ள fonts.toml இல் எழுத முடியவில்லை. வெளியேறும்போது சேமிப்பு மீண்டும் முயற்சிக்கப்படும்.</translation>
     </message>
     <message>
@@ -3767,7 +3743,7 @@ Failed to copy %2 fonts.</source>
         <translation>%2 இன் பாணிகள் மற்றும் %1 குறிச்சொற்களிலிருந்து.</translation>
     </message>
     <message>
-        <source>Choose a catalog or type a new name.</source>
+        <source>Choose a catalogue or type a new name.</source>
         <translation>ஒரு பட்டியலைத் தேர்வுசெய்யவும் அல்லது புதிய பெயரைத் தட்டச்சிடவும்.</translation>
     </message>
     <message>
@@ -3783,7 +3759,7 @@ Failed to copy %2 fonts.</source>
         <translation>திறந்துள்ள எல்லாக் கோப்புகளும்</translation>
     </message>
     <message>
-        <source>Replace the catalog’s fonts</source>
+        <source>Replace the catalogue’s fonts</source>
         <translation>பட்டியலின் எழுத்துருக்களை மாற்று</translation>
     </message>
     <message numerus="yes">
@@ -4224,22 +4200,6 @@ Failed to copy %2 fonts.</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
-        <source>&amp;Insert</source>
-        <translation>செருகு (&amp;i)</translation>
-    </message>
-    <message>
-        <source>Insert &amp;before</source>
-        <translation>முன் செருகவும் (&amp;b)</translation>
-    </message>
-    <message>
-        <source>Insert &amp;after</source>
-        <translation>பின் செருகவும் (&amp;a)</translation>
-    </message>
-    <message>
-        <source>Insert before with &amp;video time</source>
-        <translation>வீடியோ நேரத்துடன் முன் செருகவும் (&amp;v)</translation>
-    </message>
-    <message>
         <source>Insert after with video time</source>
         <translation>வீடியோ நேரத்துடன் பின் செருகு</translation>
     </message>
@@ -4250,18 +4210,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Insert after with video frame time</source>
         <translation>வீடியோ சட்டக நேரத்துடன் பின் செருகவும்</translation>
-    </message>
-    <message>
-        <source>&amp;Duplicate lines</source>
-        <translation>வரிகளை நகலாக்கு (&amp;d)</translation>
-    </message>
-    <message>
-        <source>&amp;Swap</source>
-        <translation>இடமாற்று (&amp;s)</translation>
-    </message>
-    <message>
-        <source>Join &amp;lines</source>
-        <translation>வரிகளை இணை (&amp;l)</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
@@ -4424,18 +4372,6 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவிலிருந்து FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
-        <source>Copy	Ctrl+C</source>
-        <translation>நகலெடு	Ctrl+C</translation>
-    </message>
-    <message>
-        <source>Cut	Ctrl+X</source>
-        <translation>வெட்டு	Ctrl+X</translation>
-    </message>
-    <message>
-        <source>Paste	Ctrl+V</source>
-        <translation>ஒட்டு	Ctrl+V</translation>
-    </message>
-    <message>
         <source>Copy columns</source>
         <translation>நெடுவரிசைகளை நகலெடுக்கவும்</translation>
     </message>
@@ -4446,10 +4382,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Delete text</source>
         <translation>உரையை நீக்கு</translation>
-    </message>
-    <message>
-        <source>Delete lines	Shift+Del</source>
-        <translation>வரிகளை நீக்கு	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4500,6 +4432,34 @@ Failed to copy %2 fonts.</source>
         <translation>குழுவின் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
+        <source>Insert</source>
+        <translation>செருகு</translation>
+    </message>
+    <message>
+        <source>Insert before</source>
+        <translation>முன் செருகு</translation>
+    </message>
+    <message>
+        <source>Insert after</source>
+        <translation>பின் செருகு</translation>
+    </message>
+    <message>
+        <source>Insert before with video time</source>
+        <translation>வீடியோ நேரத்துடன் முன் செருகு</translation>
+    </message>
+    <message>
+        <source>Duplicate lines</source>
+        <translation>வரிகளை நகலாக்கு</translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation>இடமாற்று</translation>
+    </message>
+    <message>
+        <source>Join lines</source>
+        <translation>வரிகளை இணை</translation>
+    </message>
+    <message>
         <source>Make times continuous with the previous line</source>
         <translation>முந்தைய வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
     </message>
@@ -4510,6 +4470,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Make line group</source>
         <translation>வரிக் குழுவை உருவாக்கவும்</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>வெட்டு</translation>
+    </message>
+    <message>
+        <source>Delete lines</source>
+        <translation>வரிகளை நீக்கு</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -6126,8 +6094,8 @@ What would you like to do?</source>
         <translation>காஞ்சி நேரமிடுபவர்</translation>
     </message>
     <message>
-        <source>The kanji timing could not be applied</source>
-        <translation>காஞ்சி நேரமிடலைப் பயன்படுத்த முடியவில்லை</translation>
+        <source>The kanji timing could not be applied.</source>
+        <translation>காஞ்சி நேரமிடலைப் பயன்படுத்த முடியவில்லை.</translation>
     </message>
     <message>
         <source>The subtitles are read-only.</source>
@@ -6209,7 +6177,7 @@ What would you like to do?</source>
         <translation>பல-சிறப்பிப்பு (#)</translation>
     </message>
     <message>
-        <source>Write each further syllable of a group as a # syllable, for the templater&apos;s multi effects</source>
+        <source>Write each further syllable of a group as a # syllable, for the templater’s multi effects</source>
         <translation>வார்ப்புருவின் பல விளைவுகளுக்காக, ஒரு குழுவின் அடுத்தடுத்த ஒவ்வொரு அசையையும் # அசையாக எழுது</translation>
     </message>
     <message>
@@ -6217,7 +6185,7 @@ What would you like to do?</source>
         <translation>ஃபுரிகானா</translation>
     </message>
     <message>
-        <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
+        <source>Write each kanji’s reading after it (漢|かん), as the romaji sings it</source>
         <translation>ரோமாஜி பாடுவதைப் போல, ஒவ்வொரு காஞ்சியின் வாசிப்பையும் அதற்குப் பின் எழுது (漢|かん)</translation>
     </message>
     <message>
@@ -6253,8 +6221,8 @@ What would you like to do?</source>
         <translation>“%1” இல் கரோக்கி வரிகள் இல்லை</translation>
     </message>
     <message>
-        <source>The subtitles have no styles</source>
-        <translation>வசன வரிகளில் பாணிகள் இல்லை</translation>
+        <source>The document has no styles.</source>
+        <translation>ஆவணத்தில் பாணிகள் இல்லை.</translation>
     </message>
     <message>
         <source>No lines to pair</source>
@@ -6766,6 +6734,10 @@ What would you like to do?</source>
     <message>
         <source>Built with</source>
         <translation>இவற்றைக் கொண்டு உருவாக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>File formats and ideas from</source>
+        <translation>கோப்பு வடிவங்களும் யோசனைகளும் இவற்றிலிருந்து</translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
@@ -7347,7 +7319,7 @@ What would you like to do?</source>
         <translation>HikariSub %1 நிறுவத் தயாராக உள்ளது</translation>
     </message>
     <message>
-        <source>What&apos;s new</source>
+        <source>What’s new</source>
         <translation>புதிதாக என்ன</translation>
     </message>
     <message>
@@ -7410,7 +7382,7 @@ What would you like to do?</source>
         </translation>
     </message>
     <message>
-        <source>Don&apos;t ask again</source>
+        <source>Don’t ask again</source>
         <translation>மீண்டும் கேட்காதே</translation>
     </message>
     <message>
@@ -7497,8 +7469,8 @@ What would you like to do?</source>
         <translation>தவிர்</translation>
     </message>
     <message>
-        <source>All:</source>
-        <translation>அனைத்தும்:</translation>
+        <source>All</source>
+        <translation>அனைத்தும்</translation>
     </message>
     <message>
         <source>Action for every row</source>
@@ -9395,7 +9367,7 @@ and will be changed to the default</source>
         <translation>அம்சத்தை விவரிக்கவும்.</translation>
     </message>
     <message>
-        <source>Don&apos;t send</source>
+        <source>Don’t send</source>
         <translation>அனுப்ப வேண்டாம்</translation>
     </message>
     <message>
@@ -9585,8 +9557,8 @@ and will be changed to the default</source>
         <translation>சிக்கல் இடைநிலைப்பலகையில் உள்ளது. அதை GitHub இல் ஒரு புதிய சிக்கலில் ஒட்டவும்.</translation>
     </message>
     <message>
-        <source>The whole report</source>
-        <translation>முழு அறிக்கை</translation>
+        <source>Report text</source>
+        <translation>அறிக்கை உரை</translation>
     </message>
     <message>
         <source>Title</source>
@@ -9625,7 +9597,7 @@ and will be changed to the default</source>
         <translation>நீங்கள் எதிர்பார்த்தது</translation>
     </message>
     <message>
-        <source>What you&apos;d like</source>
+        <source>What you’d like</source>
         <translation>உங்களுக்கு என்ன வேண்டும்</translation>
     </message>
     <message>
@@ -11492,7 +11464,7 @@ Spell checking will be disabled</source>
         <translation>பாணியைச் சேமி</translation>
     </message>
     <message>
-        <source>Style catalog</source>
+        <source>Style catalogue</source>
         <translation>பாணிப் பட்டியல்</translation>
     </message>
     <message>
@@ -11568,7 +11540,7 @@ Spell checking will be disabled</source>
         <translation>மாற்றங்களை “%1” க்குப் பயன்படுத்தவா?</translation>
     </message>
     <message>
-        <source>The catalog “%1” is shown now; the changes go to “%2”.</source>
+        <source>The catalogue “%1” is shown now; the changes go to “%2”.</source>
         <translation>இப்போது “%1” பட்டியல் காட்டப்படுகிறது; மாற்றங்கள் “%2” க்குச் செல்லும்.</translation>
     </message>
     <message>
@@ -11602,8 +11574,8 @@ Spell checking will be disabled</source>
         <translation>ஒவ்வொரு பாணியும் ஏதேனும் ஒரு வரியால் பயன்படுத்தப்படுகிறது.</translation>
     </message>
     <message>
-        <source>Ctrl+Z puts them back.</source>
-        <translation>Ctrl+Z அவற்றை மீண்டும் கொண்டுவரும்.</translation>
+        <source>Undo puts them back.</source>
+        <translation>செயல்தவிர் அவற்றைத் திரும்பக் கொண்டுவரும்.</translation>
     </message>
     <message>
         <source>border</source>
@@ -11618,15 +11590,15 @@ Spell checking will be disabled</source>
         <translation>இந்தக் கோப்பில்</translation>
     </message>
     <message>
-        <source>the catalog</source>
+        <source>the catalogue</source>
         <translation>பட்டியலில்</translation>
     </message>
     <message>
-        <source>Delete catalog</source>
+        <source>Delete catalogue</source>
         <translation>பட்டியலை நீக்கு</translation>
     </message>
     <message>
-        <source>Delete the catalog “%1”?</source>
+        <source>Delete the catalogue “%1”?</source>
         <translation>“%1” பட்டியலை நீக்கவா?</translation>
     </message>
     <message>
@@ -11649,7 +11621,7 @@ Spell checking will be disabled</source>
         <translation>பாணிக்கு ஒரு பெயர் தேவை.</translation>
     </message>
     <message>
-        <source>The catalog already has a style named “%1”.</source>
+        <source>The catalogue already has a style named “%1”.</source>
         <translation>பட்டியலில் ஏற்கனவே “%1” என்ற பாணி உள்ளது.</translation>
     </message>
     <message>
@@ -11673,7 +11645,7 @@ Spell checking will be disabled</source>
         <translation>“%1” க்கான மாற்றங்கள் பயன்படுத்தப்படவில்லை</translation>
     </message>
     <message>
-        <source>The file shown now uses the catalog “%1”.</source>
+        <source>The file shown now uses the catalogue “%1”.</source>
         <translation>இப்போது காட்டப்படும் கோப்பு “%1” பட்டியலைப் பயன்படுத்துகிறது.</translation>
     </message>
     <message>
@@ -11705,7 +11677,7 @@ Spell checking will be disabled</source>
         <translation>வெளிப்படைத்தன்மை, 0 (ஒளிபுகாதது) முதல் 255 வரை</translation>
     </message>
     <message>
-        <source>Catalog styles</source>
+        <source>Catalogue styles</source>
         <translation>பட்டியல் பாணிகள்</translation>
     </message>
     <message>
@@ -11776,15 +11748,15 @@ Spell checking will be disabled</source>
         <translation>கோப்பில் சேர்</translation>
     </message>
     <message>
-        <source>Copy the selected catalog styles into this file</source>
+        <source>Copy the selected catalogue styles into this file</source>
         <translation>தேர்ந்தெடுத்த பட்டியல் பாணிகளை இந்தக் கோப்பில் நகலெடு</translation>
     </message>
     <message>
-        <source>Add to catalog</source>
+        <source>Add to catalogue</source>
         <translation>பட்டியலில் சேர்</translation>
     </message>
     <message>
-        <source>Copy the selected file styles into the catalog</source>
+        <source>Copy the selected file styles into the catalogue</source>
         <translation>தேர்ந்தெடுத்த கோப்புப் பாணிகளைப் பட்டியலில் நகலெடு</translation>
     </message>
     <message>
@@ -11792,7 +11764,7 @@ Spell checking will be disabled</source>
         <translation>திறந்துள்ள அனைத்துக் கோப்புகளிலும் சேர்</translation>
     </message>
     <message>
-        <source>Copy the selected catalog styles into every open file</source>
+        <source>Copy the selected catalogue styles into every open file</source>
         <translation>தேர்ந்தெடுத்த பட்டியல் பாணிகளைத் திறந்துள்ள ஒவ்வொரு கோப்பிலும் நகலெடு</translation>
     </message>
     <message>
@@ -11800,8 +11772,8 @@ Spell checking will be disabled</source>
         <translation>இந்தக் கோப்பு</translation>
     </message>
     <message>
-        <source>This tab has no ASS styles.</source>
-        <translation>இந்தத் தாவலில் ASS பாணிகள் இல்லை.</translation>
+        <source>This document has no ASS styles.</source>
+        <translation>இந்த ஆவணத்தில் ASS பாணிகள் இல்லை.</translation>
     </message>
     <message numerus="yes">
         <source>%n styles: the preview shows %1</source>
@@ -11830,7 +11802,7 @@ Spell checking will be disabled</source>
         <translation>குடும்பம்</translation>
     </message>
     <message>
-        <source>Font catalog</source>
+        <source>Font catalogue</source>
         <translation>எழுத்துரு பட்டியல்</translation>
     </message>
     <message>
@@ -11926,7 +11898,7 @@ Spell checking will be disabled</source>
         <translation>பயன்படுத்து</translation>
     </message>
     <message>
-        <source>New catalog</source>
+        <source>New catalogue</source>
         <translation>புதிய பட்டியல்</translation>
     </message>
     <message>
@@ -12034,11 +12006,11 @@ Spell checking will be disabled</source>
         <translation>திரும்பப்பெறு</translation>
     </message>
     <message>
-        <source>A catalog named “%1” already exists.</source>
+        <source>A catalogue named “%1” already exists.</source>
         <translation>“%1” என்ற பட்டியல் ஏற்கனவே உள்ளது.</translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Catalogue name</source>
         <translation>பட்டியல் பெயர்</translation>
     </message>
     <message>
@@ -13379,6 +13351,65 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.TextMenu</name>
+    <message>
+        <source>Undo</source>
+        <translation>செயல்தவிர்</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>மீண்டும்செய்</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>வெட்டு</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>அனைத்தையும் தெரிவுசெய்</translation>
+    </message>
+    <message>
+        <source>Undoes the last change to the text</source>
+        <translation>உரையின் கடைசி மாற்றத்தைச் செயல்தவிர்க்கிறது</translation>
+    </message>
+    <message>
+        <source>Redoes the last change you undid</source>
+        <translation>கடைசியாகச் செயல்தவிர்த்த மாற்றத்தை மீண்டும் செய்கிறது</translation>
+    </message>
+    <message>
+        <source>Moves the selected text to the clipboard</source>
+        <translation>தேர்ந்தெடுத்த உரையைக் கிளிப்போர்டுக்கு நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Copies the selected text to the clipboard</source>
+        <translation>தேர்ந்தெடுத்த உரையைக் கிளிப்போர்டுக்கு நகலெடுக்கிறது</translation>
+    </message>
+    <message>
+        <source>Inserts the text from the clipboard</source>
+        <translation>கிளிப்போர்டிலிருந்து உரையைச் செருகுகிறது</translation>
+    </message>
+    <message>
+        <source>Deletes the selected text</source>
+        <translation>தேர்ந்தெடுத்த உரையை நீக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Selects all the text in the field</source>
+        <translation>புலத்திலுள்ள எல்லா உரையையும் தேர்ந்தெடுக்கிறது</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TimeShift</name>
     <message>
         <source>The starting time</source>
@@ -13760,7 +13791,7 @@ after the end time in milliseconds</source>
         <translation>மொழிபெயர்ப்புப் பொருத்த விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</source>
+        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted translation is matched to it, and it is deleted later.</source>
         <translation>&lt;b&gt;அசல்&lt;/b&gt;: சரியான நேரமிடல் கொண்ட உரை. ஒட்டப்பட்ட உரையாடல் இதனுடன் பொருத்தப்படும், பின்னர் இது நீக்கப்படும்.</translation>
     </message>
     <message>
@@ -14749,11 +14780,11 @@ or codecs or a splitter may be missing</source>
         <translation>“%1” என்ற பெயரில் வேறொரு குறிச்சொல் உள்ளது. அதை மாற்ற முதலில் குறிச்சொல் புலத்தை நிரப்பவும்.</translation>
     </message>
     <message>
-        <source>A tag can&apos;t contain “,”.</source>
+        <source>A tag can’t contain “,”.</source>
         <translation>குறிச்சொல்லில் “,” இருக்கக்கூடாது.</translation>
     </message>
     <message>
-        <source>A name can&apos;t contain “,”.</source>
+        <source>A name can’t contain “,”.</source>
         <translation>பெயரில் “,” இருக்கக்கூடாது.</translation>
     </message>
     <message>
@@ -14804,8 +14835,8 @@ or codecs or a splitter may be missing</source>
         <translation>22 இயல்புநிலை குறிச்சொற்கள் அவற்றின் வரம்புகள் மற்றும் படிகளுடன் மீண்டும் வரும்.</translation>
     </message>
     <message>
-        <source>The list keeps at least one tag</source>
-        <translation>பட்டியலில் குறைந்தது ஒரு குறிச்சொல் இருக்கும்</translation>
+        <source>The list keeps at least one tag.</source>
+        <translation>பட்டியலில் குறைந்தது ஒரு குறிச்சொல் இருக்கும்.</translation>
     </message>
     <message>
         <source>Default</source>
@@ -14836,10 +14867,10 @@ or codecs or a splitter may be missing</source>
         <translation>எண்ணிக்கை</translation>
     </message>
     <message numerus="yes">
-        <source>The tag takes %n value(s)</source>
+        <source>The tag takes %n value(s).</source>
         <translation>
-            <numerusform>குறிச்சொல் %n மதிப்பை ஏற்கும்</numerusform>
-            <numerusform>குறிச்சொல் %n மதிப்புகளை ஏற்கும்</numerusform>
+            <numerusform>குறிச்சொல் %n மதிப்பை ஏற்கும்.</numerusform>
+            <numerusform>குறிச்சொல் %n மதிப்புகளை ஏற்கும்.</numerusform>
         </translation>
     </message>
     <message>
@@ -14915,7 +14946,7 @@ or codecs or a splitter may be missing</source>
         <translation>ஒரு பெயரைத் தட்டச்சு செய்யவும்.</translation>
     </message>
     <message>
-        <source>A name can&apos;t contain “;”.</source>
+        <source>A name can’t contain “;”.</source>
         <translation>பெயரில் “;” இருக்கக்கூடாது.</translation>
     </message>
     <message>
@@ -14970,8 +15001,8 @@ or codecs or a splitter may be missing</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
-        <source>The list keeps at least one shape</source>
-        <translation>பட்டியலில் குறைந்தது ஒரு வடிவம் இருக்கும்</translation>
+        <source>The list keeps at least one shape.</source>
+        <translation>பட்டியலில் குறைந்தது ஒரு வடிவம் இருக்கும்.</translation>
     </message>
     <message>
         <source>Name</source>
@@ -14998,7 +15029,7 @@ or codecs or a splitter may be missing</source>
         <translation>வரைபடம்</translation>
     </message>
     <message>
-        <source>A drawing can&apos;t contain “;”.</source>
+        <source>A drawing can’t contain “;”.</source>
         <translation>வரைபடத்தில் “;” இருக்கக்கூடாது.</translation>
     </message>
     <message>
@@ -15010,7 +15041,7 @@ or codecs or a splitter may be missing</source>
         <translation>செயலில் உள்ள வரியிலிருந்து எடு</translation>
     </message>
     <message>
-        <source>Put the active line&apos;s drawing in this shape</source>
+        <source>Put the active line’s drawing in this shape</source>
         <translation>செயலில் உள்ள வரியின் வரைபடத்தை இந்த வடிவத்தில் வை</translation>
     </message>
     <message>
@@ -15022,8 +15053,8 @@ or codecs or a splitter may be missing</source>
         <translation>முன்னோட்டம்</translation>
     </message>
     <message>
-        <source>The shape keeps its last drawing until this one can be used</source>
-        <translation>இதைப் பயன்படுத்த முடியும் வரை வடிவம் தன் கடைசி வரைபடத்தையே வைத்திருக்கும்</translation>
+        <source>The shape keeps its last drawing until this one can be used.</source>
+        <translation>இதைப் பயன்படுத்த முடியும் வரை வடிவம் தன் கடைசி வரைபடத்தையே வைத்திருக்கும்.</translation>
     </message>
     <message>
         <source>%1 × %2</source>
