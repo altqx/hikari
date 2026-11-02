@@ -1,5 +1,6 @@
 include("${PROJECT_SOURCE_DIR}/cmake/HikariModules.cmake")
 add_subdirectory(core)
+add_subdirectory(minisign)
 add_subdirectory(application)
 add_subdirectory(api)
 add_subdirectory(backends)
