@@ -295,11 +295,14 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         {"GLOBAL_KANJI_TIMER", 5174},
         {"GLOBAL_GETTING_STARTED", 5176},
+        {"GLOBAL_EXPORT_SUBS_AS", 5212},
         {"GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION", 5216},
         {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_START", 5217},
         {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_END", 5218},
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START", 5219},
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END", 5220},
+        {"GLOBAL_PLUGINS", 5231},
+        {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
 };
 
@@ -567,11 +570,14 @@ constexpr NameRow kNames[] = {
         {5173, "Repeat last run"},
         {5174, "Kanji timer"},
         {5176, "Getting started"},
+        {5212, "Export as"},
         {5216, "Join with previous line using the audio selection"},
         {5217, "Shift selected lines by frames: start at video"},
         {5218, "Shift selected lines by frames: end at video"},
         {5219, "Shift following lines by frames: start at video"},
         {5220, "Shift following lines by frames: end at video"},
+        {5231, "Plugins"},
+        {5229, "Centre times within frames"},
         {5223, "Import legacy settings…"},
 };
 

@@ -1303,7 +1303,7 @@ DialogWindow {
                     spacing: 4
                     Layout.topMargin: 6
                     Label {
-                        text: qsTr("Catalog")
+                        text: qsTr("Catalogue")
                         font: manager.fontAt(13, Font.DemiBold)
                         Layout.rightMargin: 6
                     }

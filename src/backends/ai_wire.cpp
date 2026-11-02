@@ -51,7 +51,7 @@ std::vector<std::pair<QByteArray, QByteArray>> authHeaders(const app::Provider &
         headers.emplace_back("Authorization", "Bearer " + key);
     }
     if (provider.preset == app::Preset::OpenRouter) {
-        headers.emplace_back("HTTP-Referer", "https://hikarisub.altqx.com");
+        headers.emplace_back("HTTP-Referer", "https://hikarisub.org");
         headers.emplace_back("X-Title", "HikariSub");
     }
     return headers;

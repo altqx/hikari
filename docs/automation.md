@@ -85,6 +85,20 @@ Legacy and Aegisub load every script a file's `Automation Scripts` names when th
 
 Each dialogue line's `line.extra` is the Line's extradata ([document model](document-model.md), FA3 [#560](https://github.com/altqx/hikari/issues/560)) as Aegisub 3.5 gives it: a table of string keys and values, a later entry winning over an earlier one with the same key. A script writes it as Aegisub reads it. Only string keys count, a number value becomes its string, any other value becomes `<not a string>`, and a value that is neither a table nor nil fails the run with Aegisub's "dialogue extradata must be a table". A changed table replaces the Line's values in the macro's one undo step, and the save writes them; an unchanged one keeps the Line's entries as they were, repeated keys included. `line.raw` carries no `{=id}` block.
 
+### Aegisub 3.5.1 and fork API (FA4, 2026-11-02)
+
+Scripts get Aegisub 3.5.1's Lua API with the additions of arch1t3cht's fork ([FA4 #561](https://github.com/altqx/hikari/issues/561)). The differences from earlier HikariSub are recorded in [Aegisub compatibility decisions](compatibility-decisions.md).
+
+- `aegisub.version` is `{string = "3.5.1", major = 3, minor = 5, patch = 1, build = 9914}`, the TypesettingTools release the host matches.
+- `frame:getPixel(x, y)` returns r, g, b. `frame:data()` returns the BGRA pixels as a light userdata for FFI, the pitch in bytes (width × 4) and `false` for "flipped". The pixels stay valid while the frame object is alive.
+- `project_properties()` gives the open audio file, the editing tab's keyframes file and `video_zoom`, the video panel's logical pixels per video pixel (1 without video). `timecodes_file` is `""`.
+- `frame_from_ms` and `ms_from_frame` round as Aegisub does (`AegisubFrameTimes`, ported from libaegisub's `vfr.cpp`). Only the automation services use it.
+- `aegisub.lfs`, `aegisub.util.deep_copy`, `include()` and `require()` errors behave as in Aegisub 3.5. Argument checking stays as lenient as it was.
+
+The third-party corpus (`tests/fixtures/automation-thirdparty`) runs all 14 of arch1t3cht's macros scripts on a fixture with folds and a perspective plane in its extradata, a 23.976 fps fixture video and a clipboard. `expected.json` pins each run.
+- FocusLines draws at random angles, so its drawings are masked (`random_drawings`).
+- AegisubChain's run is Manage Chains. Its Configure fails with the bundled DependencyControl, because `ipairs` over a config list raises "numerically indexed config hive keys are not supported". It fails the same way in Aegisub 3.5.1, whose LuaJIT also honours `__ipairs`.
+
 Stock modules always load from the shipped Include: a module or `include` file whose top-level name is in the shipped Include comes from there before the script's folder and the user's Include. The DependencyControl-managed packages (`l0`, `a-mo`, `BM`, `DM`, `PT`, `requireffi`, `SubInspector`, `json`, `Yutils`, `lyger`) keep the script folder → user Include → shipped order, so DependencyControl's updates win, and a module the shipped Include lacks resolves as before. This covers `moonscript` as Aegisub 3.5 does by loading its support files by exact path.
 
 ## Accepted cancellation and transaction policy (2026-09-29)

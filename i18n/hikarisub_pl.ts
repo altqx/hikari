@@ -1145,11 +1145,11 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Automatyzacja</translation>
     </message>
     <message>
-        <source>The protected reference can&apos;t be changed.</source>
+        <source>The protected reference can’t be changed.</source>
         <translation>Chronionego dokumentu referencyjnego nie można zmienić.</translation>
     </message>
     <message>
-        <source>The macro&apos;s changes could not be applied; nothing was changed.</source>
+        <source>The macro’s changes could not be applied; nothing was changed.</source>
         <translation>Nie udało się zastosować zmian makra; nic nie zostało zmienione.</translation>
     </message>
     <message>
@@ -1179,11 +1179,11 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Makro zostało anulowane; ustawiono tylko rozdzielczość skryptu.</translation>
     </message>
     <message>
-        <source>Validation Lua script &apos;%1&apos; failed</source>
-        <translation>Warunki skryptu Lua &apos;%1&apos; nie zostały spełnione</translation>
+        <source>Validation Lua script “%1” failed</source>
+        <translation>Warunki skryptu Lua “%1” nie zostały spełnione</translation>
     </message>
     <message>
-        <source>The script&apos;s helper ended; reload the script to use it again.</source>
+        <source>The script’s helper ended; reload the script to use it again.</source>
         <translation>Proces pomocniczy skryptu zakończył się; wczytaj skrypt ponownie, aby znów go używać.</translation>
     </message>
     <message>
@@ -1191,7 +1191,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Dokument zmienił się podczas działania makra; nic nie zostało zmienione.</translation>
     </message>
     <message>
-        <source>The last run&apos;s macro is no longer loaded, so it can&apos;t be repeated.</source>
+        <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>Makro z ostatniego uruchomienia nie jest już wczytane, więc nie można go powtórzyć.</translation>
     </message>
     <message>
@@ -1231,7 +1231,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Otwórz dokument, na którym ma zostać uruchomione makro.</translation>
     </message>
     <message>
-        <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
+        <source>The line being edited can’t be committed, so the macro can’t start.</source>
         <translation>Nie można zatwierdzić edytowanej linijki, więc makro nie może się uruchomić.</translation>
     </message>
     <message>
@@ -1593,7 +1593,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Pobieranie koloru z ekranu jest niedostępne: ta sesja Wayland nie udostępnia portalu zrzutów ekranu (xdg-desktop-portal z PickColor).</translation>
     </message>
     <message>
-        <source>The desktop&apos;s screenshot portal is not in use here.</source>
+        <source>The desktop’s screenshot portal is not in use here.</source>
         <translation>Portal zrzutów ekranu pulpitu nie jest tu używany.</translation>
     </message>
     <message>
@@ -1668,7 +1668,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Przeskalować napisy do wideo? Można to zrobić także później: Napisy › Zmień rozdzielczość napisów.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>Katalog</translation>
     </message>
     <message>
@@ -1820,10 +1820,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Rozciągnij</translation>
     </message>
     <message>
-        <source>In line %1, value &apos;%2&apos; cannot be scaled
-in tag &apos;%3&apos;</source>
-        <translation>W linijce %1 nie można przeskalować wartości &apos;%2&apos;
-w tagu &apos;%3&apos;</translation>
+        <source>In line %1, value “%2” cannot be scaled in tag “%3”.</source>
+        <translation>W linijce %1 nie można przeskalować wartości “%2” w tagu “%3”.</translation>
     </message>
     <message numerus="yes">
         <source>%n value(s) could not be scaled.</source>
@@ -1834,7 +1832,7 @@ w tagu &apos;%3&apos;</translation>
         </translation>
     </message>
     <message>
-        <source>This document can&apos;t be converted to that format.</source>
+        <source>This document can’t be converted to that format.</source>
         <translation>Tego dokumentu nie można przekonwertować do tego formatu.</translation>
     </message>
     <message>
@@ -1890,11 +1888,11 @@ w tagu &apos;%3&apos;</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) get the conversion style &quot;%1&quot;.</source>
+        <source>%n line(s) get the conversion style “%1”.</source>
         <translation>
-            <numerusform>%n linijka otrzyma styl konwersji &quot;%1&quot;.</numerusform>
-            <numerusform>%n linijki otrzymają styl konwersji &quot;%1&quot;.</numerusform>
-            <numerusform>%n linijek otrzyma styl konwersji &quot;%1&quot;.</numerusform>
+            <numerusform>%n linijka otrzyma styl konwersji “%1”.</numerusform>
+            <numerusform>%n linijki otrzymają styl konwersji “%1”.</numerusform>
+            <numerusform>%n linijek otrzyma styl konwersji “%1”.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -2052,8 +2050,8 @@ w tagu &apos;%3&apos;</translation>
         <translation>tekst nie jest w kodowaniu UTF-8</translation>
     </message>
     <message>
-        <source>&quot;%1&quot; is not a time</source>
-        <translation>&quot;%1&quot; nie jest czasem</translation>
+        <source>“%1” is not a time</source>
+        <translation>“%1” nie jest czasem</translation>
     </message>
     <message>
         <source>the word at %1 starts before the word before it</source>
@@ -2068,24 +2066,24 @@ w tagu &apos;%3&apos;</translation>
         <translation>czas %1 wykracza poza czasy otaczającego go elementu</translation>
     </message>
     <message>
-        <source>&quot;%1&quot; has no time</source>
-        <translation>&quot;%1&quot; nie ma czasu</translation>
+        <source>“%1” has no time</source>
+        <translation>“%1” nie ma czasu</translation>
     </message>
     <message>
         <source>a line with word times can have only one line time</source>
         <translation>linijka z czasami słów może mieć tylko jeden czas linijki</translation>
     </message>
     <message>
-        <source>the XML is broken at &quot;%1&quot;</source>
-        <translation>XML jest uszkodzony przy &quot;%1&quot;</translation>
+        <source>the XML is broken at “%1”</source>
+        <translation>XML jest uszkodzony przy “%1”</translation>
     </message>
     <message>
         <source>%1 is not a TTML document</source>
         <translation>%1 nie jest dokumentem TTML</translation>
     </message>
     <message>
-        <source>the elements are nested more than %1 deep at &quot;%2&quot;</source>
-        <translation>zagnieżdżenie elementów przekracza głębokość %1 przy &quot;%2&quot;</translation>
+        <source>the elements are nested more than %1 deep at “%2”</source>
+        <translation>zagnieżdżenie elementów przekracza głębokość %1 przy “%2”</translation>
     </message>
     <message>
         <source>it is too large for a lyrics file</source>
@@ -2136,28 +2134,24 @@ w tagu &apos;%3&apos;</translation>
         <translation>Napisy zmieniły się podczas ponownego wczytywania; nic nie zostało zastąpione.</translation>
     </message>
     <message>
-        <source>Video: </source>
-        <translation>Wideo: </translation>
+        <source>Video: %1</source>
+        <translation>Wideo: %1</translation>
     </message>
     <message>
-        <source>Audio: </source>
-        <translation>Audio: </translation>
+        <source>Audio: %1</source>
+        <translation>Audio: %1</translation>
     </message>
     <message>
-        <source>Keyframes: </source>
-        <translation>Klatki kluczowe: </translation>
+        <source>Keyframes: %1</source>
+        <translation>Klatki kluczowe: %1</translation>
     </message>
     <message>
-        <source>Associated files:
-</source>
-        <translation>Skojarzone pliki:
-</translation>
+        <source>Associated files:</source>
+        <translation>Skojarzone pliki:</translation>
     </message>
     <message>
-        <source>Video from directory:
-</source>
-        <translation>Wideo z folderu:
-</translation>
+        <source>Video from directory: %1</source>
+        <translation>Wideo z folderu: %1</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -2780,9 +2774,268 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>Usunięto rysunek</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>Usunięto wycinek</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>Usunięto animację (\t)</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>Ruch zachowany jako położenie początkowe</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>Usunięto ruch</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>Usunięto zanikanie</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>Usunięto obrót lub pochylenie</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>Usunięto tagi czcionki, rozmiaru, skali lub odstępów</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>Usunięto obramowanie, cień, rozmycie, przezroczystość lub inne kolory</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>Usunięto kolor tekstu</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>Usunięto część pogrubienia, kursywy, podkreślenia lub przekreślenia</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>Usunięto położenie lub wyrównanie</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>Usunięto timing karaoke</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>Usunięto efekt przewijania</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>Scalono z nakładającymi się linijkami</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>Nie ma nic do wyeksportowania.</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>Wpisz pełną ścieżkę pliku albo wybierz go przyciskiem Przeglądaj…</translation>
+    </message>
+    <message>
+        <source>“%1” is a folder.</source>
+        <translation>„%1” jest folderem.</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>Nie można zapisać %1: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>Eksportuj jako</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>Zwykły tekst</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>Bez nazwy</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>Zastąpić „%1”?</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>Plik o tej nazwie już istnieje.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Zastąp</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>Wszystkie (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>Zaznaczone (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>Widoczne (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>Zapisz w</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>Przeglądaj…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>Pliki %1 (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>Opcje</translation>
+    </message>
+    <message>
+        <source>Alignment as %1 tags</source>
+        <translation>Wyrównanie jako tagi %1</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>Kolory tekstu jako tagi font</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>Położenie i wyrównanie</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>Style i kolory</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>Timing karaoke</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>Czas początku i końca</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>Nazwy aktorów</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>Scal nakładające się linijki w jeden napis</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>Use video frame rate</source>
+        <translation>Użyj liczby klatek wideo</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer nie ma czasów końca: nakładające się linijki są scalane, a pusty napis czyści ekran.</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>Formatowanie, kolory i położenie nie są zachowywane.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to “%1”.</source>
+        <translation>
+            <numerusform>Wyeksportowano %n linijkę do „%1”.</numerusform>
+            <numerusform>Wyeksportowano %n linijki do „%1”.</numerusform>
+            <numerusform>Wyeksportowano %n linijek do „%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>Pominięto %n linijkę komentarza.</numerusform>
+            <numerusform>Pominięto %n linijki komentarza.</numerusform>
+            <numerusform>Pominięto %n linijek komentarza.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>Pominięto %n linijkę bez treści do wyświetlenia.</numerusform>
+            <numerusform>Pominięto %n linijki bez treści do wyświetlenia.</numerusform>
+            <numerusform>Pominięto %n linijek bez treści do wyświetlenia.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>Czego format nie mógł zachować. Wybierz linijkę, aby ją pokazać.</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>Nic nie zostało pominięte ani przybliżone</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>Raport eksportu</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>Linijka</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>Pominięte lub przybliżone</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Linijka %1: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Eksportuj</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message>
-        <source>Font catalogs</source>
+        <source>Font catalogues</source>
         <translation>Katalogi czcionek</translation>
     </message>
     <message>
@@ -2894,7 +3147,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Katalogi z takimi samymi czcionkami jak Twoje pozostaną bez zmian.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>Katalog</translation>
     </message>
     <message>
@@ -3370,7 +3623,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Wszystkie czcionki</translation>
     </message>
     <message>
-        <source>Without catalog</source>
+        <source>Without catalogue</source>
         <translation>Bez katalogu</translation>
     </message>
     <message>
@@ -3394,80 +3647,76 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>czcionki: %1</translation>
     </message>
     <message>
-        <source>Found &quot;%1&quot; font file.</source>
-        <translation>Znaleziono plik czcionki &quot;%1&quot;.</translation>
+        <source>Found “%1” font file.</source>
+        <translation>Znaleziono plik czcionki “%1”.</translation>
     </message>
     <message>
-        <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
-        <translation>Renderer użył też czcionki &quot;%1&quot; (%2); nie została ona zebrana.</translation>
+        <source>The renderer also used “%1” (%2); it is not collected.</source>
+        <translation>Renderer użył też czcionki “%1” (%2); nie została ona zebrana.</translation>
     </message>
     <message>
-        <source>Copied font &quot;%1&quot;.</source>
-        <translation>Skopiowano czcionkę &quot;%1&quot;.</translation>
+        <source>Copied font “%1”.</source>
+        <translation>Skopiowano czcionkę “%1”.</translation>
     </message>
     <message>
-        <source>Added font &quot;%1&quot; to the archive.</source>
-        <translation>Dodano do archiwum czcionkę &quot;%1&quot;.</translation>
+        <source>Added font “%1” to the archive.</source>
+        <translation>Dodano do archiwum czcionkę “%1”.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; belongs to a style
-that is not used.</source>
-        <translation>Czcionka &quot;%1&quot; należy do stylu,
-który nie jest wykorzystywany.</translation>
+        <source>Font “%1” belongs to a style that is not used.</source>
+        <translation>Czcionka “%1” należy do stylu, który nie jest wykorzystywany.</translation>
     </message>
     <message>
-        <source>
-Will not be copied.</source>
-        <translation>
-Nie zostanie skopiowana.</translation>
+        <source>Will not be copied.</source>
+        <translation>Nie zostanie skopiowana.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing normal style.</source>
-        <translation>Czcionka &quot;%1&quot; nie ma stylu normalnego.</translation>
+        <source>Font “%1” is missing normal style.</source>
+        <translation>Czcionka “%1” nie ma stylu normalnego.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing bold italics.</source>
-        <translation>Czcionka &quot;%1&quot; nie ma pogrubienia z kursywą.</translation>
+        <source>Font “%1” is missing bold italics.</source>
+        <translation>Czcionka “%1” nie ma pogrubienia z kursywą.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing bold.</source>
-        <translation>Czcionka &quot;%1&quot; nie ma pogrubienia.</translation>
+        <source>Font “%1” is missing bold.</source>
+        <translation>Czcionka “%1” nie ma pogrubienia.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing italics.</source>
-        <translation>Czcionka &quot;%1&quot; nie ma kursywy.</translation>
+        <source>Font “%1” is missing italics.</source>
+        <translation>Czcionka “%1” nie ma kursywy.</translation>
     </message>
     <message>
-        <source>Cannot check the characters in font &quot;%1&quot;.</source>
-        <translation>Nie można sprawdzić znaków czcionki &quot;%1&quot;.</translation>
+        <source>Cannot check the characters in font “%1”.</source>
+        <translation>Nie można sprawdzić znaków czcionki “%1”.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
-        <translation>Czcionka &quot;%1&quot; nie zawiera znaków: &quot;%2&quot;.</translation>
+        <source>Font “%1” does not contain characters: “%2”.</source>
+        <translation>Czcionka “%1” nie zawiera znaków: “%2”.</translation>
     </message>
     <message>
-        <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
-        <translation>Znaki &quot;%1&quot; zostały narysowane czcionką zastępczą &quot;%2&quot;.</translation>
+        <source>Characters “%1” were drawn by the fallback font “%2”.</source>
+        <translation>Znaki “%1” zostały narysowane czcionką zastępczą “%2”.</translation>
     </message>
     <message>
-        <source>Cannot get the contents of font &quot;%1&quot;.</source>
-        <translation>Nie można pobrać zawartości czcionki &quot;%1&quot;.</translation>
+        <source>Cannot get the contents of font “%1”.</source>
+        <translation>Nie można pobrać zawartości czcionki “%1”.</translation>
     </message>
     <message>
-        <source>Cannot open file &quot;%1&quot;.</source>
-        <translation>Nie można otworzyć pliku &quot;%1&quot;.</translation>
+        <source>Cannot open file “%1”.</source>
+        <translation>Nie można otworzyć pliku “%1”.</translation>
     </message>
     <message>
-        <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
-        <translation>Nie można znaleźć czcionki &quot;%1&quot; w folderze Fonts.</translation>
+        <source>Cannot find “%1” font in Fonts folder.</source>
+        <translation>Nie można znaleźć czcionki “%1” w folderze Fonts.</translation>
     </message>
     <message>
-        <source>Cannot copy font &quot;%1&quot;.</source>
-        <translation>Nie można skopiować czcionki &quot;%1&quot;.</translation>
+        <source>Cannot copy font “%1”.</source>
+        <translation>Nie można skopiować czcionki “%1”.</translation>
     </message>
     <message>
-        <source>Cannot zip font &quot;%1&quot;.</source>
-        <translation>Nie można spakować czcionki &quot;%1&quot;.</translation>
+        <source>Cannot zip font “%1”.</source>
+        <translation>Nie można spakować czcionki “%1”.</translation>
     </message>
     <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
@@ -3491,18 +3740,16 @@ Nie zostanie skopiowana.</translation>
         <translation>Potwierdzenie</translation>
     </message>
     <message>
-        <source>Found font &quot;%1&quot;
-</source>
-        <translation>Znaleziono czcionkę &quot;%1&quot;
-</translation>
+        <source>Found font “%1”</source>
+        <translation>Znaleziono czcionkę “%1”</translation>
     </message>
     <message>
-        <source>Found font &quot;%1&quot;.</source>
-        <translation>Znaleziono czcionkę &quot;%1&quot;.</translation>
+        <source>Found font “%1”.</source>
+        <translation>Znaleziono czcionkę “%1”.</translation>
     </message>
     <message>
-        <source>Font not found &quot;</source>
-        <translation>Nie znaleziono czcionki &quot;</translation>
+        <source>Font not found “%1”.</source>
+        <translation>Nie znaleziono czcionki “%1”.</translation>
     </message>
     <message>
         <source>In styles:
@@ -3519,64 +3766,44 @@ Nie zostanie skopiowana.</translation>
         <translation>W linijkach: </translation>
     </message>
     <message>
-        <source>Checked by the subtitle renderer (%1).
-</source>
-        <translation>Sprawdzone przez renderer napisów (%1).
-</translation>
+        <source>Checked by the subtitle renderer (%1).</source>
+        <translation>Sprawdzone przez renderer napisów (%1).</translation>
     </message>
     <message>
-        <source>Tab %1: the renderer could not read this document; it was not checked.
-</source>
-        <translation>Zakładka %1: renderer nie mógł odczytać tego dokumentu; nie został on sprawdzony.
-</translation>
+        <source>Tab %1: the renderer could not read this document; it was not checked.</source>
+        <translation>Zakładka %1: renderer nie mógł odczytać tego dokumentu; nie został on sprawdzony.</translation>
     </message>
     <message>
-        <source>Families the renderer did not find: %1.
-</source>
-        <translation>Rodziny czcionek, których renderer nie znalazł: %1.
-</translation>
+        <source>Families the renderer did not find: %1.</source>
+        <translation>Rodziny czcionek, których renderer nie znalazł: %1.</translation>
     </message>
     <message>
-        <source>Families answered by a font of another name: %1.
-</source>
-        <translation>Rodziny zastąpione czcionką o innej nazwie: %1.
-</translation>
+        <source>Families answered by a font of another name: %1.</source>
+        <translation>Rodziny zastąpione czcionką o innej nazwie: %1.</translation>
     </message>
     <message>
-        <source>Characters no font has: %1.
-</source>
-        <translation>Znaki, których nie ma żadna czcionka: %1.
-</translation>
+        <source>Characters no font has: %1.</source>
+        <translation>Znaki, których nie ma żadna czcionka: %1.</translation>
     </message>
     <message>
-        <source>Characters drawn by a fallback font of this computer: %1.
-</source>
-        <translation>Znaki narysowane czcionką zastępczą z tego komputera: %1.
-</translation>
+        <source>Characters drawn by a fallback font of this computer: %1.</source>
+        <translation>Znaki narysowane czcionką zastępczą z tego komputera: %1.</translation>
     </message>
     <message>
-        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.
-</source>
-        <translation>Zakładka %1: przy użyciu samych zebranych czcionek różnią się klatki: %2 z %3.
-</translation>
+        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.</source>
+        <translation>Zakładka %1: przy użyciu samych zebranych czcionek różnią się klatki: %2 z %3.</translation>
     </message>
     <message>
-        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
-</source>
-        <translation>Różne czcionki o tej samej nazwie pliku: %1. W folderze zostaje zachowana tylko jedna z nich.
-</translation>
+        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.</source>
+        <translation>Różne czcionki o tej samej nazwie pliku: %1. W folderze zostaje zachowana tylko jedna z nich.</translation>
     </message>
     <message>
-        <source>The video shows the subtitles through %1, whose output this check does not verify.
-</source>
-        <translation>Wideo wyświetla napisy za pomocą %1; to sprawdzenie nie weryfikuje jego wyniku.
-</translation>
+        <source>The video shows the subtitles through %1, whose output this check does not verify.</source>
+        <translation>Wideo wyświetla napisy za pomocą %1; to sprawdzenie nie weryfikuje jego wyniku.</translation>
     </message>
     <message>
-        <source>The collected fonts alone reproduce every frame.
-</source>
-        <translation>Same zebrane czcionki odtwarzają każdą klatkę.
-</translation>
+        <source>The collected fonts alone reproduce every frame.</source>
+        <translation>Same zebrane czcionki odtwarzają każdą klatkę.</translation>
     </message>
     <message>
         <source>found</source>
@@ -3587,108 +3814,72 @@ Nie zostanie skopiowana.</translation>
         <translation>skopiowano</translation>
     </message>
     <message>
-        <source>Finished, %1 %2.
-</source>
-        <translation>Zakończono, %1 %2.
-</translation>
+        <source>Finished, %1 %2.</source>
+        <translation>Zakończono, %1 %2.</translation>
     </message>
     <message>
-        <source>Not found %1.
-</source>
-        <translation>Nieznalezione %1.
-</translation>
+        <source>Not found %1.</source>
+        <translation>Nieznalezione %1.</translation>
     </message>
     <message>
-        <source>Cannot copy %1.
-</source>
-        <translation>Nieskopiowane %1.
-</translation>
+        <source>Cannot copy %1.</source>
+        <translation>Nieskopiowane %1.</translation>
     </message>
     <message>
-        <source>Some fonts do not contain all glyphs used in the text.
-</source>
-        <translation>Niektóre czcionki nie mają wszystkich znaków użytych w tekście.
-</translation>
+        <source>Some fonts do not contain all glyphs used in the text.</source>
+        <translation>Niektóre czcionki nie mają wszystkich znaków użytych w tekście.</translation>
     </message>
     <message>
-        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
-</source>
-        <translation>Renderer nie może odtworzyć napisów wyłącznie z tych czcionek: kolekcja jest niekompletna.
-</translation>
+        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.</source>
+        <translation>Renderer nie może odtworzyć napisów wyłącznie z tych czcionek: kolekcja jest niekompletna.</translation>
     </message>
     <message>
-        <source>The output does not hold every collected font under its own name: the collection is incomplete.
-</source>
-        <translation>Wynik nie zawiera każdej zebranej czcionki pod jej własną nazwą: kolekcja jest niekompletna.
-</translation>
+        <source>The output does not hold every collected font under its own name: the collection is incomplete.</source>
+        <translation>Wynik nie zawiera każdej zebranej czcionki pod jej własną nazwą: kolekcja jest niekompletna.</translation>
     </message>
     <message>
-        <source>Writing was cancelled.
-</source>
-        <translation>Zapis został anulowany.
-</translation>
+        <source>Writing was cancelled.</source>
+        <translation>Zapis został anulowany.</translation>
     </message>
     <message>
-        <source>The output is labelled incomplete (&quot;%1&quot;).
-</source>
-        <translation>Wynik oznaczono jako niekompletny (&quot;%1&quot;).
-</translation>
+        <source>The output is labelled incomplete (“%1”).</source>
+        <translation>Wynik oznaczono jako niekompletny (“%1”).</translation>
     </message>
     <message>
-        <source>Completed Successfully, %1 %2.
-</source>
-        <translation>Zakończono pomyślnie, %1 %2.
-</translation>
+        <source>Completed successfully, %1 %2.</source>
+        <translation>Zakończono pomyślnie, %1 %2.</translation>
     </message>
     <message>
         <source>Finished in %1ms</source>
         <translation>Zakończono w %1ms</translation>
     </message>
     <message>
-        <source>Cancelled; nothing was written.
-</source>
-        <translation>Anulowano; nic nie zostało zapisane.
-</translation>
+        <source>Cancelled; nothing was written.</source>
+        <translation>Anulowano; nic nie zostało zapisane.</translation>
     </message>
     <message>
-        <source>The subtitle renderer is not available; the fonts cannot be checked.
-</source>
-        <translation>Renderer napisów jest niedostępny; nie można sprawdzić czcionek.
-</translation>
+        <source>The subtitle renderer is not available; the fonts cannot be checked.</source>
+        <translation>Renderer napisów jest niedostępny; nie można sprawdzić czcionek.</translation>
     </message>
     <message>
-        <source>Cannot retrieve the font file sizes and names;
-copying will be canceled.
-</source>
-        <translation>Nie można pobrać rozmiarów i nazw plików czcionek;
-kopiowanie zostanie anulowane.
-</translation>
+        <source>Cannot retrieve the font file sizes and names; copying will be cancelled.</source>
+        <translation>Nie można pobrać rozmiarów i nazw plików czcionek; kopiowanie zostanie anulowane.</translation>
     </message>
     <message>
-        <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
-
-</source>
-        <translation>Pobrano rozmiary i nazwy czcionek (%1), upłynęło %2ms.
-
-</translation>
+        <source>Retrieved sizes and names of %1 fonts, elapsed time %2 ms.</source>
+        <translation>Pobrano rozmiary i nazwy czcionek (%1), upłynęło %2 ms.</translation>
     </message>
     <message>
-        <source>Ready to add %1 to the archive &quot;%2&quot;.
-</source>
-        <translation>Do archiwum &quot;%2&quot; zostaną dodane %1.
-</translation>
+        <source>Ready to add %1 to the archive “%2”.</source>
+        <translation>Do archiwum “%2” zostaną dodane %1.</translation>
     </message>
     <message>
-        <source>Ready to copy %1 to &quot;%2&quot;.
-</source>
-        <translation>Do &quot;%2&quot; zostaną skopiowane %1.
-</translation>
+        <source>Ready to copy %1 to “%2”.</source>
+        <translation>Do “%2” zostaną skopiowane %1.</translation>
     </message>
     <message>
-        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.
-</source>
-        <translation>Ta kolekcja jest niekompletna. Zostanie zapisana dopiero po potwierdzeniu tego faktu, a wynik zostanie oznaczony jako niekompletny.
-</translation>
+        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
+        <translation>Ta kolekcja jest niekompletna. Zostanie zapisana dopiero po potwierdzeniu tego faktu, a wynik zostanie oznaczony jako niekompletny.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -3699,12 +3890,8 @@ kopiowanie zostanie anulowane.
         <translation>Ścieżka jest niedostępna</translation>
     </message>
     <message>
-        <source>Video: %1
-
-</source>
-        <translation>Wideo: %1
-
-</translation>
+        <source>Video: %1</source>
+        <translation>Wideo: %1</translation>
     </message>
     <message>
         <source>This video is not an MKV file.</source>
@@ -3719,22 +3906,20 @@ kopiowanie zostanie anulowane.
         <translation>Wczytany plik MKV nie ma żadnych czcionek.</translation>
     </message>
     <message>
-        <source>Font named &quot;%1&quot;.
-</source>
-        <translation>Czcionka o nazwie &quot;%1&quot;.
-</translation>
+        <source>Font named “%1”.</source>
+        <translation>Czcionka o nazwie “%1”.</translation>
     </message>
     <message>
         <source>(no folder)</source>
         <translation>(brak folderu)</translation>
     </message>
     <message>
-        <source>Saved a font named &quot;</source>
-        <translation>Zapisano czcionkę o nazwie &quot;</translation>
+        <source>Saved a font named “%1”.</source>
+        <translation>Zapisano czcionkę o nazwie “%1”.</translation>
     </message>
     <message>
-        <source>Cannot save font named &quot;</source>
-        <translation>Nie można zapisać czcionki o nazwie &quot;</translation>
+        <source>Cannot save font named “%1”.</source>
+        <translation>Nie można zapisać czcionki o nazwie “%1”.</translation>
     </message>
     <message>
         <source>Completed, copied %1 fonts.
@@ -4931,50 +5116,44 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Skrót można ustawić za pomocą Shift + kliknięcie</translation>
     </message>
     <message>
-        <source>This hotkey already exists for &quot;%1&quot;.
-What to do?</source>
-        <translation>Ten skrót jest już przypisany do &quot;%1&quot;.
-Co zrobić?</translation>
+        <source>This shortcut already exists for “%1”. What to do?</source>
+        <translation>Ten skrót jest już przypisany do “%1”. Co zrobić?</translation>
     </message>
     <message>
-        <source>This shortcut already exists in other windows as a shortcut for &quot;%1&quot;.
-What would you like to do?</source>
-        <translation>Ten skrót jest już używany w innych oknach jako skrót do &quot;%1&quot;.
-Co chcesz zrobić?</translation>
+        <source>This shortcut already exists in other windows as a shortcut for “%1”. What would you like to do?</source>
+        <translation>Ten skrót jest już używany w innych oknach jako skrót do “%1”. Co chcesz zrobić?</translation>
     </message>
     <message>
-        <source>This shortcut already exists in another window as a shortcut for &quot;%1&quot;.
-What would you like to do?</source>
-        <translation>Ten skrót jest już używany w innym oknie jako skrót do &quot;%1&quot;.
-Co chcesz zrobić?</translation>
+        <source>This shortcut already exists in another window as a shortcut for “%1”. What would you like to do?</source>
+        <translation>Ten skrót jest już używany w innym oknie jako skrót do “%1”. Co chcesz zrobić?</translation>
     </message>
     <message>
         <source>Exit</source>
         <translation>Wyjście</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Widok wszystko&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
+        <source>The shortcut %1 of “View all” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>Usunięto skrót %1 polecenia “Widok wszystko”: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View audio and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Widok audio i napisy&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
+        <source>The shortcut %1 of “View audio and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>Usunięto skrót %1 polecenia “Widok audio i napisy”: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View video and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Widok wideo i napisy&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
+        <source>The shortcut %1 of “View video and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>Usunięto skrót %1 polecenia “Widok wideo i napisy”: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View only video&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Widok tylko wideo&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
+        <source>The shortcut %1 of “View only video” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>Usunięto skrót %1 polecenia “Widok tylko wideo”: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View only subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Widok tylko napisy&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
+        <source>The shortcut %1 of “View only subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>Usunięto skrót %1 polecenia “Widok tylko napisy”: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Enable / Disable editor&quot; was removed: the editor is always shown; hide panels or choose a layout instead.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Włącz / Wyłącz edytor&quot;: edytor jest zawsze widoczny; zamiast tego ukryj panele lub wybierz układ.</translation>
+        <source>The shortcut %1 of “Enable / Disable editor” was removed: the editor is always shown; hide panels or choose a layout instead.</source>
+        <translation>Usunięto skrót %1 polecenia “Włącz / Wyłącz edytor”: edytor jest zawsze widoczny; zamiast tego ukryj panele lub wybierz układ.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
@@ -4985,8 +5164,8 @@ Co chcesz zrobić?</translation>
         <translation>Usunięto skrót %1 polecenia &quot;Otwórz puste audio na 2:30 godziny&quot;: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Otwórz wideo przez FFMS2&quot;: polecenie zostało wycofane, a wideo jest zawsze indeksowane.</translation>
+        <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
+        <translation>Usunięto skrót %1 polecenia “Otwórz wideo przez FFMS2”: polecenie zostało wycofane, a wideo jest zawsze indeksowane.</translation>
     </message>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
@@ -6013,6 +6192,10 @@ Co chcesz zrobić?</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>Eksportuj jako</translation>
+    </message>
+    <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
     </message>
@@ -6031,6 +6214,14 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Shift following lines by frames: end at video</source>
         <translation>Przesuń następne linijki o klatki: koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
         <source>Import legacy settings…</source>
@@ -6092,7 +6283,7 @@ Co chcesz zrobić?</translation>
         <translation>Nieodczytywane przez edytor audio</translation>
     </message>
     <message>
-        <source>No karaoke tag&apos;s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
+        <source>No karaoke tag’s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
         <translation>Czas żadnego tagu karaoke nie zaczyna się od cyfry, jak w \k50, więc edytor audio dzieli linijkę od nowa</translation>
     </message>
     <message>
@@ -6100,11 +6291,11 @@ Co chcesz zrobić?</translation>
         <translation>Inne sylaby w edytorze audio</translation>
     </message>
     <message>
-        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback&apos;s</source>
+        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback’s</source>
         <translation>Edytor audio dzieli tekst przy każdym tagu \k i odczytuje jego liczbę po swojemu, więc tag taki jak \keep, \kfo50 czy \k(50) daje w nim inne sylaby niż przy odtwarzaniu</translation>
     </message>
     <message>
-        <source>Syllables don&apos;t match the line</source>
+        <source>Syllables don’t match the line</source>
         <translation>Sylaby nie pasują do linijki</translation>
     </message>
     <message>
@@ -6851,6 +7042,14 @@ Co chcesz zrobić?</translation>
         <translation>Sprawdź pisownię</translation>
     </message>
     <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>Instaluj, włączaj, wyłączaj i odinstalowuj wtyczki</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>W&amp;tyczki…</translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>Ukryj tagi</translation>
     </message>
@@ -7011,6 +7210,14 @@ Co chcesz zrobić?</translation>
         <translation>Zapisz jako</translation>
     </message>
     <message>
+        <source>Writes a copy of the document in another format</source>
+        <translation>Zapisuje kopię dokumentu w innym formacie</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>&amp;Eksportuj jako…</translation>
+    </message>
+    <message>
         <source>Save translation</source>
         <translation>Zapisz tłumaczenie</translation>
     </message>
@@ -7133,6 +7340,14 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>Przesuwa czasy początku i końca zaznaczonych linii na środek ich klatek, aby późniejsze przesunięcie o czas zostawiło je na pełnych klatkach</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -7823,7 +8038,7 @@ Co chcesz zrobić?</translation>
         <translation>Pozostawiono: %1</translation>
     </message>
     <message>
-        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <source>This portable copy keeps its settings in %1. An earlier version’s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
         <translation>Ta kopia przenośna przechowuje ustawienia w %1. Ustawienia wcześniejszej wersji nadal są w %2: aby ich użyć, zamknij HikariSub, skopiuj stamtąd hikari.ini i usuń tutaj settings.toml.</translation>
     </message>
     <message>
@@ -8987,7 +9202,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Styl</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>Katalog</translation>
     </message>
     <message>
@@ -9353,7 +9568,7 @@ and will be changed to the default</source>
 zostanie zmieniony na domyślny</translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>catalogue for style</source>
         <translation>katalog dla stylu</translation>
     </message>
     <message>
@@ -9416,6 +9631,253 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>Słowa w innych językach są sprawdzane innymi zainstalowanymi słownikami dla ich pisma. Słowa w piśmie, dla którego nie ma słownika, nie są oznaczane.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>Plik nie jest pakietem wtyczki (archiwum zip zawierającym hikari-plugin.json).</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>Pakiet zawiera dowiązanie, którego HikariSub nie zainstaluje: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>Pakiet jest za duży: po rozpakowaniu ma ponad %1 plików lub ponad %2 MB.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json nie jest poprawnym plikiem JSON: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json powtarza identyfikator “%1” w miejscu %2.</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>Ta wtyczka wymaga Hikari API %1, a ten HikariSub ma API %2. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>hikari-plugin.json nie spełnia schematu wtyczki w miejscu %1: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>Pakiet zawiera nazwę pliku, której HikariSub nie zainstaluje: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>Pakiet nie ma pliku hikari-plugin.json na najwyższym poziomie.</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>W pakiecie brakuje jego pliku głównego, %1.</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>Pakiet ma podpis, ale jego manifest nie podaje klucza publicKey, którym można go sprawdzić.</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>Nie można odczytać pliku plugins.json w folderze użytkownika: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>Pakiet jest podpisany kluczem, którego jego manifest nie podaje.</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>Podpis nie pasuje do pakietu, więc pakiet mógł zostać zmieniony po podpisaniu.</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>Zaufany komentarz podpisu został zmieniony po podpisaniu.</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>Plik .minisig obok pakietu nie jest podpisem minisign.</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>Pełne zaufanie: może uruchamiać kod natywny poza ograniczeniami HikariSub.</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>Odczytywać i edytować każdy otwarty plik napisów: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>Łączyć się z %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>Prosić Cię o folder do odczytu i zapisu, %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>Prosić Cię o folder do odczytu, %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub nie mógł dokończyć operacji: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>Wtyczki wymagają folderu użytkownika, a ta kopia go nie ma.</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub nie może odczytać pliku %1.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>Najpierw wybierz pakiet wtyczki.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>Klucz podpisu się zmienił. Zainstalowana kopia była podpisana kluczem %1, a ta kluczem %2. Instaluj ją tylko wtedy, gdy ufasz, że autor zmienił klucze.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>Ten pakiet nie jest podpisany, ale zainstalowana kopia była podpisana kluczem %1. Instaluj go tylko wtedy, gdy ufasz jego źródłu.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>Niezweryfikowane źródło, podpisano kluczem %1. Aktualizacje muszą być podpisane tym samym kluczem.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>Niezweryfikowany: pakiet nie jest podpisany, więc HikariSub nie może ustalić, kto go utworzył.</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>Nie zainstalowano wtyczki</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>Zainstaluj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>Zaktualizuj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>Zainstaluj wtyczkę ponownie</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>Obniż wersję wtyczki</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>Zainstalować “%1” %2?</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>Zaktualizować “%1” z wersji %2 do %3?</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>Zainstalować ponownie “%1” %2?</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>Zastąpić “%1” %2 starszą wersją %3?</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>Prosi o te uprawnienia</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>Wtyczka nie prosi o uprawnienia wykraczające poza aktywny plik napisów.</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>Zaufaj i zainstaluj</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>Odinstaluj, zachowaj dane</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>Odinstaluj i usuń dane</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>Odinstaluj</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>Odinstaluj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>Odinstalować “%1”?</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>Wtyczka ma zapisane dane w folderze użytkownika. Zachowaj je, aby znów ich używać po ponownej instalacji.</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>Nie odinstalowano wtyczki</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>Brak zainstalowanych wtyczek. Zainstaluj wtyczkę z pliku .hikariplugin.</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>Zainstalowane wtyczki</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Włączona</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>Niezweryfikowana, podpisana kluczem %1</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>Niezweryfikowana, niepodpisana</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>Pełne zaufanie</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>Zainstaluj z pliku…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>Wybierz pakiet wtyczki</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>Wtyczki HikariSub (*.hikariplugin)</translation>
     </message>
 </context>
 <context>
@@ -10826,20 +11288,20 @@ ponieważ została zmieniona.</translation>
         <translation>To nie jest plik sesji.</translation>
     </message>
     <message>
-        <source>&quot;tabs&quot; is not a list.</source>
-        <translation>&quot;tabs&quot; nie jest listą.</translation>
+        <source>“tabs” is not a list.</source>
+        <translation>“tabs” nie jest listą.</translation>
     </message>
     <message>
-        <source>&quot;closed&quot; is not true or false.</source>
-        <translation>&quot;closed&quot; nie ma wartości true ani false.</translation>
+        <source>“closed” is not true or false.</source>
+        <translation>“closed” nie ma wartości true ani false.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
         <translation>Zakładka %1 nie jest obiektem.</translation>
     </message>
     <message>
-        <source>Tab %1: &quot;%2&quot; has the wrong type.</source>
-        <translation>Zakładka %1: &quot;%2&quot; ma nieprawidłowy typ.</translation>
+        <source>Tab %1: “%2” has the wrong type.</source>
+        <translation>Zakładka %1: “%2” ma nieprawidłowy typ.</translation>
     </message>
 </context>
 <context>
@@ -11364,13 +11826,11 @@ ponieważ została zmieniona.</translation>
         <translation>Słowa dodane do słownika</translation>
     </message>
     <message>
-        <source>No dictionary files were found in the &quot;%1&quot; folder.
-Spell checking will be disabled</source>
-        <translation>Brak plików słownika w folderze &quot;%1&quot;.
-Sprawdzanie pisowni zostanie wyłączone</translation>
+        <source>No dictionary files were found in the “%1” folder. Spell checking will be disabled.</source>
+        <translation>Brak plików słownika w folderze “%1”. Sprawdzanie pisowni zostanie wyłączone.</translation>
     </message>
     <message>
-        <source>Failed to initialize spell checker.</source>
+        <source>Failed to initialise the spellchecker.</source>
         <translation>Nie można zainicjalizować sprawdzania pisowni.</translation>
     </message>
     <message>
@@ -11382,7 +11842,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Nazwy własne</translation>
     </message>
     <message>
-        <source>Names of places, organizations and products keep their standard capitalization.</source>
+        <source>Names of places, organisations and products keep their standard capitalisation.</source>
         <translation>Nazwy miejsc, organizacji i produktów zachowują standardową wielkość liter.</translation>
     </message>
     <message>
@@ -11410,7 +11870,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Częste błędy w wyrażeniach, w których preferowany jest standardowy zwrot.</translation>
     </message>
     <message>
-        <source>Capitalization and case</source>
+        <source>Capitalisation and case</source>
         <translation>Wielkie litery i wielkość liter</translation>
     </message>
     <message>
@@ -11541,8 +12001,8 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Zaznaczone linijki: %1</translation>
     </message>
     <message>
-        <source> (%1 hidden)</source>
-        <translation> (ukryte: %1)</translation>
+        <source>(%1 hidden)</source>
+        <translation>(ukryte: %1)</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -11952,7 +12412,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Filtruj style</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>Katalog</translation>
     </message>
     <message>
@@ -12232,20 +12692,20 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
         <translation>Wybierz plik ASS</translation>
     </message>
     <message>
-        <source>Copy of </source>
-        <translation>Kopia </translation>
+        <source>Copy of %1</source>
+        <translation>Kopia %1</translation>
     </message>
     <message>
         <source>The document has no styles to edit.</source>
         <translation>Dokument nie ma stylów do edycji.</translation>
     </message>
     <message>
-        <source>The catalog “%1” no longer exists.</source>
+        <source>The catalogue “%1” no longer exists.</source>
         <translation>Katalog “%1” już nie istnieje.</translation>
     </message>
     <message>
-        <source>Style named &quot;%1&quot; already exists.</source>
-        <translation>Styl o nazwie &quot;%1&quot; już istnieje.</translation>
+        <source>Style named “%1” already exists.</source>
+        <translation>Styl o nazwie “%1” już istnieje.</translation>
     </message>
     <message>
         <source>None</source>
@@ -12326,7 +12786,7 @@ Usunięte style:
         <translation>Zaznacz linijki z tym stylem</translation>
     </message>
     <message>
-        <source>Copy to the catalog…</source>
+        <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
     </message>
     <message>
@@ -12464,19 +12924,19 @@ Usunięte style:
 <context>
     <name>HikariSub.TagList</name>
     <message>
-        <source>Transparency of primary color</source>
+        <source>Transparency of primary colour</source>
         <translation>Przezroczystość koloru podstawowego</translation>
     </message>
     <message>
-        <source>Transparency of secondary color</source>
+        <source>Transparency of secondary colour</source>
         <translation>Przezroczystość koloru zastępczego</translation>
     </message>
     <message>
-        <source>Transparency of border color</source>
+        <source>Transparency of border colour</source>
         <translation>Przezroczystość koloru obwódki</translation>
     </message>
     <message>
-        <source>Transparency of shadow color</source>
+        <source>Transparency of shadow colour</source>
         <translation>Przezroczystość koloru cienia</translation>
     </message>
     <message>
@@ -12484,7 +12944,7 @@ Usunięte style:
         <translation>Kolor podstawowy</translation>
     </message>
     <message>
-        <source>Secondary color</source>
+        <source>Secondary colour</source>
         <translation>Kolor zastępczy</translation>
     </message>
     <message>
@@ -12496,51 +12956,51 @@ Usunięte style:
         <translation>Kolor cienia</translation>
     </message>
     <message>
-        <source>PNG mask of primary color</source>
+        <source>PNG mask of primary colour</source>
         <translation>Maska PNG koloru podstawowego</translation>
     </message>
     <message>
-        <source>PNG mask of secondary color</source>
+        <source>PNG mask of secondary colour</source>
         <translation>Maska PNG koloru zastępczego</translation>
     </message>
     <message>
-        <source>PNG mask of border color</source>
+        <source>PNG mask of border colour</source>
         <translation>Maska PNG koloru obwódki</translation>
     </message>
     <message>
-        <source>PNG mask of shadow color</source>
+        <source>PNG mask of shadow colour</source>
         <translation>Maska PNG koloru cienia</translation>
     </message>
     <message>
-        <source>Transparency gradient of primary color</source>
+        <source>Transparency gradient of primary colour</source>
         <translation>Gradient przezroczystości koloru podstawowego</translation>
     </message>
     <message>
-        <source>Transparency gradient of secondary color</source>
+        <source>Transparency gradient of secondary colour</source>
         <translation>Gradient przezroczystości koloru zastępczego</translation>
     </message>
     <message>
-        <source>Transparency gradient of border color</source>
+        <source>Transparency gradient of border colour</source>
         <translation>Gradient przezroczystości koloru obwódki</translation>
     </message>
     <message>
-        <source>Transparency gradient of shadow color</source>
+        <source>Transparency gradient of shadow colour</source>
         <translation>Gradient przezroczystości koloru cienia</translation>
     </message>
     <message>
-        <source>Gradient of primary color</source>
+        <source>Gradient of primary colour</source>
         <translation>Gradient koloru podstawowego</translation>
     </message>
     <message>
-        <source>Gradient of secondary color</source>
+        <source>Gradient of secondary colour</source>
         <translation>Gradient koloru zastępczego</translation>
     </message>
     <message>
-        <source>Gradient of border color</source>
+        <source>Gradient of border colour</source>
         <translation>Gradient koloru obwódki</translation>
     </message>
     <message>
-        <source>Gradient of shadow color</source>
+        <source>Gradient of shadow colour</source>
         <translation>Gradient koloru cienia</translation>
     </message>
     <message>
@@ -14252,7 +14712,7 @@ po czasie końcowym w milisekundach</translation>
         <translation>Szerszy</translation>
     </message>
     <message>
-        <source>Failed to initialize DirectShow</source>
+        <source>Failed to initialise DirectShow</source>
         <translation>Nie można zainicjalizować DirectShow</translation>
     </message>
     <message>
@@ -14284,7 +14744,7 @@ po czasie końcowym w milisekundach</translation>
         <translation>Nie można utworzyć instancji renderera dźwięku</translation>
     </message>
     <message>
-        <source>Cannot add Direct Sound renderer</source>
+        <source>Cannot add DirectSound renderer</source>
         <translation>Nie można dodać renderera Direct Sound</translation>
     </message>
     <message>
@@ -14296,7 +14756,7 @@ po czasie końcowym w milisekundach</translation>
         <translation>Nie można wyliczyć pinów renderera</translation>
     </message>
     <message>
-        <source>Cannot enumerate Direct Sound pins</source>
+        <source>Cannot enumerate DirectSound pins</source>
         <translation>Nie można wyliczyć pinów Direct Sound</translation>
     </message>
     <message>
@@ -14757,8 +15217,12 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Wideo niedostępne: %1</translation>
     </message>
     <message>
-        <source>Frame %1 of %2  %3</source>
-        <translation>Klatka %1 z %2  %3</translation>
+        <source>Frame %1 of %2</source>
+        <translation>Klatka %1 z %2</translation>
+    </message>
+    <message>
+        <source>Frame %1 of %2 · %3</source>
+        <translation>Klatka %1 z %2 · %3</translation>
     </message>
     <message>
         <source>Aspect ratio: %1</source>
@@ -16006,8 +16470,8 @@ nie działają na komentarzach</translation>
         <translation>nie zawiera układu</translation>
     </message>
     <message>
-        <source>it holds no Classic arrangement</source>
-        <translation>nie zawiera układu Classic</translation>
+        <source>it holds no “Classic” arrangement</source>
+        <translation>nie zawiera układu “Classic”</translation>
     </message>
     <message>
         <source>it holds more windows or panels than HikariSub has</source>

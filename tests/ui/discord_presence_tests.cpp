@@ -226,7 +226,7 @@ private slots:
         QCOMPARE(assets.value(QStringLiteral("small_text")).toString(), QStringLiteral("Timing"));
         QCOMPARE(a.value(QStringLiteral("buttons")).toArray(),
                  (QJsonArray{QJsonObject{{QStringLiteral("label"), QStringLiteral("Get HikariSub")},
-                                         {QStringLiteral("url"), QStringLiteral("https://hikarisub.altqx.com")}}}));
+                                         {QStringLiteral("url"), QStringLiteral("https://hikarisub.org")}}}));
         QVERIFY2(!text(a).contains(QLatin1String("episode01")), qPrintable(text(a)));
     }
 

@@ -296,6 +296,7 @@ TEST_F(AiProviderTest, ChatCompletionsStreamsTextAndUsage)
     EXPECT_EQ(mock.received[0].path, "/v1/chat/completions");
     EXPECT_EQ(mock.received[0].headers.value("authorization"), QByteArray("Bearer ") + kKey);
     EXPECT_EQ(mock.received[0].headers.value("x-title"), "HikariSub");
+    EXPECT_EQ(mock.received[0].headers.value("http-referer"), "https://hikarisub.org");
     EXPECT_TRUE(mock.received[0].json().value("stream").toBool());
 }
 
