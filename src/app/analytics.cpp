@@ -138,6 +138,8 @@ const Table &table()
         t.emplace(QStringLiteral("getting_started_finished"),
                   std::map<QString, Rule>{{QStringLiteral("pages_changed"), {Rule::ListOf, kPages, {}}}});
         t.emplace(QStringLiteral("getting_started_skipped"), std::map<QString, Rule>{});
+        t.emplace(QStringLiteral("star_prompt_shown"), std::map<QString, Rule>{});
+        t.emplace(QStringLiteral("star_prompt_clicked"), std::map<QString, Rule>{});
         t.emplace(QStringLiteral("automation_error"),
                   std::map<QString, Rule>{
                       {QStringLiteral("kind"),

@@ -129,6 +129,18 @@ TEST(VideoZoom, ZoomModeWheelGrowsAndShrinksTheRectangle)
     EXPECT_EQ(v.zoomRect().x, 150.f);
 }
 
+TEST(VideoZoom, DisplayScaleIsLogicalPixelsPerVideoPixel)
+{
+    VideoView v = fit16x9();
+    EXPECT_DOUBLE_EQ(v.displayScale(), 0.5);
+    v.toggleZoom(0);
+    EXPECT_DOUBLE_EQ(v.displayScale(), 1.0);
+    VideoView hidpi = fit16x9();
+    hidpi.setDevicePixelRatio(2);
+    EXPECT_DOUBLE_EQ(hidpi.displayScale(), 0.25);
+    EXPECT_DOUBLE_EQ(VideoView{}.displayScale(), 1.0);
+}
+
 TEST(VideoAspect, SliderValuesAndLabels)
 {
     EXPECT_EQ(aspectSliderValue(0.5625f), 393750);

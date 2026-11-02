@@ -31,6 +31,8 @@ Edit > Sort all lines > Styles [GLOBAL_SORT_ALL_BY_STYLE]
 Edit > Sort all lines > Actor [GLOBAL_SORT_ALL_BY_ACTOR]
 Edit > Sort all lines > Effect [GLOBAL_SORT_ALL_BY_EFFECT]
 Edit > Sort all lines > Layer [GLOBAL_SORT_ALL_BY_LAYER]
+Edit > Sort all lines > Text [GLOBAL_SORT_ALL_BY_TEXT]
+Edit > Sort all lines > Text without tags [GLOBAL_SORT_ALL_BY_TEXT_WITHOUT_TAGS]
 Edit > Sort selected lines >
 Edit > Sort selected lines > The starting time [GLOBAL_SORT_SELECTED_BY_START_TIMES]
 Edit > Sort selected lines > End time [GLOBAL_SORT_SELECTED_BY_END_TIMES]
@@ -38,6 +40,8 @@ Edit > Sort selected lines > Styles [GLOBAL_SORT_SELECTED_BY_STYLE]
 Edit > Sort selected lines > Actor [GLOBAL_SORT_SELECTED_BY_ACTOR]
 Edit > Sort selected lines > Effect [GLOBAL_SORT_SELECTED_BY_EFFECT]
 Edit > Sort selected lines > Layer [GLOBAL_SORT_SELECTED_BY_LAYER]
+Edit > Sort selected lines > Text [GLOBAL_SORT_SELECTED_BY_TEXT]
+Edit > Sort selected lines > Text without tags [GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
 Edit > Fix minor errors (experimental) [GLOBAL_MISSPELLS_REPLACER]
@@ -110,6 +114,7 @@ Automation > Rerun last macro
 Automation > Repeat last run [GLOBAL_AUTOMATION_REPEAT_LAST_RUN]
 Automation > Cancel macro
 Automation > Show panel
+Automation > Plugins… [GLOBAL_PLUGINS]
 Automation > -
 View
 View > Layout >

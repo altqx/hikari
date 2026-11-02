@@ -1131,11 +1131,11 @@ Output device: %2</source>
         <translation>자동화</translation>
     </message>
     <message>
-        <source>The protected reference can&apos;t be changed.</source>
+        <source>The protected reference can’t be changed.</source>
         <translation>보호된 참조 문서는 변경할 수 없습니다.</translation>
     </message>
     <message>
-        <source>The macro&apos;s changes could not be applied; nothing was changed.</source>
+        <source>The macro’s changes could not be applied; nothing was changed.</source>
         <translation>매크로의 변경 사항을 적용하지 못해 아무것도 변경되지 않았습니다.</translation>
     </message>
     <message>
@@ -1165,11 +1165,11 @@ Output device: %2</source>
         <translation>매크로가 취소되어 스크립트 해상도만 설정되었습니다.</translation>
     </message>
     <message>
-        <source>Validation Lua script &apos;%1&apos; failed</source>
-        <translation>Lua 스크립트 &apos;%1&apos;의 유효성 검사 실패</translation>
+        <source>Validation Lua script “%1” failed</source>
+        <translation>Lua 스크립트 “%1”의 유효성 검사 실패</translation>
     </message>
     <message>
-        <source>The script&apos;s helper ended; reload the script to use it again.</source>
+        <source>The script’s helper ended; reload the script to use it again.</source>
         <translation>스크립트의 보조 프로세스가 종료되었습니다. 다시 사용하려면 스크립트를 다시 불러오십시오.</translation>
     </message>
     <message>
@@ -1177,7 +1177,7 @@ Output device: %2</source>
         <translation>매크로가 실행되는 동안 문서가 변경되어 아무것도 변경되지 않았습니다.</translation>
     </message>
     <message>
-        <source>The last run&apos;s macro is no longer loaded, so it can&apos;t be repeated.</source>
+        <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>마지막으로 실행한 매크로를 더 이상 불러온 상태가 아니어서 반복할 수 없습니다.</translation>
     </message>
     <message>
@@ -1217,7 +1217,7 @@ Output device: %2</source>
         <translation>매크로를 실행할 문서를 여십시오.</translation>
     </message>
     <message>
-        <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
+        <source>The line being edited can’t be committed, so the macro can’t start.</source>
         <translation>편집 중인 줄을 적용할 수 없어 매크로를 시작할 수 없습니다.</translation>
     </message>
     <message>
@@ -1573,7 +1573,7 @@ Output device: %2</source>
         <translation>화면에서 색상을 선택할 수 없습니다. 이 Wayland 세션에는 스크린샷 포털(PickColor를 지원하는 xdg-desktop-portal)이 없습니다.</translation>
     </message>
     <message>
-        <source>The desktop&apos;s screenshot portal is not in use here.</source>
+        <source>The desktop’s screenshot portal is not in use here.</source>
         <translation>이 환경에서는 데스크톱의 스크린샷 포털을 사용하지 않습니다.</translation>
     </message>
     <message>
@@ -1648,7 +1648,7 @@ Output device: %2</source>
         <translation>자막을 영상 해상도에 맞게 변경하시겠습니까? 나중에 자막 › 자막 해상도 변경에서도 할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
@@ -1800,10 +1800,8 @@ Output device: %2</source>
         <translation>늘리기</translation>
     </message>
     <message>
-        <source>In line %1, value &apos;%2&apos; cannot be scaled
-in tag &apos;%3&apos;</source>
-        <translation>%1번 줄에서 &apos;%3&apos; 태그의 값 &apos;%2&apos;(을)를
-조정할 수 없습니다</translation>
+        <source>In line %1, value “%2” cannot be scaled in tag “%3”.</source>
+        <translation>%1번 줄에서 “%3” 태그의 값 “%2”(을)를 조정할 수 없습니다.</translation>
     </message>
     <message numerus="yes">
         <source>%n value(s) could not be scaled.</source>
@@ -1812,7 +1810,7 @@ in tag &apos;%3&apos;</source>
         </translation>
     </message>
     <message>
-        <source>This document can&apos;t be converted to that format.</source>
+        <source>This document can’t be converted to that format.</source>
         <translation>이 문서는 해당 형식으로 변환할 수 없습니다.</translation>
     </message>
     <message>
@@ -1858,9 +1856,9 @@ in tag &apos;%3&apos;</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) get the conversion style &quot;%1&quot;.</source>
+        <source>%n line(s) get the conversion style “%1”.</source>
         <translation>
-            <numerusform>줄 %n개에 변환 스타일 &quot;%1&quot;(이)가 적용됩니다.</numerusform>
+            <numerusform>줄 %n개에 변환 스타일 “%1”(이)가 적용됩니다.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -2012,8 +2010,8 @@ in tag &apos;%3&apos;</source>
         <translation>텍스트가 UTF-8이 아님</translation>
     </message>
     <message>
-        <source>&quot;%1&quot; is not a time</source>
-        <translation>&quot;%1&quot;(은)는 시간이 아님</translation>
+        <source>“%1” is not a time</source>
+        <translation>“%1”(은)는 시간이 아님</translation>
     </message>
     <message>
         <source>the word at %1 starts before the word before it</source>
@@ -2028,24 +2026,24 @@ in tag &apos;%3&apos;</source>
         <translation>시간 %1(이)가 상위 요소의 시간 범위를 벗어남</translation>
     </message>
     <message>
-        <source>&quot;%1&quot; has no time</source>
-        <translation>&quot;%1&quot;에 시간이 없음</translation>
+        <source>“%1” has no time</source>
+        <translation>“%1”에 시간이 없음</translation>
     </message>
     <message>
         <source>a line with word times can have only one line time</source>
         <translation>단어별 시간이 있는 줄에는 줄 시간이 하나만 있을 수 있음</translation>
     </message>
     <message>
-        <source>the XML is broken at &quot;%1&quot;</source>
-        <translation>&quot;%1&quot;에서 XML이 손상됨</translation>
+        <source>the XML is broken at “%1”</source>
+        <translation>“%1”에서 XML이 손상됨</translation>
     </message>
     <message>
         <source>%1 is not a TTML document</source>
         <translation>%1(은)는 TTML 문서가 아님</translation>
     </message>
     <message>
-        <source>the elements are nested more than %1 deep at &quot;%2&quot;</source>
-        <translation>&quot;%2&quot;에서 요소가 %1단계보다 깊게 중첩됨</translation>
+        <source>the elements are nested more than %1 deep at “%2”</source>
+        <translation>“%2”에서 요소가 %1단계보다 깊게 중첩됨</translation>
     </message>
     <message>
         <source>it is too large for a lyrics file</source>
@@ -2096,28 +2094,24 @@ in tag &apos;%3&apos;</source>
         <translation>다시 불러오는 동안 자막이 변경되어 아무것도 바꾸지 않았습니다.</translation>
     </message>
     <message>
-        <source>Video: </source>
-        <translation>영상: </translation>
+        <source>Video: %1</source>
+        <translation>영상: %1</translation>
     </message>
     <message>
-        <source>Audio: </source>
-        <translation>소리: </translation>
+        <source>Audio: %1</source>
+        <translation>소리: %1</translation>
     </message>
     <message>
-        <source>Keyframes: </source>
-        <translation>키 프레임: </translation>
+        <source>Keyframes: %1</source>
+        <translation>키 프레임: %1</translation>
     </message>
     <message>
-        <source>Associated files:
-</source>
-        <translation>연결된 파일:
-</translation>
+        <source>Associated files:</source>
+        <translation>연결된 파일:</translation>
     </message>
     <message>
-        <source>Video from directory:
-</source>
-        <translation>폴더에 있는 영상:
-</translation>
+        <source>Video from directory: %1</source>
+        <translation>폴더에 있는 영상: %1</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -2736,7 +2730,7 @@ Should not exceed 15 characters per second</source>
 <context>
     <name>HikariSub.Fonts</name>
     <message>
-        <source>Font catalogs</source>
+        <source>Font catalogues</source>
         <translation>글꼴 목록</translation>
     </message>
     <message>
@@ -2848,7 +2842,7 @@ Should not exceed 15 characters per second</source>
         <translation>내 목록과 글꼴이 같은 목록은 그대로 둡니다.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
@@ -3308,7 +3302,7 @@ Should not exceed 15 characters per second</source>
         <translation>모든 글꼴</translation>
     </message>
     <message>
-        <source>Without catalog</source>
+        <source>Without catalogue</source>
         <translation>목록에 없는 글꼴</translation>
     </message>
     <message>
@@ -3332,80 +3326,76 @@ Should not exceed 15 characters per second</source>
         <translation>글꼴 %1개</translation>
     </message>
     <message>
-        <source>Found &quot;%1&quot; font file.</source>
-        <translation>&quot;%1&quot; 글꼴 파일을 찾았습니다.</translation>
+        <source>Found “%1” font file.</source>
+        <translation>“%1” 글꼴 파일을 찾았습니다.</translation>
     </message>
     <message>
-        <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
-        <translation>렌더러가 &quot;%1&quot; (%2) 글꼴도 사용했지만 수집되지 않았습니다.</translation>
+        <source>The renderer also used “%1” (%2); it is not collected.</source>
+        <translation>렌더러가 “%1” (%2) 글꼴도 사용했지만 수집되지 않았습니다.</translation>
     </message>
     <message>
-        <source>Copied font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; 글꼴을 복사했습니다.</translation>
+        <source>Copied font “%1”.</source>
+        <translation>“%1” 글꼴을 복사했습니다.</translation>
     </message>
     <message>
-        <source>Added font &quot;%1&quot; to the archive.</source>
-        <translation>&quot;%1&quot; 글꼴을 압축 파일에 추가했습니다.</translation>
+        <source>Added font “%1” to the archive.</source>
+        <translation>“%1” 글꼴을 압축 파일에 추가했습니다.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; belongs to a style
-that is not used.</source>
-        <translation>&quot;%1&quot; 글꼴은 사용되지 않는
-스타일에 속합니다.</translation>
+        <source>Font “%1” belongs to a style that is not used.</source>
+        <translation>“%1” 글꼴은 사용되지 않는 스타일에 속합니다.</translation>
     </message>
     <message>
-        <source>
-Will not be copied.</source>
-        <translation>
-복사되지 않음.</translation>
+        <source>Will not be copied.</source>
+        <translation>복사되지 않음.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing normal style.</source>
-        <translation>&quot;%1&quot; 글꼴에는 일반 스타일이 없습니다.</translation>
+        <source>Font “%1” is missing normal style.</source>
+        <translation>“%1” 글꼴에는 일반 스타일이 없습니다.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing bold italics.</source>
-        <translation>&quot;%1&quot; 글꼴에는 굵은 기울임 스타일이 없습니다.</translation>
+        <source>Font “%1” is missing bold italics.</source>
+        <translation>“%1” 글꼴에는 굵은 기울임 스타일이 없습니다.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing bold.</source>
-        <translation>&quot;%1&quot; 글꼴에는 굵은 스타일이 없습니다.</translation>
+        <source>Font “%1” is missing bold.</source>
+        <translation>“%1” 글꼴에는 굵은 스타일이 없습니다.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing italics.</source>
-        <translation>&quot;%1&quot; 글꼴에는 기울임 스타일이 없습니다.</translation>
+        <source>Font “%1” is missing italics.</source>
+        <translation>“%1” 글꼴에는 기울임 스타일이 없습니다.</translation>
     </message>
     <message>
-        <source>Cannot check the characters in font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; 글꼴의 문자를 확인할 수 없습니다.</translation>
+        <source>Cannot check the characters in font “%1”.</source>
+        <translation>“%1” 글꼴의 문자를 확인할 수 없습니다.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
-        <translation>&quot;%1&quot; 글꼴에 &quot;%2&quot; 문자가 없습니다.</translation>
+        <source>Font “%1” does not contain characters: “%2”.</source>
+        <translation>“%1” 글꼴에 “%2” 문자가 없습니다.</translation>
     </message>
     <message>
-        <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
-        <translation>&quot;%1&quot; 문자는 대체 글꼴 &quot;%2&quot;(으)로 표시되었습니다.</translation>
+        <source>Characters “%1” were drawn by the fallback font “%2”.</source>
+        <translation>“%1” 문자는 대체 글꼴 “%2”(으)로 표시되었습니다.</translation>
     </message>
     <message>
-        <source>Cannot get the contents of font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; 글꼴의 내용을 가져올 수 없습니다.</translation>
+        <source>Cannot get the contents of font “%1”.</source>
+        <translation>“%1” 글꼴의 내용을 가져올 수 없습니다.</translation>
     </message>
     <message>
-        <source>Cannot open file &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; 파일을 열 수 없습니다.</translation>
+        <source>Cannot open file “%1”.</source>
+        <translation>“%1” 파일을 열 수 없습니다.</translation>
     </message>
     <message>
-        <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
-        <translation>글꼴 폴더에서 &quot;%1&quot; 글꼴을 찾을 수 없습니다.</translation>
+        <source>Cannot find “%1” font in Fonts folder.</source>
+        <translation>글꼴 폴더에서 “%1” 글꼴을 찾을 수 없습니다.</translation>
     </message>
     <message>
-        <source>Cannot copy font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; 글꼴을 복사할 수 없습니다.</translation>
+        <source>Cannot copy font “%1”.</source>
+        <translation>“%1” 글꼴을 복사할 수 없습니다.</translation>
     </message>
     <message>
-        <source>Cannot zip font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; 글꼴을 압축할 수 없습니다.</translation>
+        <source>Cannot zip font “%1”.</source>
+        <translation>“%1” 글꼴을 압축할 수 없습니다.</translation>
     </message>
     <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
@@ -3429,18 +3419,16 @@ Will not be copied.</source>
         <translation>확인</translation>
     </message>
     <message>
-        <source>Found font &quot;%1&quot;
-</source>
-        <translation>찾은 글꼴 &quot;%1&quot;
-</translation>
+        <source>Found font “%1”</source>
+        <translation>찾은 글꼴 “%1”</translation>
     </message>
     <message>
-        <source>Found font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; 글꼴을 찾았습니다.</translation>
+        <source>Found font “%1”.</source>
+        <translation>“%1” 글꼴을 찾았습니다.</translation>
     </message>
     <message>
-        <source>Font not found &quot;</source>
-        <translation>글꼴을 찾을 수 없음 &quot;</translation>
+        <source>Font not found “%1”.</source>
+        <translation>글꼴을 찾을 수 없음 “%1”.</translation>
     </message>
     <message>
         <source>In styles:
@@ -3457,64 +3445,44 @@ Will not be copied.</source>
         <translation>줄에서: </translation>
     </message>
     <message>
-        <source>Checked by the subtitle renderer (%1).
-</source>
-        <translation>자막 렌더러(%1)로 확인했습니다.
-</translation>
+        <source>Checked by the subtitle renderer (%1).</source>
+        <translation>자막 렌더러(%1)로 확인했습니다.</translation>
     </message>
     <message>
-        <source>Tab %1: the renderer could not read this document; it was not checked.
-</source>
-        <translation>탭 %1: 렌더러가 이 문서를 읽을 수 없어 확인하지 못했습니다.
-</translation>
+        <source>Tab %1: the renderer could not read this document; it was not checked.</source>
+        <translation>탭 %1: 렌더러가 이 문서를 읽을 수 없어 확인하지 못했습니다.</translation>
     </message>
     <message>
-        <source>Families the renderer did not find: %1.
-</source>
-        <translation>렌더러가 찾지 못한 글꼴 패밀리: %1.
-</translation>
+        <source>Families the renderer did not find: %1.</source>
+        <translation>렌더러가 찾지 못한 글꼴 패밀리: %1.</translation>
     </message>
     <message>
-        <source>Families answered by a font of another name: %1.
-</source>
-        <translation>다른 이름의 글꼴로 대체된 패밀리: %1.
-</translation>
+        <source>Families answered by a font of another name: %1.</source>
+        <translation>다른 이름의 글꼴로 대체된 패밀리: %1.</translation>
     </message>
     <message>
-        <source>Characters no font has: %1.
-</source>
-        <translation>어떤 글꼴에도 없는 문자: %1.
-</translation>
+        <source>Characters no font has: %1.</source>
+        <translation>어떤 글꼴에도 없는 문자: %1.</translation>
     </message>
     <message>
-        <source>Characters drawn by a fallback font of this computer: %1.
-</source>
-        <translation>이 컴퓨터의 대체 글꼴로 표시된 문자: %1.
-</translation>
+        <source>Characters drawn by a fallback font of this computer: %1.</source>
+        <translation>이 컴퓨터의 대체 글꼴로 표시된 문자: %1.</translation>
     </message>
     <message>
-        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.
-</source>
-        <translation>탭 %1: 수집한 글꼴만 사용하면 프레임 %3개 중 %2개가 다릅니다.
-</translation>
+        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.</source>
+        <translation>탭 %1: 수집한 글꼴만 사용하면 프레임 %3개 중 %2개가 다릅니다.</translation>
     </message>
     <message>
-        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
-</source>
-        <translation>파일 이름이 같은 서로 다른 글꼴: %1. 폴더에는 그중 하나만 저장됩니다.
-</translation>
+        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.</source>
+        <translation>파일 이름이 같은 서로 다른 글꼴: %1. 폴더에는 그중 하나만 저장됩니다.</translation>
     </message>
     <message>
-        <source>The video shows the subtitles through %1, whose output this check does not verify.
-</source>
-        <translation>영상은 %1(으)로 자막을 표시하며, 이 검사는 그 출력을 확인하지 않습니다.
-</translation>
+        <source>The video shows the subtitles through %1, whose output this check does not verify.</source>
+        <translation>영상은 %1(으)로 자막을 표시하며, 이 검사는 그 출력을 확인하지 않습니다.</translation>
     </message>
     <message>
-        <source>The collected fonts alone reproduce every frame.
-</source>
-        <translation>수집한 글꼴만으로 모든 프레임이 재현됩니다.
-</translation>
+        <source>The collected fonts alone reproduce every frame.</source>
+        <translation>수집한 글꼴만으로 모든 프레임이 재현됩니다.</translation>
     </message>
     <message>
         <source>found</source>
@@ -3525,108 +3493,72 @@ Will not be copied.</source>
         <translation>복사함</translation>
     </message>
     <message>
-        <source>Finished, %1 %2.
-</source>
-        <translation>완료, %1 %2.
-</translation>
+        <source>Finished, %1 %2.</source>
+        <translation>완료, %1 %2.</translation>
     </message>
     <message>
-        <source>Not found %1.
-</source>
-        <translation>찾을 수 없음: %1.
-</translation>
+        <source>Not found %1.</source>
+        <translation>찾을 수 없음: %1.</translation>
     </message>
     <message>
-        <source>Cannot copy %1.
-</source>
-        <translation>복사할 수 없음: %1.
-</translation>
+        <source>Cannot copy %1.</source>
+        <translation>복사할 수 없음: %1.</translation>
     </message>
     <message>
-        <source>Some fonts do not contain all glyphs used in the text.
-</source>
-        <translation>일부 글꼴에는 텍스트에 사용된 글리프가 모두 들어 있지 않습니다.
-</translation>
+        <source>Some fonts do not contain all glyphs used in the text.</source>
+        <translation>일부 글꼴에는 텍스트에 사용된 글리프가 모두 들어 있지 않습니다.</translation>
     </message>
     <message>
-        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
-</source>
-        <translation>렌더러가 이 글꼴만으로는 자막을 재현할 수 없어 수집이 완전하지 않습니다.
-</translation>
+        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.</source>
+        <translation>렌더러가 이 글꼴만으로는 자막을 재현할 수 없어 수집이 완전하지 않습니다.</translation>
     </message>
     <message>
-        <source>The output does not hold every collected font under its own name: the collection is incomplete.
-</source>
-        <translation>출력에 수집한 모든 글꼴이 각자의 이름으로 들어 있지 않아 수집이 완전하지 않습니다.
-</translation>
+        <source>The output does not hold every collected font under its own name: the collection is incomplete.</source>
+        <translation>출력에 수집한 모든 글꼴이 각자의 이름으로 들어 있지 않아 수집이 완전하지 않습니다.</translation>
     </message>
     <message>
-        <source>Writing was cancelled.
-</source>
-        <translation>쓰기가 취소되었습니다.
-</translation>
+        <source>Writing was cancelled.</source>
+        <translation>쓰기가 취소되었습니다.</translation>
     </message>
     <message>
-        <source>The output is labelled incomplete (&quot;%1&quot;).
-</source>
-        <translation>출력이 불완전함으로 표시되었습니다(&quot;%1&quot;).
-</translation>
+        <source>The output is labelled incomplete (“%1”).</source>
+        <translation>출력이 불완전함으로 표시되었습니다(“%1”).</translation>
     </message>
     <message>
-        <source>Completed Successfully, %1 %2.
-</source>
-        <translation>성공적으로 완료되었습니다. %1 %2.
-</translation>
+        <source>Completed successfully, %1 %2.</source>
+        <translation>성공적으로 완료되었습니다. %1 %2.</translation>
     </message>
     <message>
         <source>Finished in %1ms</source>
         <translation>%1ms 만에 완료</translation>
     </message>
     <message>
-        <source>Cancelled; nothing was written.
-</source>
-        <translation>취소되어 아무것도 쓰지 않았습니다.
-</translation>
+        <source>Cancelled; nothing was written.</source>
+        <translation>취소되어 아무것도 쓰지 않았습니다.</translation>
     </message>
     <message>
-        <source>The subtitle renderer is not available; the fonts cannot be checked.
-</source>
-        <translation>자막 렌더러를 사용할 수 없어 글꼴을 확인할 수 없습니다.
-</translation>
+        <source>The subtitle renderer is not available; the fonts cannot be checked.</source>
+        <translation>자막 렌더러를 사용할 수 없어 글꼴을 확인할 수 없습니다.</translation>
     </message>
     <message>
-        <source>Cannot retrieve the font file sizes and names;
-copying will be canceled.
-</source>
-        <translation>글꼴 파일 크기와 이름을 가져올 수 없어
-복사를 취소합니다.
-</translation>
+        <source>Cannot retrieve the font file sizes and names; copying will be cancelled.</source>
+        <translation>글꼴 파일 크기와 이름을 가져올 수 없어 복사를 취소합니다.</translation>
     </message>
     <message>
-        <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
-
-</source>
-        <translation>글꼴 %1개의 크기와 이름을 가져왔습니다. 경과 시간 %2ms.
-
-</translation>
+        <source>Retrieved sizes and names of %1 fonts, elapsed time %2 ms.</source>
+        <translation>글꼴 %1개의 크기와 이름을 가져왔습니다. 경과 시간 %2 ms.</translation>
     </message>
     <message>
-        <source>Ready to add %1 to the archive &quot;%2&quot;.
-</source>
-        <translation>%1(을)를 압축 파일 &quot;%2&quot;에 추가할 준비가 되었습니다.
-</translation>
+        <source>Ready to add %1 to the archive “%2”.</source>
+        <translation>%1(을)를 압축 파일 “%2”에 추가할 준비가 되었습니다.</translation>
     </message>
     <message>
-        <source>Ready to copy %1 to &quot;%2&quot;.
-</source>
-        <translation>%1(을)를 &quot;%2&quot;에 복사할 준비가 되었습니다.
-</translation>
+        <source>Ready to copy %1 to “%2”.</source>
+        <translation>%1(을)를 “%2”에 복사할 준비가 되었습니다.</translation>
     </message>
     <message>
-        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.
-</source>
-        <translation>이 수집은 완전하지 않습니다. 이를 확인한 경우에만 쓰며, 출력은 불완전함으로 표시됩니다.
-</translation>
+        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
+        <translation>이 수집은 완전하지 않습니다. 이를 확인한 경우에만 쓰며, 출력은 불완전함으로 표시됩니다.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -3637,12 +3569,8 @@ copying will be canceled.
         <translation>경로를 사용할 수 없음</translation>
     </message>
     <message>
-        <source>Video: %1
-
-</source>
-        <translation>영상: %1
-
-</translation>
+        <source>Video: %1</source>
+        <translation>영상: %1</translation>
     </message>
     <message>
         <source>This video is not an MKV file.</source>
@@ -3657,22 +3585,20 @@ copying will be canceled.
         <translation>불러온 MKV 파일에 글꼴이 없습니다.</translation>
     </message>
     <message>
-        <source>Font named &quot;%1&quot;.
-</source>
-        <translation>글꼴 이름: &quot;%1&quot;.
-</translation>
+        <source>Font named “%1”.</source>
+        <translation>글꼴 이름: “%1”.</translation>
     </message>
     <message>
         <source>(no folder)</source>
         <translation>(폴더 없음)</translation>
     </message>
     <message>
-        <source>Saved a font named &quot;</source>
-        <translation>글꼴을 저장했습니다: &quot;</translation>
+        <source>Saved a font named “%1”.</source>
+        <translation>글꼴을 저장했습니다: “%1”.</translation>
     </message>
     <message>
-        <source>Cannot save font named &quot;</source>
-        <translation>글꼴을 저장할 수 없습니다: &quot;</translation>
+        <source>Cannot save font named “%1”.</source>
+        <translation>글꼴을 저장할 수 없습니다: “%1”.</translation>
     </message>
     <message>
         <source>Completed, copied %1 fonts.
@@ -4857,50 +4783,44 @@ Failed to copy %2 fonts.</source>
         <translation>단축키는 Shift + 클릭으로 설정할 수 있습니다</translation>
     </message>
     <message>
-        <source>This hotkey already exists for &quot;%1&quot;.
-What to do?</source>
-        <translation>이 단축키는 이미 &quot;%1&quot;에 지정되어 있습니다.
-어떻게 하시겠습니까?</translation>
+        <source>This shortcut already exists for “%1”. What to do?</source>
+        <translation>이 단축키는 이미 “%1”에 지정되어 있습니다. 어떻게 하시겠습니까?</translation>
     </message>
     <message>
-        <source>This shortcut already exists in other windows as a shortcut for &quot;%1&quot;.
-What would you like to do?</source>
-        <translation>이 단축키는 다른 창들에서 이미 &quot;%1&quot;의 단축키로 사용되고 있습니다.
-어떻게 하시겠습니까?</translation>
+        <source>This shortcut already exists in other windows as a shortcut for “%1”. What would you like to do?</source>
+        <translation>이 단축키는 다른 창들에서 이미 “%1”의 단축키로 사용되고 있습니다. 어떻게 하시겠습니까?</translation>
     </message>
     <message>
-        <source>This shortcut already exists in another window as a shortcut for &quot;%1&quot;.
-What would you like to do?</source>
-        <translation>이 단축키는 다른 창에서 이미 &quot;%1&quot;의 단축키로 사용되고 있습니다.
-어떻게 하시겠습니까?</translation>
+        <source>This shortcut already exists in another window as a shortcut for “%1”. What would you like to do?</source>
+        <translation>이 단축키는 다른 창에서 이미 “%1”의 단축키로 사용되고 있습니다. 어떻게 하시겠습니까?</translation>
     </message>
     <message>
         <source>Exit</source>
         <translation>종료</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;모두 보기&quot;의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
+        <source>The shortcut %1 of “View all” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“모두 보기”의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View audio and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;소리 및 자막보기&quot;의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
+        <source>The shortcut %1 of “View audio and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“소리 및 자막보기”의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View video and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;영상 및 자막보기&quot;의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
+        <source>The shortcut %1 of “View video and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“영상 및 자막보기”의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View only video&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;영상만 보기&quot;의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
+        <source>The shortcut %1 of “View only video” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“영상만 보기”의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View only subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;자막만 보기&quot;의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
+        <source>The shortcut %1 of “View only subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“자막만 보기”의 단축키 %1(이)가 제거되었습니다. 보기 배치 기능은 없어졌으므로 대신 레이아웃 전환기에서 레이아웃을 선택하십시오.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Enable / Disable editor&quot; was removed: the editor is always shown; hide panels or choose a layout instead.</source>
-        <translation>&quot;편집 활성/비활성&quot;의 단축키 %1(이)가 제거되었습니다. 편집기는 항상 표시되므로 대신 패널을 숨기거나 레이아웃을 선택하십시오.</translation>
+        <source>The shortcut %1 of “Enable / Disable editor” was removed: the editor is always shown; hide panels or choose a layout instead.</source>
+        <translation>“편집 활성/비활성”의 단축키 %1(이)가 제거되었습니다. 편집기는 항상 표시되므로 대신 패널을 숨기거나 레이아웃을 선택하십시오.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
@@ -4911,8 +4831,8 @@ What would you like to do?</source>
         <translation>&quot;빈 2h30m 소리 열기&quot;의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
-        <translation>&quot;FFMS2로 영상 열기&quot;의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 영상은 항상 색인됩니다.</translation>
+        <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
+        <translation>“FFMS2로 영상 열기”의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 영상은 항상 색인됩니다.</translation>
     </message>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
@@ -5467,6 +5387,14 @@ What would you like to do?</source>
         <translation>모든 줄 정렬 / 레이어</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>모든 줄 정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>모든 줄 정렬 / 태그가 없는 글자</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>선택한 줄 정렬 / 시작 시간</translation>
     </message>
@@ -5489,6 +5417,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>선택한 줄 정렬 / 레이어</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>선택한 줄 정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>선택한 줄 정렬 / 태그가 없는 글자</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -5943,6 +5879,10 @@ What would you like to do?</source>
         <translation>뒤따르는 줄을 프레임 단위로 이동: 끝을 영상에</translation>
     </message>
     <message>
+        <source>Plugins</source>
+        <translation>플러그인</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
@@ -6002,7 +5942,7 @@ What would you like to do?</source>
         <translation>소리 편집기가 읽지 않음</translation>
     </message>
     <message>
-        <source>No karaoke tag&apos;s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
+        <source>No karaoke tag’s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
         <translation>길이가 \k50처럼 숫자로 시작하는 노래방 태그가 없어 소리 편집기가 줄을 새로 분할합니다</translation>
     </message>
     <message>
@@ -6010,11 +5950,11 @@ What would you like to do?</source>
         <translation>소리 편집기의 다른 음절</translation>
     </message>
     <message>
-        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback&apos;s</source>
+        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback’s</source>
         <translation>소리 편집기는 모든 \k 태그에서 분할하고 숫자를 자체 방식으로 읽으므로, \keep, \kfo50, \k(50) 같은 태그에서는 재생과 다른 음절이 나옵니다</translation>
     </message>
     <message>
-        <source>Syllables don&apos;t match the line</source>
+        <source>Syllables don’t match the line</source>
         <translation>음절이 줄과 맞지 않음</translation>
     </message>
     <message>
@@ -6761,6 +6701,14 @@ What would you like to do?</source>
         <translation>철자 검사</translation>
     </message>
     <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>플러그인 설치, 켜기/끄기, 설치 제거</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>플러그인…[&amp;U]</translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>태그 숨김</translation>
     </message>
@@ -6869,6 +6817,22 @@ What would you like to do?</source>
     <message>
         <source>Sort by layer</source>
         <translation>정렬 / 레이어</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>글자</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>정렬 / 글자</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>태그가 없는 글자</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>정렬 / 태그가 없는 글자</translation>
     </message>
     <message>
         <source>Open subtitle file</source>
@@ -7117,6 +7081,22 @@ What would you like to do?</source>
     <message>
         <source>Open user &amp;folder</source>
         <translation>사용자 폴더 열기[&amp;F]</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>HikariSub가 마음에 드시나요?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>GitHub에서 별표를 주시면 다른 사람들이 찾는 데 도움이 됩니다.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>GitHub에서 별표 주기</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>나중에</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -7701,7 +7681,7 @@ What would you like to do?</source>
         <translation>남겨 둠: %1</translation>
     </message>
     <message>
-        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <source>This portable copy keeps its settings in %1. An earlier version’s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
         <translation>이 포터블 사본은 설정을 %1에 보관합니다. 이전 버전의 설정은 아직 %2에 있습니다. 사용하려면 HikariSub을 종료하고 그곳에서 hikari.ini를 복사한 다음 여기 있는 settings.toml을 삭제하십시오.</translation>
     </message>
     <message>
@@ -8851,7 +8831,7 @@ removing audio cache files.</source>
         <translation>스타일</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
@@ -9099,6 +9079,14 @@ removing audio cache files.</source>
         <translation>파일 이름 포함</translation>
     </message>
     <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>GitHub에서 HikariSub에 별표 주기 제안</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
+    </message>
+    <message>
         <source>Choose a legacy Hotkeys.txt</source>
         <translation>이전 버전 Hotkeys.txt 선택</translation>
     </message>
@@ -9183,7 +9171,7 @@ and will be changed to the default</source>
 기본값으로 변경됩니다</translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>catalogue for style</source>
         <translation>스타일 목록</translation>
     </message>
     <message>
@@ -9246,6 +9234,253 @@ and will be changed to the default</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>다른 언어의 단어는 해당 문자 체계에 맞는 다른 설치된 사전으로 검사합니다. 사전이 없는 문자 체계의 단어는 표시하지 않습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>이 파일은 플러그인 패키지(hikari-plugin.json이 들어 있는 zip 파일)가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>패키지에 링크가 있어 HikariSub이 설치하지 않습니다: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>패키지가 너무 큽니다: 압축을 풀면 파일이 %1개를 넘거나 크기가 %2MB를 넘습니다.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json이 올바른 JSON이 아닙니다: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json의 %2에서 ID “%1”(이)가 중복됩니다.</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>이 플러그인에는 Hikari API %1(이)가 필요하지만 이 HikariSub의 API는 %2입니다. 설치하려면 HikariSub을 업데이트하십시오.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>hikari-plugin.json이 %1에서 플러그인 스키마를 통과하지 못했습니다: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>패키지에 HikariSub이 설치하지 않는 파일 이름이 있습니다: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>패키지 최상위에 hikari-plugin.json이 없습니다.</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>패키지에 주 파일 %1(이)가 없습니다.</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>패키지에 서명이 있지만 매니페스트에 서명을 확인할 publicKey가 없습니다.</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>사용자 폴더의 plugins.json을 읽을 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>패키지가 매니페스트에 지정되지 않은 키로 서명되었습니다.</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>서명이 패키지와 일치하지 않습니다. 서명 후에 패키지가 변경되었을 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>서명의 신뢰 주석이 서명 후에 변경되었습니다.</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>패키지 옆의 .minisig 파일이 minisign 서명이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>전체 신뢰: HikariSub의 제한 밖에서 네이티브 코드를 실행할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>열려 있는 모든 자막 파일 읽기 및 편집: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>%1에 연결: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>읽고 쓸 폴더 요청, %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>읽을 폴더 요청, %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub이 작업을 마치지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>플러그인을 사용하려면 사용자 폴더가 필요하지만 이 사본에는 사용자 폴더가 없습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub이 %1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>먼저 플러그인 패키지를 선택하십시오.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>플러그인</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>서명 키가 바뀌었습니다. 설치된 사본은 키 %1(으)로, 이 패키지는 키 %2(으)로 서명되었습니다. 작성자가 키를 바꾼 것이 확실한 경우에만 설치하십시오.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>이 패키지는 서명되지 않았지만 설치된 사본은 키 %1(으)로 서명되었습니다. 출처를 신뢰하는 경우에만 설치하십시오.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>검증되지 않은 출처이며 키 %1(으)로 서명되었습니다. 업데이트는 같은 키로 서명되어야 합니다.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>검증되지 않음: 패키지가 서명되지 않아 HikariSub이 만든 사람을 확인할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>플러그인을 설치하지 못함</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>플러그인 설치</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>플러그인 업데이트</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>플러그인 다시 설치</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>플러그인 다운그레이드</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>“%1” %2(을)를 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>“%1”(을)를 %2에서 %3(으)로 업데이트하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>“%1” %2(을)를 다시 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>“%1” %2(을)를 하위 버전 %3(으)로 교체하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>다음 권한을 요청합니다</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>활성 자막 파일 외에는 권한을 요청하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>신뢰하고 설치</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>설치 제거, 데이터 유지</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>설치 제거 및 데이터 삭제</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>설치 제거</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>플러그인 설치 제거</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>“%1”의 설치를 제거하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>사용자 폴더에 저장된 데이터가 있습니다. 다시 설치할 때 사용하려면 데이터를 유지하십시오.</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>플러그인 설치를 제거하지 못함</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>설치된 플러그인이 없습니다. .hikariplugin 파일에서 설치하십시오.</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>설치된 플러그인</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>사용</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>검증되지 않음, 키 %1(으)로 서명됨</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>검증되지 않음, 서명 없음</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>전체 신뢰</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>파일에서 설치…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>플러그인 패키지 선택</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>HikariSub 플러그인 (*.hikariplugin)</translation>
     </message>
 </context>
 <context>
@@ -10642,20 +10877,20 @@ because it was edited.</source>
         <translation>세션 파일이 아닙니다.</translation>
     </message>
     <message>
-        <source>&quot;tabs&quot; is not a list.</source>
-        <translation>&quot;tabs&quot; 값이 목록이 아닙니다.</translation>
+        <source>“tabs” is not a list.</source>
+        <translation>“tabs” 값이 목록이 아닙니다.</translation>
     </message>
     <message>
-        <source>&quot;closed&quot; is not true or false.</source>
-        <translation>&quot;closed&quot; 값이 true 또는 false가 아닙니다.</translation>
+        <source>“closed” is not true or false.</source>
+        <translation>“closed” 값이 true 또는 false가 아닙니다.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
         <translation>탭 %1(은)는 객체가 아닙니다.</translation>
     </message>
     <message>
-        <source>Tab %1: &quot;%2&quot; has the wrong type.</source>
-        <translation>탭 %1: &quot;%2&quot;의 형식이 잘못되었습니다.</translation>
+        <source>Tab %1: “%2” has the wrong type.</source>
+        <translation>탭 %1: “%2”의 형식이 잘못되었습니다.</translation>
     </message>
 </context>
 <context>
@@ -11168,13 +11403,11 @@ because it was edited.</source>
         <translation>사전에 추가된 단어</translation>
     </message>
     <message>
-        <source>No dictionary files were found in the &quot;%1&quot; folder.
-Spell checking will be disabled</source>
-        <translation>&quot;%1&quot; 폴더에서 사전 파일을 찾을 수 없습니다.
-철자 검사가 비활성화됩니다</translation>
+        <source>No dictionary files were found in the “%1” folder. Spell checking will be disabled.</source>
+        <translation>“%1” 폴더에서 사전 파일을 찾을 수 없습니다. 철자 검사가 비활성화됩니다.</translation>
     </message>
     <message>
-        <source>Failed to initialize spell checker.</source>
+        <source>Failed to initialise the spellchecker.</source>
         <translation>철자 검사기를 초기화하지 못했습니다.</translation>
     </message>
     <message>
@@ -11186,7 +11419,7 @@ Spell checking will be disabled</source>
         <translation>고유 명사</translation>
     </message>
     <message>
-        <source>Names of places, organizations and products keep their standard capitalization.</source>
+        <source>Names of places, organisations and products keep their standard capitalisation.</source>
         <translation>장소, 단체, 제품 이름은 표준 대소문자 표기를 따릅니다.</translation>
     </message>
     <message>
@@ -11214,7 +11447,7 @@ Spell checking will be disabled</source>
         <translation>표준 표현을 권장하는 흔한 구문 수준의 실수.</translation>
     </message>
     <message>
-        <source>Capitalization and case</source>
+        <source>Capitalisation and case</source>
         <translation>대소문자 표기</translation>
     </message>
     <message>
@@ -11345,8 +11578,8 @@ Spell checking will be disabled</source>
         <translation>%1줄 선택됨</translation>
     </message>
     <message>
-        <source> (%1 hidden)</source>
-        <translation> (%1줄 숨김)</translation>
+        <source>(%1 hidden)</source>
+        <translation>(%1줄 숨김)</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -11744,7 +11977,7 @@ Spell checking will be disabled</source>
         <translation>스타일 필터</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>목록</translation>
     </message>
     <message>
@@ -12020,20 +12253,20 @@ Spell checking will be disabled</source>
         <translation>ASS 파일 선택</translation>
     </message>
     <message>
-        <source>Copy of </source>
-        <translation>복사본 </translation>
+        <source>Copy of %1</source>
+        <translation>복사본 %1</translation>
     </message>
     <message>
         <source>The document has no styles to edit.</source>
         <translation>문서에 편집할 스타일이 없습니다.</translation>
     </message>
     <message>
-        <source>The catalog “%1” no longer exists.</source>
+        <source>The catalogue “%1” no longer exists.</source>
         <translation>“%1” 목록이 더 이상 없습니다.</translation>
     </message>
     <message>
-        <source>Style named &quot;%1&quot; already exists.</source>
-        <translation>&quot;%1&quot; 스타일이 이미 있습니다.</translation>
+        <source>Style named “%1” already exists.</source>
+        <translation>“%1” 스타일이 이미 있습니다.</translation>
     </message>
     <message>
         <source>None</source>
@@ -12114,7 +12347,7 @@ Styles deleted:
         <translation>이 스타일을 사용하는 줄 선택</translation>
     </message>
     <message>
-        <source>Copy to the catalog…</source>
+        <source>Copy to the catalogue…</source>
         <translation>목록에 복사…</translation>
     </message>
     <message>
@@ -12250,19 +12483,19 @@ Styles deleted:
 <context>
     <name>HikariSub.TagList</name>
     <message>
-        <source>Transparency of primary color</source>
+        <source>Transparency of primary colour</source>
         <translation>기본 색상 투명도</translation>
     </message>
     <message>
-        <source>Transparency of secondary color</source>
+        <source>Transparency of secondary colour</source>
         <translation>보조 색상 투명도</translation>
     </message>
     <message>
-        <source>Transparency of border color</source>
+        <source>Transparency of border colour</source>
         <translation>테두리 투명도</translation>
     </message>
     <message>
-        <source>Transparency of shadow color</source>
+        <source>Transparency of shadow colour</source>
         <translation>그림자 색상 투명도</translation>
     </message>
     <message>
@@ -12270,7 +12503,7 @@ Styles deleted:
         <translation>기본 색상</translation>
     </message>
     <message>
-        <source>Secondary color</source>
+        <source>Secondary colour</source>
         <translation>보조 색상</translation>
     </message>
     <message>
@@ -12282,51 +12515,51 @@ Styles deleted:
         <translation>그림자 색상</translation>
     </message>
     <message>
-        <source>PNG mask of primary color</source>
+        <source>PNG mask of primary colour</source>
         <translation>기본 색상 PNG 마스크</translation>
     </message>
     <message>
-        <source>PNG mask of secondary color</source>
+        <source>PNG mask of secondary colour</source>
         <translation>보조 색상 PNG 마스크</translation>
     </message>
     <message>
-        <source>PNG mask of border color</source>
+        <source>PNG mask of border colour</source>
         <translation>테두리 색상 PNG 마스크</translation>
     </message>
     <message>
-        <source>PNG mask of shadow color</source>
+        <source>PNG mask of shadow colour</source>
         <translation>그림자 색상 PNG 마스크</translation>
     </message>
     <message>
-        <source>Transparency gradient of primary color</source>
+        <source>Transparency gradient of primary colour</source>
         <translation>기본 색상 투명도 그라데이션</translation>
     </message>
     <message>
-        <source>Transparency gradient of secondary color</source>
+        <source>Transparency gradient of secondary colour</source>
         <translation>보조 색상 투명도 그라데이션</translation>
     </message>
     <message>
-        <source>Transparency gradient of border color</source>
+        <source>Transparency gradient of border colour</source>
         <translation>테두리 색상 투명도 그라데이션</translation>
     </message>
     <message>
-        <source>Transparency gradient of shadow color</source>
+        <source>Transparency gradient of shadow colour</source>
         <translation>그림자 색상 투명도 그라데이션</translation>
     </message>
     <message>
-        <source>Gradient of primary color</source>
+        <source>Gradient of primary colour</source>
         <translation>기본 색상 그라데이션</translation>
     </message>
     <message>
-        <source>Gradient of secondary color</source>
+        <source>Gradient of secondary colour</source>
         <translation>보조 색상 그라데이션</translation>
     </message>
     <message>
-        <source>Gradient of border color</source>
+        <source>Gradient of border colour</source>
         <translation>테두리 색상 그라데이션</translation>
     </message>
     <message>
-        <source>Gradient of shadow color</source>
+        <source>Gradient of shadow colour</source>
         <translation>그림자 색상 그라데이션</translation>
     </message>
     <message>
@@ -14024,7 +14257,7 @@ after the end time in milliseconds</source>
         <translation>가로로 넓게</translation>
     </message>
     <message>
-        <source>Failed to initialize DirectShow</source>
+        <source>Failed to initialise DirectShow</source>
         <translation>DirectShow를 초기화하지 못함</translation>
     </message>
     <message>
@@ -14056,7 +14289,7 @@ after the end time in milliseconds</source>
         <translation>소리 렌더러 인스턴스를 만들 수 없음</translation>
     </message>
     <message>
-        <source>Cannot add Direct Sound renderer</source>
+        <source>Cannot add DirectSound renderer</source>
         <translation>Direct Sound 렌더러를 추가할 수 없음</translation>
     </message>
     <message>
@@ -14068,7 +14301,7 @@ after the end time in milliseconds</source>
         <translation>렌더러 핀을 열거할 수 없음</translation>
     </message>
     <message>
-        <source>Cannot enumerate Direct Sound pins</source>
+        <source>Cannot enumerate DirectSound pins</source>
         <translation>Direct Sound 핀을 열거할 수 없음</translation>
     </message>
     <message>
@@ -14529,8 +14762,12 @@ or codecs or a splitter may be missing</source>
         <translation>영상을 사용할 수 없음: %1</translation>
     </message>
     <message>
-        <source>Frame %1 of %2  %3</source>
-        <translation>프레임 %1/%2  %3</translation>
+        <source>Frame %1 of %2</source>
+        <translation>프레임 %1/%2</translation>
+    </message>
+    <message>
+        <source>Frame %1 of %2 · %3</source>
+        <translation>프레임 %1/%2 · %3</translation>
     </message>
     <message>
         <source>Aspect ratio: %1</source>
@@ -15764,7 +16001,7 @@ do not work on comments</source>
         <translation>레이아웃이 없음</translation>
     </message>
     <message>
-        <source>it holds no Classic arrangement</source>
+        <source>it holds no “Classic” arrangement</source>
         <translation>클래식 배치가 없음</translation>
     </message>
     <message>

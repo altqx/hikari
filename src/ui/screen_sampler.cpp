@@ -298,7 +298,7 @@ void ScreenSampler::pickFromPortal()
     if (m_portalBusy)
         return;
     if (route() != QLatin1String("portal")) {
-        emit portalFailed(available() ? QCoreApplication::translate("HikariSub.Colours", "The desktop's screenshot portal is not in use here.")
+        emit portalFailed(available() ? QCoreApplication::translate("HikariSub.Colours", "The desktop’s screenshot portal is not in use here.")
                                       : unavailableReason());
         return;
     }

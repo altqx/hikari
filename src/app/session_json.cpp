@@ -69,13 +69,13 @@ std::optional<application::Session> readJson(std::string_view bytes, application
     if (auto problem = application::checkFileVersion(number, kVersion))
         return fail(std::move(*problem));
     if (!o.value(QStringLiteral("tabs")).isArray())
-        return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "\"tabs\" is not a list."))});
+        return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "“tabs” is not a list."))});
 
     application::Session session;
     session.header = o.value(QStringLiteral("program")).toString().toStdString();
     const QJsonValue closed = o.value(QStringLiteral("closed"));
     if (!closed.isBool() && !closed.isUndefined())
-        return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "\"closed\" is not true or false."))});
+        return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "“closed” is not true or false."))});
     session.closed = closed.toBool(true);
     const QJsonArray tabs = o.value(QStringLiteral("tabs")).toArray();
     for (qsizetype i = 0; i < tabs.size(); ++i) {
@@ -115,7 +115,7 @@ std::optional<application::Session> readJson(std::string_view bytes, application
             wrong = "active";
         if (!wrong.empty())
             return fail({0, 0,
-                         message(QT_TRANSLATE_NOOP("HikariSub.Session", "Tab %1: \"%2\" has the wrong type."),
+                         message(QT_TRANSLATE_NOOP("HikariSub.Session", "Tab %1: “%2” has the wrong type."),
                                  {where, QString::fromStdString(wrong)})});
         if (active.toBool() && !session.activeTab)
             session.activeTab = static_cast<std::size_t>(i);

@@ -1138,11 +1138,11 @@ Output device: %2</source>
         <translation>தானியங்கு</translation>
     </message>
     <message>
-        <source>The protected reference can&apos;t be changed.</source>
+        <source>The protected reference can’t be changed.</source>
         <translation>பாதுகாக்கப்பட்ட மேற்கோளை மாற்ற முடியாது.</translation>
     </message>
     <message>
-        <source>The macro&apos;s changes could not be applied; nothing was changed.</source>
+        <source>The macro’s changes could not be applied; nothing was changed.</source>
         <translation>குறுநிரலின் மாற்றங்களைப் பயன்படுத்த முடியவில்லை; எதுவும் மாற்றப்படவில்லை.</translation>
     </message>
     <message>
@@ -1172,11 +1172,11 @@ Output device: %2</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; ச்கிரிப்ட் தெளிவுத்திறன் மட்டுமே அமைக்கப்பட்டது.</translation>
     </message>
     <message>
-        <source>Validation Lua script &apos;%1&apos; failed</source>
-        <translation>சரிபார்ப்பு Lua ச்கிரிப்ட் &apos;%1&apos; தோல்வியடைந்தது</translation>
+        <source>Validation Lua script “%1” failed</source>
+        <translation>சரிபார்ப்பு Lua ச்கிரிப்ட் “%1” தோல்வியடைந்தது</translation>
     </message>
     <message>
-        <source>The script&apos;s helper ended; reload the script to use it again.</source>
+        <source>The script’s helper ended; reload the script to use it again.</source>
         <translation>ச்கிரிப்டின் உதவிச் செயல்முறை முடிந்தது; மீண்டும் பயன்படுத்த ச்கிரிப்டை மீண்டும் ஏற்றவும்.</translation>
     </message>
     <message>
@@ -1184,7 +1184,7 @@ Output device: %2</source>
         <translation>குறுநிரல் இயங்கும்போது ஆவணம் மாறியது; எதுவும் மாற்றப்படவில்லை.</translation>
     </message>
     <message>
-        <source>The last run&apos;s macro is no longer loaded, so it can&apos;t be repeated.</source>
+        <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>கடைசி இயக்கத்தின் குறுநிரல் இப்போது ஏற்றப்படவில்லை, எனவே அதை மீண்டும் செய்ய முடியாது.</translation>
     </message>
     <message>
@@ -1224,7 +1224,7 @@ Output device: %2</source>
         <translation>குறுநிரலை இயக்க ஓர் ஆவணத்தைத் திறக்கவும்.</translation>
     </message>
     <message>
-        <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
+        <source>The line being edited can’t be committed, so the macro can’t start.</source>
         <translation>திருத்தப்படும் வரியை கமிட் செய்ய முடியாததால், குறுநிரலைத் தொடங்க முடியாது.</translation>
     </message>
     <message>
@@ -1583,7 +1583,7 @@ Output device: %2</source>
         <translation>திரையிலிருந்து வண்ணத்தைத் தேர்ந்தெடுக்க முடியாது: இந்த Wayland அமர்வில் திரைப்பிடிப்பு போர்ட்டல் இல்லை (PickColor உடன் xdg-desktop-portal).</translation>
     </message>
     <message>
-        <source>The desktop&apos;s screenshot portal is not in use here.</source>
+        <source>The desktop’s screenshot portal is not in use here.</source>
         <translation>டெஸ்க்டாப்பின் திரைப்பிடிப்பு போர்ட்டல் இங்கு பயன்பாட்டில் இல்லை.</translation>
     </message>
     <message>
@@ -1658,7 +1658,7 @@ Output device: %2</source>
         <translation>வசன வரிகளை வீடியோவுக்கு ஏற்ப மறுமாதிரியாக்கவா? வசன வரிகள் › வசன வரிகளை மறுமாதிரியாக்கு மூலம் பின்னரும் இதைச் செய்யலாம்.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
@@ -1810,10 +1810,8 @@ Output device: %2</source>
         <translation>நீட்டு</translation>
     </message>
     <message>
-        <source>In line %1, value &apos;%2&apos; cannot be scaled
-in tag &apos;%3&apos;</source>
-        <translation>வரி %1 இல், &apos;%2&apos; மதிப்பை அளவிட முடியாது
-(&apos;%3&apos; குறிச்சொல்லில்)</translation>
+        <source>In line %1, value “%2” cannot be scaled in tag “%3”.</source>
+        <translation>வரி %1 இல், “%2” மதிப்பை அளவிட முடியாது (“%3” குறிச்சொல்லில்).</translation>
     </message>
     <message numerus="yes">
         <source>%n value(s) could not be scaled.</source>
@@ -1823,7 +1821,7 @@ in tag &apos;%3&apos;</source>
         </translation>
     </message>
     <message>
-        <source>This document can&apos;t be converted to that format.</source>
+        <source>This document can’t be converted to that format.</source>
         <translation>இந்த ஆவணத்தை அந்த வடிவத்துக்கு மாற்ற முடியாது.</translation>
     </message>
     <message>
@@ -1874,10 +1872,10 @@ in tag &apos;%3&apos;</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) get the conversion style &quot;%1&quot;.</source>
+        <source>%n line(s) get the conversion style “%1”.</source>
         <translation>
-            <numerusform>%n வரிக்கு &quot;%1&quot; என்ற மாற்றப் பாணி வழங்கப்படும்.</numerusform>
-            <numerusform>%n வரிகளுக்கு &quot;%1&quot; என்ற மாற்றப் பாணி வழங்கப்படும்.</numerusform>
+            <numerusform>%n வரிக்கு “%1” என்ற மாற்றப் பாணி வழங்கப்படும்.</numerusform>
+            <numerusform>%n வரிகளுக்கு “%1” என்ற மாற்றப் பாணி வழங்கப்படும்.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -2032,8 +2030,8 @@ in tag &apos;%3&apos;</source>
         <translation>உரை UTF-8 இல் இல்லை</translation>
     </message>
     <message>
-        <source>&quot;%1&quot; is not a time</source>
-        <translation>&quot;%1&quot; ஒரு நேரம் அல்ல</translation>
+        <source>“%1” is not a time</source>
+        <translation>“%1” ஒரு நேரம் அல்ல</translation>
     </message>
     <message>
         <source>the word at %1 starts before the word before it</source>
@@ -2048,24 +2046,24 @@ in tag &apos;%3&apos;</source>
         <translation>நேரம் %1 அதைச் சுற்றியுள்ள உறுப்பின் நேரங்களுக்கு வெளியே உள்ளது</translation>
     </message>
     <message>
-        <source>&quot;%1&quot; has no time</source>
-        <translation>&quot;%1&quot; க்கு நேரம் இல்லை</translation>
+        <source>“%1” has no time</source>
+        <translation>“%1” க்கு நேரம் இல்லை</translation>
     </message>
     <message>
         <source>a line with word times can have only one line time</source>
         <translation>சொல் நேரங்கள் உள்ள வரிக்கு ஒரே ஒரு வரி நேரம் மட்டுமே இருக்க முடியும்</translation>
     </message>
     <message>
-        <source>the XML is broken at &quot;%1&quot;</source>
-        <translation>&quot;%1&quot; இல் XML உடைந்துள்ளது</translation>
+        <source>the XML is broken at “%1”</source>
+        <translation>“%1” இல் XML உடைந்துள்ளது</translation>
     </message>
     <message>
         <source>%1 is not a TTML document</source>
         <translation>%1 ஒரு TTML ஆவணம் அல்ல</translation>
     </message>
     <message>
-        <source>the elements are nested more than %1 deep at &quot;%2&quot;</source>
-        <translation>&quot;%2&quot; இல் உறுப்புகள் %1 நிலைகளுக்கு மேல் உள்ளமைக்கப்பட்டுள்ளன</translation>
+        <source>the elements are nested more than %1 deep at “%2”</source>
+        <translation>“%2” இல் உறுப்புகள் %1 நிலைகளுக்கு மேல் உள்ளமைக்கப்பட்டுள்ளன</translation>
     </message>
     <message>
         <source>it is too large for a lyrics file</source>
@@ -2116,28 +2114,24 @@ in tag &apos;%3&apos;</source>
         <translation>மீண்டும் ஏற்றும்போது வசன வரிகள் மாறிவிட்டன; எதுவும் மாற்றியமைக்கப்படவில்லை.</translation>
     </message>
     <message>
-        <source>Video: </source>
-        <translation>வீடியோ: </translation>
+        <source>Video: %1</source>
+        <translation>வீடியோ: %1</translation>
     </message>
     <message>
-        <source>Audio: </source>
-        <translation>ஆடியோ: </translation>
+        <source>Audio: %1</source>
+        <translation>ஆடியோ: %1</translation>
     </message>
     <message>
-        <source>Keyframes: </source>
-        <translation>கீஃப்ரேம்கள்: </translation>
+        <source>Keyframes: %1</source>
+        <translation>கீஃப்ரேம்கள்: %1</translation>
     </message>
     <message>
-        <source>Associated files:
-</source>
-        <translation>தொடர்புடைய கோப்புகள்:
-</translation>
+        <source>Associated files:</source>
+        <translation>தொடர்புடைய கோப்புகள்:</translation>
     </message>
     <message>
-        <source>Video from directory:
-</source>
-        <translation>கோப்புறையிலிருந்து வீடியோ:
-</translation>
+        <source>Video from directory: %1</source>
+        <translation>கோப்புறையிலிருந்து வீடியோ: %1</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -2759,7 +2753,7 @@ Should not exceed 15 characters per second</source>
 <context>
     <name>HikariSub.Fonts</name>
     <message>
-        <source>Font catalogs</source>
+        <source>Font catalogues</source>
         <translation>எழுத்துரு பட்டியல்கள்</translation>
     </message>
     <message>
@@ -2871,7 +2865,7 @@ Should not exceed 15 characters per second</source>
         <translation>உங்களுடையவற்றின் அதே எழுத்துருக்களைக் கொண்டவை அப்படியே விடப்படும்.</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
@@ -3339,7 +3333,7 @@ Should not exceed 15 characters per second</source>
         <translation>அனைத்து எழுத்துருக்களும்</translation>
     </message>
     <message>
-        <source>Without catalog</source>
+        <source>Without catalogue</source>
         <translation>பட்டியல் இல்லாமல்</translation>
     </message>
     <message>
@@ -3363,80 +3357,76 @@ Should not exceed 15 characters per second</source>
         <translation>%1 எழுத்துருக்கள்</translation>
     </message>
     <message>
-        <source>Found &quot;%1&quot; font file.</source>
-        <translation>&quot;%1&quot; எழுத்துருக் கோப்பு கிடைத்தது.</translation>
+        <source>Found “%1” font file.</source>
+        <translation>“%1” எழுத்துருக் கோப்பு கிடைத்தது.</translation>
     </message>
     <message>
-        <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
-        <translation>ரெண்டரர் &quot;%1&quot; (%2) ஐயும் பயன்படுத்தியது; அது சேகரிக்கப்படவில்லை.</translation>
+        <source>The renderer also used “%1” (%2); it is not collected.</source>
+        <translation>ரெண்டரர் “%1” (%2) ஐயும் பயன்படுத்தியது; அது சேகரிக்கப்படவில்லை.</translation>
     </message>
     <message>
-        <source>Copied font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; எழுத்துரு நகலெடுக்கப்பட்டது.</translation>
+        <source>Copied font “%1”.</source>
+        <translation>“%1” எழுத்துரு நகலெடுக்கப்பட்டது.</translation>
     </message>
     <message>
-        <source>Added font &quot;%1&quot; to the archive.</source>
-        <translation>&quot;%1&quot; எழுத்துரு காப்பகத்தில் சேர்க்கப்பட்டது.</translation>
+        <source>Added font “%1” to the archive.</source>
+        <translation>“%1” எழுத்துரு காப்பகத்தில் சேர்க்கப்பட்டது.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; belongs to a style
-that is not used.</source>
-        <translation>&quot;%1&quot; எழுத்துரு பயன்படுத்தப்படாத
-ஒரு பாணியைச் சேர்ந்தது.</translation>
+        <source>Font “%1” belongs to a style that is not used.</source>
+        <translation>“%1” எழுத்துரு பயன்படுத்தப்படாத ஒரு பாணியைச் சேர்ந்தது.</translation>
     </message>
     <message>
-        <source>
-Will not be copied.</source>
-        <translation>
-நகலெடுக்கப்படாது.</translation>
+        <source>Will not be copied.</source>
+        <translation>நகலெடுக்கப்படாது.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing normal style.</source>
-        <translation>&quot;%1&quot; எழுத்துருவில் சாதாரண வடிவம் இல்லை.</translation>
+        <source>Font “%1” is missing normal style.</source>
+        <translation>“%1” எழுத்துருவில் சாதாரண வடிவம் இல்லை.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing bold italics.</source>
-        <translation>&quot;%1&quot; எழுத்துருவில் தடிமன் சாய்வு வடிவம் இல்லை.</translation>
+        <source>Font “%1” is missing bold italics.</source>
+        <translation>“%1” எழுத்துருவில் தடிமன் சாய்வு வடிவம் இல்லை.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing bold.</source>
-        <translation>&quot;%1&quot; எழுத்துருவில் தடிமன் வடிவம் இல்லை.</translation>
+        <source>Font “%1” is missing bold.</source>
+        <translation>“%1” எழுத்துருவில் தடிமன் வடிவம் இல்லை.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing italics.</source>
-        <translation>&quot;%1&quot; எழுத்துருவில் சாய்வு வடிவம் இல்லை.</translation>
+        <source>Font “%1” is missing italics.</source>
+        <translation>“%1” எழுத்துருவில் சாய்வு வடிவம் இல்லை.</translation>
     </message>
     <message>
-        <source>Cannot check the characters in font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; எழுத்துருவில் உள்ள எழுத்துகளைச் சரிபார்க்க முடியாது.</translation>
+        <source>Cannot check the characters in font “%1”.</source>
+        <translation>“%1” எழுத்துருவில் உள்ள எழுத்துகளைச் சரிபார்க்க முடியாது.</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
-        <translation>&quot;%1&quot; எழுத்துருவில் இந்த எழுத்துகள் இல்லை: &quot;%2&quot;.</translation>
+        <source>Font “%1” does not contain characters: “%2”.</source>
+        <translation>“%1” எழுத்துருவில் இந்த எழுத்துகள் இல்லை: “%2”.</translation>
     </message>
     <message>
-        <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
-        <translation>&quot;%1&quot; எழுத்துகள் மாற்று எழுத்துரு &quot;%2&quot; ஆல் வரையப்பட்டன.</translation>
+        <source>Characters “%1” were drawn by the fallback font “%2”.</source>
+        <translation>“%1” எழுத்துகள் மாற்று எழுத்துரு “%2” ஆல் வரையப்பட்டன.</translation>
     </message>
     <message>
-        <source>Cannot get the contents of font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; எழுத்துருவின் உள்ளடக்கத்தைப் பெற முடியாது.</translation>
+        <source>Cannot get the contents of font “%1”.</source>
+        <translation>“%1” எழுத்துருவின் உள்ளடக்கத்தைப் பெற முடியாது.</translation>
     </message>
     <message>
-        <source>Cannot open file &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; கோப்பைத் திறக்க முடியாது.</translation>
+        <source>Cannot open file “%1”.</source>
+        <translation>“%1” கோப்பைத் திறக்க முடியாது.</translation>
     </message>
     <message>
-        <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
-        <translation>எழுத்துருக்கள் கோப்புறையில் &quot;%1&quot; எழுத்துருவைக் கண்டுபிடிக்க முடியவில்லை.</translation>
+        <source>Cannot find “%1” font in Fonts folder.</source>
+        <translation>எழுத்துருக்கள் கோப்புறையில் “%1” எழுத்துருவைக் கண்டுபிடிக்க முடியவில்லை.</translation>
     </message>
     <message>
-        <source>Cannot copy font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; எழுத்துருவை நகலெடுக்க முடியாது.</translation>
+        <source>Cannot copy font “%1”.</source>
+        <translation>“%1” எழுத்துருவை நகலெடுக்க முடியாது.</translation>
     </message>
     <message>
-        <source>Cannot zip font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; எழுத்துருவை zip இல் சுருக்க முடியாது.</translation>
+        <source>Cannot zip font “%1”.</source>
+        <translation>“%1” எழுத்துருவை zip இல் சுருக்க முடியாது.</translation>
     </message>
     <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
@@ -3460,18 +3450,16 @@ Will not be copied.</source>
         <translation>உறுதிப்படுத்தல்</translation>
     </message>
     <message>
-        <source>Found font &quot;%1&quot;
-</source>
-        <translation>&quot;%1&quot; எழுத்துரு கண்டறியப்பட்டது
-</translation>
+        <source>Found font “%1”</source>
+        <translation>“%1” எழுத்துரு கண்டறியப்பட்டது</translation>
     </message>
     <message>
-        <source>Found font &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; எழுத்துரு கண்டறியப்பட்டது.</translation>
+        <source>Found font “%1”.</source>
+        <translation>“%1” எழுத்துரு கண்டறியப்பட்டது.</translation>
     </message>
     <message>
-        <source>Font not found &quot;</source>
-        <translation>எழுத்துரு கிடைக்கவில்லை &quot;</translation>
+        <source>Font not found “%1”.</source>
+        <translation>எழுத்துரு கிடைக்கவில்லை “%1”.</translation>
     </message>
     <message>
         <source>In styles:
@@ -3488,64 +3476,44 @@ Will not be copied.</source>
         <translation>வரிகளில்: </translation>
     </message>
     <message>
-        <source>Checked by the subtitle renderer (%1).
-</source>
-        <translation>வசன ரெண்டரரால் சரிபார்க்கப்பட்டது (%1).
-</translation>
+        <source>Checked by the subtitle renderer (%1).</source>
+        <translation>வசன ரெண்டரரால் சரிபார்க்கப்பட்டது (%1).</translation>
     </message>
     <message>
-        <source>Tab %1: the renderer could not read this document; it was not checked.
-</source>
-        <translation>தாவல் %1: ரெண்டரரால் இந்த ஆவணத்தைப் படிக்க முடியவில்லை; இது சரிபார்க்கப்படவில்லை.
-</translation>
+        <source>Tab %1: the renderer could not read this document; it was not checked.</source>
+        <translation>தாவல் %1: ரெண்டரரால் இந்த ஆவணத்தைப் படிக்க முடியவில்லை; இது சரிபார்க்கப்படவில்லை.</translation>
     </message>
     <message>
-        <source>Families the renderer did not find: %1.
-</source>
-        <translation>ரெண்டரர் கண்டுபிடிக்காத குடும்பங்கள்: %1.
-</translation>
+        <source>Families the renderer did not find: %1.</source>
+        <translation>ரெண்டரர் கண்டுபிடிக்காத குடும்பங்கள்: %1.</translation>
     </message>
     <message>
-        <source>Families answered by a font of another name: %1.
-</source>
-        <translation>வேறு பெயருள்ள எழுத்துருவால் பதிலளிக்கப்பட்ட குடும்பங்கள்: %1.
-</translation>
+        <source>Families answered by a font of another name: %1.</source>
+        <translation>வேறு பெயருள்ள எழுத்துருவால் பதிலளிக்கப்பட்ட குடும்பங்கள்: %1.</translation>
     </message>
     <message>
-        <source>Characters no font has: %1.
-</source>
-        <translation>எந்த எழுத்துருவிலும் இல்லாத எழுத்துகள்: %1.
-</translation>
+        <source>Characters no font has: %1.</source>
+        <translation>எந்த எழுத்துருவிலும் இல்லாத எழுத்துகள்: %1.</translation>
     </message>
     <message>
-        <source>Characters drawn by a fallback font of this computer: %1.
-</source>
-        <translation>இந்தக் கணினியின் மாற்று எழுத்துருவால் வரையப்பட்ட எழுத்துகள்: %1.
-</translation>
+        <source>Characters drawn by a fallback font of this computer: %1.</source>
+        <translation>இந்தக் கணினியின் மாற்று எழுத்துருவால் வரையப்பட்ட எழுத்துகள்: %1.</translation>
     </message>
     <message>
-        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.
-</source>
-        <translation>தாவல் %1: சேகரித்த எழுத்துருக்களை மட்டும் கொண்டு, %3 சட்டகங்களில் %2 வேறுபடுகின்றன.
-</translation>
+        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.</source>
+        <translation>தாவல் %1: சேகரித்த எழுத்துருக்களை மட்டும் கொண்டு, %3 சட்டகங்களில் %2 வேறுபடுகின்றன.</translation>
     </message>
     <message>
-        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
-</source>
-        <translation>ஒரே கோப்புப் பெயருள்ள வெவ்வேறு எழுத்துருக்கள்: %1. கோப்புறையில் அவற்றில் ஒன்று மட்டுமே வைக்கப்படும்.
-</translation>
+        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.</source>
+        <translation>ஒரே கோப்புப் பெயருள்ள வெவ்வேறு எழுத்துருக்கள்: %1. கோப்புறையில் அவற்றில் ஒன்று மட்டுமே வைக்கப்படும்.</translation>
     </message>
     <message>
-        <source>The video shows the subtitles through %1, whose output this check does not verify.
-</source>
-        <translation>வீடியோ வசன வரிகளை %1 மூலம் காட்டுகிறது; அதன் வெளியீட்டை இந்தச் சரிபார்ப்பு உறுதிசெய்வதில்லை.
-</translation>
+        <source>The video shows the subtitles through %1, whose output this check does not verify.</source>
+        <translation>வீடியோ வசன வரிகளை %1 மூலம் காட்டுகிறது; அதன் வெளியீட்டை இந்தச் சரிபார்ப்பு உறுதிசெய்வதில்லை.</translation>
     </message>
     <message>
-        <source>The collected fonts alone reproduce every frame.
-</source>
-        <translation>சேகரித்த எழுத்துருக்கள் மட்டுமே ஒவ்வொரு சட்டகத்தையும் மீளுருவாக்குகின்றன.
-</translation>
+        <source>The collected fonts alone reproduce every frame.</source>
+        <translation>சேகரித்த எழுத்துருக்கள் மட்டுமே ஒவ்வொரு சட்டகத்தையும் மீளுருவாக்குகின்றன.</translation>
     </message>
     <message>
         <source>found</source>
@@ -3556,108 +3524,72 @@ Will not be copied.</source>
         <translation>நகலெடுக்கப்பட்டது</translation>
     </message>
     <message>
-        <source>Finished, %1 %2.
-</source>
-        <translation>முடிந்தது, %1 %2.
-</translation>
+        <source>Finished, %1 %2.</source>
+        <translation>முடிந்தது, %1 %2.</translation>
     </message>
     <message>
-        <source>Not found %1.
-</source>
-        <translation>%1 கிடைக்கவில்லை.
-</translation>
+        <source>Not found %1.</source>
+        <translation>%1 கிடைக்கவில்லை.</translation>
     </message>
     <message>
-        <source>Cannot copy %1.
-</source>
-        <translation>%1 ஐ நகலெடுக்க முடியாது.
-</translation>
+        <source>Cannot copy %1.</source>
+        <translation>%1 ஐ நகலெடுக்க முடியாது.</translation>
     </message>
     <message>
-        <source>Some fonts do not contain all glyphs used in the text.
-</source>
-        <translation>சில எழுத்துருக்களில் உரையில் பயன்படுத்தப்படும் அனைத்து கிளைப்களும் இல்லை.
-</translation>
+        <source>Some fonts do not contain all glyphs used in the text.</source>
+        <translation>சில எழுத்துருக்களில் உரையில் பயன்படுத்தப்படும் அனைத்து கிளைப்களும் இல்லை.</translation>
     </message>
     <message>
-        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
-</source>
-        <translation>இந்த எழுத்துருக்களை மட்டும் கொண்டு ரெண்டரரால் வசன வரிகளை மீளுருவாக்க முடியாது: சேகரிப்பு முழுமையடையவில்லை.
-</translation>
+        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.</source>
+        <translation>இந்த எழுத்துருக்களை மட்டும் கொண்டு ரெண்டரரால் வசன வரிகளை மீளுருவாக்க முடியாது: சேகரிப்பு முழுமையடையவில்லை.</translation>
     </message>
     <message>
-        <source>The output does not hold every collected font under its own name: the collection is incomplete.
-</source>
-        <translation>சேகரித்த ஒவ்வொரு எழுத்துருவும் அதன் சொந்தப் பெயரில் வெளியீட்டில் இல்லை: சேகரிப்பு முழுமையடையவில்லை.
-</translation>
+        <source>The output does not hold every collected font under its own name: the collection is incomplete.</source>
+        <translation>சேகரித்த ஒவ்வொரு எழுத்துருவும் அதன் சொந்தப் பெயரில் வெளியீட்டில் இல்லை: சேகரிப்பு முழுமையடையவில்லை.</translation>
     </message>
     <message>
-        <source>Writing was cancelled.
-</source>
-        <translation>எழுதுதல் ரத்துசெய்யப்பட்டது.
-</translation>
+        <source>Writing was cancelled.</source>
+        <translation>எழுதுதல் ரத்துசெய்யப்பட்டது.</translation>
     </message>
     <message>
-        <source>The output is labelled incomplete (&quot;%1&quot;).
-</source>
-        <translation>வெளியீடு முழுமையற்றது எனக் குறிக்கப்பட்டுள்ளது (&quot;%1&quot;).
-</translation>
+        <source>The output is labelled incomplete (“%1”).</source>
+        <translation>வெளியீடு முழுமையற்றது எனக் குறிக்கப்பட்டுள்ளது (“%1”).</translation>
     </message>
     <message>
-        <source>Completed Successfully, %1 %2.
-</source>
-        <translation>வெற்றிகரமாக முடிந்தது, %1 %2.
-</translation>
+        <source>Completed successfully, %1 %2.</source>
+        <translation>வெற்றிகரமாக முடிந்தது, %1 %2.</translation>
     </message>
     <message>
         <source>Finished in %1ms</source>
         <translation>%1ms இல் முடிந்தது</translation>
     </message>
     <message>
-        <source>Cancelled; nothing was written.
-</source>
-        <translation>ரத்துசெய்யப்பட்டது; எதுவும் எழுதப்படவில்லை.
-</translation>
+        <source>Cancelled; nothing was written.</source>
+        <translation>ரத்துசெய்யப்பட்டது; எதுவும் எழுதப்படவில்லை.</translation>
     </message>
     <message>
-        <source>The subtitle renderer is not available; the fonts cannot be checked.
-</source>
-        <translation>வசன ரெண்டரர் கிடைக்கவில்லை; எழுத்துருக்களைச் சரிபார்க்க முடியாது.
-</translation>
+        <source>The subtitle renderer is not available; the fonts cannot be checked.</source>
+        <translation>வசன ரெண்டரர் கிடைக்கவில்லை; எழுத்துருக்களைச் சரிபார்க்க முடியாது.</translation>
     </message>
     <message>
-        <source>Cannot retrieve the font file sizes and names;
-copying will be canceled.
-</source>
-        <translation>எழுத்துருக் கோப்புகளின் அளவுகளையும் பெயர்களையும் பெற முடியவில்லை;
-நகலெடுப்பது ரத்துசெய்யப்படும்.
-</translation>
+        <source>Cannot retrieve the font file sizes and names; copying will be cancelled.</source>
+        <translation>எழுத்துருக் கோப்புகளின் அளவுகளையும் பெயர்களையும் பெற முடியவில்லை; நகலெடுப்பது ரத்துசெய்யப்படும்.</translation>
     </message>
     <message>
-        <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
-
-</source>
-        <translation>%1 எழுத்துருக்களின் அளவுகளும் பெயர்களும் பெறப்பட்டன, எடுத்த நேரம் %2ms.
-
-</translation>
+        <source>Retrieved sizes and names of %1 fonts, elapsed time %2 ms.</source>
+        <translation>%1 எழுத்துருக்களின் அளவுகளும் பெயர்களும் பெறப்பட்டன, எடுத்த நேரம் %2 ms.</translation>
     </message>
     <message>
-        <source>Ready to add %1 to the archive &quot;%2&quot;.
-</source>
-        <translation>%1 ஐ &quot;%2&quot; காப்பகத்தில் சேர்க்கத் தயார்.
-</translation>
+        <source>Ready to add %1 to the archive “%2”.</source>
+        <translation>%1 ஐ “%2” காப்பகத்தில் சேர்க்கத் தயார்.</translation>
     </message>
     <message>
-        <source>Ready to copy %1 to &quot;%2&quot;.
-</source>
-        <translation>%1 ஐ &quot;%2&quot; க்கு நகலெடுக்கத் தயார்.
-</translation>
+        <source>Ready to copy %1 to “%2”.</source>
+        <translation>%1 ஐ “%2” க்கு நகலெடுக்கத் தயார்.</translation>
     </message>
     <message>
-        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.
-</source>
-        <translation>இந்தச் சேகரிப்பு முழுமையடையவில்லை. நீங்கள் அதை ஏற்றுக்கொண்டால் மட்டுமே இது எழுதப்படும், அப்போது வெளியீடு முழுமையற்றது எனக் குறிக்கப்படும்.
-</translation>
+        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
+        <translation>இந்தச் சேகரிப்பு முழுமையடையவில்லை. நீங்கள் அதை ஏற்றுக்கொண்டால் மட்டுமே இது எழுதப்படும், அப்போது வெளியீடு முழுமையற்றது எனக் குறிக்கப்படும்.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -3668,12 +3600,8 @@ copying will be canceled.
         <translation>பாதை கிடைக்கவில்லை</translation>
     </message>
     <message>
-        <source>Video: %1
-
-</source>
-        <translation>வீடியோ: %1
-
-</translation>
+        <source>Video: %1</source>
+        <translation>வீடியோ: %1</translation>
     </message>
     <message>
         <source>This video is not an MKV file.</source>
@@ -3688,22 +3616,20 @@ copying will be canceled.
         <translation>ஏற்றப்பட்ட MKV கோப்பில் எழுத்துருக்கள் எதுவும் இல்லை.</translation>
     </message>
     <message>
-        <source>Font named &quot;%1&quot;.
-</source>
-        <translation>&quot;%1&quot; என்ற பெயருள்ள எழுத்துரு.
-</translation>
+        <source>Font named “%1”.</source>
+        <translation>“%1” என்ற பெயருள்ள எழுத்துரு.</translation>
     </message>
     <message>
         <source>(no folder)</source>
         <translation>(கோப்புறை இல்லை)</translation>
     </message>
     <message>
-        <source>Saved a font named &quot;</source>
-        <translation>இந்தப் பெயருள்ள எழுத்துரு சேமிக்கப்பட்டது: &quot;</translation>
+        <source>Saved a font named “%1”.</source>
+        <translation>இந்தப் பெயருள்ள எழுத்துரு சேமிக்கப்பட்டது: “%1”.</translation>
     </message>
     <message>
-        <source>Cannot save font named &quot;</source>
-        <translation>இந்தப் பெயருள்ள எழுத்துருவைச் சேமிக்க முடியாது: &quot;</translation>
+        <source>Cannot save font named “%1”.</source>
+        <translation>இந்தப் பெயருள்ள எழுத்துருவைச் சேமிக்க முடியாது: “%1”.</translation>
     </message>
     <message>
         <source>Completed, copied %1 fonts.
@@ -4894,50 +4820,44 @@ Failed to copy %2 fonts.</source>
         <translation>Shift + சொடுக்கு பயன்படுத்தி குறுக்குவிசையை அமைக்கலாம்</translation>
     </message>
     <message>
-        <source>This hotkey already exists for &quot;%1&quot;.
-What to do?</source>
-        <translation>இந்தக் குறுக்குவிசை ஏற்கனவே &quot;%1&quot; க்கு உள்ளது.
-என்ன செய்வது?</translation>
+        <source>This shortcut already exists for “%1”. What to do?</source>
+        <translation>இந்தக் குறுக்குவிசை ஏற்கனவே “%1” க்கு உள்ளது. என்ன செய்வது?</translation>
     </message>
     <message>
-        <source>This shortcut already exists in other windows as a shortcut for &quot;%1&quot;.
-What would you like to do?</source>
-        <translation>இந்தக் குறுக்குவிசை ஏற்கனவே பிற சாளரங்களில் &quot;%1&quot; க்கான குறுக்குவிசையாக உள்ளது.
-என்ன செய்ய விரும்புகிறீர்கள்?</translation>
+        <source>This shortcut already exists in other windows as a shortcut for “%1”. What would you like to do?</source>
+        <translation>இந்தக் குறுக்குவிசை ஏற்கனவே பிற சாளரங்களில் “%1” க்கான குறுக்குவிசையாக உள்ளது. என்ன செய்ய விரும்புகிறீர்கள்?</translation>
     </message>
     <message>
-        <source>This shortcut already exists in another window as a shortcut for &quot;%1&quot;.
-What would you like to do?</source>
-        <translation>இந்தக் குறுக்குவிசை ஏற்கனவே வேறொரு சாளரத்தில் &quot;%1&quot; க்கான குறுக்குவிசையாக உள்ளது.
-என்ன செய்ய விரும்புகிறீர்கள்?</translation>
+        <source>This shortcut already exists in another window as a shortcut for “%1”. What would you like to do?</source>
+        <translation>இந்தக் குறுக்குவிசை ஏற்கனவே வேறொரு சாளரத்தில் “%1” க்கான குறுக்குவிசையாக உள்ளது. என்ன செய்ய விரும்புகிறீர்கள்?</translation>
     </message>
     <message>
         <source>Exit</source>
         <translation>வெளியேறு</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;அனைத்தையும் காண்க&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
+        <source>The shortcut %1 of “View all” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“அனைத்தையும் காண்க” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View audio and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;ஆடியோ மற்றும் வசன வரிகள் காண்க&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
+        <source>The shortcut %1 of “View audio and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“ஆடியோ மற்றும் வசன வரிகள் காண்க” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View video and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;வீடியோ மற்றும் வசனங்களைக் காண்க&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
+        <source>The shortcut %1 of “View video and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“வீடியோ மற்றும் வசனங்களைக் காண்க” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View only video&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;வீடியோ மட்டும் காண்க&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
+        <source>The shortcut %1 of “View only video” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“வீடியோ மட்டும் காண்க” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View only subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>&quot;வசன வரிகள் மட்டுமே காண்க&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
+        <source>The shortcut %1 of “View only subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>“வசன வரிகள் மட்டுமே காண்க” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: காட்சி ஏற்பாடுகள் நிறுத்தப்பட்டன; பதிலாக தளவமைப்பு மாற்றியில் ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Enable / Disable editor&quot; was removed: the editor is always shown; hide panels or choose a layout instead.</source>
-        <translation>&quot;எடிட்டரை இயக்கவும் / முடக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: திருத்தி எப்போதும் காட்டப்படும்; பதிலாகப் பலகங்களை மறைக்கவும் அல்லது ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
+        <source>The shortcut %1 of “Enable / Disable editor” was removed: the editor is always shown; hide panels or choose a layout instead.</source>
+        <translation>“எடிட்டரை இயக்கவும் / முடக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: திருத்தி எப்போதும் காட்டப்படும்; பதிலாகப் பலகங்களை மறைக்கவும் அல்லது ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
@@ -4948,8 +4868,8 @@ What would you like to do?</source>
         <translation>&quot;வெற்று 2h30m ஆடியோவைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; போலி வீடியோ தன்னுடைய ஒலியற்ற ஆடியோவைக் கொண்டுவரும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
-        <translation>&quot;FFMS2 உடன் வீடியோவைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; வீடியோக்கள் எப்போதும் அட்டவணைப்படுத்தப்படும்.</translation>
+        <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
+        <translation>“FFMS2 உடன் வீடியோவைத் திறக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; வீடியோக்கள் எப்போதும் அட்டவணைப்படுத்தப்படும்.</translation>
     </message>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
@@ -5504,6 +5424,14 @@ What would you like to do?</source>
         <translation>அனைத்து வரிகளையும் அடுக்குப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>அனைத்து வரிகளையும் உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>அனைத்து வரிகளையும் குறிச்சொற்கள் இல்லாத உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>தேர்ந்தெடுத்த வரிகளைத் தொடக்க நேரப்படி வரிசைப்படுத்து</translation>
     </message>
@@ -5526,6 +5454,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>தேர்ந்தெடுத்த வரிகளை அடுக்குப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை குறிச்சொற்கள் இல்லாத உரைப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -5980,6 +5916,10 @@ What would you like to do?</source>
         <translation>அடுத்து வரும் வரிகளைச் சட்டகங்களாக நகர்த்து: முடிவு வீடியோவில்</translation>
     </message>
     <message>
+        <source>Plugins</source>
+        <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
@@ -6039,7 +5979,7 @@ What would you like to do?</source>
         <translation>ஆடியோ திருத்தியால் படிக்கப்படவில்லை</translation>
     </message>
     <message>
-        <source>No karaoke tag&apos;s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
+        <source>No karaoke tag’s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
         <translation>\k50 போல எந்தக் கரோக்கி குறிச்சொல்லின் கால அளவும் இலக்கத்துடன் தொடங்கவில்லை, எனவே ஆடியோ திருத்தி வரியைப் புதிதாகப் பிரிக்கிறது</translation>
     </message>
     <message>
@@ -6047,11 +5987,11 @@ What would you like to do?</source>
         <translation>ஆடியோ திருத்தியில் வேறு அசைகள்</translation>
     </message>
     <message>
-        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback&apos;s</source>
+        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback’s</source>
         <translation>ஆடியோ திருத்தி ஒவ்வொரு \k குறிச்சொல்லிலும் பிரித்து அதன் எண்ணைத் தன் வழியில் படிக்கிறது, எனவே \keep, \kfo50 அல்லது \k(50) போன்ற குறிச்சொல் இயக்கத்தில் உள்ளவற்றிலிருந்து வேறுபட்ட அசைகளைத் தருகிறது</translation>
     </message>
     <message>
-        <source>Syllables don&apos;t match the line</source>
+        <source>Syllables don’t match the line</source>
         <translation>அசைகள் வரியுடன் பொருந்தவில்லை</translation>
     </message>
     <message>
@@ -6800,6 +6740,14 @@ What would you like to do?</source>
         <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
     </message>
     <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>செருகுநிரல்களை நிறுவு, இயக்கு அல்லது முடக்கு, நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>செருகுநிரல்கள்… (&amp;u)</translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>குறிச்சொற்களை மறைக்கவும்</translation>
     </message>
@@ -6909,6 +6857,22 @@ What would you like to do?</source>
     <message>
         <source>Sort by layer</source>
         <translation>அடுக்கு மூலம் வரிசைப்படுத்துங்கள்</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>உரை</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>உரை மூலம் வரிசைப்படுத்துங்கள்</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>குறிச்சொற்கள் இல்லாமல் உரை</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>குறிச்சொற்கள் இல்லாத உரை மூலம் வரிசைப்படுத்துங்கள்</translation>
     </message>
     <message>
         <source>Open subtitle file</source>
@@ -7157,6 +7121,22 @@ What would you like to do?</source>
     <message>
         <source>Open user &amp;folder</source>
         <translation>பயனர் கோப்புறையைத் திற (&amp;f)</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>HikariSub பிடித்திருக்கிறதா?</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>GitHub-இல் ஒரு நட்சத்திரம் மற்றவர்கள் இதைக் கண்டறிய உதவும்.</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>GitHub-இல் நட்சத்திரம் இடு</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>இப்போது வேண்டாம்</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -7744,7 +7724,7 @@ What would you like to do?</source>
         <translation>விடப்பட்டவை: %1</translation>
     </message>
     <message>
-        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <source>This portable copy keeps its settings in %1. An earlier version’s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
         <translation>இந்தக் கையடக்கப் பிரதி தன் அமைப்புகளை %1 இல் வைத்திருக்கிறது. முந்தைய பதிப்பின் அமைப்புகள் இன்னும் %2 இல் உள்ளன: அவற்றைப் பயன்படுத்த, HikariSub ஐ மூடிவிட்டு அங்கிருந்து hikari.ini ஐ நகலெடுத்து, இங்குள்ள settings.toml ஐ நீக்கவும்.</translation>
     </message>
     <message>
@@ -8901,7 +8881,7 @@ removing audio cache files.</source>
         <translation>பாணி</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
@@ -9149,6 +9129,14 @@ removing audio cache files.</source>
         <translation>கோப்பின் பெயரைச் சேர்</translation>
     </message>
     <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>GitHub-இல் HikariSub-க்கு நட்சத்திரம் இடப் பரிந்துரை</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
+    </message>
+    <message>
         <source>Choose a legacy Hotkeys.txt</source>
         <translation>பழைய Hotkeys.txt ஐத் தேர்வுசெய்</translation>
     </message>
@@ -9236,7 +9224,7 @@ and will be changed to the default</source>
 அது இயல்புநிலைக்கு மாற்றப்படும்</translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>catalogue for style</source>
         <translation>பாணிக்கான பட்டியல்</translation>
     </message>
     <message>
@@ -9299,6 +9287,253 @@ and will be changed to the default</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>பிற மொழிச் சொற்கள், அவற்றின் எழுத்துமுறைக்கான பிற நிறுவப்பட்ட அகராதிகளுடன் சரிபார்க்கப்படும். அகராதி இல்லாத எழுத்துமுறையில் உள்ள சொற்கள் குறிக்கப்படாது.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>இந்தக் கோப்பு ஒரு செருகுநிரல் தொகுப்பு அல்ல (hikari-plugin.json உள்ள zip காப்பகம்).</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>தொகுப்பில் ஓர் இணைப்பு உள்ளது, அதை HikariSub நிறுவாது: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>தொகுப்பு மிகப் பெரியது: பிரித்தெடுத்தால் %1 க்கும் மேற்பட்ட கோப்புகள் அல்லது %2 MB க்கும் மேல்.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json சரியான JSON அல்ல: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json இல் “%1” என்ற அடையாளம் %2 இல் மீண்டும் வருகிறது.</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>இந்தச் செருகுநிரலுக்கு Hikari API %1 தேவை, ஆனால் இந்த HikariSub இல் API %2 உள்ளது. இதை நிறுவ HikariSub ஐப் புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>%1 இல் hikari-plugin.json செருகுநிரல் ச்கீமாவுக்கு இணங்கவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>HikariSub நிறுவாத ஒரு கோப்புப் பெயர் தொகுப்பில் உள்ளது: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>தொகுப்பின் மேல் நிலையில் hikari-plugin.json இல்லை.</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>தொகுப்பில் அதன் முதன்மைக் கோப்பான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>தொகுப்பில் கையொப்பம் உள்ளது, ஆனால் அதைச் சரிபார்க்க publicKey எதையும் அதன் மேனிஃபெச்ட் குறிப்பிடவில்லை.</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>பயனர் கோப்புறையில் உள்ள plugins.json ஐப் படிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>தொகுப்பு அதன் மேனிஃபெச்ட் குறிப்பிடாத ஒரு விசையால் கையொப்பமிடப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>கையொப்பம் தொகுப்புடன் பொருந்தவில்லை, எனவே கையொப்பமிட்ட பிறகு அது மாற்றப்பட்டிருக்கலாம்.</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>கையொப்பத்தின் நம்பகமான கருத்து கையொப்பமிட்ட பிறகு மாற்றப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>தொகுப்பின் அருகிலுள்ள .minisig கோப்பு ஒரு minisign கையொப்பம் அல்ல.</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>முழு நம்பிக்கை: இது HikariSub இன் வரம்புகளுக்கு வெளியே நேட்டிவ் குறியீட்டை இயக்கக்கூடும்.</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>திறந்துள்ள ஒவ்வொரு வசனக் கோப்பையும் படித்துத் திருத்துதல்: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>%1 உடன் இணைதல்: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>படிக்கவும் எழுதவும் ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>படிக்க ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub ஆல் முடிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>செருகுநிரல்களுக்குப் பயனர் கோப்புறை தேவை, இந்தப் பிரதியில் அது இல்லை.</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub ஆல் %1 ஐப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>முதலில் ஒரு செருகுநிரல் தொகுப்பைத் தேர்வுசெய்யவும்.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>சரி</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>கையொப்ப விசை மாறிவிட்டது. நிறுவப்பட்ட பிரதி %1 விசையாலும், இது %2 விசையாலும் கையொப்பமிடப்பட்டுள்ளன. உருவாக்கியவர் விசையை மாற்றினார் என்று நீங்கள் நம்பினால் மட்டுமே இதை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>இந்தத் தொகுப்பு கையொப்பமிடப்படவில்லை, ஆனால் நிறுவப்பட்ட பிரதி %1 விசையால் கையொப்பமிடப்பட்டது. இது வந்த இடத்தை நீங்கள் நம்பினால் மட்டுமே நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>சரிபார்க்கப்படாத மூலம், %1 விசையால் கையொப்பமிடப்பட்டது. புதுப்பிப்புகள் அதே விசையால் கையொப்பமிடப்பட வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>சரிபார்க்கப்படாதது: தொகுப்பு கையொப்பமிடப்படவில்லை, எனவே அதை யார் உருவாக்கினார் என்பதை HikariSub ஆல் அறிய முடியாது.</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>செருகுநிரல் நிறுவப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>செருகுநிரலை நிறுவு</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>செருகுநிரலைப் புதுப்பி</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>செருகுநிரலை மீண்டும் நிறுவு</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>செருகுநிரலைத் தரமிறக்கு</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>“%1” %2 ஐ நிறுவவா?</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>“%1” ஐ %2 இலிருந்து %3 க்குப் புதுப்பிக்கவா?</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>“%1” %2 ஐ மீண்டும் நிறுவவா?</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>“%1” %2 ஐ முந்தைய பதிப்பான %3 ஆல் மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>இது இந்த அனுமதிகளைக் கேட்கிறது</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>செயலில் உள்ள வசனக் கோப்பைத் தவிர வேறு எந்த அனுமதியையும் இது கேட்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>நம்பி நிறுவு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>நிறுவலை நீக்கு, தரவை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>நிறுவலை நீக்கி, தரவையும் அகற்று</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>செருகுநிரலின் நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>“%1” இன் நிறுவலை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>பயனர் கோப்புறையில் இதன் சேமித்த தரவு உள்ளது. மீண்டும் நிறுவினால் அதைப் பயன்படுத்த, அதை வைத்திருக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>செருகுநிரலின் நிறுவல் நீக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>செருகுநிரல்கள் எதுவும் நிறுவப்படவில்லை. ஒரு .hikariplugin கோப்பிலிருந்து ஒன்றை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>நிறுவப்பட்ட செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>இயக்கத்தில்</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>சரிபார்க்கப்படாதது, %1 விசையால் கையொப்பமிடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>சரிபார்க்கப்படாதது, கையொப்பமிடப்படாதது</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>முழு நம்பிக்கை</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>கோப்பிலிருந்து நிறுவு…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>செருகுநிரல் தொகுப்பைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>HikariSub செருகுநிரல்கள் (*.hikariplugin)</translation>
     </message>
 </context>
 <context>
@@ -10702,20 +10937,20 @@ because it was edited.</source>
         <translation>இது அமர்வுக் கோப்பு அல்ல.</translation>
     </message>
     <message>
-        <source>&quot;tabs&quot; is not a list.</source>
-        <translation>&quot;tabs&quot; ஒரு பட்டியல் அல்ல.</translation>
+        <source>“tabs” is not a list.</source>
+        <translation>“tabs” ஒரு பட்டியல் அல்ல.</translation>
     </message>
     <message>
-        <source>&quot;closed&quot; is not true or false.</source>
-        <translation>&quot;closed&quot; என்பது true அல்லது false அல்ல.</translation>
+        <source>“closed” is not true or false.</source>
+        <translation>“closed” என்பது true அல்லது false அல்ல.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
         <translation>தாவல் %1 ஒரு பொருள் அல்ல.</translation>
     </message>
     <message>
-        <source>Tab %1: &quot;%2&quot; has the wrong type.</source>
-        <translation>தாவல் %1: &quot;%2&quot; தவறான வகையில் உள்ளது.</translation>
+        <source>Tab %1: “%2” has the wrong type.</source>
+        <translation>தாவல் %1: “%2” தவறான வகையில் உள்ளது.</translation>
     </message>
 </context>
 <context>
@@ -11234,13 +11469,11 @@ because it was edited.</source>
         <translation>அகராதியில் சேர்க்கப்பட்ட வார்த்தைகள்</translation>
     </message>
     <message>
-        <source>No dictionary files were found in the &quot;%1&quot; folder.
-Spell checking will be disabled</source>
-        <translation>&quot;%1&quot; கோப்புறையில் அகராதிக் கோப்புகள் எதுவும் கிடைக்கவில்லை.
-எழுத்துப்பிழை சரிபார்ப்பு முடக்கப்படும்</translation>
+        <source>No dictionary files were found in the “%1” folder. Spell checking will be disabled.</source>
+        <translation>“%1” கோப்புறையில் அகராதிக் கோப்புகள் எதுவும் கிடைக்கவில்லை. எழுத்துப்பிழை சரிபார்ப்பு முடக்கப்படும்.</translation>
     </message>
     <message>
-        <source>Failed to initialize spell checker.</source>
+        <source>Failed to initialise the spellchecker.</source>
         <translation>எழுத்துப்பிழை சரிபார்ப்பைத் தொடங்குவதில் தோல்வி.</translation>
     </message>
     <message>
@@ -11252,7 +11485,7 @@ Spell checking will be disabled</source>
         <translation>சிறப்புப் பெயர்கள்</translation>
     </message>
     <message>
-        <source>Names of places, organizations and products keep their standard capitalization.</source>
+        <source>Names of places, organisations and products keep their standard capitalisation.</source>
         <translation>இடங்கள், நிறுவனங்கள், தயாரிப்புகளின் பெயர்கள் அவற்றின் வழக்கமான பெரிய எழுத்து அமைப்பில் இருக்கும்.</translation>
     </message>
     <message>
@@ -11280,7 +11513,7 @@ Spell checking will be disabled</source>
         <translation>வழக்கமான சொல்வழக்கு விரும்பப்படும் இடங்களில் சொற்றொடர் அளவிலான பொதுவான தவறுகள்.</translation>
     </message>
     <message>
-        <source>Capitalization and case</source>
+        <source>Capitalisation and case</source>
         <translation>பெரிய எழுத்தும் எழுத்து வடிவமும்</translation>
     </message>
     <message>
@@ -11411,8 +11644,8 @@ Spell checking will be disabled</source>
         <translation>%1 வரிகள் தேர்ந்தெடுக்கப்பட்டன</translation>
     </message>
     <message>
-        <source> (%1 hidden)</source>
-        <translation> (%1 மறைக்கப்பட்டன)</translation>
+        <source>(%1 hidden)</source>
+        <translation>(%1 மறைக்கப்பட்டன)</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -11816,7 +12049,7 @@ Spell checking will be disabled</source>
         <translation>பாணிகளை வடிகட்டு</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
@@ -12094,20 +12327,20 @@ Spell checking will be disabled</source>
         <translation>ASS கோப்பைத் தேர்வுசெய்க</translation>
     </message>
     <message>
-        <source>Copy of </source>
-        <translation>நகல் </translation>
+        <source>Copy of %1</source>
+        <translation>நகல் %1</translation>
     </message>
     <message>
         <source>The document has no styles to edit.</source>
         <translation>இந்த ஆவணத்தில் திருத்துவதற்குப் பாணிகள் இல்லை.</translation>
     </message>
     <message>
-        <source>The catalog “%1” no longer exists.</source>
+        <source>The catalogue “%1” no longer exists.</source>
         <translation>“%1” பட்டியல் இப்போது இல்லை.</translation>
     </message>
     <message>
-        <source>Style named &quot;%1&quot; already exists.</source>
-        <translation>&quot;%1&quot; என்று பெயரிடப்பட்ட பாணி ஏற்கனவே உள்ளது.</translation>
+        <source>Style named “%1” already exists.</source>
+        <translation>“%1” என்று பெயரிடப்பட்ட பாணி ஏற்கனவே உள்ளது.</translation>
     </message>
     <message>
         <source>None</source>
@@ -12188,7 +12421,7 @@ Styles deleted:
         <translation>இந்தப் பாணியுள்ள வரிகளைத் தேர்ந்தெடு</translation>
     </message>
     <message>
-        <source>Copy to the catalog…</source>
+        <source>Copy to the catalogue…</source>
         <translation>பட்டியலுக்கு நகலெடு…</translation>
     </message>
     <message>
@@ -12325,19 +12558,19 @@ Styles deleted:
 <context>
     <name>HikariSub.TagList</name>
     <message>
-        <source>Transparency of primary color</source>
+        <source>Transparency of primary colour</source>
         <translation>முதன்மை வண்ணத்தின் வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
-        <source>Transparency of secondary color</source>
+        <source>Transparency of secondary colour</source>
         <translation>இரண்டாம் நிலை வண்ணத்தின் வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
-        <source>Transparency of border color</source>
+        <source>Transparency of border colour</source>
         <translation>எல்லை வண்ணத்தின் வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
-        <source>Transparency of shadow color</source>
+        <source>Transparency of shadow colour</source>
         <translation>நிழல் வண்ணத்தின் வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
@@ -12345,7 +12578,7 @@ Styles deleted:
         <translation>முதன்மை வண்ணம்</translation>
     </message>
     <message>
-        <source>Secondary color</source>
+        <source>Secondary colour</source>
         <translation>இரண்டாம் நிலை வண்ணம்</translation>
     </message>
     <message>
@@ -12357,51 +12590,51 @@ Styles deleted:
         <translation>நிழல் வண்ணம்</translation>
     </message>
     <message>
-        <source>PNG mask of primary color</source>
+        <source>PNG mask of primary colour</source>
         <translation>முதன்மை வண்ணத்தின் PNG முகமூடி</translation>
     </message>
     <message>
-        <source>PNG mask of secondary color</source>
+        <source>PNG mask of secondary colour</source>
         <translation>இரண்டாம் நிலை வண்ணத்தின் PNG முகமூடி</translation>
     </message>
     <message>
-        <source>PNG mask of border color</source>
+        <source>PNG mask of border colour</source>
         <translation>எல்லை வண்ணத்தின் PNG முகமூடி</translation>
     </message>
     <message>
-        <source>PNG mask of shadow color</source>
+        <source>PNG mask of shadow colour</source>
         <translation>நிழல் வண்ணத்தின் PNG முகமூடி</translation>
     </message>
     <message>
-        <source>Transparency gradient of primary color</source>
+        <source>Transparency gradient of primary colour</source>
         <translation>முதன்மை வண்ணத்தின் சாய்வு வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
-        <source>Transparency gradient of secondary color</source>
+        <source>Transparency gradient of secondary colour</source>
         <translation>இரண்டாம் நிலை வண்ணத்தின் சாய்வு வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
-        <source>Transparency gradient of border color</source>
+        <source>Transparency gradient of border colour</source>
         <translation>எல்லை வண்ணத்தின் சாய்வு வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
-        <source>Transparency gradient of shadow color</source>
+        <source>Transparency gradient of shadow colour</source>
         <translation>நிழல் வண்ணத்தின் சாய்வு வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
-        <source>Gradient of primary color</source>
+        <source>Gradient of primary colour</source>
         <translation>முதன்மை வண்ணத்தின் சாய்வு</translation>
     </message>
     <message>
-        <source>Gradient of secondary color</source>
+        <source>Gradient of secondary colour</source>
         <translation>இரண்டாம் நிலை வண்ணத்தின் சாய்வு</translation>
     </message>
     <message>
-        <source>Gradient of border color</source>
+        <source>Gradient of border colour</source>
         <translation>எல்லை வண்ணத்தின் சாய்வு</translation>
     </message>
     <message>
-        <source>Gradient of shadow color</source>
+        <source>Gradient of shadow colour</source>
         <translation>நிழல் வண்ணத்தின் சாய்வு</translation>
     </message>
     <message>
@@ -14106,7 +14339,7 @@ after the end time in milliseconds</source>
         <translation>அகலமானது</translation>
     </message>
     <message>
-        <source>Failed to initialize DirectShow</source>
+        <source>Failed to initialise DirectShow</source>
         <translation>DirectShow-ஐத் துவக்க முடியவில்லை</translation>
     </message>
     <message>
@@ -14138,7 +14371,7 @@ after the end time in milliseconds</source>
         <translation>ஆடியோ ரெண்டரர் நிகழ்வை உருவாக்க முடியாது</translation>
     </message>
     <message>
-        <source>Cannot add Direct Sound renderer</source>
+        <source>Cannot add DirectSound renderer</source>
         <translation>Direct Sound ரெண்டரரைச் சேர்க்க முடியாது</translation>
     </message>
     <message>
@@ -14150,7 +14383,7 @@ after the end time in milliseconds</source>
         <translation>ரெண்டரர் பின்களைப் பட்டியலிட முடியாது</translation>
     </message>
     <message>
-        <source>Cannot enumerate Direct Sound pins</source>
+        <source>Cannot enumerate DirectSound pins</source>
         <translation>Direct Sound பின்களைப் பட்டியலிட முடியாது</translation>
     </message>
     <message>
@@ -14611,8 +14844,12 @@ or codecs or a splitter may be missing</source>
         <translation>வீடியோ கிடைக்கவில்லை: %1</translation>
     </message>
     <message>
-        <source>Frame %1 of %2  %3</source>
-        <translation>சட்டகம் %1 / %2  %3</translation>
+        <source>Frame %1 of %2</source>
+        <translation>சட்டகம் %1 / %2</translation>
+    </message>
+    <message>
+        <source>Frame %1 of %2 · %3</source>
+        <translation>சட்டகம் %1 / %2 · %3</translation>
     </message>
     <message>
         <source>Aspect ratio: %1</source>
@@ -15853,8 +16090,8 @@ do not work on comments</source>
         <translation>இதில் தளவமைப்பு எதுவும் இல்லை</translation>
     </message>
     <message>
-        <source>it holds no Classic arrangement</source>
-        <translation>இதில் Classic அமைப்பு இல்லை</translation>
+        <source>it holds no “Classic” arrangement</source>
+        <translation>இதில் “Classic” அமைப்பு இல்லை</translation>
     </message>
     <message>
         <source>it holds more windows or panels than HikariSub has</source>

@@ -67,6 +67,7 @@ qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.q
     VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
     ManageLayoutsDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml)
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h menu_key.cpp menu_key.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)
@@ -114,7 +115,7 @@ if(UNIX AND NOT APPLE)
     target_sources(hikari_ui PRIVATE portal_colour_scheme.cpp portal_colour_scheme.h)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_COLOUR_SCHEME_PORTAL)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml DockSystemMoveArea.qml)
+qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml)
 # xdg-decoration names xdg-shell's xdg_toplevel, and Qt keeps its own xdg-shell code private, so both are vendored.
 target_sources(hikari_ui PRIVATE window_decorations.cpp window_decorations.h)
 if(UNIX AND NOT APPLE)

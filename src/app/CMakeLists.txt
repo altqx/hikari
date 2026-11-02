@@ -18,12 +18,13 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
-    api_host.cpp include/hikari/app/api_host.h)
+    api_host.cpp include/hikari/app/api_host.h
+    plugin_manager.cpp include/hikari/app/plugin_manager.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
-target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_api hikari_application hikari_core
+target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_plugins hikari_api hikari_application hikari_core
     Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
-# QZipWriter is private Qt API.
+# QZipWriter and QZipReader are private Qt API.
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 target_link_libraries(hikari_composition PRIVATE Qt6::CorePrivate)
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
@@ -40,7 +41,7 @@ if(WIN32)
     target_link_libraries(hikari_composition PRIVATE shell32 winhttp bcrypt crypt32 advapi32)
 endif()
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends
-    hikari_api hikari_application hikari_core "Qt6::*" "hikari_ui*")
+    hikari_plugins hikari_api hikari_application hikari_core "Qt6::*" "hikari_ui*")
 
 target_sources(hikari_composition PRIVATE startup_look.cpp include/hikari/app/startup_look.h
     include/hikari/app/launcher.h)
@@ -95,6 +96,7 @@ endif()
 set(HIKARI_DISCORD_CLIENT_ID "1566681222510411967" CACHE STRING "Discord application id for Rich Presence; empty turns it off")
 target_sources(hikari_composition PRIVATE discord_ipc.cpp include/hikari/app/discord_ipc.h
     discord_presence.cpp include/hikari/app/discord_presence.h)
+target_sources(hikari_composition PRIVATE star_prompt.cpp include/hikari/app/star_prompt.h)
 set_source_files_properties(discord_presence.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_DISCORD_CLIENT_ID=\"${HIKARI_DISCORD_CLIENT_ID}\"")
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
 target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hikari/app/settings_import_store.h

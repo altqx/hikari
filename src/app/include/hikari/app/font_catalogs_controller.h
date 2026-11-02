@@ -83,7 +83,7 @@ public:
     int sampleKey() const { return m_sampleKey; }
     QImage sample() const { return m_sample; }
 
-    // "All fonts" and "Without catalog" at 0 and 1, then the catalogs.
+    // "All fonts" and "Without catalogue" at 0 and 1, then the catalogs.
     Q_INVOKABLE QStringList catalogChoices() const;
     // `selection` and `value` from catalogChoices(); filtered when `filterOn` and `filterText` is
     // not empty.

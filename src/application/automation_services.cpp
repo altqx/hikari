@@ -1,5 +1,6 @@
 #include "hikari/application/automation_services.h"
 
+#include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/audio_spectrum.h"
 
 #include <algorithm>
@@ -176,11 +177,12 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
     switch (r.service) {
     case HostService::FrameFromMs:
     case HostService::MsFromFrame: {
-        if (!m_media)
+        auto starts = m_media ? m_media->frameStartsMs() : std::nullopt;
+        const auto times = starts ? AegisubFrameTimes::fromFrameStarts(std::move(*starts)) : std::nullopt;
+        if (!times)
             return unavailable();
-        const auto v = r.service == HostService::FrameFromMs ? m_media->frameFromMs(integer(r, 0))
-                                                             : m_media->msFromFrame(integer(r, 0));
-        return v ? reply(integers({*v})) : unavailable();
+        return reply(integers({r.service == HostService::FrameFromMs ? times->frameFromMs(integer(r, 0))
+                                                                     : times->msFromFrame(integer(r, 0))}));
     }
     case HostService::VideoSize: {
         const auto v = m_media ? m_media->videoSize() : std::nullopt;
@@ -210,6 +212,7 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
             return unavailable();
         HostServiceReply out = integers({v->videoFrameShown});
         out.strings = {v->audioFile, v->videoFile, v->keyframesFile};
+        out.numbers = {v->videoZoom};
         return reply(std::move(out));
     }
     case HostService::FileName: {

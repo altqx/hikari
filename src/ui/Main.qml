@@ -37,6 +37,7 @@ ApplicationWindow {
     required property var updates
     required property var whatsNew
     required property var analytics
+    required property var starPrompt
     required property var crashReports
     required property var styleManager
     required property var kanjiTimer
@@ -77,7 +78,11 @@ ApplicationWindow {
         { key: "effect", label: qsTr("Effect"), all: "GLOBAL_SORT_ALL_BY_EFFECT", selected: "GLOBAL_SORT_SELECTED_BY_EFFECT",
           help: qsTr("Sort by effect") },
         { key: "layer", label: qsTr("Layer"), all: "GLOBAL_SORT_ALL_BY_LAYER", selected: "GLOBAL_SORT_SELECTED_BY_LAYER",
-          help: qsTr("Sort by layer") }
+          help: qsTr("Sort by layer") },
+        { key: "text", label: qsTr("Text"), all: "GLOBAL_SORT_ALL_BY_TEXT", selected: "GLOBAL_SORT_SELECTED_BY_TEXT",
+          help: qsTr("Sort by text") },
+        { key: "textWithoutTags", label: qsTr("Text without tags"), all: "GLOBAL_SORT_ALL_BY_TEXT_WITHOUT_TAGS",
+          selected: "GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS", help: qsTr("Sort by text without tags") }
     ]
 
     function applyTagButton(index, edited) {
@@ -2042,6 +2047,18 @@ ApplicationWindow {
                 action: Action {
                     text: qsTr("Show &panel")
                     onTriggered: root.showPanel(automationDock)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_PLUGINS"
+                help: qsTr("Install, turn on and off, and uninstall plugins")
+                iconRole: "plugins"
+                objectName: "pluginsMenuItem"
+                action: Action {
+                    id: pluginsAction
+                    text: qsTr("Pl&ugins…")
+                    enabled: !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
                 }
             }
             MenuSeparator {
@@ -5907,6 +5924,18 @@ ApplicationWindow {
     }
     readonly property alias notices: notices
     Connections {
+        target: root.starPrompt
+        function onDue() {
+            if (!root.starPrompt.offer(root.video.playing || root.audio.playing, root.videoFullscreen.active,
+                                       root.workspaceLayout.modalOpen))
+                return
+            notices.show(0, 0, qsTr("Enjoying HikariSub?"), qsTr("A star on GitHub helps others find it."), "", [
+                { text: qsTr("Star on GitHub"), run: () => root.starPrompt.star() },
+                { text: qsTr("Not now"), run: () => {} }
+            ])
+        }
+    }
+    Connections {
         target: root.log
         function onRevealRequested() {
             if (root.videoFullscreen.active)
@@ -5928,6 +5957,11 @@ ApplicationWindow {
     ManageLayoutsDialog {
         id: manageLayoutsDialog
         layouts: root.workspaceLayout
+        settings: root.app.settings
+    }
+    PluginManagerDialog {
+        id: pluginManagerDialog
+        manager: root.app.pluginManager
         settings: root.app.settings
     }
 
@@ -7050,6 +7084,7 @@ ApplicationWindow {
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
+        GLOBAL_PLUGINS: pluginsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
