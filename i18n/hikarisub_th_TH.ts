@@ -7071,6 +7071,22 @@ What would you like to do?</source>
         <translation>เปิด&amp;โฟลเดอร์ผู้ใช้</translation>
     </message>
     <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>ชอบ HikariSub ไหม</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>การให้ดาวบน GitHub ช่วยให้คนอื่นค้นพบได้</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>ให้ดาวบน GitHub</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>ไว้ทีหลัง</translation>
+    </message>
+    <message>
         <source>Install update</source>
         <translation>ติดตั้งอัปเดต</translation>
     </message>
@@ -9049,6 +9065,14 @@ removing audio cache files.</source>
     <message>
         <source>Include the file name</source>
         <translation>รวมชื่อไฟล์</translation>
+    </message>
+    <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>แนะนำให้ให้ดาว HikariSub บน GitHub</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>

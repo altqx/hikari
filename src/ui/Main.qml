@@ -37,6 +37,7 @@ ApplicationWindow {
     required property var updates
     required property var whatsNew
     required property var analytics
+    required property var starPrompt
     required property var crashReports
     required property var styleManager
     required property var kanjiTimer
@@ -5796,6 +5797,18 @@ ApplicationWindow {
         }
     }
     readonly property alias notices: notices
+    Connections {
+        target: root.starPrompt
+        function onDue() {
+            if (!root.starPrompt.offer(root.video.playing || root.audio.playing, root.videoFullscreen.active,
+                                       root.workspaceLayout.modalOpen))
+                return
+            notices.show(0, 0, qsTr("Enjoying HikariSub?"), qsTr("A star on GitHub helps others find it."), "", [
+                { text: qsTr("Star on GitHub"), run: () => root.starPrompt.star() },
+                { text: qsTr("Not now"), run: () => {} }
+            ])
+        }
+    }
     Connections {
         target: root.log
         function onRevealRequested() {
