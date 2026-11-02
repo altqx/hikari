@@ -5951,7 +5951,7 @@ What would you like to do?</source>
         <translation>시작하기</translation>
     </message>
     <message>
-        <source>Center times within frames</source>
+        <source>Centre times within frames</source>
         <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
     <message>
@@ -6987,11 +6987,11 @@ What would you like to do?</source>
         <translation>텍스트에서 다음 문구 위치 찾기</translation>
     </message>
     <message>
-        <source>Moves the selected lines&apos; start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>선택한 줄의 시작 및 끝 시간을 프레임의 가운데로 옮겨, 나중에 시간 단위로 이동해도 온전한 프레임에 머무르게 합니다</translation>
     </message>
     <message>
-        <source>Center times within frames</source>
+        <source>Centre times within frames</source>
         <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
     <message>

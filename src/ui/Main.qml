@@ -1634,12 +1634,12 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_CENTER_TIMES_IN_FRAMES"
-                help: qsTr("Moves the selected lines' start and end times to the middle of their frames, so a later shift by time keeps them on whole frames")
+                help: qsTr("Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames")
                 iconRole: "split-frames"
                 objectName: "centerTimesInFramesMenuItem"
                 action: Action {
                     id: centerTimesInFramesAction
-                    text: qsTr("Center times within frames")
+                    text: qsTr("Centre times within frames")
                     enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CENTER_TIMES_IN_FRAMES")) root.app.centerTimesInFrames()
                 }

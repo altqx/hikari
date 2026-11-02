@@ -282,7 +282,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(rowNamed(list, "Global Check karaoke").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Kanji timer").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Getting started").accel, "");
-    EXPECT_EQ(rowNamed(list, "Global Center times within frames").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Centre times within frames").accel, "");
     EXPECT_EQ(rowNamed(list, "Subtitles Hide line wraps").key.id, 4513);
     EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Commit alt");
     EXPECT_EQ(list.find("Global Exit"), -1);

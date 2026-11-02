@@ -5988,7 +5988,7 @@ What would you like to do?</source>
         <translation>தொடங்குதல்</translation>
     </message>
     <message>
-        <source>Center times within frames</source>
+        <source>Centre times within frames</source>
         <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
     <message>
@@ -7027,11 +7027,11 @@ What would you like to do?</source>
         <translation>உரையில் சொற்றொடரின் அடுத்த நிகழ்வைக் கண்டறிகிறது</translation>
     </message>
     <message>
-        <source>Moves the selected lines&apos; start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>தேர்ந்தெடுத்த வரிகளின் தொடக்க, முடிவு நேரங்களை அவற்றின் சட்டகங்களின் நடுவுக்கு நகர்த்துகிறது; பின்னர் நேரத்தால் நகர்த்தினாலும் அவை முழுச் சட்டகங்களிலேயே இருக்கும்</translation>
     </message>
     <message>
-        <source>Center times within frames</source>
+        <source>Centre times within frames</source>
         <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
     <message>

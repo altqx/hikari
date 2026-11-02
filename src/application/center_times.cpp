@@ -43,7 +43,7 @@ std::expected<void, CommandRefusal> centerTimesInFrames(EditSession &session, co
         return std::unexpected(CommandRefusal::Invalid);
     const auto selection = session.selection();
     bool changed = false;
-    const auto ran = session.run(Command{"Centering times", session.revision(), chosen, [&](core::Document &d) {
+    const auto ran = session.run(Command{"Centring times", session.revision(), chosen, [&](core::Document &d) {
                                              for (const auto id : chosen)
                                                  if (!d.editLine(id, [&](core::LineRecord &l) {
                                                          const auto before = std::tuple(l.start.value, l.end.value);

@@ -5951,7 +5951,7 @@ What would you like to do?</source>
         <translation>เริ่มต้นใช้งาน</translation>
     </message>
     <message>
-        <source>Center times within frames</source>
+        <source>Centre times within frames</source>
         <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
     <message>
@@ -6987,11 +6987,11 @@ What would you like to do?</source>
         <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
     </message>
     <message>
-        <source>Moves the selected lines&apos; start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>ย้ายเวลาเริ่มและสิ้นสุดของบรรทัดที่เลือกไปไว้กลางเฟรม เพื่อให้การเลื่อนตามเวลาในภายหลังยังคงอยู่บนเฟรมเต็ม</translation>
     </message>
     <message>
-        <source>Center times within frames</source>
+        <source>Centre times within frames</source>
         <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
     <message>

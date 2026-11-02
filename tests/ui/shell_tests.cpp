@@ -5,6 +5,7 @@
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
+#include "hikari/application/center_times.h"
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
 #include "window_decorations.h"
@@ -27075,13 +27076,15 @@ private slots:
             return std::pair(timebase.frameAt(static_cast<int>(ms(i).first)), timebase.frameAt(static_cast<int>(ms(i).second)));
         };
         const auto before = frames(0);
+        const Ms centred{application::centeredTime(timebase, 410), application::centeredTime(timebase, 1200)};
+        QVERIFY(centred != (Ms{410, 1200}));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
         QVERIFY(QMetaObject::invokeMethod(center, "click"));
-        QTRY_COMPARE(ms(0), (Ms{420, 1180}));
+        QTRY_COMPARE(ms(0), centred);
         QCOMPARE(frames(0), before);
         QCOMPARE(ms(1), (Ms{1530, 1910}));
-        QCOMPARE(session->history().back().name, std::string("Centering times"));
+        QCOMPARE(session->history().back().name, std::string("Centring times"));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(ms(0), (Ms{410, 1200}));
     }

@@ -554,7 +554,7 @@ constexpr NameRow kNames[] = {
         {5173, "Repeat last run"},
         {5174, "Kanji timer"},
         {5176, "Getting started"},
-        {5229, "Center times within frames"},
+        {5229, "Centre times within frames"},
 };
 
 struct DefaultRow {

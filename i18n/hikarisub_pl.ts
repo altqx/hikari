@@ -6025,7 +6025,7 @@ Co chcesz zrobić?</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
-        <source>Center times within frames</source>
+        <source>Centre times within frames</source>
         <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
@@ -7067,11 +7067,11 @@ Co chcesz zrobić?</translation>
         <translation>Znajduje kolejne wystąpienie frazy w tekście</translation>
     </message>
     <message>
-        <source>Moves the selected lines&apos; start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>Przesuwa czasy początku i końca zaznaczonych linii na środek ich klatek, aby późniejsze przesunięcie o czas zostawiło je na pełnych klatkach</translation>
     </message>
     <message>
-        <source>Center times within frames</source>
+        <source>Centre times within frames</source>
         <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>

@@ -98,7 +98,7 @@ TEST(CenterTimes, TheSelectedLinesAreCenteredInOneStep)
     const auto steps = session.historySize();
     ASSERT_TRUE(centerTimesInFrames(session, timebase));
     EXPECT_EQ(session.historySize(), steps + 1);
-    EXPECT_EQ(session.history().back().name, "Centering times");
+    EXPECT_EQ(session.history().back().name, "Centring times");
     const auto line = [&](int i) { return session.document().lines()[static_cast<std::size_t>(i)]; };
     EXPECT_EQ(ms(line(0)->start.value), 980);
     EXPECT_EQ(ms(line(0)->end.value), centeredTime(timebase, 2000));
