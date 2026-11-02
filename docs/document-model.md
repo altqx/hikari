@@ -23,6 +23,12 @@ Application resource context owns media/keyframe/automation paths, provenance, r
 
 Aegisub's per-line data (FA3, [#560](https://github.com/altqx/hikari/issues/560)) is Document content too. That covers folds, the perspective tool's outer quad and script values. An ASS file keeps it in an `[Aegisub Extradata]` section of `Data: id,key,value` lines, and each event names its entries in a `{=id=id}` block before its text. The loader keeps the section's lines as source and reads every entry into the Document, unused ones too. A Line carries its values by copy (`LineRecord::extra`) together with the ids it was loaded with, and its text never holds the block. Undo, copy and paste, duplicate and split therefore carry the values with the Line. A save keeps a Line's ids while they still name its values. Otherwise each value reuses an equal entry or gets a new id, which is added after the section's last entry; a file without the section gains one at its end, before embedded Fonts or Graphics. Unchanged files save byte for byte, which takes two deliberate differences from Aegisub's save: unused entries stay, and an id with no entry stays in its Line's block. New ids go above every id a Line names, so such a Line never gains a value it didn't have. Insert line starts the new Line without values, as Aegisub's does. The renderer's copy of a file writes no new blocks. Copied rows carry their values to other documents in a second clipboard format, `application/x-hikarisub-extradata`, which is used only when it has one row per pasted Line.
 
+Hikari writes these keys itself (XD1, [#659](https://github.com/altqx/hikari/issues/659)). Where Aegisub 3.5 or arch1t3cht's Aegisub has a key, Hikari uses it with the same value format, so each editor reads the other's data. Hikari-only data goes under a `_hikari_` prefix. A value is written only when it differs from the default, and never holds paths, user names or secrets.
+
+| Key | Written by | Value |
+| --- | --- | --- |
+| `_aegi_perspective_ambient_plane` | The perspective tool, as arch1t3cht's Aegisub does: on every edit made while Show surrounding plane is on, for each Line edited | The outer quad's four corners in script coordinates, top left first and clockwise, as `x;y` at two decimals joined by `\|`, e.g. `600.00;300.00\|1000.00;300.00\|1000.00;500.00\|600.00;500.00` |
+
 ## Interfaces and ownership
 
 Conceptual interfaces, not production declarations:

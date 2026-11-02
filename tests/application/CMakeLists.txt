@@ -164,6 +164,8 @@ target_compile_definitions(hikari_application_visual_transform_tests PRIVATE
     HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-measure-20261012/observations.jsonl")
 hikari_add_gtest(hikari_application_visual_perspective_tests SOURCES visual_perspective_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_perspective_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
