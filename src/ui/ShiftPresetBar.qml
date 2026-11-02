@@ -72,6 +72,7 @@ RowLayout {
         }
         ShellMenuItem {
             objectName: bar.tool + "RenamePreset"
+            iconRole: "edit"
             text: qsTr("Rename preset…")
             enabled: bar.current !== ""
             onTriggered: namePopover.openFor(bar.current)

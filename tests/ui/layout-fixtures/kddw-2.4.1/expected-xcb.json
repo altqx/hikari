@@ -12,7 +12,8 @@
                 "Styles",
                 "FixMinorErrors",
                 "Template",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
             ],
@@ -85,7 +86,8 @@
                 "Original",
                 "Log",
                 "FixMinorErrors",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
                 {
@@ -188,7 +190,8 @@
                 "Log",
                 "Styles",
                 "FixMinorErrors",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
             ],
@@ -263,7 +266,8 @@
                 "Log",
                 "FixMinorErrors",
                 "Template",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
             ],
@@ -328,7 +332,8 @@
                 "Styles",
                 "FixMinorErrors",
                 "Template",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
             ],
@@ -391,7 +396,8 @@
                 "Styles",
                 "FixMinorErrors",
                 "Template",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
             ],
@@ -453,7 +459,8 @@
                 "Log",
                 "FixMinorErrors",
                 "Template",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
             ],
@@ -528,7 +535,8 @@
                 "Original",
                 "Log",
                 "FixMinorErrors",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
                 {
@@ -631,7 +639,8 @@
                 "Log",
                 "FixMinorErrors",
                 "Template",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
             ],
@@ -695,7 +704,8 @@
             "Log",
             "FixMinorErrors",
             "Template",
-            "Spellchecker"
+            "Spellchecker",
+            "Postprocessor"
         ],
         "floatingWindows": [
             {
@@ -768,7 +778,8 @@
                 "Styles",
                 "FixMinorErrors",
                 "Template",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
             ],
@@ -828,7 +839,8 @@
                 "Original",
                 "Log",
                 "FixMinorErrors",
-                "Spellchecker"
+                "Spellchecker",
+                "Postprocessor"
             ],
             "floatingWindows": [
                 {

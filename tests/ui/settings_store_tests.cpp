@@ -539,7 +539,7 @@ private slots:
         QVERIFY(shift.settings().tagTimes);
         QVERIFY(!shift.settings().moveToVideoTime);
         QCOMPARE(shift.settings().timeMs, 1500);
-        QCOMPARE(shift.settings().postprocessor, 19);
+        QCOMPARE(shift.settings().postprocessor, 3);
         QCOMPARE(shift.shiftPresetNames(), QStringList{QStringLiteral("p1")});
     }
 

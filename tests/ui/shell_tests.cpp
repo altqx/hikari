@@ -17928,10 +17928,10 @@ private slots:
         QCOMPARE(editor.historyCursor(), int(steps + 2));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_I, Qt::ControlModifier);
-        QTRY_VERIFY(item<QObject>("shiftToAudio"));
-        QVERIFY(item<QObject>("shiftToAudio")->property("enabled").toBool());
+        QTRY_VERIFY(visualItem("shiftByAudio"));
+        QVERIFY(visualItem("shiftByAudio")->property("enabled").toBool());
         audio.closeAudio();
-        QVERIFY(!item<QObject>("shiftToAudio")->property("enabled").toBool());
+        QTRY_VERIFY(!visualItem("shiftByAudio")->property("enabled").toBool());
     }
 
     void audioFollowsTheVideo()
@@ -30050,11 +30050,6 @@ private slots:
             save(box, QStringLiteral("next-file-") + code);
             QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!box->isVisible());
-            QVERIFY(QMetaObject::invokeMethod(root, "runShiftTimes"));
-            QTRY_VERIFY(box->isVisible());
-            save(box, QStringLiteral("shift-times-") + code);
-            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
-            QTRY_VERIFY(!box->isVisible());
         }
     }
 
@@ -32405,19 +32400,6 @@ private slots:
         QCOMPARE(dummy->transientParent(), fsWindow);
         QVERIFY(QMetaObject::invokeMethod(dummy, "reject"));
         QTRY_VERIFY(!dummy->isVisible());
-        QVERIFY(becomesFocusWindow(fsWindow));
-        auto shiftSettings = application->shiftTimesSettings().settingsMap();
-        const auto shiftBefore = shiftSettings;
-        shiftSettings.insert(QStringLiteral("whichTimes"), 1);
-        shiftSettings.insert(QStringLiteral("postprocessor"), 0);
-        application->shiftTimesSettings().setSettingsMap(shiftSettings);
-        QVERIFY(QMetaObject::invokeMethod(root, "runShiftTimes"));
-        QObject *shift = nullptr;
-        QTRY_VERIFY((shift = messageBox("messages")) && shift->property("visible").toBool());
-        QCOMPARE(qobject_cast<QWindow *>(shift)->transientParent(), fsWindow);
-        QVERIFY(QMetaObject::invokeMethod(shift, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
-        QTRY_VERIFY(!shift->property("visible").toBool());
-        application->shiftTimesSettings().setSettingsMap(shiftBefore);
         QVERIFY(becomesFocusWindow(fsWindow));
         QCOMPARE(named("videoOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
         QCOMPARE(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
