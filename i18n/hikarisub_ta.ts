@@ -9029,6 +9029,10 @@ removing audio cache files.</source>
         <translation>தானியங்கு குறுக்குவிசைகள்</translation>
     </message>
     <message>
+        <source>Plugin shortcuts</source>
+        <translation>செருகுநிரல் குறுக்குவிசைகள்</translation>
+    </message>
+    <message>
         <source>Filtering mode:</source>
         <translation>வடிகட்டுதல் பயன்முறை:</translation>
     </message>
@@ -9546,6 +9550,45 @@ and will be changed to the default</source>
     <message>
         <source>HikariSub plugins (*.hikariplugin)</source>
         <translation>HikariSub செருகுநிரல்கள் (*.hikariplugin)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
+        <translation>செருகுநிரல் நிறுவப்படவில்லை, அணைக்கப்பட்டுள்ளது, அல்லது இந்தக் கட்டளை இனி அதில் இல்லை</translation>
+    </message>
+    <message>
+        <source>The plugin can’t start: %1</source>
+        <translation>செருகுநிரலைத் தொடங்க முடியாது: %1</translation>
+    </message>
+    <message>
+        <source>The plugin didn’t start.</source>
+        <translation>செருகுநிரல் தொடங்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>“%1” failed.</source>
+        <translation>“%1” தோல்வியடைந்தது.</translation>
+    </message>
+    <message>
+        <source>Its %1 handler failed: %2</source>
+        <translation>அதன் %1 கையாளி தோல்வியடைந்தது: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>செருகுநிரல் %n வினாடிக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
+            <numerusform>செருகுநிரல் %n வினாடிகளுக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
+        <translation>செருகுநிரல் எதிர்பாராமல் நின்றுவிட்டது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</translation>
+    </message>
+    <message>
+        <source>Force stopped.</source>
+        <translation>கட்டாயமாக நிறுத்தப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t running.</source>
+        <translation>செருகுநிரல் இயங்கவில்லை.</translation>
     </message>
 </context>
 <context>

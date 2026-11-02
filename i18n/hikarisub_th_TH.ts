@@ -8979,6 +8979,10 @@ removing audio cache files.</source>
         <translation>ปุ่มลัดสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
+        <source>Plugin shortcuts</source>
+        <translation>ปุ่มลัดปลั๊กอิน</translation>
+    </message>
+    <message>
         <source>Filtering mode:</source>
         <translation>โหมดการกรอง:</translation>
     </message>
@@ -9493,6 +9497,44 @@ and will be changed to the default</source>
     <message>
         <source>HikariSub plugins (*.hikariplugin)</source>
         <translation>ปลั๊กอิน HikariSub (*.hikariplugin)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
+        <translation>ปลั๊กอินไม่ได้ติดตั้งไว้ ถูกปิดอยู่ หรือไม่มีคำสั่งนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>The plugin can’t start: %1</source>
+        <translation>เริ่มปลั๊กอินไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>The plugin didn’t start.</source>
+        <translation>ปลั๊กอินไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>“%1” failed.</source>
+        <translation>“%1” ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>Its %1 handler failed: %2</source>
+        <translation>ตัวจัดการ %1 ของปลั๊กอินล้มเหลว: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>ปลั๊กอินทำงานนานกว่า %n วินาที HikariSub จึงหยุดปลั๊กอินไว้ คำสั่งถัดไปจะเริ่มปลั๊กอินอีกครั้ง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
+        <translation>ปลั๊กอินหยุดทำงานโดยไม่คาดคิด คำสั่งถัดไปจะเริ่มปลั๊กอินอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Force stopped.</source>
+        <translation>บังคับหยุดแล้ว</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t running.</source>
+        <translation>ปลั๊กอินไม่ได้ทำงานอยู่</translation>
     </message>
 </context>
 <context>

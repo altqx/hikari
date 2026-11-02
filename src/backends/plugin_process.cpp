@@ -35,7 +35,19 @@ qint64 PluginProcess::processId() const
 
 QByteArray PluginProcess::diagnostics() const
 {
-    return m_host ? m_host->diagnostics() : QByteArray();
+    return m_host ? m_host->diagnostics() : m_lastDiagnostics;
+}
+
+void PluginProcess::dropHelper(bool kill)
+{
+    if (!m_host)
+        return;
+    HelperHost *host = m_host.release();
+    disconnect(host, nullptr, this, nullptr);
+    if (kill)
+        host->stop();
+    m_lastDiagnostics = host->diagnostics();
+    host->deleteLater();
 }
 
 void PluginProcess::start()
@@ -54,8 +66,7 @@ void PluginProcess::startHelper()
         m_state = State::LoadFailed;
         m_loadError = message;
         m_queue.clear();
-        if (m_host)
-            m_host.release()->deleteLater();
+        dropHelper(false);
         emit loadFailed(message);
     };
     connect(host, &HelperHost::ready, this, [this] {
@@ -73,7 +84,7 @@ void PluginProcess::startHelper()
         }
         m_state = State::Stopped;
         m_queue.clear();
-        m_host.release()->deleteLater();
+        dropHelper(false);
         emit stopped(StopReason::Crashed);
     });
     host->start();
@@ -169,8 +180,7 @@ void PluginProcess::onEvent(std::expected<helper::Event, helper::HostError> even
         const bool loading = m_running && m_running->kind == Unit::Kind::Load;
         m_running.reset();
         m_queue.clear();
-        disconnect(m_host.get(), nullptr, this, nullptr);
-        m_host.release()->deleteLater();
+        dropHelper(false);
         if (loading) {
             m_state = State::LoadFailed;
             m_loadError = QStringLiteral("hikari-plugin-helper stopped while the plugin loaded");
@@ -260,9 +270,7 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
             m_state = State::LoadFailed;
             m_loadError = message;
             m_queue.clear();
-            disconnect(m_host.get(), nullptr, this, nullptr);
-            m_host->stop();
-            m_host.release()->deleteLater();
+            dropHelper(true);
             emit loadFailed(message);
             return;
         }
@@ -272,8 +280,10 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
     } else if (outcome == Outcome::Ok) {
         if (unit.kind == Unit::Kind::Command)
             emit finished(name);
+    } else if (unit.kind == Unit::Kind::Command) {
+        emit commandFailed(name, message);
     } else {
-        emit failed(name, message);
+        emit eventFailed(name, message);
     }
     next();
 }
@@ -285,12 +295,7 @@ void PluginProcess::stopHelper(StopReason reason)
     m_queue.clear();
     m_openServices = 0;
     m_state = State::Stopped;
-    if (m_host) {
-        HelperHost *host = m_host.release();
-        disconnect(host, nullptr, this, nullptr);
-        host->stop();
-        host->deleteLater();
-    }
+    dropHelper(true);
     emit stopped(reason);
 }
 

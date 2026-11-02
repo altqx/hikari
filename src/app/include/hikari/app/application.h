@@ -18,6 +18,7 @@
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/grammar.h"
@@ -139,6 +140,8 @@ public:
         // automationDir holds automation/{Autoload,Include}. Empty: next to the
         // application, else the build tree's.
         QString luaHelper;
+        // Empty: next to the application, else the build tree's.
+        QString pluginHelper;
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;
@@ -718,6 +721,8 @@ public:
     ApiHost *apiHost() const { return m_apiHost.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
+    Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
+    PluginRuntime *pluginRuntime() const { return m_pluginRuntime.get(); }
     QVariantMap qmlProperties();
     // Waits for running writes and delivers their results.
     void waitForWrites();
@@ -944,6 +949,7 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<PluginManager> m_pluginManager;
+    std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;

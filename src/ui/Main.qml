@@ -2033,6 +2033,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                id: pluginsMenuItem
                 command: "GLOBAL_PLUGINS"
                 help: qsTr("Install, turn on and off, and uninstall plugins")
                 iconRole: "plugins"
@@ -2043,6 +2044,14 @@ ApplicationWindow {
                     enabled: !root.workspaceLayout.modalOpen
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
                 }
+            }
+            MacroMenuEntries {
+                menu: automationMenu
+                after: pluginsMenuItem
+                macros: root.app.pluginRuntime ? root.app.pluginRuntime.commands : []
+                itemPrefix: "pluginCommand_"
+                menuPrefix: "pluginCommandMenu_"
+                onTriggered: command => root.app.pluginRuntime.run(command.id)
             }
             MenuSeparator {
                 id: macrosSeparator

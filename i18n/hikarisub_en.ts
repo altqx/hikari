@@ -407,6 +407,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Plugins</name>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>The plugin ran for more than %n second, so HikariSub stopped it. Its next command starts it again.</numerusform>
+            <numerusform>The plugin ran for more than %n seconds, so HikariSub stopped it. Its next command starts it again.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Reports</name>
     <message numerus="yes">
         <source>HikariSub stopped responding for %n seconds</source>

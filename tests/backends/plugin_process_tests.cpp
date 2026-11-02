@@ -190,7 +190,7 @@ TEST_F(PluginProcessTest, ALoadErrorIsReportedAndStopsFurtherRuns)
 TEST_F(PluginProcessTest, AnErrorInACommandIsReportedAndThePluginKeepsRunning)
 {
     auto p = process(plugin("err", "hikari.commands.register('greet', function() error('nope') end)"));
-    QSignalSpy failed(p.get(), &PluginProcess::failed);
+    QSignalSpy failed(p.get(), &PluginProcess::commandFailed);
     ASSERT_TRUE(p->run("greet"));
     ASSERT_TRUE(waitFor([&] { return failed.count() == 1; }));
     EXPECT_TRUE(failed.at(0).at(1).toString().contains(QStringLiteral("main.lua:1: nope")));

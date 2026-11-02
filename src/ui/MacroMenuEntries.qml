@@ -9,6 +9,9 @@ QtObject {
     required property QtObject after
     property var macros: []
     property bool enabled: true
+    // Entries name their place with `path` (a list of titles), else with `name` split at "/".
+    property string itemPrefix: "macro_"
+    property string menuPrefix: "macroMenu_"
     signal triggered(var macro)
 
     property var shown: []
@@ -16,7 +19,7 @@ QtObject {
     readonly property Component itemComponent: Component {
         ShellMenuItem {
             required property var macro
-            objectName: "macro_" + macro.name
+            objectName: entries.itemPrefix + (macro.id !== undefined ? macro.id : macro.name)
             enabled: entries.enabled
             onTriggered: entries.triggered(macro)
         }
@@ -28,7 +31,7 @@ QtObject {
     function tree(list) {
         const top = []
         for (const macro of list) {
-            const pieces = macro.name.split("/")
+            const pieces = macro.path !== undefined ? macro.path : macro.name.split("/")
             let level = top
             let path = ""
             for (let i = 0; i < pieces.length - 1; ++i) {
@@ -49,7 +52,7 @@ QtObject {
         const made = []
         for (const entry of level) {
             if (entry.children !== undefined) {
-                const submenu = submenuComponent.createObject(target, { title: entry.title, objectName: "macroMenu_" + entry.path })
+                const submenu = submenuComponent.createObject(target, { title: entry.title, objectName: entries.menuPrefix + entry.path })
                 fill(submenu, 0, entry.children)
                 target.insertMenu(at++, submenu)
                 made.push({ menu: submenu })

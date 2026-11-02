@@ -63,13 +63,14 @@ public:
     const std::vector<std::string> &handledCommands() const { return m_handled; }
     bool busy() const { return m_running.has_value(); }
     qint64 processId() const;
+    // The helper's stderr, or the last helper's after a stop.
     QByteArray diagnostics() const;
 
 signals:
     void loaded();
     void loadFailed(const QString &message);
-    // A command or event handler raised an error.
-    void failed(const QString &command, const QString &message);
+    void commandFailed(const QString &command, const QString &message);
+    void eventFailed(const QString &event, const QString &message);
     void finished(const QString &command);
     void stopped(hikari::backends::PluginProcess::StopReason reason);
 
@@ -85,6 +86,7 @@ private:
     void onService(const helper::Event &event);
     void endUnit(helper::Outcome outcome, const std::vector<std::byte> &payload);
     void stopHelper(StopReason reason);
+    void dropHelper(bool kill);
     void pauseWatchdog();
     void resumeWatchdog();
 
@@ -95,6 +97,7 @@ private:
     std::unique_ptr<helper::HelperHost> m_host;
     State m_state = State::Idle;
     QString m_loadError;
+    QByteArray m_lastDiagnostics;
     std::vector<std::string> m_handled;
     std::deque<Unit> m_queue;
     std::optional<Unit> m_running;
