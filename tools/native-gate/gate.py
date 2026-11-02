@@ -1167,6 +1167,78 @@ def image_diff(a, b):
         return r.stderr.strip()
 
 
+GRIPS = [("right", "R"), ("left", "L"), ("bottom", "B"), ("top", "T"),
+         ("bottom-right", "BR"), ("top-left", "TL"), ("bottom-left", "BL"), ("top-right", "TR")]
+
+
+def grip_point(r, edges):
+    x, y, w, h = r[:4]
+    gx = x + 2 if "L" in edges else x + w - 3 if "R" in edges else x + w // 2
+    gy = y + 2 if "T" in edges else y + h - 3 if "B" in edges else y + h // 2
+    return gx, gy
+
+
+def step_corners():
+    fresh(episode())
+    dismiss_notices()
+    focus_main()
+    main = origin("HikariSub")
+    st = atspi()
+    video, audio = panel(st, "Video"), panel(st, "Audio")
+    if main is None or not video or not audio:
+        verdict("junction-drag", "not-observable", f"{B.name}: main window {main}, Video {video}, Audio {audio}")
+    else:
+        jx = main[0] + (video["x"] + video["w"] + audio["x"]) // 2
+        jy = main[1] + video["y"] + video["h"] + 2
+        dx, dy = 60, 40
+        drag(jx, jy, jx + dx, jy + dy)
+        st = wait_for(lambda s: abs(panel(s, "Video")["w"] - video["w"] - dx) <= 4, timeout=3)
+        v2 = panel(st, "Video")
+        ev, _ = B.snap("corners-0-junction")
+        moved = abs(v2["w"] - video["w"] - dx) <= 4 and abs(v2["h"] - video["h"] - dy) <= 4
+        verdict("junction-drag", "observed" if moved else "failed",
+                f"dragged the Video / Audio / Line editor T at {jx},{jy} by {dx},{dy}: Video "
+                f"{video['w']}x{video['h']} -> {v2['w']}x{v2['h']}", ev)
+    how = None
+    audio = panel(atspi(), "Audio")
+    if main and audio:
+        click(main[0] + audio["x"] + 30, main[1] + audio["y"] - HEADER // 2, double=True, wait=1500)
+        how = "header double-click" if "Audio" in frames(wait_for(lambda s: "Audio" in frames(s), timeout=4)) else None
+    if how is None:
+        focus_main()
+        how = float_panel("Audio", "corners")
+    wait_for(lambda s: "Audio" in frames(s))
+    r = origin("Audio")
+    if r is None:
+        verdict("floating-grips", "not-observable", f"the floating Audio window (floated by {how}) cannot be "
+                                                    f"located on {B.name}")
+        return
+    d = 40
+    rows, evidence, ok = [], [], True
+    for name, edges in GRIPS:
+        r = origin("Audio") or r
+        size = frames().get("Audio")
+        gx, gy = grip_point(r, edges)
+        drag(gx, gy, gx + d, gy + d, steps=12)
+        time.sleep(0.6)
+        r2, size2 = origin("Audio"), frames().get("Audio")
+        want = (d if "L" in edges else 0, d if "T" in edges else 0,
+                -d if "L" in edges else d if "R" in edges else 0, -d if "T" in edges else d if "B" in edges else 0)
+        # Sizes from the app itself; mutter publishes no window position, so positions are checked elsewhere.
+        moved = (r2[0] - r[0], r2[1] - r[1]) if r2 and B.name != "mutter" else None
+        resized = (size2["w"] - size["w"], size2["h"] - size["h"]) if size and size2 else None
+        got = (moved or ("?", "?")) + (resized or ("?", "?"))
+        good = resized is not None and all(abs(g - w) <= 6 for g, w in zip(resized, want[2:])) and \
+            (moved is None and B.name == "mutter" or moved is not None and
+             all(abs(g - w) <= 6 for g, w in zip(moved, want[:2])))
+        ok = ok and good
+        rows.append(f"{name} at {gx},{gy}: moved/resized {got} (want {want}) {'ok' if good else 'WRONG'}")
+        ev, _ = B.snap(f"corners-grip-{name}")
+        evidence += ev
+    verdict("floating-grips", "observed" if ok else "failed",
+            f"each grip dragged by {d},{d} through the window system's resize: " + "; ".join(rows), evidence)
+
+
 def step_video():
     shutil.copy(os.path.join(FIXTURES, "cfr.mkv"), os.path.join(HOME, "ep1.mkv"))
     subs = os.path.join(HOME, "ep1.ass")
@@ -3409,7 +3481,7 @@ SWEEP_STEPS = {"tagspeech": step_tag_list_speech, "statusspeech": step_status_ba
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "menutext": step_menu_from_text, "tests": step_test_executables, "orca": step_orca,
-         "a11y": step_a11y, "floating": step_floating, "header": step_header_keys,
+         "a11y": step_a11y, "floating": step_floating, "corners": step_corners, "header": step_header_keys,
          "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen,
          # last: after an output goes, sway's virtual pointer still maps over the old layout
          "outputs": step_outputs}
