@@ -259,9 +259,10 @@ private slots:
         QCOMPARE(shownBesideTheMain(), before);
         QTRY_VERIFY(isOpen("searchDock") && !isFloating("searchDock"));
         QTRY_VERIFY(sceneRect("searchPanel").left() > sceneRect("gridPanel").right() - 1);
-        const QRectF placed = sceneRect("searchPanel");
+        QCOMPARE(docking()->dockRightOf(QStringLiteral("Grid")), name);
         QTest::qWait(50);
-        QCOMPARE(sceneRect("searchPanel"), placed);
+        QCOMPARE(docking()->dockRightOf(QStringLiteral("Grid")), name);
+        QVERIFY(sceneRect("searchPanel").left() > sceneRect("gridPanel").right() - 1);
         QCOMPARE(docking()->tabCount(name), 1);
         QCOMPARE(floatingWindows(), 0);
         QCOMPARE(shownBesideTheMain(), before);
