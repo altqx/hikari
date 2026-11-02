@@ -86,6 +86,28 @@ struct FakePort final : ProviderPort {
     {
         done(models);
     }
+
+    struct CacheCreate {
+        std::string key;
+        Request prefix;
+        std::chrono::seconds ttl;
+    };
+    std::vector<CacheCreate> cacheCreates;
+    std::vector<std::string> cacheDeletes;
+    std::optional<Error> cacheFailure;
+    void createCache(const Provider &, const std::string &key, const Request &prefix, std::chrono::seconds ttl,
+                     std::function<void(CacheResult)> done) override
+    {
+        cacheCreates.push_back({key, prefix, ttl});
+        if (cacheFailure)
+            done(*cacheFailure);
+        else
+            done("cachedContents/" + std::to_string(cacheCreates.size()));
+    }
+    void deleteCache(const Provider &, const std::string &, const std::string &name) override
+    {
+        cacheDeletes.push_back(name);
+    }
 };
 
 Provider openRouter()
@@ -324,6 +346,103 @@ TEST_F(AiProvidersTest, RefreshingTheCatalogueKeepsTheUsersCorrections)
     providers.refreshModels("or", [&](std::optional<Error> e) { done = e; });
     EXPECT_EQ((*done)->kind, ErrorKind::Unauthorized);
     EXPECT_EQ(providers.config().provider("or")->models.size(), 1u);
+}
+
+Request scriptTurn(std::string context = "The whole script, 1200 Lines.")
+{
+    return Request{.system = "Translate.",
+                   .tools = {{.name = "set_text", .description = "d", .parametersJson = "{}"}},
+                   .context = std::move(context),
+                   .cacheKey = "thread-1",
+                   .cacheLifetime = CacheLifetime::Hour,
+                   .explicitCache = true};
+}
+
+TEST_F(AiProvidersTest, AnExplicitCacheIsCreatedReusedAndDeleted)
+{
+    auto now = std::chrono::steady_clock::time_point{};
+    keys.keys["or"] = "sk";
+    configs.stored.providers.push_back(openRouter());
+    configs.stored.roles[Role::Chat] = {"or", "a/model"};
+    Providers providers(configs, keys, port);
+    providers.setClock([&] { return now; });
+
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    ASSERT_EQ(port.cacheCreates.size(), 1u);
+    EXPECT_EQ(port.cacheCreates[0].key, "sk");
+    EXPECT_EQ(port.cacheCreates[0].ttl, std::chrono::hours(1));
+    EXPECT_EQ(port.cacheCreates[0].prefix.context, "The whole script, 1200 Lines.");
+    EXPECT_EQ(port.cacheCreates[0].prefix.model, "a/model");
+    EXPECT_EQ(port.calls.at(0).request.providerCache, "cachedContents/1");
+
+    now += std::chrono::minutes(50);
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    EXPECT_EQ(port.cacheCreates.size(), 1u);
+    EXPECT_EQ(port.calls.at(1).request.providerCache, "cachedContents/1");
+
+    now += std::chrono::minutes(10);
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    EXPECT_EQ(port.cacheCreates.size(), 2u) << "an expiring cache is made again";
+    EXPECT_EQ(port.cacheDeletes, std::vector<std::string>{"cachedContents/1"});
+    EXPECT_EQ(port.calls.at(2).request.providerCache, "cachedContents/2");
+
+    providers.stream(Role::Chat, scriptTurn("Another script."), [](const Event &) {});
+    EXPECT_EQ(port.cacheCreates.size(), 3u) << "a new prefix needs a new cache";
+    EXPECT_EQ(port.cacheDeletes.back(), "cachedContents/2");
+
+    providers.endConversation("thread-1");
+    EXPECT_EQ(port.cacheDeletes.back(), "cachedContents/3");
+    providers.endConversation("thread-1");
+    EXPECT_EQ(port.cacheDeletes.size(), 3u);
+}
+
+TEST_F(AiProvidersTest, AFailedCacheCreateFallsBackToAWholeRequest)
+{
+    keys.keys["or"] = "sk";
+    configs.stored.providers.push_back(openRouter());
+    configs.stored.roles[Role::Chat] = {"or", "a/model"};
+    Providers providers(configs, keys, port);
+
+    port.cacheFailure = Error{.kind = ErrorKind::Network};
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    EXPECT_EQ(port.calls.at(0).request.providerCache, "");
+    EXPECT_EQ(port.calls.at(0).request.context, "The whole script, 1200 Lines.");
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    EXPECT_EQ(port.cacheCreates.size(), 2u) << "a network failure is tried again";
+
+    port.cacheFailure = Error{.kind = ErrorKind::Rejected, .httpStatus = 400};
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    EXPECT_EQ(port.cacheCreates.size(), 3u) << "a refusal isn't";
+    EXPECT_EQ(port.calls.at(3).request.providerCache, "");
+
+    port.cacheFailure.reset();
+    providers.stream(Role::Chat, scriptTurn("Another script."), [](const Event &) {});
+    EXPECT_EQ(port.calls.at(4).request.providerCache, "cachedContents/4");
+    EXPECT_TRUE(port.cacheDeletes.empty());
+
+    Request plain = scriptTurn();
+    plain.explicitCache = false;
+    providers.stream(Role::Chat, plain, [](const Event &) {});
+    EXPECT_EQ(port.cacheCreates.size(), 4u);
+    EXPECT_EQ(port.calls.at(5).request.providerCache, "");
+}
+
+TEST_F(AiProvidersTest, ARequestThatFailsOnItsCacheDropsTheCache)
+{
+    keys.keys["or"] = "sk";
+    configs.stored.providers.push_back(openRouter());
+    configs.stored.roles[Role::Chat] = {"or", "a/model"};
+    Providers providers(configs, keys, port);
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    port.calls.at(0).sink(Failed{{.kind = ErrorKind::Rejected, .httpStatus = 404}});
+    EXPECT_EQ(port.cacheDeletes, std::vector<std::string>{"cachedContents/1"});
+    providers.stream(Role::Chat, scriptTurn(), [](const Event &) {});
+    EXPECT_EQ(port.calls.at(1).request.providerCache, "cachedContents/2");
+
+    std::optional<std::optional<SaveError>> removed;
+    providers.remove("or", [&](std::optional<SaveError> e) { removed = e; });
+    EXPECT_EQ(port.cacheDeletes.back(), "cachedContents/2");
 }
 
 TEST_F(AiProvidersTest, AConfigThatCannotBeSavedChangesNothing)

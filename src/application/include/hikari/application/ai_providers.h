@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -138,6 +139,7 @@ struct ToolDefinition {
     std::string description;
     /// A JSON Schema object.
     std::string parametersJson;
+    bool operator==(const ToolDefinition &) const = default;
 };
 
 enum class CacheLifetime { Minutes, Hour };
@@ -154,8 +156,16 @@ struct Request {
     /// The same for every turn of one conversation, so the provider routes its turns to one cache.
     std::string cacheKey;
     CacheLifetime cacheLifetime = CacheLifetime::Minutes;
+    /// Keeps system, tools and context in an explicit provider cache for the conversation, for a large fixed
+    /// context reused over many turns (a whole script for translation). Needs cacheKey. Where the provider has
+    /// no explicit caches, or one can't be made, the request goes out whole.
+    bool explicitCache = false;
+    /// Set by Providers: the provider's cache holding system, tools and context, which then stay out of the request.
+    std::string providerCache;
     std::optional<int> maxOutputTokens;
 };
+
+std::chrono::seconds cacheTtl(CacheLifetime lifetime);
 
 enum class StopReason { End, ToolUse, MaxTokens, Refused };
 
@@ -222,6 +232,14 @@ public:
     using ModelsResult = std::variant<std::vector<Model>, Error>;
     virtual void listModels(const Provider &provider, const std::string &key,
                             std::function<void(ModelsResult)> done) = 0;
+
+    /// The cache's name on the provider.
+    using CacheResult = std::variant<std::string, Error>;
+    /// Stores the request's system, tools and context on the provider for `ttl`. Fails with Rejected where the
+    /// provider has no explicit caches.
+    virtual void createCache(const Provider &provider, const std::string &key, const Request &prefix,
+                             std::chrono::seconds ttl, std::function<void(CacheResult)> done);
+    virtual void deleteCache(const Provider &provider, const std::string &key, const std::string &name);
 };
 
 enum class KeyError { Unavailable, Denied, NotFound, Other };
@@ -268,9 +286,31 @@ public:
     StreamId stream(Role role, Request request, EventSink sink);
     void cancel(StreamId id);
 
+    /// Deletes the provider cache kept for one conversation (Request::cacheKey). Call when the thread ends.
+    void endConversation(const std::string &cacheKey);
+
+    using Clock = std::function<std::chrono::steady_clock::time_point()>;
+    void setClock(Clock now) { m_now = std::move(now); }
+
 private:
     struct Pending;
+    struct Cache {
+        std::string providerId;
+        std::string model;
+        std::string system;
+        std::vector<ToolDefinition> tools;
+        std::string context;
+        /// Empty when the provider refused to make one for this prefix.
+        std::string name;
+        std::chrono::steady_clock::time_point expires;
+
+        bool holds(const Provider &provider, const Request &request) const;
+    };
     void withKey(const Provider &provider, std::function<void(std::optional<std::string>, std::optional<KeyError>)> next);
+    void withCache(const Provider &provider, const std::string &key, Request request, std::function<void(Request)> next);
+    void send(StreamId id, const Provider &provider, const std::string &key, const Request &request,
+              const std::shared_ptr<Pending> &pending);
+    void forgetCache(const std::string &cacheKey, const std::string &name);
 
     ConfigStore &m_configs;
     KeyStore &m_keys;
@@ -278,6 +318,8 @@ private:
     Config m_config;
     std::map<std::string, std::string, std::less<>> m_keyCache;
     std::map<StreamId, std::shared_ptr<Pending>> m_pending;
+    std::map<std::string, Cache, std::less<>> m_caches;
+    Clock m_now = [] { return std::chrono::steady_clock::now(); };
     StreamId m_nextId = 1;
 };
 

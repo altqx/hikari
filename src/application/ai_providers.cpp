@@ -137,11 +137,25 @@ std::optional<double> costOf(const Usage &usage, const std::optional<Price> &pri
            1'000'000.0;
 }
 
+std::chrono::seconds cacheTtl(CacheLifetime lifetime)
+{
+    return lifetime == CacheLifetime::Hour ? std::chrono::hours(1) : std::chrono::minutes(5);
+}
+
+void ProviderPort::createCache(const Provider &, const std::string &, const Request &, std::chrono::seconds,
+                               std::function<void(CacheResult)> done)
+{
+    done(Error{.kind = ErrorKind::Rejected, .httpStatus = 0, .detail = "no explicit caches"});
+}
+
+void ProviderPort::deleteCache(const Provider &, const std::string &, const std::string &) {}
+
 struct Providers::Pending {
     EventSink sink;
     std::optional<StreamId> portId;
     bool cancelled = false;
 };
+
 
 Providers::Providers(ConfigStore &configs, KeyStore &keys, ProviderPort &port)
     : m_configs(configs), m_keys(keys), m_port(port), m_config(configs.load())
@@ -192,6 +206,12 @@ void Providers::remove(const std::string &providerId, std::function<void(std::op
         done(SaveError::Config);
         return;
     }
+    std::vector<std::pair<std::string, std::string>> caches;
+    for (const auto &[cacheKey, cache] : m_caches)
+        if (cache.providerId == providerId)
+            caches.emplace_back(cacheKey, cache.name);
+    for (const auto &[cacheKey, name] : caches)
+        forgetCache(cacheKey, name);
     m_config = std::move(next);
     m_keyCache.erase(providerId);
     m_keys.remove(providerId, [done](std::optional<KeyError> error) {
@@ -310,13 +330,100 @@ StreamId Providers::stream(Role role, Request request, EventSink sink)
             pending->sink(Failed{{.kind = ErrorKind::Key}});
             return;
         }
-        pending->portId = m_port.stream(provider, *key, request, [this, id, pending](const Event &event) {
+        if (!request.explicitCache || request.cacheKey.empty()) {
+            send(id, provider, *key, request, pending);
+            return;
+        }
+        withCache(provider, *key, request, [this, id, provider, key = *key, pending](const Request &cached) {
+            send(id, provider, key, cached, pending);
+        });
+    });
+    return id;
+}
+
+void Providers::send(StreamId id, const Provider &provider, const std::string &key, const Request &request,
+                     const std::shared_ptr<Pending> &pending)
+{
+    if (pending->cancelled)
+        return;
+    pending->portId = m_port.stream(
+        provider, key, request,
+        [this, id, pending, cacheKey = request.cacheKey, cache = request.providerCache](const Event &event) {
+            if (const auto *failed = std::get_if<Failed>(&event);
+                failed && !cache.empty() && failed->error.kind != ErrorKind::Cancelled)
+                forgetCache(cacheKey, cache);
             if (std::holds_alternative<Finished>(event) || std::holds_alternative<Failed>(event))
                 m_pending.erase(id);
             pending->sink(event);
         });
+}
+
+bool Providers::Cache::holds(const Provider &provider, const Request &request) const
+{
+    return providerId == provider.id && model == request.model && system == request.system && tools == request.tools &&
+           context == request.context;
+}
+
+void Providers::withCache(const Provider &provider, const std::string &key, Request request,
+                          std::function<void(Request)> next)
+{
+    constexpr auto kRenewBefore = std::chrono::seconds(30);
+    const auto now = m_now();
+    if (const auto it = m_caches.find(request.cacheKey); it != m_caches.end()) {
+        const Cache &cache = it->second;
+        if (cache.holds(provider, request) && cache.name.empty()) {
+            next(std::move(request));
+            return;
+        }
+        if (cache.holds(provider, request) && now + kRenewBefore < cache.expires) {
+            request.providerCache = cache.name;
+            next(std::move(request));
+            return;
+        }
+        forgetCache(it->first, cache.name);
+    }
+    const std::chrono::seconds ttl = cacheTtl(request.cacheLifetime);
+    Cache entry{.providerId = provider.id,
+                .model = request.model,
+                .system = request.system,
+                .tools = request.tools,
+                .context = request.context,
+                .name = {},
+                .expires = now + ttl};
+    m_port.createCache(provider, key, request, ttl,
+                       [this, entry = std::move(entry), request, next = std::move(next)](ProviderPort::CacheResult result) mutable {
+                           if (const auto *name = std::get_if<std::string>(&result)) {
+                               entry.name = *name;
+                               request.providerCache = *name;
+                               m_caches[request.cacheKey] = std::move(entry);
+                           } else if (const ErrorKind kind = std::get<Error>(result).kind;
+                                      kind == ErrorKind::Rejected || kind == ErrorKind::Unauthorized) {
+                               m_caches[request.cacheKey] = std::move(entry);
+                           }
+                           next(std::move(request));
+                       });
+}
+
+void Providers::forgetCache(const std::string &cacheKey, const std::string &name)
+{
+    const auto it = m_caches.find(cacheKey);
+    if (it == m_caches.end() || it->second.name != name)
+        return;
+    const Cache cache = std::move(it->second);
+    m_caches.erase(it);
+    const Provider *provider = m_config.provider(cache.providerId);
+    if (cache.name.empty() || !provider)
+        return;
+    withKey(*provider, [this, provider = *provider, name = cache.name](std::optional<std::string> key, std::optional<KeyError>) {
+        if (key)
+            m_port.deleteCache(provider, *key, name);
     });
-    return id;
+}
+
+void Providers::endConversation(const std::string &cacheKey)
+{
+    if (const auto it = m_caches.find(cacheKey); it != m_caches.end())
+        forgetCache(cacheKey, it->second.name);
 }
 
 void Providers::cancel(StreamId id)
