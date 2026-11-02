@@ -3004,7 +3004,7 @@ private slots:
         QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("20"));
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
         QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(),
-                 QStringLiteral("The line’s selected text"));
+                 QStringLiteral("Selected text"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerBold"), "click"));
         QTRY_COMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftText().value_or(u8"").c_str())),
                      QStringLiteral("{\\b1}abc{\\b0}"));
@@ -3023,7 +3023,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
         QTRY_VERIFY(picker->property("visible").toBool());
         QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("30"));
-        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("Line text"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerItalic"), "click"));
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\i1")));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCancel"), "click"));
@@ -3274,7 +3274,7 @@ private slots:
         auto *picker = openFontPicker(fontAss("drawing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10{\\p0}abc\n"));
         QVERIFY(picker);
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
-        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("Line text"));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         QTRY_VERIFY(!picker->property("visible").toBool());
         application->editor().setShowTags(true);
@@ -3288,7 +3288,7 @@ private slots:
         };
         QVERIFY(openOn(5, 25));
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("ab"));
-        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s selected text"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("Selected text"));
         QTRY_VERIFY(!picker->property("resolution").toMap().isEmpty());
         const int request = picker->property("resolveRequest").toInt();
         QSignalSpy drawn(&catalogs, &app::FontCatalogsController::sampleChanged);
@@ -3301,7 +3301,7 @@ private slots:
         QTRY_VERIFY(!picker->property("visible").toBool());
         QVERIFY(openOn(5, 15));
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
-        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("Line text"));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         QTRY_VERIFY(!picker->property("visible").toBool());
         catalogs.waitResolved();
@@ -3656,7 +3656,7 @@ private slots:
         QCOMPARE(in("fontCatalogCatalogs")->property("currentIndex").toInt(), 0);
         auto *load = window->findChild<QObject *>(QStringLiteral("fontCatalogLoadDialog"));
         QVERIFY(load);
-        QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalog file"));
+        QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalogue file"));
         QVERIFY(!in("fontCatalogStatus")->isVisible());
 
         QVERIFY(QMetaObject::invokeMethod(in("fontCatalogNew"), "click"));
@@ -3735,7 +3735,7 @@ private slots:
         auto *renameName = named("fontCatalogRenameName");
         QCOMPARE(renameName->property("text").toString(), QStringLiteral("C"));
         renameName->setProperty("text", QStringLiteral(" "));
-        QCOMPARE(named("fontCatalogRenameProblem")->property("text").toString(), QStringLiteral("Enter a name for the catalog."));
+        QCOMPARE(named("fontCatalogRenameProblem")->property("text").toString(), QStringLiteral("Enter a name for the catalogue."));
         QVERIFY(!named("fontCatalogRenameOk")->property("enabled").toBool());
         renameName->setProperty("text", QStringLiteral("b"));
         QVERIFY(QMetaObject::invokeMethod(named("fontCatalogRenameOk"), "click"));
@@ -3743,7 +3743,7 @@ private slots:
         auto *box = named("fontCatalogMessageBox");
         QVERIFY(box);
         QTRY_VERIFY(box->property("visible").toBool());
-        QCOMPARE(box->property("title").toString(), QStringLiteral("Rename font catalog"));
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Rename font catalogue"));
         QCOMPARE(box->property("text").toString(), QStringLiteral("A catalog named “B” already exists."));
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!box->property("visible").toBool());
@@ -3775,7 +3775,7 @@ private slots:
         QTRY_VERIFY(window->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
         QTRY_VERIFY(box->property("visible").toBool());
-        QCOMPARE(box->property("title").toString(), QStringLiteral("Delete font catalog"));
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Delete font catalogue"));
         QCOMPARE(box->property("text").toString(), QStringLiteral("Delete the catalog “Latin”?"));
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QCOMPARE(catalogs.catalogNames(), QStringList{"Latin"});
@@ -3812,7 +3812,7 @@ private slots:
         auto *review = named("fontCatalogClashReview");
         QVERIFY(review);
         QTRY_VERIFY(review->property("visible").toBool());
-        QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogs"));
+        QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogues"));
         QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogs in “more-catalogs.txt” already exist."));
         QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalog"));
         const QVariantList rows = review->property("rows").toList();
@@ -4082,7 +4082,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
         QTRY_VERIFY(!from->isVisible());
         QCOMPARE(lastNotice(), QStringLiteral("Add fonts from subtitles|The fonts were added to “B” but could not be saved.|"
-                                              "fonts.toml in the \"catalogs\" folder of your user folder could not be written. Saving is tried again on exit."));
+                                              "fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit."));
         QVERIFY(QDir(dirPath).rmdir(QStringLiteral("fonts.toml")));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         application->fontCatalogs().waitResolved();
@@ -5944,9 +5944,9 @@ private slots:
              QStringLiteral("a script dialog's preset, under Delete preset")},
             {QStringLiteral("MainTitleBar.qml"), QStringLiteral("bar.foldFrom + index"),
              QStringLiteral("a menu of the title bar folded into More (the menus have no icons)")},
-            {QStringLiteral("FontPicker.qml"), QStringLiteral(R"(text: qsTr("No catalogs yet"))"),
+            {QStringLiteral("FontPicker.qml"), QStringLiteral(R"(text: qsTr("No catalogues yet"))"),
              QStringLiteral("the empty list's placeholder")},
-            {QStringLiteral("FontCatalogBar.qml"), QStringLiteral(R"(text: qsTr("No catalogs yet"))"),
+            {QStringLiteral("FontCatalogBar.qml"), QStringLiteral(R"(text: qsTr("No catalogues yet"))"),
              QStringLiteral("the empty list's placeholder")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
@@ -7019,11 +7019,11 @@ private slots:
             QAccessibleInterface *box = QAccessible::queryAccessibleInterface(catalog);
             QVERIFY(box);
             QCOMPARE(box->role(), QAccessible::ComboBox);
-            QCOMPARE(box->text(QAccessible::Name), QStringLiteral("Style catalog"));
+            QCOMPARE(box->text(QAccessible::Name), QStringLiteral("Style catalogue"));
             QAccessibleInterface *edit =
                 QAccessible::queryAccessibleInterface(catalog->property("contentItem").value<QQuickItem *>());
             QVERIFY(edit);
-            QCOMPARE(edit->text(QAccessible::Name), QStringLiteral("Style catalog"));
+            QCOMPARE(edit->text(QAccessible::Name), QStringLiteral("Style catalogue"));
         }
         QCOMPARE(window->property("assSelected").toList(), QVariantList{1});
         QCOMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
@@ -8222,7 +8222,7 @@ private slots:
         QCOMPARE(action->property("text").toString(), QStringLiteral("What's &new"));
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(dialog->isVisible());
-        QCOMPARE(dialog->title(), QStringLiteral("What's new"));
+        QCOMPARE(dialog->title(), QStringLiteral("What’s new"));
         QCOMPARE(dialog->modality(), Qt::NonModal);
         QVERIFY(dialog->property("resizable").toBool());
         QCOMPARE(whatsNew.state(), QStringLiteral("off"));
@@ -24557,7 +24557,7 @@ private slots:
         QObject *shapeText = named("shapeText");
         shapeText->setProperty("text", QStringLiteral("m 0 0; l 5 5"));
         QCOMPARE(named("shapeTextErrorText")->property("text").toString(),
-                 QStringLiteral("A drawing can't contain “;”."));
+                 QStringLiteral("A drawing can’t contain “;”."));
         QCOMPARE(editor->property("shape").toString(), QStringLiteral("m 0 0 l 100 0 100 100 0 100"));
         shapeText->setProperty("text", QStringLiteral("m 0 0 l 50 0 0 50"));
         QCOMPARE(named("shapeTextErrorText")->property("text").toString(), QString());

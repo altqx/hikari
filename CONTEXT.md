@@ -62,13 +62,13 @@ _Avoid_: Keyboard focus as a synonym for the tool target.
 A named set of subtitle appearance defaults used by Lines, distinct from inline overrides and the application's theme.
 _Avoid_: Theme as a synonym for subtitle Style.
 
-**Style catalog**:
+**Style catalogue**:
 A reusable collection of Styles outside the current Document.
-_Avoid_: Catalog without qualification; Document styles as a synonym.
+_Avoid_: Catalogue without qualification; Document styles as a synonym.
 
-**Font catalog**:
+**Font catalogue**:
 A named collection of font-family names.
-_Avoid_: Style catalog, embedded fonts or bundled font files.
+_Avoid_: Style catalogue, embedded fonts or bundled font files.
 
 **ASS override tag**:
 An instruction within subtitle text that affects presentation or timing.
@@ -115,5 +115,5 @@ _Avoid_: Grid filter as a synonym.
 ### Files
 
 **User folder**:
-The one folder holding what a user may edit or keep: settings, automation scripts and modules, dictionaries, catalogs, presets, autosaves, recovery and logs. Automation's `?user` is this folder. Bundled scripts, modules and dictionaries are copied into it; caches live elsewhere.
+The one folder holding what a user may edit or keep: settings, automation scripts and modules, dictionaries, catalogues, presets, autosaves, recovery and logs. Automation's `?user` is this folder. Bundled scripts, modules and dictionaries are copied into it; caches live elsewhere.
 _Avoid_: Settings folder, data folder or config folder as names for it; program folder for the bundled files' source.
