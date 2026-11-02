@@ -6180,6 +6180,26 @@ What would you like to do?</source>
         <translation>ส่งออกเป็น</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>เลื่อนบรรทัดที่เลือกทีละเฟรม: จุดเริ่มต้นที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>เลื่อนบรรทัดที่เลือกทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดเริ่มต้นที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -7222,6 +7242,50 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
+    </message>
+    <message>
+        <source>Shift by frames to video</source>
+        <translation>เลื่อนทีละเฟรมไปยังวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>เลื่อนบรรทัดที่เลือกเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันเริ่มที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>บรรทัดที่เลือก เริ่มที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>เลื่อนบรรทัดที่เลือกเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันสิ้นสุดที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>บรรทัดที่เลือก สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>เลื่อนบรรทัดปัจจุบันและทุกบรรทัดหลังจากนั้นเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันเริ่มที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>บรรทัดถัดไปทั้งหมด เริ่มที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>เลื่อนบรรทัดปัจจุบันและทุกบรรทัดหลังจากนั้นเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันสิ้นสุดที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>ให้บรรทัดปัจจุบันใช้ส่วนที่เลือกของเสียง และให้บรรทัดก่อนหน้าสิ้นสุดตรงจุดเริ่มของส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
     </message>
     <message>
         <source>Load script</source>

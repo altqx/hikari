@@ -6220,6 +6220,26 @@ What would you like to do?</source>
         <translation>வேறு வடிவில் ஏற்றுமதி</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>தேர்ந்தெடுத்த வரிகளைச் சட்டகங்களாக நகர்த்து: தொடக்கம் வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>தேர்ந்தெடுத்த வரிகளைச் சட்டகங்களாக நகர்த்து: முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>அடுத்து வரும் வரிகளைச் சட்டகங்களாக நகர்த்து: தொடக்கம் வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>அடுத்து வரும் வரிகளைச் சட்டகங்களாக நகர்த்து: முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -7265,6 +7285,50 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>உரையில் சொற்றொடரின் அடுத்த நிகழ்வைக் கண்டறிகிறது</translation>
+    </message>
+    <message>
+        <source>Shift by frames to video</source>
+        <translation>சட்டகங்களாக வீடியோவுக்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>செயலில் உள்ள வரி வீடியோ சட்டகத்தில் தொடங்கும்படி தேர்ந்தெடுத்த வரிகளை முழுச் சட்டகங்களாக நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>தேர்ந்தெடுத்த வரிகள், தொடக்கம் வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>செயலில் உள்ள வரி வீடியோ சட்டகத்தில் முடியும்படி தேர்ந்தெடுத்த வரிகளை முழுச் சட்டகங்களாக நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>தேர்ந்தெடுத்த வரிகள், முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>செயலில் உள்ள வரி வீடியோ சட்டகத்தில் தொடங்கும்படி அந்த வரியையும் அதற்குப் பிந்தைய எல்லா வரிகளையும் முழுச் சட்டகங்களாக நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>அடுத்து வரும் வரிகள், தொடக்கம் வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>செயலில் உள்ள வரி வீடியோ சட்டகத்தில் முடியும்படி அந்த வரியையும் அதற்குப் பிந்தைய எல்லா வரிகளையும் முழுச் சட்டகங்களாக நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>செயலில் உள்ள வரிக்கு ஆடியோ தேர்வை அளித்து, முந்தைய வரியைத் தேர்வு தொடங்கும் இடத்தில் முடிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
     </message>
     <message>
         <source>Load script</source>
