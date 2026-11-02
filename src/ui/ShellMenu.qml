@@ -6,6 +6,8 @@ Menu {
     id: menu
     property string iconRole
     property string help
+    property string shortcutText
+    property string detailText
     onAboutToShow: StatusHelp.menuOpened()
     onAboutToHide: StatusHelp.menuClosed()
     Component.onDestruction: if (visible) StatusHelp.menuClosed()

@@ -49,8 +49,7 @@ KDDWViews.TabBarBase {
         return -1
     }
 
-    // Windows turns Shift+F10 into a context menu request (WM_CONTEXTMENU), never a key press.
-    ContextMenu.onRequested: {
+    MenuKey.onRequested: {
         for (let i = 0; i < tabRepeater.count; ++i) {
             const tab = tabRepeater.itemAt(i)
             if (tab && tab.activeFocus) {

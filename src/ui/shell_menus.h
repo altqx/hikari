@@ -1,6 +1,9 @@
 #pragma once
 
+#include <QCoreApplication>
 #include <QGuiApplication>
+#include <QKeyEvent>
+#include <QKeySequence>
 #include <QObject>
 #include <QQuickItem>
 #include <QtQml/qqmlregistration.h>
@@ -30,6 +33,27 @@ public:
             return false;
         item->stackBefore(next);
         return true;
+    }
+    Q_INVOKABLE QString standardKeyText(int key) const
+    {
+        const QList<QKeySequence> keys = QKeySequence::keyBindings(QKeySequence::StandardKey(key));
+        return keys.isEmpty() ? QString() : keys.first().toString(QKeySequence::NativeText);
+    }
+    // The editor's own key handling runs the row, so a row does what its key does in that field.
+    Q_INVOKABLE void pressKeys(QQuickItem *target, int key) const
+    {
+        const QList<QKeySequence> keys = QKeySequence::keyBindings(QKeySequence::StandardKey(key));
+        if (!target || keys.isEmpty())
+            return;
+        const QKeyCombination combination = keys.first()[0];
+        QKeyEvent press(QEvent::KeyPress, combination.key(), combination.keyboardModifiers());
+        QKeyEvent release(QEvent::KeyRelease, combination.key(), combination.keyboardModifiers());
+        QCoreApplication::sendEvent(target, &press);
+        QCoreApplication::sendEvent(target, &release);
+    }
+    Q_INVOKABLE QString keyText(const QString &portable) const
+    {
+        return QKeySequence(portable, QKeySequence::PortableText).toString(QKeySequence::NativeText);
     }
     Q_INVOKABLE bool shiftHeld() const
     {
