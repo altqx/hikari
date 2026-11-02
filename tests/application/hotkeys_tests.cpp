@@ -269,7 +269,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 254u);
+    ASSERT_EQ(list.rowCount(), 253u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -300,7 +300,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 256u);
+    ASSERT_EQ(more.rowCount(), 255u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -314,13 +314,13 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 253u);
+    EXPECT_EQ(cut.rowCount(), 252u);
     EXPECT_EQ(cut.find("Audio Commit alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 254u);
+    EXPECT_EQ(whole.rowCount(), 253u);
 }
 
 TEST(Hotkeys, FilterModesAndSelection)
@@ -348,7 +348,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     EXPECT_EQ(list.shown().size(), 109u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 254u);
+    EXPECT_EQ(list.shown().size(), 253u);
 }
 
 TEST(Hotkeys, SearchNarrowsTheFilter)
@@ -564,17 +564,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 255u);
-    const auto &added = list.row(254);
+    ASSERT_EQ(list.rowCount(), 254u);
+    const auto &added = list.row(253);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 255u);
-    EXPECT_EQ(list.row(254).accel, "F6");
-    EXPECT_EQ(list.selection(), 254);
+    EXPECT_EQ(list.rowCount(), 254u);
+    EXPECT_EQ(list.row(253).accel, "F6");
+    EXPECT_EQ(list.selection(), 253);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -655,7 +655,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 254u);
+    EXPECT_EQ(third.shown().size(), 253u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -833,6 +833,22 @@ TEST(Hotkeys, RetiredIndexingBindingsAreDropped)
     EXPECT_TRUE(dropRetiredHotkeys(map).empty());
     for (const auto &line : hotkeyLines(map, false))
         EXPECT_EQ(line.find("GLOBAL_VIDEO_INDEXING"), std::string::npos);
+}
+
+TEST(Hotkeys, RetiredFixMinorErrorsBindingsAreDroppedAndTheIdStaysTaken)
+{
+    HotkeyMap map;
+    readHotkeyLines(map, {"GLOBAL_MISSPELLS_REPLACER G=Ctrl-Shift-M", "GLOBAL_SAVE_SUBS G=Ctrl-S"});
+    const int removed = ids().at("GLOBAL_MISSPELLS_REPLACER");
+    EXPECT_EQ(removed, 5012);
+    EXPECT_TRUE(isRetiredHotkey(removed));
+    const auto dropped = dropRetiredHotkeys(map);
+    ASSERT_EQ(dropped.size(), 1u);
+    EXPECT_EQ(dropped[0].second.accel, "Ctrl-Shift-M");
+    EXPECT_EQ(map.size(), 1u);
+    EXPECT_EQ(hotkeyName(removed), "");
+    for (const auto &[symbol, id] : ids())
+        EXPECT_TRUE(id != removed || symbol == "GLOBAL_MISSPELLS_REPLACER") << symbol;
 }
 
 TEST(Hotkeys, RetiredAutomationHotkeysWindowBindingsAreDropped)

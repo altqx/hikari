@@ -112,7 +112,7 @@ public:
     static int frameBucket(double milliseconds);
     static QString osId();
     static QString archId();
-    // "FixMinorErrors" => "fix_minor_errors"; "" for an unknown dock.
+    // "Spellchecker" => "spellchecker"; "" for an unknown dock.
     static QString panelId(const QString &dock);
 
 signals:

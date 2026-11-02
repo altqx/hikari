@@ -461,6 +461,12 @@ QByteArray readAll(const QString &path)
     return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
 }
 
+bool writeBytes(const QString &path, const QByteArray &bytes)
+{
+    QFile f(path);
+    return f.open(QIODevice::WriteOnly) && f.write(bytes) == bytes.size();
+}
+
 template <class Item, class From>
 std::optional<std::vector<Item>> listIn(const QString &path, const ui::ListFormat &format, From from)
 {
@@ -8554,270 +8560,25 @@ private slots:
         QTRY_VERIFY(!saveAs->property("visible").toBool());
     }
 
-    void misspellReplacerFindsReviewsAndReplaces()
-    {
-        const QString path = writeFile(dir, "misspell.ass",
-                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello , world , again\n"
-                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,a  b\n"
-                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,fine\n");
-        QVERIFY(application->openFile(path));
-        auto *session = application->files().session(*application->workspace().editingTarget());
-        auto *root = engine->rootObjects().first();
-        auto *dock = item<QObject>("misspellDock");
-        QVERIFY(dock);
-        QCOMPARE(dock->property("uniqueName").toString(), QStringLiteral("FixMinorErrors"));
-        QVERIFY(!dock->property("isOpen").toBool());
-        QQuickItem *tool = nullptr;
-        QObject *results = nullptr;
-        const auto named = [&](const char *name) { return findItem(tool, QLatin1String(name)); };
-        const auto centre = [](QQuickItem *item) { return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint(); };
-        const auto click = [&](QQuickItem *item) {
-            QVERIFY(item && item->isVisible());
-            QTest::mouseClick(item->window(), Qt::LeftButton, Qt::NoModifier, centre(item));
-        };
-        auto *menuItem = root->findChild<QObject *>(QStringLiteral("misspellMenuItem"));
-        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(dock->property("isOpen").toBool());
-        QTRY_VERIFY((tool = item<QQuickItem>("misspellTool")));
-        results = item<QObject>("misspellResults");
-        QVERIFY(results);
-        QTRY_VERIFY(tool->isVisible() && tool->width() > 0);
-        QTRY_COMPARE(tool->property("rules").toList().size(), 13);
-        const QRectF toolArea = tool->mapRectToScene(QRectF(0, 0, tool->width(), tool->height()));
-        QVERIFY2(toolArea.right() > window->width() - 40, qPrintable(QString::number(toolArea.right())));
-        QVERIFY(toolArea.left() > window->width() / 2.0);
-        QTRY_COMPARE(named("misspellRuleCount")->property("text").toString(), QStringLiteral("0 of 13 rules on"));
-        QQuickItem *check = nullptr;
-        QTRY_VERIFY((check = named("misspellRuleCheck0")));
-        click(check);
-        QTRY_VERIFY(application->misspellRules().at(0).toMap().value(QStringLiteral("checked")).toBool());
-        QTRY_COMPARE(named("misspellRuleCount")->property("text").toString(), QStringLiteral("1 of 13 rules on"));
-        QCOMPARE(named("misspellTabs")->property("currentIndex").toInt(), 0);
-        click(named("misspellFindButton"));
-        QTRY_VERIFY(results->property("shown").toBool());
-        const auto rows = results->property("rows").toList();
-        QCOMPARE(rows.size(), 3);
-        QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath()));
-        QCOMPARE(rows[1].toMap().value(QStringLiteral("line")).toInt(), 1);
-        QCOMPARE(rows[2].toMap().value(QStringLiteral("position")).toInt(), 13);
-        QCOMPARE(named("misspellResultCount")->property("text").toString(), QStringLiteral("2 errors in 1 file"));
-        QCOMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("2 checked"));
-        click(named("misspellRuleCheck2"));
-        QTRY_VERIFY(application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
-        click(named("misspellRuleCheck2"));
-        QTRY_VERIFY(!application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
-        QVERIFY(results->property("shown").toBool());
-        for (const char *button : {"misspellAddRule", "misspellEditRule", "misspellRemoveRule"})
-            QVERIFY2(!named(button)->isEnabled(), button);
-        QQuickItem *fold = nullptr, *firstRow = nullptr, *second = nullptr, *header = nullptr;
-        QTRY_VERIFY((fold = named("misspellResultFold0")));
-        QTRY_VERIFY((firstRow = named("misspellResultRow1")));
-        click(fold);
-        QTRY_VERIFY(!firstRow->isVisible());
-        click(fold);
-        QTRY_VERIFY(firstRow->isVisible());
-        QTRY_VERIFY((header = named("misspellResultCheck0")));
-        QCOMPARE(header->property("checkState").toInt(), int(Qt::Checked));
-        click(header);
-        QTRY_COMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("0 checked"));
-        QVERIFY(!named("misspellReplaceChecked")->isEnabled());
-        click(header);
-        QTRY_COMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("2 checked"));
-        QTRY_VERIFY((second = named("misspellResultCheck2")));
-        click(second);
-        QTRY_VERIFY(!second->property("checked").toBool());
-        QCOMPARE(header->property("checkState").toInt(), int(Qt::PartiallyChecked));
-        auto *findRow = named("misspellResultRow2");
-        QTest::mouseDClick(findRow->window(), Qt::LeftButton, Qt::NoModifier, centre(findRow));
-        QTRY_COMPARE(session->selection().active, std::optional(session->document().lines()[0]->id));
-        QCOMPARE(application->editor().selectionStart(), 13);
-        QCOMPARE(application->editor().selectionEnd(), 15);
-        const auto steps = session->historySize();
-        auto *replace = named("misspellReplaceChecked");
-        click(replace);
-        QTRY_COMPARE(session->historySize(), steps + 1);
-        QCOMPARE(session->history().back().name, std::string("Fixing minor errors"));
-        auto text = [&](std::size_t row) {
-            const auto &t = session->document().lines()[row]->text;
-            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
-        };
-        QCOMPARE(text(0), QStringLiteral("Hello, world , again"));
-        QVERIFY(!replace->isEnabled());
-        click(named("misspellCloseResults"));
-        QTRY_VERIFY(!results->property("shown").toBool());
-        QVERIFY(named("misspellAddRule")->isEnabled());
-        QVERIFY(dock->property("isOpen").toBool());
-        click(named("misspellRuleCheck1"));
-        QTRY_VERIFY(application->misspellRules().at(1).toMap().value(QStringLiteral("checked")).toBool());
-        click(named("misspellReplaceAll"));
-        QTRY_COMPARE(session->historySize(), steps + 2);
-        QCOMPARE(session->history().back().name, std::string("Fixing minor errors"));
-        QCOMPARE(text(0), QStringLiteral("Hello, world, again"));
-        QCOMPARE(text(1), QStringLiteral("a b"));
-        if (!tool->property("editorOpen").toBool())
-            click(named("misspellRuleSection"));
-        QTRY_VERIFY(tool->property("editorOpen").toBool());
-        auto *find = named("misspellFind");
-        QTRY_VERIFY(find->isVisible());
-        find->setProperty("text", QStringLiteral("fine"));
-        named("misspellReplace")->setProperty("text", QStringLiteral("good"));
-        named("misspellCase")->setProperty("currentIndex", 2);
-        named("misspellWhere")->setProperty("currentIndex", 2);
-        named("misspellMatchCase")->setProperty("checked", true);
-        click(named("misspellAddRule"));
-        auto added = application->misspellRules();
-        QCOMPARE(added.size(), 14);
-        QCOMPARE(added.last().toMap().value(QStringLiteral("find")).toString(), QStringLiteral("fine"));
-        QCOMPARE(added.last().toMap().value(QStringLiteral("options")).toInt(), 1 | 2 | 32);
-        QVERIFY(!added.last().toMap().value(QStringLiteral("checked")).toBool());
-        QVERIFY(QMetaObject::invokeMethod(tool, "chooseRule", Q_ARG(QVariant, 13)));
-        QCOMPARE(named("misspellCase")->property("currentIndex").toInt(), 2);
-        QCOMPARE(named("misspellWhere")->property("currentIndex").toInt(), 2);
-        find->setProperty("text", QStringLiteral("fin"));
-        named("misspellCase")->setProperty("currentIndex", 1);
-        click(named("misspellEditRule"));
-        QCOMPARE(application->misspellRules().last().toMap().value(QStringLiteral("find")).toString(), QStringLiteral("fin"));
-        QCOMPARE(application->misspellRules().last().toMap().value(QStringLiteral("options")).toInt(), 1 | 8 | 32);
-        QVariant both;
-        QVERIFY(QMetaObject::invokeMethod(tool, "caseIndexOf", Q_RETURN_ARG(QVariant, both), Q_ARG(QVariant, 2 | 4 | 8)));
-        QCOMPARE(both.toInt(), 1);
-        QVERIFY(QMetaObject::invokeMethod(tool, "caseIndexOf", Q_RETURN_ARG(QVariant, both), Q_ARG(QVariant, 2 | 4)));
-        QCOMPARE(both.toInt(), 2);
-        click(named("misspellRemoveRule"));
-        QCOMPARE(application->misspellRules().size(), 13);
-        QVERIFY(!named("misspellChooseStyles")->isVisible());
-        named("misspellWhichLines")->setProperty("currentIndex", 3);
-        QTRY_VERIFY(named("misspellChooseStyles")->isVisible());
-        named("misspellWhichLines")->setProperty("currentIndex", 0);
-        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(!dock->property("isOpen").toBool());
-    }
-
-    void misspellFindsSelectTheSearchedFieldAndLogInvalidRules()
-    {
-        const QString path = dir.filePath(QStringLiteral("misspell-tl.ass"));
-        {
-            QFile f(path);
-            QVERIFY(f.open(QIODevice::WriteOnly));
-            f.write("[Script Info]\nTLMode: Yes\nTLMode Style: TLmode\n\n[Events]\n"
-                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                    "Dialogue: 0,0:00:01.00,0:00:02.00,TLmode,,0,0,0,,orig  one\n"
-                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,tl  two\n"
-                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,untranslated  three\n");
-        }
-        QVERIFY(application->openFile(path));
-        auto *session = application->files().session(*application->workspace().editingTarget());
-        QVERIFY(application->editor().translationMode());
-        for (int i = 0; i < 13; ++i)
-            application->checkMisspellRule(i, i == 1);
-        const auto rows = application->findMisspells({{QStringLiteral("lines"), 0}}, false);
-        QCOMPARE(rows.size(), 3);
-        QCOMPARE(rows[1].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("tl  two"));
-        QCOMPARE(rows[2].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("untranslated  three"));
-        application->showMisspellFind(1);
-        QCOMPARE(session->selection().active, std::optional(session->document().lines()[1]->id));
-        QCOMPARE(application->editor().selectionRole(), 0);
-        QCOMPARE(application->editor().selectionStart(), 12);
-        QCOMPARE(application->editor().selectionEnd(), 14);
-        application->showMisspellFind(0);
-        QCOMPARE(application->editor().selectionRole(), 1);
-        QCOMPARE(application->editor().selectionStart(), 2);
-        QVERIFY(application->addMisspellRule({{QStringLiteral("find"), QStringLiteral("(")}}));
-        QVERIFY(application->addMisspellRule({{QStringLiteral("find"), QStringLiteral("[a")}}));
-        application->checkMisspellRule(13, true);
-        const QString invalid = QStringLiteral("Invalid regular expression '(': ");
-        (void)application->findMisspells({{QStringLiteral("lines"), 0}}, false);
-        QVERIFY2(application->log().lastMessage().startsWith(invalid), qPrintable(application->log().lastMessage()));
-        application->replaceMisspellFinds({});
-        QVERIFY2(application->log().lastMessage().startsWith(QStringLiteral("Invalid regular expression '[a': ")),
-                 qPrintable(application->log().lastMessage()));
-        application->replaceMisspells({{QStringLiteral("lines"), 0}}, false);
-        QVERIFY2(application->log().lastMessage().startsWith(invalid), qPrintable(application->log().lastMessage()));
-        const auto &line = *session->document().lines()[1];
-        QCOMPARE(std::string(line.text.begin(), line.text.end()), std::string("untranslated three"));
-    }
-
-    void startingLeavesTheRulesFileAlone()
+    void startingLeavesTheRemovedFeaturesRulesAloneAndSaysSo()
     {
         QTemporaryDir home;
-        const QByteArray bytes("#HikariSub rules file\r\n1\r\nnot a rule\r\nMine\fteh\fthe\f1\r\n");
-        QFile rules(home.filePath(QStringLiteral("Rules.txt")));
-        QVERIFY(rules.open(QIODevice::WriteOnly));
-        rules.write(bytes);
-        rules.close();
+        const QByteArray rules("version = 1\n\n[[rule]]\ndescription = \"Mine\"\nfind = \"teh\"\nreplace = \"the\"\n");
+        const QByteArray legacy("#HikariSub rules file\r\n1\r\nMine\fteh\fthe\f1\r\n");
+        QVERIFY(writeBytes(home.filePath(QStringLiteral("rules.toml")), rules));
+        QVERIFY(writeBytes(home.filePath(QStringLiteral("Rules.txt")), legacy));
         restartWithSpelling(home.path(), false);
-        const QString toml = home.filePath(QStringLiteral("rules.toml"));
-        const QByteArray converted = readAll(toml);
-        QVERIFY(converted.startsWith("version = 1\n"));
-        QCOMPARE(readAll(home.filePath(QStringLiteral("Rules.txt.old"))), bytes);
-        QVERIFY(!QFileInfo::exists(home.filePath(QStringLiteral("Rules.txt"))));
-        QCOMPARE(application->log().history().count(QStringLiteral("Rule \"not a rule")), 1);
-        QVERIFY(application->log().history().contains(
-            QStringLiteral("Rules.txt moved to rules.toml. The old file is kept as Rules.txt.old.")));
-        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "defaultLayout"));
-        QTest::qWait(100);
-        QVERIFY(!item<QObject>("misspellDock")->property("isOpen").toBool());
+        const QString removed = QStringLiteral("Fix minor errors was removed. Your rules stay in %1, unused.")
+                                    .arg(QDir::toNativeSeparators(home.filePath(QStringLiteral("rules.toml"))));
+        QCOMPARE(application->log().history().count(removed), 1);
+        QCOMPARE(application->log().warningCount() + application->log().errorCount(), 0);
         delete engine;
         delete application;
         engine = nullptr;
         application = nullptr;
-        QCOMPARE(readAll(toml), converted);
-    }
-
-    void misspellRulesPersist()
-    {
-        QDir().mkpath(dir.filePath(QStringLiteral("rules")));
-        app::Application::Options options;
-        options.settingsFile = dir.filePath(QStringLiteral("rules/hikari.ini"));
-        const QString rulesFile = dir.filePath(QStringLiteral("rules/rules.toml"));
-        {
-            app::Application first(options);
-            QCOMPARE(first.misspellRules().size(), 13);
-            first.checkMisspellRule(2, true);
-            QVERIFY(first.addMisspellRule({{QStringLiteral("description"), QStringLiteral("Mine")},
-                                           {QStringLiteral("find"), QStringLiteral("teh")},
-                                           {QStringLiteral("replace"), QStringLiteral("the")},
-                                           {QStringLiteral("options"), 1}}));
-        }
-        QFile file(rulesFile);
-        QVERIFY(file.open(QIODevice::ReadOnly));
-        const QByteArray bytes = file.readAll();
-        file.close();
-        const auto saved = listIn<application::ReplacerRule>(rulesFile, ui::kRulesFormat, ui::rulesFromToml);
-        QVERIFY(saved);
-        QCOMPARE(saved->size(), std::size_t(14));
-        QVERIFY(std::ranges::count_if(*saved, &application::ReplacerRule::checked) == 1 && (*saved)[2].checked);
-        QVERIFY((saved->back() == application::ReplacerRule{u8"Mine", u8"teh", u8"the", 1, false}));
-        {
-            app::Application second(options);
-            const auto rules = second.misspellRules();
-            QCOMPARE(rules.size(), 14);
-            QVERIFY(rules[2].toMap().value(QStringLiteral("checked")).toBool());
-            QCOMPARE(rules[13].toMap().value(QStringLiteral("options")).toInt(), 1);
-            while (!second.misspellRules().isEmpty())
-                QVERIFY(second.removeMisspellRule(0));
-        }
-        QVERIFY(file.open(QIODevice::ReadOnly));
-        QCOMPARE(file.readAll(), bytes);
-        file.close();
-        const QByteArray polish("Za\xBF\xF3\xB3\xE6 g\xEA\x9Cl\xB9 ja\x9F\xF1. Pchn\xB9\xE6 w t\xEA \xB3\xF3"
-                                "d\x9F je\xBF"
-                                "a lub o\x9Cm skrzy\xF1 fig.");
-        QVERIFY(QFile::remove(rulesFile));
-        file.setFileName(dir.filePath(QStringLiteral("rules/Rules.txt")));
-        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-        file.write("#HikariSub rules file\r\n1|1\r\n" + polish + "\fabc\fd\f0\r\n" + polish + "\fdef\fg\f0\r\n");
-        file.close();
-        {
-            app::Application third(options);
-            const auto rules = third.misspellRules();
-            QCOMPARE(rules.size(), 2);
-            QCOMPARE(rules[0].toMap().value(QStringLiteral("find")).toString(), QStringLiteral("abc"));
-            QCOMPARE(rules[0].toMap().value(QStringLiteral("description")).toString(),
-                     QString::fromUtf8("Zażółć gęślą jaźń. Pchnąć w tę łódź jeża lub ośm skrzyń fig."));
-            QVERIFY(rules[0].toMap().value(QStringLiteral("checked")).toBool());
-            QVERIFY(rules[1].toMap().value(QStringLiteral("checked")).toBool());
-        }
+        QCOMPARE(readAll(home.filePath(QStringLiteral("rules.toml"))), rules);
+        QCOMPARE(readAll(home.filePath(QStringLiteral("Rules.txt"))), legacy);
+        QVERIFY(!QFileInfo::exists(home.filePath(QStringLiteral("Rules.txt.old"))));
     }
 
     void matroskaSubtitlesLoadIntoTheTab()
@@ -11692,17 +11453,6 @@ private slots:
                                     {QStringLiteral("mode"), 0}, {QStringLiteral("action"), 0}},
                                    false),
                      QStringLiteral("1 lines selected."));
-            for (int i = 0; i < a.misspellRules().size(); ++i)
-                a.checkMisspellRule(i, false);
-            QVERIFY(a.addMisspellRule({{QStringLiteral("find"), QString::fromUtf8("ąb")},
-                                       {QStringLiteral("replace"), QStringLiteral("xy")}, {QStringLiteral("options"), 0}}));
-            QVERIFY(a.addMisspellRule({{QStringLiteral("find"), QString::fromUtf8("żółw")},
-                                       {QStringLiteral("replace"), QString::fromUtf8("żółw")}, {QStringLiteral("options"), 4}}));
-            const int rules = int(a.misspellRules().size());
-            a.checkMisspellRule(rules - 2, true);
-            a.checkMisspellRule(rules - 1, true);
-            a.replaceMisspells({{QStringLiteral("lines"), 0}}, false);
-            QCOMPARE(text(), QString::fromUtf8("Xy ŻÓŁW ŁÓDŹ"));
             QStringList questions;
             a.setFindQuestionHandler([&](int, const QString &q) {
                 questions << q;
@@ -11715,7 +11465,7 @@ private slots:
             QCOMPARE(questions.back(), QStringLiteral("Replaced 1 times."));
             replace[QStringLiteral("regex")] = true;
             a.runFindReplace(QStringLiteral("replaceAll"), replace);
-            QCOMPARE(text(), QString::fromUtf8("Xy ŻÓŁW x"));
+            QCOMPARE(text(), QString::fromUtf8("Ąb żółw x"));
         }
     }
 
@@ -13540,26 +13290,6 @@ private slots:
             press(Qt::Key_Escape);
             QTRY_VERIFY(!popover->property("opened").toBool());
         });
-
-        auto *dock = item<QObject>("misspellDock");
-        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
-        QTRY_VERIFY(dock->property("isOpen").toBool());
-        QQuickItem *tool = nullptr;
-        QTRY_VERIFY((tool = item<QQuickItem>("misspellTool")));
-        auto *results = item<QObject>("misspellResults");
-        application->checkMisspellRule(0, true);
-        application->checkMisspellRule(1, true);
-        QVERIFY(QMetaObject::invokeMethod(tool, "reloadRules"));
-        QVERIFY(QMetaObject::invokeMethod(tool, "chooseRule", Q_ARG(QVariant, 0)));
-        themed([&](const QString &theme) { save(window, QStringLiteral("fix-minor-errors"), theme); });
-        QVERIFY(QMetaObject::invokeMethod(tool, "find"));
-        QTRY_VERIFY(results->property("shown").toBool());
-        themed([&](const QString &theme) { save(window, QStringLiteral("fix-minor-errors-results"), theme); });
-        QVERIFY(QMetaObject::invokeMethod(results, "close"));
-        application->checkMisspellRule(0, false);
-        application->checkMisspellRule(1, false);
-        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
-        QTRY_VERIFY(!dock->property("isOpen").toBool());
 
         auto *toasts = item<QObject>("toastStack");
         themed([&](const QString &theme) {
@@ -16381,38 +16111,15 @@ private slots:
         QCOMPARE(settings.list("find.recentFinds"), (QStringList{QStringLiteral("beta"), QStringLiteral("alpha")}));
         QVERIFY(!settings.contains("find.recentReplacements"));
 
-        auto *root = engine->rootObjects().first();
-        auto *misspellDock = item<QObject>("misspellDock");
-        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(misspellDock))));
-        QTRY_VERIFY(misspellDock->property("isOpen").toBool());
-        QObject *misspell = nullptr;
-        QTRY_VERIFY((misspell = item<QObject>("misspellTool")));
-        QTRY_COMPARE(misspell->property("rules").toList().size(), 13);
-        item<QObject>("misspellFind")->setProperty("text", QStringLiteral("typed"));
-        QVERIFY(application->addMisspellRule({{QStringLiteral("description"), QStringLiteral("Owner rule")},
-                                              {QStringLiteral("find"), QStringLiteral("zz")},
-                                              {QStringLiteral("replace"), QStringLiteral("z")},
-                                              {QStringLiteral("options"), 0}}));
-        const QString rules = home.filePath(QStringLiteral("rules.toml"));
-        QVERIFY(!QFile::exists(rules));
-
         matchCase->setProperty("checked", false);
         application->applySettings({}, true);
         QSignalSpy findDestroyed(application, &app::Application::findReplaceDestroyed);
-        QSignalSpy misspellDestroyed(application, &app::Application::misspellReplacerDestroyed);
         application->applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
         QCOMPARE(findDestroyed.count(), 1);
-        QCOMPARE(misspellDestroyed.count(), 1);
         QVERIFY(settings.contains("find.options"));
         QCOMPARE(settings.integer("find.options") & 1, 0);
         QTRY_VERIFY(!dock->property("isOpen").toBool());
         QVERIFY(!tool->property("opened").toBool());
-        QVERIFY(misspellDock->property("isOpen").toBool());
-        QTRY_COMPARE(item<QObject>("misspellFind")->property("text").toString(), QString());
-        QCOMPARE(misspell->property("rules").toList().size(), 14);
-        QVERIFY(QFile::exists(rules));
-        QVERIFY(application->misspellRules().last().toMap().value(QStringLiteral("description")).toString()
-                == QStringLiteral("Owner rule"));
         press(Qt::Key_F, Qt::ControlModifier);
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QVERIFY(tool->property("finds").toStringList().isEmpty());
@@ -18099,7 +17806,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 254);
+        QCOMPARE(hotkeyRows().size(), 253);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

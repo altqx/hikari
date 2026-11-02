@@ -230,8 +230,6 @@ ApplicationWindow {
         automationDock.close()
         stylesDock.close()
         templateDock.close()
-        dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
-        misspellDock.close()
     }
 
     function typesettingLayout() {
@@ -355,9 +353,9 @@ ApplicationWindow {
 
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                           timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
-                                          misspellPanel, templatePanel]
+                                          templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
+                                     searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
     WheelScroll {}
     KeyRouter {
         id: keyRouter
@@ -531,12 +529,6 @@ ApplicationWindow {
     function panelAvailable(dock) {
         return dock !== originalDock || root.editor.translationMode
     }
-    function toggleMisspellPanel() {
-        if (misspellDock.isOpen)
-            misspellDock.close()
-        else
-            root.showPanel(misspellDock)
-    }
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
@@ -549,8 +541,6 @@ ApplicationWindow {
             root.addSpellChecker()
         else if (dock === stylesDock && !Docking.hasPlace("Styles"))
             root.addStyles()
-        else if (dock === misspellDock && !Docking.hasPlace("FixMinorErrors"))
-            dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         else if (dock === templateDock && !Docking.hasPlace("Template"))
             root.addTemplate()
         else
@@ -1387,17 +1377,6 @@ ApplicationWindow {
                     text: qsTr("&History")
                     enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.open()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_MISSPELLS_REPLACER"
-                help: qsTr("Shows or hides the Fix minor errors panel")
-                iconRole: "multireplace"
-                objectName: "misspellMenuItem"
-                action: Action {
-                    id: misspellAction
-                    text: qsTr("Fix minor errors (experimental)")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) root.toggleMisspellPanel()
                 }
             }
             ShellMenuItem {
@@ -5472,38 +5451,6 @@ ApplicationWindow {
                 }
             }
         }
-        KDDW.DockWidget {
-            id: misspellDock
-            objectName: "misspellDock"
-            uniqueName: "FixMinorErrors"
-            title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-            // MUST KILL: deferred because the default arrangement opens the panel and closes it at once
-            onIsOpenChanged: if (isOpen) Qt.callLater(misspellDock.reloadIfOpen)
-            function reloadIfOpen() {
-                if (misspellDock.isOpen)
-                    misspellTool.reloadRules()
-            }
-            Panel {
-                id: misspellPanel
-                objectName: "misspellPanel"
-                dockName: "FixMinorErrors"
-                minimumBodySize: misspellTool.minimumSize
-                anchors.fill: parent
-                title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-                FixMinorErrors {
-                    id: misspellTool
-                    anchors.fill: parent
-                    app: root.app
-                    Connections {
-                        target: root.app
-                        function onMisspellReplacerDestroyed() {
-                            misspellTool.reset()
-                            misspellDock.reloadIfOpen()
-                        }
-                    }
-                }
-            }
-        }
 
         Component.onCompleted: {
             Docking.setPanelHeader("Grid", true, null)
@@ -6856,7 +6803,7 @@ ApplicationWindow {
         GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
         GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
         GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,
-        GLOBAL_FIND_NEXT: findNextAction, GLOBAL_MISSPELLS_REPLACER: misspellAction,
+        GLOBAL_FIND_NEXT: findNextAction,
         GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,

@@ -186,16 +186,6 @@ template <class Item> std::optional<ParseFailure> failureOf(const ListRead<Item>
     return std::nullopt;
 }
 
-struct RuleOption {
-    std::string_view key;
-    int bit;
-};
-constexpr RuleOption kRuleOptions[] = {
-    {"matchCase", application::kReplacerMatchCase},   {"lowerCase", application::kReplacerLowerCase},
-    {"upperCase", application::kReplacerUpperCase},   {"keepCase", application::kReplacerUnchangedCase},
-    {"onlyInTags", application::kReplacerOnlyTags}, {"onlyInText", application::kReplacerOnlyText},
-};
-
 constexpr std::string_view kFromCursor[] = {"widthAndHeight", "keepAspectRatio", "widthOnly"};
 constexpr std::string_view kScaling[] = {"points", "scale"};
 
@@ -213,44 +203,6 @@ std::string listFileText(const ListFormat &format, toml::array items)
     toml::table table;
     table.insert(format.array, std::move(items));
     return formatTomlFile(table, ListFile::kVersion);
-}
-
-const ListFormat kRulesFormat{"rule",
-                              "description",
-                              {"description", "find", "replace", "enabled", "matchCase", "lowerCase", "upperCase",
-                               "keepCase", "onlyInTags", "onlyInText"},
-                              [](const toml::array &items) { return failureOf(rulesFromToml(items)); }};
-
-ListRead<application::ReplacerRule> rulesFromToml(const toml::array &items)
-{
-    return readItems<application::ReplacerRule>(items, "rule", [](Fields &f) {
-        application::ReplacerRule rule;
-        rule.description = u8(f.text("description"));
-        rule.find = u8(f.text("find"));
-        rule.replace = u8(f.text("replace"));
-        rule.checked = f.flag("enabled");
-        for (const auto &option : kRuleOptions)
-            if (f.flag(option.key))
-                rule.options |= option.bit;
-        return rule;
-    });
-}
-
-toml::array rulesToToml(const std::vector<application::ReplacerRule> &rules)
-{
-    toml::array out;
-    for (const auto &rule : rules) {
-        toml::table item;
-        item.insert("description", utf8(rule.description));
-        item.insert("find", utf8(rule.find));
-        item.insert("replace", utf8(rule.replace));
-        item.insert("enabled", rule.checked);
-        for (const auto &option : kRuleOptions)
-            if (rule.options & option.bit)
-                item.insert(option.key, true);
-        out.push_back(std::move(item));
-    }
-    return out;
 }
 
 const ListFormat kShapesFormat{"shape",

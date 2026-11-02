@@ -344,38 +344,6 @@
     </message>
 </context>
 <context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>%1 of %n rule on</numerusform>
-            <numerusform>%1 of %n rules on</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>%n error</numerusform>
-            <numerusform>%n errors</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>in %n file</numerusform>
-            <numerusform>in %n files</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>%n checked</numerusform>
-            <numerusform>%n checked</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
         <source>%n rules</source>

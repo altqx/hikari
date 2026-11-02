@@ -176,7 +176,6 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open new tab"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close current tab"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Clean styles of ASS file"),
-    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Fix minor errors (experimental)"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Find next"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Load last session"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next frame"),

@@ -234,7 +234,7 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Automation | Load script… (automation), Refresh autoload scripts (refresh), Shortcuts in Settings… (hotkeys), Clear runs (remove) |
 | Spellchecker | [x] Ignore comments, [x] Ignore words in capitals, Words added to dictionary… (dictionary) |
 | Grid | [x] Fold generated lines |
-| Audio, Line editor, Original text, Search, Log, Styles, Fix minor errors, Shift times, Template editor | none |
+| Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
 
 Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), Close (tab-close), or "Close reference" for the Reference panel.
 
@@ -446,7 +446,7 @@ These are menus behind toolbar or field buttons, not right-click or ⋯ menus:
 
 - The colour buttons in the Line editor strip (`LineEditorStrip.qml:131-135`) and the Style manager's colour fields (`StyleManager.qml:981-984`) open the colour picker in dropper mode. Nothing on screen says so. Settings can swap the clicks (`Main.qml:6686`).
 - In the Audio display, a right-click sets the line's end time (`audio_display_item.cpp:423`). Aegisub does the same (`audio_display.cpp:1105-1110`).
-- Log, Search, Spellchecker, Fix minor errors, Shift times, Template editor list, Style manager list and Automation script header: no right-click handler (there is no `RightButton` in `LogPanel.qml`, `SearchTool.qml`, `SpellCheckerPanel.qml`, `FixMinorErrors.qml`, `ShiftTimesPanel.qml` or `TemplateEditor.qml`). **missing-expected**: Copy, Go to line or Replace on result rows.
+- Log, Search, Spellchecker, Shift times, Template editor list, Style manager list and Automation script header: no right-click handler (there is no `RightButton` in `LogPanel.qml`, `SearchTool.qml`, `SpellCheckerPanel.qml`, `FixMinorErrors.qml`, `ShiftTimesPanel.qml` or `TemplateEditor.qml`). **missing-expected**: Copy, Go to line or Replace on result rows.
 - Log entry text is a read-only `TextEdit` (`LogPanel.qml:196-199`). It is not a Control, so it gets no Fusion menu either. You can select text but can't copy it by mouse; the panel has a Copy button for all shown entries (`LogPanel.qml:109-112`).
 
 ---

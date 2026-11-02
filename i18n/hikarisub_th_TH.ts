@@ -4928,6 +4928,10 @@ What would you like to do?</source>
         <translation>นำปุ่มลัด %1 ของ &quot;เปิดหน้าต่างกำหนดปุ่มลัด&quot; ออกแล้ว เนื่องจากไม่มีหน้าต่างนี้แล้ว และปุ่มลัดของแต่ละแมโครกำหนดได้ในแผงสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Fix minor errors (experimental)&quot; was removed: the feature is removed.</source>
+        <translation>นำปุ่มลัด %1 ของ &quot;แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)&quot; ออกแล้ว เนื่องจากนำคุณลักษณะนี้ออกแล้ว</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>นำปุ่มลัด %1 ของ &quot;เปิดเสียงเปล่ายาว 2:30 ชั่วโมง&quot; ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจำลองมีเสียงเงียบมาในตัว</translation>
     </message>
@@ -5550,10 +5554,6 @@ What would you like to do?</source>
     <message>
         <source>Clean styles of ASS file</source>
         <translation>ล้างสไตล์ในไฟล์ ASS</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -6516,14 +6516,6 @@ What would you like to do?</source>
     <message>
         <source>&amp;History</source>
         <translation>&amp;ประวัติ</translation>
-    </message>
-    <message>
-        <source>Shows or hides the Fix minor errors panel</source>
-        <translation>แสดงหรือซ่อนแผงแก้ไขข้อผิดพลาดเล็กน้อย</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)</translation>
     </message>
     <message>
         <source>Select &amp;lines</source>
@@ -7685,6 +7677,10 @@ What would you like to do?</source>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
     </message>
+    <message>
+        <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
+        <translation>นำแก้ไขข้อผิดพลาดเล็กน้อยออกแล้ว กฎของคุณยังอยู่ใน %1 แต่ไม่ได้ใช้งาน</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -7739,266 +7735,6 @@ What would you like to do?</source>
     <message>
         <source>Indexing error occurred: %1</source>
         <translation>เกิดข้อผิดพลาดขณะสร้างดัชนี: %1</translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message>
-        <source>Fix minor errors</source>
-        <translation>แก้ไขข้อผิดพลาดเล็กน้อย</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when the find results window is open</source>
-        <translation>ไม่สามารถเปลี่ยนกฎ
-ขณะที่หน้าต่างผลลัพธ์การค้นหาเปิดอยู่</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-because it was edited.</source>
-        <translation>ไม่สามารถแทนที่บรรทัด %1 ได้
-เนื่องจากถูกแก้ไข</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
-        <translation>ไม่สามารถแทนที่ &quot;%1&quot; ด้วย &quot;%2&quot; โดยใช้กฎ &quot;%3&quot; ในบรรทัด %4</translation>
-    </message>
-    <message>
-        <source>Rule description</source>
-        <translation>คำอธิบายกฎ</translation>
-    </message>
-    <message>
-        <source>Replace phrase</source>
-        <translation>แทนที่นิพจน์</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation>ตัวพิมพ์</translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation>ตามข้อความที่พบ</translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation>ไม่เปลี่ยน</translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation>ตัวพิมพ์เล็ก</translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation>ตัวพิมพ์ใหญ่</translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation>ตัวพิมพ์ของข้อความแทนที่</translation>
-    </message>
-    <message>
-        <source>Match case</source>
-        <translation>ตรงตามตัวพิมพ์ใหญ่-เล็ก</translation>
-    </message>
-    <message>
-        <source>Rules</source>
-        <translation>กฎ</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>บรรทัดใด</translation>
-    </message>
-    <message>
-        <source>All lines</source>
-        <translation>บรรทัดทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation>บรรทัด</translation>
-    </message>
-    <message>
-        <source>Selected lines</source>
-        <translation>บรรทัดที่เลือก</translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation>บรรทัดที่เลือกเป็นต้นไป</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation>ตามสไตล์ที่เลือก</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>เลือกสไตล์</translation>
-    </message>
-    <message>
-        <source>Update rule</source>
-        <translation>อัปเดตกฎ</translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation>กฎ</translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation>ค้นหา → แทนที่</translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation>(ไม่มี)</translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation>ขยายอยู่</translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation>ยุบอยู่</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation>ชื่อ</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation>ค้นหา</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation>นิพจน์ทั่วไป</translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation>วลีที่ค้นหา (นิพจน์ทั่วไป)</translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation>ใน</translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation>ข้อความและแท็ก</translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation>แท็กเท่านั้น</translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation>ข้อความเท่านั้น</translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation>แทนที่ใน</translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation>แท็บนี้</translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation>ทุกแท็บ</translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation>แท็บที่จะค้นหา</translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation>แทนที่ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation>ผลลัพธ์</translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation>ข้อผิดพลาด 1 รายการ</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>เลือกไว้ %n รายการ</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation>ใน 1 ไฟล์</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>เลือกทั้งหมด</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>ไม่เลือกทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation>ปิดผลลัพธ์</translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation>บรรทัด %1</translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation>แสดงสิ่งที่พบ</translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation>ซ่อนสิ่งที่พบ</translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation>แทนที่รายการที่เลือก</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>สไตล์</translation>
-    </message>
-    <message>
-        <source>Add rule</source>
-        <translation>เพิ่มกฎ</translation>
-    </message>
-    <message>
-        <source>Delete rule</source>
-        <translation>ลบกฎ</translation>
-    </message>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>เปิดกฎอยู่ %1 จาก %n</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>ข้อผิดพลาด %n รายการ</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>ใน %n ไฟล์</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>ผลการค้นหา</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>บรรทัด %1: </translation>
-    </message>
-    <message>
-        <source>Replace</source>
-        <translation>แทนที่</translation>
-    </message>
-    <message>
-        <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation>กฎ &quot;%1&quot; ไม่ถูกต้อง</translation>
     </message>
 </context>
 <context>

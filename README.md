@@ -111,7 +111,7 @@ This is HikariSub 0.1, on the `main` branch. The wxWidgets app it replaces, [Hik
 - A subtitle grid with filters, groups, sorting, hidden columns, joins and splits.
 - A line editor with tag highlighting, a tag button strip, and characters-per-second and line-length counters.
 - Styles panel and style manager with style catalogs and a live preview.
-- Find and replace, select lines, fix minor errors, resample and ASS properties.
+- Find and replace, select lines, resample and ASS properties.
 - Subtitle comparison and a reference document.
 - Hunspell spellchecking.
 - Font collector and font catalogs.

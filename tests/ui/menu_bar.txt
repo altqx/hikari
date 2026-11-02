@@ -40,7 +40,6 @@ Edit > Sort selected lines > Effect [GLOBAL_SORT_SELECTED_BY_EFFECT]
 Edit > Sort selected lines > Layer [GLOBAL_SORT_SELECTED_BY_LAYER]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
-Edit > Fix minor errors (experimental) [GLOBAL_MISSPELLS_REPLACER]
 Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
 Edit > Find and replace [GLOBAL_FIND_REPLACE]
 Edit > Find [GLOBAL_SEARCH]
@@ -131,7 +130,6 @@ View > Panels > Automation >
 View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
-View > Panels > Fix minor errors >
 View > Panels > Template editor >
 View > Move panel…
 View > Restore the previous layout

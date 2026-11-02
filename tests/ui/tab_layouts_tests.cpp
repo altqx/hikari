@@ -351,9 +351,9 @@ private slots:
         int closedShown = 0;
         for (const char *dock : {"videoDock", "audioDock", "editorDock", "gridDock", "referenceDock", "timingDock",
                                  "searchDock", "automationDock", "originalDock", "logDock", "spellDock", "stylesDock",
-                                 "misspellDock", "templateDock"})
+                                 "templateDock"})
             closedShown += isOpen(dock) ? 0 : 1;
-        QVERIFY(closedShown < 13);
+        QVERIFY(closedShown < 12);
         window()->close();
         QTRY_VERIFY(!window()->isVisible());
         const auto session = readSession(application->lastSessionPath());
