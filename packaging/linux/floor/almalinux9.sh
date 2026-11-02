@@ -29,7 +29,7 @@ pkgs="gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-binutils
 # (Qt Multimedia needs libpulse; PortAudio needs ALSA).
 pkgs="$pkgs alsa-lib-devel pulseaudio-libs pulseaudio-libs-devel
       mesa-libGL-devel mesa-libEGL-devel libglvnd-devel libxkbcommon-devel libxkbcommon-x11
-      wayland-devel fontconfig freetype dbus-libs
+      wayland-devel fontconfig freetype dbus-libs libsecret-devel
       libX11-devel libXext libXrandr libdrm
       xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-renderutil xcb-util-image
       libxcb libSM libICE"

@@ -1,0 +1,8 @@
+{"call": "documents.list", "as": "plugin", "result": {"documents": [{"document": 1, "editingTarget": true}]}}
+{"call": "lines.list", "as": "plugin", "params": {"fields": []}, "result": {"total": 3}}
+{"call": "lines.list", "as": "plugin", "params": {"document": 1, "fields": []}, "result": {"total": 3}}
+{"call": "lines.list", "as": "plugin", "params": {"document": 2}, "error": "not_granted", "errorData": {"document": 2}}
+{"call": "selection.get", "as": "plugin", "params": {"document": 2}, "error": "not_granted"}
+{"call": "documents.get", "as": "plugin", "params": {"document": 9}, "error": "not_granted"}
+{"call": "documents.get", "params": {"document": 9}, "error": "not_found", "errorData": {"document": 9}}
+{"call": "commands.list", "as": "plugin", "result": {"commands": [{"command": "GLOBAL_SAVE_SUBS"}, {"command": "GLOBAL_UNDO"}]}}

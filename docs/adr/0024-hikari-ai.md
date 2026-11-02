@@ -20,6 +20,8 @@ On 2026-10-28 altqx settled Hikari AI in the wave-8 grilling session ([#410](htt
 - **Anthropic** through API keys. Claude subscriptions come through the ACP Claude Agent; we ask Anthropic before advertising that path.
 - **The Claude Agent SDK isn't embedded.**
 - **OpenRouter** through PKCE, **OpenAI and Anthropic** through keys, and **custom OpenAI-compatible endpoints**.
+- **Google Gemini** through Gemini API keys from Google AI Studio, on a native Gemini adapter (added by altqx on 2026-11-02, [AI18 #639](https://github.com/altqx/hikari/issues/639)). Vertex AI is not included.
+- **Prompt caching** on the user's provider: a stable prefix and each provider's own caching, with cached tokens in usage and cost. There is no local response cache (added by altqx on 2026-11-02, [AI19 #640](https://github.com/altqx/hikari/issues/640)).
 - **Keys** live in the OS keychain through QtKeychain, never in settings files or logs ([AI5 #433](https://github.com/altqx/hikari/issues/433)).
 - **Per-role models:** chat, translator, reviewer, vision and judge.
 
