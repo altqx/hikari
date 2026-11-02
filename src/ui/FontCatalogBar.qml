@@ -86,7 +86,7 @@ RowLayout {
         Layout.fillWidth: true
         model: bar.choices
         displayText: bar.staleText !== "" ? bar.staleText : currentText
-        Accessible.name: qsTr("Font catalogs")
+        Accessible.name: qsTr("Font catalogues")
         onActivated: {
             bar.staleText = ""
             bar.changeCatalog(false)

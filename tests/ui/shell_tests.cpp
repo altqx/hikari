@@ -1813,7 +1813,7 @@ private slots:
         QVERIFY(!QTest::currentTestFailed());
         QCOMPARE(shown, QStringLiteral("010"));
         QCOMPARE(application->settingsStore()->integer("textEditor.tagListOptions"), 5);
-        QCOMPARE(list->rows().first(), QStringLiteral("1a - Transparency of primary color"));
+        QCOMPARE(list->rows().first(), QStringLiteral("1a - Transparency of primary colour"));
         QCOMPARE(checkedItems(), QStringLiteral("110"));
         const QPoint row2 = pointer->mapToScene(QPointF(10, rowHeight * 2.5)).toPoint();
         QTest::mouseMove(window, row2 - QPoint(0, 1));
@@ -3172,7 +3172,7 @@ private slots:
         QCOMPARE(shown(), all);
         QCOMPARE(in("fontPickerList")->property("currentIndex").toInt(), 3);
         QCOMPARE(in("fontPickerCount")->property("text").toString(), QStringLiteral("5 fonts"));
-        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B"}));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalogue", "A", "B"}));
         QString verdanaNote;
         auto *rows = in("fontPickerList")->property("contentItem").value<QQuickItem *>();
         for (QQuickItem *row : rows->childItems())
@@ -3190,7 +3190,7 @@ private slots:
         for (QQuickItem *entry : menuItems(menu))
             if (entry && entry->objectName() == QLatin1String("fontPickerCatalogItem"))
                 sizes << entry->property("text").toString() + QLatin1Char(' ') + entry->property("detailText").toString();
-        QCOMPARE(sizes, (QStringList{"All fonts 5", "Without catalog 2", "A 3", "B 1"}));
+        QCOMPARE(sizes, (QStringList{"All fonts 5", "Without catalogue 2", "A 3", "B 1"}));
         QVERIFY(menuEntry(menu, QStringLiteral("fontPickerCatalogManage")));
         QVERIFY(QMetaObject::invokeMethod(menuEntry(menu, QStringLiteral("fontPickerCatalogItem"), QStringLiteral("A")), "triggered"));
         QTRY_VERIFY(!menu->property("visible").toBool());
@@ -3380,7 +3380,7 @@ private slots:
         QVERIFY(picker);
         QCOMPARE(picker->property("sampleText").toString(), QString());
         QCOMPARE(picker->property("resolvedFor").toString(), QStringLiteral("日本"));
-        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog"}));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalogue"}));
         QCOMPARE(picker->property("choice").toInt(), 0);
         QCOMPARE(picker->property("listed").toStringList().size(), picker->property("total").toInt());
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
@@ -3876,7 +3876,7 @@ private slots:
         QTRY_VERIFY(review->property("visible").toBool());
         QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogues"));
         QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogues in “more-catalogs.txt” already exist."));
-        QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalog"));
+        QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalogue"));
         const QVariantList rows = review->property("rows").toList();
         QCOMPARE(rows.size(), 1);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("a"));
@@ -4025,7 +4025,7 @@ private slots:
         }
         auto *picker = openFontPicker(fontAss("end-none.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
         QVERIFY(picker);
-        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A"}));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalogue", "A"}));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         application->fontCatalogs().waitResolved();
         restartWith(options);
@@ -4124,7 +4124,7 @@ private slots:
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "Mine"}));
         QCOMPARE(catalogs.catalogsOf(QStringLiteral("Impact")), (QStringList{"A", "B", "Mine"}));
         QVERIFY(lastNotice().startsWith(QStringLiteral("Add fonts from subtitles|Added 2 fonts to “Mine”|")));
-        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B", "Mine"}));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalogue", "A", "B", "Mine"}));
         QCOMPARE(picker->property("choice").toInt(), 4);
         QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Impact", "Tahoma"}));
 
@@ -4423,7 +4423,7 @@ private slots:
         QTRY_VERIFY(box->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("delete"))));
         QVERIFY(QMetaObject::invokeMethod(window, "reject"));
-        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A"}));
+        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalogue", "A"}));
         QCOMPARE(choice->property("currentIndex").toInt(), 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
         QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
@@ -7261,7 +7261,7 @@ private slots:
         auto fresh = styles.beginNew(false);
         QCOMPARE(fresh.value(QStringLiteral("name")).toString(), QStringLiteral("New Style"));
         fresh.insert(QStringLiteral("name"), QStringLiteral("Default"));
-        QCOMPARE(styles.commitEdit(fresh, {}, false, false), QStringLiteral("Style named \"Default\" already exists."));
+        QCOMPARE(styles.commitEdit(fresh, {}, false, false), QStringLiteral("Style named “Default” already exists."));
         styles.endEdit();
         QVERIFY(styles.createCatalog(QStringLiteral("Show")));
         QCOMPARE(styles.transferClashes(true, {1}), QVariantList());
@@ -8372,8 +8372,12 @@ private slots:
         for (const char *name : {"Qt", "KDDockWidgets", "FFmpeg", "FFMS2", "libass", "Hunspell", "LuaJIT", "ICU", "Boost"})
             QVERIFY2(names.contains(QLatin1String(name)), name);
         QVERIFY(!names.contains(QStringLiteral("Aegisub")));
-        QCOMPARE(credits->property("sources").toList().value(0).toStringList(),
-                 (QStringList{QStringLiteral("Aegisub"), QStringLiteral("Aegisub contributors"), QStringLiteral("BSD 3-Clause")}));
+        const QVariantList sourceRows = credits->property("sources").toList();
+        QCOMPARE(sourceRows.value(0).toStringList(), (QStringList{QStringLiteral("Aegisub"), QStringLiteral("Aegisub contributors"),
+                                                                  QStringLiteral("BSD 3-Clause and ISC")}));
+        QCOMPARE(sourceRows.value(1).toStringList(),
+                 (QStringList{QStringLiteral("Aegisub, arch1t3cht's fork"), QStringLiteral("arch1t3cht and Aegisub contributors"),
+                              QStringLiteral("BSD 3-Clause")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
         QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
@@ -8402,7 +8406,7 @@ private slots:
         QVERIFY(list->property("contentHeight").toReal() > list->height());
         QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
         QVERIFY(sources);
-        QCOMPARE(sources->childItems().size(), 2);
+        QCOMPARE(sources->childItems().size(), 3);
         QVERIFY(sources->childItems().first()->height() > 0);
         QVERIFY(sources->parentItem()->height() >= sources->y() + sources->height());
         QVERIFY(QMetaObject::invokeMethod(about, "open"));
@@ -9470,7 +9474,7 @@ private slots:
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
         const QString checked = collector.logText();
-        QVERIFY2(checked.startsWith(QStringLiteral("Font named \"Extract Sans.ttf\".\nFont named \"Extract Serif.otf\".\n"
+        QVERIFY2(checked.startsWith(QStringLiteral("Font named “Extract Sans.ttf”.\nFont named “Extract Serif.otf”.\n"
                                                    "\nFinished in 00:00:")),
                  qPrintable(checked));
         QVERIFY2(!checked.contains(QStringLiteral("Ready to")) && !checked.contains(QStringLiteral("Cannot create folder.")),
@@ -9496,16 +9500,16 @@ private slots:
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
         const QString sep = QDir::separator();
-        QCOMPARE(collector.logText(), QStringLiteral("Font named \"Extract Sans.ttf\".\nFont named \"Extract Serif.otf\".\n"
-                                                     "\nReady to copy 2 fonts to \"%1\".\n")
+        QCOMPARE(collector.logText(), QStringLiteral("Font named “Extract Sans.ttf”.\nFont named “Extract Serif.otf”.\n"
+                                                     "\nReady to copy 2 fonts to “%1”.\n")
                                           .arg(folder + sep));
         QVERIFY(!QFileInfo::exists(folder));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorApply"), "click"));
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
         const QString log = collector.logText();
-        QVERIFY2(log.startsWith(QStringLiteral("Saved a font named \"Extract Sans.ttf\".\n \n"
-                                               "Saved a font named \"Extract Serif.otf\".\n \n"
+        QVERIFY2(log.startsWith(QStringLiteral("Saved a font named “Extract Sans.ttf”.\n \n"
+                                               "Saved a font named “Extract Serif.otf”.\n \n"
                                                "Completed successfully and copied 2 fonts.\nFinished in 00:00:")),
                  qPrintable(log));
         const auto fonts = mkvfixture::mkvExtractFonts();
@@ -9531,7 +9535,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
-        QVERIFY(collector.logText().endsWith(QStringLiteral("Ready to add 2 fonts to the archive \"%1\".\n").arg(archive)));
+        QVERIFY(collector.logText().endsWith(QStringLiteral("Ready to add 2 fonts to the archive “%1”.\n").arg(archive)));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorApply"), "click"));
         QVERIFY(collector.waitIdle());
         QFile zip(archive);
@@ -9613,9 +9617,9 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
         QVERIFY(collector.waitIdle());
         const QString check = collector.logText();
-        QVERIFY2(check.startsWith(QStringLiteral("Found font \"Arial\"\nIn styles:\n - Default tabs: 1\n\n"
-                                                 "Found font \"Times\"\nIn lines: 2\n\n"
-                                                 "Font not found \"Nowhere\".\nIn styles:\n - Sign tabs: 1\n\n")),
+        QVERIFY2(check.startsWith(QStringLiteral("Found font “Arial”\nIn styles:\n - Default tabs: 1\n\n"
+                                                 "Found font “Times”\nIn lines: 2\n\n"
+                                                 "Font not found “Nowhere”.\nIn styles:\n - Sign tabs: 1\n\n")),
                  qPrintable(check));
         QVERIFY2(check.contains(QStringLiteral("\nFinished, found 2 fonts.\nNot found 1 font.\n")), qPrintable(check));
         QVERIFY(check.contains(QStringLiteral("\nFinished in 00:00:")));
@@ -9695,9 +9699,9 @@ private slots:
         QCOMPARE(collector.copyPath(), QDir::toNativeSeparators(archive) + QStringLiteral(".zip"));
         const QString review = collector.logText();
         QVERIFY2(review.startsWith(QStringLiteral("Retrieved sizes and names of 2 fonts, elapsed time 00:00:")), qPrintable(review));
-        QVERIFY2(review.contains(QStringLiteral("Found font \"Arial\"\nFound \"/fonts/arial.ttf\" font file.\nIn styles:\n")),
+        QVERIFY2(review.contains(QStringLiteral("Found font “Arial”\nFound “/fonts/arial.ttf” font file.\nIn styles:\n")),
                  qPrintable(review));
-        QVERIFY2(review.contains(QStringLiteral("Found font \"gothic.ttf\".The renderer also used \"/fonts/gothic.ttf\" "
+        QVERIFY2(review.contains(QStringLiteral("Found font “gothic.ttf”.The renderer also used “/fonts/gothic.ttf” "
                                                 "(fallback); it is not collected.\n\n")),
                  qPrintable(review));
         QVERIFY(review.contains(QStringLiteral("Ready to add 2 fonts to the archive")));
@@ -9713,10 +9717,10 @@ private slots:
         QVERIFY(collector.waitIdle());
         QVERIFY(QFile::exists(archive + QStringLiteral(".zip")));
         const QString done = collector.logText();
-        QVERIFY2(done.contains(QStringLiteral("Added font \"arial.ttf\" to the archive.\n")), qPrintable(done));
+        QVERIFY2(done.contains(QStringLiteral("Added font “arial.ttf” to the archive.\n")), qPrintable(done));
         QVERIFY2(done.contains(QStringLiteral("\nFinished, copied 2 fonts.\nNot found 1 font.\n")), qPrintable(done));
         QVERIFY(done.contains(QStringLiteral("The output is labelled incomplete")));
-        QVERIFY(!done.contains(QStringLiteral("Completed Successfully")));
+        QVERIFY(!done.contains(QStringLiteral("Completed successfully")));
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
         QCOMPARE(application->settingsStore()->text("fontCollector.directory"), QDir::toNativeSeparators(archive));
 
@@ -9797,7 +9801,7 @@ private slots:
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
         QVERIFY(!collector.reviewIncomplete());
         const QString late = collector.logText();
-        QVERIFY2(late.startsWith(QStringLiteral("Found font \"Arial\"\nFound \"/fonts/arial.ttf\" font file.\n")),
+        QVERIFY2(late.startsWith(QStringLiteral("Found font “Arial”\nFound “/fonts/arial.ttf” font file.\n")),
                  qPrintable(late));
         QVERIFY2(late.contains(QStringLiteral("\nFinished in 00:00:")), qPrintable(late));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
@@ -10006,13 +10010,13 @@ private slots:
             return collector.logText();
         };
         const QString libass = check(QStringLiteral("libass"));
-        QVERIFY2(libass.contains(QStringLiteral("Completed Successfully, found 1 font.")), qPrintable(libass));
+        QVERIFY2(libass.contains(QStringLiteral("Completed successfully, found 1 font.")), qPrintable(libass));
         QVERIFY2(!libass.contains(note), qPrintable(libass));
         const QString csri = check(QStringLiteral("vsfiltermod_textsub"));
         QVERIFY2(csri.contains(QStringLiteral("The video shows the subtitles through vsfiltermod_textsub, whose "
                                               "output this check does not verify.\n")),
                  qPrintable(csri));
-        QVERIFY(csri.indexOf(note) < csri.indexOf(QStringLiteral("Completed Successfully")));
+        QVERIFY(csri.indexOf(note) < csri.indexOf(QStringLiteral("Completed successfully")));
         collector.setDisplayRenderer(QStringLiteral("libass"));
         collector.close();
     }
@@ -10305,7 +10309,7 @@ private slots:
         };
         const Expected expected[] = {
                 {2, "Unclosed syllable", "A karaoke tag has no duration, or its override block is never closed"},
-                {3, "Syllables don't match the line", "The syllables last 0.70 s; the line lasts 1.00 s"},
+                {3, "Syllables don’t match the line", "The syllables last 0.70 s; the line lasts 1.00 s"},
                 {4, "Zero-length syllable", "Syllable 1"},
                 {5, "Syllable outside the line", "Syllables 1, 2"},
         };
@@ -11108,7 +11112,7 @@ private slots:
         QVERIFY(empty.isValid());
         restartWithSpelling(empty.path(), true);
         QVERIFY(application->openFile(path));
-        const QString text = QStringLiteral("No dictionary files were found in the \"%1\" folder. Spell checking will be disabled")
+        const QString text = QStringLiteral("No dictionary files were found in the “%1” folder. Spell checking will be disabled.")
                                  .arg(QDir::toNativeSeparators(QDir(empty.path()).absoluteFilePath(QStringLiteral("Dictionary"))));
         QQuickItem *notice = nullptr;
         QTRY_VERIFY((notice = toastWith(text)));
@@ -15614,7 +15618,7 @@ private slots:
               {"grammar.group.initialisms", "Initialisms"},
               {"grammar.group.closedCompounds", "Closed compounds"},
               {"grammar.group.phraseCorrections", "Phrase corrections"},
-              {"grammar.group.capitalizationAndCase", "Capitalization and case"},
+              {"grammar.group.capitalizationAndCase", "Capitalisation and case"},
               {"grammar.group.punctuationAndSpacing", "Punctuation and spacing"},
               {"grammar.group.numbersAndUnits", "Numbers and units"},
               {"grammar.group.pronounsAndPossession", "Pronouns and possession"},
@@ -15894,7 +15898,7 @@ private slots:
         options.catalogDir = own.filePath(QStringLiteral("Catalog"));
         const QString accented = QStringLiteral(u"Ćwiczenia");
         const QString lower = QStringLiteral(u"ćwiczenia");
-        const QString missing = tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalog for style"));
+        const QString missing = tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalogue for style"));
         {
             app::Application a(options);
             auto &styles = a.styleManager();
@@ -18447,7 +18451,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 259);
+        QCOMPARE(hotkeyRows().size(), 263);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -18872,7 +18876,7 @@ private slots:
         h.select(hotkeyPosition(QStringLiteral("Global History")));
         const auto c = h.optionsConflict(QStringLiteral("Ctrl-K"), 0);
         QCOMPARE(c.value(QStringLiteral("message")).toString(),
-                 QStringLiteral("This hotkey already exists for \"Script a.lua-1\".\nWhat to do?"));
+                 QStringLiteral("This shortcut already exists for “Script a.lua-1”. What to do?"));
         h.optionsMap(QStringLiteral("Ctrl-K"), 0, QStringLiteral("delete"));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
         h.select(hotkeyPosition(QStringLiteral("Global Script a.lua-1")));
