@@ -289,6 +289,44 @@ private slots:
                                 .arg(*frame)));
     }
 
+    void aSeekOnlyPassesTheSoughtFrames_data()
+    {
+        QTest::addColumn<bool>("paused");
+        QTest::newRow("while playing") << false;
+        QTest::newRow("after a pause") << true;
+    }
+
+    void aSeekOnlyPassesTheSoughtFrames()
+    {
+        QFETCH(bool, paused);
+        QtGeneralPlayer player(false);
+        QVERIFY(open(player, "long"));
+        player.play();
+        QVERIFY(QTest::qWaitFor([&] { return player.deliveredFrames() > 5; }, 10'000));
+        if (paused) {
+            player.pause();
+            QTest::qWait(200);
+        }
+        const std::int64_t target = cfrStartUs(240);
+        QList<qint64> after;
+        auto connection = connect(&player, &QtGeneralPlayer::frameDelivered, this,
+                                  [&](const QVideoFrame &f) { after.push_back(f.startTime()); });
+        std::optional<std::expected<SeekResult, PlayerError>> sought;
+        player.seek(target, [&](auto r) { sought = std::move(r); });
+        if (paused) {
+            QVERIFY(QTest::qWaitFor([&] { return sought.has_value(); }, 10'000));
+            player.play();
+        }
+        QVERIFY(QTest::qWaitFor([&] { return sought.has_value() && after.size() >= 3; }, 10'000));
+        disconnect(connection);
+        player.pause();
+        QVERIFY(sought->has_value());
+        const std::int64_t frame = cfrStartUs(1);
+        QVERIFY2(std::abs((*sought)->deliveredStartUs - target) <= frame,
+                 qPrintable(QString::number((*sought)->deliveredStartUs)));
+        QVERIFY2(after.front() >= target - frame, qPrintable(QDebug::toString(after)));
+    }
+
     void clockIsAnEstimateOnlyWhilePlaying()
     {
         QtGeneralPlayer player(false);

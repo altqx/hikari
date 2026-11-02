@@ -136,7 +136,7 @@ hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp L
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_playback_workflow hikari_media_helper hikari_media_fixtures)
-hikari_add_spix_test(hikari_ui_seek_then_play SOURCES seek_then_play.cpp LIBRARIES hikari_composition
+hikari_add_spix_test(hikari_ui_seek_then_play SOURCES seek_then_play.cpp LIBRARIES hikari_composition Qt6::Test
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_seek_then_play hikari_media_helper hikari_media_fixtures)
