@@ -1,0 +1,88 @@
+#include "operations.h"
+
+#include "hikari/api/schema.h"
+
+#include <cstdio>
+#include <cstdlib>
+
+namespace hikari::api {
+
+std::string_view accessName(Access access)
+{
+    return access == Access::Read ? "read" : "write";
+}
+
+std::unexpected<Error> fail(std::string_view code, std::string message, Json data)
+{
+    return std::unexpected(Error{std::string(code), std::move(message), std::move(data)});
+}
+
+bool Registry::add(Operation operation)
+{
+    if (find(operation.name))
+        return false;
+    m_operations.push_back(std::move(operation));
+    return true;
+}
+
+const Operation *Registry::find(std::string_view name) const
+{
+    for (const Operation &operation : m_operations)
+        if (operation.name == name)
+            return &operation;
+    return nullptr;
+}
+
+namespace detail {
+
+Json schema(std::string_view text)
+{
+    auto parsed = Json::parse(text);
+    if (!parsed) {
+        std::fprintf(stderr, "hikari_api: bad schema at %zu: %s\n", parsed.error().offset, parsed.error().message.c_str());
+        std::abort();
+    }
+    return std::move(*parsed);
+}
+
+Handler now(SyncHandler handler)
+{
+    return [handler = std::move(handler)](const Context &context, const Json &params, Reply reply) {
+        reply(handler(context, params));
+    };
+}
+
+}
+
+const Registry &Api::registry()
+{
+    static const Registry registry = [] {
+        Registry r;
+        detail::addDefinitions(r);
+        detail::addDocumentOperations(r);
+        detail::addApplicationOperations(r);
+        return r;
+    }();
+    return registry;
+}
+
+void Api::call(const Caller &caller, std::string_view name, const Json &params, Reply reply)
+{
+    const Registry &operations = registry();
+    const Operation *operation = operations.find(name);
+    if (!operation) {
+        reply(fail(errors::kUnknownOperation, "No operation is named \"" + std::string(name) + "\".",
+                   Json::object({{"operation", Json(name)}})));
+        return;
+    }
+    const Json given = params.isNull() ? Json::object() : params;
+    if (auto failure = validate(operation->params, given, operations.defs())) {
+        reply(fail(errors::kInvalidParams, "Parameter " + (failure->path.empty() ? "object" : failure->path) + ": " +
+                                                failure->message + ".",
+                   Json::object({{"pointer", Json(failure->path)}})));
+        return;
+    }
+    operation->handler(Context{m_host, caller}, given, std::move(reply));
+}
+
+}
