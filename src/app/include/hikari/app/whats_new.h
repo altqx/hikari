@@ -36,6 +36,8 @@ public:
     QVariantList releases() const { return m_shown; }
     int more() const { return m_more; }
     QString since() const { return m_since; }
+    // The first run of a version after another one.
+    bool updated() const { return m_updated; }
     QString state() const;
 
     // Reads the list only when nothing is cached and update checks are on.
@@ -74,6 +76,7 @@ private:
     bool m_known = false;
     bool m_waiting = false;
     bool m_started = false;
+    bool m_updated = false;
     QVariantList m_shown;
     int m_more = 0;
 };

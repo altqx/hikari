@@ -1130,11 +1130,11 @@ DialogWindow {
                         ruled: false
                         SettingsRow {
                             iconRole: "styles"
-                            text: qsTr("Catalog")
+                            text: qsTr("Catalogue")
                             SettingChoice {
                                 setting: "convert.styleCatalog"
                                 model: dialog.catalogs
-                                Accessible.name: qsTr("Catalog")
+                                Accessible.name: qsTr("Catalogue")
                                 onChosen: index => dialog.chooseCatalog(index)
                             }
                         }
@@ -1597,6 +1597,8 @@ DialogWindow {
                             text: qsTr("Include the file name")
                             Layout.leftMargin: 22
                         }
+                        SettingCheck { setting: "privacy.starPrompt"; text: qsTr("Suggest starring HikariSub on GitHub") }
+                        SettingNote { text: qsTr("At most twice, after you have used HikariSub on several days. The counts stay on this computer.") }
                     }
                 }
             }

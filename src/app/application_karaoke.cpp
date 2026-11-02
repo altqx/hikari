@@ -51,17 +51,17 @@ QVariantMap Application::checkKaraoke() const
         case Kind::NotForAudioEditor:
             check = QCoreApplication::translate("HikariSub.Karaoke", "Not read by the audio editor");
             detail = QCoreApplication::translate(
-                "HikariSub.Karaoke", "No karaoke tag's duration starts with a digit, as in \\k50, so the audio editor splits the line anew");
+                "HikariSub.Karaoke", "No karaoke tag’s duration starts with a digit, as in \\k50, so the audio editor splits the line anew");
             break;
         case Kind::EditorOnly:
             check = QCoreApplication::translate("HikariSub.Karaoke", "Other syllables in the audio editor");
             detail = QCoreApplication::translate(
                 "HikariSub.Karaoke",
                 "The audio editor splits at every \\k tag and reads its number its own way, so a tag such as \\keep, "
-                "\\kfo50 or \\k(50) gives it syllables unlike playback's");
+                "\\kfo50 or \\k(50) gives it syllables unlike playback’s");
             break;
         case Kind::TotalNotDuration:
-            check = QCoreApplication::translate("HikariSub.Karaoke", "Syllables don't match the line");
+            check = QCoreApplication::translate("HikariSub.Karaoke", "Syllables don’t match the line");
             detail = QCoreApplication::translate("HikariSub.Karaoke", "The syllables last %1 s; the line lasts %2 s")
                          .arg(seconds(problem.totalMs), seconds(problem.durationMs));
             break;

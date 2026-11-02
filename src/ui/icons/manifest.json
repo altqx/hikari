@@ -1330,7 +1330,8 @@
    ],
    "surfaces": [
     "menu:timing",
-    "menu:subtitles"
+    "menu:subtitles",
+    "menu:video"
    ]
   },
   {
@@ -3340,7 +3341,8 @@
    "mirror": true,
    "legacy": [],
    "surfaces": [
-    "grid-menu"
+    "grid-menu",
+    "menu:audio"
    ]
   },
   {
@@ -3958,7 +3960,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "settings-dialog"
+    "settings-dialog",
+    "menu:video"
    ]
   },
   {
@@ -3969,7 +3972,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "settings-dialog"
+    "settings-dialog",
+    "menu:video"
    ]
   },
   {

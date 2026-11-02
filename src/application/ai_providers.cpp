@@ -29,11 +29,13 @@ constexpr std::pair<Wire, std::string_view> kWires[] = {
     {Wire::ChatCompletions, "chat-completions"},
     {Wire::Responses, "responses"},
     {Wire::AnthropicMessages, "anthropic-messages"},
+    {Wire::Gemini, "gemini"},
 };
 constexpr std::pair<Preset, std::string_view> kPresets[] = {
     {Preset::OpenRouter, "openrouter"},
     {Preset::OpenAI, "openai"},
     {Preset::Anthropic, "anthropic"},
+    {Preset::Gemini, "gemini"},
     {Preset::Custom, "custom"},
 };
 constexpr std::pair<Role, std::string_view> kRoleIds[] = {
@@ -85,6 +87,11 @@ Provider presetProvider(Preset preset, std::string id, std::string name)
         p.wire = Wire::AnthropicMessages;
         p.baseUrl = "https://api.anthropic.com/v1";
         p.defaults = {.tools = true, .vision = true};
+        break;
+    case Preset::Gemini:
+        p.wire = Wire::Gemini;
+        p.baseUrl = "https://generativelanguage.googleapis.com/v1beta";
+        p.defaults = {.tools = true, .vision = true, .video = true};
         break;
     case Preset::Custom:
         p.wire = Wire::ChatCompletions;

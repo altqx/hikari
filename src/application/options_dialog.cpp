@@ -135,6 +135,7 @@ constexpr OptionsBinding kBindings[] = {
     {"privacy.alwaysSendCrashReports", Check, Updates},
     {"privacy.discordPresence", Check, Updates},
     {"privacy.discordFileName", Check, Updates},
+    {"privacy.starPrompt", Check, Updates},
     {"editor.softLineBreak", Check, LineEditor},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
