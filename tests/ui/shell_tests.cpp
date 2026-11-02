@@ -16047,6 +16047,58 @@ private:
     };
 
 private slots:
+    void pluginsInstallFromTheAutomationMenu()
+    {
+        QTemporaryDir home;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        restartWith(options);
+        const auto fixture = [](const char *name) {
+            return QVariant(QUrl::fromLocalFile(QStringLiteral(HIKARI_PLUGIN_FIXTURES "/") + QString::fromLatin1(name)));
+        };
+        const auto rows = [this] { return application->pluginManager()->plugins(); };
+        QObject *dialog = named("pluginManagerDialog");
+        QVERIFY(dialog && !dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("pluginsMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("pluginManagerDialog", "pluginManagerEmpty")->isVisible());
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginManagerProblem")->isVisible());
+        QVERIFY(dialogItem("pluginManagerDialog", "pluginInstallFromFile")->isEnabled());
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("hello-1.0.0.hikariplugin"))));
+        answerMessage("pluginManagerMessages", QStringLiteral("Install plugin"), QStringLiteral("Install “Hello” 1.0.0?"),
+                      QStringLiteral("install"));
+        QTRY_COMPARE(rows().size(), 1);
+        QQuickItem *trust = nullptr;
+        QTRY_VERIFY((trust = dialogItem("pluginManagerDialog", "pluginTrust_com.example.hello")));
+        QCOMPARE(trust->property("text").toString(), QStringLiteral("Unverified, signed by key EFCDAB8967452301"));
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginManagerEmpty")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginEnabled_com.example.hello"), "click"));
+        QTRY_VERIFY(!rows().first().toMap().value(QStringLiteral("enabled")).toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("hello-2.0.0-other-key.hikariplugin"))));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("pluginManagerMessages")) && box->isVisible());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Update “Hello” from 1.0.0 to 2.0.0?"));
+        QVERIFY(box->property("detail").toString().startsWith(
+            QStringLiteral("The signing key changed. The installed copy was signed by key EFCDAB8967452301, and this one by key 1032547698BADCFE.")));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QCOMPARE(rows().first().toMap().value(QStringLiteral("version")).toString(), QStringLiteral("1.0.0"));
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("needs-api-99.hikariplugin"))));
+        answerMessage("pluginManagerMessages", QStringLiteral("Plugin not installed"),
+                      QStringLiteral("This plugin needs Hikari API 99, and this HikariSub has API 1. Update HikariSub to install it."));
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginUninstall_com.example.hello"), "click"));
+        answerMessage("pluginManagerMessages", QStringLiteral("Uninstall plugin"), QStringLiteral("Uninstall “Hello”?"),
+                      QStringLiteral("remove"));
+        QTRY_VERIFY(rows().isEmpty());
+        QVERIFY(!QDir(home.filePath(QStringLiteral("plugins/com.example.hello"))).exists());
+    }
     void gettingStartedOpensAtTheFirstStartOnly()
     {
         const LegacyHere none({});
@@ -18330,7 +18382,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 254);
+        QCOMPARE(hotkeyRows().size(), 255);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

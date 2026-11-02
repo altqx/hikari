@@ -4085,9 +4085,9 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
+    "menu:automation",
     "plugin-manager"
-   ],
-   "pending": "PL4 #416"
+   ]
   },
   {
    "role": "plugin-install",
@@ -4098,8 +4098,7 @@
    "legacy": [],
    "surfaces": [
     "plugin-manager"
-   ],
-   "pending": "PL4 #416"
+   ]
   },
   {
    "role": "plugin-unverified",
@@ -4110,8 +4109,7 @@
    "legacy": [],
    "surfaces": [
     "plugin-manager"
-   ],
-   "pending": "PL6 #418"
+   ]
   },
   {
    "role": "node-editor",

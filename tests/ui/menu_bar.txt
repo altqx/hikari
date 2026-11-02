@@ -103,6 +103,7 @@ Automation > Rerun last macro
 Automation > Repeat last run [GLOBAL_AUTOMATION_REPEAT_LAST_RUN]
 Automation > Cancel macro
 Automation > Show panel
+Automation > Plugins… [GLOBAL_PLUGINS]
 Automation > -
 View
 View > Layout >

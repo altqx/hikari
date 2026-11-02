@@ -1966,6 +1966,18 @@ ApplicationWindow {
                     onTriggered: root.showPanel(automationDock)
                 }
             }
+            ShellMenuItem {
+                command: "GLOBAL_PLUGINS"
+                help: qsTr("Install, turn on and off, and uninstall plugins")
+                iconRole: "plugins"
+                objectName: "pluginsMenuItem"
+                action: Action {
+                    id: pluginsAction
+                    text: qsTr("Pl&ugins…")
+                    enabled: !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
+                }
+            }
             MenuSeparator {
                 id: macrosSeparator
                 objectName: "macrosSeparator"
@@ -5852,6 +5864,11 @@ ApplicationWindow {
         layouts: root.workspaceLayout
         settings: root.app.settings
     }
+    PluginManagerDialog {
+        id: pluginManagerDialog
+        manager: root.app.pluginManager
+        settings: root.app.settings
+    }
 
     TapCalibrationWindow {
         id: tapCalibrationWindow
@@ -6966,6 +6983,7 @@ ApplicationWindow {
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
+        GLOBAL_PLUGINS: pluginsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,

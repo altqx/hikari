@@ -116,6 +116,17 @@ _Avoid_: Grid filter as a synonym.
 The one typed, versioned set of operations over the running application that plugins, AI tools, the MCP server and node-editor nodes call.
 _Avoid_: Automation API or Lua API, which name Aegisub automation's interface.
 
+**Plugin**:
+A `.hikariplugin` package that extends HikariSub through the Hikari API, installed per user and run in its own helper.
+_Avoid_: Automation script or macro, which name Aegisub automation; extension or add-on.
+
+**Pinned key**:
+The minisign public key HikariSub recorded at a plugin's first signed install; updates must be signed by it unless the user re-trusts another.
+_Avoid_: Trusted key as a synonym; a pinned key says who signed before, not that the plugin is verified.
+
+**Unverified**:
+A plugin installed from a file rather than the curated index, signed or not.
+
 **Operation**:
 One named, read- or write-marked entry of the Hikari API, with schemas for its parameters and result.
 _Avoid_: Command, which names a menu, toolbar or shortcut action.

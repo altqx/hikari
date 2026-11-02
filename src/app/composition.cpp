@@ -234,6 +234,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         options.userFolderMove = userFolder.moveIn(oldFolders, folderEnvironment.portable);
     options.userFolderSeed = userFolder.seed(bundledFolder());
     options.userFolder = userFolder.root();
+    options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry()};
     options.gettingStarted = true;
     options.settingsFile = userFolder.settingsFile();
     options.recoveryDir = userFolder.recovery();
