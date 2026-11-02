@@ -2751,6 +2751,262 @@ Should not exceed 15 characters per second</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>வரைபடம் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>கிளிப் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>அசைவூட்டம் (\t) நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>நகர்வு அதன் தொடக்க நிலையாக வைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>நகர்வு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>மங்கல் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>சுழற்சி அல்லது சாய்வு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>எழுத்துரு, அளவு, அளவீடு அல்லது இடைவெளிக் குறிகள் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>கரை, நிழல், மங்கலாக்கம், ஒளிபுகுதன்மை அல்லது பிற நிறங்கள் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>உரை நிறம் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>சில தடிப்பு, சாய்வு, அடிக்கோடு அல்லது அடித்தல் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>நிலை அல்லது சீரமைப்பு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>கரோக்கி நேரமிடல் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>உருளும் விளைவு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>ஒன்றின்மேல் வரும் வரிகளுடன் ஒன்றிணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>ஏற்றுமதி செய்ய எதுவும் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>கோப்பின் முழுப் பாதையை உள்ளிடு, அல்லது உலாவு… மூலம் தேர்ந்தெடு</translation>
+    </message>
+    <message>
+        <source>“%1” is a folder.</source>
+        <translation>“%1” ஒரு கோப்புறை.</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>1 முதல் 1000 வரையிலான சட்டக வீதத்தை உள்ளிடு.</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>%1 ஐ எழுத முடியவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>வேறு வடிவில் ஏற்றுமதி</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>சாதாரண உரை</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>தலைப்பிடப்படாத</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>“%1” ஐ மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>இந்தப் பெயரில் ஒரு கோப்பு ஏற்கனவே உள்ளது.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>மாற்று</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>வடிவம்</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>அனைத்தும் (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>தேர்ந்தெடுத்தவை (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>காட்டப்படுபவை (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>சேமிக்கும் இடம்</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>உலாவு…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>%1 கோப்புகள் (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>Alignment as %1 tags</source>
+        <translation>%1 குறிகளாக சீரமைப்பு</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>உரை நிறங்களை font குறிகளாக</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>நிலைகளும் சீரமைப்பும்</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>பாணிகளும் நிறங்களும்</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>கரோக்கி நேரமிடல்</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>தொடக்க, முடிவு நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>நடிகர் பெயர்கள்</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகளை ஒரே வசனமாக ஒன்றிணை</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>Use video frame rate</source>
+        <translation>காணொளியின் சட்டக வீதத்தைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer இல் முடிவு நேரங்கள் இல்லை: ஒன்றின்மேல் ஒன்று வரும் வரிகள் ஒன்றிணைக்கப்படும், வெற்று வசனம் திரையை அழிக்கும்.</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>வடிவமைப்பு, நிறங்கள், நிலைகள் வைக்கப்படாது.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to “%1”.</source>
+        <translation>
+            <numerusform>%n வரி “%1” க்கு ஏற்றுமதி செய்யப்பட்டது.</numerusform>
+            <numerusform>%n வரிகள் “%1” க்கு ஏற்றுமதி செய்யப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>%n குறிப்பு வரி தவிர்க்கப்பட்டது.</numerusform>
+            <numerusform>%n குறிப்பு வரிகள் தவிர்க்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>காட்ட எதுவும் இல்லாத %n வரி தவிர்க்கப்பட்டது.</numerusform>
+            <numerusform>காட்ட எதுவும் இல்லாத %n வரிகள் தவிர்க்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>இந்த வடிவம் வைத்திருக்க முடியாதவை. ஒரு வரியைக் காட்ட அதைத் தேர்ந்தெடு.</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>எதுவும் விடுபடவோ தோராயமாக்கப்படவோ இல்லை</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>ஏற்றுமதி அறிக்கை</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>வரி</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>விடுபட்டவை அல்லது தோராயமானவை</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>வரி %1: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>ஏற்றுமதி செய்</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message>
         <source>Font catalogues</source>
@@ -3783,10 +4039,6 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub 0.0.x இந்தக் கணினியில் நிறுவப்பட்டுள்ளது. அதில் எதுவும் மாற்றப்படாது.</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>பின்னர்: கோப்பு › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>எனது பழைய அமைப்புகளை இறக்குமதி செய்</translation>
     </message>
@@ -3801,10 +4053,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>புதிதாக அமை</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub இன் இயல்புநிலைகளிலிருந்து தொடங்கு. கோப்பு › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்… மூலம் பின்னரும் அவற்றைக் கொண்டுவரலாம்.</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -3901,6 +4149,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>காட்சிக் கருவிகள் மற்றும் பாணிகள் பலகத்துடன் பெரிய வீடியோ.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>பின்னர்: அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>HikariSub இன் இயல்புநிலைகளிலிருந்து தொடங்கு. அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்… மூலம் பின்னரும் அவற்றைக் கொண்டுவரலாம்.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -5861,6 +6117,10 @@ Failed to copy %2 fonts.</source>
         <translation>தொடங்குதல்</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>வேறு வடிவில் ஏற்றுமதி</translation>
+    </message>
+    <message>
         <source>Join with previous line using the audio selection</source>
         <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
     </message>
@@ -5879,6 +6139,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shift following lines by frames: end at video</source>
         <translation>அடுத்து வரும் வரிகளைச் சட்டகங்களாக நகர்த்து: முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6537,10 +6809,6 @@ Failed to copy %2 fonts.</source>
         <translation>கீஃப்ரேம்களைத் திறக்கவும்</translation>
     </message>
     <message>
-        <source>Import legacy settings...</source>
-        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்...</translation>
-    </message>
-    <message>
         <source>Run the last loaded script</source>
         <translation>கடைசியாக ஏற்றப்பட்ட ச்கிரிப்டை இயக்கவும்</translation>
     </message>
@@ -6695,6 +6963,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Check spelling</source>
         <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
+    </message>
+    <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>செருகுநிரல்களை நிறுவு, இயக்கு அல்லது முடக்கு, நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>செருகுநிரல்கள்… (&amp;u)</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -6864,6 +7140,14 @@ Failed to copy %2 fonts.</source>
         <translation>எனச் சேமி</translation>
     </message>
     <message>
+        <source>Writes a copy of the document in another format</source>
+        <translation>ஆவணத்தின் நகலை வேறு வடிவில் எழுதும்</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>வேறு வடிவில் ஏற்றுமதி… (&amp;E)</translation>
+    </message>
+    <message>
         <source>Save translation</source>
         <translation>மொழிபெயர்ப்பைச் சேமிக்கவும்</translation>
     </message>
@@ -7002,6 +7286,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் தொடக்க, முடிவு நேரங்களை அவற்றின் சட்டகங்களின் நடுவுக்கு நகர்த்துகிறது; பின்னர் நேரத்தால் நகர்த்தினாலும் அவை முழுச் சட்டகங்களிலேயே இருக்கும்</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -8986,6 +9278,26 @@ removing audio cache files.</source>
         <translation>பழைய குறுக்குவிசைகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
+        <source>Legacy</source>
+        <translation>பழையது</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>கடைசி இறக்குமதியைத் திரும்பப் பெறு…</translation>
+    </message>
+    <message>
+        <source>Script hotkeys</source>
+        <translation>ஸ்கிரிப்ட் குறுக்குவிசைகள்</translation>
+    </message>
+    <message>
         <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
         <translation>பழைய Hotkeys.txt இன் ச்கிரிப்ட் குறுக்குவிசைகள், உடனே சேர்க்கப்படும்</translation>
     </message>
@@ -9252,6 +9564,253 @@ and will be changed to the default</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>பிற மொழிச் சொற்கள், அவற்றின் எழுத்துமுறைக்கான பிற நிறுவப்பட்ட அகராதிகளுடன் சரிபார்க்கப்படும். அகராதி இல்லாத எழுத்துமுறையில் உள்ள சொற்கள் குறிக்கப்படாது.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>இந்தக் கோப்பு ஒரு செருகுநிரல் தொகுப்பு அல்ல (hikari-plugin.json உள்ள zip காப்பகம்).</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>தொகுப்பில் ஓர் இணைப்பு உள்ளது, அதை HikariSub நிறுவாது: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>தொகுப்பு மிகப் பெரியது: பிரித்தெடுத்தால் %1 க்கும் மேற்பட்ட கோப்புகள் அல்லது %2 MB க்கும் மேல்.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json சரியான JSON அல்ல: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json இல் “%1” என்ற அடையாளம் %2 இல் மீண்டும் வருகிறது.</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>இந்தச் செருகுநிரலுக்கு Hikari API %1 தேவை, ஆனால் இந்த HikariSub இல் API %2 உள்ளது. இதை நிறுவ HikariSub ஐப் புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>%1 இல் hikari-plugin.json செருகுநிரல் ச்கீமாவுக்கு இணங்கவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>HikariSub நிறுவாத ஒரு கோப்புப் பெயர் தொகுப்பில் உள்ளது: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>தொகுப்பின் மேல் நிலையில் hikari-plugin.json இல்லை.</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>தொகுப்பில் அதன் முதன்மைக் கோப்பான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>தொகுப்பில் கையொப்பம் உள்ளது, ஆனால் அதைச் சரிபார்க்க publicKey எதையும் அதன் மேனிஃபெச்ட் குறிப்பிடவில்லை.</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>பயனர் கோப்புறையில் உள்ள plugins.json ஐப் படிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>தொகுப்பு அதன் மேனிஃபெச்ட் குறிப்பிடாத ஒரு விசையால் கையொப்பமிடப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>கையொப்பம் தொகுப்புடன் பொருந்தவில்லை, எனவே கையொப்பமிட்ட பிறகு அது மாற்றப்பட்டிருக்கலாம்.</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>கையொப்பத்தின் நம்பகமான கருத்து கையொப்பமிட்ட பிறகு மாற்றப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>தொகுப்பின் அருகிலுள்ள .minisig கோப்பு ஒரு minisign கையொப்பம் அல்ல.</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>முழு நம்பிக்கை: இது HikariSub இன் வரம்புகளுக்கு வெளியே நேட்டிவ் குறியீட்டை இயக்கக்கூடும்.</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>திறந்துள்ள ஒவ்வொரு வசனக் கோப்பையும் படித்துத் திருத்துதல்: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>%1 உடன் இணைதல்: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>படிக்கவும் எழுதவும் ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>படிக்க ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub ஆல் முடிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>செருகுநிரல்களுக்குப் பயனர் கோப்புறை தேவை, இந்தப் பிரதியில் அது இல்லை.</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub ஆல் %1 ஐப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>முதலில் ஒரு செருகுநிரல் தொகுப்பைத் தேர்வுசெய்யவும்.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>சரி</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>கையொப்ப விசை மாறிவிட்டது. நிறுவப்பட்ட பிரதி %1 விசையாலும், இது %2 விசையாலும் கையொப்பமிடப்பட்டுள்ளன. உருவாக்கியவர் விசையை மாற்றினார் என்று நீங்கள் நம்பினால் மட்டுமே இதை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>இந்தத் தொகுப்பு கையொப்பமிடப்படவில்லை, ஆனால் நிறுவப்பட்ட பிரதி %1 விசையால் கையொப்பமிடப்பட்டது. இது வந்த இடத்தை நீங்கள் நம்பினால் மட்டுமே நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>சரிபார்க்கப்படாத மூலம், %1 விசையால் கையொப்பமிடப்பட்டது. புதுப்பிப்புகள் அதே விசையால் கையொப்பமிடப்பட வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>சரிபார்க்கப்படாதது: தொகுப்பு கையொப்பமிடப்படவில்லை, எனவே அதை யார் உருவாக்கினார் என்பதை HikariSub ஆல் அறிய முடியாது.</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>செருகுநிரல் நிறுவப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>செருகுநிரலை நிறுவு</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>செருகுநிரலைப் புதுப்பி</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>செருகுநிரலை மீண்டும் நிறுவு</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>செருகுநிரலைத் தரமிறக்கு</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>“%1” %2 ஐ நிறுவவா?</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>“%1” ஐ %2 இலிருந்து %3 க்குப் புதுப்பிக்கவா?</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>“%1” %2 ஐ மீண்டும் நிறுவவா?</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>“%1” %2 ஐ முந்தைய பதிப்பான %3 ஆல் மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>இது இந்த அனுமதிகளைக் கேட்கிறது</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>செயலில் உள்ள வசனக் கோப்பைத் தவிர வேறு எந்த அனுமதியையும் இது கேட்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>நம்பி நிறுவு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>நிறுவலை நீக்கு, தரவை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>நிறுவலை நீக்கி, தரவையும் அகற்று</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>செருகுநிரலின் நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>“%1” இன் நிறுவலை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>பயனர் கோப்புறையில் இதன் சேமித்த தரவு உள்ளது. மீண்டும் நிறுவினால் அதைப் பயன்படுத்த, அதை வைத்திருக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>செருகுநிரலின் நிறுவல் நீக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>செருகுநிரல்கள் எதுவும் நிறுவப்படவில்லை. ஒரு .hikariplugin கோப்பிலிருந்து ஒன்றை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>நிறுவப்பட்ட செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>இயக்கத்தில்</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>சரிபார்க்கப்படாதது, %1 விசையால் கையொப்பமிடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>சரிபார்க்கப்படாதது, கையொப்பமிடப்படாதது</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>முழு நம்பிக்கை</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>கோப்பிலிருந்து நிறுவு…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>செருகுநிரல் தொகுப்பைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>HikariSub செருகுநிரல்கள் (*.hikariplugin)</translation>
     </message>
 </context>
 <context>

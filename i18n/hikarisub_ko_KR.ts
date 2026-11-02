@@ -2728,6 +2728,259 @@ Should not exceed 15 characters per second</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>도형 제거됨</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>클립 제거됨</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>애니메이션(\t) 제거됨</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>이동은 시작 위치로 유지됨</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>이동 제거됨</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>페이드 제거됨</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>회전 또는 기울이기 제거됨</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>글꼴, 크기, 비율 또는 자간 태그 제거됨</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>테두리, 그림자, 흐림, 투명도 또는 다른 색 제거됨</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>글자 색 제거됨</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>일부 굵게, 기울임, 밑줄 또는 취소선 제거됨</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>위치 또는 정렬 제거됨</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>노래방 시간 제거됨</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>스크롤 효과 제거됨</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>겹치는 줄과 병합됨</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>내보낼 내용이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>파일의 전체 경로를 입력하거나 찾아보기…로 고르세요</translation>
+    </message>
+    <message>
+        <source>“%1” is a folder.</source>
+        <translation>“%1”은(는) 폴더입니다.</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>1에서 1000 사이의 프레임 속도를 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>%1 파일을 쓸 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>다른 형식으로 내보내기</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>일반 텍스트</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>새 자막</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>“%1” 파일을 바꿀까요?</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>같은 이름의 파일이 이미 있습니다.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>바꾸기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>형식</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>전체 (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>선택한 줄 (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>표시된 줄 (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>저장 위치</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>찾아보기…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>%1 파일 (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>옵션</translation>
+    </message>
+    <message>
+        <source>Alignment as %1 tags</source>
+        <translation>%1 태그로 정렬 유지</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>글자 색을 font 태그로</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>위치와 정렬</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>스타일과 색</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>노래방 시간</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>시작 및 종료 시간</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>배우 이름</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>겹치는 줄을 자막 하나로 병합</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>프레임 속도</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>Use video frame rate</source>
+        <translation>비디오 프레임 속도 사용</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer에는 종료 시간이 없으므로 겹치는 줄은 병합되고, 빈 자막이 화면을 지웁니다.</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>서식, 색, 위치는 유지되지 않습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to “%1”.</source>
+        <translation>
+            <numerusform>“%1”에 %n줄을 내보냈습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>주석 %n줄을 건너뛰었습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>표시할 내용이 없는 %n줄을 건너뛰었습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>이 형식이 유지하지 못한 내용입니다. 줄을 고르면 해당 줄을 보여 줍니다.</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>빠지거나 근사된 내용이 없습니다</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>내보내기 보고서</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>빠지거나 근사됨</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번 줄: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>내보내기</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message>
         <source>Font catalogues</source>
@@ -3750,10 +4003,6 @@ Failed to copy %2 fonts.</source>
         <translation>이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>나중에: 파일 › 이전 버전 설정 가져오기…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>이전 설정 가져오기</translation>
     </message>
@@ -3768,10 +4017,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>처음부터 설정</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub의 기본값으로 시작합니다. 나중에 파일 › 이전 버전 설정 가져오기…로 가져올 수도 있습니다.</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -3868,6 +4113,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>큰 영상 화면에 시각 도구와 스타일 패널을 함께 둡니다.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>나중에: 설정 › 일반 › 이전 버전 설정 가져오기…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>HikariSub의 기본값으로 시작합니다. 나중에 설정 › 일반 › 이전 버전 설정 가져오기…로 가져올 수도 있습니다.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -5821,6 +6074,10 @@ Failed to copy %2 fonts.</source>
         <translation>시작하기</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>다른 형식으로 내보내기</translation>
+    </message>
+    <message>
         <source>Join with previous line using the audio selection</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
     </message>
@@ -5839,6 +6096,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shift following lines by frames: end at video</source>
         <translation>뒤따르는 줄을 프레임 단위로 이동: 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>플러그인</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>프레임 안에서 시간 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>이전 버전 설정 가져오기…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6495,10 +6764,6 @@ Failed to copy %2 fonts.</source>
         <translation>키 프레임 열기</translation>
     </message>
     <message>
-        <source>Import legacy settings...</source>
-        <translation>이전 버전 설정 가져오기...</translation>
-    </message>
-    <message>
         <source>Run the last loaded script</source>
         <translation>최근 스크립트 실행</translation>
     </message>
@@ -6653,6 +6918,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Check spelling</source>
         <translation>철자 검사</translation>
+    </message>
+    <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>플러그인 설치, 켜기/끄기, 설치 제거</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>플러그인…[&amp;U]</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -6821,6 +7094,14 @@ Failed to copy %2 fonts.</source>
         <translation>다른 이름으로 저장</translation>
     </message>
     <message>
+        <source>Writes a copy of the document in another format</source>
+        <translation>문서의 사본을 다른 형식으로 씁니다</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>다른 형식으로 내보내기…[&amp;E]</translation>
+    </message>
+    <message>
         <source>Save translation</source>
         <translation>번역 저장</translation>
     </message>
@@ -6959,6 +7240,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>선택한 줄의 시작 및 끝 시간을 프레임의 가운데로 옮겨, 나중에 시간 단위로 이동해도 온전한 프레임에 머무르게 합니다</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -8933,6 +9222,26 @@ removing audio cache files.</source>
         <translation>이전 버전 단축키 가져오기…</translation>
     </message>
     <message>
+        <source>Legacy</source>
+        <translation>이전 버전</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>이전 버전 설정 가져오기…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>마지막 가져오기 되돌리기…</translation>
+    </message>
+    <message>
+        <source>Script hotkeys</source>
+        <translation>스크립트 단축키</translation>
+    </message>
+    <message>
         <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
         <translation>이전 버전 Hotkeys.txt의 스크립트 단축키를 즉시 추가</translation>
     </message>
@@ -9196,6 +9505,253 @@ and will be changed to the default</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>다른 언어의 단어는 해당 문자 체계에 맞는 다른 설치된 사전으로 검사합니다. 사전이 없는 문자 체계의 단어는 표시하지 않습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>이 파일은 플러그인 패키지(hikari-plugin.json이 들어 있는 zip 파일)가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>패키지에 링크가 있어 HikariSub이 설치하지 않습니다: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>패키지가 너무 큽니다: 압축을 풀면 파일이 %1개를 넘거나 크기가 %2MB를 넘습니다.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json이 올바른 JSON이 아닙니다: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json의 %2에서 ID “%1”(이)가 중복됩니다.</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>이 플러그인에는 Hikari API %1(이)가 필요하지만 이 HikariSub의 API는 %2입니다. 설치하려면 HikariSub을 업데이트하십시오.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>hikari-plugin.json이 %1에서 플러그인 스키마를 통과하지 못했습니다: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>패키지에 HikariSub이 설치하지 않는 파일 이름이 있습니다: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>패키지 최상위에 hikari-plugin.json이 없습니다.</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>패키지에 주 파일 %1(이)가 없습니다.</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>패키지에 서명이 있지만 매니페스트에 서명을 확인할 publicKey가 없습니다.</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>사용자 폴더의 plugins.json을 읽을 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>패키지가 매니페스트에 지정되지 않은 키로 서명되었습니다.</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>서명이 패키지와 일치하지 않습니다. 서명 후에 패키지가 변경되었을 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>서명의 신뢰 주석이 서명 후에 변경되었습니다.</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>패키지 옆의 .minisig 파일이 minisign 서명이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>전체 신뢰: HikariSub의 제한 밖에서 네이티브 코드를 실행할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>열려 있는 모든 자막 파일 읽기 및 편집: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>%1에 연결: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>읽고 쓸 폴더 요청, %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>읽을 폴더 요청, %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub이 작업을 마치지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>플러그인을 사용하려면 사용자 폴더가 필요하지만 이 사본에는 사용자 폴더가 없습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub이 %1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>먼저 플러그인 패키지를 선택하십시오.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>플러그인</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>서명 키가 바뀌었습니다. 설치된 사본은 키 %1(으)로, 이 패키지는 키 %2(으)로 서명되었습니다. 작성자가 키를 바꾼 것이 확실한 경우에만 설치하십시오.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>이 패키지는 서명되지 않았지만 설치된 사본은 키 %1(으)로 서명되었습니다. 출처를 신뢰하는 경우에만 설치하십시오.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>검증되지 않은 출처이며 키 %1(으)로 서명되었습니다. 업데이트는 같은 키로 서명되어야 합니다.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>검증되지 않음: 패키지가 서명되지 않아 HikariSub이 만든 사람을 확인할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>플러그인을 설치하지 못함</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>플러그인 설치</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>플러그인 업데이트</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>플러그인 다시 설치</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>플러그인 다운그레이드</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>“%1” %2(을)를 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>“%1”(을)를 %2에서 %3(으)로 업데이트하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>“%1” %2(을)를 다시 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>“%1” %2(을)를 하위 버전 %3(으)로 교체하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>다음 권한을 요청합니다</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>활성 자막 파일 외에는 권한을 요청하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>신뢰하고 설치</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>설치 제거, 데이터 유지</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>설치 제거 및 데이터 삭제</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>설치 제거</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>플러그인 설치 제거</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>“%1”의 설치를 제거하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>사용자 폴더에 저장된 데이터가 있습니다. 다시 설치할 때 사용하려면 데이터를 유지하십시오.</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>플러그인 설치를 제거하지 못함</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>설치된 플러그인이 없습니다. .hikariplugin 파일에서 설치하십시오.</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>설치된 플러그인</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>사용</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>검증되지 않음, 키 %1(으)로 서명됨</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>검증되지 않음, 서명 없음</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>전체 신뢰</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>파일에서 설치…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>플러그인 패키지 선택</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>HikariSub 플러그인 (*.hikariplugin)</translation>
     </message>
 </context>
 <context>

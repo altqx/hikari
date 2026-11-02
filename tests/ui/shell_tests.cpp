@@ -5,6 +5,7 @@
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
+#include "hikari/application/center_times.h"
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
 #include "style/text_menus.h"
@@ -15434,6 +15435,25 @@ private slots:
         return dialog;
     }
     QVariantMap settingsValues(QObject *dialog) const { return dialog->property("values").toMap(); }
+    QQuickItem *legacySettingsButton(const char *name)
+    {
+        auto *dialog = openSettings();
+        if (!dialog || !QTest::qWaitFor([&] { return dialog->property("visible").toBool(); }))
+            return nullptr;
+        showSettingsPage("general");
+        return dialogItem("settingsDialog", name);
+    }
+    QObject *importWizard() const
+    {
+        return engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+    }
+    bool importLegacySettingsByHotkey()
+    {
+        QVariant ran;
+        return QMetaObject::invokeMethod(engine->rootObjects().first(), "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                         Q_ARG(QVariant, QStringLiteral("GLOBAL_IMPORT_LEGACY_SETTINGS")))
+               && ran.toBool();
+    }
 
     void settingsUpdatesPageKeepsTheUpdateOptions()
     {
@@ -15953,12 +15973,16 @@ private slots:
             f.write(bytes);
         }
         restartWithSpelling(home.path(), false);
-        auto *menuItem = named("importSettingsMenuItem");
-        QVERIFY(menuItem);
-        QVERIFY(QByteArray(menuItem->metaObject()->className()).startsWith("ShellMenuItem"));
-        QVERIFY(menuItem->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
-        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QVERIFY(!named("importSettingsMenuItem"));
+        auto *importButton = legacySettingsButton("settingsImportLegacy");
+        QVERIFY(importButton);
+        QVERIFY(importButton->isVisible() && importButton->isEnabled());
+        QVERIFY(!dialogItem("settingsDialog", "settingsRollBackImport")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "settingsLegacyNotFound")->isVisible(),
+                 application->settingsImport().roots().isEmpty());
+        QVERIFY(dialogItem("settingsDialog", "hotkeyImportLegacy")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(importButton, "click"));
+        auto *dialog = importWizard();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
@@ -16069,15 +16093,17 @@ private slots:
                     .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
         QVERIFY(!application->settingsStore()->isSet(QStringLiteral("program.theme")));
 
-        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
-        dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        auto *rollBack = legacySettingsButton("settingsRollBackImport");
+        QVERIFY(rollBack);
+        QTRY_VERIFY(rollBack->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(rollBack, "click"));
+        dialog = importWizard();
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(dialog->property("step").toInt(), 1);
-        QTRY_VERIFY(visibleNamed("settingsImportRollbackBar"));
-        QCOMPARE(control("settingsImportState")->property("text").toString(), QStringLiteral("The last import is in effect."));
-        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
         answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
                       QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("cancel"));
+        QTRY_VERIFY(visibleNamed("settingsImportRollbackBar"));
+        QCOMPARE(control("settingsImportState")->property("text").toString(), QStringLiteral("The last import is in effect."));
         QVERIFY(!application->settingsImport().pending());
         QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
         answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
@@ -16085,6 +16111,7 @@ private slots:
         QVERIFY(application->settingsImport().pending());
         QTRY_COMPARE(control("settingsImportState")->property("text").toString(),
                      QStringLiteral("An import waits for the next start."));
+        QTRY_VERIFY(!rollBack->isVisible());
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
         QVERIFY(!application->settingsStore()->isSet(application::kHotkeysSetting.data()));
@@ -16108,8 +16135,8 @@ private slots:
             f.write(config);
         }
         restartWithSpelling(home.path(), false);
-        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
-        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QVERIFY(importLegacySettingsByHotkey());
+        auto *dialog = importWizard();
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
         // a closed FolderDialog keeps no folder set from outside: call addFolder instead
@@ -16177,6 +16204,58 @@ private:
     };
 
 private slots:
+    void pluginsInstallFromTheAutomationMenu()
+    {
+        QTemporaryDir home;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        restartWith(options);
+        const auto fixture = [](const char *name) {
+            return QVariant(QUrl::fromLocalFile(QStringLiteral(HIKARI_PLUGIN_FIXTURES "/") + QString::fromLatin1(name)));
+        };
+        const auto rows = [this] { return application->pluginManager()->plugins(); };
+        QObject *dialog = named("pluginManagerDialog");
+        QVERIFY(dialog && !dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("pluginsMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("pluginManagerDialog", "pluginManagerEmpty")->isVisible());
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginManagerProblem")->isVisible());
+        QVERIFY(dialogItem("pluginManagerDialog", "pluginInstallFromFile")->isEnabled());
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("hello-1.0.0.hikariplugin"))));
+        answerMessage("pluginManagerMessages", QStringLiteral("Install plugin"), QStringLiteral("Install “Hello” 1.0.0?"),
+                      QStringLiteral("install"));
+        QTRY_COMPARE(rows().size(), 1);
+        QQuickItem *trust = nullptr;
+        QTRY_VERIFY((trust = dialogItem("pluginManagerDialog", "pluginTrust_com.example.hello")));
+        QCOMPARE(trust->property("text").toString(), QStringLiteral("Unverified, signed by key EFCDAB8967452301"));
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginManagerEmpty")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginEnabled_com.example.hello"), "click"));
+        QTRY_VERIFY(!rows().first().toMap().value(QStringLiteral("enabled")).toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("hello-2.0.0-other-key.hikariplugin"))));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("pluginManagerMessages")) && box->isVisible());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Update “Hello” from 1.0.0 to 2.0.0?"));
+        QVERIFY(box->property("detail").toString().startsWith(
+            QStringLiteral("The signing key changed. The installed copy was signed by key EFCDAB8967452301, and this one by key 1032547698BADCFE.")));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QCOMPARE(rows().first().toMap().value(QStringLiteral("version")).toString(), QStringLiteral("1.0.0"));
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("needs-api-99.hikariplugin"))));
+        answerMessage("pluginManagerMessages", QStringLiteral("Plugin not installed"),
+                      QStringLiteral("This plugin needs Hikari API 99, and this HikariSub has API 1. Update HikariSub to install it."));
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginUninstall_com.example.hello"), "click"));
+        answerMessage("pluginManagerMessages", QStringLiteral("Uninstall plugin"), QStringLiteral("Uninstall “Hello”?"),
+                      QStringLiteral("remove"));
+        QTRY_VERIFY(rows().isEmpty());
+        QVERIFY(!QDir(home.filePath(QStringLiteral("plugins/com.example.hello"))).exists());
+    }
     void gettingStartedOpensAtTheFirstStartOnly()
     {
         const LegacyHere none({});
@@ -18460,7 +18539,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 263);
+        QCOMPARE(hotkeyRows().size(), 267);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -19673,7 +19752,8 @@ private slots:
             };
             QVERIFY(at("cancelMacroMenuItem") >= 0);
             QVERIFY(at("cancelMacroMenuItem") < at("automationManagerMenuItem"));
-            QCOMPARE(at("macrosSeparator"), at("automationManagerMenuItem") + 1);
+            QCOMPARE(at("pluginsMenuItem"), at("automationManagerMenuItem") + 1);
+            QCOMPARE(at("macrosSeparator"), at("pluginsMenuItem") + 1);
             QVERIFY(at("macro_Wait for cancel") > at("macrosSeparator"));
         }
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
@@ -27461,6 +27541,45 @@ private slots:
         QTRY_VERIFY(!application->shell().filtered());
     }
 
+    void centerTimesWithinFramesKeepsEachFrame()
+    {
+        const QString path = writeFile(dir, "fa16-center.ass",
+                                       "Dialogue: 0,0:00:00.41,0:00:01.20,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:01.53,0:00:01.91,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto ms = [&](int i) {
+            const auto *l = session->document().lines()[static_cast<std::size_t>(i)];
+            return std::pair(l->start.value.microseconds() / 1000, l->end.value.microseconds() / 1000);
+        };
+        using Ms = std::pair<std::int64_t, std::int64_t>;
+        auto *center = item<QObject>("centerTimesInFramesMenuItem");
+        QVERIFY(center);
+        QVERIFY(!center->property("enabled").toBool());
+
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        closeMismatchQuestion();
+        QTRY_VERIFY(center->property("enabled").toBool());
+        const auto timebase = application->video().session().legacyTimebase();
+        const auto frames = [&](int i) {
+            return std::pair(timebase.frameAt(static_cast<int>(ms(i).first)), timebase.frameAt(static_cast<int>(ms(i).second)));
+        };
+        const auto before = frames(0);
+        const Ms centred{application::centeredTime(timebase, 410), application::centeredTime(timebase, 1200)};
+        QVERIFY(centred != (Ms{410, 1200}));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QVERIFY(QMetaObject::invokeMethod(center, "click"));
+        QTRY_COMPARE(ms(0), centred);
+        QCOMPARE(frames(0), before);
+        QCOMPARE(ms(1), (Ms{1530, 1910}));
+        QCOMPARE(session->history().back().name, std::string("Centring times"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(ms(0), (Ms{410, 1200}));
+    }
+
     void snapToKeyframeNeedsTheAudioBox()
     {
         const QString path = writeFile(dir, "v6-snap.ass",
@@ -29759,7 +29878,7 @@ private slots:
             grab(settingsDialog, file("settings-hotkeys"));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!settingsDialog->isVisible());
-            QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+            QVERIFY(importLegacySettingsByHotkey());
             auto *wizard = windowNamed("settingsImportDialog");
             QTRY_VERIFY(wizard && wizard->isVisible());
             QVERIFY(importer.addRoot(legacy.path()));

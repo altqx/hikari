@@ -631,7 +631,7 @@ icon("duplicate", "Copy", [], [LISTS],
 icon("delete", "Delete", [], [LISTS, GRIDMENU, TEXTMENU],
      stroke("M2.5 4h11M6 4V2.5h4V4") + stroke("M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9")
      + stroke("M6.75 7v5M9.25 7v5"))
-icon("import", "Load", [], [LISTS, FILE],
+icon("import", "Load", [], [LISTS, "settings-dialog"],
      stroke("M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3")
      + accent(stroke("M7.5 4.5v10M4.5 11.5l3 3 3-3")))
 icon("clear", "Clear", [], [LISTS, VISUAL, GRIDMENU, AUTOPANEL],
@@ -1026,7 +1026,6 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
-    "EX1 #448": ["export"],
     "PL4 #416": ["plugins", "plugin-install"],
     "PL6 #418": ["plugin-unverified"],
     "NE2 #424": ["node-editor"],

@@ -46,7 +46,7 @@ ITEMS = ["default-arrangement", "keyboard-float", "keyboard-float-move-panel", "
          "monitor-removal-reviewed", "monitor-removal-show-focus", "orca", "menu-mnemonic-from-text-field",
          "test-executables", "grid-accessible", "header-controls-accessible", "tabs-accessible",
          "floating-borderless", "floating-header", "floating-shadow", "floating-no-compositor-frame",
-         "floating-header-composited", "floating-system-move", "floating-move", "free-part-dblclick-docks",
+         "floating-header-composited", "floating-move", "floating-move-free", "free-part-dblclick-docks",
          "floating-resize",
          "floating-forced-frame",
          "header-keyboard-menu", "header-keyboard-undock-dock", "header-keyboard-title-bar"]

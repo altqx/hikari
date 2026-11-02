@@ -72,6 +72,10 @@ private slots:
         QCOMPARE(f.catalogs(), QStringLiteral("/home/a/.config/hikarisub/catalogs"));
         QCOMPARE(f.presets(), QStringLiteral("/home/a/.config/hikarisub/presets"));
         QCOMPARE(f.recovery(), QStringLiteral("/home/a/.config/hikarisub/recovery"));
+        QCOMPARE(f.plugins(), QStringLiteral("/home/a/.config/hikarisub/plugins"));
+        QCOMPARE(f.pluginData(), QStringLiteral("/home/a/.config/hikarisub/plugin-data"));
+        QCOMPARE(f.pluginRegistry(), QStringLiteral("/home/a/.config/hikarisub/plugins.json"));
+        QCOMPARE(f.pluginCache(), QStringLiteral("/home/a/.cache/hikarisub/plugins"));
         QCOMPARE(f.audioCache(), QStringLiteral("/home/a/.cache/hikarisub/AudioCache"));
         QCOMPARE(f.indices(), QStringLiteral("/home/a/.cache/hikarisub/Indices"));
 

@@ -35,7 +35,7 @@ public:
         int flushIntervalMs = 5 * 60 * 1000;
         int firstFlushMs = 60 * 1000;
     };
-    static QUrl defaultEndpoint() { return QUrl(QStringLiteral("https://eu.i.posthog.com/batch/")); }
+    static QUrl defaultEndpoint() { return QUrl(QStringLiteral("https://i.hikarisub.org/batch/")); }
     static QUrl whatIsSentUrl()
     {
         return QUrl(QStringLiteral("https://hikarisub.org/en/docs/help/what-is-sent"));
