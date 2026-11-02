@@ -353,7 +353,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     };
     EXPECT_EQ(count(1), 110u);
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
-    EXPECT_EQ(count(6), 28u);
+    EXPECT_EQ(count(6), 30u);
     list.filter(5);
     EXPECT_EQ(list.row(list.selection()).key.type, VideoHotkey);
     list.selectShown(2);
