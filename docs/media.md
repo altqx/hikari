@@ -4,6 +4,8 @@
 
 ## Containers and codecs
 
+AV1 playback needs a hardware AV1 decoder, on Windows and Linux alike: VAAPI or NVDEC on Linux, D3D11VA, D3D12VA or DXVA2 on Windows. Without one, Play shows a notice. Opening, paused frames, seeking, stepping, keyframes and the waveform work for AV1 on every computer.
+
 Two decoders read a video: the editing path (FFMS2 on HikariSub's FFmpeg 7.1.2, which has every FFmpeg software decoder, plus dav1d for AV1 and zlib for compressed Matroska tracks) gives the paused frames, seeking, stepping, keyframes and the audio box; playback goes through Qt Multimedia, which brings its own FFmpeg (n9.0.1 in Qt 6.12, Windows and Linux alike, without dav1d).
 
 | | Editing (paused frames, seek, step, audio box) | Playback |
