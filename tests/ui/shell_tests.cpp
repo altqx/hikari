@@ -10575,8 +10575,11 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiApply"), "click"));
         QTRY_COMPARE(session->history().size(), steps + 1);
         QVERIFY(!core::extradataValue(session->document().lines()[0]->extra, hikari::application::kKanjiSkipKey));
-        QVERIFY(session->undo());
-        QVERIFY(core::extradataValue(session->document().lines()[0]->extra, hikari::application::kKanjiSkipKey) == u8"1");
+        QVariant undone;
+        QVERIFY(QMetaObject::invokeMethod(root, "runGlobalHotkey", Q_RETURN_ARG(QVariant, undone),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_UNDO"))));
+        QVERIFY(undone.toBool());
+        QTRY_VERIFY(core::extradataValue(session->document().lines()[0]->extra, hikari::application::kKanjiSkipKey) == u8"1");
         QTRY_COMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 3);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
@@ -14248,6 +14251,10 @@ private slots:
                 return nullptr;
             f.close();
             if (!application->openFile(path))
+                return nullptr;
+            const int tab = static_cast<int>(application->workspace().tabs().size()) - 1;
+            application->selectTab(tab);
+            if (!QTest::qWaitFor([&] { return application->currentTab() == tab; }))
                 return nullptr;
             application->editor().setShowTags(false);
             item("editingGrid")->forceActiveFocus();
