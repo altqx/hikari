@@ -447,3 +447,57 @@ TEST_F(SessionTest, CommitToSelectedWithOneLineIsAnOrdinaryCommit)
     EXPECT_TRUE(session.document().lines()[1]->comment);
     EXPECT_FALSE(session.document().lines()[0]->comment);
 }
+
+TEST_F(SessionTest, AmendingTheNewestStepReplacesItInPlace)
+{
+    session.editDraftText(l1, u8"o");
+    ASSERT_TRUE(session.commitDraftToSelected());
+    const auto first = session.contentId();
+    session.editDraftText(l1, u8"on");
+    ASSERT_TRUE(session.commitDraftToSelected("Edit Line", false, {}, first));
+    EXPECT_NE(session.contentId(), first);
+    session.editDraftText(l1, u8"one!");
+    ASSERT_TRUE(session.commitDraftToSelected("Edit Line", false, {}, session.contentId()));
+    EXPECT_EQ(textOf(session, l1), u8"one!");
+    EXPECT_EQ(session.historySize(), 2u);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(textOf(session, l1), u8"one");
+    EXPECT_FALSE(session.canUndo());
+    ASSERT_TRUE(session.redo());
+    EXPECT_EQ(textOf(session, l1), u8"one!");
+}
+
+TEST_F(SessionTest, AmendingAStepThatIsNoLongerNewestAddsOne)
+{
+    session.editDraftText(l1, u8"one!");
+    ASSERT_TRUE(session.commitDraftToSelected());
+    const auto typed = session.contentId();
+    ASSERT_TRUE(session.run(setText(l2, u8"two!")));
+    session.editDraftText(l1, u8"one!!");
+    ASSERT_TRUE(session.commitDraftToSelected("Edit Line", false, {}, typed));
+    EXPECT_EQ(session.historySize(), 4u);
+
+    ASSERT_TRUE(session.undo());
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(session.contentId(), typed);
+    session.editDraftText(l1, u8"one?");
+    ASSERT_TRUE(session.commitDraftToSelected("Edit Line", false, {}, typed));
+    EXPECT_EQ(session.historySize(), 3u);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(textOf(session, l1), u8"one!");
+}
+
+TEST_F(SessionTest, AmendingTheSavedStepMakesTheDocumentDirty)
+{
+    session.editDraftText(l1, u8"one!");
+    ASSERT_TRUE(session.commitDraftToSelected());
+    const auto snapshot = session.prepareSave();
+    ASSERT_TRUE(snapshot);
+    session.markSaved(snapshot->content);
+    ASSERT_FALSE(session.isDirty());
+    session.editDraftText(l1, u8"one!!");
+    ASSERT_TRUE(session.commitDraftToSelected("Edit Line", false, {}, snapshot->content));
+    EXPECT_EQ(session.historySize(), 2u);
+    EXPECT_TRUE(session.isDirty());
+    EXPECT_FALSE(session.savedStep());
+}

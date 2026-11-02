@@ -279,6 +279,9 @@ hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_karaoke_preset_tests SOURCES karaoke_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+target_compile_definitions(hikari_ui_karaoke_preset_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_karaoke_preset_tests hikari_media_helper hikari_media_fixtures)
 hikari_add_qttest(hikari_ui_saved_layouts_tests SOURCES saved_layouts_tests.cpp
     LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets
     PARTS layouts kept=unusableLayoutsAreKept)
