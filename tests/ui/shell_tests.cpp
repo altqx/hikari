@@ -8369,8 +8369,12 @@ private slots:
         for (const char *name : {"Qt", "KDDockWidgets", "FFmpeg", "FFMS2", "libass", "Hunspell", "LuaJIT", "ICU", "Boost"})
             QVERIFY2(names.contains(QLatin1String(name)), name);
         QVERIFY(!names.contains(QStringLiteral("Aegisub")));
-        QCOMPARE(credits->property("sources").toList().value(0).toStringList(),
-                 (QStringList{QStringLiteral("Aegisub"), QStringLiteral("Aegisub contributors"), QStringLiteral("BSD 3-Clause")}));
+        const QVariantList sourceRows = credits->property("sources").toList();
+        QCOMPARE(sourceRows.value(0).toStringList(), (QStringList{QStringLiteral("Aegisub"), QStringLiteral("Aegisub contributors"),
+                                                                  QStringLiteral("BSD 3-Clause and ISC")}));
+        QCOMPARE(sourceRows.value(1).toStringList(),
+                 (QStringList{QStringLiteral("Aegisub, arch1t3cht's fork"), QStringLiteral("arch1t3cht and Aegisub contributors"),
+                              QStringLiteral("BSD 3-Clause")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
         QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
@@ -8399,7 +8403,7 @@ private slots:
         QVERIFY(list->property("contentHeight").toReal() > list->height());
         QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
         QVERIFY(sources);
-        QCOMPARE(sources->childItems().size(), 2);
+        QCOMPARE(sources->childItems().size(), 3);
         QVERIFY(sources->childItems().first()->height() > 0);
         QVERIFY(sources->parentItem()->height() >= sources->y() + sources->height());
         QVERIFY(QMetaObject::invokeMethod(about, "open"));
