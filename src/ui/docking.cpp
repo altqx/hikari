@@ -51,6 +51,17 @@ namespace {
 Q_LOGGING_CATEGORY(lcDocking, "hikari.docking")
 QPointer<QQmlEngine> g_attached;
 bool g_everAttached = false;
+bool g_layoutLocked = false;
+QList<Docking *> g_dockings;
+
+bool refuseWhileLocked()
+{
+    if (!g_layoutLocked)
+        return false;
+    for (Docking *docking : std::as_const(g_dockings))
+        emit docking->layoutChangeRefused();
+    return true;
+}
 
 using KDDockWidgets::DropLocation;
 
@@ -437,6 +448,7 @@ void configureEngine()
     Config &config = Config::self();
     config.setFlags(Config::Flag_HideTitleBarWhenTabsVisible | Config::Flag_AlwaysShowTabs);
     config.setDropIndicatorAllowedFunc(dropKeepsItsGroup);
+    config.setDragAboutToStartFunc([](KDDockWidgets::Core::Draggable *) { return !refuseWhileLocked(); });
     config.setSeparatorThickness(1);
     config.setDraggedWindowOpacity(0.7);
     config.setInternalFlags(config.internalFlags() | Config::InternalFlag_UseTransparentFloatingWindow);
@@ -572,9 +584,29 @@ int keepFloatingPanelsOnScreen()
     return moved;
 }
 
+void setLayoutLocked(bool locked)
+{
+    if (locked == g_layoutLocked)
+        return;
+    g_layoutLocked = locked;
+    for (Docking *docking : std::as_const(g_dockings))
+        emit docking->layoutLockedChanged();
+}
+
+bool layoutLocked()
+{
+    return g_layoutLocked;
+}
+
+Docking::~Docking()
+{
+    g_dockings.removeAll(this);
+}
+
 Docking::Docking(QObject *parent)
     : QObject(parent)
 {
+    g_dockings.append(this);
     connect(windowdecorations::notifier(), &windowdecorations::Notifier::changed, this, [this] {
         ++m_windowTitleRevision;
         emit windowSystemTitlesChanged();
@@ -962,7 +994,7 @@ void Docking::setOpenMenu(const QString &uniqueName)
 bool Docking::toggleFloating(const QString &uniqueName)
 {
     KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
-    if (!dock)
+    if (!dock || refuseWhileLocked())
         return false;
     return dock->setFloating(!dock->isFloating());
 }
@@ -1020,7 +1052,7 @@ bool Docking::moveTab(const QString &uniqueName, int step)
 {
     KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
     KDDockWidgets::Core::Group *group = groupOf(dock);
-    if (!group || step == 0)
+    if (!group || step == 0 || g_layoutLocked)
         return false;
     const int from = group->indexOfDockWidget(dock);
     const int to = from + step;

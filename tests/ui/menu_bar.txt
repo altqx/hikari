@@ -126,6 +126,8 @@ View > Layout > -
 View > Layout > Save layout as…
 View > Layout > Reset this layout
 View > Layout > Manage layouts…
+View > Layout > -
+View > Layout > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 View > -
 View > Panels >
 View > Panels > Video >

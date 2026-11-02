@@ -9,6 +9,8 @@ ToolButton {
     id: switcher
     objectName: "layoutSwitcher"
     required property var layouts
+    property Action lockAction
+    property string lockReason
     signal presetChosen(string name)
     signal savedLayoutChosen(string name)
     signal saveRequested()
@@ -42,7 +44,8 @@ ToolButton {
     contentItem: RowLayout {
         spacing: 4
         Icon {
-            iconRole: "layout"
+            objectName: "layoutSwitcherIcon"
+            iconRole: switcher.layouts.locked ? "layout-lock" : "layout"
             Layout.alignment: Qt.AlignVCenter
         }
         Label {
@@ -61,9 +64,9 @@ ToolButton {
         }
     }
     Accessible.role: Accessible.ButtonMenu
-    Accessible.name: qsTr("Layout: %1").arg(text)
+    Accessible.name: layouts.locked ? qsTr("Layout: %1, locked").arg(text) : qsTr("Layout: %1").arg(text)
     ToolTip.visible: hovered && !layoutMenu.visible
-    ToolTip.text: qsTr("Layout of this tab")
+    ToolTip.text: layouts.locked ? qsTr("Layout of this tab, locked") : qsTr("Layout of this tab")
     onClicked: layoutMenu.visible ? layoutMenu.close() : openMenu()
 
     LayoutMenu {
@@ -71,6 +74,8 @@ ToolButton {
         objectName: "layoutSwitcherMenu"
         prefix: "switcher"
         layouts: switcher.layouts
+        lockAction: switcher.lockAction
+        lockReason: switcher.lockReason
         onPresetChosen: name => switcher.presetChosen(name)
         onSavedLayoutChosen: name => switcher.savedLayoutChosen(name)
         onSaveRequested: switcher.saveRequested()

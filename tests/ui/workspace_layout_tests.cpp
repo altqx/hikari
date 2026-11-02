@@ -347,6 +347,116 @@ private slots:
         QVERIFY(ui::WorkspaceLayoutController::payloadOf(again.readAll(), nullptr));
         QVERIFY(QFile::exists(layoutFile() + QStringLiteral(".unrestored")));
     }
+
+    void aLockedLayoutComesBackLockedNextSession()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        QVERIFY(layouts.setLocked(true));
+        QVERIFY(layouts.locked());
+        QVERIFY(ui::layoutLocked());
+        stop();
+        QFile f(layoutFile());
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QVERIFY(QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("locked")).toBool());
+
+        start();
+        QVERIFY(application->workspaceLayout().locked());
+        QVERIFY(ui::layoutLocked());
+        QVERIFY(application->workspaceLayout().setLocked(false));
+        stop();
+        QFile again(layoutFile());
+        QVERIFY(again.open(QIODevice::ReadOnly));
+        QVERIFY(!QJsonDocument::fromJson(again.readAll()).object().contains(QStringLiteral("locked")));
+    }
+
+    void theLockTravelsWithTheArrangement()
+    {
+        const ui::WorkspaceArrangement locked{QStringLiteral("Timing"), {}, QStringLiteral("Mine"), true};
+        QCOMPARE(ui::WorkspaceArrangement::parse(locked.serialise()), locked);
+        const ui::WorkspaceArrangement open{QStringLiteral("Timing"), {}, QStringLiteral("Mine"), false};
+        QCOMPARE(ui::WorkspaceArrangement::parse(open.serialise()), open);
+        QVERIFY(!open.serialise().contains("locked"));
+
+        start();
+        auto &layouts = application->workspaceLayout();
+        QVERIFY(layouts.setLocked(true));
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Locked one")));
+        QVERIFY(layouts.setLocked(false));
+        QVERIFY(layouts.applyPreset(QStringLiteral("Timing")));
+        QVERIFY(!layouts.locked());
+        QVERIFY(layouts.applySavedLayout(QStringLiteral("Locked one")));
+        QVERIFY(layouts.locked());
+        QVERIFY(ui::layoutLocked());
+        QVERIFY(layouts.setLocked(false));
+        stop();
+    }
+
+    void aFloatingPanelBlocksTheLock()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        QObject *window = engine->rootObjects().first();
+        QVERIFY(dock("editorDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
+        QTRY_COMPARE(window->property("lockReason").toString(), QStringLiteral("Dock floating panels to lock the layout"));
+        QVERIFY(!layouts.setLocked(true));
+        QVERIFY(!layouts.locked());
+        auto *lockRow = window->findChild<QObject *>(QStringLiteral("viewLayoutLock"));
+        QVERIFY(lockRow);
+        QVERIFY(!lockRow->property("enabled").toBool());
+        QCOMPARE(lockRow->property("reason").toString(), QStringLiteral("Dock floating panels to lock the layout"));
+
+        QVERIFY(dock("editorDock")->setProperty("isFloating", false));
+        QTRY_VERIFY(lockRow->property("enabled").toBool());
+        QVERIFY(window->property("lockReason").toString().isEmpty());
+        QVERIFY(!dock("editorDock")->property("isFloating").toBool());
+        QVERIFY(layouts.setLocked(true));
+        QVERIFY(lockRow->property("checked").toBool());
+        QVERIFY(layouts.setLocked(false));
+        stop();
+    }
+
+    void whileLockedTheRowsThatMovePanelsAreGreyed()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        QObject *window = engine->rootObjects().first();
+        auto row = [&](const char *name) {
+            auto *item = window->findChild<QObject *>(QLatin1String(name));
+            return item && item->property("enabled").toBool();
+        };
+        const char *held[] = {"viewLayoutPresetTiming", "viewLayoutReset", "panelShowGrid", "panelHideGrid",
+                              "panelFloatGrid", "movePanel", "switcherPresetTiming", "switcherReset"};
+        for (const char *name : held)
+            QVERIFY2(row(name), name);
+        QVERIFY(layouts.setLocked(true));
+        for (const char *name : held)
+            QVERIFY2(!row(name), name);
+        QVERIFY(row("viewLayoutSaveAs"));
+        QVERIFY(row("viewLayoutLock"));
+        QVERIFY(row("hideTagsMenuItem"));
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Timing"))));
+        QCOMPARE(layouts.preset(), QStringLiteral("Editing"));
+        QVERIFY(layouts.setLocked(false));
+        stop();
+    }
+
+    void aCommandStillShowsItsPanelWhileLocked()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        QObject *window = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(dock("searchDock"), "close"));
+        QTRY_VERIFY(!dock("searchDock")->property("isOpen").toBool());
+        QVERIFY(layouts.setLocked(true));
+        QVERIFY(QMetaObject::invokeMethod(window, "openSearch", Q_ARG(QVariant, 0)));
+        QTRY_VERIFY(dock("searchDock")->property("isOpen").toBool());
+        QVERIFY(!dock("searchDock")->property("isFloating").toBool());
+        QVERIFY(layouts.locked());
+        QVERIFY(layouts.setLocked(false));
+        stop();
+    }
 };
 
 QTEST_MAIN(WorkspaceLayoutTest)

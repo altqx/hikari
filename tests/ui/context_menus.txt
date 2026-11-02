@@ -153,6 +153,9 @@ Panel options > Move panel…
 Panel options > Move tab left
 Panel options > Move tab right
 Panel options > Undock
+Panel options > -
+Panel options > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options > -
 Panel options > Close
 Document tab
 Document tab > -

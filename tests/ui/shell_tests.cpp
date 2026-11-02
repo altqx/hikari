@@ -6514,6 +6514,7 @@ private slots:
         const QStringList referenceItems = panelMenuItems();
         QCOMPARE(referenceItems, (QStringList{QStringLiteral("Compare with reference"), QStringLiteral("|"),
                                               QStringLiteral("Move panel…"), QStringLiteral("Undock"),
+                                              QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
                                               QStringLiteral("Close reference")}));
         QQuickItem *referenceHeader = dockHeader(QStringLiteral("Reference"));
         std::function<void(QQuickItem *)> noRepeat = [&](QQuickItem *from) {
@@ -6536,7 +6537,8 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("down").toBool());
         QCOMPARE(panelMenuItems(),
-                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close")}));
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"),
+                         QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("down").toBool());
 
@@ -6544,7 +6546,9 @@ private slots:
         QVERIFY(videoDock->setProperty("options", 1));
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QCOMPARE(panelMenuItems(),
-                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close (off)")}));
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"),
+                         QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
+                         QStringLiteral("Close (off)")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(videoDock->setProperty("options", 0));
 
@@ -6561,7 +6565,9 @@ private slots:
         }
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QCOMPARE(panelMenuItems(),
-                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"),
+                         QStringLiteral("|"), QStringLiteral("Lock layout (off)"), QStringLiteral("|"),
+                         QStringLiteral("Close")}));
         {
             QQuickItem *floatingHeader = dockHeader(QStringLiteral("Video"));
             // A native popup (Popup.Window, Wayland's xdg_popup) belongs to its parent's window.
@@ -6633,6 +6639,7 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Audio")));
         QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left"),
                                                 QStringLiteral("Move tab right"), QStringLiteral("Undock"),
+                                                QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
                                                 QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsTabLeft"), "triggered"));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
@@ -6651,6 +6658,7 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Audio")));
         QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left (off)"),
                                                 QStringLiteral("Move tab right"), QStringLiteral("Undock"),
+                                                QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
                                                 QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsTabRight"), "triggered"));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
@@ -6663,6 +6671,7 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Audio")));
         QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left"),
                                                 QStringLiteral("Move tab right (off)"), QStringLiteral("Undock"),
+                                                QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
                                                 QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(!docking.moveTab(QStringLiteral("Audio"), 1));
@@ -18335,7 +18344,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 263);
+        QCOMPARE(hotkeyRows().size(), 264);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
