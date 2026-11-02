@@ -3,6 +3,7 @@
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_tools.h"
 #include "hikari/core/ass_load.h"
+#include "hikari/core/ass_save.h"
 #include "hikari/core/text_projection.h"
 
 #include <gtest/gtest.h>
@@ -181,6 +182,30 @@ TEST(PerspectiveMaths, APlaneHoldsShortOfItsHorizon)
     EXPECT_FALSE(planeHolds(steep, {0.25f, 0.25f}, {0.75f, 0.75f}));
     EXPECT_TRUE(planeHolds(steep, {0.f, 0.f}, {1.f, 1.f}));
     EXPECT_FALSE(planeHolds(rect, {0.75f, 0.25f}, {0.25f, 0.75f}));
+}
+
+TEST(PerspectiveMaths, ThePlaneIsWrittenAsArch1t3chtsAegisubWritesIt)
+{
+    const Quad plane{{{600, 300}, {1000, 300.5f}, {1000.25f, 500}, {-0.25f, 500}}};
+    EXPECT_EQ(planeValue(plane), u8"600.00;300.00|1000.00;300.50|1000.25;500.00|-0.25;500.00");
+    const auto read = parsePlane(planeValue(plane));
+    ASSERT_TRUE(read);
+    EXPECT_EQ(*read, plane);
+    const auto bare = parsePlane(u8"600;300|1000;300|1000;500|600;500");
+    ASSERT_TRUE(bare);
+    EXPECT_EQ((*bare)[2].x, 1000);
+    EXPECT_EQ(planeValue({{{NAN, 0}, {1, 0}, {1, 1}, {0, 1}}}), u8"");
+    for (const std::u8string_view bad : {u8"1;2|3;4|5;6", u8"1;2|3;4|5;6|7;8|9;10", u8"1;2;3|3;4|5;6|7;8",
+                                         u8"1;x|3;4|5;6|7;8", u8"1;inf|3;4|5;6|7;8", u8""})
+        EXPECT_FALSE(parsePlane(bad)) << std::string(bad.begin(), bad.end());
+}
+
+TEST(PerspectiveMaths, ThePlaneReplacesOnlyItsOwnExtradata)
+{
+    const std::vector<core::Extradata> extra{{u8"_aegi_perspective_ambient_plane", u8"old"}, {u8"_aegi_folddata", u8"0;0;1"}};
+    EXPECT_EQ(withExtradata(extra, kPlaneKey, u8"new"),
+              (std::vector<core::Extradata>{{u8"_aegi_folddata", u8"0;0;1"}, {u8"_aegi_perspective_ambient_plane", u8"new"}}));
+    EXPECT_EQ(withExtradata(extra, kPlaneKey, u8"old"), extra);
 }
 
 TEST(PerspectiveMaths, QuadsAndThePlane)
@@ -1332,7 +1357,7 @@ TEST(PerspectiveTool, ALockedResizeIsKept)
     const PointF corner = f.tool.outer()[2];
     const std::size_t before = f.steps();
     f.drag(corner, {corner.x + 30, corner.y + 20});
-    EXPECT_EQ(f.steps(), before);
+    EXPECT_EQ(f.steps(), before + 1);
     const Quad resized = f.tool.outer();
     EXPECT_LT(dist(resized[2], {corner.x + 30, corner.y + 20}), 0.1);
     f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
@@ -1340,6 +1365,94 @@ TEST(PerspectiveTool, ALockedResizeIsKept)
     f.host.s->setSelection({f.host.line(0), {f.host.line(0)}, f.host.line(0), std::nullopt});
     f.tool.reset(f.host);
     expectQuadNear(f.tool.outer(), resized, 0.1);
+}
+
+std::u8string planeExtra(const Host &host, std::size_t i = 0)
+{
+    for (const auto &e : host.s->document().lines()[i]->extra)
+        if (e.key == kPlaneKey)
+            return e.value;
+    return {};
+}
+
+void loadSavedPlane(Fixture &f)
+{
+    f.host.script += "\n[Aegisub Extradata]\nData: 1,_aegi_perspective_ambient_plane,e0;100#7C640;100#7C640;300#7C0;300\n";
+    f.host.reopen();
+    f.tool.reset(f.host);
+}
+
+const Quad kSavedPlane{{{0, 100}, {640, 100}, {640, 300}, {0, 300}}};
+
+TEST(PerspectiveTool, ThePlaneIsSavedInTheLinesExtradataWithTheTags)
+{
+    Fixture f;
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    EXPECT_EQ(planeExtra(f.host), u8"");
+    const std::size_t before = f.steps();
+    f.drag({540, 220}, {520, 250});
+    EXPECT_EQ(f.steps(), before + 1);
+    const std::u8string value = planeExtra(f.host);
+    const auto saved = parsePlane(value);
+    ASSERT_TRUE(saved) << std::string(value.begin(), value.end());
+    expectQuadNear(*saved, f.tool.outer(), 0.05);
+    ASSERT_TRUE(f.host.s->undo());
+    f.tool.reset(f.host);
+    EXPECT_EQ(planeExtra(f.host), u8"");
+}
+
+TEST(PerspectiveTool, ThePlaneComesBackFromTheFile)
+{
+    Fixture f({"{=1}{\\pos(320,200)}Perspective"});
+    loadSavedPlane(f);
+    ASSERT_EQ(planeExtra(f.host), u8"0;100|640;100|640;300|0;300");
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    expectQuadNear(f.tool.outer(), kSavedPlane, 0.05);
+}
+
+TEST(PerspectiveTool, UndoBringsTheSavedPlaneBack)
+{
+    Fixture f({"{=1}{\\pos(320,200)}Perspective"});
+    loadSavedPlane(f);
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    f.drag({640, 300}, {600, 320});
+    ASSERT_GT(dist(f.tool.outer()[2], {640, 300}), 1);
+    ASSERT_NE(planeExtra(f.host), u8"0;100|640;100|640;300|0;300");
+    ASSERT_TRUE(f.host.s->undo());
+    f.tool.reset(f.host);
+    EXPECT_EQ(planeExtra(f.host), u8"0;100|640;100|640;300|0;300");
+    expectQuadNear(f.tool.outer(), kSavedPlane, 0.05);
+}
+
+TEST(PerspectiveTool, ASavedPlaneIsReadAgainFromTheSavedFile)
+{
+    Fixture f;
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    f.drag({540, 220}, {520, 250});
+    const Quad plane = f.tool.outer();
+    const auto bytes = core::encodeAss(f.host.s->document());
+    const std::string saved(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+    EXPECT_NE(saved.find(",_aegi_perspective_ambient_plane,e"), std::string::npos) << saved;
+    f.host.script = saved;
+    f.host.reopen();
+    f.tool.reset(f.host);
+    ASSERT_TRUE(f.tool.planeShown());
+    expectQuadNear(f.tool.outer(), plane, 0.05);
+}
+
+TEST(PerspectiveTool, HidingThePlaneKeepsItsValue)
+{
+    Fixture f;
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    f.drag({540, 220}, {520, 250});
+    const std::u8string value = planeExtra(f.host);
+    ASSERT_FALSE(value.empty());
+    ASSERT_TRUE(f.tool.setOption("plane", 0, f.host));
+    const std::size_t before = f.steps();
+    const PointF c = centre(f.tool.inner());
+    f.drag(c, {c.x + 20, c.y - 10});
+    ASSERT_EQ(f.steps(), before + 1);
+    EXPECT_EQ(planeExtra(f.host), value);
 }
 
 TEST(PerspectiveTool, ThePlanesAreTheSessions)
@@ -1737,7 +1850,7 @@ TEST(PerspectiveTool, AnEditOfTooMuchTextIsRefused)
     EXPECT_EQ(f.steps(), steps + 1);
 }
 
-TEST(PerspectiveTool, ALockedResizeWritesNoTags)
+TEST(PerspectiveTool, ALockedResizeWritesNoTagsOnlyThePlane)
 {
     Fixture f;
     ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
@@ -1748,7 +1861,10 @@ TEST(PerspectiveTool, ALockedResizeWritesNoTags)
     f.drag(corner, {corner.x + 30, corner.y + 20});
     EXPECT_LT(dist(f.tool.outer()[2], {corner.x + 30, corner.y + 20}), 0.1);
     EXPECT_EQ(f.host.text(), text);
-    EXPECT_EQ(f.steps(), steps);
+    EXPECT_EQ(f.steps(), steps + 1);
+    const auto saved = parsePlane(planeExtra(f.host));
+    ASSERT_TRUE(saved);
+    EXPECT_LT(dist((*saved)[2], {corner.x + 30, corner.y + 20}), 0.01);
 }
 
 TEST(PerspectiveTool, ARescaleIsRefusedWhileATargetChangesItsOutlineAfterItsText)
