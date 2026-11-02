@@ -46,6 +46,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DHARPER=${HIKARI_HARPER_LS}"
             "-DHARPER_LICENSE=${HIKARI_HARPER_LS_LICENSE}"
             "-DHARPER_NOTICES=${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt"
+            "-DAEGISUB_LICENSE=${PROJECT_SOURCE_DIR}/packaging/licenses/aegisub/LICENSE"
             -P "${CMAKE_CURRENT_LIST_FILE}"
         DEPENDS hikarisub hikarisub_app hikari_media_helper hikari_lua_helper hikari_automation_stage
         COMMENT "Staging the Windows payload in ${HIKARI_PAYLOAD_DIR}"
@@ -55,7 +56,7 @@ endif()
 
 cmake_minimum_required(VERSION 3.28)
 foreach(var STAGE APP APP_LIBRARY HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS DICTIONARIES UNIDIC
-        MECAB_LICENSE UNIDIC_LICENSE)
+        MECAB_LICENSE UNIDIC_LICENSE AEGISUB_LICENSE)
     if(NOT DEFINED ${var} OR "${${var}}" STREQUAL "")
         message(FATAL_ERROR "HikariPackageWindows: ${var} is required")
     endif()
@@ -96,6 +97,8 @@ file(COPY_FILE "${HARPER}" "${STAGE}/harper-ls.exe")
 file(MAKE_DIRECTORY "${STAGE}/licenses/harper")
 file(COPY_FILE "${HARPER_LICENSE}" "${STAGE}/licenses/harper/LICENSE")
 file(COPY_FILE "${HARPER_NOTICES}" "${STAGE}/licenses/harper/THIRD-PARTY.txt")
+file(MAKE_DIRECTORY "${STAGE}/licenses/aegisub")
+file(COPY_FILE "${AEGISUB_LICENSE}" "${STAGE}/licenses/aegisub/LICENSE")
 include("${CMAKE_CURRENT_LIST_DIR}/HikariBundledManifest.cmake")
 hikari_write_bundled_manifest("${STAGE}")
 
@@ -154,7 +157,7 @@ foreach(required HikariSub.exe HikariSubApp.dll hikari-media-helper.exe hikari-l
         Csri/VSFiltermod.dll Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin
         Dictionary/unidic-lite/char.bin Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc
         Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE
-        harper-ls.exe licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt)
+        harper-ls.exe licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt licenses/aegisub/LICENSE)
     if(NOT required IN_LIST everything)
         message(FATAL_ERROR "HikariPackageWindows: the payload lacks ${required}")
     endif()

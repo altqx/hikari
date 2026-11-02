@@ -6761,6 +6761,10 @@ What would you like to do?</source>
         <translation>இவற்றைக் கொண்டு உருவாக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>கோப்பு வடிவங்களும் யோசனைகளும் இவற்றிலிருந்து</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>முந்தைய தளவமைப்பை மீட்டமை</translation>
     </message>
