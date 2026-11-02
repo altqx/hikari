@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lock Layout Mockup</title>
+<style>
+:root {
+  --page: #f3f4f6; --page-ink: #1d232b; --page-muted: #56606b; --page-line: #d5dade; --page-card: #ffffff;
+  --mark-new: #23905a; --mark-ren: #c27d00;
+  font-family: "Segoe UI", "Noto Sans", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page: #12161b; --page-ink: #e6ebf0; --page-muted: #9aa6b2; --page-line: #2c343d; --page-card: #1a1f25; }
+}
+:root[data-theme="dark"] { --page: #12161b; --page-ink: #e6ebf0; --page-muted: #9aa6b2; --page-line: #2c343d; --page-card: #1a1f25; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--page-ink); font-size: 14px; line-height: 1.45; }
+header.top { padding: 20px 24px 8px; max-width: 1700px; }
+h1 { font-size: 22px; margin: 0 0 6px; }
+.intro { color: var(--page-muted); max-width: 980px; margin: 0 0 10px; }
+.controls { display: flex; gap: 16px; align-items: center; margin: 10px 0; }
+.legend { color: var(--page-muted); font-size: 13px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.dot.new { background: var(--mark-new); } .dot.ren { background: var(--mark-ren); }
+section.sec { margin: 18px 24px; padding: 16px 18px 18px; background: var(--page-card); border: 1px solid var(--page-line); border-radius: 8px; max-width: 1700px; }
+section.sec h2 { font-size: 18px; margin: 0 0 4px; }
+.meta { color: var(--page-muted); font-size: 13px; margin: 0 0 12px; max-width: 1100px; }
+.board { display: grid; grid-template-columns: 110px repeat(3, max-content); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.rowlabel { font-size: 12px; font-weight: 600; color: var(--page-muted); align-self: start; padding-top: 18px; }
+.colhead { font-size: 12px; font-weight: 600; color: var(--page-muted); padding-left: 4px; }
+.cell { background: var(--bg); padding: 16px 18px 18px 22px; border-radius: 6px; display: flex; flex-direction: column; gap: 0; align-items: flex-start; min-width: 280px; color: var(--text); }
+.cap { font-size: 11px; color: var(--muted); margin: 0 0 3px 2px; font-weight: 600; }
+.menu { position: relative; background: var(--field); border: 1px solid var(--line); box-shadow: 1px 1px 0 color-mix(in srgb, var(--shadow) 20%, transparent); padding: 2px 0; min-width: 210px; color: var(--text); font-size: 13px; }
+.sub { margin-left: -4px; }
+.mi { position: relative; display: flex; align-items: center; height: 24px; padding: 0 6px; white-space: nowrap; }
+.mi .chk { width: 14px; height: 14px; flex: none; margin-right: 6px; display: inline-flex; }
+.mi .ic { width: 16px; height: 16px; flex: none; margin-right: 6px; display: inline-flex; }
+.mi .ic svg { width: 16px; height: 16px; display: block; }
+.mi .lbl { flex: 1 1 auto; padding-right: 8px; }
+.mi .keys { color: var(--muted); padding-left: 24px; }
+.mi .arrow { width: 14px; flex: none; text-align: right; }
+.mi.hl { background: var(--accent); color: var(--on); }
+.mi.hl .keys { color: var(--on); }
+.mi.dis { color: var(--dis); }
+.mi.hint { height: auto; padding: 0 6px 4px 46px; color: var(--dis); font-size: 11px; margin-top: -3px; white-space: normal; max-width: 260px; }
+.sep { height: 1px; background: var(--line); margin: 3px 0; }
+.box { width: 14px; height: 14px; border: 1px solid var(--line); background: var(--field); display: inline-flex; align-items: center; justify-content: center; }
+.box svg { width: 10px; height: 10px; }
+.mi.hl .box { border-color: var(--on); background: transparent; }
+.mi.dis .box { border-color: var(--dis); }
+.mark { position: absolute; left: -15px; top: 8px; width: 8px; height: 8px; border-radius: 50%; }
+.mark.new { background: var(--mark-new); } .mark.ren { background: var(--mark-ren); }
+.tip { position: absolute; background: var(--field); color: var(--text); border: 1px solid var(--line); padding: 3px 7px; font-size: 12px; white-space: nowrap; box-shadow: 1px 1px 0 color-mix(in srgb, var(--shadow) 25%, transparent); z-index: 3; }
+.bar { display: flex; align-items: center; gap: 2px; height: 32px; background: var(--panel); border: 1px solid var(--line); padding: 0 6px; font-size: 13px; min-width: 470px; position: relative; }
+.bar .m { padding: 3px 7px; }
+.switch { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 2px 4px 2px 6px; background: var(--raised); border: 1px solid var(--line); border-radius: 1px; margin-left: 8px; position: relative; }
+.switch.lit { background: var(--select); border-color: var(--accent); }
+.switch svg { width: 16px; height: 16px; display: block; }
+.switch .more svg { width: 12px; height: 12px; }
+.wbtn { margin-left: auto; display: flex; gap: 14px; color: var(--muted); padding-right: 6px; }
+.scene { position: relative; }
+.dock { width: 330px; border: 1px solid var(--line); background: var(--panel); position: relative; }
+.dhead { height: 35px; background: var(--field); border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 6px 0 10px; font-size: 13px; position: relative; }
+.dhead.tabs { background: var(--raised); padding: 0; }
+.tab { height: 34px; display: flex; align-items: center; padding: 0 12px; border-right: 1px solid var(--line); }
+.tab.sel { background: var(--field); }
+.dhead .menub { margin-left: auto; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.dhead .menub svg { width: 16px; height: 16px; }
+.dbody { height: 92px; padding: 8px 10px; color: var(--muted); font-size: 12px; }
+.splitter { height: 5px; background: var(--bg); }
+.target { width: 330px; height: 70px; border: 1px solid var(--line); background: var(--panel); position: relative; font-size: 12px; color: var(--muted); padding: 6px 10px; }
+.drop { position: absolute; left: 0; top: 0; bottom: 0; width: 45%; background: color-mix(in srgb, var(--accent) 28%, transparent); border: 2px solid var(--accent); }
+.cursor { position: absolute; width: 20px; height: 20px; z-index: 4; }
+.toast { width: 330px; margin-top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: 13px; display: flex; gap: 8px; align-items: flex-start; }
+.toast .t { font-weight: 600; } .toast .s { color: var(--muted); font-size: 12px; }
+.toast .acts { display: flex; gap: 8px; margin-top: 6px; }
+.btn { border: 1px solid var(--line); background: var(--raised); padding: 2px 10px; font-size: 12px; }
+.btn.accent { background: var(--accent); color: var(--on); border-color: var(--accent); }
+.note { color: var(--muted); font-size: 12px; max-width: 330px; margin-top: 8px; }
+.details { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px 28px; margin-top: 14px; }
+.details h3 { font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: .04em; color: var(--page-muted); }
+.details ul { margin: 0; padding-left: 20px; } .details li { margin: 2px 0; }
+.recs .num { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: 4px; }
+.t-light { --bg: #E5E9EC; --panel: #F9FAFB; --raised: #EDF0F3; --field: #FFFFFF; --text: #202832; --muted: #526170; --line: #AAB5BE; --accent: #145C4C; --on: #FFFFFF; --select: #D6EBE4; --dis: #74808B; --shadow: #AAB5BE; }
+.t-dark { --bg: #171B20; --panel: #20262D; --raised: #29313A; --field: #171D24; --text: #E8EDF2; --muted: #A5B1BD; --line: #414B57; --accent: #9CDBC9; --on: #102C24; --select: #304C47; --dis: #75818D; --shadow: #000000; }
+.t-hcb { --bg: #000000; --panel: #080808; --raised: #151515; --field: #000000; --text: #FFFFFF; --muted: #EEEEEE; --line: #FFFFFF; --accent: #FFFF00; --on: #000000; --select: #253F60; --dis: #8C8C8C; --shadow: #000000; }
+.t-hcw { --bg: #FFFFFF; --panel: #FFFFFF; --raised: #EBEBEB; --field: #FFFFFF; --text: #000000; --muted: #1A1A1A; --line: #000000; --accent: #0037B3; --on: #FFFFFF; --select: #C9DAF8; --dis: #6E6E6E; --shadow: #000000; }
+body.single section.sec { display: none; }
+body.single section.sec.shown { display: block; max-width: none; width: max-content; }
+body.single header.top, body.single #questions { display: none; }
+@media (max-width: 700px) {
+  header.top { padding: 16px; }
+  section.sec { margin: 12px 16px; padding: 12px; }
+  .board { grid-template-columns: repeat(3, max-content); }
+  .rowlabel { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>DK4: Lock layout (design gate)</h1>
+  <p class="intro">DK4 <a href="https://github.com/altqx/hikari/issues/657">#657</a>. Each section draws one surface in Light, Dark and high contrast, with the app's theme roles and the icons from <code>src/ui/icons</code>. The new lock icon is drawn from scratch. Rows marked green are new; amber rows change while the layout is locked. Answer the numbered recommendations with “yes” or a change.</p>
+  <div class="controls"><label>High contrast <select id="hc"><option value="hcb">Black</option><option value="hcw">White</option></select></label>
+  <span class="legend"><span class="dot new"></span> new row &nbsp; <span class="dot ren"></span> changes while locked</span></div>
+</header>
+<div id="main"></div>
+<script>
+const ICONS = /*ICONS*/;
+/*SPEC*/
+const CHECK_SVG = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 5.2l2.3 2.3 4.7-5"/></svg>';
+const RESIZE = '<svg viewBox="0 0 20 20"><path d="M10 1l4 4h-3v10h3l-4 4-4-4h3V5H6z" fill="#fff" stroke="#000" stroke-width=".8"/></svg>';
+const ARROW = '<svg viewBox="0 0 20 20"><path d="M3 2v14l4-4 3 6 2-1-3-6h6z" fill="#fff" stroke="#000" stroke-width="1"/></svg>';
+const MOVE = '<svg viewBox="0 0 20 20"><path d="M10 1l3 3h-2v5h5V7l3 3-3 3v-2h-5v5h2l-3 3-3-3h2v-5H4v2l-3-3 3-3v2h5V4H7z" fill="#fff" stroke="#000" stroke-width=".8"/></svg>';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function icon(role, state) {
+  const svg = ICONS[role] || "";
+  const acc = state === "dis" ? "var(--dis)" : state === "hl" ? "var(--on)" : "var(--accent)";
+  const base = state === "dis" ? "var(--dis)" : state === "hl" ? "var(--on)" : "var(--text)";
+  return svg.replace("<svg ", `<svg style="color:${base}" `).replace('<g id="accent">', `<g style="color:${acc}" stroke="currentColor">`);
+}
+
+function row(it, depth = 0) {
+  if (it.sep) return '<div class="sep"></div>';
+  const state = it.dis ? "dis" : it.hl ? "hl" : "";
+  const chk = it.chk ? `<span class="box">${it.on ? CHECK_SVG : ""}</span>` : "";
+  const mark = it.mark && !depth ? `<span class="mark ${it.mark}"></span>` : "";
+  let html = `<div class="mi ${state}">${mark}<span class="chk">${chk}</span><span class="ic">${icon(it.icon, state)}</span>`
+    + `<span class="lbl">${esc(it.t)}</span>${it.k ? `<span class="keys">${esc(it.k)}</span>` : ""}<span class="arrow">${it.sub ? "›" : ""}</span></div>`;
+  if (it.hint) html += `<div class="mi hint">${esc(it.hint)}</div>`;
+  return html;
+}
+
+function menuCascade(items, cap) {
+  let html = "<div>" + (cap ? `<div class="cap">${esc(cap)}</div>` : "") + '<div style="display:flex;align-items:flex-start">';
+  const chain = [items];
+  let level = items;
+  while (true) {
+    const open = level.findIndex((it) => it.open && Array.isArray(it.sub));
+    if (open < 0) break;
+    level = level[open].sub;
+    chain.push(level);
+  }
+  let top = 0;
+  chain.forEach((list, depth) => {
+    html += `<div class="menu${depth ? " sub" : ""}" style="margin-top:${top}px">${list.map((it) => row(it, depth)).join("")}</div>`;
+    let offset = 2;
+    for (const it of list) { if (it.open && Array.isArray(it.sub)) break; offset += it.sep ? 7 : it.hint ? 40 : 24; }
+    top += offset - 2;
+  });
+  return html + "</div></div>";
+}
+
+const SCENES = {
+  switcher(locked, hover) {
+    const ic = icon(locked ? "layout-lock" : "layout", "");
+    const tip = hover ? `<div class="tip" style="left:200px;top:36px">${esc(locked ? "Layout of this tab, locked" : "Layout of this tab")}</div>` : "";
+    return `<div class="scene" style="padding-bottom:${hover ? 30 : 0}px"><div class="bar"><span class="m">File</span><span class="m">Edit</span><span class="m">View</span><span class="m">Subtitles</span><span class="m">…</span>`
+      + `<span class="switch${hover ? " lit" : ""}">${ic}<span>Editing</span><span class="more">${icon("menu-more", "")}</span></span>`
+      + `<span class="wbtn">–&nbsp;&nbsp;□&nbsp;&nbsp;✕</span>${tip}</div></div>`;
+  },
+  header(locked) {
+    const cur = locked ? ARROW : MOVE;
+    const drop = locked ? "" : '<div class="drop"></div>';
+    let html = `<div class="scene"><div class="dock"><div class="dhead tabs"><div class="tab sel">Search</div><div class="tab">Line editor</div><span class="menub" style="margin-right:6px">${icon("panel-menu", "")}</span></div>`
+      + `<div class="dbody">Find, Replace and the results list.</div></div>`
+      + `<div class="cursor" style="left:${locked ? 150 : 220}px;top:${locked ? 14 : 150}px">${cur}</div>`
+      + `<div class="splitter"></div><div class="target">Grid${drop}</div>`
+      + (locked ? `<div class="cursor" style="left:280px;top:118px">${RESIZE}</div><div class="tip" style="left:180px;top:150px">The separator still resizes</div>` : "");
+    if (locked)
+      html += `<div class="toast">${icon("notice-info", "")}<div><div class="t">The layout is locked</div><div class="s">Unlock it to move panels. Resizing still works.</div>`
+        + `<div class="acts"><span class="btn accent">Unlock</span><span class="btn">Dismiss</span></div></div></div>`;
+    return html + "</div>";
+  },
+};
+
+function cell(content) {
+  if (content.scene) return SCENES[content.scene](...(content.args || []));
+  return menuCascade(content.items, content.cap) + (content.note ? `<div class="note">${esc(content.note)}</div>` : "");
+}
+
+function renderSection(s) {
+  const hc = document.getElementById("hc").value;
+  const themes = [["Light", "t-light"], ["Dark", "t-dark"], ["High contrast", "t-" + hc]];
+  let board = '<div class="board"><div></div>' + themes.map(([n]) => `<div class="colhead">${n}</div>`).join("");
+  for (const r of s.rows) {
+    board += `<div class="rowlabel">${esc(r.label)}</div>`;
+    for (const [, cls] of themes) board += `<div class="cell ${cls}">${cell(r)}</div>`;
+  }
+  board += "</div>";
+  const list = (arr) => "<ul>" + arr.map((x) => `<li>${esc(x)}</li>`).join("") + "</ul>";
+  const details = `<div class="details"><div><h3>How it works</h3>${list(s.notes)}</div>`
+    + `<div class="recs"><h3>For approval</h3><ol style="list-style:none;padding-left:0">${s.recs.map((r, i) => `<li><span class="num">${s.n}.${i + 1}</span>${esc(r)}</li>`).join("")}</ol></div></div>`;
+  return `<section class="sec" id="${s.id}"><h2>${s.n}. ${esc(s.title)}</h2><p class="meta">${esc(s.opens)}</p>${board}${details}</section>`;
+}
+
+function renderQuestions() {
+  return `<section class="sec" id="questions"><h2>Scope questions</h2><div class="details">` + QUESTIONS.map((q) =>
+    `<div><h3>${esc(q.id)}. ${esc(q.title)}</h3><p><b>Recommended:</b> ${esc(q.rec)}</p><p style="color:var(--page-muted)"><b>Alternative:</b> ${esc(q.alt)}</p></div>`).join("") + "</div></section>";
+}
+
+function render() {
+  document.getElementById("main").innerHTML = renderQuestions() + SECTIONS.map(renderSection).join("");
+  const only = new URLSearchParams(location.search).get("only");
+  if (only) { document.body.classList.add("single"); document.getElementById(only)?.classList.add("shown"); }
+}
+const hcParam = new URLSearchParams(location.search).get("hc");
+if (hcParam) document.getElementById("hc").value = hcParam;
+document.getElementById("hc").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
