@@ -56,7 +56,7 @@ DialogWindow {
         case AllTagsEditor.CheckTakenLastUsable:
             return qsTr("Another tag is named “%1”. Fill in Tag first to replace it.").arg(editor.takenName())
         case AllTagsEditor.CheckSeparator:
-            return field === "tag" ? qsTr("A tag can't contain “,”.") : qsTr("A name can't contain “,”.")
+            return field === "tag" ? qsTr("A tag can’t contain “,”.") : qsTr("A name can’t contain “,”.")
         case AllTagsEditor.CheckNotANumber:
             return qsTr("Type a number.")
         case AllTagsEditor.CheckOutOfRange:
@@ -395,7 +395,7 @@ DialogWindow {
                         iconRole: "delete"
                         text: qsTr("Delete")
                         enabled: dialog.editor ? dialog.editor.canRemove : false
-                        tip: enabled ? text : qsTr("The list keeps at least one tag")
+                        tip: enabled ? text : qsTr("The list keeps at least one tag.")
                         onClicked: { dialog.editor.remove(); dialog.showFields() }
                     }
                     Item { Layout.fillWidth: true }
@@ -518,7 +518,7 @@ DialogWindow {
                         SegmentedButtons {
                             objectName: "tagCount"
                             choices: [1, 2, 3, 4].map(n => ({ text: String(n), name: "tagCount" + n,
-                                                              tip: qsTr("The tag takes %n value(s)", "", n) }))
+                                                              tip: qsTr("The tag takes %n value(s).", "", n) }))
                             currentIndex: dialog.editor ? dialog.editor.count - 1 : 0
                             Accessible.name: qsTr("Count")
                             onActivated: index => dialog.editor.count = index + 1

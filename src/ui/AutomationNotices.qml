@@ -57,7 +57,7 @@ Item {
                     { id: "load", text: qsTr("Load"), role: "accept" },
                     { id: "always", text: folders.length === 1 ? qsTr("Always trust scripts in this folder")
                                                               : qsTr("Always trust scripts in these folders"), role: "action" },
-                    { id: "skip", text: qsTr("Don't load"), role: "reject", isDefault: true }
+                    { id: "skip", text: qsTr("Don’t load"), role: "reject", isDefault: true }
                 ]
             }, answer => {
                 notices.automation.answerTrust(id, answer)

@@ -215,7 +215,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Load %n catalogs</source>
+        <source>Load %n catalogues</source>
         <translation>
             <numerusform>Load %n catalog</numerusform>
             <numerusform>Load %n catalogs</numerusform>
@@ -250,7 +250,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Loaded %n font catalogs</source>
+        <source>Loaded %n font catalogues</source>
         <translation>
             <numerusform>Loaded %n font catalog</numerusform>
             <numerusform>Loaded %n font catalogs</numerusform>
@@ -701,10 +701,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>The tag takes %n value(s)</source>
+        <source>The tag takes %n value(s).</source>
         <translation>
-            <numerusform>The tag takes %n value</numerusform>
-            <numerusform>The tag takes %n values</numerusform>
+            <numerusform>The tag takes %n value.</numerusform>
+            <numerusform>The tag takes %n values.</numerusform>
         </translation>
     </message>
 </context>

@@ -1,11 +1,13 @@
 #include "hikari/core/ass_save.h"
 #include "hikari/core/ass_attachments.h"
+#include "hikari/core/extradata.h"
 
 #include "text_util.h"
 
 #include <algorithm>
 #include <cstdio>
 #include <functional>
+#include <ranges>
 
 namespace hikari::core {
 
@@ -21,7 +23,7 @@ std::u8string assTimeText(std::int64_t ms)
     return std::u8string(reinterpret_cast<const char8_t *>(buf));
 }
 
-std::u8string assLineText(const LineRecord &line)
+std::u8string assLineText(const LineRecord &line, std::u8string_view textPrefix)
 {
     auto number = [](std::int64_t v) {
         const std::string s = std::to_string(v);
@@ -46,7 +48,7 @@ std::u8string assLineText(const LineRecord &line)
     out += number(line.layer.value) + u8',' + time(line.start.value) + u8',' + time(line.end.value) + u8',' +
            line.style + u8',' + actor + u8',' + number(line.marginLeft.value) + u8',' +
            number(line.marginRight.value) + u8',' + number(line.marginVertical.value) + u8',' + line.effect +
-           u8',' + line.text;
+           u8',' + std::u8string(textPrefix) + line.text;
     return out;
 }
 
@@ -117,6 +119,45 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
     if (document.source().encoding == TextEncoding::Utf8WithBom)
         copy(0, 3);
     detail::NewlineTracker newlines;
+    const ExtradataPlan extradata = options.renderer ? ExtradataPlan{} : planExtradata(document);
+    auto eventText = [&](const LineRecord &l) {
+        const auto ids = extradata.ids.find(l.id);
+        return legacy::assLineText(l, ids == extradata.ids.end() ? std::u8string{} : extradataPrefixText(ids->second));
+    };
+    const Section *extradataSection = nullptr;
+    const Record *lastEntry = nullptr;
+    for (const auto &section : document.sections())
+        if (section.kind == SectionKind::AegisubExtradata)
+            extradataSection = &section;
+    if (extradataSection)
+        for (const auto &record : extradataSection->records)
+            if (std::visit([](const auto &r) { return r.span.length > 0; }, record))
+                lastEntry = &record;
+    auto writeAddedExtradata = [&] {
+        for (const auto &entry : extradata.added) {
+            append(newlines.wrap(extradataLine(entry)));
+            newlines.openEnd = false;
+        }
+    };
+    const Section *beforeEmbedded = nullptr;
+    for (const auto &section : document.sections() | std::views::reverse) {
+        if (section.kind != SectionKind::Fonts && section.kind != SectionKind::Graphics && !continuesAttachment(section))
+            break;
+        beforeEmbedded = &section;
+    }
+    auto writeNewExtradataSection = [&] {
+        if (extradataSection || extradata.added.empty())
+            return;
+        if (newlines.openEnd)
+            append(newlines.newline);
+        if (!out.empty() && !endsWithBlankLine(out))
+            append(newlines.newline);
+        append(u8"[Aegisub Extradata]" + newlines.newline);
+        newlines.openEnd = false;
+        writeAddedExtradata();
+        if (beforeEmbedded)
+            append(newlines.newline);
+    };
     auto flushHeld = [&] {
         if (held.empty())
             return;
@@ -129,6 +170,8 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
     bool fonts = false;
     bool inEvents = false; // the last header written is an [Events] one
     for (const auto &section : document.sections()) {
+        if (&section == beforeEmbedded)
+            writeNewExtradataSection();
         fonts = section.kind == SectionKind::Fonts || (fonts && continuesAttachment(section));
         if (options.renderer && fonts)
             continue;
@@ -258,12 +301,12 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                     newlines.openEnd = false;
                     LineRecord translated = *line;
                     translated.text = line->translation;
-                    append(newlines.wrap(legacy::assLineText(translated)));
+                    append(newlines.wrap(eventText(translated)));
                 } else {
                     LineRecord single = *line;
                     if (!tlMode.empty() && !line->translation.empty())
                         single.text = line->translation;
-                    append(newlines.wrap(legacy::assLineText(single)));
+                    append(newlines.wrap(eventText(single)));
                 }
                 newlines.openEnd = false;
                 continue;
@@ -292,16 +335,16 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                         append(span.terminatorLength == 1 ? u8"\n" : u8"\r\n");
                     LineRecord translated = *line;
                     translated.text = line->translation;
-                    append(legacy::assLineText(translated));
+                    append(eventText(translated));
                 } else {
                     LineRecord single = *line;
                     if (hasTranslation)
                         single.text = line->translation;
-                    append(legacy::assLineText(single));
+                    append(eventText(single));
                 }
                 copy(span.offset + span.length, span.terminatorLength);
             } else if (line && line->edited) {
-                append(legacy::assLineText(*line));
+                append(eventText(*line));
                 copy(span.offset + span.length, span.terminatorLength);
             } else if (line && line->originalSpan && options.hideOriginalOnVideo && !tlMode.empty() &&
                        tlMode != u8"Translated" && (!line->translation.empty() || line->unconfirmed) &&
@@ -319,14 +362,20 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             } else {
                 copy(span.offset, span.length + span.terminatorLength);
             }
+            if (&record == lastEntry)
+                writeAddedExtradata();
         }
         // The added Script Info at the top, and an added [Hikari] before
         // embedded data, end with a blank line before the next section.
+        if (&section == extradataSection && !lastEntry)
+            writeAddedExtradata();
         if (takesHeld)
             flushHeld();
         if (added && !editorOnly && (section.kind != SectionKind::Hikari || &section != &document.sections().back()))
             append(newlines.newline);
     }
+    if (!beforeEmbedded)
+        writeNewExtradataSection();
     if (!held.empty()) {
         // No [Events] section after them: one of their own at the end.
         if (newlines.openEnd)

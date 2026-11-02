@@ -258,7 +258,7 @@ DialogWindow {
         ask({
             title: qsTr("Edit style"),
             text: qsTr("Apply the changes to “%1”?").arg(pendingNew ? nameField.text : values.name),
-            detail: qsTr("The catalog “%1” is shown now; the changes go to “%2”.").arg(styles.catalog, styles.editCatalog()),
+            detail: qsTr("The catalogue “%1” is shown now; the changes go to “%2”.").arg(styles.catalog, styles.editCatalog()),
             severity: "warning",
             choices: [{ id: "discard", text: qsTr("Discard"), role: "destructive" },
                       { id: "apply", text: qsTr("Apply"), role: "accept", isDefault: true }]
@@ -427,7 +427,7 @@ DialogWindow {
                                    : deleted.length === 1 ? qsTr("Deleted 1 unused style")
                                    : qsTr("Deleted %n unused styles", "", deleted.length),
                              deleted.length === 0 ? qsTr("Every style is used by a line.")
-                                                  : deleted.join(", ") + "\n" + qsTr("Ctrl+Z puts them back."),
+                                                  : deleted.join(", ") + "\n" + qsTr("Undo puts them back."),
                              { details: result.report })
             const found = rowsOfKeys(false, keys)
             if (shown() && editing && !editingStore)
@@ -492,7 +492,7 @@ DialogWindow {
     function copyToCatalog() {
         guard(() => {
             const rows = assSelected
-            reviewClashes(styles.transferClashes(true, rows), rows.length, qsTr("the catalog"), choices => {
+            reviewClashes(styles.transferClashes(true, rows), rows.length, qsTr("the catalogue"), choices => {
                 manager.choose(true, manager.own(() => styles.addToStore(rows, choices)))
             })
         })
@@ -537,8 +537,8 @@ DialogWindow {
     function askDeleteCatalog() {
         const name = styles.catalog
         ask({
-            title: qsTr("Delete catalog"),
-            text: qsTr("Delete the catalog “%1”?").arg(name),
+            title: qsTr("Delete catalogue"),
+            text: qsTr("Delete the catalogue “%1”?").arg(name),
             detail: storeRows.length === 0 ? qsTr("It has no styles.")
                   : storeRows.length === 1 ? qsTr("Its one style goes with it. This can’t be undone.")
                   : qsTr("Its %n styles go with it. This can’t be undone.", "", storeRows.length),
@@ -667,7 +667,7 @@ DialogWindow {
         const own = pendingNew ? -1 : editedRows.length > 0 ? editedRows[0] : -1
         for (let i = 0; i < rows.length; ++i)
             if (i !== own && rows[i].name === name)
-                return editingStore ? qsTr("The catalog already has a style named “%1”.").arg(name)
+                return editingStore ? qsTr("The catalogue already has a style named “%1”.").arg(name)
                                     : qsTr("This file already has a style named “%1”.").arg(name)
         return ""
     }
@@ -783,7 +783,7 @@ DialogWindow {
             manager.ask({
                 title: qsTr("Edit style"),
                 text: qsTr("Apply the changes to “%1”?").arg(manager.pendingNew ? nameField.text : manager.values.name),
-                detail: onStore ? qsTr("The file shown now uses the catalog “%1”.").arg(manager.styles.followedCatalog())
+                detail: onStore ? qsTr("The file shown now uses the catalogue “%1”.").arg(manager.styles.followedCatalog())
                                 : qsTr("You edited it in the file shown before."),
                 severity: "warning",
                 choices: [{ id: "discard", text: qsTr("Discard"), role: "destructive" },
@@ -1017,7 +1017,7 @@ DialogWindow {
         boundsBehavior: Flickable.StopAtBounds
         model: ListModel {}
         Accessible.role: Accessible.List
-        Accessible.name: store ? qsTr("Catalog styles") : qsTr("Styles in this file")
+        Accessible.name: store ? qsTr("Catalogue styles") : qsTr("Styles in this file")
         ScrollBar.vertical: ScrollBar {}
         // Updated in place: a new model would reset the view's position.
         function sync(rows) {
@@ -1314,8 +1314,8 @@ DialogWindow {
                         model: manager.styles.catalogs
                         currentIndex: manager.styles.catalogs.indexOf(manager.styles.catalog)
                         ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Style catalog")
-                        Accessible.name: qsTr("Style catalog")
+                        ToolTip.text: qsTr("Style catalogue")
+                        Accessible.name: qsTr("Style catalogue")
                         onActivated: i => {
                             const name = model[i]
                             currentIndex = Qt.binding(() => manager.styles.catalogs.indexOf(manager.styles.catalog))
@@ -1326,13 +1326,13 @@ DialogWindow {
                         id: newCatalogButton
                         objectName: "newCatalog"
                         iconRole: "add"
-                        text: qsTr("New catalog")
+                        text: qsTr("New catalogue")
                         onClicked: newCatalogPopover.openFor(newCatalogButton)
                     }
                     IconToolButton {
                         objectName: "deleteCatalog"
                         iconRole: "delete"
-                        text: qsTr("Delete catalog")
+                        text: qsTr("Delete catalogue")
                         enabled: manager.styles.catalog !== "Default"
                         onClicked: manager.askDeleteCatalog()
                     }
@@ -1361,15 +1361,15 @@ DialogWindow {
                         objectName: "addToAss"
                         iconRole: "copy-to-ass"
                         text: qsTr("Add to file")
-                        tip: qsTr("Copy the selected catalog styles into this file")
+                        tip: qsTr("Copy the selected catalogue styles into this file")
                         enabled: manager.storeSelected.length > 0 && manager.styles.available
                         onClicked: manager.copyToFile(false)
                     }
                     IconTextButton {
                         objectName: "addToStore"
                         iconRole: "copy-to-storage"
-                        text: qsTr("Add to catalog")
-                        tip: qsTr("Copy the selected file styles into the catalog")
+                        text: qsTr("Add to catalogue")
+                        tip: qsTr("Copy the selected file styles into the catalogue")
                         enabled: manager.assSelected.length > 0
                         onClicked: manager.copyToCatalog()
                     }
@@ -1377,7 +1377,7 @@ DialogWindow {
                         objectName: "addToAllAss"
                         iconRole: "copy-to-all-ass"
                         text: qsTr("Add to all open files")
-                        tip: qsTr("Copy the selected catalog styles into every open file")
+                        tip: qsTr("Copy the selected catalogue styles into every open file")
                         enabled: manager.storeSelected.length > 0
                         onClicked: manager.copyToFile(true)
                     }
@@ -1409,7 +1409,7 @@ DialogWindow {
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.Wrap
                         color: Theme.muted
-                        text: qsTr("This tab has no ASS styles.")
+                        text: qsTr("This document has no ASS styles.")
                     }
                 }
             }
@@ -1657,7 +1657,7 @@ DialogWindow {
                         }
                     }
                     StyleField { id: sizeField; objectName: "styleSize"; key: "fontsize"; Accessible.name: qsTr("Size") }
-                    FieldLabel { text: qsTr("Font catalog"); Layout.columnSpan: 2 }
+                    FieldLabel { text: qsTr("Font catalogue"); Layout.columnSpan: 2 }
                     FieldLabel { text: qsTr("Emphasis"); keys: ["bold", "italic", "underline", "strikeOut"]; resetName: "emphasis" }
                     FieldLabel { text: qsTr("Text encoding"); key: "encoding" }
                     FontCatalogBar {
@@ -1964,14 +1964,14 @@ DialogWindow {
     Popover {
         id: newCatalogPopover
         objectName: "newCatalogPopover"
-        title: qsTr("New catalog")
+        title: qsTr("New catalogue")
         showTitle: true
         initialFocus: catalogName
         readonly property string problem: {
             const name = catalogName.text.trim()
             if (name.length === 0)
                 return ""
-            return manager.styles.catalogs.indexOf(name) >= 0 ? qsTr("A catalog named “%1” already exists.").arg(name) : ""
+            return manager.styles.catalogs.indexOf(name) >= 0 ? qsTr("A catalogue named “%1” already exists.").arg(name) : ""
         }
         function openFor(anchorItem) {
             catalogName.text = ""
@@ -1987,8 +1987,8 @@ DialogWindow {
         TextField {
             id: catalogName
             objectName: "newCatalogName"
-            placeholderText: qsTr("Catalog name")
-            Accessible.name: qsTr("Catalog name")
+            placeholderText: qsTr("Catalogue name")
+            Accessible.name: qsTr("Catalogue name")
             Layout.preferredWidth: 240
             onAccepted: newCatalogPopover.create()
         }
@@ -2032,7 +2032,7 @@ DialogWindow {
                 return
             }
             manager.reviewClashes(manager.styles.fileClashes(toStore, file, names), names.length,
-                                  toStore ? qsTr("the catalog") : qsTr("this file"), function(choices) {
+                                  toStore ? qsTr("the catalogue") : qsTr("this file"), function(choices) {
                 manager.own(() => manager.styles.loadFromFile(toStore, file, names, choices))
                 manager.followRows(toStore, toStore ? manager.storeSelected : manager.assSelected)
             }, key)

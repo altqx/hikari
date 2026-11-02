@@ -22,5 +22,7 @@
 /tests/ui/layout-fixtures/** -text
 /.githooks/pre-push text eol=lf
 
-# EX1: the export goldens are compared byte for byte (CRLF and LF).
+# The export goldens are compared byte for byte (CRLF and LF).
 /tests/fixtures/export/** -text
+# FA3: the Aegisub extradata fixtures are compared byte for byte (BOM, CRLF).
+/tests/fixtures/aegisub-extradata/** -text

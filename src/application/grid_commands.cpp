@@ -54,6 +54,8 @@ core::LineRecord blankCopy(const core::LineRecord &line)
     core::LineRecord copy = line;
     copy.text.clear();
     copy.translation.clear();
+    copy.extradataIds.clear();
+    copy.extra.clear();
     return copy;
 }
 

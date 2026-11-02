@@ -262,7 +262,7 @@ DialogWindow {
             iconRole: "styles"
             text: picker.choice >= 0 && picker.choice < picker.choices.length ? picker.choices[picker.choice] : ""
             on: picker.choice > 0
-            Accessible.name: qsTr("Font catalog: %1").arg(text)
+            Accessible.name: qsTr("Font catalogue: %1").arg(text)
             onClicked: catalogMenu.openAt(catalogChip)
         }
         FilterChip {
@@ -280,8 +280,8 @@ DialogWindow {
             id: addButton
             objectName: "fontPickerAdd"
             iconRole: "add"
-            text: qsTr("Add to a catalog")
-            tip: qsTr("Add “%1” to a catalog").arg(picker.family)
+            text: qsTr("Add to a catalogue")
+            tip: qsTr("Add “%1” to a catalogue").arg(picker.family)
             enabled: picker.family.length > 0
             onClicked: addMenu.openAt(addButton)
         }
@@ -421,9 +421,9 @@ DialogWindow {
         textFormat: Text.PlainText
         objectName: "fontPickerSampleSource"
         text: picker.sampleText.trim().length === 0 ? qsTr("Sample text")
-            : picker.sampleSource === "selection" ? qsTr("The line’s selected text")
-            : picker.sampleSource === "line" ? qsTr("The line’s text")
-            : qsTr("The Style editor’s sample text")
+            : picker.sampleSource === "selection" ? qsTr("Selected text")
+            : picker.sampleSource === "line" ? qsTr("Line text")
+            : qsTr("Style editor sample")
         color: Theme.muted
         font: picker.fontAt(11)
         Layout.topMargin: -4
@@ -433,7 +433,7 @@ DialogWindow {
         IconTextButton {
             iconRole: "font-catalogs"
             objectName: "fontPickerManage"
-            text: qsTr("Manage catalogs…")
+            text: qsTr("Manage catalogues")
             onClicked: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(picker.family, picker)
         }
     ]
@@ -474,7 +474,7 @@ DialogWindow {
                 required property int index
                 objectName: "fontPickerCatalogItem"
                 text: modelData
-                shortcutText: catalogMenu.counts.length > index ? String(catalogMenu.counts[index]) : ""
+                detailText: catalogMenu.counts.length > index ? String(catalogMenu.counts[index]) : ""
                 checkable: true
                 checked: picker.choice === index
                 keepsMenuOpen: false
@@ -487,7 +487,7 @@ DialogWindow {
         ShellMenuItem {
             objectName: "fontPickerCatalogManage"
             iconRole: "font-catalogs"
-            text: qsTr("Manage catalogs…")
+            text: qsTr("Manage catalogues")
             onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(picker.family, picker)
         }
     }
@@ -501,7 +501,7 @@ DialogWindow {
         }
         ShellMenuItem {
             objectName: "fontPickerNoCatalogs"
-            text: qsTr("No catalogs yet")
+            text: qsTr("No catalogues yet")
             enabled: false
             visible: addMenu.names.length === 0
             height: visible ? implicitHeight : 0
@@ -524,7 +524,7 @@ DialogWindow {
         ShellMenuItem {
             objectName: "fontPickerNewCatalog"
             iconRole: "add"
-            text: qsTr("New catalog…")
+            text: qsTr("New catalogue…")
             onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.startNew(picker.family, picker)
         }
         ShellMenuItem {

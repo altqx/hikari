@@ -642,13 +642,13 @@ Popup {
                     objectName: "switchClicks"
                     Layout.fillWidth: true
                     Layout.maximumWidth: spectrum.implicitWidth + hueStrip.implicitWidth + 8
-                    text: qsTr("Swap shortcuts between the color picker\nand the color selection window").replace("\n", " ")
+                    text: qsTr("Click opens the picker, right-click the colour window")
                     Component.onCompleted: if (contentItem && contentItem.wrapMode !== undefined) contentItem.wrapMode = Text.Wrap
                     Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
                     checked: popover.picker.switchClicks
                     onToggled: popover.picker.switchClicks = checked
                     ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Checking this option opens the color picker on left-click,\nand the color selection window on right-click.")
+                    ToolTip.text: qsTr("Off: click opens the colour window, right-click the picker.")
                 }
             }
         }

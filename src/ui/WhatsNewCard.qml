@@ -27,7 +27,7 @@ Rectangle {
             spacing: 12
             Label {
                 id: title
-                text: qsTranslate("HikariSub.MainWindow", "What's new")
+                text: qsTranslate("HikariSub.MainWindow", "What’s new")
                 font.bold: true
                 Layout.fillWidth: true
             }

@@ -1,6 +1,7 @@
 #include "hikari/application/macro_transaction.h"
 
 #include "hikari/core/ass_save.h"
+#include "hikari/core/extradata.h"
 
 #include <map>
 #include <set>
@@ -54,6 +55,8 @@ MacroDialogueLine macroLineOf(const core::LineRecord &l)
         d.text = narrow(l.text);
     }
     d.raw = narrow(core::legacy::assLineText(l));
+    for (const auto &e : core::extradataByKey(l.extra))
+        d.extra.emplace_back(narrow(e.key), narrow(e.value));
     return d;
 }
 
@@ -79,6 +82,11 @@ void assign(core::LineRecord &l, const MacroDialogueLine &d)
         l.translation = wide(d.text);
         l.text = wide(d.translation);
     }
+    std::vector<core::Extradata> extra;
+    for (const auto &[key, value] : d.extra)
+        extra.push_back({wide(key), wide(value)});
+    if (core::extradataByKey(l.extra) != extra)
+        l.extra = std::move(extra);
     l.unparsed = false;
 }
 
@@ -141,7 +149,8 @@ bool sameFields(const MacroDialogueLine &a, const MacroDialogueLine &b)
 {
     return a.comment == b.comment && a.layer == b.layer && a.startMs == b.startMs && a.endMs == b.endMs &&
            a.style == b.style && a.actor == b.actor && a.marginL == b.marginL && a.marginR == b.marginR &&
-           a.marginV == b.marginV && a.effect == b.effect && a.text == b.text && a.translation == b.translation;
+           a.marginV == b.marginV && a.effect == b.effect && a.text == b.text && a.translation == b.translation &&
+           a.extra == b.extra;
 }
 
 }

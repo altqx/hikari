@@ -804,6 +804,15 @@ icon("layout-restore", "Restore the previous layout", [], [VIEW],
 icon("tab-close-all", "Close all tabs", [], [TABMENU],
      stroke("M4.5 3.5v-1a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-1") + rect(1.5, 4.5, 10, 10, 1)
      + accent(stroke("M4.5 7.5l4 4M8.5 7.5l-4 4")))
+icon("tab-switch", "Switch to", [], [TABMENU],
+     stroke("M1.5 13.5h13M2.5 13.5v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4M8.5 13.5v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4")
+     + accent(stroke("M3.5 4h9M5 2.5L3.5 4 5 5.5M11 2.5L12.5 4 11 5.5")))
+icon("tab-close-others", "Close other tabs", [], [TABMENU],
+     stroke("M1.5 13.5h13M2.5 13.5v-7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7")
+     + accent(stroke("M9.5 5.5l4 4M13.5 5.5l-4 4")))
+icon("tab-close-right", "Close tabs to the right", [], [TABMENU],
+     stroke("M1.5 13.5h13M2.5 13.5v-7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7")
+     + accent(stroke("M9.5 2.5h4M12 1l1.5 1.5L12 4M10 6.5l3 3M13 6.5l-3 3")), mirror=True)
 icon("fonts-from-subtitles", "Add fonts from subtitles", [], ["font-catalog"], page(True) + accent(letters("F", 11, 10)))
 
 icon("dictionary", "Primary language", [], ["kanji-timer", "settings-dialog"],
@@ -859,6 +868,7 @@ icon("columns", "Hide columns", [], [GRIDMENU],
 icon("columns-copy", "Copy columns", [], [GRIDMENU],
      COPY_BACK + rect(2.5, 4.5, 8, 10, 1) + accent(stroke("M5.5 4.5v10M7.5 4.5v10")))
 icon("columns-paste", "Paste columns", [], [GRIDMENU], PASTE_BOARD + accent(stroke("M6.5 6v6.5M9.5 6v6.5")))
+icon("paste-special", "Paste special", [], [GRIDMENU], PASTE_BOARD + accent(stroke("M8 6v6M5.5 7.5l5 3M10.5 7.5l-5 3")))
 icon("fps", "Set new FPS", [], [GRIDMENU, "settings-dialog"], FPS_FILM + accent(letters("FPS", 2, 9)))
 icon("fps-from-video", "Set FPS from video", [], [GRIDMENU],
      FPS_FILM + letters("FPS", 2, 9) + accent(stroke("M8 2.5v3.5M6.75 4.75L8 6l1.25-1.25")))
@@ -1021,6 +1031,8 @@ for card, roles in {
     "NE2 #424": ["node-editor"],
     "AI7 #435": ["ai-assistant", "ai-send"],
     "AI2 #430": ["review-keep", "checkpoint"],
+    "CX4 #580": ["paste-special"],
+    "CX6 #582": ["tab-switch", "tab-close-others", "tab-close-right"],
 }.items():
     for role in roles:
         PENDING[role] = card

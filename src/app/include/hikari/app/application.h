@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/app/api_host.h"
 #include "hikari/app/automation_hotkeys_controller.h"
 #include "hikari/app/settings_import_controller.h"
 #include "hikari/app/settings_import_store.h"
@@ -715,6 +716,8 @@ public:
     ui::VideoFullscreenController &videoFullscreen() { return *m_videoFullscreen; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
+    Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
+    ApiHost *apiHost() const { return m_apiHost.get(); }
     QVariantMap qmlProperties();
     // Waits for running writes and delivers their results.
     void waitForWrites();
@@ -940,6 +943,7 @@ private:
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
+    std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;

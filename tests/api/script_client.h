@@ -4,6 +4,8 @@
 //   {"call": "<operation>", "params": {...}, "as": "ai" | "plugin",
 //    "result": <subset> | "exact": <value> | "error": "<code>", "errorData": <subset>,
 //    "save": {"<name>": "<JSON pointer into the result>"}}
+// or {"events": [{"event": "<name>", "data": <subset>}...], "as": ...}, which
+// checks and clears the events that caller heard since the last such step.
 // A params string "$<name>" is replaced by the value saved under that name.
 // Every result is checked against its operation's result schema.
 
@@ -25,7 +27,8 @@ const Json *pointer(const Json &value, std::string_view at);
 
 class ScriptClient {
 public:
-    explicit ScriptClient(Api &api) : m_api(api) {}
+    explicit ScriptClient(Api &api);
+    ~ScriptClient();
 
     // Each failure is a gtest failure naming the script line; the count of steps run.
     int run(const std::filesystem::path &script);
@@ -38,8 +41,11 @@ public:
 private:
     Json substitute(const Json &value) const;
     void step(const Json &line, const std::string &where);
+    void checkEvents(const Json &line, const std::string &where);
 
     Api &m_api;
+    Json m_heard[2];
+    std::uint64_t m_subscriptions[2] = {};
 };
 
 Caller aiCaller();

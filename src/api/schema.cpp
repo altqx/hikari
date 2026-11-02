@@ -143,13 +143,41 @@ public:
             const auto &options = one->asArray();
             const auto matched = std::count_if(options.begin(), options.end(),
                                                [&](const Json &option) { return !check(option, value, path, depth + 1); });
-            if (matched != 1)
-                return SchemaFailure{path, matched ? "matches more than one of oneOf" : "matches none of oneOf"};
+            if (matched > 1)
+                return SchemaFailure{path, "matches more than one of oneOf"};
+            if (matched == 0) {
+                if (const Json *chosen = discriminated(options, value))
+                    return check(*chosen, value, path, depth + 1);
+                return SchemaFailure{path, "matches none of oneOf"};
+            }
         }
         return std::nullopt;
     }
 
 private:
+    // The one option a const property of `value` picks, as "op" picks an edit's kind.
+    static const Json *discriminated(const Json::Array &options, const Json &value)
+    {
+        if (!value.isObject())
+            return nullptr;
+        const Json *chosen = nullptr;
+        for (const Json &option : options) {
+            const Json *properties = option.find("properties");
+            if (!properties || !properties->isObject())
+                continue;
+            for (const Json::Member &p : properties->asObject()) {
+                const Json *c = p.value.find("const");
+                const Json *given = value.find(p.key);
+                if (c && given && *c == *given) {
+                    if (chosen)
+                        return nullptr;
+                    chosen = &option;
+                }
+            }
+        }
+        return chosen;
+    }
+
     const Json &m_defs;
 };
 

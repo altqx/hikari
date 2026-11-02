@@ -1,0 +1,81 @@
+#pragma once
+
+#include "hikari/api/api.h"
+#include "hikari/application/document_files.h"
+
+#include <QJSValue>
+#include <QObject>
+
+#include <functional>
+#include <map>
+#include <optional>
+#include <vector>
+
+namespace hikari::app {
+
+// The application's side of the Hikari API. The shell supplies commands and
+// panels through two QML functions; observe() turns whatever changed since
+// its last call into API events.
+class ApiHost final : public QObject, public api::DocumentHost, public api::CommandHost, public api::PanelHost {
+    Q_OBJECT
+    // (command, run) => null for a command the shell cannot run; else
+    // {enabled, reason} without run, or whether it ran.
+    Q_PROPERTY(QJSValue commandHandler READ commandHandler WRITE setCommandHandler)
+    // (panel, action) => with action "list" every panel's
+    // {panel, title, open, floating, focused}; with "open", "close" or "focus"
+    // whether the panel exists.
+    Q_PROPERTY(QJSValue panelHandler READ panelHandler WRITE setPanelHandler)
+
+public:
+    struct Wiring {
+        application::Workspace &workspace;
+        application::DocumentFiles &files;
+        application::Settings *settings = nullptr;
+        // The editing target's selection, as the Grid sets it.
+        std::function<bool(application::Selection)> selectTarget;
+        std::function<void()> refresh;
+        std::function<std::vector<std::string>(std::string_view command)> keys;
+    };
+    explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
+
+    api::Api &api() { return m_api; }
+    void observe();
+
+    QJSValue commandHandler() const { return m_commandHandler; }
+    void setCommandHandler(const QJSValue &handler) { m_commandHandler = handler; }
+    QJSValue panelHandler() const { return m_panelHandler; }
+    void setPanelHandler(const QJSValue &handler) { m_panelHandler = handler; }
+    Q_INVOKABLE void commandRan(const QString &command, bool ok);
+    Q_INVOKABLE void panelChanged(const QString &panel);
+
+    const application::Workspace &workspace() const override { return m_wiring.workspace; }
+    application::EditSession *session(application::DocumentId document) const override;
+    std::optional<std::string> path(application::DocumentId document) const override;
+    bool select(application::DocumentId document, const application::Selection &selection) override;
+    void committed(application::DocumentId document) override;
+
+    std::optional<api::CommandState> state(std::string_view command) const override;
+    bool run(std::string_view command) override;
+
+    std::vector<api::PanelState> panels() const override;
+    bool setOpen(std::string_view panel, bool open) override;
+    bool focus(std::string_view panel) override;
+
+private:
+    struct Seen {
+        std::uint64_t revision = 0;
+        application::Selection selection;
+    };
+    QJSValue callPanels(std::string_view panel, const char *action) const;
+
+    Wiring m_wiring;
+    api::Api m_api;
+    QJSValue m_commandHandler;
+    QJSValue m_panelHandler;
+    std::map<std::uint64_t, Seen> m_seen;
+    std::vector<application::DocumentId> m_seenDocuments;
+    std::optional<application::DocumentId> m_seenTarget;
+    bool m_observing = false;
+};
+
+}

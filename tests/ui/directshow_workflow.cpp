@@ -160,7 +160,7 @@ std::string filtersLook(const char *code, bool dark)
                 for (auto *item : menuItems(m)) {
                     auto *label = item->property("contentItem").value<QQuickItem *>();
                     if (label && label->implicitWidth() > label->width() + 0.5)
-                        out << item->property("text").toString().replace(QLatin1Char('\t'), QLatin1Char(' '));
+                        out << item->property("text").toString();
                 }
                 return out.isEmpty() ? QStringLiteral("none") : out.join(QStringLiteral(" | "));
             };
