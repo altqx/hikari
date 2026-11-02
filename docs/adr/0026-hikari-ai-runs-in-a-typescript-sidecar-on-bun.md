@@ -32,7 +32,7 @@ The rest of ADR 0024 stands. That includes no AI in core, off and silent until a
 
 - **Bun 1.4**, one executable per platform, built with `bun build --compile --bytecode --no-compile-autoload-dotenv --no-compile-autoload-bunfig` and cross-built from Linux for linux-x64 and windows-x64. Without the two `--no-compile-autoload-*` flags, a `.env` file in the working directory sets variables inside the binary.
 - **The latest Bun every release.** Bun supports only "1.x.x" and has no LTS line, so every HikariSub release rebuilds the sidecar on the latest Bun 1.x.
-- **Pinned toolchain.** The Bun toolchain and the target runtimes are fetched by SHA-256 the way harper-ls is, and passed with `--compile-executable-path`.
+- **Pinned toolchain.** The Bun toolchain and the target runtimes are upstream's baseline x86-64 builds, which run on CPUs without AVX2. They are fetched by SHA-256 the way harper-ls is, and passed with `--compile-executable-path`.
 - **The source** is a TypeScript package at `src/ai-sidecar/`, built from the same commit as the app. The build is reproducible byte for byte.
 - **Deno 2.9 LTS** is the fallback if Bun stops fitting.
 
@@ -126,7 +126,7 @@ All three follow [opencode PR 58782](https://github.com/anomalyco/opencode/pull/
 
 ## Download, verification and update
 
-- **A separate download.** The sidecar isn't in the AppImage, deb, rpm, AUR packages, NSIS installer or portable archives. Each HikariSub GitHub release carries one asset per platform, `hikari-ai-<version>-<platform>`. It is a single compressed executable holding both Bun and the bundle, about 38 MiB on Linux and 40 MiB on Windows.
+- **A separate download.** The sidecar isn't in the AppImage, deb, rpm, AUR packages, NSIS installer or portable archives. Each HikariSub GitHub release carries one asset per platform, `hikari-ai-<version>-<platform>.gz`. It is a single gzip-compressed executable holding both Bun and the bundle, about 49 MiB on Linux and 52 MiB on Windows (measured on Bun 1.4.4).
 - **When it downloads.** The download happens the first time the user adds a provider or agent, and the user is told what is downloaded and its size. It never happens while "Turn off all AI features" is on.
 - **Integrity.** The asset's SHA-256 and size go in that release's `hikarisub-update.json` ([ADR 0019](0019-installers-and-seamless-updates.md)). This is a new member that only adds, so the manifest stays at schema 1.
   - The app reads the manifest of its own release over HTTPS.
@@ -137,7 +137,7 @@ All three follow [opencode PR 58782](https://github.com/anomalyco/opencode/pull/
   - The old copy is removed once the new one verifies.
   - An app never runs a sidecar from another version.
 - **Developer and test builds** point at a locally built sidecar through a CMake option and download nothing.
-- **Licence notices.** The asset carries the licence notices for Bun (MIT), JavaScriptCore and WebCore (LGPL-2), tinycc (LGPL-2.1) and every bundled package. Bun publishes its patched WebKit, and the sidecar's source and build are in this repository, so the sidecar can be rebuilt and relinked. Release checks cover these obligations, as they do for the app's other modules.
+- **Licence notices.** The executable embeds the licence notices, and `hikari-ai --licenses` prints them. They cover Bun (MIT), JavaScriptCore and WebCore (LGPL-2), tinycc (LGPL-2.1) and every bundled package. Bun publishes its patched WebKit, and the sidecar's source and build are in this repository, so the sidecar can be rebuilt and relinked. Release checks cover these obligations, as they do for the app's other modules.
 
 ## Supply chain
 
