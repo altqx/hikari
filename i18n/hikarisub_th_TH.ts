@@ -9267,6 +9267,10 @@ and will be changed to the default</source>
         <translation>แพ็กเกจไม่มีไฟล์หลัก %1</translation>
     </message>
     <message>
+        <source>The package breaks the media rules: %1 %2.</source>
+        <translation>แพ็กเกจไม่เป็นไปตามกฎของสื่อ: %1 %2</translation>
+    </message>
+    <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
         <translation>แพ็กเกจมีลายเซ็น แต่แมนิเฟสต์ไม่ได้ระบุ publicKey สำหรับตรวจสอบลายเซ็นนั้น</translation>
     </message>

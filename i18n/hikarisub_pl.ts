@@ -9373,6 +9373,10 @@ zostanie zmieniony na domyślny</translation>
         <translation>W pakiecie brakuje jego pliku głównego, %1.</translation>
     </message>
     <message>
+        <source>The package breaks the media rules: %1 %2.</source>
+        <translation>Pakiet narusza zasady dotyczące multimediów: %1 %2.</translation>
+    </message>
+    <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
         <translation>Pakiet ma podpis, ale jego manifest nie podaje klucza publicKey, którym można go sprawdzić.</translation>
     </message>

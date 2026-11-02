@@ -9267,6 +9267,10 @@ and will be changed to the default</source>
         <translation>패키지에 주 파일 %1(이)가 없습니다.</translation>
     </message>
     <message>
+        <source>The package breaks the media rules: %1 %2.</source>
+        <translation>패키지가 미디어 규칙을 어깁니다: %1 %2.</translation>
+    </message>
+    <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
         <translation>패키지에 서명이 있지만 매니페스트에 서명을 확인할 publicKey가 없습니다.</translation>
     </message>
