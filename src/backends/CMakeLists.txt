@@ -7,6 +7,10 @@ add_library(hikari_lua_protocol STATIC lua_protocol.cpp)
 target_link_libraries(hikari_lua_protocol PUBLIC hikari_helper_endpoint hikari_application)
 hikari_module(hikari_lua_protocol ALLOW hikari_helper_endpoint hikari_application hikari_core)
 
+add_library(hikari_plugin_protocol STATIC plugin_protocol.cpp include/hikari/backends/plugin_protocol.h)
+target_link_libraries(hikari_plugin_protocol PUBLIC hikari_helper_endpoint)
+hikari_module(hikari_plugin_protocol ALLOW hikari_helper_endpoint)
+
 add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.cpp
     include/hikari/backends/overlay_blend.h helper_host.cpp ffms_indexed_source.cpp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp

@@ -134,6 +134,18 @@ void HelperHost::readOutput()
 std::expected<std::uint64_t, HostError> HelperHost::request(std::uint64_t run, std::vector<std::byte> payload,
                                                             Handler handler)
 {
+    return send(Kind::Request, run, std::move(payload), std::move(handler));
+}
+
+std::expected<std::uint64_t, HostError> HelperHost::push(std::uint64_t run, std::vector<std::byte> payload,
+                                                         Handler handler)
+{
+    return send(Kind::Event, run, std::move(payload), std::move(handler));
+}
+
+std::expected<std::uint64_t, HostError> HelperHost::send(Kind kind, std::uint64_t run, std::vector<std::byte> payload,
+                                                         Handler handler)
+{
     if (m_state != State::Ready)
         return std::unexpected(HostError::NotReady);
     if (m_pending.size() >= m_limits.maxOutstanding ||
@@ -143,7 +155,7 @@ std::expected<std::uint64_t, HostError> HelperHost::request(std::uint64_t run, s
     const std::size_t bytes = payload.size();
     m_pending.emplace(id, Pending{std::move(handler), bytes});
     m_pendingBytes += bytes;
-    write(Frame{Kind::Request, 0, m_session, run, id, std::move(payload)});
+    write(Frame{kind, 0, m_session, run, id, std::move(payload)});
     return id;
 }
 
