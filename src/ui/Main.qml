@@ -3395,7 +3395,7 @@ ApplicationWindow {
                     id: audioBackToLine
                     objectName: "audioBackToLine"
                     readonly property int side: root.audio.lineOutOfView
-                    visible: root.audio.loaded && side !== 0
+                    visible: root.audio.loaded && side !== 0 && !root.audio.cursorIsPlayback
                     focusPolicy: Qt.NoFocus
                     z: 1
                     x: side < 0 ? audioDisplay.x + 8 : audioDisplay.x + audioDisplay.width - width - 8
