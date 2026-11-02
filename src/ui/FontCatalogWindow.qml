@@ -235,7 +235,7 @@ DialogWindow {
                     .filter(t => t.length > 0).join(" "),
             canMerge: true,
             action: "merge",
-            nameHeading: qsTr("Catalog"),
+            nameHeading: qsTr("Catalogue"),
             differenceHeading: qsTr("Fonts"),
             rows: r.rows.map(row => ({ name: row.name,
                                        difference: row.added > 0 ? qsTr("%1 here, +%2 new").arg(row.here, row.added)

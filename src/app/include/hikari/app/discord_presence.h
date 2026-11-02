@@ -30,7 +30,7 @@ public:
     };
     // HIKARI_DISCORD_CLIENT_ID, the HikariSub application by default.
     static QString defaultClientId();
-    static QUrl siteUrl() { return QUrl(QStringLiteral("https://hikarisub.altqx.com")); }
+    static QUrl siteUrl() { return QUrl(QStringLiteral("https://hikarisub.org")); }
 
     DiscordPresence(ui::SettingsStore &settings, Config config, QObject *parent = nullptr);
     ~DiscordPresence() override;

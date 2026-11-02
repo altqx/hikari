@@ -244,8 +244,8 @@ foreach(scale 125 150 175 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
     add_test(NAME hikari_ui_docking_qualification_tests.scale${scale}
-        COMMAND $<TARGET_FILE:hikari_ui_docking_qualification_tests> floatingHeaderDocksByItsTitleAndMovesByTheRest
-            floatingTabBarMovesRightOfItsTabs floatingTitleKeepsItsRoom)
+        COMMAND $<TARGET_FILE:hikari_ui_docking_qualification_tests> floatingHeaderDocksByItsTitle
+            wholeFloatingHeaderDocks floatingHeaderHasNoSystemMoveArea)
     set_tests_properties(hikari_ui_docking_qualification_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()

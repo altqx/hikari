@@ -129,8 +129,8 @@ private slots:
         const auto cut = a.reviewOpen(
             lyrics("long.ttml", "<tt><body><p>" + QByteArray(58, 'a') + "\xF0\x9F\x8E\xA4 b c d</p></body></tt>"));
         QCOMPARE(cut.value(QStringLiteral("problem")).toString(),
-                 QStringLiteral("Could not import long.ttml: line 1: \"") + QString(58, QLatin1Char('a')) + QChar(0x2026) +
-                     QStringLiteral("\" has no time. Nothing was imported."));
+                 QStringLiteral("Could not import long.ttml: line 1: “") + QString(58, QLatin1Char('a')) + QChar(0x2026) +
+                     QStringLiteral("” has no time. Nothing was imported."));
         QCOMPARE(targetTitle(a), std::string("kept.ass"));
         QCOMPARE(targetText(a), std::string("unsaved"));
         QCOMPARE(a.workspace().documents().size(), std::size_t(1));

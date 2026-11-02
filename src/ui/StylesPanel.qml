@@ -488,7 +488,7 @@ Item {
             objectName: "stylesMenuCopyToCatalog"
             enabled: panel.canChange
             iconRole: "copy-to-storage"
-            text: qsTr("Copy to the catalog…")
+            text: qsTr("Copy to the catalogue…")
             onTriggered: panel.manager.copyStyleToCatalog(rowMenu.row)
         }
         MenuSeparator {}

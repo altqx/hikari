@@ -106,6 +106,10 @@ tasks:
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(LuaHelper|Manager|AutomationRegistry)[.]|automation" -V
     timeoutSeconds: 600
     artifacts: [out/build/windows-x64-release/tests/backends/artifacts/automation-capture-corpus.json, out/build/windows-x64-release/tests/backends/artifacts/automation-capture-corpus-macro.json, out/build/windows-x64-release/tests/ui/artifacts/automation-capture-dialogs.json]
+  automation-thirdparty:
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^automation-thirdparty-stage$" --output-on-failure; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(ThirdParty|AegisubFrameTimes)" -FS automation_thirdparty --output-on-failure
+    timeoutSeconds: 1800
+    artifacts: [out/build/windows-x64-release/tests/backends/artifacts/automation-thirdparty-corpus.json, out/build/windows-x64-release/tests/backends/artifacts/automation-thirdparty-runs.json, out/build/windows-x64-release/tests/backends/artifacts/automation-capture-thirdparty-macro.json]
   end-setups:
     script: ./tools/winix/end-setups.ps1
     visualStudio: false

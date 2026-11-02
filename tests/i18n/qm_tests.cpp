@@ -90,7 +90,7 @@ TEST(Qm, HikariSubCatalogsAnswerFinishedEntriesOnly)
     ASSERT_TRUE(pl.load(QStringLiteral(":/i18n/hikarisub_pl.qm")));
     EXPECT_EQ(pl.translate("HikariSub.Audio", "Horizontal stretching"), QStringLiteral("Rozciągnięcie w poziomie"));
     EXPECT_EQ(pl.translate("HikariSub.Audio", "Search bar"), QString());
-    EXPECT_EQ(pl.translate("HikariSub.Styles", "Copy of "), QStringLiteral("Kopia "));
+    EXPECT_EQ(pl.translate("HikariSub.Styles", "Copy of %1"), QStringLiteral("Kopia %1"));
 }
 
 TEST(Qm, EnglishCatalogGivesTheNumerusForms)

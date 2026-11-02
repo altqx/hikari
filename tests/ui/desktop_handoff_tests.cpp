@@ -193,7 +193,7 @@ private slots:
         start();
         triggerAction("userGuideMenuItem");
         QCOMPARE(recorded::opened().size(), 1);
-        QVERIFY2(recorded::opened().first().toString().startsWith(QStringLiteral("https://hikarisub.altqx.com/en/docs")),
+        QVERIFY2(recorded::opened().first().toString().startsWith(QStringLiteral("https://hikarisub.org/en/docs")),
                  qPrintable(recorded::opened().first().toString()));
         triggerAction("reportIssueMenuItem");
         QCOMPARE(recorded::opened().size(), 1);

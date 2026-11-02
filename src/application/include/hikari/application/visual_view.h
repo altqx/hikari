@@ -93,6 +93,8 @@ public:
     const IntRect &sourceRect() const { return m_sourceRect; }
     const EdgeRect &zoomRect() const { return m_zoomRect; }
     float zoomPercent() const { return m_zoomPercent; }
+    // Logical pixels shown per video pixel, as Aegisub's video_zoom; 1 without video.
+    double displayScale() const;
 
     // Script units per video-rectangle pixel.
     float coeffW() const;

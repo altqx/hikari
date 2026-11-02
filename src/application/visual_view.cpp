@@ -344,6 +344,14 @@ void VideoView::refreshToolTransform()
     m_zoomMove = {zoomX - (m_videoRect.left / m_zoomScale.x), zoomY - (m_videoRect.top / m_zoomScale.y)};
 }
 
+double VideoView::displayScale() const
+{
+    const int shown = m_sourceRect.right - m_sourceRect.left;
+    if (!m_open || shown <= 0)
+        return 1.0;
+    return toLogical(m_videoRect.right - m_videoRect.left) / shown;
+}
+
 float VideoView::coeffW() const
 {
     const int videoWidth = m_videoRect.right - m_videoRect.left;
