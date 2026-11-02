@@ -76,6 +76,7 @@ void LineEditorController::setDocument(std::optional<application::DocumentId> do
 {
     m_document = document;
     m_editable = editable;
+    m_typingStep.reset();
     m_draftUndo.clear();
     m_draftRedo.clear();
     m_problem.clear();
@@ -844,6 +845,7 @@ bool LineEditorController::showLine(qulonglong id)
     }
     m_draftUndo.clear();
     m_draftRedo.clear();
+    m_typingStep.reset();
     m_attempted.clear();
     m_shownLine.reset();
     m_carryEvaluated.reset();
@@ -933,6 +935,9 @@ void LineEditorController::edit(int role, const QString &newText, int cursor)
     }
     if (newText == m_shown[role])
         return;
+    if (!m_lastTyped.isValid() || m_lastTyped.elapsed() > kTypingBurstGapMs)
+        m_typingStep.reset();
+    m_lastTyped.start();
     const QString old = m_shown[role];
     const qsizetype caret = std::clamp<qsizetype>(cursor, 0, newText.size());
     qsizetype suffix = 0;
@@ -1094,6 +1099,19 @@ bool LineEditorController::commit()
     return sendDraft();
 }
 
+bool LineEditorController::commitTyping()
+{
+    auto *s = session();
+    if (!s || !s->draftLine())
+        return false;
+    const auto before = s->contentId();
+    const auto burst = m_typingStep;
+    if (!sendDraft(false, true, burst))
+        return false;
+    m_typingStep = s->contentId() != before ? std::optional(s->contentId()) : burst;
+    return true;
+}
+
 bool LineEditorController::applyChanges()
 {
     if (!visualToolOn())
@@ -1105,7 +1123,7 @@ bool LineEditorController::applyChanges()
     return sendDraft(false, true);
 }
 
-bool LineEditorController::sendDraft(bool leaving, bool visual)
+bool LineEditorController::sendDraft(bool leaving, bool visual, std::optional<application::ContentId> amending)
 {
     if (!visual)
         clearTimeWarnings();
@@ -1127,7 +1145,7 @@ bool LineEditorController::sendDraft(bool leaving, bool visual)
             after.translation = core::toUtf8(was.body);
         }
     };
-    if (!s->commitDraftToSelected("Edit Line", leaving, companion)) {
+    if (!s->commitDraftToSelected("Edit Line", leaving, companion, amending)) {
         if (s->draftLine()) {
             fail(problemText());
             return false;
@@ -2064,6 +2082,7 @@ void LineEditorController::writeFinished()
 
 void LineEditorController::committed()
 {
+    m_typingStep.reset();
     m_draftUndo.clear();
     m_draftRedo.clear();
     m_carryEvaluated.reset();

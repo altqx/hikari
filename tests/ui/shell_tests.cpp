@@ -5767,6 +5767,27 @@ private slots:
         }
     }
 
+    void shiftTimesRunsFromItsHotkeyWithoutAMenuItem()
+    {
+        QVERIFY(application->openFile(episode));
+        QVERIFY(!named("runShiftTimes"));
+        auto settings = application->shiftTimesSettings().settingsMap();
+        const auto before = settings;
+        auto restore = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
+        settings.insert(QStringLiteral("whichTimes"), 1);
+        settings.insert(QStringLiteral("postprocessor"), 0);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SHIFT_TIMES"))));
+        QVERIFY(ran.toBool());
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = messageBox("messages")) && question->property("visible").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Shift only the start times?"));
+        QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!question->property("visible").toBool());
+    }
+
     void menuArrowsOpenAndCloseSubmenus()
     {
         QVERIFY(application->openFile(episode));
@@ -15358,7 +15379,9 @@ private slots:
               {"updater.checkForStable", "Stable versions only"},
               {"updater.autoInstall", "Install updates automatically"},
               {"privacy.usageData", "Send anonymous usage data"},
-              {"privacy.alwaysSendCrashReports", "Always send crash reports"}}},
+              {"privacy.alwaysSendCrashReports", "Always send crash reports"},
+              {"privacy.discordPresence", "Show what I am doing in Discord"},
+              {"privacy.discordFileName", "Include the file name"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
