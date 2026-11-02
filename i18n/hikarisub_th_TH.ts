@@ -4907,8 +4907,8 @@ What would you like to do?</source>
         <translation>นำปุ่มลัด %1 ของ &quot;เปิดหน้าต่างกำหนดปุ่มลัด&quot; ออกแล้ว เนื่องจากไม่มีหน้าต่างนี้แล้ว และปุ่มลัดของแต่ละแมโครกำหนดได้ในแผงสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Fix minor errors (experimental)&quot; was removed: the feature is removed.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)&quot; ออกแล้ว เนื่องจากนำคุณลักษณะนี้ออกแล้ว</translation>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>นำปุ่มลัด %1 ของ “แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)” ออกแล้ว เนื่องจากนำคุณลักษณะนี้ออกแล้ว</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>

@@ -4981,8 +4981,8 @@ Co chcesz zrobić?</translation>
         <translation>Usunięto skrót %1 polecenia &quot;Otwórz okno mapowania skrótów&quot;: tego okna już nie ma, a skrót każdego makra ustawia się w panelu Automatyzacja.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Fix minor errors (experimental)&quot; was removed: the feature is removed.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Popraw drobne błędy (eksperymentalne)&quot;: ta funkcja została usunięta.</translation>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>Usunięto skrót %1 polecenia “Popraw drobne błędy (eksperymentalne)”: ta funkcja została usunięta.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>

@@ -4907,8 +4907,8 @@ What would you like to do?</source>
         <translation>&quot;단축키 설정 창 열기&quot;의 단축키 %1(이)가 제거되었습니다. 해당 창은 없어졌으며 각 매크로의 단축키는 자동화 패널에서 설정합니다.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Fix minor errors (experimental)&quot; was removed: the feature is removed.</source>
-        <translation>&quot;사소한 오류 수정 (실험적)&quot;의 단축키 %1(이)가 제거되었습니다. 이 기능은 제거되었습니다.</translation>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>“사소한 오류 수정 (실험적)”의 단축키 %1(이)가 제거되었습니다. 이 기능은 제거되었습니다.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
