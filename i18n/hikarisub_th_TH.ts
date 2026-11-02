@@ -1083,7 +1083,7 @@ Output device: %2</source>
         <translation>เชื่อถือสคริปต์ในโฟลเดอร์เหล่านี้เสมอ</translation>
     </message>
     <message>
-        <source>Don&apos;t load</source>
+        <source>Don’t load</source>
         <translation>ไม่โหลด</translation>
     </message>
     <message>
@@ -1505,16 +1505,12 @@ Output device: %2</source>
         <translation>HTML</translation>
     </message>
     <message>
-        <source>Swap shortcuts between the color picker
-and the color selection window</source>
-        <translation>สลับปุ่มลัดระหว่างตัวเลือกสี
-กับหน้าต่างเลือกสี</translation>
+        <source>Click opens the picker, right-click the colour window</source>
+        <translation>คลิกเปิดตัวเลือกสี คลิกขวาเปิดหน้าต่างเลือกสี</translation>
     </message>
     <message>
-        <source>Checking this option opens the color picker on left-click,
-and the color selection window on right-click.</source>
-        <translation>เมื่อเลือกตัวเลือกนี้ คลิกซ้ายจะเปิดตัวเลือกสี
-และคลิกขวาจะเปิดหน้าต่างเลือกสี</translation>
+        <source>Off: click opens the colour window, right-click the picker.</source>
+        <translation>เมื่อปิด: คลิกเปิดหน้าต่างเลือกสี คลิกขวาเปิดตัวเลือกสี</translation>
     </message>
     <message>
         <source>Red</source>
@@ -1900,7 +1896,7 @@ in tag &apos;%3&apos;</source>
 <context>
     <name>HikariSub.Documents</name>
     <message>
-        <source>Apply to All</source>
+        <source>Apply to all</source>
         <translation>นำไปใช้ทั้งหมด</translation>
     </message>
     <message>
@@ -2437,36 +2433,12 @@ Should not exceed 15 characters per second</source>
         <translation>เอฟเฟกต์ของบรรทัด ใช้ระบุบรรทัดที่จะใช้เอฟเฟกต์คาราโอเกะหรือ VSFilter</translation>
     </message>
     <message>
-        <source>&amp;Copy</source>
-        <translation>&amp;คัดลอก</translation>
-    </message>
-    <message>
-        <source>Cu&amp;t</source>
-        <translation>ตั&amp;ด</translation>
-    </message>
-    <message>
-        <source>&amp;Paste</source>
-        <translation>&amp;วาง</translation>
-    </message>
-    <message>
-        <source>Spellchecker</source>
-        <translation>ตัวตรวจการสะกด</translation>
-    </message>
-    <message>
-        <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation>เ&amp;พิ่มคำว่า &quot;%1&quot; ไปยังพจนานุกรม</translation>
-    </message>
-    <message>
         <source>Add word to dictionary</source>
         <translation>เพิ่มคำไปยังพจนานุกรม</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
         <translation>เกิดข้อผิดพลาด ไม่ได้เพิ่มคำว่า &quot;%1&quot;</translation>
-    </message>
-    <message>
-        <source>&amp;Delete</source>
-        <translation>&amp;ลบ</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2535,6 +2507,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>Remove</source>
         <translation>นำออก</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>ตรวจการสะกด</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -2768,7 +2744,7 @@ Should not exceed 15 characters per second</source>
         <translation>เพิ่ม</translation>
     </message>
     <message>
-        <source>Adds fonts to a previously created catalog</source>
+        <source>Adds fonts to an existing catalogue</source>
         <translation>เพิ่มแบบอักษรในแคตตาล็อกที่สร้างไว้ก่อนหน้านี้</translation>
     </message>
     <message>
@@ -2776,7 +2752,7 @@ Should not exceed 15 characters per second</source>
         <translation>จัดการ</translation>
     </message>
     <message>
-        <source>Allows managing font catalogs</source>
+        <source>Manages font catalogues</source>
         <translation>จัดการแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
@@ -2792,7 +2768,7 @@ Should not exceed 15 characters per second</source>
         <translation>เพิ่มแบบอักษรจากคำบรรยาย</translation>
     </message>
     <message>
-        <source>Manage font catalogs</source>
+        <source>Manage font catalogues</source>
         <translation>จัดการแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
@@ -2808,7 +2784,7 @@ Should not exceed 15 characters per second</source>
         <translation>รีเฟรชแบบอักษร: อ่านแบบอักษรที่ติดตั้งไว้และแบบอักษรภายนอกอีกครั้ง</translation>
     </message>
     <message>
-        <source>Enter a name for the catalog.</source>
+        <source>Enter a name for the catalogue.</source>
         <translation>ป้อนชื่อสำหรับแคตตาล็อก</translation>
     </message>
     <message>
@@ -2816,11 +2792,11 @@ Should not exceed 15 characters per second</source>
         <translation>“%1” มีอยู่แล้ว</translation>
     </message>
     <message>
-        <source>Rename font catalog</source>
+        <source>Rename font catalogue</source>
         <translation>เปลี่ยนชื่อแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
-        <source>A catalog named “%1” already exists.</source>
+        <source>A catalogue named “%1” already exists.</source>
         <translation>มีแคตตาล็อกชื่อ “%1” อยู่แล้ว</translation>
     </message>
     <message>
@@ -2832,11 +2808,11 @@ Should not exceed 15 characters per second</source>
         <translation>แทนที่</translation>
     </message>
     <message>
-        <source>Delete font catalog</source>
+        <source>Delete font catalogue</source>
         <translation>ลบแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
-        <source>Delete the catalog “%1”?</source>
+        <source>Delete the catalogue “%1”?</source>
         <translation>ลบแคตตาล็อก “%1” หรือไม่?</translation>
     </message>
     <message>
@@ -2844,11 +2820,11 @@ Should not exceed 15 characters per second</source>
         <translation>แคตตาล็อกนี้ไม่มีแบบอักษร</translation>
     </message>
     <message>
-        <source>Its fonts stay installed and in their other catalogs.</source>
+        <source>Its fonts stay installed and in their other catalogues.</source>
         <translation>แบบอักษรในแคตตาล็อกนี้ยังคงติดตั้งอยู่และยังอยู่ในแคตตาล็อกอื่นของแบบอักษรนั้น</translation>
     </message>
     <message>
-        <source>The file holds no font catalog.</source>
+        <source>The file holds no font catalogue.</source>
         <translation>ไฟล์นี้ไม่มีแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
@@ -2856,15 +2832,15 @@ Should not exceed 15 characters per second</source>
         <translation>%1 (%2)</translation>
     </message>
     <message>
-        <source>Load font catalogs</source>
+        <source>Load font catalogues</source>
         <translation>โหลดแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
-        <source>%1 of %2 catalogs in “%3” already exist.</source>
+        <source>%1 of %2 catalogues in “%3” already exist.</source>
         <translation>แคตตาล็อก %1 จาก %2 รายการใน “%3” มีอยู่แล้ว</translation>
     </message>
     <message>
-        <source>The file’s new catalogs are added.</source>
+        <source>The file’s new catalogues are added.</source>
         <translation>ระบบจะเพิ่มแคตตาล็อกใหม่จากไฟล์</translation>
     </message>
     <message>
@@ -2884,11 +2860,11 @@ Should not exceed 15 characters per second</source>
         <translation>ที่นี่ %1, ในไฟล์ %2</translation>
     </message>
     <message>
-        <source>Load 1 catalog</source>
+        <source>Load 1 catalogue</source>
         <translation>โหลด 1 แคตตาล็อก</translation>
     </message>
     <message numerus="yes">
-        <source>Load %n catalogs</source>
+        <source>Load %n catalogues</source>
         <translation>
             <numerusform>โหลด %n แคตตาล็อก</numerusform>
         </translation>
@@ -2918,11 +2894,11 @@ Should not exceed 15 characters per second</source>
         </translation>
     </message>
     <message>
-        <source>Loaded 1 font catalog</source>
+        <source>Loaded 1 font catalogue</source>
         <translation>โหลดแคตตาล็อกแบบอักษร 1 รายการแล้ว</translation>
     </message>
     <message numerus="yes">
-        <source>Loaded %n font catalogs</source>
+        <source>Loaded %n font catalogues</source>
         <translation>
             <numerusform>โหลดแคตตาล็อกแบบอักษร %n รายการแล้ว</numerusform>
         </translation>
@@ -2932,11 +2908,11 @@ Should not exceed 15 characters per second</source>
         <translation>จาก %1: %2</translation>
     </message>
     <message>
-        <source>Catalogs</source>
+        <source>Catalogues</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
-        <source>New catalog</source>
+        <source>New catalogue</source>
         <translation>แคตตาล็อกใหม่</translation>
     </message>
     <message>
@@ -2956,11 +2932,11 @@ Should not exceed 15 characters per second</source>
         <translation>ใน “%1”</translation>
     </message>
     <message>
-        <source>In the catalog</source>
+        <source>In the catalogue</source>
         <translation>ในแคตตาล็อก</translation>
     </message>
     <message>
-        <source>Not in a catalog</source>
+        <source>Not in a catalogue</source>
         <translation>ไม่อยู่ในแคตตาล็อก</translation>
     </message>
     <message>
@@ -2984,11 +2960,11 @@ Should not exceed 15 characters per second</source>
         <translation>ไม่ได้บันทึก: ไม่สามารถเขียนสำเนาสำรองได้</translation>
     </message>
     <message>
-        <source>The catalogs are saved automatically to fonts.toml in the &quot;catalogs&quot; folder of your user folder.</source>
+        <source>Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.</source>
         <translation>แคตตาล็อกจะบันทึกโดยอัตโนมัติลงใน fonts.toml ในโฟลเดอร์ &quot;catalogs&quot; ของโฟลเดอร์ผู้ใช้ของคุณ</translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Catalogue name</source>
         <translation>ชื่อแคตตาล็อก</translation>
     </message>
     <message>
@@ -3020,7 +2996,7 @@ Should not exceed 15 characters per second</source>
         <translation>รวม</translation>
     </message>
     <message>
-        <source>Choose font catalog file</source>
+        <source>Choose font catalogue file</source>
         <translation>เลือกไฟล์แคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
@@ -3176,7 +3152,7 @@ Should not exceed 15 characters per second</source>
         <translation>ค้นหาแบบอักษร</translation>
     </message>
     <message>
-        <source>Font catalog: %1</source>
+        <source>Font catalogue: %1</source>
         <translation>แคตตาล็อกแบบอักษร: %1</translation>
     </message>
     <message>
@@ -3196,11 +3172,11 @@ Should not exceed 15 characters per second</source>
         <translation>ตัวกรองอักขระ</translation>
     </message>
     <message>
-        <source>Add to a catalog</source>
+        <source>Add to a catalogue</source>
         <translation>เพิ่มในแคตตาล็อก</translation>
     </message>
     <message>
-        <source>Add “%1” to a catalog</source>
+        <source>Add “%1” to a catalogue</source>
         <translation>เพิ่ม “%1” ในแคตตาล็อก</translation>
     </message>
     <message>
@@ -3272,27 +3248,27 @@ Should not exceed 15 characters per second</source>
         <translation>ข้อความตัวอย่าง</translation>
     </message>
     <message>
-        <source>The line’s selected text</source>
-        <translation>ข้อความที่เลือกในบรรทัด</translation>
+        <source>Selected text</source>
+        <translation>ข้อความที่เลือก</translation>
     </message>
     <message>
-        <source>The line’s text</source>
+        <source>Line text</source>
         <translation>ข้อความของบรรทัด</translation>
     </message>
     <message>
-        <source>The Style editor’s sample text</source>
-        <translation>ข้อความตัวอย่างของตัวแก้ไขสไตล์</translation>
+        <source>Style editor sample</source>
+        <translation>ตัวอย่างในตัวแก้ไขสไตล์</translation>
     </message>
     <message>
-        <source>Manage catalogs…</source>
-        <translation>จัดการแคตตาล็อก…</translation>
+        <source>Manage catalogues</source>
+        <translation>จัดการแคตตาล็อก</translation>
     </message>
     <message>
-        <source>No catalogs yet</source>
+        <source>No catalogues yet</source>
         <translation>ยังไม่มีแคตตาล็อก</translation>
     </message>
     <message>
-        <source>New catalog…</source>
+        <source>New catalogue…</source>
         <translation>แคตตาล็อกใหม่…</translation>
     </message>
     <message>
@@ -3723,7 +3699,7 @@ Failed to copy %2 fonts.</source>
         <translation>เพิ่มแบบอักษรใน “%1” แล้ว แต่บันทึกไม่ได้</translation>
     </message>
     <message>
-        <source>fonts.toml in the &quot;catalogs&quot; folder of your user folder could not be written. Saving is tried again on exit.</source>
+        <source>fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.</source>
         <translation>เขียน fonts.toml ในโฟลเดอร์ &quot;catalogs&quot; ของโฟลเดอร์ผู้ใช้ไม่ได้ จะลองบันทึกอีกครั้งเมื่อออกจากโปรแกรม</translation>
     </message>
     <message>
@@ -3735,7 +3711,7 @@ Failed to copy %2 fonts.</source>
         <translation>จากสไตล์และแท็ก %1 ของ %2</translation>
     </message>
     <message>
-        <source>Choose a catalog or type a new name.</source>
+        <source>Choose a catalogue or type a new name.</source>
         <translation>เลือกแคตตาล็อกหรือพิมพ์ชื่อใหม่</translation>
     </message>
     <message>
@@ -3751,7 +3727,7 @@ Failed to copy %2 fonts.</source>
         <translation>ไฟล์ที่เปิดอยู่ทั้งหมด</translation>
     </message>
     <message>
-        <source>Replace the catalog’s fonts</source>
+        <source>Replace the catalogue’s fonts</source>
         <translation>แทนที่แบบอักษรของแคตตาล็อก</translation>
     </message>
     <message numerus="yes">
@@ -4191,22 +4167,6 @@ Failed to copy %2 fonts.</source>
         <translation>ลบ</translation>
     </message>
     <message>
-        <source>&amp;Insert</source>
-        <translation>แ&amp;ทรก</translation>
-    </message>
-    <message>
-        <source>Insert &amp;before</source>
-        <translation>แทรก&amp;ก่อน</translation>
-    </message>
-    <message>
-        <source>Insert &amp;after</source>
-        <translation>แทรก&amp;หลัง</translation>
-    </message>
-    <message>
-        <source>Insert before with &amp;video time</source>
-        <translation>แทรกก่อนด้วย&amp;เวลาวิดีโอ</translation>
-    </message>
-    <message>
         <source>Insert after with video time</source>
         <translation>แทรกหลังด้วยเวลาวิดีโอ</translation>
     </message>
@@ -4217,18 +4177,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Insert after with video frame time</source>
         <translation>แทรกหลังด้วยเฟรมวิดีโอ</translation>
-    </message>
-    <message>
-        <source>&amp;Duplicate lines</source>
-        <translation>&amp;สร้างบรรทัดซ้ำ</translation>
-    </message>
-    <message>
-        <source>&amp;Swap</source>
-        <translation>&amp;สลับ</translation>
-    </message>
-    <message>
-        <source>Join &amp;lines</source>
-        <translation>ต่อ&amp;บรรทัด</translation>
     </message>
     <message>
         <source>Join lines and keep first</source>
@@ -4391,18 +4339,6 @@ Failed to copy %2 fonts.</source>
         <translation>กำหนดค่า FPS จากวิดีโอ</translation>
     </message>
     <message>
-        <source>Copy	Ctrl+C</source>
-        <translation>คัดลอก	Ctrl+C</translation>
-    </message>
-    <message>
-        <source>Cut	Ctrl+X</source>
-        <translation>ตัด	Ctrl+X</translation>
-    </message>
-    <message>
-        <source>Paste	Ctrl+V</source>
-        <translation>วาง	Ctrl+V</translation>
-    </message>
-    <message>
         <source>Copy columns</source>
         <translation>คัดลอกคอลัมน์</translation>
     </message>
@@ -4413,10 +4349,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Delete text</source>
         <translation>ลบข้อความ</translation>
-    </message>
-    <message>
-        <source>Delete lines	Shift+Del</source>
-        <translation>ลบบรรทัด	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4467,6 +4399,34 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกบรรทัดในกลุ่ม</translation>
     </message>
     <message>
+        <source>Insert</source>
+        <translation>แทรก</translation>
+    </message>
+    <message>
+        <source>Insert before</source>
+        <translation>แทรกก่อน</translation>
+    </message>
+    <message>
+        <source>Insert after</source>
+        <translation>แทรกหลัง</translation>
+    </message>
+    <message>
+        <source>Insert before with video time</source>
+        <translation>แทรกก่อนด้วยเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Duplicate lines</source>
+        <translation>สร้างบรรทัดซ้ำ</translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation>สลับ</translation>
+    </message>
+    <message>
+        <source>Join lines</source>
+        <translation>ต่อบรรทัด</translation>
+    </message>
+    <message>
         <source>Make times continuous with the previous line</source>
         <translation>กำหนดค่าเวลาให้ต่อเนื่องกับบรรทัดก่อนหน้า</translation>
     </message>
@@ -4477,6 +4437,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Make line group</source>
         <translation>สร้างกลุ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>ตัด</translation>
+    </message>
+    <message>
+        <source>Delete lines</source>
+        <translation>ลบบรรทัด</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -6092,7 +6060,7 @@ What would you like to do?</source>
         <translation>ตัวจัดเวลาคันจิ</translation>
     </message>
     <message>
-        <source>The kanji timing could not be applied</source>
+        <source>The kanji timing could not be applied.</source>
         <translation>ไม่สามารถนำการจัดเวลาคันจิไปใช้ได้</translation>
     </message>
     <message>
@@ -6174,7 +6142,7 @@ What would you like to do?</source>
         <translation>ไฮไลต์หลายส่วน (#)</translation>
     </message>
     <message>
-        <source>Write each further syllable of a group as a # syllable, for the templater&apos;s multi effects</source>
+        <source>Write each further syllable of a group as a # syllable, for the templater’s multi effects</source>
         <translation>เขียนพยางค์ถัดๆ ไปของกลุ่มเป็นพยางค์ # สำหรับเอฟเฟกต์ multi ของเทมเพลต</translation>
     </message>
     <message>
@@ -6182,7 +6150,7 @@ What would you like to do?</source>
         <translation>ฟุริงานะ</translation>
     </message>
     <message>
-        <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
+        <source>Write each kanji’s reading after it (漢|かん), as the romaji sings it</source>
         <translation>เขียนคำอ่านของคันจิแต่ละตัวต่อท้ายตัวนั้น (漢|かん) ตามที่โรมาจิร้อง</translation>
     </message>
     <message>
@@ -6218,8 +6186,8 @@ What would you like to do?</source>
         <translation>ไม่มีบรรทัดคาราโอเกะใน “%1”</translation>
     </message>
     <message>
-        <source>The subtitles have no styles</source>
-        <translation>คำบรรยายไม่มีสไตล์</translation>
+        <source>The document has no styles.</source>
+        <translation>เอกสารไม่มีสไตล์</translation>
     </message>
     <message>
         <source>No lines to pair</source>
@@ -6727,6 +6695,10 @@ What would you like to do?</source>
     <message>
         <source>Built with</source>
         <translation>สร้างด้วย</translation>
+    </message>
+    <message>
+        <source>File formats and ideas from</source>
+        <translation>รูปแบบไฟล์และแนวคิดจาก</translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
@@ -7307,7 +7279,7 @@ What would you like to do?</source>
         <translation>HikariSub %1 พร้อมติดตั้งแล้ว</translation>
     </message>
     <message>
-        <source>What&apos;s new</source>
+        <source>What’s new</source>
         <translation>มีอะไรใหม่</translation>
     </message>
     <message>
@@ -7369,7 +7341,7 @@ What would you like to do?</source>
         </translation>
     </message>
     <message>
-        <source>Don&apos;t ask again</source>
+        <source>Don’t ask again</source>
         <translation>ไม่ต้องถามอีก</translation>
     </message>
     <message>
@@ -7455,8 +7427,8 @@ What would you like to do?</source>
         <translation>ข้าม</translation>
     </message>
     <message>
-        <source>All:</source>
-        <translation>ทั้งหมด:</translation>
+        <source>All</source>
+        <translation>ทั้งหมด</translation>
     </message>
     <message>
         <source>Action for every row</source>
@@ -9362,7 +9334,7 @@ and will be changed to the default</source>
         <translation>อธิบายฟีเจอร์</translation>
     </message>
     <message>
-        <source>Don&apos;t send</source>
+        <source>Don’t send</source>
         <translation>ไม่ส่ง</translation>
     </message>
     <message>
@@ -9550,8 +9522,8 @@ and will be changed to the default</source>
         <translation>รายงานปัญหาอยู่ในคลิปบอร์ดแล้ว วางลงในปัญหาใหม่บน GitHub</translation>
     </message>
     <message>
-        <source>The whole report</source>
-        <translation>รายงานทั้งหมด</translation>
+        <source>Report text</source>
+        <translation>ข้อความรายงาน</translation>
     </message>
     <message>
         <source>Title</source>
@@ -9590,7 +9562,7 @@ and will be changed to the default</source>
         <translation>สิ่งที่คุณคาดหวัง</translation>
     </message>
     <message>
-        <source>What you&apos;d like</source>
+        <source>What you’d like</source>
         <translation>สิ่งที่คุณต้องการ</translation>
     </message>
     <message>
@@ -11444,7 +11416,7 @@ Spell checking will be disabled</source>
         <translation>บันทึกสไตล์</translation>
     </message>
     <message>
-        <source>Style catalog</source>
+        <source>Style catalogue</source>
         <translation>แคตตาล็อกสไตล์</translation>
     </message>
     <message>
@@ -11520,7 +11492,7 @@ Spell checking will be disabled</source>
         <translation>นำการเปลี่ยนแปลงไปใช้กับ “%1” หรือไม่?</translation>
     </message>
     <message>
-        <source>The catalog “%1” is shown now; the changes go to “%2”.</source>
+        <source>The catalogue “%1” is shown now; the changes go to “%2”.</source>
         <translation>ขณะนี้แสดงแคตตาล็อก “%1” อยู่ การเปลี่ยนแปลงจะไปที่ “%2”</translation>
     </message>
     <message>
@@ -11552,8 +11524,8 @@ Spell checking will be disabled</source>
         <translation>ทุกสไตล์มีบรรทัดที่ใช้อยู่</translation>
     </message>
     <message>
-        <source>Ctrl+Z puts them back.</source>
-        <translation>กด Ctrl+Z เพื่อนำกลับมา</translation>
+        <source>Undo puts them back.</source>
+        <translation>เลิกทำเพื่อนำกลับมา</translation>
     </message>
     <message>
         <source>border</source>
@@ -11568,15 +11540,15 @@ Spell checking will be disabled</source>
         <translation>ไฟล์นี้</translation>
     </message>
     <message>
-        <source>the catalog</source>
+        <source>the catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
-        <source>Delete catalog</source>
+        <source>Delete catalogue</source>
         <translation>ลบแคตตาล็อก</translation>
     </message>
     <message>
-        <source>Delete the catalog “%1”?</source>
+        <source>Delete the catalogue “%1”?</source>
         <translation>ลบแคตตาล็อก “%1” หรือไม่?</translation>
     </message>
     <message>
@@ -11598,7 +11570,7 @@ Spell checking will be disabled</source>
         <translation>สไตล์ต้องมีชื่อ</translation>
     </message>
     <message>
-        <source>The catalog already has a style named “%1”.</source>
+        <source>The catalogue already has a style named “%1”.</source>
         <translation>แคตตาล็อกมีสไตล์ชื่อ “%1” อยู่แล้ว</translation>
     </message>
     <message>
@@ -11622,7 +11594,7 @@ Spell checking will be disabled</source>
         <translation>ไม่ได้นำการเปลี่ยนแปลงไปใช้กับ “%1”</translation>
     </message>
     <message>
-        <source>The file shown now uses the catalog “%1”.</source>
+        <source>The file shown now uses the catalogue “%1”.</source>
         <translation>ไฟล์ที่แสดงอยู่ตอนนี้ใช้แคตตาล็อก “%1”</translation>
     </message>
     <message>
@@ -11654,7 +11626,7 @@ Spell checking will be disabled</source>
         <translation>ความโปร่งใส 0 (ทึบแสง) ถึง 255</translation>
     </message>
     <message>
-        <source>Catalog styles</source>
+        <source>Catalogue styles</source>
         <translation>สไตล์ในแคตตาล็อก</translation>
     </message>
     <message>
@@ -11724,15 +11696,15 @@ Spell checking will be disabled</source>
         <translation>เพิ่มไปยังไฟล์</translation>
     </message>
     <message>
-        <source>Copy the selected catalog styles into this file</source>
+        <source>Copy the selected catalogue styles into this file</source>
         <translation>คัดลอกสไตล์ที่เลือกในแคตตาล็อกไปยังไฟล์นี้</translation>
     </message>
     <message>
-        <source>Add to catalog</source>
+        <source>Add to catalogue</source>
         <translation>เพิ่มไปยังแคตตาล็อก</translation>
     </message>
     <message>
-        <source>Copy the selected file styles into the catalog</source>
+        <source>Copy the selected file styles into the catalogue</source>
         <translation>คัดลอกสไตล์ที่เลือกในไฟล์ไปยังแคตตาล็อก</translation>
     </message>
     <message>
@@ -11740,7 +11712,7 @@ Spell checking will be disabled</source>
         <translation>เพิ่มไปยังไฟล์ที่เปิดอยู่ทั้งหมด</translation>
     </message>
     <message>
-        <source>Copy the selected catalog styles into every open file</source>
+        <source>Copy the selected catalogue styles into every open file</source>
         <translation>คัดลอกสไตล์ที่เลือกในแคตตาล็อกไปยังไฟล์ที่เปิดอยู่ทุกไฟล์</translation>
     </message>
     <message>
@@ -11748,8 +11720,8 @@ Spell checking will be disabled</source>
         <translation>ไฟล์นี้</translation>
     </message>
     <message>
-        <source>This tab has no ASS styles.</source>
-        <translation>แท็บนี้ไม่มีสไตล์ ASS</translation>
+        <source>This document has no ASS styles.</source>
+        <translation>เอกสารนี้ไม่มีสไตล์ ASS</translation>
     </message>
     <message numerus="yes">
         <source>%n styles: the preview shows %1</source>
@@ -11776,7 +11748,7 @@ Spell checking will be disabled</source>
         <translation>ตระกูล</translation>
     </message>
     <message>
-        <source>Font catalog</source>
+        <source>Font catalogue</source>
         <translation>แคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
@@ -11872,7 +11844,7 @@ Spell checking will be disabled</source>
         <translation>นำไปใช้</translation>
     </message>
     <message>
-        <source>New catalog</source>
+        <source>New catalogue</source>
         <translation>แคตตาล็อกใหม่</translation>
     </message>
     <message>
@@ -11980,11 +11952,11 @@ Spell checking will be disabled</source>
         <translation>ย้อนกลับ</translation>
     </message>
     <message>
-        <source>A catalog named “%1” already exists.</source>
+        <source>A catalogue named “%1” already exists.</source>
         <translation>มีแคตตาล็อกชื่อ “%1” อยู่แล้ว</translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Catalogue name</source>
         <translation>ชื่อแคตตาล็อก</translation>
     </message>
     <message>
@@ -13317,6 +13289,65 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.TextMenu</name>
+    <message>
+        <source>Undo</source>
+        <translation>เลิกทำ</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>ทำซ้ำ</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>ตัด</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>วาง</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>เลือกทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Undoes the last change to the text</source>
+        <translation>เลิกทำการเปลี่ยนแปลงข้อความครั้งล่าสุด</translation>
+    </message>
+    <message>
+        <source>Redoes the last change you undid</source>
+        <translation>ทำการเปลี่ยนแปลงล่าสุดที่เลิกทำไปแล้วซ้ำ</translation>
+    </message>
+    <message>
+        <source>Moves the selected text to the clipboard</source>
+        <translation>ย้ายข้อความที่เลือกไปยังคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Copies the selected text to the clipboard</source>
+        <translation>คัดลอกข้อความที่เลือกไปยังคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Inserts the text from the clipboard</source>
+        <translation>แทรกข้อความจากคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Deletes the selected text</source>
+        <translation>ลบข้อความที่เลือก</translation>
+    </message>
+    <message>
+        <source>Selects all the text in the field</source>
+        <translation>เลือกข้อความทั้งหมดในช่อง</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TimeShift</name>
     <message>
         <source>The starting time</source>
@@ -13698,7 +13729,7 @@ after the end time in milliseconds</source>
         <translation>ตัวเลือกการจับคู่การแปล</translation>
     </message>
     <message>
-        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</source>
+        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted translation is matched to it, and it is deleted later.</source>
         <translation>&lt;b&gt;ข้อความต้นฉบับ&lt;/b&gt;: ข้อความที่จัดเวลาถูกต้องแล้ว บทสนทนาที่วางจะถูกจับคู่กับข้อความนี้ และข้อความนี้จะถูกลบในภายหลัง</translation>
     </message>
     <message>
@@ -14668,11 +14699,11 @@ or codecs or a splitter may be missing</source>
         <translation>มีแท็กอื่นชื่อ “%1” อยู่แล้ว กรอกช่อง “แท็ก” ก่อนเพื่อแทนที่</translation>
     </message>
     <message>
-        <source>A tag can&apos;t contain “,”.</source>
+        <source>A tag can’t contain “,”.</source>
         <translation>แท็กต้องไม่มี “,”</translation>
     </message>
     <message>
-        <source>A name can&apos;t contain “,”.</source>
+        <source>A name can’t contain “,”.</source>
         <translation>ชื่อต้องไม่มี “,”</translation>
     </message>
     <message>
@@ -14722,7 +14753,7 @@ or codecs or a splitter may be missing</source>
         <translation>แท็กเริ่มต้น 22 รายการจะกลับมาพร้อมช่วงค่าและขั้น</translation>
     </message>
     <message>
-        <source>The list keeps at least one tag</source>
+        <source>The list keeps at least one tag.</source>
         <translation>รายการต้องมีแท็กอย่างน้อยหนึ่งรายการ</translation>
     </message>
     <message>
@@ -14754,7 +14785,7 @@ or codecs or a splitter may be missing</source>
         <translation>จำนวน</translation>
     </message>
     <message numerus="yes">
-        <source>The tag takes %n value(s)</source>
+        <source>The tag takes %n value(s).</source>
         <translation>
             <numerusform>แท็กนี้รับ %n ค่า</numerusform>
         </translation>
@@ -14832,7 +14863,7 @@ or codecs or a splitter may be missing</source>
         <translation>พิมพ์ชื่อ</translation>
     </message>
     <message>
-        <source>A name can&apos;t contain “;”.</source>
+        <source>A name can’t contain “;”.</source>
         <translation>ชื่อต้องไม่มี “;”</translation>
     </message>
     <message>
@@ -14886,7 +14917,7 @@ or codecs or a splitter may be missing</source>
         <translation>ลบ</translation>
     </message>
     <message>
-        <source>The list keeps at least one shape</source>
+        <source>The list keeps at least one shape.</source>
         <translation>รายการต้องมีรูปร่างอย่างน้อยหนึ่งรายการ</translation>
     </message>
     <message>
@@ -14914,7 +14945,7 @@ or codecs or a splitter may be missing</source>
         <translation>ภาพวาด</translation>
     </message>
     <message>
-        <source>A drawing can&apos;t contain “;”.</source>
+        <source>A drawing can’t contain “;”.</source>
         <translation>ภาพวาดต้องไม่มี “;”</translation>
     </message>
     <message>
@@ -14926,7 +14957,7 @@ or codecs or a splitter may be missing</source>
         <translation>นำจากบรรทัดปัจจุบัน</translation>
     </message>
     <message>
-        <source>Put the active line&apos;s drawing in this shape</source>
+        <source>Put the active line’s drawing in this shape</source>
         <translation>ใส่ภาพวาดของบรรทัดปัจจุบันลงในรูปร่างนี้</translation>
     </message>
     <message>
@@ -14938,7 +14969,7 @@ or codecs or a splitter may be missing</source>
         <translation>ตัวอย่าง</translation>
     </message>
     <message>
-        <source>The shape keeps its last drawing until this one can be used</source>
+        <source>The shape keeps its last drawing until this one can be used.</source>
         <translation>รูปร่างจะใช้ภาพวาดล่าสุดไปจนกว่าภาพวาดนี้จะใช้ได้</translation>
     </message>
     <message>

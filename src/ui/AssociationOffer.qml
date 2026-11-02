@@ -24,7 +24,7 @@ Frame {
         }
         CheckBox {
             objectName: "associationApplyToAll"
-            text: qsTr("Apply to All")
+            text: qsTr("Apply to all")
             checked: offer.video.offerApplyToAll
             onToggled: offer.video.offerApplyToAll = checked
         }

@@ -45,7 +45,41 @@ DialogWindow {
             all.push(["VSFilter", "Gabest and contributors", "GPL 2 or later"])
         return all
     }
+    readonly property var sources: [["Aegisub", "Aegisub contributors", "BSD 3-Clause"]]
 
+    component CreditRow: Item {
+        id: entry
+        required property var modelData
+        required property font noteFont
+        implicitHeight: row.implicitHeight
+        Accessible.role: Accessible.ListItem
+        Accessible.name: entry.modelData[0] + ", © " + entry.modelData[1] + ", " + entry.modelData[2]
+        RowLayout {
+            id: row
+            x: 10
+            width: parent.width - 24
+            spacing: 10
+            Label { text: entry.modelData[0]; Layout.preferredWidth: 104; Layout.alignment: Qt.AlignTop; topPadding: 2 }
+            ColumnLayout {
+                spacing: 0
+                Layout.fillWidth: true
+                Label {
+                    text: "© " + entry.modelData[1]
+                    color: Theme.muted
+                    wrapMode: Text.WordWrap
+                    topPadding: 2
+                    Layout.fillWidth: true
+                }
+                Label {
+                    text: entry.modelData[2]
+                    color: Theme.muted
+                    font: entry.noteFont
+                    bottomPadding: 4
+                    Layout.fillWidth: true
+                }
+            }
+        }
+    }
     component SectionLabel: Label {
         color: Theme.muted
     }
@@ -86,38 +120,26 @@ DialogWindow {
                 Accessible.role: Accessible.List
                 Accessible.name: qsTr("Built with")
                 ScrollBar.vertical: ScrollBar { policy: list.contentHeight > list.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded }
-                delegate: Item {
-                    id: entry
-                    required property var modelData
-                    width: ListView.view.width
-                    implicitHeight: row.implicitHeight
-                    Accessible.role: Accessible.ListItem
-                    Accessible.name: entry.modelData[0] + ", © " + entry.modelData[1] + ", " + entry.modelData[2]
-                    RowLayout {
-                        id: row
-                        x: 10
-                        width: parent.width - 24
-                        spacing: 10
-                        Label { text: entry.modelData[0]; Layout.preferredWidth: 104; Layout.alignment: Qt.AlignTop; topPadding: 2 }
-                        ColumnLayout {
-                            spacing: 0
-                            Layout.fillWidth: true
-                            Label {
-                                text: "© " + entry.modelData[1]
-                                color: Theme.muted
-                                wrapMode: Text.WordWrap
-                                topPadding: 2
-                                Layout.fillWidth: true
-                            }
-                            Label {
-                                text: entry.modelData[2]
-                                color: Theme.muted
-                                font: credits.fontAt(11)
-                                bottomPadding: 4
-                                Layout.fillWidth: true
-                            }
-                        }
-                    }
+                delegate: CreditRow { width: ListView.view.width; noteFont: credits.fontAt(11) }
+            }
+        }
+        SectionLabel { text: qsTr("File formats and ideas from"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 12 }
+        Rectangle {
+            color: Theme.field
+            border.width: 1
+            border.color: Theme.line
+            Layout.fillWidth: true
+            Layout.preferredHeight: sourceRows.implicitHeight + 14
+            Column {
+                id: sourceRows
+                objectName: "creditsSources"
+                y: 7
+                width: parent.width
+                Accessible.role: Accessible.List
+                Accessible.name: qsTr("File formats and ideas from")
+                Repeater {
+                    model: credits.sources
+                    CreditRow { width: sourceRows.width; noteFont: credits.fontAt(11) }
                 }
             }
         }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/api/api.h"
 #include "hikari/api/host.h"
 #include "hikari/core/ass_load.h"
 
@@ -59,7 +60,7 @@ public:
         selection.selected = {core::LineId{1}, core::LineId{3}};
         sessions.at(a.value)->setSelection(selection);
         commands["GLOBAL_SAVE_SUBS"] = CommandState{true, "", {"Ctrl-S"}};
-        commands["GLOBAL_UNDO"] = CommandState{false, "Nothing to undo", {"Ctrl-Z"}};
+        commands["GLOBAL_UNDO"] = CommandState{true, "", {"Ctrl-Z"}};
         panelStates = {PanelState{"Grid", "Subtitles grid", true, false, true},
                        PanelState{"Video", "Video", false, false, false}};
     }
@@ -86,12 +87,80 @@ public:
         const auto it = paths.find(document.value);
         return it == paths.end() ? std::nullopt : std::optional(it->second);
     }
+    bool select(application::DocumentId document, const application::Selection &selection) override
+    {
+        session(document)->setSelection(selection);
+        if (api)
+            api->selectionChanged(document);
+        return true;
+    }
+    void committed(application::DocumentId document) override
+    {
+        ++commits;
+        if (api)
+            api->documentChanged(document);
+    }
+
+    application::EditSession *target() const { return session(*workspace_.editingTarget()); }
+
+    // GLOBAL_UNDO follows the editing target's history, as the shell's Undo does.
     std::optional<CommandState> state(std::string_view command) const override
     {
         const auto it = commands.find(command);
-        return it == commands.end() ? std::nullopt : std::optional(it->second);
+        if (it == commands.end())
+            return std::nullopt;
+        CommandState state = it->second;
+        if (command == "GLOBAL_UNDO" && !target()->canUndo()) {
+            state.enabled = false;
+            state.disabledReason = "Nothing to undo";
+        }
+        return state;
     }
+    bool run(std::string_view command) override
+    {
+        bool ok = true;
+        if (command == "GLOBAL_UNDO") {
+            ok = target()->undo();
+            if (ok && api)
+                api->documentChanged(*workspace_.editingTarget());
+        }
+        ran.emplace_back(command);
+        if (api)
+            api->commandRan(command, ok);
+        return ok;
+    }
+
     std::vector<PanelState> panels() const override { return panelStates; }
+    bool setOpen(std::string_view panel, bool open) override
+    {
+        for (PanelState &p : panelStates)
+            if (p.id == panel) {
+                p.open = open;
+                if (!open)
+                    p.focused = false;
+                if (api)
+                    api->panelChanged(panel);
+                return true;
+            }
+        return false;
+    }
+    bool focus(std::string_view panel) override
+    {
+        bool found = false;
+        for (PanelState &p : panelStates) {
+            const bool was = p.focused;
+            p.focused = p.id == panel;
+            if (p.focused)
+                p.open = found = true;
+            if (api && (was != p.focused))
+                api->panelChanged(p.id);
+        }
+        return found;
+    }
+
+    Api *api = nullptr;
+    int commits = 0;
+    std::vector<std::string> ran;
 
     application::Workspace workspace_;
     std::map<std::uint64_t, std::unique_ptr<application::EditSession>> sessions;

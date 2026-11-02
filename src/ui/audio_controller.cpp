@@ -473,6 +473,7 @@ void AudioController::setPlayingVideoTime(std::optional<int> ms)
     const auto followed = application::followCursor(
         m_view, static_cast<std::int64_t>(*ms) * audio->sampleRate() / 1000, m_scrollbarThickness);
     m_followingVideo = true;
+    playbackStateChanged();
     if (followed.moved)
         redraw();
     if (followed.x != m_cursor || followed.moved) {
@@ -487,6 +488,7 @@ void AudioController::stopFollowingVideo()
         return;
     m_cursor.reset();
     emit cursorChanged();
+    playbackStateChanged();
 }
 
 application::AudioMarks AudioController::marks() const
@@ -995,6 +997,8 @@ void AudioController::tick()
 
 void AudioController::playbackStateChanged()
 {
+    if (cursorIsPlayback() != std::exchange(m_wasCursorPlayback, cursorIsPlayback()))
+        emit cursorIsPlaybackChanged();
     if (playing() == m_wasPlaying)
         return;
     m_wasPlaying = playing();

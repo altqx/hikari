@@ -29,7 +29,7 @@ InlineBar {
         objectName: "updateWhatsNew"
         visible: !bar.manual
         flat: true
-        text: qsTr("What's new")
+        text: qsTr("What’s new")
         onClicked: bar.updates.openReleasePage(bar.updates.releasePageOf(bar.installer.readyVersion))
     }
     IconTextButton {

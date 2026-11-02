@@ -57,6 +57,7 @@ class AudioController : public QObject {
     Q_PROPERTY(bool spectrumNonLinear READ spectrumNonLinear NOTIFY boxControlsChanged)
     Q_PROPERTY(double magnification READ magnification NOTIFY boxControlsChanged)
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
+    Q_PROPERTY(bool cursorIsPlayback READ cursorIsPlayback NOTIFY cursorIsPlaybackChanged)
     Q_PROPERTY(bool karaoke READ karaoke NOTIFY boxControlsChanged)
     Q_PROPERTY(bool karaokeSplitMode READ karaokeSplitMode NOTIFY boxControlsChanged)
     Q_PROPERTY(int currentSyllable READ currentSyllable NOTIFY displayChanged)
@@ -303,6 +304,7 @@ signals:
     void boxControlsChanged();
     void volumeChanged(float playbackVolume);
     void playingChanged();
+    void cursorIsPlaybackChanged();
     void tapChanged();
     void tapSpansChanged();
     void onsetsChanged();
@@ -415,6 +417,7 @@ private:
     std::optional<application::PlayRange> m_lastRange;
     QTimer m_playTimer;
     bool m_wasPlaying = false;
+    bool m_wasCursorPlayback = false;
     std::uint64_t m_playedSerial = 0;
     bool m_syncVideo = true;
     bool m_followingVideo = false;

@@ -96,7 +96,7 @@ DialogWindow {
             Layout.fillWidth: true
         }
         Label {
-            text: issue.bug ? qsTr("What happened") : issue.kind === "feature" ? qsTr("What you'd like") : qsTr("Your question")
+            text: issue.bug ? qsTr("What happened") : issue.kind === "feature" ? qsTr("What you’d like") : qsTr("Your question")
             Layout.alignment: Qt.AlignTop
             Layout.topMargin: 6
         }
@@ -106,7 +106,7 @@ DialogWindow {
             placeholderText: issue.bug ? "" : issue.kind === "feature" ? qsTr("Describe the feature.")
                                                                        : qsTr("Ask away. Name the panel or command it is about.")
             wrapMode: TextEdit.Wrap
-            Accessible.name: issue.bug ? qsTr("What happened") : issue.kind === "feature" ? qsTr("What you'd like") : qsTr("Your question")
+            Accessible.name: issue.bug ? qsTr("What happened") : issue.kind === "feature" ? qsTr("What you’d like") : qsTr("Your question")
             Layout.fillWidth: true
             Layout.fillHeight: issue.kind === "question"
             Layout.preferredHeight: issue.kind === "question" ? 108 : 56

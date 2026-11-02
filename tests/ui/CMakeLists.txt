@@ -315,6 +315,8 @@ target_compile_definitions(hikari_ui_analytics_session_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_media_fixtures hikari_lua_helper
     hikari_automation_stage)
+hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC.

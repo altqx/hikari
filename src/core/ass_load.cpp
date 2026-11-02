@@ -1,5 +1,6 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_attachments.h"
+#include "hikari/core/extradata.h"
 
 #include "text_util.h"
 
@@ -548,8 +549,16 @@ namespace {
 
 using namespace detail;
 
+bool equalsIgnoringCase(u8sv a, u8sv b)
+{
+    const auto lower = [](char8_t c) { return c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c + 32) : c; };
+    return std::ranges::equal(a, b, [&](char8_t x, char8_t y) { return lower(x) == lower(y); });
+}
+
 SectionKind headerKind(u8sv header)
 {
+    if (equalsIgnoringCase(header, u8"[Aegisub Extradata]"))
+        return SectionKind::AegisubExtradata;
     // Prefix matches, as HikariSub legacy reads headers.
     if (startsWith(header, u8"[Script Info]"))
         return SectionKind::ScriptInfo;
@@ -654,6 +663,7 @@ public:
         // MUST KILL: pair() advances m_next behind this loop
         for (m_next = 0; m_next < m_spans.size();)
             line(m_spans[m_next++]);
+        resolveExtra();
         return std::move(m_result);
     }
 
@@ -664,6 +674,15 @@ private:
         if (sections.empty())
             sections.push_back(Section{});
         return sections.back();
+    }
+
+    void resolveExtra()
+    {
+        const auto &table = m_result.document.extradata();
+        for (auto &section : DocumentBuilder::sections(m_result.document))
+            for (auto &record : section.records)
+                if (auto *line = std::get_if<LineRecord>(&record); line && !line->extradataIds.empty())
+                    line->extra = resolveExtradata(table, line->extradataIds);
     }
 
     void addDiagnostic(Diagnostic::Severity severity, Diagnostic::Kind kind, std::size_t offset, u8sv excerpt)
@@ -729,6 +748,10 @@ private:
                 section.records.push_back(FormatRecord{fields(view.substr(7)), span});
                 return;
             }
+            break;
+        case SectionKind::AegisubExtradata:
+            if (auto entry = parseExtradataLine(view))
+                DocumentBuilder::extradata(m_result.document).push_back(std::move(*entry));
             break;
         default:
             break;
@@ -820,7 +843,12 @@ private:
         std::size_t consumed = 0;
         for (std::size_t i = 0; i < 9; ++i)
             consumed += parts[i].size() + 1;
-        line.text = consumed <= view.size() ? str(trim(view.substr(consumed))) : std::u8string{};
+        u8sv text = consumed <= view.size() ? view.substr(consumed) : u8sv{};
+        if (auto prefix = extradataPrefix(text)) {
+            line.extradataIds = std::move(prefix->ids);
+            text.remove_prefix(prefix->length);
+        }
+        line.text = str(trim(text));
         return line;
     }
 
@@ -860,6 +888,8 @@ private:
         merged.originalSpan = original.span;
         merged.translation = std::move(merged.text);
         merged.text = std::move(original.text);
+        if (merged.extradataIds.empty())
+            merged.extradataIds = std::move(original.extradataIds);
         // The authored Effect "\fD" marks Unconfirmed.
         const auto fields = splitAll(originalView, u8',');
         merged.unconfirmed = fields.size() > 8 && fields[8] == u8"\fD";

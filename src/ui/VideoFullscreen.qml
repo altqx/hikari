@@ -86,6 +86,7 @@ Window {
             return (event.key === Qt.Key_Escape || event.key === Qt.Key_B)
                     && fs.shell.hotkeys.actionFor(0, event.key, event.modifiers) === ""
         }
+        MenuKey.onRequested: fs.openMenuAt(fs.shell.videoView.cursorIn(stageHolder))
         Keys.onShortcutOverride: event => event.accepted = fs.shell.visualTools.takesKey(event.key, event.modifiers)
                                                           || fs.shell.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
                                                           || keyScope.leaves(event)
@@ -104,9 +105,6 @@ Window {
                 event.accepted = true
             } else if (event.key === Qt.Key_F) {
                 fs.controller.toggle(0)
-                event.accepted = true
-            } else if (event.key === Qt.Key_Menu) {
-                fs.openMenuAt(fs.shell.videoView.cursorIn(stageHolder))
                 event.accepted = true
             } else if (fs.shell.videoView.key(event.key, event.modifiers)) {
                 event.accepted = true
