@@ -442,6 +442,33 @@ private:
     QPointer<QQuickWindow> m_dragged;
 };
 
+// KDDW floats a panel on a header double-click unless Flag_DisableDoubleClick, which it won't change once docks exist.
+class LockedHeaderClicks final : public QObject {
+public:
+    using QObject::QObject;
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (!g_layoutLocked || event->type() != QEvent::MouseButtonDblClick)
+            return false;
+        auto *window = qobject_cast<QQuickWindow *>(watched);
+        if (!window)
+            return false;
+        QQuickItem *item = window->contentItem();
+        QPointF at = static_cast<QMouseEvent *>(event)->position();
+        while (QQuickItem *child = item->childAt(at.x(), at.y())) {
+            at = item->mapToItem(child, at);
+            item = child;
+        }
+        for (; item; item = item->parentItem()) {
+            if (item->objectName() == u"dockHeader" || item->objectName() == u"dockTitleBar")
+                return refuseWhileLocked();
+        }
+        return false;
+    }
+};
+
 void configureEngine()
 {
     using KDDockWidgets::Config;
@@ -449,6 +476,8 @@ void configureEngine()
     config.setFlags(Config::Flag_HideTitleBarWhenTabsVisible | Config::Flag_AlwaysShowTabs);
     config.setDropIndicatorAllowedFunc(dropKeepsItsGroup);
     config.setDragAboutToStartFunc([](KDDockWidgets::Core::Draggable *) { return !refuseWhileLocked(); });
+    if (!g_everAttached)
+        qApp->installEventFilter(new LockedHeaderClicks(qApp));
     config.setSeparatorThickness(1);
     config.setDraggedWindowOpacity(0.7);
     config.setInternalFlags(config.internalFlags() | Config::InternalFlag_UseTransparentFloatingWindow);

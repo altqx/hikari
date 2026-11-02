@@ -73,6 +73,6 @@ KDDWViews.TitleBarBase {
 
     // KDDW's drag area takes the presses, so the cursor comes from a HoverHandler.
     HoverHandler {
-        cursorShape: Qt.SizeAllCursor
+        cursorShape: Docking.layoutLocked ? Qt.ArrowCursor : Qt.SizeAllCursor
     }
 }
