@@ -767,7 +767,7 @@ private slots:
         QVERIFY(a.log().history().contains(QStringLiteral("Tab 1: “position” has the wrong type.")));
         writeSession(a.lastSessionPath(), R"({"version": 1, "closed": "false", "tabs": []})");
         QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
-        QVERIFY(a.log().history().contains(QStringLiteral("\"closed\" is not true or false")));
+        QVERIFY(a.log().history().contains(QStringLiteral("“closed” is not true or false")));
     }
 
     void anUnreadableLastSessionStaysAsItIs()

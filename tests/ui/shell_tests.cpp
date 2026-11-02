@@ -9506,7 +9506,7 @@ private slots:
         QVERIFY2(done.contains(QStringLiteral("Added font “arial.ttf” to the archive.\n")), qPrintable(done));
         QVERIFY2(done.contains(QStringLiteral("\nFinished, copied 2 fonts.\nNot found 1 font.\n")), qPrintable(done));
         QVERIFY(done.contains(QStringLiteral("The output is labelled incomplete")));
-        QVERIFY(!done.contains(QStringLiteral("Completed Successfully")));
+        QVERIFY(!done.contains(QStringLiteral("Completed successfully")));
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
         QCOMPARE(application->settingsStore()->text("fontCollector.directory"), QDir::toNativeSeparators(archive));
 
@@ -9802,7 +9802,7 @@ private slots:
         QVERIFY2(csri.contains(QStringLiteral("The video shows the subtitles through vsfiltermod_textsub, whose "
                                               "output this check does not verify.\n")),
                  qPrintable(csri));
-        QVERIFY(csri.indexOf(note) < csri.indexOf(QStringLiteral("Completed Successfully")));
+        QVERIFY(csri.indexOf(note) < csri.indexOf(QStringLiteral("Completed successfully")));
         collector.setDisplayRenderer(QStringLiteral("libass"));
         collector.close();
     }
