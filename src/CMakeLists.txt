@@ -1,6 +1,7 @@
 include("${PROJECT_SOURCE_DIR}/cmake/HikariModules.cmake")
 add_subdirectory(core)
 add_subdirectory(application)
+add_subdirectory(api)
 add_subdirectory(backends)
 add_subdirectory(helpers/media)
 add_subdirectory(helpers/lua)
