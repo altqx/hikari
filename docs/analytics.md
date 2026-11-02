@@ -1,6 +1,6 @@
 # Anonymous usage data
 
-HikariSub sends anonymous usage data to PostHog Cloud EU (`https://eu.i.posthog.com`). This page lists every event and property it can send ([AN1 #404](https://github.com/altqx/hikari/issues/404)). The app's "What is sent" link opens the site's page on it, https://hikarisub.org/en/docs/help/what-is-sent, which follows this one.
+HikariSub sends anonymous usage data to PostHog Cloud EU through `https://i.hikarisub.org`, a reverse proxy on our own domain that PostHog runs ([PX1 #676](https://github.com/altqx/hikari/issues/676)). There is no fallback to PostHog's own host. This page lists every event and property it can send ([AN1 #404](https://github.com/altqx/hikari/issues/404)). The app's "What is sent" link opens the site's page on it, https://hikarisub.org/en/docs/help/what-is-sent, which follows this one.
 
 ## The basics
 
@@ -28,7 +28,7 @@ Turning it off stops sending at once. It also deletes the events waiting to go a
 ## How it is sent
 
 - Events wait in memory and in `analytics-queue.json` in the cache folder, at most 1000 events or 1 MB. Past that, the oldest are dropped.
-- They are sent to `POST /batch/`, at most 100 at a time:
+- They are sent to `POST https://i.hikarisub.org/batch/`, at most 100 at a time:
   - 60 seconds after start, then every 5 minutes
   - once at quit, after the window has closed, waiting at most 2 seconds
 - Each batch carries the PostHog project key (`api_key`, the compiled-in `HIKARI_POSTHOG_KEY`, the same for every copy) and the user agent `HikariSub/<version>`.
