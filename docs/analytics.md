@@ -1,6 +1,6 @@
 # Anonymous usage data
 
-HikariSub sends anonymous usage data to PostHog Cloud EU through `https://i.hikarisub.org`, a reverse proxy on our own domain that PostHog runs ([PX1 #676](https://github.com/altqx/hikari/issues/676)). There is no fallback to PostHog's own host. This page lists every event and property it can send ([AN1 #404](https://github.com/altqx/hikari/issues/404)). The app's "What is sent" link opens the site's page on it, https://hikarisub.org/en/docs/help/what-is-sent, which follows this one.
+HikariSub sends anonymous usage data to PostHog Cloud EU through our own proxy at `https://i.hikarisub.org` ([PX1 #676](https://github.com/altqx/hikari/issues/676)), which forwards it to PostHog and keeps no IP addresses or logs. There is no fallback to PostHog's own host. This page lists every event and property it can send ([AN1 #404](https://github.com/altqx/hikari/issues/404)). The app's "What is sent" link opens the site's page on it, https://hikarisub.org/en/docs/help/what-is-sent, which follows this one.
 
 ## The basics
 
@@ -21,7 +21,7 @@ Turning it off stops sending at once. It also deletes the events waiting to go a
 **What identifies you:**
 - A random UUID made when the first event is queued (`privacy.usageDataId`). It is not tied to anything else.
 - No person profiles are made (`$process_person_profile: false`).
-- PostHog does no GeoIP lookup (`$geoip_disable: true`). The project discards client IP addresses.
+- PostHog does no GeoIP lookup (`$geoip_disable: true`). The proxy does not pass your IP address on, and the project discards client IP addresses.
 
 **Never sent:** file names, paths, subtitle or script text, Style or font names, script names other than the bundled scripts', saved layout names, or anything else you typed. Every property is an id from a closed list, a bucket, a bool, a version or a count. The client checks each event against the table below and drops any that does not match. The tests walk a scripted session and fail on any free text: `analytics_session_tests`, using the check in `tests/support/analytics_endpoint.h`.
 
