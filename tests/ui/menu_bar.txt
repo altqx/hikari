@@ -8,6 +8,7 @@ File > Open video… [GLOBAL_OPEN_VIDEO]
 File > Save [GLOBAL_SAVE_SUBS]
 File > Save all [GLOBAL_SAVE_ALL_SUBS]
 File > Save as… [GLOBAL_SAVE_SUBS_AS]
+File > Export as… [GLOBAL_EXPORT_SUBS_AS]
 File > Save translation [GLOBAL_SAVE_TRANSLATION]
 File > Save subtitles using the video name [GLOBAL_SAVE_WITH_VIDEO_NAME]
 File > Open auto save [GLOBAL_OPEN_AUTO_SAVE]
@@ -73,6 +74,7 @@ Video > Open keyframes [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
 Video > Recently opened keyframes > None
 Video > Open dummy video [GLOBAL_OPEN_DUMMY_VIDEO]
+Video > Centre times within frames [GLOBAL_CENTER_TIMES_IN_FRAMES]
 Video > Insert start time from video [GLOBAL_SET_START_TIME]
 Video > Insert end time from video [GLOBAL_SET_END_TIME]
 Video > Shift by frames to video >
@@ -112,6 +114,7 @@ Automation > Rerun last macro
 Automation > Repeat last run [GLOBAL_AUTOMATION_REPEAT_LAST_RUN]
 Automation > Cancel macro
 Automation > Show panel
+Automation > Plugins… [GLOBAL_PLUGINS]
 Automation > -
 View
 View > Layout >

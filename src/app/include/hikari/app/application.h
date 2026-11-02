@@ -18,6 +18,7 @@
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/app/plugin_manager.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/grammar.h"
@@ -199,6 +200,8 @@ public:
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
+        // Empty: no plugins can be installed.
+        PluginManager::Folders plugins;
         // Empty: beside the settings file.
         QString presetsDir;
         // The default has no key: nothing is queued or sent.
@@ -512,6 +515,13 @@ public:
     Q_INVOKABLE QVariantMap checkKaraoke() const;
     // False when the target changed, lacks the Line, or the editor refuses to leave it.
     Q_INVOKABLE bool showKaraokeLine(qulonglong document, qulonglong line);
+    // {format, options (export flags, lines "all"/"selected"/"shown", fps), extensions (by format),
+    // all, selected, shown (Dialogue counts), videoFps (0 without video), folder, name}: the editing
+    // target's last export choice, else the last export's; empty without an editing target.
+    Q_INVOKABLE QVariantMap exportSetup() const;
+    // Writes a copy of the editing target (its Document is never changed) and remembers the choice.
+    // {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number, losses}]}.
+    Q_INVOKABLE QVariantMap exportTo(const QUrl &file, const QString &format, const QVariantMap &options);
     // A tab: {tab (0 Find, 1 Find and replace, 2 Find in subtitles), find, replace,
     // styles, filters, folder, field, lines, matchCase, regex, startOfText, endOfText,
     // includeComments, skipTags, skipText, subfolders, hiddenFolders} plus the recent
@@ -654,6 +664,7 @@ public:
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
+    Q_INVOKABLE bool centerTimesInFrames();
     Q_INVOKABLE bool commitAndAdvance();
 
     ui::ShellController &shell() { return *m_shell; }
@@ -716,6 +727,8 @@ public:
     application::Workspace &workspace() { return m_workspace; }
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
     ApiHost *apiHost() const { return m_apiHost.get(); }
+    Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
+    PluginManager *pluginManager() const { return m_pluginManager.get(); }
     QVariantMap qmlProperties();
     // Waits for running writes and delivers their results.
     void waitForWrites();
@@ -862,6 +875,7 @@ private:
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
+    QString exportKey(application::DocumentId document) const;
     application::LineVisible actionLines(const application::EditSession &session) const;
     void rememberColumns(bool paste, int columns);
     void protectReference();
@@ -941,6 +955,7 @@ private:
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
+    std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;

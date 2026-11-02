@@ -56,6 +56,13 @@ TEST(Schema, ArraysAndBounds)
     EXPECT_EQ(failurePath(R"({"maxLength": 1})", "\"\xE3\x81\x82\""), "none");
 }
 
+TEST(Schema, PatternSearchesUnanchored)
+{
+    EXPECT_EQ(failurePath(R"({"pattern": "b+"})", "\"abbc\""), "none");
+    EXPECT_EQ(failurePath(R"({"pattern": "^b+$"})", "\"abbc\""), "");
+    EXPECT_EQ(failurePath(R"({"pattern": "^[a-z]+$"})", "3"), "none");
+}
+
 TEST(Schema, EnumConstAndCombinators)
 {
     EXPECT_EQ(failurePath(R"({"enum": ["a", 1]})", "1"), "none");
@@ -73,7 +80,9 @@ TEST(Schema, CheckFindsUnsupportedOrBrokenSchemas)
 {
     EXPECT_FALSE(checkSchema(j(R"({"type": "object", "properties": {"a": {"$ref": "#/$defs/Id"}},
         "required": ["a"], "additionalProperties": false, "description": "d"})"), kDefs));
-    EXPECT_EQ(*checkSchema(j(R"({"properties": {"a": {"pattern": "x"}}})"), kDefs), "/properties/a/pattern: unsupported keyword");
+    EXPECT_EQ(*checkSchema(j(R"({"properties": {"a": {"uniqueItems": true}}})"), kDefs),
+              "/properties/a/uniqueItems: unsupported keyword");
+    EXPECT_EQ(*checkSchema(j(R"({"pattern": "("})"), kDefs), "/pattern: not a regular expression");
     EXPECT_TRUE(checkSchema(j(R"({"$ref": "#/$defs/Nope"})"), kDefs));
     EXPECT_TRUE(checkSchema(j(R"({"type": "text"})"), kDefs));
     EXPECT_TRUE(checkSchema(j(R"({"minItems": -1})"), kDefs));

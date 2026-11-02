@@ -85,7 +85,7 @@ private slots:
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), app::kDocsSchema);
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), 1);
         QCOMPARE(meta.value(QStringLiteral("version")).toString(), QStringLiteral(HIKARI_VERSION));
-        QCOMPARE(meta.value(QStringLiteral("site")).toString(), QStringLiteral("https://hikarisub.altqx.com"));
+        QCOMPARE(meta.value(QStringLiteral("site")).toString(), QStringLiteral("https://hikarisub.org"));
         QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{40}$"))
                     .match(meta.value(QStringLiteral("commit")).toString())
                     .hasMatch());

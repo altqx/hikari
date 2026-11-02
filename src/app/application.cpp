@@ -810,6 +810,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
         }});
+    m_pluginManager = std::make_unique<PluginManager>(options.plugins);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
     m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
