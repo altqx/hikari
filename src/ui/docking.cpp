@@ -595,25 +595,6 @@ int Docking::windowShadow(QWindow *window) const
     return windowSystemFrame(window) ? 0 : floatingShadow();
 }
 
-bool Docking::platformUsesSystemMove(QStringView platformName)
-{
-    // Not on Windows: Snap never takes the borderless tool window.
-    return platformName.startsWith(u"wayland") || platformName == u"xcb";
-}
-
-bool Docking::platformUsesSystemMove()
-{
-    return platformUsesSystemMove(QGuiApplication::platformName());
-}
-
-void Docking::setSystemMove(bool on)
-{
-    if (on == m_systemMove)
-        return;
-    m_systemMove = on;
-    emit systemMoveChanged();
-}
-
 namespace {
 
 // Qt runs the last-installed filter first, so this sees the close before KDDW's.

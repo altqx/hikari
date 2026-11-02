@@ -99,7 +99,7 @@ KDDWViews.TabBarBase {
         objectName: "dockTitleText"
         visible: root.titleMode && !root.systemTitle
         x: 12
-        width: Math.max(0, (systemMoveArea.enabled ? systemMoveArea.x : menuButton.x) - x - 4)
+        width: Math.max(0, menuButton.x - x - 4)
         anchors.verticalCenter: parent.verticalCenter
         text: root.currentTitle
         textFormat: Text.PlainText
@@ -311,21 +311,6 @@ KDDWViews.TabBarBase {
             root.currentTabIndex = index
             root.openMenu(root.nameAt(index), menuButton)
         }
-    }
-
-    DockSystemMoveArea {
-        id: systemMoveArea
-        z: root.mouseAreaZ + 2
-        enabled: root.floating && Docking.systemMove
-        visible: enabled
-        readonly property real start: root.titleMode
-                                      ? Math.max(titleText.x + 48, Math.min(titleText.x + titleText.implicitWidth + 8, menuButton.x - 2 - 48))
-                                      : tabRow.width
-        readonly property real end: root.titleMode ? menuButton.x - 2 : root.width - root.slotWidth
-        x: start
-        width: Math.max(0, end - start)
-        height: parent.height
-        onDoubleClicked: Docking.toggleFloating(root.currentName)
     }
 
     PanelFocusMark {

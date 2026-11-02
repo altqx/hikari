@@ -1049,7 +1049,7 @@ def step_floating():
     st = wait_for(lambda s: "Audio" in frames(s))
     r = origin("Audio")
     if r is None:
-        for item in ("floating-header", "floating-shadow", "floating-system-move", "floating-move", "floating-resize"):
+        for item in ("floating-header", "floating-shadow", "floating-move", "floating-move-free", "floating-resize"):
             verdict(item, "not-observable", f"the floating Audio window (floated by {how}) cannot be located on "
                                             f"{B.name}")
         return
@@ -1058,9 +1058,12 @@ def step_floating():
     floating_frame(r, shadow, "float-0-window")
     floating_decoration("Audio", r)
     main = origin("HikariSub")
-    moves = [("floating-system-move", "free", "the header's free part (the window system's move, startSystemMove)")]
-    if not WAYLAND:
-        moves.append(("floating-move", "title", "the header's title (the engine's drag)"))
+    moves = [("floating-move", "title", "the header's title (the engine's drag)"),
+             ("floating-move-free", "free", "the header's empty part (the engine's drag)")]
+    if WAYLAND:
+        moves = []
+        verdict("floating-move", "not-observable",
+                f"{B.name}: the header's drag is a drag-and-drop that docks (the grab step); the compositor's own binding moves the window")
     for item, part, how_move in moves:
         r = origin("Audio") or r
         px, py = header_point(r, part=part)
@@ -1073,7 +1076,6 @@ def step_floating():
         r2 = origin("Audio")
         ev1, st = B.snap(f"float-1-moved-{part}")
         still = "Audio" in frames(st)
-        # A system move starts after the drag distance (about 10 px), which the window does not follow.
         moved = r2 is not None and abs((r2[0] - r[0]) - dx) <= 16 and abs((r2[1] - r[1]) - dy) <= 16
         verdict(item, "observed" if still and moved else "failed",
                 f"dragged {how_move} from {px},{py} by {dx},{dy}: window {r[:2]} -> {r2 and r2[:2]}, still floating "
@@ -1088,7 +1090,7 @@ def step_floating():
         ev, st = B.snap("float-2-free-part-dblclick")
         docked = "Audio" not in frames(st)
         verdict("free-part-dblclick-docks", "observed" if docked else "failed",
-                f"double-click on the header's free part at {fx},{fy}: docked={docked}", ev)
+                f"double-click on the header's empty part at {fx},{fy}: docked={docked}", ev)
         if docked:
             float_panel("Audio", "floating")
             wait_for(lambda s: "Audio" in frames(s))
@@ -2924,7 +2926,7 @@ def step_edge_tiling():
     floating = "Audio" in frames(st1)
     tiled = bool(fr1) and fr1.get("h", 0) >= fr0.get("h", 0) + 150
     verdict("edge-tiling-note", "observed" if floating else "failed",
-            f"{B.name}: free part dragged from {px},{py} to the left edge (1,400): window {r[:4]} -> "
+            f"{B.name}: the header's empty part (the engine's drag) dragged from {px},{py} to the left edge (1,400): window {r[:4]} -> "
             f"{r1 and r1[:4]}, size {fr0.get('w')}x{fr0.get('h')} -> {fr1.get('w')}x{fr1.get('h')}; still a "
             f"floating panel {floating}; the window system "
             + ("TILED it (size grew to the edge tile)" if tiled else "did not tile it (no edge tiling applied)"),
