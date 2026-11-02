@@ -2,6 +2,7 @@
 
 #include "hikari/api/api.h"
 #include "hikari/api/host.h"
+#include "hikari/application/audio_display.h"
 #include "hikari/core/ass_load.h"
 
 #include <cstring>
@@ -47,6 +48,84 @@ inline constexpr std::string_view kBeta =
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
     "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,other\n";
 
+// 64x36 video at 25 fps whose frame n has every pixel's blue at x and red at n;
+// one second of mono audio at 2000 Hz rising from -1000 by one per sample.
+class FakeMedia final : public application::MacroMediaPort {
+public:
+    FakeMedia()
+    {
+        std::vector<std::int16_t> ramp(2000);
+        for (std::size_t i = 0; i < ramp.size(); ++i)
+            ramp[i] = static_cast<std::int16_t>(int(i) - 1000);
+        audio.appendFrames(ramp.data(), std::int64_t(ramp.size()), 1);
+        audio.finish();
+    }
+    std::optional<std::int64_t> frameFromMs(std::int64_t ms) const override
+    {
+        return videoOpen ? std::optional(ms / 40) : std::nullopt;
+    }
+    std::optional<std::int64_t> msFromFrame(std::int64_t frame) const override
+    {
+        return videoOpen ? std::optional(frame * 40) : std::nullopt;
+    }
+    std::optional<std::vector<std::int64_t>> frameStartsMs() const override { return std::nullopt; }
+    std::optional<VideoSize> videoSize() const override
+    {
+        return videoOpen ? std::optional(VideoSize{64, 36, 16, 9}) : std::nullopt;
+    }
+    std::optional<std::vector<std::int64_t>> keyframes() const override
+    {
+        return videoOpen ? std::optional(std::vector<std::int64_t>{0, 10}) : std::nullopt;
+    }
+    void frame(std::int64_t index, bool withSubtitles, std::function<void(std::optional<Frame>)> reply) override
+    {
+        lastWithSubtitles = withSubtitles;
+        if (!videoOpen || index > 99)
+            return reply(std::nullopt);
+        Frame out{64, 36, std::vector<std::byte>(64 * 36 * 4)};
+        for (int y = 0; y < 36; ++y)
+            for (int x = 0; x < 64; ++x) {
+                std::byte *p = out.bgra.data() + (y * 64 + x) * 4;
+                p[0] = std::byte(x);
+                p[2] = std::byte(index);
+                p[3] = std::byte(255);
+            }
+        reply(std::move(out));
+    }
+    std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override { return std::nullopt; }
+    std::optional<Project> project() const override { return Project{7, {}, {}, {}}; }
+    std::optional<std::string> fileName() const override { return std::nullopt; }
+    std::optional<const application::DisplayAudio *> peakAudio() const override
+    {
+        if (!audioOpen)
+            return std::nullopt;
+        return audioLoading ? nullptr : &audio;
+    }
+
+    bool videoOpen = true;
+    bool audioOpen = true;
+    bool audioLoading = false;
+    bool lastWithSubtitles = false;
+    application::DisplayAudio audio{2000, 2000};
+};
+
+class FakeFiles final : public FileHost {
+public:
+    std::optional<std::string> read(const std::string &path, std::size_t atMost) const override
+    {
+        const auto it = contents.find(path);
+        return it == contents.end() ? std::nullopt : std::optional(it->second.substr(0, atMost));
+    }
+    bool write(const std::string &path, std::string_view bytes) override
+    {
+        if (path.starts_with("/locked/"))
+            return false;
+        contents[path] = std::string(bytes);
+        return true;
+    }
+    std::map<std::string, std::string> contents;
+};
+
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
@@ -74,7 +153,7 @@ public:
         return id;
     }
 
-    Host host() { return Host{this, this, this, &settings}; }
+    Host host() { return Host{this, this, this, &settings, &media, &files}; }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override
@@ -169,6 +248,8 @@ public:
     std::vector<PanelState> panelStates;
     application::MemorySettingsStorage storage;
     application::Settings settings{storage};
+    FakeMedia media;
+    FakeFiles files;
 };
 
 }

@@ -6,6 +6,7 @@
 #include <optional>
 #include <climits>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -113,6 +114,8 @@ struct MacroDialogueLine {
     std::string text;        // as the script sees it (the translation in TLMode)
     std::string translation; // "text_translation": the original in TLMode, else empty
     std::string raw;         // the line as ASS text (read-only)
+    // "extra": one value per key, sorted by key, as Aegisub gives it.
+    std::vector<std::pair<std::string, std::string>> extra;
     bool operator==(const MacroDialogueLine &) const = default;
 };
 
@@ -146,7 +149,8 @@ struct MacroResult {
 //   Keyframes                 -> integers (frame numbers)
 //   Frame                     integers {frame, withSubtitles} -> integers {width, height}, pixels (BGRA rows)
 //   AudioSelection            -> integers {startMs, endMs}
-//   ProjectProperties         -> integers {video frame shown}, strings {audio, video, keyframes file}
+//   ProjectProperties         -> integers {video frame shown}, strings {audio, video, keyframes file},
+//                             numbers {video zoom}
 //   TextExtents               style, strings {text} -> numbers {width, height, descent, external leading}
 //   ClipboardGet              -> strings {text}
 //   ClipboardSet              strings {text} -> integers {succeeded}

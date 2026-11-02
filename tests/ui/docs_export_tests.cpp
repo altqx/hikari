@@ -1,3 +1,4 @@
+#include "hikari/api/reference.h"
 #include "hikari/app/application.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/application/guide_links.h"
@@ -24,7 +25,7 @@ using namespace hikari;
 namespace {
 
 const QStringList kFiles{QStringLiteral("meta.json"), QStringLiteral("commands.json"), QStringLiteral("settings.json"),
-                         QStringLiteral("guide-links.json")};
+                         QStringLiteral("guide-links.json"), QStringLiteral("api.json")};
 
 QByteArray read(const QString &path)
 {
@@ -84,11 +85,22 @@ private slots:
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), app::kDocsSchema);
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), 1);
         QCOMPARE(meta.value(QStringLiteral("version")).toString(), QStringLiteral(HIKARI_VERSION));
-        QCOMPARE(meta.value(QStringLiteral("site")).toString(), QStringLiteral("https://hikarisub.altqx.com"));
+        QCOMPARE(meta.value(QStringLiteral("site")).toString(), QStringLiteral("https://hikarisub.org"));
         QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{40}$"))
                     .match(meta.value(QStringLiteral("commit")).toString())
                     .hasMatch());
-        QCOMPARE(meta.value(QStringLiteral("files")).toArray().size(), 3);
+        QCOMPARE(meta.value(QStringLiteral("files")).toArray().size(), 4);
+        QCOMPARE(meta.value(QStringLiteral("api")).toInt(), api::kApiVersion);
+    }
+
+    void apiIsTheReference()
+    {
+        const QJsonObject reference = json(first, QStringLiteral("api.json"));
+        QCOMPARE(reference.value(QStringLiteral("version")).toInt(), api::kApiVersion);
+        QCOMPARE(qsizetype(reference.value(QStringLiteral("operations")).toArray().size()),
+                 qsizetype(api::Api::registry().operations().size()));
+        QCOMPARE(read(first.filePath(QStringLiteral("api.json"))),
+                 QByteArray::fromStdString(api::apiReference().dump(2) + "\n"));
     }
 
     void everyCommandIsThere()

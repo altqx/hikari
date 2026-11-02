@@ -526,8 +526,8 @@ private slots:
         const QString english = application->shell().selectionStatus();
         QVERIFY2(english.endsWith(QStringLiteral(" (1 hidden)")), qPrintable(english));
         application->localisation().setPseudo(app::Localisation::Pseudo::Accents);
-        const QString suffix = QCoreApplication::translate("HikariSub.StatusBar", " (%1 hidden)").arg(1);
-        QVERIFY(suffix != QStringLiteral(" (1 hidden)"));
+        const QString suffix = QCoreApplication::translate("HikariSub.StatusBar", "(%1 hidden)").arg(1);
+        QVERIFY(suffix != QStringLiteral("(1 hidden)"));
         QTRY_VERIFY2(application->shell().selectionStatus().endsWith(suffix),
                      qPrintable(application->shell().selectionStatus()));
         QCOMPARE(item("selectionStatus")->property("text").toString(), application->shell().selectionStatus());

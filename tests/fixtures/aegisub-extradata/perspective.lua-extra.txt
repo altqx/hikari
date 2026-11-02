@@ -1,0 +1,4 @@
+{\an7\pos(800,400)\frx10\fry-5\org(900,450)}Sign on a wall	_aegi_perspective_ambient_plane=700.00;300.00|1100.50;320.25|1090.00;600.00|710.75;580.00
+{\an7\pos(810,402)\frx10\fry-5\org(910,452)}Same plane, next frame	_aegi_perspective_ambient_plane=700.00;300.00|1100.50;320.25|1090.00;600.00|710.75;580.00
+{\an7\pos(100,100)}Another sign	_aegi_perspective_ambient_plane=50;50|400;50|400;300|50;300
+No plane

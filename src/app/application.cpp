@@ -44,6 +44,7 @@
 
 #include <QRegularExpression>
 #include <QClipboard>
+#include <QMimeData>
 #include <QFile>
 #include <QMetaMethod>
 #include <QSet>
@@ -801,7 +802,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                       QCoreApplication::translate("HikariSub.Options", "Hotkeys"), message);
                                                     });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
-        m_workspace, *m_files, &m_settings->settings(),
+        m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); }, [this] { refreshViews(); },
         [this](std::string_view command) {
             const QString accel = m_hotkeys->accelOf(
@@ -890,6 +891,18 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_settings, options.updateFeed,
         options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.updateEnvironment);
     m_whatsNew = std::make_unique<WhatsNew>(*m_updates, WhatsNew::cacheFileIn(options.updateEnvironment));
+    StarPrompt::Config starPrompt = options.starPrompt;
+    if (!starPrompt.editing)
+        starPrompt.editing = [this] {
+            return QGuiApplication::applicationState() == Qt::ApplicationActive && !home();
+        };
+    m_starPrompt = std::make_unique<StarPrompt>(*m_settings, *m_analytics, std::move(starPrompt));
+    if (gettingStartedDue())
+        m_starPrompt->quietRun();
+    connect(m_whatsNew.get(), &WhatsNew::changed, m_starPrompt.get(), [this] {
+        if (m_whatsNew->updated())
+            m_starPrompt->quietRun();
+    });
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
                                    : !m_settingsFile.isEmpty()   ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Catalog")
@@ -1024,7 +1037,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return out;
         };
         hooks.log = [this](const QString &text) {
-            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogs"), text);
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogues"), text);
         };
         hooks.documentFonts = [this] { return attachedFontLeases(m_workspace.editingTarget()); };
         const auto report = listFileReport(*m_log);
@@ -1180,6 +1193,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_audio = std::make_unique<ui::AudioController>(*m_audioSource);
     m_automation->setAudioBox([this]() -> const application::AudioBox * { return m_audio ? &m_audio->box() : nullptr; });
+    m_automation->setProjectSources(
+        [this] {
+            const auto target = m_workspace.editingTarget();
+            const auto media = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+            return media == m_tabMedia.end() ? std::string() : media->second.keyframes.toStdString();
+        },
+        [this] { return m_visualTools ? m_visualTools->videoView().displayScale() : 1.0; });
     {
         const QString cacheDir = !options.audioCacheDir.isEmpty() ? options.audioCacheDir
                                  : !m_settingsFile.isEmpty()
@@ -1395,7 +1415,7 @@ void Application::reportUserFolder(const UserFolder::MoveReport &moved, const Us
     if (!moved.earlierSettings.isEmpty())
         m_log->notice(ui::LogController::Info, title,
                       QCoreApplication::translate("HikariSub.MainWindow",
-                                                  "This portable copy keeps its settings in %1. An earlier version's "
+                                                  "This portable copy keeps its settings in %1. An earlier version’s "
                                                   "settings are still in %2: to use them, quit HikariSub, copy "
                                                   "hikari.ini from there and delete settings.toml here.")
                           .arg(folder, moved.earlierSettings));
@@ -1747,7 +1767,7 @@ QString Application::openProblem(const QString &path, const application::StageFa
     switch (problem.kind) {
     case Kind::NotUtf8: what = QCoreApplication::translate("HikariSub.Documents", "the text is not UTF-8"); break;
     case Kind::UnreadableTime:
-        what = QCoreApplication::translate("HikariSub.Documents", "\"%1\" is not a time").arg(excerpt);
+        what = QCoreApplication::translate("HikariSub.Documents", "“%1” is not a time").arg(excerpt);
         break;
     case Kind::TimeGoesBack:
         what = QCoreApplication::translate("HikariSub.Documents", "the word at %1 starts before the word before it").arg(excerpt);
@@ -1760,19 +1780,19 @@ QString Application::openProblem(const QString &path, const application::StageFa
                    .arg(excerpt);
         break;
     case Kind::MissingTime:
-        what = QCoreApplication::translate("HikariSub.Documents", "\"%1\" has no time").arg(excerpt);
+        what = QCoreApplication::translate("HikariSub.Documents", "“%1” has no time").arg(excerpt);
         break;
     case Kind::RepeatedWordLine:
         what = QCoreApplication::translate("HikariSub.Documents", "a line with word times can have only one line time");
         break;
     case Kind::NotWellFormed:
-        what = QCoreApplication::translate("HikariSub.Documents", "the XML is broken at \"%1\"").arg(excerpt);
+        what = QCoreApplication::translate("HikariSub.Documents", "the XML is broken at “%1”").arg(excerpt);
         break;
     case Kind::NotTtml:
         what = QCoreApplication::translate("HikariSub.Documents", "%1 is not a TTML document").arg(excerpt);
         break;
     case Kind::TooDeep:
-        what = QCoreApplication::translate("HikariSub.Documents", "the elements are nested more than %1 deep at \"%2\"")
+        what = QCoreApplication::translate("HikariSub.Documents", "the elements are nested more than %1 deep at “%2”")
                    .arg(QString::number(core::kMaxTtmlDepth), excerpt);
         break;
     case Kind::TooLarge:
@@ -2984,6 +3004,29 @@ void setClipboardText(const std::u8string &text)
         QString::fromUtf8(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size())));
 }
 
+const QString kExtradataMime = QStringLiteral("application/x-hikarisub-extradata");
+
+QByteArray clipboardBytes(const std::u8string &text)
+{
+    return QByteArray(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size()));
+}
+
+void setClipboardRows(const std::u8string &text, const std::u8string &extradata)
+{
+    auto *data = new QMimeData;
+    data->setText(QString::fromUtf8(clipboardBytes(text)));
+    if (!extradata.empty())
+        data->setData(kExtradataMime, clipboardBytes(extradata));
+    QGuiApplication::clipboard()->setMimeData(data);
+}
+
+std::u8string clipboardExtradata()
+{
+    const QMimeData *data = QGuiApplication::clipboard()->mimeData();
+    const QByteArray bytes = data ? data->data(kExtradataMime) : QByteArray();
+    return std::u8string(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
+}
+
 }
 
 bool Application::copyLines()
@@ -2991,7 +3034,7 @@ bool Application::copyLines()
     auto *session = targetSession();
     if (!session || session->selection().selected.empty())
         return false;
-    setClipboardText(application::copyRows(*session));
+    setClipboardRows(application::copyRows(*session), application::copyRowsExtradata(*session));
     return true;
 }
 
@@ -3005,7 +3048,8 @@ bool Application::pasteLines()
     auto *session = targetSession();
     if (!session)
         return false;
-    const bool done = application::pasteRows(*session, toU8(clipboardText()), shownLines()).has_value();
+    const bool done =
+        application::pasteRows(*session, toU8(clipboardText()), shownLines(), {}, clipboardExtradata()).has_value();
     m_editor->reloadFromSession();
     refreshViews();
     return done;
@@ -3879,7 +3923,7 @@ application::ReplacerRule replacerRule(const QVariantMap &m)
 
 QString unscaledValue(int row, const std::u16string &value, const std::u16string &tag)
 {
-    return QCoreApplication::translate("HikariSub.Conversion", "In line %1, value '%2' cannot be scaled\nin tag '%3'")
+    return QCoreApplication::translate("HikariSub.Conversion", "In line %1, value “%2” cannot be scaled in tag “%3”.")
         .arg(row)
         .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag))
         .replace(QLatin1Char('\n'), QLatin1Char(' '));
@@ -4289,10 +4333,9 @@ application::SpellChecker *Application::spellChecker()
                 const QString message =
                     status == application::SpellChecker::Status::NoDictionary
                         ? QCoreApplication::translate("HikariSub.Spelling",
-                                                      "No dictionary files were found in the \"%1\" folder.\n"
-                                                      "Spell checking will be disabled")
+                                                      "No dictionary files were found in the “%1” folder. Spell checking will be disabled.")
                               .arg(QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absoluteFilePath()))
-                        : QCoreApplication::translate("HikariSub.Spelling", "Failed to initialize spell checker.");
+                        : QCoreApplication::translate("HikariSub.Spelling", "Failed to initialise the spellchecker.");
                 QMetaObject::invokeMethod(this, [this, message, noDictionary] {
                     m_log->notice(noDictionary ? ui::LogController::Warning : ui::LogController::Error,
                                   QCoreApplication::translate("HikariSub.Spelling", "Spellchecker"),
@@ -5078,7 +5121,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
     if (!session || !target || !conversionTargets().contains(targetName))
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This document can't be converted to that format.")}};
+                 QCoreApplication::translate("HikariSub.Conversion", "This document can’t be converted to that format.")}};
     const QVariantMap o = conversionOptions();
     core::ConversionOptions options;
     const auto &video = m_video->session();
@@ -5111,7 +5154,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
     if (!result)
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This document can't be converted to that format.")}};
+                 QCoreApplication::translate("HikariSub.Conversion", "This document can’t be converted to that format.")}};
     const auto &r = result->report;
     QStringList losses;
     QStringList kinds;
@@ -5137,7 +5180,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
             *target != core::SubtitleFormat::Ass);
     if (r.fieldsDropped)
         add(*target == core::SubtitleFormat::Ass
-                ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style \"%1\".", nullptr,
+                ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style “%1”.", nullptr,
                                               r.fieldsDropped)
                       .arg(o.value(QStringLiteral("style")).toString())
                 : QCoreApplication::translate("HikariSub.Conversion",
@@ -5348,7 +5391,9 @@ bool Application::sortLines(const QString &key, bool selectedOnly)
     using application::SortKey;
     static const std::pair<const char *, SortKey> keys[] = {{"start", SortKey::Start}, {"end", SortKey::End},
                                                             {"style", SortKey::Style}, {"actor", SortKey::Actor},
-                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer}};
+                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer},
+                                                            {"text", SortKey::Text},
+                                                            {"textWithoutTags", SortKey::TextWithoutTags}};
     auto *session = targetSession();
     const auto *found = std::find_if(std::begin(keys), std::end(keys),
                                      [&](const auto &k) { return key == QLatin1String(k.first); });
@@ -5481,6 +5526,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
+            {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
@@ -5725,7 +5771,7 @@ QVariantMap Application::openSettingsDialog()
             .arg(QCoreApplication::translate("HikariSub.Options", what));
     };
     if (open.catalogMissing)
-        warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "catalog for style"));
+        warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "catalogue for style"));
     if (open.styleMissing)
         warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "style"));
     auto values = toVariant(open.state);

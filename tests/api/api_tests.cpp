@@ -45,7 +45,9 @@ TEST(ApiRegistry, ReadsAreMarkedRead)
 {
     for (const char *name : {"documents.list", "documents.get", "lines.list", "lines.get", "lines.find", "styles.list",
                              "info.list", "selection.get", "commands.list", "panels.list", "settings.list",
-                             "settings.get", "api.version"}) {
+                             "settings.get", "api.version", "video.info", "video.frame_at_time",
+                             "video.time_of_frame", "video.frame", "audio.info", "audio.peaks", "files.list",
+                             "files.read", "nodes.catalogue"}) {
         const Operation *op = Api::registry().find(name);
         ASSERT_TRUE(op) << name;
         EXPECT_EQ(op->access, Access::Read) << name;
@@ -55,7 +57,7 @@ TEST(ApiRegistry, ReadsAreMarkedRead)
 TEST(ApiRegistry, WritesAreMarkedWrite)
 {
     for (const char *name : {"document.apply", "selection.set", "commands.run", "panels.open", "panels.close",
-                             "panels.focus", "settings.set"}) {
+                             "panels.focus", "settings.set", "files.write"}) {
         const Operation *op = Api::registry().find(name);
         ASSERT_TRUE(op) << name;
         EXPECT_EQ(op->access, Access::Write) << name;

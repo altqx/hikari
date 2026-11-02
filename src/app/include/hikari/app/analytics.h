@@ -38,7 +38,7 @@ public:
     static QUrl defaultEndpoint() { return QUrl(QStringLiteral("https://eu.i.posthog.com/batch/")); }
     static QUrl whatIsSentUrl()
     {
-        return QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/help/what-is-sent"));
+        return QUrl(QStringLiteral("https://hikarisub.org/en/docs/help/what-is-sent"));
     }
     // Empty when built without HIKARI_POSTHOG_KEY.
     static QString compiledKey();

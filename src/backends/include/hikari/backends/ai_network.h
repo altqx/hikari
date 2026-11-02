@@ -12,6 +12,7 @@
 #include <chrono>
 #include <map>
 #include <memory>
+#include <optional>
 #include <variant>
 
 namespace hikari::backends::ai {
@@ -20,14 +21,12 @@ namespace app = hikari::application::ai;
 
 struct HttpCall;
 
-/// A MagicDNS name: `<machine>.<tailnet>.ts.net`.
-bool tailscaleName(const QString &host);
-/// Loopback, Tailscale's IPv6 range, or its IPv4 range when this machine has an address in it too (the same
-/// range is ISPs' shared CGNAT space).
+/// Loopback, or Tailscale's 100.64.0.0/10 or fd7a:115c:a1e0::/48 when this machine has an address in the same
+/// range too (the IPv4 range is also ISPs' shared CGNAT space).
 bool keySafeOverPlainHttp(const QHostAddress &address, const QList<QHostAddress> &localAddresses);
 
 /// Streams requests over Qt Network. A key travels only over HTTPS, or plain HTTP to this machine or a Tailscale
-/// peer. A host name is resolved once and the request goes to the address that was checked.
+/// peer. A host name, MagicDNS ones included, is resolved once and the request goes to the address that was checked.
 class NetworkProviderPort final : public QObject, public app::ProviderPort {
 public:
     struct Route {
@@ -35,6 +34,10 @@ public:
         QByteArray hostHeader;
     };
     using Resolver = std::function<void(const QString &host, std::function<void(QList<QHostAddress>)> done)>;
+
+    /// The first resolved address a key may reach over plain HTTP, with the original authority kept for `Host`.
+    static std::optional<Route> pinnedRoute(const QUrl &url, const QList<QHostAddress> &resolved,
+                                            const QList<QHostAddress> &localAddresses);
 
     explicit NetworkProviderPort(QObject *parent = nullptr);
     ~NetworkProviderPort() override;
@@ -56,7 +59,7 @@ private:
     using RouteResult = std::variant<Route, app::Error>;
     void route(const QUrl &url, bool hasKey, std::function<void(RouteResult)> done);
     void send(app::StreamId id, const Route &route, const HttpCall &call);
-    void fetchModels(const Route &route, const HttpCall &call, std::function<void(ModelsResult)> done);
+    void fetchModels(const Route &route, const HttpCall &call, app::Wire wire, std::function<void(ModelsResult)> done);
     void end(app::StreamId id, const std::vector<app::Event> &events);
 
     QNetworkAccessManager m_network;

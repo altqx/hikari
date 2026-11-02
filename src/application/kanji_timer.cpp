@@ -62,16 +62,26 @@ u16 folded(u16v text, const KaraokeCharClass &classes)
     return out;
 }
 
+bool whitespace(char16_t c)
+{
+    return c == u' ' || c == u'\t' || c == u'\u3000' || c == u'\u00A0';
+}
+
+bool whitespaceUnit(u16v unit)
+{
+    return unit == u"\\N" || unit == u"\\n" || unit == u"\\h" ||
+           (!unit.empty() && std::ranges::all_of(unit, whitespace));
+}
+
 bool spaceUnit(u16v unit, const KaraokeCharClass &classes)
 {
-    if (unit == u"\\N" || unit == u"\\n" || unit == u"\\h")
-        return true;
-    return !unit.empty() && std::ranges::all_of(unit, [&](char16_t c) { return classes.space(c); });
+    return whitespaceUnit(unit) ||
+           (!unit.empty() && std::ranges::all_of(unit, [&](char16_t c) { return whitespace(c) || classes.space(c); }));
 }
 
 std::size_t spaceAt(u16v text, std::size_t at, const KaraokeCharClass &classes)
 {
-    if (at < text.size() && classes.space(text[at]))
+    if (at < text.size() && (whitespace(text[at]) || classes.space(text[at])))
         return 1;
     if (at + 1 < text.size() && text[at] == u'\\' && (text[at + 1] == u'N' || text[at + 1] == u'n' || text[at + 1] == u'h'))
         return 2;
@@ -173,7 +183,8 @@ std::vector<KanjiText::Unit> unitsOf(u16v t)
             }
             unit.text += t[j++];
         }
-        units.push_back(std::move(unit));
+        if (!whitespaceUnit(unit.text))
+            units.push_back(std::move(unit));
         i = end;
     }
     return units;
@@ -303,7 +314,7 @@ KanjiText kanjiText(u16v text)
             if (!reading.empty() && u16v(u"!<！＜").find(reading.front()) != u16v::npos)
                 reading.erase(0, 1);
             // trailing spaces are the syllable's (karaskel's postspace)
-            const std::size_t spaces = reading.size() - std::min(reading.size(), reading.find_last_not_of(u" \t") + 1);
+            const std::size_t spaces = reading.size() - std::min(reading.size(), reading.find_last_not_of(u" \t\u3000\u00A0") + 1);
             const u16 post = reading.substr(reading.size() - spaces);
             reading.resize(reading.size() - spaces);
             if (kept.empty())
@@ -432,11 +443,16 @@ KanjiText kanjiText(u16v text)
     return out;
 }
 
-KanjiGroup suggestGroup(const std::vector<KanjiSyllable> &syllables, std::size_t from, const KanjiText &kanji,
-                        std::size_t at, const KaraokeCharClass &classes, bool *ranOut)
+namespace {
+
+bool spaceSyllable(const KanjiSyllable &syllable, const KaraokeCharClass &classes)
 {
-    if (ranOut)
-        *ranOut = false;
+    return !syllable.text.empty() && allSpace(syllable.text, classes);
+}
+
+KanjiGroup suggestSungGroup(const std::vector<KanjiSyllable> &syllables, std::size_t from, const KanjiText &kanji,
+                            std::size_t at, const KaraokeCharClass &classes, bool *ranOut)
+{
     if (from >= syllables.size())
         return {0, 0};
     KanjiGroup g{1, 0};
@@ -530,6 +546,25 @@ KanjiGroup suggestGroup(const std::vector<KanjiSyllable> &syllables, std::size_t
     return g;
 }
 
+}
+
+KanjiGroup suggestGroup(const std::vector<KanjiSyllable> &syllables, std::size_t from, const KanjiText &kanji,
+                        std::size_t at, const KaraokeCharClass &classes, bool *ranOut)
+{
+    if (ranOut)
+        *ranOut = false;
+    std::size_t lead = 0;
+    while (from + lead < syllables.size() && spaceSyllable(syllables[from + lead], classes))
+        ++lead;
+    if (from + lead >= syllables.size())
+        return {lead, 0};
+    KanjiGroup g = suggestSungGroup(syllables, from + lead, kanji, at, classes, ranOut);
+    g.syllables += lead;
+    while (from + g.syllables < syllables.size() && spaceSyllable(syllables[from + g.syllables], classes))
+        ++g.syllables;
+    return g;
+}
+
 KanjiSuggestion suggestGroups(const std::vector<KanjiSyllable> &syllables, std::size_t from, const KanjiText &kanji,
                               std::size_t at, const KaraokeCharClass &classes)
 {
@@ -560,7 +595,9 @@ std::optional<u16> sungKana(const std::vector<KanjiSyllable> &syllables, std::si
     u16 romaji;
     for (std::size_t k = from; k < from + count && k < syllables.size(); ++k)
         for (const char16_t c : syllables[k].text)
-            if (c >= 128 || (c >= u'a' && c <= u'z') || (c >= u'A' && c <= u'Z') || c == u'\'' || c == u' ')
+            if (whitespace(c))
+                romaji += u' ';
+            else if (c >= 128 || (c >= u'a' && c <= u'z') || (c >= u'A' && c <= u'Z') || c == u'\'')
                 romaji += c;
     if (romaji.empty())
         return std::nullopt;
@@ -1524,7 +1561,7 @@ bool KanjiTimer::setReading(std::u16string_view reading)
             return false;
         std::vector<u16> pieces;
         for (std::size_t i = 0; i <= reading.size();) {
-            std::size_t end = reading.find_first_of(u" \u3000", i);
+            std::size_t end = reading.find_first_of(u" \t\u3000\u00A0", i);
             if (end == u16v::npos)
                 end = reading.size();
             if (end > i)

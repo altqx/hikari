@@ -196,7 +196,7 @@ Styles row > Duplicate
 Styles row > Delete
 Styles row > -
 Styles row > Select lines with this style
-Styles row > Copy to the catalog…
+Styles row > Copy to the catalogue…
 Styles row > -
 Styles row > Open in Style manager
 Automation macro

@@ -1131,11 +1131,11 @@ Output device: %2</source>
         <translation>สคริปต์อัตโนมัติ</translation>
     </message>
     <message>
-        <source>The protected reference can&apos;t be changed.</source>
+        <source>The protected reference can’t be changed.</source>
         <translation>เอกสารอ้างอิงที่ป้องกันไว้เปลี่ยนแปลงไม่ได้</translation>
     </message>
     <message>
-        <source>The macro&apos;s changes could not be applied; nothing was changed.</source>
+        <source>The macro’s changes could not be applied; nothing was changed.</source>
         <translation>นำการเปลี่ยนแปลงของแมโครไปใช้ไม่ได้ จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
     </message>
     <message>
@@ -1165,11 +1165,11 @@ Output device: %2</source>
         <translation>แมโครถูกยกเลิก มีเพียงความละเอียดสคริปต์ที่ถูกกำหนดค่า</translation>
     </message>
     <message>
-        <source>Validation Lua script &apos;%1&apos; failed</source>
-        <translation>การตรวจสอบสคริปต์ Lua &apos;%1&apos; ไม่ผ่าน</translation>
+        <source>Validation Lua script “%1” failed</source>
+        <translation>การตรวจสอบสคริปต์ Lua “%1” ไม่ผ่าน</translation>
     </message>
     <message>
-        <source>The script&apos;s helper ended; reload the script to use it again.</source>
+        <source>The script’s helper ended; reload the script to use it again.</source>
         <translation>ตัวช่วยของสคริปต์สิ้นสุดการทำงานแล้ว โหลดสคริปต์ใหม่เพื่อใช้อีกครั้ง</translation>
     </message>
     <message>
@@ -1177,7 +1177,7 @@ Output device: %2</source>
         <translation>เอกสารเปลี่ยนแปลงระหว่างที่แมโครทำงาน จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
     </message>
     <message>
-        <source>The last run&apos;s macro is no longer loaded, so it can&apos;t be repeated.</source>
+        <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>แมโครของการเรียกใช้ครั้งล่าสุดไม่ได้โหลดอยู่แล้ว จึงเรียกใช้ซ้ำไม่ได้</translation>
     </message>
     <message>
@@ -1217,7 +1217,7 @@ Output device: %2</source>
         <translation>เปิดเอกสารเพื่อเรียกใช้แมโคร</translation>
     </message>
     <message>
-        <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
+        <source>The line being edited can’t be committed, so the macro can’t start.</source>
         <translation>ยืนยันการแก้ไขบรรทัดที่กำลังแก้ไขไม่ได้ จึงเริ่มแมโครไม่ได้</translation>
     </message>
     <message>
@@ -1573,7 +1573,7 @@ Output device: %2</source>
         <translation>ไม่สามารถเลือกสีจากหน้าจอได้: เซสชัน Wayland นี้ไม่มีพอร์ทัลจับภาพหน้าจอ (xdg-desktop-portal ที่มี PickColor)</translation>
     </message>
     <message>
-        <source>The desktop&apos;s screenshot portal is not in use here.</source>
+        <source>The desktop’s screenshot portal is not in use here.</source>
         <translation>ไม่ได้ใช้พอร์ทัลจับภาพหน้าจอของเดสก์ท็อปที่นี่</translation>
     </message>
     <message>
@@ -1648,7 +1648,7 @@ Output device: %2</source>
         <translation>เปลี่ยนความละเอียดของคำบรรยายให้ตรงกับวิดีโอหรือไม่? ทำภายหลังได้ด้วยคำบรรยาย › เปลี่ยนความละเอียดของคำบรรยาย</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
@@ -1800,10 +1800,8 @@ Output device: %2</source>
         <translation>ยืด</translation>
     </message>
     <message>
-        <source>In line %1, value &apos;%2&apos; cannot be scaled
-in tag &apos;%3&apos;</source>
-        <translation>ในบรรทัด %1 ไม่สามารถปรับขนาดค่า &apos;%2&apos;
-ในแท็ก &apos;%3&apos;</translation>
+        <source>In line %1, value “%2” cannot be scaled in tag “%3”.</source>
+        <translation>ในบรรทัด %1 ไม่สามารถปรับขนาดค่า “%2” ในแท็ก “%3”</translation>
     </message>
     <message numerus="yes">
         <source>%n value(s) could not be scaled.</source>
@@ -1812,7 +1810,7 @@ in tag &apos;%3&apos;</source>
         </translation>
     </message>
     <message>
-        <source>This document can&apos;t be converted to that format.</source>
+        <source>This document can’t be converted to that format.</source>
         <translation>ไม่สามารถแปลงเอกสารนี้เป็นรูปแบบนั้น</translation>
     </message>
     <message>
@@ -1858,9 +1856,9 @@ in tag &apos;%3&apos;</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) get the conversion style &quot;%1&quot;.</source>
+        <source>%n line(s) get the conversion style “%1”.</source>
         <translation>
-            <numerusform>%n บรรทัดได้รับสไตล์การแปลง &quot;%1&quot;</numerusform>
+            <numerusform>%n บรรทัดได้รับสไตล์การแปลง “%1”</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -2012,8 +2010,8 @@ in tag &apos;%3&apos;</source>
         <translation>ข้อความไม่ใช่ UTF-8</translation>
     </message>
     <message>
-        <source>&quot;%1&quot; is not a time</source>
-        <translation>&quot;%1&quot; ไม่ใช่เวลา</translation>
+        <source>“%1” is not a time</source>
+        <translation>“%1” ไม่ใช่เวลา</translation>
     </message>
     <message>
         <source>the word at %1 starts before the word before it</source>
@@ -2028,24 +2026,24 @@ in tag &apos;%3&apos;</source>
         <translation>เวลา %1 อยู่นอกช่วงเวลาขององค์ประกอบที่ครอบอยู่</translation>
     </message>
     <message>
-        <source>&quot;%1&quot; has no time</source>
-        <translation>&quot;%1&quot; ไม่มีเวลา</translation>
+        <source>“%1” has no time</source>
+        <translation>“%1” ไม่มีเวลา</translation>
     </message>
     <message>
         <source>a line with word times can have only one line time</source>
         <translation>บรรทัดที่มีเวลารายคำมีเวลาบรรทัดได้เพียงค่าเดียว</translation>
     </message>
     <message>
-        <source>the XML is broken at &quot;%1&quot;</source>
-        <translation>XML เสียหายที่ &quot;%1&quot;</translation>
+        <source>the XML is broken at “%1”</source>
+        <translation>XML เสียหายที่ “%1”</translation>
     </message>
     <message>
         <source>%1 is not a TTML document</source>
         <translation>%1 ไม่ใช่เอกสาร TTML</translation>
     </message>
     <message>
-        <source>the elements are nested more than %1 deep at &quot;%2&quot;</source>
-        <translation>องค์ประกอบซ้อนกันลึกเกิน %1 ชั้นที่ &quot;%2&quot;</translation>
+        <source>the elements are nested more than %1 deep at “%2”</source>
+        <translation>องค์ประกอบซ้อนกันลึกเกิน %1 ชั้นที่ “%2”</translation>
     </message>
     <message>
         <source>it is too large for a lyrics file</source>
@@ -2096,28 +2094,24 @@ in tag &apos;%3&apos;</source>
         <translation>คำบรรยายเปลี่ยนแปลงระหว่างโหลดใหม่ จึงไม่มีการแทนที่ใด ๆ</translation>
     </message>
     <message>
-        <source>Video: </source>
-        <translation>วิดีโอ: </translation>
+        <source>Video: %1</source>
+        <translation>วิดีโอ: %1</translation>
     </message>
     <message>
-        <source>Audio: </source>
-        <translation>เสียง: </translation>
+        <source>Audio: %1</source>
+        <translation>เสียง: %1</translation>
     </message>
     <message>
-        <source>Keyframes: </source>
-        <translation>คีย์เฟรม: </translation>
+        <source>Keyframes: %1</source>
+        <translation>คีย์เฟรม: %1</translation>
     </message>
     <message>
-        <source>Associated files:
-</source>
-        <translation>ไฟล์ที่เกี่ยวข้อง:
-</translation>
+        <source>Associated files:</source>
+        <translation>ไฟล์ที่เกี่ยวข้อง:</translation>
     </message>
     <message>
-        <source>Video from directory:
-</source>
-        <translation>วิดีโอจากไดเรกทอรี:
-</translation>
+        <source>Video from directory: %1</source>
+        <translation>วิดีโอจากไดเรกทอรี: %1</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -2736,7 +2730,7 @@ Should not exceed 15 characters per second</source>
 <context>
     <name>HikariSub.Fonts</name>
     <message>
-        <source>Font catalogs</source>
+        <source>Font catalogues</source>
         <translation>แคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
@@ -2848,7 +2842,7 @@ Should not exceed 15 characters per second</source>
         <translation>แคตตาล็อกที่มีแบบอักษรเหมือนของคุณจะคงไว้ตามเดิม</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
@@ -3308,7 +3302,7 @@ Should not exceed 15 characters per second</source>
         <translation>แบบอักษรทั้งหมด</translation>
     </message>
     <message>
-        <source>Without catalog</source>
+        <source>Without catalogue</source>
         <translation>ไม่มีแคตตาล็อก</translation>
     </message>
     <message>
@@ -3332,80 +3326,76 @@ Should not exceed 15 characters per second</source>
         <translation>%1 แบบอักษร</translation>
     </message>
     <message>
-        <source>Found &quot;%1&quot; font file.</source>
-        <translation>พบไฟล์แบบอักษร &quot;%1&quot;</translation>
+        <source>Found “%1” font file.</source>
+        <translation>พบไฟล์แบบอักษร “%1”</translation>
     </message>
     <message>
-        <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
-        <translation>ตัวแสดงผลยังใช้ &quot;%1&quot; (%2) ด้วย แต่ไม่ได้รวบรวมไว้</translation>
+        <source>The renderer also used “%1” (%2); it is not collected.</source>
+        <translation>ตัวแสดงผลยังใช้ “%1” (%2) ด้วย แต่ไม่ได้รวบรวมไว้</translation>
     </message>
     <message>
-        <source>Copied font &quot;%1&quot;.</source>
-        <translation>คัดลอกแบบอักษร &quot;%1&quot; แล้ว</translation>
+        <source>Copied font “%1”.</source>
+        <translation>คัดลอกแบบอักษร “%1” แล้ว</translation>
     </message>
     <message>
-        <source>Added font &quot;%1&quot; to the archive.</source>
-        <translation>เพิ่มแบบอักษร &quot;%1&quot; ลงในไฟล์บีบอัดแล้ว</translation>
+        <source>Added font “%1” to the archive.</source>
+        <translation>เพิ่มแบบอักษร “%1” ลงในไฟล์บีบอัดแล้ว</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; belongs to a style
-that is not used.</source>
-        <translation>แบบอักษร &quot;%1&quot; เป็นของสไตล์
-ที่ไม่ได้ใช้</translation>
+        <source>Font “%1” belongs to a style that is not used.</source>
+        <translation>แบบอักษร “%1” เป็นของสไตล์ที่ไม่ได้ใช้</translation>
     </message>
     <message>
-        <source>
-Will not be copied.</source>
-        <translation>
-จะไม่ถูกคัดลอก</translation>
+        <source>Will not be copied.</source>
+        <translation>จะไม่ถูกคัดลอก</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing normal style.</source>
-        <translation>แบบอักษร &quot;%1&quot; ขาดรูปแบบปกติ</translation>
+        <source>Font “%1” is missing normal style.</source>
+        <translation>แบบอักษร “%1” ขาดรูปแบบปกติ</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing bold italics.</source>
-        <translation>แบบอักษร &quot;%1&quot; ขาดรูปแบบตัวหนาเอียง</translation>
+        <source>Font “%1” is missing bold italics.</source>
+        <translation>แบบอักษร “%1” ขาดรูปแบบตัวหนาเอียง</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing bold.</source>
-        <translation>แบบอักษร &quot;%1&quot; ขาดรูปแบบตัวหนา</translation>
+        <source>Font “%1” is missing bold.</source>
+        <translation>แบบอักษร “%1” ขาดรูปแบบตัวหนา</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; is missing italics.</source>
-        <translation>แบบอักษร &quot;%1&quot; ขาดรูปแบบตัวเอียง</translation>
+        <source>Font “%1” is missing italics.</source>
+        <translation>แบบอักษร “%1” ขาดรูปแบบตัวเอียง</translation>
     </message>
     <message>
-        <source>Cannot check the characters in font &quot;%1&quot;.</source>
-        <translation>ไม่สามารถตรวจสอบอักขระในแบบอักษร &quot;%1&quot; ได้</translation>
+        <source>Cannot check the characters in font “%1”.</source>
+        <translation>ไม่สามารถตรวจสอบอักขระในแบบอักษร “%1” ได้</translation>
     </message>
     <message>
-        <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
-        <translation>แบบอักษร &quot;%1&quot; ไม่มีอักขระ: &quot;%2&quot;</translation>
+        <source>Font “%1” does not contain characters: “%2”.</source>
+        <translation>แบบอักษร “%1” ไม่มีอักขระ: “%2”</translation>
     </message>
     <message>
-        <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
-        <translation>อักขระ &quot;%1&quot; ถูกวาดด้วยแบบอักษรสำรอง &quot;%2&quot;</translation>
+        <source>Characters “%1” were drawn by the fallback font “%2”.</source>
+        <translation>อักขระ “%1” ถูกวาดด้วยแบบอักษรสำรอง “%2”</translation>
     </message>
     <message>
-        <source>Cannot get the contents of font &quot;%1&quot;.</source>
-        <translation>ไม่สามารถอ่านข้อมูลแบบอักษร &quot;%1&quot; ได้</translation>
+        <source>Cannot get the contents of font “%1”.</source>
+        <translation>ไม่สามารถอ่านข้อมูลแบบอักษร “%1” ได้</translation>
     </message>
     <message>
-        <source>Cannot open file &quot;%1&quot;.</source>
-        <translation>ไม่สามารถเปิดไฟล์ &quot;%1&quot; ได้</translation>
+        <source>Cannot open file “%1”.</source>
+        <translation>ไม่สามารถเปิดไฟล์ “%1” ได้</translation>
     </message>
     <message>
-        <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
-        <translation>ไม่พบแบบอักษร &quot;%1&quot; ในโฟลเดอร์ Fonts</translation>
+        <source>Cannot find “%1” font in Fonts folder.</source>
+        <translation>ไม่พบแบบอักษร “%1” ในโฟลเดอร์ Fonts</translation>
     </message>
     <message>
-        <source>Cannot copy font &quot;%1&quot;.</source>
-        <translation>ไม่สามารถคัดลอกแบบอักษร &quot;%1&quot; ได้</translation>
+        <source>Cannot copy font “%1”.</source>
+        <translation>ไม่สามารถคัดลอกแบบอักษร “%1” ได้</translation>
     </message>
     <message>
-        <source>Cannot zip font &quot;%1&quot;.</source>
-        <translation>ไม่สามารถบีบอัดแบบอักษร &quot;%1&quot; ได้</translation>
+        <source>Cannot zip font “%1”.</source>
+        <translation>ไม่สามารถบีบอัดแบบอักษร “%1” ได้</translation>
     </message>
     <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
@@ -3429,18 +3419,16 @@ Will not be copied.</source>
         <translation>การยืนยัน</translation>
     </message>
     <message>
-        <source>Found font &quot;%1&quot;
-</source>
-        <translation>พบแบบอักษร &quot;%1&quot;
-</translation>
+        <source>Found font “%1”</source>
+        <translation>พบแบบอักษร “%1”</translation>
     </message>
     <message>
-        <source>Found font &quot;%1&quot;.</source>
-        <translation>พบแบบอักษร &quot;%1&quot;</translation>
+        <source>Found font “%1”.</source>
+        <translation>พบแบบอักษร “%1”</translation>
     </message>
     <message>
-        <source>Font not found &quot;</source>
-        <translation>ไม่พบแบบอักษร &quot;</translation>
+        <source>Font not found “%1”.</source>
+        <translation>ไม่พบแบบอักษร “%1”</translation>
     </message>
     <message>
         <source>In styles:
@@ -3457,64 +3445,44 @@ Will not be copied.</source>
         <translation>ในบรรทัด: </translation>
     </message>
     <message>
-        <source>Checked by the subtitle renderer (%1).
-</source>
-        <translation>ตรวจสอบโดยตัวแสดงผลคำบรรยาย (%1)
-</translation>
+        <source>Checked by the subtitle renderer (%1).</source>
+        <translation>ตรวจสอบโดยตัวแสดงผลคำบรรยาย (%1)</translation>
     </message>
     <message>
-        <source>Tab %1: the renderer could not read this document; it was not checked.
-</source>
-        <translation>แท็บ %1: ตัวแสดงผลอ่านเอกสารนี้ไม่ได้ จึงไม่ได้ตรวจสอบ
-</translation>
+        <source>Tab %1: the renderer could not read this document; it was not checked.</source>
+        <translation>แท็บ %1: ตัวแสดงผลอ่านเอกสารนี้ไม่ได้ จึงไม่ได้ตรวจสอบ</translation>
     </message>
     <message>
-        <source>Families the renderer did not find: %1.
-</source>
-        <translation>ตระกูลแบบอักษรที่ตัวแสดงผลไม่พบ: %1
-</translation>
+        <source>Families the renderer did not find: %1.</source>
+        <translation>ตระกูลแบบอักษรที่ตัวแสดงผลไม่พบ: %1</translation>
     </message>
     <message>
-        <source>Families answered by a font of another name: %1.
-</source>
-        <translation>ตระกูลแบบอักษรที่ใช้แบบอักษรชื่ออื่นแทน: %1
-</translation>
+        <source>Families answered by a font of another name: %1.</source>
+        <translation>ตระกูลแบบอักษรที่ใช้แบบอักษรชื่ออื่นแทน: %1</translation>
     </message>
     <message>
-        <source>Characters no font has: %1.
-</source>
-        <translation>อักขระที่ไม่มีแบบอักษรใดมี: %1
-</translation>
+        <source>Characters no font has: %1.</source>
+        <translation>อักขระที่ไม่มีแบบอักษรใดมี: %1</translation>
     </message>
     <message>
-        <source>Characters drawn by a fallback font of this computer: %1.
-</source>
-        <translation>อักขระที่วาดด้วยแบบอักษรสำรองของคอมพิวเตอร์นี้: %1
-</translation>
+        <source>Characters drawn by a fallback font of this computer: %1.</source>
+        <translation>อักขระที่วาดด้วยแบบอักษรสำรองของคอมพิวเตอร์นี้: %1</translation>
     </message>
     <message>
-        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.
-</source>
-        <translation>แท็บ %1: เมื่อใช้เฉพาะแบบอักษรที่รวบรวมไว้ มี %2 จาก %3 เฟรมที่แตกต่างกัน
-</translation>
+        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.</source>
+        <translation>แท็บ %1: เมื่อใช้เฉพาะแบบอักษรที่รวบรวมไว้ มี %2 จาก %3 เฟรมที่แตกต่างกัน</translation>
     </message>
     <message>
-        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
-</source>
-        <translation>แบบอักษรต่างกันที่มีชื่อไฟล์เดียวกัน: %1 ในโฟลเดอร์จะเก็บไว้ได้เพียงไฟล์เดียว
-</translation>
+        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.</source>
+        <translation>แบบอักษรต่างกันที่มีชื่อไฟล์เดียวกัน: %1 ในโฟลเดอร์จะเก็บไว้ได้เพียงไฟล์เดียว</translation>
     </message>
     <message>
-        <source>The video shows the subtitles through %1, whose output this check does not verify.
-</source>
-        <translation>วิดีโอแสดงคำบรรยายผ่าน %1 ซึ่งการตรวจนี้ไม่ได้ยืนยันผลลัพธ์ของตัวนั้น
-</translation>
+        <source>The video shows the subtitles through %1, whose output this check does not verify.</source>
+        <translation>วิดีโอแสดงคำบรรยายผ่าน %1 ซึ่งการตรวจนี้ไม่ได้ยืนยันผลลัพธ์ของตัวนั้น</translation>
     </message>
     <message>
-        <source>The collected fonts alone reproduce every frame.
-</source>
-        <translation>แบบอักษรที่รวบรวมไว้เพียงอย่างเดียวแสดงผลได้ตรงทุกเฟรม
-</translation>
+        <source>The collected fonts alone reproduce every frame.</source>
+        <translation>แบบอักษรที่รวบรวมไว้เพียงอย่างเดียวแสดงผลได้ตรงทุกเฟรม</translation>
     </message>
     <message>
         <source>found</source>
@@ -3525,108 +3493,72 @@ Will not be copied.</source>
         <translation>คัดลอกแล้ว</translation>
     </message>
     <message>
-        <source>Finished, %1 %2.
-</source>
-        <translation>เสร็จสิ้น %1 %2
-</translation>
+        <source>Finished, %1 %2.</source>
+        <translation>เสร็จสิ้น %1 %2</translation>
     </message>
     <message>
-        <source>Not found %1.
-</source>
-        <translation>ไม่พบ %1
-</translation>
+        <source>Not found %1.</source>
+        <translation>ไม่พบ %1</translation>
     </message>
     <message>
-        <source>Cannot copy %1.
-</source>
-        <translation>ไม่สามารถคัดลอก %1 ได้
-</translation>
+        <source>Cannot copy %1.</source>
+        <translation>ไม่สามารถคัดลอก %1 ได้</translation>
     </message>
     <message>
-        <source>Some fonts do not contain all glyphs used in the text.
-</source>
-        <translation>บางแบบอักษรไม่มีอักขระที่ใช้ในข้อความ
-</translation>
+        <source>Some fonts do not contain all glyphs used in the text.</source>
+        <translation>บางแบบอักษรไม่มีอักขระที่ใช้ในข้อความ</translation>
     </message>
     <message>
-        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
-</source>
-        <translation>ตัวแสดงผลไม่สามารถแสดงคำบรรยายได้ตรงด้วยแบบอักษรเหล่านี้เพียงอย่างเดียว: การรวบรวมไม่ครบ
-</translation>
+        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.</source>
+        <translation>ตัวแสดงผลไม่สามารถแสดงคำบรรยายได้ตรงด้วยแบบอักษรเหล่านี้เพียงอย่างเดียว: การรวบรวมไม่ครบ</translation>
     </message>
     <message>
-        <source>The output does not hold every collected font under its own name: the collection is incomplete.
-</source>
-        <translation>ผลลัพธ์ไม่ได้เก็บแบบอักษรที่รวบรวมไว้ทุกแบบภายใต้ชื่อของตัวเอง: การรวบรวมไม่ครบ
-</translation>
+        <source>The output does not hold every collected font under its own name: the collection is incomplete.</source>
+        <translation>ผลลัพธ์ไม่ได้เก็บแบบอักษรที่รวบรวมไว้ทุกแบบภายใต้ชื่อของตัวเอง: การรวบรวมไม่ครบ</translation>
     </message>
     <message>
-        <source>Writing was cancelled.
-</source>
-        <translation>ยกเลิกการเขียนแล้ว
-</translation>
+        <source>Writing was cancelled.</source>
+        <translation>ยกเลิกการเขียนแล้ว</translation>
     </message>
     <message>
-        <source>The output is labelled incomplete (&quot;%1&quot;).
-</source>
-        <translation>ผลลัพธ์ถูกระบุว่าไม่ครบ (&quot;%1&quot;)
-</translation>
+        <source>The output is labelled incomplete (“%1”).</source>
+        <translation>ผลลัพธ์ถูกระบุว่าไม่ครบ (“%1”)</translation>
     </message>
     <message>
-        <source>Completed Successfully, %1 %2.
-</source>
-        <translation>เสร็จสมบูรณ์ %1 %2
-</translation>
+        <source>Completed successfully, %1 %2.</source>
+        <translation>เสร็จสมบูรณ์ %1 %2</translation>
     </message>
     <message>
         <source>Finished in %1ms</source>
         <translation>เสร็จสิ้นใน %1 มิลลิวินาที</translation>
     </message>
     <message>
-        <source>Cancelled; nothing was written.
-</source>
-        <translation>ยกเลิกแล้ว ไม่ได้เขียนสิ่งใด
-</translation>
+        <source>Cancelled; nothing was written.</source>
+        <translation>ยกเลิกแล้ว ไม่ได้เขียนสิ่งใด</translation>
     </message>
     <message>
-        <source>The subtitle renderer is not available; the fonts cannot be checked.
-</source>
-        <translation>ไม่มีตัวแสดงผลคำบรรยาย จึงตรวจแบบอักษรไม่ได้
-</translation>
+        <source>The subtitle renderer is not available; the fonts cannot be checked.</source>
+        <translation>ไม่มีตัวแสดงผลคำบรรยาย จึงตรวจแบบอักษรไม่ได้</translation>
     </message>
     <message>
-        <source>Cannot retrieve the font file sizes and names;
-copying will be canceled.
-</source>
-        <translation>ไม่สามารถโหลดขนาดและชื่อไฟล์ของแบบอักษร
-การคัดลอกถูกยกเลิก
-</translation>
+        <source>Cannot retrieve the font file sizes and names; copying will be cancelled.</source>
+        <translation>ไม่สามารถโหลดขนาดและชื่อไฟล์ของแบบอักษร การคัดลอกถูกยกเลิก</translation>
     </message>
     <message>
-        <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
-
-</source>
-        <translation>อ่านขนาดและชื่อแบบอักษร %1 รายการแล้ว ใช้เวลา %2 มิลลิวินาที
-
-</translation>
+        <source>Retrieved sizes and names of %1 fonts, elapsed time %2 ms.</source>
+        <translation>อ่านขนาดและชื่อแบบอักษร %1 รายการแล้ว ใช้เวลา %2 มิลลิวินาที</translation>
     </message>
     <message>
-        <source>Ready to add %1 to the archive &quot;%2&quot;.
-</source>
-        <translation>พร้อมเพิ่ม %1 ลงในไฟล์บีบอัด &quot;%2&quot;
-</translation>
+        <source>Ready to add %1 to the archive “%2”.</source>
+        <translation>พร้อมเพิ่ม %1 ลงในไฟล์บีบอัด “%2”</translation>
     </message>
     <message>
-        <source>Ready to copy %1 to &quot;%2&quot;.
-</source>
-        <translation>พร้อมคัดลอก %1 ไปยัง &quot;%2&quot;
-</translation>
+        <source>Ready to copy %1 to “%2”.</source>
+        <translation>พร้อมคัดลอก %1 ไปยัง “%2”</translation>
     </message>
     <message>
-        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.
-</source>
-        <translation>การรวบรวมนี้ไม่ครบ ระบบจะเขียนก็ต่อเมื่อคุณรับทราบ และผลลัพธ์จะถูกระบุว่าไม่ครบ
-</translation>
+        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
+        <translation>การรวบรวมนี้ไม่ครบ ระบบจะเขียนก็ต่อเมื่อคุณรับทราบ และผลลัพธ์จะถูกระบุว่าไม่ครบ</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -3637,12 +3569,8 @@ copying will be canceled.
         <translation>ตำแหน่งไม่พร้อมใช้งาน</translation>
     </message>
     <message>
-        <source>Video: %1
-
-</source>
-        <translation>วิดีโอ: %1
-
-</translation>
+        <source>Video: %1</source>
+        <translation>วิดีโอ: %1</translation>
     </message>
     <message>
         <source>This video is not an MKV file.</source>
@@ -3657,22 +3585,20 @@ copying will be canceled.
         <translation>ไฟล์ MKV ที่โหลดมาไม่พบแบบอักษรใด ๆ</translation>
     </message>
     <message>
-        <source>Font named &quot;%1&quot;.
-</source>
-        <translation>แบบอักษรชื่อ &quot;%1&quot;
-</translation>
+        <source>Font named “%1”.</source>
+        <translation>แบบอักษรชื่อ “%1”</translation>
     </message>
     <message>
         <source>(no folder)</source>
         <translation>(ไม่มีโฟลเดอร์)</translation>
     </message>
     <message>
-        <source>Saved a font named &quot;</source>
-        <translation>บันทึกแบบอักษรชื่อ &quot;</translation>
+        <source>Saved a font named “%1”.</source>
+        <translation>บันทึกแบบอักษรชื่อ “%1”</translation>
     </message>
     <message>
-        <source>Cannot save font named &quot;</source>
-        <translation>ไม่สามารถบันทึกแบบอักษรชื่อ &quot;</translation>
+        <source>Cannot save font named “%1”.</source>
+        <translation>ไม่สามารถบันทึกแบบอักษรชื่อ “%1”</translation>
     </message>
     <message>
         <source>Completed, copied %1 fonts.
@@ -4819,50 +4745,44 @@ Failed to copy %2 fonts.</source>
         <translation>กด Shift พร้อมคลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
-        <source>This hotkey already exists for &quot;%1&quot;.
-What to do?</source>
-        <translation>ปุ่มลัดนี้ใช้กับ &quot;%1&quot; อยู่แล้ว
-ต้องการทำอย่างไร</translation>
+        <source>This shortcut already exists for “%1”. What to do?</source>
+        <translation>ปุ่มลัดนี้ใช้กับ “%1” อยู่แล้ว ต้องการทำอย่างไร</translation>
     </message>
     <message>
-        <source>This shortcut already exists in other windows as a shortcut for &quot;%1&quot;.
-What would you like to do?</source>
-        <translation>ปุ่มลัดนี้ใช้กับ &quot;%1&quot; ในหน้าต่างอื่น ๆ อยู่แล้ว
-คุณต้องการทำอย่างไร</translation>
+        <source>This shortcut already exists in other windows as a shortcut for “%1”. What would you like to do?</source>
+        <translation>ปุ่มลัดนี้ใช้กับ “%1” ในหน้าต่างอื่น ๆ อยู่แล้ว คุณต้องการทำอย่างไร</translation>
     </message>
     <message>
-        <source>This shortcut already exists in another window as a shortcut for &quot;%1&quot;.
-What would you like to do?</source>
-        <translation>ปุ่มลัดนี้ใช้กับ &quot;%1&quot; ในหน้าต่างอื่นอยู่แล้ว
-คุณต้องการทำอย่างไร</translation>
+        <source>This shortcut already exists in another window as a shortcut for “%1”. What would you like to do?</source>
+        <translation>ปุ่มลัดนี้ใช้กับ “%1” ในหน้าต่างอื่นอยู่แล้ว คุณต้องการทำอย่างไร</translation>
     </message>
     <message>
         <source>Exit</source>
         <translation>ออก</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;แสดงทั้งหมด&quot; ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
+        <source>The shortcut %1 of “View all” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>นำปุ่มลัด %1 ของ “แสดงทั้งหมด” ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View audio and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;แสดงเสียงและคำบรรยาย&quot; ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
+        <source>The shortcut %1 of “View audio and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>นำปุ่มลัด %1 ของ “แสดงเสียงและคำบรรยาย” ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View video and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;แสดงวิดีโอและคำบรรยาย&quot; ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
+        <source>The shortcut %1 of “View video and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>นำปุ่มลัด %1 ของ “แสดงวิดีโอและคำบรรยาย” ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View only video&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;แสดงวิดีโอเท่านั้น&quot; ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
+        <source>The shortcut %1 of “View only video” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>นำปุ่มลัด %1 ของ “แสดงวิดีโอเท่านั้น” ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;View only subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;แสดงคำบรรยายเท่านั้น&quot; ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
+        <source>The shortcut %1 of “View only subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation>นำปุ่มลัด %1 ของ “แสดงคำบรรยายเท่านั้น” ออกแล้ว เนื่องจากเลิกใช้การจัดวางของเมนูมุมมองแล้ว ให้เลือกเค้าโครงจากตัวสลับเค้าโครงแทน</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Enable / Disable editor&quot; was removed: the editor is always shown; hide panels or choose a layout instead.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;เปิด / ปิดใช้งานตัวแก้ไข&quot; ออกแล้ว เนื่องจากตัวแก้ไขแสดงอยู่เสมอ ให้ซ่อนแผงหรือเลือกเค้าโครงแทน</translation>
+        <source>The shortcut %1 of “Enable / Disable editor” was removed: the editor is always shown; hide panels or choose a layout instead.</source>
+        <translation>นำปุ่มลัด %1 ของ “เปิด / ปิดใช้งานตัวแก้ไข” ออกแล้ว เนื่องจากตัวแก้ไขแสดงอยู่เสมอ ให้ซ่อนแผงหรือเลือกเค้าโครงแทน</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
@@ -4873,8 +4793,8 @@ What would you like to do?</source>
         <translation>นำปุ่มลัด %1 ของ &quot;เปิดเสียงเปล่ายาว 2:30 ชั่วโมง&quot; ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจำลองมีเสียงเงียบมาในตัว</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;เปิดวิดีโอผ่าน FFMS2&quot; ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจะถูกสร้างดัชนีเสมอ</translation>
+        <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
+        <translation>นำปุ่มลัด %1 ของ “เปิดวิดีโอผ่าน FFMS2” ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจะถูกสร้างดัชนีเสมอ</translation>
     </message>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
@@ -5421,6 +5341,14 @@ What would you like to do?</source>
         <translation>จัดเรียงทุกบรรทัดตามชั้น</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>จัดเรียงทุกบรรทัดตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>จัดเรียงทุกบรรทัดตามข้อความที่ไม่มีแท็ก</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>จัดเรียงบรรทัดที่เลือกตามเวลาเริ่มต้น</translation>
     </message>
@@ -5443,6 +5371,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>จัดเรียงบรรทัดที่เลือกตามชั้น</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>จัดเรียงบรรทัดที่เลือกตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>จัดเรียงบรรทัดที่เลือกตามข้อความที่ไม่มีแท็ก</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -5885,6 +5821,26 @@ What would you like to do?</source>
         <translation>เริ่มต้นใช้งาน</translation>
     </message>
     <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: start at video</source>
+        <translation>เลื่อนบรรทัดที่เลือกทีละเฟรม: จุดเริ่มต้นที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift selected lines by frames: end at video</source>
+        <translation>เลื่อนบรรทัดที่เลือกทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: start at video</source>
+        <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดเริ่มต้นที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift following lines by frames: end at video</source>
+        <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -5940,7 +5896,7 @@ What would you like to do?</source>
         <translation>ตัวแก้ไขเสียงอ่านไม่ได้</translation>
     </message>
     <message>
-        <source>No karaoke tag&apos;s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
+        <source>No karaoke tag’s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
         <translation>ไม่มีแท็กคาราโอเกะใดที่ระยะเวลาขึ้นต้นด้วยตัวเลข เช่น \k50 ตัวแก้ไขเสียงจึงแบ่งบรรทัดใหม่</translation>
     </message>
     <message>
@@ -5948,11 +5904,11 @@ What would you like to do?</source>
         <translation>ตัวแก้ไขเสียงแบ่งพยางค์ต่างออกไป</translation>
     </message>
     <message>
-        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback&apos;s</source>
+        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback’s</source>
         <translation>ตัวแก้ไขเสียงแบ่งที่แท็ก \k ทุกแท็กและอ่านตัวเลขในแบบของตัวเอง แท็กอย่าง \keep, \kfo50 หรือ \k(50) จึงทำให้ได้พยางค์ต่างจากตอนเล่น</translation>
     </message>
     <message>
-        <source>Syllables don&apos;t match the line</source>
+        <source>Syllables don’t match the line</source>
         <translation>พยางค์ไม่ตรงกับบรรทัด</translation>
     </message>
     <message>
@@ -6659,6 +6615,10 @@ What would you like to do?</source>
         <translation>สร้างด้วย</translation>
     </message>
     <message>
+        <source>File formats and ideas from</source>
+        <translation>รูปแบบไฟล์และแนวคิดจาก</translation>
+    </message>
+    <message>
         <source>Restore the previous layout</source>
         <translation>คืนค่าเค้าโครงก่อนหน้า</translation>
     </message>
@@ -6805,6 +6765,22 @@ What would you like to do?</source>
         <translation>จัดเรียงตามชั้น</translation>
     </message>
     <message>
+        <source>Text</source>
+        <translation>ข้อความ</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>จัดเรียงตามข้อความ</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>ข้อความที่ไม่มีแท็ก</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>จัดเรียงตามข้อความที่ไม่มีแท็ก</translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
@@ -6941,6 +6917,50 @@ What would you like to do?</source>
         <translation>กำหนดค่า FPS จากวิดีโอ</translation>
     </message>
     <message>
+        <source>Shift by frames to video</source>
+        <translation>เลื่อนทีละเฟรมไปยังวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line starts on the video frame</source>
+        <translation>เลื่อนบรรทัดที่เลือกเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันเริ่มที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Selected lines, start at video</source>
+        <translation>บรรทัดที่เลือก เริ่มที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the selected lines by whole frames so the active line ends on the video frame</source>
+        <translation>เลื่อนบรรทัดที่เลือกเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันสิ้นสุดที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Selected lines, end at video</source>
+        <translation>บรรทัดที่เลือก สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line starts on the video frame</source>
+        <translation>เลื่อนบรรทัดปัจจุบันและทุกบรรทัดหลังจากนั้นเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันเริ่มที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Following lines, start at video</source>
+        <translation>บรรทัดถัดไปทั้งหมด เริ่มที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shifts the active line and every line after it by whole frames so the active line ends on the video frame</source>
+        <translation>เลื่อนบรรทัดปัจจุบันและทุกบรรทัดหลังจากนั้นเป็นจำนวนเฟรมเต็ม ให้บรรทัดปัจจุบันสิ้นสุดที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Following lines, end at video</source>
+        <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
+        <translation>ให้บรรทัดปัจจุบันใช้ส่วนที่เลือกของเสียง และให้บรรทัดก่อนหน้าสิ้นสุดตรงจุดเริ่มของส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Join with previous line using the audio selection</source>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
         <source>Load script</source>
         <translation>โหลดสคริปต์</translation>
     </message>
@@ -7023,6 +7043,22 @@ What would you like to do?</source>
     <message>
         <source>Open user &amp;folder</source>
         <translation>เปิด&amp;โฟลเดอร์ผู้ใช้</translation>
+    </message>
+    <message>
+        <source>Enjoying HikariSub?</source>
+        <translation>ชอบ HikariSub ไหม</translation>
+    </message>
+    <message>
+        <source>A star on GitHub helps others find it.</source>
+        <translation>การให้ดาวบน GitHub ช่วยให้คนอื่นค้นพบได้</translation>
+    </message>
+    <message>
+        <source>Star on GitHub</source>
+        <translation>ให้ดาวบน GitHub</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>ไว้ทีหลัง</translation>
     </message>
     <message>
         <source>Install update</source>
@@ -7607,7 +7643,7 @@ What would you like to do?</source>
         <translation>คงไว้ที่เดิม: %1</translation>
     </message>
     <message>
-        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <source>This portable copy keeps its settings in %1. An earlier version’s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
         <translation>สำเนาแบบพกพานี้เก็บการตั้งค่าไว้ใน %1 การตั้งค่าของรุ่นก่อนหน้ายังอยู่ใน %2: หากต้องการใช้ ให้ออกจาก HikariSub คัดลอก hikari.ini จากที่นั่น แล้วลบ settings.toml ที่นี่</translation>
     </message>
     <message>
@@ -8757,7 +8793,7 @@ removing audio cache files.</source>
         <translation>สไตล์</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
@@ -9005,6 +9041,14 @@ removing audio cache files.</source>
         <translation>รวมชื่อไฟล์</translation>
     </message>
     <message>
+        <source>Suggest starring HikariSub on GitHub</source>
+        <translation>แนะนำให้ให้ดาว HikariSub บน GitHub</translation>
+    </message>
+    <message>
+        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
+        <translation>แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
+    </message>
+    <message>
         <source>Choose a legacy Hotkeys.txt</source>
         <translation>เลือก Hotkeys.txt ของรุ่นเดิม</translation>
     </message>
@@ -9089,7 +9133,7 @@ and will be changed to the default</source>
 และจะถูกเปลี่ยนเป็นค่าเริ่มต้น</translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>catalogue for style</source>
         <translation>แคตตาล็อกของสไตล์</translation>
     </message>
     <message>
@@ -10548,20 +10592,20 @@ because it was edited.</source>
         <translation>ไม่ใช่ไฟล์เซสชัน</translation>
     </message>
     <message>
-        <source>&quot;tabs&quot; is not a list.</source>
-        <translation>&quot;tabs&quot; ไม่ใช่รายการ</translation>
+        <source>“tabs” is not a list.</source>
+        <translation>“tabs” ไม่ใช่รายการ</translation>
     </message>
     <message>
-        <source>&quot;closed&quot; is not true or false.</source>
-        <translation>&quot;closed&quot; ไม่ใช่ true หรือ false</translation>
+        <source>“closed” is not true or false.</source>
+        <translation>“closed” ไม่ใช่ true หรือ false</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
         <translation>แท็บ %1 ไม่ใช่ออบเจ็กต์</translation>
     </message>
     <message>
-        <source>Tab %1: &quot;%2&quot; has the wrong type.</source>
-        <translation>แท็บ %1: &quot;%2&quot; มีชนิดข้อมูลไม่ถูกต้อง</translation>
+        <source>Tab %1: “%2” has the wrong type.</source>
+        <translation>แท็บ %1: “%2” มีชนิดข้อมูลไม่ถูกต้อง</translation>
     </message>
 </context>
 <context>
@@ -11074,13 +11118,11 @@ because it was edited.</source>
         <translation>คำที่เพิ่มลงในพจนานุกรม</translation>
     </message>
     <message>
-        <source>No dictionary files were found in the &quot;%1&quot; folder.
-Spell checking will be disabled</source>
-        <translation>ไม่พบไฟล์พจนานุกรมในโฟลเดอร์ &quot;%1&quot;
-การตรวจการสะกดจะถูกปิดใช้งาน</translation>
+        <source>No dictionary files were found in the “%1” folder. Spell checking will be disabled.</source>
+        <translation>ไม่พบไฟล์พจนานุกรมในโฟลเดอร์ “%1” การตรวจการสะกดจะถูกปิดใช้งาน</translation>
     </message>
     <message>
-        <source>Failed to initialize spell checker.</source>
+        <source>Failed to initialise the spellchecker.</source>
         <translation>ไม่สามารถเริ่มตัวตรวจการสะกดได้</translation>
     </message>
     <message>
@@ -11092,7 +11134,7 @@ Spell checking will be disabled</source>
         <translation>คำนามเฉพาะ</translation>
     </message>
     <message>
-        <source>Names of places, organizations and products keep their standard capitalization.</source>
+        <source>Names of places, organisations and products keep their standard capitalisation.</source>
         <translation>ชื่อสถานที่ องค์กร และผลิตภัณฑ์ใช้ตัวพิมพ์ใหญ่ตามมาตรฐาน</translation>
     </message>
     <message>
@@ -11120,7 +11162,7 @@ Spell checking will be disabled</source>
         <translation>ข้อผิดพลาดที่พบบ่อยในระดับวลีซึ่งควรใช้สำนวนมาตรฐาน</translation>
     </message>
     <message>
-        <source>Capitalization and case</source>
+        <source>Capitalisation and case</source>
         <translation>ตัวพิมพ์ใหญ่และตัวพิมพ์เล็ก</translation>
     </message>
     <message>
@@ -11251,8 +11293,8 @@ Spell checking will be disabled</source>
         <translation>เลือก %1 บรรทัด</translation>
     </message>
     <message>
-        <source> (%1 hidden)</source>
-        <translation> (ซ่อน %1)</translation>
+        <source>(%1 hidden)</source>
+        <translation>(ซ่อน %1)</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -11650,7 +11692,7 @@ Spell checking will be disabled</source>
         <translation>กรองสไตล์</translation>
     </message>
     <message>
-        <source>Catalog</source>
+        <source>Catalogue</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
@@ -11926,20 +11968,20 @@ Spell checking will be disabled</source>
         <translation>เลือกไฟล์ ASS</translation>
     </message>
     <message>
-        <source>Copy of </source>
-        <translation>สำเนาของ </translation>
+        <source>Copy of %1</source>
+        <translation>สำเนาของ %1</translation>
     </message>
     <message>
         <source>The document has no styles to edit.</source>
         <translation>เอกสารไม่มีสไตล์ให้แก้ไข</translation>
     </message>
     <message>
-        <source>The catalog “%1” no longer exists.</source>
+        <source>The catalogue “%1” no longer exists.</source>
         <translation>แคตตาล็อก “%1” ไม่มีอยู่แล้ว</translation>
     </message>
     <message>
-        <source>Style named &quot;%1&quot; already exists.</source>
-        <translation>มีสไตล์ชื่อ &quot;%1&quot; อยู่แล้ว</translation>
+        <source>Style named “%1” already exists.</source>
+        <translation>มีสไตล์ชื่อ “%1” อยู่แล้ว</translation>
     </message>
     <message>
         <source>None</source>
@@ -12020,7 +12062,7 @@ Styles deleted:
         <translation>เลือกบรรทัดที่ใช้สไตล์นี้</translation>
     </message>
     <message>
-        <source>Copy to the catalog…</source>
+        <source>Copy to the catalogue…</source>
         <translation>คัดลอกไปยังแคตตาล็อก…</translation>
     </message>
     <message>
@@ -12156,19 +12198,19 @@ Styles deleted:
 <context>
     <name>HikariSub.TagList</name>
     <message>
-        <source>Transparency of primary color</source>
+        <source>Transparency of primary colour</source>
         <translation>ความโปร่งใสสีหลัก</translation>
     </message>
     <message>
-        <source>Transparency of secondary color</source>
+        <source>Transparency of secondary colour</source>
         <translation>ความโปร่งใสสีรอง</translation>
     </message>
     <message>
-        <source>Transparency of border color</source>
+        <source>Transparency of border colour</source>
         <translation>ความโปร่งใสสีเส้นขอบ</translation>
     </message>
     <message>
-        <source>Transparency of shadow color</source>
+        <source>Transparency of shadow colour</source>
         <translation>ความโปร่งใสสีเงา</translation>
     </message>
     <message>
@@ -12176,7 +12218,7 @@ Styles deleted:
         <translation>สีหลัก</translation>
     </message>
     <message>
-        <source>Secondary color</source>
+        <source>Secondary colour</source>
         <translation>สีรอง</translation>
     </message>
     <message>
@@ -12188,51 +12230,51 @@ Styles deleted:
         <translation>สีเงา</translation>
     </message>
     <message>
-        <source>PNG mask of primary color</source>
+        <source>PNG mask of primary colour</source>
         <translation>มาสก์ PNG ของสีหลัก</translation>
     </message>
     <message>
-        <source>PNG mask of secondary color</source>
+        <source>PNG mask of secondary colour</source>
         <translation>มาสก์ PNG ของสีรอง</translation>
     </message>
     <message>
-        <source>PNG mask of border color</source>
+        <source>PNG mask of border colour</source>
         <translation>มาสก์ PNG ของสีเส้นขอบ</translation>
     </message>
     <message>
-        <source>PNG mask of shadow color</source>
+        <source>PNG mask of shadow colour</source>
         <translation>มาสก์ PNG ของสีเงา</translation>
     </message>
     <message>
-        <source>Transparency gradient of primary color</source>
+        <source>Transparency gradient of primary colour</source>
         <translation>ไล่ระดับความโปร่งใสสีหลัก</translation>
     </message>
     <message>
-        <source>Transparency gradient of secondary color</source>
+        <source>Transparency gradient of secondary colour</source>
         <translation>ไล่ระดับความโปร่งใสสีรอง</translation>
     </message>
     <message>
-        <source>Transparency gradient of border color</source>
+        <source>Transparency gradient of border colour</source>
         <translation>ไล่ระดับความโปร่งใสสีเส้นขอบ</translation>
     </message>
     <message>
-        <source>Transparency gradient of shadow color</source>
+        <source>Transparency gradient of shadow colour</source>
         <translation>ไล่ระดับความโปร่งใสสีเงา</translation>
     </message>
     <message>
-        <source>Gradient of primary color</source>
+        <source>Gradient of primary colour</source>
         <translation>ไล่ระดับสีหลัก</translation>
     </message>
     <message>
-        <source>Gradient of secondary color</source>
+        <source>Gradient of secondary colour</source>
         <translation>ไล่ระดับสีรอง</translation>
     </message>
     <message>
-        <source>Gradient of border color</source>
+        <source>Gradient of border colour</source>
         <translation>ไล่ระดับสีเส้นขอบ</translation>
     </message>
     <message>
-        <source>Gradient of shadow color</source>
+        <source>Gradient of shadow colour</source>
         <translation>ไล่ระดับสีเงา</translation>
     </message>
     <message>
@@ -13934,7 +13976,7 @@ after the end time in milliseconds</source>
         <translation>กว้างขึ้น</translation>
     </message>
     <message>
-        <source>Failed to initialize DirectShow</source>
+        <source>Failed to initialise DirectShow</source>
         <translation>เกิดข้อผิดพลาดในการเริ่มต้น DirectShow</translation>
     </message>
     <message>
@@ -13966,7 +14008,7 @@ after the end time in milliseconds</source>
         <translation>ไม่สามารถสร้างอินสแตนซ์ตัวเรนเดอร์เสียงได้</translation>
     </message>
     <message>
-        <source>Cannot add Direct Sound renderer</source>
+        <source>Cannot add DirectSound renderer</source>
         <translation>ไม่สามารถเพิ่มตัวแสดงผล DirectSound ได้</translation>
     </message>
     <message>
@@ -13978,7 +14020,7 @@ after the end time in milliseconds</source>
         <translation>ไม่สามารถแจกแจงพินของตัวเรนเดอร์ได้</translation>
     </message>
     <message>
-        <source>Cannot enumerate Direct Sound pins</source>
+        <source>Cannot enumerate DirectSound pins</source>
         <translation>ไม่สามารถแจกแจงพิน DirectSound ได้</translation>
     </message>
     <message>
@@ -14439,8 +14481,12 @@ or codecs or a splitter may be missing</source>
         <translation>วิดีโอไม่พร้อมใช้งาน: %1</translation>
     </message>
     <message>
-        <source>Frame %1 of %2  %3</source>
-        <translation>เฟรม %1 จาก %2  %3</translation>
+        <source>Frame %1 of %2</source>
+        <translation>เฟรม %1 จาก %2</translation>
+    </message>
+    <message>
+        <source>Frame %1 of %2 · %3</source>
+        <translation>เฟรม %1 จาก %2 · %3</translation>
     </message>
     <message>
         <source>Aspect ratio: %1</source>
@@ -15674,7 +15720,7 @@ do not work on comments</source>
         <translation>ไฟล์นี้ไม่มีเค้าโครง</translation>
     </message>
     <message>
-        <source>it holds no Classic arrangement</source>
+        <source>it holds no “Classic” arrangement</source>
         <translation>ไฟล์นี้ไม่มีการจัดวางแบบคลาสสิก</translation>
     </message>
     <message>

@@ -12,8 +12,8 @@
 
 namespace hikari::api {
 
-// Grows by one with each release that adds to the API; 0 until the first.
-inline constexpr int kApiVersion = 0;
+// Grows by one with each release that adds to the API.
+inline constexpr int kApiVersion = 1;
 
 enum class Access { Read, Write };
 std::string_view accessName(Access access);
@@ -47,9 +47,18 @@ struct Caller {
     bool allDocuments = false;
 };
 
+// A file the user let one caller use; the caller sees the handle and name, never the path.
+struct GrantedFile {
+    std::string handle;
+    std::string name;
+    std::string path;
+    bool writable = false;
+};
+
 struct Context {
     const Host &host;
     const Caller &caller;
+    std::vector<GrantedFile> files; // the caller's grants
 };
 
 // A handler replies exactly once, now or later, on the GUI thread.
@@ -122,6 +131,10 @@ public:
     void panelChanged(std::string_view panel);
     void commandRan(std::string_view command, bool ok);
 
+    // The handle files.* use for `path`; granting a path again updates `writable`.
+    std::string grantFile(const std::string &callerId, const std::string &path, bool writable);
+    void revokeFiles(const std::string &callerId);
+
 private:
     struct Subscription {
         std::uint64_t id = 0;
@@ -137,6 +150,8 @@ private:
     bool m_writing = false;
     std::vector<Subscription> m_subscriptions;
     std::uint64_t m_nextSubscription = 1;
+    std::vector<std::pair<std::string, GrantedFile>> m_grants; // by caller id
+    std::uint64_t m_nextGrant = 1;
 };
 
 }

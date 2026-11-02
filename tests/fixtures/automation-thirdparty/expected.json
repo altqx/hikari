@@ -1,11 +1,14 @@
 {
- "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results were observed in the Windows VM (2026-10-14, job-a6dfbb66): they match these except where load_windows pins its own (clipper2 is looked for as clipper2.dll, with Windows' loader message). A platform not yet observed would be listed in unobserved_platforms; its results are recorded, not pinned. DependencyControl v0.9.1 with MoonScript 0.5.0 (DC1, 2026-10-27): its messages read [DepCtrl]; myaa.Bounce and arch.ConvertFolds now parse and load; lyger.FbfTransform and lyger.GradientEverything start without their first-run example preset (DC1-depctrl-fresh-config).",
+ "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results were observed in the Windows VM (2026-10-14, job-a6dfbb66): they match these except where load_windows pins its own (clipper2 is looked for as clipper2.dll, with Windows' loader message). A platform not yet observed would be listed in unobserved_platforms; its results are recorded, not pinned. DependencyControl v0.9.1 with MoonScript 0.5.0 (DC1, 2026-10-27): its messages read [DepCtrl]; myaa.Bounce and arch.ConvertFolds now parse and load; lyger.FbfTransform and lyger.GradientEverything start without their first-run example preset (DC1-depctrl-fresh-config). FA4 (2026-11-02): all 14 arch1t3cht macros scripts have a run; the fixture gained a KFX template comment and a short Sign line whose outer quad is in [Aegisub Extradata], the runs see a 23.976 fps fixture video at frame 96 and the clipboard \"fixture clipboard\", events carry extra when a Line has values, and random_drawings lists runs whose drawings are random. AegisubChain's run is Manage Chains: its Configure fails with DependencyControl's ConfigView (ipairs on a config list), as in Aegisub 3.5.1.",
  "loaded_only": {
   "myaa.MergeScripts.moon": "DependencyControl tries to install its missing module myaa.pl (Myaamori's Penlight, not in this corpus) from the module's feed while the script loads, even with the updater off, so the reason it gives depends on the network; it fails to load either way."
  },
  "macros_unordered": {
   "lyger.FbfTransform.moon": "It registers one macro per preset by iterating its presets table with pairs(), whose order LuaJIT does not fix (string hashes are seeded per process), so the macros are pinned by name.",
   "lyger.GradientEverything.moon": "Like lyger.FbfTransform, one macro per preset in pairs() order."
+ },
+ "random_drawings": {
+  "arch.FocusLines.moon | Focus Lines": "draws its lines at random angles (math.random), so only the drawings are unpinned"
  },
  "load": {
   "ILL.ChangeAlign.moon": {
@@ -1225,6 +1228,256 @@
    "name": "iBus",
    "project": "unanimated-Aegisub-Scripts",
    "version": "1.7.0"
+  },
+  "arch.AegisubChain.moon": {
+   "author": "arch1t3cht",
+   "description": "Compose chains out of existing automation macros, and play them back as non-GUI macros, or using only one dialog.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Record next Macro in Chain",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Erase last Macro in Chain",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Save Chain",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Discard Chain",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Configure",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Manage Chains",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Chain Slot 1",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Chain Slot 2",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Chain Slot 3",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Chain Slot 4",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Chain Slot 5",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Repeat 1st Last Chain",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Repeat 1st Last Chain with Same Settings",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Repeat 2nd Last Chain",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "AegisubChain/Actions/Repeat 2nd Last Chain with Same Settings",
+     "validate": false
+    }
+   ],
+   "name": "AegisubChain",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "0.4.1"
+  },
+  "arch.DerivePerspTrack.moon": {
+   "author": "arch1t3cht",
+   "description": "Create a power-pin track file from the outer perspective quads of a set of lines.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Derive Perspective Track/From Outer Quad",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Derive Perspective Track/From Tags",
+     "validate": false
+    }
+   ],
+   "name": "Derive Perspective Track",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.1.3"
+  },
+  "arch.FixKFXBoilerplate.moon": {
+   "author": "arch1t3cht",
+   "description": "Fix certain errors in boilerplate lines in old KFX templates on new Aegisub versions",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fix KFX Boilerplate",
+     "validate": false
+    }
+   ],
+   "name": "Fix KFX Boilerplate",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.0.0"
+  },
+  "arch.GitSigns.moon": {
+   "author": "arch1t3cht",
+   "description": "Displays git diffs in Aegisub",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Git Signs/Show Diff",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Git Signs/Configure",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Git Signs/Clear Markers",
+     "validate": false
+    }
+   ],
+   "name": "Git Signs",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "0.2.4"
+  },
+  "arch.PerspectiveMotion.moon": {
+   "author": "arch1t3cht",
+   "description": "Apply perspective motion tracking data",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Aegisub Perspective-Motion",
+     "validate": false
+    }
+   ],
+   "name": "Aegisub Perspective-Motion",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "0.4.1"
+  },
+  "arch.Resample.moon": {
+   "author": "arch1t3cht",
+   "description": "Apply after resampling a script in Aegisub to fix any lines with 3D rotations.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Resample Perspective",
+     "validate": false
+    }
+   ],
+   "name": "Resample Perspective",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "2.1.1"
+  },
+  "arch.TimingBinds.lua": {
+   "author": "arch1t3cht",
+   "description": "Some shorthands for timing",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Timing Binds/Snap Beginning to Frame",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Timing Binds/Snap End to Frame",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Timing Binds/Join Previous Line",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Timing Binds/Shift by Frames to Video Position",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Timing Binds/Shift by Frames to Video Position (End)",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Timing Binds/Shift all following lines by Frames to Video Position",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Timing Binds/Shift all following lines by Frames to Video Position (End)",
+     "validate": true
+    }
+   ],
+   "name": "Timing Shortcuts",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.1.0"
   }
  },
  "load_windows": {
@@ -1327,6 +1580,35 @@
      "start_time": 11000,
      "style": "Sign",
      "text": "{\\blur0.6}Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
     }
    ],
    "log": [],
@@ -1422,6 +1704,35 @@
      "start_time": 11000,
      "style": "Sign",
      "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
     }
    ],
    "log": [],
@@ -1513,6 +1824,35 @@
      "start_time": 11000,
      "style": "Sign",
      "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
     }
    ],
    "log": [],
@@ -1604,6 +1944,35 @@
      "start_time": 11000,
      "style": "Sign",
      "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
     }
    ],
    "log": [],
@@ -1715,6 +2084,35 @@
      "start_time": 11000,
      "style": "Sign",
      "text": "ÄPFEL UND STRASSE, ½ 日本語 TEXT"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
     }
    ],
    "log": [],
@@ -1819,6 +2217,35 @@
      "start_time": 11000,
      "style": "Sign",
      "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
     }
    ],
    "log": [],
@@ -1923,6 +2350,35 @@
      "start_time": 11000,
      "style": "Sign",
      "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
     }
    ],
    "log": [],
@@ -1931,6 +2387,2094 @@
     1,
     2,
     3
+   ],
+   "undo_steps": 1
+  },
+  "arch.CenterTimes.lua | Center Times": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 2980,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 980,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5480,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 2980,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 7990,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5480,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1,
+    2,
+    3
+   ],
+   "undo_steps": 1
+  },
+  "arch.ConvertFolds.moon | Convert Folds": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [
+      "Apply",
+      "From File",
+      "Cancel"
+     ],
+     "controls": [
+      "label:",
+      "edit:foldinfo"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "extra": {
+      "_aegi_folddata": "0;1;1"
+     },
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "extra": {
+      "_aegi_folddata": "1;1;1"
+     },
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "extra": {
+      "_aegi_folddata": "0;0;2"
+     },
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "extra": {
+      "_aegi_folddata": "1;0;2"
+     },
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1
+   ],
+   "undo_steps": 1
+  },
+  "arch.FocusLines.moon | Focus Lines": {
+   "active": 8,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [
+      "OK",
+      "Help",
+      "Cancel"
+     ],
+     "controls": [
+      "label:",
+      "intedit:numlines",
+      "label:",
+      "intedit:layers",
+      "label:",
+      "color:color",
+      "label:",
+      "label:",
+      "floatedit:width",
+      "label:",
+      "floatedit:height",
+      "label:",
+      "floatedit:sizechange",
+      "label:",
+      "label:",
+      "floatedit:minblur",
+      "label:",
+      "floatedit:maxblur",
+      "label:",
+      "label:",
+      "floatedit:minlinewidth",
+      "label:",
+      "floatedit:maxlinewidth",
+      "label:",
+      "floatedit:linepointiness"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14035,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13993,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur5\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14035,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 4,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13993,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur10\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14076,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14035,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur5\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14076,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 4,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14035,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur10\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14118,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14076,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur5\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14118,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 4,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14076,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur10\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14160,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14118,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur5\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14160,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 4,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14118,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur10\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14201,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14160,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur5\\pos(960,540)}<drawing>"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14201,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 4,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14160,
+     "style": "Sign",
+     "text": "{\\an7\\p1\\1c&H000000&\\bord0\\shad0\\blur10\\pos(960,540)}<drawing>"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+   ],
+   "undo_steps": 1
+  },
+  "arch.Line2Fbf.moon | FBF-ifier": {
+   "active": 0,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14035,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13993,
+     "style": "Sign",
+     "text": "{\\pos(800,400)\\fry-5\\frx10\\alpha&HD3&}fbf"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14076,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14035,
+     "style": "Sign",
+     "text": "{\\pos(800,400)\\fry-5\\frx10\\alpha&H50&}fbf"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14118,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14076,
+     "style": "Sign",
+     "text": "{\\pos(800,400)\\fry-5\\frx10\\alpha&H00&}fbf"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14160,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14118,
+     "style": "Sign",
+     "text": "{\\pos(800,400)\\fry-5\\frx10\\alpha&H00&}fbf"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14201,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14160,
+     "style": "Sign",
+     "text": "{\\pos(800,400)\\fry-5\\frx10\\alpha&H00&}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [],
+   "undo_steps": 1
+  },
+  "arch.NoteBrowser.moon | Note Browser/Load notes": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [],
+     "controls": [
+      "label:",
+      "checkbox:mark",
+      "checkbox:inline",
+      "textbox:notes"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "[QC-Alice]",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break{|QC|timing|}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke[QC-Alice]",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke{|QC|typo|}"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1
+   ],
+   "undo_steps": 1
+  },
+  "arch.RWTools.lua | Rewriting Tools/Prepare Rewrite": {
+   "active": 2,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{[/an8/bord2]two words\\Nand a break - OG}{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    2
+   ],
+   "undo_steps": 1
+  },
+  "arch.SplitSections.moon | Split Tag Sections": {
+   "active": 0,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(852,540)\\org(960,540)\\c&H0000FF&}Grad"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\org(960,540)\\c&H00FF00&}ient "
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(1068,540)\\org(960,540)\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [],
+   "undo_steps": 1
+  },
+  "arch.AegisubChain.moon | AegisubChain/Manage Chains": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [
+      "Save",
+      "Delete Selected",
+      "Export Selected",
+      "Import Chains",
+      "Cancel"
+     ],
+     "controls": [
+      "label:",
+      "label:",
+      "label:"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1
+   ],
+   "undo_steps": 0
+  },
+  "arch.DerivePerspTrack.moon | Derive Perspective Track/From Outer Quad": {
+   "active": 8,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [
+    "Adobe After Effects 6.0 Keyframe Data\n\n\tUnits Per Second\t23.976\n\tSource Width\t1920\n\tSource Height\t1080\n\tSource Pixel Aspect Ratio\t1\n\tComp Pixel Aspect Ratio\t1\n\nEffects\tCC Power Pin #1\tCC Power Pin-0002\n\tFrame\tX pixels\tY pixels\n\t0\t600\t300\n\t1\t600\t300\n\t2\t600\t300\n\t3\t600\t300\n\t4\t600\t300\n\nEffects\tCC Power Pin #1\tCC Power Pin-0003\n\tFrame\tX pixels\tY pixels\n\t0\t1000\t300\n\t1\t1000\t300\n\t2\t1000\t300\n\t3\t1000\t300\n\t4\t1000\t300\n\nEffects\tCC Power Pin #1\tCC Power Pin-0004\n\tFrame\tX pixels\tY pixels\n\t0\t600\t500\n\t1\t600\t500\n\t2\t600\t500\n\t3\t600\t500\n\t4\t600\t500\n\nEffects\tCC Power Pin #1\tCC Power Pin-0005\n\tFrame\tX pixels\tY pixels\n\t0\t1000\t500\n\t1\t1000\t500\n\t2\t1000\t500\n\t3\t1000\t500\n\t4\t1000\t500\n\nEnd of Keyframe Data"
+   ],
+   "outcome": "ok",
+   "selected": [
+    8
+   ],
+   "undo_steps": 0
+  },
+  "arch.FixKFXBoilerplate.moon | Fix KFX Boilerplate": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len((syl.text))!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [
+    "Patched 1 instances of _G.unicode.len."
+   ],
+   "outcome": "ok",
+   "selected": [
+    1
+   ],
+   "undo_steps": 1
+  },
+  "arch.GitSigns.moon | Git Signs/Clear Markers": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1
+   ],
+   "undo_steps": 1
+  },
+  "arch.PerspectiveMotion.moon | Aegisub Perspective-Motion": {
+   "active": 0,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [],
+     "controls": [
+      "label:",
+      "textbox:data",
+      "label:",
+      "intedit:relframe",
+      "label:",
+      "dropdown:orgmode",
+      "checkbox:applyperspective",
+      "checkbox:includeextra",
+      "checkbox:trackpos",
+      "checkbox:trackclip",
+      "checkbox:trackbordshad"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14035,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13993,
+     "style": "Sign",
+     "text": "{\\pos(800,400)\\org(800,400)\\fscx100\\fscy100\\frz0\\fry-5\\frx10\\fax0\\xbord1\\ybord1\\alpha&HD3&}fbf"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14076,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "610;300|1010;300|1010;500|610;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14035,
+     "style": "Sign",
+     "text": "{\\pos(810.01,400)\\org(800,400)\\fscx99.443\\fscy99.728\\frz0\\fry-5.014\\frx10.027\\fax-0.005\\xbord0.99\\ybord1\\alpha&H50&}fbf"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14118,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "620;300|1020;300|1020;500|620;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14076,
+     "style": "Sign",
+     "text": "{\\pos(819.965,400)\\org(800,400)\\fscx98.888\\fscy99.457\\frz0\\fry-5.028\\frx10.055\\fax-0.011\\xbord0.99\\ybord0.99}fbf"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14160,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "630;300|1030;300|1030;500|630;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14118,
+     "style": "Sign",
+     "text": "{\\pos(829.864,400)\\org(800,400)\\fscx98.334\\fscy99.185\\frz0\\fry-5.042\\frx10.082\\fax-0.017\\xbord0.98\\ybord0.99}fbf"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14201,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "640;300|1040;300|1040;500|640;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14160,
+     "style": "Sign",
+     "text": "{\\pos(839.707,400)\\org(800,400)\\fscx97.781\\fscy98.914\\frz0\\fry-5.056\\frx10.11\\fax-0.022\\xbord0.98\\ybord0.99}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [],
+   "undo_steps": 1
+  },
+  "arch.Resample.moon | Resample Perspective": {
+   "active": 8,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [],
+     "controls": [
+      "label:",
+      "intedit:srcresx",
+      "label:",
+      "intedit:srcresy",
+      "label:",
+      "intedit:targetresx",
+      "label:",
+      "intedit:targetresy",
+      "label:",
+      "dropdown:orgmode"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\pos(800,400)\\org(800,400)\\fscx99.789\\fscy99.162\\fry-3.338\\frx6.718\\fax-0.008\\xbord1\\ybord0.99\\fad(80,0)}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    8
+   ],
+   "undo_steps": 1
+  },
+  "arch.TimingBinds.lua | Timing Binds/Snap Beginning to Frame": {
+   "active": 2,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3983,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3983,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "template line",
+     "end_time": 14000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 13000,
+     "style": "Default",
+     "text": "{\\k!_G.unicode.len(syl.text)!}"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "[Git -]",
+     "end_time": 14210,
+     "extra": {
+      "_aegi_perspective_ambient_plane": "600;300|1000;300|1000;500|600;500"
+     },
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 14000,
+     "style": "Sign",
+     "text": "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    2
    ],
    "undo_steps": 1
   }

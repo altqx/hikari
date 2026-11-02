@@ -55,12 +55,14 @@ app::Error replyError(QNetworkReply *reply, const QByteArray &body, bool timedOu
 
 QJsonObject capabilitiesJson(const app::Capabilities &c)
 {
-    return {{QStringLiteral("tools"), c.tools}, {QStringLiteral("vision"), c.vision}};
+    return {{QStringLiteral("tools"), c.tools}, {QStringLiteral("vision"), c.vision}, {QStringLiteral("video"), c.video}};
 }
 
 app::Capabilities capabilitiesFrom(const QJsonObject &o)
 {
-    return {.tools = o.value(QStringLiteral("tools")).toBool(), .vision = o.value(QStringLiteral("vision")).toBool()};
+    return {.tools = o.value(QStringLiteral("tools")).toBool(),
+            .vision = o.value(QStringLiteral("vision")).toBool(),
+            .video = o.value(QStringLiteral("video")).toBool()};
 }
 
 }
@@ -75,30 +77,22 @@ struct NetworkProviderPort::Run {
     bool timedOut = false;
 };
 
-bool tailscaleName(const QString &host)
-{
-    QString name = host.toLower();
-    if (name.endsWith(u'.'))
-        name.chop(1);
-    return name.endsWith(QLatin1String(".ts.net")) && name.size() > 7;
-}
-
 bool keySafeOverPlainHttp(const QHostAddress &address, const QList<QHostAddress> &localAddresses)
 {
-    bool v4 = false;
-    const QHostAddress plain(address.toIPv4Address(&v4));
-    const QHostAddress a = v4 ? plain : address;
+    const auto unmapped = [](const QHostAddress &a) {
+        bool v4 = false;
+        const QHostAddress plain(a.toIPv4Address(&v4));
+        return v4 ? plain : a;
+    };
+    const QHostAddress a = unmapped(address);
     if (a.isLoopback())
         return true;
-    if (a.isInSubnet(QHostAddress(QStringLiteral("fd7a:115c:a1e0::")), 48))
-        return true;
-    const std::pair<QHostAddress, int> cgnat{QHostAddress(QStringLiteral("100.64.0.0")), 10};
-    if (!a.isInSubnet(cgnat))
-        return false;
-    return std::ranges::any_of(localAddresses, [&](const QHostAddress &local) {
-        bool localV4 = false;
-        const QHostAddress l(local.toIPv4Address(&localV4));
-        return localV4 && l.isInSubnet(cgnat);
+    const std::pair<QHostAddress, int> tailnets[] = {{QHostAddress(QStringLiteral("100.64.0.0")), 10},
+                                                     {QHostAddress(QStringLiteral("fd7a:115c:a1e0::")), 48}};
+    return std::ranges::any_of(tailnets, [&](const std::pair<QHostAddress, int> &range) {
+        return a.isInSubnet(range) && std::ranges::any_of(localAddresses, [&](const QHostAddress &local) {
+                   return unmapped(local).isInSubnet(range);
+               });
     });
 }
 
@@ -119,7 +113,7 @@ void NetworkProviderPort::route(const QUrl &url, bool hasKey, std::function<void
         return;
     }
     const QString host = url.host();
-    if (!hasKey || https || host.compare(QLatin1String("localhost"), Qt::CaseInsensitive) == 0 || tailscaleName(host)) {
+    if (!hasKey || https || host.compare(QLatin1String("localhost"), Qt::CaseInsensitive) == 0) {
         done(Route{url, {}});
         return;
     }
@@ -135,19 +129,26 @@ void NetworkProviderPort::route(const QUrl &url, bool hasKey, std::function<void
             done(app::Error{.kind = app::ErrorKind::Network, .httpStatus = 0, .detail = "host not found"});
             return;
         }
-        const QList<QHostAddress> local = m_localAddresses();
-        for (const QHostAddress &address : addresses) {
-            if (!keySafeOverPlainHttp(address, local))
-                continue;
-            QUrl pinned = url;
-            pinned.setHost(address.toString());
-            const QByteArray authority =
-                url.host(QUrl::FullyEncoded).toUtf8() + (url.port() < 0 ? QByteArray() : ":" + QByteArray::number(url.port()));
-            done(Route{pinned, authority});
-            return;
-        }
-        done(app::Error{.kind = app::ErrorKind::InsecureKey});
+        if (std::optional<Route> pinned = pinnedRoute(url, addresses, m_localAddresses()))
+            done(*std::move(pinned));
+        else
+            done(app::Error{.kind = app::ErrorKind::InsecureKey});
     });
+}
+
+std::optional<NetworkProviderPort::Route> NetworkProviderPort::pinnedRoute(const QUrl &url,
+                                                                           const QList<QHostAddress> &resolved,
+                                                                           const QList<QHostAddress> &localAddresses)
+{
+    const auto safe = std::ranges::find_if(
+        resolved, [&](const QHostAddress &address) { return keySafeOverPlainHttp(address, localAddresses); });
+    if (safe == resolved.end())
+        return std::nullopt;
+    QUrl pinned = url;
+    pinned.setHost(safe->toString());
+    const QByteArray authority =
+        url.host(QUrl::FullyEncoded).toUtf8() + (url.port() < 0 ? QByteArray() : ":" + QByteArray::number(url.port()));
+    return Route{pinned, authority};
 }
 
 NetworkProviderPort::~NetworkProviderPort()
@@ -251,15 +252,16 @@ void NetworkProviderPort::listModels(const app::Provider &provider, const std::s
 {
     const HttpCall call = modelsCall(provider, QByteArray::fromStdString(key));
     const QUrl url(QString::fromStdString(provider.baseUrl) + call.path);
-    route(url, !key.empty(), [this, call, done](const RouteResult &result) {
+    route(url, !key.empty(), [this, call, wire = provider.wire, done](const RouteResult &result) {
         if (const auto *error = std::get_if<app::Error>(&result))
             done(*error);
         else
-            fetchModels(std::get<Route>(result), call, done);
+            fetchModels(std::get<Route>(result), call, wire, done);
     });
 }
 
-void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, std::function<void(ModelsResult)> done)
+void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, app::Wire wire,
+                                      std::function<void(ModelsResult)> done)
 {
     QNetworkReply *reply = m_network.get(networkRequest(route, call));
     auto *idle = new QTimer(reply);
@@ -273,7 +275,7 @@ void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, 
         done(app::Error{.kind = app::ErrorKind::Timeout});
     });
     connect(reply, &QNetworkReply::downloadProgress, idle, [idle] { idle->start(); });
-    connect(reply, &QNetworkReply::finished, this, [reply, done, finished] {
+    connect(reply, &QNetworkReply::finished, this, [reply, wire, done, finished] {
         if (*finished)
             return;
         *finished = true;
@@ -284,7 +286,7 @@ void NetworkProviderPort::fetchModels(const Route &route, const HttpCall &call, 
             done(replyError(reply, body, false));
             return;
         }
-        done(decodeModels(body));
+        done(decodeModels(wire, body));
     });
     idle->start(m_idleTimeout);
 }

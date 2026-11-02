@@ -324,7 +324,7 @@ private slots:
                                   30'000);
         QCOMPARE(repeat(), QStringLiteral("not started"));
         QVERIFY(!shell.canRepeat());
-        QCOMPARE(shell.lastMessage(), QStringLiteral("The last run's macro is no longer loaded, so it can't be repeated."));
+        QCOMPARE(shell.lastMessage(), QStringLiteral("The last run’s macro is no longer loaded, so it can’t be repeated."));
     }
 
     void repeatTextShowsTheButtonAsShown()

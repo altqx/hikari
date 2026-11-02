@@ -588,3 +588,161 @@ TEST(VideoFollowPress, TheGridPressSeeksOnlyWhenLegacyDid)
     EXPECT_TRUE(seeks(SeekAfter::Edit, PlayAfter::VideoToNextStart, dclick));
     EXPECT_FALSE(followGridPress(SeekAfter::Edit, PlayAfter::Nothing, VideoState::None, dclick, line).seekMs);
 }
+
+namespace {
+
+struct Joined : ::testing::Test {
+    EditSession session{load("[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                             "Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,,b\n"
+                             "Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,,c\n"
+                             "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,d\n")};
+    core::LineId a{1}, b{2}, c{3}, d{4};
+    void select(std::set<core::LineId> lines, core::LineId active) { session.setSelection(Selection{active, lines, active, {}}); }
+    std::pair<std::int64_t, std::int64_t> times(std::size_t i) const
+    {
+        const auto &l = *session.document().lines()[i];
+        return {ms(l.start.value), ms(l.end.value)};
+    }
+    using Times = std::pair<std::int64_t, std::int64_t>;
+};
+
+}
+
+TEST_F(Joined, SetStartTimeMovesTheJoinedLineBeforeInTheSameStep)
+{
+    select({b}, b);
+    const auto steps = session.historySize();
+    ASSERT_TRUE(setTimesFromVideo(session, false, 2500));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(times(0), (Times{1000, 2500}));
+    EXPECT_EQ(times(1), (Times{2500, 4000}));
+    EXPECT_EQ(times(2), (Times{4000, 6000}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(times(0), (Times{1000, 2000}));
+    EXPECT_EQ(times(1), (Times{2000, 4000}));
+}
+
+TEST_F(Joined, SetEndTimeMovesTheJoinedLineAfter)
+{
+    select({b}, b);
+    ASSERT_TRUE(setTimesFromVideo(session, true, 3500));
+    EXPECT_EQ(times(0), (Times{1000, 2000}));
+    EXPECT_EQ(times(1), (Times{2000, 3500}));
+    EXPECT_EQ(times(2), (Times{3500, 6000}));
+}
+
+TEST_F(Joined, AnUnjoinedNeighbourStays)
+{
+    select({d}, d);
+    ASSERT_TRUE(setTimesFromVideo(session, false, 6500));
+    EXPECT_EQ(times(2), (Times{4000, 6000}));
+    EXPECT_EQ(times(3), (Times{6500, 8000}));
+    select({c}, c);
+    ASSERT_TRUE(setTimesFromVideo(session, true, 6200));
+    EXPECT_EQ(times(2), (Times{4000, 6200}));
+    EXPECT_EQ(times(3), (Times{6500, 8000}));
+}
+
+TEST_F(Joined, ASelectedNeighbourTakesOnlyTheSelectionsTime)
+{
+    select({a, b}, b);
+    ASSERT_TRUE(setTimesFromVideo(session, false, 1500));
+    EXPECT_EQ(times(0), (Times{1500, 2000}));
+    EXPECT_EQ(times(1), (Times{1500, 4000}));
+}
+
+TEST_F(Joined, ANeighbourPassedByTheSnapCollapsesOntoIt)
+{
+    select({b}, b);
+    ASSERT_TRUE(setTimesFromVideo(session, false, 500));
+    EXPECT_EQ(times(0), (Times{500, 500}));
+    EXPECT_EQ(times(1), (Times{500, 4000}));
+    ASSERT_TRUE(setTimesFromVideo(session, true, 6500));
+    EXPECT_EQ(times(1), (Times{500, 6500}));
+    EXPECT_EQ(times(2), (Times{6500, 6500}));
+    EXPECT_EQ(times(3), (Times{7000, 8000}));
+}
+
+TEST_F(Joined, JoinPreviousTakesTheAudioSelectionAndEndsTheLineBefore)
+{
+    select({d}, d);
+    const auto steps = session.historySize();
+    ASSERT_TRUE(joinPreviousToAudioSelection(session, 6500, 7800));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Joining with previous");
+    EXPECT_EQ(times(2), (Times{4000, 6500}));
+    EXPECT_EQ(times(3), (Times{6500, 7800}));
+    select({a}, a);
+    ASSERT_TRUE(joinPreviousToAudioSelection(session, 900, 1900));
+    EXPECT_EQ(times(0), (Times{900, 1900}));
+    EXPECT_EQ(times(1), (Times{2000, 4000}));
+    EXPECT_FALSE(joinPreviousToAudioSelection(session, 1900, 900));
+}
+
+namespace {
+
+const LegacyTimebase kCfr25({}, 25.0);
+
+std::pair<int, int> framesOf(const LegacyTimebase &timebase, const core::LineRecord &l)
+{
+    return {timebase.frameAt(static_cast<int>(ms(l.start.value))), timebase.frameAt(static_cast<int>(ms(l.end.value))) - 1};
+}
+
+}
+
+TEST_F(Joined, ShiftByFramesPutsTheActiveStartOnTheVideoFrame)
+{
+    select({b, d}, b);
+    const auto lines = [&](std::size_t i) { return framesOf(kCfr25, *session.document().lines()[i]); };
+    ASSERT_EQ(lines(1), (std::pair{50, 99}));
+    ASSERT_TRUE(shiftFramesToVideo(session, kCfr25, FrameShift{60, false, false}));
+    EXPECT_EQ(session.history().back().name, "Shifting times by frames");
+    EXPECT_EQ(lines(0), (std::pair{25, 49}));
+    EXPECT_EQ(lines(1), (std::pair{60, 109}));
+    EXPECT_EQ(lines(2), (std::pair{100, 149}));
+    EXPECT_EQ(lines(3), (std::pair{185, 209}));
+}
+
+TEST_F(Joined, ShiftByFramesByTheEndPutsTheActiveLastFrameOnTheVideoFrame)
+{
+    select({b}, b);
+    ASSERT_TRUE(shiftFramesToVideo(session, kCfr25, FrameShift{90, true, false}));
+    EXPECT_EQ(framesOf(kCfr25, *session.document().lines()[1]), (std::pair{41, 90}));
+}
+
+TEST_F(Joined, ShiftFollowingMovesEveryLineFromTheActiveOneOn)
+{
+    select({a}, c);
+    ASSERT_TRUE(shiftFramesToVideo(session, kCfr25, FrameShift{90, false, true}));
+    const auto lines = [&](std::size_t i) { return framesOf(kCfr25, *session.document().lines()[i]); };
+    EXPECT_EQ(times(0), (Times{1000, 2000}));
+    EXPECT_EQ(times(1), (Times{2000, 4000}));
+    EXPECT_EQ(lines(2), (std::pair{90, 139}));
+    EXPECT_EQ(lines(3), (std::pair{165, 189}));
+}
+
+TEST_F(Joined, ShiftByFramesKeepsFramesOnVariableTimecodes)
+{
+    std::vector<int> timecodes;
+    for (int f = 0, t = 0; f < 400; ++f, t += f % 3 == 0 ? 50 : 33)
+        timecodes.push_back(t);
+    const LegacyTimebase vfr(timecodes, 0.0);
+    select({b, c}, b);
+    const auto lines = [&](std::size_t i) { return framesOf(vfr, *session.document().lines()[i]); };
+    const auto [bFirst, bLast] = lines(1);
+    const auto [cFirst, cLast] = lines(2);
+    ASSERT_TRUE(shiftFramesToVideo(session, vfr, FrameShift{bFirst + 7, false, false}));
+    EXPECT_EQ(lines(1), (std::pair{bFirst + 7, bLast + 7}));
+    EXPECT_EQ(lines(2), (std::pair{cFirst + 7, cLast + 7}));
+    ASSERT_TRUE(shiftFramesToVideo(session, vfr, FrameShift{bFirst - 3, false, false}));
+    EXPECT_EQ(lines(1), (std::pair{bFirst - 3, bLast - 3}));
+    EXPECT_EQ(times(1).second, times(2).first);
+}
+
+TEST_F(Joined, ShiftByFramesIsRefusedWithoutAnActiveLine)
+{
+    session.setSelection(Selection{});
+    EXPECT_FALSE(shiftFramesToVideo(session, kCfr25, FrameShift{10, false, false}));
+    EXPECT_FALSE(joinPreviousToAudioSelection(session, 0, 100));
+}

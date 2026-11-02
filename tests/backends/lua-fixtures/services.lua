@@ -22,6 +22,17 @@ aegisub.register_macro("Media", "", function(subs)
     show(f:width(), f:height(), f:getPixel(1, 0), f:getPixelFormatted(1, 0), f:getPixel(5, 5))
 end)
 
+aegisub.register_macro("Fork API", "", function()
+    local v = aegisub.version
+    show(v.string, v.major, v.minor, v.patch, v.build)
+    local ffi = require 'ffi'
+    local f = aegisub.get_frame(3, true)
+    show(f:getPixel(1, 0))
+    local data, pitch, flipped = f:data()
+    local bytes = ffi.cast("uint8_t *", data)
+    show(type(data), pitch, flipped, bytes[4], bytes[5], bytes[6], bytes[7])
+end)
+
 aegisub.register_macro("Unavailable", "", function()
     show(aegisub.frame_from_ms(1), aegisub.video_size(), aegisub.keyframes(), aegisub.get_frame(1),
          aegisub.project_properties(), aegisub.file_name(), aegisub.get_audio_selection(),

@@ -78,6 +78,9 @@ const Registry &Api::registry()
         detail::addDocumentOperations(r);
         detail::addApplicationOperations(r);
         detail::addWriteOperations(r);
+        detail::addMediaOperations(r);
+        detail::addFileOperations(r);
+        detail::addNodeOperations(r);
         detail::addEvents(r);
         return r;
     }();
@@ -100,8 +103,13 @@ void Api::call(const Caller &caller, std::string_view name, const Json &params, 
                    Json::object({{"pointer", Json(failure->path)}})));
         return;
     }
+    std::vector<GrantedFile> files;
+    for (const auto &[callerId, file] : m_grants)
+        if (callerId == caller.id)
+            files.push_back(file);
+    const Context context{m_host, caller, std::move(files)};
     if (operation->access == Access::Read) {
-        operation->handler(Context{m_host, caller}, given, std::move(reply));
+        operation->handler(context, given, std::move(reply));
         return;
     }
     if (m_writing) {
@@ -109,10 +117,29 @@ void Api::call(const Caller &caller, std::string_view name, const Json &params, 
         return;
     }
     m_writing = true;
-    operation->handler(Context{m_host, caller}, given, [this, reply = std::move(reply)](Result result) {
+    operation->handler(context, given, [this, reply = std::move(reply)](Result result) {
         m_writing = false;
         reply(std::move(result));
     });
+}
+
+std::string Api::grantFile(const std::string &callerId, const std::string &path, bool writable)
+{
+    for (auto &[id, file] : m_grants)
+        if (id == callerId && file.path == path) {
+            file.writable = writable;
+            return file.handle;
+        }
+    const std::size_t slash = path.find_last_of("/\\");
+    GrantedFile file{"f" + std::to_string(m_nextGrant++), slash == std::string::npos ? path : path.substr(slash + 1),
+                     path, writable};
+    m_grants.emplace_back(callerId, file);
+    return file.handle;
+}
+
+void Api::revokeFiles(const std::string &callerId)
+{
+    std::erase_if(m_grants, [&](const auto &grant) { return grant.first == callerId; });
 }
 
 }
