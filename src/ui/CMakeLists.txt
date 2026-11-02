@@ -51,6 +51,7 @@ qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateInstallingWin
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES KaraokeCheckDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES KanjiTimerDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES ExportDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml SettingsImportReview.qml)
 qt_target_qml_sources(hikari_ui QML_FILES GettingStartedDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.qml FontsFromSubtitlesDialog.qml)
@@ -67,6 +68,7 @@ qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.q
     VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
     ManageLayoutsDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml)
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h menu_key.cpp menu_key.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)

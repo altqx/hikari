@@ -2728,6 +2728,259 @@ Should not exceed 15 characters per second</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>ลบรูปวาดแล้ว</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>ลบคลิปแล้ว</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>ลบภาพเคลื่อนไหว (\t) แล้ว</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>คงการเคลื่อนที่ไว้เป็นตำแหน่งเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>ลบการเคลื่อนที่แล้ว</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>ลบการจางแล้ว</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>ลบการหมุนหรือการเอียงแล้ว</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>ลบแท็กฟอนต์ ขนาด สเกล หรือระยะห่างแล้ว</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>ลบขอบ เงา ความเบลอ ความโปร่งใส หรือสีอื่นแล้ว</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>ลบสีข้อความแล้ว</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>ลบตัวหนา ตัวเอียง ขีดเส้นใต้ หรือขีดฆ่าบางส่วนแล้ว</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>ลบตำแหน่งหรือการจัดตำแหน่งแล้ว</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>ลบการจัดเวลาคาราโอเกะแล้ว</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>ลบเอฟเฟกต์เลื่อนแล้ว</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>รวมกับบรรทัดที่ซ้อนกันแล้ว</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>ไม่มีอะไรให้ส่งออก</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>ป้อนพาธเต็มของไฟล์ หรือเลือกด้วยปุ่ม เลือก…</translation>
+    </message>
+    <message>
+        <source>“%1” is a folder.</source>
+        <translation>“%1” เป็นโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>ป้อนอัตราเฟรมระหว่าง 1 ถึง 1000</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>เขียน %1 ไม่ได้: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>ส่งออกเป็น</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>ข้อความธรรมดา</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>ไม่มีชื่อ</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>แทนที่ “%1” หรือไม่</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>มีไฟล์ชื่อนี้อยู่แล้ว</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>แทนที่</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>รูปแบบ</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>ทั้งหมด (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>ที่เลือก (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>ที่แสดง (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>บันทึกที่</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>เลือก…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>ไฟล์ %1 (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>ตัวเลือก</translation>
+    </message>
+    <message>
+        <source>Alignment as %1 tags</source>
+        <translation>การจัดตำแหน่งเป็นแท็ก %1</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>สีข้อความเป็นแท็ก font</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>ตำแหน่งและการจัดตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>สไตล์และสี</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>จัดเวลาคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>เวลาเริ่มและเวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>ชื่อผู้พูด</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>รวมบรรทัดที่ซ้อนกันเป็นคำบรรยายเดียว</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>อัตราเฟรม</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>Use video frame rate</source>
+        <translation>ใช้อัตราเฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer ไม่มีเวลาสิ้นสุด: บรรทัดที่ซ้อนกันจะถูกรวม และคำบรรยายว่างจะล้างหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>จะไม่คงรูปแบบข้อความ สี และตำแหน่งไว้</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to “%1”.</source>
+        <translation>
+            <numerusform>ส่งออก %n บรรทัดไปยัง “%1” แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>ข้ามบรรทัดหมายเหตุ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>ข้าม %n บรรทัดที่ไม่มีอะไรให้แสดง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>สิ่งที่รูปแบบนี้เก็บไว้ไม่ได้ เลือกบรรทัดเพื่อแสดงบรรทัดนั้น</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>ไม่มีสิ่งใดถูกตัดทิ้งหรือประมาณค่า</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>รายงานการส่งออก</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>ตัดทิ้งหรือประมาณค่า</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>ส่งออก</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message>
         <source>Font catalogues</source>
@@ -3750,10 +4003,6 @@ Failed to copy %2 fonts.</source>
         <translation>มี HikariSub 0.0.x ติดตั้งอยู่ในคอมพิวเตอร์นี้ จะไม่มีการเปลี่ยนแปลงใดๆ ในโปรแกรมนั้น</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>ภายหลัง: ไฟล์ › นำเข้าการตั้งค่ารุ่นเดิม…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>นำเข้าการตั้งค่าเดิมของฉัน</translation>
     </message>
@@ -3768,10 +4017,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>ตั้งค่าใหม่ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>เริ่มจากค่าเริ่มต้นของ HikariSub ไฟล์ › นำเข้าการตั้งค่ารุ่นเดิม… ยังนำการตั้งค่าเดิมมาใช้ภายหลังได้</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -3868,6 +4113,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>วิดีโอขนาดใหญ่พร้อมเครื่องมือภาพและแผงสไตล์</translation>
+    </message>
+    <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>ภายหลัง: การตั้งค่า › ทั่วไป › นำเข้าการตั้งค่ารุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>เริ่มจากค่าเริ่มต้นของ HikariSub การตั้งค่า › ทั่วไป › นำเข้าการตั้งค่ารุ่นเดิม… ยังนำการตั้งค่าเดิมมาใช้ภายหลังได้</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -5859,6 +6112,10 @@ Failed to copy %2 fonts.</source>
         <translation>เริ่มต้นใช้งาน</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>ส่งออกเป็น</translation>
+    </message>
+    <message>
         <source>Join with previous line using the audio selection</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
     </message>
@@ -5877,6 +6134,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shift following lines by frames: end at video</source>
         <translation>เลื่อนบรรทัดถัดไปทั้งหมดทีละเฟรม: จุดสิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6533,10 +6802,6 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดคีย์เฟรม</translation>
     </message>
     <message>
-        <source>Import legacy settings...</source>
-        <translation>นำเข้าการตั้งค่ารุ่นเดิม...</translation>
-    </message>
-    <message>
         <source>Run the last loaded script</source>
         <translation>เรียกใช้สคริปต์ที่โหลดล่าสุด</translation>
     </message>
@@ -6691,6 +6956,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Check spelling</source>
         <translation>ตรวจการสะกด</translation>
+    </message>
+    <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>ติดตั้ง เปิดหรือปิด และถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>&amp;ปลั๊กอิน…</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -6851,6 +7124,14 @@ Failed to copy %2 fonts.</source>
         <translation>บันทึกเป็น</translation>
     </message>
     <message>
+        <source>Writes a copy of the document in another format</source>
+        <translation>เขียนสำเนาของเอกสารในรูปแบบอื่น</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>&amp;ส่งออกเป็น…</translation>
+    </message>
+    <message>
         <source>Save translation</source>
         <translation>บันทึกการแปล</translation>
     </message>
@@ -6973,6 +7254,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>ย้ายเวลาเริ่มและสิ้นสุดของบรรทัดที่เลือกไปไว้กลางเฟรม เพื่อให้การเลื่อนตามเวลาในภายหลังยังคงอยู่บนเฟรมเต็ม</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -9003,6 +9292,26 @@ removing audio cache files.</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม…</translation>
     </message>
     <message>
+        <source>Legacy</source>
+        <translation>รุ่นเดิม</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>ย้อนการนำเข้าครั้งล่าสุด…</translation>
+    </message>
+    <message>
+        <source>Script hotkeys</source>
+        <translation>ปุ่มลัดสคริปต์</translation>
+    </message>
+    <message>
         <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
         <translation>ปุ่มลัดสคริปต์จาก Hotkeys.txt ของรุ่นเดิม ซึ่งจะเพิ่มทันที</translation>
     </message>
@@ -9266,6 +9575,253 @@ and will be changed to the default</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>คำในภาษาอื่นจะตรวจด้วยพจนานุกรมอื่นที่ติดตั้งไว้สำหรับระบบอักษรของคำนั้น คำในระบบอักษรที่ไม่มีพจนานุกรมจะไม่ถูกทำเครื่องหมาย</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>ไฟล์นี้ไม่ใช่แพ็กเกจปลั๊กอิน (ไฟล์บีบอัดที่มี hikari-plugin.json)</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>แพ็กเกจมีลิงก์ ซึ่ง HikariSub จะไม่ติดตั้ง: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>แพ็กเกจใหญ่เกินไป: เมื่อแตกไฟล์แล้วมีมากกว่า %1 ไฟล์หรือเกิน %2 MB</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json ไม่ใช่ JSON ที่ถูกต้อง: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json มีรหัส “%1” ซ้ำที่ %2</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>ปลั๊กอินนี้ต้องใช้ Hikari API %1 แต่ HikariSub นี้มี API %2 อัปเดต HikariSub เพื่อติดตั้งปลั๊กอินนี้</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>hikari-plugin.json ไม่ผ่านสคีมาปลั๊กอินที่ %1: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>แพ็กเกจมีชื่อไฟล์ที่ HikariSub จะไม่ติดตั้ง: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>แพ็กเกจไม่มี hikari-plugin.json ที่ระดับบนสุด</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>แพ็กเกจไม่มีไฟล์หลัก %1</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>แพ็กเกจมีลายเซ็น แต่แมนิเฟสต์ไม่ได้ระบุ publicKey สำหรับตรวจสอบลายเซ็นนั้น</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>อ่าน plugins.json ในโฟลเดอร์ผู้ใช้ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>แพ็กเกจลงนามด้วยคีย์ที่แมนิเฟสต์ไม่ได้ระบุ</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>ลายเซ็นไม่ตรงกับแพ็กเกจ แพ็กเกจจึงอาจถูกเปลี่ยนแปลงหลังการลงนาม</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>ความคิดเห็นที่เชื่อถือได้ของลายเซ็นถูกเปลี่ยนแปลงหลังการลงนาม</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>ไฟล์ .minisig ข้างแพ็กเกจไม่ใช่ลายเซ็น minisign</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>เชื่อถือเต็มที่: อาจเรียกใช้โค้ดเนทีฟนอกขอบเขตที่ HikariSub จำกัดไว้</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>อ่านและแก้ไขไฟล์คำบรรยายทุกไฟล์ที่เปิดอยู่: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>เชื่อมต่อกับ %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>ขอโฟลเดอร์จากคุณเพื่ออ่านและเขียน %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>ขอโฟลเดอร์จากคุณเพื่ออ่าน %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub ทำงานไม่เสร็จ: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>ปลั๊กอินต้องใช้โฟลเดอร์ผู้ใช้ แต่สำเนานี้ไม่มี</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub อ่าน %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>เลือกแพ็กเกจปลั๊กอินก่อน</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>คีย์ลงนามเปลี่ยนไป สำเนาที่ติดตั้งไว้ลงนามด้วยคีย์ %1 และสำเนานี้ลงนามด้วยคีย์ %2 ติดตั้งเฉพาะเมื่อคุณเชื่อถือว่าผู้สร้างเปลี่ยนคีย์จริง</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>แพ็กเกจนี้ไม่ได้ลงนาม แต่สำเนาที่ติดตั้งไว้ลงนามด้วยคีย์ %1 ติดตั้งเฉพาะเมื่อคุณเชื่อถือแหล่งที่มาของแพ็กเกจนี้</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>แหล่งที่มาที่ยังไม่ได้ยืนยัน ลงนามด้วยคีย์ %1 การอัปเดตต้องลงนามด้วยคีย์เดียวกัน</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>ยังไม่ได้ยืนยัน: แพ็กเกจไม่ได้ลงนาม HikariSub จึงบอกไม่ได้ว่าใครเป็นผู้สร้าง</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>ไม่ได้ติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>ติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>อัปเดตปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>ติดตั้งปลั๊กอินใหม่</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>ดาวน์เกรดปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>ติดตั้ง “%1” %2 หรือไม่</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>อัปเดต “%1” จาก %2 เป็น %3 หรือไม่</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>ติดตั้ง “%1” %2 ใหม่หรือไม่</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>แทนที่ “%1” %2 ด้วยเวอร์ชันเก่ากว่า %3 หรือไม่</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>ปลั๊กอินนี้ขอสิทธิ์เหล่านี้</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>ปลั๊กอินนี้ไม่ขอสิทธิ์ใดนอกเหนือจากไฟล์คำบรรยายที่ใช้งานอยู่</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>เชื่อถือและติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>ถอนการติดตั้ง เก็บข้อมูลไว้</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>ถอนการติดตั้งและลบข้อมูล</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>ถอนการติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>ถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>ถอนการติดตั้ง “%1” หรือไม่</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>ปลั๊กอินนี้มีข้อมูลที่บันทึกไว้ในโฟลเดอร์ผู้ใช้ เก็บข้อมูลไว้เพื่อใช้อีกครั้งหากคุณติดตั้งใหม่</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>ไม่ได้ถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>ไม่มีปลั๊กอินที่ติดตั้งไว้ ติดตั้งได้จากไฟล์ .hikariplugin</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>ปลั๊กอินที่ติดตั้งไว้</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>เปิดใช้งาน</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>ยังไม่ได้ยืนยัน ลงนามด้วยคีย์ %1</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>ยังไม่ได้ยืนยัน ไม่ได้ลงนาม</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>เชื่อถือเต็มที่</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>ติดตั้งจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>เลือกแพ็กเกจปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>ปลั๊กอิน HikariSub (*.hikariplugin)</translation>
     </message>
 </context>
 <context>

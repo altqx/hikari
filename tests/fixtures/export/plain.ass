@@ -1,0 +1,21 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,72,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,3,0,2,60,60,50,1
+Style: Thoughts,Arial,72,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,-1,0,0,100,100,0,0,1,3,0,2,60,60,50,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:03.50,Default,Aoi,0,0,0,,Good morning.
+Dialogue: 0,0:00:04.00,0:00:06.20,Default,Ren,0,0,0,,You're late {\i1}again{\i0}.\NWe start at eight.
+Comment: 0,0:00:06.00,0:00:07.00,Default,,0,0,0,,TL note: "again" is emphatic
+Dialogue: 0,0:00:07.00,0:00:09.00,Thoughts,Aoi,0,0,0,,{Aoi thinks}Why does he always say that?
+Dialogue: 0,0:00:08.50,0:00:10.00,Default,Ren,0,0,0,,{\b1}Hurry{\b0} & bring the <notes>!
+Dialogue: 0,0:00:11.00,0:00:13.00,Default,,0,0,0,,{\u1}Chapter\hone{\u0}\N\N   
+Dialogue: 0,0:00:14.00,0:00:14.00,Default,,0,0,0,,Zero length
+Dialogue: 0,0:00:15.00,0:00:17.25,Default,Aoi,0,0,0,,{\s1}Wrong{\s0} Right, see you {\c&H00FFFF&}tomorrow{\c}.

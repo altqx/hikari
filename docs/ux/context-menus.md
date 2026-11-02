@@ -528,7 +528,7 @@ Takeaways for Hikari:
 | Text editing menu | R3 Copy, Cut, Paste … Delete (no Undo, Redo, Select all) | R4 Undo, Redo, Cut, Copy, Paste, Delete, Select All (Fusion, not ShellMenu) |
 | Active tool shown | Full-screen Tools menu checks the active tool | Rail ⋯ M7 shows no check |
 | Hotkeys shown | Video R8, M3, M4: bound keys | Grid R1: 2 bound, 4 hard-coded, the rest none; R13 and R15 hard-code "Enter" and "Del"; R3 none |
-| Ellipsis | "…" (U+2026) almost everywhere | "Edit..." (R6); menu bar "Shift times...", "Import legacy settings..." |
+| Ellipsis | "…" (U+2026) almost everywhere | "Edit..." (R6); menu bar "Shift times..." |
 
 ## Counts
 

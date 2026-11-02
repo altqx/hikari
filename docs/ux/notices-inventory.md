@@ -53,7 +53,7 @@ titled "Font collector" with Replace / Cancel (PU6-font-collector-replace), and 
 (Change / Do not change / Disable warning) a message box titled "Open video" with its choices as buttons and
 "Don't ask again" (PU6-resolution-question). A3 and A4 come from the Spellchecker panel (PU6-spellchecker-panel).
 
-PU7 ([#309](https://github.com/altqx/hikari/issues/309)): Settings > Hotkeys' Import legacy hotkeys… tells
+PU7 ([#309](https://github.com/altqx/hikari/issues/309)): Settings > General > Legacy's Import legacy hotkeys… tells
 its result in a toast titled "Import legacy hotkeys": info with how many bindings were added, kept and
 skipped (the skipped ones, with their keys, under Details), an error when the file cannot be read. The AUR
 notice (UpdateAurNotice.qml) is gone: an AUR install's release opens the update window (PU7-aur-command).
