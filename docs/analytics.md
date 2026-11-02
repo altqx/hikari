@@ -1,6 +1,6 @@
 # Anonymous usage data
 
-HikariSub sends anonymous usage data to PostHog Cloud EU (`https://eu.i.posthog.com`). This page lists every event and property it can send ([AN1 #404](https://github.com/altqx/hikari/issues/404)). The app's "What is sent" link opens the site's page on it, https://hikarisub.altqx.com/en/docs/help/what-is-sent, which follows this one.
+HikariSub sends anonymous usage data to PostHog Cloud EU (`https://eu.i.posthog.com`). This page lists every event and property it can send ([AN1 #404](https://github.com/altqx/hikari/issues/404)). The app's "What is sent" link opens the site's page on it, https://hikarisub.org/en/docs/help/what-is-sent, which follows this one.
 
 ## The basics
 
