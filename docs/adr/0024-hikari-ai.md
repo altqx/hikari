@@ -92,3 +92,5 @@ A soft cap per thread, a daily cap, a cost meter, and an estimate before every b
 - **Analytics** ([AN1 #404](https://github.com/altqx/hikari/issues/404)) counts AI use by feature and tool id only, never prompts, output, models or providers.
 - **Design gates:** the review ([AI2 #430](https://github.com/altqx/hikari/issues/430)), the agent panel ([AI7 #435](https://github.com/altqx/hikari/issues/435)) and the inline actions ([AI8 #436](https://github.com/altqx/hikari/issues/436)) need owner-approved light and dark mockups before production.
 - **The site** gets an AI guide with a "What is sent" section.
+
+Amended by [ADR 0026](0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md): providers, agents, the MCP server and client, and the agent loop run in a TypeScript sidecar on Bun; the Claude Agent SDK drives the user's own `claude`, fetched from npm and never shipped.

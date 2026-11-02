@@ -11,7 +11,7 @@ DialogWindow {
     objectName: "fontCatalogWindow"
     required property var catalogs
     property var notices: null
-    title: qsTr("Manage font catalogs")
+    title: qsTr("Manage font catalogues")
     dialogId: "fontCatalogs"
     resizable: true
     property bool created: false
@@ -145,7 +145,7 @@ DialogWindow {
     function nameProblem(name, renaming) {
         const n = name.trim()
         if (n.length === 0)
-            return renaming ? qsTr("Enter a name for the catalog.") : ""
+            return renaming ? qsTr("Enter a name for the catalogue.") : ""
         const existing = catalogs.existingName(n)
         if (existing.length === 0 || existing === renaming)
             return ""
@@ -166,8 +166,8 @@ DialogWindow {
         const existing = catalogs.existingName(newName)
         if (existing.length > 0 && existing !== oldName) {
             ask({
-                title: qsTr("Rename font catalog"),
-                text: qsTr("A catalog named “%1” already exists.").arg(existing),
+                title: qsTr("Rename font catalogue"),
+                text: qsTr("A catalogue named “%1” already exists.").arg(existing),
                 detail: qsTr("Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.").arg(oldName, existing),
                 severity: "warning",
                 choices: [{ id: "replace", text: qsTr("Replace"), role: "destructive" },
@@ -191,9 +191,9 @@ DialogWindow {
             return
         const size = catalogs.catalogSize(name)
         ask({
-            title: qsTr("Delete font catalog"),
-            text: qsTr("Delete the catalog “%1”?").arg(name),
-            detail: size === 0 ? qsTr("It holds no fonts.") : qsTr("Its fonts stay installed and in their other catalogs."),
+            title: qsTr("Delete font catalogue"),
+            text: qsTr("Delete the catalogue “%1”?").arg(name),
+            detail: size === 0 ? qsTr("It holds no fonts.") : qsTr("Its fonts stay installed and in their other catalogues."),
             severity: "warning",
             choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
                       { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
@@ -211,7 +211,7 @@ DialogWindow {
         const r = catalogs.reviewCatalogFile(file)
         if (!r.ok) {
             if (notices)
-                notices.post("warning", qsTr("Load font catalogs"), qsTr("The file holds no font catalog."), { details: r.file })
+                notices.post("warning", qsTr("Load font catalogues"), qsTr("The file holds no font catalogue."), { details: r.file })
             return
         }
         if (r.rows.length === 0) {
@@ -228,9 +228,9 @@ DialogWindow {
         }
         reviewLoader.active = true
         reviewLoader.item.review({
-            title: qsTr("Load font catalogs"),
-            text: qsTr("%1 of %2 catalogs in “%3” already exist.").arg(r.rows.length, r.total, r.file),
-            detail: [r.total - r.rows.length - r.same > 0 ? qsTr("The file’s new catalogs are added.") : "",
+            title: qsTr("Load font catalogues"),
+            text: qsTr("%1 of %2 catalogues in “%3” already exist.").arg(r.rows.length, r.total, r.file),
+            detail: [r.total - r.rows.length - r.same > 0 ? qsTr("The file’s new catalogues are added.") : "",
                      r.same > 0 ? qsTr("Those with the same fonts as yours are left as they are.") : ""]
                     .filter(t => t.length > 0).join(" "),
             canMerge: true,
@@ -248,7 +248,7 @@ DialogWindow {
                 const renames = review.names.filter((n, i) => i !== row && review.actions[i] === "rename").map(n => n.trim())
                 return catalogs.sameNameIndex(taken, name) >= 0 || catalogs.sameNameIndex(renames, name) >= 0
             },
-            acceptText: count => count === 1 ? qsTr("Load 1 catalog") : qsTr("Load %n catalogs", "", count)
+            acceptText: count => count === 1 ? qsTr("Load 1 catalogue") : qsTr("Load %n catalogues", "", count)
         }, results => {
             if (results)
                 loaded(catalogs.loadReviewed(results.map(x => ({ name: x.name, action: x.action, newName: x.newName }))), r.file)
@@ -261,8 +261,8 @@ DialogWindow {
             if (result.merged > 0) parts.push(qsTr("%n merged", "", result.merged))
             if (result.replaced > 0) parts.push(qsTr("%n replaced", "", result.replaced))
             if (result.renamed > 0) parts.push(qsTr("%n renamed", "", result.renamed))
-            notices.post("info", qsTr("Load font catalogs"),
-                         result.loaded === 1 ? qsTr("Loaded 1 font catalog") : qsTr("Loaded %n font catalogs", "", result.loaded),
+            notices.post("info", qsTr("Load font catalogues"),
+                         result.loaded === 1 ? qsTr("Loaded 1 font catalogue") : qsTr("Loaded %n font catalogues", "", result.loaded),
                          { details: qsTr("From %1: %2.").arg(file, parts.join(", ")) })
         }
     }
@@ -317,14 +317,14 @@ DialogWindow {
             Layout.preferredWidth: 200
             Layout.maximumWidth: 200
             Layout.fillHeight: true
-            Label { text: qsTr("Catalogs"); color: Theme.muted; font: window.fontAt(11) }
+            Label { text: qsTr("Catalogues"); color: Theme.muted; font: window.fontAt(11) }
             RowLayout {
                 spacing: 2
                 IconToolButton {
                     id: newButton
                     objectName: "fontCatalogNew"
                     iconRole: "add"
-                    text: qsTr("New catalog")
+                    text: qsTr("New catalogue")
                     onClicked: newPopover.openFor(newButton)
                 }
                 IconToolButton {
@@ -368,7 +368,7 @@ DialogWindow {
                     visible: catalogList.count === 0
                     anchors.fill: parent
                     anchors.margins: 10
-                    text: qsTr("No catalogs yet")
+                    text: qsTr("No catalogues yet")
                     color: Theme.muted
                     wrapMode: Text.Wrap
                 }
@@ -383,7 +383,7 @@ DialogWindow {
                     highlightMoveDuration: 0
                     Keys.onUpPressed: window.stepCatalog(-1)
                     Keys.onDownPressed: window.stepCatalog(1)
-                    Accessible.name: qsTr("Catalogs")
+                    Accessible.name: qsTr("Catalogues")
                     ScrollBar.vertical: ScrollBar {}
                     delegate: ItemDelegate {
                         id: catalogRow
@@ -460,9 +460,9 @@ DialogWindow {
                     objectName: "fontCatalogShow"
                     currentIndex: window.show
                     choices: [{ text: qsTr("All fonts"), name: "fontCatalogShowAll" },
-                              { text: window.chosen.length > 0 ? qsTr("In “%1”").arg(window.chosen) : qsTr("In the catalog"),
+                              { text: window.chosen.length > 0 ? qsTr("In “%1”").arg(window.chosen) : qsTr("In the catalogue"),
                                 name: "fontCatalogShowIn", enabled: window.chosen.length > 0 },
-                              { text: qsTr("Not in a catalog"), name: "fontCatalogShowNone" }]
+                              { text: qsTr("Not in a catalogue"), name: "fontCatalogShowNone" }]
                     Accessible.name: qsTr("Show")
                     readonly property real widest: Math.max(...choices.map(c => showMetrics.advanceWidth(c.text)))
                     Layout.preferredWidth: choices.length * (widest + 24) + 2
@@ -493,7 +493,7 @@ DialogWindow {
                         spacing: 10
                         Item { implicitWidth: 20 }
                         Label { text: qsTr("Font"); color: Theme.muted; font: window.fontAt(12); Layout.preferredWidth: 170 }
-                        Label { text: qsTr("Catalogs"); color: Theme.muted; font: window.fontAt(12); Layout.preferredWidth: 130 }
+                        Label { text: qsTr("Catalogues"); color: Theme.muted; font: window.fontAt(12); Layout.preferredWidth: 130 }
                         Label {
                             textFormat: Text.PlainText
                             text: qsTr("Sample")
@@ -625,7 +625,7 @@ DialogWindow {
             text: window.catalogs.autosaveFailed ? qsTr("Not saved: the safety copy could not be written") : qsTr("Saved")
             color: window.catalogs.autosaveFailed ? Theme.warning : Theme.muted
             ToolTip.visible: savedHover.hovered
-            ToolTip.text: qsTr("The catalogs are saved automatically to fonts.toml in the \"catalogs\" folder of your user folder.")
+            ToolTip.text: qsTr("Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.")
             HoverHandler { id: savedHover }
         }
     ]
@@ -643,7 +643,7 @@ DialogWindow {
     Popover {
         id: newPopover
         objectName: "fontCatalogNewPopover"
-        title: qsTr("New catalog")
+        title: qsTr("New catalogue")
         showTitle: true
         initialFocus: newName
         readonly property string problem: window.nameProblem(newName.text, "")
@@ -661,8 +661,8 @@ DialogWindow {
         TextField {
             id: newName
             objectName: "fontCatalogNewName"
-            placeholderText: qsTr("Catalog name")
-            Accessible.name: qsTr("Catalog name")
+            placeholderText: qsTr("Catalogue name")
+            Accessible.name: qsTr("Catalogue name")
             Layout.preferredWidth: 240
             onAccepted: newPopover.create()
         }
@@ -711,7 +711,7 @@ DialogWindow {
         TextField {
             id: renameField
             objectName: "fontCatalogRenameName"
-            Accessible.name: qsTr("Catalog name")
+            Accessible.name: qsTr("Catalogue name")
             Layout.preferredWidth: 240
             onAccepted: renamePopover.rename()
         }
@@ -759,7 +759,7 @@ DialogWindow {
     Dialogs.FileDialog {
         id: loadDialog
         objectName: "fontCatalogLoadDialog"
-        title: qsTr("Choose font catalog file")
+        title: qsTr("Choose font catalogue file")
         nameFilters: [qsTr("Text files (*.txt)")]
         fileMode: Dialogs.FileDialog.OpenFile
         onAccepted: window.load(selectedFile)

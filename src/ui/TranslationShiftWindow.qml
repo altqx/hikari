@@ -26,7 +26,7 @@ DialogWindow {
             anchors.margins: 8
             spacing: 4
             Label {
-                text: qsTr("<b>Original</b>: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.")
+                text: qsTr("<b>Original</b>: the text with the right timing. The pasted translation is matched to it, and it is deleted later.")
                 textFormat: Text.StyledText
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true

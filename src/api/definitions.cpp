@@ -1,6 +1,25 @@
 #include "operations.h"
 
+#include <algorithm>
+
 namespace hikari::api::detail {
+
+namespace {
+
+// `base`'s properties without `drop`, none required.
+Json fieldsOf(const Json &base, std::initializer_list<std::string_view> drop, std::string description)
+{
+    Json properties = Json::object();
+    for (const Json::Member &m : base.find("properties")->asObject())
+        if (std::find(drop.begin(), drop.end(), m.key) == drop.end())
+            properties[m.key] = m.value;
+    return Json::object({{"type", Json("object")},
+                         {"description", Json(std::move(description))},
+                         {"properties", properties},
+                         {"additionalProperties", Json(false)}});
+}
+
+}
 
 void addDefinitions(Registry &registry)
 {
@@ -68,6 +87,32 @@ void addDefinitions(Registry &registry)
         "required": ["name"],
         "additionalProperties": false
     })"));
+    registry.define("LineFields", fieldsOf(*registry.defs().find("Line"), {"id", "row", "generatedFrom"},
+                                           "Line fields to set; the others keep their values."));
+    registry.define("StyleFields", fieldsOf(*registry.defs().find("Style"), {},
+                                            "Style fields to set; name renames it. A new Style starts from Arial 48."));
+    registry.define("Edit", schema(R"({"oneOf": [
+        {"type": "object", "properties": {"op": {"const": "set_line"}, "line": {"$ref": "#/$defs/LineId"},
+            "fields": {"$ref": "#/$defs/LineFields"}}, "required": ["op", "line", "fields"], "additionalProperties": false},
+        {"type": "object", "description": "After or before a Line; at the end without either.",
+            "properties": {"op": {"const": "insert_line"}, "after": {"$ref": "#/$defs/LineId"},
+            "before": {"$ref": "#/$defs/LineId"}, "fields": {"$ref": "#/$defs/LineFields"}},
+            "required": ["op"], "additionalProperties": false},
+        {"type": "object", "properties": {"op": {"const": "delete_line"}, "line": {"$ref": "#/$defs/LineId"}},
+            "required": ["op", "line"], "additionalProperties": false},
+        {"type": "object", "description": "Before a Line, or to the end with before null.",
+            "properties": {"op": {"const": "move_line"}, "line": {"$ref": "#/$defs/LineId"},
+            "before": {"anyOf": [{"$ref": "#/$defs/LineId"}, {"type": "null"}]}},
+            "required": ["op", "line", "before"], "additionalProperties": false},
+        {"type": "object", "description": "Changes the Style with that name, or adds it.",
+            "properties": {"op": {"const": "set_style"}, "name": {"type": "string", "minLength": 1},
+            "fields": {"$ref": "#/$defs/StyleFields"}}, "required": ["op", "name"], "additionalProperties": false},
+        {"type": "object", "properties": {"op": {"const": "delete_style"}, "name": {"type": "string", "minLength": 1}},
+            "required": ["op", "name"], "additionalProperties": false},
+        {"type": "object", "description": "A null value removes the property.",
+            "properties": {"op": {"const": "set_info"}, "key": {"type": "string", "minLength": 1},
+            "value": {"type": ["string", "null"]}}, "required": ["op", "key", "value"], "additionalProperties": false}
+    ]})"));
     registry.define("SettingValue", schema(R"({"anyOf": [{"type": "boolean"}, {"type": "integer"}, {"type": "string"},
         {"type": "array", "items": {"type": "string"}}]})"));
 }
