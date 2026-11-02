@@ -62,6 +62,8 @@ signals:
 private:
     void onStatus(QMediaPlayer::MediaStatus status);
     void onFrame(const QVideoFrame &frame);
+    void deliver(const QVideoFrame &frame);
+    void forgetSeek();
     void takeFrame();
     void dropWaitingFrame();
     void failOpen(application::PlayerError error);
@@ -85,6 +87,8 @@ private:
         Seeked done;
     };
     std::optional<PendingSeek> m_pendingSeek;
+    QVideoFrame m_heldBack;
+    QTimer m_seekFallback;
     application::PlayerClock m_clock;
     double m_volume = 1.0;
     struct Slot {

@@ -5953,6 +5953,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przesuń następne linijki o klatki: koniec na wideo</translation>
     </message>
     <message>
+        <source>Plugins</source>
+        <translation>Wtyczki</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -6769,6 +6773,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Check spelling</source>
         <translation>Sprawdź pisownię</translation>
+    </message>
+    <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>Instaluj, włączaj, wyłączaj i odinstalowuj wtyczki</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>W&amp;tyczki…</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -9316,6 +9328,253 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>Słowa w innych językach są sprawdzane innymi zainstalowanymi słownikami dla ich pisma. Słowa w piśmie, dla którego nie ma słownika, nie są oznaczane.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>Plik nie jest pakietem wtyczki (archiwum zip zawierającym hikari-plugin.json).</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>Pakiet zawiera dowiązanie, którego HikariSub nie zainstaluje: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>Pakiet jest za duży: po rozpakowaniu ma ponad %1 plików lub ponad %2 MB.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json nie jest poprawnym plikiem JSON: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json powtarza identyfikator “%1” w miejscu %2.</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>Ta wtyczka wymaga Hikari API %1, a ten HikariSub ma API %2. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>hikari-plugin.json nie spełnia schematu wtyczki w miejscu %1: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>Pakiet zawiera nazwę pliku, której HikariSub nie zainstaluje: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>Pakiet nie ma pliku hikari-plugin.json na najwyższym poziomie.</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>W pakiecie brakuje jego pliku głównego, %1.</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>Pakiet ma podpis, ale jego manifest nie podaje klucza publicKey, którym można go sprawdzić.</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>Nie można odczytać pliku plugins.json w folderze użytkownika: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>Pakiet jest podpisany kluczem, którego jego manifest nie podaje.</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>Podpis nie pasuje do pakietu, więc pakiet mógł zostać zmieniony po podpisaniu.</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>Zaufany komentarz podpisu został zmieniony po podpisaniu.</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>Plik .minisig obok pakietu nie jest podpisem minisign.</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>Pełne zaufanie: może uruchamiać kod natywny poza ograniczeniami HikariSub.</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>Odczytywać i edytować każdy otwarty plik napisów: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>Łączyć się z %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>Prosić Cię o folder do odczytu i zapisu, %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>Prosić Cię o folder do odczytu, %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub nie mógł dokończyć operacji: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>Wtyczki wymagają folderu użytkownika, a ta kopia go nie ma.</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub nie może odczytać pliku %1.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>Najpierw wybierz pakiet wtyczki.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>Klucz podpisu się zmienił. Zainstalowana kopia była podpisana kluczem %1, a ta kluczem %2. Instaluj ją tylko wtedy, gdy ufasz, że autor zmienił klucze.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>Ten pakiet nie jest podpisany, ale zainstalowana kopia była podpisana kluczem %1. Instaluj go tylko wtedy, gdy ufasz jego źródłu.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>Niezweryfikowane źródło, podpisano kluczem %1. Aktualizacje muszą być podpisane tym samym kluczem.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>Niezweryfikowany: pakiet nie jest podpisany, więc HikariSub nie może ustalić, kto go utworzył.</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>Nie zainstalowano wtyczki</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>Zainstaluj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>Zaktualizuj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>Zainstaluj wtyczkę ponownie</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>Obniż wersję wtyczki</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>Zainstalować “%1” %2?</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>Zaktualizować “%1” z wersji %2 do %3?</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>Zainstalować ponownie “%1” %2?</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>Zastąpić “%1” %2 starszą wersją %3?</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>Prosi o te uprawnienia</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>Wtyczka nie prosi o uprawnienia wykraczające poza aktywny plik napisów.</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>Zaufaj i zainstaluj</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>Odinstaluj, zachowaj dane</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>Odinstaluj i usuń dane</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>Odinstaluj</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>Odinstaluj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>Odinstalować “%1”?</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>Wtyczka ma zapisane dane w folderze użytkownika. Zachowaj je, aby znów ich używać po ponownej instalacji.</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>Nie odinstalowano wtyczki</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>Brak zainstalowanych wtyczek. Zainstaluj wtyczkę z pliku .hikariplugin.</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>Zainstalowane wtyczki</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Włączona</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>Niezweryfikowana, podpisana kluczem %1</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>Niezweryfikowana, niepodpisana</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>Pełne zaufanie</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>Zainstaluj z pliku…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>Wybierz pakiet wtyczki</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>Wtyczki HikariSub (*.hikariplugin)</translation>
     </message>
 </context>
 <context>

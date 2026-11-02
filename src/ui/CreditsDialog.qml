@@ -31,6 +31,7 @@ DialogWindow {
             ["PortAudio", "Ross Bencina, Phil Burk and contributors", "MIT"],
             ["SoundTouch", "Olli Parviainen", "LGPL 2.1 or later"],
             ["curl", "Daniel Stenberg and contributors", "curl License"],
+            ["libsodium", "Frank Denis", "ISC"],
             ["PCRE2", "University of Cambridge and others", "BSD 3-Clause"],
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
             ["Harper", "Automattic and Harper contributors", "Apache 2.0"],

@@ -8,8 +8,8 @@
 namespace hikari::api {
 
 // A JSON Schema 2020-12 subset: type, properties, required, additionalProperties,
-// items, enum, const, minimum, maximum, minLength, maxLength, minItems, maxItems,
-// oneOf, anyOf, $ref ("#/$defs/<name>", resolved in `defs`), plus the
+// items, enum, const, minimum, maximum, minLength, maxLength, pattern (ECMAScript,
+// unanchored), minItems, maxItems, oneOf, anyOf, $ref ("#/$defs/<name>", resolved in `defs`), plus the
 // annotations description, title and default. "integer" accepts only an Int.
 struct SchemaFailure {
     std::string path; // JSON pointer into the value

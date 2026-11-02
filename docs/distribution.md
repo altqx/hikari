@@ -4,6 +4,8 @@
 
 ## Packages
 
+The site and user guide are at https://hikarisub.org (DM1 #665, 2026-11-02). The old host, hikarisub.altqx.com, answers with a path-preserving 301 to it, so links in earlier releases keep working.
+
 Every release publishes these assets, where `<V>` is the version without its `v`:
 
 | Package kind | Asset | Installs to | Updates |
