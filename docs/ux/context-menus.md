@@ -1,6 +1,6 @@
 # Context menus and ⋯ menus (CX1 step 1)
 
-Inventory for [#557](https://github.com/altqx/hikari/issues/557), read from source at `main` 3c9f13341. It covers every right-click menu and every ⋯ ("More") menu. The menu bar is out of scope; its names come from `tests/ui/menu_bar.txt`. Usage counts from AN1/PostHog are in the CX2 proposal at the end.
+Inventory for [#557](https://github.com/altqx/hikari/issues/557), read from source at `main` 3c9f13341. It covers every right-click menu and every ⋯ ("More") menu. The menu bar is out of scope; its names come from `tests/ui/menu_bar.txt`. Usage counts from AN1/PostHog are in the CX2 approved design at the end.
 
 How to read it:
 
@@ -569,9 +569,9 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 
 ---
 
-## CX2 proposal (awaiting approval)
+## CX2 approved design
 
-Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. This section becomes the approved design once the owner answers each menu on #578.
+Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. The owner approved every menu and every flagged point on 2026-11-02 ([#578 decision](https://github.com/altqx/hikari/issues/578)); CX3–CX6 build this.
 
 Notation as above, plus: `{keys}` is the default binding shown in the key column; an icon role that is not in `src/ui/icons` yet is a new icon CX3 draws.
 
@@ -620,7 +620,7 @@ Right-click a row or empty space, and now also the Menu key and Shift+F10 (ancho
 - ──
 - Select lines visible on video (select-visible; was “Select all lines visible on video”)
 - Show subtitles preview (reference; {Ctrl+Q})
-- Shift translation… (translation-shift; was “Dialogue shifting window”)
+- Translation matching… (translation-shift; was “Dialogue shifting window”)
 - ──
 - Delete text (clear; {Alt+Del})
 - Delete 3 lines (delete; {Shift+Del}; was “Delete lines”)
@@ -633,11 +633,11 @@ Changes:
 - Duplicate and Delete name the selection's count (“Duplicate line” and “Delete line” for one).
 - Hide selected lines (GRID_HIDE_SELECTED) leaves the menu (round 2).
 
-For approval:
+Approved:
 
 - **1.1** Approve the grid row menu as drawn.
 - **1.2** Use Cut · Copy · Paste here, matching the text menus, instead of Copy · Cut · Paste.
-- **1.3** Rename “Dialogue shifting window” to “Shift translation…” and “Paste translation text” (it opens a file dialog) to “Paste translation from a file…”, in the menu, the hotkey list and the command search.
+- **1.3** Rename “Dialogue shifting window” to “Translation matching…” (the window's own name) and “Paste translation text” (it opens a file dialog) to “Paste translation from a file…”, in the menu, the hotkey list and the command search.
 - **1.4** Inside Insert ▸, Split ▸, Join ▸ and Make times continuous ▸, rows drop the parent's word (“Before”, “Into words”, “Keep first”); the hotkey list keeps the full names.
 
 ### 2. Grid: right-click the column header (CX4 #580; inventory R1 (header))
@@ -664,7 +664,7 @@ Changes:
 - The header opens the column list, as Aegisub does (round 2). Ticked means shown; the old menu's “Hide …” checks were ticked when hidden.
 - The same list is Grid ⋯ › Columns ▸.
 
-For approval:
+Approved:
 
 - **2.1** Approve the header menu as drawn.
 
@@ -710,7 +710,7 @@ Changes:
 - The filter check is “Hide selected lines (filter)”, so it no longer shares its name with the one-off action.
 - Shared panel rows: Float replaces Undock, and Close sits alone after a separator (menu 16).
 
-For approval:
+Approved:
 
 - **3.1** Approve the Grid ⋯ menu as drawn.
 
@@ -730,7 +730,7 @@ Changes:
 - “Delete” only dissolved the group and kept its lines. It is now “Ungroup”, alone after a separator, with remove's icon instead of delete's.
 - “Add 3 selected lines” says it adds the Grid's selection, not the clicked group.
 
-For approval:
+Approved:
 
 - **4.1** Approve the line group menu as drawn.
 
@@ -781,7 +781,7 @@ Changes:
 - The two dictionary rows become one name, Add “word” to dictionary. Labels lose their & access keys.
 - Delete uses clear's icon, as Delete text does in the Grid; trash (delete) stays for deleting lines and objects.
 
-For approval:
+Approved:
 
 - **5.1** Approve the Line editor text menu as drawn (spelling and grammar variants).
 - **5.2** Text-field Delete takes the clear icon, not delete.
@@ -818,7 +818,7 @@ Changes:
 - Same rows and order as Qt's, in sentence case (“Select all”). Keys come from the platform; Redo shows the app's Ctrl+Y.
 - Read-only fields keep every row and grey out the ones that would change the text, so the menu has the same shape everywhere.
 
-For approval:
+Approved:
 
 - **6.1** Approve the shared text menu as drawn.
 - **6.2** Read-only fields grey out rows instead of hiding them.
@@ -842,7 +842,7 @@ Changes:
 - Both TimeField and NumberField use right-drag to scrub, so the round-2 exception (“unless they use right-drag”) would leave every one of them without a menu.
 - Proposal: a right-click that doesn't move opens the shared text menu on release. A right-drag still scrubs and opens nothing. The Menu key and Shift+F10 always open it.
 
-For approval:
+Approved:
 
 - **7.1** Time and number fields open the shared text menu on a right-click without movement; right-drag keeps scrubbing. (Without this they get no menu.)
 
@@ -860,7 +860,7 @@ Changes:
 
 - Only the ellipsis changes: “Edit…” uses the … character like every other menu.
 
-For approval:
+Approved:
 
 - **8.1** Approve.
 
@@ -876,7 +876,7 @@ Changes:
 
 - The rows stay as they are. The list gains a ⋯ button (panel-menu, tooltip “Tag list options”), so the menu is no longer hidden behind a right-click.
 
-For approval:
+Approved:
 
 - **9.1** Approve the ⋯ button; right-click on a row keeps opening the same options.
 
@@ -919,7 +919,7 @@ Changes:
 - New: Reset zoom and pan (round 2), the command the menu bar calls “Turn off video zoom”. It resets both zoom and pan (VideoView::resetZoom).
 - The monitor rows move into Full screen on ▸, shown only with a second monitor.
 
-For approval:
+Approved:
 
 - **10.1** Approve the panel video menu as drawn.
 - **10.2** Rename the menu bar's Video › “Turn off video zoom” to “Reset zoom and pan” too, so the command has one name.
@@ -965,7 +965,7 @@ Changes:
 - Open video… and Open subtitles… get the ellipsis the menu bar has. The two Recently opened submenus become one, with a heading per kind.
 - 17 top rows, above the ~12 guide. The full-screen file rows (owner decision) are what push it over; they stay together in their own group.
 
-For approval:
+Approved:
 
 - **11.1** Approve the full-screen video menu as drawn.
 - **11.2** Merge the two Recently opened submenus into one with Subtitles and Videos headings.
@@ -982,7 +982,7 @@ Changes:
 
 - Auto, Always and Never only made sense with the status-bar help. The rows now say what they do. The hotkey row becomes “Full screen bar: when the pointer moves / always / never”.
 
-For approval:
+Approved:
 
 - **12.1** Rename the three modes as drawn.
 
@@ -1000,7 +1000,7 @@ Changes:
 
 - Adds the “Output device” heading the Audio panel's copy of this menu already shows.
 
-For approval:
+Approved:
 
 - **13.1** Approve.
 
@@ -1047,7 +1047,7 @@ Changes:
 - Tap options becomes a real submenu with an icon, instead of closing this menu and opening another one in its place.
 - This is an overflow, so its button uses » (menu-more). ⋯ stays for options of a panel or object.
 
-For approval:
+Approved:
 
 - **14.1** Approve the audio overflow menu as drawn.
 
@@ -1072,7 +1072,7 @@ Changes:
 - Toolbar labels stay short (“Auto-commit”, “Next after commit”, “Line”, “Speech”); their tooltips give the full names above.
 - Tap to time becomes a check item everywhere, as the round-1 toggle rule asks.
 
-For approval:
+Approved:
 
 - **15.1** Approve the renames.
 
@@ -1100,7 +1100,7 @@ Changes:
 - Close comes last, alone after a separator; “Close reference” becomes “Close”.
 - View › Panels › name gets the same words: Show, Float or Dock, then Close. Hide becomes Close; Float and Dock become one switching row. This changes menu_bar.txt.
 
-For approval:
+Approved:
 
 - **16.1** Approve the shared panel rows.
 - **16.2** View › Panels › name shows one Float/Dock row instead of two (one always greyed).
@@ -1137,7 +1137,7 @@ Changes:
 - Automation's Clear runs gets its own group, away from Load and Refresh.
 - Spellchecker, Reference and Grid keep their rows (Grid's grows, menu 3).
 
-For approval:
+Approved:
 
 - **17.1** Rename “Seek on ▸” and “Then play ▸” as drawn.
 - **17.2** Move Show times / Show frames from the Video ⋯ to the Line editor ⋯.
@@ -1157,7 +1157,7 @@ Changes:
 
 - The floating window's ⋯ shows the same menu as the panel's own ⋯ (menu 16): the panel's rows, Move panel…, Dock, then Close alone. Two menus for one window were out of step.
 
-For approval:
+Approved:
 
 - **18.1** The floating title bar's ⋯ opens the full panel menu.
 
@@ -1201,7 +1201,7 @@ Changes:
 - The tab list moves into Switch to ▸.
 - Close all tabs stays, since no other menu has it.
 
-For approval:
+Approved:
 
 - **19.1** Approve the tab menu as drawn.
 - **19.2** Show in folder ▸ and Copy path ▸ list one row per file when the tab has more than the subtitles; with only subtitles they are plain rows.
@@ -1221,7 +1221,7 @@ Changes:
 
 - Only rows that make sense without a tab. Save (greyed) and Subtitle comparison go, and New tab is added.
 
-For approval:
+Approved:
 
 - **20.1** Approve.
 
@@ -1257,7 +1257,7 @@ Changes:
 - One name per command in both menus: Edit style…, Style manager. The right-click gains New style…, which the overflow had.
 - Delete leaves the Edit and Duplicate group and comes last. “Enter” and “Del” move from the labels into the key column.
 
-For approval:
+Approved:
 
 - **21.1** Approve both style menus as drawn.
 - **21.2** “Style manager” without an ellipsis, as in the menu bar: it opens a window and asks nothing. (The round-1 note wrote “Style manager…”.)
@@ -1276,7 +1276,7 @@ Changes:
 
 - Delete unused styles comes last, alone after a separator (round 1).
 
-For approval:
+Approved:
 
 - **22.1** Approve.
 
@@ -1294,7 +1294,7 @@ Changes:
 - Run shows the macro's own shortcut (an example key is drawn) and takes run-script, the icon of Automation › Run the last loaded script; media-play stays for playback.
 - The shortcut rows get their own group.
 
-For approval:
+Approved:
 
 - **23.1** Approve.
 
@@ -1311,7 +1311,7 @@ Changes:
 
 - The rows stay. A right-click on the script row opens the same menu as its ⋯.
 
-For approval:
+Approved:
 
 - **24.1** Approve.
 
@@ -1335,7 +1335,7 @@ Changes:
 - Delete preset ▸ goes behind a separator, away from Save as preset….
 - Presets ▸ takes dialog-memory, so save-as means only Save as preset…; Reset takes restore-default like the other resets.
 
-For approval:
+Approved:
 
 - **25.1** Approve.
 
@@ -1354,7 +1354,7 @@ Changes:
 
 - Already the cleanest menu. “Enter” and “Del” move out of the translated labels into the key column; the screen looks the same.
 
-For approval:
+Approved:
 
 - **26.1** Approve.
 
@@ -1380,7 +1380,7 @@ Changes:
 - Copy is new (round 2): it copies the clicked rows.
 - “Title (12 3)” becomes “Title, line 12”. A disabled “No other occurrences” replaces the empty menu.
 
-For approval:
+Approved:
 
 - **27.1** Approve.
 - **27.2** Occurrence rows read “title, line N” and drop the unexplained length number.
@@ -1410,7 +1410,7 @@ Changes:
 - Render cost becomes a check item in the Video menu too, and Turn off video zoom takes the context menu's name (see 10.2).
 - View › Panels › name: see menu 16. All of these update menu_bar.txt and the docs export test.
 
-For approval:
+Approved:
 
 - **28.1** Approve the menu bar rows as drawn.
 
