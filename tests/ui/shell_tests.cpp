@@ -11555,9 +11555,9 @@ private slots:
         QCOMPARE(application->findReplaceSettings().value(QStringLiteral("finds")).toStringList(),
                  QStringList{QStringLiteral("BETA")});
 
+        item("findText")->setProperty("text", QStringLiteral("zzz"));
         press(Qt::Key_F, Qt::ControlModifier);
         QTRY_VERIFY(!dock->property("isOpen").toBool());
-        item("findText")->setProperty("text", QStringLiteral("zzz"));
         auto *lineText = item("lineText");
         lineText->forceActiveFocus();
         QTRY_COMPARE(lineText->property("text").toString(), QStringLiteral("Alpha beta"));
