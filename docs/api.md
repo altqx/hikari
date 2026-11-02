@@ -24,8 +24,33 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `commands.list` | read | Commands with their id (`GLOBAL_SAVE_SUBS`), name, window, enabled state, disabled reason and keys; `query` searches ids and names. |
 | `panels.list` | read | Workspace panels: open, floating, focused. |
 | `settings.list`, `settings.get` | read | Settings with type, scope, default and value. |
+| `document.apply` | write | One change set to one Document, as one undo step. |
+| `selection.set` | write | The selected Lines and the active Line; the Grid follows. |
+| `commands.run` | write | Runs a command as its menu item or toolbar button would. |
+| `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |
+| `settings.set` | write | One setting, type-checked. |
 
 Lines are addressed by their stable Line id, never by row ([document model](document-model.md)). Times are milliseconds. In Translation mode `text` is the original text and `translation` the translated text.
+
+## Writes
+
+`document.apply` takes the Document `revision` the caller read, a step `name`, and a list of `edits`: `set_line`, `insert_line`, `delete_line`, `move_line`, `set_style`, `delete_style` and `set_info`. The whole list applies as one command through `EditSession::run`, the path Automation macros use, so it is one undo step named `"<caller>: <name>"`. If the revision moved since the read, nothing changes and the call fails with `stale_revision`; read again and retry. A pending Line editor draft on a touched Line is committed first, which moves the revision. If any edit fails, the Document stays as it was and `data.edit` gives the failing edit's index. A change set that changes nothing adds no step and answers `changed: false`.
+
+One write runs at a time; another write meanwhile gets `busy`.
+
+## Events
+
+A caller subscribes to events by name and hears them only while subscribed.
+
+| Event | When |
+| --- | --- |
+| `document.changed` | A Document's revision moved: an edit, an undo, a write. |
+| `selection.changed` | The selection or active Line of a Document changed. |
+| `documents.changed` | A Document opened or closed, or the editing target changed. Without `documents.all` the list holds the editing target only. |
+| `panel.changed` | A panel opened, closed or floated. |
+| `command.ran` | A command ran, from the API, a menu, a toolbar or a key. |
+
+The application notices changes after each refresh of its views and each selection change, so a burst of edits gives one event per refresh, not one per edit.
 
 ## Calls, callers and errors
 
@@ -42,6 +67,11 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `not_found` | No such Document, Line or setting; `data` names it. |
 | `not_granted` | The caller lacks the grant. |
 | `unavailable` | The host has no such service (no Documents, commands, panels or settings). |
+| `stale_revision` | The Document changed since the given revision; `data.current` is the revision now. |
+| `read_only` | The Document can't be edited (an open Automation macro holds it). |
+| `protected` | The Document is the protected reference. |
+| `refused` | The application refused; `data.reason` says why when the caller can act on it (`disabled`, `not_run`, `group_break`, `invalid_draft`, …). |
+| `busy` | Another write is running. |
 
 ## Versioning
 
@@ -49,4 +79,4 @@ The version is a running number. Every release that grows the API bumps it, and 
 
 ## Tests
 
-`tests/api` runs without network or Qt. A fake host holds real `Workspace` and `EditSession` objects. The **scripted test client** reads `.jsonl` scripts in `tests/api/scripts/`, one call per line, each with its expected result or error code, and checks every result against its operation's schema. The scripts double as examples of each operation.
+`tests/api` runs without network or Qt. A fake host holds real `Workspace` and `EditSession` objects. The **scripted test client** reads `.jsonl` scripts in `tests/api/scripts/`, one call per line, each with its expected result or error code, and checks every result against its operation's schema. The scripts double as examples of each operation. `hikari_ui_api_host_tests` drives the same API against the real application and shell: a write is one named undo step that the Undo command reverts, a stale revision is refused, the Grid follows `selection.set`, and panels open and close.

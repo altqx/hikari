@@ -6545,10 +6545,6 @@ What would you like to do?</source>
         <translation>ค้นหาถัดไป</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>เลื่อนเวลา / ใช้โพสต์โปรเซสเซอร์การจัดเวลา</translation>
-    </message>
-    <message>
         <source>Go to start time of line</source>
         <translation>ไปยังเวลาเริ่มต้นของบรรทัด</translation>
     </message>

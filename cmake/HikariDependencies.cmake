@@ -112,3 +112,5 @@ file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
     "compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}\n")
 
 find_package(KDDockWidgets-qt6 CONFIG REQUIRED)
+
+find_package(Qt6Keychain CONFIG REQUIRED)

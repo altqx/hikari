@@ -862,8 +862,6 @@ icon("fps-from-video", "Set FPS from video", [], [GRIDMENU],
 icon("compare-off", "Turn off comparison", [], [TABMENU],
      rect(1.5, 2.5, 6, 11, 1) + stroke("M3.5 5.5h2M3.5 8h2M3.5 10.5h2") + stroke("M8.5 8.5v-5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v5")
      + cross_badge())
-icon("shift-times-run", "Shift times / run time post processor", [], [SUBS],
-     circle(6.5, 6.5, 5) + stroke("M6.5 4v2.5l2 1.5") + accent(solid("M11 10.5v4l3.5-2z")))
 
 icon("language", "Language", [], ["settings-dialog"],
      circle(8, 8, 6.5) + stroke("M8 1.5c-2 1.75-3 4-3 6.5s1 4.75 3 6.5c2-1.75 3-4 3-6.5s-1-4.75-3-6.5z")
