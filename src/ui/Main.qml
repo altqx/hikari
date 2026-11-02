@@ -210,8 +210,6 @@ ApplicationWindow {
     }
 
     function defaultLayout() {
-        dockingArea.addDockWidget(searchDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 280))
-        searchDock.close()
         dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
         dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 520))
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
@@ -221,13 +219,9 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        editorDock.addDockWidgetAsTab(timingDock)
-        editorDock.addDockWidgetAsTab(automationDock)
         editorDock.addDockWidgetAsTab(stylesDock)
         editorDock.addDockWidgetAsTab(templateDock)
         editorDock.setAsCurrentTab()
-        timingDock.close()
-        automationDock.close()
         stylesDock.close()
         templateDock.close()
         dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
@@ -344,6 +338,22 @@ ApplicationWindow {
             editorDock.addDockWidgetAsTab(templateDock)
         else
             dockingArea.addDockWidget(templateDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
+    }
+
+    function addRightOfGrid(dock) {
+        const grid = gridDock.isOpen && !gridDock.isFloating
+        const left = Docking.placeInLayout("Grid").x
+        const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf("Grid"))
+        if (column) {
+            column.addDockWidgetAsTab(dock)
+        } else {
+            const third = Math.round((grid ? root.workspaceLayout.panelSize(gridDock).width : dockingArea.width) / 3)
+            const width = Math.min(Docking.minimumSize(dock.uniqueName).width, third)
+            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnRight, grid ? gridDock : null, Qt.size(width, 0))
+        }
+        const moved = Docking.placeInLayout("Grid").x - left
+        if (grid && moved !== 0)
+            Docking.resizeInLayout("Grid", moved, 0, 0, 0)
     }
 
     function openAutomationRun(runId) {
@@ -553,6 +563,8 @@ ApplicationWindow {
             dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         else if (dock === templateDock && !Docking.hasPlace("Template"))
             root.addTemplate()
+        else if (!Docking.hasPlace(dock.uniqueName))
+            root.addRightOfGrid(dock)
         else
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()

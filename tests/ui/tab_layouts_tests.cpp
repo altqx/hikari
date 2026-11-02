@@ -114,6 +114,18 @@ class TabLayoutsTest : public QObject {
         QVERIFY(QMetaObject::invokeMethod(window(), "applyPreset", Q_ARG(QVariant, QLatin1String(name))));
     }
     QString preset() const { return application->workspaceLayout().preset(); }
+    ui::Docking *docking() const { return engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking"); }
+    QRectF sceneRect(const char *name) const
+    {
+        auto *item = window()->findChild<QQuickItem *>(QLatin1String(name));
+        return QRectF(item->mapToScene(QPointF(0, 0)), QSizeF(item->width(), item->height()));
+    }
+    void showPanel(const char *name)
+    {
+        QVERIFY(QMetaObject::invokeMethod(window(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock(name)))));
+        QTRY_VERIFY(isOpen(name));
+        QVERIFY(!isFloating(name));
+    }
     void openVideo()
     {
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
@@ -148,6 +160,74 @@ private slots:
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
                                  "last-session.json", "settings.toml", "hotkeys.toml", "state.json"})
             QFile::remove(dir.filePath(QLatin1String(name)));
+    }
+
+    void aPanelWithoutAPlaceOpensRightOfTheGrid_data()
+    {
+        QTest::addColumn<QString>("preset");
+        QTest::addColumn<QString>("first");
+        for (const char *preset : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke"})
+            QTest::addRow("%s, Shift times", preset) << QString::fromLatin1(preset) << QStringLiteral("timing");
+        for (const char *first : {"search", "automation"})
+            QTest::addRow("Editing, %s", first) << QStringLiteral("Editing") << QString::fromLatin1(first);
+    }
+
+    void aPanelWithoutAPlaceOpensRightOfTheGrid()
+    {
+        QFETCH(QString, preset);
+        QFETCH(QString, first);
+        start();
+        applyPreset(qPrintable(preset));
+        QTRY_COMPARE(this->preset(), preset);
+        QStringList order{QStringLiteral("timing"), QStringLiteral("search"), QStringLiteral("automation")};
+        order.move(order.indexOf(first), 0);
+        const auto uniqueName = [&](const QString &panel) {
+            return dock((panel + QLatin1String("Dock")).toLatin1().constData())->property("uniqueName").toString();
+        };
+        for (const QString &panel : order)
+            QVERIFY2(!docking()->hasPlace(uniqueName(panel)), qPrintable(panel));
+        const QRectF before = sceneRect("gridPanel");
+        const QByteArray firstDock = (first + QLatin1String("Dock")).toLatin1();
+        const QByteArray firstPanel = (first + QLatin1String("Panel")).toLatin1();
+        const QString firstName = uniqueName(first);
+        showPanel(firstDock.constData());
+        QTRY_VERIFY(window()->findChild<QQuickItem *>(QLatin1String(firstPanel))->isVisible());
+        QTRY_VERIFY(sceneRect(firstPanel.constData()).left() > sceneRect("gridPanel").right() - 1);
+        const QRectF grid = sceneRect("gridPanel");
+        const QRectF column = sceneRect(firstPanel.constData());
+        const QString where = QStringLiteral("grid %1,%2 %3x%4 (was %5 wide) %6 %7,%8 %9x%10")
+                                  .arg(grid.x()).arg(grid.y()).arg(grid.width()).arg(grid.height()).arg(before.width())
+                                  .arg(first).arg(column.x()).arg(column.y()).arg(column.width()).arg(column.height());
+        QVERIFY2(qAbs(grid.left() - before.left()) < 1, qPrintable(where));
+        QVERIFY2(qAbs(column.bottom() - grid.bottom()) < 2, qPrintable(where));
+        QVERIFY2(column.top() < grid.top() + 1, qPrintable(where));
+        QVERIFY2(column.width() <= std::max(qreal(docking()->minimumSize(firstName).width()), before.width() / 3) + 2,
+                 qPrintable(where));
+        QCOMPARE(docking()->tabCount(firstName), 1);
+        QVERIFY(docking()->tabCount(QStringLiteral("Grid")) == 1);
+
+        for (qsizetype i = 1; i < order.size(); ++i) {
+            showPanel((order[i] + QLatin1String("Dock")).toLatin1().constData());
+            QTRY_COMPARE(docking()->tabCount(firstName), int(i + 1));
+            QCOMPARE(docking()->tabCount(uniqueName(order[i])), int(i + 1));
+        }
+        const bool gridAtItsMinimum = docking()->placeInLayout(QStringLiteral("Grid")).width()
+                                      <= docking()->minimumSize(QStringLiteral("Grid")).width() + 1;
+        QVERIFY2(qAbs(sceneRect("gridPanel").left() - before.left()) < 1 || gridAtItsMinimum,
+                 qPrintable(QStringLiteral("grid left %1, was %2; column %3 wide; grid group %4 wide, minimum %5")
+                                .arg(sceneRect("gridPanel").left()).arg(before.left()).arg(sceneRect(firstPanel.constData()).width())
+                                .arg(docking()->placeInLayout(QStringLiteral("Grid")).width())
+                                .arg(docking()->minimumSize(QStringLiteral("Grid")).width())));
+
+        for (const QString &panel : order)
+            close((panel + QLatin1String("Dock")).toLatin1().constData());
+        showPanel("timingDock");
+        QTRY_VERIFY(sceneRect("timingPanel").left() > sceneRect("gridPanel").right() - 1);
+
+        QVERIFY(application->workspaceLayout().resetCurrentLayout());
+        QTRY_VERIFY(!isOpen("timingDock"));
+        QTRY_VERIFY(qAbs(sceneRect("gridPanel").width() - before.width()) < 2);
+        stop();
     }
 
     void switchingTabsSwapsTheirArrangements()
