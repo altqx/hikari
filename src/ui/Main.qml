@@ -1462,15 +1462,6 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
             }
             ShellMenuItem {
-                command: "GLOBAL_SHIFT_TIMES"
-                id: runShiftTimesItem
-                iconRole: "shift-times-run"
-                objectName: "runShiftTimes"
-                text: qsTr("Shift times / run timing postprocessor")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
-            }
-            ShellMenuItem {
                 command: "GLOBAL_OPEN_STYLE_MANAGER"
                 help: qsTr("Is used to manage ASS styles")
                 id: styleManagerItem
@@ -6887,7 +6878,7 @@ ApplicationWindow {
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
-        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
+        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
@@ -7033,6 +7024,7 @@ ApplicationWindow {
             if (editing)
                 styleManagerWindow.deleteUnused()
             return true
+        case "GLOBAL_SHIFT_TIMES": if (editing) root.runShiftTimes(); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
