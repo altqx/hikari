@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD;
+  --line:#414B57; --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --match:#5A4A1E; --matchtext:#FFE7A3;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170;
+  --line:#AAB5BE; --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --match:#FCE8A8; --matchtext:#3A2C00;
+}
+[data-theme="hc"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE;
+  --line:#FFFFFF; --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#00FFFF; --danger:#FFADAD; --match:#FFFF00; --matchtext:#000000;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+.sheet { padding:20px 24px 28px; display:grid; grid-template-columns: 900px 340px; gap:22px 24px; align-items:start; width:1312px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; }
+.cap b { color:var(--text); font-weight:600; }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+
+.dock { background:var(--panel); border:1px solid var(--line); }
+.tabs { display:flex; align-items:stretch; height:28px; background:var(--raised); border-bottom:1px solid var(--line); }
+.tab { padding:0 12px; display:flex; align-items:center; font-weight:600; background:var(--panel); border-right:1px solid var(--line); }
+.tab.off { font-weight:400; background:var(--raised); color:var(--text); }
+.tabs .sp { flex:1; }
+.more { width:28px; display:flex; align-items:center; justify-content:center; color:var(--muted); }
+.float { background:var(--panel); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 28px rgba(0,0,0,.45); }
+.titlebar { height:28px; display:flex; align-items:center; padding:0 0 0 10px; font-weight:700; }
+.titlebar .sp { flex:1; }
+.body { padding:8px; }
+
+.row { display:flex; align-items:center; gap:4px; }
+.row + .row { margin-top:4px; }
+.fold { width:20px; height:26px; display:flex; align-items:center; justify-content:center; color:var(--text); flex:none; border-radius:2px; }
+.fold.on svg { transform:rotate(90deg); }
+.input { flex:1; min-width:0; height:26px; display:flex; align-items:center; background:var(--field); border:1px solid var(--line); border-radius:2px; padding:0 2px 0 7px; gap:2px; }
+.input.focus { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.input.error { border-color:var(--danger); box-shadow:0 0 0 1px var(--danger) inset; }
+.input .val { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.input .ph { color:var(--muted); }
+.caret { display:inline-block; width:1px; height:14px; background:var(--text); vertical-align:-2px; margin-left:1px; }
+.tog { height:20px; min-width:22px; padding:0 3px; display:inline-flex; align-items:center; justify-content:center; border:1px solid transparent; border-radius:2px; color:var(--muted); font-size:11px; font-weight:600; }
+.tog.on { background:var(--select); border-color:var(--accent); color:var(--text); }
+.ib { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; color:var(--text); flex:none; position:relative; }
+.ib.dis { color:var(--muted); opacity:.55; }
+.ib.on { background:var(--select); }
+.ib .dot { position:absolute; right:3px; top:3px; width:6px; height:6px; border-radius:3px; background:var(--accent); }
+.count { min-width:58px; text-align:center; color:var(--muted); font-size:12px; white-space:nowrap; }
+.count.none { color:var(--danger); }
+.btn { height:26px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); }
+.btn.danger { background:transparent; border-color:var(--danger); color:var(--danger); }
+.ring { outline:1px solid var(--focus); outline-offset:1px; }
+.summary { margin:6px 0 0 24px; color:var(--muted); font-size:12px; display:flex; flex-wrap:wrap; gap:4px 6px; align-items:center; }
+.chip { border:1px solid var(--line); border-radius:10px; padding:0 8px; height:20px; display:inline-flex; align-items:center; color:var(--text); background:var(--raised); }
+.err { margin:4px 0 0 24px; color:var(--danger); font-size:12px; }
+
+.opts { margin:8px 0 0 24px; border-top:1px solid var(--line); padding-top:8px; display:grid; grid-template-columns: 92px 1fr; gap:6px 8px; align-items:center; }
+.opts .k { color:var(--muted); font-size:12px; }
+.seg { justify-self:start; display:inline-flex; border:1px solid var(--line); border-radius:2px; overflow:hidden; }
+.seg span { padding:0 8px; height:22px; display:inline-flex; align-items:center; border-right:1px solid var(--line); font-size:12px; white-space:nowrap; }
+.seg span:last-child { border-right:0; }
+.seg span.on { background:var(--select); font-weight:600; box-shadow: inset 0 -2px 0 var(--accent); }
+.check { display:inline-flex; align-items:center; gap:6px; font-size:12px; }
+.box { width:14px; height:14px; border:1px solid var(--line); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; }
+.box.on { background:var(--accent); border-color:var(--accent); color:var(--onaccent); }
+.combo { height:24px; border:1px solid var(--line); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; padding:0 6px 0 8px; gap:6px; font-size:12px; min-width:0; }
+.combo .val { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.split { display:grid; grid-template-columns: 420px 1fr; }
+.split > .left { padding:8px; border-right:1px solid var(--line); }
+.results { display:flex; flex-direction:column; min-height:0; }
+.rhead { height:30px; display:flex; align-items:center; padding:0 8px; gap:8px; border-bottom:1px solid var(--line); }
+.rhead .t { font-weight:600; }
+.rhead .sp { flex:1; }
+.group { display:flex; align-items:center; gap:6px; height:24px; padding:0 8px; font-weight:600; background:var(--raised); border-bottom:1px solid var(--line); }
+.group .n { color:var(--muted); font-weight:400; }
+.hit { display:flex; align-items:center; gap:8px; height:22px; padding:0 8px 0 22px; white-space:nowrap; overflow:hidden; }
+.hit.cur { background:var(--select); box-shadow: inset 2px 0 0 var(--accent); }
+.hit .ln { color:var(--muted); width:34px; text-align:right; flex:none; }
+.hit .tm { color:var(--muted); flex:none; }
+.hit .tx { overflow:hidden; text-overflow:ellipsis; }
+.m { background:var(--match); color:var(--matchtext); border-radius:2px; padding:0 1px; }
+.m.del { text-decoration:line-through; }
+.ins { color:var(--accent); font-weight:600; }
+.rfoot { display:flex; align-items:center; gap:6px; padding:6px 8px; border-top:1px solid var(--line); }
+.rfoot .sp { flex:1; }
+.empty { color:var(--muted); padding:28px 16px; text-align:center; font-size:12px; }
+.note { font-size:12px; color:var(--muted); width:900px; }
+.legend { grid-column: 1 / -1; display:flex; gap:18px; font-size:12px; color:var(--muted); }
+.kbd { font-family:inherit; border:1px solid var(--line); border-bottom-width:2px; border-radius:3px; padding:0 4px; font-size:11px; color:var(--text); background:var(--raised); }
+.tip { position:absolute; background:var(--raised); border:1px solid var(--line); color:var(--text); padding:3px 7px; font-size:12px; border-radius:2px; white-space:nowrap; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,.35); }
+svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="chev" viewBox="0 0 16 16"><path d="M6 4l4 4-4 4"/></symbol>
+  <symbol id="up" viewBox="0 0 16 16"><path d="M8 13V3M4 7l4-4 4 4"/></symbol>
+  <symbol id="down" viewBox="0 0 16 16"><path d="M8 3v10M4 9l4 4 4-4"/></symbol>
+  <symbol id="list" viewBox="0 0 16 16"><path d="M5 4h8M5 8h8M5 12h8"/><circle cx="2.5" cy="4" r=".6"/><circle cx="2.5" cy="8" r=".6"/><circle cx="2.5" cy="12" r=".6"/></symbol>
+  <symbol id="opts" viewBox="0 0 16 16"><path d="M2 4h7M12 4h2M2 12h2M7 12h7"/><circle cx="10.5" cy="4" r="1.5"/><circle cx="5.5" cy="12" r="1.5"/></symbol>
+  <symbol id="more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r=".9"/><circle cx="8" cy="8" r=".9"/><circle cx="12.5" cy="8" r=".9"/></symbol>
+  <symbol id="close" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></symbol>
+  <symbol id="folder" viewBox="0 0 16 16"><path d="M2 4.5h4l1.5 1.5H14v6.5H2z"/></symbol>
+  <symbol id="drop" viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5"/></symbol>
+  <symbol id="tick" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></symbol>
+  <symbol id="styles" viewBox="0 0 16 16"><path d="M3 3h10v3H3zM3 10h6"/><path d="M3 13h8"/></symbol>
+  <symbol id="warn" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.2"/></symbol>
+</svg>
+
+<div class="sheet" id="sheet">
+
+  <!-- 1. Docked, wide -->
+  <div>
+    <p class="cap"><b>1 · Docked, wide (900 px).</b> The Replace row is shown, the options are open beside the rows, and Find all has listed the results on the right.</p>
+    <div class="dock" style="height:318px; display:flex; flex-direction:column;">
+      <div class="tabs"><div class="tab">Find</div><div class="tab off">Automation</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="split" style="flex:1; min-height:0;">
+        <div class="left">
+          <div class="row">
+            <span class="fold on" title="Hide replace"><svg><use href="#chev"/></svg></span>
+            <div class="input focus"><span class="val">hello<span class="caret"></span></span><span class="tog on" title="Match case">Aa</span><span class="tog" title="Regular expression">.*</span></div>
+            <span class="count">3 of 12</span>
+            <span class="ib"><svg><use href="#up"/></svg></span><span class="ib"><svg><use href="#down"/></svg></span>
+            <span class="ib on"><svg><use href="#list"/></svg></span>
+            <span class="ib on"><svg><use href="#opts"/></svg><span class="dot"></span></span>
+          </div>
+          <div class="row">
+            <span class="fold"></span>
+            <div class="input"><span class="val">hi</span></div>
+            <span class="btn">Replace</span><span class="btn">Replace all</span>
+          </div>
+          <div class="opts">
+            <span class="k">Search in</span>
+            <span class="seg"><span class="on">This document</span><span>Open documents</span><span>Folder</span></span>
+            <span class="k">Field</span>
+            <span class="seg"><span class="on">Text</span><span>Style</span><span>Actor</span><span>Effect</span></span>
+            <span class="k">Lines</span>
+            <span class="seg"><span class="on">All</span><span>Selected</span><span>From selected</span></span>
+            <span class="k">Styles</span>
+            <span class="combo" style="width:250px"><svg><use href="#styles"/></svg><span class="val">Default, Sign</span><svg><use href="#drop"/></svg></span>
+            <span class="k">In text</span>
+            <span class="seg"><span class="on">All text</span><span>Outside tags</span><span>Inside tags</span></span>
+            <span class="k">Match at</span>
+            <span class="seg"><span class="on">Anywhere</span><span>Start</span><span>End</span></span>
+            <span class="k"></span>
+            <span class="check"><span class="box"></span>Include comments</span>
+          </div>
+        </div>
+        <div class="results">
+          <div class="rhead"><span class="t">12 matches in 9 lines</span><span class="sp"></span><span class="ib"><svg><use href="#close"/></svg></span></div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="group"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><svg style="width:12px;height:12px;transform:rotate(90deg)"><use href="#chev"/></svg>ep01.ass <span class="n">12</span></div>
+            <div class="hit"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><span class="ln mono">14</span><span class="tm mono">0:01:02.30</span><span class="tx">She said <span class="m">hello</span> and left.</span></div>
+            <div class="hit"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><span class="ln mono">27</span><span class="tm mono">0:02:11.04</span><span class="tx">{\i1}<span class="m">hello</span>{\i0}, is anyone there?</span></div>
+            <div class="hit cur"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><span class="ln mono">31</span><span class="tm mono">0:02:40.88</span><span class="tx"><span class="m">hello</span> again. Say <span class="m">hello</span> to the others.</span></div>
+            <div class="hit"><span class="box"></span><span class="ln mono">48</span><span class="tm mono">0:04:05.12</span><span class="tx">The sign reads <span class="m">hello</span> world</span></div>
+            <div class="hit"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><span class="ln mono">52</span><span class="tm mono">0:04:31.70</span><span class="tx">“<span class="m">hello</span>,” he whispered.</span></div>
+            <div class="hit"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><span class="ln mono">60</span><span class="tm mono">0:05:12.45</span><span class="tx">Did you say <span class="m">hello</span>?</span></div>
+            <div class="hit"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><span class="ln mono">71</span><span class="tm mono">0:06:03.02</span><span class="tx"><span class="m">hello</span>, <span class="m">hello</span>, <span class="m">hello</span>!</span></div>
+          </div>
+          <div class="rfoot"><span class="btn">Check all</span><span class="btn">Uncheck all</span><span class="sp"></span><span class="btn primary">Replace 11 checked</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Docked, narrow, find only -->
+  <div>
+    <p class="cap"><b>2 · Docked, narrow (340 px), find only.</b> Replace is folded and so are the options. A summary shows what differs from the defaults.</p>
+    <div class="dock">
+      <div class="tabs"><div class="tab">Find</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="body">
+        <div class="row">
+          <span class="fold ring"><svg><use href="#chev"/></svg></span>
+          <div class="input"><span class="val">Bakura</span><span class="tog">Aa</span><span class="tog">.*</span></div>
+        </div>
+        <div class="row" style="justify-content:flex-end">
+          <span class="count">1 of 4</span>
+          <span class="ib"><svg><use href="#up"/></svg></span><span class="ib"><svg><use href="#down"/></svg></span>
+          <span class="ib"><svg><use href="#list"/></svg></span>
+          <span class="ib"><svg><use href="#opts"/></svg><span class="dot"></span></span>
+        </div>
+        <div class="summary"><span class="chip">Actor</span><span class="chip">Selected lines</span><span class="chip">Comments too</span></div>
+      </div>
+    </div>
+    <p class="cap" style="margin-top:14px"><b>2a · The same, regex error.</b> Nothing is searched. The field says why.</p>
+    <div class="dock">
+      <div class="tabs"><div class="tab">Find</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="body">
+        <div class="row">
+          <span class="fold"><svg><use href="#chev"/></svg></span>
+          <div class="input error focus"><span class="val mono">(hel+o<span class="caret"></span></span><span class="tog">Aa</span><span class="tog on">.*</span></div>
+        </div>
+        <div class="err">Missing closing parenthesis at position 7</div>
+        <div class="row" style="justify-content:flex-end; margin-top:4px">
+          <span class="count none">No matches</span>
+          <span class="ib dis"><svg><use href="#up"/></svg></span><span class="ib dis"><svg><use href="#down"/></svg></span>
+          <span class="ib dis"><svg><use href="#list"/></svg></span>
+          <span class="ib"><svg><use href="#opts"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Floating, folder scope -->
+  <div>
+    <p class="cap"><b>3 · Floating (560 px), Search in: Folder.</b> The folder fields show only for this scope. Replacing writes the files and asks first.</p>
+    <div style="display:flex; gap:24px; align-items:flex-start;">
+      <div class="float" style="width:560px;">
+        <div class="titlebar">Find<span class="sp"></span><span class="more"><svg><use href="#more"/></svg></span></div>
+        <div class="body" style="padding-top:2px">
+          <div class="row">
+            <span class="fold on"><svg><use href="#chev"/></svg></span>
+            <div class="input"><span class="val">Mr\.\s+Smith</span><span class="tog">Aa</span><span class="tog on">.*</span></div>
+            <span class="ib on"><svg><use href="#list"/></svg></span>
+            <span class="ib on"><svg><use href="#opts"/></svg><span class="dot"></span></span>
+          </div>
+          <div class="row">
+            <span class="fold"></span>
+            <div class="input"><span class="val">Mr Smith</span></div>
+            <span class="btn danger">Replace in 3 files…</span>
+          </div>
+          <div class="opts" style="grid-template-columns: 84px 1fr;">
+            <span class="k">Search in</span>
+            <span class="seg"><span>This document</span><span>Open documents</span><span class="on">Folder</span></span>
+            <span class="k">Folder</span>
+            <span class="row" style="margin:0; gap:4px"><span class="combo" style="flex:1"><span class="val mono">~/subs/show-s01</span><svg><use href="#drop"/></svg></span><span class="ib"><svg><use href="#folder"/></svg></span></span>
+            <span class="k">Files</span>
+            <span class="combo" style="width:200px"><span class="val mono">*.ass; *.srt</span><svg><use href="#drop"/></svg></span>
+            <span class="k"></span>
+            <span class="row" style="margin:0; gap:16px"><span class="check"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span>Subfolders</span><span class="check"><span class="box"></span>Hidden folders</span></span>
+            <span class="k">Field</span>
+            <span class="seg"><span class="on">Text</span><span>Style</span><span>Actor</span><span>Effect</span></span>
+          </div>
+          <div style="margin:8px -8px -8px; border-top:1px solid var(--line);">
+            <div class="rhead"><span class="t">5 matches in 3 files</span><span class="sp"></span><span class="ib"><svg><use href="#close"/></svg></span></div>
+            <div class="group"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><svg style="width:12px;height:12px;transform:rotate(90deg)"><use href="#chev"/></svg><span class="mono">ep01.ass</span> <span class="n">2</span></div>
+            <div class="hit"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><span class="ln mono">8</span><span class="tx"><span class="m del">Mr. Smith</span><span class="ins">Mr Smith</span> will see you now.</span></div>
+            <div class="hit"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><span class="ln mono">90</span><span class="tx">Thank you, <span class="m del">Mr.  Smith</span><span class="ins">Mr Smith</span>.</span></div>
+            <div class="group"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><svg style="width:12px;height:12px"><use href="#chev"/></svg><span class="mono">ep02.ass</span> <span class="n">2</span></div>
+            <div class="group"><span class="box on"><svg style="width:12px;height:12px"><use href="#tick"/></svg></span><svg style="width:12px;height:12px"><use href="#chev"/></svg><span class="mono">extras/op.srt</span> <span class="n">1</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="width:300px; font-size:12px; color:var(--muted);">
+        <p class="cap"><b>Keyboard</b></p>
+        <div style="display:grid; grid-template-columns:auto 1fr; gap:5px 10px; align-items:center;">
+          <span><span class="kbd">Ctrl+F</span></span><span>Find: focus the find field, with Replace as it was left</span>
+          <span><span class="kbd">Ctrl+H</span></span><span>Replace: unfold Replace, focus the find field</span>
+          <span><span class="kbd">Enter</span> <span class="kbd">F3</span></span><span>Find next</span>
+          <span><span class="kbd">Shift+Enter</span></span><span>Find previous (new)</span>
+          <span><span class="kbd">Alt+Enter</span></span><span>Find all</span>
+          <span><span class="kbd">Enter</span> in Replace</span><span>Replace, then go to the next match</span>
+          <span><span class="kbd">Ctrl+Alt+Enter</span></span><span>Replace all</span>
+          <span><span class="kbd">Alt+C</span> <span class="kbd">Alt+R</span></span><span>Match case, Regular expression</span>
+          <span><span class="kbd">Up</span> <span class="kbd">Down</span></span><span>Recent finds or replacements in the field</span>
+          <span><span class="kbd">Esc</span></span><span>Back to the Line editor; the panel stays</span>
+        </div>
+        <p class="cap" style="margin-top:12px"><b>Tab order</b></p>
+        <div>Fold ▸ find field ▸ Match case ▸ Regular expression ▸ Previous ▸ Next ▸ Find all ▸ Options ▸ replace field ▸ Replace ▸ Replace all ▸ the options, top to bottom ▸ results ▸ Check all ▸ Uncheck all ▸ Replace checked.</div>
+        <p class="cap" style="margin-top:12px"><b>Screen readers</b></p>
+        <div>The count is a live status: “3 of 12 matches”, “No matches”. The results are announced as “12 matches in 9 lines”. Each result reads its line number, time and text.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Docked narrow with replace + options open -->
+  <div>
+    <p class="cap"><b>4 · Docked, narrow, Replace and options open.</b> The options push the results down. Each choice is one row, so nothing is clipped.</p>
+    <div class="dock">
+      <div class="tabs"><div class="tab">Find</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="body">
+        <div class="row">
+          <span class="fold on"><svg><use href="#chev"/></svg></span>
+          <div class="input"><span class="val">colour</span><span class="tog">Aa</span><span class="tog">.*</span></div>
+        </div>
+        <div class="row">
+          <span class="fold"></span>
+          <div class="input"><span class="val">color</span></div>
+        </div>
+        <div class="row" style="justify-content:flex-end">
+          <span class="count">5 matches</span>
+          <span class="ib"><svg><use href="#up"/></svg></span><span class="ib"><svg><use href="#down"/></svg></span>
+          <span class="ib"><svg><use href="#list"/></svg></span>
+          <span class="ib on"><svg><use href="#opts"/></svg></span>
+        </div>
+        <div class="row" style="justify-content:flex-end"><span class="btn">Replace</span><span class="btn">Replace all</span></div>
+        <div class="opts" style="margin-left:0; grid-template-columns: 1fr;">
+          <span class="k">Search in</span>
+          <span class="combo"><span class="val">This document</span><svg><use href="#drop"/></svg></span>
+          <span class="k">Field</span>
+          <span class="seg" style="width:max-content"><span class="on">Text</span><span>Style</span><span>Actor</span><span>Effect</span></span>
+          <span class="k">Lines</span>
+          <span class="seg" style="width:max-content"><span class="on">All</span><span>Selected</span><span>From selected</span></span>
+          <span class="k">Styles</span>
+          <span class="combo"><svg><use href="#styles"/></svg><span class="val">All styles</span><svg><use href="#drop"/></svg></span>
+          <span class="k">In text</span>
+          <span class="seg" style="width:max-content"><span class="on">All text</span><span>Outside tags</span><span>Inside tags</span></span>
+          <span class="k">Match at</span>
+          <span class="seg" style="width:max-content"><span class="on">Anywhere</span><span>Start</span><span>End</span></span>
+          <span class="check" style="margin-top:2px"><span class="box"></span>Include comments</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const t = new URLSearchParams(location.search).get('theme');
+if (t) document.documentElement.dataset.theme = t;
+</script>
+</body>
+</html>
