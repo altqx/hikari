@@ -5504,6 +5504,14 @@ What would you like to do?</source>
         <translation>அனைத்து வரிகளையும் அடுக்குப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
+        <source>Sort all lines by text</source>
+        <translation>அனைத்து வரிகளையும் உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort all lines by text without tags</source>
+        <translation>அனைத்து வரிகளையும் குறிச்சொற்கள் இல்லாத உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
         <source>Sort selected lines by start time</source>
         <translation>தேர்ந்தெடுத்த வரிகளைத் தொடக்க நேரப்படி வரிசைப்படுத்து</translation>
     </message>
@@ -5526,6 +5534,14 @@ What would you like to do?</source>
     <message>
         <source>Sort selected lines by layer</source>
         <translation>தேர்ந்தெடுத்த வரிகளை அடுக்குப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை உரைப்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by text without tags</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை குறிச்சொற்கள் இல்லாத உரைப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6905,6 +6921,22 @@ What would you like to do?</source>
     <message>
         <source>Sort by layer</source>
         <translation>அடுக்கு மூலம் வரிசைப்படுத்துங்கள்</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>உரை</translation>
+    </message>
+    <message>
+        <source>Sort by text</source>
+        <translation>உரை மூலம் வரிசைப்படுத்துங்கள்</translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation>குறிச்சொற்கள் இல்லாமல் உரை</translation>
+    </message>
+    <message>
+        <source>Sort by text without tags</source>
+        <translation>குறிச்சொற்கள் இல்லாத உரை மூலம் வரிசைப்படுத்துங்கள்</translation>
     </message>
     <message>
         <source>Open subtitle file</source>

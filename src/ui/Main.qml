@@ -78,7 +78,11 @@ ApplicationWindow {
         { key: "effect", label: qsTr("Effect"), all: "GLOBAL_SORT_ALL_BY_EFFECT", selected: "GLOBAL_SORT_SELECTED_BY_EFFECT",
           help: qsTr("Sort by effect") },
         { key: "layer", label: qsTr("Layer"), all: "GLOBAL_SORT_ALL_BY_LAYER", selected: "GLOBAL_SORT_SELECTED_BY_LAYER",
-          help: qsTr("Sort by layer") }
+          help: qsTr("Sort by layer") },
+        { key: "text", label: qsTr("Text"), all: "GLOBAL_SORT_ALL_BY_TEXT", selected: "GLOBAL_SORT_SELECTED_BY_TEXT",
+          help: qsTr("Sort by text") },
+        { key: "textWithoutTags", label: qsTr("Text without tags"), all: "GLOBAL_SORT_ALL_BY_TEXT_WITHOUT_TAGS",
+          selected: "GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS", help: qsTr("Sort by text without tags") }
     ]
 
     function applyTagButton(index, edited) {

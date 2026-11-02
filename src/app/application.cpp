@@ -5385,7 +5385,9 @@ bool Application::sortLines(const QString &key, bool selectedOnly)
     using application::SortKey;
     static const std::pair<const char *, SortKey> keys[] = {{"start", SortKey::Start}, {"end", SortKey::End},
                                                             {"style", SortKey::Style}, {"actor", SortKey::Actor},
-                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer}};
+                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer},
+                                                            {"text", SortKey::Text},
+                                                            {"textWithoutTags", SortKey::TextWithoutTags}};
     auto *session = targetSession();
     const auto *found = std::find_if(std::begin(keys), std::end(keys),
                                      [&](const auto &k) { return key == QLatin1String(k.first); });
