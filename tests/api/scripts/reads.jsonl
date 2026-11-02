@@ -1,0 +1,24 @@
+{"call": "api.version", "exact": {"version": 0}}
+{"call": "documents.list", "result": {"documents": [{"document": 1, "title": "a.ass", "path": "/subs/a.ass", "format": "ass", "editingTarget": true, "reference": false, "dirty": false, "readOnly": false}, {"document": 2, "title": "b.ass", "path": null, "editingTarget": false}]}}
+{"call": "documents.get", "result": {"document": 1, "lineCount": 3, "styleCount": 2, "draftLine": null}, "save": {"rev": "/revision"}}
+{"call": "lines.list", "result": {"revision": "$rev", "total": 3, "lines": [{"id": 1, "row": 1, "comment": false, "layer": 0, "start": 1000, "end": 2000, "style": "Default", "actor": "Ann", "marginL": 0, "marginR": 0, "marginV": 0, "effect": "", "text": "Hello there", "translation": "", "unconfirmed": false, "generatedFrom": null}, {"id": 2, "comment": true, "style": "Sign", "effect": "note"}, {"id": 3, "layer": 1, "end": 6500, "marginL": 10, "marginR": 20, "marginV": 30, "text": "General Kenobi"}]}}
+{"call": "lines.list", "params": {"offset": 1, "limit": 1, "fields": ["text"]}, "exact": {"revision": "$rev", "total": 3, "lines": [{"id": 2, "row": 2, "text": "a sign note"}]}}
+{"call": "lines.list", "params": {"offset": 7}, "result": {"total": 3, "lines": []}}
+{"call": "lines.get", "params": {"ids": [3, 1], "fields": ["start"]}, "exact": {"revision": "$rev", "lines": [{"id": 3, "row": 3, "start": 5000}, {"id": 1, "row": 1, "start": 1000}]}}
+{"call": "lines.find", "params": {"regex": "^gen", "ignoreCase": true, "fields": []}, "exact": {"revision": "$rev", "total": 1, "lines": [{"id": 3, "row": 3}]}}
+{"call": "lines.find", "params": {"regex": "^gen", "fields": []}, "result": {"total": 0, "lines": []}}
+{"call": "lines.find", "params": {"text": "note", "in": "effect", "fields": []}, "result": {"total": 1, "lines": [{"id": 2}]}}
+{"call": "lines.find", "params": {"from": 1500, "to": 3500, "fields": []}, "result": {"total": 2, "lines": [{"id": 1}, {"id": 2}]}}
+{"call": "lines.find", "params": {"style": "Default", "comment": false, "limit": 1, "fields": []}, "result": {"total": 2, "lines": [{"id": 1}]}}
+{"call": "lines.find", "params": {"actor": "Bob", "fields": []}, "result": {"total": 1, "lines": [{"id": 3}]}}
+{"call": "styles.list", "result": {"revision": "$rev", "styles": [{"name": "Default", "fontname": "Arial", "fontsize": "20", "primaryColour": "&H00FFFFFF", "secondaryColour": "&H000000FF", "bold": false, "italic": false, "scaleX": "100", "borderStyle": 1, "outline": "2", "alignment": "2", "marginV": "10", "encoding": "1"}, {"name": "Sign", "fontname": "Verdana", "backColour": "&H80000000", "bold": true, "borderStyle": 3, "alignment": "8", "marginV": "40"}]}}
+{"call": "info.list", "exact": {"revision": "$rev", "info": [{"key": "Title", "value": "alpha"}, {"key": "ScriptType", "value": "v4.00+"}, {"key": "PlayResX", "value": "1920"}]}}
+{"call": "selection.get", "exact": {"document": 1, "revision": "$rev", "active": 3, "selected": [1, 3]}}
+{"call": "lines.list", "params": {"document": 2, "fields": ["text"]}, "result": {"total": 1, "lines": [{"id": 1, "text": "other"}]}}
+{"call": "selection.get", "params": {"document": 2}, "result": {"document": 2, "active": null, "selected": []}}
+{"call": "commands.list", "params": {"query": "undo"}, "exact": {"commands": [{"command": "GLOBAL_UNDO", "name": "Undo", "window": "global", "enabled": false, "keys": ["Ctrl-Z"], "disabledReason": "Nothing to undo"}]}}
+{"call": "commands.list", "result": {"commands": [{"command": "GLOBAL_SAVE_SUBS", "enabled": true, "keys": ["Ctrl-S"]}, {"command": "GLOBAL_UNDO"}]}}
+{"call": "commands.list", "params": {"window": "video"}, "exact": {"commands": []}}
+{"call": "panels.list", "exact": {"panels": [{"panel": "Grid", "title": "Subtitles grid", "open": true, "floating": false, "focused": true}, {"panel": "Video", "title": "Video", "open": false, "floating": false, "focused": false}]}}
+{"call": "settings.get", "params": {"settings": ["grid.changeActiveOnSelection", "editor.dictionaryLanguage", "grid.copyColumns"]}, "exact": {"values": {"grid.changeActiveOnSelection": true, "editor.dictionaryLanguage": "en_US", "grid.copyColumns": 0}}}
+{"call": "settings.list", "params": {"prefix": "grid.changeActiveOn"}, "exact": {"settings": [{"setting": "grid.changeActiveOnSelection", "type": "boolean", "scope": "profile", "default": true, "value": true}]}}

@@ -133,6 +133,8 @@ constexpr OptionsBinding kBindings[] = {
     {"grammar.group.miscellaneous", Check, Spelling},
     {"privacy.usageData", Check, Updates},
     {"privacy.alwaysSendCrashReports", Check, Updates},
+    {"privacy.discordPresence", Check, Updates},
+    {"privacy.discordFileName", Check, Updates},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

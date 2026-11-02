@@ -138,8 +138,11 @@ public:
     // not copied: each other Line keeps its own, which `companion` may write
     // again from the Line before and after; so too when only the text or Style
     // changed.
+    // While `amending` is still the newest step, the commit replaces that step
+    // instead of adding one, keeping its name and recorded selection.
     using Companion = std::function<void(const core::LineRecord &before, core::LineRecord &after)>;
-    bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false, const Companion &companion = {});
+    bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false, const Companion &companion = {},
+                               std::optional<ContentId> amending = std::nullopt);
     void discardDraft();
     // The draft's fields that `fields` holds go to its own Line alone, however
     // many Lines are selected, until it is committed or discarded or a later
@@ -214,8 +217,8 @@ private:
         DraftChange own; // keepDraftFieldsToItsLine
     };
 
-    void pushState(core::Document document, std::string name);
-    bool commit(bool leaving, std::string name = "Edit Line");
+    void pushState(core::Document document, std::string name, std::optional<ContentId> amending = std::nullopt);
+    bool commit(bool leaving, std::string name = "Edit Line", std::optional<ContentId> amending = std::nullopt);
 
     std::deque<State> m_states;
     std::size_t m_cursor = 0;

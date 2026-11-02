@@ -48,6 +48,8 @@ install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyri
     RENAME LICENSE COMPONENT hikari_app)
 install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
     DESTINATION licenses/unidic RENAME LICENSE COMPONENT hikari_app)
+install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/qtkeychain/copyright" DESTINATION licenses/qtkeychain
+    RENAME LICENSE COMPONENT hikari_app)
 install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/dav1d/copyright" DESTINATION licenses/dav1d
     RENAME LICENSE COMPONENT hikari_app)
 

@@ -1588,6 +1588,14 @@ DialogWindow {
                             visible: !dialog.crashReports || dialog.crashReports.canSend
                             text: qsTr("After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.")
                         }
+                        SettingCheck { setting: "privacy.discordPresence"; text: qsTr("Show what I am doing in Discord") }
+                        SettingNote { text: qsTr("Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.") }
+                        SettingCheck {
+                            setting: "privacy.discordFileName"
+                            enabled: dialog.values["privacy.discordPresence"] === true
+                            text: qsTr("Include the file name")
+                            Layout.leftMargin: 22
+                        }
                     }
                 }
             }

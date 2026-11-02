@@ -112,6 +112,14 @@ _Avoid_: Script as an interchangeable name for one registered command.
 A compatibility-API term for a script-defined export-processing operation.
 _Avoid_: Grid filter as a synonym.
 
+**Hikari API**:
+The one typed, versioned set of operations over the running application that plugins, AI tools, the MCP server and node-editor nodes call.
+_Avoid_: Automation API or Lua API, which name Aegisub automation's interface.
+
+**Operation**:
+One named, read- or write-marked entry of the Hikari API, with schemas for its parameters and result.
+_Avoid_: Command, which names a menu, toolbar or shortcut action.
+
 ### Files
 
 **User folder**:

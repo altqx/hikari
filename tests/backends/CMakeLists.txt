@@ -410,3 +410,8 @@ add_test(NAME directshow-adapter-presence COMMAND "${CMAKE_COMMAND}"
     "-DEXECUTABLE=$<TARGET_FILE:${_hikari_app_code}>" "-DEXPECT=$<IF:$<PLATFORM_ID:Windows>,present,absent>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/directshow_presence.cmake")
 set_tests_properties(directshow-adapter-presence PROPERTIES LABELS packaging TIMEOUT 120)
+
+hikari_add_gtest(hikari_backends_ai_provider_tests SOURCES ai_provider_tests.cpp
+    LIBRARIES hikari_ai LABELS backends)
+hikari_add_gtest(hikari_backends_ai_keychain_tests SOURCES ai_keychain_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core LABELS backends)
