@@ -1038,6 +1038,24 @@ TEST_F(VideoTest, AFailedOpenAtPlayIsCountedAndNotRetried)
     EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.avi"}));
 }
 
+TEST_F(VideoTest, ADummyVideoThePlayerCannotOpenIsNeitherCountedNorRefused)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    const std::string dummy = "?dummy:23.976000:1000:1280:720:28:30:64:";
+    video.open(dummy);
+    source.finishOpen();
+    source.answer();
+    ASSERT_TRUE(video.playLine(0, 1000));
+    player.failed();
+    EXPECT_FALSE(video.playing());
+    EXPECT_FALSE(video.playerFailed());
+    EXPECT_EQ(video.playbackFailures(), 0u);
+    EXPECT_TRUE(video.playLine(0, 1000, true));
+    EXPECT_TRUE(video.playing());
+}
+
 TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
 {
     std::vector<std::string> logged;

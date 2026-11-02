@@ -508,7 +508,7 @@ bool VideoSession::startPlayback(std::int64_t fromUs)
                 return;
             if (!opened) {
                 m_playing = false;
-                if (opened.error() != PlayerError::Stale) {
+                if (opened.error() != PlayerError::Stale && !dummy()) {
                     m_failedPath = m_path;
                     ++m_playbackFailures;
                 }
