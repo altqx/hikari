@@ -27,6 +27,7 @@
 #include <QDeadlineTimer>
 #include <QGuiApplication>
 #include <QLoggingCategory>
+#include <QMouseEvent>
 #include <QPointer>
 #include <QQmlEngine>
 #include <QQuickItem>
@@ -623,6 +624,76 @@ bool Docking::resizeInLayout(const QString &uniqueName, int left, int top, int r
         return false;
     dock->resizeInLayout(left, top, right, bottom);
     return true;
+}
+
+QRect dockchrome::resizedFrom(const QRect &from, Qt::Edges edges, QPoint delta, QSize minimum)
+{
+    const QSize least = minimum.expandedTo(QSize(1, 1));
+    QRect to = from;
+    if (edges & Qt::LeftEdge)
+        to.setLeft(std::min(from.left() + delta.x(), from.right() + 1 - least.width()));
+    if (edges & Qt::RightEdge)
+        to.setRight(std::max(from.right() + delta.x(), from.left() - 1 + least.width()));
+    if (edges & Qt::TopEdge)
+        to.setTop(std::min(from.top() + delta.y(), from.bottom() + 1 - least.height()));
+    if (edges & Qt::BottomEdge)
+        to.setBottom(std::max(from.bottom() + delta.y(), from.top() - 1 + least.height()));
+    return to;
+}
+
+namespace {
+std::optional<bool> g_systemResize;
+}
+
+void dockchrome::overrideSystemResize(std::optional<bool> allowed)
+{
+    g_systemResize = allowed;
+}
+
+namespace {
+// Takes the moves from KDDW's WidgetResizeHandler, which would put the edge under the pointer instead.
+class EngineResize : public QObject {
+public:
+    EngineResize(QWindow *window, Qt::Edges edges, QPointF pressedAt)
+        : QObject(window), m_window(window), m_edges(edges), m_from(window->geometry()), m_pressedAt(pressedAt)
+    {
+        window->installEventFilter(this);
+    }
+
+    bool eventFilter(QObject *, QEvent *event) override
+    {
+        switch (event->type()) {
+        case QEvent::MouseMove: {
+            const QPointF delta = static_cast<QMouseEvent *>(event)->globalPosition() - m_pressedAt;
+            m_window->setGeometry(dockchrome::resizedFrom(m_from, m_edges, delta.toPoint(), m_window->minimumSize()));
+            return true;
+        }
+        case QEvent::MouseButtonRelease:
+        case QEvent::FocusOut:
+            m_window->removeEventFilter(this);
+            deleteLater();
+            return false;
+        default:
+            return false;
+        }
+    }
+
+private:
+    QWindow *m_window;
+    Qt::Edges m_edges;
+    QRect m_from;
+    QPointF m_pressedAt;
+};
+
+}
+
+void Docking::startResize(QWindow *window, int edges, QPointF globalPressPosition)
+{
+    if (!window)
+        return;
+    if (g_systemResize.value_or(true) && window->startSystemResize(Qt::Edges(edges)))
+        return;
+    new EngineResize(window, Qt::Edges(edges), globalPressPosition);
 }
 
 namespace {
