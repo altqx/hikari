@@ -18,6 +18,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace std::chrono_literals;
@@ -42,7 +43,6 @@ const char *nameOf(Source source)
 struct Observed {
     bool reopened = false;
     bool ready = false;
-    std::optional<int> shown;
     bool recording = false;
     std::vector<int> playing;
 };
@@ -70,10 +70,15 @@ protected:
         for (int i = 0; i < 200; ++i) {
             if (pred(observed()))
                 return true;
-            wait(100ms);
-            getStringProperty("mainWindow/playPause", "text");
+            std::this_thread::sleep_for(100ms);
         }
         return false;
+    }
+
+    void clickPlayPause()
+    {
+        mouseClick("mainWindow/playPause");
+        getStringProperty("mainWindow/playPause", "text");
     }
 
     template <typename F> void onGui(F f)
@@ -103,6 +108,27 @@ protected:
         return {-1, -1};
     }
 
+    int shownFrame()
+    {
+        int index = -1;
+        onGui([&] {
+            const auto &session = m_application.video().session();
+            if (const auto frame = session.lastFrame(); frame && !session.playing())
+                index = frame->index;
+        });
+        return index;
+    }
+
+    bool shows(int frame)
+    {
+        for (int i = 0; i < 200; ++i) {
+            if (shownFrame() == frame)
+                return true;
+            std::this_thread::sleep_for(100ms);
+        }
+        return false;
+    }
+
     bool audioViewShows(std::int64_t ms)
     {
         for (int i = 0; i < 200; ++i) {
@@ -115,7 +141,7 @@ protected:
             });
             if (shows)
                 return true;
-            wait(100ms);
+            std::this_thread::sleep_for(100ms);
         }
         return false;
     }
@@ -169,16 +195,24 @@ protected:
         const auto target = seek(source);
         if (!target || std::abs(*target - 240) > 1)
             return name + ": the seek could not be made";
-        if (!waitFor([&](const Observed &o) { return o.shown == target; }))
-            return name + ": the seek to frame " + std::to_string(*target) + " was not shown; shown "
-                   + std::to_string(observed().shown.value_or(-1));
+        if (!shows(*target)) {
+            std::string why;
+            onGui([&] {
+                const auto &session = m_application.video().session();
+                const auto frame = session.lastFrame();
+                why = "; last " + (frame ? std::to_string(frame->index) : std::string("none")) + ", playing "
+                      + std::to_string(session.playing()) + ", requested "
+                      + std::to_string(session.requestedFrame().value_or(-1));
+            });
+            return name + ": the seek to frame " + std::to_string(*target) + " was not shown" + why;
+        }
         {
             std::lock_guard lock(g_mutex);
             g_observed.recording = true;
         }
-        mouseClick("mainWindow/playPause");
+        clickPlayPause();
         const bool played = waitFor([](const Observed &o) { return o.playing.size() >= 5; });
-        mouseClick("mainWindow/playPause");
+        clickPlayPause();
         const Observed o = observed();
         if (!played)
             return name + ": no playback";
@@ -202,7 +236,7 @@ protected:
             onGui([&] { loaded = m_application.audio().ready(); });
             if (loaded)
                 break;
-            wait(100ms);
+            std::this_thread::sleep_for(100ms);
         }
         for (const Source source : {Source::Direct, Source::Grid, Source::AudioView})
             for (int i = 0; i < kRepeats; ++i)
@@ -252,9 +286,7 @@ int main(int argc, char **argv)
         const auto frame = session.lastFrame();
         if (!frame)
             return;
-        if (frame->index >= 0)
-            g_observed.shown = frame->index;
-        else if (g_observed.recording && session.playing() && g_observed.playing.size() < 5)
+        if (frame->index < 0 && g_observed.recording && session.playing() && g_observed.playing.size() < 5)
             if (const auto at = session.currentFrame();
                 at && (g_observed.playing.empty() || g_observed.playing.back() != *at))
                 g_observed.playing.push_back(*at);
