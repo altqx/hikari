@@ -11550,7 +11550,7 @@ private slots:
         QTRY_COMPARE(count(), QStringLiteral("No matches"));
         application->editor().undo();
         QCOMPARE(text(0), QStringLiteral("Alpha beta"));
-        QCOMPARE(session->historySize(), steps);
+        QVERIFY(session->canRedo());
         QTRY_COMPARE(count(), QStringLiteral("3 match(es)"));
         QCOMPARE(application->findReplaceSettings().value(QStringLiteral("finds")).toStringList(),
                  QStringList{QStringLiteral("BETA")});

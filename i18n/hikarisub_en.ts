@@ -448,6 +448,7 @@
     </message>
     <message numerus="yes">
         <source>%1 in %n file(s)</source>
+        <extracomment>%1 is the number of matches, such as &quot;5 matches&quot;</extracomment>
         <translation>
             <numerusform>%1 in %n file</numerusform>
             <numerusform>%1 in %n files</numerusform>
