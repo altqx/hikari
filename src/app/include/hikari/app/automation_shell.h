@@ -85,6 +85,7 @@ public:
     std::string hostState() const;
     // What aegisub.get_frequency_peaks and aegisub.get_audio_selection read; null: none.
     void setAudioBox(std::function<const application::AudioBox *()> box);
+    application::MacroMediaPort &media() { return *m_media; }
     // QuietError: an error line a message box already reports.
     enum class LogLine { Notice, Quiet, QuietError };
     void setLog(std::function<void(const QString &, LogLine)> log) { m_logLine = std::move(log); }
