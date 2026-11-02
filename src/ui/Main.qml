@@ -2267,8 +2267,26 @@ ApplicationWindow {
             else
                 root.editor.translationEdited(text, cursorPosition)
         }
+        readonly property bool commitsTyping: root.workspaceLayout.preset === "Karaoke"
+        Timer {
+            id: typingCommit
+            interval: 300
+            onTriggered: field.commitTyping()
+        }
+        function commitTyping() {
+            typingCommit.stop()
+            field.report()
+            root.editor.commitTyping()
+        }
+        onCommitsTypingChanged: if (typingCommit.running) field.commitTyping()
         Component.onCompleted: sync()
-        onTextChanged: if (!syncing) Qt.callLater(field.report)
+        onTextChanged: {
+            if (syncing)
+                return
+            Qt.callLater(field.report)
+            if (commitsTyping)
+                typingCommit.restart()
+        }
         onSelectionStartChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
         onSelectionEndChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
         onCursorPositionChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
@@ -2598,9 +2616,11 @@ ApplicationWindow {
         property double compositionEndedAt: -1
         onInputMethodComposingChanged: compositionEndedAt = inputMethodComposing ? -1 : Date.now()
         onActiveFocusChanged: {
-            if (!activeFocus)
+            if (!activeFocus) {
                 compositionEndedAt = -1
-            else if (focusReason !== Qt.ActiveWindowFocusReason && focusReason !== Qt.PopupFocusReason)
+                if (typingCommit.running)
+                    field.commitTyping()
+            } else if (focusReason !== Qt.ActiveWindowFocusReason && focusReason !== Qt.PopupFocusReason)
                 root.lastTextField = field
         }
         onPressed: compositionEndedAt = -1

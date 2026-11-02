@@ -15557,7 +15557,9 @@ private slots:
               {"updater.checkForStable", "Stable versions only"},
               {"updater.autoInstall", "Install updates automatically"},
               {"privacy.usageData", "Send anonymous usage data"},
-              {"privacy.alwaysSendCrashReports", "Always send crash reports"}}},
+              {"privacy.alwaysSendCrashReports", "Always send crash reports"},
+              {"privacy.discordPresence", "Show what I am doing in Discord"},
+              {"privacy.discordFileName", "Include the file name"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {

@@ -152,18 +152,39 @@ TEST(ClipboardPaste, MicroDvdConvertsFramesAndItalics)
     EXPECT_EQ(tags[0].text, u8"{\\b1\\fnArial\\fs30\\1c&H0000FF&}x");
 }
 
-TEST(ClipboardPaste, TmPlayerAndPlainTextKeepTheDefaultEnd)
+TEST(ClipboardPaste, TmPlayerKeepsTheDefaultEnd)
 {
-    auto lines = parseClipboardRows(u8"0:00:07:Text", SubtitleFormat::Ass);
+    const auto lines = parseClipboardRows(u8"0:00:07:Text", SubtitleFormat::Ass);
     ASSERT_EQ(lines.size(), 1u);
     EXPECT_EQ(ms(lines[0].start.value), 7000);
     EXPECT_EQ(ms(lines[0].end.value), 5000);
     EXPECT_EQ(lines[0].text, u8"Text");
-    lines = parseClipboardRows(u8"just words  ", SubtitleFormat::Ass);
-    EXPECT_EQ(lines[0].style, u8"Default");
-    EXPECT_EQ(ms(lines[0].start.value), 0);
-    EXPECT_EQ(ms(lines[0].end.value), 5000);
-    EXPECT_EQ(lines[0].text, u8"just words");
+}
+
+TEST(ClipboardPaste, PlainTextLinesAreUntimed)
+{
+    for (const auto format : {SubtitleFormat::Ass, SubtitleFormat::Srt}) {
+        const auto lines = parseClipboardRows(u8"just words  \nsecond\r\nthird", format);
+        ASSERT_EQ(lines.size(), 3u);
+        for (const auto &line : lines) {
+            EXPECT_EQ(ms(line.start.value), 0);
+            EXPECT_EQ(ms(line.end.value), 0);
+        }
+        EXPECT_EQ(lines[0].text, u8"just words");
+    }
+    EXPECT_EQ(parseClipboardRows(u8"words", SubtitleFormat::Ass)[0].style, u8"Default");
+}
+
+TEST(ClipboardPaste, AssRowsKeepTheirTimes)
+{
+    const auto lines = parseClipboardRows(u8"Dialogue: 0,0:00:01.00,0:00:02.50,Default,,0,0,0,,one\n"
+                                          u8"Comment: 0,0:01:00.00,0:01:03.20,Default,,0,0,0,,two",
+                                          SubtitleFormat::Ass);
+    ASSERT_EQ(lines.size(), 2u);
+    EXPECT_EQ(ms(lines[0].start.value), 1000);
+    EXPECT_EQ(ms(lines[0].end.value), 2500);
+    EXPECT_EQ(ms(lines[1].start.value), 60000);
+    EXPECT_EQ(ms(lines[1].end.value), 63200);
 }
 
 TEST(ClipboardPaste, NonDialogueLinesBecomeHiddenDialogue)
