@@ -5811,6 +5811,10 @@ What would you like to do?</source>
         <translation>번역 모드</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>고정 공백 삽입</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>서식 구간 1 배치</translation>
     </message>
@@ -6957,6 +6961,14 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>텍스트에서 다음 문구 위치 찾기</translation>
+    </message>
+    <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>줄 편집기의 커서 위치에 고정 공백(%1)을 삽입합니다</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>고정 공백 삽입</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -8475,6 +8487,10 @@ removing audio cache files.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>시간 편집 시 현재 줄에 머무르기</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter로 소프트 줄 바꿈(%1) 삽입</translation>
     </message>
     <message>
         <source>Translation mode</source>

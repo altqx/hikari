@@ -5811,6 +5811,10 @@ What would you like to do?</source>
         <translation>โหมดการแปล</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>วางช่วงที่ 1</translation>
     </message>
@@ -6957,6 +6961,14 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
+    </message>
+    <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด (%1) ที่เคอร์เซอร์ในตัวแก้ไขบรรทัด</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -8475,6 +8487,10 @@ removing audio cache files.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>อยู่ที่บรรทัดเดิมเมื่อแก้ไขเวลา</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter แทรกตัวแบ่งบรรทัดแบบอ่อน (%1)</translation>
     </message>
     <message>
         <source>Translation mode</source>

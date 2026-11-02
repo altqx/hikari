@@ -15266,7 +15266,7 @@ private slots:
         QCOMPARE(draft(), QStringLiteral("\\hone\\h two"));
         QVERIFY(text->hasActiveFocus());
 
-        text->setProperty("cursorPosition", 9);
+        text->setProperty("cursorPosition", 8);
         press(Qt::Key_Return, Qt::ShiftModifier);
         QCOMPARE(draft(), QStringLiteral("\\hone\\h\\Ntwo"));
         application->settingsStore()->setValue(QStringLiteral("editor.softLineBreak"), true);
@@ -18838,7 +18838,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_CONVERT_TO_TMP")), QStringLiteral("Ctrl+F12"));
-        QCOMPARE(table().size(), 36);
+        QCOMPARE(table().size(), 37);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));

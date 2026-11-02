@@ -5848,6 +5848,10 @@ What would you like to do?</source>
         <translation>மொழிபெயர்ப்பு பயன்முறை</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>நிலையான இடைவெளியைச் செருகு</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>தொகுதி 1 ஐ வை</translation>
     </message>
@@ -6997,6 +7001,14 @@ What would you like to do?</source>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
         <translation>உரையில் சொற்றொடரின் அடுத்த நிகழ்வைக் கண்டறிகிறது</translation>
+    </message>
+    <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>வரி திருத்தியில் கர்சரில் நிலையான இடைவெளியை (%1) செருகும்</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>நிலையான இடைவெளியைச் செருகு</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -8524,6 +8536,10 @@ removing audio cache files.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>நேரங்களைத் திருத்தும்போது அதே வரியிலேயே இரு</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter மென் வரி முறிவை (%1) செருகும்</translation>
     </message>
     <message>
         <source>Translation mode</source>

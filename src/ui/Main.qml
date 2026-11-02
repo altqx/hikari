@@ -1451,7 +1451,8 @@ ApplicationWindow {
             MenuSeparator {}
             ShellMenuItem {
                 command: "GLOBAL_INSERT_HARD_SPACE"
-                help: qsTr("Inserts a hard space (\\h) at the cursor in the line editor")
+                help: qsTr("Inserts a hard space (%1) at the cursor in the line editor").arg("\\h")
+                iconRole: "hard-space"
                 objectName: "insertHardSpaceMenuItem"
                 action: Action {
                     id: insertHardSpaceAction
