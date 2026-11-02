@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <map>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -120,6 +121,17 @@ std::vector<int> runOrder(std::span<const RunPlacement> placements);
 // Equal-formatting runs read back as the first unused one; `order` (runOrder of the placements
 // last composed) restores the translator's numbers where each still names a run of that formatting.
 void relabelRuns(const OriginalTags &tags, TranslationDraft &draft, std::span<const int> order);
+// The draft `translation` reads back as with `order`, relabelled.
+TranslationDraft readTranslationInOrder(const OriginalTags &tags, std::u16string_view translation,
+                                        std::span<const int> order);
+
+// The extradata key that keeps a Line's `order` in the file: "1;<hash of the translation>;<run>,<run>…".
+inline constexpr std::u8string_view kRunOrderKey = u8"_hikari_tm_order";
+// nullopt when `translation` reads back the same without `order`.
+std::optional<std::u8string> runOrderValue(const OriginalTags &tags, std::u8string_view translation,
+                                           std::span<const int> order);
+// nullopt when the value is malformed or was saved for another translation.
+std::optional<std::vector<int>> savedRunOrder(std::u8string_view value, std::u8string_view translation);
 // Whether each of `runs` reads back over the same text from the composed translation, and the
 // translator's own formatting around them draws as it did.
 bool placementHolds(const OriginalTags &tags, const TranslationDraft &draft, std::span<const int> runs);

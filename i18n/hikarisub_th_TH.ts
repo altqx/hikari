@@ -6495,6 +6495,10 @@ Failed to copy %2 fonts.</source>
         <translation>ข้ามบรรทัดคันจิ</translation>
     </message>
     <message>
+        <source>Pair again</source>
+        <translation>จับคู่อีกครั้ง</translation>
+    </message>
+    <message>
         <source>Previous</source>
         <translation>ก่อนหน้า</translation>
     </message>

@@ -2,6 +2,9 @@
 #include "hikari/app/style_manager_controller.h"
 #include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/extradata.h"
+#include "hikari/application/kanji_timer.h"
+#include "hikari/core/tag_transfer.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
@@ -10519,6 +10522,70 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    void kanjiTimerPairAgainTakesASavedSkipOff()
+    {
+        const QString path = dir.filePath(QStringLiteral("kanji-skip.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Song,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song,,0,0,0,,{=0}{\\k50}yu{\\k50}me\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Song,,0,0,0,,{\\k40}ki{\\k30}mi{\\k30}no\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song kanji,,0,0,0,,夢\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Song kanji,,0,0,0,,君の\n\n"
+                    "[Aegisub Extradata]\nData: 0,_hikari_kanji_skip,e1\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("kanjiTimerMenuItem")), "triggered"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *kanji = qobject_cast<QQuickWindow *>(dialog);
+        QVERIFY(kanji);
+        auto *controller = dialog->property("timer").value<QObject *>();
+        QTRY_COMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 3);
+        const auto pairAgain = [&]() -> QQuickItem * {
+            std::vector<QQuickItem *> shown;
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                if (from->objectName() == QLatin1String("kanjiPairAgain") && from->isVisible())
+                    shown.push_back(from);
+                for (QQuickItem *child : from->childItems())
+                    walk(child);
+            };
+            walk(kanji->contentItem());
+            return shown.size() == 1 ? shown.front() : nullptr;
+        };
+        QTRY_VERIFY(pairAgain());
+        QCOMPARE(pairAgain()->property("text").toString(), QStringLiteral("Pair again"));
+        QCOMPARE(controller->property("pending").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(pairAgain(), "click"));
+        QTRY_COMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 2);
+        QVERIFY(!pairAgain());
+        QCOMPARE(controller->property("pending").toInt(), 1);
+        const auto steps = session->history().size();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiApply"), "click"));
+        QTRY_COMPARE(session->history().size(), steps + 1);
+        QVERIFY(!core::extradataValue(session->document().lines()[0]->extra, hikari::application::kKanjiSkipKey));
+        QVariant undone;
+        QVERIFY(QMetaObject::invokeMethod(root, "runGlobalHotkey", Q_RETURN_ARG(QVariant, undone),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_UNDO"))));
+        QVERIFY(undone.toBool());
+        QTRY_VERIFY(core::extradataValue(session->document().lines()[0]->extra, hikari::application::kKanjiSkipKey) == u8"1");
+        QTRY_COMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 3);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     void kanjiTimerWritesMultiHighlightSyllables()
     {
         const QByteArray styles =
@@ -14170,6 +14237,62 @@ private slots:
             return runs.size() == 1 ? runs[0].toMap().value("text").toString() : QString();
         };
         QTRY_COMPARE(runText(), QStringLiteral("C"));
+    }
+
+    void tagsFromOriginalKeepsAnAmbiguousRunInTheFile()
+    {
+        const QByteArray script = "[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                                  "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                  "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a {\\i1}b{\\i0} c {\\i1}d{\\i0} e\n"
+                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n";
+        const auto openScript = [&](const char *name, const QByteArray &bytes) -> hikari::application::EditSession * {
+            const QString path = dir.filePath(QLatin1String(name));
+            QFile f(path);
+            if (!f.open(QIODevice::WriteOnly) || f.write(bytes) != bytes.size())
+                return nullptr;
+            f.close();
+            if (!application->openFile(path))
+                return nullptr;
+            const int tab = static_cast<int>(application->workspace().tabs().size()) - 1;
+            application->selectTab(tab);
+            if (!QTest::qWaitFor([&] { return application->currentTab() == tab; }))
+                return nullptr;
+            application->editor().setShowTags(false);
+            item("editingGrid")->forceActiveFocus();
+            press(Qt::Key_Home);
+            return application->files().session(*application->workspace().editingTarget());
+        };
+        const auto placed = [&] {
+            QStringList out;
+            for (const auto &run : application->editor().tagRuns())
+                out << QStringLiteral("%1@%2").arg(run.toMap().value("number").toInt()).arg(run.toMap().value("start").toInt());
+            return out.join(QLatin1Char(' '));
+        };
+        auto *session = openScript("tm-order.ass", script);
+        QVERIFY(session);
+        QTRY_VERIFY(application->editor().moveTags());
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        application->editor().translationEdited(QStringLiteral("x y"), 3);
+        QVERIFY(application->editor().placeRun(2, 0, 1));
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QCOMPARE(placed(), QStringLiteral("1@2 2@0"));
+        QVERIFY(session->commitDraft());
+        const auto *line = session->document().lines()[0];
+        const auto value = core::extradataValue(line->extra, core::kRunOrderKey);
+        QVERIFY(value);
+        QVERIFY(value->starts_with(u8"1;") && value->ends_with(u8";2,1"));
+        const auto bytes = core::encodeAss(session->document());
+        const QByteArray saved(reinterpret_cast<const char *>(bytes.data()), static_cast<qsizetype>(bytes.size()));
+        QVERIFY(saved.contains(",_hikari_tm_order,e1;"));
+
+        QVERIFY(openScript("tm-order-without.ass", QByteArray(saved).replace("_hikari_tm_order", "_hikari_tm_other")));
+        QTRY_COMPARE(placed(), QStringLiteral("1@0 2@2"));
+        QVERIFY(openScript("tm-order-saved.ass", saved));
+        QTRY_COMPARE(placed(), QStringLiteral("1@2 2@0"));
+
+        QVERIFY(session->undo());
+        QVERIFY(!core::extradataValue(session->document().lines()[0]->extra, core::kRunOrderKey));
+        QVERIFY(session->document().lines()[0]->translation.empty());
     }
 
     void tagsFromOriginalShownDeletingARunTakesItsTags()

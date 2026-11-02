@@ -28,6 +28,9 @@ Hikari writes these keys itself (XD1, [#659](https://github.com/altqx/hikari/iss
 | Key | Written by | Value |
 | --- | --- | --- |
 | `_aegi_perspective_ambient_plane` | The perspective tool, as arch1t3cht's Aegisub does: on every edit made while Show surrounding plane is on, for each Line edited | The outer quad's four corners in script coordinates, top left first and clockwise, as `x;y` at two decimals joined by `\|`, e.g. `600.00;300.00\|1000.00;300.00\|1000.00;500.00\|600.00;500.00` |
+| `_hikari_kara_source` and `_hikari_kara_from` | The karaoke templater, in its run's undo step: `_hikari_kara_source` on each karaoke Line a run generated Lines from, `_hikari_kara_from` on each generated Line | `1;` and a token of eight base32 letters (`a`–`z`, `2`–`7`), the same on a karaoke Line and the Lines generated from it, e.g. `1;k3vq7mzd`. A karaoke Line keeps its token. A new one is random, and so is the token of a karaoke Line that holds one an earlier Line also holds, as a pasted copy does. A generated Line carries no `_hikari_kara_source`, which templates copy from the karaoke Line. On load each `_hikari_kara_from` Line is generated from the first Line holding its token as `_hikari_kara_source` (`LineRecord::generatedFrom`); a malformed token links nothing |
+| `_hikari_tm_order` | The Line editor in TLMode, with the translation's commit, for a translation that reads back differently without the order its runs were placed in | `1;`, a 64-bit FNV-1a hash of the translation's UTF-8 bytes as 16 lowercase hex digits, `;`, then the runs' numbers in the order they are placed, joined by `,`, e.g. `1;3a0c9e1f72b4d685;2`. It is read only while the hash matches the Line's translation |
+| `_hikari_kanji_skip` | The Kanji timer, at Apply: on each romaji or kanji Line skipped, and taken off each Line paired again | `1` |
 
 ## Interfaces and ownership
 

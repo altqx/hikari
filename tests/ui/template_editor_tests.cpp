@@ -9,6 +9,7 @@
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "karaoke_marks.h"
 #include "hikari/core/editor_syntax.h"
 
 #include <QDir>
@@ -104,7 +105,7 @@ QString qs(const std::u8string &s)
 
 std::string bytesOf(const core::Document &doc)
 {
-    const auto b = core::encodeAss(doc);
+    const auto b = core::encodeAss(test::withoutKaraokeMarks(doc));
     return std::string(reinterpret_cast<const char *>(b.data()), b.size());
 }
 

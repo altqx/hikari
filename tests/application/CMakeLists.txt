@@ -119,6 +119,8 @@ target_compile_definitions(hikari_application_karaoke_split_tests PRIVATE
     HIKARI_HYPHENATION_PATTERNS="${PROJECT_SOURCE_DIR}/src/ui/hyphenation/hyph_en_US.dic")
 hikari_add_gtest(hikari_application_kanji_timer_tests SOURCES kanji_timer_tests.cpp
     LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_kanji_timer_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_session_file_tests PRIVATE

@@ -65,9 +65,6 @@ inline constexpr std::u8string_view kPlaneKey = u8"_aegi_perspective_ambient_pla
 std::u8string planeValue(const Quad &quad);
 // nullopt unless four "x;y" pairs of numbers.
 std::optional<Quad> parsePlane(std::u8string_view value);
-// `extra` with `key` once, holding `value`, after the other entries; unchanged when it already is the only one.
-std::vector<core::Extradata> withExtradata(std::vector<core::Extradata> extra, std::u8string_view key,
-                                           std::u8string value);
 // Where the diagonals cross.
 PointF centre(const Quad &quad);
 // Plane coordinates: (0, 0) .. (1, 1) at the corners, through the projective map of the unit square.

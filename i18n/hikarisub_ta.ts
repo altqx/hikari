@@ -6537,6 +6537,10 @@ Failed to copy %2 fonts.</source>
         <translation>காஞ்சி வரியைத் தவிர்</translation>
     </message>
     <message>
+        <source>Pair again</source>
+        <translation>மீண்டும் இணை</translation>
+    </message>
+    <message>
         <source>Previous</source>
         <translation>முந்தையது</translation>
     </message>

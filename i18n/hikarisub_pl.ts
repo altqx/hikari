@@ -6579,6 +6579,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pomiń linijkę kanji</translation>
     </message>
     <message>
+        <source>Pair again</source>
+        <translation>Sparuj ponownie</translation>
+    </message>
+    <message>
         <source>Previous</source>
         <translation>Poprzednia</translation>
     </message>
