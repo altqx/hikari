@@ -36,7 +36,7 @@ An author signs the `.hikariplugin` file with minisign and ships the `.minisig` 
 - **First install.** A signature is checked against the manifest's `publicKey`, and that key is pinned in `plugins.json`. A package with a signature but no `publicKey` is refused.
 - **Update.** A signature is checked against the pinned key first. A signature by another key, valid against the new manifest's `publicKey`, needs the user to trust the new key; so does an unsigned package over a signed install. Re-trusting pins the new key, or none.
 - **Refused outright.** A signature that does not match the package or its trusted comment, whatever the user trusts.
-- **Unverified.** Until the curated index (PL6), every sideloaded plugin shows as unverified. A signed one shows its key id, as minisign prints it (16 hex digits).
+- **Unverified.** Every plugin installed from a file is a sideload and shows as unverified, signed or not; it never updates by itself. A signed one shows its key id, as minisign prints it (16 hex digits). Listed plugins, automatic updates, permission-increase consent, roll back and revocation come from the HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418)), which checks its signed index and then this same pinned author key.
 
 ## Folders and `plugins.json`
 

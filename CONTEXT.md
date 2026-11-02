@@ -124,8 +124,12 @@ _Avoid_: Automation script or macro, which name Aegisub automation; extension or
 The minisign public key HikariSub recorded at a plugin's first signed install; updates must be signed by it unless the user re-trusts another.
 _Avoid_: Trusted key as a synonym; a pinned key says who signed before, not that the plugin is verified.
 
+**Plugin marketplace**:
+HikariSub's own signed index of plugins, run only by us, and the one source of listed plugins and their automatic updates ([ADR 0022](docs/adr/0022-hikarisub-plugins.md)).
+_Avoid_: Store, feed or curated index; there are no third-party feeds.
+
 **Unverified**:
-A plugin installed from a file rather than the curated index, signed or not.
+A plugin sideloaded from a `.hikariplugin` file rather than installed from the Plugin marketplace, signed or not. It never updates by itself.
 
 **Operation**:
 One named, read- or write-marked entry of the Hikari API, with schemas for its parameters and result.
