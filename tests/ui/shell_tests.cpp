@@ -18662,7 +18662,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 267);
+        QCOMPARE(hotkeyRows().size(), 270);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -27532,6 +27532,73 @@ private slots:
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 980'000);
         QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 1'020'000);
+    }
+
+    void aTimecodesFileTimesTheVideoForItsTab()
+    {
+        const QString subtitles =
+            writeFile(dir, "fa21-timecodes.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        QVERIFY(application->openFile(subtitles));
+        const auto timed = *application->workspace().editingTarget();
+        auto *session = application->files().session(timed);
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        QByteArray tenPerSecond = "# timecode format v2\n";
+        for (int frame = 0; frame < 40; ++frame)
+            tenPerSecond += QByteArray::number(frame * 100) + '\n';
+        const QString timecodes = dir.filePath(QStringLiteral("fa21-timecodes.txt"));
+        {
+            QFile f(timecodes);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(tenPerSecond);
+        }
+        auto *close = item<QObject>("closeTimecodesMenuItem");
+        QVERIFY(close);
+        QVERIFY(!close->property("enabled").toBool());
+        QCOMPARE(application->openTimecodesFile(QUrl::fromLocalFile(timecodes).toString()), QString());
+        QCOMPARE(application->timecodesFile(), QDir::toNativeSeparators(timecodes));
+        QTRY_VERIFY(close->property("enabled").toBool());
+        QCOMPARE(application->statusBar().fields()[ui::StatusBarController::FramesPerSecond], QStringLiteral("10 FPS"));
+        QCOMPARE(application->statusBar().tooltips()[ui::StatusBarController::FramesPerSecond],
+                 QStringLiteral("Frames per second, average of the timecodes file fa21-timecodes.txt"));
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SET_VIDEO_AT_START_TIME"))));
+        QVERIFY(ran.toBool());
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 10);
+        QVERIFY(application->video().showFrameAt(24));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 24);
+        QVERIFY(application->setTimeFromVideo(false));
+        QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 2'350'000);
+
+        application->addPage();
+        QTRY_VERIFY(*application->workspace().editingTarget() != timed);
+        QCOMPARE(application->timecodesFile(), QString());
+        QVERIFY(!application->video().session().replacedFrameTimes());
+        const auto tabs = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(tabs, timed) - tabs.begin()));
+        QTRY_VERIFY(*application->workspace().editingTarget() == timed);
+        QCOMPARE(application->timecodesFile(), QDir::toNativeSeparators(timecodes));
+        QVERIFY(application->video().session().replacedFrameTimes());
+        QTRY_COMPARE_WITH_TIMEOUT(application->video().session().shownFrame().value_or(-1), 24, 20000);
+
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_CLOSE_TIMECODES"))));
+        QCOMPARE(application->timecodesFile(), QString());
+        QTRY_VERIFY(!close->property("enabled").toBool());
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 24);
+        QVERIFY(application->setTimeFromVideo(false));
+        QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 980'000);
+
+        QCOMPARE(application->openTimecodesFile(timecodes), QString());
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QCOMPARE(application->timecodesFile(), QString());
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame().has_value(), 20000);
+        QVERIFY(!application->video().session().replacedFrameTimes());
     }
 
     void timingBindsKeepJoinsAndShiftByFrames()

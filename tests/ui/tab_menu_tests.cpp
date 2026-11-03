@@ -648,6 +648,66 @@ private slots:
         QVERIFY(!application->video().offering());
     }
 
+    void aTimecodesFileIsOfferedAndKeptInTheProjectGarbage()
+    {
+        const QString folder = dir.filePath(QStringLiteral("tcassoc"));
+        QDir().mkpath(folder + QStringLiteral("/tc"));
+        QFile::remove(folder + QStringLiteral("/ep.mkv"));
+        QVERIFY(QFile::copy(media("cfr.mkv"), folder + QStringLiteral("/ep.mkv")));
+        {
+            QFile t(folder + QStringLiteral("/tc/ep.txt"));
+            QVERIFY(t.open(QIODevice::WriteOnly));
+            t.write("# timestamp format v2\n0\n100\n200\n300\n400\n");
+        }
+        QFile::remove(folder + QStringLiteral("/ep.ass"));
+        const QString subs = writeAss(folder + QStringLiteral("/ep.ass"),
+                                      "Video File: ep.mkv\n\n[Aegisub Project Garbage]\nAudio File: ep.mkv\n"
+                                      "Timecodes File: tc/ep.txt\n",
+                                      "ep");
+        const QString n = QDir::toNativeSeparators(folder);
+        const QChar sep = QDir::separator();
+        QVERIFY(application->openFile(subs));
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(),
+                 QStringLiteral("Associated files:\nVideo: %1%2ep.mkv\nTimecodes: %1%2tc%2ep.txt\n\nVideo from directory: ep.mkv")
+                     .arg(n, sep));
+        application->video().loadAssociated();
+        QCOMPARE(application->timecodesFile(), n + sep + QStringLiteral("tc") + sep + QStringLiteral("ep.txt"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QTRY_COMPARE(application->log().lastMessage(),
+                     QStringLiteral("The timecodes file ends before the video does (frame 5 of %1). Later frames continue "
+                                    "at its average frame rate.")
+                         .arg(application->video().session().frameCount()));
+        QCOMPARE(application->timecodesFile(), n + sep + QStringLiteral("tc") + sep + QStringLiteral("ep.txt"));
+
+        const auto written = [this] {
+            const auto last = application->files().lastSave(*application->workspace().editingTarget());
+            return last && last->outcome == hikari::application::WriteOutcome::Written;
+        };
+        const QString moved = folder + QStringLiteral("/out/ep.ass");
+        QDir().mkpath(folder + QStringLiteral("/out"));
+        QVERIFY(application->saveAs(moved));
+        QTRY_VERIFY(written());
+        QVERIFY(readAll(moved).contains("[Aegisub Project Garbage]\nAudio File: ep.mkv\nTimecodes File: ../tc/ep.txt\n"));
+        application->closeTimecodes();
+        QVERIFY(application->saveAs(moved));
+        QTRY_VERIFY(written());
+        QVERIFY(!readAll(moved).contains("Timecodes File"));
+        QVERIFY(readAll(moved).contains("[Aegisub Project Garbage]\nAudio File: ep.mkv\n"));
+
+        const QString untouched = writeAss(folder + QStringLiteral("/untouched.ass"),
+                                           "\n[Aegisub Project Garbage]\nTimecodes File: gone.txt\n", "u");
+        QVERIFY(application->openFile(untouched));
+        QCOMPARE(application->log().lastMessage(),
+                 QStringLiteral("Timecodes file not found: %1").arg(QStringLiteral("gone.txt")));
+        QCOMPARE(titles().last(), QStringLiteral("untouched.ass"));
+        application->selectTab(int(titles().size()) - 1);
+        QVERIFY(application->timecodesFile().isEmpty());
+        QVERIFY(application->saveAs(untouched));
+        QTRY_VERIFY(written());
+        QVERIFY(readAll(untouched).contains("[Aegisub Project Garbage]\nTimecodes File: gone.txt\n"));
+    }
+
     void theFoldersVideoAndApplyToAll()
     {
         const QString folder = dir.filePath(QStringLiteral("dirvideo"));

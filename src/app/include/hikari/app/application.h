@@ -22,6 +22,8 @@
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/grammar.h"
+#include "hikari/application/aegisub_frame_times.h"
+#include "hikari/application/timecodes_file.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/audio_devices.h"
 #include "hikari/application/document_files.h"
@@ -83,6 +85,7 @@
 
 #include <functional>
 #include <deque>
+#include <expected>
 #include <map>
 #include <memory>
 #include <set>
@@ -312,6 +315,7 @@ public:
     Q_PROPERTY(bool translatorModeAvailable READ translatorModeAvailable NOTIFY tabsChanged)
     Q_PROPERTY(QString translationHint READ translationHint NOTIFY tabsChanged)
     Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
+    Q_PROPERTY(QString timecodesFile READ timecodesFile NOTIFY timecodesChanged)
     bool translatorModeAvailable() const;
     QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
@@ -638,6 +642,15 @@ public:
     Q_INVOKABLE QString openKeyframesFile(const QString &path);
     Q_INVOKABLE QUrl videoDialogFolder() const;
     Q_INVOKABLE QUrl keyframesDialogFolder() const;
+    // Empty: loaded; else the message.
+    Q_INVOKABLE QString openTimecodesFile(const QString &path);
+    // Empty: saved; else the message.
+    Q_INVOKABLE QString saveTimecodesFile(const QString &path);
+    Q_INVOKABLE void closeTimecodes();
+    Q_INVOKABLE QVariantList recentTimecodes();
+    Q_INVOKABLE QUrl timecodesDialogFolder() const;
+    // The current tab's loaded timecodes file; empty when none.
+    QString timecodesFile() const;
     Q_INVOKABLE QVariantMap dummyVideoDefaults() const;
     // The error to log, else empty.
     Q_INVOKABLE QString openDummyVideo(const QVariantMap &values);
@@ -863,6 +876,7 @@ signals:
     void documentWriteFailed(qulonglong document);
     // A later start handed files over, about to open.
     void filesForwarded();
+    void timecodesChanged();
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
@@ -1092,7 +1106,7 @@ private:
     std::optional<std::uint64_t> m_videoRevision;
     bool m_videoShowsDraft = false;
     std::vector<std::byte> m_videoScript;
-    QString m_editorTimebaseVideo;
+    std::optional<std::pair<std::string, std::uint64_t>> m_editorTimebaseFor;
     std::optional<core::LineId> m_videoLine;
     struct LineChangeOrigin {
         bool gridClick = false;
@@ -1233,6 +1247,7 @@ private:
     std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine;
     std::optional<application::LegacyTimebase> m_audioTimebase;
     std::string m_audioTimebasePath;
+    std::uint64_t m_audioTimebaseSerial = 0;
     std::vector<int> m_audioKeyframes;
     std::function<application::AudioCacheSettings()> m_audioSettings;
     QString m_indexDir;
@@ -1260,6 +1275,11 @@ private:
     bool keyframesWithoutVideo(const QString &path, QString &problem);
     application::RecentFiles m_recentVideo;
     application::RecentFiles m_recentKeyframes;
+    application::RecentFiles m_recentTimecodes;
+    void rememberRecentTimecodes(const QString &path);
+    std::expected<application::Timecodes, QString> readTimecodes(const QString &path) const;
+    void showTabTimecodes(std::optional<application::DocumentId> document);
+    bool m_enteringTabMedia = false;
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
     std::optional<application::NextFileStep> nextVideoStep(application::NextFileWalker &walker, bool next) const;
     QString m_recentVideoSeen;
@@ -1276,6 +1296,10 @@ private:
         int position = 0;
         QString audio;
         QString keyframes;
+        QString timecodes;
+        std::optional<application::AegisubFrameTimes> frameTimes;
+        bool timecodesDropped = false;
+        bool timecodesListFrames = false;
         int scroll = 0;
         bool audioFromVideo = false;
     };
@@ -1294,6 +1318,10 @@ private:
         std::vector<std::pair<QDateTime, qint64>> stamps;
     };
     std::map<std::uint64_t, TabMedia> m_tabMedia;
+    void loadTabTimecodes(TabMedia &media, const QString &path, const application::Timecodes &timecodes);
+    void warnShortTimecodes(TabMedia &media);
+    std::vector<application::ProjectGarbageEdit> timecodesGarbage(application::DocumentId document,
+                                                                   const application::DestinationKey &destination) const;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
     std::optional<application::DocumentId> m_closingTab;

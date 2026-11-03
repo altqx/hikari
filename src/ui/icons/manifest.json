@@ -330,6 +330,50 @@
    ]
   },
   {
+   "role": "open-timecodes",
+   "file": "open-timecodes.svg",
+   "label": "Open timecodes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "recent-timecodes",
+   "file": "recent-timecodes.svg",
+   "label": "Recently opened timecodes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "save-timecodes",
+   "file": "save-timecodes.svg",
+   "label": "Save timecodes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "close-timecodes",
+   "file": "close-timecodes.svg",
+   "label": "Close timecodes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
    "role": "set-start-time",
    "file": "set-start-time.svg",
    "label": "Insert start time from video",

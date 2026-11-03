@@ -2106,6 +2106,10 @@ Output device: %2</source>
         <translation>คีย์เฟรม: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>ไทม์โค้ด: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>ไฟล์ที่เกี่ยวข้อง:</translation>
     </message>
@@ -6110,6 +6114,18 @@ Failed to copy %2 fonts.</source>
         <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
     </message>
     <message>
+        <source>Open timecodes</source>
+        <translation>เปิดไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>บันทึกไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>ปิดไทม์โค้ด</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -7200,6 +7216,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set FPS from video</source>
         <translation>กำหนดค่า FPS จากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>เปิดไฟล์ไทม์โค้ด VFR v1, v2 หรือ v4</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>เปิดไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>ไทม์โค้ดที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>บันทึกเป็นไฟล์ไทม์โค้ด VFR v2</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>บันทึกไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>ปิดไฟล์ไทม์โค้ดที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>ปิดไทม์โค้ด</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -10976,6 +11020,10 @@ because it was edited.</source>
         <translation>คีย์เฟรม</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>ไทม์โค้ด</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>ไม่พบ %1 ซึ่งเป็นคำบรรยายของแท็บนี้</translation>
     </message>
@@ -10990,6 +11038,10 @@ because it was edited.</source>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>ไม่พบ %1 ซึ่งเป็นคีย์เฟรมของแท็บนี้</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>ไม่พบ %1 ซึ่งเป็นไฟล์ไทม์โค้ดของแท็บนี้</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11014,6 +11066,10 @@ because it was edited.</source>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>ไฟล์คีย์เฟรม (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>ไฟล์ไทม์โค้ด (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -11879,6 +11935,10 @@ because it was edited.</source>
     <message>
         <source>Frames per second</source>
         <translation>เฟรมต่อวินาที</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>เฟรมต่อวินาที ค่าเฉลี่ยของไฟล์ไทม์โค้ด %1</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -14744,6 +14804,14 @@ after the end time in milliseconds</source>
         <translation>เลือกไฟล์คีย์เฟรม</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>ไฟล์ไทม์โค้ด (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>บันทึกไฟล์ไทม์โค้ด</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
@@ -15086,6 +15154,90 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>เปิดไฟล์ไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>รูปแบบไทม์โค้ดที่ไม่รู้จัก</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>บรรทัดไทม์โค้ดไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>ต้องมีไทม์โค้ดอย่างน้อยสองค่า</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>ไฟล์ไทม์โค้ดเกินขีดจำกัด 10000000 รายการ</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>ไทม์โค้ดเรียงลำดับไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>ไทม์โค้ดเหมือนกันทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>ไม่สามารถกำหนดอัตราเฟรมให้เฟรมติดลบได้</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>เฟรมสิ้นสุดต้องมากกว่าหรือเท่ากับเฟรมเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>ช่วงไทม์โค้ด V1 เกินขีดจำกัด 10000000 เฟรม</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS ต้องมากกว่าศูนย์</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS ต้องไม่เกิน 1000</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>ช่วงที่กำหนดทับต้องไม่ซ้อนกัน</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>ไทม์โค้ดเกินช่วงเวลาที่รองรับ</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>แยกวิเคราะห์ไฟล์ไทม์โค้ดไม่สำเร็จ: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>ไม่สามารถเปิดไฟล์ไทม์โค้ด %1</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>ไฟล์ไทม์โค้ดจบก่อนวิดีโอ (เฟรม %1 จาก %2) เฟรมถัดไปจะใช้อัตราเฟรมเฉลี่ยของไฟล์</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>ไม่มีเวลาเฟรมให้บันทึก</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>ไม่สามารถบันทึกไฟล์ไทม์โค้ด %1</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation>ไม่พบไฟล์ไทม์โค้ด: %1</translation>
     </message>
 </context>
 <context>

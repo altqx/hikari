@@ -48,6 +48,19 @@ Paused frames (seek, step, edit, typing) are still prepared on the GUI thread, a
 
 DirectShow may remain an optional Windows playback adapter and CSRI (VSFilterMod, the altqx/VSFilterMod fork's release, W2-vsfiltermod-fork; xy-VSFilter is not shipped, user 2026-10-14) an optional subtitle-renderer adapter; libass is the default renderer everywhere. They cannot dictate core types, the default cross-platform backend or a new general-purpose plugin ecosystem. Preserve a possible later macOS implementation.
 
+### Timecodes files
+
+Video > Open timecodes loads a v1, v2 or v4 timecodes file into the editing tab (FA21 [#648](https://github.com/altqx/hikari/issues/648)), ported from Aegisub 3.5.1's `libaegisub/common/vfr.cpp` with the differences in [compatibility decisions](compatibility-decisions.md) (FA21-*). Its frame times replace the video's for everything except decoding: the grid's frames, the timing commands, seeking to a time, the audio's video marker and keyframes, the subtitles drawn on each frame, and Lua. The player still decodes frame *n* at the video's own time *n* and draws the subtitles at the file's time *n*. Frames past the file's last time continue at its average rate (v2, v4) or its assumed rate (v1).
+
+- Each tab has its own file, kept in the session (`timecodes`) and restored with it. A missing file is listed with the session's other missing files.
+- Opening a video drops the tab's timecodes file, as in Aegisub; closing the video keeps it, and frame times then come from the file alone.
+- Save timecodes writes `# timecode format v2`: each frame's start up to the video's frame count, or the file's own times without a video.
+- Close timecodes goes back to the video's times.
+- While a tab has a file, saving an ASS file writes it as `Timecodes File` in `[Aegisub Project Garbage]`, relative to the subtitle file and with `/` separators, as Aegisub does. Close timecodes, or a video open that drops the file, removes the key on the next save. A file whose timecodes were never loaded or closed keeps the section as it was.
+- Opening a subtitle file lists its `Timecodes File` (from `[Aegisub Project Garbage]`, or Script Info in older files) with the other associated files, and Load associated opens it after the video. A missing file gets a "Timecodes file not found" notice; the subtitle file still opens.
+- A v2 or v4 file listing fewer frames than the video gets a warning once the video is ready, naming the frame where it ends. Later frames continue at its average rate.
+- The status bar's frames-per-second field shows the file's average rate, and its tooltip names the file.
+
 ## PortAudio, analysis and caches
 
 PortAudio supplies documented **estimated** callback-buffer DAC time and stream time in a shared domain; this supports mapping ready audio to its expected audible position. It is not an observed latency, drift or acoustic-accuracy guarantee. Keep source sample frames, resampled device frames and monotonic time distinct, and report clock uncertainty. Seek, underrun, device replacement and sleep/wake invalidate stale estimates; never extrapolate stale audio indefinitely. [Audio research](https://github.com/altqx/hikari/blob/7e1aad3ba4f7ac217b9bb467a297035bc0639abd/docs/research/audio.md).

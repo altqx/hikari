@@ -2126,6 +2126,10 @@ Output device: %2</source>
         <translation>கீஃப்ரேம்கள்: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>நேரக்குறியீடுகள்: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>தொடர்புடைய கோப்புகள்:</translation>
     </message>
@@ -6153,6 +6157,18 @@ Failed to copy %2 fonts.</source>
         <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
+        <source>Open timecodes</source>
+        <translation>நேரக்குறியீடுகளைத் திற</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>நேரக்குறியீடுகளைச் சேமி</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>நேரக்குறியீடுகளை மூடு</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -7246,6 +7262,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set FPS from video</source>
         <translation>வீடியோவிலிருந்து FPS ஐ அமைக்கவும்</translation>
+    </message>
+    <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>VFR நேரக்குறியீடுகள் v1, v2 அல்லது v4 கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>நேரக்குறியீடுகளைத் திற</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட நேரக்குறியீடுகள்</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>VFR நேரக்குறியீடுகள் v2 கோப்பாகச் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>நேரக்குறியீடுகளைச் சேமி</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>இப்போது திறந்துள்ள நேரக்குறியீட்டுக் கோப்பை மூடுகிறது</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>நேரக்குறியீடுகளை மூடு</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -11038,6 +11082,10 @@ because it was edited.</source>
         <translation>கீஃப்ரேம்கள்</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>நேரக்குறியீடுகள்</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>இந்தத் தாவலின் வசன வரிகளான %1 கிடைக்கவில்லை.</translation>
     </message>
@@ -11052,6 +11100,10 @@ because it was edited.</source>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>இந்தத் தாவலின் கீஃப்ரேம்களான %1 கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>இந்தத் தாவலின் நேரக்குறியீட்டுக் கோப்பான %1 கிடைக்கவில்லை.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11076,6 +11128,10 @@ because it was edited.</source>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>கீஃப்ரேம் கோப்பு (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -11951,6 +12007,10 @@ because it was edited.</source>
     <message>
         <source>Frames per second</source>
         <translation>நொடிக்குச் சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>வினாடிக்குச் சட்டகங்கள், நேரக்குறியீட்டுக் கோப்பு %1-இன் சராசரி</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -14832,6 +14892,14 @@ after the end time in milliseconds</source>
         <translation>கீஃப்ரேம் கோப்பைத் தேர்ந்தெடு</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பைச் சேமி</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
     </message>
@@ -15174,6 +15242,90 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>திற</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பைத் திற</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>அறியப்படாத நேரக்குறியீட்டு வடிவம்</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>தவறான நேரக்குறியீட்டு வரி</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>குறைந்தது இரண்டு நேரக்குறியீடுகள் தேவை</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு 10000000 உள்ளீடுகள் வரம்பை மீறுகிறது</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>நேரக்குறியீடுகள் வரிசையில் இல்லை</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>எல்லா நேரக்குறியீடுகளும் ஒன்றாகவே உள்ளன</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>எதிர்மறைச் சட்டகங்களுக்குச் சட்டக வீதத்தைக் குறிப்பிட முடியாது</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>முடிவுச் சட்டகம் தொடக்கச் சட்டகத்துக்குச் சமமாகவோ அதைவிடப் பெரியதாகவோ இருக்க வேண்டும்</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>V1 நேரக்குறியீட்டு வரம்பு 10000000 சட்டக வரம்பை மீறுகிறது</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS பூஜ்ஜியத்தை விட அதிகமாக இருக்க வேண்டும்</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS 1000-ஐ விட அதிகமாக இருக்கக் கூடாது</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>மேலெழுது வரம்புகள் ஒன்றின் மேல் ஒன்று வரக் கூடாது</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>நேரக்குறியீடு ஆதரிக்கப்படும் நேர வரம்பை மீறுகிறது</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>வரி %1: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பைப் பகுக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு %1-ஐத் திறக்க முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு காணொளிக்கு முன்பே முடிகிறது (%2-இல் சட்டகம் %1). அடுத்த சட்டகங்கள் அதன் சராசரிச் சட்டக வீதத்தில் தொடர்கின்றன.</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>சேமிக்கச் சட்டக நேரங்கள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு %1-ஐச் சேமிக்க முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு கிடைக்கவில்லை: %1</translation>
     </message>
 </context>
 <context>

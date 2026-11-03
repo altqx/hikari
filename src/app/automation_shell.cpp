@@ -136,6 +136,8 @@ public:
             p.audioFile = box->path();
         if (keyframesFile)
             p.keyframesFile = keyframesFile();
+        if (timecodesFile)
+            p.timecodesFile = timecodesFile();
         if (videoZoom)
             p.videoZoom = videoZoom();
         return p;
@@ -155,27 +157,13 @@ public:
             return std::nullopt;
         return box->audio();
     }
-    std::optional<std::vector<std::int64_t>> frameStartsMs() const override
-    {
-        const auto &s = m_video.session();
-        if (s.state() != application::VideoSession::State::Ready)
-            return std::nullopt;
-        std::vector<std::int64_t> starts;
-        starts.reserve(static_cast<std::size_t>(s.frameCount()));
-        for (int i = 0; i < s.frameCount(); ++i) {
-            const auto start = s.frameStart(i);
-            if (!start)
-                return std::nullopt;
-            starts.push_back(start->microseconds() / 1000);
-        }
-        return starts;
-    }
-    // MUST KILL: the video path and frame count stand in for the frame times
+    std::optional<application::AegisubFrameTimes> frameTimes() const override { return m_video.session().aegisubFrameTimes(); }
+    // MUST KILL: the video path, frame count and frame-times serial stand in for the frame times
     std::string state() const
     {
         const auto &s = m_video.session();
         std::string out = s.path() + '\n' + std::to_string(static_cast<int>(s.state())) + ' ' +
-                          std::to_string(s.frameCount());
+                          std::to_string(s.frameCount()) + " times " + std::to_string(s.frameTimesSerial());
         if (const auto size = videoSize())
             out += " size " + std::to_string(size->width) + 'x' + std::to_string(size->height);
         if (const auto frames = keyframes())
@@ -194,6 +182,7 @@ public:
 
     std::function<const application::AudioBox *()> audioBox;
     std::function<std::string()> keyframesFile;
+    std::function<std::string()> timecodesFile;
     std::function<double()> videoZoom;
 
 private:
@@ -392,10 +381,12 @@ void AutomationShell::setAudioBox(std::function<const application::AudioBox *()>
     static_cast<MediaAdapter *>(m_media.get())->audioBox = std::move(box);
 }
 
-void AutomationShell::setProjectSources(std::function<std::string()> keyframesFile, std::function<double()> videoZoom)
+void AutomationShell::setProjectSources(std::function<std::string()> keyframesFile,
+                                        std::function<std::string()> timecodesFile, std::function<double()> videoZoom)
 {
     auto *media = static_cast<MediaAdapter *>(m_media.get());
     media->keyframesFile = std::move(keyframesFile);
+    media->timecodesFile = std::move(timecodesFile);
     media->videoZoom = std::move(videoZoom);
 }
 

@@ -783,6 +783,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         auto *session = targetSession();
         return session ? &session->document() : nullptr;
     });
+    connect(this, &Application::timecodesChanged, m_statusBar.get(),
+            [this] { m_statusBar->setTimecodesFile(timecodesFile()); });
     m_findHost = std::make_unique<FindHost>(*this);
     createFindReplace();
     if (!m_settingsFile.isEmpty())
@@ -829,7 +831,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 if (const std::string *title = m_workspace.title(id))
                     names << QString::fromStdString(*title);
             for (const auto &[id, media] : m_tabMedia)
-                names << media.video << media.audio << media.keyframes;
+                names << media.video << media.audio << media.keyframes << media.timecodes;
             names.removeAll(QString());
             return names;
         },
@@ -1143,11 +1145,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
         const bool ready = video.state() == application::VideoSession::State::Ready;
-        const QString path = ready ? QString::fromStdString(video.path()) : QString();
-        if (path == m_editorTimebaseVideo)
+        const auto timedBy = ready || video.replacedFrameTimes()
+                                 ? std::optional(std::pair(ready ? video.path() : std::string(), video.frameTimesSerial()))
+                                 : std::nullopt;
+        if (timedBy == m_editorTimebaseFor)
             return;
-        m_editorTimebaseVideo = path;
-        m_editor->setVideoTimebase(ready ? std::optional(video.legacyTimebase()) : std::nullopt);
+        m_editorTimebaseFor = timedBy;
+        m_editor->setVideoTimebase(timedBy ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
@@ -1200,6 +1204,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             const auto media = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
             return media == m_tabMedia.end() ? std::string() : media->second.keyframes.toStdString();
         },
+        [this] { return timecodesFile().toStdString(); },
         [this] { return m_visualTools ? m_visualTools->videoView().displayScale() : 1.0; });
     {
         const QString cacheDir = !options.audioCacheDir.isEmpty() ? options.audioCacheDir
@@ -1375,7 +1380,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (home())
             newDocument();
     };
-    m_video->setBeforeOpen(documentForMedia);
+    m_video->setBeforeOpen([this, documentForMedia] {
+        documentForMedia();
+        if (!m_enteringTabMedia)
+            closeTimecodes();
+    });
     m_audio->setBeforeOpen(documentForMedia);
     trackTabMedia();
     trackVideoSources();
@@ -1555,8 +1564,10 @@ void Application::followVideoInAudio()
         syncAudioWithVideo();
         return;
     }
-    if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioKeyframes != video.keyframes()) {
+    if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioTimebaseSerial != video.frameTimesSerial()
+        || m_audioKeyframes != video.keyframes()) {
         m_audioTimebasePath = video.path();
+        m_audioTimebaseSerial = video.frameTimesSerial();
         m_audioKeyframes = video.keyframes();
         m_audioTimebase = video.legacyTimebase();
         std::vector<int> ms;
@@ -3311,6 +3322,8 @@ bool Application::autosave(application::DocumentId document)
     core::Document saved = application::withActiveLine(session->document(), activeLine);
     if (layout)
         saved.setHikariProperty(application::kLayoutKey, *layout);
+    m_files->applyProjectGarbage(document, m_files->destination(document).value_or(application::DestinationKey{}),
+                                 saved);
     content.bytes = core::encodeSubtitle(saved, m_files->saveOptions());
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
@@ -3724,8 +3737,9 @@ QString Application::openKeyframes(const QUrl &file)
 
 bool Application::exactTimebase() const
 {
-    return m_video->session().state() == application::VideoSession::State::Ready &&
-           m_video->session().legacyTimebase().exact();
+    const auto &video = m_video->session();
+    return (video.state() == application::VideoSession::State::Ready || video.replacedFrameTimes()) &&
+           video.legacyTimebase().exact();
 }
 
 QString Application::shiftTimes()
@@ -3737,8 +3751,9 @@ QString Application::shiftTimes()
     const bool hasVideo = video.state() == application::VideoSession::State::Ready;
     const auto timebase = video.legacyTimebase();
     application::ShiftContext context;
-    if (hasVideo) {
+    if (hasVideo || video.replacedFrameTimes())
         context.timebase = &timebase;
+    if (hasVideo) {
         context.keyframes = video.keyframes();
         if (const auto frame = video.reportedFrame()) {
             context.videoFrame = *frame;

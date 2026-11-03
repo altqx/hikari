@@ -2106,6 +2106,10 @@ Output device: %2</source>
         <translation>키 프레임: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>타임코드: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>연결된 파일:</translation>
     </message>
@@ -6110,6 +6114,18 @@ Failed to copy %2 fonts.</source>
         <translation>이전 버전 설정 가져오기…</translation>
     </message>
     <message>
+        <source>Open timecodes</source>
+        <translation>타임코드 열기</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>타임코드 저장</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>타임코드 닫기</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -7200,6 +7216,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set FPS from video</source>
         <translation>영상에서 프레임 속도 설정</translation>
+    </message>
+    <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>VFR 타임코드 v1, v2, v4 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>타임코드 열기</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>열었던 타임코드</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>VFR 타임코드 v2 파일로 저장합니다</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>타임코드 저장</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>지금 열린 타임코드 파일을 닫습니다</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>타임코드 닫기</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -10976,6 +11020,10 @@ because it was edited.</source>
         <translation>키 프레임</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>타임코드</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>이 탭의 자막 파일 %1(을)를 찾을 수 없습니다.</translation>
     </message>
@@ -10990,6 +11038,10 @@ because it was edited.</source>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>이 탭의 키 프레임 파일 %1(을)를 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>이 탭의 타임코드 파일 %1(을)를 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11014,6 +11066,10 @@ because it was edited.</source>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>키 프레임 파일 (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>타임코드 파일 (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -11879,6 +11935,10 @@ because it was edited.</source>
     <message>
         <source>Frames per second</source>
         <translation>초당 프레임</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>초당 프레임, 타임코드 파일 %1의 평균</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -14744,6 +14804,14 @@ after the end time in milliseconds</source>
         <translation>키 프레임 파일 선택</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>타임코드 파일 (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>타임코드 파일 저장</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
     </message>
@@ -15086,6 +15154,90 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>열기</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>타임코드 파일 열기</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>알 수 없는 타임코드 형식</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>잘못된 타임코드 줄</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>타임코드가 두 개 이상 있어야 합니다</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>타임코드 파일이 10000000개 항목 제한을 넘습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>타임코드의 순서가 맞지 않습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>타임코드가 모두 같습니다</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>음수 프레임에는 프레임 레이트를 지정할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>끝 프레임은 시작 프레임보다 크거나 같아야 합니다</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>V1 타임코드 범위가 10000000 프레임 제한을 넘습니다</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS는 0보다 커야 합니다</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS는 1000보다 클 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>재정의 범위가 겹치면 안 됩니다</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>타임코드가 지원되는 시간 범위를 넘습니다</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번째 줄: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>타임코드 파일을 해석하지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>타임코드 파일 %1을(를) 열 수 없습니다</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>타임코드 파일이 영상보다 먼저 끝납니다(%2개 중 %1번째 프레임). 이후 프레임은 파일의 평균 프레임 레이트로 이어집니다.</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>저장할 프레임 시간이 없습니다</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>타임코드 파일 %1을(를) 저장할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation>타임코드 파일을 찾을 수 없습니다: %1</translation>
     </message>
 </context>
 <context>

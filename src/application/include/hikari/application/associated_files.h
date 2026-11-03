@@ -15,17 +15,18 @@ std::optional<std::filesystem::path> findSameNamedFile(const std::filesystem::pa
 
 // An association equal to what the tab already has open is not offered again.
 struct TabMediaPaths {
-    std::string video, audio, keyframes;
+    std::string video, audio, keyframes, timecodes;
 };
 
 struct AssociationOffer {
     std::string video;     // empty: not listed
     std::string audio;
     std::string keyframes;
+    std::string timecodes;
     // Listed, but loads with the video, not on its own.
     bool audioIsVideo = false;
     std::string directoryVideo; // full path
-    bool associated() const { return !video.empty() || !audio.empty() || !keyframes.empty(); }
+    bool associated() const { return !video.empty() || !audio.empty() || !keyframes.empty() || !timecodes.empty(); }
     bool asks() const { return associated() || !directoryVideo.empty(); }
 };
 
@@ -40,6 +41,8 @@ struct AssociationLoad {
     bool videoAudio = true; // the video's own audio opens with it
     std::string audio;      // associated or dummy audio, empty: none
     std::string keyframes;  // empty: none
+    std::string timecodes;  // empty: none; loads after the video, which drops a tab's file
+    bool loadsAnything() const { return !video.empty() || !audio.empty() || !keyframes.empty() || !timecodes.empty(); }
 };
 AssociationLoad associationLoad(const AssociationOffer &offer, AssociationAnswer answer);
 

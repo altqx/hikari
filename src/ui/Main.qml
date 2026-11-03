@@ -1864,6 +1864,49 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_OPEN_TIMECODES"
+                objectName: "openTimecodesMenuItem"
+                help: qsTr("Open a VFR timecodes v1, v2 or v4 file")
+                iconRole: "open-timecodes"
+                action: Action {
+                    id: openTimecodesAction
+                    text: qsTr("Open timecodes")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_TIMECODES")) timecodesDialog.show()
+                }
+            }
+            RecentFilesMenu {
+                iconRole: "recent-timecodes"
+                objectName: "recentTimecodesMenu"
+                prefix: "recentTimecodes"
+                title: qsTr("Recently opened timecodes")
+                load: () => root.app.recentTimecodes()
+                onChosen: path => root.openTimecodes(path)
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SAVE_TIMECODES"
+                objectName: "saveTimecodesMenuItem"
+                help: qsTr("Save a VFR timecodes v2 file")
+                iconRole: "save-timecodes"
+                action: Action {
+                    id: saveTimecodesAction
+                    text: qsTr("Save timecodes")
+                    enabled: root.video.hasVideo || root.app.timecodesFile.length > 0
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_TIMECODES")) saveTimecodesDialog.show()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_CLOSE_TIMECODES"
+                objectName: "closeTimecodesMenuItem"
+                help: qsTr("Close the currently open timecodes file")
+                iconRole: "close-timecodes"
+                action: Action {
+                    id: closeTimecodesAction
+                    text: qsTr("Close timecodes")
+                    enabled: root.app.timecodesFile.length > 0
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_TIMECODES")) root.app.closeTimecodes()
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_OPEN_DUMMY_VIDEO"
                 iconRole: "dummy-video"
                 objectName: "dummyVideoMenuItem"
@@ -6592,6 +6635,42 @@ ApplicationWindow {
             open()
         }
     }
+    function openTimecodes(path) {
+        const problem = root.app.openTimecodesFile(path)
+        if (problem.length > 0)
+            root.notices.post("error", qsTranslate("HikariSub.Video", "Open timecodes file"), problem)
+    }
+    FileDialog {
+        id: timecodesDialog
+        objectName: "timecodesDialog"
+        title: qsTranslate("HikariSub.Video", "Open timecodes file")
+        nameFilters: [qsTranslate("HikariSub.Video", "Timecodes file (*.txt)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("timecodes", selectedFile)
+            root.openTimecodes(selectedFile.toString())
+        }
+        function show() {
+            currentFolder = root.startFolder("timecodes", root.app.timecodesDialogFolder())
+            open()
+        }
+    }
+    FileDialog {
+        id: saveTimecodesDialog
+        objectName: "saveTimecodesDialog"
+        fileMode: FileDialog.SaveFile
+        title: qsTranslate("HikariSub.Video", "Save timecodes file")
+        nameFilters: [qsTranslate("HikariSub.Video", "Timecodes file (*.txt)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("timecodes", selectedFile)
+            const problem = root.app.saveTimecodesFile(selectedFile.toString())
+            if (problem.length > 0)
+                root.notices.post("error", qsTranslate("HikariSub.Video", "Save timecodes file"), problem)
+        }
+        function show() {
+            currentFolder = root.startFolder("timecodes", root.app.timecodesDialogFolder())
+            open()
+        }
+    }
     FileDialog {
         id: translationFileDialog
         title: qsTranslate("HikariSub.Translation", "Choose subtitle file")
@@ -7191,6 +7270,8 @@ ApplicationWindow {
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
         GLOBAL_VIDEO_RENDER_COST: renderCostAction,
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
+        GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
+        GLOBAL_CLOSE_TIMECODES: closeTimecodesAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
@@ -7318,6 +7399,7 @@ ApplicationWindow {
         if (symbol.startsWith("GRID_"))
             return root.runGridHotkey(symbol)
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
+                               "GLOBAL_OPEN_TIMECODES", "GLOBAL_SAVE_TIMECODES",
                                "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
                                "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",

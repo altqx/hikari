@@ -2101,7 +2101,7 @@ int projectProperties(lua_State *L)
     setNumber(L, "video_position", static_cast<double>(integerAt(*reply, 0)));
     setString(L, "audio_file", stringAt(*reply, 0));
     setString(L, "video_file", stringAt(*reply, 1));
-    setString(L, "timecodes_file", "");
+    setString(L, "timecodes_file", stringAt(*reply, 3));
     setString(L, "keyframes_file", stringAt(*reply, 2));
     return 1;
 }

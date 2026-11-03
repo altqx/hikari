@@ -67,6 +67,8 @@ AssociationOffer associationOffer(const MediaAssociations &associations, const s
         audio = associations.audio->authored;
     const std::string keyframes =
         associations.keyframes && associations.keyframes->resolved ? *associations.keyframes->resolved : "";
+    const std::string timecodes =
+        associations.timecodes && associations.timecodes->resolved ? *associations.timecodes->resolved : "";
     offer.audioIsVideo = !audio.empty() && audio == video;
     if (!video.empty() && tab.video != video)
         offer.video = video;
@@ -74,6 +76,8 @@ AssociationOffer associationOffer(const MediaAssociations &associations, const s
         offer.audio = audio;
     if (!keyframes.empty() && tab.keyframes != keyframes)
         offer.keyframes = keyframes;
+    if (!timecodes.empty() && tab.timecodes != timecodes)
+        offer.timecodes = timecodes;
     if (!directoryVideo.empty()) {
         if (tab.video == directoryVideo)
             return {};
@@ -97,6 +101,7 @@ AssociationLoad associationLoad(const AssociationOffer &offer, AssociationAnswer
         load.audio = offer.audio;
     load.videoAudio = !ownAudio;
     load.keyframes = offer.keyframes;
+    load.timecodes = offer.timecodes;
     return load;
 }
 

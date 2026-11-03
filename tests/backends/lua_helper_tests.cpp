@@ -843,7 +843,7 @@ struct FakeServices {
             case HostService::AudioSelection: out.integers = {1000, 2000}; break;
             case HostService::ProjectProperties:
                 out.integers = {12};
-                out.strings = {"a.wav", "v.mkv", "k.txt"};
+                out.strings = {"a.wav", "v.mkv", "k.txt", "t.txt"};
                 out.numbers = {1.5};
                 break;
             case HostService::FileName: out.strings = {"ep1.ass"}; break;
@@ -905,7 +905,7 @@ TEST_F(LuaHelper, MediaServicesAnswerInTheLegacyShapes)
     EXPECT_EQ(run.log[1], "640,360,2,true");
     EXPECT_EQ(run.log[2], "3,24");
     EXPECT_EQ(run.log[3], "1000,2000");
-    EXPECT_EQ(run.log[4], "12,v.mkv,a.wav,k.txt,,1.5,,");
+    EXPECT_EQ(run.log[4], "12,v.mkv,a.wav,k.txt,t.txt,1.5,,");
     EXPECT_EQ(run.log[5], "ep1.ass,/home/u/x");
     EXPECT_EQ(run.log[6], "2,1,48,&H102030&,nil");
     for (const auto &r : services.requests) {

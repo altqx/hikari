@@ -77,6 +77,11 @@ Video > Recently opened videos > None
 Video > Open keyframes [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
 Video > Recently opened keyframes > None
+Video > Open timecodes [GLOBAL_OPEN_TIMECODES]
+Video > Recently opened timecodes >
+Video > Recently opened timecodes > None
+Video > Save timecodes [GLOBAL_SAVE_TIMECODES]
+Video > Close timecodes [GLOBAL_CLOSE_TIMECODES]
 Video > Open dummy video [GLOBAL_OPEN_DUMMY_VIDEO]
 Video > Centre times within frames [GLOBAL_CENTER_TIMES_IN_FRAMES]
 Video > Insert start time from video [GLOBAL_SET_START_TIME]
