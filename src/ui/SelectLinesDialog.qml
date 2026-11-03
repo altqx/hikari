@@ -18,7 +18,7 @@ DialogWindow {
     property var recent: []
     Component.onCompleted: IconTheme.setWindowIcon(dialog, "select-lines")
 
-    readonly property var fieldNames: [qsTr("Text"), qsTr("Styles"), qsTr("Actor"), qsTr("Effect"), qsTr("Start time"),
+    readonly property var fieldNames: [qsTr("Text"), qsTr("Style"), qsTr("Actor"), qsTr("Effect"), qsTr("Start time"),
                                        qsTr("End time")]
     function openDialog() {
         const s = app.openSelectLines()
@@ -78,7 +78,7 @@ DialogWindow {
                 model: dialog.recent
                 Layout.fillWidth: true
                 Layout.minimumWidth: 214
-                Accessible.name: qsTr("Search text:")
+                Accessible.name: qsTr("Search text")
                 // An editable ComboBox takes Enter before the window's default button sees it.
                 Keys.onReturnPressed: dialog.run(false)
                 Keys.onEnterPressed: dialog.run(false)

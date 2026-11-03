@@ -10581,8 +10581,8 @@ because it was edited.</source>
         <translation>இல்லாமல்</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>தேடல் உரை:</translation>
+        <source>Search text</source>
+        <translation>தேடல் உரை</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10605,8 +10605,8 @@ because it was edited.</source>
         <translation>உரை</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
+        <source>Style</source>
+        <translation>பாணி</translation>
     </message>
     <message>
         <source>Actor</source>

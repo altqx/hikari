@@ -10517,8 +10517,8 @@ because it was edited.</source>
         <translation>โดยไม่มี</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>ค้นหาข้อความ:</translation>
+        <source>Search text</source>
+        <translation>ค้นหาข้อความ</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10541,7 +10541,7 @@ because it was edited.</source>
         <translation>ข้อความ</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>สไตล์</translation>
     </message>
     <message>

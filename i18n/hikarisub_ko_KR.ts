@@ -10517,8 +10517,8 @@ because it was edited.</source>
         <translation>포함하지 않음</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>검색 글자:</translation>
+        <source>Search text</source>
+        <translation>검색 글자</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10541,7 +10541,7 @@ because it was edited.</source>
         <translation>글자</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>스타일</translation>
     </message>
     <message>

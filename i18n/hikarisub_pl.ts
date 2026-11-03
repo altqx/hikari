@@ -10645,8 +10645,8 @@ ponieważ została zmieniona.</translation>
         <translation>Nie zawiera</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>Szukany tekst:</translation>
+        <source>Search text</source>
+        <translation>Szukany tekst</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10669,8 +10669,8 @@ ponieważ została zmieniona.</translation>
         <translation>Tekst</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>Style</translation>
+        <source>Style</source>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Actor</source>
