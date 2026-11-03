@@ -19,6 +19,7 @@
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/grammar.h"
@@ -28,7 +29,6 @@
 #include "hikari/application/find_replace.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
-#include "hikari/application/misspell_replacer.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/video_sources.h"
@@ -119,9 +119,9 @@ signals:
     void grammarWalkChanged();
     void playbackPlayerChanged();
     void audioOutputChanged();
-    // kind: 0 message, 1 "Reached end", 2 missing styles, 3 no style found, 4 replace in
-    // files; kinds 1-4 wait for answerFindQuestion(id, ...).
-    void findQuestion(int id, int kind, const QVariantMap &question);
+    // kind: "styles" (some chosen styles missing), "noStyles" or "confirmFiles"
+    // (replace in files); each waits for answerFindQuestion(id, ...).
+    void findQuestion(int id, const QString &kind, const QVariantMap &question);
     void findResultsChanged();
     // Also after its questions; settings: the tab as it is now, with the recent lists.
     void findFinished(const QVariantMap &settings);
@@ -129,9 +129,8 @@ signals:
     // A file result opens into the Untitled target, which has changes: rows as
     // reviewOpen's.
     void findOpenReview(const QVariantList &rows);
-    // Both fire when a changed program font closes the Search tool / Multireplacer.
+    // Fires when a changed program font closes the Search tool.
     void findReplaceDestroyed();
-    void misspellReplacerDestroyed();
     // The interface language changed while Options is open: the dictionaries' new names.
     void settingsListsChanged(const QStringList &dictionaries);
 
@@ -142,6 +141,8 @@ public:
         // automationDir holds automation/{Autoload,Include}. Empty: next to the
         // application, else the build tree's.
         QString luaHelper;
+        // Empty: next to the application, else the build tree's.
+        QString pluginHelper;
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;
@@ -436,22 +437,6 @@ public:
     Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
     // The chosen styles as an anchored pattern.
     Q_INVOKABLE QString selectStylesPattern(const QStringList &styles) const;
-    // Rows {description, find, replace, options, checked}; read from Rules.txt beside the
-    // INI file (the shipped rules without one), written back at exit unless empty.
-    Q_INVOKABLE QVariantList misspellRules();
-    // Refused while the results window is shown.
-    Q_INVOKABLE bool addMisspellRule(const QVariantMap &rule);
-    Q_INVOKABLE bool editMisspellRule(int index, const QVariantMap &rule);
-    Q_INVOKABLE bool removeMisspellRule(int index);
-    Q_INVOKABLE void checkMisspellRule(int index, bool checked);
-    Q_INVOKABLE void setMisspellResultsShown(bool shown) { m_misspellResultsShown = shown; }
-    // scope: {lines (0-3), styles}. A {header: true, text: path} row before each
-    // Document's finds {header: false, find (its index), line, text, position, length}.
-    Q_INVOKABLE QVariantList findMisspells(const QVariantMap &scope, bool allTabs);
-    // One step per Document.
-    Q_INVOKABLE void replaceMisspells(const QVariantMap &scope, bool allTabs);
-    Q_INVOKABLE void replaceMisspellFinds(const QVariantList &finds);
-    Q_INVOKABLE void showMisspellFind(int find);
     Q_PROPERTY(bool spellingOn READ spellingOn WRITE setSpellingOn NOTIFY spellingChanged)
     Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage NOTIFY spellingChanged)
     Q_PROPERTY(bool suggestionsOnDoubleClick READ suggestionsOnDoubleClick WRITE setSuggestionsOnDoubleClick NOTIFY spellingChanged)
@@ -530,22 +515,28 @@ public:
     // Writes a copy of the editing target (its Document is never changed) and remembers the choice.
     // {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number, losses}]}.
     Q_INVOKABLE QVariantMap exportTo(const QUrl &file, const QString &format, const QVariantMap &options);
-    // A tab: {tab (0 Find, 1 Find and replace, 2 Find in subtitles), find, replace,
-    // styles, filters, folder, field, lines, matchCase, regex, startOfText, endOfText,
-    // includeComments, skipTags, skipText, subfolders, hiddenFolders} plus the recent
-    // lists {finds, replacements, filterList, paths}. openFindReplace reads the recent
-    // lists; switchFindReplaceTab saves `settings` and returns tab `tab`.
-    Q_INVOKABLE QVariantMap openFindReplace(int tab);
-    Q_INVOKABLE QVariantMap findReplaceSettings(int tab) const;
-    Q_INVOKABLE QVariantMap switchFindReplaceTab(const QVariantMap &settings, int tab);
+    // The panel's values: {scope ("document", "openDocuments", "folder"),
+    // replaceShown, find, replace, styles, filters, folder, field ("text", "style",
+    // "actor", "effect"), lines ("all", "selected", "fromSelection"), matchCase, regex,
+    // matchAt ("anywhere", "start", "end"), inText ("all", "outsideTags",
+    // "insideTags"), includeComments, subfolders, hiddenFolders} plus the recent lists
+    // {finds, replacements, filterList, paths}. openFindReplace reads the recent lists.
+    Q_INVOKABLE QVariantMap openFindReplace();
+    Q_INVOKABLE QVariantMap findReplaceSettings() const;
     Q_INVOKABLE void saveFindReplaceSettings(const QVariantMap &settings);
-    // action: "find", "findAllCurrent", "findAllTabs", "replace", "replaceAll",
-    // "replaceAllTabs", "findInFiles" or "replaceInFiles"; findFinished ends it.
-    // Ignored while findBusy.
+    // action: "find", "findPrevious", "findAll", "replace" or "replaceAll"; Find all
+    // and Replace all work in the values' scope. findFinished ends it. Ignored while
+    // findBusy.
     Q_INVOKABLE void runFindReplace(const QString &action, const QVariantMap &settings);
+    // {total, current} in the editing target; current is 0 when the last match is not
+    // one of them.
+    Q_INVOKABLE QVariantMap findCount(const QVariantMap &settings);
+    // Empty unless the values hold an invalid regular expression.
+    Q_INVOKABLE QString findPatternError(const QVariantMap &settings) const;
     Q_INVOKABLE void findNext();
-    // answer: 0 Ok, 1 Yes, 2 No, 3 Cancel.
-    Q_INVOKABLE void answerFindQuestion(int id, int answer);
+    Q_INVOKABLE void findPrevious();
+    // answer: "ok", "yes", "no" or "cancel".
+    Q_INVOKABLE void answerFindQuestion(int id, const QString &answer);
     bool findBusy() const;
     // The text selected in the Line editor, or find as it is.
     Q_INVOKABLE QString findReplaceActivated(const QString &find);
@@ -737,6 +728,8 @@ public:
     ApiHost *apiHost() const { return m_apiHost.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
+    Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
+    PluginRuntime *pluginRuntime() const { return m_pluginRuntime.get(); }
     QVariantMap qmlProperties();
     // Waits for running writes and delivers their results.
     void waitForWrites();
@@ -964,6 +957,7 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<PluginManager> m_pluginManager;
+    std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
@@ -1016,12 +1010,6 @@ private:
     void checkVideoMatrix();
     void checkLayoutResolution();
     QStringList m_selectRecent;
-    std::optional<std::vector<application::ReplacerRule>> m_misspellRules;
-    std::vector<std::pair<application::DocumentId, application::ReplacerFind>> m_misspellFinds;
-    bool m_misspellResultsShown = false;
-    std::vector<application::ReplacerRule> &misspellRuleList();
-    void saveMisspellRules();
-    std::shared_ptr<ui::ListFile> m_rulesFile;
     void destroyDialogs();
     void resetAllSettings();
     class FindHost;
@@ -1037,7 +1025,7 @@ private:
     std::function<void(bool)> m_findOpenDone;
     int m_findProcessors = 0;
     void endFindOpen(bool opened);
-    void saveFindRecent(application::FindReplaceSettings::Tab tab);
+    void saveFindRecent(const application::FindReplaceSettings &window);
     void findFinished();
     QString m_pendingKeyframes;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
@@ -1088,6 +1076,7 @@ private:
     std::unique_ptr<ui::StatusBarController> m_statusBar;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
+    std::uint64_t m_playbackFailuresLogged = 0;
     std::uint64_t m_seenGroupBreaks = 0;
     std::unique_ptr<application::RecoveryStore> m_recovery;
     std::unique_ptr<QLockFile> m_sessionLock;
@@ -1140,7 +1129,7 @@ private:
     QString m_userFolder;
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
     void reportSettingsFiles();
-    void convertRules();
+    void noteRemovedRules();
     void convertListFiles();
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
@@ -1265,6 +1254,7 @@ private:
     void followVideoInAudio();
     void trackVideoSources();
     void logVideoFailure();
+    void logPlaybackFailure();
     void rememberRecentVideo(const QString &path);
     void rememberRecentKeyframes(const QString &path);
     QVariantList recentRows(application::RecentFiles &list, const char *setting);

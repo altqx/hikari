@@ -19,12 +19,18 @@
 #include <QVariantList>
 
 #include <cmath>
+#include <utility>
 
 namespace hikari::ui {
 
 namespace {
 
 enum PointerKind { Enter = 0, Leave = 1, Move = 2, Press = 3, Release = 4, Wheel = 5, DoubleClick = 6 };
+
+constexpr qreal kPanThreshold = 3;
+
+using application::visual::ScrollAction;
+using application::visual::ZoomModel;
 
 }
 
@@ -41,8 +47,24 @@ VideoViewController::VideoViewController(VideoController &video, VisualToolsCont
         } else if (id == QLatin1String("video.progressBar") || id == QLatin1String("video.pauseOnClick") ||
                    id == QLatin1String("video.renderCost")) {
             emit changed();
+        } else if (id == QLatin1String("video.zoomModel")) {
+            applyZoomModel();
         }
     });
+    applyZoomModel();
+}
+
+void VideoViewController::applyZoomModel()
+{
+    const auto model = m_settings.integer("video.zoomModel") == static_cast<int>(ZoomModel::Legacy)
+                           ? ZoomModel::Legacy
+                           : ZoomModel::Aegisub35;
+    if (model == m_tools.videoView().zoomModel())
+        return;
+    m_tools.videoView().setZoomModel(model);
+    m_middle.reset();
+    m_zoomCursor = 0;
+    viewChanged();
 }
 
 void VideoViewController::setPlayer(application::GeneralPlayerPort *player)
@@ -64,7 +86,9 @@ bool VideoViewController::zoomMode() const
 
 bool VideoViewController::zoomed() const
 {
-    return m_video.hasVideo() && m_tools.videoView().hasVideo() && m_tools.videoView().zoomPercent() != 1.f;
+    const auto &view = m_tools.videoView();
+    return m_video.hasVideo() && view.hasVideo() &&
+           (view.zoomPercent() != 1.f || view.pan() != application::visual::PointD{});
 }
 
 int VideoViewController::zoomPercent() const
@@ -171,6 +195,81 @@ void VideoViewController::zoomPointer(int kind, int x, int y, int button, int bu
     emit changed();
 }
 
+bool VideoViewController::middlePan(int kind, qreal x, qreal y, int button, int buttons, int modifiers)
+{
+    auto &view = m_tools.videoView();
+    if (view.zoomModel() != ZoomModel::Aegisub35 || m_tools.toolTakesMiddleButton()) {
+        m_middle.reset();
+        return false;
+    }
+    if (kind == Press && button == Qt::MiddleButton) {
+        m_middle = MiddlePress{x, y, x, y, modifiers, false};
+        return true;
+    }
+    if (!m_middle)
+        return false;
+    if (kind == Move && (buttons & Qt::MiddleButton) != 0) {
+        if (!m_middle->panning && std::hypot(x - m_middle->x, y - m_middle->y) < kPanThreshold)
+            return true;
+        m_middle->panning = true;
+        view.panBy((x - m_middle->lastX) * view.devicePixelRatio(), (y - m_middle->lastY) * view.devicePixelRatio());
+        m_middle->lastX = x;
+        m_middle->lastY = y;
+        viewChanged();
+        return true;
+    }
+    if (kind == Release && button == Qt::MiddleButton) {
+        const MiddlePress press = *std::exchange(m_middle, std::nullopt);
+        if (press.panning)
+            return true;
+        m_tools.pointer(Press, press.x, press.y, Qt::MiddleButton, buttons | Qt::MiddleButton, press.modifiers, 0);
+        return false;
+    }
+    if (kind == Leave)
+        m_middle.reset();
+    return false;
+}
+
+bool VideoViewController::wheel(qreal x, qreal y, qreal notchesX, qreal notchesY, int modifiers)
+{
+    auto &view = m_tools.videoView();
+    if (!m_video.hasVideo() || !view.hasVideo() || view.zoomModel() != ZoomModel::Aegisub35)
+        return false;
+    const bool shift = (modifiers & Qt::ShiftModifier) != 0;
+    const bool control = (modifiers & Qt::ControlModifier) != 0;
+    if (m_tools.toolTakesWheel(shift, control))
+        return false;
+    const char *setting = shift && control ? nullptr
+                          : control        ? "video.ctrlScrollAction"
+                          : shift          ? "video.shiftScrollAction"
+                                           : "video.scrollAction";
+    if (!setting)
+        return false;
+    const int stored = m_settings.integer(setting);
+    const auto action = stored >= 0 && stored <= static_cast<int>(ScrollAction::Nothing) ? static_cast<ScrollAction>(stored)
+                                                                                          : ScrollAction::Nothing;
+    const double dpr = view.devicePixelRatio();
+    if (!view.scroll(action, notchesX, notchesY, x * dpr, y * dpr))
+        return false;
+    viewChanged();
+    return true;
+}
+
+void VideoViewController::beginPinch(qreal x, qreal y)
+{
+    auto &view = m_tools.videoView();
+    view.beginPinch(x * view.devicePixelRatio(), y * view.devicePixelRatio());
+}
+
+void VideoViewController::pinch(qreal factor, qreal x, qreal y)
+{
+    auto &view = m_tools.videoView();
+    if (!m_video.hasVideo() || !view.hasVideo() || view.zoomModel() != ZoomModel::Aegisub35)
+        return;
+    view.pinch(factor, x * view.devicePixelRatio(), y * view.devicePixelRatio());
+    viewChanged();
+}
+
 int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps)
 {
     auto &view = m_tools.videoView();
@@ -183,10 +282,12 @@ int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int but
         zoomPointer(kind, view.toDevice(x), view.toDevice(y), button, buttons, wheelSteps);
         return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest;
     }
+    if (middlePan(kind, x, y, button, buttons, modifiers))
+        return NoRequest;
     if (kind == Wheel && wheelSteps != 0) {
         if (control && !m_fullscreen)
             return NoRequest;
-        if (!control && !m_tools.hasNonDefaultTool()) {
+        if (!control && !m_tools.hasNonDefaultTool() && view.zoomModel() == ZoomModel::Legacy) {
             const float current = view.zoomPercent();
             const float zoom = application::wheelZoomPercent(current, wheelSteps);
             if (current != zoom) {

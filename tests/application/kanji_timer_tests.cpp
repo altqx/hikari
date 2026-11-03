@@ -1,11 +1,18 @@
 #include "hikari/application/kana.h"
 #include "hikari/application/kanji_timer.h"
+#include "hikari/core/ass_load.h"
+#include "hikari/core/ass_save.h"
+#include "hikari/core/extradata.h"
 #include "hikari/core/text_projection.h"
 
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstring>
+#include <fstream>
+#include <iterator>
 #include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1074,4 +1081,183 @@ TEST(KanjiSpaces, FuriganaKeepsTheSpacesOfTheLine)
         EXPECT_TRUE(timer.acceptLine()) << space;
         EXPECT_EQ(s(timer.pending()[0].second), "{\\k40}君|きみ" + space + "{\\k30}の{\\k80}声|こえ") << space;
     }
+}
+
+namespace {
+
+const std::string kSkipScript = "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n"
+                                "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+                                "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, "
+                                "Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                                "Style: Romaji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,"
+                                "1,2,1,8,10,10,10,1\n"
+                                "Style: Kanji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,"
+                                "1,2,1,2,10,10,10,1\n\n"
+                                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                "Dialogue: 0,0:00:00.00,0:00:01.00,Romaji,,0,0,0,,{\\k50}yu{\\k50}me\n"
+                                "Dialogue: 0,0:00:00.00,0:00:00.00,Kanji,,0,0,0,,夢\n"
+                                "Dialogue: 0,0:00:02.00,0:00:03.00,Romaji,,0,0,0,,{\\k50}ho{\\k50}shi\n"
+                                "Dialogue: 0,0:00:00.00,0:00:00.00,Kanji,,0,0,0,,星\n";
+
+std::unique_ptr<EditSession> openScript(const std::string &script)
+{
+    std::vector<std::byte> bytes(script.size());
+    std::memcpy(bytes.data(), script.data(), script.size());
+    return std::make_unique<EditSession>(core::loadAss(bytes).document);
+}
+
+std::string savedText(const EditSession &session)
+{
+    const auto bytes = core::encodeAss(session.document());
+    return {reinterpret_cast<const char *>(bytes.data()), bytes.size()};
+}
+
+KanjiTimer timerOn(const EditSession &session)
+{
+    KanjiTimer timer(classes());
+    auto [romaji, kanji] = kanjiTimerLines(session.document(), u8"Romaji", u8"Kanji");
+    timer.setLines(std::move(romaji), std::move(kanji));
+    return timer;
+}
+
+std::optional<std::u8string> skipMark(const EditSession &session, std::size_t row)
+{
+    return core::extradataValue(session.document().lines()[row]->extra, kKanjiSkipKey);
+}
+
+std::unique_ptr<EditSession> skippedAndApplied()
+{
+    auto session = openScript(kSkipScript);
+    auto timer = timerOn(*session);
+    EXPECT_TRUE(timer.skipRomaji());
+    EXPECT_EQ(timer.pendingSkips(), (std::vector<std::pair<core::LineId, bool>>{{session->document().lines()[0]->id, true}}));
+    EXPECT_TRUE(applyKanjiTimer(timer, *session));
+    timer.applied();
+    EXPECT_FALSE(timer.hasPending());
+    EXPECT_EQ(timer.pairs().size(), 3u);
+    return session;
+}
+
+std::string extradataFixture(const char *name)
+{
+    std::ifstream in(std::string(HIKARI_EXTRADATA_FIXTURES) + "/" + name, std::ios::binary);
+    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+}
+
+}
+
+TEST(KanjiTimerFile, ASkipIsSavedOnTheLineAndReadBack)
+{
+    const auto session = skippedAndApplied();
+    EXPECT_EQ(skipMark(*session, 0), u8"1");
+    EXPECT_FALSE(skipMark(*session, 2));
+    const std::string file = savedText(*session);
+    EXPECT_NE(file.find(",_hikari_kanji_skip,e1\n"), std::string::npos) << file;
+    const auto reopened = openScript(file);
+    const auto timer = timerOn(*reopened);
+    ASSERT_EQ(timer.pairs().size(), 3u);
+    EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::NoKanji);
+    EXPECT_EQ(timer.pairs()[1].romaji->text, u("{\\k50}ho{\\k50}shi"));
+    EXPECT_EQ(timer.pairs()[1].kanji->text, u("夢"));
+    EXPECT_FALSE(timer.hasPending());
+}
+
+TEST(KanjiTimerFile, UndoTakesTheSkipOffTheLine)
+{
+    const auto session = skippedAndApplied();
+    ASSERT_TRUE(session->undo());
+    EXPECT_FALSE(skipMark(*session, 0));
+    EXPECT_EQ(savedText(*session), savedText(*openScript(kSkipScript)));
+    EXPECT_EQ(timerOn(*session).pairs().size(), 2u);
+}
+
+TEST(KanjiTimerFile, PairAgainTakesTheSavedSkipOff)
+{
+    const auto reopened = openScript(savedText(*skippedAndApplied()));
+    auto timer = timerOn(*reopened);
+    ASSERT_EQ(timer.pairs().size(), 3u);
+    EXPECT_TRUE(timer.pairs()[0].skipped);
+    EXPECT_FALSE(timer.pairs()[1].skipped);
+    EXPECT_FALSE(timer.pairAgain(1));
+    ASSERT_TRUE(timer.pairAgain(0));
+    EXPECT_EQ(timer.pairs().size(), 2u);
+    EXPECT_EQ(timer.pendingSkips(), (std::vector<std::pair<core::LineId, bool>>{{reopened->document().lines()[0]->id, false}}));
+    ASSERT_TRUE(applyKanjiTimer(timer, *reopened));
+    timer.applied();
+    EXPECT_FALSE(timer.hasPending());
+    EXPECT_FALSE(skipMark(*reopened, 0));
+    const std::string file = savedText(*reopened);
+    EXPECT_NE(file.find(",,{\\k50}yu{\\k50}me\n"), std::string::npos) << file;
+    EXPECT_FALSE(skipMark(*openScript(file), 0));
+    EXPECT_EQ(timerOn(*openScript(file)).pairs().size(), 2u);
+    ASSERT_TRUE(reopened->undo());
+    EXPECT_EQ(skipMark(*reopened, 0), u8"1");
+    auto [romaji, kanji] = kanjiTimerLines(reopened->document(), u8"Romaji", u8"Kanji");
+    timer.setLines(std::move(romaji), std::move(kanji));
+    EXPECT_EQ(timer.pairs().size(), 3u);
+    EXPECT_TRUE(timer.pairs()[0].skipped);
+}
+
+TEST(KanjiTimerFile, TheTimersUndoTakesPairAgainBack)
+{
+    const auto reopened = openScript(savedText(*skippedAndApplied()));
+    auto timer = timerOn(*reopened);
+    ASSERT_TRUE(timer.pairAgain(0));
+    ASSERT_TRUE(timer.undo());
+    EXPECT_EQ(timer.pairs().size(), 3u);
+    EXPECT_TRUE(timer.pairs()[0].skipped);
+    EXPECT_FALSE(timer.hasPending());
+    ASSERT_TRUE(timer.redo());
+    EXPECT_EQ(timer.pairs().size(), 2u);
+}
+
+TEST(KanjiTimerFile, ASkipNotYetAppliedPairsAgainWithNothingToWrite)
+{
+    auto session = openScript(kSkipScript);
+    auto timer = timerOn(*session);
+    ASSERT_TRUE(timer.skipRomaji());
+    ASSERT_TRUE(timer.pairs()[0].skipped);
+    ASSERT_TRUE(timer.pairAgain(0));
+    EXPECT_EQ(timer.pairs().size(), 2u);
+    EXPECT_FALSE(timer.hasPending());
+}
+
+TEST(KanjiTimerFile, ASkipUndoneInTheTimerIsNotWritten)
+{
+    auto session = openScript(kSkipScript);
+    auto timer = timerOn(*session);
+    ASSERT_TRUE(timer.skipKanji());
+    EXPECT_TRUE(timer.hasPending());
+    ASSERT_TRUE(timer.undo());
+    EXPECT_FALSE(timer.hasPending());
+}
+
+TEST(KanjiTimerFile, ASkippedKanjiLineIsSavedToo)
+{
+    auto session = openScript(kSkipScript);
+    auto timer = timerOn(*session);
+    ASSERT_TRUE(timer.skipKanji());
+    ASSERT_TRUE(applyKanjiTimer(timer, *session));
+    EXPECT_EQ(skipMark(*session, 1), u8"1");
+    EXPECT_FALSE(skipMark(*session, 0));
+}
+
+TEST(KanjiTimerFile, HikarisSaveOfASkipIsTheGoldenFile)
+{
+    const std::string file = savedText(*skippedAndApplied());
+    if (file != extradataFixture("kanji-skip-hikari.ass"))
+        std::ofstream("kanji-skip-hikari.actual.ass", std::ios::binary) << file;
+    EXPECT_EQ(file, extradataFixture("kanji-skip-hikari.ass"));
+}
+
+TEST(KanjiTimerFile, AegisubKeepsHikarisSkip)
+{
+    EXPECT_EQ(extradataFixture("kanji-skip-hikari.lua-extra.txt"),
+              "{\\k50}yu{\\k50}me\t_hikari_kanji_skip=1\n夢\n{\\k50}ho{\\k50}shi\n星\n");
+    const auto session = openScript(extradataFixture("kanji-skip-hikari.aegisub.ass"));
+    ASSERT_EQ(session->document().lines().size(), 4u);
+    EXPECT_EQ(skipMark(*session, 0), u8"1");
+    const auto timer = timerOn(*session);
+    ASSERT_EQ(timer.pairs().size(), 3u);
+    EXPECT_TRUE(timer.pairs()[0].skipped);
 }

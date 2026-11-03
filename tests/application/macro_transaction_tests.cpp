@@ -1,6 +1,7 @@
 #include "hikari/application/macro_transaction.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/extradata.h"
 
 #include <gtest/gtest.h>
 
@@ -429,4 +430,31 @@ TEST(MacroExtradata, ScriptsReadAndWriteLineExtraAsOneUndoStep)
     EXPECT_EQ(save(session), loaded);
     ASSERT_TRUE(session.redo());
     EXPECT_EQ(save(session), folded);
+}
+
+TEST_F(MacroTest, GeneratedLinesAreMarkedInTheRunsUndoStep)
+{
+    const std::string loaded = save(session);
+    const auto steps = session.historySize();
+    const auto s = snapshot();
+    MacroResult r = unchanged(s);
+    MacroDialogueLine made = s.dialogues[0];
+    made.id = 0;
+    made.generatedFrom = l1.value;
+    made.effect = "fx";
+    made.text = "made";
+    made.extra = {{"_hikari_kara_source", "1;copiedxx"}};
+    r.dialogues.insert(r.dialogues.begin() + 1, made);
+    ASSERT_TRUE(applyMacroResult(session, s, r, "Apply karaoke template"));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    const auto lines = session.document().lines();
+    ASSERT_EQ(lines.size(), 4u);
+    const auto token = core::extradataValue(lines[0]->extra, core::kKaraSourceKey);
+    ASSERT_TRUE(token);
+    EXPECT_EQ(core::extradataValue(lines[1]->extra, core::kKaraFromKey), token);
+    EXPECT_FALSE(core::extradataValue(lines[1]->extra, core::kKaraSourceKey));
+    const auto reopened = load(save(session));
+    EXPECT_EQ(reopened.lines()[1]->generatedFrom, reopened.lines()[0]->id);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(save(session), loaded);
 }

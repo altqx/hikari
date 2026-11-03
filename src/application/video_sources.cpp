@@ -141,8 +141,8 @@ int saturate(double v)
 bool isNextFileVideo(std::string_view path)
 {
     const std::string ext = lower(afterLastDot(path));
-    static constexpr std::string_view kExtensions[] = {"avi", "mp4", "mkv", "ogm", "wmv", "asf", "rmvb",
-                                                        "rm",  "3gp", "ts",  "m2ts", "mpg", "mpeg"};
+    static constexpr std::string_view kExtensions[] = {"avi", "mp4", "mkv",  "ogm", "wmv",  "asf", "rmvb",
+                                                        "rm",  "3gp", "ts",  "m2ts", "mpg", "mpeg", "webm"};
     return std::find(std::begin(kExtensions), std::end(kExtensions), ext) != std::end(kExtensions);
 }
 

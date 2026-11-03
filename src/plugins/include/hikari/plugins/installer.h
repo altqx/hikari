@@ -55,6 +55,10 @@ public:
     // that needs re-trust is refused unless `retrusted`.
     std::expected<void, std::string> install(const InstallReview &review, bool retrusted);
     std::expected<void, std::string> setEnabled(std::string_view id, bool enabled);
+    // The manifest of the installed copy.
+    std::expected<Manifest, std::string> installedManifest(std::string_view id) const;
+    // Checks the value against the installed manifest, then keeps it in plugins.json.
+    std::expected<void, std::string> setSetting(std::string_view id, std::string_view setting, const api::Json &value);
     std::expected<void, std::string> uninstall(std::string_view id, bool removeData);
 
 private:

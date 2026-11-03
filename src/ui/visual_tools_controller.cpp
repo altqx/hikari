@@ -1072,6 +1072,14 @@ QRectF VisualToolsController::sourceRect() const
     return QRectF(r.left, r.top, r.width(), r.height());
 }
 
+QRectF VisualToolsController::frameRect() const
+{
+    if (!m_view.hasVideo())
+        return {};
+    const auto r = m_view.frameRect();
+    return {m_view.toLogical(r.left), m_view.toLogical(r.top), m_view.toLogical(r.width), m_view.toLogical(r.height)};
+}
+
 QVariantList VisualToolsController::overlay() const
 {
     QVariantList out;

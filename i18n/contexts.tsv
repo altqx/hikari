@@ -15,7 +15,6 @@ HikariSub.Karaoke	The karaoke check: its window, problems and their details
 HikariSub.Export	Export as: its window, the formats and options, and the report of what each format drops
 HikariSub.MainWindow	The main window: title, its title bar (menus, window buttons, the window menu), menu help, About, Credits, updates, the log and history windows
 HikariSub.Matroska	Subtitles from Matroska files
-HikariSub.MisspellReplacer	Fix minor errors (the misspell replacer) and its rules
 HikariSub.Options	The Options dialog, its Appearance page (themes, accent colours) and the interface language
 HikariSub.Reports	Crash and freeze reports, their notices, and Report an issue (CR1)
 HikariSub.Reference	The protected reference panel and its tray

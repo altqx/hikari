@@ -172,6 +172,12 @@ void Gesture::stage(core::LineId line, std::u8string text, bool translation)
         m_staged[{line, translation}] = std::move(text);
 }
 
+void Gesture::stageExtradata(core::LineId line, std::vector<core::Extradata> extra)
+{
+    if (m_before.contains(line))
+        m_stagedExtra[line] = std::move(extra);
+}
+
 bool Gesture::changesAnyLine() const
 {
     for (const auto &[key, text] : m_staged) {
@@ -179,6 +185,9 @@ bool Gesture::changesAnyLine() const
         if ((key.second ? line.translation : line.text) != text)
             return true;
     }
+    for (const auto &[id, extra] : m_stagedExtra)
+        if (m_before.at(id).extra != extra)
+            return true;
     return false;
 }
 
@@ -196,6 +205,8 @@ void Gesture::applyTo(core::Document &document) const
         (void)document.editLine(key.first, [&](core::LineRecord &line) {
             (key.second ? line.translation : line.text) = text;
         });
+    for (const auto &[id, extra] : m_stagedExtra)
+        (void)document.editLine(id, [&](core::LineRecord &line) { line.extra = extra; });
 }
 
 core::Document Gesture::preview(const core::Document &document, std::int64_t timeMs, bool playing) const
@@ -214,7 +225,7 @@ core::Document Gesture::preview(const core::Document &document, std::int64_t tim
 
 std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
 {
-    if (m_staged.empty())
+    if (!hasChanges())
         return {};
     if (session.isProtected())
         return std::unexpected(CommandRefusal::Protected);
@@ -233,7 +244,7 @@ std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
     command.name = m_history;
     command.expectedRevision = session.revision();
     command.touches = touches;
-    command.apply = [staged = m_staged](core::Document &document) {
+    command.apply = [staged = m_staged, stagedExtra = m_stagedExtra](core::Document &document) {
         for (const auto &[key, text] : staged) {
             const bool translation = key.second;
             if (!document.editLine(key.first, [&](core::LineRecord &line) {
@@ -241,6 +252,9 @@ std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
                 }))
                 return false;
         }
+        for (const auto &[id, extra] : stagedExtra)
+            if (!document.editLine(id, [&](core::LineRecord &line) { line.extra = extra; }))
+                return false;
         return true;
     };
     return session.run(command);

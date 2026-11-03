@@ -229,8 +229,6 @@ ApplicationWindow {
         editorDock.setAsCurrentTab()
         stylesDock.close()
         templateDock.close()
-        dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
-        misspellDock.close()
     }
 
     function typesettingLayout() {
@@ -370,9 +368,9 @@ ApplicationWindow {
 
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                           timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
-                                          misspellPanel, templatePanel]
+                                          templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
+                                     searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
     Instantiator {
         model: root.dockList
         delegate: Connections {
@@ -467,14 +465,13 @@ ApplicationWindow {
     onKaraokeTurnedOnChanged: root.keepKaraokeTurnedOn()
     onFoldTurnedOnChanged: root.keepKaraokeTurnedOn()
 
-    // MUST KILL: which is a magic int search tab (0 Search, 1 Find and replace)
-    function openSearch(which) {
-        if (searchDock.isOpen && searchPanel.activeFocus && searchTool.tab === which) {
+    function openFind(withReplace) {
+        if (searchDock.isOpen && searchPanel.activeFocus && (!withReplace || searchTool.replaceShown)) {
             searchDock.close()
             root.focusPanel(editorPanel, Qt.OtherFocusReason)
             return
         }
-        searchTool.showTab(which)
+        searchTool.open(withReplace)
         root.showPanel(searchDock)
         searchTool.focusFind()
     }
@@ -554,12 +551,6 @@ ApplicationWindow {
     function panelAvailable(dock) {
         return dock !== originalDock || root.editor.translationMode
     }
-    function toggleMisspellPanel() {
-        if (misspellDock.isOpen)
-            misspellDock.close()
-        else
-            root.showPanel(misspellDock)
-    }
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
@@ -580,8 +571,6 @@ ApplicationWindow {
             root.addSpellChecker()
         else if (dock === stylesDock && !Docking.hasPlace("Styles"))
             root.addStyles()
-        else if (dock === misspellDock && !Docking.hasPlace("FixMinorErrors"))
-            dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         else if (dock === templateDock && !Docking.hasPlace("Template"))
             root.addTemplate()
         else if (!Docking.hasPlace(dock.uniqueName))
@@ -660,7 +649,11 @@ ApplicationWindow {
                     { name: "spellAddedWords", text: qsTranslate("HikariSub.Spelling", "Words added to dictionary…"),
                       iconRole: "dictionary", run: () => spellTool.openAddedWords() }]
         if (dock === gridDock)
-            return [{ name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated lines"), checkable: true,
+            return [{ name: "ignoreFilteringInActions", text: qsTranslate("HikariSub.Grid", "Ignore filtering in some actions"),
+                      command: "GRID_FILTER_IGNORE_IN_ACTIONS", checkable: true,
+                      checked: () => root.gridFilter.ignoreInActions,
+                      run: () => root.gridFilter.ignoreInActions = !root.gridFilter.ignoreInActions },
+                    { name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated lines"), checkable: true,
                       checked: () => root.shell.foldGenerated,
                       run: () => root.shell.foldGenerated = !root.shell.foldGenerated }]
         return []
@@ -703,8 +696,14 @@ ApplicationWindow {
         property int tabIndex: -1
         property int tabCount: 0
         readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
+        readonly property var hostedMenus: [gridFilteringMenu, gridColumnsMenu]
         function openFor(target, anchor) {
+            for (let i = count - 1; i >= 0; --i)
+                if (hostedMenus.includes(menuAt(i)))
+                    takeMenu(i)
             dock = target
+            if (target === gridDock)
+                hostedMenus.forEach((menu, i) => insertMenu(i, menu))
             tabIndex = Docking.tabIndex(target.uniqueName)
             tabCount = Docking.tabCount(target.uniqueName)
             margins = anchor.Window.window !== root ? Docking.windowShadow(anchor.Window.window) + 1 : 0
@@ -719,12 +718,14 @@ ApplicationWindow {
                 objectName: "panelOptions_" + modelData.name
                 iconRole: modelData.iconRole ?? ""
                 text: modelData.text
+                command: modelData.command ?? ""
                 checkable: modelData.checkable === true
                 checked: typeof modelData.checked === "function" ? modelData.checked() : modelData.checked === true
                 keepsMenuOpen: checkable && modelData.radio !== true
                 enabled: typeof modelData.enabled === "function" ? modelData.enabled() : modelData.enabled !== false
                 onTriggered: {
-                    modelData.run()
+                    if (!command || !root.hotkeyGesture(command, commandWindow))
+                        modelData.run()
                     // Clicking a checkable item assigns checked and breaks its binding; restore it.
                     if (typeof modelData.checked === "function")
                         checked = Qt.binding(() => modelData.checked())
@@ -810,6 +811,171 @@ ApplicationWindow {
             enabled: panelOptionsMenu.closable
             onTriggered: root.closePanel(panelOptionsMenu.dock)
         }
+    }
+
+    component GridColumnsMenu: ShellMenu {
+        id: columns
+        property string prefix
+        Instantiator {
+            model: [
+                { bit: 1, label: qsTranslate("HikariSub.Grid", "Layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
+                { bit: 2, label: qsTranslate("HikariSub.Grid", "Start time"), ass: false, symbol: "GRID_HIDE_START" },
+                { bit: 4, label: qsTranslate("HikariSub.Grid", "End time"), ass: false, end: true, symbol: "GRID_HIDE_END" },
+                { bit: 16, label: qsTranslate("HikariSub.Grid", "Actor"), ass: true, symbol: "GRID_HIDE_ACTOR" },
+                { bit: 8, label: qsTranslate("HikariSub.Grid", "Style"), ass: true, symbol: "GRID_HIDE_STYLE" },
+                { bit: 32, label: qsTranslate("HikariSub.Grid", "Left margin"), ass: true, symbol: "GRID_HIDE_MARGINL" },
+                { bit: 64, label: qsTranslate("HikariSub.Grid", "Right margin"), ass: true, symbol: "GRID_HIDE_MARGINR" },
+                { bit: 128, label: qsTranslate("HikariSub.Grid", "Vertical margin"), ass: true, symbol: "GRID_HIDE_MARGINV" },
+                { bit: 256, label: qsTranslate("HikariSub.Grid", "Effect"), ass: true, symbol: "GRID_HIDE_EFFECT" },
+                { bit: 512, label: qsTranslate("HikariSub.Grid", "Characters per second"), ass: false, symbol: "GRID_HIDE_CPS" },
+                { bit: 8192, label: qsTranslate("HikariSub.Grid", "Line wraps"), ass: false, symbol: "GRID_HIDE_WRAPS" }
+            ]
+            delegate: ShellMenuItem {
+                required property var modelData
+                objectName: columns.prefix + "hideColumn" + modelData.bit
+                command: modelData.symbol
+                text: modelData.label
+                checkable: true
+                checked: (root.shell.hiddenColumns & modelData.bit) === 0
+                enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
+                onTriggered: {
+                    if (!root.gridGesture(this, modelData.symbol))
+                        root.shell.toggleColumn(modelData.bit)
+                    checked = Qt.binding(() => (root.shell.hiddenColumns & modelData.bit) === 0)
+                }
+            }
+            onObjectAdded: (index, object) => columns.insertItem(index, object)
+            onObjectRemoved: (index, object) => columns.removeItem(object)
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: columns.prefix + "hideEmptyColumns"
+            text: qsTranslate("HikariSub.Grid", "Hide empty columns")
+            checkable: true
+            checked: root.shell.autoHideColumns
+            onTriggered: {
+                root.shell.autoHideColumns = checked
+                checked = Qt.binding(() => root.shell.autoHideColumns)
+            }
+        }
+        ShellMenuItem {
+            iconRole: "restore-default"
+            objectName: columns.prefix + "resetColumnWidths"
+            text: qsTranslate("HikariSub.Grid", "Reset column widths")
+            enabled: Object.keys(root.shell.gridColumnWidths).length > 0
+            onTriggered: root.shell.gridColumnWidths = {}
+        }
+    }
+    component FilterCheck: ShellMenuItem {
+        id: check
+        property int bit
+        property bool assOnly
+        property bool translationOnly
+        checkable: true
+        enabled: (!assOnly || root.shell.assColumns) && (!translationOnly || root.editor.translationMode)
+        checked: (root.gridFilter.filterBy & bit) !== 0
+        onTriggered: {
+            if (!root.gridGesture(this, command))
+                root.gridFilter.setFilterBy(bit, checked)
+            checked = Qt.binding(() => (root.gridFilter.filterBy & check.bit) !== 0)
+        }
+    }
+    ShellMenu {
+        id: gridFilteringMenu
+        objectName: "filteringMenu"
+        iconRole: "filter"
+        title: qsTranslate("HikariSub.Grid", "Filtering")
+        property var styleNames: []
+        onAboutToShow: styleNames = root.app.styleNames()
+        ShellMenuItem { command: "GRID_FILTER"; iconRole: "filter"; objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
+        ShellMenuItem {
+            command: "GRID_FILTER_BY_NOTHING"
+            iconRole: "filter-off"
+            objectName: "turnOffFiltering"
+            text: qsTranslate("HikariSub.Grid", "Turn off filtering")
+            enabled: root.shell.filtered
+            onTriggered: if (!root.gridGesture(this, "GRID_FILTER_BY_NOTHING")) root.app.turnOffFiltering()
+        }
+        MenuSeparator {}
+        FilterCheck {
+            objectName: "filterBySelection"; command: "GRID_FILTER_BY_SELECTIONS"; bit: 2
+            text: qsTranslate("HikariSub.Grid", "Hide selected lines (filter)")
+        }
+        FilterCheck {
+            objectName: "filterByComments"; command: "GRID_FILTER_BY_DIALOGUES"; bit: 4; assOnly: true
+            text: qsTranslate("HikariSub.Grid", "Hide comments")
+        }
+        ShellMenu {
+            id: filterStylesMenu
+            objectName: "filterStylesMenu"
+            iconRole: "styles"
+            title: qsTranslate("HikariSub.Grid", "Hide lines with styles")
+            enabled: root.shell.assColumns
+            Instantiator {
+                model: gridFilteringMenu.styleNames
+                delegate: ShellMenuItem {
+                    required property string modelData
+                    text: modelData
+                    checkable: true
+                    checked: root.gridFilter.styles.indexOf(modelData) >= 0
+                    onTriggered: root.gridFilter.setStyle(modelData, checked)
+                }
+                onObjectAdded: (index, object) => filterStylesMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => filterStylesMenu.removeItem(object)
+            }
+        }
+        FilterCheck {
+            objectName: "filterByUnconfirmed"; command: "GRID_FILTER_BY_DOUBTFUL"; bit: 8; translationOnly: true
+            text: qsTranslate("HikariSub.Grid", "Show unconfirmed")
+        }
+        FilterCheck {
+            objectName: "filterByUntranslated"; command: "GRID_FILTER_BY_UNTRANSLATED"; bit: 16; translationOnly: true
+            text: qsTranslate("HikariSub.Grid", "Show untranslated")
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            command: "GRID_FILTER_INVERT"
+            objectName: "filterInvert"
+            text: qsTranslate("HikariSub.Grid", "Reverse filtering")
+            checkable: true
+            checked: root.gridFilter.inverted
+            onTriggered: {
+                if (!root.gridGesture(this, "GRID_FILTER_INVERT"))
+                    root.gridFilter.inverted = checked
+                checked = Qt.binding(() => root.gridFilter.inverted)
+            }
+        }
+        ShellMenuItem {
+            command: "GRID_FILTER_AFTER_SUBS_LOAD"
+            objectName: "filterAfterLoad"
+            text: qsTranslate("HikariSub.Grid", "Filter after loading subtitles")
+            checkable: true
+            enabled: root.shell.assColumns
+            checked: root.gridFilter.afterLoad
+            onTriggered: {
+                if (!root.gridGesture(this, "GRID_FILTER_AFTER_SUBS_LOAD"))
+                    root.gridFilter.afterLoad = checked
+                checked = Qt.binding(() => root.gridFilter.afterLoad)
+            }
+        }
+        ShellMenuItem {
+            command: "GRID_FILTER_DO_NOT_RESET"
+            objectName: "filterDoNotReset"
+            text: qsTranslate("HikariSub.Grid", "Do not reset previous filtering")
+            checkable: true
+            checked: root.gridFilter.addToFilter
+            onTriggered: {
+                if (!root.gridGesture(this, "GRID_FILTER_DO_NOT_RESET"))
+                    root.gridFilter.addToFilter = checked
+                checked = Qt.binding(() => root.gridFilter.addToFilter)
+            }
+        }
+    }
+    GridColumnsMenu {
+        id: gridColumnsMenu
+        objectName: "columnsMenu"
+        iconRole: "columns"
+        title: qsTranslate("HikariSub.Grid", "Columns")
     }
 
     function cyclePanels(step) {
@@ -1151,6 +1317,15 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GRID_SUBS_FROM_MKV"
+                    help: qsTr("Imports a subtitle track from a Matroska file")
+                    iconRole: "extract-subtitles"
+                    objectName: "importMkvMenuItem"
+                    text: qsTr("Import subtitles from MKV…")
+                    enabled: root.matroska.available
+                    onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
+                }
+                ShellMenuItem {
                     command: "GLOBAL_SAVE_SUBS"
                     help: qsTr("Save current file")
                     iconRole: "save"
@@ -1423,17 +1598,6 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
-                command: "GLOBAL_MISSPELLS_REPLACER"
-                help: qsTr("Shows or hides the Fix minor errors panel")
-                iconRole: "multireplace"
-                objectName: "misspellMenuItem"
-                action: Action {
-                    id: misspellAction
-                    text: qsTr("Fix minor errors (experimental)")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) root.toggleMisspellPanel()
-                }
-            }
-            ShellMenuItem {
                 command: "GLOBAL_OPEN_SELECT_LINES"
                 help: qsTr("Selects lines by expressions")
                 iconRole: "select-lines"
@@ -1446,39 +1610,51 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
-                command: "GLOBAL_FIND_REPLACE"
-                help: qsTr("Searches for the specified text phrases and replaces them")
-                iconRole: "find-replace"
-                objectName: "findReplaceMenuItem"
-                action: Action {
-                    id: findReplaceAction
-                    text: qsTr("Find and re&place")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openSearch(1)
-                }
-            }
-            ShellMenuItem {
                 command: "GLOBAL_SEARCH"
-                help: qsTr("Searches for the specified text phrase")
+                help: qsTr("Opens the Find panel")
                 iconRole: "search"
                 objectName: "findMenuItem"
                 action: Action {
                     id: findAction
-                    text: qsTr("&Find")
+                    text: qsTr("&Find…")
                     enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openSearch(0)
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openFind(false)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_REPLACE"
+                help: qsTr("Opens the Find panel with the replace row shown")
+                iconRole: "find-replace"
+                objectName: "findReplaceMenuItem"
+                action: Action {
+                    id: findReplaceAction
+                    text: qsTr("Re&place…")
+                    enabled: root.editor.hasLine
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openFind(true)
                 }
             }
             ShellMenuItem {
                 command: "GLOBAL_FIND_NEXT"
-                help: qsTr("Finds the next occurrence of the phrase in the text")
-                iconRole: "search"
+                help: qsTr("Selects the next match")
+                iconRole: "match-next"
                 objectName: "findNextMenuItem"
                 action: Action {
                     id: findNextAction
                     text: qsTr("Find next")
                     enabled: root.editor.hasLine && !root.app.findBusy
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_PREVIOUS"
+                help: qsTr("Selects the previous match")
+                iconRole: "match-previous"
+                objectName: "findPreviousMenuItem"
+                action: Action {
+                    id: findPreviousAction
+                    text: qsTr("Find previous")
+                    enabled: root.editor.hasLine && !root.app.findBusy
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_PREVIOUS")) root.app.findPrevious()
                 }
             }
         }
@@ -1554,6 +1730,28 @@ ApplicationWindow {
                 text: qsTr("Resample subtitles")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) root.openResample()
+            }
+            ShellMenu {
+                help: qsTr("Changes the frame rate of the subtitle times")
+                iconRole: "fps"
+                objectName: "setFpsMenu"
+                title: qsTr("Set FPS")
+                enabled: root.shell.hasEditingTarget
+                ShellMenuItem {
+                    command: "GRID_SET_NEW_FPS"
+                    iconRole: "fps"
+                    objectName: "setNewFps"
+                    text: qsTr("Set new FPS…")
+                    onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps()
+                }
+                ShellMenuItem {
+                    command: "GRID_SET_FPS_FROM_VIDEO"
+                    iconRole: "fps-from-video"
+                    objectName: "setFpsFromVideo"
+                    text: qsTr("Set FPS from video")
+                    enabled: root.video.hasVideo
+                    onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
+                }
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_SPELLCHECKER"
@@ -1864,7 +2062,7 @@ ApplicationWindow {
                 objectName: "resetVideoZoomMenuItem"
                 action: Action {
                     id: resetVideoZoomAction
-                    text: qsTr("Turn off video zoom"); enabled: root.videoView.zoomed
+                    text: qsTr("Reset zoom and pan"); enabled: root.videoView.zoomed
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
                 }
             }
@@ -2077,6 +2275,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                id: pluginsMenuItem
                 command: "GLOBAL_PLUGINS"
                 help: qsTr("Install, turn on and off, and uninstall plugins")
                 iconRole: "plugins"
@@ -2087,6 +2286,14 @@ ApplicationWindow {
                     enabled: !root.workspaceLayout.modalOpen
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
                 }
+            }
+            MacroMenuEntries {
+                menu: automationMenu
+                after: pluginsMenuItem
+                macros: root.app.pluginRuntime ? root.app.pluginRuntime.commands : []
+                itemPrefix: "pluginCommand_"
+                menuPrefix: "pluginCommandMenu_"
+                onTriggered: command => root.app.pluginRuntime.run(command.id)
             }
             MenuSeparator {
                 id: macrosSeparator
@@ -2607,6 +2814,8 @@ ApplicationWindow {
             root.editor.tagList.close()
             field.readMarksAt(position)
         }
+        MenuKey.enabled: root.editor.tagList.open
+        MenuKey.onRequested: tagListPopup.openOptions()
         function ignoreGrammarRule() {
             const group = root.app.ignoreGrammarRule(field.grammar.rule)
             if (group < 0)
@@ -2615,7 +2824,7 @@ ApplicationWindow {
             const groups = root.app.grammarGroups()
             const rules = group < groups.length ? groups[group].rules : 0
             root.notices.post("info", qsTranslate("HikariSub.Spelling", "%1 turned off").arg(name),
-                              qsTranslate("HikariSub.Spelling", "Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling & grammar.", "", rules),
+                              qsTranslate("HikariSub.Spelling", "Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.", "", rules),
                               {actions: [{text: qsTranslate("HikariSub.Spelling", "Undo"), run: () => root.app.setGrammarGroup(group, true)},
                                          {text: qsTranslate("HikariSub.Spelling", "Grammar settings…"), run: () => root.openSettings("spelling")}]})
         }
@@ -3045,12 +3254,13 @@ ApplicationWindow {
                     objectName: "videoStage"
                     parent: root.videoStageInFullscreen ? videoFullscreenWindow.stage : videoStageDock
                     anchors.fill: parent
+                    clip: true
                 VideoPresenter {
                     id: presenter
                     objectName: "videoPresenter"
                     visible: root.video.hasVideo
                     anchors.fill: parent
-                    videoRect: root.visualTools.videoRect
+                    videoRect: root.visualTools.frameRect
                     sourceRect: root.visualTools.sourceRect
                     Component.onCompleted: root.video.attachPresenter(presenter)
                 }
@@ -5057,6 +5267,7 @@ ApplicationWindow {
                     onLineDragged: id => root.app.dragSelection(id)
                     onSelectAllRequested: root.app.selectAllLines()
                     onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
+                    onHeaderMenuRequested: (x, y) => gridHeaderMenu.popup(grid, x, y)
                     MenuKey.onRequested: grid.requestMenu()
                     GridHeaderToolTip { grid: grid }
                     GridScrollBars { grid: grid }
@@ -5073,15 +5284,21 @@ ApplicationWindow {
                         objectName: "groupMenu"
                         property var description: 0
                         property point at: Qt.point(0, 0)
-                        ShellMenuItem { iconRole: "tree-add-lines"; objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select the group's lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        ShellMenuItem {
+                            iconRole: "tree-add-lines"
+                            objectName: "groupAddLines"
+                            text: qsTranslate("HikariSub.Grid", "Add %n selected line(s)", "", Math.max(1, root.shell.selectedCount))
+                            onTriggered: root.app.addLinesToGroup(groupMenu.description)
+                        }
                         ShellMenuItem { iconRole: "edit-copy"; objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy line group"); onTriggered: root.app.copyGroup(groupMenu.description) }
                         ShellMenuItem {
                             iconRole: "edit"
-                            objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description")
+                            objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description…")
                             onTriggered: groupDescriptionPopover.edit(groupMenu.description, grid, groupMenu.at)
                         }
-                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select the group's lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
-                        ShellMenuItem { iconRole: "delete"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
+                        MenuSeparator {}
+                        ShellMenuItem { iconRole: "remove"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Ungroup"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
                     function clipboardKey(event) {
                         const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
@@ -5113,37 +5330,40 @@ ApplicationWindow {
                         objectName: "gridMenu"
                         property bool canPasteTranslation: false
                         property bool canShiftTranslation: false
+                        readonly property int lineCount: Math.max(1, root.shell.selectedCount)
                         onAboutToShow: {
                             canPasteTranslation = root.app.canPasteTranslation()
                             canShiftTranslation = root.app.canShiftTranslation()
                         }
                         ShellMenu {
+                            objectName: "gridInsertMenu"
                             iconRole: "add"
                             title: qsTranslate("HikariSub.Grid", "Insert")
-                            ShellMenuItem { command: "GRID_INSERT_BEFORE"; iconRole: "insert-before"; objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Insert before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
-                            ShellMenuItem { command: "GRID_INSERT_AFTER"; iconRole: "insert-after"; objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "Insert after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
+                            ShellMenuItem { command: "GRID_INSERT_BEFORE"; iconRole: "insert-before"; objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
+                            ShellMenuItem { command: "GRID_INSERT_AFTER"; iconRole: "insert-after"; objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "After"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
+                            MenuSeparator {}
                             ShellMenuItem {
                                 command: "GRID_INSERT_BEFORE_VIDEO"
                                 iconRole: "insert-before"
-                                objectName: "insertBeforeVideo"; text: qsTranslate("HikariSub.Grid", "Insert before with video time")
+                                objectName: "insertBeforeVideo"; text: qsTranslate("HikariSub.Grid", "Before, at video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_VIDEO")) root.app.insertLine(true, "video")
                             }
                             ShellMenuItem {
                                 command: "GRID_INSERT_AFTER_VIDEO"
                                 iconRole: "insert-after"
-                                objectName: "insertAfterVideo"; text: qsTranslate("HikariSub.Grid", "Insert after with video time")
+                                objectName: "insertAfterVideo"; text: qsTranslate("HikariSub.Grid", "After, at video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_VIDEO")) root.app.insertLine(false, "video")
                             }
                             ShellMenuItem {
                                 command: "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME"
                                 iconRole: "insert-before"
-                                objectName: "insertBeforeFrame"; text: qsTranslate("HikariSub.Grid", "Insert before with video frame time")
+                                objectName: "insertBeforeFrame"; text: qsTranslate("HikariSub.Grid", "Before, at video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME")) root.app.insertLine(true, "frame")
                             }
                             ShellMenuItem {
                                 command: "GRID_INSERT_AFTER_WITH_VIDEO_FRAME"
                                 iconRole: "insert-after"
-                                objectName: "insertAfterFrame"; text: qsTranslate("HikariSub.Grid", "Insert after with video frame time")
+                                objectName: "insertAfterFrame"; text: qsTranslate("HikariSub.Grid", "After, at video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_WITH_VIDEO_FRAME")) root.app.insertLine(false, "frame")
                             }
                         }
@@ -5151,33 +5371,53 @@ ApplicationWindow {
                             command: "GRID_DUPLICATE_LINES"
                             objectName: "duplicateLines"
                             iconRole: "duplicate"
-                            text: qsTranslate("HikariSub.Grid", "Duplicate lines")
+                            text: qsTranslate("HikariSub.Grid", "Duplicate %n line(s)", "", gridMenu.lineCount)
+                            readonly property string docsText: qsTranslate("HikariSub.Hotkeys", "Duplicate lines")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
-                        ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
-                        ShellMenuItem { command: "GRID_JOIN_LINES"; iconRole: "join-lines"; objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
-                        ShellMenuItem { command: "GRID_JOIN_TO_FIRST_LINE"; iconRole: "join-keep-first"; objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
-                        ShellMenuItem { command: "GRID_JOIN_TO_LAST_LINE"; iconRole: "join-keep-last"; objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
-                        ShellMenuItem {
-                            command: "GRID_MAKE_CONTINOUS_PREVIOUS_LINE"
-                            iconRole: "continuous-previous"
-                            objectName: "continuousPrevious"; text: qsTranslate("HikariSub.Grid", "Make times continuous with the previous line")
-                            onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
+                        ShellMenuItem { command: "GRID_CUT"; iconRole: "edit-cut"; objectName: "cutLines"; standardKey: StandardKey.Cut; text: qsTranslate("HikariSub.Grid", "Cut"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
+                        ShellMenuItem { command: "GRID_COPY"; iconRole: "edit-copy"; objectName: "copyLines"; standardKey: StandardKey.Copy; text: qsTranslate("HikariSub.Grid", "Copy"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
+                        ShellMenuItem { command: "GRID_PASTE"; iconRole: "edit-paste"; objectName: "pasteLines"; standardKey: StandardKey.Paste; text: qsTranslate("HikariSub.Grid", "Paste"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
+                        ShellMenu {
+                            objectName: "gridPasteSpecialMenu"
+                            iconRole: "paste-special"
+                            title: qsTranslate("HikariSub.Grid", "Paste special")
+                            ShellMenuItem { command: "GRID_COPY_COLUMNS"; iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
+                            ShellMenuItem { command: "GRID_PASTE_COLUMNS"; iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                command: "GRID_PASTE_TRANSLATION"
+                                iconRole: "paste-translation"
+                                objectName: "pasteTranslation"
+                                text: qsTranslate("HikariSub.Grid", "Paste translation from a file…")
+                                enabled: gridMenu.canPasteTranslation
+                                help: root.app.translationHint
+                                onTriggered: {
+                                    if (root.gridGesture(this, "GRID_PASTE_TRANSLATION"))
+                                        return
+                                    translationFileDialog.currentFolder = root.app.targetFolder()
+                                    translationFileDialog.open()
+                                }
+                            }
                         }
-                        ShellMenuItem {
-                            command: "GRID_MAKE_CONTINOUS_NEXT_LINE"
-                            iconRole: "continuous-next"
-                            objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "Make times continuous with the next line")
-                            onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
+                        MenuSeparator {}
+                        ShellMenu {
+                            objectName: "gridJoinMenu"
+                            iconRole: "join-lines"
+                            title: qsTranslate("HikariSub.Grid", "Join")
+                            ShellMenuItem { command: "GRID_JOIN_LINES"; iconRole: "join-lines"; objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
+                            ShellMenuItem { command: "GRID_JOIN_TO_FIRST_LINE"; iconRole: "join-keep-first"; objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
+                            ShellMenuItem { command: "GRID_JOIN_TO_LAST_LINE"; iconRole: "join-keep-last"; objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
                         }
                         ShellMenu {
+                            objectName: "gridSplitMenu"
                             iconRole: "split-lines"
-                            title: qsTranslate("HikariSub.Grid", "Split lines")
+                            title: qsTranslate("HikariSub.Grid", "Split")
                             ShellMenuItem {
                                 command: "GRID_SPLIT_BY_VIDEO_TIME"
                                 iconRole: "split-at-video"
                                 objectName: "splitAtVideoTime"
-                                text: qsTranslate("HikariSub.Grid", "Split line at video time")
+                                text: qsTranslate("HikariSub.Grid", "At video time")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_VIDEO_TIME")) root.app.splitLines("videoTime")
                             }
@@ -5185,39 +5425,59 @@ ApplicationWindow {
                                 command: "GRID_SPLIT_BY_FRAME"
                                 iconRole: "split-frames"
                                 objectName: "splitIntoFrames"
-                                text: qsTranslate("HikariSub.Grid", "Split lines into frames")
+                                text: qsTranslate("HikariSub.Grid", "Into frames")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_FRAME")) root.app.splitLines("frames")
                             }
+                            MenuSeparator {}
                             ShellMenuItem {
                                 command: "GRID_SPLIT_BY_CHARS"
                                 iconRole: "split-characters"
                                 objectName: "splitIntoCharacters"
-                                text: qsTranslate("HikariSub.Grid", "Split lines into characters")
+                                text: qsTranslate("HikariSub.Grid", "Into characters")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_CHARS")) root.app.splitLines("chars")
                             }
                             ShellMenuItem {
                                 command: "GRID_SPLIT_BY_WORDS"
                                 iconRole: "split-words"
                                 objectName: "splitIntoWords"
-                                text: qsTranslate("HikariSub.Grid", "Split lines into words")
+                                text: qsTranslate("HikariSub.Grid", "Into words")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WORDS")) root.app.splitLines("words")
                             }
                             ShellMenuItem {
                                 command: "GRID_SPLIT_BY_WRAPS"
                                 iconRole: "split-wraps"
                                 objectName: "splitByWraps"
-                                text: qsTranslate("HikariSub.Grid", "Split lines by wraps")
+                                text: qsTranslate("HikariSub.Grid", "By wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
+                        ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenu {
+                            objectName: "gridContinuousMenu"
+                            iconRole: "continuous-next"
+                            title: qsTranslate("HikariSub.Grid", "Make times continuous")
+                            ShellMenuItem {
+                                command: "GRID_MAKE_CONTINOUS_PREVIOUS_LINE"
+                                iconRole: "continuous-previous"
+                                objectName: "continuousPrevious"; text: qsTranslate("HikariSub.Grid", "With the previous line")
+                                onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
+                            }
+                            ShellMenuItem {
+                                command: "GRID_MAKE_CONTINOUS_NEXT_LINE"
+                                iconRole: "continuous-next"
+                                objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "With the next line")
+                                onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
+                            }
+                        }
+                        ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        MenuSeparator {}
                         ShellMenuItem {
                             command: "GRID_SELECT_VISIBLE_LINES"
                             iconRole: "select-visible"
-                            objectName: "selectVisibleLines"; text: qsTranslate("HikariSub.Grid", "Select all lines visible on video")
+                            objectName: "selectVisibleLines"; text: qsTranslate("HikariSub.Grid", "Select lines visible on video")
                             onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
                         }
-                        ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         ShellMenuItem {
                             command: "GRID_SHOW_PREVIEW"
                             iconRole: "reference"
@@ -5227,198 +5487,28 @@ ApplicationWindow {
                             onTriggered: if (!root.gridGesture(this, "GRID_SHOW_PREVIEW")) root.app.showPreview()
                         }
                         ShellMenuItem {
-                            command: "GRID_PASTE_TRANSLATION"
-                            iconRole: "paste-translation"
-                            objectName: "pasteTranslation"
-                            text: qsTranslate("HikariSub.Grid", "Paste translation text")
-                            enabled: gridMenu.canPasteTranslation
-                            help: root.app.translationHint
-                            onTriggered: {
-                                if (root.gridGesture(this, "GRID_PASTE_TRANSLATION"))
-                                    return
-                                translationFileDialog.currentFolder = root.app.targetFolder()
-                                translationFileDialog.open()
-                            }
-                        }
-                        ShellMenuItem {
                             command: "GRID_TRANSLATION_DIALOG"
                             iconRole: "translation-shift"
                             objectName: "translationDialog"
-                            text: qsTranslate("HikariSub.Grid", "Dialogue shifting window")
+                            text: qsTranslate("HikariSub.Grid", "Translation matching…")
                             enabled: gridMenu.canShiftTranslation
                             onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.open()
                         }
-                        ShellMenuItem { command: "GRID_HIDE_SELECTED"; iconRole: "hide"; objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
-                        ShellMenu {
-                            id: filteringMenu
-                            objectName: "filteringMenu"
-                            iconRole: "filter"
-                            title: qsTranslate("HikariSub.Grid", "Filtering")
-                            property var styleNames: []
-                            onAboutToShow: styleNames = root.app.styleNames()
-                            ShellMenuItem {
-                                command: "GRID_FILTER_AFTER_SUBS_LOAD"
-                                objectName: "filterAfterLoad"
-                                text: qsTranslate("HikariSub.Grid", "Filter after loading subtitles")
-                                checkable: true
-                                enabled: root.shell.assColumns
-                                checked: root.gridFilter.afterLoad
-                                onTriggered: if (!root.gridGesture(this, "GRID_FILTER_AFTER_SUBS_LOAD")) root.gridFilter.afterLoad = checked
-                            }
-                            ShellMenuItem {
-                                command: "GRID_FILTER_INVERT"
-                                objectName: "filterInvert"
-                                text: qsTranslate("HikariSub.Grid", "Reverse filtering")
-                                checkable: true
-                                checked: root.gridFilter.inverted
-                                onTriggered: if (!root.gridGesture(this, "GRID_FILTER_INVERT")) root.gridFilter.inverted = checked
-                            }
-                            ShellMenuItem {
-                                command: "GRID_FILTER_DO_NOT_RESET"
-                                objectName: "filterDoNotReset"
-                                text: qsTranslate("HikariSub.Grid", "Do not reset previous filtering")
-                                checkable: true
-                                checked: root.gridFilter.addToFilter
-                                onTriggered: if (!root.gridGesture(this, "GRID_FILTER_DO_NOT_RESET")) root.gridFilter.addToFilter = checked
-                            }
-                            ShellMenu {
-                                id: filterStylesMenu
-                                objectName: "filterStylesMenu"
-                                iconRole: "styles"
-                                title: qsTranslate("HikariSub.Grid", "Hide lines with styles")
-                                enabled: root.shell.assColumns
-                                Instantiator {
-                                    model: filteringMenu.styleNames
-                                    delegate: ShellMenuItem {
-                                        required property string modelData
-                                        text: modelData
-                                        checkable: true
-                                        checked: root.gridFilter.styles.indexOf(modelData) >= 0
-                                        onTriggered: root.gridFilter.setStyle(modelData, checked)
-                                    }
-                                    onObjectAdded: (index, object) => filterStylesMenu.insertItem(index, object)
-                                    onObjectRemoved: (index, object) => filterStylesMenu.removeItem(object)
-                                }
-                            }
-                            Instantiator {
-                                model: [
-                                    { bit: 2, label: qsTranslate("HikariSub.Grid", "Hide selected lines"), name: "filterBySelection",
-                                      symbol: "GRID_FILTER_BY_SELECTIONS" },
-                                    { bit: 4, label: qsTranslate("HikariSub.Grid", "Hide comments"), name: "filterByComments", ass: true,
-                                      symbol: "GRID_FILTER_BY_DIALOGUES" },
-                                    { bit: 8, label: qsTranslate("HikariSub.Grid", "Show unconfirmed"), name: "filterByUnconfirmed", tl: true,
-                                      symbol: "GRID_FILTER_BY_DOUBTFUL" },
-                                    { bit: 16, label: qsTranslate("HikariSub.Grid", "Show untranslated"), name: "filterByUntranslated", tl: true,
-                                      symbol: "GRID_FILTER_BY_UNTRANSLATED" }
-                                ]
-                                delegate: ShellMenuItem {
-                                    required property var modelData
-                                    objectName: modelData.name
-                                    command: modelData.symbol
-                                    text: modelData.label
-                                    checkable: true
-                                    enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.tl || root.editor.translationMode)
-                                    checked: (root.gridFilter.filterBy & modelData.bit) !== 0
-                                    onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.gridFilter.setFilterBy(modelData.bit, checked)
-                                }
-                                onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
-                                onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
-                            }
-                            ShellMenuItem { command: "GRID_FILTER"; iconRole: "filter"; objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
-                            ShellMenuItem {
-                                command: "GRID_FILTER_BY_NOTHING"
-                                iconRole: "filter-off"
-                                objectName: "turnOffFiltering"
-                                text: qsTranslate("HikariSub.Grid", "Turn off filtering")
-                                enabled: root.shell.filtered
-                                onTriggered: if (!root.gridGesture(this, "GRID_FILTER_BY_NOTHING")) root.app.turnOffFiltering()
-                            }
-                        }
-                        ShellMenuItem {
-                            command: "GRID_FILTER_IGNORE_IN_ACTIONS"
-                            objectName: "ignoreFilteringInActions"
-                            text: qsTranslate("HikariSub.Grid", "Ignore filtering in some actions")
-                            checkable: true
-                            checked: root.gridFilter.ignoreInActions
-                            onTriggered: if (!root.gridGesture(this, "GRID_FILTER_IGNORE_IN_ACTIONS")) root.gridFilter.ignoreInActions = checked
-                        }
-                        ShellMenu {
-                            id: hideColumnsMenu
-                            iconRole: "columns"
-                            objectName: "hideColumnsMenu"
-                            title: qsTranslate("HikariSub.Grid", "Hide columns")
-                            ShellMenuItem {
-                                objectName: "hideEmptyColumns"
-                                text: qsTranslate("HikariSub.Grid", "Hide empty columns")
-                                checkable: true
-                                checked: root.shell.autoHideColumns
-                                onTriggered: root.shell.autoHideColumns = checked
-                            }
-                            MenuSeparator {}
-                            Instantiator {
-                                model: [
-                                    { bit: 1, label: qsTranslate("HikariSub.Grid", "Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
-                                    { bit: 2, label: qsTranslate("HikariSub.Grid", "Hide start time"), ass: false, symbol: "GRID_HIDE_START" },
-                                    { bit: 4, label: qsTranslate("HikariSub.Grid", "Hide end time"), ass: false, end: true, symbol: "GRID_HIDE_END" },
-                                    { bit: 16, label: qsTranslate("HikariSub.Grid", "Hide actor"), ass: true, symbol: "GRID_HIDE_ACTOR" },
-                                    { bit: 8, label: qsTranslate("HikariSub.Grid", "Hide style"), ass: true, symbol: "GRID_HIDE_STYLE" },
-                                    { bit: 32, label: qsTranslate("HikariSub.Grid", "Hide left margin"), ass: true, symbol: "GRID_HIDE_MARGINL" },
-                                    { bit: 64, label: qsTranslate("HikariSub.Grid", "Hide right margin"), ass: true, symbol: "GRID_HIDE_MARGINR" },
-                                    { bit: 128, label: qsTranslate("HikariSub.Grid", "Hide vertical margin"), ass: true, symbol: "GRID_HIDE_MARGINV" },
-                                    { bit: 256, label: qsTranslate("HikariSub.Grid", "Hide effect"), ass: true, symbol: "GRID_HIDE_EFFECT" },
-                                    { bit: 512, label: qsTranslate("HikariSub.Grid", "Hide characters per second"), ass: false, symbol: "GRID_HIDE_CPS" },
-                                    { bit: 8192, label: qsTranslate("HikariSub.Grid", "Hide line wraps"), ass: false, symbol: "GRID_HIDE_WRAPS" }
-                                ]
-                                delegate: ShellMenuItem {
-                                    required property var modelData
-                                    objectName: "hideColumn" + modelData.bit
-                                    command: modelData.symbol
-                                    text: modelData.label
-                                    checkable: true
-                                    checked: (root.shell.hiddenColumns & modelData.bit) !== 0
-                                    enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
-                                    onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.shell.toggleColumn(modelData.bit)
-                                }
-                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(2 + index, object)
-                                onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
-                            }
-                            MenuSeparator {}
-                            ShellMenuItem {
-                                iconRole: "restore-default"
-                                objectName: "resetColumnWidths"
-                                text: qsTranslate("HikariSub.Grid", "Reset column widths")
-                                enabled: Object.keys(root.shell.gridColumnWidths).length > 0
-                                onTriggered: root.shell.gridColumnWidths = {}
-                            }
-                        }
-                        ShellMenuItem { command: "GRID_SET_NEW_FPS"; iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps() }
-                        ShellMenuItem {
-                            command: "GRID_SET_FPS_FROM_VIDEO"
-                            iconRole: "fps-from-video"
-                            objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
-                            enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
-                        }
-                        ShellMenuItem { command: "GRID_COPY"; iconRole: "edit-copy"; objectName: "copyLines"; standardKey: StandardKey.Copy; text: qsTranslate("HikariSub.Grid", "Copy"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
-                        ShellMenuItem { command: "GRID_CUT"; iconRole: "edit-cut"; objectName: "cutLines"; standardKey: StandardKey.Cut; text: qsTranslate("HikariSub.Grid", "Cut"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
-                        ShellMenuItem { command: "GRID_PASTE"; iconRole: "edit-paste"; objectName: "pasteLines"; standardKey: StandardKey.Paste; text: qsTranslate("HikariSub.Grid", "Paste"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
-                        ShellMenuItem { command: "GRID_COPY_COLUMNS"; iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
-                        ShellMenuItem { command: "GRID_PASTE_COLUMNS"; iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
-                        ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
-                        ShellMenuItem { command: "GLOBAL_REMOVE_LINES"; iconRole: "delete"; objectName: "deleteLines"; text: qsTranslate("HikariSub.Grid", "Delete lines"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         MenuSeparator {}
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
                         ShellMenuItem {
-                            command: "GLOBAL_OPEN_FONT_COLLECTOR"
-                            iconRole: "font-collector"
-                            objectName: "gridFontCollector"; text: qsTranslate("HikariSub.Grid", "Font collector"); enabled: root.shell.assColumns
-                            onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
+                            command: "GLOBAL_REMOVE_LINES"
+                            iconRole: "delete"
+                            objectName: "deleteLines"
+                            text: qsTranslate("HikariSub.Grid", "Delete %n line(s)", "", gridMenu.lineCount)
+                            readonly property string docsText: qsTranslate("HikariSub.Hotkeys", "Delete line")
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines()
                         }
-                        ShellMenuItem {
-                            command: "GRID_SUBS_FROM_MKV"
-                            iconRole: "extract-subtitles"
-                            objectName: "gridSubsFromMkv"; text: qsTranslate("HikariSub.Grid", "Load subtitles from an MKV/OGM file")
-                            enabled: root.matroska.available
-                            onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
-                        }
+                    }
+                    GridColumnsMenu {
+                        id: gridHeaderMenu
+                        objectName: "gridHeaderMenu"
+                        prefix: "header"
                     }
                 }
                 Label {
@@ -5487,7 +5577,7 @@ ApplicationWindow {
             id: searchDock
             objectName: "searchDock"
             uniqueName: "Search"
-            title: qsTranslate("HikariSub.Search", "Search")
+            title: qsTranslate("HikariSub.Search", "Find")
             onIsOpenChanged: if (!isOpen) searchTool.save()
             Panel {
                 id: searchPanel
@@ -5495,12 +5585,14 @@ ApplicationWindow {
                 dockName: "Search"
                 minimumBodySize: searchTool.minimumSize
                 anchors.fill: parent
-                title: qsTranslate("HikariSub.Search", "Find and replace")
+                title: qsTranslate("HikariSub.Search", "Find")
                 onActiveFocusChanged: if (activeFocus) searchTool.activated()
                 SearchTool {
                     id: searchTool
                     anchors.fill: parent
                     app: root.app
+                    editor: root.editor
+                    onEscaped: root.focusPanel(editorPanel, Qt.OtherFocusReason)
                 }
             }
         }
@@ -5634,38 +5726,6 @@ ApplicationWindow {
                     objectName: "logView"
                     anchors.fill: parent
                     log: root.log
-                }
-            }
-        }
-        PanelDock {
-            id: misspellDock
-            objectName: "misspellDock"
-            uniqueName: "FixMinorErrors"
-            title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-            // MUST KILL: deferred because the default arrangement opens the panel and closes it at once
-            onIsOpenChanged: if (isOpen) Qt.callLater(misspellDock.reloadIfOpen)
-            function reloadIfOpen() {
-                if (misspellDock.isOpen)
-                    misspellTool.reloadRules()
-            }
-            Panel {
-                id: misspellPanel
-                objectName: "misspellPanel"
-                dockName: "FixMinorErrors"
-                minimumBodySize: misspellTool.minimumSize
-                anchors.fill: parent
-                title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-                FixMinorErrors {
-                    id: misspellTool
-                    anchors.fill: parent
-                    app: root.app
-                    Connections {
-                        target: root.app
-                        function onMisspellReplacerDestroyed() {
-                            misspellTool.reset()
-                            misspellDock.reloadIfOpen()
-                        }
-                    }
                 }
             }
         }
@@ -6476,7 +6536,7 @@ ApplicationWindow {
         id: audioDialog
         objectName: "audioDialog"
         title: qsTranslate("HikariSub.Audio", "Choose audio file")
-        nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)",
+        nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.opus *.mp3 *.mp4 *.m4a *.mka *.mkv *.webm *.avi)",
                       qsTranslate("HikariSub.Audio", "All files") + " (*)"]
         onAccepted: {
             root.rememberPickerFolder("audio", selectedFile)
@@ -7158,7 +7218,7 @@ ApplicationWindow {
         GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
         GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
         GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,
-        GLOBAL_FIND_NEXT: findNextAction, GLOBAL_MISSPELLS_REPLACER: misspellAction,
+        GLOBAL_FIND_NEXT: findNextAction, GLOBAL_FIND_PREVIOUS: findPreviousAction,
         GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_RELOAD_AUDIO: reloadAudioAction, GLOBAL_RELOAD_VIDEO: reloadVideoAction,
@@ -7225,7 +7285,7 @@ ApplicationWindow {
                 const symbol = item.command || symbolOf.get(item.action) || symbolOf.get(item)
                 if (!symbol)
                     continue
-                const place = path.concat(plain(item.text)).join(" > ")
+                const place = path.concat(plain(item.docsText || item.text)).join(" > ")
                 if (!out[symbol])
                     out[symbol] = []
                 if (!out[symbol].includes(place))
@@ -7235,6 +7295,14 @@ ApplicationWindow {
         for (let i = 0; i < appMenus.count; ++i)
             walk(appMenus.menuAt(i), [plain(appMenus.menuAt(i).title)])
         walk(gridMenu, ["Grid menu"])
+        walk(gridHeaderMenu, ["Grid header menu"])
+        walk(gridFilteringMenu, ["Grid options", plain(gridFilteringMenu.title)])
+        walk(gridColumnsMenu, ["Grid options", plain(gridColumnsMenu.title)])
+        for (const own of root.panelOwnItems(gridDock))
+            if (own.command) {
+                const place = "Grid options > " + own.text
+                out[own.command] = (out[own.command] ?? []).concat(place)
+            }
         return out
     }
     function applyMenuShortcuts() {

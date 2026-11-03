@@ -260,7 +260,20 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(starPrompt.page, OptionsPage::Updates);
     ASSERT_NE(findSetting("privacy.starPrompt"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("privacy.starPrompt")->defaultValue), true);
-    const auto &handleSize = all[std::size(kLegacy) + 39];
+    const std::pair<std::string_view, std::int64_t> zoom[] = {{"video.zoomModel", 0},
+                                                              {"video.scrollAction", 4},
+                                                              {"video.ctrlScrollAction", 0},
+                                                              {"video.shiftScrollAction", 2}};
+    for (std::size_t i = 0; i < std::size(zoom); ++i) {
+        const auto &binding = all[std::size(kLegacy) + 39 + i];
+        EXPECT_EQ(binding.setting, zoom[i].first);
+        EXPECT_EQ(binding.control, OptionsControl::IndexChoice) << zoom[i].first;
+        EXPECT_EQ(binding.page, OptionsPage::Video) << zoom[i].first;
+        EXPECT_EQ(binding.entries, i == 0 ? 2 : 5) << zoom[i].first;
+        ASSERT_NE(findSetting(zoom[i].first), nullptr);
+        EXPECT_EQ(std::get<std::int64_t>(findSetting(zoom[i].first)->defaultValue), zoom[i].second) << zoom[i].first;
+    }
+    const auto &handleSize = all[std::size(kLegacy) + 43];
     EXPECT_EQ(handleSize.setting, "video.handleSize");
     EXPECT_EQ(handleSize.control, OptionsControl::Number);
     EXPECT_EQ(handleSize.page, OptionsPage::Video);
@@ -271,7 +284,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
                                       {"video.matrixMismatch", 3},
                                       {"video.missingLayoutRes", 4},
                                       {"video.layoutResMismatch", 3}}) {
-        const auto &prompt = all[std::size(kLegacy) + 40 + i++];
+        const auto &prompt = all[std::size(kLegacy) + 44 + i++];
         EXPECT_EQ(prompt.setting, id);
         EXPECT_EQ(prompt.control, OptionsControl::IndexChoice);
         EXPECT_EQ(prompt.page, OptionsPage::Video);
@@ -279,15 +292,15 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         EXPECT_EQ(std::get<std::int64_t>(findSetting(id)->defaultValue), 1) << id;
     }
     for (std::size_t i = 0; const std::string_view id : {"video.untaggedMatrixWarning", "video.hdrWarning"}) {
-        const auto &warning = all[std::size(kLegacy) + 44 + i++];
+        const auto &warning = all[std::size(kLegacy) + 48 + i++];
         EXPECT_EQ(warning.setting, id);
         EXPECT_EQ(warning.control, OptionsControl::Check);
         EXPECT_EQ(warning.page, OptionsPage::Video);
         EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), true) << id;
     }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 48);
-    const auto &hostApi = all[std::size(kLegacy) + 46];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 52);
+    const auto &hostApi = all[std::size(kLegacy) + 50];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -298,7 +311,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 46);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 50);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
@@ -536,7 +549,7 @@ TEST(OptionsDialog, SetDefaultKeepsAChoiceWhoseIndexIsPastItsList)
     Settings settings(storage);
     auto l = lists();
     l.dictionarySymbols.clear();
-    l.dictionaryNames = {"Put files .dic and .aff to \"Dictionary\" folder"};
+    l.dictionaryNames = {"Put .dic and .aff files in the “Dictionary” folder"};
     auto state = openOptionsDialog(settings, l).state;
     EXPECT_EQ(intOf(state, "editor.dictionaryLanguage"), -1);
     state["program.language"] = std::int64_t{1};

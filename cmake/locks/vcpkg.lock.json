@@ -36,8 +36,10 @@
   "features": [
    "avcodec",
    "avformat",
+   "dav1d",
    "swresample",
-   "swscale"
+   "swscale",
+   "zlib"
   ]
  }
 }

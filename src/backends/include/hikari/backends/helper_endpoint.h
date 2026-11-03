@@ -28,6 +28,9 @@ using RequestHandler = std::function<void(const Frame &request, Responder &respo
 // running request. First points fd 1 (and the Windows stdout handle) at stderr, so stray output
 // never lands in a frame. Returns 0 once stdin closes, 3 when refused or the host left first.
 int runHelper(const std::string &name, std::uint32_t protocolVersion, const RequestHandler &handler);
+// As above; Event frames go to `onEvent`. Without it an Event ends Unsupported.
+int runHelper(const std::string &name, std::uint32_t protocolVersion, const RequestHandler &onRequest,
+              const RequestHandler &onEvent);
 
 // For tests only: writes a frame without any responder checks.
 void sendUncheckedFrame(const Frame &frame);

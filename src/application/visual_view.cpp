@@ -1,5 +1,6 @@
 #include "hikari/application/visual_view.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 
@@ -8,6 +9,8 @@
 namespace hikari::application::visual {
 
 namespace {
+
+constexpr double kMinContentZoom = 0.125, kMaxContentZoom = 10.0;
 
 float mid(float a, float b, float c)
 {
@@ -67,6 +70,8 @@ void VideoView::open(const SourceGeometry &source)
 void VideoView::close()
 {
     m_open = false;
+    m_contentZoom = 1.0;
+    m_pan = {};
 }
 
 void VideoView::setClient(int width, int height, int panelHeight)
@@ -74,8 +79,114 @@ void VideoView::setClient(int width, int height, int panelHeight)
     m_clientWidth = width;
     m_clientHeight = height;
     m_panelHeight = panelHeight;
-    if (m_open)
-        updateRects();
+    if (!m_open)
+        return;
+    const int before = m_contentHeight;
+    if (!updateRects())
+        return;
+    const int after = m_videoRect.height();
+    if (m_model == ZoomModel::Aegisub35 && before > 0 && after > 0 && before != after &&
+        (m_contentZoom != 1.0 || m_pan != PointD{})) {
+        m_contentZoom *= static_cast<double>(before) / after;
+        clampPan();
+        refreshToolTransform();
+    }
+}
+
+void VideoView::setZoomModel(ZoomModel model)
+{
+    if (model == m_model)
+        return;
+    m_model = model;
+    m_hasZoom = false;
+    resetZoom();
+}
+
+PointD VideoView::pictureCentre() const
+{
+    return {m_videoRect.left + m_videoRect.width() / 2.0, m_videoRect.top + m_videoRect.height() / 2.0};
+}
+
+void VideoView::clampPan()
+{
+    const double maxX = 0.5 * m_videoRect.width() * m_contentZoom + 0.4 * m_windowRect.width();
+    const double maxY = 0.5 * m_videoRect.height() * m_contentZoom + 0.4 * m_windowRect.height();
+    m_pan = {std::clamp(m_pan.x, -maxX, maxX), std::clamp(m_pan.y, -maxY, maxY)};
+}
+
+void VideoView::panBy(double dx, double dy)
+{
+    if (!m_open || m_model != ZoomModel::Aegisub35)
+        return;
+    m_pan = {m_pan.x + dx, m_pan.y + dy};
+    clampPan();
+    refreshToolTransform();
+}
+
+PointD VideoView::zoomAnchor(double x, double y) const
+{
+    const PointD centre = pictureCentre();
+    return {(x - centre.x - m_pan.x) / m_contentZoom, (y - centre.y - m_pan.y) / m_contentZoom};
+}
+
+void VideoView::zoomAndPan(double zoom, PointD anchor, double x, double y)
+{
+    if (!m_open || m_model != ZoomModel::Aegisub35 || !std::isfinite(zoom))
+        return;
+    m_contentZoom = std::clamp(zoom, kMinContentZoom, kMaxContentZoom);
+    const PointD centre = pictureCentre();
+    m_pan = {x - centre.x - anchor.x * m_contentZoom, y - centre.y - anchor.y * m_contentZoom};
+    clampPan();
+    refreshToolTransform();
+}
+
+void VideoView::wheelZoom(double notches, double x, double y)
+{
+    zoomAndPan(m_contentZoom * (1 + 0.125 * notches), zoomAnchor(x, y), x, y);
+}
+
+bool VideoView::scroll(ScrollAction action, double notchesX, double notchesY, double x, double y)
+{
+    if (!m_open || m_model != ZoomModel::Aegisub35)
+        return false;
+    switch (action) {
+    case ScrollAction::Zoom:
+    case ScrollAction::ZoomReversed: {
+        const double notches = notchesY != 0 ? notchesY : notchesX;
+        wheelZoom(action == ScrollAction::Zoom ? notches : -notches, x, y);
+        return true;
+    }
+    case ScrollAction::Pan:
+        panBy(5 * m_dpr * notchesX, 5 * m_dpr * notchesY);
+        return true;
+    case ScrollAction::PanSwapped:
+        panBy(5 * m_dpr * notchesY, 5 * m_dpr * notchesX);
+        return true;
+    case ScrollAction::Nothing:
+        break;
+    }
+    return false;
+}
+
+void VideoView::beginPinch(double x, double y)
+{
+    m_pinchStartZoom = m_contentZoom;
+    m_pinchAnchor = zoomAnchor(x, y);
+}
+
+void VideoView::pinch(double factor, double x, double y)
+{
+    zoomAndPan(m_pinchStartZoom * factor, m_pinchAnchor, x, y);
+}
+
+RectD VideoView::frameRect() const
+{
+    const double width = m_videoRect.width(), height = m_videoRect.height();
+    if (m_model == ZoomModel::Legacy)
+        return {static_cast<double>(m_videoRect.left), static_cast<double>(m_videoRect.top), width, height};
+    const PointD centre = pictureCentre();
+    return {centre.x + m_pan.x - width * m_contentZoom / 2, centre.y + m_pan.y - height * m_contentZoom / 2,
+            width * m_contentZoom, height * m_contentZoom};
 }
 
 void VideoView::setAspectRatio(float ratio)
@@ -114,6 +225,7 @@ bool VideoView::updateRects(bool changeZoom)
             m_videoRect = m_windowRect;
         }
     }
+    m_contentHeight = m_videoRect.height();
     if (changeZoom) {
         // MUST KILL: scales by the rect's right and bottom edges, not its size
         const float videoToScreenX = static_cast<float>(m_videoRect.right) / static_cast<float>(m_width);
@@ -166,6 +278,16 @@ void VideoView::toggleZoom(int zoomPercentOption)
 {
     if (!m_open)
         return;
+    if (m_model == ZoomModel::Aegisub35) {
+        if (m_contentZoom != 1.0 || m_pan != PointD{}) {
+            resetZoom();
+            return;
+        }
+        const double percent = zoomPercentOption / 100.0;
+        m_contentZoom = (percent < 1.0 || percent > 11.0) ? 2.0 : std::min(percent, kMaxContentZoom);
+        refreshToolTransform();
+        return;
+    }
     m_hasZoom = !m_hasZoom;
     if ((m_zoomPercent == 1.f && m_hasZoom) || m_zoomRect.width < 1) {
         float npercent = zoomPercentOption / 100.f;
@@ -192,6 +314,8 @@ void VideoView::resetZoom()
     const int sizeX = m_videoRect.right - m_videoRect.left;
     m_sourceRect = {0, 0, m_width, m_height};
     m_zoomPercent = sizeX / (m_zoomRect.width - m_zoomRect.x);
+    m_contentZoom = 1.0;
+    m_pan = {};
     refreshToolTransform();
 }
 
@@ -333,6 +457,14 @@ void VideoView::refreshToolTransform()
 {
     if (!m_open || m_width == 0 || m_height == 0)
         return;
+    if (m_model == ZoomModel::Aegisub35) {
+        const PointD centre = pictureCentre();
+        const auto zoom = static_cast<float>(m_contentZoom);
+        m_zoomScale = {zoom, zoom};
+        m_zoomMove = {static_cast<float>(m_videoRect.width() / 2.0 - (centre.x + m_pan.x) / m_contentZoom),
+                      static_cast<float>(m_videoRect.height() / 2.0 - (centre.y + m_pan.y) / m_contentZoom)};
+        return;
+    }
     const float videoToScreenX =
         static_cast<float>(m_videoRect.right - m_videoRect.left) / static_cast<float>(m_width);
     const float videoToScreenY =
@@ -346,6 +478,8 @@ void VideoView::refreshToolTransform()
 
 double VideoView::displayScale() const
 {
+    if (m_model == ZoomModel::Aegisub35)
+        return m_open && m_width > 0 ? toLogical(m_videoRect.width() * m_contentZoom) / m_width : 1.0;
     const int shown = m_sourceRect.right - m_sourceRect.left;
     if (!m_open || shown <= 0)
         return 1.0;

@@ -462,10 +462,23 @@ void VideoSession::preparePlayer()
     });
 }
 
+std::string VideoSession::playerVideoCodec() const
+{
+    if (!m_player)
+        return {};
+    const MediaDescription d = m_player->description();
+    if (d.activeVideo < 0 || d.activeVideo >= static_cast<int>(d.videoTracks.size()))
+        return {};
+    return d.videoTracks[static_cast<std::size_t>(d.activeVideo)].codec;
+}
+
 bool VideoSession::startPlayback(std::int64_t fromUs)
 {
-    if (playerFailed())
+    if (playerFailed()) {
+        ++m_playbackFailures;
+        notify();
         return false;
+    }
     m_preparing = false;
     m_playing = true;
     m_stopped = false;
@@ -477,6 +490,10 @@ bool VideoSession::startPlayback(std::int64_t fromUs)
                 return;
             if (!sought) {
                 m_playing = false;
+                if (sought.error() == PlayerError::NoVideoFrame) {
+                    m_failedPath = m_path;
+                    ++m_playbackFailures;
+                }
                 return notify();
             }
             m_player->play();
@@ -492,6 +509,10 @@ bool VideoSession::startPlayback(std::int64_t fromUs)
                 return;
             if (!opened) {
                 m_playing = false;
+                if (opened.error() != PlayerError::Stale && !dummy()) {
+                    m_failedPath = m_path;
+                    ++m_playbackFailures;
+                }
                 return notify();
             }
             m_playerPath = m_path;

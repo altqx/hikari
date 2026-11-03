@@ -146,6 +146,11 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     m.description = text(json, "description");
     m.license = text(json, "license");
     m.homepage = text(json, "homepage");
+    m.summary = text(json, "summary");
+    m.icon = text(json, "icon");
+    if (const Json *screenshots = json.find("screenshots"))
+        for (const Json &shot : screenshots->asArray())
+            m.screenshots.push_back({text(shot, "path"), text(shot, "caption")});
     if (const Json *key = json.find("publicKey")) {
         m.publicKey = minisign::parsePublicKey(key->asString());
         if (!m.publicKey)
@@ -199,6 +204,45 @@ int compareVersions(std::string_view a, std::string_view b)
         if (const int c = compareIdentifiers(x.pre[i], y.pre[i]))
             return c;
     return x.pre.size() == y.pre.size() ? 0 : x.pre.size() < y.pre.size() ? -1 : 1;
+}
+
+std::optional<std::string> settingRefusal(const Setting &setting, const Json &value)
+{
+    const Json &d = setting.definition;
+    const std::string type = text(d, "type");
+    const std::string name = "\xE2\x80\x9C" + setting.id + "\xE2\x80\x9D";
+    if (type == "boolean" && !value.isBool())
+        return name + " takes true or false";
+    if (type == "integer" && !value.isInt())
+        return name + " takes a whole number";
+    if (type == "number" && !value.isNumber())
+        return name + " takes a number";
+    if ((type == "string" || type == "choice") && !value.isString())
+        return name + " takes text";
+    if (const Json *options = d.find("options")) {
+        const auto &list = options->asArray();
+        if (std::find(list.begin(), list.end(), value) == list.end()) {
+            std::string choices;
+            for (const Json &option : list)
+                choices += (choices.empty() ? "" : ", ") + option.asString();
+            return name + " must be one of: " + choices;
+        }
+    }
+    if (const Json *m = d.find("minimum"); m && value.asNumber() < m->asNumber())
+        return name + " must be at least " + m->dump();
+    if (const Json *m = d.find("maximum"); m && value.asNumber() > m->asNumber())
+        return name + " must be at most " + m->dump();
+    return std::nullopt;
+}
+
+Json settingValues(const Manifest &manifest, const Json &stored)
+{
+    Json out = Json::object();
+    for (const Setting &setting : manifest.settings) {
+        const Json *value = stored.find(setting.id);
+        out[setting.id] = value && !settingRefusal(setting, *value) ? *value : *setting.definition.find("default");
+    }
+    return out;
 }
 
 }
