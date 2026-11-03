@@ -421,7 +421,8 @@
     "videoonstime.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "audio-box"
    ]
   },
   {
@@ -434,7 +435,8 @@
     "videoonetime.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "audio-box"
    ]
   },
   {

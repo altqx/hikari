@@ -314,6 +314,14 @@
         <translation>ตัวเลือกเสียงเพิ่มเติม</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>ไปยังจุดเริ่มต้นของส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>ไปยังจุดสิ้นสุดของส่วนที่เลือก</translation>
+    </message>
+    <message>
         <source>Zoom</source>
         <translation>ซูม</translation>
     </message>
@@ -5930,6 +5938,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Faster</source>
         <translation>เล่นเร็วขึ้น</translation>
+    </message>
+    <message>
+        <source>Go to selection start</source>
+        <translation>ไปยังจุดเริ่มต้นของส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>ไปยังจุดสิ้นสุดของส่วนที่เลือก</translation>
     </message>
     <message>
         <source>Translation mode</source>
