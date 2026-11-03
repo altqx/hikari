@@ -3,6 +3,7 @@
 #include "text_util.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -155,7 +156,13 @@ StyleValues decodeStyle(std::u8string_view styleLine, bool ssa)
     }
     if (!next(tok))
         return v;
-    v.borderStyle = tok == u8"3";
+    if (const auto trimmed = trim(tok); !trimmed.empty()) {
+        int border = 1;
+        const auto *first = reinterpret_cast<const char *>(trimmed.data());
+        if (const auto [end, error] = std::from_chars(first, first + trimmed.size(), border);
+            error == std::errc() && end == first + trimmed.size() && (border == 3 || border == 4))
+            v.borderStyle = border;
+    }
     if (!text(v.outlineWidth) || !text(v.shadow) || !text(v.alignment))
         return v;
     if (ssa) {
@@ -289,10 +296,12 @@ std::vector<std::u8string> styleRawFields(const StyleValues &s)
 {
     using u8 = std::u8string;
     const auto flag = [](bool v) { return v ? u8(u8"-1") : u8(u8"0"); };
+    const std::string borderText = std::to_string(s.borderStyle);
+    const u8 border(borderText.begin(), borderText.end());
     return {s.name,         s.fontname,       s.fontsize,          hexColour(s.primary), hexColour(s.secondary),
             hexColour(s.outline), hexColour(s.back), flag(s.bold), flag(s.italic),   flag(s.underline),
             flag(s.strikeOut), s.scaleX,       s.scaleY,            s.spacing,            s.angle,
-            s.borderStyle ? u8(u8"3") : u8(u8"1"), s.outlineWidth, s.shadow, s.alignment, s.marginLeft,
+            border, s.outlineWidth, s.shadow, s.alignment, s.marginLeft,
             s.marginRight,  s.marginVertical, s.encoding};
 }
 
