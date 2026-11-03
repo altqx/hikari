@@ -141,24 +141,12 @@
         <translation>கரோக்கி</translation>
     </message>
     <message>
-        <source>Enable / disable karaoke creation</source>
-        <translation>கரோக்கி உருவாக்கத்தை இயக்கவும் / முடக்கவும்</translation>
-    </message>
-    <message>
         <source>Auto split</source>
         <translation>தானியங்கு பிரிப்பு</translation>
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
         <translation>அசைகளின் தானியங்கு பிரிப்பை இயக்கவும் / முடக்கவும்</translation>
-    </message>
-    <message>
-        <source>Automatically apply changes</source>
-        <translation>மாற்றங்களைத் தானாகப் பயன்படுத்து</translation>
-    </message>
-    <message>
-        <source>Go to the next line after applying changes</source>
-        <translation>மாற்றங்களைப் பயன்படுத்திய பின் அடுத்த வரிக்குச் செல்</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -262,14 +250,6 @@
         <translation>தட்டல் விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>Stop tapping</source>
-        <translation>தட்டுவதை நிறுத்து</translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation>தட்டத் தொடங்கு</translation>
-    </message>
-    <message>
         <source>Each syllable</source>
         <translation>ஒவ்வொரு அசையும்</translation>
     </message>
@@ -330,16 +310,8 @@
         <translation>பேச்சு</translation>
     </message>
     <message>
-        <source>Enhance speech frequencies in the spectrum</source>
-        <translation>ச்பெக்ட்ரம் பேச்சு அதிர்வெண் மேம்பாடு</translation>
-    </message>
-    <message>
         <source>More audio options</source>
         <translation>மேலும் ஆடியோ விருப்பங்கள்</translation>
-    </message>
-    <message>
-        <source>Speech (non-linear spectrum)</source>
-        <translation>பேச்சு (நேரியல் அல்லாத ச்பெக்ட்ரம்)</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -400,6 +372,10 @@ Output device: %2</source>
     <message>
         <source>Go to the next line after commit</source>
         <translation>கமிட்டுக்குப் பின் அடுத்த வரிக்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Speech spectrum</source>
+        <translation>பேச்சு ச்பெக்ட்ரம்</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -5769,6 +5745,10 @@ Failed to copy %2 fonts.</source>
         <translation>மீண்டும்செய்</translation>
     </message>
     <message>
+        <source>Full screen bar: when the pointer moves / always / never</source>
+        <translation>முழுத் திரைப் பட்டி: சுட்டி நகரும்போது / எப்போதும் / ஒருபோதும் இல்லை</translation>
+    </message>
+    <message>
         <source>Delete line</source>
         <translation>வரியை நீக்கு</translation>
     </message>
@@ -5979,10 +5959,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Show / hide render cost</source>
         <translation>ரெண்டர் செலவைக் காட்டு / மறை</translation>
-    </message>
-    <message>
-        <source>Full screen bar: Auto / Always / Never</source>
-        <translation>முழுத் திரைப் பட்டி: தானாக / எப்போதும் / ஒருபோதும் இல்லை</translation>
     </message>
     <message>
         <source>Tap to time</source>
@@ -7288,6 +7264,10 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
     </message>
     <message>
+        <source>Render cost</source>
+        <translation>ரெண்டர் செலவு</translation>
+    </message>
+    <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
         <translation>செயலில் உள்ள வரிக்கு ஆடியோ தேர்வை அளித்து, முந்தைய வரியைத் தேர்வு தொடங்கும் இடத்தில் முடிக்கிறது</translation>
     </message>
@@ -7342,10 +7322,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plays / Pauses video</source>
         <translation>வீடியோவை இயக்கவும் / இடைநிறுத்தவும்</translation>
-    </message>
-    <message>
-        <source>Show / hide render cost</source>
-        <translation>ரெண்டர் செலவைக் காட்டு / மறை</translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -14897,6 +14873,67 @@ Styles deleted:
         <translation>வீடியோ நிலையை நகலெடு</translation>
     </message>
     <message>
+        <source>Full screen on</source>
+        <translation>முழுத் திரை இதில்</translation>
+    </message>
+    <message>
+        <source>Monitor %1</source>
+        <extracomment>A monitor in the Full screen on submenu; %1 is its number</extracomment>
+        <translation>மானிட்டர் %1</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>வீடியோவைத் திற…</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>வசன வரிகளைத் திற…</translation>
+    </message>
+    <message>
+        <source>Recently opened</source>
+        <translation>அண்மையில் திறந்தவை</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation>வசன வரிகள்</translation>
+    </message>
+    <message>
+        <source>Videos</source>
+        <translation>வீடியோக்கள்</translation>
+    </message>
+    <message>
+        <source>Export frame</source>
+        <translation>சட்டகத்தை ஏற்றுமதி செய்</translation>
+    </message>
+    <message>
+        <source>Save as PNG…</source>
+        <translation>PNG ஆகச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Save with subtitles as PNG…</source>
+        <translation>வசன வரிகளுடன் PNG ஆகச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Copy with subtitles</source>
+        <translation>வசன வரிகளுடன் நகலெடு</translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation>ஆடியோ தடம்</translation>
+    </message>
+    <message>
+        <source>Progress bar</source>
+        <translation>முன்னேற்றப் பட்டி</translation>
+    </message>
+    <message>
+        <source>Render cost</source>
+        <translation>ரெண்டர் செலவு</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>முழுத் திரையிலிருந்து வெளியேறு</translation>
     </message>
@@ -14909,24 +14946,8 @@ Styles deleted:
         <translation>முழுத் திரை</translation>
     </message>
     <message>
-        <source>Switch full screen to monitor %1</source>
-        <translation>முழுத் திரையை மானிட்டர் %1 க்கு மாற்று</translation>
-    </message>
-    <message>
-        <source>Open in full screen on monitor %1</source>
-        <translation>மானிட்டர் %1 இல் முழுத் திரையில் திற</translation>
-    </message>
-    <message>
         <source>Open editor</source>
         <translation>எடிட்டரைத் திற</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள்</translation>
-    </message>
-    <message>
-        <source>Recently opened videos</source>
-        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வீடியோக்கள்</translation>
     </message>
     <message>
         <source>Open video</source>
@@ -14937,32 +14958,12 @@ Styles deleted:
         <translation>வசன வரிகளைத் திற</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>முன்னேற்றப் பட்டியைக் காட்டவும் / மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Show / hide render cost</source>
-        <translation>ரெண்டர் செலவைக் காட்டு / மறை</translation>
-    </message>
-    <message>
         <source>Change aspect ratio</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்</translation>
     </message>
     <message>
-        <source>Save frame with subtitles as PNG</source>
-        <translation>வசன வரிகளுடன் சட்டகத்தை PNG ஆகச் சேமிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Copy frame with subtitles to clipboard</source>
-        <translation>இடைநிலைப்பலகைக்கு வசன வரிகளுடன் சட்டகத்தை நகலெடுக்கவும்</translation>
-    </message>
-    <message>
-        <source>Save frame as PNG</source>
-        <translation>சட்டகத்தை PNG ஆகச் சேமிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Copy frame to clipboard</source>
-        <translation>இடைநிலைப்பலகைக்கு சட்டகத்தை நகலெடுக்கவும்</translation>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -15064,16 +15065,16 @@ Styles deleted:
         <translation>முழுத் திரைப் பட்டி: %1</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation>தானாக</translation>
+        <source>Show when the pointer moves</source>
+        <translation>சுட்டி நகரும்போது காட்டு</translation>
     </message>
     <message>
-        <source>Always</source>
-        <translation>எப்போதும்</translation>
+        <source>Always show</source>
+        <translation>எப்போதும் காட்டு</translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation>ஒருபோதும் இல்லை</translation>
+        <source>Never show</source>
+        <translation>ஒருபோதும் காட்டாதே</translation>
     </message>
     <message>
         <source>Show on pointer movement, hide when idle</source>

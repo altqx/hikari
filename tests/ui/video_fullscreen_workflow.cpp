@@ -59,6 +59,7 @@ std::vector<Seen> seen()
 class Workflow : public spix::TestServer {
 public:
     int monitors = 1;
+    std::function<QObject *(const QString &)> find;
     std::vector<std::string> observed;
     void note(std::string what)
     {
@@ -82,6 +83,13 @@ protected:
         return done();
     }
     std::size_t changes() { return seen().size(); }
+    void callMenu(const QString &name, const char *method)
+    {
+        QMetaObject::invokeMethod(qApp, [&] {
+            if (QObject *menu = find(name))
+                QMetaObject::invokeMethod(menu, method);
+        }, Qt::BlockingQueuedConnection);
+    }
 
     void executeTest() override
     {
@@ -107,12 +115,12 @@ protected:
                                ? "stepped" : "not stepped");
         const auto mode = [&] { return getStringProperty("videoFullscreen/fullscreenBarMode", "text"); };
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
-        note(waitFor([&] { return mode() == "Always"; }) ? "always" : "not always: " + mode());
+        note(waitFor([&] { return mode() == "Always show"; }) ? "always" : "not always: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
-        note(waitFor([&] { return mode() == "Never" && !existsAndVisible("videoFullscreen/videoFullscreenPanel"); })
+        note(waitFor([&] { return mode() == "Never show" && !existsAndVisible("videoFullscreen/videoFullscreenPanel"); })
                  ? "never" : "not never: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
-        note(waitFor([&] { return mode() == "Auto"; }) ? "auto" : "not auto: " + mode());
+        note(waitFor([&] { return mode() == "Show when the pointer moves"; }) ? "auto" : "not auto: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
         const std::string blank = std::to_string(int(Qt::BlankCursor));
         note(waitFor([&] {
@@ -131,6 +139,8 @@ protected:
         wait(500ms);
         if (monitors > 1) {
             mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
+            sync();
+            callMenu(QStringLiteral("videoMenuFullScreenOn"), "open");
             note(waitForItem("mainWindow/videoMenuMonitor1", 3s)
                                    ? getStringProperty("mainWindow/videoMenuMonitor1", "text") : "no monitor entry");
             invokeMethod("mainWindow/videoMenuMonitor1", "triggered", {});
@@ -138,10 +148,13 @@ protected:
             wait(800ms);
             takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-monitor2.png");
             mouseClick("videoFullscreen/visualOverlay", spix::MouseButtons::Right);
+            sync();
+            callMenu(QStringLiteral("fullscreenMenuFullScreenOn"), "open");
             note(waitForItem("videoFullscreen/fullscreenMenuMonitor1", 3s)
                                    ? getStringProperty("videoFullscreen/fullscreenMenuMonitor1", "text")
                                    : "no monitor entry");
-            enterKey("videoFullscreen/fullscreenMenuMonitor1", Qt::Key_Escape, spix::KeyModifiers::None);
+            callMenu(QStringLiteral("fullscreenMenuFullScreenOn"), "close");
+            callMenu(QStringLiteral("videoFullscreenMenu"), "close");
             wait(300ms);
             enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Escape, spix::KeyModifiers::None);
             note(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left");
@@ -282,6 +295,12 @@ int main(int argc, char **argv)
 
     Workflow test;
     test.monitors = monitors;
+    test.find = [&](const QString &name) -> QObject * {
+        for (QObject *root : {static_cast<QObject *>(window), static_cast<QObject *>(fs.window())})
+            if (QObject *found = root ? root->findChild<QObject *>(name) : nullptr)
+                return found;
+        return nullptr;
+    };
     spix::QtQmlBot bot;
     bot.runTestServer(test);
     app.exec();
@@ -319,9 +338,9 @@ int main(int argc, char **argv)
         expect(o[10] == "paused, shown", "paused, the bar is back");
         expect(o[11] == "left", "Esc leaves");
         if (monitors > 1) {
-            expect(o[12] == "Open in full screen on monitor 2", "the second monitor is offered");
+            expect(o[12] == "Monitor 2", "Full screen on offers the second monitor");
             expect(o[13] == "on monitor 2", "fullscreen on the second monitor");
-            expect(o[14] == "Switch full screen to monitor 2", "in fullscreen the entry switches the monitor");
+            expect(o[14] == "Monitor 2", "in fullscreen Full screen on offers it again");
             expect(o[15] == "left monitor 2", "Esc leaves the second monitor");
         }
     }
