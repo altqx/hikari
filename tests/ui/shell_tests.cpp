@@ -1737,6 +1737,14 @@ private slots:
             QTRY_VERIFY(lineText->isVisible());
             QTRY_VERIFY(visualItem("tagButton0"));
             shoot(visualItem("tagButton0"), QStringLiteral("/menu-tag-button") + suffix, [&] { return named("tagButtonMenu"); });
+            auto *actorBox = item("actorBox");
+            auto *actor = actorBox->property("contentItem").value<QQuickItem *>();
+            actorBox->setProperty("editText", QStringLiteral("Narrator"));
+            QVERIFY(QMetaObject::invokeMethod(actor, "selectAll"));
+            shoot(actor, QStringLiteral("/menu-combo") + suffix, [&] {
+                return actor->findChild<QObject *>(QStringLiteral("textMenu"), Qt::FindDirectChildrenOnly);
+            });
+            actorBox->setProperty("editText", QString());
             application->editor().setShowTags(true);
             lineText->forceActiveFocus();
             lineText->setProperty("cursorPosition", 0);
