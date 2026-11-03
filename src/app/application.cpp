@@ -3111,10 +3111,10 @@ QVariantList Application::columnChoices(bool paste)
     std::vector<std::pair<const char *, int>> rows;
     if (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText) {
         rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Layer"), Layer},
-                {QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), Start},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "End time"), End},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Actor"), Actor},
-                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Styles"), Style},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Style"), Style},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Left margin"), MarginLeft},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Right margin"), MarginRight},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Vertical margin"), MarginVertical},
@@ -3129,12 +3129,12 @@ QVariantList Application::columnChoices(bool paste)
             rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text});
         }
     } else if (format == core::SubtitleFormat::TMPlayer) {
-        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
+        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), Start},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text}};
     } else {
-        // MUST KILL: the End row is labelled "The starting time" on purpose
-        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
-                {QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), End},
+        // MUST KILL: the End row is labelled "Start time" on purpose
+        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), Start},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), End},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text}};
     }
     const int chosen = paste ? m_pasteColumns : m_copyColumns;
