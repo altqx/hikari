@@ -51,6 +51,7 @@ public:
 
     void setServiceHandler(ServiceHandler handler) { m_services = std::move(handler); }
 
+    // Also tries again after a failed load.
     void start();
     // Queued behind running work; starts the helper again after a stop. False when the plugin
     // failed to load or the queue is full.

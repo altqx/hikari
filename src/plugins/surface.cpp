@@ -372,7 +372,7 @@ public:
             if (auto refused = object(button,
                                       {{"id", T::Id, true}, {"text", T::Line, true},
                                        {"style", T::Enum, false, {"normal", "primary", "danger"}}, {"default", T::Bool},
-                                       {"cancel", T::Bool}},
+                                       {"cancel", T::Bool}, {"stays_open", T::Bool}},
                                       place, "a button"))
                 return refused;
             if (!ids.insert(button.find("id")->asString()).second)

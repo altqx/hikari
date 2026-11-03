@@ -2,6 +2,7 @@
 
 #include "hikari/api/api.h"
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_ui.h"
 #include "hikari/backends/plugin_process.h"
 #include "hikari/plugins/installer.h"
 
@@ -27,6 +28,7 @@ class PluginRuntime : public QObject {
     // [{id: "plugin.<plugin id>.<command>", plugin, pluginName, title, titles: [pluginName, title]}],
     // by plugin name, then in manifest order.
     Q_PROPERTY(QVariantList commands READ commands NOTIFY commandsChanged)
+    Q_PROPERTY(hikari::app::PluginUi *ui READ ui CONSTANT)
 
 public:
     struct Wiring {
@@ -50,6 +52,9 @@ public:
     // False when no running plugin has the command.
     Q_INVOKABLE bool run(const QString &commandId);
     Q_INVOKABLE void forceStop(const QString &pluginId);
+    // Starts a stopped plugin, or one that didn't start, again.
+    Q_INVOKABLE void restart(const QString &pluginId);
+    PluginUi *ui() const { return m_ui; }
     backends::PluginProcess *process(const QString &pluginId) const;
 
 signals:
@@ -78,6 +83,7 @@ private:
     Running *m_lockHolder = nullptr;
     std::deque<LockWaiter> m_lockWaiters;
     QVariantList m_commands;
+    PluginUi *m_ui = nullptr;
 };
 
 }

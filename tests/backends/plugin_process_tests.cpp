@@ -204,6 +204,21 @@ TEST_F(PluginProcessTest, ALoadErrorIsReportedAndStopsFurtherRuns)
     EXPECT_FALSE(p->run("greet"));
 }
 
+TEST_F(PluginProcessTest, StartTriesAgainAfterAFailedLoad)
+{
+    const std::string root = plugin("fixed", "this is not lua");
+    auto p = process(root);
+    QSignalSpy failed(p.get(), &PluginProcess::loadFailed);
+    QSignalSpy loaded(p.get(), &PluginProcess::loaded);
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return failed.count() == 1; }));
+    plugin("fixed", "hikari.notify('back')");
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return loaded.count() == 1; }));
+    EXPECT_EQ(p->state(), PluginProcess::State::Ready);
+    EXPECT_EQ(m_notices, std::vector<std::string>{"back"});
+}
+
 TEST_F(PluginProcessTest, AnErrorInACommandIsReportedAndThePluginKeepsRunning)
 {
     auto p = process(plugin("err", "hikari.commands.register('greet', function() error('nope') end)"));

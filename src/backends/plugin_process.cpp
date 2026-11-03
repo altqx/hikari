@@ -52,7 +52,7 @@ void PluginProcess::dropHelper(bool kill)
 
 void PluginProcess::start()
 {
-    if (m_state == State::Idle || m_state == State::Stopped)
+    if (m_state == State::Idle || m_state == State::Stopped || m_state == State::LoadFailed)
         startHelper();
 }
 

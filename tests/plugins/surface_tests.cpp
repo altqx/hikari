@@ -142,6 +142,7 @@ TEST(PluginSurface, ADialogHasATitleABodyAndItsButtons)
     const std::string body = R"("body": {"kind": "empty", "text": "a"})";
     EXPECT_EQ(dialogRefusal(R"({"title": "Join", )" + body +
                             R"(, "buttons": [{"id": "join", "text": "Join", "default": true, "style": "primary"},
+                                             {"id": "preview", "text": "Preview", "stays_open": true},
                                              {"id": "cancel", "text": "Cancel", "cancel": true}]})"),
               "");
     EXPECT_EQ(dialogRefusal(R"({"title": "Join", )" + body + "}"), "spec: needs “buttons”");
