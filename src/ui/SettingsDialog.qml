@@ -1036,6 +1036,43 @@ DialogWindow {
                     SettingsSection {
                         title: qsTr("View")
                         SettingsRow {
+                            id: zoomModelRow
+                            objectName: "settingsZoomModel"
+                            iconRole: "zoom-reset"
+                            readonly property bool aegisub: (dialog.values["video.zoomModel"] ?? 0) === 0
+                            text: qsTr("Zoom and pan")
+                            note: aegisub ? qsTr("Middle-drag pans. A touchpad pinch zooms around the pointer.")
+                                          : qsTr("The wheel zooms around the pointer. Zoom video shows a frame to drag.")
+                            SettingChoice {
+                                setting: "video.zoomModel"
+                                model: [qsTr("As in Aegisub 3.5"), qsTr("As in HikariSub legacy")]
+                                Accessible.name: qsTr("Zoom and pan")
+                            }
+                        }
+                        Repeater {
+                            model: [
+                                { setting: "video.scrollAction", text: qsTr("Wheel on the video") },
+                                { setting: "video.ctrlScrollAction", text: qsTr("Ctrl+wheel on the video") },
+                                { setting: "video.shiftScrollAction", text: qsTr("Shift+wheel on the video") }
+                            ]
+                            SettingsRow {
+                                required property var modelData
+                                objectName: "settingsScroll_" + modelData.setting
+                                text: modelData.text
+                                enabled: zoomModelRow.aegisub
+                                SettingChoice {
+                                    setting: modelData.setting
+                                    model: [qsTr("Zooms the video"), qsTr("Zooms the video (reversed)"), qsTr("Pans the video"),
+                                            qsTr("Pans the video (X and Y swapped)"), qsTr("Does nothing")]
+                                    Accessible.name: modelData.text
+                                }
+                            }
+                        }
+                        SettingNote {
+                            visible: zoomModelRow.aegisub
+                            text: qsTr("A visual tool that uses the wheel, or drags with the middle button, keeps it.")
+                        }
+                        SettingsRow {
                             iconRole: "zoom"
                             text: qsTr("Start zoom")
                             // MUST KILL: video.zoomPercent is a number edited as text

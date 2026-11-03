@@ -176,7 +176,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo to last save"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom video"),
-    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Turn off video zoom"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Reset zoom and pan"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open new tab"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close current tab"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Clean styles of ASS file"),

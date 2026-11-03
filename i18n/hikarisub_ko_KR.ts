@@ -5662,8 +5662,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상 확대</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>영상 확대 해제</translation>
+        <source>Reset zoom and pan</source>
+        <translation>확대/축소 및 이동 초기화</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -6796,8 +6796,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상 확대</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>영상 확대 해제</translation>
+        <source>Reset zoom and pan</source>
+        <translation>확대/축소 및 이동 초기화</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -8746,6 +8746,62 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>View</source>
         <translation>보기</translation>
+    </message>
+    <message>
+        <source>Zoom and pan</source>
+        <translation>확대/축소 및 이동</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>가운데 버튼으로 끌면 화면이 이동합니다. 터치패드에서 두 손가락을 오므리거나 벌리면 포인터를 중심으로 확대/축소합니다.</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>휠로 포인터를 중심으로 확대/축소합니다. 영상 확대는 끌 수 있는 틀을 표시합니다.</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>Aegisub 3.5 방식</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>HikariSub 이전 버전 방식</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>영상에서 휠</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>영상에서 Ctrl+휠</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>영상에서 Shift+휠</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>영상 확대/축소</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>영상 확대/축소 (반대 방향)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>영상 이동</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>영상 이동 (X와 Y 바꿈)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>아무 작업도 하지 않음</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>휠을 쓰거나 가운데 버튼으로 끄는 시각 도구는 그 입력을 그대로 사용합니다.</translation>
     </message>
     <message>
         <source>Start zoom</source>

@@ -5662,8 +5662,8 @@ Failed to copy %2 fonts.</source>
         <translation>ซูมวิดีโอ</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>ปิดการซูมวิดีโอ</translation>
+        <source>Reset zoom and pan</source>
+        <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -6796,8 +6796,8 @@ Failed to copy %2 fonts.</source>
         <translation>ซูมวิดีโอ</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>ปิดการซูมวิดีโอ</translation>
+        <source>Reset zoom and pan</source>
+        <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -8746,6 +8746,62 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>View</source>
         <translation>มุมมอง</translation>
+    </message>
+    <message>
+        <source>Zoom and pan</source>
+        <translation>ซูมและเลื่อนภาพ</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>ลากด้วยปุ่มกลางเพื่อเลื่อนภาพ การจีบนิ้วบนทัชแพดจะซูมรอบตัวชี้</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>ล้อเมาส์ซูมรอบตัวชี้ ซูมวิดีโอจะแสดงกรอบให้ลาก</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>แบบ Aegisub 3.5</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>แบบ HikariSub รุ่นเดิม</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>Ctrl+ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>Shift+ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>ซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>ซูมวิดีโอ (กลับทิศ)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>เลื่อนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>เลื่อนวิดีโอ (สลับ X และ Y)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>ไม่ทำอะไร</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>เครื่องมือภาพที่ใช้ล้อเมาส์ หรือลากด้วยปุ่มกลาง จะใช้การป้อนนั้นเอง</translation>
     </message>
     <message>
         <source>Start zoom</source>

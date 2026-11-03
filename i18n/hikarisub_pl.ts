@@ -5748,8 +5748,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Powiększ wideo</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>Wyłącz powiększenie wideo</translation>
+        <source>Reset zoom and pan</source>
+        <translation>Resetuj powiększenie i przesunięcie</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -6886,8 +6886,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Powiększ wideo</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>Wyłącz powiększenie wideo</translation>
+        <source>Reset zoom and pan</source>
+        <translation>Resetuj powiększenie i przesunięcie</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -8850,6 +8850,62 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>View</source>
         <translation>Widok</translation>
+    </message>
+    <message>
+        <source>Zoom and pan</source>
+        <translation>Powiększenie i przesuwanie</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>Przeciąganie środkowym przyciskiem przesuwa obraz. Uszczypnięcie na touchpadzie powiększa wokół wskaźnika.</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>Kółko powiększa wokół wskaźnika. Powiększ wideo pokazuje ramkę do przeciągania.</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>Jak w Aegisub 3.5</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>Jak w starej wersji HikariSub</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>Kółko na wideo</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>Ctrl+kółko na wideo</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>Shift+kółko na wideo</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>Powiększa wideo</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>Powiększa wideo (odwrotnie)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>Przesuwa wideo</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>Przesuwa wideo (X i Y zamienione)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>Nic nie robi</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>Narzędzie wizualne, które używa kółka lub przeciąga środkowym przyciskiem, zachowuje je dla siebie.</translation>
     </message>
     <message>
         <source>Start zoom</source>

@@ -5705,8 +5705,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைப் பெரிதாக்கு</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>வீடியோ பெரிதாக்கத்தை முடக்கு</translation>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -6841,8 +6841,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைப் பெரிதாக்கு</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>வீடியோ பெரிதாக்கத்தை அணைக்கவும்</translation>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -8798,6 +8798,62 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>View</source>
         <translation>பார்வை</translation>
+    </message>
+    <message>
+        <source>Zoom and pan</source>
+        <translation>பெரிதாக்கமும் நகர்த்தலும்</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>நடுப் பொத்தானால் இழுத்தால் படம் நகரும். தொடுதிட்டில் கிள்ளினால் சுட்டியைச் சுற்றிப் பெரிதாக்கும்.</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>சக்கரம் சுட்டியைச் சுற்றிப் பெரிதாக்கும். வீடியோவைப் பெரிதாக்கு இழுக்கக்கூடிய சட்டகத்தைக் காட்டும்.</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>Aegisub 3.5 போல</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>பழைய HikariSub பதிப்பைப் போல</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>வீடியோவின் மேல் சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>வீடியோவின் மேல் Ctrl+சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>வீடியோவின் மேல் Shift+சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>வீடியோவைப் பெரிதாக்கும்</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>வீடியோவைப் பெரிதாக்கும் (எதிர்த் திசையில்)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>வீடியோவை நகர்த்தும்</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>வீடியோவை நகர்த்தும் (X, Y இடம் மாற்றி)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>எதுவும் செய்யாது</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>சக்கரத்தைப் பயன்படுத்தும் அல்லது நடுப் பொத்தானால் இழுக்கும் காட்சிக் கருவி அதைத் தானே பயன்படுத்தும்.</translation>
     </message>
     <message>
         <source>Start zoom</source>
