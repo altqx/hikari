@@ -5275,6 +5275,14 @@ ApplicationWindow {
                             objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description…")
                             onTriggered: groupDescriptionPopover.edit(groupMenu.description, grid, groupMenu.at)
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
+                            iconRole: "convert-folds"
+                            objectName: "groupConvertFolds"
+                            text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
+                            enabled: groupMenu.visible && root.app.canConvertFolds()
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
+                        }
                         MenuSeparator {}
                         ShellMenuItem { iconRole: "remove"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Ungroup"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }

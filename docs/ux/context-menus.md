@@ -100,6 +100,7 @@ Opens on a right press on a group's description row (`GroupRole == 1`, `line_gri
 1. Add lines (tree-add-lines)
 2. Copy line group (edit-copy)
 3. Change description (edit)
+3.1. Convert Aegisub folds to line groups (FA5, GLOBAL_CONVERT_FOLDS_TO_GROUPS, `canConvertFolds()`) (convert-folds)
 4. Select the group's lines (tree-select)
 5. Delete (delete)
 

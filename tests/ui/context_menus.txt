@@ -87,6 +87,7 @@ Grid group row > Select the group’s lines
 Grid group row > Add 1 selected line(s)
 Grid group row > Copy line group
 Grid group row > Change description…
+Grid group row > Convert Aegisub folds to line groups [GLOBAL_CONVERT_FOLDS_TO_GROUPS]
 Grid group row > -
 Grid group row > Ungroup
 Video

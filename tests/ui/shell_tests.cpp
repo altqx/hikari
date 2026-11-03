@@ -13190,6 +13190,14 @@ private slots:
         QTRY_COMPARE(table->rowCount(), 1);
         QVERIFY(named("convertFolds"));
         QCOMPARE(named("convertFolds")->property("text").toString(), QStringLiteral("Convert Aegisub folds to line groups"));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        auto *groupMenu = named("groupMenu");
+        emit grid->groupMenuRequested(lines[0]->id.value, 120, grid->property("rowHeight").toDouble() / 2);
+        QTRY_VERIFY(groupMenu->property("visible").toBool());
+        QCOMPARE(named("groupConvertFolds")->property("text").toString(), QStringLiteral("Convert Aegisub folds to line groups"));
+        QVERIFY(!named("groupConvertFolds")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(groupMenu, "close"));
+        QTRY_VERIFY(!groupMenu->property("visible").toBool());
         QVERIFY(application->editor().undo());
         QCOMPARE(session->document().lines().size(), std::size_t(3));
         QVERIFY(application->canConvertFolds());
