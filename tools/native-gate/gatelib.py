@@ -5,7 +5,7 @@ TEST_RUNS = [
         "placementWindowShowsItsDefaultsAndKeyboardChanges", "fileDropAreaLeavesPanelDragsToTheDockingEngine",
         "dockingControlsAndTheGridAreAccessible", "floatingPanelsOffEveryScreenComeBack",
         "panelMenuMovesTabsWithinTheirGroup",
-        "panelMenuHoldsMoveUndockAndClose", "keyboardReachesThePanelHeaderAndItsMenu",
+        "panelMenuHoldsMoveFloatAndClose", "keyboardReachesThePanelHeaderAndItsMenu",
         "doubleClickOnAHeaderFloatsAndDocks", "bottomPanelsKeepATabAndTheTrayToolbar",
         "panelsKeepTheirMinimumSizes"]),
     ("hikari_ui_docking_qualification_tests", []),

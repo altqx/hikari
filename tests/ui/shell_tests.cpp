@@ -1793,7 +1793,8 @@ private slots:
             QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
         QVERIFY(QDir().mkpath(out));
         window->resize(1400, 860);
-        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openFile(writeStyled("menus.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
         application->addPage(true);
         QVERIFY(application->openFile(writeFile(dir, "second.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,two\n")));
         application->selectTab(0);
@@ -1826,14 +1827,19 @@ private slots:
             const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
             for (const QString panel : {QStringLiteral("Video"), QStringLiteral("Editor"), QStringLiteral("Automation"),
                                         QStringLiteral("Reference")}) {
+                auto *dock = item<QObject>(qPrintable(panel.toLower() + QStringLiteral("Dock")));
+                QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+                QTRY_VERIFY(dock->property("isOpen").toBool());
                 QVERIFY2(openPanelMenu(panel), qPrintable(panel));
                 grab(QStringLiteral("/menu-panel-") + panel.toLower() + suffix);
                 closed(panelMenu);
             }
             for (int index : {0, -1}) {
-                QQuickItem *tab = item("documentTab0");
-                QVERIFY(QMetaObject::invokeMethod(bar, "openTabMenu", Q_ARG(QVariant, index), Q_ARG(QVariant, QVariant::fromValue(tab)),
-                                                  Q_ARG(QVariant, 10), Q_ARG(QVariant, tab->height())));
+                auto *anchor = qobject_cast<QQuickItem *>(bar);
+                QVERIFY(anchor && anchor->isVisible());
+                QVERIFY(QMetaObject::invokeMethod(bar, "openTabMenu", Q_ARG(QVariant, index),
+                                                  Q_ARG(QVariant, QVariant::fromValue(anchor)), Q_ARG(QVariant, 10),
+                                                  Q_ARG(QVariant, anchor->height())));
                 QTRY_VERIFY(tabMenu->property("opened").toBool());
                 grab(QString::fromLatin1(index < 0 ? "/menu-tab-bar" : "/menu-tab") + suffix);
                 if (index == 0) {
@@ -1845,8 +1851,9 @@ private slots:
                 }
                 closed(tabMenu);
             }
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("stylesDock")))));
             QQuickItem *style = nullptr;
-            QTRY_VERIFY((style = item("stylesRow0")) && style->isVisible());
+            QTRY_VERIFY((style = findItem(item("stylesList"), QStringLiteral("stylesRow0"))) && style->isVisible());
             rightClick(style);
             QTRY_VERIFY(named("stylesRowMenu")->property("opened").toBool());
             grab(QStringLiteral("/menu-styles-row") + suffix);
@@ -6858,7 +6865,7 @@ private slots:
         QTRY_VERIFY(!timingDock->property("isOpen").toBool());
     }
 
-    void panelMenuHoldsMoveUndockAndClose()
+    void panelMenuHoldsMoveFloatAndClose()
     {
         QVERIFY(application->openFile(episode));
         QVERIFY(application->openReference(original));
