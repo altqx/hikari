@@ -6041,6 +6041,35 @@ private slots:
         QVERIFY(enabled("textCopy") && enabled("textSelectAll"));
     }
 
+    void editableComboBoxesUseTheTextMenu()
+    {
+        QVERIFY(application->openFile(episode));
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *box = item("actorBox");
+        QVERIFY(box && box->property("editable").toBool());
+        auto *field = box->property("contentItem").value<QQuickItem *>();
+        QVERIFY(field);
+        const auto textMenu = [&] { return field->findChild<QObject *>(QStringLiteral("textMenu"), Qt::FindDirectChildrenOnly); };
+        const auto closed = [&](QObject *menu) {
+            QMetaObject::invokeMethod(menu, "close");
+            return QTest::qWaitFor([&] { return !menu->property("visible").toBool(); });
+        };
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier,
+                          field->mapToScene(QPointF(field->width() / 2, field->height() / 2)).toPoint());
+        QTRY_VERIFY(textMenu() && textMenu()->property("opened").toBool());
+        QVERIFY(closed(textMenu()));
+        field->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Menu);
+        QTRY_VERIFY(textMenu()->property("opened").toBool());
+        QVERIFY(closed(textMenu()));
+
+        box->setProperty("editText", QStringLiteral("Narrator"));
+        QVERIFY(QMetaObject::invokeMethod(field, "selectAll"));
+        QGuiApplication::clipboard()->clear();
+        QVERIFY(QMetaObject::invokeMethod(textMenu()->findChild<QObject *>(QStringLiteral("textCopy")), "triggered"));
+        QCOMPARE(QGuiApplication::clipboard()->text(), QStringLiteral("Narrator"));
+    }
+
     void menuKeyColumnFollowsTheBindings()
     {
         QVERIFY(application->openFile(episode));
