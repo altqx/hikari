@@ -60,13 +60,13 @@ RowLayout {
         text: counters.editor.charsText
         name: qsTranslate("HikariSub.Grid", "Wraps")
         warning: counters.editor.charsWarning
-        description: qsTr("Number of characters in each line.\nNo more than 43 characters per line (maximum 2 lines).")
+        description: qsTr("Number of characters in each line. Keep it at 43 or under, in at most 2 lines.")
     }
     Counter {
         objectName: "cpsCounter"
         text: counters.editor.cpsText
         name: qsTranslate("HikariSub.Grid", "CPS")
         warning: counters.editor.cpsWarning
-        description: qsTr("Characters per second.\nShould not exceed 15 characters per second")
+        description: qsTr("Characters per second. Keep it at 15 or under.")
     }
 }

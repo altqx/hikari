@@ -2271,16 +2271,12 @@ Output device: %2</source>
         <translation>혼합</translation>
     </message>
     <message>
-        <source>Number of characters in each line.
-No more than 43 characters per line (maximum 2 lines).</source>
-        <translation>각 줄의 글자 수.
-한 줄에 43자 이하 (최대 2줄).</translation>
+        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
+        <translation>각 줄의 글자 수. 43자 이하, 최대 2줄로 유지하십시오.</translation>
     </message>
     <message>
-        <source>Characters per second.
-Should not exceed 15 characters per second</source>
-        <translation>초당 문자 수.
-초당 15자를 넘지 않아야 합니다</translation>
+        <source>Characters per second. Keep it at 15 or under.</source>
+        <translation>초당 문자 수. 15자 이하로 유지하십시오.</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -2343,7 +2339,7 @@ Should not exceed 15 characters per second</source>
         <translation>변경됨, 아직 줄에 적용되지 않음</translation>
     </message>
     <message>
-        <source>0: the Style&apos;s (%1)</source>
+        <source>0: the style’s (%1)</source>
         <translation>0: 스타일 값(%1)</translation>
     </message>
     <message>
@@ -2351,12 +2347,8 @@ Should not exceed 15 characters per second</source>
         <translation>스타일 편집</translation>
     </message>
     <message>
-        <source>Edit style: allows quick editing of the current line&apos;s style</source>
-        <translation>스타일 편집: 현재 줄의 스타일을 빠르게 편집할 수 있습니다</translation>
-    </message>
-    <message>
-        <source>Allows quick editing of the current line&apos;s style</source>
-        <translation>현재 줄의 스타일을 빠르게 편집할 수 있습니다</translation>
+        <source>Edits the current line’s style</source>
+        <translation>현재 줄의 스타일을 편집합니다</translation>
     </message>
     <message>
         <source>Actor</source>
@@ -2407,8 +2399,8 @@ Should not exceed 15 characters per second</source>
         <translation>사전에 단어 추가</translation>
     </message>
     <message>
-        <source>Error. Word &quot;%1&quot; was not added.</source>
-        <translation>오류: &quot;%1&quot; 단어를 추가하지 못했습니다.</translation>
+        <source>“%1” was not added to the dictionary.</source>
+        <translation>“%1” 단어를 사전에 추가하지 못했습니다.</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2439,19 +2431,19 @@ Should not exceed 15 characters per second</source>
         <translation>글꼴 선택</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>기본 색상</translation>
     </message>
     <message>
-        <source>Secondary color for karaoke</source>
+        <source>Secondary colour for karaoke</source>
         <translation>노래방 보조 색상</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>테두리 색상</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>그림자 색상</translation>
     </message>
     <message>
@@ -2515,7 +2507,7 @@ Should not exceed 15 characters per second</source>
         <translation>커서 위치에 추가</translation>
     </message>
     <message>
-        <source>Insert Tag at text beginning</source>
+        <source>Insert tag at start of text</source>
         <translation>맨 앞으로 추가</translation>
     </message>
     <message>
@@ -2607,7 +2599,7 @@ Should not exceed 15 characters per second</source>
         <translation>저장 실패, 디스크의 파일은 변경되지 않음</translation>
     </message>
     <message>
-        <source>End is before Start.</source>
+        <source>End time is before start time.</source>
         <translation>종료 시간이 시작 시간보다 앞섭니다.</translation>
     </message>
     <message>
@@ -2659,7 +2651,7 @@ Should not exceed 15 characters per second</source>
         <translation>미확인은 번역 모드에서만 적용됩니다.</translation>
     </message>
     <message>
-        <source>This document can&apos;t be saved here.</source>
+        <source>This document can’t be saved here.</source>
         <translation>이 문서는 여기에 저장할 수 없습니다.</translation>
     </message>
     <message>
@@ -2667,7 +2659,7 @@ Should not exceed 15 characters per second</source>
         <translation>열려 있는 다른 문서가 해당 파일을 사용하고 있습니다.</translation>
     </message>
     <message>
-        <source>The document can&apos;t be saved right now.</source>
+        <source>The document can’t be saved right now.</source>
         <translation>지금은 문서를 저장할 수 없습니다.</translation>
     </message>
     <message>
@@ -3927,7 +3919,7 @@ Failed to copy %2 fonts.</source>
         <translation>소리</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>스타일</translation>
     </message>
     <message>
@@ -4540,7 +4532,7 @@ Failed to copy %2 fonts.</source>
         <translation>줄 그룹 복사</translation>
     </message>
     <message>
-        <source>Select the group&apos;s lines</source>
+        <source>Select the group’s lines</source>
         <translation>그룹의 줄 선택</translation>
     </message>
     <message>
@@ -4580,20 +4572,12 @@ Failed to copy %2 fonts.</source>
         <translation>레이어</translation>
     </message>
     <message>
-        <source>The starting time</source>
-        <translation>시작 시간</translation>
-    </message>
-    <message>
         <source>End time</source>
         <translation>종료 시간</translation>
     </message>
     <message>
         <source>Actor</source>
         <translation>배우</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>스타일</translation>
     </message>
     <message>
         <source>Left margin</source>
@@ -4738,12 +4722,12 @@ Failed to copy %2 fonts.</source>
         <translation>선택한 줄 %1개에서 클립보드를 붙여 넣을 열:</translation>
     </message>
     <message>
-        <source>Copy these columns of the selected line:</source>
-        <translation>선택한 줄에서 복사할 열:</translation>
+        <source>Columns to copy from the selected line</source>
+        <translation>선택한 줄에서 복사할 열</translation>
     </message>
     <message>
-        <source>Copy these columns of the %1 selected lines:</source>
-        <translation>선택한 줄 %1개에서 복사할 열:</translation>
+        <source>Columns to copy from the %1 selected lines</source>
+        <translation>선택한 줄 %1개에서 복사할 열</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -5014,24 +4998,24 @@ Failed to copy %2 fonts.</source>
         <translation>“편집 활성/비활성”의 단축키 %1(이)가 제거되었습니다. 편집기는 항상 표시되므로 대신 패널을 숨기거나 레이아웃을 선택하십시오.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
-        <translation>&quot;단축키 설정 창 열기&quot;의 단축키 %1(이)가 제거되었습니다. 해당 창은 없어졌으며 각 매크로의 단축키는 자동화 패널에서 설정합니다.</translation>
+        <source>The shortcut %1 of “Open shortcut mapping window” was removed: the window is gone and each macro’s shortcut is set in the Automation panel.</source>
+        <translation>“단축키 설정 창 열기”의 단축키 %1(이)가 제거되었습니다. 해당 창은 없어졌으며 각 매크로의 단축키는 자동화 패널에서 설정합니다.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
         <translation>“사소한 오류 수정 (실험적)”의 단축키 %1(이)가 제거되었습니다. 이 기능은 제거되었습니다.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation>&quot;빈 2h30m 소리 열기&quot;의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
+        <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation>“빈 2h30m 소리 열기”의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
         <translation>“FFMS2로 영상 열기”의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 영상은 항상 색인됩니다.</translation>
     </message>
     <message>
-        <source>Shortcut &quot;%1&quot; is invalid</source>
-        <translation>단축키 &quot;%1&quot;(이)가 유효하지 않습니다</translation>
+        <source>Shortcut “%1” is invalid</source>
+        <translation>단축키 “%1”(이)가 유효하지 않습니다</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -5114,19 +5098,19 @@ Failed to copy %2 fonts.</source>
         <translation>종결부 추가</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>테두리 색상</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>기본 색상</translation>
     </message>
     <message>
-        <source>Secondary color for karaoke</source>
+        <source>Secondary colour for karaoke</source>
         <translation>노래방 보조 색상</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>그림자 색상</translation>
     </message>
     <message>
@@ -10464,8 +10448,8 @@ because it was edited.</source>
         <translation>%1번 바꿨습니다.</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>잘못된 정규식 &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>잘못된 정규식 “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
@@ -10631,8 +10615,8 @@ because it was edited.</source>
         <translation>닫기</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>잘못된 정규식 &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>잘못된 정규식 “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
@@ -11730,8 +11714,8 @@ because it was edited.</source>
         <translation>해당 위치의 텍스트는 바꿀 수 없습니다.</translation>
     </message>
     <message>
-        <source>Error. Word &quot;%1&quot; was not added.</source>
-        <translation>오류: &quot;%1&quot; 단어를 추가하지 못했습니다.</translation>
+        <source>“%1” was not added to the dictionary.</source>
+        <translation>“%1” 단어를 사전에 추가하지 못했습니다.</translation>
     </message>
 </context>
 <context>
@@ -12670,7 +12654,7 @@ Styles deleted:
         <translation>그림자 색상 투명도</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>기본 색상</translation>
     </message>
     <message>
@@ -12678,11 +12662,11 @@ Styles deleted:
         <translation>보조 색상</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>테두리 색상</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>그림자 색상</translation>
     </message>
     <message>
@@ -13403,7 +13387,7 @@ Styles deleted:
         <translation>크기 팝</translation>
     </message>
     <message>
-        <source>Each syllable swells as it is sung and settles back to its Style&apos;s size in the sung colour.</source>
+        <source>Each syllable swells as it is sung and settles back to its style’s size in the sung colour.</source>
         <translation>각 음절은 부를 때 부풀었다가, 부른 뒤의 색상으로 스타일 크기에 맞게 다시 줄어듭니다.</translation>
     </message>
     <message>
@@ -13451,16 +13435,16 @@ Styles deleted:
         <translation>줄마다 색상</translation>
     </message>
     <message>
-        <source>syllable start, from the line&apos;s start (ms)</source>
+        <source>syllable start, from the line’s start (ms)</source>
         <extracomment>Template variables&apos; descriptions in the template editor&apos;s list (karaoke templater docs)</extracomment>
         <translation>줄 시작부터의 음절 시작 시간 (ms)</translation>
     </message>
     <message>
-        <source>syllable end, from the line&apos;s start (ms)</source>
+        <source>syllable end, from the line’s start (ms)</source>
         <translation>줄 시작부터의 음절 종료 시간 (ms)</translation>
     </message>
     <message>
-        <source>middle of the syllable, from the line&apos;s start (ms)</source>
+        <source>middle of the syllable, from the line’s start (ms)</source>
         <translation>줄 시작부터의 음절 중간 시간 (ms)</translation>
     </message>
     <message>
@@ -13468,19 +13452,19 @@ Styles deleted:
         <translation>줄 안에서 음절의 번호, 1부터 (0: 첫 \k 앞의 텍스트)</translation>
     </message>
     <message>
-        <source>the line&apos;s layer</source>
+        <source>the line’s layer</source>
         <translation>줄의 레이어</translation>
     </message>
     <message>
-        <source>middle of the line, from the video&apos;s start (ms)</source>
+        <source>middle of the line, from the video’s start (ms)</source>
         <translation>영상 시작부터의 줄 중간 시간 (ms)</translation>
     </message>
     <message>
-        <source>the line&apos;s Style</source>
+        <source>the line’s style</source>
         <translation>줄의 스타일</translation>
     </message>
     <message>
-        <source>the line&apos;s actor</source>
+        <source>the line’s actor</source>
         <translation>줄의 배우</translation>
     </message>
     <message>
@@ -13492,15 +13476,15 @@ Styles deleted:
         <translation>파일에서 줄의 인덱스 (앞에 있는 Script Info 및 스타일 항목 포함)</translation>
     </message>
     <message>
-        <source>x of the line&apos;s left edge (px)</source>
+        <source>x of the line’s left edge (px)</source>
         <translation>줄 왼쪽 가장자리의 x (px)</translation>
     </message>
     <message>
-        <source>x of the line&apos;s centre (px)</source>
+        <source>x of the line’s centre (px)</source>
         <translation>줄 중심의 x (px)</translation>
     </message>
     <message>
-        <source>x of the line&apos;s right edge (px)</source>
+        <source>x of the line’s right edge (px)</source>
         <translation>줄 오른쪽 가장자리의 x (px)</translation>
     </message>
     <message>
@@ -13508,15 +13492,15 @@ Styles deleted:
         <translation>줄의 너비 (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s top (px)</source>
+        <source>y of the line’s top (px)</source>
         <translation>줄 위쪽의 y (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s middle (px)</source>
+        <source>y of the line’s middle (px)</source>
         <translation>줄 중간의 y (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s bottom (px)</source>
+        <source>y of the line’s bottom (px)</source>
         <translation>줄 아래쪽의 y (px)</translation>
     </message>
     <message>
@@ -13524,23 +13508,23 @@ Styles deleted:
         <translation>줄의 높이 (px)</translation>
     </message>
     <message>
-        <source>skdur; the line&apos;s duration in centiseconds in a pre-line template</source>
+        <source>skdur; the line’s duration in centiseconds in a pre-line template</source>
         <translation>skdur; 줄 앞 템플릿에서는 센티초 단위의 줄 길이</translation>
     </message>
     <message>
-        <source>smid, from the line&apos;s start; lmid, from the video&apos;s start, in a pre-line template (ms)</source>
+        <source>smid, from the line’s start; lmid, from the video’s start, in a pre-line template (ms)</source>
         <translation>smid (줄 시작 기준); 줄 앞 템플릿에서는 lmid (영상 시작 기준) (ms)</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s time, by mode</source>
+        <source>sets the generated line’s time, by mode</source>
         <translation>모드에 따라 생성되는 줄의 시간 설정</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s layer</source>
+        <source>sets the generated line’s layer</source>
         <translation>생성되는 줄의 레이어 설정</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s Style</source>
+        <source>sets the generated line’s style</source>
         <translation>생성되는 줄의 스타일 설정</translation>
     </message>
     <message>
@@ -13568,15 +13552,15 @@ Styles deleted:
         <translation>센티초 단위의 음절 길이</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s left edge (px)</source>
+        <source>x of the syllable’s left edge (px)</source>
         <translation>음절 왼쪽 가장자리의 x (px)</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s centre (px)</source>
+        <source>x of the syllable’s centre (px)</source>
         <translation>음절 중심의 x (px)</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s right edge (px)</source>
+        <source>x of the syllable’s right edge (px)</source>
         <translation>음절 오른쪽 가장자리의 x (px)</translation>
     </message>
     <message>
@@ -13584,15 +13568,15 @@ Styles deleted:
         <translation>음절의 너비 (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s top (px)</source>
+        <source>y of the syllable’s top (px)</source>
         <translation>음절 위쪽의 y (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s middle (px)</source>
+        <source>y of the syllable’s middle (px)</source>
         <translation>음절 중간의 y (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s bottom (px)</source>
+        <source>y of the syllable’s bottom (px)</source>
         <translation>음절 아래쪽의 y (px)</translation>
     </message>
     <message>
@@ -13604,11 +13588,11 @@ Styles deleted:
         <translation>정렬에 따른 \pos용 음절 위치</translation>
     </message>
     <message>
-        <source>Line start, from the video&apos;s start (ms)</source>
+        <source>Line start, from the video’s start (ms)</source>
         <translation>영상 시작부터의 줄 시작 시간 (ms)</translation>
     </message>
     <message>
-        <source>Line end, from the video&apos;s start (ms)</source>
+        <source>Line end, from the video’s start (ms)</source>
         <translation>영상 시작부터의 줄 종료 시간 (ms)</translation>
     </message>
     <message>
@@ -13700,7 +13684,7 @@ Styles deleted:
         <translation>템플릿을 이 횟수만큼 실행</translation>
     </message>
     <message>
-        <source>sets the loop&apos;s counter and count</source>
+        <source>sets the loop’s counter and count</source>
         <translation>반복 카운터와 반복 횟수 설정</translation>
     </message>
     <message>
@@ -13716,11 +13700,11 @@ Styles deleted:
         <translation>remember로 저장한 값</translation>
     </message>
     <message>
-        <source>the loop&apos;s counter, from 1</source>
+        <source>the loop’s counter, from 1</source>
         <translation>반복 카운터 (1부터)</translation>
     </message>
     <message>
-        <source>the loop&apos;s count</source>
+        <source>the loop’s count</source>
         <translation>반복 횟수</translation>
     </message>
     <message>
@@ -13732,19 +13716,19 @@ Styles deleted:
         <translation>후리가나가 붙은 음절</translation>
     </message>
     <message>
-        <source>the script&apos;s resolution and properties</source>
+        <source>the script’s resolution and properties</source>
         <translation>스크립트의 해상도와 속성</translation>
     </message>
     <message>
-        <source>Lua&apos;s math library</source>
+        <source>Lua’s math library</source>
         <translation>Lua math 라이브러리</translation>
     </message>
     <message>
-        <source>Lua&apos;s string library</source>
+        <source>Lua’s string library</source>
         <translation>Lua string 라이브러리</translation>
     </message>
     <message>
-        <source>every global, karaskel&apos;s included</source>
+        <source>every global, karaskel’s included</source>
         <translation>karaskel의 것을 포함한 모든 전역 변수</translation>
     </message>
     <message>
@@ -14245,11 +14229,11 @@ after the end time in milliseconds</source>
         <translation>줄 삭제</translation>
     </message>
     <message>
-        <source>Not confirmed</source>
+        <source>Unconfirmed</source>
         <translation>미확인</translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected lines for review</source>
+        <source>Unconfirmed: marks the selected lines for review</source>
         <translation>미확인: 선택한 줄을 검토 대상으로 표시</translation>
     </message>
     <message>
@@ -14257,7 +14241,7 @@ after the end time in milliseconds</source>
         <translation>원문 태그</translation>
     </message>
     <message>
-        <source>Tags from original: the translation gets the Original text&apos;s tags</source>
+        <source>Tags from original: the translation gets the original text’s tags</source>
         <translation>원문 태그: 번역문에 원문의 태그를 적용</translation>
     </message>
     <message>

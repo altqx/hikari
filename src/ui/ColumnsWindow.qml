@@ -51,8 +51,8 @@ DialogWindow {
         objectName: "columnsText"
         text: columns.paste ? (columns.lineCount === 1 ? qsTr("Paste the clipboard into these columns of the selected line:")
                                                        : qsTr("Paste the clipboard into these columns of the %1 selected lines:").arg(columns.lineCount))
-                            : (columns.lineCount === 1 ? qsTr("Copy these columns of the selected line:")
-                                                       : qsTr("Copy these columns of the %1 selected lines:").arg(columns.lineCount))
+                            : (columns.lineCount === 1 ? qsTr("Columns to copy from the selected line")
+                                                       : qsTr("Columns to copy from the %1 selected lines").arg(columns.lineCount))
         wrapMode: Text.Wrap
         Layout.fillWidth: true
         Layout.maximumWidth: 352
