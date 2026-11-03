@@ -835,6 +835,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
         }});
+    m_ai = std::make_unique<AiFeatures>(
+        *m_settings, options.aiPorts ? std::move(*options.aiPorts)
+                                     : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
+                                                                options.appVersion.isEmpty()
+                                                                    ? QStringLiteral(HIKARI_VERSION)
+                                                                    : options.appVersion));
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
     m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
         pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),

@@ -182,9 +182,17 @@ jobs:
       QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
       HIKARI_POSTHOG_KEY: ${{ secrets.HIKARI_POSTHOG_KEY }} # AN1 (#404)
 
+  ai-sidecar:
+    name: AI sidecar
+    needs: release-version
+    if: ${{ !inputs.dry_run }}
+    uses: ./.github/workflows/ai-sidecar.yml
+    with:
+      version: ${{ needs.release-version.outputs.version }}
+
   release:
     name: Release
-    needs: [release-version, linux, windows]
+    needs: [release-version, linux, windows, ai-sidecar]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -223,6 +231,11 @@ jobs:
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
+          name: hikari-ai
+          path: artifacts/ai-sidecar
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
           name: hikarisub-linux-symbols
           path: artifacts/linux-symbols
 
@@ -246,6 +259,8 @@ jobs:
             "hikarisub-docs-$VERSION.zip"
             "hikarisub-symbols-$VERSION-linux-x86_64.tar.xz"
             "HikariSub-$VERSION-windows-x64-symbols.zip"
+            "hikari-ai-$VERSION-linux-x64.gz"
+            "hikari-ai-$VERSION-windows-x64.gz"
           )
           for name in "${names[@]}"; do
             if ! [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
@@ -444,7 +459,8 @@ jobs:
           mkdir release manifest
           for name in "HikariSub-$VERSION-windows-x64-setup.exe" "HikariSub-$VERSION-windows-x64.zip" \
               "HikariSub-$VERSION-linux-x86_64.AppImage" "hikarisub-$VERSION-linux-amd64.deb" \
-              "hikarisub-$VERSION-linux-x86_64.rpm" "hikarisub-$VERSION-linux-x86_64.tar.gz"; do
+              "hikarisub-$VERSION-linux-x86_64.rpm" "hikarisub-$VERSION-linux-x86_64.tar.gz" \
+              "hikari-ai-$VERSION-linux-x64.gz" "hikari-ai-$VERSION-windows-x64.gz"; do
             echo "stand-in for $name" > "release/$name"
           done
           python3 - release > assets.json <<'PY'

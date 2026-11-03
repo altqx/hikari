@@ -22,6 +22,9 @@
 /tests/ui/layout-fixtures/** -text
 /.githooks/pre-push text eol=lf
 
+# SC1: the sidecar is built byte for byte the same everywhere, and NOTICES.txt is compared with what its
+# licence files generate.
+/src/ai-sidecar/** text eol=lf
 # The export goldens are compared byte for byte (CRLF and LF).
 /tests/fixtures/export/** -text
 # FA3: the Aegisub extradata fixtures are compared byte for byte (BOM, CRLF).
