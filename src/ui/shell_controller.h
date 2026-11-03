@@ -63,7 +63,8 @@ public:
         m_referenceLines.setComparisonColours(colours);
     }
 
-    bool hasEditingTarget() const { return m_workspace.editingTarget().has_value(); }
+    bool hasEditingTarget() const { return m_workspace.currentTab(m_shellWindow).has_value(); }
+    void setShellWindow(int shellWindow) { m_shellWindow = shellWindow; }
     QString editingTitle() const;
     bool hasReference() const { return m_workspace.reference().has_value(); }
     QString referenceTitle() const;
@@ -193,6 +194,7 @@ private:
     QString selectionText() const;
 
     application::Workspace &m_workspace;
+    int m_shellWindow = 0;
     LineTableModel m_lines;
     LineFilterModel m_shown;
     LineTableModel m_referenceLines;

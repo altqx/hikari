@@ -22,7 +22,8 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     api_host.cpp include/hikari/app/api_host.h
     ai_features.cpp include/hikari/app/ai_features.h
     ai_settings.cpp include/hikari/app/ai_settings.h
-    plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h)
+    plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
+    plugin_ui.cpp include/hikari/app/plugin_ui.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_ai hikari_plugins hikari_api

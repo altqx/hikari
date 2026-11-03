@@ -130,7 +130,15 @@
             "type": "object",
             "required": ["id", "title"],
             "additionalProperties": false,
-            "properties": {"id": {"$ref": "#/$defs/LocalId"}, "title": {"$ref": "#/$defs/Title"}}
+            "properties": {
+              "id": {"$ref": "#/$defs/LocalId"},
+              "title": {"$ref": "#/$defs/Title"},
+              "area": {
+                "description": "Where the panel docks the first time it is shown.",
+                "enum": ["left", "right", "bottom"],
+                "default": "right"
+              }
+            }
           }
         },
         "settings": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/Setting"}}

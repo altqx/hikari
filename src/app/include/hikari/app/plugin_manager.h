@@ -28,7 +28,9 @@ public:
     explicit PluginManager(Folders folders, QObject *parent = nullptr);
 
     bool available() const { return m_installer.has_value(); }
-    // Rows {id, name, version, description, enabled, keyId ("" when unsigned), unrestricted}, by name.
+    // Rows {id, name, version, description, enabled, keyId ("" when unsigned), unrestricted, icon (a file URL, or
+    // empty), authors, homepage, permissions: [text], adds: [text], settings: [the manifest's setting with its value]},
+    // by name.
     QVariantList plugins() const { return m_rows; }
     // Why plugins.json cannot be read; "" when it can.
     QString problem() const { return m_problem; }
@@ -41,12 +43,20 @@ public:
     // Installs what review() last accepted; "" on success, else the problem.
     Q_INVOKABLE QString install(bool retrusted);
     Q_INVOKABLE void cancelReview() { m_review.reset(); }
+    // review() for a package that must have the id `id`.
+    Q_INVOKABLE QVariantMap reviewUpdate(const QUrl &file, const QString &id);
     Q_INVOKABLE QString setEnabled(const QString &id, bool enabled);
+    // `json` is the value as JSON text; "" when it is kept, else why not.
+    Q_INVOKABLE QString setSetting(const QString &id, const QString &setting, const QString &json);
     Q_INVOKABLE bool hasData(const QString &id) const;
+    // The plugin's data folder, made when missing; empty when it can't be.
+    QUrl dataFolder(const QString &id) const;
+    Q_INVOKABLE bool openDataFolder(const QString &id) const;
     Q_INVOKABLE QString uninstall(const QString &id, bool removeData);
 
 signals:
     void pluginsChanged();
+    void settingChanged(const QString &id, const QString &setting, const QString &json);
 
 private:
     void refresh();
