@@ -36,3 +36,7 @@ HikariSub.Fonts	 tabs: 	whitespace	font collector log layout; clicking a number 
 HikariSub.Fonts	In lines: 	colon	font collector log layout; clicking a number goes to its style or line
 HikariSub.Fonts	In lines: 	whitespace	font collector log layout; clicking a number goes to its style or line
 HikariSub.Spelling	The grammar checker (harper-ls) stopped: %1	leading-the	a message, not a label; the helper’s error follows the colon
+HikariSub.Options	Chat Completions	title-case	the OpenAI API’s name, beside Responses and Messages
+HikariSub.Options	Get a key in Google AI Studio	title-case	Google AI Studio is the product’s name
+HikariSub.Options	AI in Getting started and What’s new	title-case	names the Getting started and What’s new windows
+HikariSub.Options	Replace the key with Edit	title-case	names the row’s Edit button

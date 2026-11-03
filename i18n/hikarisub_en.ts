@@ -418,6 +418,20 @@
             <numerusform>%n skipped: their keys are taken.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>Connected · %n model</numerusform>
+            <numerusform>Connected · %n models</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>Not tested · %n model</numerusform>
+            <numerusform>Not tested · %n models</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

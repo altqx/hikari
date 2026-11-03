@@ -1,4 +1,6 @@
 #include "hikari/app/application.h"
+#include "hikari/app/ai_features.h"
+#include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/app/style_manager_controller.h"
 #include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
@@ -16004,6 +16006,9 @@ private slots:
             {"settingsPageAutomation",
              {{"automation.traceLevel", nullptr},
               {"automation.fillLastAnswers", "Fill in my last answers"}}},
+            {"settingsPageAi",
+             {{"ai.off", "Turn off all AI features"},
+              {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
              {{"updater.autoCheck", "Check for updates automatically"},
               {"updater.checkForStable", "Stable versions only"},
@@ -16064,6 +16069,119 @@ private slots:
 #endif
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+    }
+
+    void settingsAiPageAddsGeminiAndFoldsAwayWhenAiIsOff()
+    {
+        namespace ai = application::ai;
+        struct Stored {
+            std::map<std::string, std::string> keys;
+            ai::Config config;
+        };
+        class Keys final : public ai::KeyStore {
+        public:
+            explicit Keys(std::shared_ptr<Stored> s) : m(std::move(s)) {}
+            void read(const std::string &id, std::function<void(ai::KeyResult)> done) override
+            {
+                const auto it = m->keys.find(id);
+                done(it == m->keys.end() ? ai::KeyResult(ai::KeyError::NotFound) : ai::KeyResult(it->second));
+            }
+            void write(const std::string &id, const std::string &key,
+                       std::function<void(std::optional<ai::KeyError>)> done) override
+            {
+                m->keys[id] = key;
+                done(std::nullopt);
+            }
+            void remove(const std::string &id, std::function<void(std::optional<ai::KeyError>)> done) override
+            {
+                m->keys.erase(id);
+                done(std::nullopt);
+            }
+
+        private:
+            std::shared_ptr<Stored> m;
+        };
+        class Configs final : public ai::ConfigStore {
+        public:
+            explicit Configs(std::shared_ptr<Stored> s) : m(std::move(s)) {}
+            ai::Config load() override { return m->config; }
+            bool save(const ai::Config &config) override
+            {
+                m->config = config;
+                return true;
+            }
+
+        private:
+            std::shared_ptr<Stored> m;
+        };
+        auto stored = std::make_shared<Stored>();
+        app::AiFeatures::Ports ports;
+        ports.keyStore = [stored] { return std::make_unique<Keys>(stored); };
+        ports.configStore = [stored] { return std::make_unique<Configs>(stored); };
+        ports.sidecarHost = [this] {
+            backends::ai::AiSidecarHost::Options o;
+            o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
+            o.arguments = {QStringLiteral("--build-id"), QStringLiteral("test"), QStringLiteral("--api-version"),
+                           QString::number(api::kApiVersion)};
+            o.workingDirectory = dir.filePath(QStringLiteral("ai-page/ai/work"));
+            o.buildId = "test";
+            return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
+        };
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("ai-page/hikari.ini"));
+        options.playbackAudio = false;
+        options.aiPorts = std::move(ports);
+        restartWith(options);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        auto *page = dialogItem("settingsDialog", "settingsPageAi");
+        QTRY_VERIFY(page->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiNoProviders")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiOffSummary")->isVisible());
+
+        auto *off = dialogItem("settingsDialog", "setting_ai.off");
+        QCOMPARE(off->mapToItem(off->parentItem()->parentItem()->parentItem(), QPointF(0, 0)).y(), 0.0);
+        QVERIFY(QMetaObject::invokeMethod(off, "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiOffSummary")->isVisible());
+        for (const char *section : {"aiProviders", "aiModels", "aiPrivacy"})
+            QVERIFY2(!dialogItem("settingsDialog", section)->isVisible(), section);
+        QVERIFY(application->ai()->on());
+        QVERIFY(QMetaObject::invokeMethod(off, "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiProviders")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("gemini")), Q_ARG(QVariant, QVariant())));
+        QQuickItem *key = nullptr;
+        QTRY_VERIFY((key = dialogItem("settingsDialog", "aiProviderKey")));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderName")->property("text").toString(), QStringLiteral("Google Gemini"));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderKeyRow")->property("text").toString(), QStringLiteral("Gemini API key"));
+        QVERIFY(dialogItem("settingsDialog", "aiGeminiKeys")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiDownloadNotice")->isVisible());
+        key->setProperty("text", QStringLiteral("AIza-typed"));
+        QVERIFY(!key->property("displayText").toString().contains(QStringLiteral("AIza")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiDraftSave"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiProvider_gemini"));
+        QCOMPARE(stored->keys.at("gemini"), "AIza-typed");
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiProviderStatus")->property("text").toString(),
+                     QStringLiteral("Connected · 1 model(s)"));
+        QVERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiRole_chat")->property("currentText").toString(),
+                     QStringLiteral("B · Google Gemini"));
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "activated", Q_ARG(int, 1)));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!stored->config.roles.contains(ai::Role::Judge));
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "activated", Q_ARG(int, 1)));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(stored->config.roles.at(ai::Role::Judge), (ai::ModelRef{"gemini", "b/model"}));
     }
 
     void settingsAppearanceScrollsSidewaysWhenNarrow()
@@ -18792,7 +18910,7 @@ private slots:
             names << p.toMap().value(QStringLiteral("name")).toString();
         QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Spelling and grammar", "Grid",
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
-                                     "Updates and privacy"}));
+                                     "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         QCOMPARE(hotkeyRows().size(), 270);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));

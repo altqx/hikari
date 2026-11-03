@@ -39,9 +39,10 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json"
     HIKARI_EN_CATALOG="${CMAKE_BINARY_DIR}/i18n/qm/hikarisub_en.qm"
     HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
-    hikari_lua_helper hikari_automation_stage hikari_lrelease)
+    hikari_lua_helper hikari_automation_stage hikari_lrelease hikari_fake_ai_sidecar)
 # MSVC: shell_tests.cpp outgrows an object file's default section count (C1128).
 if(MSVC)
     target_compile_options(hikari_ui_shell_tests PRIVATE /bigobj)
@@ -335,6 +336,12 @@ target_compile_definitions(hikari_ui_ai_features_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
     HIKARI_MENU_LEDGER="${CMAKE_CURRENT_SOURCE_DIR}/menu_bar.txt")
 add_dependencies(hikari_ui_ai_features_tests hikari_fake_ai_sidecar)
+hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
+    LIBRARIES hikari_composition Qt6::Test ZLIB::ZLIB LABELS ui)
+target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends")
+target_compile_definitions(hikari_ui_ai_settings_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
+add_dependencies(hikari_ui_ai_settings_tests hikari_fake_ai_sidecar)
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_plugin_manager_tests SOURCES plugin_manager_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_manager_tests PRIVATE

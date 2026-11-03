@@ -285,9 +285,17 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(bake.page, OptionsPage::Grid);
     ASSERT_NE(findSetting("grid.splitFramesBakeAnimations"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("grid.splitFramesBakeAnimations")->defaultValue), true);
+    for (std::size_t i = 0; const auto &[id, on] : {std::pair{"ai.off", false}, std::pair{"ai.promptCaching", true}}) {
+        const auto &binding = all[std::size(kLegacy) + 45 + i++];
+        EXPECT_EQ(binding.setting, id);
+        EXPECT_EQ(binding.control, OptionsControl::Check);
+        EXPECT_EQ(binding.page, OptionsPage::Ai);
+        ASSERT_NE(findSetting(id), nullptr);
+        EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), on) << id;
+    }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 47);
-    const auto &hostApi = all[std::size(kLegacy) + 45];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 49);
+    const auto &hostApi = all[std::size(kLegacy) + 47];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -298,7 +306,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 45);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 47);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
@@ -684,11 +692,13 @@ TEST(OptionsDialog, PagesHaveIdsAndAPageResetsAlone)
     for (const auto page : {OptionsPage::General, OptionsPage::Appearance, OptionsPage::LineEditor,
                             OptionsPage::Spelling, OptionsPage::Grid,
                             OptionsPage::Video, OptionsPage::Audio, OptionsPage::Conversion,
-                            OptionsPage::SubtitleProperties, OptionsPage::Automation, OptionsPage::Updates})
+                            OptionsPage::SubtitleProperties, OptionsPage::Automation, OptionsPage::Updates,
+                            OptionsPage::Ai})
         EXPECT_EQ(optionsPageOfId(optionsPageId(page)), page);
     EXPECT_EQ(optionsPageId(OptionsPage::LineEditor), "lineEditor");
     EXPECT_EQ(optionsPageId(OptionsPage::Updates), "updates");
     EXPECT_EQ(optionsPageId(OptionsPage::Spelling), "spelling");
+    EXPECT_EQ(optionsPageId(OptionsPage::Ai), "ai");
     EXPECT_EQ(optionsPageOfId("hotkeys"), std::nullopt);
     EXPECT_EQ(optionsPageOfId(""), std::nullopt);
 

@@ -23,6 +23,7 @@ ColumnLayout {
         Layout.bottomMargin: 6
     }
     Label {
+        visible: section.title !== ""
         text: section.title
         font.bold: true
         color: Theme.text
