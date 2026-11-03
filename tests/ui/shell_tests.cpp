@@ -1829,7 +1829,7 @@ private slots:
         dock->setProperty("isFloating", true);
         QTRY_VERIFY(item("audioPanel")->window() != window);
         QQuickWindow *floating = item("audioPanel")->window();
-        floating->resize(440, 760);
+        floating->resize(440, 560);
         QTRY_VERIFY(item("audioButtons")->property("folded").toBool());
         audio.toggleKaraoke();
         QVERIFY(audio.karaoke());
