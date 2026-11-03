@@ -46,6 +46,7 @@ hikari_add_gtest(hikari_application_recovery_store_tests SOURCES recovery_store_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_hotkeys_tests SOURCES automation_hotkeys_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_frame_bake_tests SOURCES frame_bake_tests.cpp LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
@@ -65,8 +66,6 @@ hikari_add_gtest(hikari_application_whats_new_tests SOURCES whats_new_tests.cpp
 hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_style_manager_tests SOURCES style_manager_tests.cpp
-    LIBRARIES hikari_application LABELS application)
-hikari_add_gtest(hikari_application_misspell_replacer_tests SOURCES misspell_replacer_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_spell_checker_tests SOURCES spell_checker_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -97,7 +96,7 @@ hikari_add_gtest(hikari_application_audio_playback_tests SOURCES audio_playback_
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
-    LIBRARIES hikari_application LABELS application)
+    LIBRARIES hikari_application hikari_regex LABELS application)
 target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
     HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map/actions.csv")
 hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
@@ -119,6 +118,8 @@ target_compile_definitions(hikari_application_karaoke_split_tests PRIVATE
     HIKARI_HYPHENATION_PATTERNS="${PROJECT_SOURCE_DIR}/src/ui/hyphenation/hyph_en_US.dic")
 hikari_add_gtest(hikari_application_kanji_timer_tests SOURCES kanji_timer_tests.cpp
     LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_kanji_timer_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_session_file_tests PRIVATE
@@ -137,7 +138,7 @@ target_include_directories(hikari_application_font_collector_tests PRIVATE "${PR
 hikari_add_gtest(hikari_application_matroska_tests SOURCES matroska_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_visual_tools_tests SOURCES visual_tools_tests.cpp
-    LIBRARIES hikari_application Qt6::Core LABELS application)
+    LIBRARIES hikari_application hikari_regex Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
@@ -164,6 +165,8 @@ target_compile_definitions(hikari_application_visual_transform_tests PRIVATE
     HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-measure-20261012/observations.jsonl")
 hikari_add_gtest(hikari_application_visual_perspective_tests SOURCES visual_perspective_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_perspective_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE

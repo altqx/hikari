@@ -65,16 +65,16 @@
         <translation>ஒலியளவு மற்றும் நீட்சி ச்லைடர்களை இணைக்கவும்</translation>
     </message>
     <message>
-        <source> or </source>
-        <translation> அல்லது </translation>
+        <source>%1 or %2</source>
+        <translation>%1 அல்லது %2</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>Shift + சொடுக்கு பயன்படுத்தி குறுக்குவிசையை அமைக்கலாம்</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
     </message>
     <message>
-        <source>Second shortcut can be set using Control + Click</source>
-        <translation>Control + சொடுக்கு பயன்படுத்தி இரண்டாவது குறுக்குவிசையை அமைக்கலாம்</translation>
+        <source>Ctrl+click to set a second shortcut</source>
+        <translation>இரண்டாவது குறுக்குவிசையை அமைக்க Ctrl+சொடுக்கு</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -141,24 +141,12 @@
         <translation>கரோக்கி</translation>
     </message>
     <message>
-        <source>Enable / disable karaoke creation</source>
-        <translation>கரோக்கி உருவாக்கத்தை இயக்கவும் / முடக்கவும்</translation>
-    </message>
-    <message>
         <source>Auto split</source>
         <translation>தானியங்கு பிரிப்பு</translation>
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
         <translation>அசைகளின் தானியங்கு பிரிப்பை இயக்கவும் / முடக்கவும்</translation>
-    </message>
-    <message>
-        <source>Automatically apply changes</source>
-        <translation>மாற்றங்களைத் தானாகப் பயன்படுத்து</translation>
-    </message>
-    <message>
-        <source>Go to the next line after applying changes</source>
-        <translation>மாற்றங்களைப் பயன்படுத்திய பின் அடுத்த வரிக்குச் செல்</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -262,14 +250,6 @@
         <translation>தட்டல் விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>Stop tapping</source>
-        <translation>தட்டுவதை நிறுத்து</translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation>தட்டத் தொடங்கு</translation>
-    </message>
-    <message>
         <source>Each syllable</source>
         <translation>ஒவ்வொரு அசையும்</translation>
     </message>
@@ -330,16 +310,16 @@
         <translation>பேச்சு</translation>
     </message>
     <message>
-        <source>Enhance speech frequencies in the spectrum</source>
-        <translation>ச்பெக்ட்ரம் பேச்சு அதிர்வெண் மேம்பாடு</translation>
-    </message>
-    <message>
         <source>More audio options</source>
         <translation>மேலும் ஆடியோ விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>Speech (non-linear spectrum)</source>
-        <translation>பேச்சு (நேரியல் அல்லாத ச்பெக்ட்ரம்)</translation>
+        <source>Go to selection start</source>
+        <translation>தேர்வின் தொடக்கத்துக்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>தேர்வின் முடிவுக்குச் செல்</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -400,6 +380,10 @@ Output device: %2</source>
     <message>
         <source>Go to the next line after commit</source>
         <translation>கமிட்டுக்குப் பின் அடுத்த வரிக்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Speech spectrum</source>
+        <translation>பேச்சு ச்பெக்ட்ரம்</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -927,7 +911,7 @@ Output device: %2</source>
         <translation>வடிப்பி</translation>
     </message>
     <message>
-        <source>Filter the run&apos;s log</source>
+        <source>Filter the run’s log</source>
         <translation>இயக்கத்தின் பதிவை வடிகட்டு</translation>
     </message>
     <message>
@@ -967,7 +951,7 @@ Output device: %2</source>
         <translation>%1 min %2 s</translation>
     </message>
     <message>
-        <source>Save the run&apos;s log</source>
+        <source>Save the run’s log</source>
         <translation>இயக்கத்தின் பதிவைச் சேமி</translation>
     </message>
     <message>
@@ -991,7 +975,7 @@ Output device: %2</source>
         <translation>%1 விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
         <translation>ச்கிரிப்டின் செயல்முறை முடிந்தது. மீண்டும் தொடங்க மீண்டும் ஏற்றவும்; அதன் குறுநிரல் மீண்டும் இயக்கப்படாது.</translation>
     </message>
     <message>
@@ -1154,10 +1138,8 @@ Output device: %2</source>
         <translation>%1 இல் இயக்க குறுநிரல்கள் இல்லை</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Lua ச்கிரிப்டை ஏற்றுவதில் பிழை: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>%1 ஏற்றப்படவில்லை. அதன் பிழை விவரங்களில் உள்ளது.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -1819,8 +1801,8 @@ Output device: %2</source>
         <translation>ரத்துசெய்</translation>
     </message>
     <message>
-        <source>Subtitle file </source>
-        <translation>வசனக் கோப்பு </translation>
+        <source>Subtitle file (%1)</source>
+        <translation>வசனக் கோப்பு (%1)</translation>
     </message>
     <message>
         <source>Save</source>
@@ -1987,12 +1969,12 @@ Output device: %2</source>
         <translation>தலைப்பிடப்படாத ஆவணத்தைச் சேமிக்கும் இடத்தைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
-        <source>Save as ASS</source>
-        <translation>ASS ஆகச் சேமி</translation>
-    </message>
-    <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
         <translation>அமைப்புகள் › மாற்றம் இல் உள்ள சட்டக வீதம் சரியில்லை. அதைத் திருத்தி மீண்டும் சேமிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>ASS ஆகச் சேமி</translation>
     </message>
     <message>
         <source>A document could not be saved; nothing was closed.</source>
@@ -2231,16 +2213,12 @@ Output device: %2</source>
         <translation>கலவை</translation>
     </message>
     <message>
-        <source>Number of characters in each line.
-No more than 43 characters per line (maximum 2 lines).</source>
-        <translation>ஒவ்வொரு வரியிலும் உள்ள எழுத்துகளின் எண்ணிக்கை.
-ஒரு வரிக்கு 43 எழுத்துகளுக்கு மேல் கூடாது (அதிகபட்சம் 2 வரிகள்).</translation>
+        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
+        <translation>ஒவ்வொரு வரியிலும் உள்ள எழுத்துகளின் எண்ணிக்கை. 43 அல்லது அதற்குக் குறைவாக, அதிகபட்சம் 2 வரிகளில் வைத்திருங்கள்.</translation>
     </message>
     <message>
-        <source>Characters per second.
-Should not exceed 15 characters per second</source>
-        <translation>ஒரு நொடிக்கான எழுத்துகள்.
-நொடிக்கு 15 எழுத்துகளை மிகக்கூடாது</translation>
+        <source>Characters per second. Keep it at 15 or under.</source>
+        <translation>ஒரு நொடிக்கான எழுத்துகள். 15 அல்லது அதற்குக் குறைவாக வைத்திருங்கள்.</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -2303,7 +2281,7 @@ Should not exceed 15 characters per second</source>
         <translation>மாற்றப்பட்டது, இன்னும் வரியில் பயன்படுத்தப்படவில்லை</translation>
     </message>
     <message>
-        <source>0: the Style&apos;s (%1)</source>
+        <source>0: the style’s (%1)</source>
         <translation>0: பாணியினுடையது (%1)</translation>
     </message>
     <message>
@@ -2311,12 +2289,8 @@ Should not exceed 15 characters per second</source>
         <translation>பாணியைத் திருத்து</translation>
     </message>
     <message>
-        <source>Edit style: allows quick editing of the current line&apos;s style</source>
-        <translation>பாணியைத் திருத்து: தற்போதைய வரியின் பாணியை விரைவாகத் திருத்த உதவுகிறது</translation>
-    </message>
-    <message>
-        <source>Allows quick editing of the current line&apos;s style</source>
-        <translation>தற்போதைய வரிக்கான பாணியை விரைவாக திருத்தலாம்</translation>
+        <source>Edits the current line’s style</source>
+        <translation>தற்போதைய வரியின் பாணியைத் திருத்துகிறது</translation>
     </message>
     <message>
         <source>Actor</source>
@@ -2367,8 +2341,8 @@ Should not exceed 15 characters per second</source>
         <translation>சொல்லை அகராதியில் சேர்</translation>
     </message>
     <message>
-        <source>Error. Word &quot;%1&quot; was not added.</source>
-        <translation>பிழை. &quot;%1&quot; என்ற சொல் சேர்க்கப்படவில்லை.</translation>
+        <source>“%1” was not added to the dictionary.</source>
+        <translation>“%1” என்ற சொல் அகராதியில் சேர்க்கப்படவில்லை.</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2395,23 +2369,23 @@ Should not exceed 15 characters per second</source>
         <translation>அடித்தல்</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>எழுத்துரு தேர்வு</translation>
+        <source>Choose font…</source>
+        <translation>எழுத்துருவைத் தேர்ந்தெடு…</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>முதன்மை வண்ணம்</translation>
     </message>
     <message>
-        <source>Secondary color for karaoke</source>
+        <source>Secondary colour for karaoke</source>
         <translation>கரோக்கிக்கு இரண்டாம் நிலை வண்ணம்</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>எல்லை வண்ணம்</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>நிழல் வண்ணம்</translation>
     </message>
     <message>
@@ -2423,8 +2397,8 @@ Should not exceed 15 characters per second</source>
         <translation>குறிச்சொல் பொத்தானைச் சேர்</translation>
     </message>
     <message>
-        <source>Edit...</source>
-        <translation>திருத்து...</translation>
+        <source>Edit…</source>
+        <translation>திருத்து…</translation>
     </message>
     <message>
         <source>Move left</source>
@@ -2475,7 +2449,7 @@ Should not exceed 15 characters per second</source>
         <translation>கர்சர் இருக்கும் இடத்தில் குறிச்சொல் செருகப்படும்</translation>
     </message>
     <message>
-        <source>Insert Tag at text beginning</source>
+        <source>Insert tag at start of text</source>
         <translation>உரை தொடக்கத்தில் குறிச்சொல்லைச் செருகவும்</translation>
     </message>
     <message>
@@ -2567,8 +2541,8 @@ Should not exceed 15 characters per second</source>
         <translation>சேமிப்பு தோல்வியடைந்தது; வட்டில் உள்ள கோப்பு மாறவில்லை</translation>
     </message>
     <message>
-        <source>End is before Start.</source>
-        <translation>முடிவு தொடக்கத்திற்கு முன் உள்ளது.</translation>
+        <source>End time is before start time.</source>
+        <translation>முடிவு நேரம் தொடக்க நேரத்திற்கு முன் உள்ளது.</translation>
     </message>
     <message>
         <source>Margins must be between 0 and 9999.</source>
@@ -2619,7 +2593,7 @@ Should not exceed 15 characters per second</source>
         <translation>உறுதிப்படுத்தப்படாதவை மொழிபெயர்ப்பு பயன்முறையில் மட்டுமே பொருந்தும்.</translation>
     </message>
     <message>
-        <source>This document can&apos;t be saved here.</source>
+        <source>This document can’t be saved here.</source>
         <translation>இந்த ஆவணத்தை இங்கே சேமிக்க முடியாது.</translation>
     </message>
     <message>
@@ -2627,7 +2601,7 @@ Should not exceed 15 characters per second</source>
         <translation>திறந்துள்ள வேறொரு ஆவணம் அந்தக் கோப்பைப் பயன்படுத்துகிறது.</translation>
     </message>
     <message>
-        <source>The document can&apos;t be saved right now.</source>
+        <source>The document can’t be saved right now.</source>
         <translation>ஆவணத்தை இப்போது சேமிக்க முடியாது.</translation>
     </message>
     <message>
@@ -3336,8 +3310,8 @@ Should not exceed 15 characters per second</source>
         <translation>எழுத்துரு</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>எழுத்துரு தேர்வு</translation>
+        <source>Choose font</source>
+        <translation>எழுத்துருவைத் தேர்ந்தெடு</translation>
     </message>
     <message>
         <source>Search fonts</source>
@@ -3900,7 +3874,7 @@ Failed to copy %2 fonts.</source>
         <translation>ஆடியோ</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>பாணிகள்</translation>
     </message>
     <message>
@@ -3952,10 +3926,6 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub 0.0.x இந்தக் கணினியில் நிறுவப்பட்டுள்ளது. அதில் எதுவும் மாற்றப்படாது.</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>பின்னர்: கோப்பு › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>எனது பழைய அமைப்புகளை இறக்குமதி செய்</translation>
     </message>
@@ -3964,16 +3934,12 @@ Failed to copy %2 fonts.</source>
         <translation>பரிந்துரைக்கப்படுவது</translation>
     </message>
     <message>
-        <source>Hotkeys, fonts, audio and video options and your dictionary words.</source>
+        <source>Shortcuts, fonts, audio and video options and your dictionary words.</source>
         <translation>குறுக்குவிசைகள், எழுத்துருக்கள், ஆடியோ மற்றும் வீடியோ விருப்பங்கள், உங்கள் அகராதிச் சொற்கள்.</translation>
     </message>
     <message>
         <source>Set up from scratch</source>
         <translation>புதிதாக அமை</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub இன் இயல்புநிலைகளிலிருந்து தொடங்கு. கோப்பு › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்… மூலம் பின்னரும் அவற்றைக் கொண்டுவரலாம்.</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -4016,7 +3982,7 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub இனுடையது</translation>
     </message>
     <message>
-        <source>The system’s</source>
+        <source>System</source>
         <translation>கணினியினுடையது</translation>
     </message>
     <message>
@@ -4072,6 +4038,14 @@ Failed to copy %2 fonts.</source>
         <translation>காட்சிக் கருவிகள் மற்றும் பாணிகள் பலகத்துடன் பெரிய வீடியோ.</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>பின்னர்: அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>HikariSub இன் இயல்புநிலைகளிலிருந்து தொடங்கு. அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்… மூலம் பின்னரும் அவற்றைக் கொண்டுவரலாம்.</translation>
+    </message>
+    <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
         <translation>வீடியோவின் அருகே வார்ப்புரு திருத்தி, கரோக்கி பயன்முறையில் ஆடியோ.</translation>
     </message>
@@ -4112,8 +4086,8 @@ Failed to copy %2 fonts.</source>
         <translation>திருத்துதல்</translation>
     </message>
     <message>
-        <source>Later: Settings › General › Saving and Settings › Spelling &amp; grammar</source>
-        <translation>பின்னர்: அமைப்புகள் › பொது › சேமித்தல் மற்றும் அமைப்புகள் › எழுத்துப்பிழை &amp; இலக்கணம்</translation>
+        <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
+        <translation>பின்னர்: அமைப்புகள் › பொது › சேமித்தல் மற்றும் அமைப்புகள் › எழுத்துப்பிழை மற்றும் இலக்கணம்</translation>
     </message>
     <message>
         <source>Autosave files kept</source>
@@ -4267,10 +4241,6 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Grid</name>
     <message>
-        <source>Font collector</source>
-        <translation>எழுத்துருக்கள் சேகரிப்பான்</translation>
-    </message>
-    <message>
         <source>Grid</source>
         <translation>கட்டம்</translation>
     </message>
@@ -4283,80 +4253,12 @@ Failed to copy %2 fonts.</source>
         <translation>ஆவணம் எதுவும் திறக்கப்படவில்லை</translation>
     </message>
     <message>
-        <source>Add lines</source>
-        <translation>வரிகளைச் சேர்க்கவும்</translation>
-    </message>
-    <message>
-        <source>Change description</source>
-        <translation>விளக்கத்தை மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>நீக்கு</translation>
-    </message>
-    <message>
-        <source>Insert after with video time</source>
-        <translation>வீடியோ நேரத்துடன் பின் செருகு</translation>
-    </message>
-    <message>
-        <source>Insert before with video frame time</source>
-        <translation>வீடியோ சட்டக நேரத்துடன் முன் செருகவும்</translation>
-    </message>
-    <message>
-        <source>Insert after with video frame time</source>
-        <translation>வீடியோ சட்டக நேரத்துடன் பின் செருகவும்</translation>
-    </message>
-    <message>
-        <source>Join lines and keep first</source>
-        <translation>வரிகளை இணைத்து முதல் வரியை வைத்திரு</translation>
-    </message>
-    <message>
-        <source>Join lines and keep last</source>
-        <translation>வரிகளை இணைத்து கடைசி வரியை வைத்திரு</translation>
-    </message>
-    <message>
-        <source>Split lines</source>
-        <translation>வரிகளைப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split line at video time</source>
-        <translation>வீடியோ நேரத்தில் வரியைப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split lines into frames</source>
-        <translation>வரிகளைச் சட்டகங்களாகப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split lines into characters</source>
-        <translation>வரிகளை எழுத்துகளாகப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split lines into words</source>
-        <translation>வரிகளைச் சொற்களாகப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Split lines by wraps</source>
-        <translation>வரி மடக்குகளின்படி வரிகளைப் பிரிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Select all lines visible on video</source>
-        <translation>வீடியோவில் தெரியும் அனைத்து வரிகளையும் தேர்ந்தெடுக்கவும்</translation>
+        <source>Bake animations</source>
+        <translation>அசைவூட்டங்களை நிலைப்படுத்து</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
         <translation>வசன வரிகள் முன்னோட்டத்தைக் காட்டு</translation>
-    </message>
-    <message>
-        <source>Paste translation text</source>
-        <translation>உரை மொழிபெயர்ப்புகளை ஒட்டவும்</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>உரையாடல் நகர்த்தல் சாளரம்</translation>
-    </message>
-    <message>
-        <source>Hide selected lines</source>
-        <translation>தேர்ந்தெடுத்த வரிகளை மறை</translation>
     </message>
     <message>
         <source>Filtering</source>
@@ -4377,6 +4279,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Hide lines with styles</source>
         <translation>பாணிகளுடன் வரிகளை மறைக்கவும்</translation>
+    </message>
+    <message>
+        <source>Start time</source>
+        <translation>தொடக்க நேரம்</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>பாணி</translation>
+    </message>
+    <message>
+        <source>Hide selected lines (filter)</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை மறை (வடிகட்டி)</translation>
     </message>
     <message>
         <source>Hide comments</source>
@@ -4403,68 +4317,12 @@ Failed to copy %2 fonts.</source>
         <translation>சில செயல்களில் வடிகட்டலை புறக்கணிக்கவும்</translation>
     </message>
     <message>
-        <source>Hide columns</source>
-        <translation>நெடுவரிசைகளை மறைக்கவும்</translation>
-    </message>
-    <message>
         <source>Hide empty columns</source>
         <translation>வெற்று நெடுவரிசைகளை மறை</translation>
     </message>
     <message>
-        <source>Hide layer</source>
-        <translation>அடுக்கை மறை</translation>
-    </message>
-    <message>
-        <source>Hide start time</source>
-        <translation>தொடக்க நேரத்தை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide end time</source>
-        <translation>இறுதி நேரத்தை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide actor</source>
-        <translation>நடிகரை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide style</source>
-        <translation>பாணியை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide left margin</source>
-        <translation>இடது விளிம்பை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide right margin</source>
-        <translation>வலது விளிம்பை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide vertical margin</source>
-        <translation>செங்குத்து விளிம்பை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide effect</source>
-        <translation>விளைவை மறை</translation>
-    </message>
-    <message>
-        <source>Hide characters per second</source>
-        <translation>ஒரு நொடிக்கு எழுத்துக்களை மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Hide line wraps</source>
-        <translation>வரி மடக்குகளை மறைக்கவும்</translation>
-    </message>
-    <message>
         <source>Reset column widths</source>
         <translation>நெடுவரிசை அகலங்களை மீட்டமை</translation>
-    </message>
-    <message>
-        <source>Set new FPS</source>
-        <translation>புதிய FPS ஐ அமைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Set FPS from video</source>
-        <translation>வீடியோவிலிருந்து FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -4479,8 +4337,110 @@ Failed to copy %2 fonts.</source>
         <translation>உரையை நீக்கு</translation>
     </message>
     <message>
-        <source>Load subtitles from an MKV/OGM file</source>
-        <translation>MKV / OGM கோப்பின் வசன வரிகள் ஏற்றவும்</translation>
+        <source>Before</source>
+        <translation>முன்</translation>
+    </message>
+    <message>
+        <source>After</source>
+        <translation>பின்</translation>
+    </message>
+    <message>
+        <source>Before, at video time</source>
+        <translation>முன், வீடியோ நேரத்துடன்</translation>
+    </message>
+    <message>
+        <source>After, at video time</source>
+        <translation>பின், வீடியோ நேரத்துடன்</translation>
+    </message>
+    <message>
+        <source>Before, at video frame time</source>
+        <translation>முன், வீடியோ சட்டக நேரத்துடன்</translation>
+    </message>
+    <message>
+        <source>After, at video frame time</source>
+        <translation>பின், வீடியோ சட்டக நேரத்துடன்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>வரியை நகலாக்கு</numerusform>
+            <numerusform>%n வரிகளை நகலாக்கு</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste special</source>
+        <translation>சிறப்பு ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>கோப்பிலிருந்து மொழிபெயர்ப்பை ஒட்டவும்…</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>இணை</translation>
+    </message>
+    <message>
+        <source>Keep first</source>
+        <translation>முதல் வரியை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Keep last</source>
+        <translation>கடைசி வரியை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation>பிரி</translation>
+    </message>
+    <message>
+        <source>At video time</source>
+        <translation>வீடியோ நேரத்தில்</translation>
+    </message>
+    <message>
+        <source>Into frames</source>
+        <translation>சட்டகங்களாக</translation>
+    </message>
+    <message>
+        <source>Into characters</source>
+        <translation>எழுத்துகளாக</translation>
+    </message>
+    <message>
+        <source>Into words</source>
+        <translation>சொற்களாக</translation>
+    </message>
+    <message>
+        <source>By wraps</source>
+        <translation>வரி மடக்குகளின்படி</translation>
+    </message>
+    <message>
+        <source>Swap lines</source>
+        <translation>வரிகளை இடமாற்று</translation>
+    </message>
+    <message>
+        <source>Make times continuous</source>
+        <translation>நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
+    </message>
+    <message>
+        <source>With the previous line</source>
+        <translation>முந்தைய வரியுடன்</translation>
+    </message>
+    <message>
+        <source>With the next line</source>
+        <translation>அடுத்த வரியுடன்</translation>
+    </message>
+    <message>
+        <source>Select lines visible on video</source>
+        <translation>வீடியோவில் தெரியும் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>மொழிபெயர்ப்புப் பொருத்தம்…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>வரியை நீக்கு</numerusform>
+            <numerusform>%n வரிகளை நீக்கு</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -4519,48 +4479,35 @@ Failed to copy %2 fonts.</source>
         <translation>வரிக் குழு</translation>
     </message>
     <message>
+        <source>Columns</source>
+        <translation>நெடுவரிசைகள்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>தேர்ந்தெடுத்த வரியைச் சேர்க்கவும்</numerusform>
+            <numerusform>தேர்ந்தெடுத்த %n வரிகளைச் சேர்க்கவும்</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Copy line group</source>
         <translation>வரிக் குழுவை நகலெடுக்கவும்</translation>
     </message>
     <message>
-        <source>Select the group&apos;s lines</source>
+        <source>Select the group’s lines</source>
         <translation>குழுவின் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Change description…</source>
+        <translation>விளக்கத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation>குழுவைக் கலை</translation>
     </message>
     <message>
         <source>Insert</source>
         <translation>செருகு</translation>
-    </message>
-    <message>
-        <source>Insert before</source>
-        <translation>முன் செருகு</translation>
-    </message>
-    <message>
-        <source>Insert after</source>
-        <translation>பின் செருகு</translation>
-    </message>
-    <message>
-        <source>Insert before with video time</source>
-        <translation>வீடியோ நேரத்துடன் முன் செருகு</translation>
-    </message>
-    <message>
-        <source>Duplicate lines</source>
-        <translation>வரிகளை நகலாக்கு</translation>
-    </message>
-    <message>
-        <source>Swap</source>
-        <translation>இடமாற்று</translation>
-    </message>
-    <message>
-        <source>Join lines</source>
-        <translation>வரிகளை இணை</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the previous line</source>
-        <translation>முந்தைய வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the next line</source>
-        <translation>அடுத்த வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
     </message>
     <message>
         <source>Make line group</source>
@@ -4569,10 +4516,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Cut</source>
         <translation>வெட்டு</translation>
-    </message>
-    <message>
-        <source>Delete lines</source>
-        <translation>வரிகளை நீக்கு</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -4591,20 +4534,12 @@ Failed to copy %2 fonts.</source>
         <translation>அடுக்கு</translation>
     </message>
     <message>
-        <source>The starting time</source>
-        <translation>தொடக்க நேரம்</translation>
-    </message>
-    <message>
         <source>End time</source>
         <translation>இறுதி நேரம்</translation>
     </message>
     <message>
         <source>Actor</source>
         <translation>நடிகர்</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
     </message>
     <message>
         <source>Left margin</source>
@@ -4752,12 +4687,12 @@ Failed to copy %2 fonts.</source>
         <translation>தேர்ந்தெடுத்த %1 வரிகளின் இந்த நெடுவரிசைகளில் இடைநிலைப்பலகையை ஒட்டு:</translation>
     </message>
     <message>
-        <source>Copy these columns of the selected line:</source>
-        <translation>தேர்ந்தெடுத்த வரியின் இந்த நெடுவரிசைகளை நகலெடு:</translation>
+        <source>Columns to copy from the selected line</source>
+        <translation>தேர்ந்தெடுத்த வரியிலிருந்து நகலெடுக்க வேண்டிய நெடுவரிசைகள்</translation>
     </message>
     <message>
-        <source>Copy these columns of the %1 selected lines:</source>
-        <translation>தேர்ந்தெடுத்த %1 வரிகளின் இந்த நெடுவரிசைகளை நகலெடு:</translation>
+        <source>Columns to copy from the %1 selected lines</source>
+        <translation>தேர்ந்தெடுத்த %1 வரிகளிலிருந்து நகலெடுக்க வேண்டிய நெடுவரிசைகள்</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -4913,27 +4848,27 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Hotkeys</name>
     <message>
-        <source>Keys for &quot;%1&quot;</source>
-        <translation>&quot;%1&quot; க்கான விசைகள்</translation>
+        <source>Keys for “%1”</source>
+        <translation>“%1” க்கான விசைகள்</translation>
     </message>
     <message>
-        <source>Global hotkey</source>
+        <source>Global shortcut</source>
         <translation>பொது குறுக்குவிசை</translation>
     </message>
     <message>
-        <source>Subtitle grid hotkey</source>
-        <translation>வசனக் கட்டக் குறுக்குவிசை</translation>
+        <source>Grid shortcut</source>
+        <translation>கட்டக் குறுக்குவிசை</translation>
     </message>
     <message>
-        <source>Edit box hotkey</source>
-        <translation>திருத்தப் பெட்டிக் குறுக்குவிசை</translation>
+        <source>Line editor shortcut</source>
+        <translation>வரி திருத்தி குறுக்குவிசை</translation>
     </message>
     <message>
-        <source>Video hotkey</source>
+        <source>Video shortcut</source>
         <translation>வீடியோ குறுக்குவிசை</translation>
     </message>
     <message>
-        <source>Audio hotkey</source>
+        <source>Audio shortcut</source>
         <translation>ஆடியோ குறுக்குவிசை</translation>
     </message>
     <message>
@@ -4985,8 +4920,8 @@ Failed to copy %2 fonts.</source>
         <translation>ரத்துசெய்</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>Shift + சொடுக்கு பயன்படுத்தி குறுக்குவிசையை அமைக்கலாம்</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -5029,8 +4964,12 @@ Failed to copy %2 fonts.</source>
         <translation>“எடிட்டரை இயக்கவும் / முடக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: திருத்தி எப்போதும் காட்டப்படும்; பதிலாகப் பலகங்களை மறைக்கவும் அல்லது ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
-        <translation>&quot;குறுக்குவிசை மேப்பிங் சாளரத்தைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தச் சாளரம் இனி இல்லை; ஒவ்வொரு குறுநிரலின் குறுக்குவிசையும் தானியங்கு பலகத்தில் அமைக்கப்படும்.</translation>
+        <source>The shortcut %1 of “Open shortcut mapping window” was removed: the window is gone and each macro’s shortcut is set in the Automation panel.</source>
+        <translation>“குறுக்குவிசை மேப்பிங் சாளரத்தைத் திறக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தச் சாளரம் இனி இல்லை; ஒவ்வொரு குறுநிரலின் குறுக்குவிசையும் தானியங்கு பலகத்தில் அமைக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>“சிறு பிழைகளைச் சரிசெய் (சோதனை)” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: இந்த அம்சம் அகற்றப்பட்டது.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
@@ -5053,16 +4992,16 @@ Failed to copy %2 fonts.</source>
         <translation>“MPL2 ஆக மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation>&quot;வெற்று 2h30m ஆடியோவைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; போலி வீடியோ தன்னுடைய ஒலியற்ற ஆடியோவைக் கொண்டுவரும்.</translation>
+        <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation>“வெற்று 2h30m ஆடியோவைத் திறக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; போலி வீடியோ தன்னுடைய ஒலியற்ற ஆடியோவைக் கொண்டுவரும்.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
         <translation>“FFMS2 உடன் வீடியோவைத் திறக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; வீடியோக்கள் எப்போதும் அட்டவணைப்படுத்தப்படும்.</translation>
     </message>
     <message>
-        <source>Shortcut &quot;%1&quot; is invalid</source>
-        <translation>&quot;%1&quot; குறுக்குவிசை செல்லாதது</translation>
+        <source>Shortcut “%1” is invalid</source>
+        <translation>“%1” குறுக்குவிசை செல்லாதது</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -5145,19 +5084,19 @@ Failed to copy %2 fonts.</source>
         <translation>லீட்-அவுட் சேர்</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>எல்லை வண்ணம்</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>முதன்மை வண்ணம்</translation>
     </message>
     <message>
-        <source>Secondary color for karaoke</source>
+        <source>Secondary colour for karaoke</source>
         <translation>கரோக்கிக்கு இரண்டாம் நிலை வண்ணம்</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>நிழல் வண்ணம்</translation>
     </message>
     <message>
@@ -5445,20 +5384,12 @@ Failed to copy %2 fonts.</source>
         <translation>நெடுவரிசைகளை ஒட்டு</translation>
     </message>
     <message>
-        <source>Paste translation text</source>
-        <translation>மொழிபெயர்ப்பு உரையை ஒட்டு</translation>
-    </message>
-    <message>
         <source>Load subtitles from an MKV file</source>
         <translation>MKV கோப்பிலிருந்து வசன வரிகளை ஏற்று</translation>
     </message>
     <message>
         <source>Swap lines</source>
         <translation>வரிகளை இடமாற்று</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>உரையாடல் நகர்த்தல் சாளரம்</translation>
     </message>
     <message>
         <source>Set new FPS</source>
@@ -5633,6 +5564,18 @@ Failed to copy %2 fonts.</source>
         <translation>தேர்ந்தெடுத்த வரிகளை குறிச்சொற்கள் இல்லாத உரைப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
+        <source>Shift times with the last values</source>
+        <translation>கடைசி மதிப்புகளுடன் நேரங்களை நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor panel</source>
+        <translation>நேரப் பின்செயலாக்கி பலகம்</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor with the last values</source>
+        <translation>கடைசி மதிப்புகளுடன் நேரப் பின்செயலாக்கி</translation>
+    </message>
+    <message>
         <source>Go to previous keyframe</source>
         <translation>முந்தைய கீஃப்ரேமுக்குச் செல்லவும்</translation>
     </message>
@@ -5657,8 +5600,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைப் பெரிதாக்கு</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>வீடியோ பெரிதாக்கத்தை முடக்கு</translation>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -5673,12 +5616,12 @@ Failed to copy %2 fonts.</source>
         <translation>ASS கோப்பின் பாணிகளைச் சுத்தம் செய்</translation>
     </message>
     <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>சிறு பிழைகளைச் சரிசெய் (சோதனை)</translation>
-    </message>
-    <message>
         <source>Find next</source>
         <translation>அடுத்ததை தேடு</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>முந்தையதைத் தேடு</translation>
     </message>
     <message>
         <source>Load last session</source>
@@ -5723,6 +5666,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Redo</source>
         <translation>மீண்டும்செய்</translation>
+    </message>
+    <message>
+        <source>Full screen bar: when the pointer moves / always / never</source>
+        <translation>முழுத் திரைப் பட்டி: சுட்டி நகரும்போது / எப்போதும் / ஒருபோதும் இல்லை</translation>
     </message>
     <message>
         <source>Delete line</source>
@@ -5821,8 +5768,12 @@ Failed to copy %2 fonts.</source>
         <translation>வரிக் குழுவை உருவாக்கு</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>நேரங்களை நகர்த்து / நேரப் பின்செயலாக்கியை இயக்கு</translation>
+        <source>Paste translation from a file…</source>
+        <translation>கோப்பிலிருந்து மொழிபெயர்ப்பை ஒட்டவும்…</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>மொழிபெயர்ப்புப் பொருத்தம்…</translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -5933,10 +5884,6 @@ Failed to copy %2 fonts.</source>
         <translation>ரெண்டர் செலவைக் காட்டு / மறை</translation>
     </message>
     <message>
-        <source>Full screen bar: Auto / Always / Never</source>
-        <translation>முழுத் திரைப் பட்டி: தானாக / எப்போதும் / ஒருபோதும் இல்லை</translation>
-    </message>
-    <message>
         <source>Tap to time</source>
         <translation>தட்டி நேரமிடு</translation>
     </message>
@@ -5949,8 +5896,20 @@ Failed to copy %2 fonts.</source>
         <translation>வேகமாக</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>தேர்வின் தொடக்கத்துக்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>தேர்வின் முடிவுக்குச் செல்</translation>
+    </message>
+    <message>
         <source>Translation mode</source>
         <translation>மொழிபெயர்ப்பு பயன்முறை</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>நிலையான இடைவெளியைச் செருகு</translation>
     </message>
     <message>
         <source>Place run 1</source>
@@ -6095,6 +6054,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Centre times within frames</source>
         <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6446,6 +6409,10 @@ Failed to copy %2 fonts.</source>
         <translation>காஞ்சி வரியைத் தவிர்</translation>
     </message>
     <message>
+        <source>Pair again</source>
+        <translation>மீண்டும் இணை</translation>
+    </message>
+    <message>
         <source>Previous</source>
         <translation>முந்தையது</translation>
     </message>
@@ -6517,7 +6484,7 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>The starting time</source>
+        <source>Start time</source>
         <translation>தொடக்க நேரம்</translation>
     </message>
     <message>
@@ -6525,8 +6492,8 @@ Failed to copy %2 fonts.</source>
         <translation>இறுதி நேரம்</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
+        <source>Style</source>
+        <translation>பாணி</translation>
     </message>
     <message>
         <source>Actor</source>
@@ -6585,8 +6552,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவின் பெயருடன் வசன வரிகள் சேமிக்கவும்</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>தானியங்கு சேமிப்பைத் திற</translation>
+        <source>Open autosave…</source>
+        <translation>தானியங்கு சேமிப்பைத் திற…</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
@@ -6653,28 +6620,24 @@ Failed to copy %2 fonts.</source>
         <translation>வரலாறு (&amp;h)</translation>
     </message>
     <message>
-        <source>Shows or hides the Fix minor errors panel</source>
-        <translation>சிறு பிழைகளைச் சரிசெய் பலகத்தைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>சிறு பிழைகளைச் சரிசெய் (சோதனை)</translation>
-    </message>
-    <message>
         <source>Select &amp;lines</source>
         <translation>வரிகளைத் தேர்ந்தெடு (&amp;l)</translation>
     </message>
     <message>
-        <source>Find and re&amp;place</source>
-        <translation>கண்டுபிடித்து மாற்று (&amp;p)</translation>
-    </message>
-    <message>
-        <source>&amp;Find</source>
-        <translation>தேடு (&amp;f)</translation>
-    </message>
-    <message>
         <source>Find next</source>
         <translation>அடுத்ததை தேடு</translation>
+    </message>
+    <message>
+        <source>Shift &amp;times…</source>
+        <translation>நேரங்களை நகர்த்து… (&amp;t)</translation>
+    </message>
+    <message>
+        <source>Moves line times by the lead-in, lead-out, gap and keyframe rules</source>
+        <translation>லீட்-இன், லீட்-அவுட், இடைவெளி, கீஃப்ரேம் விதிகளின்படி வரி நேரங்களை நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Timing &amp;postprocessor…</source>
+        <translation>நேரப் பின்செயலாக்கி… (&amp;p)</translation>
     </message>
     <message>
         <source>Go to start time of line</source>
@@ -6733,10 +6696,6 @@ Failed to copy %2 fonts.</source>
         <translation>கீஃப்ரேம்களைத் திறக்கவும்</translation>
     </message>
     <message>
-        <source>Import legacy settings...</source>
-        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்...</translation>
-    </message>
-    <message>
         <source>Run the last loaded script</source>
         <translation>கடைசியாக ஏற்றப்பட்ட ச்கிரிப்டை இயக்கவும்</translation>
     </message>
@@ -6777,8 +6736,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைப் பெரிதாக்கு</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>வீடியோ பெரிதாக்கத்தை அணைக்கவும்</translation>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -6865,16 +6824,40 @@ Failed to copy %2 fonts.</source>
         <translation>வசன வரிகள் (&amp;s)</translation>
     </message>
     <message>
-        <source>Shift &amp;times...</source>
-        <translation>நேரங்களை நகர்த்து... (&amp;t)</translation>
+        <source>Opens the Find panel</source>
+        <translation>கண்டுபிடி பலகத்தைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>&amp;Find…</source>
+        <translation>தேடு… (&amp;f)</translation>
+    </message>
+    <message>
+        <source>Opens the Find panel with the replace row shown</source>
+        <translation>மாற்று வரிசை காட்டப்பட்ட நிலையில் கண்டுபிடி பலகத்தைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Re&amp;place…</source>
+        <translation>மாற்று… (&amp;p)</translation>
+    </message>
+    <message>
+        <source>Selects the next match</source>
+        <translation>அடுத்த பொருத்தத்தைத் தேர்ந்தெடுக்கிறது</translation>
+    </message>
+    <message>
+        <source>Selects the previous match</source>
+        <translation>முந்தைய பொருத்தத்தைத் தேர்ந்தெடுக்கிறது</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>முந்தையதைத் தேடு</translation>
     </message>
     <message>
         <source>Style &amp;manager</source>
         <translation>பாணி மேலாளர் (&amp;m)</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS கோப்பு பண்புகள்</translation>
+        <source>Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
         <source>Font collector</source>
@@ -6917,7 +6900,7 @@ Failed to copy %2 fonts.</source>
         <translation>நீங்கள் முன்பு பயன்படுத்திய பதிப்புக்குப் பிறகு வந்த பதிப்புகளின் வெளியீட்டுக் குறிப்புகளைக் காட்டுகிறது</translation>
     </message>
     <message>
-        <source>What&apos;s &amp;new</source>
+        <source>What’s &amp;new</source>
         <translation>புதிதாக என்ன (&amp;n)</translation>
     </message>
     <message>
@@ -7024,6 +7007,14 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோ கோப்பைத் திறக்கவும்</translation>
     </message>
     <message>
+        <source>Imports a subtitle track from a Matroska file</source>
+        <translation>Matroska கோப்பிலிருந்து வசனத் தடத்தை இறக்குமதி செய்கிறது</translation>
+    </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>MKV இலிருந்து வசன வரிகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
         <source>Save current file</source>
         <translation>தற்போதைய கோப்பை சேமிக்கவும்</translation>
     </message>
@@ -7112,16 +7103,20 @@ Failed to copy %2 fonts.</source>
         <translation>வெளிப்பாடுகளால் வரிகளைத் தேர்ந்தெடுக்கிறது</translation>
     </message>
     <message>
-        <source>Searches for the specified text phrases and replaces them</source>
-        <translation>குறிப்பிட்ட உரைச் சொற்றொடர்களைத் தேடி அவற்றை மாற்றுகிறது</translation>
+        <source>Changes the frame rate of the subtitle times</source>
+        <translation>வசன நேரங்களின் சட்டக வீதத்தை மாற்றுகிறது</translation>
     </message>
     <message>
-        <source>Searches for the specified text phrase</source>
-        <translation>குறிப்பிட்ட உரைச் சொற்றொடரைத் தேடுகிறது</translation>
+        <source>Set FPS</source>
+        <translation>FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
-        <source>Finds the next occurrence of the phrase in the text</source>
-        <translation>உரையில் சொற்றொடரின் அடுத்த நிகழ்வைக் கண்டறிகிறது</translation>
+        <source>Set new FPS…</source>
+        <translation>புதிய FPS ஐ அமைக்கவும்…</translation>
+    </message>
+    <message>
+        <source>Set FPS from video</source>
+        <translation>வீடியோவிலிருந்து FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -7160,12 +7155,24 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
     </message>
     <message>
+        <source>Render cost</source>
+        <translation>ரெண்டர் செலவு</translation>
+    </message>
+    <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
         <translation>செயலில் உள்ள வரிக்கு ஆடியோ தேர்வை அளித்து, முந்தைய வரியைத் தேர்வு தொடங்கும் இடத்தில் முடிக்கிறது</translation>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+    </message>
+    <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>வரி திருத்தியில் கர்சரில் நிலையான இடைவெளியை (%1) செருகும்</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>நிலையான இடைவெளியைச் செருகு</translation>
     </message>
     <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
@@ -7216,10 +7223,6 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவை இயக்கவும் / இடைநிறுத்தவும்</translation>
     </message>
     <message>
-        <source>Show / hide render cost</source>
-        <translation>ரெண்டர் செலவைக் காட்டு / மறை</translation>
-    </message>
-    <message>
         <source>Opens audio file</source>
         <translation>ஆடியோ கோப்பைத் திறக்கிறது</translation>
     </message>
@@ -7232,8 +7235,8 @@ Failed to copy %2 fonts.</source>
         <translation>ரோமாஜி வரிகளின் கரோக்கி நேரமிடலை அவற்றின் காஞ்சி வரிகளுக்கு நகலெடுக்கிறது</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>காஞ்சி நேரமிடுபவர்…</translation>
+        <source>Kanji timer</source>
+        <translation>காஞ்சி நேரமிடுபவர்</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -7292,8 +7295,8 @@ Failed to copy %2 fonts.</source>
         <translation>ASS பாணிகளை நிர்வகிக்கப் பயன்படுகிறது</translation>
     </message>
     <message>
-        <source>ASS subtitle properties</source>
-        <translation>ASS வசன வரிகள் பண்புகள்</translation>
+        <source>Opens Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகளைத் திறக்கிறது</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
@@ -7898,6 +7901,10 @@ Failed to copy %2 fonts.</source>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
     </message>
+    <message>
+        <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
+        <translation>சிறு பிழைகளைச் சரிசெய் அம்சம் அகற்றப்பட்டது. உங்கள் விதிகள் %1 இல் பயன்படுத்தப்படாமல் அப்படியே உள்ளன.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -7955,270 +7962,6 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message>
-        <source>Fix minor errors</source>
-        <translation>சிறு பிழைகளைச் சரிசெய்</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when the find results window is open</source>
-        <translation>தேடல் முடிவுகள் சாளரம் திறந்திருக்கும்போது
-விதிகளை மாற்ற முடியாது</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-because it was edited.</source>
-        <translation>வரி %1 ஐ மாற்ற முடியாது,
-ஏனெனில் அது திருத்தப்பட்டுள்ளது.</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
-        <translation>வரி %4 இல், &quot;%3&quot; விதியைக் கொண்டு &quot;%1&quot; ஐ &quot;%2&quot; ஆக மாற்ற முடியாது.</translation>
-    </message>
-    <message>
-        <source>Rule description</source>
-        <translation>விதி விளக்கம்</translation>
-    </message>
-    <message>
-        <source>Replace phrase</source>
-        <translation>சொற்றொடரை மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation>பெரிய/சிறிய எழுத்து</translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation>கண்டறிந்த உரையைப் போல</translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation>மாற்றமில்லை</translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation>சிறிய எழுத்து</translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation>பெரிய எழுத்து</translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation>மாற்று உரையின் பெரிய/சிறிய எழுத்து</translation>
-    </message>
-    <message>
-        <source>Match case</source>
-        <translation>பெரிய/சிறிய எழுத்தைப் பொருத்து</translation>
-    </message>
-    <message>
-        <source>Rules</source>
-        <translation>விதிகள்</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>எந்த வரிகள்</translation>
-    </message>
-    <message>
-        <source>All lines</source>
-        <translation>அனைத்து வரிகளும்</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation>வரிகள்</translation>
-    </message>
-    <message>
-        <source>Selected lines</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரிகள்</translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரியிலிருந்து</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளின்படி</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>பாணிகளைத் தேர்வுசெய்க</translation>
-    </message>
-    <message>
-        <source>Update rule</source>
-        <translation>விதியைப் புதுப்பி</translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation>விதி</translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation>கண்டுபிடி → மாற்று</translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation>(எதுவுமில்லை)</translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation>விரிக்கப்பட்டது</translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation>சுருக்கப்பட்டது</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation>பெயர்</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation>கண்டுபிடி</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation>ஒரு வழக்கமான வெளிப்பாடு</translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation>தேடல் சொற்றொடர் (வழக்கமான வெளிப்பாடுகள்)</translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation>இதில்</translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation>உரையும் குறிச்சொற்களும்</translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation>குறிச்சொற்கள் மட்டும்</translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation>உரை மட்டும்</translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation>இதில் மாற்று</translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation>இந்தத் தாவல்</translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation>எல்லாத் தாவல்களும்</translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation>தேட வேண்டிய தாவல்கள்</translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation>அனைத்தையும் மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation>முடிவுகள்</translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation>1 பிழை</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>%n தேர்வுசெய்யப்பட்டது</numerusform>
-            <numerusform>%n தேர்வுசெய்யப்பட்டன</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation>1 கோப்பில்</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>அனைத்தும்</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>எதுவுமில்லை</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation>முடிவுகளை மூடு</translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation>வரி %1</translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation>கண்டறிந்தவற்றைக் காட்டு</translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation>கண்டறிந்தவற்றை மறை</translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation>தேர்வுசெய்தவற்றை மாற்று</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
-    </message>
-    <message>
-        <source>Add rule</source>
-        <translation>விதியைச் சேர்க்கவும்</translation>
-    </message>
-    <message>
-        <source>Delete rule</source>
-        <translation>விதியை நீக்கு</translation>
-    </message>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>%n விதியில் %1 இயக்கத்தில்</numerusform>
-            <numerusform>%n விதிகளில் %1 இயக்கத்தில்</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>%n பிழை</numerusform>
-            <numerusform>%n பிழைகள்</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>%n கோப்பில்</numerusform>
-            <numerusform>%n கோப்புகளில்</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>தேடல் முடிவுகள்</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>வரி %1: </translation>
-    </message>
-    <message>
-        <source>Replace</source>
-        <translation>மாற்று</translation>
-    </message>
-    <message>
-        <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation>விதி &quot;%1&quot; செல்லாது.</translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -8233,7 +7976,7 @@ because it was edited.</source>
         <translation>கணினியின் கருப்பொருளைப் பின்பற்று</translation>
     </message>
     <message>
-        <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
+        <source>Light or Dark as the system’s colour scheme sets it; high contrast stays as chosen</source>
         <translation>கணினியின் வண்ணத் திட்டத்தின்படி வெளிர் அல்லது இருண்ட; உயர் மாறுபாடு தேர்ந்தெடுத்தபடியே இருக்கும்</translation>
     </message>
     <message>
@@ -8241,7 +7984,7 @@ because it was edited.</source>
         <translation>தேர்வுசெய்…</translation>
     </message>
     <message>
-        <source>Accent color</source>
+        <source>Accent colour</source>
         <translation>சிறப்பு வண்ணம்</translation>
     </message>
     <message>
@@ -8277,7 +8020,7 @@ because it was edited.</source>
         <translation>Windows, KDE Plasma, GNOME இல் இயல்பாக முடக்கப்பட்டிருக்கும்; டைலிங் சாளர மேலாளர்களில் இயல்பாக இயக்கப்பட்டிருக்கும்.</translation>
     </message>
     <message>
-        <source>UI colors</source>
+        <source>UI colours</source>
         <translation>இடைமுக வண்ணங்கள்</translation>
     </message>
     <message>
@@ -8321,12 +8064,12 @@ because it was edited.</source>
         <translation>ஆடியோ</translation>
     </message>
     <message>
-        <source>Hotkeys</source>
+        <source>Shortcuts</source>
         <translation>குறுக்குவிசைகள்</translation>
     </message>
     <message>
-        <source>Subtitle properties</source>
-        <translation>வசன வரிகள் பண்புகள்</translation>
+        <source>Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
         <source>Language (program restart required)</source>
@@ -8505,10 +8248,8 @@ because it was edited.</source>
         <translation>வரி எல்லைகள் தடிமன்</translation>
     </message>
     <message>
-        <source>Range from 0 to 10000, where 0 turns off
-removing audio cache files.</source>
-        <translation>0 முதல் 10000 வரை; 0 என்றால் ஆடியோ தற்காலிகச் சேமிப்புக்
-கோப்புகள் நீக்கப்படாது.</translation>
+        <source>0–10000. At 0, audio cache files are never removed.</source>
+        <translation>0–10000. 0 என்றால் ஆடியோ தற்காலிகச் சேமிப்புக் கோப்புகள் ஒருபோதும் நீக்கப்படாது.</translation>
     </message>
     <message>
         <source>None</source>
@@ -8539,8 +8280,8 @@ removing audio cache files.</source>
         <translation>வரி திருத்தி</translation>
     </message>
     <message>
-        <source>Subtitle grid</source>
-        <translation>வசனக் கட்டம்</translation>
+        <source>Grid</source>
+        <translation>கட்டம்</translation>
     </message>
     <message>
         <source>Automation</source>
@@ -8579,7 +8320,7 @@ removing audio cache files.</source>
         <translation>எல்லா அமைப்புகளையும் இயல்புநிலைக்கு மீட்டமைக்கவா?</translation>
     </message>
     <message>
-        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
+        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
         <translation>சரி அல்லது பயன்படுத்து அழுத்தும்போது ஒவ்வொரு பக்கமும் இயல்புநிலைக்குத் திரும்பும்; ரத்துசெய் உங்கள் அமைப்புகளை அப்படியே வைக்கும். குறுக்குவிசைகளும் தோற்றமும் மாறாது: அவற்றை அவற்றுக்கான பக்கங்களில் தனியாக மீட்டமைக்கவும்.</translation>
     </message>
     <message>
@@ -8591,7 +8332,7 @@ removing audio cache files.</source>
         <translation>பக்கத்தை மீட்டமை</translation>
     </message>
     <message>
-        <source>The settings of the page shown back to their defaults</source>
+        <source>Resets the settings on this page to their defaults</source>
         <translation>காட்டப்படும் பக்கத்தின் அமைப்புகள் இயல்புநிலைக்குத் திரும்பும்</translation>
     </message>
     <message>
@@ -8667,8 +8408,8 @@ removing audio cache files.</source>
         <translation>காட்சி</translation>
     </message>
     <message>
-        <source>Spelling &amp; grammar</source>
-        <translation>எழுத்துப்பிழை &amp; இலக்கணம்</translation>
+        <source>Spelling and grammar</source>
+        <translation>எழுத்துப்பிழை மற்றும் இலக்கணம்</translation>
     </message>
     <message>
         <source>Clear last answers</source>
@@ -8707,12 +8448,16 @@ removing audio cache files.</source>
         <translation>நேரங்களுக்குப் பதிலாக வீடியோ சட்டகங்களைக் காட்டு</translation>
     </message>
     <message>
-        <source>In the line editor and the subtitle grid.</source>
-        <translation>வரி திருத்தியிலும் வசனக் கட்டத்திலும்.</translation>
+        <source>In the line editor and the grid.</source>
+        <translation>வரி திருத்தியிலும் கட்டத்திலும்.</translation>
     </message>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>நேரங்களைத் திருத்தும்போது அதே வரியிலேயே இரு</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter மென் வரி முறிவை (%1) செருகும்</translation>
     </message>
     <message>
         <source>Translation mode</source>
@@ -8826,6 +8571,14 @@ removing audio cache files.</source>
         <translation>CPS க்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் எண்ணு</translation>
     </message>
     <message>
+        <source>Splitting</source>
+        <translation>பிரித்தல்</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>சட்டகங்களாகப் பிரிக்கும்போது அசைவூட்டங்களை நிலைப்படுத்து</translation>
+    </message>
+    <message>
         <source>New lines</source>
         <translation>புதிய வரிகள்</translation>
     </message>
@@ -8850,7 +8603,7 @@ removing audio cache files.</source>
         <translation>சூழல் மெனுவிலிருந்து வீடியோவை முழுத் திரையில் திற</translation>
     </message>
     <message>
-        <source>Open video at the active line&apos;s time</source>
+        <source>Open video at the active line’s time</source>
         <translation>செயலில் உள்ள வரியின் நேரத்தில் வீடியோவைத் திற</translation>
     </message>
     <message>
@@ -8866,7 +8619,7 @@ removing audio cache files.</source>
         <translation>வசன வரிகளை முன்னோட்டமிடும் அளவு</translation>
     </message>
     <message>
-        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script&apos;s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
+        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script’s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
         <translation>திரை அளவு, படம் திரையில் எடுக்கும் அளவிலேயே வசன வரிகளை வரைகிறது, எனவே பெரிய மற்றும் உயர்-DPI திரைகளில் அவை கூர்மையாக இருக்கும். எதைத் தேர்ந்தாலும் ச்கிரிப்டின் தளவமைப்பு ஒன்றே. பாணி மேலாளர், எழுத்துரு தேர்வி, வார்ப்புரு திருத்தி ஆகியவற்றின் முன்னோட்டங்களும் இதைப் பயன்படுத்துகின்றன.</translation>
     </message>
     <message>
@@ -8918,6 +8671,62 @@ removing audio cache files.</source>
         <translation>பார்வை</translation>
     </message>
     <message>
+        <source>Zoom and pan</source>
+        <translation>பெரிதாக்கமும் நகர்த்தலும்</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>நடுப் பொத்தானால் இழுத்தால் படம் நகரும். தொடுதிட்டில் கிள்ளினால் சுட்டியைச் சுற்றிப் பெரிதாக்கும்.</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>சக்கரம் சுட்டியைச் சுற்றிப் பெரிதாக்கும். வீடியோவைப் பெரிதாக்கு இழுக்கக்கூடிய சட்டகத்தைக் காட்டும்.</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>Aegisub 3.5 போல</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>பழைய HikariSub பதிப்பைப் போல</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>வீடியோவின் மேல் சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>வீடியோவின் மேல் Ctrl+சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>வீடியோவின் மேல் Shift+சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>வீடியோவைப் பெரிதாக்கும்</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>வீடியோவைப் பெரிதாக்கும் (எதிர்த் திசையில்)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>வீடியோவை நகர்த்தும்</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>வீடியோவை நகர்த்தும் (X, Y இடம் மாற்றி)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>எதுவும் செய்யாது</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>சக்கரத்தைப் பயன்படுத்தும் அல்லது நடுப் பொத்தானால் இழுக்கும் காட்சிக் கருவி அதைத் தானே பயன்படுத்தும்.</translation>
+    </message>
+    <message>
         <source>Start zoom</source>
         <translation>தொடக்கப் பெரிதாக்கம்</translation>
     </message>
@@ -8930,7 +8739,7 @@ removing audio cache files.</source>
         <translation>காட்சிக் கருவிகள் எச்சரிக்கையை முடக்கு</translation>
     </message>
     <message>
-        <source>Don&apos;t warn about a resolution mismatch</source>
+        <source>Don’t warn about a resolution mismatch</source>
         <translation>தெளிவுத்திறன் பொருந்தாமை பற்றி எச்சரிக்காதே</translation>
     </message>
     <message>
@@ -8954,7 +8763,7 @@ removing audio cache files.</source>
         <translation>லீட்-இன், லீட்-அவுட்</translation>
     </message>
     <message>
-        <source>Don&apos;t play after changing the line</source>
+        <source>Don’t play after changing the line</source>
         <translation>வரியை மாற்றிய பின் இயக்காதே</translation>
     </message>
     <message>
@@ -8986,8 +8795,8 @@ removing audio cache files.</source>
         <translation>கரோக்கி</translation>
     </message>
     <message>
-        <source>Merge every &quot;n&quot; with the previous syllable</source>
-        <translation>ஒவ்வொரு &quot;n&quot; ஐயும் முந்தைய அசையுடன் ஒன்றிணை</translation>
+        <source>Merge every “n” with the previous syllable</source>
+        <translation>ஒவ்வொரு “n” ஐயும் முந்தைய அசையுடன் ஒன்றிணை</translation>
     </message>
     <message>
         <source>Move the syllable line after a click</source>
@@ -9126,12 +8935,12 @@ removing audio cache files.</source>
         <translation>உலகளாவிய குறுக்குவிசைகள்</translation>
     </message>
     <message>
-        <source>Subtitle shortcuts</source>
-        <translation>வசனக் குறுக்குவிசைகள்</translation>
+        <source>Grid shortcuts</source>
+        <translation>கட்டக் குறுக்குவிசைகள்</translation>
     </message>
     <message>
-        <source>Editor shortcuts</source>
-        <translation>திருத்தி குறுக்குவிசைகள்</translation>
+        <source>Line editor shortcuts</source>
+        <translation>வரி திருத்தி குறுக்குவிசைகள்</translation>
     </message>
     <message>
         <source>Video shortcuts</source>
@@ -9142,20 +8951,44 @@ removing audio cache files.</source>
         <translation>தானியங்கு குறுக்குவிசைகள்</translation>
     </message>
     <message>
-        <source>Filtering mode:</source>
-        <translation>வடிகட்டுதல் பயன்முறை:</translation>
+        <source>Plugin shortcuts</source>
+        <translation>செருகுநிரல் குறுக்குவிசைகள்</translation>
     </message>
     <message>
-        <source>Search hotkeys</source>
+        <source>Filtering mode</source>
+        <translation>வடிகட்டுதல் பயன்முறை</translation>
+    </message>
+    <message>
+        <source>Search shortcuts</source>
         <translation>குறுக்குவிசைகளைத் தேடு</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
+        <source>Import legacy shortcuts…</source>
         <translation>பழைய குறுக்குவிசைகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
-        <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
-        <translation>பழைய Hotkeys.txt இன் ச்கிரிப்ட் குறுக்குவிசைகள், உடனே சேர்க்கப்படும்</translation>
+        <source>Legacy</source>
+        <translation>பழையது</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>கடைசி இறக்குமதியைத் திரும்பப் பெறு…</translation>
+    </message>
+    <message>
+        <source>Script shortcuts</source>
+        <translation>ஸ்கிரிப்ட் குறுக்குவிசைகள்</translation>
+    </message>
+    <message>
+        <source>Adds the script shortcuts of a legacy Hotkeys.txt at once</source>
+        <translation>பழைய Hotkeys.txt இன் ஸ்கிரிப்ட் குறுக்குவிசைகளை உடனே சேர்க்கும்</translation>
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
@@ -9178,7 +9011,7 @@ removing audio cache files.</source>
         <translation>சார்பு</translation>
     </message>
     <message>
-        <source>Hotkey</source>
+        <source>Shortcut</source>
         <translation>குறுக்குவிசை</translation>
     </message>
     <message>
@@ -9186,7 +9019,7 @@ removing audio cache files.</source>
         <translation>காணாத குறுநிரல்</translation>
     </message>
     <message>
-        <source>Map hotkey…</source>
+        <source>Map shortcut…</source>
         <translation>குறுக்குவிசையை ஒதுக்கு…</translation>
     </message>
     <message>
@@ -9270,11 +9103,7 @@ removing audio cache files.</source>
         <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
     </message>
     <message>
-        <source>Choose a legacy Hotkeys.txt</source>
-        <translation>பழைய Hotkeys.txt ஐத் தேர்வுசெய்</translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
+        <source>Shortcuts (Hotkeys.txt)</source>
         <translation>குறுக்குவிசைகள் (Hotkeys.txt)</translation>
     </message>
     <message>
@@ -9282,7 +9111,7 @@ removing audio cache files.</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys</source>
+        <source>Import legacy shortcuts</source>
         <translation>பழைய குறுக்குவிசைகளை இறக்குமதி செய்</translation>
     </message>
     <message>
@@ -9290,14 +9119,14 @@ removing audio cache files.</source>
         <translation>கோப்பைப் படிக்க முடியவில்லை.</translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>%n ச்கிரிப்ட் குறுக்குவிசை சேர்க்கப்பட்டது.</numerusform>
             <numerusform>%n ச்கிரிப்ட் குறுக்குவிசைகள் சேர்க்கப்பட்டன.</numerusform>
         </translation>
     </message>
     <message>
-        <source>No script hotkeys were added.</source>
+        <source>No script shortcuts were added.</source>
         <translation>ச்கிரிப்ட் குறுக்குவிசைகள் எதுவும் சேர்க்கப்படவில்லை.</translation>
     </message>
     <message numerus="yes">
@@ -9347,22 +9176,16 @@ removing audio cache files.</source>
         <translation>இளஞ்சிவப்பு</translation>
     </message>
     <message>
-        <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
-        <translation>.dic மற்றும் .aff கோப்புகளை &quot;Dictionary&quot; கோப்புறையில் வைக்கவும்</translation>
+        <source>Put .dic and .aff files in the “Dictionary” folder</source>
+        <translation>.dic மற்றும் .aff கோப்புகளை “Dictionary” கோப்புறையில் வைக்கவும்</translation>
     </message>
     <message>
-        <source>The selected %1 for conversion does not exist
-and will be changed to the default</source>
-        <translation>மாற்றத்திற்காகத் தேர்ந்தெடுக்கப்பட்ட %1 இல்லை;
-அது இயல்புநிலைக்கு மாற்றப்படும்</translation>
+        <source>The style catalogue chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>மாற்றத்திற்காகத் தேர்ந்தெடுக்கப்பட்ட பாணிப் பட்டியல் இனி இல்லை. அதற்குப் பதிலாக இயல்புநிலை பயன்படுத்தப்படும்.</translation>
     </message>
     <message>
-        <source>catalogue for style</source>
-        <translation>பாணிக்கான பட்டியல்</translation>
-    </message>
-    <message>
-        <source>style</source>
-        <translation>பாணி</translation>
+        <source>The style chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>மாற்றத்திற்காகத் தேர்ந்தெடுக்கப்பட்ட பாணி இனி இல்லை. அதற்குப் பதிலாக இயல்புநிலை பயன்படுத்தப்படும்.</translation>
     </message>
     <message>
         <source>System default</source>
@@ -9402,7 +9225,7 @@ and will be changed to the default</source>
         <translation>உரை மற்றும் சின்னங்கள்</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>எல்லை வண்ணம்</translation>
     </message>
     <message>
@@ -9463,6 +9286,10 @@ and will be changed to the default</source>
     <message>
         <source>The package lacks its main file, %1.</source>
         <translation>தொகுப்பில் அதன் முதன்மைக் கோப்பான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>The package breaks the media rules: %1 %2.</source>
+        <translation>தொகுப்பு ஊடக விதிகளை மீறுகிறது: %1 %2.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -9667,6 +9494,45 @@ and will be changed to the default</source>
     <message>
         <source>HikariSub plugins (*.hikariplugin)</source>
         <translation>HikariSub செருகுநிரல்கள் (*.hikariplugin)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
+        <translation>செருகுநிரல் நிறுவப்படவில்லை, அணைக்கப்பட்டுள்ளது, அல்லது இந்தக் கட்டளை இனி அதில் இல்லை</translation>
+    </message>
+    <message>
+        <source>Can’t start: %1</source>
+        <translation>செருகுநிரலைத் தொடங்க முடியாது: %1</translation>
+    </message>
+    <message>
+        <source>The plugin didn’t start.</source>
+        <translation>செருகுநிரல் தொடங்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>“%1” failed.</source>
+        <translation>“%1” தோல்வியடைந்தது.</translation>
+    </message>
+    <message>
+        <source>Its %1 handler failed: %2</source>
+        <translation>அதன் %1 கையாளி தோல்வியடைந்தது: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>செருகுநிரல் %n வினாடிக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
+            <numerusform>செருகுநிரல் %n வினாடிகளுக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
+        <translation>செருகுநிரல் எதிர்பாராமல் நின்றுவிட்டது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</translation>
+    </message>
+    <message>
+        <source>Force stopped.</source>
+        <translation>கட்டாயமாக நிறுத்தப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t running.</source>
+        <translation>செருகுநிரல் இயங்கவில்லை.</translation>
     </message>
 </context>
 <context>
@@ -9885,8 +9751,8 @@ and will be changed to the default</source>
         <translation>10 வினாடிகள் அல்லது அதற்கு மேல் உறைந்தது. எங்கே சிக்கியது என்பதை அறிக்கை காட்டும்.</translation>
     </message>
     <message>
-        <source>It is kept for the next start.</source>
-        <translation>அடுத்த தொடக்கத்திற்காக வைக்கப்பட்டுள்ளது.</translation>
+        <source>The crash report could not be sent. It is kept for the next start.</source>
+        <translation>செயலிழப்பு அறிக்கையை அனுப்ப முடியவில்லை. அடுத்த தொடக்கத்திற்காக வைக்கப்பட்டுள்ளது.</translation>
     </message>
     <message>
         <source>It works again. A report shows where it was stuck.</source>
@@ -9981,8 +9847,8 @@ and will be changed to the default</source>
         <translation>%1 படிவம் நிரப்பப்பட்டு உங்கள் உலாவியில் திறந்தது.</translation>
     </message>
     <message>
-        <source>The crash report could not be sent</source>
-        <translation>செயலிழப்பு அறிக்கையை அனுப்ப முடியவில்லை</translation>
+        <source>The crash report could not be sent.</source>
+        <translation>செயலிழப்பு அறிக்கையை அனுப்ப முடியவில்லை.</translation>
     </message>
     <message>
         <source>The report is too long for a link, so it is on the clipboard.</source>
@@ -9993,12 +9859,8 @@ and will be changed to the default</source>
         <translation>இணைப்புக்கு அறிக்கை மிக நீளமானது, எனவே அது இடைநிலைப்பலகையில் உள்ளது. அதைப் படிவத்தில் ஒட்டவும்.</translation>
     </message>
     <message>
-        <source>The browser did not open</source>
-        <translation>உலாவி திறக்கவில்லை</translation>
-    </message>
-    <message>
-        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
-        <translation>சிக்கல் இடைநிலைப்பலகையில் உள்ளது. அதை GitHub இல் ஒரு புதிய சிக்கலில் ஒட்டவும்.</translation>
+        <source>The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>உலாவி திறக்கவில்லை. சிக்கல் இடைநிலைப்பலகையில் உள்ளது. அதை GitHub இல் ஒரு புதிய சிக்கலில் ஒட்டவும்.</translation>
     </message>
     <message>
         <source>Report text</source>
@@ -10088,8 +9950,8 @@ and will be changed to the default</source>
 <context>
     <name>HikariSub.ScriptProperties</name>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS கோப்பு பண்புகள்</translation>
+        <source>Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -10211,22 +10073,6 @@ and will be changed to the default</source>
 <context>
     <name>HikariSub.Search</name>
     <message>
-        <source>Search</source>
-        <translation>தேடல்</translation>
-    </message>
-    <message>
-        <source>Find and replace</source>
-        <translation>கண்டுபிடித்து மாற்று</translation>
-    </message>
-    <message>
-        <source>Reached the end of the subtitles.</source>
-        <translation>வசன வரிகளின் முடிவை அடைந்தது.</translation>
-    </message>
-    <message>
-        <source>Search again from the first line?</source>
-        <translation>முதல் வரியிலிருந்து மீண்டும் தேடவா?</translation>
-    </message>
-    <message>
         <source>“%1”</source>
         <translation>“%1”</translation>
     </message>
@@ -10255,6 +10101,10 @@ and will be changed to the default</source>
         <translation>இந்தப் பாணிகளில் மட்டும் தேடினால் எதுவும் கிடைக்காது.</translation>
     </message>
     <message>
+        <source>Replace in files</source>
+        <translation>கோப்புகளில் மாற்று</translation>
+    </message>
+    <message>
         <source>Replace in every matching file in “%1”?</source>
         <translation>“%1” இல் பொருந்தும் ஒவ்வொரு கோப்பிலும் மாற்றவா?</translation>
     </message>
@@ -10281,68 +10131,24 @@ because it was edited.</source>
 ஏனெனில் அது திருத்தப்பட்டுள்ளது.</translation>
     </message>
     <message>
-        <source>In files</source>
-        <translation>கோப்புகளில்</translation>
-    </message>
-    <message>
-        <source>Find in subtitles</source>
-        <translation>வசன வரிகளில் கண்டுபிடி</translation>
-    </message>
-    <message>
-        <source>Search text:</source>
-        <translation>தேடல் உரை:</translation>
-    </message>
-    <message>
-        <source>Replace with:</source>
-        <translation>இதனுடன் மாற்றவும்:</translation>
-    </message>
-    <message>
-        <source>Filters:</source>
-        <translation>வடிப்பான்கள்:</translation>
-    </message>
-    <message>
-        <source>Windows search filters separated by semicolons, e.g. &quot;*.ass; *.srt&quot;.</source>
-        <translation>அரைப்புள்ளிகளால் பிரிக்கப்பட்ட Windows தேடல் வடிப்பான்கள், எ.கா. &quot;*.ass; *.srt&quot;.</translation>
-    </message>
-    <message>
-        <source>Catalog:</source>
-        <translation>பட்டியல்:</translation>
-    </message>
-    <message>
-        <source>Subtitle search folder:</source>
-        <translation>வசனத் தேடல் கோப்புறை:</translation>
-    </message>
-    <message>
         <source>Match case</source>
         <translation>பெரிய/சிறிய எழுத்தைப் பொருத்து</translation>
     </message>
     <message>
+        <source>All styles</source>
+        <translation>அனைத்து பாணிகளும்</translation>
+    </message>
+    <message>
+        <source>In text</source>
+        <translation>உரையில்</translation>
+    </message>
+    <message>
+        <source>Match at</source>
+        <translation>பொருத்தும் இடம்</translation>
+    </message>
+    <message>
         <source>Include comments</source>
         <translation>கருத்துகளையும் சேர்</translation>
-    </message>
-    <message>
-        <source>Regular expressions</source>
-        <translation>வழக்கமான வெளிப்பாடுகள்</translation>
-    </message>
-    <message>
-        <source>Skip tags</source>
-        <translation>குறிச்சொற்களைத் தவிர்க்கவும்</translation>
-    </message>
-    <message>
-        <source>Beginning of text</source>
-        <translation>உரையின் துவக்கம்</translation>
-    </message>
-    <message>
-        <source>Skip text</source>
-        <translation>உரையைத் தவிர்க்கவும்</translation>
-    </message>
-    <message>
-        <source>End of text</source>
-        <translation>உரையின் முடிவு</translation>
-    </message>
-    <message>
-        <source>In field</source>
-        <translation>புலத்தில்</translation>
     </message>
     <message>
         <source>Text</source>
@@ -10357,16 +10163,212 @@ because it was edited.</source>
         <translation>நடிகர்</translation>
     </message>
     <message>
+        <source>From the selection</source>
+        <translation>தேர்விலிருந்து</translation>
+    </message>
+    <message>
+        <source>Match at start</source>
+        <translation>தொடக்கத்தில் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Match at end</source>
+        <translation>முடிவில் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Comments too</source>
+        <translation>கருத்துகளும்</translation>
+    </message>
+    <message>
+        <source>Subfolders</source>
+        <translation>துணைக் கோப்புறைகள்</translation>
+    </message>
+    <message>
+        <source>Hidden folders</source>
+        <translation>மறைக்கப்பட்ட கோப்புறைகள்</translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation>பொருத்தங்கள் இல்லை</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <extracomment>The live match count: the current match, then all matches</extracomment>
+        <translation>%2 இல் %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n பொருத்தம்</numerusform>
+            <numerusform>%n பொருத்தங்கள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n match(es)</source>
+        <translation>
+            <numerusform>%n பொருத்தத்தில் %1</numerusform>
+            <numerusform>%n பொருத்தங்களில் %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This document</source>
+        <translation>இந்த ஆவணம்</translation>
+    </message>
+    <message>
+        <source>Open documents</source>
+        <translation>திறந்துள்ள ஆவணங்கள்</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>கோப்புறை</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>பாணி</translation>
+    </message>
+    <message>
         <source>Effect</source>
         <translation>விளைவு</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>அனைத்தும்</translation>
+    </message>
+    <message>
+        <source>Selected</source>
+        <translation>தேர்ந்தெடுத்தவை</translation>
+    </message>
+    <message>
+        <source>All text</source>
+        <translation>முழு உரை</translation>
+    </message>
+    <message>
+        <source>Outside tags</source>
+        <translation>குறிச்சொற்களுக்கு வெளியே</translation>
+    </message>
+    <message>
+        <source>Inside tags</source>
+        <translation>குறிச்சொற்களுக்குள்</translation>
+    </message>
+    <message>
+        <source>Anywhere</source>
+        <translation>எங்கும்</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>தொடக்கம்</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>முடிவு</translation>
+    </message>
+    <message>
+        <source>Show replace</source>
+        <translation>மாற்றுவதைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Hide replace</source>
+        <translation>மாற்றுவதை மறை</translation>
+    </message>
+    <message>
+        <source>Regular expression</source>
+        <translation>வழக்கமான வெளிப்பாடு</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>முந்தையதைத் தேடு</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>அடுத்ததை தேடு</translation>
+    </message>
+    <message>
+        <source>Find all</source>
+        <translation>அனைத்தையும் கண்டுபிடி</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>Options that differ from the defaults</source>
+        <translation>இயல்புநிலையிலிருந்து மாறுபடும் விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation>இதனுடன் மாற்று</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace in %n file(s)…</source>
+        <translation>
+            <numerusform>%n கோப்பில் மாற்று…</numerusform>
+            <numerusform>%n கோப்புகளில் மாற்று…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace in files…</source>
+        <translation>கோப்புகளில் மாற்று…</translation>
+    </message>
+    <message>
+        <source>Search in</source>
+        <translation>இதில் தேடு</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>கோப்புறையைத் தேர்வுசெய்…</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>கோப்புகள்</translation>
+    </message>
+    <message>
+        <source>File patterns separated by semicolons, such as *.ass; *.srt</source>
+        <translation>அரைப்புள்ளிகளால் பிரிக்கப்பட்ட கோப்பு வடிவங்கள், எ.கா. *.ass; *.srt</translation>
+    </message>
+    <message>
+        <source>Field</source>
+        <translation>புலம்</translation>
     </message>
     <message>
         <source>Lines</source>
         <translation>வரிகள்</translation>
     </message>
     <message>
-        <source>All lines</source>
-        <translation>அனைத்து வரிகளும்</translation>
+        <source>Results</source>
+        <translation>முடிவுகள்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n file(s)</source>
+        <extracomment>%1 is the number of matches, such as &quot;5 matches&quot;</extracomment>
+        <translation>
+            <numerusform>%n கோப்பில் %1</numerusform>
+            <numerusform>%n கோப்புகளில் %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n line(s)</source>
+        <translation>
+            <numerusform>%n வரியில் %1</numerusform>
+            <numerusform>%n வரிகளில் %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Close results</source>
+        <translation>முடிவுகளை மூடு</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>வரி %1: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace %n checked</source>
+        <translation>
+            <numerusform>தேர்வுசெய்த %n ஐ மாற்று</numerusform>
+            <numerusform>தேர்வுசெய்த %n ஐ மாற்று</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Choose folder</source>
+        <translation>கோப்புறையைத் தேர்வுசெய்</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -10375,38 +10377,6 @@ because it was edited.</source>
     <message>
         <source>From selected</source>
         <translation>தேர்ந்தெடுக்கப்பட்டதிலிருந்து</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>பாணிகளைத் தேர்வுசெய்க</translation>
-    </message>
-    <message>
-        <source>Search in subfolders</source>
-        <translation>துணை கோப்புறைகளில் தேடுங்கள்</translation>
-    </message>
-    <message>
-        <source>Search in hidden folders</source>
-        <translation>மறைக்கப்பட்ட கோப்புறைகளிலும் தேடு</translation>
-    </message>
-    <message>
-        <source>Find in all open subtitles</source>
-        <translation>திறந்துள்ள எல்லா வசன வரிகளிலும் கண்டுபிடி</translation>
-    </message>
-    <message>
-        <source>Find all in current subtitles</source>
-        <translation>தற்போதைய வசன வரிகளில் அனைத்தையும் கண்டுபிடி</translation>
-    </message>
-    <message>
-        <source>Replace next</source>
-        <translation>அடுத்ததை மாற்று</translation>
-    </message>
-    <message>
-        <source>Search from the start</source>
-        <translation>தொடக்கத்திலிருந்து தேடு</translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation>நிறுத்து</translation>
     </message>
     <message>
         <source>Drop the missing styles</source>
@@ -10429,26 +10399,6 @@ because it was edited.</source>
         <translation>அனைத்தையும் மாற்றவும்</translation>
     </message>
     <message>
-        <source>Replace in all open subtitles</source>
-        <translation>திறந்துள்ள எல்லா வசன வரிகளிலும் மாற்று</translation>
-    </message>
-    <message>
-        <source>Replace in subtitles</source>
-        <translation>வசன வரிகளில் மாற்று</translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>தேடல் முடிவுகள்</translation>
-    </message>
-    <message>
-        <source>No results yet</source>
-        <translation>இன்னும் முடிவுகள் இல்லை</translation>
-    </message>
-    <message>
-        <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
-        <translation>“அனைத்தையும் கண்டுபிடி”, “திறந்துள்ள எல்லா வசன வரிகளிலும் கண்டுபிடி”, “வசன வரிகளில் கண்டுபிடி” ஆகியவை பொருத்தங்களை இங்கே பட்டியலிடும்; மாற்ற வேண்டியவற்றைத் தேர்வுசெய்து அவற்றை மாற்றவும்.</translation>
-    </message>
-    <message>
         <source>Check all</source>
         <translation>அனைத்தையும் தேர்வுசெய்</translation>
     </message>
@@ -10461,10 +10411,6 @@ because it was edited.</source>
         <translation>மாற்று</translation>
     </message>
     <message>
-        <source>Choose subtitle search folder</source>
-        <translation>வசனத் தேடல் கோப்புறையைத் தேர்வுசெய்</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
     </message>
@@ -10473,12 +10419,8 @@ because it was edited.</source>
         <translation>%1 முறை மாற்றப்பட்டது.</translation>
     </message>
     <message>
-        <source>Find in files</source>
-        <translation>கோப்புகளில் கண்டுபிடி</translation>
-    </message>
-    <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>தவறான வழக்கமான வெளிப்பாடு &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>தவறான வழக்கமான வெளிப்பாடு “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
@@ -10499,10 +10441,6 @@ because it was edited.</source>
     <message>
         <source>%1 could not be restored; its backup is in %2.</source>
         <translation>%1 ஐ மீட்டமைக்க முடியவில்லை; அதன் காப்புப் பிரதி %2 இல் உள்ளது.</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>வரி %1: </translation>
     </message>
 </context>
 <context>
@@ -10528,8 +10466,8 @@ because it was edited.</source>
         <translation>இல்லாமல்</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>தேடல் உரை:</translation>
+        <source>Search text</source>
+        <translation>தேடல் உரை</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10552,8 +10490,8 @@ because it was edited.</source>
         <translation>உரை</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
+        <source>Style</source>
+        <translation>பாணி</translation>
     </message>
     <message>
         <source>Actor</source>
@@ -10648,8 +10586,8 @@ because it was edited.</source>
         <translation>மூடு</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>தவறான வழக்கமான வெளிப்பாடு &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>தவறான வழக்கமான வெளிப்பாடு “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
@@ -10675,7 +10613,7 @@ because it was edited.</source>
         <translation>திற</translation>
     </message>
     <message>
-        <source>Open auto save</source>
+        <source>Open autosave</source>
         <translation>தானியங்கு சேமிப்பைத் திற</translation>
     </message>
     <message>
@@ -10918,10 +10856,6 @@ because it was edited.</source>
         <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
-        <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation>ஆடியோ மற்றும் வீடியோ கோப்புகள் (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
-    </message>
-    <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>கீஃப்ரேம் கோப்பு (*.txt *.pass *.stats *.log)</translation>
     </message>
@@ -10954,12 +10888,12 @@ because it was edited.</source>
         <translation>%1 (மீட்கப்பட்டது)</translation>
     </message>
     <message>
-        <source>Auto save folder is empty</source>
-        <translation>தானியங்கு சேமிப்புக் கோப்புறை காலியாக உள்ளது</translation>
+        <source>The autosave folder is empty.</source>
+        <translation>தானியங்கு சேமிப்புக் கோப்புறை காலியாக உள்ளது.</translation>
     </message>
     <message>
-        <source>Cannot open auto save folder</source>
-        <translation>தானியங்கு சேமிப்புக் கோப்புறையைத் திறக்க முடியாது</translation>
+        <source>The autosave folder cannot be opened.</source>
+        <translation>தானியங்கு சேமிப்புக் கோப்புறையைத் திறக்க முடியாது.</translation>
     </message>
     <message>
         <source>Failed to load autosave</source>
@@ -11335,8 +11269,8 @@ because it was edited.</source>
         <translation>நிரலின் அருகில் பழைய அமைப்புகள் எதுவும் கண்டறியப்படவில்லை. பழைய நிறுவலின் கோப்புறையைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
-        <source>%1 holds no legacy settings (Config, Dictionary).</source>
-        <translation>%1 இல் பழைய அமைப்புகள் எதுவும் இல்லை (Config, Dictionary).</translation>
+        <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
+        <translation>%1 இல் பழைய அமைப்புகள் எதுவும் இல்லை (“Config” அல்லது “Dictionary” கோப்புறை இல்லை).</translation>
     </message>
     <message>
         <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
@@ -11382,10 +11316,10 @@ because it was edited.</source>
         <translation>%1 முடக்கப்பட்டது</translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
-            <numerusform>இலக்கணச் சரிபார்ப்பு இனி அதன் %n விதியைப் பயன்படுத்தாது. அமைப்புகள் › எழுத்துப்பிழை &amp; இலக்கணம் பக்கத்தில் அதை மீண்டும் இயக்கவும்.</numerusform>
-            <numerusform>இலக்கணச் சரிபார்ப்பு இனி அதன் %n விதிகளைப் பயன்படுத்தாது. அமைப்புகள் › எழுத்துப்பிழை &amp; இலக்கணம் பக்கத்தில் அதை மீண்டும் இயக்கவும்.</numerusform>
+            <numerusform>இலக்கணச் சரிபார்ப்பு இனி அதன் %n விதியைப் பயன்படுத்தாது. அமைப்புகள் › எழுத்துப்பிழை மற்றும் இலக்கணம் பக்கத்தில் அதை மீண்டும் இயக்கவும்.</numerusform>
+            <numerusform>இலக்கணச் சரிபார்ப்பு இனி அதன் %n விதிகளைப் பயன்படுத்தாது. அமைப்புகள் › எழுத்துப்பிழை மற்றும் இலக்கணம் பக்கத்தில் அதை மீண்டும் இயக்கவும்.</numerusform>
         </translation>
     </message>
     <message>
@@ -11563,7 +11497,7 @@ because it was edited.</source>
         <translation>புறக்கணிக்கவும்</translation>
     </message>
     <message>
-        <source>Ignore All</source>
+        <source>Ignore all</source>
         <translation>அனைத்தையும் புறக்கணிக்கவும்</translation>
     </message>
     <message>
@@ -11758,8 +11692,8 @@ because it was edited.</source>
         <translation>அங்குள்ள உரையை மாற்ற முடியாது.</translation>
     </message>
     <message>
-        <source>Error. Word &quot;%1&quot; was not added.</source>
-        <translation>பிழை. &quot;%1&quot; என்ற சொல் சேர்க்கப்படவில்லை.</translation>
+        <source>“%1” was not added to the dictionary.</source>
+        <translation>“%1” என்ற சொல் அகராதியில் சேர்க்கப்படவில்லை.</translation>
     </message>
 </context>
 <context>
@@ -11960,6 +11894,14 @@ because it was edited.</source>
     <message>
         <source>Opaque box</source>
         <translation>ஒளிபுகா பெட்டி</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Opaque box per line (libass)</source>
+        <translation>ஒவ்வொரு வரிக்கும் ஒளிபுகா பெட்டி (libass)</translation>
     </message>
     <message>
         <source>Edit style</source>
@@ -12256,6 +12198,10 @@ because it was edited.</source>
         <translation>உரை குறியாக்கம்</translation>
     </message>
     <message>
+        <source>-1 - Detect text direction (libass)</source>
+        <translation>-1 - உரை திசையைக் கண்டறி (libass)</translation>
+    </message>
+    <message>
         <source>0 - ANSI</source>
         <translation>0 - ANSI</translation>
     </message>
@@ -12530,11 +12476,11 @@ Styles deleted:
         <translation>வரிகள்: %1</translation>
     </message>
     <message>
-        <source>the current line&apos;s style</source>
+        <source>the current line’s style</source>
         <translation>தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
-        <source>The current line&apos;s style</source>
+        <source>Current line’s style</source>
         <translation>தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
@@ -12601,20 +12547,20 @@ Styles deleted:
         <translation>எல்லா தாவல்களையும் மூடு</translation>
     </message>
     <message>
-        <source>Open the folder containing the subtitles</source>
-        <translation>வசன வரிகள் உள்ள கோப்புறையைத் திற</translation>
+        <source>Show subtitles in folder</source>
+        <translation>வசன வரிகளைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
-        <source>Open video containing folder</source>
-        <translation>வீடியோ உள்ள கோப்புறையைத் திற</translation>
+        <source>Show video in folder</source>
+        <translation>வீடியோவைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
-        <source>Open audio containing folder</source>
-        <translation>ஆடியோ உள்ள கோப்புறையைத் திற</translation>
+        <source>Show audio in folder</source>
+        <translation>ஆடியோவைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
-        <source>Open keyframes containing folder</source>
-        <translation>கீஃப்ரேம்கள் உள்ள கோப்புறையைத் திற</translation>
+        <source>Show keyframes in folder</source>
+        <translation>கீஃப்ரேம்களைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -12707,7 +12653,7 @@ Styles deleted:
         <translation>நிழல் வண்ணத்தின் வெளிப்படைத்தன்மை</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>முதன்மை வண்ணம்</translation>
     </message>
     <message>
@@ -12715,11 +12661,11 @@ Styles deleted:
         <translation>இரண்டாம் நிலை வண்ணம்</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>எல்லை வண்ணம்</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>நிழல் வண்ணம்</translation>
     </message>
     <message>
@@ -12995,6 +12941,10 @@ Styles deleted:
         <translation>\frx, \fry குறிச்சொற்களுக்கான Z ஆயத்தொலைவு</translation>
     </message>
     <message>
+        <source>Tag list options</source>
+        <translation>குறிச்சொல் பட்டியல் விருப்பங்கள்</translation>
+    </message>
+    <message>
         <source>Tag list</source>
         <translation>குறிச்சொல் பட்டியல்</translation>
     </message>
@@ -13100,7 +13050,7 @@ Styles deleted:
         <translation>வேலை செய்த கடைசி இயக்கத்திலிருந்து வைக்கப்பட்டது</translation>
     </message>
     <message>
-        <source>This file&apos;s templates run Lua code with your rights. Preview them if you trust the file.</source>
+        <source>This file’s templates run Lua code with your rights. Preview them if you trust the file.</source>
         <translation>இந்தக் கோப்பின் வார்ப்புருக்கள் உங்கள் உரிமைகளுடன் Lua குறியீட்டை இயக்குகின்றன. இந்தக் கோப்பை நீங்கள் நம்பினால் அவற்றை முன்னோட்டமிடவும்.</translation>
     </message>
     <message>
@@ -13149,8 +13099,8 @@ Styles deleted:
         </translation>
     </message>
     <message>
-        <source>Changed since Apply</source>
-        <translation>பயன்படுத்தியதிலிருந்து மாற்றப்பட்டது</translation>
+        <source>Changes not applied</source>
+        <translation>பயன்படுத்தப்படாத மாற்றங்கள்</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -13289,7 +13239,7 @@ Styles deleted:
         <translation>தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்து</translation>
     </message>
     <message>
-        <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
+        <source>Only the selected lines are regenerated; the other lines’ output stays as it is.</source>
         <translation>தேர்ந்தெடுத்த வரிகள் மட்டுமே மீண்டும் உருவாக்கப்படும்; மற்ற வரிகளின் வெளியீடு அப்படியே இருக்கும்.</translation>
     </message>
     <message>
@@ -13309,7 +13259,7 @@ Styles deleted:
         <translation>ஒவ்வொரு வரிக்குமான குறியீடு</translation>
     </message>
     <message>
-        <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
+        <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>புதிய வரி, முதல் கரோக்கி வரியின் பாணியுடன், அதற்கு மேலே சேர்க்கப்படும்.</translation>
     </message>
     <message>
@@ -13349,7 +13299,7 @@ Styles deleted:
         <translation>மீண்டும் செய்</translation>
     </message>
     <message>
-        <source>Keep the line&apos;s override tags</source>
+        <source>Keep the line’s override tags</source>
         <translation>வரியின் மேலெழுதும் குறிச்சொற்களை வைத்திரு</translation>
     </message>
     <message>
@@ -13443,7 +13393,7 @@ Styles deleted:
         <translation>அளவீட்டுத் துடிப்பு</translation>
     </message>
     <message>
-        <source>Each syllable swells as it is sung and settles back to its Style&apos;s size in the sung colour.</source>
+        <source>Each syllable swells as it is sung and settles back to its style’s size in the sung colour.</source>
         <translation>ஒவ்வொரு அசையும் பாடப்படும்போது பெரிதாகி, பாடிய வண்ணத்தில் அதன் பாணியின் அளவுக்குத் திரும்பும்.</translation>
     </message>
     <message>
@@ -13491,16 +13441,16 @@ Styles deleted:
         <translation>வரிக்கு ஒரு வண்ணம்</translation>
     </message>
     <message>
-        <source>syllable start, from the line&apos;s start (ms)</source>
+        <source>syllable start, from the line’s start (ms)</source>
         <extracomment>Template variables&apos; descriptions in the template editor&apos;s list (karaoke templater docs)</extracomment>
         <translation>அசையின் தொடக்கம், வரியின் தொடக்கத்திலிருந்து (ms)</translation>
     </message>
     <message>
-        <source>syllable end, from the line&apos;s start (ms)</source>
+        <source>syllable end, from the line’s start (ms)</source>
         <translation>அசையின் முடிவு, வரியின் தொடக்கத்திலிருந்து (ms)</translation>
     </message>
     <message>
-        <source>middle of the syllable, from the line&apos;s start (ms)</source>
+        <source>middle of the syllable, from the line’s start (ms)</source>
         <translation>அசையின் நடுப்பகுதி, வரியின் தொடக்கத்திலிருந்து (ms)</translation>
     </message>
     <message>
@@ -13508,19 +13458,19 @@ Styles deleted:
         <translation>வரியில் அசையின் எண், 1 இலிருந்து (0: முதல் \k க்கு முந்தைய உரை)</translation>
     </message>
     <message>
-        <source>the line&apos;s layer</source>
+        <source>the line’s layer</source>
         <translation>வரியின் அடுக்கு</translation>
     </message>
     <message>
-        <source>middle of the line, from the video&apos;s start (ms)</source>
+        <source>middle of the line, from the video’s start (ms)</source>
         <translation>வரியின் நடுப்பகுதி, வீடியோவின் தொடக்கத்திலிருந்து (ms)</translation>
     </message>
     <message>
-        <source>the line&apos;s Style</source>
+        <source>the line’s style</source>
         <translation>வரியின் பாணி</translation>
     </message>
     <message>
-        <source>the line&apos;s actor</source>
+        <source>the line’s actor</source>
         <translation>வரியின் நடிகர்</translation>
     </message>
     <message>
@@ -13532,15 +13482,15 @@ Styles deleted:
         <translation>கோப்பில் வரியின் வரிசை எண்; அதற்கு முன்னுள்ள Script Info, பாணி உள்ளீடுகளும் எண்ணப்படும்</translation>
     </message>
     <message>
-        <source>x of the line&apos;s left edge (px)</source>
+        <source>x of the line’s left edge (px)</source>
         <translation>வரியின் இடது ஓரத்தின் x (px)</translation>
     </message>
     <message>
-        <source>x of the line&apos;s centre (px)</source>
+        <source>x of the line’s centre (px)</source>
         <translation>வரியின் மையத்தின் x (px)</translation>
     </message>
     <message>
-        <source>x of the line&apos;s right edge (px)</source>
+        <source>x of the line’s right edge (px)</source>
         <translation>வரியின் வலது ஓரத்தின் x (px)</translation>
     </message>
     <message>
@@ -13548,15 +13498,15 @@ Styles deleted:
         <translation>வரியின் அகலம் (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s top (px)</source>
+        <source>y of the line’s top (px)</source>
         <translation>வரியின் மேற்பகுதியின் y (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s middle (px)</source>
+        <source>y of the line’s middle (px)</source>
         <translation>வரியின் நடுப்பகுதியின் y (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s bottom (px)</source>
+        <source>y of the line’s bottom (px)</source>
         <translation>வரியின் அடிப்பகுதியின் y (px)</translation>
     </message>
     <message>
@@ -13564,23 +13514,23 @@ Styles deleted:
         <translation>வரியின் உயரம் (px)</translation>
     </message>
     <message>
-        <source>skdur; the line&apos;s duration in centiseconds in a pre-line template</source>
+        <source>skdur; the line’s duration in centiseconds in a pre-line template</source>
         <translation>skdur; வரிக்கு முந்தைய வார்ப்புருவில் வரியின் கால அளவு, சென்டிவினாடிகளில்</translation>
     </message>
     <message>
-        <source>smid, from the line&apos;s start; lmid, from the video&apos;s start, in a pre-line template (ms)</source>
+        <source>smid, from the line’s start; lmid, from the video’s start, in a pre-line template (ms)</source>
         <translation>smid, வரியின் தொடக்கத்திலிருந்து; வரிக்கு முந்தைய வார்ப்புருவில் lmid, வீடியோவின் தொடக்கத்திலிருந்து (ms)</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s time, by mode</source>
+        <source>sets the generated line’s time, by mode</source>
         <translation>பயன்முறையின்படி, உருவாக்கப்படும் வரியின் நேரத்தை அமைக்கிறது</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s layer</source>
+        <source>sets the generated line’s layer</source>
         <translation>உருவாக்கப்படும் வரியின் அடுக்கை அமைக்கிறது</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s Style</source>
+        <source>sets the generated line’s style</source>
         <translation>உருவாக்கப்படும் வரியின் பாணியை அமைக்கிறது</translation>
     </message>
     <message>
@@ -13608,15 +13558,15 @@ Styles deleted:
         <translation>அசையின் கால அளவு, சென்டிவினாடிகளில்</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s left edge (px)</source>
+        <source>x of the syllable’s left edge (px)</source>
         <translation>அசையின் இடது ஓரத்தின் x (px)</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s centre (px)</source>
+        <source>x of the syllable’s centre (px)</source>
         <translation>அசையின் மையத்தின் x (px)</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s right edge (px)</source>
+        <source>x of the syllable’s right edge (px)</source>
         <translation>அசையின் வலது ஓரத்தின் x (px)</translation>
     </message>
     <message>
@@ -13624,15 +13574,15 @@ Styles deleted:
         <translation>அசையின் அகலம் (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s top (px)</source>
+        <source>y of the syllable’s top (px)</source>
         <translation>அசையின் மேற்பகுதியின் y (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s middle (px)</source>
+        <source>y of the syllable’s middle (px)</source>
         <translation>அசையின் நடுப்பகுதியின் y (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s bottom (px)</source>
+        <source>y of the syllable’s bottom (px)</source>
         <translation>அசையின் அடிப்பகுதியின் y (px)</translation>
     </message>
     <message>
@@ -13644,11 +13594,11 @@ Styles deleted:
         <translation>சீரமைப்பின்படி, \pos க்கான அசையின் நிலை</translation>
     </message>
     <message>
-        <source>Line start, from the video&apos;s start (ms)</source>
+        <source>Line start, from the video’s start (ms)</source>
         <translation>வரியின் தொடக்கம், வீடியோவின் தொடக்கத்திலிருந்து (ms)</translation>
     </message>
     <message>
-        <source>Line end, from the video&apos;s start (ms)</source>
+        <source>Line end, from the video’s start (ms)</source>
         <translation>வரியின் முடிவு, வீடியோவின் தொடக்கத்திலிருந்து (ms)</translation>
     </message>
     <message>
@@ -13740,7 +13690,7 @@ Styles deleted:
         <translation>வார்ப்புருவை இத்தனை முறை இயக்குகிறது</translation>
     </message>
     <message>
-        <source>sets the loop&apos;s counter and count</source>
+        <source>sets the loop’s counter and count</source>
         <translation>சுழற்சியின் எண்ணியையும் எண்ணிக்கையையும் அமைக்கிறது</translation>
     </message>
     <message>
@@ -13756,11 +13706,11 @@ Styles deleted:
         <translation>remember வைத்திருக்கும் மதிப்பு</translation>
     </message>
     <message>
-        <source>the loop&apos;s counter, from 1</source>
+        <source>the loop’s counter, from 1</source>
         <translation>சுழற்சியின் எண்ணி, 1 முதல்</translation>
     </message>
     <message>
-        <source>the loop&apos;s count</source>
+        <source>the loop’s count</source>
         <translation>சுழற்சியின் எண்ணிக்கை</translation>
     </message>
     <message>
@@ -13772,19 +13722,19 @@ Styles deleted:
         <translation>ஃபுரிகானா பகுதி அமைந்துள்ள அசை</translation>
     </message>
     <message>
-        <source>the script&apos;s resolution and properties</source>
+        <source>the script’s resolution and properties</source>
         <translation>ச்கிரிப்ட்டின் தெளிவுத்திறனும் பண்புகளும்</translation>
     </message>
     <message>
-        <source>Lua&apos;s math library</source>
+        <source>Lua’s math library</source>
         <translation>Lua இன் கணித நூலகம்</translation>
     </message>
     <message>
-        <source>Lua&apos;s string library</source>
+        <source>Lua’s string library</source>
         <translation>Lua இன் சரங்கள் நூலகம்</translation>
     </message>
     <message>
-        <source>every global, karaskel&apos;s included</source>
+        <source>every global, karaskel’s included</source>
         <translation>karaskel இன் மாறிகள் உட்பட, எல்லா உலகளாவிய மாறிகளும்</translation>
     </message>
     <message>
@@ -13854,20 +13804,104 @@ Styles deleted:
 <context>
     <name>HikariSub.TimeShift</name>
     <message>
-        <source>The starting time</source>
-        <translation>தொடக்க நேரம்</translation>
+        <source>Shift by</source>
+        <translation>நகர்த்தும் வகை</translation>
     </message>
     <message>
-        <source>End time</source>
-        <translation>இறுதி நேரம்</translation>
+        <source>To video</source>
+        <translation>வீடியோவுக்கு</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
+        <source>Moves the active line to the video’s frame</source>
+        <translation>செயலில் உள்ள வரியை வீடியோவின் சட்டகத்துக்கு நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>To audio mark</source>
+        <translation>ஒலிக் குறிக்கு</translation>
+    </message>
+    <message>
+        <source>Moves the active line to the audio mark</source>
+        <translation>செயலில் உள்ள வரியை ஒலிக் குறிக்கு நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation>நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move the active line’s</source>
+        <translation>செயலில் உள்ள வரியில் நகர்த்துவது</translation>
     </message>
     <message>
         <source>End</source>
         <translation>முடிவு</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>தொடக்கம்</translation>
+    </message>
+    <message>
+        <source>To the video at %1</source>
+        <translation>%1 இல் உள்ள வீடியோவுக்கு</translation>
+    </message>
+    <message>
+        <source>To the audio mark at %1</source>
+        <translation>%1 இல் உள்ள ஒலிக் குறிக்கு</translation>
+    </message>
+    <message>
+        <source>Plus</source>
+        <translation>கூடுதலாக</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>அலகு</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>சட்டகங்களுக்கு வீடியோ தேவை.</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>வீடியோவைத் திற…</translation>
+    </message>
+    <message>
+        <source>Direction</source>
+        <translation>திசை</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>பிறகு</translation>
+    </message>
+    <message>
+        <source>Earlier</source>
+        <translation>முன்னதாக</translation>
+    </message>
+    <message>
+        <source>Times</source>
+        <translation>நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>இரண்டும்</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>இறுதி நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Leave as they are</source>
+        <translation>அப்படியே விடு</translation>
+    </message>
+    <message>
+        <source>Fix overlaps</source>
+        <translation>மேற்பொருத்தங்களைச் சரிசெய்</translation>
+    </message>
+    <message>
+        <source>Recalculate from text length</source>
+        <translation>உரை நீளத்திலிருந்து மீண்டும் கணக்கிடு</translation>
+    </message>
+    <message>
+        <source>Move tag times too (%1, %2, %3)</source>
+        <translation>குறிச்சொல் நேரங்களையும் நகர்த்து (%1, %2, %3)</translation>
     </message>
     <message>
         <source>Shift times</source>
@@ -13882,60 +13916,122 @@ Styles deleted:
         <translation>நேரம்</translation>
     </message>
     <message>
-        <source>Shift subtitle times</source>
-        <translation>வசன வரி நேரங்களை நகர்த்து</translation>
-    </message>
-    <message>
         <source>Shift</source>
         <translation>நகர்த்து</translation>
     </message>
     <message>
-        <source>Forward</source>
-        <translation>முன்னோக்கி</translation>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n line(s)</source>
+        <translation>
+            <numerusform>%n வரிக்குப் பயன்படுத்து</numerusform>
+            <numerusform>%n வரிகளுக்குப் பயன்படுத்து</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift %n line(s)</source>
+        <translation>
+            <numerusform>%n வரியை நகர்த்து</numerusform>
+            <numerusform>%n வரிகளை நகர்த்து</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Backward</source>
-        <translation>பின்னோக்கி</translation>
+        <source>No line changes</source>
+        <translation>எந்த வரியும் மாறாது</translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %n line(s)</source>
+        <translation>
+            <numerusform>%n வரியை மாற்றும்</numerusform>
+            <numerusform>%n வரிகளை மாற்றும்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %1 of %n line(s)</source>
+        <translation>
+            <numerusform>%n வரியில் %1 ஐ மாற்றும்</numerusform>
+            <numerusform>%n வரிகளில் %1 ஐ மாற்றும்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-in</source>
+        <translation>
+            <numerusform>%n லீட்-இன்</numerusform>
+            <numerusform>%n லீட்-இன்கள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-out</source>
+        <translation>
+            <numerusform>%n லீட்-அவுட்</numerusform>
+            <numerusform>%n லீட்-அவுட்கள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n gap(s) closed</source>
+        <translation>
+            <numerusform>%n இடைவெளி மூடப்பட்டது</numerusform>
+            <numerusform>%n இடைவெளிகள் மூடப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n snapped</source>
+        <translation>
+            <numerusform>%n பொருத்தப்பட்டது</numerusform>
+            <numerusform>%n பொருத்தப்பட்டன</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Tag times</source>
-        <translation>குறிச்சொல் நேரங்கள்</translation>
+        <source>lead-in</source>
+        <translation>லீட்-இன்</translation>
     </message>
     <message>
-        <source>Move according to the following styles (separated by a comma)</source>
-        <translation>பின்வரும் பாணிகளின்படி நகர்த்து (காற்புள்ளியால் பிரிக்கவும்)</translation>
+        <source>lead-out</source>
+        <translation>லீட்-அவுட்</translation>
     </message>
     <message>
-        <source>End time correction</source>
-        <translation>முடிவு நேரத் திருத்தம்</translation>
+        <source>gap closed</source>
+        <translation>இடைவெளி மூடப்பட்டது</translation>
     </message>
     <message>
-        <source>Corrects end times that are improper or overlap each other</source>
-        <translation>முறையற்ற அல்லது ஒன்றுடன் ஒன்று மேற்பொருந்தும் முடிவு நேரங்களைத் திருத்தும்</translation>
+        <source>snapped start</source>
+        <translation>தொடக்கம் பொருத்தப்பட்டது</translation>
     </message>
     <message>
-        <source>Shift by video / audio</source>
-        <translation>வீடியோ / ஆடியோ மூலம் நகர்த்து</translation>
+        <source>snapped end</source>
+        <translation>முடிவு பொருத்தப்பட்டது</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s)</source>
+        <translation>
+            <numerusform>%n சட்டகம்</numerusform>
+            <numerusform>%n சட்டகங்கள்</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Beginning</source>
-        <translation>தொடக்கம்</translation>
+        <source>Preview</source>
+        <translation>முன்னோட்டம்</translation>
     </message>
     <message>
-        <source>Moves the start time to the video/audio time</source>
-        <translation>தொடக்க நேரத்தை வீடியோ/ஆடியோ நேரத்துக்கு நகர்த்தும்</translation>
+        <source>no change</source>
+        <translation>மாற்றம் இல்லை</translation>
     </message>
     <message>
-        <source>Move the marker to video time</source>
-        <translation>குறிப்பானை வீடியோ நேரத்துக்கு நகர்த்து</translation>
+        <source>Line %1, start %2 to %3, end %4 to %5, %6</source>
+        <translation>வரி %1, தொடக்கம் %2 இலிருந்து %3, முடிவு %4 இலிருந்து %5, %6</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more line(s) change.</source>
+        <translation>
+            <numerusform>மேலும் %n வரி மாறும்.</numerusform>
+            <numerusform>மேலும் %n வரிகள் மாறும்.</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Move the marker to audio time</source>
-        <translation>குறிப்பானை ஆடியோ நேரத்துக்கு நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>எந்த வரிகள்</translation>
+        <source>One undo step: “%1”</source>
+        <translation>ஒரு செயல்தவிர் படி: “%1”</translation>
     </message>
     <message>
         <source>Timing postprocessor</source>
@@ -13946,36 +14042,8 @@ Styles deleted:
         <translation>அளவு</translation>
     </message>
     <message>
-        <source>Time shifts</source>
-        <translation>நேர நகர்த்தல்கள்</translation>
-    </message>
-    <message>
-        <source>Shift times by time / frames</source>
-        <translation>நேரம் / சட்டகங்கள் அளவில் நேரங்களை நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Delays subtitles</source>
-        <translation>வசன வரிகளைத் தாமதப்படுத்துகிறது</translation>
-    </message>
-    <message>
-        <source>Speeds up subtitles</source>
-        <translation>வசன வரிகளைத் துரிதப்படுத்துகிறது</translation>
-    </message>
-    <message>
-        <source>Shifts %1, %2, and %3 tag times
-so their positions on video do not change
-(slows down time shifting)</source>
-        <translation>%1, %2, %3 குறிச்சொல் நேரங்களையும் நகர்த்தும்
-இதனால் வீடியோவில் அவற்றின் நிலைகள் மாறாது
-(நேர நகர்த்தலை மெதுவாக்கும்)</translation>
-    </message>
-    <message>
         <source>Lines</source>
         <translation>வரிகள்</translation>
-    </message>
-    <message>
-        <source>The choice of lines to move</source>
-        <translation>நகர்த்த வேண்டிய வரிகளின் தேர்வு</translation>
     </message>
     <message>
         <source>All lines</source>
@@ -13986,168 +14054,108 @@ so their positions on video do not change
         <translation>தேர்ந்தெடுக்கப்பட்ட வரிகள்</translation>
     </message>
     <message>
-        <source>From the selected line</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரியிலிருந்து</translation>
+        <source>Selected line and below</source>
+        <translation>தேர்ந்தெடுத்த வரியும் அதற்குக் கீழும்</translation>
     </message>
     <message>
-        <source>All times higher and equal</source>
-        <translation>சமமான அல்லது அதிகமான எல்லா நேரங்களும்</translation>
+        <source>Starting at or after the selection</source>
+        <translation>தேர்வில் அல்லது அதற்குப் பிறகு தொடங்குபவை</translation>
     </message>
     <message>
-        <source>All times lower and equal</source>
-        <translation>சமமான அல்லது குறைவான எல்லா நேரங்களும்</translation>
+        <source>Starting at or before the selection</source>
+        <translation>தேர்வில் அல்லது அதற்கு முன் தொடங்குபவை</translation>
     </message>
     <message>
-        <source>According to the selected styles</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளின்படி</translation>
+        <source>Lines in chosen styles…</source>
+        <translation>தேர்ந்தெடுத்த பாணிகளில் உள்ள வரிகள்…</translation>
     </message>
     <message>
-        <source>Select a style from the list</source>
-        <translation>பட்டியலிலிருந்து ஒரு பாணியைத் தேர்ந்தெடுக்கவும்</translation>
+        <source>Choose styles…</source>
+        <translation>பாணிகளைத் தேர்வுசெய்…</translation>
     </message>
     <message>
-        <source>Styles, separated by commas</source>
-        <translation>காற்புள்ளிகளால் பிரிக்கப்பட்ட பாணிகள்</translation>
+        <source>%1 ms</source>
+        <translation>%1 ms</translation>
     </message>
     <message>
-        <source>Run timing postprocessor</source>
-        <translation>நேரப் பின்செயலாக்கியை இயக்கவும்</translation>
-    </message>
-    <message>
-        <source>A method of time shift</source>
-        <translation>நேர நகர்த்தல் முறை</translation>
-    </message>
-    <message>
-        <source>The choice of times to move</source>
-        <translation>நகர்த்த வேண்டிய நேரங்களின் தேர்வு</translation>
-    </message>
-    <message>
-        <source>Both times</source>
-        <translation>இரு நேரங்களும்</translation>
-    </message>
-    <message>
-        <source>Leave unchanged</source>
-        <translation>மாறாமல் விடுங்கள்</translation>
-    </message>
-    <message>
-        <source>Adjust overlapping times</source>
-        <translation>ஒன்றுடன் ஒன்று மேற்பொருந்தும் நேரங்களைச் சரிசெய்யவும்</translation>
-    </message>
-    <message>
-        <source>New times</source>
-        <translation>புதிய நேரங்கள்</translation>
-    </message>
-    <message>
-        <source>Moves the end time to the video/audio time</source>
-        <translation>முடிவு நேரத்தை வீடியோ/ஆடியோ நேரத்துக்கு நகர்த்தும்</translation>
-    </message>
-    <message>
-        <source>Lead-in/lead-out</source>
-        <translation>லீட்-இன்/லீட்-அவுட்</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the start time (good when using fad)</source>
-        <translation>தொடக்க நேரத்துக்கு முன் லீட்-இன் சேர்க்கும் (fad பயன்படுத்தும்போது பயனுள்ளது)</translation>
-    </message>
-    <message>
-        <source>Introduction time in milliseconds</source>
-        <translation>லீட்-இன் நேரம் (மில்லிவிநாடிகளில்)</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the end time (good when using fad)</source>
-        <translation>முடிவு நேரத்துக்குப் பின் லீட்-அவுட் சேர்க்கும் (fad பயன்படுத்தும்போது பயனுள்ளது)</translation>
-    </message>
-    <message>
-        <source>Enable</source>
-        <translation>இயக்கு</translation>
-    </message>
-    <message>
-        <source>Start time extension threshold</source>
-        <translation>தொடக்க நேர நீட்டிப்பு வரம்பு</translation>
-    </message>
-    <message>
-        <source>End time extension threshold</source>
-        <translation>முடிவு நேர நீட்டிப்பு வரம்பு</translation>
-    </message>
-    <message>
-        <source>Before the start time</source>
-        <translation>தொடக்க நேரத்திற்கு முன்</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the start time in milliseconds</source>
-        <translation>தொடக்க நேரத்துக்கு முன் கீஃப்ரேமுக்கான 
-அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the start time in milliseconds</source>
-        <translation>தொடக்க நேரத்துக்குப் பின் கீஃப்ரேமுக்கான 
-அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the end time in milliseconds</source>
-        <translation>முடிவு நேரத்துக்கு முன் கீஃப்ரேமுக்கான 
-அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the end time in milliseconds</source>
-        <translation>முடிவு நேரத்துக்குப் பின் கீஃப்ரேமுக்கான 
-அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
+        <source>The rules need a video.</source>
+        <translation>விதிகளுக்கு வீடியோ தேவை.</translation>
     </message>
     <message>
         <source>Lead-in</source>
         <translation>லீட்-இன்</translation>
     </message>
     <message>
+        <source>Start earlier by</source>
+        <translation>இவ்வளவு முன்னதாகத் தொடங்கு</translation>
+    </message>
+    <message>
         <source>Lead-out</source>
         <translation>லீட்-அவுட்</translation>
     </message>
     <message>
-        <source>Lead-out time in milliseconds</source>
-        <translation>லீட்-அவுட் நேரம் (மில்லிவிநாடிகளில்)</translation>
+        <source>End later by</source>
+        <translation>இவ்வளவு தாமதமாக முடி</translation>
     </message>
     <message>
-        <source>Set times as continuous</source>
-        <translation>நேரங்களை தொடர்ச்சியாக அமைக்கவும்</translation>
+        <source>Close small gaps</source>
+        <translation>சிறிய இடைவெளிகளை மூடு</translation>
     </message>
     <message>
-        <source>Start time threshold</source>
-        <translation>தொடக்க நேர வரம்பு</translation>
+        <source>Start back to the previous end if within</source>
+        <translation>இந்த அளவுக்குள் இருந்தால் தொடக்கத்தை முந்தைய முடிவுக்குப் பின்னகர்த்து</translation>
     </message>
     <message>
-        <source>End time threshold</source>
-        <translation>முடிவு நேர வரம்பு</translation>
+        <source>End on to the next start if within</source>
+        <translation>இந்த அளவுக்குள் இருந்தால் முடிவை அடுத்த தொடக்கம் வரை நீட்டு</translation>
+    </message>
+    <message>
+        <source>Both gap limits are 0 ms. Raise one to close gaps.</source>
+        <translation>இரு இடைவெளி வரம்புகளும் 0 ms. இடைவெளிகளை மூட ஒன்றை உயர்த்துங்கள்.</translation>
+    </message>
+    <message>
+        <source>before</source>
+        <translation>முன்</translation>
+    </message>
+    <message>
+        <source>after</source>
+        <translation>பின்</translation>
+    </message>
+    <message>
+        <source>Start within</source>
+        <translation>தொடக்கம் இதற்குள்</translation>
+    </message>
+    <message>
+        <source>Start within, before</source>
+        <translation>தொடக்கம் இதற்குள், முன்</translation>
+    </message>
+    <message>
+        <source>Start within, after</source>
+        <translation>தொடக்கம் இதற்குள், பின்</translation>
+    </message>
+    <message>
+        <source>End within</source>
+        <translation>முடிவு இதற்குள்</translation>
+    </message>
+    <message>
+        <source>End within, before</source>
+        <translation>முடிவு இதற்குள், முன்</translation>
+    </message>
+    <message>
+        <source>End within, after</source>
+        <translation>முடிவு இதற்குள், பின்</translation>
+    </message>
+    <message>
+        <source>Needs keyframes.</source>
+        <translation>கீஃப்ரேம்கள் தேவை.</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>கீஃப்ரேம்களைத் திற…</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
         <translation>கீஃப்ரேம்களுடன் ஒட்டிப் பொருத்து</translation>
-    </message>
-    <message>
-        <source>After the start time</source>
-        <translation>தொடக்க நேரத்திற்குப் பிறகு</translation>
-    </message>
-    <message>
-        <source>Before the end time</source>
-        <translation>இறுதி நேரத்திற்கு முன்</translation>
-    </message>
-    <message>
-        <source>After the end time</source>
-        <translation>இறுதி நேரத்திற்குப் பிறகு</translation>
-    </message>
-    <message>
-        <source>Profiles</source>
-        <translation>சுயவிவரங்கள்</translation>
-    </message>
-    <message>
-        <source>Adding and editing profiles</source>
-        <translation>சுயவிவரங்களைச் சேர்ப்பது மற்றும் திருத்துதல்</translation>
-    </message>
-    <message>
-        <source>Removing profiles</source>
-        <translation>சுயவிவரங்களை நீக்குதல்</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -14162,6 +14170,10 @@ after the end time in milliseconds</source>
         <translation>நகர்த்துவதற்கு எந்த வரியும் தேர்ந்தெடுக்கப்படவில்லை</translation>
     </message>
     <message>
+        <source>Needs a video.</source>
+        <translation>வீடியோ தேவை.</translation>
+    </message>
+    <message>
         <source>Video was not loaded using FFMS2</source>
         <translation>FFMS2 ஐப் பயன்படுத்தி வீடியோ ஏற்றப்படவில்லை</translation>
     </message>
@@ -14170,32 +14182,92 @@ after the end time in milliseconds</source>
         <translation>நேரங்களை நகர்த்த முடியவில்லை.</translation>
     </message>
     <message>
-        <source>Shift only the start times?</source>
-        <translation>தொடக்க நேரங்களை மட்டும் நகர்த்தவா?</translation>
+        <source>%1 (Timing default)</source>
+        <translation>%1 (நேரமிடல் இயல்பு)</translation>
     </message>
     <message>
-        <source>Shift only the end times?</source>
-        <translation>முடிவு நேரங்களை மட்டும் நகர்த்தவா?</translation>
+        <source>Delete preset</source>
+        <translation>முன்னமைவை நீக்கு</translation>
     </message>
     <message>
-        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
-        <translation>முடிவு நேரங்கள் அப்படியே இருக்கும், எனவே அதன் முடிவைத் தாண்டி நகர்த்தப்பட்ட வரி தொடங்கும் முன்பே முடிந்துவிடும்.</translation>
+        <source>Delete the preset “%1”?</source>
+        <translation>“%1” முன்னமைவை நீக்கவா?</translation>
     </message>
     <message>
-        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
-        <translation>தொடக்க நேரங்கள் அப்படியே இருக்கும், எனவே அதன் தொடக்கத்துக்கு முன் நகர்த்தப்பட்ட வரி தொடங்கும் முன்பே முடிந்துவிடும்.</translation>
-    </message>
-    <message>
-        <source>Shift start times</source>
-        <translation>தொடக்க நேரங்களை நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Shift end times</source>
-        <translation>முடிவு நேரங்களை நகர்த்து</translation>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation>முன்னமைவு</translation>
+    </message>
+    <message>
+        <source>Preset: %1</source>
+        <translation>முன்னமைவு: %1</translation>
+    </message>
+    <message>
+        <source>last used</source>
+        <translation>கடைசியாகப் பயன்படுத்தியவை</translation>
+    </message>
+    <message>
+        <source>Preset commands</source>
+        <translation>முன்னமைவுக் கட்டளைகள்</translation>
+    </message>
+    <message>
+        <source>Save as preset…</source>
+        <translation>முன்னமைவாகச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Rename preset…</source>
+        <translation>முன்னமைவை மறுபெயரிடு…</translation>
+    </message>
+    <message>
+        <source>Delete preset…</source>
+        <translation>முன்னமைவை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Use in the Timing layout</source>
+        <translation>நேரமிடல் தளவமைப்பில் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Rename preset</source>
+        <translation>முன்னமைவை மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>Save as preset</source>
+        <translation>முன்னமைவாகச் சேமி</translation>
+    </message>
+    <message>
+        <source>Preset name</source>
+        <translation>முன்னமைவுப் பெயர்</translation>
+    </message>
+    <message>
+        <source>A preset named “%1” exists. Saving replaces it.</source>
+        <translation>“%1” என்ற பெயரில் ஒரு முன்னமைவு உள்ளது. சேமித்தால் அது மாற்றப்படும்.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>மாற்று</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>சேமி</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Times were not centred within frames: no video is open</source>
+        <translation>நேரங்கள் சட்டகங்களுக்குள் மையப்படுத்தப்படவில்லை: வீடியோ எதுவும் திறக்கப்படவில்லை</translation>
     </message>
 </context>
 <context>
@@ -14285,11 +14357,11 @@ after the end time in milliseconds</source>
         <translation>வரியை நீக்கு</translation>
     </message>
     <message>
-        <source>Not confirmed</source>
+        <source>Unconfirmed</source>
         <translation>உறுதிப்படுத்தப்படவில்லை</translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected lines for review</source>
+        <source>Unconfirmed: marks the selected lines for review</source>
         <translation>உறுதிப்படுத்தப்படவில்லை: தேர்ந்தெடுத்த வரிகளை மதிப்பாய்வுக்காகக் குறிக்கிறது</translation>
     </message>
     <message>
@@ -14297,7 +14369,7 @@ after the end time in milliseconds</source>
         <translation>அசலிலிருந்து குறிச்சொற்கள்</translation>
     </message>
     <message>
-        <source>Tags from original: the translation gets the Original text&apos;s tags</source>
+        <source>Tags from original: the translation gets the original text’s tags</source>
         <translation>அசலிலிருந்து குறிச்சொற்கள்: மொழிபெயர்ப்பு அசல் உரையின் குறிச்சொற்களைப் பெறும்</translation>
     </message>
     <message>
@@ -14640,7 +14712,7 @@ after the end time in milliseconds</source>
         <translation>வீடியோ நேரங்கள்</translation>
     </message>
     <message>
-        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
         <translation>சட்டக நேரம்; சட்டக எண்; வரியின் தொடக்கச் சட்டகத்திலிருந்து சட்டகங்கள்; வரியின் தொடக்கம் மற்றும் முடிவிலிருந்து மில்லிவினாடிகள்</translation>
     </message>
     <message>
@@ -14716,6 +14788,67 @@ after the end time in milliseconds</source>
         <translation>வீடியோ நிலையை நகலெடு</translation>
     </message>
     <message>
+        <source>Full screen on</source>
+        <translation>முழுத் திரை இதில்</translation>
+    </message>
+    <message>
+        <source>Monitor %1</source>
+        <extracomment>A monitor in the Full screen on submenu; %1 is its number</extracomment>
+        <translation>மானிட்டர் %1</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>வீடியோவைத் திற…</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>வசன வரிகளைத் திற…</translation>
+    </message>
+    <message>
+        <source>Recently opened</source>
+        <translation>அண்மையில் திறந்தவை</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation>வசன வரிகள்</translation>
+    </message>
+    <message>
+        <source>Videos</source>
+        <translation>வீடியோக்கள்</translation>
+    </message>
+    <message>
+        <source>Export frame</source>
+        <translation>சட்டகத்தை ஏற்றுமதி செய்</translation>
+    </message>
+    <message>
+        <source>Save as PNG…</source>
+        <translation>PNG ஆகச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Save with subtitles as PNG…</source>
+        <translation>வசன வரிகளுடன் PNG ஆகச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Copy with subtitles</source>
+        <translation>வசன வரிகளுடன் நகலெடு</translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation>ஆடியோ தடம்</translation>
+    </message>
+    <message>
+        <source>Progress bar</source>
+        <translation>முன்னேற்றப் பட்டி</translation>
+    </message>
+    <message>
+        <source>Render cost</source>
+        <translation>ரெண்டர் செலவு</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>முழுத் திரையிலிருந்து வெளியேறு</translation>
     </message>
@@ -14728,24 +14861,8 @@ after the end time in milliseconds</source>
         <translation>முழுத் திரை</translation>
     </message>
     <message>
-        <source>Switch full screen to monitor %1</source>
-        <translation>முழுத் திரையை மானிட்டர் %1 க்கு மாற்று</translation>
-    </message>
-    <message>
-        <source>Open in full screen on monitor %1</source>
-        <translation>மானிட்டர் %1 இல் முழுத் திரையில் திற</translation>
-    </message>
-    <message>
         <source>Open editor</source>
         <translation>எடிட்டரைத் திற</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள்</translation>
-    </message>
-    <message>
-        <source>Recently opened videos</source>
-        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வீடியோக்கள்</translation>
     </message>
     <message>
         <source>Open video</source>
@@ -14756,32 +14873,12 @@ after the end time in milliseconds</source>
         <translation>வசன வரிகளைத் திற</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>முன்னேற்றப் பட்டியைக் காட்டவும் / மறைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Show / hide render cost</source>
-        <translation>ரெண்டர் செலவைக் காட்டு / மறை</translation>
-    </message>
-    <message>
         <source>Change aspect ratio</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்</translation>
     </message>
     <message>
-        <source>Save frame with subtitles as PNG</source>
-        <translation>வசன வரிகளுடன் சட்டகத்தை PNG ஆகச் சேமிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Copy frame with subtitles to clipboard</source>
-        <translation>இடைநிலைப்பலகைக்கு வசன வரிகளுடன் சட்டகத்தை நகலெடுக்கவும்</translation>
-    </message>
-    <message>
-        <source>Save frame as PNG</source>
-        <translation>சட்டகத்தை PNG ஆகச் சேமிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Copy frame to clipboard</source>
-        <translation>இடைநிலைப்பலகைக்கு சட்டகத்தை நகலெடுக்கவும்</translation>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -14820,10 +14917,6 @@ after the end time in milliseconds</source>
         <translation>திருத்துதல்</translation>
     </message>
     <message>
-        <source>Move video to selected line on:</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரிக்கு வீடியோவை நகர்த்தவும்:</translation>
-    </message>
-    <message>
         <source>Then play</source>
         <translation>பிறகு இயக்கு</translation>
     </message>
@@ -14842,10 +14935,6 @@ after the end time in milliseconds</source>
     <message>
         <source>Video and audio to the next line start time</source>
         <translation>வீடியோ மற்றும் ஆடியோ அடுத்த வரி தொடக்க நேரத்திற்கு</translation>
-    </message>
-    <message>
-        <source>On moving to another line play:</source>
-        <translation>மற்றொரு வரிக்குச் செல்லும்போது இயக்கவும்:</translation>
     </message>
     <message>
         <source>Full screen video</source>
@@ -14891,16 +14980,16 @@ after the end time in milliseconds</source>
         <translation>முழுத் திரைப் பட்டி: %1</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation>தானாக</translation>
+        <source>Show when the pointer moves</source>
+        <translation>சுட்டி நகரும்போது காட்டு</translation>
     </message>
     <message>
-        <source>Always</source>
-        <translation>எப்போதும்</translation>
+        <source>Always show</source>
+        <translation>எப்போதும் காட்டு</translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation>ஒருபோதும் இல்லை</translation>
+        <source>Never show</source>
+        <translation>ஒருபோதும் காட்டாதே</translation>
     </message>
     <message>
         <source>Show on pointer movement, hide when idle</source>
@@ -14949,6 +15038,21 @@ after the end time in milliseconds</source>
     <message>
         <source>Cannot convert video to RGBA</source>
         <translation>வீடியோவை RGBA ஆக மாற்ற முடியாது</translation>
+    </message>
+    <message>
+        <source>This video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
+        <translation>இந்தக் கணினியில் இந்த வீடியோவை இயக்க முடியாது. இடைநிறுத்தியிருக்கும்போது அதன் சட்டகங்கள் தொடர்ந்து தெரியும்; தேடுதலும் சட்டகம் சட்டகமாக நகர்தலும் வேலை செய்யும்.</translation>
+    </message>
+    <message>
+        <source>%1 video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
+        <translation>இந்தக் கணினியில் %1 வீடியோவை இயக்க முடியாது. இடைநிறுத்தியிருக்கும்போது அதன் சட்டகங்கள் தொடர்ந்து தெரியும்; தேடுதலும் சட்டகம் சட்டகமாக நகர்தலும் வேலை செய்யும்.</translation>
+    </message>
+    <message>
+        <source>Play video</source>
+        <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
+        <translation>வீடியோவை இயக்கு</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

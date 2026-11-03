@@ -5,7 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <vector>
 
 namespace hikari::application {
@@ -92,7 +92,7 @@ private:
     bool m_nonLinear = false;
     std::array<std::uint8_t, 256 * 3> m_palette{};
     std::vector<SubCache> m_slots;
-    std::unordered_map<std::uint64_t, std::size_t> m_byIndex;
+    absl::flat_hash_map<std::uint64_t, std::size_t> m_byIndex;
     std::uint64_t m_clock = 0;
     std::uint64_t m_transformed = 0;
     std::vector<float> m_nullLine;

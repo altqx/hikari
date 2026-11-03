@@ -164,6 +164,20 @@ TEST_F(TimingTest, SnapsToKeyframesInViewWithinSixteenColumns)
     EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, true, false, true), 2970);
 }
 
+TEST_F(TimingTest, SnapsToTheVideoFrameMiddlesWithTheKeyframes)
+{
+    snap.videoFrame = audioVideoFrame(LegacyTimebase({}, 25.0), 75);
+    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, false, false, true), 3300);
+    snap.snapToKeyframes = true;
+    EXPECT_EQ(legacyBoundarySnap(snap, 2800, 16, false, false, true), 2980);
+    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, false, false, true), 3020);
+    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, true, false, true), 3300);
+    snap.drawKeyframes = false;
+    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, false, false, true), 3020);
+    snap.videoFrame.reset();
+    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, false, false, true), 3300);
+}
+
 TEST_F(TimingTest, SnapsToTheShadedLinesBoundaries)
 {
     lines = {{100, 1005, true}, {1300, 2000, false}, {3000, 6000, true}, {6505, 8000, true}, {9000, 9500, true}};

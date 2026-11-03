@@ -1,11 +1,13 @@
 #pragma once
 
 #include "hikari/application/audio_karaoke.h"
+#include "hikari/application/edit_session.h"
 #include "hikari/application/furigana.h"
 #include "hikari/core/document.h"
 
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <map>
 #include <optional>
@@ -113,17 +115,22 @@ std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const Ka
                            const std::vector<KanjiReading> *readings = nullptr);
 
 // Keeps its own undo, apart from the Document's.
+// On a romaji or kanji Line the user skipped, so it pairs with none.
+inline constexpr std::u8string_view kKanjiSkipKey = u8"_hikari_kanji_skip";
+
 class KanjiTimer {
 public:
     struct Line {
         core::LineId id;
         std::u16string text;
         int startMs = 0, endMs = 0;
+        bool skipped = false; // saved with kKanjiSkipKey
     };
     enum class Status { Suggested, Check, ToDo, Done, Applied, Changed, NoKanji, NoRomaji };
     struct Pair {
         std::optional<Line> romaji, kanji;
         Status status = Status::ToDo;
+        bool skipped = false;
     };
 
     explicit KanjiTimer(KaraokeCharClass classes = KaraokeCharClass::ascii());
@@ -185,6 +192,8 @@ public:
     // The current pair's Line is paired with none; the others pair again without it.
     bool skipRomaji();
     bool skipKanji();
+    // A skipped Line's pair: the Line pairs again. An undo step.
+    bool pairAgain(int pair);
     // Every pair whose suggestion is clean is done.
     int acceptAllSuggestions();
 
@@ -196,6 +205,9 @@ public:
     // The done pairs' kanji Lines and their new texts; applied() marks them Applied
     // once the Document has them and clears the undo.
     std::vector<std::pair<core::LineId, std::u16string>> pending() const;
+    // The Lines skipped (true) or paired again (false) since they were set: kKanjiSkipKey's changes.
+    std::vector<std::pair<core::LineId, bool>> pendingSkips() const;
+    bool hasPending() const { return !pending().empty() || !pendingSkips().empty(); }
     void applied();
 
 private:
@@ -209,19 +221,21 @@ private:
     };
     using Key = std::pair<std::uint64_t, std::uint64_t>;
     struct State {
-        std::set<core::LineId> skippedRomaji, skippedKanji;
+        std::map<core::LineId, bool> skips; // over each Line's own skipped
         std::map<Key, Work> works;
         std::optional<Key> current;
     };
     struct Step {
         std::map<Key, std::pair<std::optional<Work>, std::optional<Work>>> works;
-        std::optional<core::LineId> skippedRomaji, skippedKanji;
+        std::map<core::LineId, std::pair<std::optional<bool>, std::optional<bool>>> skips;
         std::optional<Key> currentBefore, currentAfter;
         std::size_t bytes = 0;
     };
 
     static Key keyOf(const Pair &pair);
     void derive();
+    bool isSkipped(const Line &line) const;
+    void setSkip(core::LineId line, bool skipped);
     void begin();
     // MUST KILL: touch() is workFor that also records the Work for the open step
     Work &touch(const Pair &pair);
@@ -259,5 +273,12 @@ private:
     std::size_t m_undo = 0;
     std::size_t m_stepBytes = 0;
 };
+
+// The romaji Style's Lines with karaoke tags and the kanji Style's, in Document order, without
+// templater fx Lines.
+std::pair<std::vector<KanjiTimer::Line>, std::vector<KanjiTimer::Line>>
+kanjiTimerLines(const core::Document &document, std::u8string_view romajiStyle, std::u8string_view kanjiStyle);
+// The timer's pending texts and skips, as one undo step.
+std::expected<void, CommandRefusal> applyKanjiTimer(const KanjiTimer &timer, EditSession &session);
 
 }

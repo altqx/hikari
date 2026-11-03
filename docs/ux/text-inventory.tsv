@@ -722,7 +722,7 @@ Menus	Hotkeys	Fix minor errors (experimental)		src/application/hotkeys.cpp src/u
 Menus	Hotkeys	Font collector		src/application/hotkeys.cpp src/ui/FontCollectorDialog.qml src/ui/Main.qml …
 Menus	Hotkeys	Font selection		src/application/hotkeys.cpp src/ui/FontPicker.qml src/ui/LineEditorStrip.qml …
 Menus	Hotkeys	Full screen		src/application/hotkeys.cpp src/ui/VideoContextMenu.qml src/ui/command_names.cpp
-Menus	Hotkeys	Full screen bar: Auto / Always / Never		src/application/hotkeys.cpp src/ui/command_names.cpp
+Menus	Hotkeys	Full screen bar: when the pointer moves / always / never		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Getting started		src/application/hotkeys.cpp src/ui/GettingStartedDialog.qml src/ui/command_names.cpp
 Menus	Hotkeys	Global		src/application/hotkeys.cpp src/application/include/hikari/application/hotkeys.h src/ui/SettingsDialog.qml …
 Menus	Hotkeys	Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).		src/application/hotkeys.cpp src/ui/command_names.cpp
@@ -898,7 +898,7 @@ Menus	Hotkeys	Third tag button		src/application/hotkeys.cpp src/ui/command_names
 Menus	Hotkeys	Time shift window		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Translation mode		src/application/hotkeys.cpp src/ui/Main.qml src/ui/SettingsDialog.qml …
 Menus	Hotkeys	Turn off filtering		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
-Menus	Hotkeys	Turn off video zoom		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
+Menus	Hotkeys	Reset zoom and pan		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	Hotkeys	Underline		src/application/hotkeys.cpp src/ui/FontPicker.qml src/ui/LineEditorStrip.qml …
 Menus	Hotkeys	Undo		src/application/hotkeys.cpp src/application/settings_import_tables.cpp src/ui/AllTagsEditionDialog.qml …
 Menus	Hotkeys	Undo to last save		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
@@ -1087,7 +1087,7 @@ Menus	MainWindow	Sort by styles		src/ui/Main.qml
 Menus	MainWindow	Sorts all lines in ASS file		src/ui/Main.qml
 Menus	MainWindow	Sorts selected lines in ASS file		src/ui/Main.qml
 Menus	MainWindow	Style &manager		src/ui/Main.qml
-Menus	MainWindow	Turn off video zoom		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
+Menus	MainWindow	Reset zoom and pan		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	MainWindow	Undo		src/application/hotkeys.cpp src/application/settings_import_tables.cpp src/ui/AllTagsEditionDialog.qml …
 Menus	MainWindow	Undo to last save		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	MainWindow	Unload video		src/application/hotkeys.cpp src/ui/Main.qml src/ui/VideoContextMenu.qml …

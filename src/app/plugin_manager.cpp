@@ -123,6 +123,9 @@ QString packageMessage(const PackageProblem &problem)
         return QCoreApplication::translate("HikariSub.Plugins", "The package has no hikari-plugin.json at its top level.");
     case PackageProblem::Kind::MissingMain:
         return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its main file, %1.").arg(text(problem.path));
+    case PackageProblem::Kind::Media:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package breaks the media rules: %1 %2.")
+            .arg(text(problem.path), text(problem.detail));
     case PackageProblem::Kind::Manifest:
         break;
     }

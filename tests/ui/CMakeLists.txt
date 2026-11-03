@@ -37,10 +37,11 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures"
     HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json"
+    HIKARI_EN_CATALOG="${CMAKE_BINARY_DIR}/i18n/qm/hikarisub_en.qm"
     HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
-    hikari_lua_helper hikari_automation_stage)
+    hikari_lua_helper hikari_automation_stage hikari_lrelease)
 # MSVC: shell_tests.cpp outgrows an object file's default section count (C1128).
 if(MSVC)
     target_compile_options(hikari_ui_shell_tests PRIVATE /bigobj)
@@ -207,7 +208,7 @@ target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
     HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus"
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
-target_include_directories(hikari_ui_template_editor_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
+target_include_directories(hikari_ui_template_editor_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui" "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_ui_template_editor_tests hikari_lua_helper hikari_automation_stage)
 foreach(mode offscreen xvfb native)
     if(TEST hikari_ui_template_editor_tests.${mode})
@@ -241,7 +242,7 @@ hikari_add_spix_test(hikari_ui_automation_workflow SOURCES automation_workflow.c
                 HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_workflow hikari_media_helper hikari_media_fixtures hikari_lua_helper
     hikari_automation_stage)
-hikari_add_qttest(hikari_ui_docking_qualification_tests SOURCES docking_qualification_tests.cpp
+hikari_add_qttest(hikari_ui_docking_qualification_tests SOURCES docking_qualification_tests.cpp left_button_held.cpp
     LIBRARIES hikari_ui hikari_uiplugin KDAB::kddockwidgets Qt6::Quick Qt6::QuickControls2)
 target_link_libraries(hikari_ui_docking_qualification_tests PRIVATE Qt6::GuiPrivate)
 foreach(scale 125 150 175 200)
@@ -266,6 +267,8 @@ hikari_add_qttest(hikari_ui_layout_migration_tests SOURCES layout_migration_test
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_layout_migration_tests PRIVATE
     HIKARI_LAYOUT_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/layout-fixtures")
+hikari_add_qttest(hikari_ui_shell_windows_tests SOURCES shell_windows_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
@@ -327,10 +330,18 @@ add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_me
     hikari_automation_stage)
 hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp LIBRARIES hikari_composition LABELS ui)
+target_compile_definitions(hikari_ui_ai_features_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
+    HIKARI_MENU_LEDGER="${CMAKE_CURRENT_SOURCE_DIR}/menu_bar.txt")
+add_dependencies(hikari_ui_ai_features_tests hikari_fake_ai_sidecar)
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_plugin_manager_tests SOURCES plugin_manager_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_manager_tests PRIVATE
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
+hikari_add_qttest(hikari_ui_plugin_runtime_tests OFFSCREEN_ONLY SOURCES plugin_runtime_tests.cpp LIBRARIES hikari_composition hikari_translations)
+target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>")
+add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper)
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC.
 target_compile_definitions(hikari_ui_update_apply_tests PRIVATE HIKARI_UPDATE_APPLY_WINDOWS_TESTS=$<BOOL:${WIN32}>)

@@ -10,7 +10,7 @@
 #include <map>
 #include <optional>
 #include <set>
-#include <unordered_set>
+#include <absl/container/flat_hash_set.h>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -61,6 +61,7 @@ struct DraftChange {
     std::optional<std::int64_t> layer;
     std::optional<std::u8string> style, actor, effect;
     std::optional<std::optional<std::int64_t>> startFrame, endFrame; // MicroDVD's authored frames
+    std::optional<std::vector<core::Extradata>> extra; // the draft's Line only, never the other selected Lines
     // The translation only followed the text or Style cells and was not typed;
     // several selected Lines then keep their own (commitDraftToSelected).
     bool translationCarried = false;
@@ -225,7 +226,7 @@ private:
     Selection m_selection;
     std::optional<Draft> m_draft;
     std::optional<ContentId> m_saved;
-    std::unordered_set<std::uint64_t> m_savedVersions;
+    absl::flat_hash_set<std::uint64_t> m_savedVersions;
     // Kept until the write is reported; the step may leave history meanwhile.
     std::map<std::uint64_t, std::vector<std::uint64_t>> m_preparedVersions;
     std::uint64_t m_revision = 0;

@@ -25,7 +25,9 @@
 #include <QScreen>
 #include <QTimer>
 
+#include <algorithm>
 #include <cmath>
+#include <functional>
 #include <utility>
 
 namespace hikari::ui {
@@ -124,10 +126,91 @@ const QStringList &WorkspaceLayoutController::panelIds()
     static const QStringList ids{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor"),
                                  QStringLiteral("Grid"), QStringLiteral("Reference"), QStringLiteral("Timing"),
                                  QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original"),
-                                 QStringLiteral("Log"), QStringLiteral("Styles"),
-                                 QStringLiteral("FixMinorErrors"), QStringLiteral("Template"),
-                                 QStringLiteral("Spellchecker")};
+                                 QStringLiteral("Log"), QStringLiteral("Styles"), QStringLiteral("Template"),
+                                 QStringLiteral("Spellchecker"),
+                                 QStringLiteral("Postprocessor")};
     return ids;
+}
+
+namespace {
+
+QJsonValue renamed(const QJsonValue &value, const std::function<QString(const QString &)> &rename)
+{
+    static const QSet<QString> nameKeys{QStringLiteral("uniqueName"), QStringLiteral("objectName"),
+                                        QStringLiteral("mainWindowUniqueName"), QStringLiteral("parentMainWindowName")};
+    static const QSet<QString> nameLists{QStringLiteral("dockWidgets"), QStringLiteral("closedDockWidgets")};
+    if (value.isArray()) {
+        QJsonArray out;
+        for (const QJsonValue &v : value.toArray())
+            out.append(renamed(v, rename));
+        return out;
+    }
+    if (!value.isObject())
+        return value;
+    QJsonObject out = value.toObject();
+    for (auto it = out.begin(); it != out.end(); ++it) {
+        if (nameKeys.contains(it.key()) && it->isString() && !it->toString().isEmpty()) {
+            *it = rename(it->toString());
+        } else if (nameLists.contains(it.key()) && it->isArray()) {
+            QJsonArray names;
+            for (const QJsonValue &n : it->toArray())
+                names.append(n.isString() ? QJsonValue(rename(n.toString())) : n);
+            *it = names;
+        } else {
+            *it = renamed(*it, rename);
+        }
+    }
+    return out;
+}
+
+QByteArray rewritten(const QByteArray &payload, const std::function<QString(const QString &)> &rename,
+                     const QString &affinity)
+{
+    QJsonObject root = QJsonDocument::fromJson(payload).object();
+    if (root.isEmpty())
+        return payload;
+    root = renamed(root, rename).toObject();
+    for (const QString list : {QStringLiteral("mainWindows"), QStringLiteral("floatingWindows"), QStringLiteral("allDockWidgets")}) {
+        QJsonArray items = root.value(list).toArray();
+        for (QJsonValueRef item : items) {
+            QJsonObject o = item.toObject();
+            if (!affinity.isEmpty())
+                o.insert(QStringLiteral("affinities"), QJsonArray{affinity});
+            else if (list == QLatin1String("mainWindows"))
+                o.insert(QStringLiteral("affinities"), QJsonArray{});
+            else
+                o.remove(QStringLiteral("affinities"));
+            item = o;
+        }
+        if (root.contains(list))
+            root.insert(list, items);
+    }
+    return QJsonDocument(root).toJson(QJsonDocument::Compact);
+}
+
+}
+
+QString ShellWindowNames::affinity() const
+{
+    return QStringLiteral("w%1").arg(window);
+}
+
+QString ShellWindowNames::engineName(const QString &name) const
+{
+    return window == 0 ? name : name + QLatin1Char('~') + QString::number(window);
+}
+
+QByteArray ShellWindowNames::toEngine(const QByteArray &payload) const
+{
+    return rewritten(payload, [this](const QString &name) { return engineName(name); }, affinity());
+}
+
+QByteArray ShellWindowNames::toStored(const QByteArray &payload) const
+{
+    const QString suffix = engineName({});
+    return rewritten(payload, [&suffix](const QString &name) {
+        return !suffix.isEmpty() && name.endsWith(suffix) ? name.chopped(suffix.size()) : name;
+    }, {});
 }
 
 WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QString savedLayoutsFile, QObject *parent)
@@ -441,6 +524,248 @@ bool noAffinities(const QJsonObject &o)
            (name.isUndefined() || name == QJsonValue(QString()));
 }
 
+const QStringList kRemovedPanels{QStringLiteral("FixMinorErrors")};
+
+QString dockName(const QJsonValue &dock)
+{
+    return dock.isObject() ? dock.toObject().value(QStringLiteral("uniqueName")).toString() : dock.toString();
+}
+
+QJsonArray withoutRemovedPanels(const QJsonArray &docks)
+{
+    QJsonArray kept;
+    for (const auto &dock : docks)
+        if (!kRemovedPanels.contains(dockName(dock)))
+            kept.append(dock);
+    return kept;
+}
+
+struct Axis {
+    QString position, length;
+};
+
+Axis axisOf(const QJsonObject &container)
+{
+    if (container.value(QStringLiteral("orientation")).toInt() == Qt::Horizontal)
+        return {QStringLiteral("x"), QStringLiteral("width")};
+    return {QStringLiteral("y"), QStringLiteral("height")};
+}
+
+bool isContainer(const QJsonObject &item)
+{
+    return item.value(QStringLiteral("isContainer")).toBool();
+}
+
+QJsonObject sizingOf(const QJsonObject &item)
+{
+    return item.value(QStringLiteral("sizingInfo")).toObject();
+}
+
+QJsonObject geometryOf(const QJsonObject &item)
+{
+    return sizingOf(item).value(QStringLiteral("geometry")).toObject();
+}
+
+QJsonObject withSizing(QJsonObject item, const QString &key, const QJsonValue &value)
+{
+    QJsonObject sizing = sizingOf(item);
+    sizing.insert(key, value);
+    item.insert(QStringLiteral("sizingInfo"), sizing);
+    return item;
+}
+
+bool showsAGroup(const QJsonObject &item)
+{
+    if (!isContainer(item))
+        return item.value(QStringLiteral("isVisible")).toBool();
+    const QJsonArray children = item.value(QStringLiteral("children")).toArray();
+    return std::any_of(children.begin(), children.end(), [](const QJsonValue &c) { return showsAGroup(c.toObject()); });
+}
+
+QJsonObject withPercentages(QJsonObject container)
+{
+    const QString length = axisOf(container).length;
+    QJsonArray children = container.value(QStringLiteral("children")).toArray();
+    double shown = 0;
+    for (const auto &child : children)
+        if (showsAGroup(child.toObject()))
+            shown += geometryOf(child.toObject()).value(length).toDouble();
+    for (qsizetype i = 0; i < children.size(); ++i) {
+        const QJsonObject child = children.at(i).toObject();
+        const double share = showsAGroup(child) && shown > 0 ? geometryOf(child).value(length).toDouble() / shown : 0;
+        children.replace(i, withSizing(child, QStringLiteral("percentageWithinParent"), share));
+    }
+    container.insert(QStringLiteral("children"), children);
+    return container;
+}
+
+QJsonObject spanning(QJsonObject item, const Axis &axis, int position, int length)
+{
+    QJsonObject geometry = geometryOf(item);
+    const int grown = length - geometry.value(axis.length).toInt();
+    geometry.insert(axis.position, position);
+    geometry.insert(axis.length, length);
+    item = withSizing(item, QStringLiteral("geometry"), geometry);
+    if (!isContainer(item) || grown == 0)
+        return item;
+    QJsonArray children = item.value(QStringLiteral("children")).toArray();
+    const bool along = axisOf(item).length == axis.length;
+    qsizetype last = -1;
+    for (qsizetype i = 0; i < children.size(); ++i) {
+        const QJsonObject child = children.at(i).toObject();
+        if (!showsAGroup(child))
+            continue;
+        last = i;
+        if (!along)
+            children.replace(i, spanning(child, axis, geometryOf(child).value(axis.position).toInt(), length));
+    }
+    if (along && last >= 0) {
+        const QJsonObject child = children.at(last).toObject();
+        const QJsonObject g = geometryOf(child);
+        children.replace(last, spanning(child, axis, g.value(axis.position).toInt(), g.value(axis.length).toInt() + grown));
+    }
+    item.insert(QStringLiteral("children"), children);
+    return along ? withPercentages(item) : item;
+}
+
+QJsonObject hidingGroups(QJsonObject item, const QSet<QString> &groups)
+{
+    if (!isContainer(item)) {
+        if (groups.contains(item.value(QStringLiteral("guestId")).toString())) {
+            item.remove(QStringLiteral("guestId"));
+            item.insert(QStringLiteral("isVisible"), false);
+        }
+        return item;
+    }
+    QJsonArray children = item.value(QStringLiteral("children")).toArray();
+    QList<qsizetype> emptied;
+    for (qsizetype i = 0; i < children.size(); ++i) {
+        const QJsonObject child = children.at(i).toObject();
+        const QJsonObject hidden = hidingGroups(child, groups);
+        if (showsAGroup(child) && !showsAGroup(hidden))
+            emptied << i;
+        children.replace(i, hidden);
+    }
+    if (emptied.isEmpty()) {
+        item.insert(QStringLiteral("children"), children);
+        return item;
+    }
+    const Axis axis = axisOf(item);
+    for (const qsizetype i : emptied) {
+        qsizetype neighbour = -1;
+        for (qsizetype j = i - 1; j >= 0 && neighbour < 0; --j)
+            if (showsAGroup(children.at(j).toObject()))
+                neighbour = j;
+        for (qsizetype j = i + 1; j < children.size() && neighbour < 0; ++j)
+            if (showsAGroup(children.at(j).toObject()))
+                neighbour = j;
+        if (neighbour < 0)
+            continue;
+        const QJsonObject freed = geometryOf(children.at(i).toObject());
+        const QJsonObject kept = geometryOf(children.at(neighbour).toObject());
+        const int start = std::min(freed.value(axis.position).toInt(), kept.value(axis.position).toInt());
+        const int end = std::max(freed.value(axis.position).toInt() + freed.value(axis.length).toInt(),
+                                 kept.value(axis.position).toInt() + kept.value(axis.length).toInt());
+        children.replace(neighbour, spanning(children.at(neighbour).toObject(), axis, start, end - start));
+    }
+    item.insert(QStringLiteral("children"), children);
+    return withPercentages(item);
+}
+
+bool emptiedByRemovedPanels(QJsonObject &window)
+{
+    QJsonObject split = window.value(QStringLiteral("multiSplitterLayout")).toObject();
+    QJsonObject groups = split.value(QStringLiteral("frames")).toObject();
+    QSet<QString> emptied;
+    bool trimmed = false;
+    for (const QString &id : groups.keys()) {
+        QJsonObject group = groups.value(id).toObject();
+        const QJsonArray docks = group.value(QStringLiteral("dockWidgets")).toArray();
+        const QJsonArray kept = withoutRemovedPanels(docks);
+        if (kept.size() == docks.size())
+            continue;
+        trimmed = true;
+        if (kept.isEmpty()) {
+            groups.remove(id);
+            emptied.insert(id);
+            continue;
+        }
+        const QString current = dockName(docks.at(group.value(QStringLiteral("currentTabIndex")).toInt()));
+        int index = 0;
+        for (qsizetype i = 0; i < kept.size(); ++i)
+            if (dockName(kept.at(i)) == current)
+                index = int(i);
+        group.insert(QStringLiteral("dockWidgets"), kept);
+        group.insert(QStringLiteral("currentTabIndex"), index);
+        groups.insert(id, group);
+    }
+    if (!trimmed)
+        return false;
+    split.insert(QStringLiteral("frames"), groups);
+    if (!emptied.isEmpty() && split.value(QStringLiteral("layout")).isObject())
+        split.insert(QStringLiteral("layout"), hidingGroups(split.value(QStringLiteral("layout")).toObject(), emptied));
+    window.insert(QStringLiteral("multiSplitterLayout"), split);
+    return !emptied.isEmpty() && groups.isEmpty();
+}
+
+QJsonObject envelopeWithoutRemovedPanels(QJsonObject envelope)
+{
+    if (envelope.value(QStringLiteral("panels")).isArray())
+        envelope.insert(QStringLiteral("panels"), withoutRemovedPanels(envelope.value(QStringLiteral("panels")).toArray()));
+    QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
+    if (payload.isEmpty())
+        return envelope;
+    QJsonArray mainWindows;
+    for (const auto &w : payload.value(QStringLiteral("mainWindows")).toArray()) {
+        QJsonObject window = w.toObject();
+        emptiedByRemovedPanels(window);
+        mainWindows.append(window);
+    }
+    QJsonArray floatingWindows;
+    QList<int> floatingIndex;
+    for (const auto &w : payload.value(QStringLiteral("floatingWindows")).toArray()) {
+        QJsonObject window = w.toObject();
+        if (emptiedByRemovedPanels(window)) {
+            floatingIndex << -1;
+        } else {
+            floatingIndex << int(floatingWindows.size());
+            floatingWindows.append(window);
+        }
+    }
+    QJsonArray docks;
+    for (const auto &d : withoutRemovedPanels(payload.value(QStringLiteral("allDockWidgets")).toArray())) {
+        QJsonObject dock = d.toObject();
+        QJsonObject position = dock.value(QStringLiteral("lastPosition")).toObject();
+        QJsonArray places;
+        for (const auto &place : position.value(QStringLiteral("placeholders")).toArray()) {
+            QJsonObject p = place.toObject();
+            const int index = p.value(QStringLiteral("indexOfFloatingWindow")).toInt(-1);
+            if (p.value(QStringLiteral("isFloatingWindow")).toBool() && index >= 0 && index < floatingIndex.size()) {
+                if (floatingIndex.at(index) < 0)
+                    continue;
+                p.insert(QStringLiteral("indexOfFloatingWindow"), floatingIndex.at(index));
+            }
+            places.append(place.isObject() ? QJsonValue(p) : place);
+        }
+        if (position.contains(QStringLiteral("placeholders"))) {
+            position.insert(QStringLiteral("placeholders"), places);
+            dock.insert(QStringLiteral("lastPosition"), position);
+        }
+        docks.append(d.isObject() ? QJsonValue(dock) : d);
+    }
+    if (payload.contains(QStringLiteral("mainWindows")))
+        payload.insert(QStringLiteral("mainWindows"), mainWindows);
+    if (payload.contains(QStringLiteral("floatingWindows")))
+        payload.insert(QStringLiteral("floatingWindows"), floatingWindows);
+    if (payload.contains(QStringLiteral("allDockWidgets")))
+        payload.insert(QStringLiteral("allDockWidgets"), docks);
+    if (payload.contains(QStringLiteral("closedDockWidgets")))
+        payload.insert(QStringLiteral("closedDockWidgets"),
+                       withoutRemovedPanels(payload.value(QStringLiteral("closedDockWidgets")).toArray()));
+    envelope.insert(QStringLiteral("payload"), payload);
+    return envelope;
+}
+
 }
 
 std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray &file, QString *problem, QString *preset,
@@ -457,7 +782,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     const QJsonDocument doc = QJsonDocument::fromJson(file, &error);
     if (error.error != QJsonParseError::NoError || !doc.isObject())
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it is not a layout file"));
-    const QJsonObject o = doc.object();
+    const QJsonObject o = envelopeWithoutRemovedPanels(doc.object());
     const int schema = o.value(QStringLiteral("schema")).toInt(-1);
     if (schema != kSchema)
         return fail(schema > kSchema ? QCoreApplication::translate("HikariSub.Workspace", "it was written by a newer version")
@@ -606,9 +931,23 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     return QJsonDocument(payload).toJson(QJsonDocument::Compact);
 }
 
+QByteArray WorkspaceLayoutController::serialiseWindow() const
+{
+    KDDockWidgets::LayoutSaver saver;
+    saver.setAffinityNames({m_names.affinity()});
+    return m_names.toStored(saver.serializeLayout());
+}
+
+bool WorkspaceLayoutController::restoreWindow(const QByteArray &payload, int options) const
+{
+    KDDockWidgets::LayoutSaver saver{KDDockWidgets::RestoreOptions(options)};
+    saver.setAffinityNames({m_names.affinity()});
+    return saver.restoreLayout(m_names.toEngine(payload));
+}
+
 void WorkspaceLayoutController::captureDefault()
 {
-    m_default = KDDockWidgets::LayoutSaver().serializeLayout();
+    m_default = serialiseWindow();
 }
 
 void WorkspaceLayoutController::buildsArrangement(const QString &name)
@@ -624,9 +963,9 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool i
         inPlace ? KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_RelativeToMainWindow |
                                                 KDDockWidgets::RestoreOption_AbsoluteFloatingDockWindows)
                 : KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_None);
-    const bool restored = KDDockWidgets::LayoutSaver(options).restoreLayout(payload);
+    const bool restored = restoreWindow(payload, options.toInt());
     if (!restored && !m_default.isEmpty())
-        KDDockWidgets::LayoutSaver(options).restoreLayout(m_default);
+        restoreWindow(m_default, options.toInt());
     m_restoring = false;
     // Floating windows come back short of their layouts on Wayland.
     hikari::ui::fitFloatingLayouts();
@@ -639,7 +978,7 @@ bool WorkspaceLayoutController::restoreSaved()
 {
     m_loaded = true;
     const bool restored = restoreSavedFile();
-    const QPoint origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
+    const QPoint origin = mainWindowPosition(QJsonDocument::fromJson(serialiseWindow()).object());
     for (auto &[id, t] : m_tabs)
         if (std::exchange(t.unplaced, false) && t.arrangement && !t.arrangement->payload.isEmpty())
             t.arrangement->payload = moveWindows(t.arrangement->payload, origin, false);
@@ -671,7 +1010,7 @@ bool WorkspaceLayoutController::restoreSavedFile()
         if (problem.isEmpty())
             problem = QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it");
         const QString kept = m_file + QStringLiteral(".unrestored");
-        m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
+        m_lastSaved = serialiseWindow();
         if (unreadable || !keepAside(m_file, kept)) {
             m_fileLocked = true;
             addPanelNotice(QCoreApplication::translate("HikariSub.Workspace",
@@ -685,7 +1024,7 @@ bool WorkspaceLayoutController::restoreSavedFile()
         emit changed();
         return false;
     }
-    m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
+    m_lastSaved = serialiseWindow();
     layout = knownLayout(layout);
     if (preset != m_preset || layout != m_layout) {
         m_preset = preset;
@@ -699,7 +1038,7 @@ bool WorkspaceLayoutController::save()
 {
     if (m_file.isEmpty() || m_fileLocked || m_restoring || !m_loaded || m_quitting)
         return false;
-    const QByteArray current = KDDockWidgets::LayoutSaver().serializeLayout();
+    const QByteArray current = serialiseWindow();
     if (current == m_lastSaved)
         return false;
     if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
@@ -751,7 +1090,7 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
     const bool done = restorePayload(m_default, inPlace);
     if (done && m_builtPresets.contains(name)) {
         emit buildArrangement(name);
-        m_presetPayloads[name] = KDDockWidgets::LayoutSaver().serializeLayout();
+        m_presetPayloads[name] = serialiseWindow();
         return true;
     }
     QString closed;
@@ -760,7 +1099,7 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
     else if (name == QLatin1String("Translation") || name == QLatin1String("Typesetting"))
         closed = QStringLiteral("Audio");
     if (!closed.isEmpty() && KDDockWidgets::Core::Platform::instance())
-        if (auto *dock = KDDockWidgets::DockRegistry::self()->dockByName(closed); dock && dock->isOpen())
+        if (auto *dock = KDDockWidgets::DockRegistry::self()->dockByName(m_names.engineName(closed)); dock && dock->isOpen())
             dock->close();
     return done;
 }
@@ -770,6 +1109,7 @@ bool WorkspaceLayoutController::applyPreset(const QString &name)
     if (!applyPresetArrangement(name))
         return false;
     choseMode();
+    emit presetApplied(name);
     return true;
 }
 
@@ -874,7 +1214,7 @@ WorkspaceArrangement WorkspaceLayoutController::shownArrangement() const
 {
     if (m_quitArrangement)
         return *m_quitArrangement;
-    return {m_preset, KDDockWidgets::LayoutSaver().serializeLayout(), m_layout};
+    return {m_preset, serialiseWindow(), m_layout};
 }
 
 bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arrangement)
@@ -882,7 +1222,7 @@ bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arra
     bool shown = true;
     if (arrangement.payload.isEmpty()) {
         shown = buildPreset(arrangement.preset, true);
-    } else if (arrangement.payload != KDDockWidgets::LayoutSaver().serializeLayout()) {
+    } else if (arrangement.payload != serialiseWindow()) {
         shown = restorePayload(arrangement.payload, true);
     }
     if (!shown)
@@ -1027,7 +1367,7 @@ bool WorkspaceLayoutController::setFileArrangement(std::uint64_t tab, const QByt
 {
     QPoint origin;
     if (m_loaded)
-        origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
+        origin = mainWindowPosition(QJsonDocument::fromJson(serialiseWindow()).object());
     const auto arrangement = WorkspaceArrangement::parseFromFile(text, origin, problem);
     if (!arrangement)
         return false;
@@ -1046,6 +1386,11 @@ void WorkspaceLayoutController::reservePresetNames(const QStringList &names)
     if (names == m_reservedNames)
         return;
     m_reservedNames = names;
+    reloadSavedLayouts();
+}
+
+void WorkspaceLayoutController::reloadSavedLayouts()
+{
     readSavedLayouts();
     m_layout = knownLayout(m_layout);
     for (auto &[id, tab] : m_tabs)
@@ -1256,7 +1601,9 @@ WorkspaceLayoutController::SavedLayoutsState WorkspaceLayoutController::savedLay
 bool WorkspaceLayoutController::commitSavedLayouts(SavedLayoutsState before)
 {
     const bool written = writeSavedLayouts();
-    if (!written) {
+    if (written)
+        emit savedLayoutsWritten();
+    else {
         m_saved = std::move(before.saved);
         m_tabs = std::move(before.tabs);
         m_quitArrangement = std::move(before.quitArrangement);

@@ -5,7 +5,7 @@
 
 #include <cstdint>
 #include <list>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 
 namespace hikari::ui {
 
@@ -82,13 +82,15 @@ private:
         std::uint64_t line;
         int column;
         bool operator==(const Key &) const = default;
-    };
-    struct KeyHash {
-        std::size_t operator()(const Key &k) const { return std::hash<std::uint64_t>()(k.line) * 31 + k.column; }
+        template <typename H>
+        friend H AbslHashValue(H h, const Key &k)
+        {
+            return H::combine(std::move(h), k.line, k.column);
+        }
     };
 
     mutable std::list<Key> m_lru;
-    mutable std::unordered_map<Key, std::pair<QAccessible::Id, std::list<Key>::iterator>, KeyHash> m_cache;
+    mutable absl::flat_hash_map<Key, std::pair<QAccessible::Id, std::list<Key>::iterator>> m_cache;
     mutable std::size_t m_created = 0;
 };
 

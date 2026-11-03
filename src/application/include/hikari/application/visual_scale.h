@@ -14,6 +14,7 @@ public:
     void reset(VisualHost &host) override;
     bool keepsStateAfterCommit() const override { return true; }
     void selected(VisualHost &host) override;
+    bool takesMiddleButton() const override { return true; }
     void pointer(const Pointer &event, VisualHost &host) override;
     bool takesKey(const Key &event) const override;
     bool key(const Key &event, VisualHost &host) override;

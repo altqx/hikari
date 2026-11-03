@@ -9,10 +9,11 @@ Accepted foundation, 2026-09-27: [Own the HikariSub Qt application layer](adr/00
 | Core / `src/core` | Authoritative subtitle content, styles, script properties, time/frame values, editing operations and their invariants | Standard C++ value records; no QML/Qt Quick, window, renderer, device, global UI settings or service-container dependency. Qt conversions belong to adapters. |
 | Application / `src/application` | Document/session lifetime, editing target and selection, command dispatch, undo transactions, action metadata, settings/shortcuts, workspace/navigation policy and task coordination | Depends on core and explicit backend ports. No duplicated subtitle model in controls and no implicit access through process-wide service lookup. |
 | Hikari API / `src/api` | Typed, versioned operations over the application for plugins, AI tools, MCP and nodes, with JSON Schemas and host ports | Depends on application and core; no Qt. The composition root implements its host ports. See [Hikari API](api.md). |
-| Plugins / `src/plugins` | The `.hikariplugin` manifest and its schema, package checks, `plugins.json` and the installer with key pinning | Depends on the Hikari API (JSON and the schema validator) and minisign; no Qt. The composition root unzips packages and owns the manager. See [Plugins](plugins.md). |
+| Plugins / `src/plugins` | The `.hikariplugin` manifest and its schema, package checks, `plugins.json` and the installer with key pinning | Depends on the Hikari API (JSON and the schema validator) and minisign; no Qt. The composition root unzips packages and owns the manager. Each running plugin is a `hikari-plugin-helper` (`src/helpers/plugin`, a restricted LuaJIT state) that `PluginProcess` in the backends supervises. See [Plugins](plugins.md). |
 | Minisign / `src/minisign` | Verifying minisign signatures (`ED` and `Ed`, key id, trusted comment) | libsodium only; no Qt and no other module, so the update check can link it without the plugins. |
 | Backend adapters / `src/backends` | FFMS2/libass integration, audio/general playback, automation runtime, font/file/platform services and their resource lifetime | Implement the ports consumed by application services. Backend-specific handles stay inside their adapters. Renderer, A/V clock and thread contracts are separate decisions. |
 | Qt Quick UI / `src/ui` | QML shell, reusable controls, panels, model adapters/presenters, focus and accessibility representation | Observes application state and submits commands. It does not become another authoritative document store or make native backend calls from delegates. |
+| AI sidecar / `src/ai-sidecar` | Every model call, the agent loop, prompt caching and the MCP client, in TypeScript on Bun | A separate process the app starts. It reaches documents only through `_hikari/api.call` into the Hikari API, and never opens the keychain. See [AI](#ai). |
 | Composition root / `src/app` | Process startup, explicit service construction, Qt engine setup, platform adapter selection and orderly shutdown | Wires and owns dependencies once. It does not host document algorithms. |
 
 The names above describe the intended new tree. The CMake target graph and dependency packages are settled by [Choose the dependency and build strategy for the stateless CMake build](https://github.com/altqx/hikari/issues/24); creating these production modules is later implementation work.
@@ -28,6 +29,30 @@ flowchart TD
 ```
 
 The adapter arrow denotes implementation of port contracts, not an application dependency on a concrete adapter. Runtime callbacks return through the specified port and application coordination path.
+
+## AI
+
+[ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md) splits Hikari AI in two:
+
+- **The sidecar** (`src/ai-sidecar`, TypeScript on Bun 1.4) makes the provider requests and runs the agent loop. It is one executable per platform, downloaded on its own and never part of the packages.
+- **Qt** keeps the UI, the Hikari API, the staged review, the AI settings and the keys (QtKeychain).
+
+The pieces in C++:
+
+- **`AiFeatures`** (`src/app/ai_features.*`) is the only place that builds AI objects. It reads `ai.off`, the "Turn off all AI features" switch, before anything else. With it on, no key store, config store or sidecar host exists, so nothing reads the keychain, downloads, starts or listens. Turning the switch on builds them on demand; turning it off destroys them and stops the sidecar.
+- **`AiSidecarHost`** (`src/backends/ai_sidecar_host.*`) starts the sidecar on the first AI action once a provider exists, never at startup or when Settings opens. It starts it with an allowlisted environment (no `*_API_KEY`, `*_BASE_URL`, `ANTHROPIC_*`, `OPENAI_*`, `GEMINI_*`, `GOOGLE_*`, `OTEL_*` or `NODE_OPTIONS`), in `<user folder>/ai/work`, in its own process group on Linux and a kill-on-close job object on Windows. Shutdown closes stdin, waits 3 s, then kills the tree.
+- **`AiSidecarDownload`** (`src/backends/ai_sidecar_download.*`) fetches `hikari-ai-<version>-<platform>.gz` from the app's own release into `<user folder>/ai/sidecar/<version>/`. It checks the size and SHA-256 that release's `hikarisub-update.json` gives, and deletes a file that fails.
+
+**The link** is JSON-RPC 2.0, one message per line on the sidecar's stdin and stdout, with requests both ways:
+
+- `initialize` carries the protocol major (`kSidecarProtocolVersion`, 1), HA1's `kApiVersion` and the build id (`<version>+<commit>`). Qt refuses a sidecar whose answer differs, and it isn't restarted until it is downloaded again.
+- `$/cancel_request {requestId}` cancels a request, which still gets exactly one response, with code -32800.
+- `_hikari/api.call {operation, params}` runs `Api::call` under the sidecar's `Caller`. An HA1 error comes back as code -32000, with HA1's code in `data.code`.
+- The limits are `HelperHost`'s: 64 outstanding requests, 16 MiB outstanding and 64 MiB per message.
+
+The ACP session methods and the other `_hikari/*` methods in the ADR are declared in `src/ai-sidecar/src/protocol.ts`. Until their cards land they answer "not implemented".
+
+**Crashes.** An exit, a stdout line that isn't JSON-RPC, or no `initialize` answer within 10 s counts as a crash. Requests in flight fail with `SidecarLost`, and the next request restarts the sidecar after a backoff that doubles from 0.5 s. After three crashes in a minute the host stops and keeps the newest 64 KiB of stderr to show.
 
 ## State and command ownership
 

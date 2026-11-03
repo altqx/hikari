@@ -5,4 +5,5 @@ target_include_directories(hikari_core PUBLIC include)
 target_compile_features(hikari_core PUBLIC cxx_std_23)
 # 16-bit PCRE2, matching HikariSub legacy's regex engine on UTF-16 text.
 target_link_libraries(hikari_core PRIVATE PCRE2::16BIT)
-hikari_module(hikari_core ALLOW PCRE2::16BIT)
+target_link_libraries(hikari_core PUBLIC absl::flat_hash_map absl::flat_hash_set Boost::dynamic_bitset)
+hikari_module(hikari_core ALLOW PCRE2::16BIT Boost::dynamic_bitset)

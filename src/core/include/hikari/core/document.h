@@ -82,6 +82,8 @@ struct LineRecord {
     bool bookmark = false;
     LineVisibility visibility = LineVisibility::Visible;
     GroupMarker group = GroupMarker::None;
+    // The [tree_opened] / [tree_closed] markers written before `group`, one per enclosing line group, outermost first.
+    std::vector<GroupMarker> outerGroups;
     IntField marginLeft;
     IntField marginRight;
     IntField marginVertical;
@@ -102,7 +104,7 @@ struct LineRecord {
     bool unconfirmed = false;  // written as the effect "\fD"
     // Unique per changed copy (0: unchanged since loading), so a save marks exactly the saved copies.
     std::uint64_t changeVersion = 0;
-    // The karaoke Line a templater run generated this one from; 0: none. Never saved.
+    // The karaoke Line a templater run generated this one from; 0: none. Saved by markGeneratedLines.
     LineId generatedFrom;
     // The "{=1=2}" ids before the text as loaded, kept on save while they still name exactly `extra`.
     std::vector<std::uint32_t> extradataIds;

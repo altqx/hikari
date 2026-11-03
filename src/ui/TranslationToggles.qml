@@ -10,7 +10,7 @@ RowLayout {
     Button {
         id: notConfirmed
         objectName: "notConfirmed"
-        text: qsTr("Not confirmed")
+        text: qsTr("Unconfirmed")
         checkable: true
         focusPolicy: Qt.NoFocus
         enabled: toggles.editor.editable

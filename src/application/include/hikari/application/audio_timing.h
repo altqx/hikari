@@ -40,8 +40,9 @@ struct AudioSnapContext {
     std::span<const int> keyframeSnapMs;
     std::span<const AudioLineSpan> lines;
     int active = -1;
+    std::optional<AudioVideoFrame> videoFrame; // drawn; snaps with the keyframes
 };
-// The keyframe or other Line boundary in view nearest `ms` within `rangeX` columns, else `ms`;
+// The keyframe, video frame middle or other Line boundary in view nearest `ms` within `rangeX` columns, else `ms`;
 // rounded down to 10 ms. Shift inverts both options; `keysnap` skips boundaries under 10 ms away.
 int legacyBoundarySnap(const AudioSnapContext &context, int ms, int rangeX, bool shiftHeld, bool keysnap,
                        bool otherLines);

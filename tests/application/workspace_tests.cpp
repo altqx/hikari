@@ -185,3 +185,65 @@ TEST(Workspace, SwappingTabsKeepsTheRoles)
     EXPECT_FALSE(w.swapTabs(0, 3));
     EXPECT_EQ(w.documents().size(), 4u);
 }
+
+TEST(Workspace, EachWindowKeepsItsOwnTabsAndCurrentTab)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto b = w.add("b.ass");
+    ASSERT_TRUE(w.setEditingTarget(b));
+    ASSERT_TRUE(w.activateWindow(1));
+    EXPECT_FALSE(w.editingTarget());
+    EXPECT_TRUE(w.tabs().empty());
+    const auto c = w.add("c.ass");
+    EXPECT_EQ(w.editingTarget(), c);
+    EXPECT_EQ(w.tabs(), std::vector{c});
+    EXPECT_EQ(w.tabs(0), (std::vector{a, b}));
+    EXPECT_EQ(w.allTabs(), (std::vector{a, b, c}));
+    EXPECT_EQ(w.currentTab(0), b);
+    EXPECT_EQ(w.currentTab(1), c);
+    EXPECT_EQ(w.checkContentCommand(b).error(), TargetRefusal::NotEditingTarget);
+
+    ASSERT_TRUE(w.activateWindow(0));
+    EXPECT_EQ(w.editingTarget(), b);
+    EXPECT_FALSE(w.activateWindow(0));
+    EXPECT_EQ(w.currentTab(1), c);
+}
+
+TEST(Workspace, ChoosingAnotherWindowsTabActivatesThatWindow)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    w.activateWindow(1);
+    const auto c = w.add("c.ass");
+    ASSERT_TRUE(w.setEditingTarget(a));
+    EXPECT_EQ(w.activeWindow(), 0);
+    EXPECT_EQ(w.currentTab(1), c);
+}
+
+TEST(Workspace, ClosingAnInactiveWindowsCurrentTabPassesWithinThatWindow)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    w.activateWindow(1);
+    const auto c = w.add("c.ass");
+    const auto d = w.add("d.ass");
+    w.activateWindow(0);
+    ASSERT_TRUE(w.remove(c));
+    EXPECT_EQ(w.editingTarget(), a);
+    EXPECT_EQ(w.currentTab(1), d);
+    ASSERT_TRUE(w.remove(d));
+    EXPECT_FALSE(w.currentTab(1));
+}
+
+TEST(Workspace, RemovingAWindowDropsItsDocumentsAndReturnsToTheFirst)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    w.activateWindow(1);
+    const auto c = w.add("c.ass");
+    EXPECT_EQ(w.removeWindow(1), std::vector{c});
+    EXPECT_EQ(w.activeWindow(), 0);
+    EXPECT_EQ(w.editingTarget(), a);
+    EXPECT_EQ(w.allTabs(), std::vector{a});
+}

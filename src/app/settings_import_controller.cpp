@@ -145,7 +145,7 @@ bool SettingsImportController::addRoot(const QString &folder)
     const QString path = url.isLocalFile() ? url.toLocalFile() : folder;
     const auto root = SettingsImportStore::inspectRoot(path);
     if (!root) {
-        setStatus(QCoreApplication::translate("HikariSub.SettingsImport", "%1 holds no legacy settings (Config, Dictionary).")
+        setStatus(QCoreApplication::translate("HikariSub.SettingsImport", "%1 holds no legacy settings (no “Config” or “Dictionary” folder).")
                       .arg(QDir::toNativeSeparators(path)));
         return false;
     }

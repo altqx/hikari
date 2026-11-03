@@ -104,6 +104,7 @@ public:
         bool dontAdvanceOnTimes = false;
         bool allCharsForCps = false;
         bool allCharsForWraps = false;
+        bool softLineBreak = false;
     };
 
     explicit LineEditorController(application::DocumentFiles &files, QObject *parent = nullptr);
@@ -224,6 +225,7 @@ public:
     Q_INVOKABLE bool toggleTag(const QString &tag, int selectionStart, int selectionEnd);
     Q_INVOKABLE bool toggleTagIn(int role, const QString &tag, int selectionStart, int selectionEnd);
     Q_INVOKABLE bool splitLine(int role, int selectionStart, int selectionEnd);
+    Q_INVOKABLE bool insertHardSpace(int role, int selectionStart, int selectionEnd);
     // MUST KILL: type is a magic int (0 at the caret, 1 at the text start, 2 plain text)
     Q_INVOKABLE bool applyTagButton(int role, const QString &tag, int type, int selectionStart, int selectionEnd);
     Q_INVOKABLE QVariantMap beginFont(int role, int selectionStart, int selectionEnd);
@@ -337,6 +339,8 @@ private:
     std::optional<RunOrder> runOrderOf(core::LineId line) const;
     void setRunOrder(core::LineId line, std::optional<RunOrder> order);
     void noteRunOrder(core::LineId line, RunOrder order);
+    // Puts the Line's run order, or no stale one, on its draft as core::kRunOrderKey.
+    void stageRunOrder(core::LineId line);
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw, const std::optional<RunOrder> *orderBefore = nullptr);
@@ -372,6 +376,8 @@ private:
     std::optional<DialogSession> m_dialog;
     core::legacy::TagColour m_lastColour;
     void edit(int role, const QString &newText, int cursor);
+    bool insertAtSelection(int role, std::u16string_view inserted, int selectionStart, int selectionEnd,
+                           bool absorbSpaces);
     void placeCaretAfterChange(const QString (&before)[2]);
     const std::u8string &roleText(const core::LineRecord &line, int role) const
     {

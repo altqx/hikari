@@ -7,6 +7,10 @@ add_library(hikari_lua_protocol STATIC lua_protocol.cpp)
 target_link_libraries(hikari_lua_protocol PUBLIC hikari_helper_endpoint hikari_application)
 hikari_module(hikari_lua_protocol ALLOW hikari_helper_endpoint hikari_application hikari_core)
 
+add_library(hikari_plugin_protocol STATIC plugin_protocol.cpp include/hikari/backends/plugin_protocol.h)
+target_link_libraries(hikari_plugin_protocol PUBLIC hikari_helper_endpoint)
+hikari_module(hikari_plugin_protocol ALLOW hikari_helper_endpoint)
+
 add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.cpp
     include/hikari/backends/overlay_blend.h helper_host.cpp ffms_indexed_source.cpp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
@@ -22,6 +26,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.
     legacy_spelling.cpp include/hikari/backends/legacy_spelling.h
     mecab_readings.cpp include/hikari/backends/mecab_readings.h
     harper_client.cpp include/hikari/backends/harper_client.h
+    plugin_process.cpp include/hikari/backends/plugin_process.h
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>
     $<$<PLATFORM_ID:Linux>:posix_platform_files.cpp>
     $<$<PLATFORM_ID:Windows>:win_file_port.cpp> $<$<PLATFORM_ID:Windows>:win_file_reader.cpp>
@@ -31,12 +36,14 @@ set_target_properties(hikari_backends PROPERTIES AUTOMOC ON)
 target_sources(hikari_backends PRIVATE audio_box_player.cpp include/hikari/backends/audio_box_player.h
     simulated_output.cpp include/hikari/backends/simulated_output.h)
 target_sources(hikari_backends PRIVATE qt_audio_devices.cpp include/hikari/backends/qt_audio_devices.h)
-target_link_libraries(hikari_backends PUBLIC hikari_application hikari_helper_endpoint hikari_lua_protocol Qt6::Core
+target_link_libraries(hikari_backends PUBLIC hikari_application hikari_helper_endpoint hikari_lua_protocol
+    hikari_plugin_protocol Qt6::Core
     Qt6::Multimedia
     PRIVATE Hikari::media_deps Hikari::portaudio Hikari::soundtouch Hikari::uchardet Hikari::hunspell Hikari::mecab Boost::locale ICU::i18n ICU::uc ICU::data)
 # ICU and Boost.Locale link statically: no dllimport, no Boost auto-linking.
 target_compile_definitions(hikari_backends PRIVATE BOOST_ALL_NO_LIB U_STATIC_IMPLEMENTATION)
 hikari_module(hikari_backends ALLOW hikari_application hikari_core hikari_helper_endpoint hikari_lua_protocol
+    hikari_plugin_protocol
     Hikari::media_deps
     Hikari::portaudio Hikari::soundtouch Hikari::uchardet Hikari::hunspell Hikari::mecab "Qt6::*")
 if(WIN32)
@@ -61,11 +68,14 @@ if(WIN32)
     add_subdirectory(directshow)
 endif()
 
-add_library(hikari_ai STATIC ai_wire.cpp include/hikari/backends/ai_wire.h ai_network.cpp
-    include/hikari/backends/ai_network.h ai_keychain.cpp include/hikari/backends/ai_keychain.h)
+add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_config_store.h ai_requests.cpp
+    include/hikari/backends/ai_requests.h ai_keychain.cpp include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp
+    include/hikari/backends/ai_sidecar_host.h ai_sidecar_download.cpp include/hikari/backends/ai_sidecar_download.h)
+find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
-target_link_libraries(hikari_ai PUBLIC hikari_application Qt6::Core Qt6::Network PRIVATE Qt6Keychain::Qt6Keychain)
+target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api Qt6::Core Qt6::Network
+    PRIVATE Qt6Keychain::Qt6Keychain ZLIB::ZLIB)
 if(NOT WIN32)
     target_link_libraries(hikari_ai PRIVATE Qt6::DBus)
 endif()
-hikari_module(hikari_ai ALLOW hikari_application hikari_core "Qt6::*")
+hikari_module(hikari_ai ALLOW hikari_application hikari_api hikari_core "Qt6::*" ZLIB::ZLIB)

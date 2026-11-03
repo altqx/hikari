@@ -34,6 +34,11 @@ std::string fixture(const char *kind)
     return std::string(HIKARI_MEDIA_FIXTURES) + "/" + kind + ".mkv";
 }
 
+std::string webm(const char *name)
+{
+    return std::string(HIKARI_WEBM_FIXTURES) + "/" + name;
+}
+
 int barcode(const IndexedFrame &f)
 {
     int value = 0;
@@ -61,8 +66,13 @@ struct Fixture : ::testing::Test {
 
     std::expected<SourceTimeline, SourceError> open(const char *kind, std::vector<std::int64_t> *progress = nullptr)
     {
+        return openPath(fixture(kind), progress);
+    }
+    std::expected<SourceTimeline, SourceError> openPath(const std::string &path,
+                                                        std::vector<std::int64_t> *progress = nullptr)
+    {
         std::optional<std::expected<SourceTimeline, SourceError>> result;
-        source.open(fixture(kind), [&](std::int64_t done, std::int64_t) { if (progress) progress->push_back(done); },
+        source.open(path, [&](std::int64_t done, std::int64_t) { if (progress) progress->push_back(done); },
                     [&](auto r) { result = std::move(r); });
         EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
         return result.value_or(std::unexpected(SourceError::BackendFailure));
@@ -104,6 +114,49 @@ TEST_F(Fixture, ConstantRateFramesAreExact)
     EXPECT_EQ(t->width, 320);
     EXPECT_EQ(t->height, 240);
     EXPECT_TRUE(t->sarNum == 0 || t->sarNum == t->sarDen) << t->sarNum << ":" << t->sarDen;
+    expectExactFrames(48);
+}
+
+struct WebmSample {
+    const char *file;
+    std::vector<int> keyframes;
+};
+
+struct WebmVideo : Fixture, ::testing::WithParamInterface<WebmSample> {};
+
+TEST_P(WebmVideo, FramesKeyframesAndSeeksAreExact)
+{
+    const auto t = openPath(webm(GetParam().file));
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->pts.size(), 48u);
+    EXPECT_EQ(t->keyframes, GetParam().keyframes);
+    EXPECT_EQ(t->fpsNumerator, t->fpsDenominator * 24);
+    EXPECT_EQ(t->width, 128);
+    EXPECT_EQ(t->height, 96);
+    expectExactFrames(48);
+}
+
+INSTANTIATE_TEST_SUITE_P(Webm, WebmVideo,
+                         ::testing::Values(WebmSample{"vp8-vorbis.webm", {0, 12, 24, 36}},
+                                           WebmSample{"vp9-opus.webm", {0, 12, 24, 36}},
+                                           WebmSample{"av1-opus.webm", {0, 12, 24, 32, 44}},
+                                           WebmSample{"vp9-alpha.webm", {0, 12, 24, 36}}),
+                         [](const auto &info) {
+                             std::string name = info.param.file;
+                             name.resize(name.find('.'));
+                             std::erase(name, '-');
+                             return name;
+                         });
+
+TEST_F(Fixture, WebmVariableRateTimelineAndFramesAreExact)
+{
+    const auto t = openPath(webm("vp9-vfr.webm"));
+    ASSERT_TRUE(t);
+    ASSERT_EQ(t->pts.size(), 48u);
+    for (std::size_t i = 1; i < t->pts.size(); ++i) {
+        const auto ms = (t->pts[i] - t->pts[i - 1]) * 1000 * t->timeBaseNumerator / t->timeBaseDenominator;
+        EXPECT_EQ(ms, 30 + 20 * static_cast<std::int64_t>((i - 1) % 3)) << i;
+    }
     expectExactFrames(48);
 }
 
@@ -1083,6 +1136,44 @@ TEST_F(DisplayAudioFixture, FailuresCarryTheStageAndFfms2sText)
     EXPECT_EQ(noAudio.error().error, SourceError::Unsupported);
     EXPECT_TRUE(openDisplay("audio"));
 }
+
+struct WebmAudio : DisplayAudioFixture, ::testing::WithParamInterface<const char *> {};
+
+TEST_P(WebmAudio, TheToneOpensAsTheAudioBoxsWaveform)
+{
+    const std::string path = webm(GetParam());
+    const auto tracks = probe(path);
+    ASSERT_TRUE(tracks) << tracks.error().message;
+    ASSERT_EQ(tracks->audio.size(), 1u);
+    const auto opened = openDisplayPath(source, path, tracks->audio[0].index, {});
+    ASSERT_TRUE(opened) << opened.error().message;
+    const AudioInfo &info = opened->info;
+    EXPECT_EQ(info.sampleRate, 48000);
+    EXPECT_EQ(info.channels, 2);
+    EXPECT_NEAR(info.sampleCount, 96000, 1000);
+    const auto b = display(4800, 4800);
+    ASSERT_TRUE(b);
+    int peak = 0, crossings = 0;
+    for (std::int64_t i = 0; i < b->count; ++i) {
+        peak = std::max(peak, std::abs(static_cast<int>(left(*b, i))));
+        if (i > 0 && (left(*b, i - 1) < 0) != (left(*b, i) < 0))
+            ++crossings;
+        EXPECT_NEAR(left(*b, i), right(*b, i), 64) << i;
+    }
+    constexpr int sourceTonePeak = 2896;
+    constexpr int signChangesOf440HzIn100Ms = 2 * 440 / 10;
+    EXPECT_NEAR(peak, sourceTonePeak, 150);
+    EXPECT_NEAR(crossings, signChangesOf440HzIn100Ms, 2);
+}
+
+INSTANTIATE_TEST_SUITE_P(Webm, WebmAudio,
+                         ::testing::Values("vp8-vorbis.webm", "vp9-opus.webm", "av1-opus.webm", "tone.opus", "tone.mka"),
+                         [](const auto &info) {
+                             std::string name = info.param;
+                             std::ranges::replace(name, '.', '_');
+                             std::erase(name, '-');
+                             return name;
+                         });
 
 TEST_F(DisplayAudioFixture, ClosingTheBoxLetsGoOfTheFile)
 {

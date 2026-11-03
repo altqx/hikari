@@ -1,0 +1,2 @@
+a {\i1}b{\i0} c {\b1}d{\b0} e
+{\i1}{\b1}x{\b0}{\i0} y	_hikari_tm_order=1;27ca7d1e0eb8c7be;2

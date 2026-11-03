@@ -37,6 +37,8 @@ struct Price {
     double input = 0;
     double output = 0;
     std::optional<double> cachedInput;
+    std::optional<double> cacheWrite;
+    std::optional<double> cacheWriteHour;
     bool operator==(const Price &) const = default;
 };
 
@@ -90,8 +92,12 @@ struct Config {
 struct Usage {
     std::int64_t inputTokens = 0;
     std::int64_t outputTokens = 0;
-    /// Part of inputTokens.
+    /// Part of inputTokens: read from the provider's cache.
     std::int64_t cachedInputTokens = 0;
+    /// Part of inputTokens: written to the provider's cache.
+    std::int64_t cacheWriteTokens = 0;
+    /// Part of cacheWriteTokens: kept for an hour.
+    std::int64_t cacheWriteHourTokens = 0;
     /// What the provider says the request cost, when it says.
     std::optional<double> reportedCost;
     bool operator==(const Usage &) const = default;
@@ -100,13 +106,6 @@ struct Usage {
 /// The provider's figure when it reports one, else the model's price applied to the usage.
 std::optional<double> costOf(const Usage &usage, const std::optional<Price> &price);
 
-struct Text {
-    std::string text;
-};
-struct Image {
-    std::string mediaType;
-    std::string base64;
-};
 struct ToolCall {
     std::string id;
     std::string name;
@@ -115,37 +114,10 @@ struct ToolCall {
     std::string signature;
     bool operator==(const ToolCall &) const = default;
 };
-struct ToolResult {
-    std::string callId;
-    std::string content;
-    bool isError = false;
-};
-using Part = std::variant<Text, Image, ToolCall, ToolResult>;
-
-enum class Author { User, Assistant };
-
-/// A user message holds Text, Image and ToolResult parts; an assistant message Text and ToolCall parts.
-struct Message {
-    Author author = Author::User;
-    std::vector<Part> parts;
-};
-
-struct ToolDefinition {
-    std::string name;
-    std::string description;
-    /// A JSON Schema object.
-    std::string parametersJson;
-};
-
-struct Request {
-    std::string model;
-    std::string system;
-    std::vector<Message> messages;
-    std::vector<ToolDefinition> tools;
-    std::optional<int> maxOutputTokens;
-};
 
 enum class StopReason { End, ToolUse, MaxTokens, Refused };
+
+std::optional<StopReason> stopReasonFromId(std::string_view id);
 
 enum class ErrorKind {
     NoProvider,
@@ -169,6 +141,9 @@ struct Error {
     std::string detail;
     bool operator==(const Error &) const = default;
 };
+
+std::string_view errorKindId(ErrorKind kind);
+std::optional<ErrorKind> errorKindFromId(std::string_view id);
 
 struct TextDelta {
     std::string text;
@@ -198,20 +173,6 @@ using EventSink = std::function<void(const Event &)>;
 
 using StreamId = std::uint64_t;
 
-/// Talks to a provider over the network. Runs callbacks on the thread that owns it.
-class ProviderPort {
-public:
-    virtual ~ProviderPort() = default;
-    /// `key` is empty for a provider that needs none.
-    virtual StreamId stream(const Provider &provider, const std::string &key, const Request &request,
-                            EventSink sink) = 0;
-    /// Ends the stream with Failed{Cancelled}; nothing for a finished one.
-    virtual void cancel(StreamId id) = 0;
-    using ModelsResult = std::variant<std::vector<Model>, Error>;
-    virtual void listModels(const Provider &provider, const std::string &key,
-                            std::function<void(ModelsResult)> done) = 0;
-};
-
 enum class KeyError { Unavailable, Denied, NotFound, Other };
 
 using KeyResult = std::variant<std::string, KeyError>;
@@ -236,10 +197,10 @@ public:
 
 enum class SaveError { Key, KeychainUnavailable, KeychainDenied, Config };
 
-/// The providers the user added, their keys and their role models. Requests go through it.
+/// The providers the user added, their keys and their role models.
 class Providers {
 public:
-    Providers(ConfigStore &configs, KeyStore &keys, ProviderPort &port);
+    Providers(ConfigStore &configs, KeyStore &keys);
 
     const Config &config() const { return m_config; }
     bool enabled() const { return m_config.enabled(); }
@@ -250,23 +211,18 @@ public:
     void remove(const std::string &providerId, std::function<void(std::optional<SaveError>)> done);
     bool assign(Role role, ModelRef model);
     bool setCapabilities(const std::string &providerId, const std::string &modelId, Capabilities capabilities);
-    void refreshModels(const std::string &providerId, std::function<void(std::optional<Error>)> done);
+    /// Replaces the provider's catalogue; the user's capability corrections stay.
+    bool setModels(const std::string &providerId, std::vector<Model> models);
 
-    /// Runs `request` on the role's model. Without a provider, fails without touching the network.
-    StreamId stream(Role role, Request request, EventSink sink);
-    void cancel(StreamId id);
+    /// The provider's key, read from the keychain once; empty for a provider that needs none. Nullopt when the
+    /// provider is gone or its key can't be read.
+    void readKey(const std::string &providerId, std::function<void(std::optional<std::string>)> done);
 
 private:
-    struct Pending;
-    void withKey(const Provider &provider, std::function<void(std::optional<std::string>, std::optional<KeyError>)> next);
-
     ConfigStore &m_configs;
     KeyStore &m_keys;
-    ProviderPort &m_port;
     Config m_config;
     std::map<std::string, std::string, std::less<>> m_keyCache;
-    std::map<StreamId, std::shared_ptr<Pending>> m_pending;
-    StreamId m_nextId = 1;
 };
 
 }
