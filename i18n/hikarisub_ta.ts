@@ -15239,16 +15239,8 @@ or codecs or a splitter may be missing</source>
         <translation>அம்பு விசைகள் புள்ளியை நகர்த்தும்; Enter சீரமைக்கும்</translation>
     </message>
     <message>
-        <source>X</source>
-        <translation>X</translation>
-    </message>
-    <message>
         <source>Point X</source>
         <translation>புள்ளி X</translation>
-    </message>
-    <message>
-        <source>Y</source>
-        <translation>Y</translation>
     </message>
     <message>
         <source>Point Y</source>

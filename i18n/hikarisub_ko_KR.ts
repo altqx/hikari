@@ -15151,16 +15151,8 @@ or codecs or a splitter may be missing</source>
         <translation>화살표 키로 지점을 옮기고, Enter로 맞춥니다</translation>
     </message>
     <message>
-        <source>X</source>
-        <translation>X</translation>
-    </message>
-    <message>
         <source>Point X</source>
         <translation>지점 X</translation>
-    </message>
-    <message>
-        <source>Y</source>
-        <translation>Y</translation>
     </message>
     <message>
         <source>Point Y</source>

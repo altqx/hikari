@@ -8500,7 +8500,7 @@ private slots:
         QVERIFY(list->property("contentHeight").toReal() > list->height());
         QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
         QVERIFY(sources);
-        QCOMPARE(sources->childItems().size(), 3);
+        QCOMPARE(sources->childItems().size(), 4);
         QVERIFY(sources->childItems().first()->height() > 0);
         QVERIFY(sources->parentItem()->height() >= sources->y() + sources->height());
         QVERIFY(QMetaObject::invokeMethod(about, "open"));

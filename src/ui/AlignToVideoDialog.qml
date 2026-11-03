@@ -137,7 +137,7 @@ DialogWindow {
             rowSpacing: 8
             Layout.alignment: Qt.AlignTop
             enabled: dialog.controller.ready && !dialog.controller.searching
-            Label { text: qsTr("X") }
+            Label { text: "X"; Accessible.ignored: true }
             SpinBox {
                 objectName: "alignToVideoX"
                 from: 0
@@ -147,7 +147,7 @@ DialogWindow {
                 Accessible.name: qsTr("Point X")
                 onValueModified: dialog.controller.pick(value, dialog.controller.pointY)
             }
-            Label { text: qsTr("Y") }
+            Label { text: "Y"; Accessible.ignored: true }
             SpinBox {
                 objectName: "alignToVideoY"
                 from: 0

@@ -15327,16 +15327,8 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Strzałki przesuwają punkt; Enter dopasowuje</translation>
     </message>
     <message>
-        <source>X</source>
-        <translation>X</translation>
-    </message>
-    <message>
         <source>Point X</source>
         <translation>Punkt X</translation>
-    </message>
-    <message>
-        <source>Y</source>
-        <translation>Y</translation>
     </message>
     <message>
         <source>Point Y</source>

@@ -15151,16 +15151,8 @@ or codecs or a splitter may be missing</source>
         <translation>ปุ่มลูกศรย้ายจุด กด Enter เพื่อจัด</translation>
     </message>
     <message>
-        <source>X</source>
-        <translation>X</translation>
-    </message>
-    <message>
         <source>Point X</source>
         <translation>จุด X</translation>
-    </message>
-    <message>
-        <source>Y</source>
-        <translation>Y</translation>
     </message>
     <message>
         <source>Point Y</source>
