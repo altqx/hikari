@@ -1130,10 +1130,8 @@ Output device: %2</source>
         <translation>%1 இல் இயக்க குறுநிரல்கள் இல்லை</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Lua ச்கிரிப்டை ஏற்றுவதில் பிழை: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>%1 ஏற்றப்படவில்லை. அதன் பிழை விவரங்களில் உள்ளது.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -5977,6 +5975,10 @@ Failed to copy %2 fonts.</source>
         <translation>மொழிபெயர்ப்பு பயன்முறை</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>நிலையான இடைவெளியைச் செருகு</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>தொகுதி 1 ஐ வை</translation>
     </message>
@@ -7276,6 +7278,14 @@ Failed to copy %2 fonts.</source>
         <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
     </message>
     <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>வரி திருத்தியில் கர்சரில் நிலையான இடைவெளியை (%1) செருகும்</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>நிலையான இடைவெளியைச் செருகு</translation>
+    </message>
+    <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>தேர்ந்தெடுத்த வரிகளின் தொடக்க, முடிவு நேரங்களை அவற்றின் சட்டகங்களின் நடுவுக்கு நகர்த்துகிறது; பின்னர் நேரத்தால் நகர்த்தினாலும் அவை முழுச் சட்டகங்களிலேயே இருக்கும்</translation>
     </message>
@@ -7336,8 +7346,8 @@ Failed to copy %2 fonts.</source>
         <translation>ரோமாஜி வரிகளின் கரோக்கி நேரமிடலை அவற்றின் காஞ்சி வரிகளுக்கு நகலெடுக்கிறது</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>காஞ்சி நேரமிடுபவர்…</translation>
+        <source>Kanji timer</source>
+        <translation>காஞ்சி நேரமிடுபவர்</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -8559,6 +8569,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>நேரங்களைத் திருத்தும்போது அதே வரியிலேயே இரு</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter மென் வரி முறிவை (%1) செருகும்</translation>
     </message>
     <message>
         <source>Translation mode</source>
@@ -10559,8 +10573,8 @@ because it was edited.</source>
         <translation>இல்லாமல்</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>தேடல் உரை:</translation>
+        <source>Search text</source>
+        <translation>தேடல் உரை</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10583,8 +10597,8 @@ because it was edited.</source>
         <translation>உரை</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
+        <source>Style</source>
+        <translation>பாணி</translation>
     </message>
     <message>
         <source>Actor</source>

@@ -1123,10 +1123,8 @@ Output device: %2</source>
         <translation>%1에 실행할 매크로가 없습니다</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Lua 스크립트를 불러오는 중 오류가 발생했습니다: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>%1을(를) 불러오지 못했습니다. 오류는 세부 정보에 있습니다.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -5934,6 +5932,10 @@ Failed to copy %2 fonts.</source>
         <translation>번역 모드</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>고정 공백 삽입</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>서식 구간 1 배치</translation>
     </message>
@@ -7230,6 +7232,14 @@ Failed to copy %2 fonts.</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
     </message>
     <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>줄 편집기의 커서 위치에 고정 공백(%1)을 삽입합니다</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>고정 공백 삽입</translation>
+    </message>
+    <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>선택한 줄의 시작 및 끝 시간을 프레임의 가운데로 옮겨, 나중에 시간 단위로 이동해도 온전한 프레임에 머무르게 합니다</translation>
     </message>
@@ -7290,8 +7300,8 @@ Failed to copy %2 fonts.</source>
         <translation>로마자 줄의 노래방 타이밍을 해당 한자 줄에 복사합니다</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>한자 타이머…</translation>
+        <source>Kanji timer</source>
+        <translation>한자 타이머</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -8508,6 +8518,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>시간 편집 시 현재 줄에 머무르기</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter로 소프트 줄 바꿈(%1) 삽입</translation>
     </message>
     <message>
         <source>Translation mode</source>
@@ -10495,8 +10509,8 @@ because it was edited.</source>
         <translation>포함하지 않음</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>검색 글자:</translation>
+        <source>Search text</source>
+        <translation>검색 글자</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10519,7 +10533,7 @@ because it was edited.</source>
         <translation>글자</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>스타일</translation>
     </message>
     <message>

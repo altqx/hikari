@@ -80,11 +80,13 @@ TimeFieldEdit backspaceTimeField(const TimeFieldState &field);
 // kTimeFieldDigits. Anything else is refused with the bell.
 TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field, std::u16string_view pasted);
 
-// In ms: hours before column 2 (ASS) or 3 (SRT, TMPlayer), minutes in the
-// next three columns, seconds in the three after, 10 ms past them.
-std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column);
-// 9:59:59.999
-inline constexpr std::int64_t kTimeFieldMaxMs = 35999999;
+// In ms: hours up to the first ':' of `text` (column 2 for ASS, 3 for SRT and
+// TMPlayer without one), minutes in the next three columns, seconds in the
+// three after, 10 ms past them.
+std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column, std::u16string_view text = {});
+// 99:59:59.999. The fields show and edit times up to it; the loaders and
+// writers take any time, and a field never writes back a time it only shows.
+inline constexpr std::int64_t kTimeFieldMaxMs = 359999999;
 
 enum class TimeCtrlForm { Ass = 0, Srt = 1, TMPlayer = 2, MicroDvd = 3, Mpl2 = 4 };
 TimeCtrlForm timeCtrlForm(core::SubtitleFormat format);
@@ -93,7 +95,7 @@ struct TimeFieldMouse {
     bool frames = false; // the switch on and an exact timebase
 };
 // A number form steps by 1.
-std::int64_t timeFieldStep(TimeFieldMouse mouse, std::size_t column);
+std::int64_t timeFieldStep(TimeFieldMouse mouse, std::size_t column, std::u16string_view text = {});
 
 // `notches` whole wheel steps. A clock form moves by notches times the
 // column's step, nullopt when it would leave 0..kTimeFieldMaxMs. A number

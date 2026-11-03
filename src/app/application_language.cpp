@@ -53,7 +53,8 @@ void Application::languageSwitched()
     m_video->retranslate();
     m_audio->retranslate();
     m_statusBar->retranslate();
-    m_workspaceLayout->retranslate();
+    for (auto *layout : layouts())
+        layout->retranslate();
     m_visualTools->retranslate();
     if (m_hotkeys)
         m_hotkeys->retranslate();

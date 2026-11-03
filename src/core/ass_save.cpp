@@ -23,6 +23,21 @@ std::u8string assTimeText(std::int64_t ms)
     return std::u8string(reinterpret_cast<const char8_t *>(buf));
 }
 
+namespace {
+
+std::u8string_view groupMarkerText(GroupMarker marker)
+{
+    switch (marker) {
+    case GroupMarker::Description: return u8"[tree_description]";
+    case GroupMarker::Opened: return u8"[tree_opened]";
+    case GroupMarker::Closed: return u8"[tree_closed]";
+    case GroupMarker::None: break;
+    }
+    return {};
+}
+
+}
+
 std::u8string assLineText(const LineRecord &line, std::u8string_view textPrefix)
 {
     auto number = [](std::int64_t v) {
@@ -33,16 +48,17 @@ std::u8string assLineText(const LineRecord &line, std::u8string_view textPrefix)
     // [bookmark] first, then the group or visibility marker before it (a
     // group marker wins over visibility).
     std::u8string actor = line.bookmark ? u8"[bookmark]" + line.actor : line.actor;
-    switch (line.group) {
-    case GroupMarker::Description: actor.insert(0, u8"[tree_description]"); break;
-    case GroupMarker::Opened: actor.insert(0, u8"[tree_opened]"); break;
-    case GroupMarker::Closed: actor.insert(0, u8"[tree_closed]"); break;
-    case GroupMarker::None:
+    if (line.group == GroupMarker::None) {
         if (line.visibility == LineVisibility::Hidden)
             actor.insert(0, u8"[hidden]");
         else if (line.visibility == LineVisibility::VisibleBlock)
             actor.insert(0, u8"[visible]");
-        break;
+    } else {
+        std::u8string markers;
+        for (const auto marker : line.outerGroups)
+            markers += groupMarkerText(marker);
+        markers += groupMarkerText(line.group);
+        actor.insert(0, markers);
     }
     std::u8string out = line.comment ? u8"Comment: " : u8"Dialogue: ";
     out += number(line.layer.value) + u8',' + time(line.start.value) + u8',' + time(line.end.value) + u8',' +

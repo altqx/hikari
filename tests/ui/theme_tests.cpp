@@ -2,6 +2,7 @@
 #include "theme.h"
 
 #include "hikari/application/audio_display.h"
+#include "hikari/core/editor_syntax.h"
 
 #include <QAccessible>
 #include <QDir>
@@ -593,14 +594,16 @@ private slots:
         QCOMPARE(ui::theme::content(Code::HighContrastBlack, roles(Code::HighContrastBlack)).grammar, hex(0xFFFF00));
         QCOMPARE(dark.syntax, (std::array{roles(Code::Dark).text, hex(0x8791FD), hex(0x00C3FF), hex(0x00C3FF),
                                           hex(0x0076FF), hex(0xADABAB), hex(0xBDB76B), hex(0xFB4544), hex(0x00C3FF),
-                                          hex(0x8D80D3), hex(0x11A243)}));
+                                          hex(0x8D80D3), hex(0x11A243), hex(0x4EC9B0), hex(0xE5A0D9)}));
         QCOMPARE(light.syntax, (std::array{roles(Code::Light).text, hex(0x7E3B00), hex(0x787600), hex(0x787600),
                                            hex(0x34C200), hex(0x817F7F), hex(0xBDB76B), hex(0xFB4544), hex(0x00C3FF),
-                                           hex(0x8D80D3), hex(0x11A243)}));
+                                           hex(0x8D80D3), hex(0x11A243), hex(0x00796B), hex(0xAD1457)}));
         for (const auto code : {Code::HighContrastWhite, Code::HighContrastBlack}) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
             const auto c = ui::theme::content(code, r);
             QCOMPARE(c.syntax[0], r.text);
+            QVERIFY(c.syntax[std::size_t(core::syntax::Role::DrawingX)] !=
+                    c.syntax[std::size_t(core::syntax::Role::DrawingY)]);
             for (const QColor &colour : c.syntax)
                 QVERIFY2(contrastRatio(colour, r.field) >= 4.5,
                          qPrintable(ui::theme::codeName(code) + QLatin1Char(' ') + colour.name()));

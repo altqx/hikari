@@ -21,7 +21,8 @@ std::u8string copyRowsExtradata(const EditSession &session);
 std::u8string copyColumns(const EditSession &session, int columns);
 
 // Pasted Lines go before the first shown selected Line and become the
-// selection; inside a group they join it, and a hidden next Line hides them.
+// selection; inside a group they join its innermost group there, and a hidden next Line hides them.
+// Pasted groups keep their shape, re-based from their shallowest Line to the depth they land at.
 // `extradata` (copyRowsExtradata) is used only when it has a row for each pasted Line.
 std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8string_view text,
                                               const LineVisible &visible = {},

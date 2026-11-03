@@ -3130,7 +3130,7 @@ private slots:
                                                    {QStringLiteral("isDefault"), true}}});
         const std::vector<std::tuple<const char *, QString, QVariantMap>> boxes{
             {"messages", QStringLiteral("load-script"),
-             box(QStringLiteral("Run the last loaded script"), QStringLiteral("Error loading Lua script: karaoke.lua"),
+             box(QStringLiteral("Run the last loaded script"), QStringLiteral("karaoke.lua did not load. Its error is in Details."),
                  QStringLiteral("error"), QStringLiteral("karaoke.lua:12: '=' expected near 'end'"))},
             {"messages", QStringLiteral("edit-script"),
              box(QStringLiteral("Edit script"), QStringLiteral("Cannot start editor."), QStringLiteral("error"))},
@@ -15621,6 +15621,43 @@ private slots:
         QVERIFY(editor.problem().isEmpty());
     }
 
+    void hardSpaceAndSoftLineBreakGoInAtTheCursor()
+    {
+        application->editor().setShowTags(true);
+        QVERIFY(application->openFile(writeStyled("spaces.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one two\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("one two"));
+        auto *session = targetSession();
+        const auto draft = [&] {
+            return QString::fromUtf8(reinterpret_cast<const char *>(session->draftText()->c_str()));
+        };
+
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 3);
+        press(Qt::Key_Space, Qt::ControlModifier | Qt::ShiftModifier);
+        QCOMPARE(draft(), QStringLiteral("one\\h two"));
+        QCOMPARE(text->property("cursorPosition").toInt(), 5);
+
+        auto *menuItem = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("insertHardSpaceMenuItem"));
+        QVERIFY(menuItem);
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QCOMPARE(draft(), QStringLiteral("\\hone\\h two"));
+        QVERIFY(text->hasActiveFocus());
+
+        text->setProperty("cursorPosition", 8);
+        press(Qt::Key_Return, Qt::ShiftModifier);
+        QCOMPARE(draft(), QStringLiteral("\\hone\\h\\Ntwo"));
+        application->settingsStore()->setValue(QStringLiteral("editor.softLineBreak"), true);
+        text->setProperty("cursorPosition", 0);
+        press(Qt::Key_Return, Qt::ShiftModifier);
+        QCOMPARE(draft(), QStringLiteral("\\n\\hone\\h\\Ntwo"));
+        application->settingsStore()->setValue(QStringLiteral("editor.softLineBreak"), false);
+    }
+
     void enterOnTheLastMicroDvdLineCountsFrames()
     {
         for (const bool withRate : {true, false}) {
@@ -15887,6 +15924,7 @@ private slots:
               {"editor.timesToFramesSwitch", "Show video frames instead of times"},
               {"editor.dontGoToNextLineOnTimesEdit", "Stay on the line when editing times"},
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
+              {"editor.softLineBreak", "Shift+Enter inserts a soft line break (\\n)"},
               {"translation.showOriginal", "Show the original"},
               {"translation.hideOriginalOnVideo", "Hide the original on the video"}}},
             {"settingsPageSpelling",
@@ -18775,7 +18813,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 269);
+        QCOMPARE(hotkeyRows().size(), 270);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -19246,7 +19284,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_CONVERT_TO_TMP")), QStringLiteral("Ctrl+F12"));
-        QCOMPARE(table().size(), 37);
+        QCOMPARE(table().size(), 38);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
@@ -28225,6 +28263,30 @@ private slots:
         press(Qt::Key_Return);
         QCOMPARE(session->document().lines()[1]->end.value.microseconds(), 4'500'000);
         QCOMPARE(session->selection().active, std::optional(session->document().lines()[2]->id));
+    }
+
+    void timesPastTheFieldCapStayUntilEdited()
+    {
+        QVERIFY(application->openFile(writeStyled("long.ass",
+                                                  "Dialogue: 0,123:00:00.00,124:00:00.00,Default,,0,0,0,,first\n")));
+        auto *session = targetSession();
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), true);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        QCOMPARE(item<QObject>("startField")->property("text").toString(), QStringLiteral("99:59:59.99"));
+        QCOMPARE(item<QObject>("endField")->property("text").toString(), QStringLiteral("99:59:59.99"));
+        item("startField")->forceActiveFocus();
+        press(Qt::Key_Return);
+        item("endField")->forceActiveFocus();
+        press(Qt::Key_Return);
+        typeInto("layerField", QStringLiteral("3"));
+        press(Qt::Key_Return);
+        const auto line = session->document().lines()[0];
+        QCOMPARE(line->layer.value, 3);
+        QCOMPARE(line->start.value.microseconds(), 442'800'000'000LL);
+        QCOMPARE(line->end.value.microseconds(), 446'400'000'000LL);
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
     }
 
     void durationMovesTheEndWhateverLiveEditing()

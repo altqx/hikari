@@ -242,6 +242,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Slower"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Faster"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Translation mode"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Insert hard space"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place run 1"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place run 2"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place run 3"),

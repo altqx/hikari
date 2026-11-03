@@ -1137,10 +1137,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>%1 nie ma makr do uruchomienia</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Błąd wczytywania skryptu Lua: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>Nie udało się wczytać %1. Błąd jest w sekcji Szczegóły.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -6020,6 +6018,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Tryb tłumaczenia</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>Wstaw twardą spację</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>Wstaw fragment 1</translation>
     </message>
@@ -7322,6 +7324,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
     </message>
     <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>Wstawia twardą spację (%1) w miejscu kursora w edytorze linijki</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>Wstaw twardą spację</translation>
+    </message>
+    <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>Przesuwa czasy początku i końca zaznaczonych linii na środek ich klatek, aby późniejsze przesunięcie o czas zostawiło je na pełnych klatkach</translation>
     </message>
@@ -7382,8 +7392,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Kopiuje timing karaoke linijek romaji do odpowiadających im linijek kanji</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>Timer kanji…</translation>
+        <source>Kanji timer</source>
+        <translation>Timer kanji</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -8610,6 +8620,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>Pozostawaj na linijce podczas edycji czasów</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter wstawia miękkie łamanie wiersza (%1)</translation>
     </message>
     <message>
         <source>Translation mode</source>
@@ -10623,8 +10637,8 @@ ponieważ została zmieniona.</translation>
         <translation>Nie zawiera</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>Szukany tekst:</translation>
+        <source>Search text</source>
+        <translation>Szukany tekst</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10647,8 +10661,8 @@ ponieważ została zmieniona.</translation>
         <translation>Tekst</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>Style</translation>
+        <source>Style</source>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Actor</source>

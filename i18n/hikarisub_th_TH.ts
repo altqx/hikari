@@ -1123,10 +1123,8 @@ Output device: %2</source>
         <translation>%1 ไม่มีแมโครให้เรียกใช้</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>เกิดข้อผิดพลาดในการโหลดสคริปต์ Lua: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>โหลด %1 ไม่ได้ ข้อผิดพลาดอยู่ในรายละเอียด</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -5934,6 +5932,10 @@ Failed to copy %2 fonts.</source>
         <translation>โหมดการแปล</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>วางช่วงที่ 1</translation>
     </message>
@@ -7230,6 +7232,14 @@ Failed to copy %2 fonts.</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
     </message>
     <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด (%1) ที่เคอร์เซอร์ในตัวแก้ไขบรรทัด</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด</translation>
+    </message>
+    <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>ย้ายเวลาเริ่มและสิ้นสุดของบรรทัดที่เลือกไปไว้กลางเฟรม เพื่อให้การเลื่อนตามเวลาในภายหลังยังคงอยู่บนเฟรมเต็ม</translation>
     </message>
@@ -7290,8 +7300,8 @@ Failed to copy %2 fonts.</source>
         <translation>คัดลอกการจัดเวลาคาราโอเกะของบรรทัดโรมาจิไปยังบรรทัดคันจิที่คู่กัน</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>ตัวจัดเวลาคันจิ…</translation>
+        <source>Kanji timer</source>
+        <translation>ตัวจัดเวลาคันจิ</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -8508,6 +8518,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>อยู่ที่บรรทัดเดิมเมื่อแก้ไขเวลา</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter แทรกตัวแบ่งบรรทัดแบบอ่อน (%1)</translation>
     </message>
     <message>
         <source>Translation mode</source>
@@ -10495,8 +10509,8 @@ because it was edited.</source>
         <translation>โดยไม่มี</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>ค้นหาข้อความ:</translation>
+        <source>Search text</source>
+        <translation>ค้นหาข้อความ</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10519,7 +10533,7 @@ because it was edited.</source>
         <translation>ข้อความ</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>สไตล์</translation>
     </message>
     <message>
