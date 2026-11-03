@@ -1778,6 +1778,14 @@ Output device: %2</source>
         <translation>가로 세로 비율이 %1에서 %2(으)로 바뀝니다.</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>3D 회전 조정</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>회전된 줄은 화면에서 모양을 유지합니다.</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>늘리기</translation>
     </message>
@@ -1789,6 +1797,16 @@ Output device: %2</source>
         <source>%n value(s) could not be scaled.</source>
         <translation>
             <numerusform>값 %n개를 조정할 수 없습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>%1번 줄은 크기만 조정되었습니다: 이동하거나, 시간에 따라 모양이 바뀌거나, 측정할 수 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>회전된 줄 %n개가 모양을 유지하지 못했습니다.</numerusform>
         </translation>
     </message>
     <message>

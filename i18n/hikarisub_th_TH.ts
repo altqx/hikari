@@ -1778,6 +1778,14 @@ Output device: %2</source>
         <translation>อัตราส่วนภาพเปลี่ยนจาก %1 เป็น %2</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>ปรับการหมุนแบบ 3D</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>บรรทัดที่หมุนจะคงรูปร่างบนหน้าจอไว้</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>ยืด</translation>
     </message>
@@ -1789,6 +1797,16 @@ Output device: %2</source>
         <source>%n value(s) could not be scaled.</source>
         <translation>
             <numerusform>ไม่สามารถปรับขนาดค่า %n ค่า</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>บรรทัด %1 ถูกปรับขนาดเท่านั้น: บรรทัดนี้เคลื่อนที่ เปลี่ยนรูปร่างตามเวลา หรือวัดขนาดไม่ได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>บรรทัดที่หมุน %n บรรทัดไม่สามารถคงรูปร่างไว้ได้</numerusform>
         </translation>
     </message>
     <message>

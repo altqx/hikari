@@ -420,8 +420,9 @@ public:
     // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
     // video size is the subtitles'); empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
-    Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch);
-    // option: 0 only the resolution, 1 resample, 2 resample with stretch.
+    Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch,
+                              bool adjustRotations = true);
+    // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
@@ -898,6 +899,8 @@ private:
     void protectReference();
     void refreshViews();
     void refreshVideo();
+    bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
+                          bool adjustRotations);
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
