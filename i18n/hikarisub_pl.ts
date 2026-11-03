@@ -933,7 +933,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Filtruj</translation>
     </message>
     <message>
-        <source>Filter the run&apos;s log</source>
+        <source>Filter the run’s log</source>
         <translation>Filtruj dziennik uruchomienia</translation>
     </message>
     <message>
@@ -973,7 +973,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>%1 min %2 s</translation>
     </message>
     <message>
-        <source>Save the run&apos;s log</source>
+        <source>Save the run’s log</source>
         <translation>Zapisz dziennik uruchomienia</translation>
     </message>
     <message>
@@ -997,7 +997,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Opcje: %1</translation>
     </message>
     <message>
-        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
         <translation>Proces skryptu zakończył się. Wczytaj go ponownie, aby go uruchomić; jego makro nie zostanie uruchomione ponownie.</translation>
     </message>
     <message>
@@ -9409,7 +9409,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Tekst i ikony</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>Kolor obwódki</translation>
     </message>
     <message>
@@ -11708,7 +11708,7 @@ ponieważ została zmieniona.</translation>
         <translation>Ignoruj</translation>
     </message>
     <message>
-        <source>Ignore All</source>
+        <source>Ignore all</source>
         <translation>Ignoruj wszystko</translation>
     </message>
     <message>
@@ -12684,11 +12684,11 @@ Usunięte style:
         <translation>Linijki: %1</translation>
     </message>
     <message>
-        <source>the current line&apos;s style</source>
+        <source>the current line’s style</source>
         <translation>styl bieżącej linijki</translation>
     </message>
     <message>
-        <source>The current line&apos;s style</source>
+        <source>Current line’s style</source>
         <translation>Styl bieżącej linijki</translation>
     </message>
     <message>
@@ -13259,7 +13259,7 @@ Usunięte style:
         <translation>Z ostatniego udanego uruchomienia</translation>
     </message>
     <message>
-        <source>This file&apos;s templates run Lua code with your rights. Preview them if you trust the file.</source>
+        <source>This file’s templates run Lua code with your rights. Preview them if you trust the file.</source>
         <translation>Szablony tego pliku uruchamiają kod Lua z Twoimi uprawnieniami. Włącz podgląd, jeśli ufasz temu plikowi.</translation>
     </message>
     <message>
@@ -13310,8 +13310,8 @@ Usunięte style:
         </translation>
     </message>
     <message>
-        <source>Changed since Apply</source>
-        <translation>Zmieniono od zastosowania</translation>
+        <source>Changes not applied</source>
+        <translation>Zmiany niezastosowane</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -13455,7 +13455,7 @@ Usunięte style:
         <translation>Zastosuj do zaznaczonych linijek</translation>
     </message>
     <message>
-        <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
+        <source>Only the selected lines are regenerated; the other lines’ output stays as it is.</source>
         <translation>Ponownie generowane są tylko zaznaczone linijki; wynik pozostałych linijek zostaje bez zmian.</translation>
     </message>
     <message>
@@ -13475,7 +13475,7 @@ Usunięte style:
         <translation>Kod dla każdej linijki</translation>
     </message>
     <message>
-        <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
+        <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>Nowa linijka trafia nad pierwszą linijkę karaoke i dostaje jej styl.</translation>
     </message>
     <message>
@@ -13515,7 +13515,7 @@ Usunięte style:
         <translation>Powtarzaj</translation>
     </message>
     <message>
-        <source>Keep the line&apos;s override tags</source>
+        <source>Keep the line’s override tags</source>
         <translation>Zachowuj tagi linijki</translation>
     </message>
     <message>
@@ -14986,10 +14986,6 @@ po czasie końcowym w milisekundach</translation>
         <translation>Edycja</translation>
     </message>
     <message>
-        <source>Move video to selected line on:</source>
-        <translation>Przesuwaj wideo do zaznaczonej linijki po:</translation>
-    </message>
-    <message>
         <source>Then play</source>
         <translation>Potem odtwórz</translation>
     </message>
@@ -15008,10 +15004,6 @@ po czasie końcowym w milisekundach</translation>
     <message>
         <source>Video and audio to the next line start time</source>
         <translation>Wideo i audio do początku następnej linijki</translation>
-    </message>
-    <message>
-        <source>On moving to another line play:</source>
-        <translation>Odtwarzaj po zmianie linijki:</translation>
     </message>
     <message>
         <source>Full screen video</source>
