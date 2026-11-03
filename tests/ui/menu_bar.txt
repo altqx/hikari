@@ -67,7 +67,7 @@ Subtitles > Set FPS > Set new FPS… [GRID_SET_NEW_FPS]
 Subtitles > Set FPS > Set FPS from video [GRID_SET_FPS_FROM_VIDEO]
 Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]
 Subtitles > Check karaoke [GLOBAL_CHECK_KARAOKE]
-Subtitles > Kanji timer… [GLOBAL_KANJI_TIMER]
+Subtitles > Kanji timer [GLOBAL_KANJI_TIMER]
 Subtitles > -
 Subtitles > Translation mode [GLOBAL_TRANSLATION_MODE]
 Video

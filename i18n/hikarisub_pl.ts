@@ -1161,10 +1161,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>%1 nie ma makr do uruchomienia</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Błąd wczytywania skryptu Lua: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>Nie udało się wczytać %1. Błąd jest w sekcji Szczegóły.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -7402,8 +7400,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Kopiuje timing karaoke linijek romaji do odpowiadających im linijek kanji</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>Timer kanji…</translation>
+        <source>Kanji timer</source>
+        <translation>Timer kanji</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>

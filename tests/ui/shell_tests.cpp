@@ -2969,7 +2969,7 @@ private slots:
                                                    {QStringLiteral("isDefault"), true}}});
         const std::vector<std::tuple<const char *, QString, QVariantMap>> boxes{
             {"messages", QStringLiteral("load-script"),
-             box(QStringLiteral("Run the last loaded script"), QStringLiteral("Error loading Lua script: karaoke.lua"),
+             box(QStringLiteral("Run the last loaded script"), QStringLiteral("karaoke.lua did not load. Its error is in Details."),
                  QStringLiteral("error"), QStringLiteral("karaoke.lua:12: '=' expected near 'end'"))},
             {"messages", QStringLiteral("edit-script"),
              box(QStringLiteral("Edit script"), QStringLiteral("Cannot start editor."), QStringLiteral("error"))},

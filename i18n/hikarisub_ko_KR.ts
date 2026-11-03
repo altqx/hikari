@@ -1147,10 +1147,8 @@ Output device: %2</source>
         <translation>%1에 실행할 매크로가 없습니다</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Lua 스크립트를 불러오는 중 오류가 발생했습니다: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>%1을(를) 불러오지 못했습니다. 오류는 세부 정보에 있습니다.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -7310,8 +7308,8 @@ Failed to copy %2 fonts.</source>
         <translation>로마자 줄의 노래방 타이밍을 해당 한자 줄에 복사합니다</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>한자 타이머…</translation>
+        <source>Kanji timer</source>
+        <translation>한자 타이머</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>

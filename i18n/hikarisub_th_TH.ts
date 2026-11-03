@@ -1147,10 +1147,8 @@ Output device: %2</source>
         <translation>%1 ไม่มีแมโครให้เรียกใช้</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>เกิดข้อผิดพลาดในการโหลดสคริปต์ Lua: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>โหลด %1 ไม่ได้ ข้อผิดพลาดอยู่ในรายละเอียด</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -7310,8 +7308,8 @@ Failed to copy %2 fonts.</source>
         <translation>คัดลอกการจัดเวลาคาราโอเกะของบรรทัดโรมาจิไปยังบรรทัดคันจิที่คู่กัน</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>ตัวจัดเวลาคันจิ…</translation>
+        <source>Kanji timer</source>
+        <translation>ตัวจัดเวลาคันจิ</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>

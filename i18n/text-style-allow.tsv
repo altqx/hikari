@@ -30,6 +30,7 @@ HikariSub.VisualTools	A double "m" was blocked because of a VSFilter bug	quotes	
 HikariSub.VisualTools	Show surrounding plane\nA rectangle of the text's plane: match it to one in the shot, then place the text inside it	quotes	pending #596 Menus
 HikariSub.VisualTools	Top-center	spelling	pending #596 Menus
 HikariSub.VisualTools	Video must be set at least one frame after the line's start time	quotes	pending #596 Menus
+HikariSub.Automation	%1 did not load. Its error is in Details.	title-case	names the toast’s Details button
 HikariSub.Automation	The script has no such macro	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Automation	The script or its macro changed	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Documents	Associated files:	colon	heading line of the association offer; the files are listed under it
