@@ -11,7 +11,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_set>
+#include <absl/container/flat_hash_set.h>
 #include <utility>
 #include <vector>
 
@@ -54,7 +54,7 @@ using ClashChoices = std::map<ClashKey, ClashChoice>;
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices);
 // "<name> (2)", "<name> (3)"...: the first that names no Style.
 std::u8string freeStyleName(const StyleList &styles, std::u8string_view name);
-using StyleNames = std::unordered_set<std::u8string>;
+using StyleNames = absl::flat_hash_set<std::u8string>;
 StyleNames namesOf(const StyleList &styles);
 std::u8string freeStyleName(const StyleNames &names, std::u8string_view name);
 

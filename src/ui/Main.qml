@@ -67,11 +67,11 @@ ApplicationWindow {
         ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP", qsTr("Converts to TMPlayer format (not recommended)")]]
 
     readonly property var sortKeys: [
-        { key: "start", label: qsTr("The starting time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
+        { key: "start", label: qsTr("Start time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
           selected: "GLOBAL_SORT_SELECTED_BY_START_TIMES", help: qsTr("Sort by start time") },
         { key: "end", label: qsTr("End time"), all: "GLOBAL_SORT_ALL_BY_END_TIMES",
           selected: "GLOBAL_SORT_SELECTED_BY_END_TIMES", help: qsTr("Sort by end time") },
-        { key: "style", label: qsTr("Styles"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE",
+        { key: "style", label: qsTr("Style"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE",
           help: qsTr("Sort by styles") },
         { key: "actor", label: qsTr("Actor"), all: "GLOBAL_SORT_ALL_BY_ACTOR", selected: "GLOBAL_SORT_SELECTED_BY_ACTOR",
           help: qsTr("Sort by actor") },
@@ -221,6 +221,8 @@ ApplicationWindow {
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 272))
         dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
         originalDock.close()
+        dockingArea.addDockWidget(postprocessorDock, KDDW.KDDockWidgets.Location_OnRight, audioDock, Qt.size(360, 0))
+        postprocessorDock.close()
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
@@ -259,6 +261,10 @@ ApplicationWindow {
         if (lower !== natural)
             Docking.resizeInLayout("Video", 0, 0, 0, lower - natural)
     }
+    function timingLayout() {
+        videoDock.close()
+        postprocessorDock.open()
+    }
     function karaokeLayout() {
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, gridDock,
                                   Qt.size(0, root.workspaceLayout.panelSize(audioDock).height))
@@ -272,7 +278,9 @@ ApplicationWindow {
     Connections {
         target: root.workspaceLayout
         function onBuildArrangement(name) {
-            if (name === "Typesetting")
+            if (name === "Timing")
+                root.timingLayout()
+            else if (name === "Typesetting")
                 root.typesettingLayout()
             else if (name === "Karaoke")
                 root.karaokeLayout()
@@ -367,10 +375,10 @@ ApplicationWindow {
     }
 
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
-                                          templatePanel]
+                                          timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel, logPanel,
+                                          stylesPanel, templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
+                                     postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
     Instantiator {
         model: root.dockList
         delegate: Connections {
@@ -429,6 +437,10 @@ ApplicationWindow {
             // MUST KILL: deferred because the arrangement swaps in before the editor leaves the old tab
             Qt.callLater(root.placeOriginal)
         }
+        function onPresetApplied(name) {
+            if (name === "Timing" && root.shiftTimes.timingPreset !== "")
+                root.shiftTimes.applyPreset("postprocessor", root.shiftTimes.timingPreset)
+        }
         function onPresetModeChosen(mode) {
             if (mode === "Translation" && root.app.translationQuestionDue())
                 root.openInMainWindow(translationModeQuestion)
@@ -476,34 +488,10 @@ ApplicationWindow {
         searchTool.focusFind()
     }
 
-    function runShiftTimes() {
-        const which = root.shiftTimes.settings.whichTimes
-        const pp = root.shiftTimes.settings.postprocessor
-        // MUST KILL: whichTimes (1 start, else end) and the postprocessor bit test are magic ints
-        if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
-            const start = which === 1
-            const target = root.app.editingTargetId()
-            shiftQuestion.askedFor = target
-            shiftQuestion.askWith({
-                title: qsTranslate("HikariSub.TimeShift", "Shift times"),
-                text: start ? qsTranslate("HikariSub.TimeShift", "Shift only the start times?")
-                            : qsTranslate("HikariSub.TimeShift", "Shift only the end times?"),
-                detail: start ? qsTranslate("HikariSub.TimeShift", "End times stay where they are, so a line shifted past its end ends before it starts.")
-                              : qsTranslate("HikariSub.TimeShift", "Start times stay where they are, so a line shifted before its start ends before it starts."),
-                severity: "warning",
-                choices: [
-                    { id: "shift", text: start ? qsTranslate("HikariSub.TimeShift", "Shift start times")
-                                               : qsTranslate("HikariSub.TimeShift", "Shift end times"),
-                      role: "accept", isDefault: true },
-                    { id: "cancel", text: qsTranslate("HikariSub.TimeShift", "Cancel"), role: "reject" }
-                ]
-            }, id => {
-                if (id === "shift" && root.app.editingTargetId() === target)
-                    shiftTimesPanel.message = root.app.shiftTimes()
-            })
-            return
-        }
-        shiftTimesPanel.message = root.app.shiftTimes()
+    function applyShift(tool) {
+        const panel = tool === "postprocessor" ? postprocessorTool : shiftTimesPanel
+        panel.message = root.app.applyShift(tool)
+        panel.refresh()
     }
 
     function focusedDock() {
@@ -1419,7 +1407,7 @@ ApplicationWindow {
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
                         id: openAutoSaveAction
-                        text: qsTr("Open auto save")
+                        text: qsTr("Open autosave…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) autosaves.show()
                     }
                 }
@@ -1686,8 +1674,17 @@ ApplicationWindow {
                 id: showShiftTimesItem
                 iconRole: "shift-times"
                 objectName: "showShiftTimes"
-                text: qsTr("Shift &times...")
+                text: qsTr("Shift &times…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SHOW_TIMING_POSTPROCESSOR"
+                help: qsTr("Moves line times by the lead-in, lead-out, gap and keyframe rules")
+                id: showPostprocessorItem
+                iconRole: "shift-times"
+                objectName: "showTimingPostprocessor"
+                text: qsTr("Timing &postprocessor…")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_STYLE_MANAGER"
@@ -1701,11 +1698,11 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_ASS_PROPERTIES"
-                help: qsTr("ASS subtitle properties")
+                help: qsTr("Opens Script properties")
                 id: assPropertiesItem
                 iconRole: "script-properties"
                 objectName: "assProperties"
-                text: qsTr("ASS file properties")
+                text: qsTr("Script properties")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
             }
@@ -2490,7 +2487,7 @@ ApplicationWindow {
                 objectName: "whatsNewMenuItem"
                 action: Action {
                     id: whatsNewAction
-                    text: qsTr("What's &new")
+                    text: qsTr("What’s &new")
                     onTriggered: whatsNewDialog.open()
                 }
             }
@@ -3368,8 +3365,8 @@ ApplicationWindow {
                         font.features: { "tnum": 1 }
                         color: root.video.keyframeShown ? Theme.warning : palette.windowText
                         Accessible.name: qsTranslate("HikariSub.Video", "Video times")
-                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line's start frame; "
-                                                     + "milliseconds from the line's start and end")
+                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line’s start frame; "
+                                                     + "milliseconds from the line’s start and end")
                         HoverHandler { id: timesHover }
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
@@ -3678,14 +3675,12 @@ ApplicationWindow {
                 }
                 function audioTip(text, symbol, alt) {
                     let key = root.boundKeys(symbol, 4)
-                    if (alt) {
-                        const second = root.boundKeys(alt, 4)
-                        key = key + qsTranslate("HikariSub.Audio", " or ") + second
-                    }
-                    let tip = key.length ? text + " (" + key + ")" : text
-                    tip += "\n" + qsTranslate("HikariSub.Audio", "Shortcut can be set using Shift + Click")
                     if (alt)
-                        tip += "\n" + qsTranslate("HikariSub.Audio", "Second shortcut can be set using Control + Click")
+                        key = root.eitherKey(key, root.boundKeys(alt, 4))
+                    let tip = key.length ? text + " (" + key + ")" : text
+                    tip += "\n" + qsTranslate("HikariSub.Audio", "Shift+click to set a shortcut")
+                    if (alt)
+                        tip += "\n" + qsTranslate("HikariSub.Audio", "Ctrl+click to set a second shortcut")
                     return tip
                 }
                 readonly property var playArounds: [
@@ -4204,8 +4199,7 @@ ApplicationWindow {
                                 objectName: "audioCommitItem"
                                 iconRole: "commit"
                                 text: qsTranslate("HikariSub.Audio", "Commit")
-                                shortcutText: [root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4)]
-                                        .filter(k => k.length).join(qsTranslate("HikariSub.Audio", " or "))
+                                shortcutText: root.eitherKey(root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4))
                                 onTriggered: if (!root.hotkeyGesture("AUDIO_COMMIT", 4, true, true)) root.audio.commit()
                             }
                             MenuSeparator {}
@@ -5561,11 +5555,55 @@ ApplicationWindow {
                 ShiftTimesPanel {
                     id: shiftTimesPanel
                     anchors.fill: parent
+                    focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    messages: root.messages
                     hasVideo: root.video.hasVideo
                     audioHasMark: root.audio.hasMark
-                    onRun: root.runShiftTimes()
+                    onApply: root.applyShift("shift")
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    onOpenVideo: openVideoAction.trigger()
+                }
+            }
+        }
+
+        PanelDock {
+            id: postprocessorDock
+            objectName: "postprocessorDock"
+            uniqueName: "Postprocessor"
+            title: qsTranslate("HikariSub.TimeShift", "Timing postprocessor")
+            Panel {
+                id: postprocessorPanel
+                objectName: "postprocessorPanel"
+                dockName: "Postprocessor"
+                minimumBodySize: postprocessorTool.minimumBodySize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.TimeShift", "Timing postprocessor")
+                TimingPostprocessorPanel {
+                    id: postprocessorTool
+                    anchors.fill: parent
+                    focus: true
+                    shiftTimes: root.shiftTimes
+                    app: root.app
+                    messages: root.messages
+                    onApply: root.applyShift("postprocessor")
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    onOpenVideo: openVideoAction.trigger()
+                    onOpenKeyframes: openKeyframesAction.trigger()
+                }
+                Connections {
+                    target: root.editor
+                    function onChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                }
+                Connections {
+                    target: root.video
+                    function onChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                    function onTextsChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                }
+                Connections {
+                    target: root.audio
+                    function onMarkChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
                 }
             }
         }
@@ -5748,6 +5786,7 @@ ApplicationWindow {
             panel.reportMinimumSize()
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
+        root.workspaceLayout.buildsArrangement("Timing")
         root.workspaceLayout.buildsArrangement("Typesetting")
         root.workspaceLayout.buildsArrangement("Karaoke")
         root.workspaceLayout.restoreSaved()
@@ -6118,7 +6157,7 @@ ApplicationWindow {
         id: saveAsDialog
         objectName: "saveAsDialog"
         fileMode: FileDialog.SaveFile
-        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file ") + "(*.ass)"]
+        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file (%1)").arg("*.ass")]
         // MUST KILL: document id 0 means the editing target
         property var document: 0
         onAccepted: {
@@ -6592,20 +6631,6 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    HidableQuestion {
-        id: shiftQuestion
-        objectName: "shiftQuestion"
-        messages: root.messages
-        questionId: "shiftOneTime"
-        property var askedFor: 0
-        property Connections targetChanges: Connections {
-            target: root.app
-            function onTabsChanged() {
-                if (shiftQuestion.pending.length > 0 && root.app.editingTargetId() !== shiftQuestion.askedFor)
-                    shiftQuestion.withdraw()
-            }
-        }
-    }
     Connections {
         target: root.updates
         function onFinished(outcome, release, interactive) {
@@ -6665,8 +6690,8 @@ ApplicationWindow {
         onBrowserFailed: root.issueBrowserFailed()
     }
     function issueBrowserFailed() {
-        root.notices.post("warning", qsTranslate("HikariSub.Reports", "The browser did not open"),
-                          qsTranslate("HikariSub.Reports", "The issue is on the clipboard. Paste it into a new issue on GitHub."))
+        root.notices.post("warning", qsTranslate("HikariSub.Reports", "Open GitHub issue"),
+                          qsTranslate("HikariSub.Reports", "The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub."))
     }
     Connections {
         target: root.crashReports
@@ -6681,15 +6706,17 @@ ApplicationWindow {
                 return
             }
             const note = crashReportWindow.lastNote
-            root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
-                              source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
+            root.notices.post("warning", qsTranslate("HikariSub.Reports", "Send report"),
+                              source === "start" ? qsTranslate("HikariSub.Reports", "The crash report could not be sent. It is kept for the next start.")
+                                                 : qsTranslate("HikariSub.Reports", "The crash report could not be sent."),
                               { actions: source === "" ? [] : [{ text: qsTranslate("HikariSub.Reports", "Try again"), run: () => root.crashReports.send(source, note) },
                                                                { text: qsTranslate("HikariSub.Reports", "Open GitHub issue"), run: () => crashReportWindow.openOnGitHub(source, note) }] })
         }
         function onAutoSent(kind, ok, source) {
             if (!ok) {
-                root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
-                                  source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
+                root.notices.post("warning", qsTranslate("HikariSub.Reports", "Send report"),
+                                  source === "start" ? qsTranslate("HikariSub.Reports", "The crash report could not be sent. It is kept for the next start.")
+                                                     : qsTranslate("HikariSub.Reports", "The crash report could not be sent."),
                                   { actions: source === "" ? [] : [{ text: qsTranslate("HikariSub.Reports", "Show report"), run: () => crashReportWindow.showReport(source) }] })
                 return
             }
@@ -7112,13 +7139,16 @@ ApplicationWindow {
     function boundKeys(symbol, window) {
         return root.hotkeys.keys ? root.hotkeys.accelOf(symbol, window) : ""
     }
+    function eitherKey(first, second) {
+        return first.length && second.length ? qsTranslate("HikariSub.Audio", "%1 or %2").arg(first, second) : first + second
+    }
     function mappedTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
-        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     function bitmapTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
-        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     // MUST KILL: kind is true or a string ("menu", "mapped", "macro", "bitmap"); two maps the second (id - 10) hotkey
     function hotkeyGesture(symbol, window, kind, two) {
@@ -7198,7 +7228,7 @@ ApplicationWindow {
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
-        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem,
+        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
@@ -7350,7 +7380,8 @@ ApplicationWindow {
             if (editing)
                 styleManagerWindow.deleteUnused()
             return true
-        case "GLOBAL_SHIFT_TIMES": if (editing) root.runShiftTimes(); return true
+        case "GLOBAL_SHIFT_TIMES": if (editing) root.applyShift("shift"); return true
+        case "GLOBAL_TIMING_POSTPROCESSOR": if (editing) root.applyShift("postprocessor"); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true

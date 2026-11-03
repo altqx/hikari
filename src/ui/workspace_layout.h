@@ -51,8 +51,8 @@ public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    // MUST KILL: kPanelRegistry is a version int bumped per added panel (2 Timing ... 10 Spellchecker)
-    static constexpr int kPanelRegistry = 10;
+    // MUST KILL: kPanelRegistry is a version int bumped per added panel (2 Timing ... 11 Postprocessor)
+    static constexpr int kPanelRegistry = 11;
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
@@ -123,6 +123,7 @@ signals:
     void arrangementSwapped();
     void presetModeChosen(const QString &mode);
     void presetModeLeft(const QString &mode);
+    void presetApplied(const QString &name);
 
 private:
     void checkModal();

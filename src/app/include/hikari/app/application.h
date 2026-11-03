@@ -88,7 +88,7 @@
 #include <memory>
 #include <set>
 #include <tuple>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 
 namespace hikari::app {
 
@@ -389,8 +389,15 @@ public:
     Q_INVOKABLE QUrl targetFolder() const;
     Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);
     Q_INVOKABLE bool canShiftTranslation() const;
-    // Empty when shifted, else the message; frames need an exact (indexed) timebase.
-    Q_INVOKABLE QString shiftTimes();
+    // tool: "shift" or "postprocessor", with the remembered values. One step named after the panel.
+    // Empty when done, else the message; frames, end fixes and the postprocessor need an exact timebase.
+    Q_INVOKABLE QString applyShift(const QString &tool);
+    // What applyShift would do: {problem (empty when it can run), changed, total, amount (ms, or frames
+    // when byFrames), targetMs (the video or audio mark time, -1 without), rows: [{line (1-based),
+    // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "snappedStart",
+    // "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed, snapped}}.
+    Q_INVOKABLE QVariantMap shiftPreview(const QString &tool);
+    Q_INVOKABLE bool hasKeyframes() const;
     // 0: none. Ids are never reused.
     Q_INVOKABLE qulonglong editingTargetId() const;
     Q_INVOKABLE bool exactTimebase() const;
@@ -874,6 +881,8 @@ private:
     application::LineVisible shownLines() const;
     QString exportKey(application::DocumentId document) const;
     application::LineVisible actionLines(const application::EditSession &session) const;
+    application::ShiftContext shiftContext(application::LegacyTimebase &timebase) const;
+    application::ShiftTimesSettings shiftRunSettings(const QString &tool) const;
     void rememberColumns(bool paste, int columns);
     void protectReference();
     void refreshViews();
@@ -1168,7 +1177,7 @@ private:
         bool translation = false;
         std::vector<core::LineId> lines;
         std::map<std::size_t, GrammarCheck> checks;
-        std::unordered_map<std::uint64_t, const core::LineRecord *> rows;
+        absl::flat_hash_map<std::uint64_t, const core::LineRecord *> rows;
         const core::Document *rowsOf = nullptr;
         std::uint64_t rowsRevision = 0;
         bool pumpQueued = false;

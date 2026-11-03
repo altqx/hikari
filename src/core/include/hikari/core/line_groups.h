@@ -6,14 +6,14 @@
 #include "hikari/core/document.h"
 
 #include <optional>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <vector>
 
 namespace hikari::core {
 
 // Each member's description, or nullopt for an orphan (a member that does not
 // follow its description or another member).
-std::unordered_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document);
+absl::flat_hash_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document);
 
 // The members `after` breaks: a new orphan, or a member now in another group
 // than in `before`.

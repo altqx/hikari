@@ -3158,7 +3158,7 @@ private slots:
         QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
         QTRY_VERIFY(picker->property("visible").toBool());
-        QCOMPARE(picker->property("title").toString(), QStringLiteral("Font selection"));
+        QCOMPARE(picker->property("title").toString(), QStringLiteral("Choose font"));
         QCOMPARE(picker->property("family").toString(), QStringLiteral("Arial"));
         QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("20"));
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
@@ -6141,22 +6141,26 @@ private slots:
     void shiftTimesRunsFromItsHotkeyWithoutAMenuItem()
     {
         QVERIFY(application->openFile(episode));
+        auto *session = application->files().session(*application->workspace().editingTarget());
         QVERIFY(!named("runShiftTimes"));
         auto settings = application->shiftTimesSettings().settingsMap();
         const auto before = settings;
         auto restore = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
         settings.insert(QStringLiteral("whichTimes"), 1);
-        settings.insert(QStringLiteral("postprocessor"), 0);
         application->shiftTimesSettings().setSettingsMap(settings);
+        const auto steps = session->historySize();
         QVariant ran;
         QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
                                           Q_ARG(QVariant, QStringLiteral("GLOBAL_SHIFT_TIMES"))));
         QVERIFY(ran.toBool());
-        QObject *question = nullptr;
-        QTRY_VERIFY((question = messageBox("messages")) && question->property("visible").toBool());
-        QCOMPARE(question->property("text").toString(), QStringLiteral("Shift only the start times?"));
-        QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Shift times"));
+        QVERIFY(!messageBox("messages") || !messageBox("messages")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_TIMING_POSTPROCESSOR"))));
+        QVERIFY(ran.toBool());
+        QCOMPARE(session->historySize(), steps + 1);
+        application->editor().discard();
     }
 
     void menuArrowsOpenAndCloseSubmenus()
@@ -8626,7 +8630,7 @@ private slots:
         QVERIFY(menuItem);
         QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("whats-new"));
         auto *action = menuItem->property("action").value<QObject *>();
-        QCOMPARE(action->property("text").toString(), QStringLiteral("What's &new"));
+        QCOMPARE(action->property("text").toString(), QStringLiteral("What’s &new"));
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(dialog->isVisible());
         QCOMPARE(dialog->title(), QStringLiteral("What’s new"));
@@ -12323,13 +12327,22 @@ private slots:
         QCOMPARE(application->editor().selectionEnd(), 5);
     }
 
-    void timingPanelShiftsTimes()
+    void showPostprocessor()
+    {
+        QVERIFY(QMetaObject::invokeMethod(named("showTimingPostprocessor"), "triggered"));
+        QTRY_VERIFY(item<QObject>("postprocessorDock")->property("isOpen").toBool());
+        QTRY_VERIFY(item("postprocessorApply") && item("postprocessorApply")->isVisible());
+    }
+    QVariantMap shiftPlan(const char *preview)
+    {
+        return item<QObject>(preview)->property("plan").toMap();
+    }
+
+    void shiftTimesPanelPreviewsAndShiftsInOneStep()
     {
         QVERIFY(application->openFile(episode));
         auto *session = application->files().session(*application->workspace().editingTarget());
-        auto *root = engine->rootObjects().first();
-        auto *timingDock = root->findChild<QObject *>(QStringLiteral("timingDock"));
-        QVERIFY(timingDock);
+        auto *timingDock = item<QObject>("timingDock");
         QVERIFY(!timingDock->property("isOpen").toBool());
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_I, Qt::ControlModifier);
@@ -12337,102 +12350,89 @@ private slots:
         QTRY_VERIFY(item("timingPanel")->hasActiveFocus());
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 2000);
         QVERIFY(visualItem("shiftBackward")->property("checked").toBool());
+        QCOMPARE(visualItem("shiftForward")->property("text").toString(), QStringLiteral("Later"));
+        QCOMPARE(visualItem("shiftBackward")->property("text").toString(), QStringLiteral("Earlier"));
         QVERIFY(!application->settingsStore()->contains("shiftTimes.time"));
-        QVERIFY(!application->settingsStore()->contains("shiftTimes.options"));
         QVERIFY(QMetaObject::invokeMethod(visualItem("shiftForward"), "click"));
         QVERIFY(application->shiftTimesSettings().settings().forward);
         auto *time = item("shiftTime");
         time->setProperty("text", QStringLiteral("0:00:01.50"));
         QVERIFY(QMetaObject::invokeMethod(time, "editingFinished"));
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 1500);
-        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QTRY_COMPARE(session->history().back().name, std::string("Shifting times"));
+        const int lines = int(session->document().lines().size());
+        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), lines);
+        QCOMPARE(shiftPlan("shiftPreview").value(QStringLiteral("amount")).toInt(), 1500);
+        QCOMPARE(item("shiftPreviewStatus")->property("text").toString(), QStringLiteral("Changes %1 line(s)").arg(lines));
+        QCOMPARE(item("shiftApply")->property("text").toString(), QStringLiteral("Shift %1 line(s)").arg(lines));
+        const auto rows = shiftPlan("shiftPreview").value(QStringLiteral("rows")).toList();
+        QVERIFY(!rows.isEmpty());
+        QCOMPARE(rows.front().toMap().value(QStringLiteral("startBefore")).toInt(), 1000);
+        QCOMPARE(rows.front().toMap().value(QStringLiteral("start")).toInt(), 2500);
         auto ms = [&](std::size_t row, bool start) {
             const auto *l = session->document().lines()[row];
             return (start ? l->start : l->end).value.microseconds() / 1000;
         };
+        QCOMPARE(ms(0, true), 1000);
+        const auto steps = session->historySize();
+        time->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Shift times"));
         QCOMPARE(ms(0, true), 2500);
         QCOMPARE(ms(1, false), 5500);
-        auto settings = application->shiftTimesSettings().settingsMap();
-        settings.insert(QStringLiteral("whichTimes"), 1);
-        application->shiftTimesSettings().setSettingsMap(settings);
-        const auto steps = session->historySize();
+        QVERIFY(application->editor().undo());
+        QCOMPARE(ms(0, true), 1000);
+        QVERIFY(session->canRedo());
+        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), lines);
+        setShift("whichTimes", 1);
         QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QObject *confirm = nullptr;
-        QTRY_VERIFY((confirm = messageBox("messages")) && confirm->property("visible").toBool());
-        QCOMPARE(confirm->property("title").toString(), QStringLiteral("Shift times"));
-        QCOMPARE(confirm->property("text").toString(), QStringLiteral("Shift only the start times?"));
-        QCOMPARE(confirm->property("severity").toString(), QStringLiteral("warning"));
-        QCOMPARE(confirm->property("defaultButton").value<QObject *>()->property("text").toString(),
-                 QStringLiteral("Shift start times"));
-        QVERIFY(confirm->property("offerDontAsk").toBool());
-        QVERIFY(QMetaObject::invokeMethod(confirm, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
-        QTRY_VERIFY(!confirm->property("visible").toBool());
-        QCOMPARE(session->historySize(), steps);
-        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QTRY_VERIFY(confirm->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(confirm, "answer", Q_ARG(QVariant, QStringLiteral("shift"))));
-        QTRY_COMPARE(session->historySize(), steps + 1);
-        QCOMPARE(ms(0, true), 4000);
-        QCOMPARE(ms(0, false), 3500);
-        settings.insert(QStringLiteral("whichTimes"), 2);
-        application->shiftTimesSettings().setSettingsMap(settings);
-        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QTRY_VERIFY(confirm->property("visible").toBool());
-        QCOMPARE(confirm->property("text").toString(), QStringLiteral("Shift only the end times?"));
-        QCOMPARE(confirm->property("defaultButton").value<QObject *>()->property("text").toString(),
-                 QStringLiteral("Shift end times"));
-        messageBoxItem("messageBoxDontAsk")->setProperty("checked", true);
-        QVERIFY(QMetaObject::invokeMethod(confirm, "answer", Q_ARG(QVariant, QStringLiteral("shift"))));
-        QTRY_COMPARE(session->historySize(), steps + 2);
-        QCOMPARE(application->settingsStore()->list("notices.hiddenQuestions"), QStringList{QStringLiteral("shiftOneTime")});
-        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QTRY_COMPARE(session->historySize(), steps + 3);
-        QVERIFY(!confirm->property("visible").toBool());
-        application->settingsStore()->set("notices.hiddenQuestions", QStringList());
-        settings.insert(QStringLiteral("whichTimes"), 1);
-        application->shiftTimesSettings().setSettingsMap(settings);
-        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QTRY_VERIFY(confirm->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QCOMPARE(named("messages")->property("queue").toList().size(), 1);
-        application->addPage();
-        QTRY_VERIFY(!confirm->property("visible").toBool());
-        QCOMPARE(named("messages")->property("queue").toList().size(), 0);
-        // MUST KILL: a fixed 50 ms wait to show that no queued question follows.
-        QTest::qWait(50);
-        QVERIFY(!confirm->property("visible").toBool());
-        QCOMPARE(named("shiftQuestion")->property("pending").toList().size(), 0);
-        QCOMPARE(session->historySize(), steps + 3);
-        QCOMPARE(application->files().session(*application->workspace().editingTarget())->historySize(), 1);
-        application->selectTab(0);
-        QTRY_COMPARE(application->files().session(*application->workspace().editingTarget()), session);
-        application->shiftTimesSettings().saveProfile(QStringLiteral("Start only"));
-        settings.insert(QStringLiteral("whichTimes"), 0);
-        application->shiftTimesSettings().setSettingsMap(settings);
-        application->shiftTimesSettings().loadProfile(QStringLiteral("Start only"));
-        QCOMPARE(application->shiftTimesSettings().settings().whichTimes, 1);
-        QCOMPARE(application->shiftTimesSettings().profileNames(), QStringList{QStringLiteral("Start only")});
+        QTRY_COMPARE(ms(0, true), 2500);
+        QCOMPARE(ms(0, false), 2000);
+        QVERIFY(!messageBox("messages") || !messageBox("messages")->property("visible").toBool());
+        time->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(item("gridPanel")->hasActiveFocus());
         application->editor().discard();
     }
 
-    void timingPanelRunsThePostprocessor()
+    void shiftTimesPanelShowsTheTargetForToVideo()
     {
         QVERIFY(application->openFile(episode));
-        auto *session = application->files().session(*application->workspace().editingTarget());
+        showShiftTimes();
+        QVERIFY(!visualItem("shiftByVideo")->property("enabled").toBool());
+        QVERIFY(!item("shiftMoveWhich")->isVisible());
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
-        auto settings = application->shiftTimesSettings().settingsMap();
-        settings.insert(QStringLiteral("postprocessor"), 16 | 1 | 2);
-        settings.insert(QStringLiteral("leadIn"), 200);
-        settings.insert(QStringLiteral("leadOut"), 300);
-        settings.insert(QStringLiteral("timeMs"), 5000);
-        application->shiftTimesSettings().setSettingsMap(settings);
-        QVERIFY(application->shiftTimes().isEmpty());
-        QCOMPARE(session->history().back().name, std::string("Shifting times"));
-        const auto *a = session->document().lines()[0];
-        QCOMPARE(a->start.value.microseconds() / 1000, 800);
-        QCOMPARE(a->end.value.microseconds() / 1000, 2300);
+        QTRY_VERIFY(visualItem("shiftByVideo")->property("enabled").toBool());
+        auto restore = qScopeGuard([&] { setShift("moveToVideoTime", false); setShift("timeMs", 2000); });
+        setShift("timeMs", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftByVideo"), "click"));
+        QVERIFY(application->shiftTimesSettings().settings().moveToVideoTime);
+        QTRY_VERIFY(item("shiftMoveWhich")->isVisible());
+        QTRY_VERIFY(item("shiftTarget")->isVisible());
+        QVERIFY(item("shiftTarget")->property("text").toString().startsWith(QStringLiteral("To the video at ")));
+    }
+
+    void shiftPresetsSaveApplyRenameAndDelete()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        auto &shift = application->shiftTimesSettings();
+        QCOMPARE(item("shiftPreset")->property("displayText").toString(), QStringLiteral("Preset: last used"));
+        setShift("whichTimes", 1);
+        QVERIFY(shift.savePreset(QStringLiteral("shift"), QStringLiteral("Start only")));
+        QCOMPARE(shift.shiftPreset(), QStringLiteral("Start only"));
+        QTRY_COMPARE(item("shiftPreset")->property("displayText").toString(), QStringLiteral("Preset: Start only"));
+        setShift("whichTimes", 0);
+        QVERIFY(shift.shiftPreset().isEmpty());
+        QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Start only")));
+        QCOMPARE(shift.settings().whichTimes, 1);
+        QVERIFY(shift.renamePreset(QStringLiteral("shift"), QStringLiteral("Start only"), QStringLiteral("Starts")));
+        QCOMPARE(shift.shiftPresetNames(), QStringList{QStringLiteral("Starts")});
+        QVERIFY(shift.postprocessorPresetNames().isEmpty());
+        QVERIFY(shift.deletePreset(QStringLiteral("shift"), QStringLiteral("Starts")));
+        QVERIFY(shift.shiftPresetNames().isEmpty());
+        setShift("whichTimes", 0);
     }
 
     void shiftTimesNewTimesTakeTheTimePerLetter()
@@ -12457,71 +12457,88 @@ private slots:
         settings.insert(QStringLiteral("whichLines"), 0);
         settings.insert(QStringLiteral("whichTimes"), 0);
         settings.insert(QStringLiteral("correctEndTimes"), 2);
-        settings.insert(QStringLiteral("postprocessor"), 0);
         application->shiftTimesSettings().setSettingsMap(settings);
         store.setValue(QStringLiteral("convert.timePerCharacter"), 200);
-        QVERIFY(application->shiftTimes().isEmpty());
+        QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
         const auto lines = session->document().lines();
         QCOMPARE(lines[1]->end.value.microseconds() / 1000, 3000);
         QCOMPARE(lines[2]->end.value.microseconds() / 1000, 7000);
     }
 
-    void timingPanelSwitchesBetweenItsModes()
+    void postprocessorPanelNamesTheRulesAndAppliesInOneStep()
     {
         QVERIFY(application->openFile(episode));
-        showShiftTimes();
-        auto *apply = item("shiftApply");
-        QVERIFY(item("shiftAmountSection")->isVisible());
-        QVERIFY(item("shiftVideoAudioSection")->isVisible());
-        QVERIFY(item("shiftProfile")->isVisible());
-        QVERIFY(!item("ppLeadSection")->isVisible());
-        QCOMPARE(apply->property("text").toString(), QStringLiteral("Shift"));
-        QVERIFY(visualItem("shiftModeShift")->property("checked").toBool());
-        QVERIFY(!visualItem("shiftFrames")->property("enabled").toBool());
-        QVERIFY(!item("shiftToVideo")->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftModePostprocessor"), "click"));
-        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 16);
-        QTRY_VERIFY(item("ppLeadSection")->isVisible());
-        QVERIFY(item("ppContinuousSection")->isVisible());
-        QVERIFY(item("ppSnapSection")->isVisible());
-        QVERIFY(item("shiftLinesSection")->isVisible());
-        QVERIFY(item("shiftWhichLines")->isVisible());
-        QVERIFY(!item("shiftWhichTimes")->isVisible());
-        QVERIFY(!item("shiftEndCorrection")->isVisible());
-        QVERIFY(!item("shiftAmountSection")->isVisible());
-        QVERIFY(!item("shiftVideoAudioSection")->isVisible());
-        QVERIFY(!item("shiftProfile")->isVisible());
-        QCOMPARE(apply->property("text").toString(), QStringLiteral("Run timing postprocessor"));
-        QVERIFY(visualItem("shiftModePostprocessor")->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(item("ppLeadIn"), "click"));
-        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 16 | 1);
-        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftModeShift"), "click"));
-        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 1);
-        QTRY_VERIFY(item("shiftAmountSection")->isVisible());
-        QCOMPARE(apply->property("text").toString(), QStringLiteral("Shift"));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto before = application->shiftTimesSettings().settingsMap();
+        auto restore = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
+        setShift("postprocessor", 1 | 2);
+        setShift("leadIn", 200);
+        setShift("leadOut", 300);
+        setShift("timeMs", 5000);
+        showPostprocessor();
+        QTRY_VERIFY(item("postprocessorVideoNeed")->isVisible());
+        QVERIFY(!item("postprocessorApply")->property("enabled").toBool());
+        QCOMPARE(item("postprocessorApply")->property("text").toString(), QStringLiteral("Apply"));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        QTRY_VERIFY(!item("postprocessorVideoNeed")->isVisible());
+        const int lines = int(session->document().lines().size());
+        QTRY_COMPARE(shiftPlan("postprocessorPreview").value(QStringLiteral("changed")).toInt(), lines);
+        const auto counts = shiftPlan("postprocessorPreview").value(QStringLiteral("ruleCounts")).toMap();
+        QCOMPARE(counts.value(QStringLiteral("leadIn")).toInt(), lines);
+        QCOMPARE(counts.value(QStringLiteral("leadOut")).toInt(), lines);
+        const auto first = shiftPlan("postprocessorPreview").value(QStringLiteral("rows")).toList().front().toMap();
+        QCOMPARE(first.value(QStringLiteral("rules")).toStringList(),
+                 (QStringList{QStringLiteral("leadIn"), QStringLiteral("leadOut")}));
+        QVERIFY(item("postprocessorPreviewStatus")->property("text").toString().startsWith(
+            QStringLiteral("Changes %1 of %2 line(s)").arg(lines).arg(lines)));
+        QCOMPARE(item("postprocessorApply")->property("text").toString(), QStringLiteral("Apply to %1 line(s)").arg(lines));
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(item("postprocessorApply"), "click"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Timing postprocessor"));
+        const auto *a = session->document().lines()[0];
+        QCOMPARE(a->start.value.microseconds() / 1000, 800);
+        QCOMPARE(a->end.value.microseconds() / 1000, 2300);
+        QVERIFY(application->editor().undo());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds() / 1000, 1000);
+        setShift("postprocessor", 4);
+        setShift("thresholdStart", 0);
+        setShift("thresholdEnd", 0);
+        QTRY_VERIFY(item("ppGapsNeed")->isVisible());
+        QTRY_COMPARE(item("postprocessorPreviewStatus")->property("text").toString(), QStringLiteral("No line changes"));
+        QVERIFY(!item("postprocessorApply")->property("enabled").toBool());
+        application->editor().discard();
     }
 
-    void timingPanelSectionsCollapseAndStayCollapsed()
+    void theTimingLayoutOpensThePostprocessorWithItsPreset()
     {
         QVERIFY(application->openFile(episode));
-        showShiftTimes();
-        QVERIFY(item("shiftTime")->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(item("shiftAmountSectionHeader"), "click"));
-        QTRY_VERIFY(!item("shiftTime")->isVisible());
-        QCOMPARE(application->settingsStore()->list("shiftTimes.collapsedSections"), QStringList{QStringLiteral("amount")});
-        // MUST KILL: focus leaves the header and comes back by Tab so that Space counts as a keyboard press.
-        item("editingGrid")->forceActiveFocus();
-        item("shiftAmountSectionHeader")->forceActiveFocus(Qt::TabFocusReason);
-        press(Qt::Key_Space);
-        QTRY_VERIFY(item("shiftTime")->isVisible());
-        QVERIFY(application->settingsStore()->list("shiftTimes.collapsedSections").isEmpty());
-        application->shiftTimesSettings().setCollapsedSections({QStringLiteral("lines")});
-        QTRY_VERIFY(!item("shiftWhichLines")->isVisible());
-        application->shiftTimesSettings().setCollapsedSections({});
-        QTRY_VERIFY(item("shiftWhichLines")->isVisible());
+        auto &shift = application->shiftTimesSettings();
+        const auto before = shift.settingsMap();
+        auto restore = qScopeGuard([&] {
+            shift.setSettingsMap(before);
+            shift.deletePreset(QStringLiteral("postprocessor"), QStringLiteral("TV"));
+            QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        });
+        QVERIFY(!item<QObject>("postprocessorDock")->property("isOpen").toBool());
+        setShift("postprocessor", 1);
+        setShift("leadIn", 150);
+        QVERIFY(shift.savePreset(QStringLiteral("postprocessor"), QStringLiteral("TV")));
+        shift.setTimingPreset(QStringLiteral("TV"));
+        setShift("leadIn", 10);
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Timing"))));
+        QTRY_VERIFY(item<QObject>("postprocessorDock")->property("isOpen").toBool());
+        QVERIFY(!item<QObject>("videoDock")->property("isOpen").toBool());
+        QCOMPARE(shift.settings().leadIn, 150);
+        QCOMPARE(shift.postprocessorPreset(), QStringLiteral("TV"));
+        QTRY_COMPARE(item("postprocessorPreset")->property("displayText").toString(),
+                     QStringLiteral("Preset: TV (Timing default)"));
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        QTRY_VERIFY(!item<QObject>("postprocessorDock")->property("isOpen").toBool());
     }
 
-    void timingPanelPicksStylesFromTheDocument()
+    void shiftTimesPanelPicksStylesFromTheDocument()
     {
         const QString path = dir.filePath(QStringLiteral("styles.ass"));
         {
@@ -12542,12 +12559,12 @@ private slots:
         }
         QVERIFY(application->openFile(path));
         showShiftTimes();
-        QVERIFY(!item("shiftStylesPick")->isVisible());
+        QVERIFY(!item("shiftLinesChooseStyles")->isVisible());
         setShift("whichLines", 5);
-        QTRY_VERIFY(item("shiftStylesPick")->isVisible());
-        auto *popup = item<QObject>("shiftStylesPopup");
+        QTRY_VERIFY(item("shiftLinesChooseStyles")->isVisible());
+        auto *popup = item<QObject>("shiftLinesStylesPopup");
         const auto open = [&](const QStringList &checked) {
-            QVERIFY(QMetaObject::invokeMethod(item("shiftStylesPick"), "click"));
+            QVERIFY(QMetaObject::invokeMethod(item("shiftLinesChooseStyles"), "click"));
             QTRY_VERIFY(popup->property("opened").toBool());
             QCOMPARE(popup->property("names").toStringList(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
             QCOMPARE(popup->property("checkedNames").toStringList(), checked);
@@ -12559,7 +12576,7 @@ private slots:
         open({});
         tick(QStringLiteral("Sign"));
         QCOMPARE(styles(), std::u8string(u8"Sign"));
-        QTRY_COMPARE(item("shiftStyles")->property("text").toString(), QStringLiteral("Sign"));
+        QTRY_COMPARE(item("shiftLinesStyles")->property("text").toString(), QStringLiteral("Sign"));
         QVERIFY(QMetaObject::invokeMethod(popup, "keep"));
         QTRY_VERIFY(!popup->property("visible").toBool());
         QCOMPARE(styles(), std::u8string(u8"Sign"));
@@ -12569,20 +12586,12 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(popup, "revert"));
         QTRY_VERIFY(!popup->property("visible").toBool());
         QCOMPARE(styles(), std::u8string(u8"Sign"));
-        setShift("styles", QStringLiteral("Typed, Sign"));
-        open({QStringLiteral("Sign")});
-        tick(QStringLiteral("Default"));
-        QVERIFY(QMetaObject::invokeMethod(popup, "revert"));
-        QTRY_VERIFY(!popup->property("visible").toBool());
-        QCOMPARE(styles(), std::u8string(u8"Typed, Sign"));
-        setShift("styles", QStringLiteral("Sign"));
         open({QStringLiteral("Sign")});
         tick(QStringLiteral("Sign"));
         QVERIFY(QMetaObject::invokeMethod(popup, "keep"));
         QTRY_VERIFY(!popup->property("visible").toBool());
         QCOMPARE(styles(), std::u8string());
         QCOMPARE(application->shiftTimesSettings().settings().whichLines, 5);
-        setShift("whichLines", 5);
         open({});
         tick(QStringLiteral("Sign"));
         QVERIFY(QMetaObject::invokeMethod(popup, "keep"));
@@ -12590,29 +12599,36 @@ private slots:
         setShift("forward", true);
         setShift("timeMs", 1000);
         auto *session = application->files().session(*application->workspace().editingTarget());
+        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), 1);
+        QCOMPARE(shiftPlan("shiftPreview").value(QStringLiteral("total")).toInt(), 1);
         QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QTRY_COMPARE(session->history().back().name, std::string("Shifting times"));
+        QTRY_COMPARE(session->history().back().name, std::string("Shift times"));
         QCOMPARE(session->document().lines()[0]->start.value.microseconds() / 1000, 2000);
         QCOMPARE(session->document().lines()[1]->start.value.microseconds() / 1000, 3000);
+        setShift("whichLines", 0);
+        setShift("styles", QString());
     }
 
-    void timingPanelShowsARefusalOverItsButton()
+    void shiftTimesPanelSaysWhyItCannotShift()
     {
         QVERIFY(application->openFile(episode));
         showShiftTimes();
-        auto *message = item("shiftMessage");
-        QVERIFY(!message->isVisible());
         setShift("whichLines", 5);
         setShift("styles", QString());
-        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QTRY_VERIFY(message->isVisible());
-        QCOMPARE(message->property("text").toString(), QStringLiteral("No styles selected for time shifting"));
-        QCOMPARE(message->property("color").value<QColor>(), ui::theme::current().roles.danger);
-        const auto top = [](QQuickItem *it) { return it->mapToScene(QPointF(0, 0)).y(); };
-        QVERIFY(top(message) < top(item("shiftApply")));
+        auto *status = item("shiftPreviewStatus");
+        QTRY_COMPARE(status->property("text").toString(), QStringLiteral("No styles selected for time shifting"));
+        QCOMPARE(status->property("color").value<QColor>(), ui::theme::current().roles.danger);
+        QVERIFY(!item("shiftApply")->property("enabled").toBool());
         setShift("whichLines", 0);
-        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        QTRY_VERIFY(!message->isVisible());
+        QTRY_VERIFY(item("shiftApply")->property("enabled").toBool());
+        QVERIFY(!item("shiftFramesNeed")->isVisible());
+        setShift("byFrames", true);
+        QTRY_VERIFY(item("shiftFramesNeed")->isVisible());
+        QCOMPARE(item("shiftFramesNeedCommand")->property("text").toString(), QStringLiteral("Open video…"));
+        setShift("byFrames", false);
+        setShift("correctEndTimes", 1);
+        QTRY_VERIFY(item("shiftEndNeed")->isVisible());
+        setShift("correctEndTimes", 0);
     }
 
     void shiftTimesScreenshots()
@@ -12626,13 +12642,17 @@ private slots:
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         QVERIFY(application->openFile(episode));
         showShiftTimes();
-        auto *dock = item<QObject>("timingDock");
-        dock->setProperty("isFloating", true);
+        showPostprocessor();
+        item<QObject>("timingDock")->setProperty("isFloating", true);
+        item<QObject>("postprocessorDock")->setProperty("isFloating", true);
         QTRY_VERIFY(item("timingPanel")->window() != window);
-        QQuickWindow *floating = item("timingPanel")->window();
-        floating->resize(340, 800);
+        QTRY_VERIFY(item("postprocessorPanel")->window() != window);
+        QQuickWindow *shiftWindow = item("timingPanel")->window();
+        QQuickWindow *ppWindow = item("postprocessorPanel")->window();
+        shiftWindow->resize(340, 800);
+        ppWindow->resize(620, 640);
         setShift("timeMs", 2350);
-        setShift("whichLines", 1);
+        setShift("whichLines", 0);
         setShift("correctEndTimes", 1);
         setShift("tagTimes", true);
         setShift("postprocessor", 1 | 4);
@@ -12646,26 +12666,14 @@ private slots:
             settings.setValue(QStringLiteral("appearance.theme"), theme);
             auto *controls = root->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
-            const auto shot = [&](const QString &state) {
+            const auto shot = [&](QQuickWindow *w, const QString &state) {
                 QTest::qWait(300);
-                QVERIFY(floating->grabWindow().save(out + QStringLiteral("/shift-times-") + state + QLatin1Char('-') + theme
-                                                    + QStringLiteral(".png")));
+                QVERIFY(w->grabWindow().save(out + QStringLiteral("/shift-times-") + state + QLatin1Char('-') + theme
+                                             + QStringLiteral(".png")));
             };
-            setShift("whichLines", 1);
-            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModeShift")), "click"));
-            QTRY_VERIFY(item("shiftAmountSection")->isVisible());
             item("shiftTime")->forceActiveFocus(Qt::TabFocusReason);
-            shot(QStringLiteral("shift"));
-            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModePostprocessor")), "click"));
-            QTRY_VERIFY(item("ppLeadSection")->isVisible());
-            shot(QStringLiteral("postprocessor"));
-            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModeShift")), "click"));
-            setShift("whichLines", 5);
-            setShift("styles", QString());
-            QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-            QTRY_VERIFY(item("shiftMessage")->isVisible());
-            shot(QStringLiteral("refusal"));
-            item<QQuickItem>("shiftMessage")->setProperty("text", QString());
+            shot(shiftWindow, QStringLiteral("shift"));
+            shot(ppWindow, QStringLiteral("postprocessor"));
         }
     }
 
@@ -18212,10 +18220,10 @@ private slots:
         QCOMPARE(editor.historyCursor(), int(steps + 2));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_I, Qt::ControlModifier);
-        QTRY_VERIFY(item<QObject>("shiftToAudio"));
-        QVERIFY(item<QObject>("shiftToAudio")->property("enabled").toBool());
+        QTRY_VERIFY(visualItem("shiftByAudio"));
+        QVERIFY(visualItem("shiftByAudio")->property("enabled").toBool());
         audio.closeAudio();
-        QVERIFY(!item<QObject>("shiftToAudio")->property("enabled").toBool());
+        QTRY_VERIFY(!visualItem("shiftByAudio")->property("enabled").toBool());
     }
 
     void audioFollowsTheVideo()
@@ -18621,7 +18629,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 268);
+        QCOMPARE(hotkeyRows().size(), 270);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -19268,7 +19276,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         auto *stop = visualItem("stopVideo");
         QVERIFY(stop);
-        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop\nShortcut can be set using Shift + Click"));
+        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop\nShift+click to set a shortcut"));
         QTRY_VERIFY_WITH_TIMEOUT(messageBox("messages") && messageBox("messages")->isVisible(), 20000);
         closeMismatchQuestion();
         QVERIFY(!messageBox("messages")->isVisible());
@@ -19280,7 +19288,7 @@ private slots:
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(h.accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("U"));
-        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (U)\nShortcut can be set using Shift + Click"));
+        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (U)\nShift+click to set a shortcut"));
         QTRY_VERIFY(window->isActive());
         grid->forceActiveFocus();
         const int frame = application->video().frame();
@@ -26755,7 +26763,7 @@ private slots:
             QCOMPARE(QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name), QLatin1String(b.accessibleName));
             QVERIFY(!button->property("tip").toString().isEmpty());
         }
-        QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShortcut can be set using Shift + Click"));
+        QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShift+click to set a shortcut"));
         setTheme("light");
         QCOMPARE(colours(), all(QStringLiteral("#74808b")));
         QVERIFY(shown(QColor(0x74, 0x80, 0x8B)));
@@ -26832,14 +26840,14 @@ private slots:
         QCOMPARE(item<QObject>("audioLink")->property("iconRole").toString(), QStringLiteral("link"));
         QCOMPARE(item<QObject>("audioLink")->property("text").toString(), QStringLiteral("Link the volume and stretch sliders"));
         for (const Expected &e : {Expected{"tag_b", "tag-bold", "Bold"}, Expected{"tag_s", "tag-strikeout", "Strikeout"},
-                                  Expected{"changeFont", "tag-font", "Font selection"},
+                                  Expected{"changeFont", "tag-font", "Choose font…"},
                                   Expected{"changeColour1", "colour-primary", "Primary colour"},
                                   Expected{"changeColour4", "colour-shadow", "Shadow colour"}}) {
             auto *button = visualItem(e.object);
             QVERIFY2(button, e.object);
             QCOMPARE(icon(button), QLatin1String(e.role));
-            QCOMPARE(name(button), QLatin1String(e.name));
-            QVERIFY(button->property("tip").toString().startsWith(QLatin1String(e.name)));
+            QCOMPARE(name(button), QString::fromUtf8(e.name));
+            QVERIFY(button->property("tip").toString().startsWith(QString::fromUtf8(e.name)));
         }
         auto *root = engine->rootObjects().first();
         const QString normal = ui::IconTheme::colours()[0].name().mid(1);
@@ -30473,11 +30481,6 @@ private slots:
             save(box, QStringLiteral("next-file-") + code);
             QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!box->isVisible());
-            QVERIFY(QMetaObject::invokeMethod(root, "runShiftTimes"));
-            QTRY_VERIFY(box->isVisible());
-            save(box, QStringLiteral("shift-times-") + code);
-            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
-            QTRY_VERIFY(!box->isVisible());
         }
     }
 
@@ -32912,19 +32915,6 @@ private slots:
         QCOMPARE(dummy->transientParent(), fsWindow);
         QVERIFY(QMetaObject::invokeMethod(dummy, "reject"));
         QTRY_VERIFY(!dummy->isVisible());
-        QVERIFY(becomesFocusWindow(fsWindow));
-        auto shiftSettings = application->shiftTimesSettings().settingsMap();
-        const auto shiftBefore = shiftSettings;
-        shiftSettings.insert(QStringLiteral("whichTimes"), 1);
-        shiftSettings.insert(QStringLiteral("postprocessor"), 0);
-        application->shiftTimesSettings().setSettingsMap(shiftSettings);
-        QVERIFY(QMetaObject::invokeMethod(root, "runShiftTimes"));
-        QObject *shift = nullptr;
-        QTRY_VERIFY((shift = messageBox("messages")) && shift->property("visible").toBool());
-        QCOMPARE(qobject_cast<QWindow *>(shift)->transientParent(), fsWindow);
-        QVERIFY(QMetaObject::invokeMethod(shift, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
-        QTRY_VERIFY(!shift->property("visible").toBool());
-        application->shiftTimesSettings().setSettingsMap(shiftBefore);
         QVERIFY(becomesFocusWindow(fsWindow));
         QCOMPARE(named("videoOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
         QCOMPARE(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);

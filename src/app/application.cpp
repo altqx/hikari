@@ -2525,8 +2525,8 @@ QVariantMap Application::saveDialogValuesFor(qulonglong id) const
                          : importPath != m_importPaths.end()            ? importPath->second
                                                                        : QString();
     const QString ext = extensionFor(session->document().format());
-    const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file ") +
-                           (ext == QStringLiteral("txt") ? QStringLiteral("(*.txt *.sub)") : QStringLiteral("(*.%1)").arg(ext));
+    const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file (%1)")
+                               .arg(ext == QStringLiteral("txt") ? QStringLiteral("*.txt *.sub") : QStringLiteral("*.%1").arg(ext));
     const QFileInfo info(path);
     return {{QStringLiteral("folder"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath())},
             {QStringLiteral("file"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath() + u'/' + info.completeBaseName())},
@@ -3536,12 +3536,12 @@ QVariantList Application::legacyAutosaves()
     if (files.empty()) {
         // FindFirstFileW always finds "." and ".."; elsewhere an empty folder counts as unreadable.
 #ifdef _WIN32
-        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"),
-                      QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
+        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open autosave"),
+                      QCoreApplication::translate("HikariSub.Session", "The autosave folder is empty."));
 #else
-        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"), QDir(folder).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
-                       ? QCoreApplication::translate("HikariSub.Session", "Cannot open auto save folder")
-                       : QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
+        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open autosave"), QDir(folder).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
+                       ? QCoreApplication::translate("HikariSub.Session", "The autosave folder cannot be opened.")
+                       : QCoreApplication::translate("HikariSub.Session", "The autosave folder is empty."));
 #endif
         return rows;
     }
@@ -3588,7 +3588,7 @@ bool Application::openLegacyAutosave(const QString &file)
 {
     auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()});
     if (!staged) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Session", "Open auto save"),
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Session", "Open autosave"),
                       QCoreApplication::translate("HikariSub.Session", "Failed to load autosave"));
         return false;
     }
@@ -3762,16 +3762,12 @@ bool Application::exactTimebase() const
            m_video->session().legacyTimebase().exact();
 }
 
-QString Application::shiftTimes()
+application::ShiftContext Application::shiftContext(application::LegacyTimebase &timebase) const
 {
-    auto *session = targetSession();
-    if (!session)
-        return QCoreApplication::translate("HikariSub.TimeShift", "No document open");
     const auto &video = m_video->session();
-    const bool hasVideo = video.state() == application::VideoSession::State::Ready;
-    const auto timebase = video.legacyTimebase();
     application::ShiftContext context;
-    if (hasVideo) {
+    if (video.state() == application::VideoSession::State::Ready) {
+        timebase = video.legacyTimebase();
         context.timebase = &timebase;
         context.keyframes = video.keyframes();
         if (const auto frame = video.reportedFrame()) {
@@ -3782,28 +3778,151 @@ QString Application::shiftTimes()
     }
     if (m_audio && m_audio->hasMark())
         context.audioMarkMs = m_audio->markMs();
-    auto settings = m_shiftTimes->settings();
+    return context;
+}
+
+application::ShiftTimesSettings Application::shiftRunSettings(const QString &tool) const
+{
+    auto settings = m_shiftTimes->runSettings(tool == QLatin1String("postprocessor")
+                                                  ? ui::ShiftTimesController::Tool::Postprocessor
+                                                  : ui::ShiftTimesController::Tool::Shift);
     settings.timePerCharacter = m_settings->integer("convert.timePerCharacter");
-    const auto result = application::shiftTimes(*session, settings, context, actionLines(*session));
+    return settings;
+}
+
+namespace {
+
+QString shiftFailureText(const application::ShiftFailure &failure)
+{
+    if (const auto *problem = std::get_if<application::ShiftProblem>(&failure)) {
+        switch (*problem) {
+        case application::ShiftProblem::NoStylesChosen:
+            return QCoreApplication::translate("HikariSub.TimeShift", "No styles selected for time shifting");
+        case application::ShiftProblem::NoLinesSelected:
+            return QCoreApplication::translate("HikariSub.TimeShift", "No lines selected for shifting");
+        case application::ShiftProblem::NoExactTimebase:
+            return QCoreApplication::translate("HikariSub.TimeShift", "Needs a video.");
+        }
+    }
+    return QCoreApplication::translate("HikariSub.TimeShift", "The times could not be shifted.");
+}
+
+}
+
+QString Application::applyShift(const QString &tool)
+{
+    auto *session = targetSession();
+    if (!session)
+        return QCoreApplication::translate("HikariSub.TimeShift", "No document open");
+    const bool postprocessor = tool == QLatin1String("postprocessor");
+    application::LegacyTimebase timebase;
+    const auto context = shiftContext(timebase);
+    const auto settings = shiftRunSettings(tool);
+    const auto visible = actionLines(*session);
+    if (const auto plan = application::planShift(*session, settings, context, visible);
+        plan && std::ranges::none_of(plan->lines, &application::ShiftedLine::changed))
+        return {};
+    const std::string step = postprocessor ? "Timing postprocessor" : "Shift times";
+    const auto result = application::shiftTimes(*session, settings, context, visible, step);
     m_editor->reloadFromSession();
     refreshViews();
-    if (!result) {
-        if (const auto *problem = std::get_if<application::ShiftProblem>(&result.error())) {
-            switch (*problem) {
-            case application::ShiftProblem::NoStylesChosen:
-                return QCoreApplication::translate("HikariSub.TimeShift", "No styles selected for time shifting");
-            case application::ShiftProblem::NoLinesSelected:
-                return QCoreApplication::translate("HikariSub.TimeShift", "No lines selected for shifting");
-            case application::ShiftProblem::NoExactTimebase:
-                return QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2");
-            }
-        }
-        return QCoreApplication::translate("HikariSub.TimeShift", "The times could not be shifted.");
-    }
+    if (!result)
+        return shiftFailureText(result.error());
     if (result->endCorrectionSkipped)
         m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.TimeShift", "Shift times"),
                       QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2"));
     return {};
+}
+
+QVariantMap Application::shiftPreview(const QString &tool)
+{
+    constexpr qsizetype kRows = 8;
+    QVariantMap out{{QStringLiteral("problem"), QString()}, {QStringLiteral("changed"), 0},
+                    {QStringLiteral("total"), 0},          {QStringLiteral("amount"), 0},
+                    {QStringLiteral("targetMs"), -1},      {QStringLiteral("rows"), QVariantList()},
+                    {QStringLiteral("more"), 0},           {QStringLiteral("ruleCounts"), QVariantMap()}};
+    auto *session = targetSession();
+    if (!session) {
+        out.insert(QStringLiteral("problem"), QCoreApplication::translate("HikariSub.TimeShift", "No document open"));
+        return out;
+    }
+    application::LegacyTimebase timebase;
+    const auto context = shiftContext(timebase);
+    const auto settings = shiftRunSettings(tool);
+    if (settings.moveToVideoTime && context.videoFrame) {
+        const auto at = settings.fromStartTime ? context.videoFrameStartMs : context.videoFrameEndMs;
+        out.insert(QStringLiteral("targetMs"), at ? *at : -1);
+    } else if (settings.moveToAudioTime && context.audioMarkMs) {
+        out.insert(QStringLiteral("targetMs"), *context.audioMarkMs);
+    }
+    const auto plan = application::planShift(*session, settings, context, actionLines(*session));
+    if (!plan) {
+        out.insert(QStringLiteral("problem"), shiftFailureText(plan.error()));
+        return out;
+    }
+    const auto &selected = session->selection().selected;
+    const auto lines = session->document().lines();
+    int changed = 0, leadIn = 0, leadOut = 0, gaps = 0, snapped = 0;
+    std::vector<const application::ShiftedLine *> shown;
+    for (const auto &l : plan->lines) {
+        if (!l.changed())
+            continue;
+        ++changed;
+        leadIn += (l.rules & application::LeadIn) != 0;
+        leadOut += (l.rules & application::LeadOut) != 0;
+        gaps += (l.rules & application::GapClosed) != 0;
+        snapped += (l.rules & (application::SnappedStart | application::SnappedEnd)) != 0;
+    }
+    for (const auto &l : plan->lines)
+        if (selected.contains(l.id) && std::ssize(shown) < kRows)
+            shown.push_back(&l);
+    if (shown.empty())
+        for (const auto &l : plan->lines)
+            if (l.changed() && std::ssize(shown) < kRows)
+                shown.push_back(&l);
+    QVariantList rows;
+    int shownChanged = 0;
+    for (const auto *l : shown) {
+        shownChanged += l->changed();
+        QStringList rules;
+        if (l->rules & application::LeadIn)
+            rules << QStringLiteral("leadIn");
+        if (l->rules & application::GapClosed)
+            rules << QStringLiteral("gapClosed");
+        if (l->rules & application::SnappedStart)
+            rules << QStringLiteral("snappedStart");
+        if (l->rules & application::LeadOut)
+            rules << QStringLiteral("leadOut");
+        if (l->rules & application::SnappedEnd)
+            rules << QStringLiteral("snappedEnd");
+        const auto &text = l->row < lines.size() ? lines[l->row]->text : std::u8string();
+        rows << QVariantMap{{QStringLiteral("line"), int(l->row) + 1},
+                            {QStringLiteral("startBefore"), l->startBefore},
+                            {QStringLiteral("endBefore"), l->endBefore},
+                            {QStringLiteral("start"), l->start},
+                            {QStringLiteral("end"), l->end},
+                            {QStringLiteral("changed"), l->changed()},
+                            {QStringLiteral("text"), QString::fromUtf8(reinterpret_cast<const char *>(text.data()),
+                                                                       qsizetype(text.size()))},
+                            {QStringLiteral("rules"), rules}};
+    }
+    out.insert(QStringLiteral("changed"), changed);
+    out.insert(QStringLiteral("total"), int(plan->lines.size()));
+    out.insert(QStringLiteral("amount"), plan->amount);
+    out.insert(QStringLiteral("frames"), settings.byFrames);
+    out.insert(QStringLiteral("rows"), rows);
+    out.insert(QStringLiteral("more"), changed - shownChanged);
+    out.insert(QStringLiteral("ruleCounts"), QVariantMap{{QStringLiteral("leadIn"), leadIn},
+                                                         {QStringLiteral("leadOut"), leadOut},
+                                                         {QStringLiteral("gapClosed"), gaps},
+                                                         {QStringLiteral("snapped"), snapped}});
+    return out;
+}
+
+bool Application::hasKeyframes() const
+{
+    return m_video->session().state() == application::VideoSession::State::Ready &&
+           !m_video->session().keyframes().empty();
 }
 
 application::LineVisible Application::actionLines(const application::EditSession &session) const
