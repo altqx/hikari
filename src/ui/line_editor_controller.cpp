@@ -759,7 +759,7 @@ QString LineEditorController::problemText() const
     if (!problem || s->invalidCommitPolicy() == application::InvalidCommitPolicy::Legacy)
         return {};
     return *problem == application::DraftProblem::EndBeforeStart
-               ? QCoreApplication::translate("HikariSub.Editor", "End is before Start.")
+               ? QCoreApplication::translate("HikariSub.Editor", "End time is before start time.")
                : QCoreApplication::translate("HikariSub.Editor", "Margins must be between 0 and 9999.");
 }
 
@@ -1411,7 +1411,7 @@ bool LineEditorController::save()
     if (!plan) {
         fail(plan.error() == application::SaveRefusal::InvalidDraft
                  ? problemText()
-                 : QCoreApplication::translate("HikariSub.Editor", "This document can't be saved here."));
+                 : QCoreApplication::translate("HikariSub.Editor", "This document can’t be saved here."));
         return false;
     }
     committed();
@@ -1426,7 +1426,7 @@ bool LineEditorController::save()
             fail(QCoreApplication::translate("HikariSub.Editor", "Another open document uses that file."));
             break;
         default:
-            fail(QCoreApplication::translate("HikariSub.Editor", "The document can't be saved right now."));
+            fail(QCoreApplication::translate("HikariSub.Editor", "The document can’t be saved right now."));
             break;
         }
         return false;
