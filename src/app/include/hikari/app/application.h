@@ -88,7 +88,7 @@
 #include <memory>
 #include <set>
 #include <tuple>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 
 namespace hikari::app {
 
@@ -1173,7 +1173,7 @@ private:
         bool translation = false;
         std::vector<core::LineId> lines;
         std::map<std::size_t, GrammarCheck> checks;
-        std::unordered_map<std::uint64_t, const core::LineRecord *> rows;
+        absl::flat_hash_map<std::uint64_t, const core::LineRecord *> rows;
         const core::Document *rowsOf = nullptr;
         std::uint64_t rowsRevision = 0;
         bool pumpQueued = false;

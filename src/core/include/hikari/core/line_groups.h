@@ -7,7 +7,7 @@
 #include "hikari/core/document.h"
 
 #include <optional>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <vector>
 
 namespace hikari::core {
@@ -20,7 +20,7 @@ void setGroupMarkers(LineRecord &line, std::vector<GroupMarker> memberships, boo
 
 // The description of each Line's innermost group, or nullopt for an orphan (a Line with a
 // marker that no description at that depth encloses). Lines outside every group are absent.
-std::unordered_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document);
+absl::flat_hash_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document);
 
 // The Lines `after` breaks: a new orphan, or a Line whose markers are unchanged but that is now in
 // another group than in `before`. Group commands regroup Lines by rewriting their markers.

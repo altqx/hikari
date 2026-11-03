@@ -13,7 +13,7 @@
 #include <functional>
 #include <map>
 #include <optional>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -169,8 +169,8 @@ private:
         using is_transparent = void;
         std::size_t operator()(u8sv s) const { return std::hash<u8sv>{}(s); }
     };
-    std::unordered_map<std::u8string, std::vector<std::uint32_t>, Hash, std::equal_to<>> m_declared;
-    std::unordered_map<std::u8string, std::uint32_t, Hash, std::equal_to<>> m_uris;
+    absl::flat_hash_map<std::u8string, std::vector<std::uint32_t>, Hash, std::equal_to<>> m_declared;
+    absl::flat_hash_map<std::u8string, std::uint32_t, Hash, std::equal_to<>> m_uris;
     std::vector<Namespace> m_kinds;
 };
 
