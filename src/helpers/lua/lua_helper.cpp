@@ -26,7 +26,7 @@ extern "C" {
 #include <type_traits>
 #include <utility>
 #include <chrono>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <variant>
 #include <fstream>
 #include <iterator>
@@ -1486,7 +1486,7 @@ int hikariSources(lua_State *L)
     checkLive(L);
     const auto &d = g_subs->lists.dialogues;
     const int offset = static_cast<int>(g_subs->lists.info.size() + g_subs->lists.styles.size()) + 1;
-    std::unordered_map<std::uint64_t, int> at;
+    absl::flat_hash_map<std::uint64_t, int> at;
     for (std::size_t k = 0; k < d.size(); ++k)
         if (d[k].id)
             at.emplace(d[k].id, offset + static_cast<int>(k));

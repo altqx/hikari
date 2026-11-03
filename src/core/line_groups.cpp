@@ -11,9 +11,9 @@ bool isMember(GroupMarker g)
 
 }
 
-std::unordered_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document)
+absl::flat_hash_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document)
 {
-    std::unordered_map<std::uint64_t, std::optional<LineId>> owners;
+    absl::flat_hash_map<std::uint64_t, std::optional<LineId>> owners;
     std::optional<LineId> current;
     for (const auto *line : document.lines()) {
         if (line->group == GroupMarker::Description) {
