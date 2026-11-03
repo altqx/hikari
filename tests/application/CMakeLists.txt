@@ -207,3 +207,7 @@ hikari_add_gtest(hikari_application_ai_providers_tests SOURCES ai_providers_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_aegisub_frame_times_tests SOURCES aegisub_frame_times_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_timecodes_file_tests SOURCES timecodes_file_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_timecodes_file_tests PRIVATE
+    HIKARI_TIMECODES_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timecodes")
