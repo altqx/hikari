@@ -5803,12 +5803,13 @@ ApplicationWindow {
         PanelDock {
             id: postprocessorDock
             objectName: "postprocessorDock"
-            uniqueName: "Postprocessor"
+            uniqueName: root.engineName("Postprocessor")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.TimeShift", "Timing postprocessor")
             Panel {
                 id: postprocessorPanel
                 objectName: "postprocessorPanel"
-                dockName: "Postprocessor"
+                dockName: root.engineName("Postprocessor")
                 minimumBodySize: postprocessorTool.minimumBodySize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TimeShift", "Timing postprocessor")
