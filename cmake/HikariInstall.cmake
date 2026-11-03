@@ -7,11 +7,11 @@ set(HIKARI_INSTALL_PLUGINSDIR plugins)
 set(HIKARI_INSTALL_QMLDIR qml)
 
 if(NOT WIN32)
-    set_target_properties(hikarisub hikari_media_helper hikari_lua_helper PROPERTIES
+    set_target_properties(hikarisub hikari_media_helper hikari_lua_helper hikari_plugin_helper PROPERTIES
         INSTALL_RPATH "$ORIGIN/${HIKARI_INSTALL_LIBDIR}" INSTALL_RPATH_USE_LINK_PATH OFF)
 endif()
 
-install(TARGETS hikarisub hikari_media_helper hikari_lua_helper
+install(TARGETS hikarisub hikari_media_helper hikari_lua_helper hikari_plugin_helper
     RUNTIME DESTINATION . COMPONENT hikari_app)
 
 # Installed as targets so CMake drops their build run paths.
@@ -49,6 +49,8 @@ install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyri
 install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
     DESTINATION licenses/unidic RENAME LICENSE COMPONENT hikari_app)
 install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/qtkeychain/copyright" DESTINATION licenses/qtkeychain
+    RENAME LICENSE COMPONENT hikari_app)
+install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/dav1d/copyright" DESTINATION licenses/dav1d
     RENAME LICENSE COMPONENT hikari_app)
 
 install(PROGRAMS "${HIKARI_HARPER_LS}" DESTINATION . COMPONENT hikari_app)

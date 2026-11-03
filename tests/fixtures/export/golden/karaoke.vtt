@@ -1,0 +1,21 @@
+WEBVTT
+
+STYLE
+::cue(.English) { color: #FFFFFF; font-family: "Noto Sans"; background-color: transparent; text-shadow: -1px -1px 0 #202020, 1px -1px 0 #202020, -1px 1px 0 #202020, 1px 1px 0 #202020; }
+::cue(.Kanji_Side) { color: #FFFFFF; font-family: "Noto Sans JP"; background-color: #000000; }
+::cue(.Romaji) { color: #C0E0FF; font-family: "Noto Sans"; font-weight: bold; background-color: transparent; text-shadow: -1px -1px 0 #002040, 1px -1px 0 #002040, -1px 1px 0 #002040, 1px 1px 0 #002040; }
+
+00:00:10.000 --> 00:00:13.000 line:3.47%,start
+<c.Romaji>kimi no koe</c>
+
+00:00:10.000 --> 00:00:13.000
+<c.English>Your voice</c>
+
+00:00:12.000 --> 00:00:15.000 line:50%,center position:3.12%,line-left align:left
+<c.Kanji_Side>君の声</c>
+
+00:00:13.000 --> 00:00:16.000 line:3.47%,start
+<c.Romaji>tooku made hibiku</c>
+
+00:00:13.000 --> 00:00:16.000
+<c.English>Echoes far away</c>

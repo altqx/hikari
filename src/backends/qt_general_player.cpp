@@ -71,6 +71,10 @@ bool nearSeek(const QVideoFrame &frame, std::int64_t requestedUs)
 QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject(parent), m_useAudioOutput(useAudioOutput)
 {
     m_player.setVideoSink(&m_sink);
+    // Qt's FFmpeg reports no error for a video stream it cannot decode (AV1 without a hardware decoder).
+    m_frameDeadline.setSingleShot(true);
+    m_frameDeadline.setInterval(std::chrono::seconds(5));
+    connect(&m_frameDeadline, &QTimer::timeout, this, &QtGeneralPlayer::missFrameDeadline);
     setOutputDevice({});
     connect(&m_player, &QMediaPlayer::mediaStatusChanged, this, &QtGeneralPlayer::onStatus);
     connect(&m_player, &QMediaPlayer::playbackStateChanged, this, [this] {
@@ -187,6 +191,7 @@ void QtGeneralPlayer::open(const std::string &path, Opened done)
     ++m_generation;
     ++m_epoch;
     m_clock = {};
+    m_mediaFrames = 0;
     if (auto previous = std::exchange(m_pendingOpen, nullptr))
         previous(std::unexpected(PlayerError::Stale));
     forgetSeek();
@@ -249,6 +254,8 @@ void QtGeneralPlayer::seek(std::int64_t us, Seeked done)
     m_clock.valid = false;
     m_pendingSeek = PendingSeek{m_generation, us, std::move(done)};
     m_seekFallback.start();
+    if (m_mediaFrames == 0)
+        m_frameDeadline.start();
     dropWaitingFrame();
     const bool stopped = m_player.playbackState() == QMediaPlayer::StoppedState;
     m_player.setPosition(us / 1000); // QMediaPlayer positions are milliseconds
@@ -257,10 +264,21 @@ void QtGeneralPlayer::seek(std::int64_t us, Seeked done)
         m_player.pause();
 }
 
+void QtGeneralPlayer::missFrameDeadline()
+{
+    if (m_mediaFrames > 0 || !m_player.hasVideo())
+        return;
+    m_seekFallback.stop();
+    if (auto seek = std::exchange(m_pendingSeek, std::nullopt))
+        seek->done(std::unexpected(PlayerError::NoVideoFrame));
+}
+
 void QtGeneralPlayer::onFrame(const QVideoFrame &frame)
 {
     if (!frame.isValid())
         return;
+    ++m_mediaFrames;
+    m_frameDeadline.stop();
     // Qt still hands over frames decoded before a setPosition.
     if (m_pendingSeek && frame.startTime() >= 0 && !nearSeek(frame, m_pendingSeek->requestedUs)) {
         m_heldBack = frame;
@@ -318,6 +336,7 @@ void QtGeneralPlayer::forgetSeek()
 {
     m_heldBack = {};
     m_seekFallback.stop();
+    m_frameDeadline.stop();
     if (auto seek = std::exchange(m_pendingSeek, std::nullopt))
         seek->done(std::unexpected(PlayerError::Stale));
 }

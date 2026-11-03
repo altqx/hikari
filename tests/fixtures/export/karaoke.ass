@@ -1,0 +1,19 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji,Noto Sans,48,&H00FFE0C0,&H000000FF,&H00402000,&H80000000,-1,0,0,0,100,100,0,0,1,2,1,8,30,30,25,1
+Style: English,Noto Sans,42,&H00FFFFFF,&H000000FF,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,2,30,30,25,1
+Style: Kanji Side,Noto Sans JP,44,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,3,2,0,4,40,30,25,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:10.00,0:00:13.00,Romaji,,0,0,0,karaoke,{\k30}ki{\k25}mi {\k40}no {\k55}ko{\k50}e
+Dialogue: 0,0:00:10.00,0:00:13.00,Romaji,,0,0,0,fx,{\k30}ki{\k25}mi {\k40}no {\k55}ko{\k50}e
+Dialogue: 0,0:00:10.00,0:00:13.00,English,,0,0,0,,Your voice
+Dialogue: 0,0:00:13.00,0:00:16.00,Romaji,,0,0,0,fx,{\kf45}to{\kf35}o{\kf60}ku {\K40}ma{\K50}de {\ko30}hi{\ko40}bi{\ko0}ku
+Dialogue: 0,0:00:13.00,0:00:16.00,English,,0,0,0,,Echoes far away
+Dialogue: 0,0:00:12.00,0:00:15.00,Kanji Side,,0,0,0,,{\k100}君{\k100}の{\k100}声

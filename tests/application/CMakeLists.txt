@@ -66,8 +66,6 @@ hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_style_manager_tests SOURCES style_manager_tests.cpp
     LIBRARIES hikari_application LABELS application)
-hikari_add_gtest(hikari_application_misspell_replacer_tests SOURCES misspell_replacer_tests.cpp
-    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_spell_checker_tests SOURCES spell_checker_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_include_directories(hikari_application_spell_checker_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
@@ -119,6 +117,8 @@ target_compile_definitions(hikari_application_karaoke_split_tests PRIVATE
     HIKARI_HYPHENATION_PATTERNS="${PROJECT_SOURCE_DIR}/src/ui/hyphenation/hyph_en_US.dic")
 hikari_add_gtest(hikari_application_kanji_timer_tests SOURCES kanji_timer_tests.cpp
     LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_kanji_timer_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_session_file_tests PRIVATE
@@ -164,6 +164,8 @@ target_compile_definitions(hikari_application_visual_transform_tests PRIVATE
     HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-measure-20261012/observations.jsonl")
 hikari_add_gtest(hikari_application_visual_perspective_tests SOURCES visual_perspective_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_perspective_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
@@ -188,6 +190,8 @@ hikari_add_gtest(hikari_application_video_timing_tests SOURCES video_timing_test
 target_compile_definitions(hikari_application_video_timing_tests PRIVATE
     HIKARI_VIDEO_TIMING_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/video-timing-cases.txt"
     HIKARI_VIDEO_TIMING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v6-video-timing-20261005/observations.jsonl")
+hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_translation_mode_tests PRIVATE

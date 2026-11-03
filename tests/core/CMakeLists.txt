@@ -68,3 +68,7 @@ hikari_add_gtest(hikari_core_ass_attachments_tests SOURCES ass_attachments_tests
     LIBRARIES hikari_core Qt6::Core LABELS core)
 target_compile_definitions(hikari_core_ass_attachments_tests PRIVATE
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments")
+
+hikari_add_gtest(hikari_core_export_tests SOURCES export_tests.cpp LIBRARIES hikari_core LABELS core)
+target_compile_definitions(hikari_core_export_tests PRIVATE
+    HIKARI_EXPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/export")

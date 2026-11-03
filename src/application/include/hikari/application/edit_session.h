@@ -61,6 +61,7 @@ struct DraftChange {
     std::optional<std::int64_t> layer;
     std::optional<std::u8string> style, actor, effect;
     std::optional<std::optional<std::int64_t>> startFrame, endFrame; // MicroDVD's authored frames
+    std::optional<std::vector<core::Extradata>> extra; // the draft's Line only, never the other selected Lines
     // The translation only followed the text or Style cells and was not typed;
     // several selected Lines then keep their own (commitDraftToSelected).
     bool translationCarried = false;

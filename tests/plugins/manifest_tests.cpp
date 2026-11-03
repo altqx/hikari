@@ -116,6 +116,54 @@ TEST(PluginManifest, SchemaFailuresNameTheField)
     EXPECT_EQ(problem(key).at, "/publicKey");
 }
 
+TEST(PluginManifest, MarketplaceFieldsRead)
+{
+    Json json = minimal();
+    json["summary"] = "Greets every line";
+    json["icon"] = "media/icon.svg";
+    json["screenshots"] = *Json::parse(R"([{"path": "media/one.png", "caption": "The panel"},
+        {"path": "two.jpg", "caption": "Afterwards"}])");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << " " << m.error().detail;
+    EXPECT_EQ(m->summary, "Greets every line");
+    EXPECT_EQ(m->icon, "media/icon.svg");
+    ASSERT_EQ(m->screenshots.size(), 2u);
+    EXPECT_EQ(m->screenshots[1].path, "two.jpg");
+    EXPECT_EQ(m->screenshots[1].caption, "Afterwards");
+    EXPECT_TRUE(parse(minimal())->screenshots.empty());
+}
+
+TEST(PluginManifest, MarketplaceFieldsFollowTheSchema)
+{
+    const auto at = [](std::string_view key, Json value) {
+        Json json = minimal();
+        json[std::string(key)] = std::move(value);
+        return problem(json).at;
+    };
+    EXPECT_EQ(at("summary", ""), "/summary");
+    EXPECT_EQ(at("summary", std::string(101, 'a')), "/summary");
+    EXPECT_EQ(at("summary", "two\nlines"), "/summary");
+    EXPECT_EQ(at("summary", "tab\there"), "/summary");
+    EXPECT_EQ(at("summary", "del\x7F"), "/summary");
+    for (const char *icon : {"icon.jpg", "icon.PNG", "../icon.png", "/icon.svg", "media/.png"})
+        EXPECT_EQ(at("icon", icon), "/icon") << icon;
+    EXPECT_EQ(at("icon", std::string(197, 'a') + ".png"), "/icon");
+    EXPECT_EQ(at("screenshots", Json::array()), "/screenshots");
+    Json seven = Json::array();
+    for (int i = 0; i < 7; ++i)
+        seven.asArray().push_back(*Json::parse(R"({"path": "s.png", "caption": "c"})"));
+    EXPECT_EQ(at("screenshots", seven), "/screenshots");
+    EXPECT_EQ(at("screenshots", *Json::parse(R"([{"path": "s.png"}])")), "/screenshots/0");
+    EXPECT_EQ(at("screenshots", *Json::parse(R"([{"path": "s.jpeg", "caption": "c"}])")), "/screenshots/0/path");
+    EXPECT_EQ(at("screenshots", *Json::parse(R"([{"path": "s.svg", "caption": "c"}])")), "/screenshots/0/path");
+    EXPECT_EQ(at("screenshots", *Json::parse(R"([{"path": "s.png", "caption": ""}])")), "/screenshots/0/caption");
+    EXPECT_EQ(at("screenshots", *Json::parse(R"([{"path": "s.png", "caption": "a\u0001"}])")), "/screenshots/0/caption");
+    Json longCaption = *Json::parse(R"([{"path": "s.png"}])");
+    longCaption.asArray()[0]["caption"] = std::string(121, 'c');
+    EXPECT_EQ(at("screenshots", longCaption), "/screenshots/0/caption");
+    EXPECT_EQ(at("screenshots", *Json::parse(R"([{"path": "s.png", "caption": "c", "alt": "x"}])")), "/screenshots/0/alt");
+}
+
 TEST(PluginManifest, ANewerApiIsRefusedWithTheNumberItNeeds)
 {
     Json json = minimal();

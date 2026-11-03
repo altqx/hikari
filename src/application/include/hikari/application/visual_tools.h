@@ -210,8 +210,10 @@ public:
     const core::LineRecord &before(core::LineId line) const;
     // Stages a target's text, or its translation (TLMode's translated role).
     void stage(core::LineId line, std::u8string text, bool translation = false);
-    bool hasChanges() const { return !m_staged.empty(); }
-    // A staged text that differs from the target's as the gesture began.
+    // Stages a target's whole [Aegisub Extradata] list.
+    void stageExtradata(core::LineId line, std::vector<core::Extradata> extra);
+    bool hasChanges() const { return !m_staged.empty() || !m_stagedExtra.empty(); }
+    // A staged text or extradata list that differs from the target's as the gesture began.
     bool changesAnyLine() const;
     std::optional<std::u8string> staged(core::LineId line, bool translation = false) const;
     // The staged texts put into a copy of the Document.
@@ -220,7 +222,7 @@ public:
     // over while playing), the targets with their staged texts.
     core::Document preview(const core::Document &document, std::int64_t timeMs, bool playing) const;
 
-    // One history step with every staged text. A pending draft on a target
+    // One history step with every staged text and extradata list. A pending draft on a target
     // is committed first, as every command does (its own step); the gesture
     // is refused when anything else changed the Document since it began.
     // Without staged changes nothing is recorded.
@@ -233,6 +235,7 @@ private:
     std::uint64_t m_revision = 0;
     std::map<core::LineId, core::LineRecord> m_before;
     std::map<std::pair<core::LineId, bool>, std::u8string> m_staged;
+    std::map<core::LineId, std::vector<core::Extradata>> m_stagedExtra;
 };
 
 // Lines picked explicitly and kept by identity; with nothing picked a tool

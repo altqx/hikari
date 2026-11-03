@@ -6,6 +6,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_reference.cpp
     application_tab_menu.cpp
     application_karaoke.cpp
+    application_export.cpp
     automation_shell.cpp include/hikari/app/automation_shell.h
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
@@ -20,7 +21,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_features.cpp include/hikari/app/ai_features.h
-    plugin_manager.cpp include/hikari/app/plugin_manager.h)
+    plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_ai hikari_plugins hikari_api
@@ -29,11 +30,12 @@ target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 target_link_libraries(hikari_composition PRIVATE Qt6::CorePrivate)
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
-    HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
+    HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_BUILD_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
     HIKARI_BUILD_HARPER_LS="${HIKARI_HARPER_LS}" HIKARI_HARPER_VERSION="${HIKARI_HARPER_VERSION}"
     HIKARI_BUILD_UNIDIC="${HIKARI_UNIDIC_DIR}"
     HIKARI_VERSION="${HIKARI_VERSION}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
-add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_automation_stage)
+add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_plugin_helper hikari_automation_stage)
 if(HIKARI_AI_LOCAL_SIDECAR)
     target_compile_definitions(hikari_composition PRIVATE HIKARI_AI_LOCAL_SIDECAR="${HIKARI_AI_SIDECAR_FILE}")
     add_dependencies(hikari_composition hikari_ai_sidecar)

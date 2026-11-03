@@ -1,0 +1,10 @@
+00:00:20:SHIBUYA STATION|Exit A3|West gate
+00:00:21:SHIBUYA STATION|Exit A3|West gate|Moving sign
+00:00:22:SHIBUYA STATION|Exit A3|West gate|Moving sign|Clipped half
+00:00:23:SHIBUYA STATION|Exit A3|West gate|Top right note|Clipped half
+00:00:24:Top right note|Clipped half|Ticker news
+00:00:25:Top right note|Ticker news
+00:00:26:Centre reset styled|Ticker news
+00:00:28:
+00:00:29:Unclosed {brace|stays
+00:00:30:

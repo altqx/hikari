@@ -1236,7 +1236,6 @@
     "style-manager",
     "search-tool",
     "select-lines",
-    "misspell-replacer",
     "grid-menu",
     "tab-menu"
    ]
@@ -2413,7 +2412,7 @@
    "legacy": [],
    "surfaces": [
     "style-manager",
-    "menu:file"
+    "settings-dialog"
    ]
   },
   {
@@ -2557,18 +2556,6 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ]
-  },
-  {
-   "role": "multireplace",
-   "file": "multireplace.svg",
-   "label": "Fix minor errors",
-   "accent": true,
-   "mirror": true,
-   "legacy": [],
-   "surfaces": [
-    "menu:subtitles",
-    "misspell-replacer"
    ]
   },
   {
@@ -3419,7 +3406,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "grid-menu"
+    "grid-menu",
+    "menu:video"
    ]
   },
   {
@@ -3469,7 +3457,7 @@
   {
    "role": "paste-translation",
    "file": "paste-translation.svg",
-   "label": "Paste translation text",
+   "label": "Paste translation from a file…",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3481,7 +3469,7 @@
   {
    "role": "translation-shift",
    "file": "translation-shift.svg",
-   "label": "Dialogue shifting window",
+   "label": "Translation matching…",
    "accent": true,
    "mirror": true,
    "legacy": [],
@@ -3542,8 +3530,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "CX4 #580"
+   ]
   },
   {
    "role": "fps",
@@ -4065,7 +4052,6 @@
     "choose-styles",
     "columns",
     "search-tool",
-    "fix-minor-errors",
     "settings-import"
    ]
   },
@@ -4078,8 +4064,7 @@
    "legacy": [],
    "surfaces": [
     "menu:file"
-   ],
-   "pending": "EX1 #448"
+   ]
   },
   {
    "role": "plugins",

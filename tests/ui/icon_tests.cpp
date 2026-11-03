@@ -225,7 +225,7 @@ private slots:
                                  "pick-lines", "clear", "move-to-top", "move-up", "move-down", "move-to-bottom",
                                  "panel-menu", "add", "remove", "edit", "duplicate", "delete", "import", "refresh",
                                  "filter", "edit-copy", "edit-cut", "edit-paste", "folder-open", "find-in-files",
-                                 "show-in-folder", "compare", "reference", "extract-subtitles", "multireplace",
+                                 "show-in-folder", "compare", "reference", "extract-subtitles",
                                  "close-video", "frame-snapshot", "zoom-reset", "volume", "match-previous",
                                  "match-next", "unload", "run-script", "settings-video", "settings-audio",
                                  "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass",
@@ -246,7 +246,7 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        QCOMPARE(pending, 10);
+        QCOMPARE(pending, 8);
     }
 
     static bool isStandInGlyph(const QString &literal)
@@ -792,7 +792,7 @@ Rectangle {
         const QSet<QString> expected{
             QStringLiteral("undo"), QStringLiteral("redo"), QStringLiteral("undo-to-last-save"),
             QStringLiteral("sort"), QStringLiteral("sort-selected"), QStringLiteral("select-lines"),
-            QStringLiteral("pick-lines"), QStringLiteral("multireplace"), QStringLiteral("edit-paste"),
+            QStringLiteral("pick-lines"), QStringLiteral("edit-paste"),
             QStringLiteral("editor"), QStringLiteral("script-properties"), QStringLiteral("spellchecker"),
             QStringLiteral("last-session"), QStringLiteral("find-replace"),
             QStringLiteral("log"), QStringLiteral("make-tree"), QStringLiteral("tree-add-lines"),

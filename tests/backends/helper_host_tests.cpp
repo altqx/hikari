@@ -67,6 +67,36 @@ TEST_F(HelperHostTest, HandshakeThenRoundTrip)
     EXPECT_EQ(host->outstanding(), 0u);
 }
 
+TEST_F(HelperHostTest, AnEventWaitsBehindRunningWorkAndReachesTheEventHandler)
+{
+    auto host = startHelper({QStringLiteral("--events")});
+    ASSERT_TRUE(waitFor([&] { return host->state() == HelperHost::State::Ready; }));
+    std::vector<std::string> order;
+    auto record = [&order](std::expected<Event, HostError> e) {
+        if (e && e->kind == Kind::Reply)
+            order.push_back(textOf(e->payload));
+        else if (e && e->kind == Kind::Terminal)
+            order.push_back(e->outcome == Outcome::Ok ? "ok" : "not ok");
+    };
+    ASSERT_TRUE(host->request(1, bytesOf("echo:first"), record));
+    ASSERT_TRUE(host->push(2, bytesOf("saved"), record));
+    ASSERT_TRUE(host->request(1, bytesOf("echo:last"), record));
+    ASSERT_TRUE(waitFor([&] { return order.size() == 6; }));
+    EXPECT_EQ(order, (std::vector<std::string>{"first", "ok", "event:saved", "ok", "last", "ok"}));
+    EXPECT_EQ(host->outstanding(), 0u);
+}
+
+TEST_F(HelperHostTest, AHelperWithoutAnEventHandlerEndsAnEventUnsupported)
+{
+    auto host = startHelper();
+    ASSERT_TRUE(waitFor([&] { return host->state() == HelperHost::State::Ready; }));
+    Results r;
+    ASSERT_TRUE(host->push(1, bytesOf("saved"), r.handler()));
+    ASSERT_TRUE(waitFor([&] { return r.resolved(); }));
+    ASSERT_EQ(r.events.size(), 1u);
+    EXPECT_EQ(r.events[0]->outcome, Outcome::Unsupported);
+}
+
 TEST_F(HelperHostTest, IncompatibleHelperIsRefusedBeforeAnyWork)
 {
     auto host = startHelper({QStringLiteral("--version"), QStringLiteral("2")});

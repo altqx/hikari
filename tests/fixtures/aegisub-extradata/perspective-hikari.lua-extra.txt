@@ -1,0 +1,1 @@
+{\pos(320,200)}Perspective	_aegi_perspective_ambient_plane=80.00;120.00|560.00;120.00|560.00;250.00|80.00;250.00
