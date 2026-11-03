@@ -17,10 +17,11 @@ struct PackageFile {
 };
 
 struct PackageProblem {
-    enum class Kind { TooLarge, BadPath, NoManifest, Manifest, MissingMain };
+    enum class Kind { TooLarge, BadPath, NoManifest, Manifest, MissingMain, Media };
     Kind kind = Kind::BadPath;
     std::string path;
     ManifestProblem manifest;
+    std::string detail; // Media: English, technical
 };
 
 struct Package {
@@ -29,7 +30,8 @@ struct Package {
 };
 
 // Refuses more than kMaxPackageFiles files or kMaxPackageBytes unpacked, and any path that is
-// absolute, climbs out, repeats another case-insensitively, or that Windows cannot hold.
+// absolute, climbs out, repeats another case-insensitively, or that Windows cannot hold, and an
+// icon, screenshot or README.md that breaks the marketplace's media rules (docs/plugins.md).
 std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion);
 
 }

@@ -9,6 +9,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 - Entry names are `/`-separated paths of letters, digits, spaces and `_ . - +`. HikariSub refuses an absolute path, `.` or `..`, a backslash or colon, a name ending in a dot or space, a Windows device name (`CON`, `NUL`, `COM1`…), two names that differ only in case, a file whose name is also a folder, and a link.
 - A package holds at most 4096 files and 64 MB unpacked.
 - `main` must be one of the package's files.
+- The marketplace's media rules below hold for `icon`, `screenshots` and `README.md`.
 
 ## The manifest
 
@@ -23,11 +24,27 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `authors` | yes | One or more names. The card's "author" is a list, as in research §6. |
 | `tier` | no | `restricted` (the default) or `unrestricted`, which needs the user's full trust. |
 | `description`, `license`, `homepage` | no | `license` is an SPDX expression; `homepage` is `https://`. |
+| `summary` | no | One line, at most 100 characters and no control characters, for the marketplace's cards and the plugin page. |
+| `icon` | no | A package file: a 256 × 256 px PNG or a square SVG. |
+| `screenshots` | no | One to six `{path, caption}` objects. `path` is a package `.png` or `.jpg`; `caption`, at most 120 characters, shows under the image and is its alt text. |
 | `publicKey` | no | The author's minisign public key, the base64 line of its `.pub`. |
 | `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`). |
 | `contributes` | no | `commands` and `panels` (`id`, `title`), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
 
 Beyond the schema, an id repeated within `files`, `commands`, `panels` or `settings` is refused, and so is a setting default outside its `options` or its `minimum`/`maximum`.
+
+### Media and README
+
+The registry CI enforces these rules too ([#664](https://github.com/altqx/hikari/issues/664)). A breach refuses the package and names the file.
+
+- **Paths.** `icon` and every screenshot `path` name a file in the package, with the case matching exactly. A screenshot path appears once.
+- **PNG icon.** A real PNG (its signature and an `IHDR`), exactly 256 × 256 px, and at most 256 KiB.
+- **SVG icon.** At most 64 KiB of UTF-8 XML whose root is `<svg>` with a `viewBox` as wide as it is tall. It holds no `<script>` or `<foreignObject>`, no `on…` attribute, no `href` or `xlink:href` except `#…`, and no `url(` except `url(#…)`. Character references count as what they stand for, and a DOCTYPE with an internal subset is refused, since it can add attributes.
+- **Screenshots.** A PNG, or a JPEG named `.jpg`, whose signature matches its extension. 16:9, from 1280 × 720 to 1920 × 1080 px, allowing for rounding (`abs(w × 9 − h × 16) ≤ 16`), and at most 2 MiB each. HikariSub reads the size from the `IHDR` or the JPEG frame header and decodes nothing.
+- **Together.** The icon and screenshots come to at most 8 MiB, within the 64 MB package limit.
+- **`README.md`.** Optional, at the package root under exactly that name: UTF-8 and at most 128 KiB. HikariSub checks only that. The site and the app render it as CommonMark with GFM tables, strikethrough and task lists. Raw HTML is escaped, images show as links, links keep only `https:`, `http:` and `mailto:` targets, and relative links become plain text.
+
+A marketplace listing also needs `summary`, `README.md` and an SPDX `license`. The registry checks that, and HikariSub doesn't.
 
 ## Signatures
 

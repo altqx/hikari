@@ -721,6 +721,31 @@ TEST(VisualGesture, OneUndoStepPerGesture)
     EXPECT_EQ(session.historySize(), before);
 }
 
+TEST(VisualGesture, ExtradataIsCommittedWithTheTextInOneStep)
+{
+    EditSession session(load(kScript));
+    const auto all = ids(session);
+    const std::size_t steps = session.historySize();
+    const std::vector<core::Extradata> plane{{u8"_aegi_perspective_ambient_plane", u8"1.00;2.00|3.00;2.00|3.00;4.00|1.00;4.00"}};
+    auto g = Gesture::begin(session, {all[0]}, "Perspective");
+    ASSERT_TRUE(g);
+    g->stageExtradata(all[0], plane);
+    EXPECT_TRUE(g->changesAnyLine());
+    EXPECT_TRUE(line(session, all[0])->extra.empty());
+    g->stage(all[0], u8"{\\pos(1,1)}first");
+    ASSERT_TRUE(g->commit(session));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(line(session, all[0])->extra, plane);
+    EXPECT_EQ(line(session, all[0])->text, u8"{\\pos(1,1)}first");
+    ASSERT_TRUE(session.undo());
+    EXPECT_TRUE(line(session, all[0])->extra.empty());
+    EXPECT_EQ(line(session, all[0])->text, u8"first");
+    auto same = Gesture::begin(session, {all[0]}, "Perspective");
+    ASSERT_TRUE(same);
+    same->stageExtradata(all[0], {});
+    EXPECT_FALSE(same->changesAnyLine());
+}
+
 TEST(VisualGesture, PreviewHoldsOnlyTheShownLines)
 {
     EditSession session(load(kScript));

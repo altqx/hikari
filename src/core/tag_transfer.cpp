@@ -4,12 +4,14 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <functional>
 #include <limits>
+#include <system_error>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -1706,6 +1708,62 @@ bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation)
         return false;
     const auto draft = readTranslation(tags, translation);
     return draft.carried && nextUnplacedRun(tags, draft.placements) != 0;
+}
+
+TranslationDraft readTranslationInOrder(const OriginalTags &tags, std::u16string_view translation,
+                                        std::span<const int> order)
+{
+    auto draft = readTranslation(tags, translation, order);
+    relabelRuns(tags, draft, order);
+    return draft;
+}
+
+namespace {
+
+std::u8string translationHash(std::u8string_view translation)
+{
+    std::uint64_t hash = 0xcbf29ce484222325;
+    for (const char8_t c : translation)
+        hash = (hash ^ c) * 0x100000001b3;
+    std::array<char, 16> hex{};
+    const auto end = std::to_chars(hex.data(), hex.data() + hex.size(), hash, 16).ptr;
+    return std::u8string(16 - static_cast<std::size_t>(end - hex.data()), u8'0') +
+           std::u8string(reinterpret_cast<const char8_t *>(hex.data()), static_cast<std::size_t>(end - hex.data()));
+}
+
+}
+
+std::optional<std::u8string> runOrderValue(const OriginalTags &tags, std::u8string_view translation,
+                                           std::span<const int> order)
+{
+    const auto text = toUtf16(translation);
+    if (order.empty() || readTranslationInOrder(tags, text, order).placements == readTranslation(tags, text).placements)
+        return std::nullopt;
+    std::u8string value = u8"1;" + translationHash(translation) + u8";";
+    for (std::size_t i = 0; i < order.size(); ++i) {
+        const auto number = std::to_string(order[i]);
+        value += (i ? u8"," : u8"") + std::u8string(number.begin(), number.end());
+    }
+    return value;
+}
+
+std::optional<std::vector<int>> savedRunOrder(std::u8string_view value, std::u8string_view translation)
+{
+    const std::u8string prefix = u8"1;" + translationHash(translation) + u8";";
+    if (!value.starts_with(prefix))
+        return std::nullopt;
+    std::vector<int> order;
+    const std::string_view list(reinterpret_cast<const char *>(value.data()) + prefix.size(), value.size() - prefix.size());
+    for (std::size_t at = 0; at <= list.size();) {
+        const std::size_t comma = std::min(list.find(',', at), list.size());
+        int run = 0;
+        const auto [end, error] = std::from_chars(list.data() + at, list.data() + comma, run);
+        if (error != std::errc{} || end != list.data() + comma || run < 1)
+            return std::nullopt;
+        order.push_back(run);
+        at = comma + 1;
+    }
+    return order;
 }
 
 }

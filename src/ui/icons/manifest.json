@@ -3470,7 +3470,7 @@
   {
    "role": "paste-translation",
    "file": "paste-translation.svg",
-   "label": "Paste translation text",
+   "label": "Paste translation from a file…",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3482,7 +3482,7 @@
   {
    "role": "translation-shift",
    "file": "translation-shift.svg",
-   "label": "Dialogue shifting window",
+   "label": "Translation matching…",
    "accent": true,
    "mirror": true,
    "legacy": [],
@@ -3543,8 +3543,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "CX4 #580"
+   ]
   },
   {
    "role": "fps",
