@@ -68,8 +68,8 @@ if(WIN32)
     add_subdirectory(directshow)
 endif()
 
-add_library(hikari_ai STATIC ai_wire.cpp include/hikari/backends/ai_wire.h ai_network.cpp
-    include/hikari/backends/ai_network.h ai_keychain.cpp include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp
+add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_config_store.h ai_requests.cpp
+    include/hikari/backends/ai_requests.h ai_keychain.cpp include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp
     include/hikari/backends/ai_sidecar_host.h ai_sidecar_download.cpp include/hikari/backends/ai_sidecar_download.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
