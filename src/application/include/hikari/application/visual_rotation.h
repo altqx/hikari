@@ -88,6 +88,7 @@ public:
     void reset(VisualHost &host) override;
     bool keepsStateAfterCommit() const override { return true; }
     void selected(VisualHost &host) override;
+    bool takesMiddleButton() const override { return true; }
     void pointer(const Pointer &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolValue> values(const VisualHost &host) const override;

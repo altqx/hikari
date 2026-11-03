@@ -4,6 +4,7 @@
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/core/text_projection.h"
+#include "hikari/regex/regex.h"
 #include "lua_native.h"
 
 extern "C" {
@@ -21,7 +22,6 @@ extern "C" {
 #include <filesystem>
 #include <limits>
 #include <map>
-#include <regex>
 #include <system_error>
 #include <type_traits>
 #include <utility>
@@ -194,8 +194,9 @@ int addStackTrace(lua_State *L)
     std::string message = err;
     if (lua_gettop(L))
         lua_pop(L, 1);
-    static const std::regex location("^\\[string (.*)\\]:[0-9]+: ");
-    message = std::regex_replace(message, location, "", std::regex_constants::format_first_only);
+    static const hikari::regex::Pattern location =
+        *hikari::regex::Pattern::compile("^\\[string (.*)\\]:[0-9]+: ", hikari::regex::Syntax::EcmaScript);
+    message = location.replaceFirst(message, "");
 
     std::string frames;
     lua_Debug ar;

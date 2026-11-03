@@ -336,10 +336,10 @@ constexpr NameRow kNames[] = {
         {1022, "Play to the end"},
         {1026, "Add lead-in"},
         {1027, "Add lead-out"},
-        {3008, "Border color"},
-        {3006, "Primary color"},
-        {3007, "Secondary color for karaoke"},
-        {3009, "Shadow color"},
+        {3008, "Border colour"},
+        {3006, "Primary colour"},
+        {3007, "Secondary colour for karaoke"},
+        {3009, "Shadow colour"},
         {3000, "Font selection"},
         {3002, "Strikethrough"},
         {3001, "Underline"},
@@ -475,11 +475,10 @@ constexpr NameRow kNames[] = {
         {5006, "Undo"},
         {5007, "Undo to last save"},
         {5043, "Zoom video"},
-        {5044, "Turn off video zoom"},
+        {5044, "Reset zoom and pan"},
         {5301, "Open new tab"},
         {5302, "Close current tab"},
         {5168, "Clean styles of ASS file"},
-        {5012, "Fix minor errors (experimental)"},
         {5011, "Find next"},
         {5055, "Load last session"},
         {5042, "Next frame"},
@@ -868,7 +867,8 @@ bool isRetiredHotkey(int id)
            || id == 5039
            || id == 5104
            || (id >= 5031 && id <= 5035)
-           || id == 5109;
+           || id == 5109
+           || id == 5012;
 }
 
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)
@@ -1280,7 +1280,8 @@ bool shownByFilter(int mode, const HotkeyList::Row &r)
     case 4: return r.key.type == EditorHotkey;
     case 5: return r.key.type == VideoHotkey;
     case 6: return r.key.type == AudioHotkey;
-    case 7: return r.key.id >= kFirstScriptHotkey;
+    case 7: return r.key.id >= kFirstScriptHotkey && !isPluginCommand(r.name);
+    case 8: return r.key.id >= kFirstScriptHotkey && isPluginCommand(r.name);
     default: return true;
     }
 }

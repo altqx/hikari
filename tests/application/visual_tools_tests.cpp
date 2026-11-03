@@ -4,6 +4,7 @@
 #include "hikari/application/visual_view.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
+#include "hikari/regex/regex.h"
 
 #include <gtest/gtest.h>
 
@@ -18,7 +19,6 @@
 #include <fstream>
 #include <map>
 #include <optional>
-#include <regex>
 #include <set>
 #include <sstream>
 #include <string>
@@ -440,6 +440,174 @@ TEST(VisualView, ForwardAndInverseRoundTrip)
                 EXPECT_EQ(host.v.toDevice(host.v.toLogical(px)), px);
         }
     }
+}
+
+namespace {
+
+void openAegisub35(TestHost &host, double dpr = 1.0)
+{
+    host.v.setZoomModel(ZoomModel::Aegisub35);
+    host.v.setDevicePixelRatio(dpr);
+    host.v.setClient(960, 600, 60);
+    host.v.setScript(1920, 1080);
+    host.v.open({1920, 1080, 0, 1});
+}
+
+void expectNear(PointF a, PointF b, float tolerance = 1e-2f)
+{
+    EXPECT_NEAR(a.x, b.x, tolerance);
+    EXPECT_NEAR(a.y, b.y, tolerance);
+}
+
+}
+
+TEST(VisualView, Aegisub35ZoomKeepsThePointUnderThePointer)
+{
+    TestHost host;
+    openAegisub35(host);
+    const PointF script = host.v.viewToScript({300, 200});
+    host.v.wheelZoom(2, 300, 200);
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 1.25);
+    expectNear(host.v.viewToScript({300, 200}), script);
+    expectNear(host.v.scriptToView(script), {300, 200});
+    host.v.beginPinch(500, 100);
+    const PointF pinched = host.v.viewToScript({500, 100});
+    host.v.pinch(3, 500, 100);
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 3.75);
+    expectNear(host.v.viewToScript({500, 100}), pinched);
+}
+
+TEST(VisualView, Aegisub35PanMovesThePictureAndTheToolsTogether)
+{
+    for (const double dpr : {1.0, 1.5, 2.0}) {
+        SCOPED_TRACE(dpr);
+        TestHost host;
+        openAegisub35(host, dpr);
+        host.v.wheelZoom(8, 480, 270);
+        const RectD before = host.v.frameRect();
+        const PointF centre = host.v.scriptToView({960, 540});
+        host.v.panBy(40, -30);
+        const RectD after = host.v.frameRect();
+        EXPECT_DOUBLE_EQ(after.left - before.left, 40);
+        EXPECT_DOUBLE_EQ(after.top - before.top, -30);
+        expectNear(host.v.scriptToView({960, 540}), {centre.x + 40, centre.y - 30});
+        expectNear(host.v.scriptToView({0, 0}), {static_cast<float>(after.left), static_cast<float>(after.top)});
+        expectNear(host.v.scriptToView({1920, 1080}), {static_cast<float>(after.left + after.width),
+                                                        static_cast<float>(after.top + after.height)});
+        for (const PointF script : {PointF{0, 0}, PointF{123.5f, 987.25f}, PointF{1919, 1079}}) {
+            const PointF back = host.v.viewToScript(host.v.scriptToView(script));
+            expectNear(back, script);
+        }
+    }
+}
+
+TEST(VisualView, Aegisub35KeepsZoomAndPanInBounds)
+{
+    TestHost host;
+    openAegisub35(host);
+    host.v.wheelZoom(-100, 480, 270);
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 0.125);
+    host.v.zoomAndPan(1000, {}, 480, 270);
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 10);
+    host.v.resetZoom();
+    host.v.panBy(100000, -100000);
+    EXPECT_DOUBLE_EQ(host.v.pan().x, 0.5 * 960 + 0.4 * 960);
+    EXPECT_DOUBLE_EQ(host.v.pan().y, -(0.5 * 540 + 0.4 * 540));
+}
+
+TEST(VisualView, Aegisub35ScrollActions)
+{
+    TestHost host;
+    openAegisub35(host, 2.0);
+    EXPECT_TRUE(host.v.scroll(ScrollAction::Pan, 0, 1, 100, 100));
+    EXPECT_EQ(host.v.pan(), (PointD{0, 10}));
+    EXPECT_TRUE(host.v.scroll(ScrollAction::Pan, -2, 0, 100, 100));
+    EXPECT_EQ(host.v.pan(), (PointD{-20, 10}));
+    EXPECT_TRUE(host.v.scroll(ScrollAction::PanSwapped, 0, 1, 100, 100));
+    EXPECT_EQ(host.v.pan(), (PointD{-10, 10}));
+    EXPECT_TRUE(host.v.scroll(ScrollAction::Zoom, 0, 1, 100, 100));
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 1.125);
+    EXPECT_TRUE(host.v.scroll(ScrollAction::ZoomReversed, 0, 1, 100, 100));
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 1.125 * 0.875);
+    EXPECT_FALSE(host.v.scroll(ScrollAction::Nothing, 0, 1, 100, 100));
+    host.v.setZoomModel(ZoomModel::Legacy);
+    EXPECT_FALSE(host.v.scroll(ScrollAction::Zoom, 0, 1, 100, 100));
+    EXPECT_FALSE(host.v.scroll(ScrollAction::Pan, 0, 1, 100, 100));
+}
+
+TEST(VisualView, Aegisub35KeepsThePicturesSizeWhenTheWindowResizes)
+{
+    TestHost host;
+    openAegisub35(host);
+    host.v.wheelZoom(8, 480, 270);
+    const double height = host.v.frameRect().height;
+    host.v.setClient(480, 330, 60);
+    EXPECT_DOUBLE_EQ(host.v.frameRect().height, height);
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 4);
+}
+
+TEST(VisualView, ResetZoomResetsZoomAndPanInBothModels)
+{
+    TestHost host;
+    openAegisub35(host);
+    const RectD whole = host.v.frameRect();
+    host.v.wheelZoom(4, 100, 100);
+    host.v.panBy(25, 35);
+    ASSERT_NE(host.v.frameRect(), whole);
+    host.v.resetZoom();
+    EXPECT_EQ(host.v.contentZoom(), 1.0);
+    EXPECT_EQ(host.v.pan(), PointD{});
+    EXPECT_EQ(host.v.frameRect(), whole);
+    expectNear(host.v.scriptToView({0, 0}), {0, 0});
+
+    host.v.setZoomModel(ZoomModel::Legacy);
+    host.v.zoomAt(2.f, 200, 100);
+    ASSERT_NE(host.v.sourceRect(), (IntRect{0, 0, 1920, 1080}));
+    host.v.resetZoom();
+    EXPECT_EQ(host.v.zoomPercent(), 1.f);
+    EXPECT_EQ(host.v.sourceRect(), (IntRect{0, 0, 1920, 1080}));
+    EXPECT_EQ(host.v.frameRect(), whole);
+}
+
+TEST(VisualView, ZoomVideoTogglesTheAegisub35Zoom)
+{
+    TestHost host;
+    openAegisub35(host);
+    host.v.toggleZoom(300);
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 3);
+    EXPECT_FALSE(host.v.zoomMode());
+    host.v.toggleZoom(300);
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 1);
+    host.v.toggleZoom(0);
+    EXPECT_DOUBLE_EQ(host.v.contentZoom(), 2);
+}
+
+TEST(VisualCrosshair, PutsThePositionUnderThePointerWhilePannedAndZoomed)
+{
+    TestHost host;
+    host.s = std::make_unique<EditSession>(load(kScript));
+    host.v.setZoomModel(ZoomModel::Aegisub35);
+    host.v.setClient(640, 400, 40);
+    host.v.setScript(1920, 1080);
+    host.v.open({1280, 720, 0, 1});
+    host.v.wheelZoom(8, 100, 50);
+    host.v.panBy(-30, 12);
+    const core::LineId id = ids(*host.s)[1];
+    host.s->setSelection({id, {id}, id, std::nullopt});
+    CrosshairTool cross;
+    cross.reset(host);
+    cross.pointer({Pointer::Kind::Move, 320, 180}, host);
+    cross.pointer({Pointer::Kind::Press, 320, 180, Pointer::Button::Middle}, host);
+    const CrossCoefficients coeff = crossCoefficients(host.v);
+    const PointF expected = crossScriptPoint(host.v, coeff.x, coeff.y, 320, 180);
+    const PointF unquirked = host.v.viewToScript({320, 180});
+    EXPECT_NEAR(expected.x, unquirked.x * 640 / 639, 0.01f);
+    EXPECT_NEAR(expected.y, unquirked.y * 360 / 359, 0.01f);
+    const std::string text(reinterpret_cast<const char *>(line(*host.s, id)->text.c_str()));
+    const auto m = hikari::regex::Pattern::compile(R"(\\pos\(([-0-9.]+),([-0-9.]+)\))")->search(text);
+    ASSERT_TRUE(m) << text;
+    EXPECT_NEAR(std::stof(std::string((*m)[1])), expected.x, 0.01f);
+    EXPECT_NEAR(std::stof(std::string((*m)[2])), expected.y, 0.01f);
 }
 
 TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)

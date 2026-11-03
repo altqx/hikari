@@ -316,6 +316,11 @@ const std::vector<SettingDefinition> &definitions()
         {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
+        // visual::ZoomModel and visual::ScrollAction values.
+        {"video.zoomModel", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.scrollAction", "", Int, Profile, Mapped, false, std::int64_t{4}},
+        {"video.ctrlScrollAction", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.shiftScrollAction", "", Int, Profile, Mapped, false, std::int64_t{2}},
         // 0 video resolution, 1 screen size (libass only).
         {"video.previewSubtitlesAt", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // dialogAnswers: one "<key>\t<JSON>" row per dialog, last used first, at most 200.
@@ -324,6 +329,7 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.closedCompounds", "", Bool, Profile, Mapped, false, true},

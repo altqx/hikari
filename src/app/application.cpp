@@ -152,6 +152,23 @@ QString luaHelperPath(const QString &configured)
     return sibling;
 }
 
+QString pluginHelperPath(const QString &configured)
+{
+    if (!configured.isEmpty())
+        return configured;
+#ifdef _WIN32
+    const QString name = QStringLiteral("hikari-plugin-helper.exe");
+#else
+    const QString name = QStringLiteral("hikari-plugin-helper");
+#endif
+    const QString sibling = QCoreApplication::applicationDirPath() + QLatin1Char('/') + name;
+#ifdef HIKARI_BUILD_PLUGIN_HELPER
+    if (!QFileInfo::exists(sibling))
+        return QStringLiteral(HIKARI_BUILD_PLUGIN_HELPER);
+#endif
+    return sibling;
+}
+
 QString readingDictionaryPath(const QString &configured)
 {
     if (!configured.isEmpty())
@@ -378,7 +395,7 @@ public:
     {
         using K = application::FindLog::Kind;
         switch (line.kind) {
-        case K::InvalidRegex: return QCoreApplication::translate("HikariSub.Search", "Invalid regular expression '%1': %2")
+        case K::InvalidRegex: return QCoreApplication::translate("HikariSub.Search", "Invalid regular expression “%1”: %2")
                                          .arg(qs(line.first), qs(line.second));
         case K::MatchError: return QCoreApplication::translate("HikariSub.Search", "Failed to find match for regular expression: %1")
                                        .arg(qs(line.first));
@@ -694,8 +711,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_importStore->rendererInstalled = [this](std::string_view name) {
             return std::ranges::contains(m_renderer.providers(), name);
         };
-        // MUST KILL: must run before m_importStore->recover()
-        convertRules();
+        noteRemovedRules();
         m_importStore->recover();
     }
     m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
@@ -819,7 +835,21 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
         }});
+    m_ai = std::make_unique<AiFeatures>(
+        *m_settings, options.aiPorts ? std::move(*options.aiPorts)
+                                     : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
+                                                                options.appVersion.isEmpty()
+                                                                    ? QStringLiteral(HIKARI_VERSION)
+                                                                    : options.appVersion));
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
+    m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
+        pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
+        [this] { return m_localisation ? m_localisation->language() : QString(); }});
+    connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
+    m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
+    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
+            [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });
+    QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
     m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
@@ -1717,15 +1747,8 @@ Application::~Application()
     m_audioOutput.reset();
     m_audioSource.reset();
     m_port->waitIdle();
-    saveMisspellRules();
     if (m_localisation)
         QGuiApplication::setFont(m_startFont);
-}
-
-void Application::saveMisspellRules()
-{
-    if (m_misspellRules && !m_misspellRules->empty() && m_rulesFile)
-        m_rulesFile->write(ui::rulesToToml(*m_misspellRules));
 }
 
 namespace {
@@ -3088,10 +3111,10 @@ QVariantList Application::columnChoices(bool paste)
     std::vector<std::pair<const char *, int>> rows;
     if (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText) {
         rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Layer"), Layer},
-                {QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), Start},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "End time"), End},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Actor"), Actor},
-                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Styles"), Style},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Style"), Style},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Left margin"), MarginLeft},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Right margin"), MarginRight},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Vertical margin"), MarginVertical},
@@ -3106,12 +3129,12 @@ QVariantList Application::columnChoices(bool paste)
             rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text});
         }
     } else if (format == core::SubtitleFormat::TMPlayer) {
-        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
+        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), Start},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text}};
     } else {
-        // MUST KILL: the End row is labelled "The starting time" on purpose
-        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
-                {QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), End},
+        // MUST KILL: the End row is labelled "Start time" on purpose
+        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), Start},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), End},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text}};
     }
     const int chosen = paste ? m_pasteColumns : m_copyColumns;
@@ -3879,7 +3902,7 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
             continue;
         if (result->invalidExpression)
             m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.SelectLines", "Select lines"),
-                          QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
+                          QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression “%1”: %2")
                               .arg(fromUtf16(result->invalidExpression->first), fromUtf16(result->invalidExpression->second)));
         for (const auto &error : result->matchErrors)
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.SelectLines", "Select lines"),
@@ -3915,21 +3938,9 @@ QString Application::selectStylesPattern(const QStringList &styles) const
 
 namespace {
 
-application::ReplacerCase replacerCase(bool everyLetter)
-{
-    const auto cases = backends::legacyCaseMapping(everyLetter);
-    return {cases.isUpper, cases.toLower, cases.toUpper};
-}
-
 QString fromUtf16(const std::u16string &s)
 {
     return QString(reinterpret_cast<const QChar *>(s.data()), static_cast<qsizetype>(s.size()));
-}
-
-application::ReplacerRule replacerRule(const QVariantMap &m)
-{
-    return {utf8(m.value(QStringLiteral("description")).toString()), utf8(m.value(QStringLiteral("find")).toString()),
-            utf8(m.value(QStringLiteral("replace")).toString()), m.value(QStringLiteral("options")).toInt(), false};
 }
 
 QString unscaledValue(int row, const std::u16string &value, const std::u16string &tag)
@@ -3950,36 +3961,10 @@ void noticeUnscaled(ui::LogController &log, const QStringList &values)
                values.join(QLatin1Char('\n')));
 }
 
-QString replacerTitle()
-{
-    return QCoreApplication::translate("HikariSub.MisspellReplacer", "Fix minor errors");
-}
-
-void logRegexErrors(ui::LogController &log, const std::vector<application::ReplacerRule> &rules, bool checkedOnly)
-{
-    for (const auto &error : application::replacerRegexErrors(rules, checkedOnly))
-        log.notice(ui::LogController::Error, replacerTitle(),
-                   QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
-                       .arg(fromUtf16(error.expression), fromUtf16(error.message)));
-}
-
 QString regexMatchError(const std::u16string &error)
 {
     return QCoreApplication::translate("HikariSub.SelectLines", "Failed to find match for regular expression: %1")
         .arg(fromUtf16(error));
-}
-
-void logMatchErrors(ui::LogController &log, const application::ReplacerMatchErrors &errors)
-{
-    for (const auto &error : errors)
-        log.notice(ui::LogController::Warning, replacerTitle(), regexMatchError(error));
-}
-
-application::ReplacerScope replacerScope(const QVariantMap &m)
-{
-    using L = application::ReplacerScope::Lines;
-    return {static_cast<L>(std::clamp(m.value(QStringLiteral("lines")).toInt(), 0, 3)),
-            utf8(m.value(QStringLiteral("styles")).toString())};
 }
 
 QString findQs(std::u8string_view s)
@@ -4112,34 +4097,13 @@ application::SpellCheckWalk::Options walkOptions(const QVariantMap &options)
 
 }
 
-std::vector<application::ReplacerRule> &Application::misspellRuleList()
+void Application::noteRemovedRules()
 {
-    if (!m_misspellRules) {
-        if (const auto items = m_rulesFile ? m_rulesFile->read() : std::nullopt)
-            m_misspellRules = std::get<std::vector<application::ReplacerRule>>(ui::rulesFromToml(*items));
-        else
-            m_misspellRules = application::readReplacerRules({}).rules;
-    }
-    return *m_misspellRules;
-}
-
-void Application::convertRules()
-{
-    const QString folder = QFileInfo(m_settingsFile).absolutePath();
-    m_rulesFile = ui::ListFile::make(
-        folder + QStringLiteral("/rules.toml"), folder + QStringLiteral("/Rules.txt"), ui::kRulesFormat,
-        [this](const std::filesystem::path &legacy) -> std::optional<toml::array> {
-            const auto read = readLegacyRulesFile(legacy);
-            if (!read)
-                return std::nullopt;
-            for (const auto &line : read->invalid)
-                m_log->notice(ui::LogController::Warning, replacerTitle(),
-                              QCoreApplication::translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid.")
-                                  .arg(fromUtf8(line)));
-            return ui::rulesToToml(read->rules);
-        },
-        listFileReport(*m_log));
-    m_rulesFile->convert();
+    const QString rules = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/rules.toml");
+    if (QFileInfo::exists(rules))
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
+                                               "Fix minor errors was removed. Your rules stay in %1, unused.")
+                       .arg(QDir::toNativeSeparators(rules)));
 }
 
 void Application::convertListFiles()
@@ -4168,186 +4132,6 @@ void Application::convertListFiles()
         file->convert();
     m_visualTools->setShapesFile(std::move(shapes));
     m_visualTools->setAllTagsFile(std::move(tags));
-}
-
-QVariantList Application::misspellRules()
-{
-    QVariantList rows;
-    for (const auto &rule : misspellRuleList())
-        rows << QVariantMap{{QStringLiteral("description"), fromUtf8(rule.description)},
-                            {QStringLiteral("find"), fromUtf8(rule.find)},
-                            {QStringLiteral("replace"), fromUtf8(rule.replace)},
-                            {QStringLiteral("options"), rule.options},
-                            {QStringLiteral("checked"), rule.checked}};
-    return rows;
-}
-
-bool Application::addMisspellRule(const QVariantMap &rule)
-{
-    if (m_misspellResultsShown) {
-        m_log->notice(ui::LogController::Warning, replacerTitle(),
-                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen the find results window is open"));
-        return false;
-    }
-    misspellRuleList().push_back(replacerRule(rule));
-    return true;
-}
-
-bool Application::editMisspellRule(int index, const QVariantMap &rule)
-{
-    if (m_misspellResultsShown) {
-        m_log->notice(ui::LogController::Warning, replacerTitle(),
-                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen the find results window is open"));
-        return false;
-    }
-    auto &rules = misspellRuleList();
-    if (index < 0 || static_cast<std::size_t>(index) >= rules.size()) {
-        m_log->notice(ui::LogController::Error, replacerTitle(),
-                      QStringLiteral("edit rule - bad selection of rule %1 - %2").arg(index).arg(rules.size()));
-        return false;
-    }
-    const bool checked = rules[static_cast<std::size_t>(index)].checked;
-    rules[static_cast<std::size_t>(index)] = replacerRule(rule);
-    rules[static_cast<std::size_t>(index)].checked = checked;
-    return true;
-}
-
-bool Application::removeMisspellRule(int index)
-{
-    if (m_misspellResultsShown) {
-        m_log->notice(ui::LogController::Warning, replacerTitle(),
-                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen the find results window is open"));
-        return false;
-    }
-    auto &rules = misspellRuleList();
-    if (index < 0 || static_cast<std::size_t>(index) >= rules.size()) {
-        m_log->notice(ui::LogController::Error, replacerTitle(),
-                      QStringLiteral("edit rule - bad selection of rule %1 - %2").arg(index).arg(rules.size()));
-        return false;
-    }
-    rules.erase(rules.begin() + index);
-    return true;
-}
-
-void Application::checkMisspellRule(int index, bool checked)
-{
-    auto &rules = misspellRuleList();
-    if (index >= 0 && static_cast<std::size_t>(index) < rules.size())
-        rules[static_cast<std::size_t>(index)].checked = checked;
-}
-
-QVariantList Application::findMisspells(const QVariantMap &scope, bool allTabs)
-{
-    m_misspellFinds.clear();
-    std::vector<application::DocumentId> documents;
-    if (allTabs)
-        documents = m_workspace.documents();
-    else if (const auto target = m_workspace.editingTarget())
-        documents.push_back(*target);
-    QVariantList rows;
-    for (const auto id : documents) {
-        auto *session = m_files->session(id);
-        if (!session || (m_workspace.reference() && *m_workspace.reference() == id))
-            continue;
-        logRegexErrors(*m_log, misspellRuleList(), true);
-        application::ReplacerMatchErrors matchErrors;
-        const auto finds = application::findErrors(*session, misspellRuleList(), replacerScope(scope), &matchErrors);
-        logMatchErrors(*m_log, matchErrors);
-        if (finds.empty())
-            continue;
-        const auto destination = m_files->destination(id);
-        rows << QVariantMap{{QStringLiteral("header"), true},
-                            {QStringLiteral("text"), destination ? QDir::toNativeSeparators(QString::fromStdString(destination->value))
-                                                                 : QString()}};
-        for (const auto &find : finds) {
-            rows << QVariantMap{{QStringLiteral("header"), false},
-                                {QStringLiteral("find"), static_cast<int>(m_misspellFinds.size())},
-                                {QStringLiteral("line"), find.lineNumber},
-                                {QStringLiteral("text"), fromUtf16(find.text)},
-                                {QStringLiteral("position"), static_cast<int>(find.position)},
-                                {QStringLiteral("length"), static_cast<int>(find.length)}};
-            m_misspellFinds.emplace_back(id, find);
-        }
-    }
-    return rows;
-}
-
-void Application::replaceMisspells(const QVariantMap &scope, bool allTabs)
-{
-    std::vector<application::DocumentId> documents;
-    if (allTabs)
-        documents = m_workspace.documents();
-    else if (const auto target = m_workspace.editingTarget())
-        documents.push_back(*target);
-    for (const auto id : documents)
-        if (auto *session = m_files->session(id); session && !(m_workspace.reference() && *m_workspace.reference() == id)) {
-            logRegexErrors(*m_log, misspellRuleList(), true);
-            application::ReplacerMatchErrors matchErrors;
-            (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase(true),
-                                             &matchErrors);
-            logMatchErrors(*m_log, matchErrors);
-        }
-    m_editor->reloadFromSession();
-    refreshViews();
-}
-
-void Application::replaceMisspellFinds(const QVariantList &chosen)
-{
-    logRegexErrors(*m_log, misspellRuleList(), false);
-    std::vector<std::size_t> indices;
-    for (const auto &v : chosen)
-        if (const int i = v.toInt(); i >= 0 && static_cast<std::size_t>(i) < m_misspellFinds.size())
-            indices.push_back(static_cast<std::size_t>(i));
-    std::ranges::sort(indices);
-    for (std::size_t at = 0; at < indices.size();) {
-        const auto document = m_misspellFinds[indices[at]].first;
-        std::vector<application::ReplacerFind> finds;
-        for (; at < indices.size() && m_misspellFinds[indices[at]].first == document; ++at)
-            finds.push_back(m_misspellFinds[indices[at]].second);
-        auto *session = m_files->session(document);
-        if (!session)
-            continue;
-        const auto result = application::replaceFinds(*session, misspellRuleList(), finds, replacerCase(true));
-        if (!result)
-            continue;
-        for (const auto &problem : result->problems) {
-            using K = application::ReplacerProblem::Kind;
-            if (problem.kind == K::Edited)
-                m_log->notice(ui::LogController::Warning, replacerTitle(),
-                              QCoreApplication::translate("HikariSub.MisspellReplacer", "Line %1 cannot be replaced,\nbecause it was edited.")
-                                  .arg(problem.lineNumber));
-            else if (problem.kind == K::MatchError)
-                m_log->notice(ui::LogController::Warning, replacerTitle(), regexMatchError(problem.found));
-            else
-                m_log->notice(ui::LogController::Warning, replacerTitle(),
-                              QCoreApplication::translate("HikariSub.MisspellReplacer",
-                                                          "Cannot replace \"%1\" with \"%2\" using rule \"%3\" in line %4.")
-                                  .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
-                                  .arg(problem.lineNumber));
-        }
-    }
-    m_editor->reloadFromSession();
-    refreshViews();
-}
-
-void Application::showMisspellFind(int index)
-{
-    if (index < 0 || static_cast<std::size_t>(index) >= m_misspellFinds.size())
-        return;
-    const auto &[document, find] = m_misspellFinds[static_cast<std::size_t>(index)];
-    auto *session = m_files->session(document);
-    if (!session || find.row >= session->document().lines().size())
-        return;
-    if (m_workspace.editingTarget() != document) {
-        m_workspace.setEditingTarget(document);
-        refreshViews();
-    }
-    const auto &record = *session->document().lines()[find.row];
-    const auto line = record.id;
-    if (!applySelection(application::Selection{line, {line}, line, {}}))
-        return;
-    const int role = m_editor->translationMode() && !record.translation.empty() ? 1 : 0;
-    m_editor->selectInField(static_cast<int>(find.position), static_cast<int>(find.position + find.length), role);
 }
 
 application::SpellChecker *Application::spellChecker()
@@ -6130,13 +5914,6 @@ void Application::destroyDialogs()
         m_selectLinesOpened = false;
         m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
         emit selectLinesDestroyed();
-    }
-    if (m_misspellRules) {
-        saveMisspellRules();
-        m_misspellRules.reset();
-        m_misspellFinds.clear();
-        m_misspellResultsShown = false;
-        emit misspellReplacerDestroyed();
     }
 }
 

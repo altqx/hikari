@@ -28,6 +28,9 @@ enum class Kind : std::uint16_t {
     // starts with an i64 call ID, then the call's own fields.
     Service = 15,      // helper -> host
     ServiceReply = 16, // host -> helper: code = outcome
+    // host -> helper: an application event for the helper's own code. It queues with the
+    // requests and is answered like one (Reply, Progress, Service, Terminal).
+    Event = 17,
 };
 
 // Terminal outcome codes.

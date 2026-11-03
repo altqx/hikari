@@ -2,7 +2,6 @@
 
 #include "hikari/application/all_tags.h"
 #include "hikari/application/font_catalogs.h"
-#include "hikari/application/misspell_replacer.h"
 #include "hikari/application/owned_file.h"
 #include "hikari/application/shape_presets.h"
 
@@ -34,10 +33,6 @@ struct ListFormat {
 std::string listFileText(const ListFormat &format, toml::array items);
 
 template <class Item> using ListRead = std::variant<std::vector<Item>, ParseFailure>;
-
-extern const ListFormat kRulesFormat;
-ListRead<application::ReplacerRule> rulesFromToml(const toml::array &items);
-toml::array rulesToToml(const std::vector<application::ReplacerRule> &rules);
 
 extern const ListFormat kShapesFormat;
 ListRead<application::visual::ShapePreset> shapesFromToml(const toml::array &items);
