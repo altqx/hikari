@@ -267,18 +267,18 @@ private slots:
         const struct {
             const char *symbol;
             int window;
-            const char *accel;
+            const char *keys;
             const char *name;
-        } renamed[] = {{"GLOBAL_OPEN_ASS_PROPERTIES", GlobalHotkey, "Ctrl-Alt-F2", "Script properties"},
-                       {"GLOBAL_OPEN_AUTO_SAVE", GlobalHotkey, "Ctrl-Alt-F3", "Open autosave…"},
-                       {"EDITBOX_CHANGE_FONT", EditorHotkey, "Ctrl-Alt-F4", "Choose font…"},
-                       {"AUDIO_COMMIT", AudioHotkey, "Ctrl-Alt-F5", "Apply changes"},
-                       {"AUDIO_COMMIT_ALT", AudioHotkey, "Ctrl-Alt-F6", "Apply changes alt"}};
+        } renamed[] = {{"GLOBAL_OPEN_ASS_PROPERTIES", GlobalHotkey, "Ctrl+Alt+F2", "Script properties"},
+                       {"GLOBAL_OPEN_AUTO_SAVE", GlobalHotkey, "Ctrl+Alt+F3", "Open autosave…"},
+                       {"EDITBOX_CHANGE_FONT", EditorHotkey, "Ctrl+Alt+F4", "Choose font…"},
+                       {"AUDIO_COMMIT", AudioHotkey, "Ctrl+Alt+F5", "Apply changes"},
+                       {"AUDIO_COMMIT_ALT", AudioHotkey, "Ctrl+Alt+F6", "Apply changes alt"}};
         for (const auto &r : renamed) {
             const int id = hotkeyIdOf(r.symbol);
             const auto it = read.find(HotkeyId{id, r.window});
             QVERIFY2(it != read.end(), r.symbol);
-            QCOMPARE(it->second.accel, std::string(r.accel));
+            QCOMPARE(it->second.accel, accelOfQtKeys(r.keys));
             QCOMPARE(hotkeyName(id), std::string(r.name));
         }
     }
