@@ -897,7 +897,7 @@ Output device: %2</source>
         <translation>필터</translation>
     </message>
     <message>
-        <source>Filter the run&apos;s log</source>
+        <source>Filter the run’s log</source>
         <translation>실행 로그 필터</translation>
     </message>
     <message>
@@ -937,7 +937,7 @@ Output device: %2</source>
         <translation>%1분 %2초</translation>
     </message>
     <message>
-        <source>Save the run&apos;s log</source>
+        <source>Save the run’s log</source>
         <translation>실행 로그 저장</translation>
     </message>
     <message>
@@ -961,7 +961,7 @@ Output device: %2</source>
         <translation>%1 설정</translation>
     </message>
     <message>
-        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
         <translation>스크립트 프로세스가 종료되었습니다. 다시 시작하려면 다시 불러오십시오. 매크로는 다시 실행되지 않습니다.</translation>
     </message>
     <message>
@@ -5018,6 +5018,10 @@ Failed to copy %2 fonts.</source>
         <translation>&quot;단축키 설정 창 열기&quot;의 단축키 %1(이)가 제거되었습니다. 해당 창은 없어졌으며 각 매크로의 단축키는 자동화 패널에서 설정합니다.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>“사소한 오류 수정 (실험적)”의 단축키 %1(이)가 제거되었습니다. 이 기능은 제거되었습니다.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>&quot;빈 2h30m 소리 열기&quot;의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
     </message>
@@ -5634,8 +5638,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상 확대</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>영상 확대 해제</translation>
+        <source>Reset zoom and pan</source>
+        <translation>확대/축소 및 이동 초기화</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -5650,12 +5654,12 @@ Failed to copy %2 fonts.</source>
         <translation>ASS 파일 스타일 정리</translation>
     </message>
     <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>사소한 오류 수정 (실험적)</translation>
-    </message>
-    <message>
         <source>Find next</source>
         <translation>다음 찾기</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>이전 찾기</translation>
     </message>
     <message>
         <source>Load last session</source>
@@ -6664,24 +6668,8 @@ Failed to copy %2 fonts.</source>
         <translation>기록[&amp;H]</translation>
     </message>
     <message>
-        <source>Shows or hides the Fix minor errors panel</source>
-        <translation>사소한 오류 수정 패널 표시 또는 숨기기</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>사소한 오류 수정 (실험적)</translation>
-    </message>
-    <message>
         <source>Select &amp;lines</source>
         <translation>줄 선택[&amp;L]</translation>
-    </message>
-    <message>
-        <source>Find and re&amp;place</source>
-        <translation>찾아서 바꾸기[&amp;P]</translation>
-    </message>
-    <message>
-        <source>&amp;Find</source>
-        <translation>찾기[&amp;F]</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -6784,8 +6772,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상 확대</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>영상 확대 해제</translation>
+        <source>Reset zoom and pan</source>
+        <translation>확대/축소 및 이동 초기화</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -6870,6 +6858,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>&amp;Subtitles</source>
         <translation>자막[&amp;S]</translation>
+    </message>
+    <message>
+        <source>Opens the Find panel</source>
+        <translation>찾기 패널을 엽니다</translation>
+    </message>
+    <message>
+        <source>&amp;Find…</source>
+        <translation>찾기…[&amp;F]</translation>
+    </message>
+    <message>
+        <source>Opens the Find panel with the replace row shown</source>
+        <translation>바꾸기 줄을 표시한 채로 찾기 패널을 엽니다</translation>
+    </message>
+    <message>
+        <source>Re&amp;place…</source>
+        <translation>바꾸기…[&amp;P]</translation>
+    </message>
+    <message>
+        <source>Selects the next match</source>
+        <translation>다음 일치 항목을 선택합니다</translation>
+    </message>
+    <message>
+        <source>Selects the previous match</source>
+        <translation>이전 일치 항목을 선택합니다</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>이전 찾기</translation>
     </message>
     <message>
         <source>Shift &amp;times...</source>
@@ -7151,15 +7167,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Searches for the specified text phrases and replaces them</source>
-        <translation>글자를 검색하고 변경합니다</translation>
+        <translation type="vanished">글자를 검색하고 변경합니다</translation>
     </message>
     <message>
         <source>Searches for the specified text phrase</source>
-        <translation>글자를 검색합니다</translation>
+        <translation type="vanished">글자를 검색합니다</translation>
     </message>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
-        <translation>텍스트에서 다음 문구 위치 찾기</translation>
+        <translation type="vanished">텍스트에서 다음 문구 위치 찾기</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -7951,6 +7967,10 @@ Failed to copy %2 fonts.</source>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
     </message>
+    <message>
+        <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
+        <translation>사소한 오류 수정 기능이 제거되었습니다. 규칙은 %1에 그대로 남아 있지만 사용되지 않습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -8005,266 +8025,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Indexing error occurred: %1</source>
         <translation>색인 오류: %1</translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message>
-        <source>Fix minor errors</source>
-        <translation>사소한 오류 수정</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when the find results window is open</source>
-        <translation>찾기 결과 창이 열려 있을 때
-규칙을 변경할 수 없음</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-because it was edited.</source>
-        <translation>%1번 줄은 편집되었으므로
-바꿀 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
-        <translation>&quot;%1&quot;(을)를 &quot;%2&quot;(으)로 바꿀 수 없습니다. 규칙: &quot;%3&quot;, 줄: %4.</translation>
-    </message>
-    <message>
-        <source>Rule description</source>
-        <translation>규칙에 대한 설명</translation>
-    </message>
-    <message>
-        <source>Replace phrase</source>
-        <translation>바꿀 구문</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation>대소문자</translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation>찾은 글자와 같게</translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation>변경 안 함</translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation>소문자</translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation>대문자</translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation>바꿀 글자의 대소문자</translation>
-    </message>
-    <message>
-        <source>Match case</source>
-        <translation>대소문자 구분</translation>
-    </message>
-    <message>
-        <source>Rules</source>
-        <translation>규칙</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>대상 줄</translation>
-    </message>
-    <message>
-        <source>All lines</source>
-        <translation>모든 줄</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation>줄</translation>
-    </message>
-    <message>
-        <source>Selected lines</source>
-        <translation>선택한 줄만</translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation>선택한 줄부터</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation>선택한 스타일에 따라</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>스타일 선택</translation>
-    </message>
-    <message>
-        <source>Update rule</source>
-        <translation>규칙 수정</translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation>규칙</translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation>찾기 → 바꾸기</translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation>(없음)</translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation>펼침</translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation>접힘</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation>이름</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation>찾기</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation>정규식</translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation>검색 구문 (정규식)</translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation>대상</translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation>글자 및 태그</translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation>태그만</translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation>글자만</translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation>바꿀 대상</translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation>이 탭</translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation>모든 탭</translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation>검색할 탭</translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation>모두 바꾸기</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation>결과</translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation>오류 1개</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>%n개 선택됨</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation>(파일 1개)</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>모두 선택</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>모두 해제</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation>결과 닫기</translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation>%1번 줄</translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation>찾은 항목 표시</translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation>찾은 항목 숨기기</translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation>선택 항목 바꾸기</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>스타일</translation>
-    </message>
-    <message>
-        <source>Add rule</source>
-        <translation>규칙 추가</translation>
-    </message>
-    <message>
-        <source>Delete rule</source>
-        <translation>규칙 삭제</translation>
-    </message>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>규칙 %1/%n 켜짐</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>오류 %n개</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>(파일 %n개)</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>찾기 결과</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>%1번 줄: </translation>
-    </message>
-    <message>
-        <source>Replace</source>
-        <translation>바꾸기</translation>
-    </message>
-    <message>
-        <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation>&quot;%1&quot; 규칙이 유효하지 않습니다.</translation>
     </message>
 </context>
 <context>
@@ -8964,6 +8724,62 @@ because it was edited.</source>
         <translation>보기</translation>
     </message>
     <message>
+        <source>Zoom and pan</source>
+        <translation>확대/축소 및 이동</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>가운데 버튼으로 끌면 화면이 이동합니다. 터치패드에서 두 손가락을 오므리거나 벌리면 포인터를 중심으로 확대/축소합니다.</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>휠로 포인터를 중심으로 확대/축소합니다. 영상 확대는 끌 수 있는 틀을 표시합니다.</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>Aegisub 3.5 방식</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>HikariSub 이전 버전 방식</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>영상에서 휠</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>영상에서 Ctrl+휠</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>영상에서 Shift+휠</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>영상 확대/축소</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>영상 확대/축소 (반대 방향)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>영상 이동</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>영상 이동 (X와 Y 바꿈)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>아무 작업도 하지 않음</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>휠을 쓰거나 가운데 버튼으로 끄는 시각 도구는 그 입력을 그대로 사용합니다.</translation>
+    </message>
+    <message>
         <source>Start zoom</source>
         <translation>시작 확대 비율</translation>
     </message>
@@ -9186,6 +9002,10 @@ because it was edited.</source>
     <message>
         <source>Automation shortcuts</source>
         <translation>자동화 단축키</translation>
+    </message>
+    <message>
+        <source>Plugin shortcuts</source>
+        <translation>플러그인 단축키</translation>
     </message>
     <message>
         <source>Filtering mode</source>
@@ -9455,7 +9275,7 @@ because it was edited.</source>
         <translation>텍스트 및 아이콘</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>테두리 색상</translation>
     </message>
     <message>
@@ -9724,6 +9544,44 @@ because it was edited.</source>
     <message>
         <source>HikariSub plugins (*.hikariplugin)</source>
         <translation>HikariSub 플러그인 (*.hikariplugin)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
+        <translation>플러그인이 설치되어 있지 않거나, 꺼져 있거나, 더 이상 이 명령이 없습니다</translation>
+    </message>
+    <message>
+        <source>Can’t start: %1</source>
+        <translation>플러그인을 시작할 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>The plugin didn’t start.</source>
+        <translation>플러그인이 시작되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>“%1” failed.</source>
+        <translation>“%1” 명령이 실패했습니다.</translation>
+    </message>
+    <message>
+        <source>Its %1 handler failed: %2</source>
+        <translation>플러그인의 %1 처리기가 실패했습니다: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>플러그인이 %n초 넘게 실행되어 HikariSub가 중지했습니다. 다음 명령을 실행하면 다시 시작됩니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
+        <translation>플러그인이 예기치 않게 멈췄습니다. 다음 명령을 실행하면 다시 시작됩니다.</translation>
+    </message>
+    <message>
+        <source>Force stopped.</source>
+        <translation>강제 중지했습니다.</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t running.</source>
+        <translation>플러그인이 실행 중이 아닙니다.</translation>
     </message>
 </context>
 <context>
@@ -10266,22 +10124,6 @@ because it was edited.</source>
 <context>
     <name>HikariSub.Search</name>
     <message>
-        <source>Search</source>
-        <translation>검색</translation>
-    </message>
-    <message>
-        <source>Find and replace</source>
-        <translation>찾아서 바꾸기</translation>
-    </message>
-    <message>
-        <source>Reached the end of the subtitles.</source>
-        <translation>자막의 끝에 도달했습니다.</translation>
-    </message>
-    <message>
-        <source>Search again from the first line?</source>
-        <translation>첫 줄부터 다시 검색하시겠습니까?</translation>
-    </message>
-    <message>
         <source>“%1”</source>
         <translation>“%1”</translation>
     </message>
@@ -10310,6 +10152,10 @@ because it was edited.</source>
         <translation>이 스타일만 검색하면 아무것도 찾을 수 없습니다.</translation>
     </message>
     <message>
+        <source>Replace in files</source>
+        <translation>파일에서 바꾸기</translation>
+    </message>
+    <message>
         <source>Replace in every matching file in “%1”?</source>
         <translation>“%1”에서 일치하는 모든 파일을 바꾸시겠습니까?</translation>
     </message>
@@ -10336,68 +10182,24 @@ because it was edited.</source>
 바꿀 수 없습니다.</translation>
     </message>
     <message>
-        <source>In files</source>
-        <translation>파일에서</translation>
-    </message>
-    <message>
-        <source>Find in subtitles</source>
-        <translation>자막에서 찾기</translation>
-    </message>
-    <message>
-        <source>Search text:</source>
-        <translation>검색 글자:</translation>
-    </message>
-    <message>
-        <source>Replace with:</source>
-        <translation>바꿀 글자:</translation>
-    </message>
-    <message>
-        <source>Filters:</source>
-        <translation>필터:</translation>
-    </message>
-    <message>
-        <source>Windows search filters separated by semicolons, e.g. &quot;*.ass; *.srt&quot;.</source>
-        <translation>Windows 검색 필터를 세미콜론으로 구분합니다(예: &quot;*.ass; *.srt&quot;).</translation>
-    </message>
-    <message>
-        <source>Catalog:</source>
-        <translation>목록:</translation>
-    </message>
-    <message>
-        <source>Subtitle search folder:</source>
-        <translation>자막 찾기 폴더:</translation>
-    </message>
-    <message>
         <source>Match case</source>
         <translation>대소문자 구분</translation>
     </message>
     <message>
+        <source>All styles</source>
+        <translation>모든 스타일</translation>
+    </message>
+    <message>
+        <source>In text</source>
+        <translation>글자 범위</translation>
+    </message>
+    <message>
+        <source>Match at</source>
+        <translation>일치 위치</translation>
+    </message>
+    <message>
         <source>Include comments</source>
         <translation>주석 포함</translation>
-    </message>
-    <message>
-        <source>Regular expressions</source>
-        <translation>정규식</translation>
-    </message>
-    <message>
-        <source>Skip tags</source>
-        <translation>태그 제외</translation>
-    </message>
-    <message>
-        <source>Beginning of text</source>
-        <translation>텍스트의 시작</translation>
-    </message>
-    <message>
-        <source>Skip text</source>
-        <translation>글자 제외</translation>
-    </message>
-    <message>
-        <source>End of text</source>
-        <translation>텍스트의 끝</translation>
-    </message>
-    <message>
-        <source>In field</source>
-        <translation>찾을 부분</translation>
     </message>
     <message>
         <source>Text</source>
@@ -10412,16 +10214,206 @@ because it was edited.</source>
         <translation>배우</translation>
     </message>
     <message>
+        <source>From the selection</source>
+        <translation>선택한 줄부터</translation>
+    </message>
+    <message>
+        <source>Match at start</source>
+        <translation>시작에서 일치</translation>
+    </message>
+    <message>
+        <source>Match at end</source>
+        <translation>끝에서 일치</translation>
+    </message>
+    <message>
+        <source>Comments too</source>
+        <translation>주석 포함</translation>
+    </message>
+    <message>
+        <source>Subfolders</source>
+        <translation>하위 폴더</translation>
+    </message>
+    <message>
+        <source>Hidden folders</source>
+        <translation>숨겨진 폴더</translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation>일치 항목 없음</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <extracomment>The live match count: the current match, then all matches</extracomment>
+        <translation>%1/%2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>일치 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n match(es)</source>
+        <translation>
+            <numerusform>일치 %n개 중 %1번째</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This document</source>
+        <translation>이 문서</translation>
+    </message>
+    <message>
+        <source>Open documents</source>
+        <translation>열린 문서</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>폴더</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
         <source>Effect</source>
         <translation>효과</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>모두</translation>
+    </message>
+    <message>
+        <source>Selected</source>
+        <translation>선택한 줄</translation>
+    </message>
+    <message>
+        <source>All text</source>
+        <translation>모든 글자</translation>
+    </message>
+    <message>
+        <source>Outside tags</source>
+        <translation>태그 밖</translation>
+    </message>
+    <message>
+        <source>Inside tags</source>
+        <translation>태그 안</translation>
+    </message>
+    <message>
+        <source>Anywhere</source>
+        <translation>어디서나</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>시작</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>끝</translation>
+    </message>
+    <message>
+        <source>Show replace</source>
+        <translation>바꾸기 표시</translation>
+    </message>
+    <message>
+        <source>Hide replace</source>
+        <translation>바꾸기 숨기기</translation>
+    </message>
+    <message>
+        <source>Regular expression</source>
+        <translation>정규식</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>이전 찾기</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>다음 찾기</translation>
+    </message>
+    <message>
+        <source>Find all</source>
+        <translation>모두 찾기</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>옵션</translation>
+    </message>
+    <message>
+        <source>Options that differ from the defaults</source>
+        <translation>기본값과 다른 옵션</translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation>바꿀 글자</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace in %n file(s)…</source>
+        <translation>
+            <numerusform>파일 %n개에서 바꾸기…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace in files…</source>
+        <translation>파일에서 바꾸기…</translation>
+    </message>
+    <message>
+        <source>Search in</source>
+        <translation>검색 위치</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>폴더 선택…</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>File patterns separated by semicolons, such as *.ass; *.srt</source>
+        <translation>세미콜론으로 구분한 파일 패턴(예: *.ass; *.srt)</translation>
+    </message>
+    <message>
+        <source>Field</source>
+        <translation>찾을 부분</translation>
     </message>
     <message>
         <source>Lines</source>
         <translation>검색 위치</translation>
     </message>
     <message>
-        <source>All lines</source>
-        <translation>모든 줄</translation>
+        <source>Results</source>
+        <translation>결과</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n file(s)</source>
+        <extracomment>%1 is the number of matches, such as &quot;5 matches&quot;</extracomment>
+        <translation>
+            <numerusform>파일 %n개에서 %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n line(s)</source>
+        <translation>
+            <numerusform>%n개 줄에서 %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Close results</source>
+        <translation>결과 닫기</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번 줄: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace %n checked</source>
+        <translation>
+            <numerusform>선택한 %n개 바꾸기</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Choose folder</source>
+        <translation>폴더 선택</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -10430,38 +10422,6 @@ because it was edited.</source>
     <message>
         <source>From selected</source>
         <translation>선택한 줄부터</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>스타일 선택</translation>
-    </message>
-    <message>
-        <source>Search in subfolders</source>
-        <translation>하위 폴더에서 검색</translation>
-    </message>
-    <message>
-        <source>Search in hidden folders</source>
-        <translation>숨겨진 폴더에서 검색</translation>
-    </message>
-    <message>
-        <source>Find in all open subtitles</source>
-        <translation>열린 모든 자막에서 찾기</translation>
-    </message>
-    <message>
-        <source>Find all in current subtitles</source>
-        <translation>현재 자막에서 모두 찾기</translation>
-    </message>
-    <message>
-        <source>Replace next</source>
-        <translation>다음 바꾸기</translation>
-    </message>
-    <message>
-        <source>Search from the start</source>
-        <translation>처음부터 검색</translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation>중지</translation>
     </message>
     <message>
         <source>Drop the missing styles</source>
@@ -10484,26 +10444,6 @@ because it was edited.</source>
         <translation>모두 바꾸기</translation>
     </message>
     <message>
-        <source>Replace in all open subtitles</source>
-        <translation>열린 모든 자막에서 바꾸기</translation>
-    </message>
-    <message>
-        <source>Replace in subtitles</source>
-        <translation>자막에서 바꾸기</translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>찾기 결과</translation>
-    </message>
-    <message>
-        <source>No results yet</source>
-        <translation>아직 결과 없음</translation>
-    </message>
-    <message>
-        <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
-        <translation>모두 찾기, 열린 모든 자막에서 찾기, 자막에서 찾기의 결과가 여기에 표시됩니다. 바꿀 항목을 선택한 후 바꾸십시오.</translation>
-    </message>
-    <message>
         <source>Check all</source>
         <translation>모두 선택</translation>
     </message>
@@ -10516,20 +10456,12 @@ because it was edited.</source>
         <translation>바꾸기</translation>
     </message>
     <message>
-        <source>Choose subtitle search folder</source>
-        <translation>자막 검색 폴더 선택</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
     <message>
         <source>Replaced %1 times.</source>
         <translation>%1번 바꿨습니다.</translation>
-    </message>
-    <message>
-        <source>Find in files</source>
-        <translation>파일에서 찾기</translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -10554,10 +10486,6 @@ because it was edited.</source>
     <message>
         <source>%1 could not be restored; its backup is in %2.</source>
         <translation>%1(을)를 복원할 수 없습니다. 백업은 %2에 있습니다.</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>%1번 줄: </translation>
     </message>
 </context>
 <context>
@@ -11608,7 +11536,7 @@ because it was edited.</source>
         <translation>무시</translation>
     </message>
     <message>
-        <source>Ignore All</source>
+        <source>Ignore all</source>
         <translation>모두 무시</translation>
     </message>
     <message>
@@ -12566,11 +12494,11 @@ Styles deleted:
         <translation>줄: %1</translation>
     </message>
     <message>
-        <source>the current line&apos;s style</source>
+        <source>the current line’s style</source>
         <translation>현재 줄의 스타일</translation>
     </message>
     <message>
-        <source>The current line&apos;s style</source>
+        <source>Current line’s style</source>
         <translation>현재 줄의 스타일</translation>
     </message>
     <message>
@@ -13139,7 +13067,7 @@ Styles deleted:
         <translation>마지막으로 성공한 실행의 결과</translation>
     </message>
     <message>
-        <source>This file&apos;s templates run Lua code with your rights. Preview them if you trust the file.</source>
+        <source>This file’s templates run Lua code with your rights. Preview them if you trust the file.</source>
         <translation>이 파일의 템플릿은 사용자 권한으로 Lua 코드를 실행합니다. 파일을 신뢰하는 경우에만 미리 보십시오.</translation>
     </message>
     <message>
@@ -13186,8 +13114,8 @@ Styles deleted:
         </translation>
     </message>
     <message>
-        <source>Changed since Apply</source>
-        <translation>적용 후 변경됨</translation>
+        <source>Changes not applied</source>
+        <translation>적용되지 않은 변경</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -13321,7 +13249,7 @@ Styles deleted:
         <translation>선택한 줄에 적용</translation>
     </message>
     <message>
-        <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
+        <source>Only the selected lines are regenerated; the other lines’ output stays as it is.</source>
         <translation>선택한 줄만 다시 생성하며, 다른 줄의 결과는 그대로 유지됩니다.</translation>
     </message>
     <message>
@@ -13341,7 +13269,7 @@ Styles deleted:
         <translation>줄별 코드</translation>
     </message>
     <message>
-        <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
+        <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>새 줄은 첫 번째 노래방 줄 위에 그 줄의 스타일로 추가됩니다.</translation>
     </message>
     <message>
@@ -13381,7 +13309,7 @@ Styles deleted:
         <translation>반복</translation>
     </message>
     <message>
-        <source>Keep the line&apos;s override tags</source>
+        <source>Keep the line’s override tags</source>
         <translation>줄의 재정의 태그 유지</translation>
     </message>
     <message>
@@ -14877,10 +14805,6 @@ after the end time in milliseconds</source>
         <translation>편집 시</translation>
     </message>
     <message>
-        <source>Move video to selected line on:</source>
-        <translation>선택한 줄로 영상 이동 시점:</translation>
-    </message>
-    <message>
         <source>Then play</source>
         <translation>이어서 재생</translation>
     </message>
@@ -14899,10 +14823,6 @@ after the end time in milliseconds</source>
     <message>
         <source>Video and audio to the next line start time</source>
         <translation>다음 줄 시작 시간까지 영상과 소리</translation>
-    </message>
-    <message>
-        <source>On moving to another line play:</source>
-        <translation>줄 변경 시 재생 방법:</translation>
     </message>
     <message>
         <source>Full screen video</source>

@@ -234,7 +234,7 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Automation | Load script… (automation), Refresh autoload scripts (refresh), Shortcuts in Settings… (hotkeys), Clear runs (remove) |
 | Spellchecker | [x] Ignore comments, [x] Ignore words in capitals, Words added to dictionary… (dictionary) |
 | Grid | [x] Fold generated lines |
-| Audio, Line editor, Original text, Search, Log, Styles, Fix minor errors, Shift times, Template editor | none |
+| Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
 
 Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), Close (tab-close), or "Close reference" for the Reference panel.
 
@@ -446,7 +446,7 @@ These are menus behind toolbar or field buttons, not right-click or ⋯ menus:
 
 - The colour buttons in the Line editor strip (`LineEditorStrip.qml:131-135`) and the Style manager's colour fields (`StyleManager.qml:981-984`) open the colour picker in dropper mode. Nothing on screen says so. Settings can swap the clicks (`Main.qml:6686`).
 - In the Audio display, a right-click sets the line's end time (`audio_display_item.cpp:423`). Aegisub does the same (`audio_display.cpp:1105-1110`).
-- Log, Search, Spellchecker, Fix minor errors, Shift times, Template editor list, Style manager list and Automation script header: no right-click handler (there is no `RightButton` in `LogPanel.qml`, `SearchTool.qml`, `SpellCheckerPanel.qml`, `FixMinorErrors.qml`, `ShiftTimesPanel.qml` or `TemplateEditor.qml`). **missing-expected**: Copy, Go to line or Replace on result rows.
+- Log, Search, Spellchecker, Shift times, Template editor list, Style manager list and Automation script header: no right-click handler (there is no `RightButton` in `LogPanel.qml`, `SearchTool.qml`, `SpellCheckerPanel.qml`, `FixMinorErrors.qml`, `ShiftTimesPanel.qml` or `TemplateEditor.qml`). **missing-expected**: Copy, Go to line or Replace on result rows.
 - Log entry text is a read-only `TextEdit` (`LogPanel.qml:196-199`). It is not a Control, so it gets no Fusion menu either. You can select text but can't copy it by mouse; the panel has a Copy button for all shown entries (`LogPanel.qml:109-112`).
 
 ---
@@ -600,7 +600,7 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **One video menu.** `VideoContextMenu.qml` serves the panel and full screen. Rows that only make sense in full screen (Open editor, the file rows, Recently opened ▸, Progress bar, Full screen bar ▸) are hidden in the panel, not greyed out. A `ShellMenu` with `shown: false` hides its row in the parent menu; hidden rows stay in `context_menus.txt`.
 - **Submenus.** Full screen on ▸ (only with a second monitor), Export frame ▸, Audio track ▸ and Chapters ▸. The two Recently opened submenus are one, with a heading per kind. Audio tracks, chapters and the bar modes are radio rows (`MenuRadioItem.qml`); headings are `MenuHeading.qml`.
 - **Check items.** Full screen, Progress bar, Render cost (also in the menu bar) and Tap to time are check items wherever they appear.
-- **Zoom.** The video menu gains GLOBAL_RESET_VIDEO_ZOOM with the menu bar's name, “Turn off video zoom”; the rename in 10.2 is left to the coordinator.
+- **Zoom.** The video menu gains GLOBAL_RESET_VIDEO_ZOOM, “Reset zoom and pan”, the name the menu bar took in 10.2.
 - **Full screen bar.** The modes are “Show when the pointer moves”, “Always show” and “Never show”, in the menu, on the bar's mode button and in the hotkey row.
 - **Speaker.** Shift+Tab in full screen focuses the bar's speaker, and the bar stays up while it has focus; the Menu key opens its output menu, which now always shows the “Output device” heading.
 - **Audio overflow.** » (menu-more) icon; the folded play buttons have their own group; Tap options ▸ is a real submenu (without its own Tap to time row, which sits just above it); Speech spectrum sits with Waveform and Spectrum.
@@ -957,7 +957,7 @@ Changes:
 Approved:
 
 - **10.1** Approve the panel video menu as drawn.
-- **10.2** Rename the menu bar's Video › “Turn off video zoom” to “Reset zoom and pan” too, so the command has one name.
+- **10.2** Rename the menu bar's Video › “Turn off video zoom” to “Reset zoom and pan” too, so the command has one name. Done by FA12 ([#569](https://github.com/altqx/hikari/issues/569)).
 
 ### 11. Video: right-click in full screen (CX5 #581; inventory R8)
 

@@ -389,38 +389,6 @@
     </message>
 </context>
 <context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>%1 of %n rule on</numerusform>
-            <numerusform>%1 of %n rules on</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>%n error</numerusform>
-            <numerusform>%n errors</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>in %n file</numerusform>
-            <numerusform>in %n files</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>%n checked</numerusform>
-            <numerusform>%n checked</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
         <source>%n rules</source>
@@ -452,6 +420,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Plugins</name>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>The plugin ran for more than %n second, so HikariSub stopped it. Its next command starts it again.</numerusform>
+            <numerusform>The plugin ran for more than %n seconds, so HikariSub stopped it. Its next command starts it again.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Reports</name>
     <message numerus="yes">
         <source>HikariSub stopped responding for %n seconds</source>
@@ -465,6 +443,52 @@
         <translation>
             <numerusform>HikariSub stopped responding for %n second %1.</numerusform>
             <numerusform>HikariSub stopped responding for %n seconds %1.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Search</name>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n match</numerusform>
+            <numerusform>%n matches</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n match(es)</source>
+        <translation>
+            <numerusform>%1 of %n match</numerusform>
+            <numerusform>%1 of %n matches</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace in %n file(s)…</source>
+        <translation>
+            <numerusform>Replace in %n file…</numerusform>
+            <numerusform>Replace in %n files…</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n file(s)</source>
+        <extracomment>%1 is the number of matches, such as &quot;5 matches&quot;</extracomment>
+        <translation>
+            <numerusform>%1 in %n file</numerusform>
+            <numerusform>%1 in %n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n line(s)</source>
+        <translation>
+            <numerusform>%1 in %n line</numerusform>
+            <numerusform>%1 in %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace %n checked</source>
+        <translation>
+            <numerusform>Replace %n checked</numerusform>
+            <numerusform>Replace %n checked</numerusform>
         </translation>
     </message>
 </context>

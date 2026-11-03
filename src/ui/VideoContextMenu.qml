@@ -304,7 +304,7 @@ ShellMenu {
         iconRole: "zoom-reset"
         objectName: videoMenu.itemPrefix + "ResetZoom"
         command: "GLOBAL_RESET_VIDEO_ZOOM"
-        text: qsTr("Turn off video zoom")
+        text: qsTr("Reset zoom and pan")
         enabled: videoMenu.shell.videoView.zoomed
         onTriggered: if (!videoMenu.shell.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM", 0)) videoMenu.shell.videoView.resetZoom()
     }

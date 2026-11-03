@@ -1,4 +1,5 @@
 #include "hikari/core/lyrics_import.h"
+#include "hikari/regex/regex.h"
 
 #include <gtest/gtest.h>
 
@@ -6,7 +7,6 @@
 #include <cstdint>
 #include <fstream>
 #include <iterator>
-#include <regex>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -60,14 +60,14 @@ std::vector<Row> rows(const LoadResult &result)
 
 void expectSyllablesFillTheLines(const LoadResult &result)
 {
-    const std::regex k(R"(\{\\k(\d+)\})");
+    const auto k = *hikari::regex::Pattern::compile(R"(\{\\k(\d+)\})");
     for (const LineRecord *line : result.document.lines()) {
         const std::string text = str(line->text);
         if (text.find("{\\k") == std::string::npos)
             continue;
         std::int64_t total = 0;
-        for (auto it = std::sregex_iterator(text.begin(), text.end(), k); it != std::sregex_iterator(); ++it)
-            total += std::stoll((*it)[1]);
+        for (auto m = k.search(text); m; m = k.search(text, m->end()))
+            total += std::stoll(std::string((*m)[1]));
         EXPECT_EQ(total * 10, (line->end.value.microseconds() - line->start.value.microseconds()) / 1000) << text;
     }
 }

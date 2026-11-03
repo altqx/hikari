@@ -898,7 +898,7 @@ Menus	Hotkeys	Third tag button		src/application/hotkeys.cpp src/ui/command_names
 Menus	Hotkeys	Time shift window		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Translation mode		src/application/hotkeys.cpp src/ui/Main.qml src/ui/SettingsDialog.qml …
 Menus	Hotkeys	Turn off filtering		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
-Menus	Hotkeys	Turn off video zoom		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
+Menus	Hotkeys	Reset zoom and pan		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	Hotkeys	Underline		src/application/hotkeys.cpp src/ui/FontPicker.qml src/ui/LineEditorStrip.qml …
 Menus	Hotkeys	Undo		src/application/hotkeys.cpp src/application/settings_import_tables.cpp src/ui/AllTagsEditionDialog.qml …
 Menus	Hotkeys	Undo to last save		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
@@ -1087,7 +1087,7 @@ Menus	MainWindow	Sort by styles		src/ui/Main.qml
 Menus	MainWindow	Sorts all lines in ASS file		src/ui/Main.qml
 Menus	MainWindow	Sorts selected lines in ASS file		src/ui/Main.qml
 Menus	MainWindow	Style &manager		src/ui/Main.qml
-Menus	MainWindow	Turn off video zoom		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
+Menus	MainWindow	Reset zoom and pan		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	MainWindow	Undo		src/application/hotkeys.cpp src/application/settings_import_tables.cpp src/ui/AllTagsEditionDialog.qml …
 Menus	MainWindow	Undo to last save		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	MainWindow	Unload video		src/application/hotkeys.cpp src/ui/Main.qml src/ui/VideoContextMenu.qml …

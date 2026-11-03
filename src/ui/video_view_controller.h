@@ -7,6 +7,8 @@
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
+#include <optional>
+
 class QQuickItem;
 
 namespace hikari::application {
@@ -64,6 +66,10 @@ public:
     Q_ENUM(PointerRequest)
     // MUST KILL: pointer's kind is a magic int (6 a double click) and it returns a PointerRequest as int
     Q_INVOKABLE int pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps = 0);
+    // The 3.5 model's wheel action for these modifiers; false leaves the wheel to pointer().
+    Q_INVOKABLE bool wheel(qreal x, qreal y, qreal notchesX, qreal notchesY, int modifiers);
+    Q_INVOKABLE void beginPinch(qreal x, qreal y);
+    Q_INVOKABLE void pinch(qreal factor, qreal x, qreal y);
     Q_INVOKABLE void panelWheel(int steps, int modifiers = 0);
     Q_INVOKABLE void volumeWheel(int steps);
     Q_INVOKABLE bool key(int key, int modifiers);
@@ -96,6 +102,8 @@ signals:
 
 private:
     void zoomPointer(int kind, int x, int y, int button, int buttons, int wheelSteps);
+    bool middlePan(int kind, qreal x, qreal y, int button, int buttons, int modifiers);
+    void applyZoomModel();
     void viewChanged();
     void applyVolume();
 
@@ -107,6 +115,12 @@ private:
     QString m_lastSnapshot;
     bool m_fullscreen = false;
     bool m_muted = false;
+    struct MiddlePress {
+        qreal x = 0, y = 0, lastX = 0, lastY = 0;
+        int modifiers = 0;
+        bool panning = false;
+    };
+    std::optional<MiddlePress> m_middle;
 };
 
 }

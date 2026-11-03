@@ -136,6 +136,12 @@ const std::map<std::string, std::string> kDepartures = {
     {"F1-replace-next-stale", "F1-stale-replace (R3-hang-crash-loss): legacy replaced the stale match again"},
     {"F1-find-all-end-of-text", "F1-end-of-text (R3-hang-crash-loss): legacy hangs"},
     {"F1-replace-all-empty-match", "F1-empty-match (R3-hang-crash-loss): legacy hangs"},
+    {"F1-next-text", "#597 rec 7: the search wraps without asking"},
+    {"F1-wrap-from-selected", "#597 rec 7: the search wraps without asking"},
+    {"F1-beginning-of-text", "#597 rec 7: the search wraps without asking"},
+    {"F1-beginning-of-text-regex", "#597 rec 7: the search wraps without asking"},
+    {"F1-end-of-text", "#597 rec 7: the search wraps without asking"},
+    {"F1-replace-next", "#597 rec 7: the search wraps without asking"},
 };
 
 std::vector<std::byte> fileBytes(const QString &path)
@@ -202,7 +208,7 @@ TEST(FindReplaceCapture, ReplaysTheLegacyCaptures)
                 host.session->setSelection(sel);
                 host.editor.reset();
             } else if (d == QStringLiteral("open")) {
-                window.tab = step[QStringLiteral("tab")].toString() == QStringLiteral("find") ? S::Tab::Find : S::Tab::Replace;
+                window.replaceShown = step[QStringLiteral("tab")].toString() != QStringLiteral("find");
             } else if (d == QStringLiteral("find_text")) {
                 window.find = u8(step[QStringLiteral("text")].toString());
             } else if (d == QStringLiteral("replace_text")) {
@@ -238,7 +244,6 @@ TEST(FindReplaceCapture, ReplaysTheLegacyCaptures)
                                      step[QStringLiteral("answer")].toString() == QStringLiteral("ok");
                     FindAnswer a = FindAnswer::Ok;
                     switch (box.question.kind) {
-                    case K::Wrap:
                     case K::ConfirmFiles:
                         a = yes ? FindAnswer::Yes : FindAnswer::No;
                         break;

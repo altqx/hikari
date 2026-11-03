@@ -45,11 +45,11 @@ Edit > Sort selected lines > Text [GLOBAL_SORT_SELECTED_BY_TEXT]
 Edit > Sort selected lines > Text without tags [GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
-Edit > Fix minor errors (experimental) [GLOBAL_MISSPELLS_REPLACER]
 Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
-Edit > Find and replace [GLOBAL_FIND_REPLACE]
-Edit > Find [GLOBAL_SEARCH]
+Edit > Find… [GLOBAL_SEARCH]
+Edit > Replace… [GLOBAL_FIND_REPLACE]
 Edit > Find next [GLOBAL_FIND_NEXT]
+Edit > Find previous [GLOBAL_FIND_PREVIOUS]
 Subtitles
 Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
@@ -98,7 +98,7 @@ Video > Unload video
 Video > Streams >
 Video > Chapters >
 Video > Zoom video [GLOBAL_VIDEO_ZOOM]
-Video > Turn off video zoom [GLOBAL_RESET_VIDEO_ZOOM]
+Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
 Audio
 Audio > Open audio [GLOBAL_OPEN_AUDIO]
@@ -141,12 +141,11 @@ View > Panels > Line editor >
 View > Panels > Grid >
 View > Panels > Reference >
 View > Panels > Shift times >
-View > Panels > Search >
+View > Panels > Find >
 View > Panels > Automation >
 View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
-View > Panels > Fix minor errors >
 View > Panels > Template editor >
 View > Move panel…
 View > Restore the previous layout

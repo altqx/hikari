@@ -117,7 +117,7 @@ Video > Full screen bar > Show when the pointer moves
 Video > Full screen bar > Always show
 Video > Full screen bar > Never show
 Video > Change aspect ratio [VIDEO_ASPECT_RATIO]
-Video > Turn off video zoom [GLOBAL_RESET_VIDEO_ZOOM]
+Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > -
 Video > Unload video [VIDEO_DELETE_FILE]
 Full-screen video
@@ -149,7 +149,7 @@ Full-screen video > Full screen bar > Show when the pointer moves
 Full-screen video > Full screen bar > Always show
 Full-screen video > Full screen bar > Never show
 Full-screen video > Change aspect ratio [VIDEO_ASPECT_RATIO]
-Full-screen video > Turn off video zoom [GLOBAL_RESET_VIDEO_ZOOM]
+Full-screen video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Full-screen video > -
 Full-screen video > Unload video [VIDEO_DELETE_FILE]
 Grid panel options

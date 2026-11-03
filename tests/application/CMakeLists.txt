@@ -66,8 +66,6 @@ hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_style_manager_tests SOURCES style_manager_tests.cpp
     LIBRARIES hikari_application LABELS application)
-hikari_add_gtest(hikari_application_misspell_replacer_tests SOURCES misspell_replacer_tests.cpp
-    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_spell_checker_tests SOURCES spell_checker_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_include_directories(hikari_application_spell_checker_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
@@ -97,7 +95,7 @@ hikari_add_gtest(hikari_application_audio_playback_tests SOURCES audio_playback_
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
-    LIBRARIES hikari_application LABELS application)
+    LIBRARIES hikari_application hikari_regex LABELS application)
 target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
     HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map/actions.csv")
 hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp

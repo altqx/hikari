@@ -13,6 +13,7 @@ on:
       - cmake/locks/**
       - cmake/HikariDependencies.cmake
       - cmake/HikariTesting.cmake
+      - cmake/HikariBun.cmake
       - cmake/quicktest_main.cpp
       - ports/**
       - triplets/**

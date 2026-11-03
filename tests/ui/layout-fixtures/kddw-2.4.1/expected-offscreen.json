@@ -10,7 +10,6 @@
                 "Original",
                 "Log",
                 "Styles",
-                "FixMinorErrors",
                 "Template",
                 "Spellchecker"
             ],
@@ -84,7 +83,6 @@
                 "Automation",
                 "Original",
                 "Log",
-                "FixMinorErrors",
                 "Spellchecker"
             ],
             "floatingWindows": [
@@ -187,7 +185,6 @@
                 "Original",
                 "Log",
                 "Styles",
-                "FixMinorErrors",
                 "Spellchecker"
             ],
             "floatingWindows": [
@@ -261,7 +258,6 @@
                 "Automation",
                 "Original",
                 "Log",
-                "FixMinorErrors",
                 "Template",
                 "Spellchecker"
             ],
@@ -326,7 +322,6 @@
                 "Original",
                 "Log",
                 "Styles",
-                "FixMinorErrors",
                 "Template",
                 "Spellchecker"
             ],
@@ -389,7 +384,6 @@
                 "Original",
                 "Log",
                 "Styles",
-                "FixMinorErrors",
                 "Template",
                 "Spellchecker"
             ],
@@ -451,7 +445,6 @@
                 "Automation",
                 "Original",
                 "Log",
-                "FixMinorErrors",
                 "Template",
                 "Spellchecker"
             ],
@@ -527,7 +520,6 @@
                 "Automation",
                 "Original",
                 "Log",
-                "FixMinorErrors",
                 "Spellchecker"
             ],
             "floatingWindows": [
@@ -629,7 +621,6 @@
                 "Automation",
                 "Original",
                 "Log",
-                "FixMinorErrors",
                 "Template",
                 "Spellchecker"
             ],
@@ -693,7 +684,6 @@
             "Automation",
             "Original",
             "Log",
-            "FixMinorErrors",
             "Template",
             "Spellchecker"
         ],
@@ -766,7 +756,6 @@
                 "Original",
                 "Log",
                 "Styles",
-                "FixMinorErrors",
                 "Template",
                 "Spellchecker"
             ],
@@ -827,7 +816,6 @@
                 "Automation",
                 "Original",
                 "Log",
-                "FixMinorErrors",
                 "Spellchecker"
             ],
             "floatingWindows": [

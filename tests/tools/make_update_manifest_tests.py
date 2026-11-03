@@ -37,23 +37,24 @@ class ManifestTest(unittest.TestCase):
             json.dump(value, file, ensure_ascii=False)
         return self.path(name)
 
-    def release(self, version):
-        """The AppImage of version in <dir>/release and the asset list naming it."""
+    def release(self, version, extra=()):
+        """The AppImage of version, and the `extra` files, in <dir>/release and the asset list naming them."""
         os.makedirs(self.path("release"), exist_ok=True)
-        name = f"HikariSub-{version}-linux-x86_64.AppImage"
-        data = f"stand-in {version}".encode()
-        with open(os.path.join(self.path("release"), name), "wb") as file:
-            file.write(data)
-        asset = {"name": name, "size": len(data), "digest": "sha256:" + hashlib.sha256(data).hexdigest()}
-        return self.write_json("assets.json", {"assets": [asset], "publishedAt": "2026-10-29T00:00:00Z"})
+        assets = []
+        for name in (f"HikariSub-{version}-linux-x86_64.AppImage", *extra):
+            data = f"stand-in {name}".encode()
+            with open(os.path.join(self.path("release"), name), "wb") as file:
+                file.write(data)
+            assets.append({"name": name, "size": len(data), "digest": "sha256:" + hashlib.sha256(data).hexdigest()})
+        return self.write_json("assets.json", {"assets": assets, "publishedAt": "2026-10-29T00:00:00Z"})
 
-    def make(self, version, *arguments):
-        assets = self.release(version)
+    def make(self, version, *arguments, extra=()):
+        assets = self.release(version, extra)
         return run("--tag", f"v{version}", "--dir", self.path("release"), "--assets-json", assets,
                    "--output", self.path("out.json"), *arguments)
 
-    def made(self, version, *arguments):
-        result = self.make(version, *arguments)
+    def made(self, version, *arguments, extra=()):
+        result = self.make(version, *arguments, extra=extra)
         self.assertEqual(result.returncode, 0, result.stderr)
         with open(self.path("out.json"), encoding="utf-8") as file:
             return json.load(file)
@@ -74,6 +75,26 @@ class ManifestTest(unittest.TestCase):
         self.assertEqual(manifest["offer"], {"to": "legacy", "channel": "prerelease",
                                              "legacy_support": "continues", "pitch": PITCH})
         self.assertNotIn("offer", self.made("0.1.0-beta.1"))
+
+    def test_the_ai_sidecar_member_names_each_platforms_asset_and_adds_only(self):
+        sidecars = ("hikari-ai-0.1.0-linux-x64.gz", "hikari-ai-0.1.0-windows-x64.gz")
+        manifest = self.made("0.1.0", extra=sidecars)
+        self.assertEqual(manifest["schema"], 1)
+        self.assertEqual(sorted(manifest["ai_sidecar"]), ["linux-x64", "windows-x64"])
+        data = b"stand-in hikari-ai-0.1.0-linux-x64.gz"
+        self.assertEqual(manifest["ai_sidecar"]["linux-x64"], {"name": sidecars[0], "size": len(data),
+                                                               "sha256": hashlib.sha256(data).hexdigest()})
+        self.assertNotIn("hikari-ai-0.1.0-linux-x64.gz", json.dumps(manifest["packages"]))
+        for name in sidecars:
+            os.remove(os.path.join(self.path("release"), name))
+        self.assertNotIn("ai_sidecar", self.made("0.1.0"))
+
+    def test_an_ai_sidecar_that_differs_from_its_asset_is_refused(self):
+        assets = self.release("0.1.0", ("hikari-ai-0.1.0-linux-x64.gz",))
+        with open(os.path.join(self.path("release"), "hikari-ai-0.1.0-linux-x64.gz"), "ab") as file:
+            file.write(b"tampered")
+        self.refused(run("--tag", "v0.1.0", "--dir", self.path("release"), "--assets-json", assets,
+                         "--output", self.path("out.json")), "hikari-ai-0.1.0-linux-x64.gz")
 
     def test_hikarisub_offer_to_must_be_exactly_qt(self):
         for offer_to in ("qt,legacy", "legacy,qt", "legacy", "qt,qt"):
