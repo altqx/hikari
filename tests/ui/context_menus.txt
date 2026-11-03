@@ -93,51 +93,65 @@ Video > Copy video position [VIDEO_COPY_COORDS]
 Video > Play [VIDEO_PLAY_PAUSE]
 Video > Stop [VIDEO_STOP]
 Video > Full screen [VIDEO_FULL_SCREEN]
-Video > Full screen bar >
-Video > Full screen bar > Auto
-Video > Full screen bar > Always
-Video > Full screen bar > Never
+Video > Full screen on >
 Video > Open editor
-Video > Recently opened subtitles >
-Video > Recently opened videos >
-Video > Open video [GLOBAL_OPEN_VIDEO]
-Video > Open subtitles [GLOBAL_OPEN_SUBS]
-Video > Show / hide progress bar [VIDEO_HIDE_PROGRESS_BAR]
-Video > Show / hide render cost [GLOBAL_VIDEO_RENDER_COST]
+Video > -
+Video > Open video… [GLOBAL_OPEN_VIDEO]
+Video > Open subtitles… [GLOBAL_OPEN_SUBS]
+Video > Recently opened >
+Video > Recently opened > -
+Video > -
+Video > Export frame >
+Video > Export frame > Save as PNG… [VIDEO_SAVE_FRAME_TO_PNG]
+Video > Export frame > Copy [VIDEO_COPY_FRAME_TO_CLIPBOARD]
+Video > Export frame > -
+Video > Export frame > Save with subtitles as PNG… [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
+Video > Export frame > Copy with subtitles [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
+Video > Audio track >
+Video > Chapters >
+Video > -
+Video > Progress bar [VIDEO_HIDE_PROGRESS_BAR]
+Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
+Video > Full screen bar >
+Video > Full screen bar > Show when the pointer moves
+Video > Full screen bar > Always show
+Video > Full screen bar > Never show
 Video > Change aspect ratio [VIDEO_ASPECT_RATIO]
-Video > Save frame with subtitles as PNG [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
-Video > Copy frame with subtitles to clipboard [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
-Video > Save frame as PNG [VIDEO_SAVE_FRAME_TO_PNG]
-Video > Copy frame to clipboard [VIDEO_COPY_FRAME_TO_CLIPBOARD]
+Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > -
 Video > Unload video [VIDEO_DELETE_FILE]
-Video > -
-Video > -
 Full-screen video
 Full-screen video > Copy video position [VIDEO_COPY_COORDS]
 Full-screen video > Play [VIDEO_PLAY_PAUSE]
 Full-screen video > Stop [VIDEO_STOP]
 Full-screen video > Full screen [VIDEO_FULL_SCREEN]
-Full-screen video > Full screen bar >
-Full-screen video > Full screen bar > Auto
-Full-screen video > Full screen bar > Always
-Full-screen video > Full screen bar > Never
+Full-screen video > Full screen on >
 Full-screen video > Open editor
-Full-screen video > Recently opened subtitles >
-Full-screen video > Recently opened videos >
-Full-screen video > Open video [GLOBAL_OPEN_VIDEO]
-Full-screen video > Open subtitles [GLOBAL_OPEN_SUBS]
-Full-screen video > Show / hide progress bar [VIDEO_HIDE_PROGRESS_BAR]
-Full-screen video > Show / hide render cost [GLOBAL_VIDEO_RENDER_COST]
+Full-screen video > -
+Full-screen video > Open video… [GLOBAL_OPEN_VIDEO]
+Full-screen video > Open subtitles… [GLOBAL_OPEN_SUBS]
+Full-screen video > Recently opened >
+Full-screen video > Recently opened > -
+Full-screen video > -
+Full-screen video > Export frame >
+Full-screen video > Export frame > Save as PNG… [VIDEO_SAVE_FRAME_TO_PNG]
+Full-screen video > Export frame > Copy [VIDEO_COPY_FRAME_TO_CLIPBOARD]
+Full-screen video > Export frame > -
+Full-screen video > Export frame > Save with subtitles as PNG… [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
+Full-screen video > Export frame > Copy with subtitles [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
+Full-screen video > Audio track >
+Full-screen video > Chapters >
+Full-screen video > -
+Full-screen video > Progress bar [VIDEO_HIDE_PROGRESS_BAR]
+Full-screen video > Render cost [GLOBAL_VIDEO_RENDER_COST]
+Full-screen video > Full screen bar >
+Full-screen video > Full screen bar > Show when the pointer moves
+Full-screen video > Full screen bar > Always show
+Full-screen video > Full screen bar > Never show
 Full-screen video > Change aspect ratio [VIDEO_ASPECT_RATIO]
-Full-screen video > Save frame with subtitles as PNG [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
-Full-screen video > Copy frame with subtitles to clipboard [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
-Full-screen video > Save frame as PNG [VIDEO_SAVE_FRAME_TO_PNG]
-Full-screen video > Copy frame to clipboard [VIDEO_COPY_FRAME_TO_CLIPBOARD]
+Full-screen video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Full-screen video > -
 Full-screen video > Unload video [VIDEO_DELETE_FILE]
-Full-screen video > -
-Full-screen video > -
 Grid panel options
 Grid panel options > Filtering >
 Grid panel options > Filtering > Filter [GRID_FILTER]

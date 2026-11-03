@@ -16,6 +16,8 @@ MenuItem {
         return holdsMenu && keepsMenuOpen && !ShellMenus.shiftHeld()
     }
     onMenuChanged: holdsMenu = false
+    visible: !subMenu || subMenu.shown !== false
+    height: subMenu && subMenu.shown === false ? 0 : implicitHeight
     onHighlightedChanged: if (highlighted) holdMenu()
     onPressed: holdMenu()
     property string iconRole

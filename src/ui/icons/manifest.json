@@ -3023,7 +3023,7 @@
   {
    "role": "progress-bar",
    "file": "progress-bar.svg",
-   "label": "Show / hide progress bar",
+   "label": "Progress bar",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3035,7 +3035,7 @@
   {
    "role": "render-cost",
    "file": "render-cost.svg",
-   "label": "Show / hide render cost",
+   "label": "Render cost",
    "accent": true,
    "mirror": false,
    "legacy": [],
