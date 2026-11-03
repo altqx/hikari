@@ -170,7 +170,7 @@ Item {
         relinkDialog.nameFilters = [({
             subtitles: qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
             video: qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"),
-            audio: qsTr("Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)"),
+            audio: qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.opus *.mp3 *.mp4 *.m4a *.mka *.mkv *.webm *.avi)",
             keyframes: qsTr("Keyframes file (*.txt *.pass *.stats *.log)"),
             timecodes: qsTr("Timecodes file (*.txt)")
         })[entry.kind] || qsTr("All files (*)"), qsTr("All files (*)")]

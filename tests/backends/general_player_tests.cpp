@@ -14,6 +14,7 @@
 #include <QVideoFrame>
 #include <QtTest>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -35,6 +36,11 @@ namespace {
 std::string fixture(const char *kind)
 {
     return std::string(HIKARI_MEDIA_FIXTURES) + "/" + kind + ".mkv";
+}
+
+std::string webm(const QString &name)
+{
+    return std::string(HIKARI_WEBM_FIXTURES) + "/" + name.toStdString();
 }
 
 int barcode(const QVideoFrame &frame)
@@ -107,8 +113,13 @@ class GeneralPlayerTests : public QObject {
 
     std::optional<MediaDescription> open(QtGeneralPlayer &player, const char *kind)
     {
+        return openPath(player, fixture(kind));
+    }
+
+    std::optional<MediaDescription> openPath(QtGeneralPlayer &player, const std::string &path)
+    {
         std::optional<std::expected<MediaDescription, PlayerError>> result;
-        player.open(fixture(kind), [&](auto r) { result = std::move(r); });
+        player.open(path, [&](auto r) { result = std::move(r); });
         if (!QTest::qWaitFor([&] { return result.has_value(); }, 10'000) || !*result)
             return std::nullopt;
         return **result;
@@ -233,6 +244,70 @@ private slots:
                      static_cast<long long>(result->deliveredStartUs), static_cast<long long>(result->errorUs()));
         std::fflush(stderr);
         QVERIFY2(std::abs(result->errorUs()) <= 100'000, "within 100 ms of the request");
+    }
+
+    void webmPlaysFromASeekedTime_data()
+    {
+        QTest::addColumn<QString>("file");
+        QTest::addColumn<bool>("variableRate");
+        QTest::newRow("vp8 vorbis") << QStringLiteral("vp8-vorbis.webm") << false;
+        QTest::newRow("vp9 opus") << QStringLiteral("vp9-opus.webm") << false;
+        QTest::newRow("vp9 alpha") << QStringLiteral("vp9-alpha.webm") << false;
+        QTest::newRow("vp9 vfr") << QStringLiteral("vp9-vfr.webm") << true;
+    }
+
+    void webmPlaysFromASeekedTime()
+    {
+        QFETCH(QString, file);
+        QFETCH(bool, variableRate);
+        QtGeneralPlayer player(false);
+        const auto d = openPath(player, webm(file));
+        QVERIFY(d);
+        QCOMPARE(d->videoTracks.size(), 1u);
+        const auto [result, index] = seek(player, 1'000'000);
+        QVERIFY(result);
+        QVERIFY(index >= 0);
+        const std::int64_t truth = variableRate ? vfrStartUs(index) : std::int64_t(index) * 1'000'000 / 24;
+        QVERIFY2(std::abs(result->deliveredStartUs - truth) <= 1000,
+                 qPrintable(QStringLiteral("frame %1 reported at %2 us").arg(index).arg(result->deliveredStartUs)));
+        QVERIFY2(std::abs(result->errorUs()) <= 100'000, "within 100 ms of the request");
+        int last = index;
+        auto connection = connect(&player, &QtGeneralPlayer::frameDelivered, this,
+                                  [&](const QVideoFrame &f) { last = std::max(last, barcode(f)); });
+        player.play();
+        QVERIFY(QTest::qWaitFor([&] { return last >= index + 5; }, 10'000));
+        disconnect(connection);
+        player.stop();
+    }
+
+    void av1PlaysOrFailsWithoutAFrame()
+    {
+        QtGeneralPlayer player(false);
+        player.setFrameDeadline(std::chrono::seconds(2));
+        const auto d = openPath(player, webm(QStringLiteral("av1-opus.webm")));
+        QVERIFY(d);
+        QCOMPARE(d->videoTracks.at(0).codec, std::string("AV1"));
+        std::optional<std::expected<SeekResult, PlayerError>> result;
+        player.seek(1'000'000, [&](auto r) { result = std::move(r); });
+        QVERIFY(QTest::qWaitFor([&] { return result.has_value(); }, 10'000));
+        std::fprintf(stderr, "av1 playback observation: %s\n", *result ? "decoded" : "no video frame");
+        std::fflush(stderr);
+        if (!*result)
+            QCOMPARE(result->error(), PlayerError::NoVideoFrame);
+        else
+            QVERIFY(std::abs(result->value().errorUs()) <= 100'000);
+    }
+
+    void aPlayerThatDecodedAFrameNeverReportsNoVideoFrame()
+    {
+        QtGeneralPlayer player(false);
+        QVERIFY(open(player, "cfr"));
+        pauseOnFirstFrame(player);
+        player.setFrameDeadline(std::chrono::milliseconds(50));
+        std::optional<std::expected<SeekResult, PlayerError>> result;
+        player.seek(60'000'000, [&](auto r) { result = std::move(r); });
+        QTest::qWait(500);
+        QVERIFY(!result || *result || result->error() != PlayerError::NoVideoFrame);
     }
 
     void aSeekRightAfterTheLoadIsWherePlaybackStarts_data()

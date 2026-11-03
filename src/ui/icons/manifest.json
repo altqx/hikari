@@ -1280,7 +1280,6 @@
     "style-manager",
     "search-tool",
     "select-lines",
-    "misspell-replacer",
     "grid-menu",
     "tab-menu"
    ]
@@ -2601,18 +2600,6 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ]
-  },
-  {
-   "role": "multireplace",
-   "file": "multireplace.svg",
-   "label": "Fix minor errors",
-   "accent": true,
-   "mirror": true,
-   "legacy": [],
-   "surfaces": [
-    "menu:subtitles",
-    "misspell-replacer"
    ]
   },
   {
@@ -4109,7 +4096,6 @@
     "choose-styles",
     "columns",
     "search-tool",
-    "fix-minor-errors",
     "settings-import"
    ]
   },

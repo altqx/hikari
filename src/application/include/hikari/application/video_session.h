@@ -77,6 +77,10 @@ public:
     bool playerHasVideo() const { return m_player && !m_path.empty() && m_playerPath == m_path; }
     // The player is not asked again until the video is loaded again or the player changes.
     bool playerFailed() const { return !m_path.empty() && m_failedPath == m_path; }
+    // Bumped when the player cannot open or decode the video, and by each play it then refuses.
+    std::uint64_t playbackFailures() const { return m_playbackFailures; }
+    // The player's name for the video's codec; empty when it does not say.
+    std::string playerVideoCodec() const;
     bool play();  // from the shown frame; false without video or player
     bool pause(); // shows the indexed frame of the last delivered time
     bool stop();  // pauses, then shows the first frame
@@ -233,7 +237,8 @@ private:
     GeneralPlayerPort *m_player = nullptr;
     std::string m_playerPath; // what the player has open
     bool m_preparing = false;  // preparePlayer's open is pending
-    std::string m_failedPath;  // preparePlayer could not open it
+    std::string m_failedPath;  // the player could not open or decode it
+    std::uint64_t m_playbackFailures = 0;
     bool m_playing = false;
     bool m_stopped = false;
     std::uint64_t m_playEpoch = 0;

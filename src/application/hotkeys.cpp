@@ -296,6 +296,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_KANJI_TIMER", 5174},
         {"GLOBAL_GETTING_STARTED", 5176},
         {"GLOBAL_EXPORT_SUBS_AS", 5212},
+        {"GLOBAL_FIND_PREVIOUS", 5213},
         {"GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION", 5216},
         {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_START", 5217},
         {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_END", 5218},
@@ -481,7 +482,6 @@ constexpr NameRow kNames[] = {
         {5301, "Open new tab"},
         {5302, "Close current tab"},
         {5168, "Clean styles of ASS file"},
-        {5012, "Fix minor errors (experimental)"},
         {5011, "Find next"},
         {5055, "Load last session"},
         {5042, "Next frame"},
@@ -574,6 +574,7 @@ constexpr NameRow kNames[] = {
         {5174, "Kanji timer"},
         {5176, "Getting started"},
         {5212, "Export as"},
+        {5213, "Find previous"},
         {5216, "Join with previous line using the audio selection"},
         {5217, "Shift selected lines by frames: start at video"},
         {5218, "Shift selected lines by frames: end at video"},
@@ -623,6 +624,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5150, GlobalHotkey, "Previous line", "Ctrl-Up"},
         {5151, GlobalHotkey, "Next line", "Ctrl-Down"},
         {5011, GlobalHotkey, "Find next", "F3"},
+        {5213, GlobalHotkey, "Find previous", "Shift-F3"},
         {5152, GlobalHotkey, "Merge with previous line", "F4"},
         {5153, GlobalHotkey, "Merge with next line", "F5"},
         {5158, GlobalHotkey, "Change start time to nearest keyframe", "Shift-Left"},
@@ -871,7 +873,8 @@ bool isRetiredHotkey(int id)
            || id == 5039
            || id == 5104
            || (id >= 5031 && id <= 5035)
-           || id == 5109;
+           || id == 5109
+           || id == 5012;
 }
 
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)

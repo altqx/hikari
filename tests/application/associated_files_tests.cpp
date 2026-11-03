@@ -76,6 +76,15 @@ TEST_F(SameNamedFile, FindsTheVideoBesideTheSubtitles)
     EXPECT_EQ(found->filename(), first);
 }
 
+TEST_F(SameNamedFile, FindsAWebmBesideTheSubtitles)
+{
+    const auto subs = touch("clip.ass");
+    touch("clip.webm");
+    const auto found = findSameNamedFile(subs, true);
+    ASSERT_TRUE(found);
+    EXPECT_EQ(found->filename(), "clip.webm");
+}
+
 TEST_F(SameNamedFile, FindsTheSubtitlesBesideAVideo)
 {
     const auto video = touch("movie.mkv");
