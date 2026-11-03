@@ -290,6 +290,7 @@ private slots:
         QFile saved(layouts->savedLayoutsFile());
         QVERIFY(saved.open(QIODevice::ReadOnly));
         const QByteArray text = saved.readAll();
+        saved.close();
         QVERIFY(text.contains("From the second"));
         QVERIFY(!text.contains("~1"));
         QVERIFY(!text.contains("\"w1\""));
@@ -306,10 +307,20 @@ private slots:
         QCOMPARE(secondClose->property("keysText").toString(), before);
         auto &hotkeys = application->hotkeys();
         const QVariantMap close = hotkeys.gestureTarget(QStringLiteral("GLOBAL_CLOSE_PAGE"));
-        hotkeys.gestureMap(close.value(QStringLiteral("id")).toInt(), close.value(QStringLiteral("name")).toString(),
-                           QStringLiteral("Ctrl-Alt-K"), 0, QStringLiteral("cancel"));
+        const QString defaultKeys = hotkeys.accelOf(QStringLiteral("GLOBAL_CLOSE_PAGE"), 0);
+        QVERIFY(!defaultKeys.isEmpty());
+        const auto bind = [&](const QString &accel) {
+            hotkeys.gestureMap(close.value(QStringLiteral("id")).toInt(), close.value(QStringLiteral("name")).toString(),
+                               accel, 0, QStringLiteral("cancel"));
+        };
+        bind(QStringLiteral("Ctrl-Alt-K"));
         QTRY_VERIFY(firstClose->property("keysText").toString() != before);
         QCOMPARE(secondClose->property("keysText").toString(), firstClose->property("keysText").toString());
+
+        bind(defaultKeys);
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("GLOBAL_CLOSE_PAGE"), 0), defaultKeys);
+        QTRY_COMPARE(firstClose->property("keysText").toString(), before);
+        QCOMPARE(secondClose->property("keysText").toString(), before);
     }
 };
 
