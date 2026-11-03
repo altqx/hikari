@@ -1150,6 +1150,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editor->setVideoTimebase(ready ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
+    connect(m_video.get(), &ui::VideoController::changed, this, &Application::logPlaybackFailure);
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
         if (video.state() != application::VideoSession::State::Ready || !video.lastFrame())

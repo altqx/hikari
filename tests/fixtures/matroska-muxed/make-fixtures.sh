@@ -1,5 +1,5 @@
 #!/bin/sh
-# How the committed files were made (mkvmerge v102.0, FFmpeg n9.0.2). Neither writes S_TEXT/ASCII.
+# How the committed files were made (mkvmerge v102.0, FFmpeg n9.0.2; zlib.mkv mkvmerge v103.0). Neither writes S_TEXT/ASCII.
 set -eu
 cd "$(dirname "$0")"
 s=sources
@@ -23,5 +23,7 @@ mux multi.mkv "$s/video.mkv" \
     --attachment-mime-type application/vnd.ms-opentype --attachment-name "..d.otf" --attach-file "$s/b.otf" \
     --attachment-mime-type text/plain --attachment-name "notes.txt" --attach-file "$s/notes.txt"
 mux webvtt-only.mkv "$s/video.mkv" "$s/muxed.vtt"
+mux zlib.mkv "$s/video.mkv" --compression 0:zlib --language 0:jpn "$s/muxed.ass" \
+    --compression 0:zlib --language 0:pol "$s/muxed.srt"
 printf 'not a Matroska file\n' > not-matroska.mkv
 rm "$s/video.mkv"

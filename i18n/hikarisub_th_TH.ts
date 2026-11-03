@@ -11009,7 +11009,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation>ไฟล์เสียงและวิดีโอ (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
+        <translation type="vanished">ไฟล์เสียงและวิดีโอ (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -15017,6 +15017,21 @@ after the end time in milliseconds</source>
     <message>
         <source>Cannot convert video to RGBA</source>
         <translation>ไม่สามารถแปลงวิดีโอเป็น RGBA ได้</translation>
+    </message>
+    <message>
+        <source>This video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
+        <translation>ไม่สามารถเล่นวิดีโอนี้บนคอมพิวเตอร์เครื่องนี้ได้ เฟรมยังคงแสดงเมื่อหยุดชั่วคราว และยังเลื่อนตำแหน่งและก้าวทีละเฟรมได้</translation>
+    </message>
+    <message>
+        <source>%1 video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
+        <translation>ไม่สามารถเล่นวิดีโอ %1 บนคอมพิวเตอร์เครื่องนี้ได้ เฟรมยังคงแสดงเมื่อหยุดชั่วคราว และยังเลื่อนตำแหน่งและก้าวทีละเฟรมได้</translation>
+    </message>
+    <message>
+        <source>Play video</source>
+        <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
+        <translation>เล่นวิดีโอ</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

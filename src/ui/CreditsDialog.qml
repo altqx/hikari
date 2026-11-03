@@ -18,6 +18,7 @@ DialogWindow {
             ["Qt", "The Qt Company Ltd. and other contributors", "LGPL 3"],
             ["KDDockWidgets", "Klarälvdalens Datakonsult AB (KDAB)", "GPL 2 or 3"],
             ["FFmpeg", "The FFmpeg developers", "LGPL 2.1 or later"],
+            ["dav1d", "VideoLAN and dav1d authors", "BSD 2-Clause"],
             ["FFMS2", "Fredrik Mellbin and contributors", "MIT"],
             ["libass", "libass contributors", "ISC"],
             ["FreeType", "David Turner, Robert Wilhelm, Werner Lemberg and others", "FreeType License"],

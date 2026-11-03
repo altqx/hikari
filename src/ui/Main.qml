@@ -6544,7 +6544,7 @@ ApplicationWindow {
         id: audioDialog
         objectName: "audioDialog"
         title: qsTranslate("HikariSub.Audio", "Choose audio file")
-        nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)",
+        nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.opus *.mp3 *.mp4 *.m4a *.mka *.mkv *.webm *.avi)",
                       qsTranslate("HikariSub.Audio", "All files") + " (*)"]
         onAccepted: {
             root.rememberPickerFolder("audio", selectedFile)

@@ -11009,7 +11009,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation>소리 및 영상 파일 (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
+        <translation type="vanished">소리 및 영상 파일 (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -15017,6 +15017,21 @@ after the end time in milliseconds</source>
     <message>
         <source>Cannot convert video to RGBA</source>
         <translation>영상을 RGBA로 변환할 수 없음</translation>
+    </message>
+    <message>
+        <source>This video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
+        <translation>이 컴퓨터에서는 이 영상을 재생할 수 없습니다. 일시 정지 상태에서는 프레임이 계속 표시되며, 탐색과 프레임 이동은 작동합니다.</translation>
+    </message>
+    <message>
+        <source>%1 video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
+        <translation>이 컴퓨터에서는 %1 영상을 재생할 수 없습니다. 일시 정지 상태에서는 프레임이 계속 표시되며, 탐색과 프레임 이동은 작동합니다.</translation>
+    </message>
+    <message>
+        <source>Play video</source>
+        <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
+        <translation>영상 재생</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>
