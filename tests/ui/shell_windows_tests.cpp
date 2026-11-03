@@ -10,6 +10,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -25,13 +26,16 @@ const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock"
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock"};
 
-QString writeSubtitles(const QString &path, const char *text)
+QString writeSubtitles(const QString &path, const char *text, int width)
 {
     QFile f(path);
     if (!f.open(QIODevice::WriteOnly))
         return {};
-    f.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
-            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+    f.write(QStringLiteral("[Script Info]\nScriptType: v4.00+\nPlayResX: %1\nPlayResY: %2\n\n[Events]\n")
+                .arg(width)
+                .arg(width * 9 / 16)
+                .toUtf8());
+    f.write("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
     f.write(QByteArray("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,") + text + "\n");
     return path;
 }
@@ -62,6 +66,13 @@ class ShellWindowsTest : public QObject {
         return false;
     }
     std::optional<application::DocumentId> target() const { return application->workspace().editingTarget(); }
+    static QObject *controller(QQuickWindow *window, const char *name) { return window->property(name).value<QObject *>(); }
+    static QString editorText(QQuickWindow *window) { return controller(window, "editor")->property("text").toString(); }
+    static QStringList statusFields(QQuickWindow *window)
+    {
+        return controller(window, "statusBar")->property("fields").toStringList();
+    }
+    static QVariantList overlay(QQuickWindow *window) { return controller(window, "visualTools")->property("overlay").toList(); }
     static QList<QQuickItem *> itemsNamed(QQuickWindow *window, const QString &name)
     {
         QList<QQuickItem *> out;
@@ -130,7 +141,7 @@ private slots:
         options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         options.playbackAudio = false;
         application = std::make_unique<app::Application>(options);
-        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("first.ass")), "first")));
+        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("first.ass")), "first", 640)));
         firstTab = *target();
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
@@ -146,7 +157,7 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(second));
         QTRY_VERIFY(second->property("arrangementSettled").toBool());
         QCOMPARE(application->workspace().activeWindow(), 1);
-        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("second.ass")), "second")));
+        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("second.ass")), "second", 1280)));
         secondTab = *target();
         QVERIFY(secondTab != firstTab);
     }
@@ -172,9 +183,72 @@ private slots:
         QVERIFY(menus);
         QCOMPARE(menus->property("count").toInt(), first()->findChild<QObject *>(QStringLiteral("appMenus"))->property("count").toInt());
         QVERIFY(item(second, "documentTabBar")->property("shown").toBool());
-        QCOMPARE(second->property("shell").value<QObject *>(), first()->property("shell").value<QObject *>());
+        for (const char *own : {"shell", "editor", "visualTools", "videoView", "statusBar"})
+            QVERIFY2(controller(second, own) != controller(first(), own), own);
         QCOMPARE(second->property("hotkeys").value<QObject *>(), first()->property("hotkeys").value<QObject *>());
         QVERIFY(second->property("workspaceLayout").value<QObject *>() != first()->property("workspaceLayout").value<QObject *>());
+    }
+
+    void eachWindowsPanelsShowItsOwnTab()
+    {
+        for (const int active : {0, 1, 0}) {
+            application->activateShellWindow(active);
+            QCOMPARE(application->workspace().activeWindow(), active);
+            QCOMPARE(editorText(first()), QStringLiteral("first"));
+            QCOMPARE(editorText(second), QStringLiteral("second"));
+            QCOMPARE(controller(first(), "shell")->property("editingTitle").toString(), QStringLiteral("first.ass"));
+            QCOMPARE(controller(second, "shell")->property("editingTitle").toString(), QStringLiteral("second.ass"));
+            QVERIFY2(statusFields(first()).contains(QStringLiteral("640 x 360")), qPrintable(statusFields(first()).join(u'|')));
+            QVERIFY2(statusFields(second).contains(QStringLiteral("1280 x 720")), qPrintable(statusFields(second).join(u'|')));
+        }
+    }
+
+    void anInactiveWindowsOverlayHidesWhileThePictureShowsAnotherTab()
+    {
+        const QString dummy = QStringLiteral("?dummy:25.000000:250:1280:720:47:163:254:");
+        for (const int window : {0, 1}) {
+            application->activateShellWindow(window);
+            application->video().openVideo(dummy);
+            QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        }
+        for (QQuickWindow *window : {first(), second.data()})
+            QVERIFY(QMetaObject::invokeMethod(controller(window, "visualTools"), "selectFamily", Q_ARG(int, 1)));
+        for (const int active : {1, 0, 1}) {
+            application->activateShellWindow(active);
+            QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+            QVERIFY(application->video().showFrameAt(37));
+            QQuickWindow *shown = active == 0 ? first() : second.data();
+            QQuickWindow *hidden = active == 0 ? second.data() : first();
+            QTRY_VERIFY_WITH_TIMEOUT(!overlay(shown).isEmpty(), 20000);
+            QVERIFY(overlay(hidden).isEmpty());
+        }
+    }
+
+    void anEditReachesAnotherWindowOnlyWhenItChangesThatWindowsTab()
+    {
+        QCOMPARE(application->workspace().activeWindow(), 1);
+        QSignalSpy firstGrid(controller(first(), "shell"), SIGNAL(targetsChanged()));
+        QSignalSpy firstStatus(controller(first(), "statusBar"), SIGNAL(changed()));
+        auto *editor = controller(second, "editor");
+        QVERIFY(QMetaObject::invokeMethod(editor, "setActorText", Q_ARG(QString, QStringLiteral("Actor"))));
+        bool committed = false;
+        QVERIFY(QMetaObject::invokeMethod(editor, "commit", Q_RETURN_ARG(bool, committed)));
+        QVERIFY(committed);
+        QTRY_VERIFY(modified(secondTab));
+        QCOMPARE(firstGrid.count(), 0);
+        QCOMPARE(firstStatus.count(), 0);
+        QCOMPARE(editorText(first()), QStringLiteral("first"));
+
+        auto *firstSession = application->files().session(firstTab);
+        QVERIFY(firstSession);
+        const auto line = firstSession->document().lines().front()->id;
+        QVERIFY(firstSession->editDraftText(line, u8"first, changed elsewhere"));
+        QVERIFY(firstSession->commitDraft());
+        QVERIFY(QMetaObject::invokeMethod(editor, "setActorText", Q_ARG(QString, QStringLiteral("Other"))));
+        QVERIFY(QMetaObject::invokeMethod(editor, "commit", Q_RETURN_ARG(bool, committed)));
+        QCOMPARE(application->workspace().activeWindow(), 1);
+        QTRY_COMPARE(editorText(first()), QStringLiteral("first, changed elsewhere"));
+        QVERIFY(firstGrid.count() > 0);
     }
 
     void eachWindowShowsItsOwnTabs()

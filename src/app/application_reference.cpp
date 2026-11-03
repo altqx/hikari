@@ -152,13 +152,13 @@ void Application::showReferenceRow(std::size_t row)
         return;
     const auto line = lines[row]->id;
     referenceSession->setSelection(application::Selection{line, {line}, line, {}});
-    m_shell->setReferenceSelection(referenceSession->selection());
-    m_shell->showReferenceLine(line);
+    shell().setReferenceSelection(referenceSession->selection());
+    shell().showReferenceLine(line);
 }
 
 void Application::publishReferenceNavigation()
 {
-    m_shell->setReferenceNavigation(m_referenceLinked, m_linkedMatch);
+    shell().setReferenceNavigation(m_referenceLinked, m_linkedMatch);
 }
 
 bool Application::stepReferenceMatch(int delta)
@@ -193,7 +193,7 @@ application::GridSelection Application::referenceGridSelection() const
     if (auto *session = reference ? m_files->session(*reference) : nullptr)
         for (const auto *line : session->document().lines())
             document.push_back(line->id);
-    application::GridSelection rules(std::move(document), m_shell->referenceDisplayedLines());
+    application::GridSelection rules(std::move(document), shell().referenceDisplayedLines());
     rules.setChangeActiveOnSelection(m_settings->boolean("grid.changeActiveOnSelection"));
     return rules;
 }
@@ -205,7 +205,7 @@ void Application::applyReferenceSelection(application::Selection next)
     if (!session)
         return;
     session->setSelection(std::move(next));
-    m_shell->setReferenceSelection(session->selection());
+    shell().setReferenceSelection(session->selection());
 }
 
 void Application::selectReferenceLine(qulonglong id)
@@ -267,7 +267,7 @@ bool Application::copyReferenceLines()
 
 void Application::refuseReferenceChange()
 {
-    m_shell->setStatusText(QCoreApplication::translate("HikariSub.Reference", "The reference is protected (read-only)."));
+    shell().setStatusText(QCoreApplication::translate("HikariSub.Reference", "The reference is protected (read-only)."));
 }
 
 QVariantList Application::referenceOccurrences()
@@ -327,7 +327,7 @@ int Application::comparedReferenceRow(int row) const
     const auto target = m_workspace.editingTarget();
     if (!m_referenceLinked || !reference || partner != reference || row < 0)
         return -1;
-    const auto shown = m_shell->displayedLines();
+    const auto shown = shell().displayedLines();
     auto *session = m_files->session(*target);
     if (static_cast<std::size_t>(row) >= shown.size() || !session)
         return -1;
