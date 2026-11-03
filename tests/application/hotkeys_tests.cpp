@@ -1,11 +1,11 @@
 #include "hikari/application/hotkeys.h"
+#include "hikari/regex/regex.h"
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
 #include <fstream>
 #include <map>
-#include <regex>
 #include <set>
 #include <sstream>
 #include <string_view>
@@ -119,13 +119,13 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     std::string line;
     std::getline(csv, line);
     int rows = 0;
-    const std::regex row(R"re(^"(\w+)","(\d+)")re");
+    const auto row = *hikari::regex::Pattern::compile(R"re(^"(\w+)","(\d+)")re");
     while (std::getline(csv, line)) {
-        std::smatch m;
-        if (!std::regex_search(line, m, row))
+        const auto m = row.search(line);
+        if (!m)
             continue;
         ++rows;
-        EXPECT_EQ(hotkeyIdOf(m[1].str()), std::stoi(m[2])) << m[1];
+        EXPECT_EQ(hotkeyIdOf(std::string((*m)[1])), std::stoi(std::string((*m)[2]))) << (*m)[1];
     }
     EXPECT_EQ(rows, 243);
     EXPECT_EQ(hotkeyIdOf("NOT_A_SYMBOL"), 0);

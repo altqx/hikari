@@ -55,7 +55,7 @@ hikari_add_gtest(hikari_core_spelling_tests SOURCES spelling_tests.cpp LIBRARIES
 hikari_add_gtest(hikari_core_spelling_scripts_tests SOURCES spelling_scripts_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_editor_syntax_tests SOURCES editor_syntax_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_matroska_tests SOURCES matroska_tests.cpp LIBRARIES hikari_core LABELS core)
-hikari_add_gtest(hikari_core_lyrics_import_tests SOURCES lyrics_import_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_lyrics_import_tests SOURCES lyrics_import_tests.cpp LIBRARIES hikari_core hikari_regex LABELS core)
 target_compile_definitions(hikari_core_lyrics_import_tests PRIVATE
     HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
 hikari_add_gtest(hikari_core_karaoke_checks_tests SOURCES karaoke_checks_tests.cpp LIBRARIES hikari_core LABELS core)
