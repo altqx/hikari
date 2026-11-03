@@ -315,6 +315,27 @@
             <numerusform>Delete %n lines</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>This file has %n Aegisub fold.</numerusform>
+            <numerusform>This file has %n Aegisub folds.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>%n Aegisub fold became a line group.</numerusform>
+            <numerusform>%n Aegisub folds became line groups.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>%n fold was skipped: it overlaps a line group or does not pair.</numerusform>
+            <numerusform>%n folds were skipped: they overlap a line group or do not pair.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>

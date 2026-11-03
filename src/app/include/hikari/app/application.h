@@ -110,6 +110,9 @@ signals:
     // description: the group the command would break (0: it would make a new
     // malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
+    // An opened file has Aegisub folds that Convert Aegisub folds to line groups would convert.
+    void aegisubFoldsFound(qulonglong document, int folds);
+    void foldsConverted(int converted, int skipped);
     void spellingChanged();
     // The dictionary changed; a running check starts over with it.
     void spellCheckerRestarted();
@@ -562,6 +565,8 @@ public:
     Q_INVOKABLE bool addLinesToGroup(qulonglong description);
     Q_INVOKABLE bool copyGroup(qulonglong description);
     Q_INVOKABLE QString groupTitle(qulonglong description) const;
+    Q_INVOKABLE bool canConvertFolds() const;
+    Q_INVOKABLE bool convertFoldsToGroups();
     // key: "start", "end", "style", "actor", "effect" or "layer"; text keys use
     // the locale's collation.
     Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);

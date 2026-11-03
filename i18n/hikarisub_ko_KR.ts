@@ -4500,6 +4500,10 @@ Failed to copy %2 fonts.</source>
         <translation>다음 줄과</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub 접기를 줄 그룹으로 변환</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>영상에 보이는 줄 선택</translation>
     </message>
@@ -4524,6 +4528,32 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add description</source>
         <translation>설명 추가</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>Aegisub 접기</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>이 파일에 Aegisub 접기가 %n개 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>줄 그룹으로 변환</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>Aegisub 접기 %n개를 줄 그룹으로 바꿨습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>접기 %n개를 건너뛰었습니다. 줄 그룹과 겹치거나 짝이 맞지 않습니다.</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -6112,6 +6142,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import legacy settings…</source>
         <translation>이전 버전 설정 가져오기…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub 접기를 줄 그룹으로 변환</translation>
     </message>
     <message>
         <source>Global</source>

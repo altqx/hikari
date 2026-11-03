@@ -305,6 +305,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_PLUGINS", 5231},
         {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
+        {"GLOBAL_CONVERT_FOLDS_TO_GROUPS", 5239},
 };
 
 struct NameRow {
@@ -580,6 +581,7 @@ constexpr NameRow kNames[] = {
         {5231, "Plugins"},
         {5229, "Centre times within frames"},
         {5223, "Import legacy settings…"},
+        {5239, "Convert Aegisub folds to line groups"},
 };
 
 struct DefaultRow {

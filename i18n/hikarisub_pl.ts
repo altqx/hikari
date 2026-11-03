@@ -4574,6 +4574,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Z następną linijką</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>Zaznacz linijki widoczne na wideo</translation>
     </message>
@@ -4600,6 +4604,38 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Add description</source>
         <translation>Dodaj opis</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>Zwinięcia Aegisub</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>Ten plik ma %n zwinięcie Aegisub.</numerusform>
+            <numerusform>Ten plik ma %n zwinięcia Aegisub.</numerusform>
+            <numerusform>Ten plik ma %n zwinięć Aegisub.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>Konwertuj na grupy linijek</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>%n zwinięcie Aegisub stało się grupą linijek.</numerusform>
+            <numerusform>%n zwinięcia Aegisub stały się grupami linijek.</numerusform>
+            <numerusform>%n zwinięć Aegisub stało się grupami linijek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>Pominięto %n zwinięcie: nakłada się na grupę linijek lub nie ma pary.</numerusform>
+            <numerusform>Pominięto %n zwinięcia: nakładają się na grupę linijek lub nie mają pary.</numerusform>
+            <numerusform>Pominięto %n zwinięć: nakładają się na grupę linijek lub nie mają pary.</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -6198,6 +6234,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Import legacy settings…</source>
         <translation>Importuj ustawienia starej wersji…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
     </message>
     <message>
         <source>Global</source>

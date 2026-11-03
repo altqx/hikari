@@ -4537,6 +4537,10 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்த வரியுடன்</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub மடிப்புகளை வரிக் குழுக்களாக மாற்று</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>வீடியோவில் தெரியும் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
@@ -4562,6 +4566,35 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add description</source>
         <translation>விளக்கத்தைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>Aegisub மடிப்புகள்</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>இந்தக் கோப்பில் %n Aegisub மடிப்பு உள்ளது.</numerusform>
+            <numerusform>இந்தக் கோப்பில் %n Aegisub மடிப்புகள் உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>வரிக் குழுக்களாக மாற்று</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>%n Aegisub மடிப்பு வரிக் குழுவாக மாறியது.</numerusform>
+            <numerusform>%n Aegisub மடிப்புகள் வரிக் குழுக்களாக மாறின.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>%n மடிப்பு தவிர்க்கப்பட்டது: அது ஒரு வரிக் குழுவுடன் மேற்பொருந்துகிறது அல்லது இணை இல்லை.</numerusform>
+            <numerusform>%n மடிப்புகள் தவிர்க்கப்பட்டன: அவை ஒரு வரிக் குழுவுடன் மேற்பொருந்துகின்றன அல்லது இணை இல்லை.</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -6155,6 +6188,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import legacy settings…</source>
         <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub மடிப்புகளை வரிக் குழுக்களாக மாற்று</translation>
     </message>
     <message>
         <source>Global</source>

@@ -4500,6 +4500,10 @@ Failed to copy %2 fonts.</source>
         <translation>กับบรรทัดถัดไป</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>แปลงส่วนยุบของ Aegisub เป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>เลือกบรรทัดที่ปรากฏในวิดีโอ</translation>
     </message>
@@ -4524,6 +4528,32 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add description</source>
         <translation>เพิ่มคำอธิบาย</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>ส่วนยุบของ Aegisub</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>ไฟล์นี้มีส่วนยุบของ Aegisub %n ส่วน</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>แปลงเป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>ส่วนยุบของ Aegisub %n ส่วนกลายเป็นกลุ่มบรรทัดแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>ข้ามส่วนยุบ %n ส่วน เพราะซ้อนทับกลุ่มบรรทัดหรือไม่มีคู่</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -6112,6 +6142,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import legacy settings…</source>
         <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>แปลงส่วนยุบของ Aegisub เป็นกลุ่มบรรทัด</translation>
     </message>
     <message>
         <source>Global</source>
