@@ -1041,9 +1041,9 @@ Approved:
 
 - **13.1** Approve.
 
-### 14. Audio: overflow menu (when the bar folds) (CX5 #581; inventory M3)
+### 14. Audio: overflow menu (CX5 #581; inventory M3)
 
-The overflow button at the end of the audio bar, shown only when its controls fold. Its icon changes from ⋯ to » (menu-more).
+The overflow button at the end of the audio bar. Its icon changes from ⋯ to » (menu-more). It shows at every width, because Go to selection start and end are in no other menu (FA10b #726). In a wide bar the menu holds only those two rows; the other rows appear as the bar folds them out, so no row is also a button in the bar.
 
 - Play before the mark (play-before-mark)
 - Play after the mark (play-after-mark)
@@ -1072,13 +1072,13 @@ The overflow button at the end of the audio bar, shown only when its controls fo
 - ──
 - (•) Waveform
 - (•) Spectrum
-- [x] Speech spectrum (was “Speech (non-linear spectrum)”)
+- [x] Speech spectrum (was “Speech (non-linear spectrum)”; while the toggles fold)
 - ──
-- Go to selection start (video-to-start-time; FA10, always shown)
-- Go to selection end (video-to-end-time; FA10, always shown)
+- Go to selection start (video-to-start-time; FA10, at every width)
+- Go to selection end (video-to-end-time; FA10, at every width)
 - ──
-- [x] Auto-scroll
-- [x] Sync with video
+- [x] Auto-scroll (while the toggles fold)
+- [x] Sync with video (while the toggles fold)
 
 Changes:
 
