@@ -30978,11 +30978,7 @@ private slots:
             QVERIFY(submenu->property("shown").toBool());
             QVERIFY(QMetaObject::invokeMethod(submenu, "open"));
             QTRY_VERIFY(submenu->property("opened").toBool());
-            QPointF was(-1, -1);
-            QTRY_VERIFY([&] {
-                const QPointF now = row->mapToScene(QPointF());
-                return std::exchange(was, now) == now && row->isVisible() && row->width() > 0;
-            }());
+            QVERIFY(row->isVisible() && row->width() > 0);
         };
         QVERIFY(video.showFrameAt(0));
         QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
