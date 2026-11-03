@@ -116,6 +116,16 @@ TEST(AlignToVideo, TheKeyPointHoldsWhileItsShapeMovesAtMostFivePixels)
     EXPECT_FALSE(keyPointHolds(picture(64, 32, kBlack), point, reference));
 }
 
+TEST(AlignToVideo, ARunThatReachesTheEdgeEndsAtTheEdge)
+{
+    const KeyPoint point{30, 10, kWhite};
+    const auto reference = *keyShape(picture(64, 32, kBlack, {{0, 5, 40, 10, kWhite}}), point);
+    EXPECT_EQ(reference, (KeyShape{-1, 40, 4, 15}));
+    EXPECT_TRUE(keyPointHolds(picture(64, 32, kBlack, {{0, 5, 38, 10, kWhite}}), point, reference));
+    EXPECT_TRUE(keyPointHolds(picture(64, 32, kBlack, {{4, 5, 36, 10, kWhite}}), point, reference));
+    EXPECT_FALSE(keyPointHolds(picture(64, 32, kBlack, {{27, 5, 13, 10, kWhite}}), point, reference));
+}
+
 TEST(AlignToVideo, TheSearchStepsOneFrameBackThenForward)
 {
     std::vector<int> asked;
