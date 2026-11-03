@@ -32,9 +32,13 @@ bool waitFor(const std::function<bool()> &done, int ms = 10'000)
 {
     QElapsedTimer t;
     t.start();
-    while (!done() && t.elapsed() < ms)
+    for (;;) {
+        if (done())
+            return true;
+        if (t.elapsed() >= ms)
+            return false;
         QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
-    return done();
+    }
 }
 
 bool processAlive(qint64 pid)
@@ -53,7 +57,10 @@ bool processAlive(qint64 pid)
     std::string line;
     std::getline(stat, line);
     const auto paren = line.rfind(')');
-    return paren == std::string::npos || paren + 2 >= line.size() || line[paren + 2] != 'Z';
+    if (paren == std::string::npos || paren + 2 >= line.size())
+        return ::kill(static_cast<pid_t>(pid), 0) == 0;
+    const char state = line[paren + 2];
+    return state != 'Z' && state != 'X' && state != 'x';
 #endif
 }
 
