@@ -43,6 +43,23 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariHarper.cmake")
 set(HIKARI_HARPER_DOWNLOADS "${CMAKE_BINARY_DIR}/harper-downloads" CACHE PATH
     "Folder the pinned harper-ls is fetched into (seed it to configure offline)")
 hikari_fetch_harper("${HIKARI_HARPER_DOWNLOADS}" HIKARI_HARPER_LS)
+execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    OUTPUT_VARIABLE HIKARI_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+# In CI's container git refuses the checkout (dubious ownership); Actions sets GITHUB_SHA.
+if(NOT HIKARI_COMMIT AND DEFINED ENV{GITHUB_SHA})
+    set(HIKARI_COMMIT "$ENV{GITHUB_SHA}")
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariBun.cmake")
+option(HIKARI_AI_SIDECAR "Build the AI sidecar (src/ai-sidecar) and run its bun tests" ON)
+option(HIKARI_AI_LOCAL_SIDECAR "Run the sidecar this build makes instead of downloading one (developer and test builds)"
+    OFF)
+set(HIKARI_BUN_DOWNLOADS "${CMAKE_BINARY_DIR}/bun-downloads" CACHE PATH
+    "Folder the pinned Bun is fetched into (seed it to configure offline)")
+hikari_ai_build_id(HIKARI_AI_BUILD_ID)
+if(HIKARI_AI_SIDECAR OR HIKARI_AI_LOCAL_SIDECAR)
+    hikari_fetch_bun("${HIKARI_BUN_DOWNLOADS}" "${HIKARI_BUN_HOST_PLATFORM}" HIKARI_BUN)
+    add_subdirectory(src/ai-sidecar)
+endif()
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDictionaries.cmake")
 set(HIKARI_DICTIONARY_DOWNLOADS "${CMAKE_BINARY_DIR}/dictionary-downloads" CACHE PATH
     "Folder the pinned dictionaries are fetched into (seed it to configure offline)")
@@ -83,6 +100,7 @@ if(BUILD_TESTING)
     add_subdirectory(tests/application)
     add_subdirectory(tests/api)
     add_subdirectory(tests/minisign)
+    add_subdirectory(tests/regex)
     add_subdirectory(tests/plugins)
     add_subdirectory(tests/backends)
     add_subdirectory(tests/ui)

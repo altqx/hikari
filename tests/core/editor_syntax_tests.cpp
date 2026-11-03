@@ -25,6 +25,9 @@ TEST(EditorSyntax, StateFollowsCommentAndEffect)
     EXPECT_EQ(textState(true, u"template line"), TextState::Template);
     EXPECT_EQ(textState(true, u"templatefoo"), TextState::Template);
     EXPECT_EQ(textState(true, u"code once"), TextState::Code);
+    EXPECT_EQ(textState(true, u"mixin line"), TextState::Template);
+    EXPECT_EQ(textState(false, u"mixin line"), TextState::Dialogue);
+    EXPECT_EQ(textState(true, u"Mixin"), TextState::Comment);
     EXPECT_EQ(textState(true, u"Template"), TextState::Comment);
     EXPECT_EQ(textState(true, u" code"), TextState::Comment);
     EXPECT_TRUE(spellChecked(TextState::Dialogue));
@@ -79,14 +82,17 @@ TEST(EditorSyntax, BreaksAndDrawingsTakeTheirColour)
                                                                {2, 3, R::Names},
                                                                {3, 4, R::Values},
                                                                {4, 5, R::CurlyBraces},
-                                                               {5, 10, R::SplitAndDrawings},
+                                                               {5, 7, R::SplitAndDrawings},
+                                                               {7, 8, R::DrawingX},
+                                                               {8, 9, R::SplitAndDrawings},
+                                                               {9, 10, R::DrawingY},
                                                                {10, 11, R::CurlyBraces},
                                                                {11, 12, R::Operators},
                                                                {12, 13, R::Names},
                                                                {13, 14, R::Values},
                                                                {14, 15, R::CurlyBraces},
                                                                {15, 16, R::Text}}));
-    EXPECT_EQ(runs(u"{\\p1}m 0 0").back(), (Span{5, 10, R::SplitAndDrawings}));
+    EXPECT_EQ(runs(u"{\\p1}m 0 0").back(), (Span{9, 10, R::DrawingY}));
     EXPECT_EQ(runs(u"a\tb"), (Runs{{0, 1, R::Text}, {2, 3, R::Text}}));
 }
 
@@ -159,4 +165,35 @@ TEST(EditorSyntax, CodeLinesAreCodeThroughout)
     EXPECT_EQ(runs(u"a\\Nb", TextState::Code), (Runs{{0, 1, R::TemplateVariables},
                                                                  {1, 3, R::SplitAndDrawings},
                                                                  {3, 4, R::TemplateVariables}}));
+}
+
+namespace {
+
+std::u16string coordinates(std::u16string_view text, TextState state = TextState::Dialogue)
+{
+    std::u16string out(text.size(), u'.');
+    for (const auto &r : runs(text, state))
+        for (std::size_t i = r.start; i < r.end; ++i)
+            out[i] = r.role == R::DrawingX ? u'x' : r.role == R::DrawingY ? u'y' : u'.';
+    return out;
+}
+
+}
+
+TEST(EditorSyntax, DrawingCoordinatesAlternateXAndY)
+{
+    EXPECT_EQ(coordinates(u"{\\p1}m 10 -20 l 30.5 40 b 1 2 3 4 5 6{\\p0}7 8"),
+              u".......xx.yyy...xxxx.yy...x.y.x.y.x.y........");
+    EXPECT_EQ(coordinates(u"{\\p2}m 1 2 3"), u".......x.y.x");
+    EXPECT_EQ(coordinates(u"{\\p0}m 1 2"), u"..........");
+    EXPECT_EQ(coordinates(u"{\\pos(1,2)}m 1 2"), u"................");
+    EXPECT_EQ(coordinates(u"{\\p1}m 1 2", TextState::Template), u".......x.y");
+}
+
+TEST(EditorSyntax, VectorClipCoordinatesAlternateXAndY)
+{
+    EXPECT_EQ(coordinates(u"{\\clip(m 10 20 l 30 40)}a"), u".........xx.yy...xx.yy...");
+    EXPECT_EQ(coordinates(u"{\\iclip(m 1 2)}a"), u"..........x.y...");
+    EXPECT_EQ(coordinates(u"{\\clip(2,m 1 2)}a"), u"...........x.y...");
+    EXPECT_EQ(coordinates(u"{\\clip(10,20,30,40)}a"), u".....................");
 }

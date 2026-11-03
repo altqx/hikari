@@ -5,12 +5,14 @@ File > Recently opened subtitles > None
 File > Remove subtitles from the editor [GLOBAL_REMOVE_SUBS]
 File > Close [GLOBAL_CLOSE_PAGE]
 File > Open video… [GLOBAL_OPEN_VIDEO]
+File > Import subtitles from MKV… [GRID_SUBS_FROM_MKV]
 File > Save [GLOBAL_SAVE_SUBS]
 File > Save all [GLOBAL_SAVE_ALL_SUBS]
 File > Save as… [GLOBAL_SAVE_SUBS_AS]
+File > Export as… [GLOBAL_EXPORT_SUBS_AS]
 File > Save translation [GLOBAL_SAVE_TRANSLATION]
 File > Save subtitles using the video name [GLOBAL_SAVE_WITH_VIDEO_NAME]
-File > Open auto save [GLOBAL_OPEN_AUTO_SAVE]
+File > Open autosave… [GLOBAL_OPEN_AUTO_SAVE]
 File > Remove temporary files [GLOBAL_DELETE_TEMPORARY_FILES]
 File > Last session >
 File > Last session > Load last session [GLOBAL_LOAD_LAST_SESSION]
@@ -19,24 +21,23 @@ File > Last session > Save session to file [GLOBAL_SAVE_EXTERNAL_SESSION]
 File > Last session > Ask whether to load the last session at program startup
 File > Last session > Load last session after program start
 File > Settings [GLOBAL_SETTINGS]
-File > Import legacy settings...
 File > Exit
 Edit
 Edit > Undo [GLOBAL_UNDO]
 Edit > Redo [GLOBAL_REDO]
 Edit > Sort all lines >
-Edit > Sort all lines > The starting time [GLOBAL_SORT_ALL_BY_START_TIMES]
+Edit > Sort all lines > Start time [GLOBAL_SORT_ALL_BY_START_TIMES]
 Edit > Sort all lines > End time [GLOBAL_SORT_ALL_BY_END_TIMES]
-Edit > Sort all lines > Styles [GLOBAL_SORT_ALL_BY_STYLE]
+Edit > Sort all lines > Style [GLOBAL_SORT_ALL_BY_STYLE]
 Edit > Sort all lines > Actor [GLOBAL_SORT_ALL_BY_ACTOR]
 Edit > Sort all lines > Effect [GLOBAL_SORT_ALL_BY_EFFECT]
 Edit > Sort all lines > Layer [GLOBAL_SORT_ALL_BY_LAYER]
 Edit > Sort all lines > Text [GLOBAL_SORT_ALL_BY_TEXT]
 Edit > Sort all lines > Text without tags [GLOBAL_SORT_ALL_BY_TEXT_WITHOUT_TAGS]
 Edit > Sort selected lines >
-Edit > Sort selected lines > The starting time [GLOBAL_SORT_SELECTED_BY_START_TIMES]
+Edit > Sort selected lines > Start time [GLOBAL_SORT_SELECTED_BY_START_TIMES]
 Edit > Sort selected lines > End time [GLOBAL_SORT_SELECTED_BY_END_TIMES]
-Edit > Sort selected lines > Styles [GLOBAL_SORT_SELECTED_BY_STYLE]
+Edit > Sort selected lines > Style [GLOBAL_SORT_SELECTED_BY_STYLE]
 Edit > Sort selected lines > Actor [GLOBAL_SORT_SELECTED_BY_ACTOR]
 Edit > Sort selected lines > Effect [GLOBAL_SORT_SELECTED_BY_EFFECT]
 Edit > Sort selected lines > Layer [GLOBAL_SORT_SELECTED_BY_LAYER]
@@ -44,15 +45,18 @@ Edit > Sort selected lines > Text [GLOBAL_SORT_SELECTED_BY_TEXT]
 Edit > Sort selected lines > Text without tags [GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
-Edit > Fix minor errors (experimental) [GLOBAL_MISSPELLS_REPLACER]
 Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
-Edit > Find and replace [GLOBAL_FIND_REPLACE]
-Edit > Find [GLOBAL_SEARCH]
+Edit > Find… [GLOBAL_SEARCH]
+Edit > Replace… [GLOBAL_FIND_REPLACE]
 Edit > Find next [GLOBAL_FIND_NEXT]
+Edit > Find previous [GLOBAL_FIND_PREVIOUS]
+Edit > -
+Edit > Insert hard space [GLOBAL_INSERT_HARD_SPACE]
 Subtitles
-Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
+Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
+Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
-Subtitles > ASS file properties [GLOBAL_OPEN_ASS_PROPERTIES]
+Subtitles > Script properties [GLOBAL_OPEN_ASS_PROPERTIES]
 Subtitles > Conversion >
 Subtitles > Conversion > Convert to ASS [GLOBAL_CONVERT_TO_ASS]
 Subtitles > Conversion > Convert to SRT [GLOBAL_CONVERT_TO_SRT]
@@ -61,9 +65,12 @@ Subtitles > Conversion > Convert to MPL2 [GLOBAL_CONVERT_TO_MPL2]
 Subtitles > Conversion > Convert to TMP [GLOBAL_CONVERT_TO_TMP]
 Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
 Subtitles > Resample subtitles [GLOBAL_OPEN_SUBS_RESAMPLE]
+Subtitles > Set FPS >
+Subtitles > Set FPS > Set new FPS… [GRID_SET_NEW_FPS]
+Subtitles > Set FPS > Set FPS from video [GRID_SET_FPS_FROM_VIDEO]
 Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]
 Subtitles > Check karaoke [GLOBAL_CHECK_KARAOKE]
-Subtitles > Kanji timer… [GLOBAL_KANJI_TIMER]
+Subtitles > Kanji timer [GLOBAL_KANJI_TIMER]
 Subtitles > -
 Subtitles > Translation mode [GLOBAL_TRANSLATION_MODE]
 Video
@@ -94,8 +101,8 @@ Video > Unload video
 Video > Streams >
 Video > Chapters >
 Video > Zoom video [GLOBAL_VIDEO_ZOOM]
-Video > Turn off video zoom [GLOBAL_RESET_VIDEO_ZOOM]
-Video > Show / hide render cost [GLOBAL_VIDEO_RENDER_COST]
+Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
+Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
 Audio
 Audio > Open audio [GLOBAL_OPEN_AUDIO]
 Audio > Recently opened audio >
@@ -137,12 +144,12 @@ View > Panels > Line editor >
 View > Panels > Grid >
 View > Panels > Reference >
 View > Panels > Shift times >
-View > Panels > Search >
+View > Panels > Timing postprocessor >
+View > Panels > Find >
 View > Panels > Automation >
 View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
-View > Panels > Fix minor errors >
 View > Panels > Template editor >
 View > Move panel…
 View > Restore the previous layout
@@ -156,6 +163,6 @@ Help > User guide [GLOBAL_HELP]
 Help > Report an issue [GLOBAL_ANSI]
 Help > Check for updates [GLOBAL_CHECK_FOR_UPDATES]
 Help > Open user folder
-Help > What's new
+Help > What’s new
 Help > About [GLOBAL_ABOUT]
 Help > Credits [GLOBAL_HELPERS]

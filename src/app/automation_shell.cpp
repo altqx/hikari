@@ -16,7 +16,7 @@
 #include <numeric>
 #include <ranges>
 #include <string_view>
-#include <unordered_set>
+#include <absl/container/flat_hash_set.h>
 
 namespace hikari::app {
 
@@ -760,8 +760,8 @@ QStringList AutomationShell::documentScriptsToLoad()
     };
     // No file check: checking a UNC path contacts its server.
     const auto &listed = m_documentScripts.scripts();
-    const std::unordered_set<std::string_view> loaded(listed.begin(), listed.end());
-    std::unordered_set<std::string> offered;
+    const absl::flat_hash_set<std::string_view> loaded(listed.begin(), listed.end());
+    absl::flat_hash_set<std::string> offered;
     for (std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
         if (!path.empty() && !loaded.contains(path) && (!read || declined(path)) && offered.insert(path).second)
             out << QString::fromStdString(path);
@@ -815,10 +815,8 @@ void AutomationShell::continueLastScript()
     if (!host)
         return;
     if (host->state() == State::LoadFailed) {
-        // MUST KILL: an empty %2 only keeps the existing translations of this two-line text
         emit notice(QStringLiteral("error"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
-                    QCoreApplication::translate("HikariSub.Automation", "Error loading Lua script: %1\n%2")
-                        .arg(prettyName(path), QString()).trimmed(),
+                    QCoreApplication::translate("HikariSub.Automation", "%1 did not load. Its error is in Details.").arg(prettyName(path)),
                     host->lastError());
         editScript(QString::fromStdString(path));
         return;

@@ -75,7 +75,7 @@ void addDefinitions(Registry &registry)
             "scaleY": {"type": "string"},
             "spacing": {"type": "string"},
             "angle": {"type": "string"},
-            "borderStyle": {"enum": [1, 3]},
+            "borderStyle": {"enum": [1, 3, 4]},
             "outline": {"type": "string"},
             "shadow": {"type": "string"},
             "alignment": {"type": "string"},

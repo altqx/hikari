@@ -69,6 +69,23 @@ private slots:
         QVERIFY(!model.rowOf(core::LineId{42}));
     }
 
+    void nestedGroupsGiveEachRowItsDepthAndEachDescriptionItsOwnState()
+    {
+        LineTableModel model;
+        model.setDocument(load("[Events]\n"
+                               "Comment: 0,0:00:00.00,0:00:00.00,D,[tree_description],0,0,0,,S\n"
+                               "Comment: 0,0:00:00.00,0:00:00.00,D,[tree_opened][tree_description],0,0,0,,C\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened][tree_closed],0,0,0,,c\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,D,,0,0,0,,z\n"));
+        auto at = [&](int row, int role) { return model.index(row, 0).data(role); };
+        QCOMPARE(at(0, LineTableModel::GroupDepthRole).toInt(), 0);
+        QCOMPARE(at(1, LineTableModel::GroupDepthRole).toInt(), 1);
+        QCOMPARE(at(2, LineTableModel::GroupDepthRole).toInt(), 2);
+        QCOMPARE(at(3, LineTableModel::GroupDepthRole).toInt(), 0);
+        QCOMPARE(at(0, LineTableModel::GroupClosedRole).toBool(), false);
+        QCOMPARE(at(1, LineTableModel::GroupClosedRole).toBool(), true);
+    }
+
     void legacyColumnsAndMeasures()
     {
         LineTableModel model;
@@ -275,6 +292,16 @@ private slots:
         QCOMPARE(model.index(1, 0).data(LineTableModel::SelectedRole).toBool(), true);
         QCOMPARE(model.index(1, 0).data(LineTableModel::AnchorRole).toBool(), true);
         QCOMPARE(model.index(0, 0).data(LineTableModel::SelectedRole).toBool(), false);
+
+        LineTableModel apart;
+        apart.setDocument(load(kLines));
+        QSignalSpy runs(&apart, &QAbstractItemModel::dataChanged);
+        apart.setSelection({core::LineId{1}, {core::LineId{1}, core::LineId{3}}}, core::LineId{1});
+        QCOMPARE(runs.count(), 2);
+        QCOMPARE(runs.at(0).at(0).toModelIndex().row(), 0);
+        QCOMPARE(runs.at(0).at(1).toModelIndex().row(), 0);
+        QCOMPARE(runs.at(1).at(0).toModelIndex().row(), 2);
+        QCOMPARE(runs.at(1).at(1).toModelIndex().row(), 2);
     }
 
     void marksAndSelectionDoNotRefilter()

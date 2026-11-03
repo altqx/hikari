@@ -54,6 +54,8 @@ public:
 
     std::expected<std::uint64_t, HostError> request(std::uint64_t run, std::vector<std::byte> payload,
                                                     Handler handler);
+    // An Event frame: it waits behind the helper's running work, under the same limits.
+    std::expected<std::uint64_t, HostError> push(std::uint64_t run, std::vector<std::byte> payload, Handler handler);
     void cancel(std::uint64_t request);
     // False, dropping the answer, when the call is unknown, answered, or its request ended.
     bool answer(std::uint64_t request, std::uint64_t call, Outcome outcome, std::vector<std::byte> payload = {});
@@ -71,6 +73,8 @@ signals:
     void lost();
 
 private:
+    std::expected<std::uint64_t, HostError> send(Kind kind, std::uint64_t run, std::vector<std::byte> payload,
+                                                 Handler handler);
     void readOutput();
     void readDiagnostics();
     void fail();

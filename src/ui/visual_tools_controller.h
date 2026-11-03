@@ -43,6 +43,7 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(QString warning READ warning NOTIFY changed)
     Q_PROPERTY(QRectF videoRect READ videoRect NOTIFY geometryChanged)
     Q_PROPERTY(QRectF sourceRect READ sourceRect NOTIFY geometryChanged)
+    Q_PROPERTY(QRectF frameRect READ frameRect NOTIFY geometryChanged)
     Q_PROPERTY(QVariantList values READ values NOTIFY changed)
     Q_PROPERTY(bool escapable READ escapable NOTIFY changed)
     Q_PROPERTY(int batchCount READ batchCount NOTIFY changed)
@@ -97,6 +98,7 @@ public:
     QString warning() const;
     QRectF videoRect() const;
     QRectF sourceRect() const;
+    QRectF frameRect() const;
     QVariantList values() const;
     bool escapable() const;
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
@@ -170,6 +172,8 @@ public:
     application::visual::VideoView &videoView() { return m_view; }
     const application::visual::VideoView &videoView() const { return m_view; }
     bool hasNonDefaultTool() const { return tool() && m_family != application::visual::Family::Crosshair; }
+    bool toolTakesWheel(bool shift, bool control) const { return tool() && tool()->takesWheel(shift, control); }
+    bool toolTakesMiddleButton() const { return tool() && tool()->takesMiddleButton(); }
     void viewChanged();
     std::optional<application::CommandRefusal> lastRefusal() const { return m_lastRefusal; }
 

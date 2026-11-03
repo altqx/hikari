@@ -2,11 +2,11 @@
 #include "script_client.h"
 
 #include "hikari/api/schema.h"
+#include "hikari/regex/regex.h"
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <regex>
 #include <set>
 
 using namespace hikari::api;
@@ -22,10 +22,10 @@ TEST(ApiRegistry, EveryOperationIsWellFormed)
     ASSERT_FALSE(registry.operations().empty());
     for (const Json::Member &def : registry.defs().asObject())
         EXPECT_FALSE(checkSchema(def.value, registry.defs())) << def.key << ": " << *checkSchema(def.value, registry.defs());
-    const std::regex name("[a-z]+(\\.[a-z_]+)+");
+    const auto name = *hikari::regex::Pattern::compile("[a-z]+(\\.[a-z_]+)+");
     std::set<std::string> seen;
     for (const Operation &op : registry.operations()) {
-        EXPECT_TRUE(std::regex_match(op.name, name)) << op.name;
+        EXPECT_TRUE(name.match(op.name)) << op.name;
         EXPECT_TRUE(seen.insert(op.name).second) << op.name;
         EXPECT_FALSE(op.summary.empty()) << op.name;
         EXPECT_TRUE(op.handler) << op.name;

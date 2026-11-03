@@ -4,6 +4,7 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 #include <fstream>
 #include <iterator>
 #include <system_error>
@@ -111,7 +112,7 @@ FontFamilies::FontFamilies(FontServicePort &fonts, FontNameLower lower, FontList
 void FontFamilies::enumerate()
 {
     const std::vector<SystemFace> faces = m_fonts.pickerFaces(m_environment);
-    std::vector<bool> covers;
+    boost::dynamic_bitset<> covers;
     if (m_filtered)
         covers = m_fonts.facesCover(faces, m_environment, filterCharacters(m_filter, m_platform));
     std::vector<u16> all, filtered;

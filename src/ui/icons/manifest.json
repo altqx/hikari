@@ -1238,7 +1238,6 @@
     "style-manager",
     "search-tool",
     "select-lines",
-    "misspell-replacer",
     "grid-menu",
     "tab-menu"
    ]
@@ -2415,7 +2414,7 @@
    "legacy": [],
    "surfaces": [
     "style-manager",
-    "menu:file"
+    "settings-dialog"
    ]
   },
   {
@@ -2562,18 +2561,6 @@
    ]
   },
   {
-   "role": "multireplace",
-   "file": "multireplace.svg",
-   "label": "Fix minor errors",
-   "accent": true,
-   "mirror": true,
-   "legacy": [],
-   "surfaces": [
-    "menu:subtitles",
-    "misspell-replacer"
-   ]
-  },
-  {
    "role": "close-video",
    "file": "close-video.svg",
    "label": "Unload video",
@@ -2621,7 +2608,7 @@
   {
    "role": "zoom-reset",
    "file": "zoom-reset.svg",
-   "label": "Turn off video zoom",
+   "label": "Reset zoom and pan",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3038,7 +3025,7 @@
   {
    "role": "progress-bar",
    "file": "progress-bar.svg",
-   "label": "Show / hide progress bar",
+   "label": "Progress bar",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3050,7 +3037,7 @@
   {
    "role": "render-cost",
    "file": "render-cost.svg",
-   "label": "Show / hide render cost",
+   "label": "Render cost",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3448,6 +3435,17 @@
    ]
   },
   {
+   "role": "hard-space",
+   "file": "hard-space.svg",
+   "label": "Insert hard space",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:edit"
+   ]
+  },
+  {
    "role": "split-wraps",
    "file": "split-wraps.svg",
    "label": "Split lines by wraps",
@@ -3472,7 +3470,7 @@
   {
    "role": "paste-translation",
    "file": "paste-translation.svg",
-   "label": "Paste translation text",
+   "label": "Paste translation from a file…",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3484,7 +3482,7 @@
   {
    "role": "translation-shift",
    "file": "translation-shift.svg",
-   "label": "Dialogue shifting window",
+   "label": "Translation matching…",
    "accent": true,
    "mirror": true,
    "legacy": [],
@@ -3545,8 +3543,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "CX4 #580"
+   ]
   },
   {
    "role": "fps",
@@ -4068,7 +4065,6 @@
     "choose-styles",
     "columns",
     "search-tool",
-    "fix-minor-errors",
     "settings-import"
    ]
   },
@@ -4081,8 +4077,7 @@
    "legacy": [],
    "surfaces": [
     "menu:file"
-   ],
-   "pending": "EX1 #448"
+   ]
   },
   {
    "role": "plugins",

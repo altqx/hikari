@@ -342,7 +342,7 @@ private slots:
         map[QStringLiteral("whichTimes")] = 0;
         application->shiftTimesSettings().setSettingsMap(map);
         playerAt(30);
-        QCOMPARE(application->shiftTimes(), QString());
+        QCOMPARE(application->applyShift(QStringLiteral("shift")), QString());
         const int added = (timebase.startTimeFor(30) - 1000) / 10 * 10;
         QVERIFY(added > 0);
         QCOMPARE(ms(lines()[1]->start.value), 1000 + added);

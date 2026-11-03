@@ -389,7 +389,7 @@ private slots:
         QCOMPARE(tabTitle(0), QStringLiteral("episode.ass"));
         QCOMPARE(tabTitle(1), QStringLiteral("Bez nazwy"));
         QCOMPARE(settingsDialog()->property("dictionaries").toStringList().value(0),
-                 QStringLiteral("Umieść pliki .dic i .aff w folderze \"Dictionary\""));
+                 QStringLiteral("Umieść pliki .dic i .aff w folderze “Dictionary”"));
         choose("setting_program.language", 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!settingsDialog()->property("visible").toBool());
@@ -521,7 +521,7 @@ private slots:
         QVERIFY(application->openFile(episode));
         const auto &lines = application->files().session(*application->workspace().editingTarget())->document().lines();
         application->shell().selectLine(lines[1]->id.value);
-        QVERIFY(QMetaObject::invokeMethod(root()->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QVERIFY(application->hideSelectedLines());
         QTRY_VERIFY(application->shell().filtered());
         const QString english = application->shell().selectionStatus();
         QVERIFY2(english.endsWith(QStringLiteral(" (1 hidden)")), qPrintable(english));

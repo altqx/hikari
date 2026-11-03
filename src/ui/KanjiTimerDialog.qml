@@ -276,6 +276,15 @@ DialogWindow {
                                       : dialog.statusText(row.modelData)
                             }
                         }
+                        Button {
+                            objectName: "kanjiPairAgain"
+                            visible: row.modelData.skipped === true
+                            text: qsTr("Pair again")
+                            flat: true
+                            focusPolicy: Qt.TabFocus
+                            font: dialog.fontAt(12)
+                            onClicked: { strip.forceActiveFocus(); dialog.timer.pairAgain(row.index) }
+                        }
                     }
                     onClicked: {
                         strip.forceActiveFocus()

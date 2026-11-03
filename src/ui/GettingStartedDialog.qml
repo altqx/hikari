@@ -316,7 +316,7 @@ DialogWindow {
                 spacing: 2
                 Layout.preferredHeight: 64
                 Block { label: qsTr("Video"); video: true; Layout.preferredWidth: 74 }
-                Block { label: qsTr("Styles"); Layout.preferredWidth: 26 }
+                Block { label: qsTr("Style"); Layout.preferredWidth: 26 }
             }
             RowLayout {
                 visible: thumb.preset === "Typesetting"
@@ -492,7 +492,7 @@ DialogWindow {
                 explanation: setup.importing
                              ? qsTr("The next pages start from these values; a change there wins over the imported one.")
                              : qsTr("HikariSub 0.0.x is installed on this computer. Nothing in it is changed.")
-                later: qsTr("Later: File › Import legacy settings…")
+                later: qsTr("Later: Settings › General › Import legacy settings…")
                 RowLayout {
                     id: importChoices
                     spacing: 16
@@ -502,7 +502,7 @@ DialogWindow {
                         iconRole: "import"
                         text: qsTr("Import my old settings")
                         badge: qsTr("Recommended")
-                        description: qsTr("Hotkeys, fonts, audio and video options and your dictionary words.")
+                        description: qsTr("Shortcuts, fonts, audio and video options and your dictionary words.")
                         checked: setup.importing
                         onClicked: setup.importing = true
                         Layout.preferredWidth: 300
@@ -511,7 +511,7 @@ DialogWindow {
                         objectName: "gettingStartedImportNo"
                         iconRole: "settings"
                         text: qsTr("Set up from scratch")
-                        description: qsTr("Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.")
+                        description: qsTr("Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.")
                         checked: !setup.importing
                         onClicked: setup.importing = false
                         Layout.preferredWidth: 300
@@ -677,7 +677,7 @@ DialogWindow {
                     SegmentedButtons {
                         objectName: "gettingStartedTitleBar"
                         choices: [{ text: qsTr("HikariSub’s"), name: "gettingStartedTitleBarOwn" },
-                                  { text: qsTr("The system’s"), name: "gettingStartedTitleBarSystem" }]
+                                  { text: qsTr("System"), name: "gettingStartedTitleBarSystem" }]
                         currentIndex: WindowFrame.usesSystemTitleBar(setup.values["appearance.titleBar"] ?? "auto") ? 1 : 0
                         // MUST KILL: picking the desktop's default stores "auto", not the choice
                         onActivated: index => setup.put("appearance.titleBar",
@@ -787,7 +787,7 @@ DialogWindow {
                 objectName: "gettingStartedEditing"
                 title: qsTr("Editing")
                 explanation: qsTr("Backups while you work, and the checks on the line editor’s text.")
-                later: qsTr("Later: Settings › General › Saving and Settings › Spelling & grammar")
+                later: qsTr("Later: Settings › General › Saving and Settings › Spelling and grammar")
                 GridLayout {
                     columns: 2
                     columnSpacing: 12

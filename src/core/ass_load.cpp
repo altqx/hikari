@@ -1,11 +1,13 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/extradata.h"
+#include "hikari/core/line_groups.h"
 
 #include "text_util.h"
 
 #include <algorithm>
 #include <atomic>
+#include <boost/dynamic_bitset.hpp>
 #include <cstdint>
 #include <limits>
 #include <set>
@@ -49,9 +51,9 @@ std::size_t endOfRecord(const Section &section, std::size_t count)
 
 // The sections libass reads as embedded data: a [Fonts] or [Graphics]
 // section and every section after it up to a header libass knows.
-std::vector<bool> embeddedData(const std::vector<Section> &sections)
+boost::dynamic_bitset<> embeddedData(const std::vector<Section> &sections)
 {
-    std::vector<bool> data;
+    boost::dynamic_bitset<> data;
     bool in = false;
     for (const auto &section : sections) {
         if (section.kind == SectionKind::Fonts || section.kind == SectionKind::Graphics)
@@ -604,29 +606,6 @@ bool replaceAll(std::u8string &text, u8sv marker)
     return found;
 }
 
-// Actor markers as HikariSub legacy writes them: only the first kind found is removed, then the field is trimmed.
-std::u8string actorMarkers(u8sv field, LineRecord &line)
-{
-    std::u8string actor(field);
-    if (!actor.empty() && actor.front() == u8'[') {
-        if (replaceAll(actor, u8"[bookmark]")) {
-            line.bookmark = true;
-        } else if (replaceAll(actor, u8"[hidden]")) {
-            line.visibility = LineVisibility::Hidden;
-        } else if (replaceAll(actor, u8"[visible]")) {
-            line.visibility = LineVisibility::VisibleBlock;
-        } else if (replaceAll(actor, u8"[tree_closed]")) {
-            line.group = GroupMarker::Closed;
-            line.visibility = LineVisibility::Hidden;
-        } else if (replaceAll(actor, u8"[tree_opened]")) {
-            line.group = GroupMarker::Opened;
-        } else if (replaceAll(actor, u8"[tree_description]")) {
-            line.group = GroupMarker::Description;
-        }
-    }
-    return str(trim(actor));
-}
-
 class Loader {
 public:
     explicit Loader(std::span<const std::byte> bytes)
@@ -679,10 +658,14 @@ private:
     void resolveExtra()
     {
         const auto &table = m_result.document.extradata();
+        std::vector<LineRecord *> lines;
         for (auto &section : DocumentBuilder::sections(m_result.document))
             for (auto &record : section.records)
-                if (auto *line = std::get_if<LineRecord>(&record); line && !line->extradataIds.empty())
+                if (auto *line = std::get_if<LineRecord>(&record); line && !line->extradataIds.empty()) {
                     line->extra = resolveExtradata(table, line->extradataIds);
+                    lines.push_back(line);
+                }
+        linkGeneratedLines(lines);
     }
 
     void addDiagnostic(Diagnostic::Severity severity, Diagnostic::Kind kind, std::size_t offset, u8sv excerpt)
@@ -835,7 +818,7 @@ private:
         line.start = time(parts[1], span.offset);
         line.end = time(parts[2], span.offset);
         line.style = str(parts[3]);
-        line.actor = actorMarkers(parts[4], line);
+        line.actor = legacy::actorMarkers(parts[4], line);
         line.marginLeft = {str(parts[5]), legacy::atoi(parts[5])};
         line.marginRight = {str(parts[6]), legacy::atoi(parts[6])};
         line.marginVertical = {str(parts[7]), legacy::atoi(parts[7])};
@@ -907,6 +890,64 @@ private:
 }
 
 namespace legacy {
+
+namespace {
+
+bool takeMarker(std::u8string_view &text, std::u8string_view marker)
+{
+    if (!text.starts_with(marker))
+        return false;
+    text.remove_prefix(marker.size());
+    return true;
+}
+
+// Nested line groups (#696): two or more leading tree markers, outermost first.
+bool takeStackedGroups(std::u8string &actor, LineRecord &line)
+{
+    std::u8string_view rest = actor;
+    std::vector<GroupMarker> memberships;
+    for (;;) {
+        if (takeMarker(rest, u8"[tree_opened]"))
+            memberships.push_back(GroupMarker::Opened);
+        else if (takeMarker(rest, u8"[tree_closed]"))
+            memberships.push_back(GroupMarker::Closed);
+        else
+            break;
+    }
+    const bool description = takeMarker(rest, u8"[tree_description]");
+    if (memberships.size() + (description ? 1 : 0) < 2)
+        return false;
+    actor.erase(0, actor.size() - rest.size());
+    setGroupMarkers(line, std::move(memberships), description);
+    return true;
+}
+
+}
+
+std::u8string actorMarkers(std::u8string_view field, LineRecord &line)
+{
+    std::u8string actor(field);
+    if (takeStackedGroups(actor, line)) {
+        if (!actor.empty() && actor.front() == u8'[' && replaceAll(actor, u8"[bookmark]"))
+            line.bookmark = true;
+    } else if (!actor.empty() && actor.front() == u8'[') {
+        if (replaceAll(actor, u8"[bookmark]")) {
+            line.bookmark = true;
+        } else if (replaceAll(actor, u8"[hidden]")) {
+            line.visibility = LineVisibility::Hidden;
+        } else if (replaceAll(actor, u8"[visible]")) {
+            line.visibility = LineVisibility::VisibleBlock;
+        } else if (replaceAll(actor, u8"[tree_closed]")) {
+            line.group = GroupMarker::Closed;
+            line.visibility = LineVisibility::Hidden;
+        } else if (replaceAll(actor, u8"[tree_opened]")) {
+            line.group = GroupMarker::Opened;
+        } else if (replaceAll(actor, u8"[tree_description]")) {
+            line.group = GroupMarker::Description;
+        }
+    }
+    return str(trim(actor));
+}
 
 std::int64_t atoi(std::u8string_view text)
 {

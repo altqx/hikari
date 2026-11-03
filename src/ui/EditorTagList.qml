@@ -48,7 +48,7 @@ Item {
                 return true
             }
             const ctrl = Qt.ControlModifier, shift = Qt.ShiftModifier
-            const closes = k === Qt.Key_Home || k === Qt.Key_End || k === Qt.Key_Menu
+            const closes = k === Qt.Key_Home || k === Qt.Key_End
                 || ((k === Qt.Key_Delete || k === Qt.Key_Backspace) && (mods === 0 || mods === ctrl))
                 || ((k === Qt.Key_Left || k === Qt.Key_Right)
                     && (mods === 0 || mods === ctrl || mods === shift || mods === (ctrl | shift)))
@@ -66,6 +66,10 @@ Item {
             Qt.callLater(tags.afterTyped)
         }
         return false
+    }
+
+    function openOptions() {
+        popup.openOptions()
     }
 
     function dismiss() {

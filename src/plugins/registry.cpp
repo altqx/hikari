@@ -27,7 +27,7 @@ std::optional<InstalledPlugin> readPlugin(const Json &json)
     const Json *enabled = json.find("enabled");
     if (!version || !version->isString() || !enabled || !enabled->isBool())
         return std::nullopt;
-    InstalledPlugin plugin{version->asString(), enabled->asBool(), std::nullopt, {}};
+    InstalledPlugin plugin{version->asString(), enabled->asBool(), std::nullopt, {}, Json::object()};
     if (const Json *key = json.find("key")) {
         if (!key->isString() || !(plugin.key = minisign::parsePublicKey(key->asString())))
             return std::nullopt;
@@ -42,6 +42,11 @@ std::optional<InstalledPlugin> readPlugin(const Json &json)
                 return std::nullopt;
             plugin.grants[grant.key] = {path->asString(), writable->asBool()};
         }
+    }
+    if (const Json *settings = json.find("settings")) {
+        if (!settings->isObject())
+            return std::nullopt;
+        plugin.settings = *settings;
     }
     return plugin;
 }
@@ -88,6 +93,8 @@ bool saveRegistry(const std::filesystem::path &file, const Registry &registry)
                 grants[grantId] = Json::object({{"path", grant.path}, {"writable", grant.writable}});
             entry["grants"] = std::move(grants);
         }
+        if (!plugin.settings.asObject().empty())
+            entry["settings"] = plugin.settings;
         plugins[id] = std::move(entry);
     }
     const std::string text = Json::object({{"format", kFormat}, {"plugins", std::move(plugins)}}).dump(2) + "\n";

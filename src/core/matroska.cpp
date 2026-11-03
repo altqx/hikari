@@ -7,6 +7,7 @@
 #include "hikari/core/style.h"
 #include "text_util.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -87,8 +88,9 @@ bool sameLine(const LineRecord &a, const LineRecord &b)
 {
     return a.comment == b.comment && a.layer.value == b.layer.value && a.start.value == b.start.value &&
            a.end.value == b.end.value && a.style == b.style && a.actor == b.actor && a.bookmark == b.bookmark &&
-           a.visibility == b.visibility && a.group == b.group && a.marginLeft.value == b.marginLeft.value &&
-           a.marginRight.value == b.marginRight.value && a.marginVertical.value == b.marginVertical.value &&
+           a.visibility == b.visibility && a.group == b.group && a.outerGroups == b.outerGroups &&
+           a.marginLeft.value == b.marginLeft.value && a.marginRight.value == b.marginRight.value &&
+           a.marginVertical.value == b.marginVertical.value &&
            a.effect == b.effect && a.text == b.text && a.translation == b.translation;
 }
 
@@ -103,6 +105,7 @@ void copyFields(LineRecord &to, const LineRecord &from)
     to.bookmark = from.bookmark;
     to.visibility = from.visibility;
     to.group = from.group;
+    to.outerGroups = from.outerGroups;
     to.marginLeft = from.marginLeft;
     to.marginRight = from.marginRight;
     to.marginVertical = from.marginVertical;
@@ -243,7 +246,7 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
     Document document = srt ? loadSrt(bytes).document : loadAss(bytes).document;
     // MUST KILL: writes a file, loads it, then patches or replaces its Lines with the parsed ones
     std::vector<LineId> loaded;
-    std::vector<bool> same;
+    boost::dynamic_bitset<> same;
     for (const auto *l : document.lines()) {
         same.push_back(loaded.size() < dialogues.size() && sameLine(*l, dialogues[loaded.size()].line));
         loaded.push_back(l->id);

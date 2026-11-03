@@ -133,6 +133,7 @@ void LineGrid::modelLayoutChanged()
 namespace {
 
 constexpr double kFoldIndent = 14;
+constexpr double kGroupIndent = 12;
 constexpr double kMinColumnWidth = 24;
 constexpr double kMinFlexibleWidth = 120;
 constexpr double kDividerGrip = 4;
@@ -361,9 +362,11 @@ void LineGrid::fitColumn(int column)
     double width = metrics.horizontalAdvance(columnTitle(column)) + 8;
     for (int row = 0, rows = m_model->rowCount(); row < rows; ++row) {
         const QString text = m_model->index(row, mc).data().toString();
-        const int fold = mc == LineTableModel::TextColumn ? m_model->index(row, 0).data(LineTableModel::FoldRole).toInt() : 0;
+        const auto first = m_model->index(row, 0);
+        const int fold = mc == LineTableModel::TextColumn ? first.data(LineTableModel::FoldRole).toInt() : 0;
+        const int depth = mc == LineTableModel::TextColumn ? first.data(LineTableModel::GroupDepthRole).toInt() : 0;
         const double advance = (fold == 1 ? boldMetrics : metrics).horizontalAdvance(text);
-        width = std::max(width, std::ceil(advance) + 8 + (fold != 0 ? kFoldIndent : 0));
+        width = std::max(width, std::ceil(advance) + 8 + (fold != 0 ? kFoldIndent : 0) + kGroupIndent * depth);
     }
     resizeColumn(column, width);
 }
@@ -571,6 +574,11 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
     }
     if (event->button() == Qt::RightButton) {
         forceActiveFocus(Qt::MouseFocusReason);
+        if (event->position().y() < m_geometry.headerHeight) {
+            emit headerMenuRequested(event->position().x(), event->position().y());
+            event->accept();
+            return;
+        }
         const int row = rowAt(event->position().y());
         if (row >= 0 && m_model->index(row, 0).data(LineTableModel::GroupRole).toInt() == 1) {
             emit groupMenuRequested(lineAtRow(row)->value, event->position().x(), event->position().y());
@@ -1126,9 +1134,13 @@ void LineGrid::paint(QPainter *painter)
                     painter->drawLine(QPointF(box.center().x(), box.top() + 2), QPointF(box.center().x(), box.bottom() - 2));
                 text.clear();
             }
-            const double indent = mc == LineTableModel::TextColumn && fold != 0 ? kFoldIndent : 0;
-            if (indent > 0)
+            const double foldIndent = mc == LineTableModel::TextColumn && fold != 0 ? kFoldIndent : 0;
+            if (foldIndent > 0)
                 drawFoldArrow(painter, QRectF(x, top, widths[c], rh), fold == 1);
+            const double indent =
+                foldIndent + (mc == LineTableModel::TextColumn
+                                  ? kGroupIndent * idx.data(LineTableModel::GroupDepthRole).toInt()
+                                  : 0);
             if (mc == LineTableModel::TextColumn) {
                 drawSpellMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
                                idx.data(LineTableModel::SpellMarksRole).toList());
