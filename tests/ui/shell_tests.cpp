@@ -1829,7 +1829,7 @@ private slots:
         dock->setProperty("isFloating", true);
         QTRY_VERIFY(item("audioPanel")->window() != window);
         QQuickWindow *floating = item("audioPanel")->window();
-        floating->resize(440, 420);
+        floating->resize(440, 760);
         QTRY_VERIFY(item("audioButtons")->property("folded").toBool());
         audio.toggleKaraoke();
         QVERIFY(audio.karaoke());
@@ -1858,6 +1858,8 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(more, "popup", Q_ARG(QQuickItem *, anchor), Q_ARG(qreal, 0),
                                               Q_ARG(qreal, anchor->height())));
             QTRY_VERIFY(more->property("opened").toBool());
+            QVERIFY2(more->property("height").toReal() >= more->property("implicitHeight").toReal(),
+                     qPrintable(QStringLiteral("menu %1 of %2").arg(more->property("height").toReal()).arg(more->property("implicitHeight").toReal())));
             grab(floating, QStringLiteral("/menu-audio-more") + suffix);
             open("audioMoreTapOptions");
             grab(floating, QStringLiteral("/menu-audio-tap-options") + suffix);
@@ -17468,11 +17470,33 @@ private slots:
         QTRY_VERIFY(centred(80000));
         QVERIFY(!centred(60000));
 
-        audio.setScrollPosition(0);
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("audioMoreGotoStart"), "triggered"));
-        QVERIFY(centred(60000));
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("audioMoreGotoEnd"), "triggered"));
-        QVERIFY(centred(80000));
+        auto *more = named("audioMoreMenu");
+        const auto runFromMore = [&](const char *row, int ms) {
+            audio.setScrollPosition(0);
+            QQuickItem *anchor = item("audioMore");
+            QVERIFY(anchor->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(more, "popup", Q_ARG(QQuickItem *, anchor), Q_ARG(qreal, 0),
+                                              Q_ARG(qreal, anchor->height())));
+            QTRY_VERIFY(more->property("opened").toBool());
+            QVERIFY(item(row)->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>(row), "triggered"));
+            QVERIFY(centred(ms));
+            QVERIFY(QMetaObject::invokeMethod(more, "close"));
+            QTRY_VERIFY(!more->property("visible").toBool());
+        };
+        QVERIFY(!item("audioButtons")->property("togglesFolded").toBool());
+        runFromMore("audioMoreGotoStart", 60000);
+        runFromMore("audioMoreGotoEnd", 80000);
+
+        auto *dock = item<QObject>("audioDock");
+        dock->setProperty("isFloating", true);
+        QTRY_VERIFY(item("audioPanel")->window() != window);
+        item("audioPanel")->window()->resize(440, 300);
+        QTRY_VERIFY(item("audioButtons")->property("folded").toBool());
+        runFromMore("audioMoreGotoStart", 60000);
+        runFromMore("audioMoreGotoEnd", 80000);
+        dock->setProperty("isFloating", false);
+        QTRY_VERIFY(item("audioPanel")->window() == window);
     }
 
     void audioPanelRowFoldsItsControls()
@@ -17651,7 +17675,25 @@ private slots:
         QVERIFY(item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(!item("audioButtons")->property("togglesFolded").toBool());
         QVERIFY(item("audioAutoScroll")->isVisible());
-        QVERIFY(!item("audioMore")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
+        auto *moreMenu = named("audioMoreMenu");
+        const auto openMore = [&] {
+            QQuickItem *anchor = item("audioMore");
+            QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, anchor), Q_ARG(qreal, 0),
+                                              Q_ARG(qreal, anchor->height())));
+            QTRY_VERIFY(moreMenu->property("opened").toBool());
+        };
+        const auto closeMore = [&] {
+            QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
+            QTRY_VERIFY(!moreMenu->property("visible").toBool());
+        };
+        openMore();
+        QVERIFY(item("audioMoreGotoStart")->isVisible());
+        QVERIFY(item("audioMoreGotoEnd")->isVisible());
+        for (const char *twice : {"audioMoreSpeechSpectrum", "audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
+                                  "audioMoreLineTiming", "audioMoreExtraGoto"})
+            QVERIFY2(!item(twice)->isVisible(), twice);
+        closeMore();
         auto *dock = item<QObject>("audioDock");
         dock->setProperty("isFloating", true);
         QTRY_VERIFY(item("audioPanel")->window() != window);
@@ -17679,19 +17721,11 @@ private slots:
         QVERIFY(!item("audioSpectrumNonLinear")->isVisible());
         QVERIFY(item("audioMore")->isVisible());
         QVERIFY(speaker->mapToItem(item("audioPanel"), QPointF(speaker->width(), 0)).x() <= item("audioPanel")->width() + 0.5);
-        auto *moreMenu = named("audioMoreMenu");
-        const auto openMore = [&] {
-            QQuickItem *anchor = item("audioMore");
-            QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, anchor), Q_ARG(qreal, 0),
-                                              Q_ARG(qreal, anchor->height())));
-            QTRY_VERIFY(moreMenu->property("opened").toBool());
-        };
-        const auto closeMore = [&] {
-            QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
-            QTRY_VERIFY(!moreMenu->property("visible").toBool());
-        };
         openMore();
         QVERIFY(item("audioMoreAutoScroll")->isVisible());
+        QVERIFY(item("audioMoreSyncVideo")->isVisible());
+        QVERIFY(item("audioMoreSpeechSpectrum")->isVisible());
+        QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
         QVERIFY(!named("audioMoreTapOptions")->property("shown").toBool());
@@ -17711,14 +17745,14 @@ private slots:
         QVERIFY(!tap->isVisible());
         QVERIFY(!item("audioButtons")->property("togglesFolded").toBool());
         QVERIFY(item("audioAutoScroll")->isVisible());
-        QVERIFY(!item("audioMore")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
         click(item("audioWaveformMode"));
         QVERIFY(!audio.spectrumOn());
 
         auto *row = item("audioButtons");
         QVERIFY(!row->property("folded").toBool());
         QVERIFY(item("audioSwitches")->isVisible());
-        QVERIFY(!item("audioMore")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
         floating->resize(440, 300);
         QTRY_VERIFY(row->property("folded").toBool());
         QVERIFY(!item("audioSwitches")->isVisible());
@@ -17897,7 +17931,7 @@ private slots:
         QTRY_VERIFY(!row->property("folded").toBool());
         QCOMPARE(kept(), classic.mid(0, 10));
         QVERIFY(item("audioSwitches")->isVisible());
-        QVERIFY(!item("audioMore")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
         computedWidth();
         endsInside();
         const std::pair<const char *, const char *> plays[] = {

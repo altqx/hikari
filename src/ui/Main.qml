@@ -4482,7 +4482,6 @@ ApplicationWindow {
                         AudioButton {
                             id: audioMoreButton
                             objectName: "audioMore"
-                            visible: audioButtons.togglesFolded
                             iconRole: "menu-more"
                             text: qsTranslate("HikariSub.Audio", "More audio options")
                             tip: text
@@ -4504,6 +4503,15 @@ ApplicationWindow {
                                 }
                                 component FoldedSeparator: MenuSeparator {
                                     visible: audioButtons.folded
+                                    height: visible ? implicitHeight : 0
+                                }
+                                component FoldedToggle: ShellMenuItem {
+                                    checkable: true
+                                    visible: audioButtons.togglesFolded
+                                    height: visible ? implicitHeight : 0
+                                }
+                                component FoldedToggleSeparator: MenuSeparator {
+                                    visible: audioButtons.togglesFolded
                                     height: visible ? implicitHeight : 0
                                 }
                                 component FoldedPlay: ShellMenuItem {
@@ -4655,18 +4663,17 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedToggle {
                                     objectName: "audioMoreSpeechSpectrum"
                                     iconRole: "spectrum-nonlinear"
                                     text: qsTranslate("HikariSub.Audio", "Speech spectrum")
-                                    checkable: true
                                     checked: root.audio.spectrumNonLinear
                                     onToggled: {
                                         root.audio.setSpectrumNonLinear(checked)
                                         checked = Qt.binding(() => root.audio.spectrumNonLinear)
                                     }
                                 }
-                                MenuSeparator {}
+                                FoldedToggleSeparator {}
                                 ShellMenuItem {
                                     objectName: "audioMoreGotoStart"
                                     iconRole: "video-to-start-time"
@@ -4681,22 +4688,21 @@ ApplicationWindow {
                                     command: "AUDIO_GOTO_END"
                                     onTriggered: if (!root.hotkeyGesture("AUDIO_GOTO_END", 4, true, false)) root.audio.goToSelectionEnd()
                                 }
-                                MenuSeparator {}
-                                ShellMenuItem {
+                                FoldedToggleSeparator {}
+                                FoldedToggle {
                                     objectName: "audioMoreAutoScroll"
                                     iconRole: "auto-scroll"
                                     text: qsTranslate("HikariSub.Audio", "Auto-scroll")
-                                    checkable: true
                                     checked: root.audio.autoScroll
                                     onToggled: {
                                         root.audio.setAutoScroll(checked)
                                         checked = Qt.binding(() => root.audio.autoScroll)
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedToggle {
+                                    objectName: "audioMoreSyncVideo"
                                     iconRole: "audio-video-sync"
                                     text: qsTranslate("HikariSub.Audio", "Sync with video")
-                                    checkable: true
                                     checked: root.audio.syncVideo
                                     onToggled: {
                                         root.audio.setSyncVideo(checked)
