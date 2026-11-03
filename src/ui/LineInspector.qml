@@ -105,7 +105,7 @@ ColumnLayout {
                 field.given(field.value)
             }
         }
-        readonly property string hintText: hinting ? qsTr("0: the Style's (%1)").arg(hint) : ""
+        readonly property string hintText: hinting ? qsTr("0: the style’s (%1)").arg(hint) : ""
         Accessible.description: pending ? inspector.pendingText : hintText
         ToolTip.visible: hovered && tip.length > 0
         ToolTip.text: pending ? tip + "\n" + inspector.pendingText : hinting ? tip + "\n" + hintText : tip
@@ -425,10 +425,9 @@ ColumnLayout {
                 objectName: "styleEditButton"
                 iconRole: "edit"
                 text: qsTr("Edit style")
-                tip: qsTr("Edit style: allows quick editing of the current line's style")
                 enabled: inspector.editor.hasLine && inspector.editor.assFields
                 focusPolicy: Qt.TabFocus
-                Accessible.description: qsTr("Allows quick editing of the current line's style")
+                Accessible.description: qsTr("Edits the current line’s style")
                 onClicked: inspector.styleEditRequested(inspector.editor.style)
             }
         }

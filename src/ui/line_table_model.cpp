@@ -752,7 +752,7 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "L."),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Start"),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "End"),
-                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Styles"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Style"),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Actor"),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Left"),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Right"),

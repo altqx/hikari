@@ -70,8 +70,8 @@ Item {
         IconToolButton {
             objectName: "originalNotConfirmed"
             iconRole: "unconfirmed"
-            text: qsTr("Not confirmed")
-            tip: qsTr("Not confirmed: marks the selected lines for review")
+            text: qsTr("Unconfirmed")
+            tip: qsTr("Unconfirmed: marks the selected lines for review")
             checkable: true
             focusPolicy: Qt.NoFocus
             enabled: tools.editor.editable
@@ -87,7 +87,7 @@ Item {
             objectName: "originalMovingTags"
             iconRole: "moving-tags"
             text: qsTr("Tags from original")
-            tip: qsTr("Tags from original: the translation gets the Original text's tags")
+            tip: qsTr("Tags from original: the translation gets the original text’s tags")
             checkable: true
             focusPolicy: Qt.NoFocus
             checked: tools.editor.moveTags
@@ -139,7 +139,7 @@ Item {
         ShellMenuItem {
             objectName: "originalNotConfirmedItem"
             iconRole: "unconfirmed"
-            text: qsTr("Not confirmed")
+            text: qsTr("Unconfirmed")
             checkable: true
             checked: tools.editor.unconfirmed
             enabled: tools.editor.editable
