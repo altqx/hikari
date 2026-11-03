@@ -1,11 +1,11 @@
-#include "hikari/api/json.h"
+#include "hikari/json/json.h"
 
 #include <charconv>
 #include <cmath>
 #include <limits>
 #include <optional>
 
-namespace hikari::api {
+namespace hikari::json {
 
 Json::Json() = default;
 Json::Json(std::nullptr_t) {}

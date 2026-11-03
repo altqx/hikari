@@ -7,7 +7,8 @@
 
 namespace hikari::application {
 
-// Written by the karaoke templater (Effect "fx") or Kara Effector ("Effector [fx]"); the templater skips Comments.
+// Written by the karaoke templater (Effect "fx"), a node effect ("fx <graph name>") or Kara Effector
+// ("Effector [fx]"); the templater skips Comments.
 bool isFoldableGeneratedLine(const core::LineRecord &line);
 
 struct GeneratedRun {

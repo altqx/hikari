@@ -13,6 +13,14 @@ target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/applica
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
+target_sources(hikari_application PRIVATE karaoke_syllables.cpp include/hikari/application/karaoke_syllables.h)
+target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp node_layout.cpp
+    node_layout.h node_effects.cpp include/hikari/application/node_catalogue.h
+    include/hikari/application/node_graph.h include/hikari/application/node_graph_library.h
+    include/hikari/application/node_effects.h)
+# Generated Lines must be byte-identical on every platform.
+set_source_files_properties(node_layout.cpp node_effects.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
 target_sources(hikari_application PRIVATE ai_providers.cpp include/hikari/application/ai_providers.h)
 target_include_directories(hikari_application PUBLIC include)
@@ -31,8 +39,8 @@ target_sources(hikari_application PRIVATE legacy_dir.cpp)
 if(WIN32)
     target_link_libraries(hikari_application PRIVATE shlwapi)
 endif()
-target_link_libraries(hikari_application PUBLIC hikari_core)
-hikari_module(hikari_application ALLOW hikari_core)
+target_link_libraries(hikari_application PUBLIC hikari_core hikari_json)
+hikari_module(hikari_application ALLOW hikari_core hikari_json)
 target_sources(hikari_application PRIVATE session_file.cpp)
 target_sources(hikari_application PRIVATE document_scripts.cpp)
 target_sources(hikari_application PRIVATE macro_validation.cpp)
