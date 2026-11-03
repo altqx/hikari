@@ -22,6 +22,9 @@ Item {
     onLiveTitleChanged: if (liveTitle.length > 0) lastTitle = liveTitle
     readonly property string pluginName: livePluginName || lastPluginName || (saved.pluginName ?? "")
     readonly property string title: liveTitle || lastTitle || (saved.title ?? "")
+    readonly property bool troubled: status === "stopped" || status === "failed"
+    readonly property bool missing: status === "missing"
+    readonly property bool off: status === "off"
     readonly property bool drawn: status === "running" && panelState.tree !== null && panelState.tree !== undefined
     readonly property var host: ({
         send: event => body.ui.send(body.dock, event),
@@ -71,9 +74,9 @@ Item {
         spacing: 8
         Icon {
             Layout.alignment: Qt.AlignHCenter
-            iconRole: body.status === "stopped" || body.status === "failed" ? "notice-warning" : "plugins"
+            iconRole: body.troubled ? "notice-warning" : "plugins"
             size: 32
-            color: body.status === "stopped" || body.status === "failed" ? Theme.warning : Theme.muted
+            color: body.troubled ? Theme.warning : Theme.muted
         }
         Label {
             objectName: "pluginPanelPlaceholderText"
@@ -95,14 +98,14 @@ Item {
             textFormat: Text.PlainText
             color: Theme.muted
             text: body.status === "missing" ? qsTr("The layout keeps this place for its panel “%1”.").arg(body.title)
-                : body.status === "stopped" || body.status === "failed" ? body.panelState.reason : ""
+                : body.troubled ? body.panelState.reason : ""
         }
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: 12
             IconTextButton {
                 objectName: "pluginPanelAction"
-                iconRole: body.status === "missing" ? "plugins" : body.status === "off" ? "show" : "restart"
+                iconRole: body.missing ? "plugins" : body.off ? "show" : "restart"
                 text: body.status === "missing" ? qsTr("Open Plugins…")
                     : body.status === "off" ? qsTr("Turn on") : qsTr("Start again")
                 onClicked: {
@@ -117,7 +120,7 @@ Item {
             }
             AbstractButton {
                 objectName: "pluginPanelDetails"
-                visible: body.status === "stopped" || body.status === "failed"
+                visible: body.troubled
                 focusPolicy: Qt.StrongFocus
                 Accessible.role: Accessible.Link
                 Accessible.name: detailsText.text
