@@ -5081,24 +5081,24 @@ Failed to copy %2 fonts.</source>
         <translation>“எடிட்டரை இயக்கவும் / முடக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: திருத்தி எப்போதும் காட்டப்படும்; பதிலாகப் பலகங்களை மறைக்கவும் அல்லது ஒரு தளவமைப்பைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
-        <translation>&quot;குறுக்குவிசை மேப்பிங் சாளரத்தைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தச் சாளரம் இனி இல்லை; ஒவ்வொரு குறுநிரலின் குறுக்குவிசையும் தானியங்கு பலகத்தில் அமைக்கப்படும்.</translation>
+        <source>The shortcut %1 of “Open shortcut mapping window” was removed: the window is gone and each macro’s shortcut is set in the Automation panel.</source>
+        <translation>“குறுக்குவிசை மேப்பிங் சாளரத்தைத் திறக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தச் சாளரம் இனி இல்லை; ஒவ்வொரு குறுநிரலின் குறுக்குவிசையும் தானியங்கு பலகத்தில் அமைக்கப்படும்.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
         <translation>“சிறு பிழைகளைச் சரிசெய் (சோதனை)” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: இந்த அம்சம் அகற்றப்பட்டது.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation>&quot;வெற்று 2h30m ஆடியோவைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; போலி வீடியோ தன்னுடைய ஒலியற்ற ஆடியோவைக் கொண்டுவரும்.</translation>
+        <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation>“வெற்று 2h30m ஆடியோவைத் திறக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; போலி வீடியோ தன்னுடைய ஒலியற்ற ஆடியோவைக் கொண்டுவரும்.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
         <translation>“FFMS2 உடன் வீடியோவைத் திறக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; வீடியோக்கள் எப்போதும் அட்டவணைப்படுத்தப்படும்.</translation>
     </message>
     <message>
-        <source>Shortcut &quot;%1&quot; is invalid</source>
-        <translation>&quot;%1&quot; குறுக்குவிசை செல்லாதது</translation>
+        <source>Shortcut “%1” is invalid</source>
+        <translation>“%1” குறுக்குவிசை செல்லாதது</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -10453,8 +10453,8 @@ because it was edited.</source>
         <translation>%1 முறை மாற்றப்பட்டது.</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>தவறான வழக்கமான வெளிப்பாடு &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>தவறான வழக்கமான வெளிப்பாடு “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
@@ -10620,8 +10620,8 @@ because it was edited.</source>
         <translation>மூடு</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>தவறான வழக்கமான வெளிப்பாடு &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>தவறான வழக்கமான வெளிப்பாடு “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>

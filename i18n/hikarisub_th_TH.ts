@@ -5038,24 +5038,24 @@ Failed to copy %2 fonts.</source>
         <translation>นำปุ่มลัด %1 ของ “เปิด / ปิดใช้งานตัวแก้ไข” ออกแล้ว เนื่องจากตัวแก้ไขแสดงอยู่เสมอ ให้ซ่อนแผงหรือเลือกเค้าโครงแทน</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;เปิดหน้าต่างกำหนดปุ่มลัด&quot; ออกแล้ว เนื่องจากไม่มีหน้าต่างนี้แล้ว และปุ่มลัดของแต่ละแมโครกำหนดได้ในแผงสคริปต์อัตโนมัติ</translation>
+        <source>The shortcut %1 of “Open shortcut mapping window” was removed: the window is gone and each macro’s shortcut is set in the Automation panel.</source>
+        <translation>นำปุ่มลัด %1 ของ “เปิดหน้าต่างกำหนดปุ่มลัด” ออกแล้ว เนื่องจากไม่มีหน้าต่างนี้แล้ว และปุ่มลัดของแต่ละแมโครกำหนดได้ในแผงสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
         <translation>นำปุ่มลัด %1 ของ “แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)” ออกแล้ว เนื่องจากนำคุณลักษณะนี้ออกแล้ว</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation>นำปุ่มลัด %1 ของ &quot;เปิดเสียงเปล่ายาว 2:30 ชั่วโมง&quot; ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจำลองมีเสียงเงียบมาในตัว</translation>
+        <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation>นำปุ่มลัด %1 ของ “เปิดเสียงเปล่ายาว 2:30 ชั่วโมง” ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจำลองมีเสียงเงียบมาในตัว</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
         <translation>นำปุ่มลัด %1 ของ “เปิดวิดีโอผ่าน FFMS2” ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจะถูกสร้างดัชนีเสมอ</translation>
     </message>
     <message>
-        <source>Shortcut &quot;%1&quot; is invalid</source>
-        <translation>ปุ่มลัด &quot;%1&quot; ไม่ถูกต้อง</translation>
+        <source>Shortcut “%1” is invalid</source>
+        <translation>ปุ่มลัด “%1” ไม่ถูกต้อง</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -10390,8 +10390,8 @@ because it was edited.</source>
         <translation>แทนที่แล้ว %1 ครั้ง</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>นิพจน์ทั่วไป &apos;%1&apos; ไม่ถูกต้อง: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>นิพจน์ทั่วไป “%1” ไม่ถูกต้อง: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
@@ -10557,8 +10557,8 @@ because it was edited.</source>
         <translation>ปิด</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>นิพจน์ทั่วไป &apos;%1&apos; ไม่ถูกต้อง: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>นิพจน์ทั่วไป “%1” ไม่ถูกต้อง: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>

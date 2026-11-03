@@ -5038,24 +5038,24 @@ Failed to copy %2 fonts.</source>
         <translation>“편집 활성/비활성”의 단축키 %1(이)가 제거되었습니다. 편집기는 항상 표시되므로 대신 패널을 숨기거나 레이아웃을 선택하십시오.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
-        <translation>&quot;단축키 설정 창 열기&quot;의 단축키 %1(이)가 제거되었습니다. 해당 창은 없어졌으며 각 매크로의 단축키는 자동화 패널에서 설정합니다.</translation>
+        <source>The shortcut %1 of “Open shortcut mapping window” was removed: the window is gone and each macro’s shortcut is set in the Automation panel.</source>
+        <translation>“단축키 설정 창 열기”의 단축키 %1(이)가 제거되었습니다. 해당 창은 없어졌으며 각 매크로의 단축키는 자동화 패널에서 설정합니다.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
         <translation>“사소한 오류 수정 (실험적)”의 단축키 %1(이)가 제거되었습니다. 이 기능은 제거되었습니다.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation>&quot;빈 2h30m 소리 열기&quot;의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
+        <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation>“빈 2h30m 소리 열기”의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
         <translation>“FFMS2로 영상 열기”의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 영상은 항상 색인됩니다.</translation>
     </message>
     <message>
-        <source>Shortcut &quot;%1&quot; is invalid</source>
-        <translation>단축키 &quot;%1&quot;(이)가 유효하지 않습니다</translation>
+        <source>Shortcut “%1” is invalid</source>
+        <translation>단축키 “%1”(이)가 유효하지 않습니다</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -10390,8 +10390,8 @@ because it was edited.</source>
         <translation>%1번 바꿨습니다.</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>잘못된 정규식 &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>잘못된 정규식 “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
@@ -10557,8 +10557,8 @@ because it was edited.</source>
         <translation>닫기</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>잘못된 정규식 &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>잘못된 정규식 “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
