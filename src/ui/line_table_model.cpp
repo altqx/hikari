@@ -16,6 +16,7 @@
 #include <QSet>
 #include <QString>
 #include <QStringList>
+#include <boost/dynamic_bitset.hpp>
 
 #include <algorithm>
 #include <array>
@@ -476,19 +477,17 @@ void LineTableModel::emitRowChanged(int row)
 
 void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
 {
-    std::vector<bool> touched(m_rows.size());
+    boost::dynamic_bitset<> touched(m_rows.size());
     for (const auto &id : ids)
         if (const auto row = rowOf(id))
             touched[static_cast<std::size_t>(*row)] = true;
-    const int rows = static_cast<int>(touched.size());
-    for (int first = 0; first < rows; ++first) {
-        if (!touched[static_cast<std::size_t>(first)])
-            continue;
-        int last = first;
-        while (last + 1 < rows && touched[static_cast<std::size_t>(last + 1)])
+    for (auto first = touched.find_first(); first != touched.npos;) {
+        auto last = first;
+        while (last + 1 < touched.size() && touched[last + 1])
             ++last;
-        emit dataChanged(index(first, 0), index(last, ColumnCount - 1), {ActiveRole, SelectedRole, AnchorRole});
-        first = last;
+        emit dataChanged(index(static_cast<int>(first), 0), index(static_cast<int>(last), ColumnCount - 1),
+                         {ActiveRole, SelectedRole, AnchorRole});
+        first = touched.find_next(last);
     }
 }
 

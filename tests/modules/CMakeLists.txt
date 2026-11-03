@@ -16,7 +16,8 @@ set_tests_properties(modules.desktop-handoffs-violation-rejected PROPERTIES WILL
 set(qml-idioms_rejection "QML text built the pre-6.12 way:.*Violation.qml")
 set(qml-debug_rejection "reaches CI, tests or packages:.*workflowPresets release uses release")
 set(std-regex_rejection "std::regex is banned.*src/Violation.cpp: #include <regex>.*src/Violation.cpp: return std::regex_search.*tests/Violation.h: using Groups = std::smatch")
-foreach(check qml-idioms qml-debug std-regex)
+set(std-vector-bool_rejection "std::vector<bool> is banned under src/.*src/Violation.cpp: std::vector<bool> flags\\(8\\);.*src/Violation.cpp: std::vector< bool > spaced;")
+foreach(check qml-idioms qml-debug std-regex std-vector-bool)
     string(REPLACE "-" "_" script "check_${check}")
     add_test(NAME modules.${check}
         COMMAND "${CMAKE_COMMAND}" -DROOT=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/${script}.cmake")
@@ -27,6 +28,7 @@ foreach(check qml-idioms qml-debug std-regex)
     set_tests_properties(modules.${check}-violation-rejected PROPERTIES
         PASS_REGULAR_EXPRESSION "${${check}_rejection}" LABELS "modules;control")
 endforeach()
+set_tests_properties(modules.std-vector-bool-violation-rejected PROPERTIES FAIL_REGULAR_EXPRESSION "tests/Allowed.cpp")
 
 add_test(NAME modules.qmllint
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target hikari_ui_qmllint)

@@ -2,6 +2,7 @@
 
 // Text and positions are UTF-16 code units.
 
+#include <boost/dynamic_bitset.hpp>
 #include <cstddef>
 #include <optional>
 #include <span>
@@ -74,7 +75,7 @@ public:
 private:
     void paintClamp();
     int m_options = 0;
-    std::vector<bool> m_shown;
+    boost::dynamic_bitset<> m_shown;
     std::u16string m_keyword;
     std::size_t m_lastItems = 0;
     bool m_popup = false;

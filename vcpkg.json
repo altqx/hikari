@@ -38,6 +38,7 @@
         "icu"
       ]
     },
+    "boost-dynamic-bitset",
     "icu",
     "curl",
     "pcre2",
