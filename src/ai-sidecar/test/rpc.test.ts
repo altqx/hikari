@@ -120,10 +120,10 @@ describe("Sidecar", () => {
     test("declared methods refuse before initialize and say they aren't implemented after it", async () => {
         const { peer, sent, feed } = link();
         new Sidecar(peer, build);
-        feed({ jsonrpc: "2.0", id: 1, method: Method.complete, params: {} });
+        feed({ jsonrpc: "2.0", id: 1, method: Method.sessionNew, params: {} });
         await settle();
         feed({ jsonrpc: "2.0", id: 2, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
-        feed({ jsonrpc: "2.0", id: 3, method: Method.complete, params: {} });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.sessionNew, params: {} });
         await settle();
         expect(sent.map((m) => (m.error as { code?: number } | undefined)?.code ?? "ok")).toEqual(
             [ErrorCode.notInitialized, "ok", ErrorCode.methodNotFound]);
