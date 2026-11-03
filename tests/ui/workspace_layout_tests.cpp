@@ -450,7 +450,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dock("searchDock"), "close"));
         QTRY_VERIFY(!dock("searchDock")->property("isOpen").toBool());
         QVERIFY(layouts.setLocked(true));
-        QVERIFY(QMetaObject::invokeMethod(window, "openSearch", Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(window, "openFind", Q_ARG(QVariant, false)));
         QTRY_VERIFY(dock("searchDock")->property("isOpen").toBool());
         QVERIFY(!dock("searchDock")->property("isFloating").toBool());
         QVERIFY(layouts.locked());
