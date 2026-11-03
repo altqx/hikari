@@ -38,7 +38,7 @@ QVariantMap Application::checkKaraoke() const
     if (!session)
         return {{QStringLiteral("rows"), rows}, {QStringLiteral("unlisted"), 0}};
     using Kind = core::KaraokeProblem::Kind;
-    const auto draft = m_editorDocument == target ? m_editor->draftDocument() : std::nullopt;
+    const auto draft = activeViews().editorDocument == target ? editor().draftDocument() : std::nullopt;
     const core::KaraokeCheck checked = core::checkKaraoke(draft ? *draft : session->document());
     for (const core::KaraokeProblem &problem : checked.problems) {
         QString check, detail;
