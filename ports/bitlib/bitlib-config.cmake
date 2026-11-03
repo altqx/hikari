@@ -1,0 +1,7 @@
+get_filename_component(_bitlib_prefix "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+if(NOT TARGET bitlib::bitlib)
+    add_library(bitlib::bitlib INTERFACE IMPORTED)
+    set_target_properties(bitlib::bitlib PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${_bitlib_prefix}/include")
+endif()
+set(BITLIB_TEST_SOURCES "${CMAKE_CURRENT_LIST_DIR}/tests")
+unset(_bitlib_prefix)

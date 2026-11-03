@@ -2,6 +2,8 @@
 
 #include "hikari/core/style.h"
 
+#include <bitlib/bitlib.hpp>
+
 #include <algorithm>
 #include <map>
 #include <set>
@@ -72,11 +74,11 @@ std::expected<void, CommandRefusal> applyVisibility(EditSession &session, const 
 
 // MUST KILL: hiddenAreLast: whether newly hidden Lines count as the previous Line
 void keepBlocks(const std::vector<const core::LineRecord *> &lines, std::map<std::uint64_t, LineVisibility> &target,
-                const std::vector<bool> &hideNow, bool hiddenAreLast)
+                const bit::bit_vector<std::uint64_t> &hideNow, bool hiddenAreLast)
 {
     std::optional<std::size_t> last;
     for (std::size_t i = 0; i < lines.size(); ++i) {
-        if (hideNow[i]) {
+        if (hideNow.begin()[i]) {
             if (hiddenAreLast)
                 last = i;
             continue;
@@ -145,12 +147,12 @@ std::expected<void, CommandRefusal> filterLines(EditSession &session, const Filt
         return result != 0;
     };
     std::map<std::uint64_t, LineVisibility> target;
-    std::vector<bool> hideNow(lines.size(), false);
+    bit::bit_vector<std::uint64_t> hideNow(lines.size(), bit::bit0);
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const bool hide = hides(*lines[i]);
         if (hide != settings.invert) {
             target[lines[i]->id.value] = LineVisibility::Hidden;
-            hideNow[i] = true;
+            hideNow[i] = bit::bit1;
         } else if (!settings.addToFilter && lines[i]->visibility != LineVisibility::Visible) {
             target[lines[i]->id.value] = LineVisibility::Visible;
         }
@@ -164,17 +166,15 @@ std::expected<void, CommandRefusal> hideSelectedLines(EditSession &session, cons
 {
     const auto lines = linesOf(session);
     std::map<std::uint64_t, LineVisibility> target;
-    std::vector<bool> hideNow(lines.size(), false);
-    bool any = false;
+    bit::bit_vector<std::uint64_t> hideNow(lines.size(), bit::bit0);
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const auto *l = lines[i];
         if (session.selection().selected.contains(l->id) && shownFlag(l->visibility) && (!shown || shown(l->id))) {
             target[l->id.value] = LineVisibility::Hidden;
-            hideNow[i] = true;
-            any = true;
+            hideNow[i] = bit::bit1;
         }
     }
-    if (!any)
+    if (bit::find(hideNow.begin(), hideNow.end(), bit::bit1) == hideNow.end())
         return std::unexpected(CommandRefusal::Invalid);
     keepBlocks(lines, target, hideNow, true);
     return applyVisibility(session, "Filtering", target, core::ChangeMark::Changed);

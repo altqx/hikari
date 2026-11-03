@@ -1,0 +1,8 @@
+{
+  "name": "bitlib",
+  "version-date": "2024-06-06",
+  "port-version": 100,
+  "description": "BitLib bit containers and bit-level algorithms (Hikari-owned overlay: header-only, pinned to e7a50c7, ships its tests for our CI)",
+  "homepage": "https://github.com/bkille/BitLib",
+  "license": "BSD-3-Clause AND BSD-2-Clause"
+}

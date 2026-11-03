@@ -45,6 +45,7 @@
     "uchardet",
     "tomlplusplus",
     "libsodium",
+    "bitlib",
     {
       "name": "pkgconf",
       "host": true,
