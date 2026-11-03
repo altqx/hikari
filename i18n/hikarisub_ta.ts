@@ -927,7 +927,7 @@ Output device: %2</source>
         <translation>வடிப்பி</translation>
     </message>
     <message>
-        <source>Filter the run&apos;s log</source>
+        <source>Filter the run’s log</source>
         <translation>இயக்கத்தின் பதிவை வடிகட்டு</translation>
     </message>
     <message>
@@ -967,7 +967,7 @@ Output device: %2</source>
         <translation>%1 min %2 s</translation>
     </message>
     <message>
-        <source>Save the run&apos;s log</source>
+        <source>Save the run’s log</source>
         <translation>இயக்கத்தின் பதிவைச் சேமி</translation>
     </message>
     <message>
@@ -991,7 +991,7 @@ Output device: %2</source>
         <translation>%1 விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
         <translation>ச்கிரிப்டின் செயல்முறை முடிந்தது. மீண்டும் தொடங்க மீண்டும் ஏற்றவும்; அதன் குறுநிரல் மீண்டும் இயக்கப்படாது.</translation>
     </message>
     <message>
@@ -5705,8 +5705,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைப் பெரிதாக்கு</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>வீடியோ பெரிதாக்கத்தை முடக்கு</translation>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -6841,8 +6841,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைப் பெரிதாக்கு</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>வீடியோ பெரிதாக்கத்தை அணைக்கவும்</translation>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -8800,6 +8800,62 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வை</translation>
     </message>
     <message>
+        <source>Zoom and pan</source>
+        <translation>பெரிதாக்கமும் நகர்த்தலும்</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>நடுப் பொத்தானால் இழுத்தால் படம் நகரும். தொடுதிட்டில் கிள்ளினால் சுட்டியைச் சுற்றிப் பெரிதாக்கும்.</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>சக்கரம் சுட்டியைச் சுற்றிப் பெரிதாக்கும். வீடியோவைப் பெரிதாக்கு இழுக்கக்கூடிய சட்டகத்தைக் காட்டும்.</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>Aegisub 3.5 போல</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>பழைய HikariSub பதிப்பைப் போல</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>வீடியோவின் மேல் சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>வீடியோவின் மேல் Ctrl+சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>வீடியோவின் மேல் Shift+சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>வீடியோவைப் பெரிதாக்கும்</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>வீடியோவைப் பெரிதாக்கும் (எதிர்த் திசையில்)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>வீடியோவை நகர்த்தும்</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>வீடியோவை நகர்த்தும் (X, Y இடம் மாற்றி)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>எதுவும் செய்யாது</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>சக்கரத்தைப் பயன்படுத்தும் அல்லது நடுப் பொத்தானால் இழுக்கும் காட்சிக் கருவி அதைத் தானே பயன்படுத்தும்.</translation>
+    </message>
+    <message>
         <source>Start zoom</source>
         <translation>தொடக்கப் பெரிதாக்கம்</translation>
     </message>
@@ -9298,7 +9354,7 @@ Failed to copy %2 fonts.</source>
         <translation>உரை மற்றும் சின்னங்கள்</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>எல்லை வண்ணம்</translation>
     </message>
     <message>
@@ -11578,7 +11634,7 @@ because it was edited.</source>
         <translation>புறக்கணிக்கவும்</translation>
     </message>
     <message>
-        <source>Ignore All</source>
+        <source>Ignore all</source>
         <translation>அனைத்தையும் புறக்கணிக்கவும்</translation>
     </message>
     <message>
@@ -12545,11 +12601,11 @@ Styles deleted:
         <translation>வரிகள்: %1</translation>
     </message>
     <message>
-        <source>the current line&apos;s style</source>
+        <source>the current line’s style</source>
         <translation>தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
-        <source>The current line&apos;s style</source>
+        <source>Current line’s style</source>
         <translation>தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
@@ -13119,7 +13175,7 @@ Styles deleted:
         <translation>வேலை செய்த கடைசி இயக்கத்திலிருந்து வைக்கப்பட்டது</translation>
     </message>
     <message>
-        <source>This file&apos;s templates run Lua code with your rights. Preview them if you trust the file.</source>
+        <source>This file’s templates run Lua code with your rights. Preview them if you trust the file.</source>
         <translation>இந்தக் கோப்பின் வார்ப்புருக்கள் உங்கள் உரிமைகளுடன் Lua குறியீட்டை இயக்குகின்றன. இந்தக் கோப்பை நீங்கள் நம்பினால் அவற்றை முன்னோட்டமிடவும்.</translation>
     </message>
     <message>
@@ -13168,8 +13224,8 @@ Styles deleted:
         </translation>
     </message>
     <message>
-        <source>Changed since Apply</source>
-        <translation>பயன்படுத்தியதிலிருந்து மாற்றப்பட்டது</translation>
+        <source>Changes not applied</source>
+        <translation>பயன்படுத்தப்படாத மாற்றங்கள்</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -13308,7 +13364,7 @@ Styles deleted:
         <translation>தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்து</translation>
     </message>
     <message>
-        <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
+        <source>Only the selected lines are regenerated; the other lines’ output stays as it is.</source>
         <translation>தேர்ந்தெடுத்த வரிகள் மட்டுமே மீண்டும் உருவாக்கப்படும்; மற்ற வரிகளின் வெளியீடு அப்படியே இருக்கும்.</translation>
     </message>
     <message>
@@ -13328,7 +13384,7 @@ Styles deleted:
         <translation>ஒவ்வொரு வரிக்குமான குறியீடு</translation>
     </message>
     <message>
-        <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
+        <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>புதிய வரி, முதல் கரோக்கி வரியின் பாணியுடன், அதற்கு மேலே சேர்க்கப்படும்.</translation>
     </message>
     <message>
@@ -13368,7 +13424,7 @@ Styles deleted:
         <translation>மீண்டும் செய்</translation>
     </message>
     <message>
-        <source>Keep the line&apos;s override tags</source>
+        <source>Keep the line’s override tags</source>
         <translation>வரியின் மேலெழுதும் குறிச்சொற்களை வைத்திரு</translation>
     </message>
     <message>
@@ -14839,10 +14895,6 @@ after the end time in milliseconds</source>
         <translation>திருத்துதல்</translation>
     </message>
     <message>
-        <source>Move video to selected line on:</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரிக்கு வீடியோவை நகர்த்தவும்:</translation>
-    </message>
-    <message>
         <source>Then play</source>
         <translation>பிறகு இயக்கு</translation>
     </message>
@@ -14861,10 +14913,6 @@ after the end time in milliseconds</source>
     <message>
         <source>Video and audio to the next line start time</source>
         <translation>வீடியோ மற்றும் ஆடியோ அடுத்த வரி தொடக்க நேரத்திற்கு</translation>
-    </message>
-    <message>
-        <source>On moving to another line play:</source>
-        <translation>மற்றொரு வரிக்குச் செல்லும்போது இயக்கவும்:</translation>
     </message>
     <message>
         <source>Full screen video</source>

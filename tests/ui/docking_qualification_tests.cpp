@@ -1,4 +1,5 @@
 #include "docking.h"
+#include "left_button_held.h"
 #include "window_decorations.h"
 
 #include <kddockwidgets/Config.h>
@@ -277,6 +278,36 @@ class DockingQualification : public QObject {
             if (s->name() == name)
                 return s;
         return nullptr;
+    }
+
+    QObject *area() const { return engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("area")); }
+    static QRectF sceneRect(QQuickItem *item)
+    {
+        return item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+    }
+    QQuickItem *separatorThrough(Qt::Orientation line, QPointF point) const
+    {
+        for (QQuickItem *separator : itemsNamed(window, QStringLiteral("dockSeparator"))) {
+            const QRectF r = sceneRect(separator);
+            if ((line == Qt::Vertical) == (r.height() > r.width()) && r.adjusted(-3, -3, 3, 3).contains(point))
+                return separator;
+        }
+        return nullptr;
+    }
+    void dragFrom(QPoint from, QPoint by)
+    {
+        const LeftButtonHeld held;
+        QTest::mousePress(window, Qt::LeftButton, {}, from);
+        for (int i = 1; i <= 10; ++i)
+            QTest::mouseMove(window, from + by * i / 10);
+        QTest::mouseRelease(window, Qt::LeftButton, {}, from + by);
+    }
+
+    static void dragWindow(QWindow *w, QPoint from, QPoint by)
+    {
+        QTest::mousePress(w, Qt::LeftButton, {}, from);
+        QTest::mouseMove(w, from + by);
+        QTest::mouseRelease(w, Qt::LeftButton, {}, from + by);
     }
 
 private slots:
@@ -852,6 +883,162 @@ private slots:
         QQuickItem *handle = childNamed(separators.first(), QStringLiteral("dockSeparatorHandle"));
         QVERIFY(handle);
         QCOMPARE(qMin(handle->width(), handle->height()), 11.0);
+    }
+
+    void aSeparatorJunctionShowsTheMoveCursor()
+    {
+        restoreInitial();
+        const QRectF video = sceneRect(groupOf(header(QStringLiteral("Video"))));
+        QQuickItem *upright = separatorThrough(Qt::Vertical, QPointF(video.right(), video.center().y()));
+        QQuickItem *across = separatorThrough(Qt::Horizontal, QPointF(video.center().x(), video.bottom()));
+        QVERIFY(upright && across);
+        const QPoint junction(qRound(sceneRect(upright).center().x()), qRound(sceneRect(across).center().y()));
+        QTest::mouseMove(window, junction);
+        QTRY_COMPARE(window->cursor().shape(), Qt::SizeAllCursor);
+        QTest::mouseMove(window, sceneRect(upright).center().toPoint());
+        QTRY_COMPARE(window->cursor().shape(), Qt::SizeHorCursor);
+        QTest::mouseMove(window, QPoint(qRound(video.center().x()), junction.y()));
+        QTRY_COMPARE(window->cursor().shape(), Qt::SizeVerCursor);
+        QTest::mouseMove(window, centreOf(header(QStringLiteral("Grid"))));
+    }
+
+    void aTJunctionMovesBothSeparators()
+    {
+        restoreInitial();
+        QQuickItem *videoGroup = groupOf(header(QStringLiteral("Video")));
+        QQuickItem *audioGroup = groupOf(header(QStringLiteral("Audio")));
+        QQuickItem *editorGroup = groupOf(header(QStringLiteral("Editor")));
+        const QRectF video = sceneRect(videoGroup);
+        const QRectF editor = sceneRect(editorGroup);
+        QQuickItem *upright = separatorThrough(Qt::Vertical, QPointF(video.right(), video.center().y()));
+        QQuickItem *across = separatorThrough(Qt::Horizontal, QPointF(video.center().x(), video.bottom()));
+        QVERIFY(upright && across);
+        const QPoint junction(qRound(sceneRect(upright).center().x()), qRound(sceneRect(across).center().y()));
+        dragFrom(junction, QPoint(40, 30));
+        QTRY_VERIFY2(qAbs(videoGroup->width() - (video.width() + 40)) <= 2 && qAbs(videoGroup->height() - (video.height() + 30)) <= 2,
+                     qPrintable(QStringLiteral("Video %1x%2 from %3x%4").arg(videoGroup->width()).arg(videoGroup->height())
+                                    .arg(video.width()).arg(video.height())));
+        QVERIFY2(qAbs(editorGroup->height() - (editor.height() - 30)) <= 2,
+                 qPrintable(QStringLiteral("Editor %1 from %2").arg(editorGroup->height()).arg(editor.height())));
+
+        const qreal least = 300;
+        QVERIFY(docking()->setMinimumSize(QStringLiteral("Audio"), QSize(int(least), 0)));
+        const auto unset = qScopeGuard([this] {
+            docking()->setMinimumSize(QStringLiteral("Audio"), QSize());
+            hikari::ui::refreshDockConstraints();
+        });
+        QTRY_VERIFY(audioGroup->width() >= least);
+        const qreal videoHeight = videoGroup->height();
+        const QPoint moved(qRound(sceneRect(upright).center().x()), qRound(sceneRect(across).center().y()));
+        dragFrom(moved, QPoint(window->width() - moved.x(), -20));
+        QTRY_VERIFY2(qAbs(videoGroup->height() - (videoHeight - 20)) <= 2,
+                     qPrintable(QStringLiteral("Video height %1 from %2").arg(videoGroup->height()).arg(videoHeight)));
+        QVERIFY2(audioGroup->width() >= least, qPrintable(QString::number(audioGroup->width())));
+        QVERIFY(videoGroup->width() > video.width() + 40);
+    }
+
+    void aPlusJunctionMovesAllThreeSeparators()
+    {
+        restoreInitial();
+        QVERIFY(QMetaObject::invokeMethod(area(), "addDockWidget", Q_ARG(QQuickItem *, qobject_cast<QQuickItem *>(dock("Grid"))),
+                                          Q_ARG(KDDockWidgets::Location, KDDockWidgets::Location_OnRight),
+                                          Q_ARG(QQuickItem *, qobject_cast<QQuickItem *>(dock("Editor"))), Q_ARG(QSize, QSize()),
+                                          Q_ARG(KDDockWidgets::InitialVisibilityOption, {})));
+        QQuickItem *videoGroup = groupOf(header(QStringLiteral("Video")));
+        QQuickItem *editorGroup = nullptr;
+        QTRY_VERIFY((editorGroup = groupOf(header(QStringLiteral("Editor"))))
+                    && qAbs(sceneRect(editorGroup).bottom() - sceneRect(videoGroup).bottom()) > 50);
+        QQuickItem *gridGroup = groupOf(header(QStringLiteral("Grid")));
+        QTRY_VERIFY(qAbs(sceneRect(gridGroup).top() - sceneRect(editorGroup).top()) <= 1);
+        QVERIFY(docking()->resizeInLayout(QStringLiteral("Editor"), 0, 0,
+                                          qRound(sceneRect(videoGroup).right() - sceneRect(editorGroup).right()), 0));
+        QTRY_VERIFY2(qAbs(sceneRect(videoGroup).right() - sceneRect(editorGroup).right()) <= 1,
+                     qPrintable(QStringLiteral("Video right %1, Editor right %2").arg(sceneRect(videoGroup).right())
+                                    .arg(sceneRect(editorGroup).right())));
+        const QRectF video = sceneRect(videoGroup);
+        const QRectF editor = sceneRect(editorGroup);
+        QQuickItem *upper = separatorThrough(Qt::Vertical, QPointF(video.right(), video.center().y()));
+        QQuickItem *lower = separatorThrough(Qt::Vertical, QPointF(editor.right(), editor.center().y()));
+        QQuickItem *across = separatorThrough(Qt::Horizontal, QPointF(video.center().x(), video.bottom()));
+        QVERIFY(upper && lower && across && upper != lower);
+        const QPoint junction(qRound(sceneRect(upper).center().x()), qRound(sceneRect(across).center().y()));
+        QTest::mouseMove(window, junction + QPoint(0, 3));
+        QTRY_COMPARE(window->cursor().shape(), Qt::SizeAllCursor);
+        dragFrom(junction, QPoint(-50, 25));
+        QTRY_VERIFY2(qAbs(videoGroup->width() - (video.width() - 50)) <= 2 && qAbs(editorGroup->width() - (editor.width() - 50)) <= 2
+                         && qAbs(videoGroup->height() - (video.height() + 25)) <= 2,
+                     qPrintable(QStringLiteral("Video %1x%2 from %3x%4, Editor width %5 from %6").arg(videoGroup->width())
+                                    .arg(videoGroup->height()).arg(video.width()).arg(video.height()).arg(editorGroup->width())
+                                    .arg(editor.width())));
+        restoreInitial();
+    }
+
+    void floatingPanelsResizeFromEveryEdgeAndCorner()
+    {
+        hikari::ui::dockchrome::overrideSystemResize(false);
+        const auto unset = qScopeGuard([] { hikari::ui::dockchrome::overrideSystemResize(std::nullopt); });
+        restoreInitial();
+        auto *audio = dock("Audio");
+        QVERIFY(audio->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        auto *floating = qobject_cast<QQuickWindow *>(bar->window());
+        QVERIFY(floating);
+        QTRY_VERIFY(floating->isExposed());
+        const QSize roomy = floating->minimumSize().expandedTo(floating->size()) + QSize(100, 100);
+        floating->setGeometry(QRect(QPoint(200, 150), roomy));
+        QTRY_COMPARE(floating->size(), roomy);
+        const struct {
+            const char *name;
+            QPoint by;
+            Qt::CursorShape cursor;
+            QMargins grows;
+        } grips[] = {
+            {"resizeLeft", {-30, 0}, Qt::SizeHorCursor, {30, 0, 0, 0}},
+            {"resizeRight", {30, 0}, Qt::SizeHorCursor, {0, 0, 30, 0}},
+            {"resizeTop", {0, -20}, Qt::SizeVerCursor, {0, 20, 0, 0}},
+            {"resizeBottom", {0, 20}, Qt::SizeVerCursor, {0, 0, 0, 20}},
+            {"resizeTopLeft", {-30, -20}, Qt::SizeFDiagCursor, {30, 20, 0, 0}},
+            {"resizeTopRight", {30, -20}, Qt::SizeBDiagCursor, {0, 20, 30, 0}},
+            {"resizeBottomLeft", {-30, 20}, Qt::SizeBDiagCursor, {30, 0, 0, 20}},
+            {"resizeBottomRight", {30, 20}, Qt::SizeFDiagCursor, {0, 0, 30, 20}},
+        };
+        for (const auto &grip : grips) {
+            QQuickItem *edge = itemsNamed(floating, QLatin1String(grip.name)).value(0);
+            QVERIFY2(edge && edge->isVisible(), grip.name);
+            QCOMPARE(edge->cursor().shape(), grip.cursor);
+            const QRect before = floating->geometry();
+            const QPoint at = centreOf(edge);
+            QTest::mousePress(floating, Qt::LeftButton, {}, at);
+            QTest::mouseMove(floating, at + grip.by);
+            QTRY_VERIFY(floating->geometry() != before);
+            QTest::mouseRelease(floating, Qt::LeftButton, {}, at + grip.by - (floating->position() - before.topLeft()));
+            const QRect want = before.marginsAdded(grip.grows);
+            QTRY_VERIFY2(floating->geometry() == want,
+                         qPrintable(QStringLiteral("%1: %2,%3 %4x%5, want %6,%7 %8x%9").arg(QLatin1String(grip.name))
+                                        .arg(floating->x()).arg(floating->y()).arg(floating->width()).arg(floating->height())
+                                        .arg(want.x()).arg(want.y()).arg(want.width()).arg(want.height())));
+        }
+        const QRect before = floating->geometry();
+        QQuickItem *corner = itemsNamed(floating, QStringLiteral("resizeBottomRight")).value(0);
+        dragWindow(floating, centreOf(corner), QPoint(-5000, -5000));
+        QTRY_VERIFY(floating->width() < before.width());
+        QVERIFY2(floating->width() >= floating->minimumWidth() && floating->height() >= floating->minimumHeight(),
+                 qPrintable(QStringLiteral("%1x%2, minimum %3x%4").arg(floating->width()).arg(floating->height())
+                                .arg(floating->minimumWidth()).arg(floating->minimumHeight())));
+        QVERIFY(audio->setProperty("isFloating", false));
+        QTRY_VERIFY(!audio->property("isFloating").toBool());
+    }
+
+    void aResizeKeepsTheMinimumSize()
+    {
+        const QSize least(200, 120);
+        const QRect from(100, 100, 400, 300);
+        using hikari::ui::dockchrome::resizedFrom;
+        QCOMPARE(resizedFrom(from, Qt::RightEdge | Qt::BottomEdge, {-1000, -1000}, least), QRect(100, 100, 200, 120));
+        QCOMPARE(resizedFrom(from, Qt::LeftEdge | Qt::TopEdge, {1000, 1000}, least), QRect(300, 280, 200, 120));
+        QCOMPARE(resizedFrom(from, Qt::LeftEdge, {-50, 999}, least), QRect(50, 100, 450, 300));
+        QCOMPARE(resizedFrom(from, Qt::TopEdge, {0, 40}, QSize()), QRect(100, 140, 400, 260));
     }
 
     void minimumSizesHoldTheLayout()

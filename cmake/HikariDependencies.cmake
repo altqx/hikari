@@ -60,7 +60,7 @@ add_library(Hikari::media_deps ALIAS hikari_media_deps)
 
 # ALSA is the system library on Linux.
 find_package(portaudio CONFIG REQUIRED)
-find_package(PCRE2 CONFIG REQUIRED COMPONENTS 16BIT)
+find_package(PCRE2 CONFIG REQUIRED COMPONENTS 8BIT 16BIT)
 find_package(absl CONFIG REQUIRED)
 find_package(uchardet CONFIG REQUIRED)
 if(NOT TARGET Hikari::uchardet)

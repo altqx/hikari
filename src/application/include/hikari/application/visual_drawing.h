@@ -71,6 +71,7 @@ public:
     DrawingTool();
     Family family() const override { return Family::Drawing; }
     void reset(VisualHost &host) override;
+    bool takesWheel(bool shift, bool control) const override { return !shift && !control; }
     void pointer(const Pointer &event, VisualHost &host) override;
     bool takesKey(const Key &event) const override;
     bool key(const Key &event, VisualHost &host) override;

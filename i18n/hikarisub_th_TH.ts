@@ -921,7 +921,7 @@ Output device: %2</source>
         <translation>ตัวกรอง</translation>
     </message>
     <message>
-        <source>Filter the run&apos;s log</source>
+        <source>Filter the run’s log</source>
         <translation>กรองล็อกของการเรียกใช้</translation>
     </message>
     <message>
@@ -961,7 +961,7 @@ Output device: %2</source>
         <translation>%1 นาที %2 วินาที</translation>
     </message>
     <message>
-        <source>Save the run&apos;s log</source>
+        <source>Save the run’s log</source>
         <translation>บันทึกล็อกของการเรียกใช้</translation>
     </message>
     <message>
@@ -985,7 +985,7 @@ Output device: %2</source>
         <translation>ตัวเลือก %1</translation>
     </message>
     <message>
-        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
         <translation>โปรเซสของสคริปต์สิ้นสุดแล้ว โหลดใหม่เพื่อเริ่มอีกครั้ง โดยจะไม่เรียกใช้แมโครซ้ำ</translation>
     </message>
     <message>
@@ -5662,8 +5662,8 @@ Failed to copy %2 fonts.</source>
         <translation>ซูมวิดีโอ</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>ปิดการซูมวิดีโอ</translation>
+        <source>Reset zoom and pan</source>
+        <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -6796,8 +6796,8 @@ Failed to copy %2 fonts.</source>
         <translation>ซูมวิดีโอ</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>ปิดการซูมวิดีโอ</translation>
+        <source>Reset zoom and pan</source>
+        <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -8748,6 +8748,62 @@ Failed to copy %2 fonts.</source>
         <translation>มุมมอง</translation>
     </message>
     <message>
+        <source>Zoom and pan</source>
+        <translation>ซูมและเลื่อนภาพ</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>ลากด้วยปุ่มกลางเพื่อเลื่อนภาพ การจีบนิ้วบนทัชแพดจะซูมรอบตัวชี้</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>ล้อเมาส์ซูมรอบตัวชี้ ซูมวิดีโอจะแสดงกรอบให้ลาก</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>แบบ Aegisub 3.5</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>แบบ HikariSub รุ่นเดิม</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>Ctrl+ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>Shift+ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>ซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>ซูมวิดีโอ (กลับทิศ)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>เลื่อนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>เลื่อนวิดีโอ (สลับ X และ Y)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>ไม่ทำอะไร</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>เครื่องมือภาพที่ใช้ล้อเมาส์ หรือลากด้วยปุ่มกลาง จะใช้การป้อนนั้นเอง</translation>
+    </message>
+    <message>
         <source>Start zoom</source>
         <translation>การซูมเริ่มต้น</translation>
     </message>
@@ -9243,7 +9299,7 @@ Failed to copy %2 fonts.</source>
         <translation>ข้อความและไอคอน</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>สีเส้นขอบ</translation>
     </message>
     <message>
@@ -11504,7 +11560,7 @@ because it was edited.</source>
         <translation>ละเว้น</translation>
     </message>
     <message>
-        <source>Ignore All</source>
+        <source>Ignore all</source>
         <translation>ละเว้นทั้งหมด</translation>
     </message>
     <message>
@@ -12462,11 +12518,11 @@ Styles deleted:
         <translation>บรรทัด: %1</translation>
     </message>
     <message>
-        <source>the current line&apos;s style</source>
+        <source>the current line’s style</source>
         <translation>สไตล์ของบรรทัดปัจจุบัน</translation>
     </message>
     <message>
-        <source>The current line&apos;s style</source>
+        <source>Current line’s style</source>
         <translation>สไตล์ของบรรทัดปัจจุบัน</translation>
     </message>
     <message>
@@ -13035,7 +13091,7 @@ Styles deleted:
         <translation>เก็บไว้จากการทำงานครั้งล่าสุดที่สำเร็จ</translation>
     </message>
     <message>
-        <source>This file&apos;s templates run Lua code with your rights. Preview them if you trust the file.</source>
+        <source>This file’s templates run Lua code with your rights. Preview them if you trust the file.</source>
         <translation>เทมเพลตของไฟล์นี้รันโค้ด Lua ด้วยสิทธิ์ของคุณ ดูตัวอย่างเทมเพลตเหล่านี้หากคุณเชื่อถือไฟล์นี้</translation>
     </message>
     <message>
@@ -13082,8 +13138,8 @@ Styles deleted:
         </translation>
     </message>
     <message>
-        <source>Changed since Apply</source>
-        <translation>เปลี่ยนไปหลังการนำไปใช้</translation>
+        <source>Changes not applied</source>
+        <translation>มีการเปลี่ยนแปลงที่ยังไม่ได้นำไปใช้</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -13217,7 +13273,7 @@ Styles deleted:
         <translation>นำไปใช้กับบรรทัดที่เลือก</translation>
     </message>
     <message>
-        <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
+        <source>Only the selected lines are regenerated; the other lines’ output stays as it is.</source>
         <translation>สร้างใหม่เฉพาะบรรทัดที่เลือก ผลลัพธ์ของบรรทัดอื่นยังคงเดิม</translation>
     </message>
     <message>
@@ -13237,7 +13293,7 @@ Styles deleted:
         <translation>โค้ดสำหรับแต่ละบรรทัด</translation>
     </message>
     <message>
-        <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
+        <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>บรรทัดใหม่จะอยู่เหนือบรรทัดคาราโอเกะแรก โดยใช้สไตล์ของบรรทัดนั้น</translation>
     </message>
     <message>
@@ -13277,7 +13333,7 @@ Styles deleted:
         <translation>วนซ้ำ</translation>
     </message>
     <message>
-        <source>Keep the line&apos;s override tags</source>
+        <source>Keep the line’s override tags</source>
         <translation>คงแท็กของบรรทัดไว้</translation>
     </message>
     <message>
@@ -14748,10 +14804,6 @@ after the end time in milliseconds</source>
         <translation>แก้ไข</translation>
     </message>
     <message>
-        <source>Move video to selected line on:</source>
-        <translation>เลื่อนวิดีโอไปยังบรรทัดที่เลือกเมื่อ:</translation>
-    </message>
-    <message>
         <source>Then play</source>
         <translation>จากนั้นเล่น</translation>
     </message>
@@ -14770,10 +14822,6 @@ after the end time in milliseconds</source>
     <message>
         <source>Video and audio to the next line start time</source>
         <translation>เลื่อนวิดีโอและเสียงไปยังเวลาเริ่มต้นของบรรทัดถัดไป</translation>
-    </message>
-    <message>
-        <source>On moving to another line play:</source>
-        <translation>เมื่อย้ายไปยังบรรทัดอื่น ให้เล่น:</translation>
     </message>
     <message>
         <source>Full screen video</source>
