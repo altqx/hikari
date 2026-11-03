@@ -1,7 +1,7 @@
 #include "hikari/application/furigana.h"
 
 #include <cstdint>
-#include <unordered_set>
+#include <absl/container/flat_hash_set.h>
 #include <utility>
 
 namespace hikari::application {
@@ -68,7 +68,7 @@ bool split(std::u16string_view surface, const std::vector<Segment> &segs, std::u
             kana[k] = hiragana(surface.substr(segs[k].begin, segs[k].end - segs[k].begin));
     // at[k]: segment k's start in the reading; taken[k]: kana a kanji run takes
     std::vector<std::size_t> at(segs.size() + 1, 0), taken(segs.size(), 0);
-    std::unordered_set<std::uint64_t> failed;
+    absl::flat_hash_set<std::uint64_t> failed;
     const auto place = [&](std::size_t k) { return std::uint64_t(k) * (reading.size() + 1) + at[k]; };
     std::size_t k = 0;
     bool again = false; // retry segment k with its kanji run one kana longer

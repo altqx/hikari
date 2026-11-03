@@ -11916,6 +11916,14 @@ because it was edited.</source>
         <translation>กล่องทึบแสง</translation>
     </message>
     <message>
+        <source>Outline</source>
+        <translation>เส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Opaque box per line (libass)</source>
+        <translation>กล่องทึบแสงแยกแต่ละบรรทัด (libass)</translation>
+    </message>
+    <message>
         <source>Edit style</source>
         <translation>แก้ไขสไตล์</translation>
     </message>
@@ -12202,6 +12210,10 @@ because it was edited.</source>
     <message>
         <source>Text encoding</source>
         <translation>การเข้ารหัสข้อความ</translation>
+    </message>
+    <message>
+        <source>-1 - Detect text direction (libass)</source>
+        <translation>-1 - ตรวจหาทิศทางข้อความ (libass)</translation>
     </message>
     <message>
         <source>0 - ANSI</source>

@@ -12,7 +12,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 
 namespace hikari::core {
 
@@ -709,9 +709,9 @@ bool isNumber(u8sv s)
     return true;
 }
 
-std::unordered_map<std::uint64_t, std::size_t> rowsOf(const Document &document)
+absl::flat_hash_map<std::uint64_t, std::size_t> rowsOf(const Document &document)
 {
-    std::unordered_map<std::uint64_t, std::size_t> rows;
+    absl::flat_hash_map<std::uint64_t, std::size_t> rows;
     const auto lines = document.lines();
     for (std::size_t i = 0; i < lines.size(); ++i)
         rows.emplace(lines[i]->id.value, i);
