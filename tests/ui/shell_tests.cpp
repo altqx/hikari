@@ -2268,7 +2268,7 @@ private slots:
         int style = -1;
         QTRY_VERIFY((style = [&] {
             for (int c = 0; c < grid->columnCount(); ++c)
-                if (grid->columnTitle(c) == QLatin1String("Styles"))
+                if (grid->columnTitle(c) == QLatin1String("Style"))
                     return c;
             return -1;
         }()) >= 0);
@@ -5034,7 +5034,7 @@ private slots:
         QTRY_VERIFY(popover->property("visible").toBool());
         QCOMPARE(popover->property("anchor").value<QQuickItem *>(), visualItem("changeColour3"));
         auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
-        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("Border color"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("Border colour"));
         QCOMPARE(popover->property("red").toInt(), 255);
         QCOMPARE(dialogItem("colourPopover", "hexColour")->property("text").toString(), QStringLiteral("#FFFFFF"));
         QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
@@ -12689,7 +12689,7 @@ private slots:
                 out << grid->columnTitle(c);
             return out;
         };
-        const QStringList empty{"#", "Start", "End", "Styles", "CPS", "Wraps", "Text"};
+        const QStringList empty{"#", "Start", "End", "Style", "CPS", "Wraps", "Text"};
         QTRY_COMPARE(titles(), empty);
 
         QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
@@ -26757,8 +26757,8 @@ private slots:
         QCOMPARE(item<QObject>("audioLink")->property("text").toString(), QStringLiteral("Link the volume and stretch sliders"));
         for (const Expected &e : {Expected{"tag_b", "tag-bold", "Bold"}, Expected{"tag_s", "tag-strikeout", "Strikeout"},
                                   Expected{"changeFont", "tag-font", "Font selection"},
-                                  Expected{"changeColour1", "colour-primary", "Primary color"},
-                                  Expected{"changeColour4", "colour-shadow", "Shadow color"}}) {
+                                  Expected{"changeColour1", "colour-primary", "Primary colour"},
+                                  Expected{"changeColour4", "colour-shadow", "Shadow colour"}}) {
             auto *button = visualItem(e.object);
             QVERIFY2(button, e.object);
             QCOMPARE(icon(button), QLatin1String(e.role));
@@ -27955,7 +27955,7 @@ private slots:
         typeInto("layerField", QStringLiteral("2"));
         typeInto("endField", QStringLiteral("0:00:00.50"));
         press(Qt::Key_Return);
-        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
+        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End time is before start time."));
         QCOMPARE(session->document().lines()[0]->layer.value, 0);
         QVERIFY(session->draftLine());
         session->setInvalidCommitPolicy(application::InvalidCommitPolicy::Legacy);
@@ -28191,7 +28191,7 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QTest::mouseMove(window, at + QPoint(10, -8));
         QCOMPARE(text(), QStringLiteral("0:00:12.00"));
-        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
+        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End time is before start time."));
         auto *problem = item("editorProblem");
         QTRY_VERIFY(problem->isVisible() && problem->height() > 0
                     && problem->mapToScene(QPointF(0, problem->height())).y() <= fieldOrigin.y());
