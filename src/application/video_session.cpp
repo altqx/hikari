@@ -21,6 +21,7 @@ void VideoSession::setFrameWorker(PlaybackPipeline::Post post)
                                                     [this](PlaybackPipeline::Output out) { showGeneral(std::move(out)); });
     m_pipeline->setSubtitles(m_subtitleSerial, m_hasSubtitles);
     m_pipeline->setScreenSize(m_screen);
+    m_pipeline->setTimeMap(timeMap());
 }
 
 void VideoSession::setScreenSize(std::optional<std::pair<int, int>> size)
@@ -104,24 +105,24 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         }
         if (opened->generation != m_source.generation())
             return;
-        m_starts.clear();
+        m_streamStarts.clear();
         bool exact = opened->timeBaseDenominator > 0;
         for (const std::int64_t pts : opened->pts) {
             const auto us = core::mulDiv(pts, opened->timeBaseNumerator * 1'000'000, opened->timeBaseDenominator, 1,
                                          core::Rounding::Floor);
             exact = exact && us.has_value();
-            m_starts.emplace_back(us.value_or(0));
+            m_streamStarts.emplace_back(us.value_or(0));
         }
         m_legacyFps = opened->fpsDenominator != 0 ? static_cast<float>(opened->fpsNumerator) /
                                                         static_cast<float>(opened->fpsDenominator)
                                                   : 0.f;
-        if (!exact || m_starts.empty()) {
+        if (!exact || m_streamStarts.empty()) {
             m_state = State::Failed;
             m_error = SourceError::Unsupported;
-            m_starts.clear();
+            m_streamStarts.clear();
             return notify();
         }
-        m_timeline = core::FrameTimeline::indexed(m_starts);
+        m_streamTimeline = core::FrameTimeline::indexed(m_streamStarts);
         m_keyframes = opened->keyframes;
         m_hasAudio = opened->firstAudioTrack >= 0;
         m_audioTrack = chosen >= 0 ? chosen : opened->firstAudioTrack;
@@ -131,7 +132,8 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_audioTracks = opened->audioTracks;
         m_newIndex = opened->newIndex;
         m_indexHandoff = opened->handoffIndexFile;
-        m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
+        m_streamFps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
+        applyFrameTimes();
         m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
         m_state = State::Ready;
         m_inputMatrix.reset();
@@ -168,6 +170,8 @@ void VideoSession::close()
     m_path.clear();
     m_error.reset();
     m_starts.clear();
+    m_streamStarts.clear();
+    m_streamTimeline.reset();
     m_keyframes.clear();
     m_hasAudio = false;
     m_audioTrack = -1;
@@ -396,8 +400,7 @@ bool VideoSession::play()
     m_playEndMs = 0;
     // A pause's indexed frame may still be on its way.
     const auto from = reportedFrame();
-    const std::int64_t fromUs = from ? frameStart(*from).value_or(core::DocumentTime(0)).microseconds() : 0;
-    return startPlayback(fromUs);
+    return startPlayback(from ? streamUs(*from) : 0);
 }
 
 bool VideoSession::playLine(int startMs, int endMs, bool loop)
@@ -419,7 +422,7 @@ bool VideoSession::playLine(int startMs, int endMs, bool loop)
     m_loop = loop;
     m_loopStartMs = startMs;
     m_loopEndMs = endMs;
-    return startPlayback(frameStart(frame).value_or(core::DocumentTime(0)).microseconds());
+    return startPlayback(streamUs(frame));
 }
 
 void VideoSession::setGeneralPlayer(GeneralPlayerPort *player)
@@ -547,7 +550,7 @@ void VideoSession::showGeneral(PlaybackPipeline::Output out)
     m_lastGeneralUs = startUs;
     m_lastGeneralEpoch = out.epoch;
     m_shown = std::move(out.frame);
-    m_overlayTime = core::DocumentTime(startUs);
+    m_overlayTime = core::DocumentTime(subtitleUsAt(startUs));
     m_lastPresent.reset();
     if (out.subtitles != 0 && out.subtitles == m_subtitleSerial) {
         m_overlay = m_hasSubtitles ? std::move(out.overlay) : nullptr;
@@ -652,8 +655,14 @@ bool VideoSession::seekBy(std::int64_t ms)
 
 LegacyTimebase VideoSession::legacyTimebase() const
 {
-    if (m_state != State::Ready)
-        return {};
+    if (m_state != State::Ready) {
+        if (!m_frameTimes)
+            return {};
+        std::vector<int> held;
+        for (std::int64_t frame = 0; frame < m_frameTimes->heldFrames(); ++frame)
+            held.push_back(static_cast<int>(m_frameTimes->startOf(frame)));
+        return LegacyTimebase(std::move(held), m_frameTimes->fps());
+    }
     std::vector<int> timecodes;
     timecodes.reserve(m_starts.size());
     for (const auto start : m_starts)
@@ -661,12 +670,87 @@ LegacyTimebase VideoSession::legacyTimebase() const
     return LegacyTimebase(std::move(timecodes), m_fps);
 }
 
+void VideoSession::setFrameTimes(std::optional<AegisubFrameTimes> times)
+{
+    m_frameTimes = std::move(times);
+    ++m_frameTimesSerial;
+    if (m_state != State::Ready)
+        return notify();
+    applyFrameTimes();
+    if (!m_playing) {
+        render();
+        present();
+    }
+    notify();
+}
+
+std::optional<AegisubFrameTimes> VideoSession::aegisubFrameTimes() const
+{
+    if (m_frameTimes)
+        return m_frameTimes;
+    if (m_state != State::Ready)
+        return std::nullopt;
+    std::vector<std::int64_t> starts;
+    starts.reserve(m_streamStarts.size());
+    for (const auto start : m_streamStarts)
+        starts.push_back(msOf(start));
+    return AegisubFrameTimes::fromFrameStarts(std::move(starts));
+}
+
+void VideoSession::applyFrameTimes()
+{
+    if (m_frameTimes && !m_streamStarts.empty()) {
+        m_starts.clear();
+        m_starts.reserve(m_streamStarts.size());
+        for (std::size_t frame = 0; frame < m_streamStarts.size(); ++frame)
+            m_starts.emplace_back(m_frameTimes->startOf(static_cast<std::int64_t>(frame)) * 1000);
+        m_fps = m_frameTimes->fps();
+    } else {
+        m_starts = m_streamStarts;
+        m_fps = m_streamFps;
+    }
+    m_timeline.reset();
+    if (!m_starts.empty())
+        m_timeline = core::FrameTimeline::indexed(m_starts);
+    if (m_pipeline)
+        m_pipeline->setTimeMap(timeMap());
+}
+
+PlaybackPipeline::TimeMap VideoSession::timeMap() const
+{
+    if (!m_frameTimes || m_streamStarts.empty())
+        return {};
+    auto stream = std::make_shared<const std::vector<core::DocumentTime>>(m_streamStarts);
+    auto subtitle = std::make_shared<const std::vector<core::DocumentTime>>(m_starts);
+    return [stream, subtitle](std::int64_t us) {
+        const auto after = std::upper_bound(stream->begin(), stream->end(), core::DocumentTime(us));
+        const auto frame = after == stream->begin() ? 0 : static_cast<std::size_t>(after - stream->begin() - 1);
+        return (*subtitle)[frame].microseconds() + std::max<std::int64_t>(0, us - (*stream)[frame].microseconds());
+    };
+}
+
+std::int64_t VideoSession::streamUs(int frame) const
+{
+    if (m_streamStarts.empty())
+        return 0;
+    const auto at = std::clamp<std::size_t>(static_cast<std::size_t>(std::max(frame, 0)), 0, m_streamStarts.size() - 1);
+    return m_streamStarts[at].microseconds();
+}
+
+std::int64_t VideoSession::subtitleUsAt(std::int64_t streamUs) const
+{
+    if (!m_frameTimes || m_streamStarts.empty())
+        return streamUs;
+    const auto frame = static_cast<std::size_t>(frameHolding(streamUs).value_or(0));
+    return m_starts[frame].microseconds() + std::max<std::int64_t>(0, streamUs - m_streamStarts[frame].microseconds());
+}
+
 int VideoSession::tellMs() const
 {
     if (m_state != State::Ready || m_starts.empty())
         return 0;
     if (m_playing && m_lastGeneralUs)
-        return static_cast<int>(*m_lastGeneralUs / 1000);
+        return static_cast<int>(subtitleUsAt(*m_lastGeneralUs) / 1000);
     const int frame = std::clamp(m_requested.value_or(0), 0, frameCount() - 1);
     return static_cast<int>(msOf(m_starts[static_cast<std::size_t>(frame)]));
 }
@@ -696,20 +780,20 @@ void VideoSession::seekKeepPlaying(core::DocumentTime time, bool startTime)
     }
     m_requested = frame;
     m_playEndMs = 0;
-    startPlayback(m_starts[static_cast<std::size_t>(frame)].microseconds());
+    startPlayback(streamUs(frame));
 }
 
 std::optional<int> VideoSession::frameHolding(std::int64_t us) const
 {
-    if (!m_timeline || m_starts.empty())
+    if (!m_streamTimeline || m_streamStarts.empty())
         return std::nullopt;
     const core::DocumentTime time(us);
-    if (const auto at = m_timeline->frameContaining(time))
+    if (const auto at = m_streamTimeline->frameContaining(time))
         return static_cast<int>(at->value());
     // The last frame's interval has no known end.
-    if (time >= m_starts.back())
+    if (time >= m_streamStarts.back())
         return frameCount() - 1;
-    if (time < m_starts.front())
+    if (time < m_streamStarts.front())
         return 0;
     return std::nullopt;
 }
@@ -740,7 +824,7 @@ bool VideoSession::seekFrame(int index)
     m_requested = index;
     m_lastGeneralUs.reset();
     m_playEndMs = 0;
-    return startPlayback(m_starts[static_cast<std::size_t>(index)].microseconds());
+    return startPlayback(streamUs(index));
 }
 
 bool VideoSession::isKeyframe(int index) const
