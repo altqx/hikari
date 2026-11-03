@@ -91,7 +91,6 @@ bool keepsValue(const Json &event)
            widget->isString() && event.find("value");
 }
 
-// Text edits, slider drags and pointer moves keep only their newest event while the plugin is busy.
 std::string coalesceKey(const std::string &surface, const Json &event)
 {
     const Json *kind = event.find("kind");
@@ -175,6 +174,17 @@ void PluginUi::setPlugins(std::vector<Plugin> plugins)
     for (auto &[dock, state] : m_panels)
         refresh(*state);
     relist();
+    emit pluginStatesChanged();
+}
+
+QVariantMap PluginUi::pluginState(const QString &plugin) const
+{
+    const auto it = m_plugins.find(plugin.toStdString());
+    if (it == m_plugins.end())
+        return {{QStringLiteral("status"), QStringLiteral("missing")}, {QStringLiteral("reason"), QString()}};
+    if (!it->second.plugin.enabled)
+        return {{QStringLiteral("status"), QStringLiteral("off")}, {QStringLiteral("reason"), QString()}};
+    return {{QStringLiteral("status"), it->second.status}, {QStringLiteral("reason"), it->second.reason}};
 }
 
 void PluginUi::running(const std::string &plugin)
@@ -184,6 +194,7 @@ void PluginUi::running(const std::string &plugin)
         return;
     it->second.status = QStringLiteral("running");
     it->second.reason.clear();
+    emit pluginStatesChanged();
     for (auto &[dock, state] : m_panels)
         if (state->pluginId() == qs(plugin)) {
             refresh(*state);
@@ -200,6 +211,7 @@ void PluginUi::stopped(const std::string &plugin, const QString &status, const Q
         return;
     it->second.status = status;
     it->second.reason = reason;
+    emit pluginStatesChanged();
     for (auto &[dock, state] : m_panels)
         if (state->pluginId() == qs(plugin))
             refresh(*state);

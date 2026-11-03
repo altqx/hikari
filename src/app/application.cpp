@@ -846,6 +846,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
         [this] { return m_localisation ? m_localisation->language() : QString(); }});
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
+    connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
     m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
     connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
             [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });

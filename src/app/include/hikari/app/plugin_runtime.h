@@ -54,6 +54,8 @@ public:
     Q_INVOKABLE void forceStop(const QString &pluginId);
     // Starts a stopped plugin, or one that didn't start, again.
     Q_INVOKABLE void restart(const QString &pluginId);
+    // A setting the plugin manager changed, so that hikari.settings.get sees it at once.
+    void settingChanged(const QString &pluginId, const QString &setting, const QString &json);
     PluginUi *ui() const { return m_ui; }
     backends::PluginProcess *process(const QString &pluginId) const;
 

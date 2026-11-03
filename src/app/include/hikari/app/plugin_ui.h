@@ -142,6 +142,8 @@ public:
     void serve(const std::string &plugin, const std::string &operation, const api::Json &params, Reply reply);
 
     QVariantList panels() const { return m_rows; }
+    // {status ("missing", "off", "running", "stopped" or "failed"), reason} of an installed plugin.
+    Q_INVOKABLE QVariantMap pluginState(const QString &plugin) const;
     // Made on first use for any plugin panel id, so a layout's placeholder has one too.
     Q_INVOKABLE hikari::app::PluginPanelState *panel(const QString &dock);
     Q_INVOKABLE void setShown(const QString &dock, bool shown);
@@ -156,6 +158,7 @@ public:
 
 signals:
     void panelsChanged();
+    void pluginStatesChanged();
     void showRequested(const QString &dock);
     void dialogOpened(hikari::app::PluginDialogState *dialog);
     void dialogClosed(hikari::app::PluginDialogState *dialog);

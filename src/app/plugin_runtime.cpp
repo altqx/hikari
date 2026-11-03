@@ -396,6 +396,16 @@ void PluginRuntime::restart(const QString &pluginId)
         it->second->process->start();
 }
 
+void PluginRuntime::settingChanged(const QString &pluginId, const QString &setting, const QString &json)
+{
+    const auto it = m_plugins.find(pluginId.toStdString());
+    const auto value = api::Json::parse(json.toStdString());
+    if (it == m_plugins.end() || !value)
+        return;
+    const api::Json data = api::Json::object({{"id", setting.toStdString()}, {"value", *value}});
+    it->second->process->deliver("settings:changed", data.dump(), "settings:changed#" + setting.toStdString());
+}
+
 void PluginRuntime::forceStop(const QString &pluginId)
 {
     if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end())

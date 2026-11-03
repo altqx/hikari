@@ -352,6 +352,17 @@ TEST_F(PluginStateTest, SettingsReadAndWriteThroughHikariSub)
     EXPECT_EQ(evaluate("pcall(hikari.settings.get, 'other')"), "false");
 }
 
+TEST_F(PluginStateTest, ASettingChangedInThePluginManagerReadsAtOnce)
+{
+    auto state = load("hikari.commands.register('greet', function() hikari.notify(tostring(hikari.settings.get('count'))) end)");
+    ASSERT_TRUE(state) << state.error();
+    ASSERT_TRUE((*state)->dispatch("settings:changed", Json::object({{"id", "count"}, {"value", 2}}), m_host));
+    ASSERT_TRUE((*state)->dispatch("settings:changed", Json::object({{"id", "other"}, {"value", 9}}), m_host));
+    ASSERT_TRUE((*state)->run("greet", m_host));
+    EXPECT_EQ(m_host.texts(), std::vector<std::string>{"2"});
+    EXPECT_EQ(evaluate("pcall(hikari.settings.get, 'other')"), "false");
+}
+
 TEST_F(PluginStateTest, CallsReachTheHikariApiAsJson)
 {
     auto state = load("local r = hikari.call('lines.list', {fields = hikari.array({'text'}), limit = 2, "

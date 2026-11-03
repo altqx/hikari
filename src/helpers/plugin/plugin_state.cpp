@@ -809,6 +809,14 @@ std::expected<void, std::string> PluginState::run(const std::string &command, Ho
 std::expected<void, std::string> PluginState::dispatch(const std::string &event, const Json &data, Host &host)
 {
     lua_State *L = m_lua;
+    if (event == "settings:changed") {
+        const Json *id = data.find("id");
+        const Json *value = data.find("value");
+        Json &settings = m_options.settings;
+        if (id && id->isString() && value && settings.find(id->asString()))
+            settings[id->asString()] = *value;
+        return {};
+    }
     lua_getfield(L, LUA_REGISTRYINDEX, kEventsKey);
     lua_getfield(L, -1, event.c_str());
     lua_remove(L, -2);
