@@ -1732,6 +1732,66 @@ Output device: %2</source>
             <numerusform>%n மதிப்புகளை அளவிட முடியவில்லை.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n comment line(s) removed.</source>
+        <translation>
+            <numerusform>%n கருத்து வரி நீக்கப்பட்டது.</numerusform>
+            <numerusform>%n கருத்து வரிகள் நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n drawing(s) removed.</source>
+        <translation>
+            <numerusform>%n வரைபடம் நீக்கப்பட்டது.</numerusform>
+            <numerusform>%n வரைபடங்கள் நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) left without text removed.</source>
+        <translation>
+            <numerusform>உரை இல்லாமல் போன %n வரி நீக்கப்பட்டது.</numerusform>
+            <numerusform>உரை இல்லாமல் போன %n வரிகள் நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n duplicate line(s) removed.</source>
+        <translation>
+            <numerusform>%n நகல் வரி நீக்கப்பட்டது.</numerusform>
+            <numerusform>%n நகல் வரிகள் நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lines are sorted by time.</source>
+        <translation>வரிகள் நேரப்படி வரிசைப்படுத்தப்படும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Formatting tags converted or removed in %n line(s).</source>
+        <translation>
+            <numerusform>%n வரியில் வடிவமைப்புக் குறிச்சொற்கள் மாற்றப்பட்டன அல்லது நீக்கப்பட்டன.</numerusform>
+            <numerusform>%n வரிகளில் வடிவமைப்புக் குறிச்சொற்கள் மாற்றப்பட்டன அல்லது நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) get the conversion style “%1”.</source>
+        <translation>
+            <numerusform>%n வரிக்கு “%1” என்ற மாற்றப் பாணி வழங்கப்படும்.</numerusform>
+            <numerusform>%n வரிகளுக்கு “%1” என்ற மாற்றப் பாணி வழங்கப்படும்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
+        <translation>
+            <numerusform>%n வரியிலிருந்து புத்தகக்குறிகள், மறைக்கப்பட்ட வரிகள், குழுக்கள் நீக்கப்பட்டன.</numerusform>
+            <numerusform>%n வரிகளிலிருந்து புத்தகக்குறிகள், மறைக்கப்பட்ட வரிகள், குழுக்கள் நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Times changed (rounding, frames or new end times) in %n line(s).</source>
+        <translation>
+            <numerusform>%n வரியில் நேரங்கள் மாற்றப்பட்டன (முழுமையாக்கல், சட்டகங்கள் அல்லது புதிய இறுதி நேரங்கள்).</numerusform>
+            <numerusform>%n வரிகளில் நேரங்கள் மாற்றப்பட்டன (முழுமையாக்கல், சட்டகங்கள் அல்லது புதிய இறுதி நேரங்கள்).</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Discord</name>
@@ -1789,6 +1849,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>என்னுடையதை வை</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>சேமிப்பதற்கு முன் “%1” ஐ ASS ஆக மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>ASS ஆக மாற்று</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -1925,45 +1993,6 @@ Output device: %2</source>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
         <translation>அமைப்புகள் › மாற்றம் இல் உள்ள சட்டக வீதம் சரியில்லை. அதைத் திருத்தி மீண்டும் சேமிக்கவும்.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) get the style “%1”.</source>
-        <translation>
-            <numerusform>%n வரிக்கு “%1” என்ற பாணி வழங்கப்பட்டது.</numerusform>
-            <numerusform>%n வரிகளுக்கு “%1” என்ற பாணி வழங்கப்பட்டது.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Formatting tags converted in %n line(s).</source>
-        <translation>
-            <numerusform>%n வரியில் வடிவமைப்புக் குறிச்சொற்கள் மாற்றப்பட்டன.</numerusform>
-            <numerusform>%n வரிகளில் வடிவமைப்புக் குறிச்சொற்கள் மாற்றப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Times changed in %n line(s).</source>
-        <translation>
-            <numerusform>%n வரியில் நேரங்கள் மாற்றப்பட்டன.</numerusform>
-            <numerusform>%n வரிகளில் நேரங்கள் மாற்றப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Lines are sorted by time.</source>
-        <translation>வரிகள் நேரப்படி வரிசைப்படுத்தப்பட்டன.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n duplicate line(s) removed.</source>
-        <translation>
-            <numerusform>%n நகல் வரி நீக்கப்பட்டது.</numerusform>
-            <numerusform>%n நகல் வரிகள் நீக்கப்பட்டன.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) without text removed.</source>
-        <translation>
-            <numerusform>உரை இல்லாத %n வரி நீக்கப்பட்டது.</numerusform>
-            <numerusform>உரை இல்லாத %n வரிகள் நீக்கப்பட்டன.</numerusform>
-        </translation>
     </message>
     <message>
         <source>A document could not be saved; nothing was closed.</source>

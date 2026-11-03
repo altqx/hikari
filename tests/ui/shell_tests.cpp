@@ -8073,6 +8073,11 @@ private slots:
         QCOMPARE(values.value(QStringLiteral("filters")).toStringList(),
                  (QStringList{QStringLiteral("Subtitle file (*.srt)"), QStringLiteral("ASS subtitles (*.ass)")}));
         QCOMPARE(values.value(QStringLiteral("formats")).toStringList(), (QStringList{QString(), QStringLiteral("ass")}));
+        const QUrl unnamed = QUrl::fromLocalFile(dir.filePath(QStringLiteral("save-as-ass")));
+        QCOMPARE(application->assConversionPreview(0, unnamed, QString()), QVariantMap());
+        const QVariantMap preview = application->assConversionPreview(0, unnamed, QStringLiteral("ass"));
+        QVERIFY(preview.value(QStringLiteral("convert")).toBool());
+        QVERIFY(preview.value(QStringLiteral("changes")).toStringList().join(u' ').contains(QStringLiteral("get the conversion style")));
         auto &settings = *application->settingsStore();
         const QVariant style = settings.value(QStringLiteral("convert.style"));
         auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("convert.style"), style); });
@@ -8099,9 +8104,52 @@ private slots:
         QVERIFY(bytes.contains("[V4+ Styles]"));
         QVERIFY(bytes.contains(",Converted,,0,0,0,,{\\i1}two{\\i0}"));
         QCOMPARE(application->saveDialogValuesFor(0).value(QStringLiteral("formats")).toStringList(), QStringList{QString()});
-        QVERIFY(application->log().history().contains(QRegularExpression(QStringLiteral("2 line(s|\\(s\\)) get the style “Converted”\\."))));
+        QVERIFY(application->log().history().contains(QRegularExpression(QStringLiteral("2 line(s|\\(s\\)) get the conversion style “Converted”\\."))));
         QVERIFY(application->editor().undo());
         QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
+        application->editor().discard();
+    }
+
+    void saveAsAssAsksFirstAndCancelKeepsTheDocument()
+    {
+        const QString path = writeSrt(dir, "confirm-ass.srt",
+                                      "1\n00:00:01,000 --> 00:00:02,000\none\n\n2\n00:00:03,000 --> 00:00:04,000\n<b>two</b>\n\n");
+        QVERIFY(application->openFile(path));
+        auto *session = openedSrt();
+        QVERIFY(session);
+        const auto cursor = session->historyCursor();
+        auto *saveAs = named("saveAsDialog");
+        const auto accept = [&](const char *name) {
+            saveAs->setProperty("document", 0);
+            saveAs->setProperty("selectedFile", QUrl::fromLocalFile(dir.filePath(QLatin1String(name))));
+            QVERIFY(QMetaObject::invokeMethod(saveAs, "accepted"));
+        };
+        const QString question = QStringLiteral("Convert “confirm-ass.srt” to ASS before saving it?");
+
+        accept("confirm-cancel.ass");
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        const QVariantList choices = box->property("choices").toList();
+        QCOMPARE(choices.size(), 2);
+        QCOMPARE(choices.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Convert to ASS"));
+        QCOMPARE(choices.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Cancel"));
+        QVERIFY(box->property("detail").toString().contains(QStringLiteral("get the conversion style")));
+        answerMessage("messages", QStringLiteral("Save as ASS"), question, QStringLiteral("cancel"));
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
+        QCOMPARE(session->historyCursor(), cursor);
+        QTest::qWait(50);
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("confirm-cancel.ass"))));
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("confirm-cancel.ass.srt"))));
+
+        accept("confirm-done.ass");
+        answerMessage("messages", QStringLiteral("Save as ASS"), question, QStringLiteral("convert"));
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QCOMPARE(session->historyCursor(), cursor + 1);
+        QCOMPARE(session->history().back().name, std::string("Subtitles conversion"));
+        QTRY_VERIFY(!session->isDirty());
+        QFile written(dir.filePath(QStringLiteral("confirm-done.ass")));
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        QVERIFY(written.readAll().contains("[V4+ Styles]"));
         application->editor().discard();
     }
 

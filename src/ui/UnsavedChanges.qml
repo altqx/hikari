@@ -14,6 +14,7 @@ Item {
     property var pickerFolder: picker => ""
     property var rememberPickerFolder: (picker, file) => {}
     property var confirmOverDisk: (ids, then, cancelled) => then()
+    property var confirmConversion: (id, file, format, from, then, cancelled) => then()
     property var rows: []
     property var choices: []
     property string problem: ""
@@ -76,6 +77,10 @@ Item {
     function discardAll() {
         setAll(false)
         app.resolveClose(choices)
+    }
+    function pickCancelled() {
+        if (rows.length === 1 && !(window && window.visible))
+            askOne()
     }
     function pick(i, then) {
         const v = app.saveDialogValuesFor(rows[i].id)
@@ -168,19 +173,22 @@ Item {
         fileMode: FileDialog.SaveFile
         onAccepted: {
             unsaved.rememberPickerFolder("subtitles", selectedFile)
-            const list = unsaved.choices.slice()
-            list[row] = Object.assign({}, list[row], { path: unsaved.app.localPath(selectedFile),
-                                                       format: formats[selectedNameFilter.index] ?? "" })
-            unsaved.choices = list
+            const i = row
+            const file = selectedFile
+            const format = formats[selectedNameFilter.index] ?? ""
             const next = then
             then = null
-            if (next)
-                next()
+            unsaved.confirmConversion(unsaved.rows[i].id, file, format, unsaved.window, () => {
+                const list = unsaved.choices.slice()
+                list[i] = Object.assign({}, list[i], { path: unsaved.app.localPath(file), format: format })
+                unsaved.choices = list
+                if (next)
+                    next()
+            }, () => unsaved.pickCancelled())
         }
         onRejected: {
             then = null
-            if (unsaved.rows.length === 1 && !(unsaved.window && unsaved.window.visible))
-                unsaved.askOne()
+            unsaved.pickCancelled()
         }
     }
 

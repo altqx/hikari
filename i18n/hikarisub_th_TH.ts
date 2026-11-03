@@ -1721,6 +1721,58 @@ Output device: %2</source>
             <numerusform>ไม่สามารถปรับขนาดค่า %n ค่า</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n comment line(s) removed.</source>
+        <translation>
+            <numerusform>ลบบรรทัดความคิดเห็น %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n drawing(s) removed.</source>
+        <translation>
+            <numerusform>ลบภาพวาด %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) left without text removed.</source>
+        <translation>
+            <numerusform>ลบบรรทัดที่ไม่มีข้อความเหลือ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n duplicate line(s) removed.</source>
+        <translation>
+            <numerusform>ลบบรรทัดซ้ำ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lines are sorted by time.</source>
+        <translation>บรรทัดถูกเรียงตามเวลา</translation>
+    </message>
+    <message numerus="yes">
+        <source>Formatting tags converted or removed in %n line(s).</source>
+        <translation>
+            <numerusform>แปลงหรือลบแท็กจัดรูปแบบใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) get the conversion style “%1”.</source>
+        <translation>
+            <numerusform>%n บรรทัดได้รับสไตล์การแปลง “%1”</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
+        <translation>
+            <numerusform>ลบที่คั่นหน้า บรรทัดที่ซ่อน และกลุ่มออกจาก %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Times changed (rounding, frames or new end times) in %n line(s).</source>
+        <translation>
+            <numerusform>เปลี่ยนเวลา (การปัดเศษ เฟรม หรือเวลาสิ้นสุดใหม่) ใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Discord</name>
@@ -1778,6 +1830,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>เก็บฉบับของฉัน</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>แปลง “%1” เป็น ASS ก่อนบันทึกหรือไม่</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>แปลงเป็น ASS</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -1914,40 +1974,6 @@ Output device: %2</source>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
         <translation>อัตราเฟรมใน การตั้งค่า › การแปลง ไม่ถูกต้อง แก้ไขแล้วบันทึกอีกครั้ง</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) get the style “%1”.</source>
-        <translation>
-            <numerusform>%n บรรทัดได้รับสไตล์ “%1”</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Formatting tags converted in %n line(s).</source>
-        <translation>
-            <numerusform>แปลงแท็กจัดรูปแบบใน %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Times changed in %n line(s).</source>
-        <translation>
-            <numerusform>เปลี่ยนเวลาใน %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Lines are sorted by time.</source>
-        <translation>เรียงบรรทัดตามเวลาแล้ว</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n duplicate line(s) removed.</source>
-        <translation>
-            <numerusform>ลบบรรทัดซ้ำ %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) without text removed.</source>
-        <translation>
-            <numerusform>ลบบรรทัดที่ไม่มีข้อความ %n บรรทัด</numerusform>
-        </translation>
     </message>
     <message>
         <source>A document could not be saved; nothing was closed.</source>

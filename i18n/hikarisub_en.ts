@@ -86,6 +86,62 @@
             <numerusform>%n values could not be scaled.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n comment line(s) removed.</source>
+        <translation>
+            <numerusform>%n comment line removed.</numerusform>
+            <numerusform>%n comment lines removed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n drawing(s) removed.</source>
+        <translation>
+            <numerusform>%n drawing removed.</numerusform>
+            <numerusform>%n drawings removed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) left without text removed.</source>
+        <translation>
+            <numerusform>%n line left without text removed.</numerusform>
+            <numerusform>%n lines left without text removed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n duplicate line(s) removed.</source>
+        <translation>
+            <numerusform>%n duplicate line removed.</numerusform>
+            <numerusform>%n duplicate lines removed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Formatting tags converted or removed in %n line(s).</source>
+        <translation>
+            <numerusform>Formatting tags converted or removed in %n line.</numerusform>
+            <numerusform>Formatting tags converted or removed in %n lines.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) get the conversion style “%1”.</source>
+        <translation>
+            <numerusform>%n line gets the conversion style “%1”.</numerusform>
+            <numerusform>%n lines get the conversion style “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
+        <translation>
+            <numerusform>Bookmarks, hidden lines and groups removed from %n line.</numerusform>
+            <numerusform>Bookmarks, hidden lines and groups removed from %n lines.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Times changed (rounding, frames or new end times) in %n line(s).</source>
+        <translation>
+            <numerusform>Times changed (rounding, frames or new end times) in %n line.</numerusform>
+            <numerusform>Times changed (rounding, frames or new end times) in %n lines.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Documents</name>
@@ -108,41 +164,6 @@
         <translation>
             <numerusform>Save the changes to %n document before loading the session?</numerusform>
             <numerusform>Save the changes to %n documents before loading the session?</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) get the style “%1”.</source>
-        <translation>
-            <numerusform>%n line gets the style “%1”.</numerusform>
-            <numerusform>%n lines get the style “%1”.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Formatting tags converted in %n line(s).</source>
-        <translation>
-            <numerusform>Formatting tags converted in %n line.</numerusform>
-            <numerusform>Formatting tags converted in %n lines.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Times changed in %n line(s).</source>
-        <translation>
-            <numerusform>Times changed in %n line.</numerusform>
-            <numerusform>Times changed in %n lines.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n duplicate line(s) removed.</source>
-        <translation>
-            <numerusform>%n duplicate line removed.</numerusform>
-            <numerusform>%n duplicate lines removed.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) without text removed.</source>
-        <translation>
-            <numerusform>%n line without text removed.</numerusform>
-            <numerusform>%n lines without text removed.</numerusform>
         </translation>
     </message>
 </context>

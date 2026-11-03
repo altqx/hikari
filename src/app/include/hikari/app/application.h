@@ -309,6 +309,9 @@ public:
     Q_INVOKABLE QVariantMap saveDialogValuesFor(qulonglong id) const;
     // format "ass" converts a Document of another format to ASS before it is saved.
     Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file, const QString &format = {});
+    // {} when saving as file in format keeps the Document's format; else {convert: true} with
+    // changes (what converting to ASS does, to confirm first) or problem.
+    Q_INVOKABLE QVariantMap assConversionPreview(qulonglong id, const QUrl &file, const QString &format) const;
     Q_INVOKABLE bool saveDocument(qulonglong id);
     Q_INVOKABLE bool turnOffTranslationMode();
     // translationHint: why the mode is unavailable (a PlainText Document); else empty.
@@ -986,6 +989,7 @@ private:
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
     std::optional<core::ConversionOptions> assConversionOptions() const;
+    std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
     bool convertToAss(application::DocumentId document);
     QString m_resolutionCheckedVideo;
     void checkResolution();

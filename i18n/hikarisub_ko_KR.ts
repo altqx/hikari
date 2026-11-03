@@ -1721,6 +1721,58 @@ Output device: %2</source>
             <numerusform>값 %n개를 조정할 수 없습니다.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n comment line(s) removed.</source>
+        <translation>
+            <numerusform>주석 줄 %n개가 제거됩니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n drawing(s) removed.</source>
+        <translation>
+            <numerusform>도형 %n개가 제거됩니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) left without text removed.</source>
+        <translation>
+            <numerusform>텍스트가 없는 줄 %n개가 제거됩니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n duplicate line(s) removed.</source>
+        <translation>
+            <numerusform>중복 줄 %n개가 제거됩니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lines are sorted by time.</source>
+        <translation>줄이 시간순으로 정렬됩니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Formatting tags converted or removed in %n line(s).</source>
+        <translation>
+            <numerusform>줄 %n개의 서식 태그가 변환되거나 제거됩니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) get the conversion style “%1”.</source>
+        <translation>
+            <numerusform>줄 %n개에 변환 스타일 “%1”(이)가 적용됩니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
+        <translation>
+            <numerusform>줄 %n개에서 책갈피, 숨긴 줄 및 그룹이 제거됩니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Times changed (rounding, frames or new end times) in %n line(s).</source>
+        <translation>
+            <numerusform>줄 %n개의 시간이 변경됩니다(반올림, 프레임 또는 새 종료 시간).</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Discord</name>
@@ -1778,6 +1830,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>내 변경 사항 유지</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>저장하기 전에 “%1”을(를) ASS로 변환할까요?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>ASS로 변환</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -1914,40 +1974,6 @@ Output device: %2</source>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
         <translation>설정 › 변환의 프레임 속도가 올바르지 않습니다. 수정한 다음 다시 저장하십시오.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) get the style “%1”.</source>
-        <translation>
-            <numerusform>줄 %n개에 스타일 “%1”(이)가 적용되었습니다.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Formatting tags converted in %n line(s).</source>
-        <translation>
-            <numerusform>줄 %n개의 서식 태그가 변환되었습니다.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Times changed in %n line(s).</source>
-        <translation>
-            <numerusform>줄 %n개의 시간이 변경되었습니다.</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Lines are sorted by time.</source>
-        <translation>줄이 시간순으로 정렬되었습니다.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n duplicate line(s) removed.</source>
-        <translation>
-            <numerusform>중복 줄 %n개가 제거되었습니다.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) without text removed.</source>
-        <translation>
-            <numerusform>텍스트가 없는 줄 %n개가 제거되었습니다.</numerusform>
-        </translation>
     </message>
     <message>
         <source>A document could not be saved; nothing was closed.</source>

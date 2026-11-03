@@ -5089,28 +5089,84 @@ std::optional<core::ConversionOptions> Application::assConversionOptions() const
     return options;
 }
 
+namespace {
+
+QString invalidConversionFrameRate()
+{
+    return QCoreApplication::translate("HikariSub.Documents",
+                                       "The frame rate in Settings › Conversion isn’t valid. Correct it and save again.");
+}
+
+QStringList assConversionChanges(const core::ConversionReport &r, const QString &style)
+{
+    QStringList out;
+    if (r.commentsRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved);
+    if (r.drawingsCleared)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared);
+    if (r.emptyRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved);
+    if (r.duplicatesRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved);
+    if (r.reordered)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time.");
+    if (r.textChanged)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Formatting tags converted or removed in %n line(s).", nullptr,
+                                           r.textChanged);
+    if (r.fieldsDropped)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style “%1”.", nullptr,
+                                           r.fieldsDropped)
+                   .arg(style);
+    if (r.markersDropped)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Bookmarks, hidden lines and groups removed from %n line(s).",
+                                           nullptr, r.markersDropped);
+    if (r.timesChanged)
+        out << QCoreApplication::translate("HikariSub.Conversion",
+                                           "Times changed (rounding, frames or new end times) in %n line(s).", nullptr,
+                                           r.timesChanged);
+    return out;
+}
+
+}
+
+std::optional<core::ConversionResult> Application::convertedToAss(const application::EditSession &session) const
+{
+    const auto options = assConversionOptions();
+    if (!options)
+        return std::nullopt;
+    const QCollator collator;
+    return core::convertDocument(session.document(), core::SubtitleFormat::Ass, *options,
+                                 [&](std::u8string_view a, std::u8string_view b) {
+                                     return collator.compare(
+                                         QString::fromUtf8(reinterpret_cast<const char *>(a.data()), qsizetype(a.size())),
+                                         QString::fromUtf8(reinterpret_cast<const char *>(b.data()), qsizetype(b.size())));
+                                 });
+}
+
+QVariantMap Application::assConversionPreview(qulonglong id, const QUrl &file, const QString &format) const
+{
+    const auto document = documentOf(id);
+    const auto *session = document ? m_files->session(*document) : nullptr;
+    if (!session || !savesAsAss(session->document().format(), file.toLocalFile(), format))
+        return {};
+    const auto result = convertedToAss(*session);
+    if (!result)
+        return {{QStringLiteral("convert"), true}, {QStringLiteral("problem"), invalidConversionFrameRate()}};
+    return {{QStringLiteral("convert"), true},
+            {QStringLiteral("changes"), assConversionChanges(result->report, m_settings->text("convert.style"))}};
+}
+
 bool Application::convertToAss(application::DocumentId document)
 {
     auto *session = m_files->session(document);
     if (!session)
         return false;
     const QString title = QCoreApplication::translate("HikariSub.Documents", "Save as ASS");
-    const auto options = assConversionOptions();
-    if (!options) {
-        m_log->notice(ui::LogController::Error, title,
-                      QCoreApplication::translate("HikariSub.Documents",
-                                                  "The frame rate in Settings › Conversion isn’t valid. Correct it and save again."));
+    auto result = convertedToAss(*session);
+    if (!result) {
+        m_log->notice(ui::LogController::Error, title, invalidConversionFrameRate());
         return false;
     }
-    const QCollator collator;
-    auto result = core::convertDocument(session->document(), core::SubtitleFormat::Ass, *options,
-                                        [&](std::u8string_view a, std::u8string_view b) {
-                                            return collator.compare(
-                                                QString::fromUtf8(reinterpret_cast<const char *>(a.data()), qsizetype(a.size())),
-                                                QString::fromUtf8(reinterpret_cast<const char *>(b.data()), qsizetype(b.size())));
-                                        });
-    if (!result)
-        return false;
     std::set<core::LineId> touches;
     for (const auto *line : session->document().lines())
         touches.insert(line->id);
@@ -5135,25 +5191,7 @@ bool Application::convertToAss(application::DocumentId document)
     if (document == m_workspace.editingTarget())
         m_editor->reloadFromSession();
     refreshViews();
-    const auto &r = result->report;
-    QStringList changes;
-    if (r.fieldsDropped)
-        changes << QCoreApplication::translate("HikariSub.Documents", "%n line(s) get the style “%1”.", nullptr, r.fieldsDropped)
-                       .arg(m_settings->text("convert.style"));
-    if (r.textChanged)
-        changes << QCoreApplication::translate("HikariSub.Documents", "Formatting tags converted in %n line(s).", nullptr,
-                                               r.textChanged);
-    if (r.timesChanged)
-        changes << QCoreApplication::translate("HikariSub.Documents", "Times changed in %n line(s).", nullptr, r.timesChanged);
-    if (r.reordered)
-        changes << QCoreApplication::translate("HikariSub.Documents", "Lines are sorted by time.");
-    if (r.duplicatesRemoved)
-        changes << QCoreApplication::translate("HikariSub.Documents", "%n duplicate line(s) removed.", nullptr,
-                                               r.duplicatesRemoved);
-    if (r.emptyRemoved)
-        changes << QCoreApplication::translate("HikariSub.Documents", "%n line(s) without text removed.", nullptr,
-                                               r.emptyRemoved);
-    if (!changes.isEmpty())
+    if (const QStringList changes = assConversionChanges(result->report, m_settings->text("convert.style")); !changes.isEmpty())
         m_log->notice(ui::LogController::Info, title, changes.join(u' '));
     return true;
 }

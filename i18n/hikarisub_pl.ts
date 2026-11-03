@@ -1743,6 +1743,74 @@ Urządzenie wyjściowe: %2</translation>
             <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n comment line(s) removed.</source>
+        <translation>
+            <numerusform>Zostanie usunięta %n zakomentowana linijka.</numerusform>
+            <numerusform>Zostaną usunięte %n zakomentowane linijki.</numerusform>
+            <numerusform>Zostanie usuniętych %n zakomentowanych linijek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n drawing(s) removed.</source>
+        <translation>
+            <numerusform>Zostanie usunięty %n rysunek.</numerusform>
+            <numerusform>Zostaną usunięte %n rysunki.</numerusform>
+            <numerusform>Zostanie usuniętych %n rysunków.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) left without text removed.</source>
+        <translation>
+            <numerusform>Zostanie usunięta %n linijka bez tekstu.</numerusform>
+            <numerusform>Zostaną usunięte %n linijki bez tekstu.</numerusform>
+            <numerusform>Zostanie usuniętych %n linijek bez tekstu.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n duplicate line(s) removed.</source>
+        <translation>
+            <numerusform>Zostanie usunięta %n zduplikowana linijka.</numerusform>
+            <numerusform>Zostaną usunięte %n zduplikowane linijki.</numerusform>
+            <numerusform>Zostanie usuniętych %n zduplikowanych linijek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lines are sorted by time.</source>
+        <translation>Linijki zostaną posortowane według czasu.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Formatting tags converted or removed in %n line(s).</source>
+        <translation>
+            <numerusform>Tagi formatowania zostaną przekonwertowane lub usunięte w %n linijce.</numerusform>
+            <numerusform>Tagi formatowania zostaną przekonwertowane lub usunięte w %n linijkach.</numerusform>
+            <numerusform>Tagi formatowania zostaną przekonwertowane lub usunięte w %n linijkach.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) get the conversion style “%1”.</source>
+        <translation>
+            <numerusform>%n linijka otrzyma styl konwersji “%1”.</numerusform>
+            <numerusform>%n linijki otrzymają styl konwersji “%1”.</numerusform>
+            <numerusform>%n linijek otrzyma styl konwersji “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
+        <translation>
+            <numerusform>Zakładki, ukrycie i grupy zostaną usunięte z %n linijki.</numerusform>
+            <numerusform>Zakładki, ukrycie i grupy zostaną usunięte z %n linijek.</numerusform>
+            <numerusform>Zakładki, ukrycie i grupy zostaną usunięte z %n linijek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Times changed (rounding, frames or new end times) in %n line(s).</source>
+        <translation>
+            <numerusform>Czasy zostaną zmienione (zaokrąglenie, klatki lub nowe czasy końcowe) w %n linijce.</numerusform>
+            <numerusform>Czasy zostaną zmienione (zaokrąglenie, klatki lub nowe czasy końcowe) w %n linijkach.</numerusform>
+            <numerusform>Czasy zostaną zmienione (zaokrąglenie, klatki lub nowe czasy końcowe) w %n linijkach.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Discord</name>
@@ -1800,6 +1868,14 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Keep mine</source>
         <translation>Zachowaj moje</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>Przekonwertować „%1” do ASS przed zapisaniem?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>Konwertuj do ASS</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -1936,50 +2012,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
         <translation>Liczba klatek na sekundę w Ustawienia › Konwersja jest nieprawidłowa. Popraw ją i zapisz ponownie.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) get the style “%1”.</source>
-        <translation>
-            <numerusform>%n linijka otrzymała styl „%1”.</numerusform>
-            <numerusform>%n linijki otrzymały styl „%1”.</numerusform>
-            <numerusform>%n linijek otrzymało styl „%1”.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Formatting tags converted in %n line(s).</source>
-        <translation>
-            <numerusform>Przekonwertowano tagi formatowania w %n linijce.</numerusform>
-            <numerusform>Przekonwertowano tagi formatowania w %n linijkach.</numerusform>
-            <numerusform>Przekonwertowano tagi formatowania w %n linijkach.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Times changed in %n line(s).</source>
-        <translation>
-            <numerusform>Zmieniono czasy w %n linijce.</numerusform>
-            <numerusform>Zmieniono czasy w %n linijkach.</numerusform>
-            <numerusform>Zmieniono czasy w %n linijkach.</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Lines are sorted by time.</source>
-        <translation>Linijki posortowano według czasu.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n duplicate line(s) removed.</source>
-        <translation>
-            <numerusform>Usunięto %n zduplikowaną linijkę.</numerusform>
-            <numerusform>Usunięto %n zduplikowane linijki.</numerusform>
-            <numerusform>Usunięto %n zduplikowanych linijek.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) without text removed.</source>
-        <translation>
-            <numerusform>Usunięto %n linijkę bez tekstu.</numerusform>
-            <numerusform>Usunięto %n linijki bez tekstu.</numerusform>
-            <numerusform>Usunięto %n linijek bez tekstu.</numerusform>
-        </translation>
     </message>
     <message>
         <source>A document could not be saved; nothing was closed.</source>

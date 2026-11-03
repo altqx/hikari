@@ -6002,6 +6002,41 @@ ApplicationWindow {
         else
             openSaveDialog(next.id)
     }
+    function saveChosenAs(document, file, format) {
+        const result = root.app.saveChosenFor(document, file, format)
+        if (result === "readonly") {
+            root.warnReadOnly(document, root.app.localPath(file).replace(/^.*[\\/]/, ""))
+        } else {
+            const id = document === 0 ? root.currentTab().id : document
+            if (result === "" && root.changedOnDisk[id] === true)
+                root.savingAway = Object.assign({}, root.savingAway, { [id]: true })
+            matroskaSubtitles.saveDone()
+            root.saveNext()
+        }
+    }
+    function confirmAssConversion(document, file, format, from, then, cancelled) {
+        const preview = root.app.assConversionPreview(document, file, format)
+        if (preview.convert !== true) {
+            then()
+            return
+        }
+        const title = qsTranslate("HikariSub.Documents", "Save as ASS")
+        if (preview.problem !== undefined) {
+            root.messages.ask({ title: title, text: preview.problem, severity: "error", from: from }, () => cancelled())
+            return
+        }
+        root.messages.ask({
+            title: title,
+            text: qsTranslate("HikariSub.Documents", "Convert “%1” to ASS before saving it?").arg(root.tabTitle(document)),
+            detail: preview.changes.join("\n"),
+            plainText: true,
+            from: from,
+            choices: [
+                { id: "convert", text: qsTranslate("HikariSub.Documents", "Convert to ASS"), role: "accept", isDefault: true },
+                { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject" }
+            ]
+        }, id => id === "convert" ? then() : cancelled())
+    }
     function openSaveDialog(id) {
         const v = root.app.saveDialogValuesFor(id ?? 0)
         saveAsDialog.document = id ?? 0
@@ -6025,16 +6060,13 @@ ApplicationWindow {
         property var formats: []
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
-            const result = root.app.saveChosenFor(document, selectedFile, formats[selectedNameFilter.index] ?? "")
-            if (result === "readonly") {
-                root.warnReadOnly(document, root.app.localPath(selectedFile).replace(/^.*[\\/]/, ""))
-            } else {
-                const id = document === 0 ? root.currentTab().id : document
-                if (result === "" && root.changedOnDisk[id] === true)
-                    root.savingAway = Object.assign({}, root.savingAway, { [id]: true })
+            const target = document
+            const file = selectedFile
+            const format = formats[selectedNameFilter.index] ?? ""
+            root.confirmAssConversion(target, file, format, null, () => root.saveChosenAs(target, file, format), () => {
                 matroskaSubtitles.saveDone()
                 root.saveNext()
-            }
+            })
         }
         onRejected: {
             matroskaSubtitles.saveDone()
@@ -6139,6 +6171,7 @@ ApplicationWindow {
         settings: root.app.settings
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
+        confirmConversion: (id, file, format, from, then, cancelled) => root.confirmAssConversion(id, file, format, from, then, cancelled)
         confirmOverDisk: (ids, then, cancelled) => {
             const marked = ids.filter(id => root.changedOnDisk[id] === true)
             if (marked.length === 0)
