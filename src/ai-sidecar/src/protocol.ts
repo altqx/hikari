@@ -31,6 +31,7 @@ export const Method = {
     requestPermission: "session/request_permission",
     providersSet: "_hikari/providers.set",
     modelsList: "_hikari/models.list",
+    conversationEnd: "_hikari/conversation.end",
     complete: "_hikari/complete",
     apiCall: "_hikari/api.call",
     apiSubscribe: "_hikari/api.subscribe",

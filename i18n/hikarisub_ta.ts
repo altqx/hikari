@@ -314,6 +314,14 @@
         <translation>மேலும் ஆடியோ விருப்பங்கள்</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>தேர்வின் தொடக்கத்துக்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>தேர்வின் முடிவுக்குச் செல்</translation>
+    </message>
+    <message>
         <source>Zoom</source>
         <translation>பெரிதாக்கம்</translation>
     </message>
@@ -4332,6 +4340,10 @@ Failed to copy %2 fonts.</source>
         <translation>ஆவணம் எதுவும் திறக்கப்படவில்லை</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>அசைவூட்டங்களை நிலைப்படுத்து</translation>
+    </message>
+    <message>
         <source>Show subtitles preview</source>
         <translation>வசன வரிகள் முன்னோட்டத்தைக் காட்டு</translation>
     </message>
@@ -5971,6 +5983,14 @@ Failed to copy %2 fonts.</source>
         <translation>வேகமாக</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>தேர்வின் தொடக்கத்துக்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>தேர்வின் முடிவுக்குச் செல்</translation>
+    </message>
+    <message>
         <source>Translation mode</source>
         <translation>மொழிபெயர்ப்பு பயன்முறை</translation>
     </message>
@@ -6965,6 +6985,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Pl&amp;ugins…</source>
         <translation>செருகுநிரல்கள்… (&amp;u)</translation>
+    </message>
+    <message>
+        <source>Remove from the layout</source>
+        <translation>தளவமைப்பிலிருந்து அகற்று</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -8682,6 +8706,14 @@ Failed to copy %2 fonts.</source>
         <translation>CPS க்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் எண்ணு</translation>
     </message>
     <message>
+        <source>Splitting</source>
+        <translation>பிரித்தல்</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>சட்டகங்களாகப் பிரிக்கும்போது அசைவூட்டங்களை நிலைப்படுத்து</translation>
+    </message>
+    <message>
         <source>New lines</source>
         <translation>புதிய வரிகள்</translation>
     </message>
@@ -9439,6 +9471,14 @@ Failed to copy %2 fonts.</source>
         <translation>படிக்க ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
     </message>
     <message>
+        <source>Command: %1</source>
+        <translation>கட்டளை: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>பலகம்: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub ஆல் முடிக்க முடியவில்லை: %1</translation>
     </message>
@@ -9451,12 +9491,28 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub ஆல் %1 ஐப் படிக்க முடியவில்லை.</translation>
     </message>
     <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>இந்தத் தொகுப்பு “%1”, “%2” இன் புதுப்பிப்பு அல்ல.</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>முதலில் ஒரு செருகுநிரல் தொகுப்பைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>முடக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>தொடங்கவில்லை</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>நிறுத்தப்பட்டது</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9559,8 +9615,20 @@ Failed to copy %2 fonts.</source>
         <translation>செருகுநிரலின் நிறுவல் நீக்கப்படவில்லை</translation>
     </message>
     <message>
+        <source>Filter</source>
+        <translation>வடிகட்டி</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>செருகுநிரல்களை வடிகட்டு</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>செருகுநிரல்கள் எதுவும் நிறுவப்படவில்லை. ஒரு .hikariplugin கோப்பிலிருந்து ஒன்றை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>வடிகட்டிக்குப் பொருந்தும் செருகுநிரல் இல்லை.</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9568,7 +9636,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>இயக்கத்தில்</translation>
+        <translation type="vanished">இயக்கத்தில்</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9581,6 +9649,58 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>முழு நம்பிக்கை</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>இயக்கு</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>செருகுநிரல் மாற்றப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>அது தொடங்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>அது நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>மீண்டும் தொடங்கு</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>அனுமதிகள்</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>இது சேர்ப்பவை</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>அமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>கோப்பிலிருந்து புதுப்பி…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>தரவுக் கோப்புறையைத் திற</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>நிறுவலை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>அமைப்பு வைக்கப்படவில்லை</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -9601,6 +9721,21 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>செருகுநிரல் நிறுவப்படவில்லை, அணைக்கப்பட்டுள்ளது, அல்லது இந்தக் கட்டளை இனி அதில் இல்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>அது %n வினாடிக்கு மேல் இயங்கியது.</numerusform>
+            <numerusform>அது %n வினாடிகளுக்கு மேல் இயங்கியது.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>அது எதிர்பாராமல் நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>அது கட்டாயமாக நிறுத்தப்பட்டது.</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9636,6 +9771,50 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>செருகுநிரல் இயங்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1, %2 இலிருந்து</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>%1 பற்றி…</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>%1 நிறுவப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>அதன் செருகுநிரல்</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1 முடக்கப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1 தொடங்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1 நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>தளவமைப்பு அதன் பலகம் “%1” க்காக இந்த இடத்தை வைத்திருக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>செருகுநிரல்களைத் திற…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>இயக்கு</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>விவரங்கள்</translation>
     </message>
 </context>
 <context>

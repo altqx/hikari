@@ -277,6 +277,7 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.onsetSnap", "", Bool, Profile, Mapped, false, false},
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
         {"editor.softLineBreak", "", Bool, Profile, Mapped, false, false},
+        {"grid.splitFramesBakeAnimations", "", Bool, Profile, Mapped, false, true},
         // usageDataId: random, made at the first send, cleared when usage data is turned off.
         {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
         {"privacy.usageDataId", "", String, Profile, Mapped, false, std::string()},

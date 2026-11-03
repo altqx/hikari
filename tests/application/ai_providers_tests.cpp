@@ -134,6 +134,19 @@ TEST(AiConfig, CostIsTheProvidersFigureElseThePriceTimesTheTokens)
     EXPECT_DOUBLE_EQ(*costOf(reported, price), 0.0123);
 }
 
+TEST(AiConfig, CacheWritesCostTheWritePriceAndReadsTheCachedPrice)
+{
+    const Usage usage{.inputTokens = 1'000'000, .outputTokens = 0, .cachedInputTokens = 500'000,
+                      .cacheWriteTokens = 300'000, .cacheWriteHourTokens = 100'000};
+    const Price price{.input = 3.0, .output = 15.0, .cachedInput = 0.3, .cacheWrite = 3.75, .cacheWriteHour = 6.0};
+    EXPECT_DOUBLE_EQ(*costOf(usage, price), 0.2 * 3.0 + 0.5 * 0.3 + 0.2 * 3.75 + 0.1 * 6.0);
+    const Price noWritePrice{.input = 3.0, .output = 15.0, .cachedInput = 0.3};
+    EXPECT_DOUBLE_EQ(*costOf(usage, noWritePrice), 0.5 * 3.0 + 0.5 * 0.3);
+    Price minutesOnly = price;
+    minutesOnly.cacheWriteHour.reset();
+    EXPECT_DOUBLE_EQ(*costOf(usage, minutesOnly), 0.2 * 3.0 + 0.5 * 0.3 + 0.3 * 3.75);
+}
+
 TEST(AiConfig, IdsRoundTrip)
 {
     for (const Role role : kRoles)

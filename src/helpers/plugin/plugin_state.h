@@ -28,6 +28,8 @@ public:
     // Waits for the app-wide edit lock; the error says why it wasn't given.
     virtual std::expected<void, std::string> lock() = 0;
     virtual void unlock() = 0;
+    // The plugin's panels and dialogs; answered like call.
+    virtual std::expected<api::Json, api::Json> ui(const std::string &operation, const api::Json &params) = 0;
 };
 
 struct Options {

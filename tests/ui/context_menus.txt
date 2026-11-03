@@ -50,6 +50,7 @@ Grid > Join > Keep last [GRID_JOIN_TO_LAST_LINE]
 Grid > Split >
 Grid > Split > At video time [GRID_SPLIT_BY_VIDEO_TIME]
 Grid > Split > Into frames [GRID_SPLIT_BY_FRAME]
+Grid > Split > Bake animations
 Grid > Split > -
 Grid > Split > Into characters [GRID_SPLIT_BY_CHARS]
 Grid > Split > Into words [GRID_SPLIT_BY_WORDS]

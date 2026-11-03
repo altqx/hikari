@@ -1,5 +1,6 @@
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 
+import { cacheControl, markLast, prefixTexts, sortedTools } from "./cache";
 import { catalogueModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
@@ -39,6 +40,9 @@ function messages(request: Request): Json[] {
         if (content.length)
             out.push({ role: message.author, content });
     }
+    const last = out.at(-1);
+    if (last)
+        markLast(last.content as Json[], cacheControl(request.cacheLifetime));
     return out;
 }
 
@@ -47,8 +51,11 @@ function readUsage(usage: Usage, u: Json | undefined): void {
         return;
     if (typeof u.input_tokens === "number") {
         const read = Number(u.cache_read_input_tokens ?? 0);
-        usage.inputTokens = u.input_tokens + read + Number(u.cache_creation_input_tokens ?? 0);
+        const written = Number(u.cache_creation_input_tokens ?? 0);
+        usage.inputTokens = u.input_tokens + read + written;
         usage.cachedInputTokens = read;
+        usage.cacheWriteTokens = written;
+        usage.cacheWriteHourTokens = Number((u.cache_creation as Json | undefined)?.ephemeral_1h_input_tokens ?? 0);
     }
     if (typeof u.output_tokens === "number")
         usage.outputTokens = u.output_tokens;
@@ -80,12 +87,15 @@ export function anthropicClient({ config, key, fetch }: ClientOptions): Client {
                 messages: messages(request),
                 stream: true,
             };
-            if (request.system)
-                body.system = request.system;
-            if (request.tools?.length)
-                body.tools = request.tools.map((t) => ({
-                    name: t.name, description: t.description, input_schema: schemaObject(t.parametersJson),
-                }));
+            const tools: Json[] = sortedTools(request).map((t) => ({
+                name: t.name, description: t.description, input_schema: schemaObject(t.parametersJson),
+            }));
+            const system: Json[] = prefixTexts(request).map((text) => ({ type: "text", text }));
+            markLast(system.length ? system : tools, cacheControl(request.cacheLifetime));
+            if (system.length)
+                body.system = system;
+            if (tools.length)
+                body.tools = tools;
             let stop: StopReason | undefined;
             try {
                 const stream = await client.messages.create(body as never, { signal });

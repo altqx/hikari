@@ -2,7 +2,7 @@ import type { Finished, StopReason, ToolCall, Update, Usage } from "./types";
 
 /** Gathers one completion's text, tool calls and usage, sending each piece to Qt as it arrives. */
 export class Collector {
-    usage: Usage = { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0 };
+    usage: Usage = { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, cacheWriteTokens: 0, cacheWriteHourTokens: 0 };
     private text = "";
     private readonly calls = new Map<number, ToolCall>();
 

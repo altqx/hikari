@@ -40,9 +40,10 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9 | Split lines ▸ | | | split-lines |
 | 9.1 | Split line at video time | GRID_SPLIT_BY_VIDEO_TIME | video loaded | split-at-video |
 | 9.2 | Split lines into frames | GRID_SPLIT_BY_FRAME | video loaded | split-frames |
-| 9.3 | Split lines into characters | GRID_SPLIT_BY_CHARS | | split-characters |
-| 9.4 | Split lines into words | GRID_SPLIT_BY_WORDS | | split-words |
-| 9.5 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
+| 9.3 | [x] Bake animations | | `grid.splitFramesBakeAnimations`, on by default | |
+| 9.4 | Split lines into characters | GRID_SPLIT_BY_CHARS | | split-characters |
+| 9.5 | Split lines into words | GRID_SPLIT_BY_WORDS | | split-words |
+| 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
 | 11 | Make line group | GRID_TREE_MAKE | | make-tree |
 | 12 | Show subtitles preview | GRID_SHOW_PREVIEW | `canShowPreview()`; key bound | reference |
@@ -235,8 +236,9 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Spellchecker | [x] Ignore comments, [x] Ignore words in capitals, Words added to dictionary… (dictionary) |
 | Grid | [x] Fold generated lines |
 | Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
+| A plugin panel | the rows of its tree's `menu`, while the plugin runs ([plugins.md](../plugins.md), "Panels and dialogs") |
 
-Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), Close (tab-close), or "Close reference" for the Reference panel.
+Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin>… (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
 
 Items: 5 shared + 23 panel-owned = 28 (5–19 shown at a time).
 
@@ -1084,6 +1086,9 @@ The overflow button at the end of the audio bar, shown only when its controls fo
 - (•) Waveform
 - (•) Spectrum
 - [x] Speech spectrum (was “Speech (non-linear spectrum)”)
+- ──
+- Go to selection start (video-to-start-time; FA10, always shown)
+- Go to selection end (video-to-end-time; FA10, always shown)
 - ──
 - [x] Auto-scroll
 - [x] Sync with video

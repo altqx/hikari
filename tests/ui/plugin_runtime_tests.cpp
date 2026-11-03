@@ -2,6 +2,7 @@
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/plugin_runtime.h"
+#include "hikari/app/plugin_ui.h"
 
 #include <QDir>
 #include <QFile>
@@ -60,6 +61,7 @@ class PluginRuntimeTests : public QObject {
               R"({"id": ")" + id.toUtf8() + R"(", "name": ")" + name.toUtf8() +
                   R"(", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],)"
                   R"( "contributes": {"commands": [{"id": "greet", "title": "Say hello"}, {"id": "spin", "title": "Spin"}],)"
+                  R"( "panels": [{"id": "notes", "title": "Notes", "area": "bottom"}],)"
                   R"( "settings": [{"id": "count", "title": "Count", "type": "integer", "default": 0}]})" +
                   extra + "}");
         write(folder + QStringLiteral("/main.lua"), main);
@@ -448,6 +450,146 @@ private slots:
         runtime.forceStop(QStringLiteral("com.example.holder"));
         QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Waiter: followed")));
         QCOMPARE(session(*a).document().lines().front()->text, std::u8string(u8"first B"));
+    }
+
+    void aPanelDrawsWhenShownAndHearsItsWidgets()
+    {
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            local name = ''
+            local function draw(text)
+                hikari.panels.render('notes', {kind = 'column', children = {
+                    {kind = 'label', id = 'said', text = text},
+                    {kind = 'text', id = 'name', value = name},
+                    {kind = 'button', id = 'go', text = 'Go'}}})
+            end
+            hikari.panels.on('notes', function(e)
+                if e.kind == 'show' then draw('hello') end
+                if e.kind == 'click' and e.widget == 'go' then
+                    name = e.values.name
+                    draw('hello ' .. name)
+                end
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        app::PluginUi *ui = runtime.ui();
+        const QString dock = QStringLiteral("plugin:com.example.tidy/notes");
+        QCOMPARE(ui->panels().size(), 1);
+        QCOMPARE(ui->panels().first().toMap().value(QStringLiteral("area")).toString(), QStringLiteral("bottom"));
+        app::PluginPanelState *panel = ui->panel(dock);
+        QCOMPARE(panel->title(), QStringLiteral("Notes"));
+        QCOMPARE(panel->pluginName(), QStringLiteral("Tidy"));
+        QTRY_VERIFY(runtime.process(QStringLiteral("com.example.tidy"))->state() == PluginProcess::State::Ready);
+        QVERIFY(panel->tree().isNull());
+
+        const auto said = [&] {
+            return panel->tree().toMap().value(QStringLiteral("children")).toList().value(0).toMap().value(QStringLiteral("text")).toString();
+        };
+        ui->setShown(dock, true);
+        QTRY_COMPARE(said(), QStringLiteral("hello"));
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("change")}, {QStringLiteral("widget"), QStringLiteral("name")},
+                        {QStringLiteral("value"), QStringLiteral("Ana")}});
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("click")}, {QStringLiteral("widget"), QStringLiteral("go")}});
+        QTRY_COMPARE(said(), QStringLiteral("hello Ana"));
+        QCOMPARE(ui->value(dock, QStringLiteral("name")).toString(), QStringLiteral("Ana"));
+
+        QCOMPARE(ui->panel(QStringLiteral("plugin:com.example.gone/notes"))->status(), QStringLiteral("missing"));
+        runtime.forceStop(QStringLiteral("com.example.tidy"));
+        QTRY_COMPARE(panel->status(), QStringLiteral("stopped"));
+        QVERIFY(panel->tree().isNull());
+        QCOMPARE(ui->pluginState(QStringLiteral("com.example.tidy")).value(QStringLiteral("status")).toString(),
+                 QStringLiteral("stopped"));
+        runtime.restart(QStringLiteral("com.example.tidy"));
+        QTRY_COMPARE(said(), QStringLiteral("hello"));
+        QCOMPARE(panel->status(), QStringLiteral("running"));
+
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), "", false);
+        runtime.sync();
+        QCOMPARE(panel->status(), QStringLiteral("off"));
+        QVERIFY(ui->panels().isEmpty());
+    }
+
+    void theSamplePluginDrawsItsPanel()
+    {
+        const QString folder = folders().plugins + QStringLiteral("/com.example.line-tools");
+        for (const char *file : {"hikari-plugin.json", "main.lua"}) {
+            QFile source(QStringLiteral(HIKARI_PLUGIN_EXAMPLES "/line-tools/") + QLatin1String(file));
+            QVERIFY(source.open(QIODevice::ReadOnly));
+            write(folder + QLatin1Char('/') + QLatin1String(file), source.readAll());
+        }
+        m_registry[QStringLiteral("com.example.line-tools")] =
+            QJsonObject{{QStringLiteral("version"), QStringLiteral("1.2.0")}, {QStringLiteral("enabled"), true}};
+        write(folders().registry,
+              QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy logged(&a->log(), &ui::LogController::added);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        app::PluginUi *ui = runtime.ui();
+        const QString dock = QStringLiteral("plugin:com.example.line-tools/timing-check");
+        app::PluginPanelState *panel = ui->panel(dock);
+        QCOMPARE(panel->title(), QStringLiteral("Timing check"));
+        ui->setShown(dock, true);
+        const auto kinds = [&] {
+            QStringList out;
+            for (const QVariant &child : panel->tree().toMap().value(QStringLiteral("children")).toList())
+                out << child.toMap().value(QStringLiteral("kind")).toString();
+            return out;
+        };
+        QTRY_COMPARE(kinds(), (QStringList{QStringLiteral("row"), QStringLiteral("choice"), QStringLiteral("canvas"),
+                                           QStringLiteral("label")}));
+        QCOMPARE(panel->menu().size(), 2);
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("pointer")}, {QStringLiteral("widget"), QStringLiteral("chart")},
+                        {QStringLiteral("type"), QStringLiteral("move")}, {QStringLiteral("x"), 20}, {QStringLiteral("y"), 50}});
+        QTRY_VERIFY(panel->tree().toMap().value(QStringLiteral("children")).toList().value(2).toMap().contains(QStringLiteral("tip")));
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("change")}, {QStringLiteral("widget"), QStringLiteral("view")},
+                        {QStringLiteral("value"), QStringLiteral("list")}});
+        QTRY_COMPARE(kinds().value(2), QStringLiteral("list"));
+        for (const auto &entry : logged)
+            QVERIFY2(entry.at(1).value<ui::LogController::Severity>() != ui::LogController::Error,
+                     qPrintable(entry.at(3).toString()));
+    }
+
+    void aDialogAnswersWithItsButtonAndValues()
+    {
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            hikari.commands.register('greet', function()
+                local button, values = hikari.dialogs.ask('name', {title = 'Name',
+                    body = {kind = 'text', id = 'name', value = ''},
+                    buttons = {{id = 'ok', text = 'OK', default = true}, {id = 'cancel', text = 'Cancel', cancel = true}}})
+                hikari.notify(tostring(button) .. ' ' .. tostring(values.name) .. ' ' .. hikari.settings.get('count'))
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        app::PluginUi *ui = runtime.ui();
+        QSignalSpy opened(ui, &app::PluginUi::dialogOpened);
+        QSignalSpy closed(ui, &app::PluginUi::dialogClosed);
+        QTRY_VERIFY(runtime.process(QStringLiteral("com.example.tidy"))->state() == PluginProcess::State::Ready);
+        runtime.settingChanged(QStringLiteral("com.example.tidy"), QStringLiteral("count"), QStringLiteral("3"));
+
+        QVERIFY(runtime.run(QStringLiteral("plugin.com.example.tidy.greet")));
+        QTRY_VERIFY2(opened.count() == 1, qPrintable(texts(noticed).join(u'\n')));
+        auto *dialog = opened.first().at(0).value<app::PluginDialogState *>();
+        QCOMPARE(dialog->key(), QStringLiteral("plugin.com.example.tidy.name"));
+        QCOMPARE(dialog->title(), QStringLiteral("Name"));
+        QCOMPARE(dialog->buttons().size(), 2);
+        ui->dialogEvent(dialog->key(), {{QStringLiteral("kind"), QStringLiteral("change")},
+                                        {QStringLiteral("widget"), QStringLiteral("name")}, {QStringLiteral("value"), QStringLiteral("Bo")}});
+        ui->press(dialog->key(), QStringLiteral("ok"));
+        QCOMPARE(closed.count(), 1);
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: ok Bo 3")));
+
+        QVERIFY(runtime.run(QStringLiteral("plugin.com.example.tidy.greet")));
+        QTRY_COMPARE(opened.count(), 2);
+        ui->dismiss(opened.last().at(0).value<app::PluginDialogState *>()->key());
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: cancel  3")));
     }
 
     void pluginsHandleTheSameEventSideBySide()

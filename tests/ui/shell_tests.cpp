@@ -1,4 +1,7 @@
 #include "hikari/app/application.h"
+#include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_runtime.h"
+#include "hikari/app/plugin_ui.h"
 #include "hikari/app/style_manager_controller.h"
 #include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
@@ -13341,6 +13344,25 @@ private slots:
         QVERIFY(gridMenu->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(gridMenu, "dismiss"));
         QTRY_VERIFY(!gridMenu->property("visible").toBool());
+        auto *settings = application->settingsStore();
+        const bool bake = settings->boolean("grid.splitFramesBakeAnimations");
+        auto *rowMenu = named("gridMenu");
+        grid->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Menu);
+        QTRY_VERIFY(rowMenu->property("opened").toBool());
+        auto *split = named("gridSplitMenu");
+        QVERIFY(QMetaObject::invokeMethod(split, "open"));
+        auto *bakeItem = qobject_cast<QQuickItem *>(named("splitFramesBakeAnimations"));
+        QTRY_VERIFY(bakeItem->isVisible() && bakeItem->width() > 0);
+        QCOMPARE(bakeItem->property("checked").toBool(), bake);
+        clickWith(bakeItem, Qt::NoModifier);
+        QCOMPARE(settings->boolean("grid.splitFramesBakeAnimations"), !bake);
+        QTest::qWait(50);
+        QVERIFY(split->property("visible").toBool());
+        QVERIFY(rowMenu->property("visible").toBool());
+        settings->set("grid.splitFramesBakeAnimations", bake);
+        QVERIFY(QMetaObject::invokeMethod(rowMenu, "dismiss"));
+        QTRY_VERIFY(!rowMenu->property("visible").toBool());
         application->gridFilter().setInverted(inverted);
         application->gridFilter().setAddToFilter(addToFilter);
         shell.setHiddenColumns(0);
@@ -16015,6 +16037,7 @@ private slots:
               {"grid.autoHideColumns", "Hide empty columns"},
               {"grid.calcSpacesAndPunctuationForWraps", "Count spaces and punctuation for wraps"},
               {"grid.calcSpacesAndPunctuationForCps", "Count spaces and punctuation for CPS"},
+              {"grid.splitFramesBakeAnimations", "Bake animations when splitting into frames"},
               {"grid.insertStartOffset", nullptr},
               {"grid.insertEndOffset", nullptr},
               {"grid.tagsSwapCharacter", nullptr}}},
@@ -16609,6 +16632,197 @@ private slots:
                       QStringLiteral("remove"));
         QTRY_VERIFY(rows().isEmpty());
         QVERIFY(!QDir(home.filePath(QStringLiteral("plugins/com.example.hello"))).exists());
+    }
+    void aPluginPanelDocksFloatsPersistsAndKeepsItsPlace()
+    {
+        QTemporaryDir home;
+        const auto put = [&](const QString &path, const QByteArray &bytes) {
+            QDir().mkpath(QFileInfo(home.filePath(path)).absolutePath());
+            QFile f(home.filePath(path));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        };
+        put(QStringLiteral("plugins/com.example.notes/hikari-plugin.json"), R"({"id": "com.example.notes", "name": "Notes helper",
+            "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
+            "contributes": {"commands": [{"id": "ask", "title": "Ask"}],
+                            "panels": [{"id": "notes", "title": "Notes", "area": "bottom"}]}})");
+        put(QStringLiteral("plugins/com.example.notes/main.lua"), R"~(
+            local function draw(text)
+                hikari.panels.render('notes', {kind = 'column', menu = {{id = 'clear', text = 'Clear'}}, children = {
+                    {kind = 'label', id = 'said', text = text}, {kind = 'button', id = 'go', text = 'Go'}}})
+            end
+            hikari.panels.on('notes', function(e)
+                if e.kind == 'show' then draw('hello') end
+                if e.kind == 'click' then draw('clicked') end
+                if e.kind == 'menu' then draw('cleared') end
+            end)
+            hikari.commands.register('ask', function()
+                hikari.dialogs.show('note', {title = 'A note', body = {kind = 'label', text = 'Hi'},
+                                             buttons = {{id = 'ok', text = 'OK', default = true}}})
+            end)
+        )~");
+        put(QStringLiteral("plugins.json"), R"({"format": 1, "plugins": {"com.example.notes": {"version": "1.0.0", "enabled": true}}})");
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        options.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        restartWith(options);
+        QVERIFY(application->openFile(writeFile(dir, "plugin-panel.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hi\n")));
+
+        const QString dock = QStringLiteral("plugin:com.example.notes/notes");
+        const auto at = [&](const char *prefix) { return (QLatin1String(prefix) + dock).toUtf8(); };
+        QObject *show = nullptr;
+        QTRY_VERIFY((show = named(at("panelShow").constData())));
+        QVERIFY(!named(at("pluginDock_").constData()));
+        QVERIFY(QMetaObject::invokeMethod(show, "triggered"));
+        QObject *notes = nullptr;
+        QTRY_VERIFY((notes = item<QObject>(at("pluginDock_").constData())) && notes->property("isOpen").toBool());
+        QCOMPARE(notes->property("title").toString(), QStringLiteral("Notes"));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        QCOMPARE(docking->panelTip(dock), QStringLiteral("Notes, from Notes helper"));
+        QCOMPARE(dockHeader(dock)->property("titleMode").toBool(), true);
+        QQuickItem *body = item(at("pluginPanelBody_").constData());
+        QQuickItem *said = nullptr;
+        QTRY_VERIFY((said = findItem(body, QStringLiteral("pluginWidget_said"))) && said->property("text") == QStringLiteral("hello"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(body, QStringLiteral("pluginWidget_go")), "click"));
+        QTRY_COMPARE(findItem(body, QStringLiteral("pluginWidget_said"))->property("text").toString(), QStringLiteral("clicked"));
+
+        QVERIFY(openPanelMenu(dock));
+        const QStringList rows = panelMenuItems();
+        QCOMPARE(rows.first(), QStringLiteral("Clear"));
+        QCOMPARE(rows.mid(rows.size() - 3),
+                 (QStringList{QStringLiteral("About Notes helper…"), QStringLiteral("|"), QStringLiteral("Close")}));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_pluginMenu_clear"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
+        QTRY_COMPARE(findItem(body, QStringLiteral("pluginWidget_said"))->property("text").toString(), QStringLiteral("cleared"));
+
+        QCOMPARE(menu_rows::shown(named(at("panelMenu").constData())),
+                 (QStringList{QString::fromUtf8(at("panelShow")), QString::fromUtf8(at("panelFloat")), QStringLiteral("|"),
+                              QString::fromUtf8(at("panelClose"))}));
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat").constData()), "triggered"));
+        QTRY_VERIFY(notes->property("isFloating").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat").constData()), "triggered"));
+        QTRY_VERIFY(!notes->property("isFloating").toBool());
+        QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("With notes")));
+
+        QVERIFY(application->pluginRuntime()->run(QStringLiteral("plugin.com.example.notes.ask")));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = named("pluginDialog_plugin.com.example.notes.note")) && dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("title").toString(), QStringLiteral("A note"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginDialog_plugin.com.example.notes.note", "pluginDialogButton_ok"), "click"));
+        QTRY_VERIFY(!named("pluginDialog_plugin.com.example.notes.note"));
+
+        QCOMPARE(application->pluginManager()->uninstall(QStringLiteral("com.example.notes"), true), QString());
+        QTRY_COMPARE(findItem(body, QStringLiteral("pluginPanelPlaceholderText"))->property("text").toString(),
+                     QStringLiteral("Notes helper isn’t installed."));
+        QCOMPARE(notes->property("title").toString(), QStringLiteral("Notes"));
+        QTRY_VERIFY(named(at("panelMenu").constData()) && named(at("panelMenu").constData())->property("kept").toBool());
+        QVERIFY(!named(at("panelShow").constData())->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelForget").constData()), "triggered"));
+        QTRY_VERIFY(!item<QObject>(at("pluginDock_").constData()));
+        QTRY_VERIFY(!named(at("panelShow").constData()));
+
+        QVERIFY(application->workspaceLayout().applySavedLayout(QStringLiteral("With notes")));
+        QTRY_VERIFY((notes = item<QObject>(at("pluginDock_").constData())) && notes->property("isOpen").toBool());
+        QCOMPARE(notes->property("title").toString(), QStringLiteral("Notes"));
+        body = item(at("pluginPanelBody_").constData());
+        QCOMPARE(findItem(body, QStringLiteral("pluginPanelPlaceholderText"))->property("text").toString(),
+                 QStringLiteral("Notes helper isn’t installed."));
+    }
+    void pluginPanelScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QTemporaryDir home;
+        const QString folder = home.filePath(QStringLiteral("plugins/com.example.line-tools"));
+        QVERIFY(QDir().mkpath(folder));
+        for (const char *file : {"hikari-plugin.json", "main.lua"})
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_PLUGIN_EXAMPLES "/line-tools/") + QLatin1String(file),
+                                folder + QLatin1Char('/') + QLatin1String(file)));
+        const auto registry = [&](bool enabled) {
+            QFile f(home.filePath(QStringLiteral("plugins.json")));
+            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            f.write(QByteArray(R"({"format": 1, "plugins": {"com.example.line-tools": {"version": "1.2.0", "enabled": )")
+                    + (enabled ? "true" : "false") + "}}}");
+        };
+        registry(true);
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        options.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        restartWith(options);
+        window->resize(1600, 900);
+        QByteArray events;
+        for (int i = 0; i < 40; ++i) {
+            const int start = i * 150, length = 60 + (i * 37) % 140;
+            events += QStringLiteral("Dialogue: 0,0:00:%1.%2,0:00:%3.%4,Default,,0,0,0,,%5\n")
+                          .arg(start / 100, 2, 10, QLatin1Char('0')).arg(start % 100, 2, 10, QLatin1Char('0'))
+                          .arg((start + length) / 100, 2, 10, QLatin1Char('0')).arg((start + length) % 100, 2, 10, QLatin1Char('0'))
+                          .arg(QStringLiteral("A line that takes its time to read").left(10 + (i * 7) % 25))
+                          .toUtf8();
+        }
+        QVERIFY(application->openFile(writeFile(dir, "plugin-shots.ass", events.constData())));
+        const QString dock = QStringLiteral("plugin:com.example.line-tools/timing-check");
+        const auto at = [&](const char *prefix) { return (QLatin1String(prefix) + dock).toUtf8(); };
+        QTRY_VERIFY(named(at("panelShow").constData()));
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelShow").constData()), "triggered"));
+        QQuickItem *body = nullptr;
+        QTRY_VERIFY((body = item(at("pluginPanelBody_").constData())) && findItem(body, QStringLiteral("pluginWidget_chart")));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        const auto applyTheme = [&](ui::theme::Code code) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QTest::qWait(300);
+        };
+        const auto themed = [&](ui::theme::Code code) {
+            applyTheme(code);
+            return QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+        };
+        auto *pluginUi = application->pluginRuntime()->ui();
+        for (const auto code : ui::theme::kCodes) {
+            const QString suffix = themed(code);
+            QVERIFY(!QTest::currentTestFailed());
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/panel-chart") + suffix));
+            pluginUi->send(dock, {{QStringLiteral("kind"), QStringLiteral("change")}, {QStringLiteral("widget"), QStringLiteral("view")},
+                            {QStringLiteral("value"), QStringLiteral("list")}});
+            QTRY_VERIFY(findItem(body, QStringLiteral("pluginWidget_lines")));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/panel-list") + suffix));
+            pluginUi->send(dock, {{QStringLiteral("kind"), QStringLiteral("change")}, {QStringLiteral("widget"), QStringLiteral("view")},
+                            {QStringLiteral("value"), QStringLiteral("chart")}});
+            QTRY_VERIFY(findItem(body, QStringLiteral("pluginWidget_chart")));
+
+            QObject *manager = named("pluginManagerDialog");
+            QVERIFY(QMetaObject::invokeMethod(manager, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.line-tools"))));
+            QTRY_VERIFY(manager->property("visible").toBool());
+            QTest::qWait(400);
+            QVERIFY(qobject_cast<QQuickWindow *>(manager)->grabWindow().save(out + QStringLiteral("/manager") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(manager, "close"));
+            QTRY_VERIFY(!manager->property("visible").toBool());
+
+            QVERIFY(application->pluginRuntime()->run(QStringLiteral("plugin.com.example.line-tools.rename")));
+            QObject *dialog = nullptr;
+            QTRY_VERIFY((dialog = named("pluginDialog_plugin.com.example.line-tools.rename")) && dialog->property("visible").toBool());
+            QTest::qWait(400);
+            QVERIFY(qobject_cast<QQuickWindow *>(dialog)->grabWindow().save(out + QStringLiteral("/dialog") + suffix));
+            pluginUi->dismiss(QStringLiteral("plugin.com.example.line-tools.rename"));
+            QTRY_VERIFY(!named("pluginDialog_plugin.com.example.line-tools.rename"));
+        }
+        QCOMPARE(application->pluginManager()->setEnabled(QStringLiteral("com.example.line-tools"), false), QString());
+        QTRY_VERIFY(findItem(body, QStringLiteral("pluginPanelPlaceholder"))->isVisible());
+        for (const auto code : ui::theme::kCodes) {
+            const QString suffix = themed(code);
+            QVERIFY(!QTest::currentTestFailed());
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/placeholder-off") + suffix));
+        }
+        restartWith(app::Application::Options());
     }
     void gettingStartedOpensAtTheFirstStartOnly()
     {
@@ -17510,6 +17724,49 @@ private slots:
         QCOMPARE(audio.view().position(), followed);
         audio.setAutoScroll(true);
         application->editor().discard();
+    }
+
+    void audioGoesToTheSelectionStartAndEndFromItsKeys()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        const QString path =
+            writeFile(dir, "fa10-goto.ass", "Dialogue: 0,0:01:00.00,0:01:20.00,Default,,0,0,0,,long line\n");
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(audio.marks().startMs, 60000);
+        QCOMPARE(audio.marks().endMs, 80000);
+        audio.setHorizontalZoom(10);
+        auto &hotkeys = application->hotkeys();
+        hotkeys.gestureMap(application::hotkeyIdOf("AUDIO_GOTO_START"), QStringLiteral("Go to selection start"),
+                           QStringLiteral("Ctrl-Alt-U"), application::AudioHotkey, QStringLiteral("cancel"));
+        hotkeys.gestureMap(application::hotkeyIdOf("AUDIO_GOTO_END"), QStringLiteral("Go to selection end"),
+                           QStringLiteral("Ctrl-Alt-I"), application::AudioHotkey, QStringLiteral("cancel"));
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("AUDIO_GOTO_START"), application::AudioHotkey), QStringLiteral("Ctrl-Alt-U"));
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("AUDIO_GOTO_END"), application::AudioHotkey), QStringLiteral("Ctrl-Alt-I"));
+        const auto centred = [&](int ms) { return std::abs(audio.view().xAtMs(ms) - audio.view().width() / 2.f) <= 1.f; };
+        audio.setScrollPosition(0);
+        QVERIFY(!centred(60000));
+
+        // MUST KILL: parks the pointer over no panel again so the key goes by the focus
+        QTest::mouseMove(window, kOverNoPanel);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        press(Qt::Key_U, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY(centred(60000));
+        press(Qt::Key_I, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY(centred(80000));
+        QVERIFY(!centred(60000));
+
+        audio.setScrollPosition(0);
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("audioMoreGotoStart"), "triggered"));
+        QVERIFY(centred(60000));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("audioMoreGotoEnd"), "triggered"));
+        QVERIFY(centred(80000));
     }
 
     void audioPanelRowFoldsItsControls()
@@ -18486,7 +18743,7 @@ private slots:
         QTRY_VERIFY(!audio.marks().keyframesMs.empty());
         QCOMPARE(audio.marks().keyframesMs.front(), 0);
         QCOMPARE(audio.marks().keyframesMs[1], timebase.msAt(12));
-        QTRY_COMPARE(audio.marks().videoMs.value_or(-1),
+        QTRY_COMPARE(audio.marks().videoFrame.value_or(application::AudioVideoFrame{}).startMs,
                      timebase.msAt(application->video().session().shownFrame().value_or(-1)));
         QVERIFY(audio.box().fromVideo());
         QCOMPARE(audio.view().position(), 0);
@@ -18502,7 +18759,7 @@ private slots:
         const int shown = application->video().session().shownFrame().value_or(-1);
         QVERIFY(application->video().stepFrames(1));
         QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), shown + 1);
-        QCOMPARE(audio.marks().videoMs.value_or(-1), timebase.msAt(shown + 1));
+        QCOMPARE(audio.marks().videoFrame, application::audioVideoFrame(timebase, shown + 1));
         QCOMPARE(redraws.count(), 1);
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
@@ -18874,7 +19131,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 270);
+        QCOMPARE(hotkeyRows().size(), 272);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

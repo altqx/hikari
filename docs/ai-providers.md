@@ -23,6 +23,7 @@ With no provider, `AiRequests::complete` fails at once with `NoProvider`. It rea
 | `_hikari/providers.set` | `{providers: [{id, preset, wire, baseUrl}]}` | `null` |
 | `_hikari/complete` | `{stream, providerId, key, request}` | `{reason, text, toolCalls, usage}` |
 | `_hikari/models.list` | `{providerId, key}` | `{models: [{id, name, capabilities?, price?, contextTokens?}]}` |
+| `_hikari/conversation.end` | `{providerId, key, cacheKey}` | `null`; deletes the conversation's explicit cache |
 
 - `AiRequests` sends `providers.set` with the current config before each request, then the request with the role's model and the key it just read from the keychain. The sidecar keeps the key only for that call.
 - While a completion runs, `session/update` notifications carry `{stream, update}` with `text`, `toolCall {index, id, name}`, `toolArguments {index, delta}` and `usage` updates. C++ turns them into `TextDelta`, `ToolCallStarted` and `ToolCallArguments`; the answer becomes `Finished`.
@@ -43,6 +44,7 @@ With no provider, `AiRequests::complete` fails at once with `NoProvider`. It rea
 - Every request streams and ends with exactly one `Finished` (stop reason, the whole text, the tool calls, usage) or `Failed`.
 - A user message carries text, images (base64) and tool results. An assistant message carries text and tool calls.
 - The SDKs never retry. A Chat Completions stream that ends without a `finish_reason` fails as `Malformed`, even after `[DONE]`.
+- No response is cached on this machine. Prompt caching happens on the provider; see [Caching](#caching).
 
 ## Google Gemini
 
@@ -84,7 +86,29 @@ Sources, read on 2026-11-02:
 
 ## Usage and cost
 
-`Usage` holds input, output and cached input tokens. Cost is the provider's own figure when it reports one (OpenRouter's `usage.cost`), else the model's price per million tokens times the tokens, else unknown. Caps, the meter and estimates belong to the agent.
+`Usage` holds input and output tokens, and within the input the cache reads (`cachedInputTokens`), the cache writes (`cacheWriteTokens`) and the part of the writes kept for an hour (`cacheWriteHourTokens`). Cost is the provider's own figure when it reports one (OpenRouter's `usage.cost`). Otherwise `costOf` prices reads at `Price::cachedInput`, writes at `Price::cacheWrite`, one-hour writes at `Price::cacheWriteHour` and the rest at `Price::input`, each falling back to the input price; without a price, cost is unknown. OpenRouter's catalogue gives all three cache prices (`input_cache_read`, `input_cache_write`, `input_cache_write_1h`). Caps, the meter and estimates belong to the agent.
+
+## Caching
+
+Prompt caching runs on the provider the user chose, so long agent sessions and repeated translation and review passes don't pay full price for the same prefix every turn ([AI19 #640](https://github.com/altqx/hikari/issues/640)).
+
+- **Stable prefix.** A request goes out as the system prompt, the tools sorted by name, the request's `context` (pinned material such as the document summary or the style list), then the conversation. Nothing that changes per turn (timestamps, ids, the playhead) belongs in the first three. The sidecar builds every body the same way each turn, so the same prefix is the same bytes.
+- **Anthropic.** Two `cache_control` breakpoints, within Anthropic's limit of four: one on the last block of the stable prefix (the context block, else the system block, else the last tool), and one on the last block of the last message. The system prompt and context go as `system` text blocks. `cacheLifetime: "minutes"` sends `{"type": "ephemeral"}` (five minutes), and `"hour"` adds `"ttl": "1h"`. A prompt shorter than the model's minimum is sent without caching and without an error. Reads are `cache_read_input_tokens`; writes are `cache_creation_input_tokens`, of which `cache_creation.ephemeral_1h_input_tokens` were for an hour.
+- **OpenAI.** Caching is automatic. The request's `cacheKey` goes out as `prompt_cache_key`, the same for every turn of one thread, which keeps the turns on one cache. The context goes as the first `developer` input. Reads are `input_tokens_details.cached_tokens`, and writes are `input_tokens_details.cache_write_tokens`, which newer models charge for.
+- **OpenRouter.** `cacheKey` goes out as `prompt_cache_key` for sticky routing. For `anthropic/` and `google/` models, which need explicit markers, `cache_control` goes on the last system block and on the last part of the latest user message. Other models cache on their own. Reads are `prompt_tokens_details.cached_tokens`, and writes are `prompt_tokens_details.cache_write_tokens`.
+- **Google Gemini, implicit.** Implicit caching is on by default for Gemini 2.5 and newer, above a minimum prompt size that depends on the model. The system prompt and context go as `systemInstruction` parts and the tools are sorted, ahead of `contents`, so a repeated prefix hits the cache. Reads come back as `cachedContentTokenCount`.
+- **Google Gemini, explicit.** A request with `explicitCache` and a `cacheKey` is for a large fixed context reused over many turns, such as a whole script for translation.
+  - **Create.** The sidecar first stores the system prompt, tools and context with `caches.create` (`POST {base}/cachedContents`, with `model` and a `ttl` of `300s`, or `3600s` for `"hour"`).
+  - **Use.** Each request then sends `cachedContent` and the conversation only, without `systemInstruction` or `tools`.
+  - **Reuse and replace.** The cache is reused while the provider, model and prefix stay the same and more than 30 seconds remain. It is deleted and made again when the prefix changes or it runs out, and dropped when a request on it fails.
+  - **Delete.** `_hikari/conversation.end` (`AiRequests::endConversation`) deletes it when the thread ends. When the provider is removed, the sidecar forgets the cache and it expires on its own, since deleting it would need the key.
+  - **Fallback.** When the provider refuses to make the cache (a 4xx: a prefix below the minimum, or a model without explicit caches such as Gemini 4 Argon), the whole request goes out and that prefix isn't tried again. Any other failure sends the whole request and tries again on the next turn.
+  - **Storage cost.** Google bills cache storage per hour, and that cost is not in `Usage`.
+  - **Explicit caches are generateContent-only.** They aren't offered for Gemini 4 Argon and later, nor in Google's newer Interactions API. There a turn can chain on the server with `previous_interaction_id`, which needs the interaction stored (the default, kept up to 55 days); `store: false` turns storage off and with it the chaining, and only implicit caching applies. Hikari uses generateContent and stores nothing on Google beyond the explicit cache a request asks for.
+- **Custom endpoints** get nothing extra: no cache key, no markers, no explicit caches.
+- **Privacy.** Caching stays on the provider the user chose. Nothing new is stored on this machine, and no answer is replayed from a local cache.
+
+Sources, read on 2026-11-02 (Google's caching and Interactions pages again on 2026-11-03): Anthropic's [prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), OpenAI's [prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching), OpenRouter's [prompt caching](https://openrouter.ai/docs/features/prompt-caching) and its [models list](https://openrouter.ai/api/v1/models) for the price fields, Google's [context caching](https://aistudio.google.com/docs/caching), [caching API](https://ai.google.dev/api/caching), [Interactions API](https://aistudio.google.com/docs/interactions-overview) and [pricing](https://ai.google.dev/gemini-api/docs/pricing), and `CachedContent` in the [Gemini API v1beta discovery document](https://generativelanguage.googleapis.com/$discovery/rest?version=v1beta).
 
 ## Errors
 
@@ -104,7 +128,7 @@ Sources, read on 2026-11-02:
 
 ## Tests
 
-- `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/providers`): a local mock server for each wire, Gemini included, covering streaming split at awkward bytes, tool calls, vision and history encoding, HTTP and in-stream errors, safety blocks, early ends, timeouts, cancellation, catalogues, the key rules and the JSON-RPC methods against their schemas.
+- `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/providers`): a local mock server for each wire, Gemini included, covering streaming split at awkward bytes, tool calls, vision and history encoding, cache markers and keys on the wire, a stable prefix that is byte-identical across turns, cache reads and writes in usage, the Gemini explicit cache lifecycle, HTTP and in-stream errors, safety blocks, early ends, timeouts, cancellation, catalogues, the key rules and the JSON-RPC methods against their schemas.
 - `hikari_application_ai_providers_tests`: role fallback, capabilities, cost, keychain failures, removal, the catalogue and a Gemini model in every role.
 - `hikari_backends_ai_requests_tests`: requests through a fake sidecar: no provider starts nothing, a cancel before the key sends nothing, the key and model reach the sidecar, errors keep their kind.
 - `hikari_backends_ai_config_store_tests`: the provider file keeps everything but the key.
