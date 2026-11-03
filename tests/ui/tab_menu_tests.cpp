@@ -243,11 +243,11 @@ private slots:
         QCOMPARE(named("tabMenuSave")->property("text").toString(), QStringLiteral("Save"));
         QCOMPARE(named("tabMenuCloseAll")->property("text").toString(), QStringLiteral("Close all tabs"));
         QCOMPARE(named("tabMenuFolder_subtitles")->property("text").toString(),
-                 QStringLiteral("Open the folder containing the subtitles"));
-        QCOMPARE(named("tabMenuFolder_video")->property("text").toString(), QStringLiteral("Open video containing folder"));
-        QCOMPARE(named("tabMenuFolder_audio")->property("text").toString(), QStringLiteral("Open audio containing folder"));
+                 QStringLiteral("Show subtitles in folder"));
+        QCOMPARE(named("tabMenuFolder_video")->property("text").toString(), QStringLiteral("Show video in folder"));
+        QCOMPARE(named("tabMenuFolder_audio")->property("text").toString(), QStringLiteral("Show audio in folder"));
         QCOMPARE(named("tabMenuFolder_keyframes")->property("text").toString(),
-                 QStringLiteral("Open keyframes containing folder"));
+                 QStringLiteral("Show keyframes in folder"));
         QStringList order;
         const int count = menu->property("count").toInt();
         for (int i = 0; i < count; ++i) {
@@ -940,9 +940,9 @@ private slots:
         QDir().mkpath(subs);
         QVERIFY(application->legacyAutosaves().isEmpty());
 #ifdef _WIN32
-        QCOMPARE(application->log().lastMessage(), QStringLiteral("Auto save folder is empty"));
+        QCOMPARE(application->log().lastMessage(), QStringLiteral("The autosave folder is empty."));
 #else
-        QCOMPARE(application->log().lastMessage(), QStringLiteral("Cannot open auto save folder"));
+        QCOMPARE(application->log().lastMessage(), QStringLiteral("The autosave folder cannot be opened."));
 #endif
     }
 };

@@ -2524,8 +2524,8 @@ QVariantMap Application::saveDialogValuesFor(qulonglong id) const
                          : importPath != m_importPaths.end()            ? importPath->second
                                                                        : QString();
     const QString ext = extensionFor(session->document().format());
-    const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file ") +
-                           (ext == QStringLiteral("txt") ? QStringLiteral("(*.txt *.sub)") : QStringLiteral("(*.%1)").arg(ext));
+    const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file (%1)")
+                               .arg(ext == QStringLiteral("txt") ? QStringLiteral("*.txt *.sub") : QStringLiteral("*.%1").arg(ext));
     const QFileInfo info(path);
     return {{QStringLiteral("folder"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath())},
             {QStringLiteral("file"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath() + u'/' + info.completeBaseName())},
@@ -3535,12 +3535,12 @@ QVariantList Application::legacyAutosaves()
     if (files.empty()) {
         // FindFirstFileW always finds "." and ".."; elsewhere an empty folder counts as unreadable.
 #ifdef _WIN32
-        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"),
-                      QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
+        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open autosave"),
+                      QCoreApplication::translate("HikariSub.Session", "The autosave folder is empty."));
 #else
-        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"), QDir(folder).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
-                       ? QCoreApplication::translate("HikariSub.Session", "Cannot open auto save folder")
-                       : QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
+        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open autosave"), QDir(folder).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
+                       ? QCoreApplication::translate("HikariSub.Session", "The autosave folder cannot be opened.")
+                       : QCoreApplication::translate("HikariSub.Session", "The autosave folder is empty."));
 #endif
         return rows;
     }
@@ -3587,7 +3587,7 @@ bool Application::openLegacyAutosave(const QString &file)
 {
     auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()});
     if (!staged) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Session", "Open auto save"),
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Session", "Open autosave"),
                       QCoreApplication::translate("HikariSub.Session", "Failed to load autosave"));
         return false;
     }

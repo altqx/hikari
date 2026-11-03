@@ -10,7 +10,7 @@ DialogWindow {
     objectName: "fontPicker"
     required property var catalogs
     property LineEditorController editor: null
-    title: qsTr("Font selection")
+    title: qsTr("Choose font")
     dialogId: "fontPicker"
     resizable: true
     modal: true

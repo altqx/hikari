@@ -65,16 +65,16 @@
         <translation>ஒலியளவு மற்றும் நீட்சி ச்லைடர்களை இணைக்கவும்</translation>
     </message>
     <message>
-        <source> or </source>
-        <translation> அல்லது </translation>
+        <source>%1 or %2</source>
+        <translation>%1 அல்லது %2</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>Shift + சொடுக்கு பயன்படுத்தி குறுக்குவிசையை அமைக்கலாம்</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
     </message>
     <message>
-        <source>Second shortcut can be set using Control + Click</source>
-        <translation>Control + சொடுக்கு பயன்படுத்தி இரண்டாவது குறுக்குவிசையை அமைக்கலாம்</translation>
+        <source>Ctrl+click to set a second shortcut</source>
+        <translation>இரண்டாவது குறுக்குவிசையை அமைக்க Ctrl+சொடுக்கு</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -1926,8 +1926,8 @@ Output device: %2</source>
         <translation>ரத்துசெய்</translation>
     </message>
     <message>
-        <source>Subtitle file </source>
-        <translation>வசனக் கோப்பு </translation>
+        <source>Subtitle file (%1)</source>
+        <translation>வசனக் கோப்பு (%1)</translation>
     </message>
     <message>
         <source>Save</source>
@@ -2474,8 +2474,8 @@ Output device: %2</source>
         <translation>அடித்தல்</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>எழுத்துரு தேர்வு</translation>
+        <source>Choose font…</source>
+        <translation>எழுத்துருவைத் தேர்ந்தெடு…</translation>
     </message>
     <message>
         <source>Primary colour</source>
@@ -3415,8 +3415,8 @@ Output device: %2</source>
         <translation>எழுத்துரு</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>எழுத்துரு தேர்வு</translation>
+        <source>Choose font</source>
+        <translation>எழுத்துருவைத் தேர்ந்தெடு</translation>
     </message>
     <message>
         <source>Search fonts</source>
@@ -5021,8 +5021,8 @@ Failed to copy %2 fonts.</source>
         <translation>ரத்துசெய்</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>Shift + சொடுக்கு பயன்படுத்தி குறுக்குவிசையை அமைக்கலாம்</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -6585,7 +6585,7 @@ Failed to copy %2 fonts.</source>
         <translation>TMP க்கு மாற்றவும்</translation>
     </message>
     <message>
-        <source>The starting time</source>
+        <source>Start time</source>
         <translation>தொடக்க நேரம்</translation>
     </message>
     <message>
@@ -6593,8 +6593,8 @@ Failed to copy %2 fonts.</source>
         <translation>இறுதி நேரம்</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
+        <source>Style</source>
+        <translation>பாணி</translation>
     </message>
     <message>
         <source>Actor</source>
@@ -6653,8 +6653,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவின் பெயருடன் வசன வரிகள் சேமிக்கவும்</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>தானியங்கு சேமிப்பைத் திற</translation>
+        <source>Open autosave…</source>
+        <translation>தானியங்கு சேமிப்பைத் திற…</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
@@ -6949,8 +6949,8 @@ Failed to copy %2 fonts.</source>
         <translation>பாணி மேலாளர் (&amp;m)</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS கோப்பு பண்புகள்</translation>
+        <source>Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -6997,7 +6997,7 @@ Failed to copy %2 fonts.</source>
         <translation>நீங்கள் முன்பு பயன்படுத்திய பதிப்புக்குப் பிறகு வந்த பதிப்புகளின் வெளியீட்டுக் குறிப்புகளைக் காட்டுகிறது</translation>
     </message>
     <message>
-        <source>What&apos;s &amp;new</source>
+        <source>What’s &amp;new</source>
         <translation>புதிதாக என்ன (&amp;n)</translation>
     </message>
     <message>
@@ -7416,8 +7416,8 @@ Failed to copy %2 fonts.</source>
         <translation>ASS பாணிகளை நிர்வகிக்கப் பயன்படுகிறது</translation>
     </message>
     <message>
-        <source>ASS subtitle properties</source>
-        <translation>ASS வசன வரிகள் பண்புகள்</translation>
+        <source>Opens Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகளைத் திறக்கிறது</translation>
     </message>
     <message>
         <source>Converts from one format to another</source>
@@ -9864,8 +9864,8 @@ Failed to copy %2 fonts.</source>
         <translation>10 வினாடிகள் அல்லது அதற்கு மேல் உறைந்தது. எங்கே சிக்கியது என்பதை அறிக்கை காட்டும்.</translation>
     </message>
     <message>
-        <source>It is kept for the next start.</source>
-        <translation>அடுத்த தொடக்கத்திற்காக வைக்கப்பட்டுள்ளது.</translation>
+        <source>The crash report could not be sent. It is kept for the next start.</source>
+        <translation>செயலிழப்பு அறிக்கையை அனுப்ப முடியவில்லை. அடுத்த தொடக்கத்திற்காக வைக்கப்பட்டுள்ளது.</translation>
     </message>
     <message>
         <source>It works again. A report shows where it was stuck.</source>
@@ -9960,8 +9960,8 @@ Failed to copy %2 fonts.</source>
         <translation>%1 படிவம் நிரப்பப்பட்டு உங்கள் உலாவியில் திறந்தது.</translation>
     </message>
     <message>
-        <source>The crash report could not be sent</source>
-        <translation>செயலிழப்பு அறிக்கையை அனுப்ப முடியவில்லை</translation>
+        <source>The crash report could not be sent.</source>
+        <translation>செயலிழப்பு அறிக்கையை அனுப்ப முடியவில்லை.</translation>
     </message>
     <message>
         <source>The report is too long for a link, so it is on the clipboard.</source>
@@ -9972,12 +9972,8 @@ Failed to copy %2 fonts.</source>
         <translation>இணைப்புக்கு அறிக்கை மிக நீளமானது, எனவே அது இடைநிலைப்பலகையில் உள்ளது. அதைப் படிவத்தில் ஒட்டவும்.</translation>
     </message>
     <message>
-        <source>The browser did not open</source>
-        <translation>உலாவி திறக்கவில்லை</translation>
-    </message>
-    <message>
-        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
-        <translation>சிக்கல் இடைநிலைப்பலகையில் உள்ளது. அதை GitHub இல் ஒரு புதிய சிக்கலில் ஒட்டவும்.</translation>
+        <source>The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>உலாவி திறக்கவில்லை. சிக்கல் இடைநிலைப்பலகையில் உள்ளது. அதை GitHub இல் ஒரு புதிய சிக்கலில் ஒட்டவும்.</translation>
     </message>
     <message>
         <source>Report text</source>
@@ -10067,8 +10063,8 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.ScriptProperties</name>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS கோப்பு பண்புகள்</translation>
+        <source>Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -10730,7 +10726,7 @@ because it was edited.</source>
         <translation>திற</translation>
     </message>
     <message>
-        <source>Open auto save</source>
+        <source>Open autosave</source>
         <translation>தானியங்கு சேமிப்பைத் திற</translation>
     </message>
     <message>
@@ -11009,12 +11005,12 @@ because it was edited.</source>
         <translation>%1 (மீட்கப்பட்டது)</translation>
     </message>
     <message>
-        <source>Auto save folder is empty</source>
-        <translation>தானியங்கு சேமிப்புக் கோப்புறை காலியாக உள்ளது</translation>
+        <source>The autosave folder is empty.</source>
+        <translation>தானியங்கு சேமிப்புக் கோப்புறை காலியாக உள்ளது.</translation>
     </message>
     <message>
-        <source>Cannot open auto save folder</source>
-        <translation>தானியங்கு சேமிப்புக் கோப்புறையைத் திறக்க முடியாது</translation>
+        <source>The autosave folder cannot be opened.</source>
+        <translation>தானியங்கு சேமிப்புக் கோப்புறையைத் திறக்க முடியாது.</translation>
     </message>
     <message>
         <source>Failed to load autosave</source>
@@ -12656,20 +12652,20 @@ Styles deleted:
         <translation>எல்லா தாவல்களையும் மூடு</translation>
     </message>
     <message>
-        <source>Open the folder containing the subtitles</source>
-        <translation>வசன வரிகள் உள்ள கோப்புறையைத் திற</translation>
+        <source>Show subtitles in folder</source>
+        <translation>வசன வரிகளைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
-        <source>Open video containing folder</source>
-        <translation>வீடியோ உள்ள கோப்புறையைத் திற</translation>
+        <source>Show video in folder</source>
+        <translation>வீடியோவைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
-        <source>Open audio containing folder</source>
-        <translation>ஆடியோ உள்ள கோப்புறையைத் திற</translation>
+        <source>Show audio in folder</source>
+        <translation>ஆடியோவைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
-        <source>Open keyframes containing folder</source>
-        <translation>கீஃப்ரேம்கள் உள்ள கோப்புறையைத் திற</translation>
+        <source>Show keyframes in folder</source>
+        <translation>கீஃப்ரேம்களைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -14699,7 +14695,7 @@ after the end time in milliseconds</source>
         <translation>வீடியோ நேரங்கள்</translation>
     </message>
     <message>
-        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
         <translation>சட்டக நேரம்; சட்டக எண்; வரியின் தொடக்கச் சட்டகத்திலிருந்து சட்டகங்கள்; வரியின் தொடக்கம் மற்றும் முடிவிலிருந்து மில்லிவினாடிகள்</translation>
     </message>
     <message>

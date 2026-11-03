@@ -65,16 +65,16 @@
         <translation>เชื่อมแถบเลื่อนระดับเสียงกับแถบเลื่อนการยืด</translation>
     </message>
     <message>
-        <source> or </source>
-        <translation> หรือ </translation>
+        <source>%1 or %2</source>
+        <translation>%1 หรือ %2</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>กด Shift พร้อมคลิกเพื่อกำหนดปุ่มลัด</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
-        <source>Second shortcut can be set using Control + Click</source>
-        <translation>ปุ่มลัดที่สองสามารถกำหนดค่าโดยใช้ Control + คลิก</translation>
+        <source>Ctrl+click to set a second shortcut</source>
+        <translation>Ctrl+คลิกเพื่อกำหนดปุ่มลัดที่สอง</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -1906,8 +1906,8 @@ Output device: %2</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
-        <source>Subtitle file </source>
-        <translation>ไฟล์คำบรรยาย </translation>
+        <source>Subtitle file (%1)</source>
+        <translation>ไฟล์คำบรรยาย (%1)</translation>
     </message>
     <message>
         <source>Save</source>
@@ -2451,8 +2451,8 @@ Output device: %2</source>
         <translation>ขีดฆ่า</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>เลือกแบบอักษร</translation>
+        <source>Choose font…</source>
+        <translation>เลือกแบบอักษร…</translation>
     </message>
     <message>
         <source>Primary colour</source>
@@ -3383,7 +3383,7 @@ Output device: %2</source>
         <translation>แบบอักษร</translation>
     </message>
     <message>
-        <source>Font selection</source>
+        <source>Choose font</source>
         <translation>เลือกแบบอักษร</translation>
     </message>
     <message>
@@ -4978,8 +4978,8 @@ Failed to copy %2 fonts.</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>กด Shift พร้อมคลิกเพื่อกำหนดปุ่มลัด</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -6540,7 +6540,7 @@ Failed to copy %2 fonts.</source>
         <translation>แปลงเป็น TMP</translation>
     </message>
     <message>
-        <source>The starting time</source>
+        <source>Start time</source>
         <translation>เวลาเริ่มต้น</translation>
     </message>
     <message>
@@ -6548,7 +6548,7 @@ Failed to copy %2 fonts.</source>
         <translation>เวลาสิ้นสุด</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>สไตล์</translation>
     </message>
     <message>
@@ -6608,8 +6608,8 @@ Failed to copy %2 fonts.</source>
         <translation>บันทึกคำบรรยายด้วยชื่อวิดีโอ</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>เปิดไฟล์บันทึกอัตโนมัติ</translation>
+        <source>Open autosave…</source>
+        <translation>เปิดไฟล์บันทึกอัตโนมัติ…</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
@@ -6904,8 +6904,8 @@ Failed to copy %2 fonts.</source>
         <translation>&amp;ตัวจัดการสไตล์</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>คุณสมบัติไฟล์ ASS</translation>
+        <source>Script properties</source>
+        <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -6952,7 +6952,7 @@ Failed to copy %2 fonts.</source>
         <translation>แสดงบันทึกประจำรุ่นของเวอร์ชันต่างๆ นับตั้งแต่เวอร์ชันที่คุณใช้ก่อนหน้านี้</translation>
     </message>
     <message>
-        <source>What&apos;s &amp;new</source>
+        <source>What’s &amp;new</source>
         <translation>&amp;มีอะไรใหม่</translation>
     </message>
     <message>
@@ -7370,8 +7370,8 @@ Failed to copy %2 fonts.</source>
         <translation>ใช้สำหรับจัดการสไตล์ ASS</translation>
     </message>
     <message>
-        <source>ASS subtitle properties</source>
-        <translation>คุณสมบัติของคำบรรยาย ASS</translation>
+        <source>Opens Script properties</source>
+        <translation>เปิดคุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Converts from one format to another</source>
@@ -9806,8 +9806,8 @@ Failed to copy %2 fonts.</source>
         <translation>ค้างนาน 10 วินาทีขึ้นไป รายงานจะแสดงว่าค้างอยู่ที่ใด</translation>
     </message>
     <message>
-        <source>It is kept for the next start.</source>
-        <translation>จะเก็บไว้จนถึงการเริ่มครั้งถัดไป</translation>
+        <source>The crash report could not be sent. It is kept for the next start.</source>
+        <translation>ส่งรายงานการขัดข้องไม่ได้ จะเก็บไว้จนถึงการเริ่มครั้งถัดไป</translation>
     </message>
     <message>
         <source>It works again. A report shows where it was stuck.</source>
@@ -9902,7 +9902,7 @@ Failed to copy %2 fonts.</source>
         <translation>แบบฟอร์ม %1 เปิดในเบราว์เซอร์ของคุณพร้อมกรอกข้อมูลแล้ว</translation>
     </message>
     <message>
-        <source>The crash report could not be sent</source>
+        <source>The crash report could not be sent.</source>
         <translation>ส่งรายงานการขัดข้องไม่ได้</translation>
     </message>
     <message>
@@ -9914,12 +9914,8 @@ Failed to copy %2 fonts.</source>
         <translation>รายงานยาวเกินกว่าจะใส่ในลิงก์ จึงอยู่ในคลิปบอร์ด วางลงในแบบฟอร์ม</translation>
     </message>
     <message>
-        <source>The browser did not open</source>
-        <translation>เบราว์เซอร์ไม่เปิด</translation>
-    </message>
-    <message>
-        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
-        <translation>รายงานปัญหาอยู่ในคลิปบอร์ดแล้ว วางลงในปัญหาใหม่บน GitHub</translation>
+        <source>The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>เบราว์เซอร์ไม่เปิด รายงานปัญหาอยู่ในคลิปบอร์ดแล้ว วางลงในปัญหาใหม่บน GitHub</translation>
     </message>
     <message>
         <source>Report text</source>
@@ -10009,8 +10005,8 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.ScriptProperties</name>
     <message>
-        <source>ASS file properties</source>
-        <translation>คุณสมบัติไฟล์ ASS</translation>
+        <source>Script properties</source>
+        <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -10666,7 +10662,7 @@ because it was edited.</source>
         <translation>เปิด</translation>
     </message>
     <message>
-        <source>Open auto save</source>
+        <source>Open autosave</source>
         <translation>เปิดไฟล์บันทึกอัตโนมัติ</translation>
     </message>
     <message>
@@ -10944,11 +10940,11 @@ because it was edited.</source>
         <translation>%1 (กู้คืน)</translation>
     </message>
     <message>
-        <source>Auto save folder is empty</source>
+        <source>The autosave folder is empty.</source>
         <translation>โฟลเดอร์บันทึกอัตโนมัติว่างเปล่า</translation>
     </message>
     <message>
-        <source>Cannot open auto save folder</source>
+        <source>The autosave folder cannot be opened.</source>
         <translation>ไม่สามารถเปิดโฟลเดอร์บันทึกอัตโนมัติได้</translation>
     </message>
     <message>
@@ -12573,20 +12569,20 @@ Styles deleted:
         <translation>ปิดแท็บทั้งหมด</translation>
     </message>
     <message>
-        <source>Open the folder containing the subtitles</source>
-        <translation>เปิดโฟลเดอร์ของไฟล์คำบรรยาย</translation>
+        <source>Show subtitles in folder</source>
+        <translation>แสดงไฟล์คำบรรยายในโฟลเดอร์</translation>
     </message>
     <message>
-        <source>Open video containing folder</source>
-        <translation>เปิดโฟลเดอร์ของวิดีโอ</translation>
+        <source>Show video in folder</source>
+        <translation>แสดงวิดีโอในโฟลเดอร์</translation>
     </message>
     <message>
-        <source>Open audio containing folder</source>
-        <translation>เปิดโฟลเดอร์ของเสียง</translation>
+        <source>Show audio in folder</source>
+        <translation>แสดงเสียงในโฟลเดอร์</translation>
     </message>
     <message>
-        <source>Open keyframes containing folder</source>
-        <translation>เปิดโฟลเดอร์ของคีย์เฟรม</translation>
+        <source>Show keyframes in folder</source>
+        <translation>แสดงคีย์เฟรมในโฟลเดอร์</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -14608,7 +14604,7 @@ after the end time in milliseconds</source>
         <translation>เวลาของวิดีโอ</translation>
     </message>
     <message>
-        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
         <translation>เวลาของเฟรม; หมายเลขเฟรม; จำนวนเฟรมนับจากเฟรมเริ่มต้นของบรรทัด; มิลลิวินาทีนับจากจุดเริ่มต้นและจุดสิ้นสุดของบรรทัด</translation>
     </message>
     <message>

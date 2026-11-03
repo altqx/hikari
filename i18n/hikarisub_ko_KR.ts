@@ -65,16 +65,16 @@
         <translation>음량 슬라이더와 확대/축소 슬라이더 연결</translation>
     </message>
     <message>
-        <source> or </source>
-        <translation> 또는 </translation>
+        <source>%1 or %2</source>
+        <translation>%1 또는 %2</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>단축키는 Shift + 클릭으로 설정할 수 있습니다</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
     <message>
-        <source>Second shortcut can be set using Control + Click</source>
-        <translation>두 번째 단축키는 Control + 클릭으로 설정할 수 있습니다</translation>
+        <source>Ctrl+click to set a second shortcut</source>
+        <translation>Ctrl+클릭으로 두 번째 단축키를 설정합니다</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -1906,8 +1906,8 @@ Output device: %2</source>
         <translation>취소</translation>
     </message>
     <message>
-        <source>Subtitle file </source>
-        <translation>자막 파일 </translation>
+        <source>Subtitle file (%1)</source>
+        <translation>자막 파일 (%1)</translation>
     </message>
     <message>
         <source>Save</source>
@@ -2451,8 +2451,8 @@ Output device: %2</source>
         <translation>취소선</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>글꼴 선택</translation>
+        <source>Choose font…</source>
+        <translation>글꼴 선택…</translation>
     </message>
     <message>
         <source>Primary colour</source>
@@ -3383,7 +3383,7 @@ Output device: %2</source>
         <translation>글꼴</translation>
     </message>
     <message>
-        <source>Font selection</source>
+        <source>Choose font</source>
         <translation>글꼴 선택</translation>
     </message>
     <message>
@@ -4978,8 +4978,8 @@ Failed to copy %2 fonts.</source>
         <translation>취소</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>단축키는 Shift + 클릭으로 설정할 수 있습니다</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -6540,7 +6540,7 @@ Failed to copy %2 fonts.</source>
         <translation>TMP로 변환</translation>
     </message>
     <message>
-        <source>The starting time</source>
+        <source>Start time</source>
         <translation>시작 시간</translation>
     </message>
     <message>
@@ -6548,7 +6548,7 @@ Failed to copy %2 fonts.</source>
         <translation>종료 시간</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>스타일</translation>
     </message>
     <message>
@@ -6608,8 +6608,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상과 같은 이름으로 자막 저장</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>자동 저장 파일 열기</translation>
+        <source>Open autosave…</source>
+        <translation>자동 저장 파일 열기…</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
@@ -6904,8 +6904,8 @@ Failed to copy %2 fonts.</source>
         <translation>스타일 관리[&amp;M]</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS 파일 속성</translation>
+        <source>Script properties</source>
+        <translation>스크립트 속성</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -6952,7 +6952,7 @@ Failed to copy %2 fonts.</source>
         <translation>이전에 사용한 버전 이후의 릴리스 노트를 표시합니다</translation>
     </message>
     <message>
-        <source>What&apos;s &amp;new</source>
+        <source>What’s &amp;new</source>
         <translation>새로운 기능[&amp;N]</translation>
     </message>
     <message>
@@ -7370,8 +7370,8 @@ Failed to copy %2 fonts.</source>
         <translation>ASS 스타일 관리창을 엽니다</translation>
     </message>
     <message>
-        <source>ASS subtitle properties</source>
-        <translation>ASS 파일 정보</translation>
+        <source>Opens Script properties</source>
+        <translation>스크립트 속성을 엽니다</translation>
     </message>
     <message>
         <source>Converts from one format to another</source>
@@ -9806,8 +9806,8 @@ Failed to copy %2 fonts.</source>
         <translation>10초 이상 멈췄습니다. 보고서에 멈춘 위치가 나옵니다.</translation>
     </message>
     <message>
-        <source>It is kept for the next start.</source>
-        <translation>다음 시작 때까지 보관합니다.</translation>
+        <source>The crash report could not be sent. It is kept for the next start.</source>
+        <translation>충돌 보고서를 보내지 못했습니다. 다음 시작 때까지 보관합니다.</translation>
     </message>
     <message>
         <source>It works again. A report shows where it was stuck.</source>
@@ -9902,8 +9902,8 @@ Failed to copy %2 fonts.</source>
         <translation>%1 양식이 채워진 상태로 브라우저에서 열렸습니다.</translation>
     </message>
     <message>
-        <source>The crash report could not be sent</source>
-        <translation>충돌 보고서를 보내지 못했습니다</translation>
+        <source>The crash report could not be sent.</source>
+        <translation>충돌 보고서를 보내지 못했습니다.</translation>
     </message>
     <message>
         <source>The report is too long for a link, so it is on the clipboard.</source>
@@ -9914,12 +9914,8 @@ Failed to copy %2 fonts.</source>
         <translation>보고서가 링크에 담기에는 너무 길어 클립보드에 복사했습니다. 양식에 붙여 넣으십시오.</translation>
     </message>
     <message>
-        <source>The browser did not open</source>
-        <translation>브라우저가 열리지 않았습니다</translation>
-    </message>
-    <message>
-        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
-        <translation>이슈 내용이 클립보드에 있습니다. GitHub의 새 이슈에 붙여 넣으십시오.</translation>
+        <source>The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>브라우저가 열리지 않았습니다. 이슈 내용이 클립보드에 있습니다. GitHub의 새 이슈에 붙여 넣으십시오.</translation>
     </message>
     <message>
         <source>Report text</source>
@@ -10009,8 +10005,8 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.ScriptProperties</name>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS 파일 속성</translation>
+        <source>Script properties</source>
+        <translation>스크립트 속성</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -10666,7 +10662,7 @@ because it was edited.</source>
         <translation>열기</translation>
     </message>
     <message>
-        <source>Open auto save</source>
+        <source>Open autosave</source>
         <translation>자동 저장 파일 열기</translation>
     </message>
     <message>
@@ -10944,12 +10940,12 @@ because it was edited.</source>
         <translation>%1 (복구됨)</translation>
     </message>
     <message>
-        <source>Auto save folder is empty</source>
-        <translation>자동 저장 폴더가 비어 있음</translation>
+        <source>The autosave folder is empty.</source>
+        <translation>자동 저장 폴더가 비어 있습니다.</translation>
     </message>
     <message>
-        <source>Cannot open auto save folder</source>
-        <translation>자동 저장 폴더를 열 수 없음</translation>
+        <source>The autosave folder cannot be opened.</source>
+        <translation>자동 저장 폴더를 열 수 없습니다.</translation>
     </message>
     <message>
         <source>Failed to load autosave</source>
@@ -12573,20 +12569,20 @@ Styles deleted:
         <translation>모든 탭 닫기</translation>
     </message>
     <message>
-        <source>Open the folder containing the subtitles</source>
-        <translation>자막 폴더 열기</translation>
+        <source>Show subtitles in folder</source>
+        <translation>폴더에서 자막 보기</translation>
     </message>
     <message>
-        <source>Open video containing folder</source>
-        <translation>영상 폴더 열기</translation>
+        <source>Show video in folder</source>
+        <translation>폴더에서 영상 보기</translation>
     </message>
     <message>
-        <source>Open audio containing folder</source>
-        <translation>소리 폴더 열기</translation>
+        <source>Show audio in folder</source>
+        <translation>폴더에서 소리 보기</translation>
     </message>
     <message>
-        <source>Open keyframes containing folder</source>
-        <translation>키 프레임 폴더 열기</translation>
+        <source>Show keyframes in folder</source>
+        <translation>폴더에서 키 프레임 보기</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -14608,7 +14604,7 @@ after the end time in milliseconds</source>
         <translation>영상 시간</translation>
     </message>
     <message>
-        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
         <translation>프레임 시간; 프레임 번호; 줄 시작 프레임부터의 프레임 수; 줄 시작과 끝으로부터의 밀리초</translation>
     </message>
     <message>
