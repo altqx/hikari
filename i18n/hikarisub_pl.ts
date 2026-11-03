@@ -9076,6 +9076,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Skróty automatyzacji</translation>
     </message>
     <message>
+        <source>Plugin shortcuts</source>
+        <translation>Skróty wtyczek</translation>
+    </message>
+    <message>
         <source>Filtering mode</source>
         <translation>Rodzaj filtrowania</translation>
     </message>
@@ -9618,6 +9622,46 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>HikariSub plugins (*.hikariplugin)</source>
         <translation>Wtyczki HikariSub (*.hikariplugin)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
+        <translation>Wtyczka nie jest zainstalowana, jest wyłączona albo nie ma już tego polecenia</translation>
+    </message>
+    <message>
+        <source>Can’t start: %1</source>
+        <translation>Nie można uruchomić wtyczki: %1</translation>
+    </message>
+    <message>
+        <source>The plugin didn’t start.</source>
+        <translation>Wtyczka się nie uruchomiła.</translation>
+    </message>
+    <message>
+        <source>“%1” failed.</source>
+        <translation>Polecenie „%1” nie powiodło się.</translation>
+    </message>
+    <message>
+        <source>Its %1 handler failed: %2</source>
+        <translation>Obsługa zdarzenia %1 we wtyczce nie powiodła się: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>Wtyczka działała dłużej niż %n sekundę, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
+            <numerusform>Wtyczka działała dłużej niż %n sekundy, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
+            <numerusform>Wtyczka działała dłużej niż %n sekund, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
+        <translation>Wtyczka nieoczekiwanie się zatrzymała. Następne polecenie uruchomi ją ponownie.</translation>
+    </message>
+    <message>
+        <source>Force stopped.</source>
+        <translation>Wymuszono zatrzymanie.</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t running.</source>
+        <translation>Wtyczka nie działa.</translation>
     </message>
 </context>
 <context>

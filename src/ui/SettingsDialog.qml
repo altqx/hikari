@@ -1341,7 +1341,7 @@ DialogWindow {
                                 Layout.preferredWidth: 200
                                 model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Grid shortcuts"),
                                         qsTr("Line editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio shortcuts"),
-                                        qsTr("Automation shortcuts")]
+                                        qsTr("Automation shortcuts"), qsTr("Plugin shortcuts")]
                                 ToolTip.text: qsTr("Filtering mode")
                                 ToolTip.visible: hovered
                                 Accessible.name: qsTr("Choose filtering")

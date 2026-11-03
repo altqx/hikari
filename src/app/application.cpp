@@ -152,6 +152,23 @@ QString luaHelperPath(const QString &configured)
     return sibling;
 }
 
+QString pluginHelperPath(const QString &configured)
+{
+    if (!configured.isEmpty())
+        return configured;
+#ifdef _WIN32
+    const QString name = QStringLiteral("hikari-plugin-helper.exe");
+#else
+    const QString name = QStringLiteral("hikari-plugin-helper");
+#endif
+    const QString sibling = QCoreApplication::applicationDirPath() + QLatin1Char('/') + name;
+#ifdef HIKARI_BUILD_PLUGIN_HELPER
+    if (!QFileInfo::exists(sibling))
+        return QStringLiteral(HIKARI_BUILD_PLUGIN_HELPER);
+#endif
+    return sibling;
+}
+
 QString readingDictionaryPath(const QString &configured)
 {
     if (!configured.isEmpty())
@@ -819,6 +836,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
         }});
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
+    m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
+        pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
+        [this] { return m_localisation ? m_localisation->language() : QString(); }});
+    connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
+    m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
+    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
+            [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });
+    QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
     m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);

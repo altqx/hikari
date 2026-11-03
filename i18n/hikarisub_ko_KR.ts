@@ -8972,6 +8972,10 @@ Failed to copy %2 fonts.</source>
         <translation>자동화 단축키</translation>
     </message>
     <message>
+        <source>Plugin shortcuts</source>
+        <translation>플러그인 단축키</translation>
+    </message>
+    <message>
         <source>Filtering mode</source>
         <translation>필터 모드</translation>
     </message>
@@ -9508,6 +9512,44 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>HikariSub plugins (*.hikariplugin)</source>
         <translation>HikariSub 플러그인 (*.hikariplugin)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
+        <translation>플러그인이 설치되어 있지 않거나, 꺼져 있거나, 더 이상 이 명령이 없습니다</translation>
+    </message>
+    <message>
+        <source>Can’t start: %1</source>
+        <translation>플러그인을 시작할 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>The plugin didn’t start.</source>
+        <translation>플러그인이 시작되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>“%1” failed.</source>
+        <translation>“%1” 명령이 실패했습니다.</translation>
+    </message>
+    <message>
+        <source>Its %1 handler failed: %2</source>
+        <translation>플러그인의 %1 처리기가 실패했습니다: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>플러그인이 %n초 넘게 실행되어 HikariSub가 중지했습니다. 다음 명령을 실행하면 다시 시작됩니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
+        <translation>플러그인이 예기치 않게 멈췄습니다. 다음 명령을 실행하면 다시 시작됩니다.</translation>
+    </message>
+    <message>
+        <source>Force stopped.</source>
+        <translation>강제 중지했습니다.</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t running.</source>
+        <translation>플러그인이 실행 중이 아닙니다.</translation>
     </message>
 </context>
 <context>

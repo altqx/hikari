@@ -341,6 +341,29 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(whole.rowCount(), 267u);
 }
 
+TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    auto live = defaultHotkeys();
+    live[HotkeyId{kFirstScriptHotkey, GlobalHotkey}] = Hotkey{"Script macro.lua-0", "Ctrl-Alt-M"};
+    live[HotkeyId{kFirstScriptHotkey + 1, GlobalHotkey}] = Hotkey{"plugin.com.example.hello.greet", "Ctrl-Alt-H"};
+    live[HotkeyId{kFirstScriptHotkey + 2, GlobalHotkey}] = Hotkey{"plugin.com.example.hello.spin", ""};
+    list.build(live);
+    const auto names = [&](int mode) {
+        list.filter(mode);
+        std::vector<std::string> out;
+        for (const int i : list.shown())
+            out.push_back(list.row(i).name);
+        return out;
+    };
+    EXPECT_EQ(names(7), std::vector<std::string>{"Script macro.lua-0"});
+    EXPECT_EQ(names(8), (std::vector<std::string>{"plugin.com.example.hello.greet", "plugin.com.example.hello.spin"}));
+    EXPECT_FALSE(list.mapOffersWindows(list.shown().front()));
+    EXPECT_TRUE(isPluginCommand("plugin.a.b"));
+    EXPECT_FALSE(isPluginCommand("Script plugin.lua-0"));
+}
+
 TEST(Hotkeys, FilterModesAndSelection)
 {
     HotkeyMap copy;

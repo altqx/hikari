@@ -1280,7 +1280,8 @@ bool shownByFilter(int mode, const HotkeyList::Row &r)
     case 4: return r.key.type == EditorHotkey;
     case 5: return r.key.type == VideoHotkey;
     case 6: return r.key.type == AudioHotkey;
-    case 7: return r.key.id >= kFirstScriptHotkey;
+    case 7: return r.key.id >= kFirstScriptHotkey && !isPluginCommand(r.name);
+    case 8: return r.key.id >= kFirstScriptHotkey && isPluginCommand(r.name);
     default: return true;
     }
 }

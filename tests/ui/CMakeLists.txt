@@ -332,6 +332,9 @@ hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_test
 hikari_add_qttest(hikari_ui_plugin_manager_tests SOURCES plugin_manager_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_manager_tests PRIVATE
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
+hikari_add_qttest(hikari_ui_plugin_runtime_tests OFFSCREEN_ONLY SOURCES plugin_runtime_tests.cpp LIBRARIES hikari_composition hikari_translations)
+target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>")
+add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper)
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC.
 target_compile_definitions(hikari_ui_update_apply_tests PRIVATE HIKARI_UPDATE_APPLY_WINDOWS_TESTS=$<BOOL:${WIN32}>)
