@@ -112,7 +112,7 @@ int main(int argc, char **argv)
     if (o.size() == 6) {
         expect(o[0] == "shortcuts.ass - HikariSub", "the file is the editing target");
         expect(o[1] == "0", "the list starts on its first row");
-        expect(o[2] == "Keys for \"Close current tab\"", "the capture names the action");
+        expect(o[2] == "Keys for “Close current tab”", "the capture names the action");
         expect(o[3] == "false", "a key with modifiers closes the capture");
         expect(o[4] == "shortcuts.ass - HikariSub", "the old keys no longer close the tab");
         expect(o[5] == "HikariSub", "the new keys close it");

@@ -4,9 +4,11 @@
 
 #include <QMediaPlayer>
 #include <QObject>
+#include <QTimer>
 #include <QVideoFrame>
 #include <QVideoSink>
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -47,6 +49,7 @@ public:
     QVideoSink *videoSink() { return &m_sink; }
     QString subtitleText() const { return m_sink.subtitleText(); }
     std::uint64_t deliveredFrames() const { return m_delivered; }
+    void setFrameDeadline(std::chrono::milliseconds deadline) { m_frameDeadline.setInterval(deadline); }
     std::uint64_t receivedFrames() const;
     // Frames a newer one replaced before this object's thread took them.
     std::uint64_t supersededFrames() const;
@@ -59,9 +62,12 @@ signals:
 private:
     void onStatus(QMediaPlayer::MediaStatus status);
     void onFrame(const QVideoFrame &frame);
+    void deliver(const QVideoFrame &frame);
+    void forgetSeek();
     void takeFrame();
     void dropWaitingFrame();
     void failOpen(application::PlayerError error);
+    void missFrameDeadline();
     application::MediaDescription describe() const;
 
     QMediaPlayer m_player;
@@ -72,6 +78,8 @@ private:
     std::uint64_t m_generation = 0;
     std::uint64_t m_epoch = 0;
     std::uint64_t m_delivered = 0;
+    std::uint64_t m_mediaFrames = 0;
+    QTimer m_frameDeadline;
     Opened m_pendingOpen;
     struct PendingSeek {
         std::uint64_t generation;
@@ -79,6 +87,8 @@ private:
         Seeked done;
     };
     std::optional<PendingSeek> m_pendingSeek;
+    QVideoFrame m_heldBack;
+    QTimer m_seekFallback;
     application::PlayerClock m_clock;
     double m_volume = 1.0;
     struct Slot {

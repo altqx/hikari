@@ -20,6 +20,7 @@ enum class PlayerError {
     FormatError,
     AccessDenied,
     BackendFailure,
+    NoVideoFrame, // the media has video, but the player decoded none of it before the seek deadline
 };
 
 enum class PlaybackState { Stopped, Playing, Paused };
@@ -40,7 +41,8 @@ struct MediaDescription {
     int activeVideo = -1, activeAudio = -1, activeSubtitle = -1; // -1: none (subtitles suppressed)
 };
 
-// The first video frame delivered after a time seek; no exact frame is promised.
+// The first video frame delivered after a time seek; no exact frame is promised. A player that
+// has decoded no frame of the open media fails a seek with NoVideoFrame at its deadline.
 struct SeekResult {
     std::uint64_t generation = 0;
     std::int64_t requestedUs = 0;

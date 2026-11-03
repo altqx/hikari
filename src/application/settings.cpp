@@ -316,6 +316,11 @@ const std::vector<SettingDefinition> &definitions()
         {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
+        // visual::ZoomModel and visual::ScrollAction values.
+        {"video.zoomModel", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.scrollAction", "", Int, Profile, Mapped, false, std::int64_t{4}},
+        {"video.ctrlScrollAction", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.shiftScrollAction", "", Int, Profile, Mapped, false, std::int64_t{2}},
         // 0 video resolution, 1 screen size (libass only).
         {"video.previewSubtitlesAt", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // dialogAnswers: one "<key>\t<JSON>" row per dialog, last used first, at most 200.
@@ -339,6 +344,8 @@ const std::vector<SettingDefinition> &definitions()
         {"grammar.group.wordChoiceAndUsage", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.regionalismsAndDialect", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.miscellaneous", "", Bool, Profile, Mapped, false, true},
+        // One "<document file>\t<JSON>" row per document, last used first, at most 100; "" holds the last export.
+        {"export.choices", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
     };
     return table;
 }

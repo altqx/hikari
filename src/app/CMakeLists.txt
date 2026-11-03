@@ -6,6 +6,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_reference.cpp
     application_tab_menu.cpp
     application_karaoke.cpp
+    application_export.cpp
     automation_shell.cpp include/hikari/app/automation_shell.h
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
@@ -18,20 +19,22 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
-    api_host.cpp include/hikari/app/api_host.h)
+    api_host.cpp include/hikari/app/api_host.h
+    plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
-target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_api hikari_application hikari_core
+target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_plugins hikari_api hikari_application hikari_core
     Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
-# QZipWriter is private Qt API.
+# QZipWriter and QZipReader are private Qt API.
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 target_link_libraries(hikari_composition PRIVATE Qt6::CorePrivate)
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
-    HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
+    HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_BUILD_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
     HIKARI_BUILD_HARPER_LS="${HIKARI_HARPER_LS}" HIKARI_HARPER_VERSION="${HIKARI_HARPER_VERSION}"
     HIKARI_BUILD_UNIDIC="${HIKARI_UNIDIC_DIR}"
     HIKARI_VERSION="${HIKARI_VERSION}")
-add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_automation_stage)
+add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_plugin_helper hikari_automation_stage)
 option(HIKARI_UPDATE_TEST_FEED "Read the update feed and package kind from the environment (test builds only)" OFF)
 if(HIKARI_UPDATE_TEST_FEED)
     target_compile_definitions(hikari_composition PRIVATE HIKARI_UPDATE_TEST_FEED)
@@ -40,7 +43,7 @@ if(WIN32)
     target_link_libraries(hikari_composition PRIVATE shell32 winhttp bcrypt crypt32 advapi32)
 endif()
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends
-    hikari_api hikari_application hikari_core "Qt6::*" "hikari_ui*")
+    hikari_plugins hikari_api hikari_application hikari_core "Qt6::*" "hikari_ui*")
 
 target_sources(hikari_composition PRIVATE startup_look.cpp include/hikari/app/startup_look.h
     include/hikari/app/launcher.h)

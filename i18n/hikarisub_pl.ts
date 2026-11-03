@@ -2533,8 +2533,8 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Dodaj przycisk tagu</translation>
     </message>
     <message>
-        <source>Edit...</source>
-        <translation>Edytuj...</translation>
+        <source>Edit…</source>
+        <translation>Edytuj…</translation>
     </message>
     <message>
         <source>Move left</source>
@@ -2771,6 +2771,265 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>Tag zaczyna się od ukośnika odwrotnego, na przykład \blur2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Export</name>
+    <message>
+        <source>Drawing removed</source>
+        <translation>Usunięto rysunek</translation>
+    </message>
+    <message>
+        <source>Clip removed</source>
+        <translation>Usunięto wycinek</translation>
+    </message>
+    <message>
+        <source>Animation (\t) removed</source>
+        <translation>Usunięto animację (\t)</translation>
+    </message>
+    <message>
+        <source>Movement kept as its start position</source>
+        <translation>Ruch zachowany jako położenie początkowe</translation>
+    </message>
+    <message>
+        <source>Movement removed</source>
+        <translation>Usunięto ruch</translation>
+    </message>
+    <message>
+        <source>Fade removed</source>
+        <translation>Usunięto zanikanie</translation>
+    </message>
+    <message>
+        <source>Rotation or shearing removed</source>
+        <translation>Usunięto obrót lub pochylenie</translation>
+    </message>
+    <message>
+        <source>Font, size, scale or spacing tags removed</source>
+        <translation>Usunięto tagi czcionki, rozmiaru, skali lub odstępów</translation>
+    </message>
+    <message>
+        <source>Border, shadow, blur, transparency or other colours removed</source>
+        <translation>Usunięto obramowanie, cień, rozmycie, przezroczystość lub inne kolory</translation>
+    </message>
+    <message>
+        <source>Text colour removed</source>
+        <translation>Usunięto kolor tekstu</translation>
+    </message>
+    <message>
+        <source>Some bold, italic, underline or strikeout removed</source>
+        <translation>Usunięto część pogrubienia, kursywy, podkreślenia lub przekreślenia</translation>
+    </message>
+    <message>
+        <source>Position or alignment removed</source>
+        <translation>Usunięto położenie lub wyrównanie</translation>
+    </message>
+    <message>
+        <source>Karaoke timing removed</source>
+        <translation>Usunięto timing karaoke</translation>
+    </message>
+    <message>
+        <source>Scrolling effect removed</source>
+        <translation>Usunięto efekt przewijania</translation>
+    </message>
+    <message>
+        <source>Merged with overlapping lines</source>
+        <translation>Scalono z nakładającymi się linijkami</translation>
+    </message>
+    <message>
+        <source>There is nothing to export.</source>
+        <translation>Nie ma nic do wyeksportowania.</translation>
+    </message>
+    <message>
+        <source>Enter the file’s full path, or choose it with Browse…</source>
+        <translation>Wpisz pełną ścieżkę pliku albo wybierz go przyciskiem Przeglądaj…</translation>
+    </message>
+    <message>
+        <source>“%1” is a folder.</source>
+        <translation>„%1” jest folderem.</translation>
+    </message>
+    <message>
+        <source>Enter a frame rate between 1 and 1000.</source>
+        <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>Nie można zapisać %1: %2</translation>
+    </message>
+    <message>
+        <source>Export as</source>
+        <translation>Eksportuj jako</translation>
+    </message>
+    <message>
+        <source>Plain text</source>
+        <translation>Zwykły tekst</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation>Bez nazwy</translation>
+    </message>
+    <message>
+        <source>Replace “%1”?</source>
+        <translation>Zastąpić „%1”?</translation>
+    </message>
+    <message>
+        <source>A file with this name already exists.</source>
+        <translation>Plik o tej nazwie już istnieje.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Zastąp</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
+    </message>
+    <message>
+        <source>All (%1)</source>
+        <translation>Wszystkie (%1)</translation>
+    </message>
+    <message>
+        <source>Selected (%1)</source>
+        <translation>Zaznaczone (%1)</translation>
+    </message>
+    <message>
+        <source>Shown (%1)</source>
+        <translation>Widoczne (%1)</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>Zapisz w</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>Przeglądaj…</translation>
+    </message>
+    <message>
+        <source>%1 files (*.%2)</source>
+        <translation>Pliki %1 (*.%2)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>Opcje</translation>
+    </message>
+    <message>
+        <source>Alignment as %1 tags</source>
+        <translation>Wyrównanie jako tagi %1</translation>
+    </message>
+    <message>
+        <source>Text colours as font tags</source>
+        <translation>Kolory tekstu jako tagi font</translation>
+    </message>
+    <message>
+        <source>Positions and alignment</source>
+        <translation>Położenie i wyrównanie</translation>
+    </message>
+    <message>
+        <source>Styles and colours</source>
+        <translation>Style i kolory</translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation>Timing karaoke</translation>
+    </message>
+    <message>
+        <source>Start and end times</source>
+        <translation>Czas początku i końca</translation>
+    </message>
+    <message>
+        <source>Actor names</source>
+        <translation>Nazwy aktorów</translation>
+    </message>
+    <message>
+        <source>Merge overlapping lines into one subtitle</source>
+        <translation>Scal nakładające się linijki w jeden napis</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation>fps</translation>
+    </message>
+    <message>
+        <source>Use video frame rate</source>
+        <translation>Użyj liczby klatek wideo</translation>
+    </message>
+    <message>
+        <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
+        <translation>TMPlayer nie ma czasów końca: nakładające się linijki są scalane, a pusty napis czyści ekran.</translation>
+    </message>
+    <message>
+        <source>Formatting, colours and positions are not kept.</source>
+        <translation>Formatowanie, kolory i położenie nie są zachowywane.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n line(s) to “%1”.</source>
+        <translation>
+            <numerusform>Wyeksportowano %n linijkę do „%1”.</numerusform>
+            <numerusform>Wyeksportowano %n linijki do „%1”.</numerusform>
+            <numerusform>Wyeksportowano %n linijek do „%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>Pominięto %n linijkę komentarza.</numerusform>
+            <numerusform>Pominięto %n linijki komentarza.</numerusform>
+            <numerusform>Pominięto %n linijek komentarza.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>Pominięto %n linijkę bez treści do wyświetlenia.</numerusform>
+            <numerusform>Pominięto %n linijki bez treści do wyświetlenia.</numerusform>
+            <numerusform>Pominięto %n linijek bez treści do wyświetlenia.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>What the format could not keep. Choose a line to show it.</source>
+        <translation>Czego format nie mógł zachować. Wybierz linijkę, aby ją pokazać.</translation>
+    </message>
+    <message>
+        <source>Nothing was dropped or approximated</source>
+        <translation>Nic nie zostało pominięte ani przybliżone</translation>
+    </message>
+    <message>
+        <source>Export report</source>
+        <translation>Raport eksportu</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>Linijka</translation>
+    </message>
+    <message>
+        <source>Dropped or approximated</source>
+        <translation>Pominięte lub przybliżone</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Linijka %1: %2</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Eksportuj</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
     </message>
 </context>
 <context>
@@ -3816,10 +4075,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Na tym komputerze jest zainstalowany HikariSub 0.0.x. Nic w nim nie zostanie zmienione.</translation>
     </message>
     <message>
-        <source>Later: File › Import legacy settings…</source>
-        <translation>Później: Plik › Importuj ustawienia starej wersji…</translation>
-    </message>
-    <message>
         <source>Import my old settings</source>
         <translation>Importuj moje dawne ustawienia</translation>
     </message>
@@ -3828,16 +4083,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zalecane</translation>
     </message>
     <message>
-        <source>Hotkeys, fonts, audio and video options and your dictionary words.</source>
+        <source>Shortcuts, fonts, audio and video options and your dictionary words.</source>
         <translation>Skróty klawiszowe, czcionki, opcje audio i wideo oraz słowa dodane do słownika.</translation>
     </message>
     <message>
         <source>Set up from scratch</source>
         <translation>Skonfiguruj od zera</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</source>
-        <translation>Zacznij od ustawień domyślnych HikariSub. Plik › Importuj ustawienia starej wersji… pozwoli przenieść je później.</translation>
     </message>
     <message>
         <source>Read again</source>
@@ -3880,7 +4131,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>HikariSub</translation>
     </message>
     <message>
-        <source>The system’s</source>
+        <source>System</source>
         <translation>Systemowy</translation>
     </message>
     <message>
@@ -3936,6 +4187,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Duże wideo z narzędziami wizualnymi i panelem Style.</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import legacy settings…</source>
+        <translation>Później: Ustawienia › Ogólne › Importuj ustawienia starej wersji…</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
+        <translation>Zacznij od ustawień domyślnych HikariSub. Ustawienia › Ogólne › Importuj ustawienia starej wersji… pozwoli przenieść je później.</translation>
+    </message>
+    <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
         <translation>Edytor szablonów obok wideo, audio w trybie karaoke.</translation>
     </message>
@@ -3976,7 +4235,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Edycja</translation>
     </message>
     <message>
-        <source>Later: Settings › General › Saving and Settings › Spelling &amp; grammar</source>
+        <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>Później: Ustawienia › Ogólne › Zapisywanie i Ustawienia › Pisownia i gramatyka</translation>
     </message>
     <message>
@@ -4131,10 +4390,6 @@ Nie udało się skopiować czcionek: %2.</translation>
 <context>
     <name>HikariSub.Grid</name>
     <message>
-        <source>Font collector</source>
-        <translation>Kolekcjoner czcionek</translation>
-    </message>
-    <message>
         <source>Grid</source>
         <translation>Lista napisów</translation>
     </message>
@@ -4147,80 +4402,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Brak otwartego dokumentu</translation>
     </message>
     <message>
-        <source>Add lines</source>
-        <translation>Dodaj linijki</translation>
-    </message>
-    <message>
-        <source>Change description</source>
-        <translation>Zmień opis</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>Usuń</translation>
-    </message>
-    <message>
-        <source>Insert after with video time</source>
-        <translation>Wstaw po z czasem wideo</translation>
-    </message>
-    <message>
-        <source>Insert before with video frame time</source>
-        <translation>Wstaw przed z czasem klatki wideo</translation>
-    </message>
-    <message>
-        <source>Insert after with video frame time</source>
-        <translation>Wstaw po z czasem klatki wideo</translation>
-    </message>
-    <message>
-        <source>Join lines and keep first</source>
-        <translation>Złącz linijki i zostaw pierwszą</translation>
-    </message>
-    <message>
-        <source>Join lines and keep last</source>
-        <translation>Złącz linijki i zostaw ostatnią</translation>
-    </message>
-    <message>
-        <source>Split lines</source>
-        <translation>Podziel linijki</translation>
-    </message>
-    <message>
-        <source>Split line at video time</source>
-        <translation>Podziel linijkę w czasie wideo</translation>
-    </message>
-    <message>
-        <source>Split lines into frames</source>
-        <translation>Podziel linijki na klatki</translation>
-    </message>
-    <message>
-        <source>Split lines into characters</source>
-        <translation>Podziel linijki na znaki</translation>
-    </message>
-    <message>
-        <source>Split lines into words</source>
-        <translation>Podziel linijki na słowa</translation>
-    </message>
-    <message>
-        <source>Split lines by wraps</source>
-        <translation>Podziel linijki według łamań wierszy</translation>
-    </message>
-    <message>
-        <source>Select all lines visible on video</source>
-        <translation>Zaznacz wszystkie linijki widoczne na wideo</translation>
-    </message>
-    <message>
         <source>Show subtitles preview</source>
         <translation>Pokaż podgląd napisów</translation>
-    </message>
-    <message>
-        <source>Paste translation text</source>
-        <translation>Wklej tekst tłumaczenia</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>Okno przesuwania dialogów</translation>
-    </message>
-    <message>
-        <source>Hide selected lines</source>
-        <translation>Ukryj zaznaczone linijki</translation>
     </message>
     <message>
         <source>Filtering</source>
@@ -4241,6 +4424,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Hide lines with styles</source>
         <translation>Ukryj linijki ze stylami</translation>
+    </message>
+    <message>
+        <source>Start time</source>
+        <translation>Czas początkowy</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Styl</translation>
+    </message>
+    <message>
+        <source>Hide selected lines (filter)</source>
+        <translation>Ukryj zaznaczone linijki (filtr)</translation>
     </message>
     <message>
         <source>Hide comments</source>
@@ -4267,68 +4462,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ignoruj filtrowanie przy niektórych akcjach</translation>
     </message>
     <message>
-        <source>Hide columns</source>
-        <translation>Ukryj kolumny</translation>
-    </message>
-    <message>
         <source>Hide empty columns</source>
         <translation>Ukryj puste kolumny</translation>
     </message>
     <message>
-        <source>Hide layer</source>
-        <translation>Ukryj warstwę</translation>
-    </message>
-    <message>
-        <source>Hide start time</source>
-        <translation>Ukryj czas początkowy</translation>
-    </message>
-    <message>
-        <source>Hide end time</source>
-        <translation>Ukryj czas końcowy</translation>
-    </message>
-    <message>
-        <source>Hide actor</source>
-        <translation>Ukryj aktora</translation>
-    </message>
-    <message>
-        <source>Hide style</source>
-        <translation>Ukryj styl</translation>
-    </message>
-    <message>
-        <source>Hide left margin</source>
-        <translation>Ukryj lewy margines</translation>
-    </message>
-    <message>
-        <source>Hide right margin</source>
-        <translation>Ukryj prawy margines</translation>
-    </message>
-    <message>
-        <source>Hide vertical margin</source>
-        <translation>Ukryj pionowy margines</translation>
-    </message>
-    <message>
-        <source>Hide effect</source>
-        <translation>Ukryj efekt</translation>
-    </message>
-    <message>
-        <source>Hide characters per second</source>
-        <translation>Ukryj znaki na sekundę</translation>
-    </message>
-    <message>
-        <source>Hide line wraps</source>
-        <translation>Ukryj łamania wierszy</translation>
-    </message>
-    <message>
         <source>Reset column widths</source>
         <translation>Resetuj szerokości kolumn</translation>
-    </message>
-    <message>
-        <source>Set new FPS</source>
-        <translation>Ustaw nowy FPS</translation>
-    </message>
-    <message>
-        <source>Set FPS from video</source>
-        <translation>Ustaw FPS z wideo</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -4343,8 +4482,112 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usuń tekst</translation>
     </message>
     <message>
-        <source>Load subtitles from an MKV/OGM file</source>
-        <translation>Wczytaj napisy z pliku MKV / OGM</translation>
+        <source>Before</source>
+        <translation>Przed</translation>
+    </message>
+    <message>
+        <source>After</source>
+        <translation>Po</translation>
+    </message>
+    <message>
+        <source>Before, at video time</source>
+        <translation>Przed, z czasem wideo</translation>
+    </message>
+    <message>
+        <source>After, at video time</source>
+        <translation>Po, z czasem wideo</translation>
+    </message>
+    <message>
+        <source>Before, at video frame time</source>
+        <translation>Przed, z czasem klatki wideo</translation>
+    </message>
+    <message>
+        <source>After, at video frame time</source>
+        <translation>Po, z czasem klatki wideo</translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>Duplikuj linijkę</numerusform>
+            <numerusform>Duplikuj %n linijki</numerusform>
+            <numerusform>Duplikuj %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste special</source>
+        <translation>Wklej specjalnie</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>Wklej tłumaczenie z pliku…</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>Złącz</translation>
+    </message>
+    <message>
+        <source>Keep first</source>
+        <translation>Zostaw pierwszą</translation>
+    </message>
+    <message>
+        <source>Keep last</source>
+        <translation>Zostaw ostatnią</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation>Podziel</translation>
+    </message>
+    <message>
+        <source>At video time</source>
+        <translation>W czasie wideo</translation>
+    </message>
+    <message>
+        <source>Into frames</source>
+        <translation>Na klatki</translation>
+    </message>
+    <message>
+        <source>Into characters</source>
+        <translation>Na znaki</translation>
+    </message>
+    <message>
+        <source>Into words</source>
+        <translation>Na słowa</translation>
+    </message>
+    <message>
+        <source>By wraps</source>
+        <translation>Według łamań wierszy</translation>
+    </message>
+    <message>
+        <source>Swap lines</source>
+        <translation>Zamień linijki</translation>
+    </message>
+    <message>
+        <source>Make times continuous</source>
+        <translation>Ustaw czasy jako ciągłe</translation>
+    </message>
+    <message>
+        <source>With the previous line</source>
+        <translation>Z poprzednią linijką</translation>
+    </message>
+    <message>
+        <source>With the next line</source>
+        <translation>Z następną linijką</translation>
+    </message>
+    <message>
+        <source>Select lines visible on video</source>
+        <translation>Zaznacz linijki widoczne na wideo</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>Dopasowywanie tłumaczenia…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>Usuń linijkę</numerusform>
+            <numerusform>Usuń %n linijki</numerusform>
+            <numerusform>Usuń %n linijek</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -4383,6 +4626,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Grupa linijek</translation>
     </message>
     <message>
+        <source>Columns</source>
+        <translation>Kolumny</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>Dodaj zaznaczoną linijkę</numerusform>
+            <numerusform>Dodaj %n zaznaczone linijki</numerusform>
+            <numerusform>Dodaj %n zaznaczonych linijek</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Copy line group</source>
         <translation>Kopiuj grupę linijek</translation>
     </message>
@@ -4391,40 +4646,16 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacz linijki grupy</translation>
     </message>
     <message>
+        <source>Change description…</source>
+        <translation>Zmień opis…</translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation>Rozgrupuj</translation>
+    </message>
+    <message>
         <source>Insert</source>
         <translation>Wstaw</translation>
-    </message>
-    <message>
-        <source>Insert before</source>
-        <translation>Wstaw przed</translation>
-    </message>
-    <message>
-        <source>Insert after</source>
-        <translation>Wstaw po</translation>
-    </message>
-    <message>
-        <source>Insert before with video time</source>
-        <translation>Wstaw przed z czasem wideo</translation>
-    </message>
-    <message>
-        <source>Duplicate lines</source>
-        <translation>Duplikuj linijki</translation>
-    </message>
-    <message>
-        <source>Swap</source>
-        <translation>Zamień</translation>
-    </message>
-    <message>
-        <source>Join lines</source>
-        <translation>Złącz linijki</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the previous line</source>
-        <translation>Ustaw czasy jako ciągłe z poprzednią linijką</translation>
-    </message>
-    <message>
-        <source>Make times continuous with the next line</source>
-        <translation>Ustaw czasy jako ciągłe z następną linijką</translation>
     </message>
     <message>
         <source>Make line group</source>
@@ -4433,10 +4664,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Cut</source>
         <translation>Wytnij</translation>
-    </message>
-    <message>
-        <source>Delete lines</source>
-        <translation>Usuń linijki</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -4781,27 +5008,27 @@ Nie udało się skopiować czcionek: %2.</translation>
 <context>
     <name>HikariSub.Hotkeys</name>
     <message>
-        <source>Keys for &quot;%1&quot;</source>
-        <translation>Klawisze dla &quot;%1&quot;</translation>
+        <source>Keys for “%1”</source>
+        <translation>Klawisze dla “%1”</translation>
     </message>
     <message>
-        <source>Global hotkey</source>
+        <source>Global shortcut</source>
         <translation>Skrót globalny</translation>
     </message>
     <message>
-        <source>Subtitle grid hotkey</source>
+        <source>Grid shortcut</source>
         <translation>Skrót listy napisów</translation>
     </message>
     <message>
-        <source>Edit box hotkey</source>
-        <translation>Skrót pola edycji</translation>
+        <source>Line editor shortcut</source>
+        <translation>Skrót edytora linijki</translation>
     </message>
     <message>
-        <source>Video hotkey</source>
+        <source>Video shortcut</source>
         <translation>Skrót wideo</translation>
     </message>
     <message>
-        <source>Audio hotkey</source>
+        <source>Audio shortcut</source>
         <translation>Skrót audio</translation>
     </message>
     <message>
@@ -4899,6 +5126,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
         <translation>Usunięto skrót %1 polecenia &quot;Otwórz okno mapowania skrótów&quot;: tego okna już nie ma, a skrót każdego makra ustawia się w panelu Automatyzacja.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>Usunięto skrót %1 polecenia “Popraw drobne błędy (eksperymentalne)”: ta funkcja została usunięta.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
@@ -5293,20 +5524,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wklej kolumny</translation>
     </message>
     <message>
-        <source>Paste translation text</source>
-        <translation>Wklej tekst tłumaczenia</translation>
-    </message>
-    <message>
         <source>Load subtitles from an MKV file</source>
         <translation>Wczytaj napisy z pliku MKV</translation>
     </message>
     <message>
         <source>Swap lines</source>
         <translation>Zamień linijki</translation>
-    </message>
-    <message>
-        <source>Dialogue shifting window</source>
-        <translation>Okno przesuwania dialogów</translation>
     </message>
     <message>
         <source>Set new FPS</source>
@@ -5525,8 +5748,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Powiększ wideo</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>Wyłącz powiększenie wideo</translation>
+        <source>Reset zoom and pan</source>
+        <translation>Resetuj powiększenie i przesunięcie</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -5541,12 +5764,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Oczyść style pliku ASS</translation>
     </message>
     <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>Popraw drobne błędy (eksperymentalne)</translation>
-    </message>
-    <message>
         <source>Find next</source>
         <translation>Znajdź następny</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>Znajdź poprzedni</translation>
     </message>
     <message>
         <source>Load last session</source>
@@ -5687,6 +5910,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Make line group</source>
         <translation>Utwórz grupę linijek</translation>
+    </message>
+    <message>
+        <source>Paste translation from a file…</source>
+        <translation>Wklej tłumaczenie z pliku…</translation>
+    </message>
+    <message>
+        <source>Translation matching…</source>
+        <translation>Dopasowywanie tłumaczenia…</translation>
     </message>
     <message>
         <source>Shift times / run timing postprocessor</source>
@@ -5933,6 +6164,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
+        <source>Export as</source>
+        <translation>Eksportuj jako</translation>
+    </message>
+    <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
     </message>
@@ -5951,6 +6186,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Shift following lines by frames: end at video</source>
         <translation>Przesuń następne linijki o klatki: koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>Importuj ustawienia starej wersji…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6304,6 +6551,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pomiń linijkę kanji</translation>
     </message>
     <message>
+        <source>Pair again</source>
+        <translation>Sparuj ponownie</translation>
+    </message>
+    <message>
         <source>Previous</source>
         <translation>Poprzednia</translation>
     </message>
@@ -6531,24 +6782,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Historia</translation>
     </message>
     <message>
-        <source>Shows or hides the Fix minor errors panel</source>
-        <translation>Pokazuje lub ukrywa panel poprawiania drobnych błędów</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>Popraw drobne błędy (eksperymentalne)</translation>
-    </message>
-    <message>
         <source>Select &amp;lines</source>
         <translation>Zaznacz &amp;linijki</translation>
-    </message>
-    <message>
-        <source>Find and re&amp;place</source>
-        <translation>Znajdź i za&amp;mień</translation>
-    </message>
-    <message>
-        <source>&amp;Find</source>
-        <translation>Z&amp;najdź</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -6611,10 +6846,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz klatki kluczowe</translation>
     </message>
     <message>
-        <source>Import legacy settings...</source>
-        <translation>Importuj ustawienia starej wersji...</translation>
-    </message>
-    <message>
         <source>Run the last loaded script</source>
         <translation>Uruchom ostatnio wczytany skrypt</translation>
     </message>
@@ -6655,8 +6886,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Powiększ wideo</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>Wyłącz powiększenie wideo</translation>
+        <source>Reset zoom and pan</source>
+        <translation>Resetuj powiększenie i przesunięcie</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -6743,6 +6974,34 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Napisy</translation>
     </message>
     <message>
+        <source>Opens the Find panel</source>
+        <translation>Otwiera panel Znajdź</translation>
+    </message>
+    <message>
+        <source>&amp;Find…</source>
+        <translation>Z&amp;najdź…</translation>
+    </message>
+    <message>
+        <source>Opens the Find panel with the replace row shown</source>
+        <translation>Otwiera panel Znajdź z widocznym wierszem zamiany</translation>
+    </message>
+    <message>
+        <source>Re&amp;place…</source>
+        <translation>Za&amp;mień…</translation>
+    </message>
+    <message>
+        <source>Selects the next match</source>
+        <translation>Zaznacza następne dopasowanie</translation>
+    </message>
+    <message>
+        <source>Selects the previous match</source>
+        <translation>Zaznacza poprzednie dopasowanie</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>Znajdź poprzedni</translation>
+    </message>
+    <message>
         <source>Shift &amp;times...</source>
         <translation>Przesuń &amp;czasy...</translation>
     </message>
@@ -6769,6 +7028,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Check spelling</source>
         <translation>Sprawdź pisownię</translation>
+    </message>
+    <message>
+        <source>Install, turn on and off, and uninstall plugins</source>
+        <translation>Instaluj, włączaj, wyłączaj i odinstalowuj wtyczki</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins…</source>
+        <translation>W&amp;tyczki…</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -6919,6 +7186,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwiera plik wideo</translation>
     </message>
     <message>
+        <source>Imports a subtitle track from a Matroska file</source>
+        <translation>Importuje ścieżkę napisów z pliku Matroska</translation>
+    </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>Importuj napisy z MKV…</translation>
+    </message>
+    <message>
         <source>Save current file</source>
         <translation>Zapisz aktualny plik</translation>
     </message>
@@ -6929,6 +7204,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Save as</source>
         <translation>Zapisz jako</translation>
+    </message>
+    <message>
+        <source>Writes a copy of the document in another format</source>
+        <translation>Zapisuje kopię dokumentu w innym formacie</translation>
+    </message>
+    <message>
+        <source>&amp;Export as…</source>
+        <translation>&amp;Eksportuj jako…</translation>
     </message>
     <message>
         <source>Save translation</source>
@@ -7000,15 +7283,31 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Searches for the specified text phrases and replaces them</source>
-        <translation>Wyszukuje podane frazy tekstu i zamienia je</translation>
+        <translation type="vanished">Wyszukuje podane frazy tekstu i zamienia je</translation>
     </message>
     <message>
         <source>Searches for the specified text phrase</source>
-        <translation>Wyszukuje podaną frazę tekstu</translation>
+        <translation type="vanished">Wyszukuje podaną frazę tekstu</translation>
     </message>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
-        <translation>Znajduje kolejne wystąpienie frazy w tekście</translation>
+        <translation type="vanished">Znajduje kolejne wystąpienie frazy w tekście</translation>
+    </message>
+    <message>
+        <source>Changes the frame rate of the subtitle times</source>
+        <translation>Zmienia liczbę klatek na sekundę czasów napisów</translation>
+    </message>
+    <message>
+        <source>Set FPS</source>
+        <translation>Ustaw FPS</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>Ustaw nowy FPS…</translation>
+    </message>
+    <message>
+        <source>Set FPS from video</source>
+        <translation>Ustaw FPS z wideo</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -7053,6 +7352,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
+        <translation>Przesuwa czasy początku i końca zaznaczonych linii na środek ich klatek, aby późniejsze przesunięcie o czas zostawiło je na pełnych klatkach</translation>
+    </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
         <source>Load script</source>
@@ -7786,6 +8093,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
     </message>
+    <message>
+        <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
+        <translation>Funkcja Popraw drobne błędy została usunięta. Twoje reguły pozostają w %1, nieużywane.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -7843,274 +8154,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
 </context>
 <context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message>
-        <source>Fix minor errors</source>
-        <translation>Popraw drobne błędy</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when the find results window is open</source>
-        <translation>Nie można zmieniać reguł,
-gdy okno wyników szukania jest otwarte</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-because it was edited.</source>
-        <translation>Nie można zamienić linijki %1,
-ponieważ została zmieniona.</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
-        <translation>Nie można zamienić &quot;%1&quot; na &quot;%2&quot; przy użyciu reguły &quot;%3&quot; w linijce %4.</translation>
-    </message>
-    <message>
-        <source>Rule description</source>
-        <translation>Opis reguły</translation>
-    </message>
-    <message>
-        <source>Replace phrase</source>
-        <translation>Zmieniana fraza</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation>Wielkość liter</translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation>Jak w znalezionym tekście</translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation>Bez zmian</translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation>Małe litery</translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation>Wielkie litery</translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation>Wielkość liter zamiennika</translation>
-    </message>
-    <message>
-        <source>Match case</source>
-        <translation>Uwzględniaj wielkość liter</translation>
-    </message>
-    <message>
-        <source>Rules</source>
-        <translation>Reguły</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>Które linijki</translation>
-    </message>
-    <message>
-        <source>All lines</source>
-        <translation>Wszystkie linijki</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation>Linijki</translation>
-    </message>
-    <message>
-        <source>Selected lines</source>
-        <translation>Zaznaczone linijki</translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation>Od zaznaczonej linijki</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation>Według wybranych stylów</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>Wybierz style</translation>
-    </message>
-    <message>
-        <source>Update rule</source>
-        <translation>Zaktualizuj regułę</translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation>Reguła</translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation>Znajdź → zamień</translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation>(nic)</translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation>Rozwinięte</translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation>Zwinięte</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation>Nazwa</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation>Znajdź</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation>Wyrażenie regularne</translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation>Szukana fraza (wyrażenia regularne)</translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation>Zakres</translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation>Tekst i tagi</translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation>Tylko tagi</translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation>Tylko tekst</translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation>Zamieniaj w</translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation>Ta zakładka</translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation>Wszystkie zakładki</translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation>Zakładki do przeszukania</translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation>Zamień wszystko</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation>Wyniki</translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation>1 błąd</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>%n zaznaczony</numerusform>
-            <numerusform>%n zaznaczone</numerusform>
-            <numerusform>%n zaznaczonych</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation>w 1 pliku</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Wszystkie</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>Żadne</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation>Zamknij wyniki</translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation>Linijka %1</translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation>Pokaż znalezione</translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation>Ukryj znalezione</translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation>Zamień zaznaczone</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>Style</translation>
-    </message>
-    <message>
-        <source>Add rule</source>
-        <translation>Dodaj regułę</translation>
-    </message>
-    <message>
-        <source>Delete rule</source>
-        <translation>Usuń regułę</translation>
-    </message>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>Włączone: %1 z %n reguły</numerusform>
-            <numerusform>Włączone: %1 z %n reguł</numerusform>
-            <numerusform>Włączone: %1 z %n reguł</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>%n błąd</numerusform>
-            <numerusform>%n błędy</numerusform>
-            <numerusform>%n błędów</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>w %n pliku</numerusform>
-            <numerusform>w %n plikach</numerusform>
-            <numerusform>w %n plikach</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>Wyniki szukania</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>Linijka %1: </translation>
-    </message>
-    <message>
-        <source>Replace</source>
-        <translation>Zamień</translation>
-    </message>
-    <message>
-        <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation>Reguła &quot;%1&quot; jest nieprawidłowa.</translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -8125,7 +8168,7 @@ ponieważ została zmieniona.</translation>
         <translation>Używaj motywu systemowego</translation>
     </message>
     <message>
-        <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
+        <source>Light or Dark as the system’s colour scheme sets it; high contrast stays as chosen</source>
         <translation>Jasny lub ciemny, zgodnie ze schematem kolorów systemu; wysoki kontrast pozostaje taki, jak wybrano</translation>
     </message>
     <message>
@@ -8133,7 +8176,7 @@ ponieważ została zmieniona.</translation>
         <translation>Wybierz…</translation>
     </message>
     <message>
-        <source>Accent color</source>
+        <source>Accent colour</source>
         <translation>Kolor akcentu</translation>
     </message>
     <message>
@@ -8169,7 +8212,7 @@ ponieważ została zmieniona.</translation>
         <translation>Domyślnie wyłączone w systemie Windows, KDE Plasma i GNOME; domyślnie włączone w kafelkowych menedżerach okien.</translation>
     </message>
     <message>
-        <source>UI colors</source>
+        <source>UI colours</source>
         <translation>Kolory interfejsu</translation>
     </message>
     <message>
@@ -8213,12 +8256,12 @@ ponieważ została zmieniona.</translation>
         <translation>Audio</translation>
     </message>
     <message>
-        <source>Hotkeys</source>
+        <source>Shortcuts</source>
         <translation>Skróty klawiszowe</translation>
     </message>
     <message>
-        <source>Subtitle properties</source>
-        <translation>Właściwości napisów</translation>
+        <source>Script properties</source>
+        <translation>Właściwości skryptu</translation>
     </message>
     <message>
         <source>Language (program restart required)</source>
@@ -8397,10 +8440,8 @@ ponieważ została zmieniona.</translation>
         <translation>Grubość linii znaczników</translation>
     </message>
     <message>
-        <source>Range from 0 to 10000, where 0 turns off
-removing audio cache files.</source>
-        <translation>Przedział od 0 do 10000, gdzie 0 wyłącza
-całkowicie usuwanie plików pamięci podręcznej audio.</translation>
+        <source>0–10000. At 0, audio cache files are never removed.</source>
+        <translation>0–10000. Przy 0 pliki pamięci podręcznej audio nigdy nie są usuwane.</translation>
     </message>
     <message>
         <source>None</source>
@@ -8431,7 +8472,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Edytor linijki</translation>
     </message>
     <message>
-        <source>Subtitle grid</source>
+        <source>Grid</source>
         <translation>Lista napisów</translation>
     </message>
     <message>
@@ -8471,7 +8512,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Przywrócić domyślne wartości wszystkich ustawień?</translation>
     </message>
     <message>
-        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
+        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
         <translation>Każda strona wróci do wartości domyślnych po naciśnięciu OK lub Zastosuj; Anuluj zachowuje ustawienia. Skróty klawiszowe i wygląd pozostają bez zmian: przywróć je na ich własnych stronach.</translation>
     </message>
     <message>
@@ -8483,7 +8524,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Przywróć stronę</translation>
     </message>
     <message>
-        <source>The settings of the page shown back to their defaults</source>
+        <source>Resets the settings on this page to their defaults</source>
         <translation>Przywraca domyślne wartości ustawień wyświetlanej strony</translation>
     </message>
     <message>
@@ -8559,7 +8600,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wyświetlanie</translation>
     </message>
     <message>
-        <source>Spelling &amp; grammar</source>
+        <source>Spelling and grammar</source>
         <translation>Pisownia i gramatyka</translation>
     </message>
     <message>
@@ -8599,7 +8640,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Pokazuj klatki wideo zamiast czasów</translation>
     </message>
     <message>
-        <source>In the line editor and the subtitle grid.</source>
+        <source>In the line editor and the grid.</source>
         <translation>W edytorze linijki i na liście napisów.</translation>
     </message>
     <message>
@@ -8743,7 +8784,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Otwieraj wideo z menu kontekstowego na pełnym ekranie</translation>
     </message>
     <message>
-        <source>Open video at the active line&apos;s time</source>
+        <source>Open video at the active line’s time</source>
         <translation>Otwieraj wideo w czasie aktywnej linijki</translation>
     </message>
     <message>
@@ -8759,7 +8800,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Rozdzielczość podglądu napisów</translation>
     </message>
     <message>
-        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script&apos;s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
+        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script’s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
         <translation>Rozmiar ekranu rysuje napisy w rozmiarze, jaki obraz zajmuje na ekranie, więc pozostają ostre na dużych ekranach i ekranach o wysokim DPI. Układ skryptu jest w obu przypadkach taki sam. Ustawienie dotyczy też podglądów w menedżerze stylów, selektorze czcionek i edytorze szablonów.</translation>
     </message>
     <message>
@@ -8811,6 +8852,62 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Widok</translation>
     </message>
     <message>
+        <source>Zoom and pan</source>
+        <translation>Powiększenie i przesuwanie</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>Przeciąganie środkowym przyciskiem przesuwa obraz. Uszczypnięcie na touchpadzie powiększa wokół wskaźnika.</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>Kółko powiększa wokół wskaźnika. Powiększ wideo pokazuje ramkę do przeciągania.</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>Jak w Aegisub 3.5</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>Jak w starej wersji HikariSub</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>Kółko na wideo</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>Ctrl+kółko na wideo</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>Shift+kółko na wideo</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>Powiększa wideo</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>Powiększa wideo (odwrotnie)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>Przesuwa wideo</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>Przesuwa wideo (X i Y zamienione)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>Nic nie robi</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>Narzędzie wizualne, które używa kółka lub przeciąga środkowym przyciskiem, zachowuje je dla siebie.</translation>
+    </message>
+    <message>
         <source>Start zoom</source>
         <translation>Początkowe powiększenie</translation>
     </message>
@@ -8823,7 +8920,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wyłącz ostrzeżenie narzędzi wizualnych</translation>
     </message>
     <message>
-        <source>Don&apos;t warn about a resolution mismatch</source>
+        <source>Don’t warn about a resolution mismatch</source>
         <translation>Nie ostrzegaj o niezgodności rozdzielczości</translation>
     </message>
     <message>
@@ -8847,7 +8944,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wstęp i zakończenie</translation>
     </message>
     <message>
-        <source>Don&apos;t play after changing the line</source>
+        <source>Don’t play after changing the line</source>
         <translation>Nie odtwarzaj po zmianie linijki</translation>
     </message>
     <message>
@@ -8879,8 +8976,8 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Karaoke</translation>
     </message>
     <message>
-        <source>Merge every &quot;n&quot; with the previous syllable</source>
-        <translation>Scalaj każde &quot;n&quot; z poprzednią sylabą</translation>
+        <source>Merge every “n” with the previous syllable</source>
+        <translation>Scalaj każde “n” z poprzednią sylabą</translation>
     </message>
     <message>
         <source>Move the syllable line after a click</source>
@@ -9019,12 +9116,12 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Skróty globalne</translation>
     </message>
     <message>
-        <source>Subtitle shortcuts</source>
-        <translation>Skróty napisów</translation>
+        <source>Grid shortcuts</source>
+        <translation>Skróty listy napisów</translation>
     </message>
     <message>
-        <source>Editor shortcuts</source>
-        <translation>Skróty edytora</translation>
+        <source>Line editor shortcuts</source>
+        <translation>Skróty edytora linijki</translation>
     </message>
     <message>
         <source>Video shortcuts</source>
@@ -9035,19 +9132,43 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Skróty automatyzacji</translation>
     </message>
     <message>
-        <source>Filtering mode:</source>
-        <translation>Rodzaj filtrowania:</translation>
+        <source>Plugin shortcuts</source>
+        <translation>Skróty wtyczek</translation>
     </message>
     <message>
-        <source>Search hotkeys</source>
+        <source>Filtering mode</source>
+        <translation>Rodzaj filtrowania</translation>
+    </message>
+    <message>
+        <source>Search shortcuts</source>
         <translation>Szukaj skrótów</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
+        <source>Import legacy shortcuts…</source>
         <translation>Importuj skróty ze starej wersji…</translation>
     </message>
     <message>
-        <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
+        <source>Legacy</source>
+        <translation>Starsza wersja</translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x</source>
+        <translation>HikariSub 0.0.x</translation>
+    </message>
+    <message>
+        <source>Import legacy settings…</source>
+        <translation>Importuj ustawienia starej wersji…</translation>
+    </message>
+    <message>
+        <source>Roll back the last import…</source>
+        <translation>Wycofaj ostatni import…</translation>
+    </message>
+    <message>
+        <source>Script shortcuts</source>
+        <translation>Skróty skryptów</translation>
+    </message>
+    <message>
+        <source>Adds the script shortcuts of a legacy Hotkeys.txt at once</source>
         <translation>Od razu dodaje skróty skryptów z pliku Hotkeys.txt starej wersji</translation>
     </message>
     <message>
@@ -9071,7 +9192,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Funkcja</translation>
     </message>
     <message>
-        <source>Hotkey</source>
+        <source>Shortcut</source>
         <translation>Skrót</translation>
     </message>
     <message>
@@ -9079,7 +9200,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Brakujące makro</translation>
     </message>
     <message>
-        <source>Map hotkey…</source>
+        <source>Map shortcut…</source>
         <translation>Mapuj skrót…</translation>
     </message>
     <message>
@@ -9163,11 +9284,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
     </message>
     <message>
-        <source>Choose a legacy Hotkeys.txt</source>
-        <translation>Wybierz plik Hotkeys.txt starej wersji</translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
+        <source>Shortcuts (Hotkeys.txt)</source>
         <translation>Skróty klawiszowe (Hotkeys.txt)</translation>
     </message>
     <message>
@@ -9175,7 +9292,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Wszystkie pliki (*)</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys</source>
+        <source>Import legacy shortcuts</source>
         <translation>Importuj skróty ze starej wersji</translation>
     </message>
     <message>
@@ -9183,7 +9300,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Nie można odczytać pliku.</translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>Dodano %n skrót skryptu.</numerusform>
             <numerusform>Dodano %n skróty skryptów.</numerusform>
@@ -9191,7 +9308,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         </translation>
     </message>
     <message>
-        <source>No script hotkeys were added.</source>
+        <source>No script shortcuts were added.</source>
         <translation>Nie dodano żadnych skrótów skryptów.</translation>
     </message>
     <message numerus="yes">
@@ -9243,22 +9360,16 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
         <translation>Różowy</translation>
     </message>
     <message>
-        <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
-        <translation>Umieść pliki .dic i .aff w folderze &quot;Dictionary&quot;</translation>
+        <source>Put .dic and .aff files in the “Dictionary” folder</source>
+        <translation>Umieść pliki .dic i .aff w folderze “Dictionary”</translation>
     </message>
     <message>
-        <source>The selected %1 for conversion does not exist
-and will be changed to the default</source>
-        <translation>Wybrany %1 konwersji nie istnieje,
-zostanie zmieniony na domyślny</translation>
+        <source>The style catalogue chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>Katalog stylów wybrany do konwersji już nie istnieje. Zamiast niego używany jest domyślny.</translation>
     </message>
     <message>
-        <source>catalogue for style</source>
-        <translation>katalog dla stylu</translation>
-    </message>
-    <message>
-        <source>style</source>
-        <translation>styl</translation>
+        <source>The style chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>Styl wybrany do konwersji już nie istnieje. Zamiast niego używany jest domyślny.</translation>
     </message>
     <message>
         <source>System default</source>
@@ -9316,6 +9427,297 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>Słowa w innych językach są sprawdzane innymi zainstalowanymi słownikami dla ich pisma. Słowa w piśmie, dla którego nie ma słownika, nie są oznaczane.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Plugins</name>
+    <message>
+        <source>The file is not a plugin package (a zip holding hikari-plugin.json).</source>
+        <translation>Plik nie jest pakietem wtyczki (archiwum zip zawierającym hikari-plugin.json).</translation>
+    </message>
+    <message>
+        <source>The package holds a link, which HikariSub won’t install: %1</source>
+        <translation>Pakiet zawiera dowiązanie, którego HikariSub nie zainstaluje: %1</translation>
+    </message>
+    <message>
+        <source>The package is too large: more than %1 files or %2 MB unpacked.</source>
+        <translation>Pakiet jest za duży: po rozpakowaniu ma ponad %1 plików lub ponad %2 MB.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json is not valid JSON: %1</source>
+        <translation>hikari-plugin.json nie jest poprawnym plikiem JSON: %1</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json repeats the id “%1” at %2.</source>
+        <translation>hikari-plugin.json powtarza identyfikator “%1” w miejscu %2.</translation>
+    </message>
+    <message>
+        <source>This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.</source>
+        <translation>Ta wtyczka wymaga Hikari API %1, a ten HikariSub ma API %2. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
+        <translation>hikari-plugin.json nie spełnia schematu wtyczki w miejscu %1: %2</translation>
+    </message>
+    <message>
+        <source>The package holds a file name HikariSub won’t install: %1</source>
+        <translation>Pakiet zawiera nazwę pliku, której HikariSub nie zainstaluje: %1</translation>
+    </message>
+    <message>
+        <source>The package has no hikari-plugin.json at its top level.</source>
+        <translation>Pakiet nie ma pliku hikari-plugin.json na najwyższym poziomie.</translation>
+    </message>
+    <message>
+        <source>The package lacks its main file, %1.</source>
+        <translation>W pakiecie brakuje jego pliku głównego, %1.</translation>
+    </message>
+    <message>
+        <source>The package breaks the media rules: %1 %2.</source>
+        <translation>Pakiet narusza zasady dotyczące multimediów: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
+        <translation>Pakiet ma podpis, ale jego manifest nie podaje klucza publicKey, którym można go sprawdzić.</translation>
+    </message>
+    <message>
+        <source>plugins.json in the user folder can’t be read: %1</source>
+        <translation>Nie można odczytać pliku plugins.json w folderze użytkownika: %1</translation>
+    </message>
+    <message>
+        <source>The package is signed by a key its manifest doesn’t name.</source>
+        <translation>Pakiet jest podpisany kluczem, którego jego manifest nie podaje.</translation>
+    </message>
+    <message>
+        <source>The signature doesn’t match the package, so it may have been changed after signing.</source>
+        <translation>Podpis nie pasuje do pakietu, więc pakiet mógł zostać zmieniony po podpisaniu.</translation>
+    </message>
+    <message>
+        <source>The signature’s trusted comment was changed after signing.</source>
+        <translation>Zaufany komentarz podpisu został zmieniony po podpisaniu.</translation>
+    </message>
+    <message>
+        <source>The .minisig file beside the package is not a minisign signature.</source>
+        <translation>Plik .minisig obok pakietu nie jest podpisem minisign.</translation>
+    </message>
+    <message>
+        <source>Full trust: it may run native code outside HikariSub’s limits.</source>
+        <translation>Pełne zaufanie: może uruchamiać kod natywny poza ograniczeniami HikariSub.</translation>
+    </message>
+    <message>
+        <source>Read and edit every open subtitle file: %1</source>
+        <translation>Odczytywać i edytować każdy otwarty plik napisów: %1</translation>
+    </message>
+    <message>
+        <source>Connect to %1: %2</source>
+        <translation>Łączyć się z %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read and write, %1: %2</source>
+        <translation>Prosić Cię o folder do odczytu i zapisu, %1: %2</translation>
+    </message>
+    <message>
+        <source>Ask you for a folder to read, %1: %2</source>
+        <translation>Prosić Cię o folder do odczytu, %1: %2</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t finish: %1</source>
+        <translation>HikariSub nie mógł dokończyć operacji: %1</translation>
+    </message>
+    <message>
+        <source>Plugins need a user folder, and this copy has none.</source>
+        <translation>Wtyczki wymagają folderu użytkownika, a ta kopia go nie ma.</translation>
+    </message>
+    <message>
+        <source>HikariSub can’t read %1.</source>
+        <translation>HikariSub nie może odczytać pliku %1.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package first.</source>
+        <translation>Najpierw wybierz pakiet wtyczki.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation>Klucz podpisu się zmienił. Zainstalowana kopia była podpisana kluczem %1, a ta kluczem %2. Instaluj ją tylko wtedy, gdy ufasz, że autor zmienił klucze.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation>Ten pakiet nie jest podpisany, ale zainstalowana kopia była podpisana kluczem %1. Instaluj go tylko wtedy, gdy ufasz jego źródłu.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation>Niezweryfikowane źródło, podpisano kluczem %1. Aktualizacje muszą być podpisane tym samym kluczem.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation>Niezweryfikowany: pakiet nie jest podpisany, więc HikariSub nie może ustalić, kto go utworzył.</translation>
+    </message>
+    <message>
+        <source>Plugin not installed</source>
+        <translation>Nie zainstalowano wtyczki</translation>
+    </message>
+    <message>
+        <source>Install plugin</source>
+        <translation>Zainstaluj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Update plugin</source>
+        <translation>Zaktualizuj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Reinstall plugin</source>
+        <translation>Zainstaluj wtyczkę ponownie</translation>
+    </message>
+    <message>
+        <source>Downgrade plugin</source>
+        <translation>Obniż wersję wtyczki</translation>
+    </message>
+    <message>
+        <source>Install “%1” %2?</source>
+        <translation>Zainstalować “%1” %2?</translation>
+    </message>
+    <message>
+        <source>Update “%1” from %2 to %3?</source>
+        <translation>Zaktualizować “%1” z wersji %2 do %3?</translation>
+    </message>
+    <message>
+        <source>Reinstall “%1” %2?</source>
+        <translation>Zainstalować ponownie “%1” %2?</translation>
+    </message>
+    <message>
+        <source>Replace “%1” %2 with the older %3?</source>
+        <translation>Zastąpić “%1” %2 starszą wersją %3?</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation>Prosi o te uprawnienia</translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation>Wtyczka nie prosi o uprawnienia wykraczające poza aktywny plik napisów.</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation>Zaufaj i zainstaluj</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Uninstall, keep its data</source>
+        <translation>Odinstaluj, zachowaj dane</translation>
+    </message>
+    <message>
+        <source>Uninstall and remove its data</source>
+        <translation>Odinstaluj i usuń dane</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>Odinstaluj</translation>
+    </message>
+    <message>
+        <source>Uninstall plugin</source>
+        <translation>Odinstaluj wtyczkę</translation>
+    </message>
+    <message>
+        <source>Uninstall “%1”?</source>
+        <translation>Odinstalować “%1”?</translation>
+    </message>
+    <message>
+        <source>It has saved data in the user folder. Keep it to use it again if you reinstall.</source>
+        <translation>Wtyczka ma zapisane dane w folderze użytkownika. Zachowaj je, aby znów ich używać po ponownej instalacji.</translation>
+    </message>
+    <message>
+        <source>Plugin not uninstalled</source>
+        <translation>Nie odinstalowano wtyczki</translation>
+    </message>
+    <message>
+        <source>No plugins installed. Install one from a .hikariplugin file.</source>
+        <translation>Brak zainstalowanych wtyczek. Zainstaluj wtyczkę z pliku .hikariplugin.</translation>
+    </message>
+    <message>
+        <source>Installed plugins</source>
+        <translation>Zainstalowane wtyczki</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Włączona</translation>
+    </message>
+    <message>
+        <source>Unverified, signed by key %1</source>
+        <translation>Niezweryfikowana, podpisana kluczem %1</translation>
+    </message>
+    <message>
+        <source>Unverified, unsigned</source>
+        <translation>Niezweryfikowana, niepodpisana</translation>
+    </message>
+    <message>
+        <source>Full trust</source>
+        <translation>Pełne zaufanie</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation>Zainstaluj z pliku…</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Choose a plugin package</source>
+        <translation>Wybierz pakiet wtyczki</translation>
+    </message>
+    <message>
+        <source>HikariSub plugins (*.hikariplugin)</source>
+        <translation>Wtyczki HikariSub (*.hikariplugin)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
+        <translation>Wtyczka nie jest zainstalowana, jest wyłączona albo nie ma już tego polecenia</translation>
+    </message>
+    <message>
+        <source>Can’t start: %1</source>
+        <translation>Nie można uruchomić wtyczki: %1</translation>
+    </message>
+    <message>
+        <source>The plugin didn’t start.</source>
+        <translation>Wtyczka się nie uruchomiła.</translation>
+    </message>
+    <message>
+        <source>“%1” failed.</source>
+        <translation>Polecenie „%1” nie powiodło się.</translation>
+    </message>
+    <message>
+        <source>Its %1 handler failed: %2</source>
+        <translation>Obsługa zdarzenia %1 we wtyczce nie powiodła się: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>Wtyczka działała dłużej niż %n sekundę, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
+            <numerusform>Wtyczka działała dłużej niż %n sekundy, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
+            <numerusform>Wtyczka działała dłużej niż %n sekund, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
+        <translation>Wtyczka nieoczekiwanie się zatrzymała. Następne polecenie uruchomi ją ponownie.</translation>
+    </message>
+    <message>
+        <source>Force stopped.</source>
+        <translation>Wymuszono zatrzymanie.</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t running.</source>
+        <translation>Wtyczka nie działa.</translation>
     </message>
 </context>
 <context>
@@ -9862,22 +10264,6 @@ zostanie zmieniony na domyślny</translation>
 <context>
     <name>HikariSub.Search</name>
     <message>
-        <source>Search</source>
-        <translation>Szukaj</translation>
-    </message>
-    <message>
-        <source>Find and replace</source>
-        <translation>Znajdź i zamień</translation>
-    </message>
-    <message>
-        <source>Reached the end of the subtitles.</source>
-        <translation>Osiągnięto koniec napisów.</translation>
-    </message>
-    <message>
-        <source>Search again from the first line?</source>
-        <translation>Szukać ponownie od pierwszej linijki?</translation>
-    </message>
-    <message>
         <source>“%1”</source>
         <translation>“%1”</translation>
     </message>
@@ -9906,6 +10292,10 @@ zostanie zmieniony na domyślny</translation>
         <translation>Szukanie tylko w tych stylach nic nie znajdzie.</translation>
     </message>
     <message>
+        <source>Replace in files</source>
+        <translation>Zamień w plikach</translation>
+    </message>
+    <message>
         <source>Replace in every matching file in “%1”?</source>
         <translation>Zamienić we wszystkich pasujących plikach w “%1”?</translation>
     </message>
@@ -9932,68 +10322,24 @@ because it was edited.</source>
 ponieważ została zmieniona.</translation>
     </message>
     <message>
-        <source>In files</source>
-        <translation>W plikach</translation>
-    </message>
-    <message>
-        <source>Find in subtitles</source>
-        <translation>Znajdź w napisach</translation>
-    </message>
-    <message>
-        <source>Search text:</source>
-        <translation>Szukany tekst:</translation>
-    </message>
-    <message>
-        <source>Replace with:</source>
-        <translation>Zamień na:</translation>
-    </message>
-    <message>
-        <source>Filters:</source>
-        <translation>Filtry:</translation>
-    </message>
-    <message>
-        <source>Windows search filters separated by semicolons, e.g. &quot;*.ass; *.srt&quot;.</source>
-        <translation>Filtry wyszukiwania systemu Windows rozdzielone średnikami, np. &quot;*.ass; *.srt&quot;.</translation>
-    </message>
-    <message>
-        <source>Catalog:</source>
-        <translation>Katalog:</translation>
-    </message>
-    <message>
-        <source>Subtitle search folder:</source>
-        <translation>Katalog szukania napisów:</translation>
-    </message>
-    <message>
         <source>Match case</source>
         <translation>Uwzględniaj wielkość liter</translation>
     </message>
     <message>
+        <source>All styles</source>
+        <translation>Wszystkie style</translation>
+    </message>
+    <message>
+        <source>In text</source>
+        <translation>W tekście</translation>
+    </message>
+    <message>
+        <source>Match at</source>
+        <translation>Dopasuj w</translation>
+    </message>
+    <message>
         <source>Include comments</source>
         <translation>Uwzględnij komentarze</translation>
-    </message>
-    <message>
-        <source>Regular expressions</source>
-        <translation>Wyrażenia regularne</translation>
-    </message>
-    <message>
-        <source>Skip tags</source>
-        <translation>Pomiń tagi</translation>
-    </message>
-    <message>
-        <source>Beginning of text</source>
-        <translation>Początek tekstu</translation>
-    </message>
-    <message>
-        <source>Skip text</source>
-        <translation>Pomiń tekst</translation>
-    </message>
-    <message>
-        <source>End of text</source>
-        <translation>Koniec tekstu</translation>
-    </message>
-    <message>
-        <source>In field</source>
-        <translation>W polu</translation>
     </message>
     <message>
         <source>Text</source>
@@ -10008,16 +10354,218 @@ ponieważ została zmieniona.</translation>
         <translation>Aktor</translation>
     </message>
     <message>
+        <source>From the selection</source>
+        <translation>Od zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Match at start</source>
+        <translation>Dopasuj na początku</translation>
+    </message>
+    <message>
+        <source>Match at end</source>
+        <translation>Dopasuj na końcu</translation>
+    </message>
+    <message>
+        <source>Comments too</source>
+        <translation>Także komentarze</translation>
+    </message>
+    <message>
+        <source>Subfolders</source>
+        <translation>Podfoldery</translation>
+    </message>
+    <message>
+        <source>Hidden folders</source>
+        <translation>Ukryte foldery</translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation>Brak dopasowań</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <extracomment>The live match count: the current match, then all matches</extracomment>
+        <translation>%1 z %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n dopasowanie</numerusform>
+            <numerusform>%n dopasowania</numerusform>
+            <numerusform>%n dopasowań</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n match(es)</source>
+        <translation>
+            <numerusform>%1 z %n dopasowania</numerusform>
+            <numerusform>%1 z %n dopasowań</numerusform>
+            <numerusform>%1 z %n dopasowań</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This document</source>
+        <translation>Ten dokument</translation>
+    </message>
+    <message>
+        <source>Open documents</source>
+        <translation>Otwarte dokumenty</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>Folder</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Styl</translation>
+    </message>
+    <message>
         <source>Effect</source>
         <translation>Efekt</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Wszystkie</translation>
+    </message>
+    <message>
+        <source>Selected</source>
+        <translation>Zaznaczone</translation>
+    </message>
+    <message>
+        <source>All text</source>
+        <translation>Cały tekst</translation>
+    </message>
+    <message>
+        <source>Outside tags</source>
+        <translation>Poza tagami</translation>
+    </message>
+    <message>
+        <source>Inside tags</source>
+        <translation>Wewnątrz tagów</translation>
+    </message>
+    <message>
+        <source>Anywhere</source>
+        <translation>Gdziekolwiek</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Początek</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>Koniec</translation>
+    </message>
+    <message>
+        <source>Show replace</source>
+        <translation>Pokaż zamianę</translation>
+    </message>
+    <message>
+        <source>Hide replace</source>
+        <translation>Ukryj zamianę</translation>
+    </message>
+    <message>
+        <source>Regular expression</source>
+        <translation>Wyrażenie regularne</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>Znajdź poprzedni</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>Znajdź następny</translation>
+    </message>
+    <message>
+        <source>Find all</source>
+        <translation>Znajdź wszystko</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>Opcje</translation>
+    </message>
+    <message>
+        <source>Options that differ from the defaults</source>
+        <translation>Opcje różniące się od domyślnych</translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation>Zamień na</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace in %n file(s)…</source>
+        <translation>
+            <numerusform>Zamień w %n pliku…</numerusform>
+            <numerusform>Zamień w %n plikach…</numerusform>
+            <numerusform>Zamień w %n plikach…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace in files…</source>
+        <translation>Zamień w plikach…</translation>
+    </message>
+    <message>
+        <source>Search in</source>
+        <translation>Szukaj w</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>Wybierz folder…</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Pliki</translation>
+    </message>
+    <message>
+        <source>File patterns separated by semicolons, such as *.ass; *.srt</source>
+        <translation>Wzorce plików rozdzielone średnikami, np. *.ass; *.srt</translation>
+    </message>
+    <message>
+        <source>Field</source>
+        <translation>Pole</translation>
     </message>
     <message>
         <source>Lines</source>
         <translation>Linijki</translation>
     </message>
     <message>
-        <source>All lines</source>
-        <translation>Wszystkie linijki</translation>
+        <source>Results</source>
+        <translation>Wyniki</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n file(s)</source>
+        <extracomment>%1 is the number of matches, such as &quot;5 matches&quot;</extracomment>
+        <translation>
+            <numerusform>%1 w %n pliku</numerusform>
+            <numerusform>%1 w %n plikach</numerusform>
+            <numerusform>%1 w %n plikach</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n line(s)</source>
+        <translation>
+            <numerusform>%1 w %n linijce</numerusform>
+            <numerusform>%1 w %n linijkach</numerusform>
+            <numerusform>%1 w %n linijkach</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Close results</source>
+        <translation>Zamknij wyniki</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Linijka %1: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace %n checked</source>
+        <translation>
+            <numerusform>Zamień %n zaznaczone</numerusform>
+            <numerusform>Zamień %n zaznaczone</numerusform>
+            <numerusform>Zamień %n zaznaczonych</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Choose folder</source>
+        <translation>Wybierz folder</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -10026,38 +10574,6 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>From selected</source>
         <translation>Od zaznaczonej</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>Wybierz style</translation>
-    </message>
-    <message>
-        <source>Search in subfolders</source>
-        <translation>Szukaj w podfolderach</translation>
-    </message>
-    <message>
-        <source>Search in hidden folders</source>
-        <translation>Szukaj w ukrytych folderach</translation>
-    </message>
-    <message>
-        <source>Find in all open subtitles</source>
-        <translation>Znajdź we wszystkich otwartych napisach</translation>
-    </message>
-    <message>
-        <source>Find all in current subtitles</source>
-        <translation>Znajdź wszystko w bieżących napisach</translation>
-    </message>
-    <message>
-        <source>Replace next</source>
-        <translation>Zamień następne</translation>
-    </message>
-    <message>
-        <source>Search from the start</source>
-        <translation>Szukaj od początku</translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation>Zatrzymaj</translation>
     </message>
     <message>
         <source>Drop the missing styles</source>
@@ -10080,26 +10596,6 @@ ponieważ została zmieniona.</translation>
         <translation>Zamień wszystko</translation>
     </message>
     <message>
-        <source>Replace in all open subtitles</source>
-        <translation>Zamień we wszystkich otwartych napisach</translation>
-    </message>
-    <message>
-        <source>Replace in subtitles</source>
-        <translation>Zamień w napisach</translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>Wyniki szukania</translation>
-    </message>
-    <message>
-        <source>No results yet</source>
-        <translation>Na razie brak wyników</translation>
-    </message>
-    <message>
-        <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
-        <translation>Znajdź wszystko, Znajdź we wszystkich otwartych napisach i Znajdź w napisach wyświetlają tu dopasowania; zaznacz te do zmiany i zamień je.</translation>
-    </message>
-    <message>
         <source>Check all</source>
         <translation>Zaznacz wszystkie</translation>
     </message>
@@ -10112,20 +10608,12 @@ ponieważ została zmieniona.</translation>
         <translation>Zamień</translation>
     </message>
     <message>
-        <source>Choose subtitle search folder</source>
-        <translation>Wybierz folder do przeszukania napisów</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
     <message>
         <source>Replaced %1 times.</source>
         <translation>Liczba zamian: %1.</translation>
-    </message>
-    <message>
-        <source>Find in files</source>
-        <translation>Znajdź w plikach</translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -10150,10 +10638,6 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>%1 could not be restored; its backup is in %2.</source>
         <translation>Nie można przywrócić %1; kopia zapasowa jest w %2.</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>Linijka %1: </translation>
     </message>
 </context>
 <context>
@@ -10571,7 +11055,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation>Pliki audio i wideo (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
+        <translation type="vanished">Pliki audio i wideo (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -10993,8 +11477,8 @@ ponieważ została zmieniona.</translation>
         <translation>Obok programu nie znaleziono ustawień starszej wersji. Wybierz folder instalacji starszej wersji.</translation>
     </message>
     <message>
-        <source>%1 holds no legacy settings (Config, Dictionary).</source>
-        <translation>%1 nie zawiera ustawień starszej wersji (Config, Dictionary).</translation>
+        <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
+        <translation>%1 nie zawiera ustawień starszej wersji (brak folderu “Config” ani “Dictionary”).</translation>
     </message>
     <message>
         <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
@@ -11040,7 +11524,7 @@ ponieważ została zmieniona.</translation>
         <translation>Wyłączono: %1</translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
             <numerusform>Sprawdzanie gramatyki nie używa już %n reguły z tej grupy. Możesz ją ponownie włączyć w Ustawienia › Pisownia i gramatyka.</numerusform>
             <numerusform>Sprawdzanie gramatyki nie używa już %n reguł z tej grupy. Możesz ją ponownie włączyć w Ustawienia › Pisownia i gramatyka.</numerusform>
@@ -12664,6 +13148,10 @@ Usunięte style:
     <message>
         <source>Z coordinate for tags \frx and \fry</source>
         <translation>Współrzędna Z dla tagów \frx i \fry</translation>
+    </message>
+    <message>
+        <source>Tag list options</source>
+        <translation>Opcje listy tagów</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -14627,6 +15115,21 @@ po czasie końcowym w milisekundach</translation>
     <message>
         <source>Cannot convert video to RGBA</source>
         <translation>Nie można przekonwertować wideo na RGBA</translation>
+    </message>
+    <message>
+        <source>This video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
+        <translation>Tego wideo nie można odtworzyć na tym komputerze. Jego klatki nadal są widoczne podczas pauzy, a przewijanie i przechodzenie o klatkę działają.</translation>
+    </message>
+    <message>
+        <source>%1 video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
+        <translation>Wideo %1 nie można odtworzyć na tym komputerze. Jego klatki nadal są widoczne podczas pauzy, a przewijanie i przechodzenie o klatkę działają.</translation>
+    </message>
+    <message>
+        <source>Play video</source>
+        <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
+        <translation>Odtwarzanie wideo</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

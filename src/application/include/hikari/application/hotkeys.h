@@ -49,6 +49,12 @@ inline constexpr int kGlobalFirst = 5000;
 inline constexpr int kGlobalQuit = 5108;
 inline constexpr int kLegacyHotkeyActions = 243;
 inline constexpr int kFirstScriptHotkey = 30100;
+// Rows from kFirstScriptHotkey up are macros', and plugin commands' when named "plugin.<id>.<command>".
+inline constexpr std::string_view kPluginCommandPrefix = "plugin.";
+inline bool isPluginCommand(std::string_view name)
+{
+    return name.starts_with(kPluginCommandPrefix);
+}
 
 struct HotkeyAction {
     std::string_view symbol;
@@ -194,8 +200,8 @@ public:
     bool modified() const { return m_modified; }
     int filterMode() const { return m_filterMode; }
     // 0 All, 1 Set shortcuts, 2 Global, 3 Subtitles, 4 Editor, 5 Video,
-    // 6 Audio, 7 Automation (the macros' rows). The selection goes to the
-    // first shown row.
+    // 6 Audio, 7 Automation (the macros' rows), 8 Plugins (the plugin
+    // commands' rows). The selection goes to the first shown row.
     void filter(int mode);
     // Within the filter, only rows whose Function or Hotkey column holds `text`
     // (ASCII case-insensitive; macros' rows also by `also`) show. Empty shows
@@ -219,7 +225,10 @@ public:
     // The "Hotkey mapping" window's title name and whether it offers the
     // window choice (not for scripts).
     std::string mapName(int index) const { return row(index).name; }
-    bool mapOffersWindows(int index) const { return !row(index).name.starts_with("Script"); }
+    bool mapOffersWindows(int index) const
+    {
+        return !row(index).name.starts_with("Script") && !isPluginCommand(row(index).name);
+    }
     // After the mapping window gave `accel` for `type`: the question to ask
     // first, if any (the copy is filled before it).
     std::optional<HotkeyConflict> mapConflict(int row, const std::string &accel, int type, const HotkeyMap &live);

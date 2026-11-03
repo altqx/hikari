@@ -50,6 +50,12 @@ private slots:
         QFile::remove(dir.filePath(QStringLiteral("analytics-queue.json")));
     }
 
+    void sendsThroughTheProxy()
+    {
+        QCOMPARE(Analytics::defaultEndpoint(), QUrl(QStringLiteral("https://i.hikarisub.org/batch/")));
+        QCOMPARE(Analytics::Config().endpoint, Analytics::defaultEndpoint());
+    }
+
     void whatIsSentIsOnTheSite()
     {
         QCOMPARE(Analytics::whatIsSentUrl(), QUrl(QStringLiteral("https://hikarisub.org/en/docs/help/what-is-sent")));
@@ -252,12 +258,13 @@ private slots:
         analytics.commandUsed(QStringLiteral("GLOBAL_SAVE_SUBS"), QStringLiteral("key"));
         analytics.commandUsed(QStringLiteral("GLOBAL_SAVE_SUBS"), QStringLiteral("pointer"));
         analytics.panelOpened(QStringLiteral("FixMinorErrors"));
-        analytics.panelOpened(QStringLiteral("FixMinorErrors"));
+        analytics.panelOpened(QStringLiteral("Spellchecker"));
+        analytics.panelOpened(QStringLiteral("Spellchecker"));
         analytics.dialogOpened(QStringLiteral("styleManager"));
         analytics.dialogOpened(QStringLiteral("styleManager"));
         QCOMPARE(analytics.queued().size(), 4);
         QCOMPARE(analytics.queued().at(2).toObject().value(QStringLiteral("properties")).toObject().value(QStringLiteral("panel")).toString(),
-                 QStringLiteral("fix_minor_errors"));
+                 QStringLiteral("spellchecker"));
         for (int i = 0; i < Analytics::kMaxLayoutChanges + 5; ++i)
             analytics.layoutChanged(QStringLiteral("saved"));
         QCOMPARE(analytics.queued().size(), 4 + Analytics::kMaxLayoutChanges);

@@ -1,5 +1,7 @@
 #include "hikari/application/audio_devices.h"
+#include "hikari/application/video_session.h"
 #include "hikari/backends/ffms_indexed_source.h"
+#include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/qt_audio_devices.h"
 #include "hikari/backends/qt_general_player.h"
 #include "hikari/backends/video_frame_bgra.h"
@@ -12,6 +14,7 @@
 #include <QVideoFrame>
 #include <QtTest>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -33,6 +36,11 @@ namespace {
 std::string fixture(const char *kind)
 {
     return std::string(HIKARI_MEDIA_FIXTURES) + "/" + kind + ".mkv";
+}
+
+std::string webm(const QString &name)
+{
+    return std::string(HIKARI_WEBM_FIXTURES) + "/" + name.toStdString();
 }
 
 int barcode(const QVideoFrame &frame)
@@ -73,6 +81,19 @@ std::optional<QString> runSinks(const QStringList &arguments)
     return QString::fromUtf8(process.readAllStandardOutput()).trimmed();
 }
 
+struct ShownFrames : hikari::application::PresenterPort {
+    explicit ShownFrames(const hikari::application::VideoSession &video) : video(video) {}
+    const hikari::application::VideoSession &video;
+    QList<int> playing;
+    void present(hikari::application::Presentation p, Done done) override
+    {
+        if (p.frame && p.frame->index < 0)
+            playing.push_back(video.currentFrame().value_or(-1));
+        done({p.generation, hikari::application::PresentOutcome::Accepted,
+              hikari::application::PresentStage::Rendered, {}});
+    }
+};
+
 std::int64_t cfrStartUs(int index)
 {
     return static_cast<std::int64_t>(index) * 1'001'000'000 / 24'000;
@@ -92,8 +113,13 @@ class GeneralPlayerTests : public QObject {
 
     std::optional<MediaDescription> open(QtGeneralPlayer &player, const char *kind)
     {
+        return openPath(player, fixture(kind));
+    }
+
+    std::optional<MediaDescription> openPath(QtGeneralPlayer &player, const std::string &path)
+    {
         std::optional<std::expected<MediaDescription, PlayerError>> result;
-        player.open(fixture(kind), [&](auto r) { result = std::move(r); });
+        player.open(path, [&](auto r) { result = std::move(r); });
         if (!QTest::qWaitFor([&] { return result.has_value(); }, 10'000) || !*result)
             return std::nullopt;
         return **result;
@@ -218,6 +244,162 @@ private slots:
                      static_cast<long long>(result->deliveredStartUs), static_cast<long long>(result->errorUs()));
         std::fflush(stderr);
         QVERIFY2(std::abs(result->errorUs()) <= 100'000, "within 100 ms of the request");
+    }
+
+    void webmPlaysFromASeekedTime_data()
+    {
+        QTest::addColumn<QString>("file");
+        QTest::addColumn<bool>("variableRate");
+        QTest::newRow("vp8 vorbis") << QStringLiteral("vp8-vorbis.webm") << false;
+        QTest::newRow("vp9 opus") << QStringLiteral("vp9-opus.webm") << false;
+        QTest::newRow("vp9 alpha") << QStringLiteral("vp9-alpha.webm") << false;
+        QTest::newRow("vp9 vfr") << QStringLiteral("vp9-vfr.webm") << true;
+    }
+
+    void webmPlaysFromASeekedTime()
+    {
+        QFETCH(QString, file);
+        QFETCH(bool, variableRate);
+        QtGeneralPlayer player(false);
+        const auto d = openPath(player, webm(file));
+        QVERIFY(d);
+        QCOMPARE(d->videoTracks.size(), 1u);
+        const auto [result, index] = seek(player, 1'000'000);
+        QVERIFY(result);
+        QVERIFY(index >= 0);
+        const std::int64_t truth = variableRate ? vfrStartUs(index) : std::int64_t(index) * 1'000'000 / 24;
+        QVERIFY2(std::abs(result->deliveredStartUs - truth) <= 1000,
+                 qPrintable(QStringLiteral("frame %1 reported at %2 us").arg(index).arg(result->deliveredStartUs)));
+        QVERIFY2(std::abs(result->errorUs()) <= 100'000, "within 100 ms of the request");
+        int last = index;
+        auto connection = connect(&player, &QtGeneralPlayer::frameDelivered, this,
+                                  [&](const QVideoFrame &f) { last = std::max(last, barcode(f)); });
+        player.play();
+        QVERIFY(QTest::qWaitFor([&] { return last >= index + 5; }, 10'000));
+        disconnect(connection);
+        player.stop();
+    }
+
+    void av1PlaysOrFailsWithoutAFrame()
+    {
+        QtGeneralPlayer player(false);
+        player.setFrameDeadline(std::chrono::seconds(2));
+        const auto d = openPath(player, webm(QStringLiteral("av1-opus.webm")));
+        QVERIFY(d);
+        QCOMPARE(d->videoTracks.at(0).codec, std::string("AV1"));
+        std::optional<std::expected<SeekResult, PlayerError>> result;
+        player.seek(1'000'000, [&](auto r) { result = std::move(r); });
+        QVERIFY(QTest::qWaitFor([&] { return result.has_value(); }, 10'000));
+        std::fprintf(stderr, "av1 playback observation: %s\n", *result ? "decoded" : "no video frame");
+        std::fflush(stderr);
+        if (!*result)
+            QCOMPARE(result->error(), PlayerError::NoVideoFrame);
+        else
+            QVERIFY(std::abs(result->value().errorUs()) <= 100'000);
+    }
+
+    void aPlayerThatDecodedAFrameNeverReportsNoVideoFrame()
+    {
+        QtGeneralPlayer player(false);
+        QVERIFY(open(player, "cfr"));
+        pauseOnFirstFrame(player);
+        player.setFrameDeadline(std::chrono::milliseconds(50));
+        std::optional<std::expected<SeekResult, PlayerError>> result;
+        player.seek(60'000'000, [&](auto r) { result = std::move(r); });
+        QTest::qWait(500);
+        QVERIFY(!result || *result || result->error() != PlayerError::NoVideoFrame);
+    }
+
+    void aSeekRightAfterTheLoadIsWherePlaybackStarts_data()
+    {
+        QTest::addColumn<QString>("kind");
+        QTest::addColumn<bool>("sound");
+        QTest::newRow("no audio") << QStringLiteral("long") << false;
+        QTest::newRow("audio") << QStringLiteral("longaudio") << true;
+    }
+
+    void aSeekRightAfterTheLoadIsWherePlaybackStarts()
+    {
+        QFETCH(QString, kind);
+        QFETCH(bool, sound);
+        FfmsIndexedSource source(QStringLiteral(HIKARI_MEDIA_HELPER));
+        hikari::backends::LibassRenderer renderer;
+        QtGeneralPlayer player(sound);
+        hikari::application::VideoSession video(source, renderer);
+        video.setFrameWorker([this](std::function<void()> task) {
+            QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
+        });
+        video.setGeneralPlayer(&player);
+        connect(&player, &QtGeneralPlayer::frameDelivered, this, [&](const QVideoFrame &frame) {
+            video.submitGeneralFrame(frame.startTime(), std::nullopt,
+                                     [frame](hikari::application::FramePool &pool) {
+                                         auto out = pool.acquire();
+                                         return hikari::backends::videoFrameToBgra(frame, *out, std::nullopt)
+                                                    ? out
+                                                    : nullptr;
+                                     });
+        });
+        ShownFrames presenter(video);
+        video.setPresenter(&presenter);
+        const auto target = hikari::core::DocumentTime(10'000'000);
+        bool sought = false;
+        video.setObserver([&] {
+            if (!sought && video.state() == hikari::application::VideoSession::State::Ready) {
+                sought = true;
+                video.seekTo(target);
+            }
+        });
+        video.open(fixture(kind.toUtf8().constData()));
+        QVERIFY(QTest::qWaitFor([&] { return sought; }, 20'000));
+        const auto frame = video.frameAtOrAfter(target);
+        QVERIFY(frame);
+        QVERIFY(QTest::qWaitFor([&] { return video.reportedFrame() == frame; }, 10'000));
+        QVERIFY(video.play());
+        QVERIFY(QTest::qWaitFor([&] { return presenter.playing.size() >= 5; }, 10'000));
+        video.pause();
+        qInfo() << "first player frames" << presenter.playing;
+        QVERIFY2(std::abs(presenter.playing.front() - *frame) <= 1,
+                 qPrintable(QStringLiteral("playback started at frame %1, the seek was to %2")
+                                .arg(presenter.playing.front())
+                                .arg(*frame)));
+    }
+
+    void aSeekOnlyPassesTheSoughtFrames_data()
+    {
+        QTest::addColumn<bool>("paused");
+        QTest::newRow("while playing") << false;
+        QTest::newRow("after a pause") << true;
+    }
+
+    void aSeekOnlyPassesTheSoughtFrames()
+    {
+        QFETCH(bool, paused);
+        QtGeneralPlayer player(false);
+        QVERIFY(open(player, "long"));
+        player.play();
+        QVERIFY(QTest::qWaitFor([&] { return player.deliveredFrames() > 5; }, 10'000));
+        if (paused) {
+            player.pause();
+            QTest::qWait(200);
+        }
+        const std::int64_t target = cfrStartUs(240);
+        QList<qint64> after;
+        auto connection = connect(&player, &QtGeneralPlayer::frameDelivered, this,
+                                  [&](const QVideoFrame &f) { after.push_back(f.startTime()); });
+        std::optional<std::expected<SeekResult, PlayerError>> sought;
+        player.seek(target, [&](auto r) { sought = std::move(r); });
+        if (paused) {
+            QVERIFY(QTest::qWaitFor([&] { return sought.has_value(); }, 10'000));
+            player.play();
+        }
+        QVERIFY(QTest::qWaitFor([&] { return sought.has_value() && after.size() >= 3; }, 10'000));
+        disconnect(connection);
+        player.pause();
+        QVERIFY(sought->has_value());
+        const std::int64_t frame = cfrStartUs(1);
+        QVERIFY2(std::abs((*sought)->deliveredStartUs - target) <= frame,
+                 qPrintable(QString::number((*sought)->deliveredStartUs)));
+        QVERIFY2(after.front() >= target - frame, qPrintable(QDebug::toString(after)));
     }
 
     void clockIsAnEstimateOnlyWhilePlaying()

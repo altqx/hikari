@@ -1,6 +1,7 @@
 #include "hikari/app/automation_hotkeys_controller.h"
 
 #include "hikari/app/automation_shell.h"
+#include "hikari/application/hotkeys.h"
 
 #include <QCoreApplication>
 #include <QFile>
@@ -122,11 +123,30 @@ QString AutomationHotkeysController::scriptLabel(const std::string &path) const
     return fileNameOf(path);
 }
 
+bool AutomationHotkeysController::resolves(const application::MacroBinding &binding) const
+{
+    if (application::isPluginCommand(binding.legacyName))
+        return m_pluginCommands.contains(binding.legacyName);
+    return resolve(binding).has_value();
+}
+
+void AutomationHotkeysController::setPluginCommands(const QVariantList &commands)
+{
+    m_pluginCommands.clear();
+    for (const QVariant &command : commands) {
+        const QVariantMap c = command.toMap();
+        m_pluginCommands[c.value(QStringLiteral("id")).toString().toStdString()] = {
+            c.value(QStringLiteral("pluginName")).toString(), c.value(QStringLiteral("title")).toString()};
+    }
+    emit bindingsChanged();
+    emit shortcutsChanged();
+}
+
 QVariantMap AutomationHotkeysController::keys() const
 {
     QVariantMap out;
     for (const auto &[name, b] : m_committed)
-        if (resolve(b))
+        if (resolves(b))
             out.insert(qs(name), qs(b.keys));
     return out;
 }
@@ -135,6 +155,8 @@ QVariantList AutomationHotkeysController::missing() const
 {
     QVariantList out;
     for (const auto &[name, b] : m_committed) {
+        if (application::isPluginCommand(name))
+            continue;
         const auto r = resolution(b);
         if (r.identity)
             continue;
@@ -150,7 +172,7 @@ QVariantList AutomationHotkeysController::shortcuts() const
 {
     QVariantList out;
     for (const auto &[name, b] : m_installed)
-        if (resolve(b))
+        if (resolves(b))
             out << QVariantMap{{QStringLiteral("legacyName"), qs(name)}, {QStringLiteral("keys"), qs(b.keys)}};
     return out;
 }
@@ -164,11 +186,26 @@ std::vector<std::string> AutomationHotkeysController::unboundMacros() const
         if (!m_committed.contains(name) && seen.insert(name).second && recordingProblem(qs(name)).isEmpty())
             out.push_back(name);
     }
+    for (const auto &[id, names] : m_pluginCommands)
+        if (!m_committed.contains(id))
+            out.push_back(id);
     return out;
 }
 
 QVariantMap AutomationHotkeysController::describe(const std::string &legacyName) const
 {
+    if (application::isPluginCommand(legacyName)) {
+        const auto listed = m_pluginCommands.find(legacyName);
+        if (listed != m_pluginCommands.end())
+            return {{QStringLiteral("script"), listed->second.first},
+                    {QStringLiteral("macro"), listed->second.second},
+                    {QStringLiteral("problem"), QString()}};
+        const std::string rest = legacyName.substr(application::kPluginCommandPrefix.size());
+        return {{QStringLiteral("script"), qs(rest.substr(0, rest.rfind('.')))},
+                {QStringLiteral("macro"), QString()},
+                {QStringLiteral("problem"),
+                 QCoreApplication::translate("HikariSub.Plugins", "The plugin isn’t installed, is turned off, or no longer has this command")}};
+    }
     const auto it = m_committed.find(legacyName);
     application::MacroBinding binding;
     if (it != m_committed.end())
@@ -279,6 +316,8 @@ bool AutomationHotkeysController::run(const QString &legacyName)
     const auto it = m_committed.find(legacyName.toStdString());
     if (it == m_committed.end())
         return false;
+    if (application::isPluginCommand(it->first))
+        return m_pluginCommands.contains(it->first) && m_runPlugin && m_runPlugin(legacyName);
     const auto target = resolve(it->second);
     return target && m_automation.run(target->first, target->second, AutomationShell::RunOrigin::Hotkey);
 }

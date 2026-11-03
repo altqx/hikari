@@ -247,7 +247,7 @@ RowLayout {
                 objectName: "tagButton" + index
                 text: modelData.name
                 iconRole: modelData.icon
-                focusPolicy: Qt.NoFocus
+                focusPolicy: Qt.TabFocus
                 enabled: strip.editor.editable
                 Accessible.name: modelData.name.length > 0 ? modelData.name : modelData.tag
                 Accessible.description: modelData.tag
@@ -263,6 +263,7 @@ RowLayout {
                     acceptedButtons: Qt.RightButton
                     onTapped: eventPoint => tagButtonMenu.openFor(tagButton, tagButton.index, eventPoint.position)
                 }
+                MenuKey.onRequested: at => tagButtonMenu.openFor(tagButton, tagButton.index, at)
             }
         }
         IconToolButton {
@@ -299,7 +300,7 @@ RowLayout {
             ShellMenuItem {
                 objectName: "tagButtonEdit"
                 iconRole: "edit"
-                text: qsTr("Edit...")
+                text: qsTr("Edit…")
                 onTriggered: tagButtonEditor.openFor(tagButtonMenu.button, tagButtonMenu.index,
                                                      strip.tagButtons.buttons[tagButtonMenu.index])
             }

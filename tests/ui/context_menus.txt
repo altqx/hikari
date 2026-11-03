@@ -26,77 +26,68 @@ Text field > -
 Text field > Select all
 Grid
 Grid > Insert >
-Grid > Insert > Insert before [GRID_INSERT_BEFORE]
-Grid > Insert > Insert after [GRID_INSERT_AFTER]
-Grid > Insert > Insert before with video time [GRID_INSERT_BEFORE_VIDEO]
-Grid > Insert > Insert after with video time [GRID_INSERT_AFTER_VIDEO]
-Grid > Insert > Insert before with video frame time [GRID_INSERT_BEFORE_WITH_VIDEO_FRAME]
-Grid > Insert > Insert after with video frame time [GRID_INSERT_AFTER_WITH_VIDEO_FRAME]
-Grid > Duplicate lines [GRID_DUPLICATE_LINES]
-Grid > Swap [GRID_SWAP_LINES]
-Grid > Join lines [GRID_JOIN_LINES]
-Grid > Join lines and keep first [GRID_JOIN_TO_FIRST_LINE]
-Grid > Join lines and keep last [GRID_JOIN_TO_LAST_LINE]
-Grid > Make times continuous with the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
-Grid > Make times continuous with the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
-Grid > Split lines >
-Grid > Split lines > Split line at video time [GRID_SPLIT_BY_VIDEO_TIME]
-Grid > Split lines > Split lines into frames [GRID_SPLIT_BY_FRAME]
-Grid > Split lines > Split lines into characters [GRID_SPLIT_BY_CHARS]
-Grid > Split lines > Split lines into words [GRID_SPLIT_BY_WORDS]
-Grid > Split lines > Split lines by wraps [GRID_SPLIT_BY_WRAPS]
-Grid > Select all lines visible on video [GRID_SELECT_VISIBLE_LINES]
-Grid > Make line group [GRID_TREE_MAKE]
-Grid > Show subtitles preview [GRID_SHOW_PREVIEW]
-Grid > Paste translation text [GRID_PASTE_TRANSLATION]
-Grid > Dialogue shifting window [GRID_TRANSLATION_DIALOG]
-Grid > Hide selected lines [GRID_HIDE_SELECTED]
-Grid > Filtering >
-Grid > Filtering > Filter after loading subtitles [GRID_FILTER_AFTER_SUBS_LOAD]
-Grid > Filtering > Reverse filtering [GRID_FILTER_INVERT]
-Grid > Filtering > Do not reset previous filtering [GRID_FILTER_DO_NOT_RESET]
-Grid > Filtering > Hide lines with styles >
-Grid > Filtering > Hide selected lines [GRID_FILTER_BY_SELECTIONS]
-Grid > Filtering > Hide comments [GRID_FILTER_BY_DIALOGUES]
-Grid > Filtering > Show unconfirmed [GRID_FILTER_BY_DOUBTFUL]
-Grid > Filtering > Show untranslated [GRID_FILTER_BY_UNTRANSLATED]
-Grid > Filtering > Filter [GRID_FILTER]
-Grid > Filtering > Turn off filtering [GRID_FILTER_BY_NOTHING]
-Grid > Ignore filtering in some actions [GRID_FILTER_IGNORE_IN_ACTIONS]
-Grid > Hide columns >
-Grid > Hide columns > Hide empty columns
-Grid > Hide columns > -
-Grid > Hide columns > Hide layer [GRID_HIDE_LAYER]
-Grid > Hide columns > Hide start time [GRID_HIDE_START]
-Grid > Hide columns > Hide end time [GRID_HIDE_END]
-Grid > Hide columns > Hide actor [GRID_HIDE_ACTOR]
-Grid > Hide columns > Hide style [GRID_HIDE_STYLE]
-Grid > Hide columns > Hide left margin [GRID_HIDE_MARGINL]
-Grid > Hide columns > Hide right margin [GRID_HIDE_MARGINR]
-Grid > Hide columns > Hide vertical margin [GRID_HIDE_MARGINV]
-Grid > Hide columns > Hide effect [GRID_HIDE_EFFECT]
-Grid > Hide columns > Hide characters per second [GRID_HIDE_CPS]
-Grid > Hide columns > Hide line wraps [GRID_HIDE_WRAPS]
-Grid > Hide columns > -
-Grid > Hide columns > Reset column widths
-Grid > Set new FPS [GRID_SET_NEW_FPS]
-Grid > Set FPS from video [GRID_SET_FPS_FROM_VIDEO]
-Grid > Copy [GRID_COPY]
+Grid > Insert > Before [GRID_INSERT_BEFORE]
+Grid > Insert > After [GRID_INSERT_AFTER]
+Grid > Insert > -
+Grid > Insert > Before, at video time [GRID_INSERT_BEFORE_VIDEO]
+Grid > Insert > After, at video time [GRID_INSERT_AFTER_VIDEO]
+Grid > Insert > Before, at video frame time [GRID_INSERT_BEFORE_WITH_VIDEO_FRAME]
+Grid > Insert > After, at video frame time [GRID_INSERT_AFTER_WITH_VIDEO_FRAME]
+Grid > Duplicate 1 line(s) [GRID_DUPLICATE_LINES]
 Grid > Cut [GRID_CUT]
+Grid > Copy [GRID_COPY]
 Grid > Paste [GRID_PASTE]
-Grid > Copy columns [GRID_COPY_COLUMNS]
-Grid > Paste columns [GRID_PASTE_COLUMNS]
-Grid > Delete text [GLOBAL_REMOVE_TEXT]
-Grid > Delete lines [GLOBAL_REMOVE_LINES]
+Grid > Paste special >
+Grid > Paste special > Copy columns [GRID_COPY_COLUMNS]
+Grid > Paste special > Paste columns [GRID_PASTE_COLUMNS]
+Grid > Paste special > -
+Grid > Paste special > Paste translation from a file… [GRID_PASTE_TRANSLATION]
 Grid > -
-Grid > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
-Grid > Load subtitles from an MKV/OGM file [GRID_SUBS_FROM_MKV]
+Grid > Join >
+Grid > Join > Join [GRID_JOIN_LINES]
+Grid > Join > Keep first [GRID_JOIN_TO_FIRST_LINE]
+Grid > Join > Keep last [GRID_JOIN_TO_LAST_LINE]
+Grid > Split >
+Grid > Split > At video time [GRID_SPLIT_BY_VIDEO_TIME]
+Grid > Split > Into frames [GRID_SPLIT_BY_FRAME]
+Grid > Split > -
+Grid > Split > Into characters [GRID_SPLIT_BY_CHARS]
+Grid > Split > Into words [GRID_SPLIT_BY_WORDS]
+Grid > Split > By wraps [GRID_SPLIT_BY_WRAPS]
+Grid > Swap lines [GRID_SWAP_LINES]
+Grid > Make times continuous >
+Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
+Grid > Make times continuous > With the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
+Grid > Make line group [GRID_TREE_MAKE]
+Grid > -
+Grid > Select lines visible on video [GRID_SELECT_VISIBLE_LINES]
+Grid > Show subtitles preview [GRID_SHOW_PREVIEW]
+Grid > Translation matching… [GRID_TRANSLATION_DIALOG]
+Grid > -
+Grid > Delete text [GLOBAL_REMOVE_TEXT]
+Grid > Delete 1 line(s) [GLOBAL_REMOVE_LINES]
+Grid header
+Grid header > Layer [GRID_HIDE_LAYER]
+Grid header > Start time [GRID_HIDE_START]
+Grid header > End time [GRID_HIDE_END]
+Grid header > Actor [GRID_HIDE_ACTOR]
+Grid header > Style [GRID_HIDE_STYLE]
+Grid header > Left margin [GRID_HIDE_MARGINL]
+Grid header > Right margin [GRID_HIDE_MARGINR]
+Grid header > Vertical margin [GRID_HIDE_MARGINV]
+Grid header > Effect [GRID_HIDE_EFFECT]
+Grid header > Characters per second [GRID_HIDE_CPS]
+Grid header > Line wraps [GRID_HIDE_WRAPS]
+Grid header > -
+Grid header > Hide empty columns
+Grid header > Reset column widths
 Grid group row
-Grid group row > Add lines
-Grid group row > Copy line group
-Grid group row > Change description
 Grid group row > Select the group's lines
-Grid group row > Delete
+Grid group row > Add 1 selected line(s)
+Grid group row > Copy line group
+Grid group row > Change description…
+Grid group row > -
+Grid group row > Ungroup
 Video
 Video > Copy video position [VIDEO_COPY_COORDS]
 Video > Play [VIDEO_PLAY_PAUSE]
@@ -147,16 +138,46 @@ Full-screen video > -
 Full-screen video > Unload video [VIDEO_DELETE_FILE]
 Full-screen video > -
 Full-screen video > -
-Panel options
-Panel options > -
-Panel options > Move panel…
-Panel options > Move tab left
-Panel options > Move tab right
-Panel options > Undock
-Panel options > -
-Panel options > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
-Panel options > -
-Panel options > Close
+Grid panel options
+Grid panel options > Filtering >
+Grid panel options > Filtering > Filter [GRID_FILTER]
+Grid panel options > Filtering > Turn off filtering [GRID_FILTER_BY_NOTHING]
+Grid panel options > Filtering > -
+Grid panel options > Filtering > Hide selected lines (filter) [GRID_FILTER_BY_SELECTIONS]
+Grid panel options > Filtering > Hide comments [GRID_FILTER_BY_DIALOGUES]
+Grid panel options > Filtering > Hide lines with styles >
+Grid panel options > Filtering > Show unconfirmed [GRID_FILTER_BY_DOUBTFUL]
+Grid panel options > Filtering > Show untranslated [GRID_FILTER_BY_UNTRANSLATED]
+Grid panel options > Filtering > -
+Grid panel options > Filtering > Reverse filtering [GRID_FILTER_INVERT]
+Grid panel options > Filtering > Filter after loading subtitles [GRID_FILTER_AFTER_SUBS_LOAD]
+Grid panel options > Filtering > Do not reset previous filtering [GRID_FILTER_DO_NOT_RESET]
+Grid panel options > Columns >
+Grid panel options > Columns > Layer [GRID_HIDE_LAYER]
+Grid panel options > Columns > Start time [GRID_HIDE_START]
+Grid panel options > Columns > End time [GRID_HIDE_END]
+Grid panel options > Columns > Actor [GRID_HIDE_ACTOR]
+Grid panel options > Columns > Style [GRID_HIDE_STYLE]
+Grid panel options > Columns > Left margin [GRID_HIDE_MARGINL]
+Grid panel options > Columns > Right margin [GRID_HIDE_MARGINR]
+Grid panel options > Columns > Vertical margin [GRID_HIDE_MARGINV]
+Grid panel options > Columns > Effect [GRID_HIDE_EFFECT]
+Grid panel options > Columns > Characters per second [GRID_HIDE_CPS]
+Grid panel options > Columns > Line wraps [GRID_HIDE_WRAPS]
+Grid panel options > Columns > -
+Grid panel options > Columns > Hide empty columns
+Grid panel options > Columns > Reset column widths
+Grid panel options > Ignore filtering in some actions [GRID_FILTER_IGNORE_IN_ACTIONS]
+Grid panel options > Fold generated lines
+Grid panel options > -
+Grid panel options > Move panel…
+Grid panel options > Move tab left
+Grid panel options > Move tab right
+Grid panel options > Undock
+Grid panel options > -
+Grid panel options > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Grid panel options > -
+Grid panel options > Close
 Document tab
 Document tab > -
 Document tab > Save
@@ -194,8 +215,12 @@ Home row > Remove from list
 Home row > Remove missing files
 Reference tray
 Tag button
-Tag button > Edit...
+Tag button > Edit…
 Tag button > Move left
 Tag button > Move right
 Tag button > -
 Tag button > Remove
+Tag list
+Tag list > Show description
+Tag list > Show all tags
+Tag list > Show VSFilterMod tags

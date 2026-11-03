@@ -10,8 +10,8 @@ namespace hikari::application {
 namespace {
 
 constexpr std::array<std::u16string_view, 5> kSubtitles{u"ass", u"txt", u"sub", u"srt", u"ssa"};
-constexpr std::array<std::u16string_view, 13> kVideos{u"avi", u"mp4",  u"mkv", u"ogm", u"wmv", u"asf", u"rmvb",
-                                                      u"rm",  u"3gp",  u"ts",  u"m2ts", u"m4v", u"flv"};
+constexpr std::array<std::u16string_view, 14> kVideos{u"avi", u"mp4", u"mkv",  u"ogm", u"wmv", u"asf", u"rmvb",
+                                                      u"rm",  u"3gp", u"ts",   u"m2ts", u"m4v", u"flv", u"webm"};
 
 // The whole string when `c` is missing.
 std::u16string afterLast(const std::u16string &s, char16_t c)

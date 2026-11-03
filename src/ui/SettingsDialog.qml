@@ -14,6 +14,8 @@ DialogWindow {
     property var updates: null
     property var crashReports: null
     property TagButtonsController tagButtons: null
+    property var importer: null
+    property string legacyNotFound: ""
     title: qsTr("Settings")
     dialogId: "settings"
     settings: app ? app.settings : null
@@ -34,6 +36,8 @@ DialogWindow {
     property bool resetAllStaged: false
     signal reloaded()
     signal creditsRequested()
+    signal legacyImportRequested()
+    signal legacyRollBackRequested()
     readonly property VideoFollowChoices follow: VideoFollowChoices { settings: dialog.app.settings }
 
     // MUST KILL: the page ids must match the C++ OptionsPage ids (and "hotkeys")
@@ -41,14 +45,14 @@ DialogWindow {
         {id: "general", name: qsTr("General"), iconRole: "settings"},
         {id: "appearance", name: qsTr("Appearance"), iconRole: "appearance"},
         {id: "lineEditor", name: qsTr("Line editor"), iconRole: "editor"},
-        {id: "spelling", name: qsTr("Spelling & grammar"), iconRole: "spellchecker"},
-        {id: "grid", name: qsTr("Subtitle grid"), iconRole: "settings-grid"},
+        {id: "spelling", name: qsTr("Spelling and grammar"), iconRole: "spellchecker"},
+        {id: "grid", name: qsTr("Grid"), iconRole: "settings-grid"},
         {id: "video", name: qsTr("Video"), iconRole: "settings-video"},
         {id: "audio", name: qsTr("Audio"), iconRole: "settings-audio"},
         {id: "conversion", name: qsTr("Conversion"), iconRole: "convert"},
-        {id: "subtitleProperties", name: qsTr("Subtitle properties"), iconRole: "script-properties"},
+        {id: "subtitleProperties", name: qsTr("Script properties"), iconRole: "script-properties"},
         {id: "automation", name: qsTr("Automation"), iconRole: "automation"},
-        {id: "hotkeys", name: qsTr("Hotkeys"), iconRole: "hotkeys"},
+        {id: "hotkeys", name: qsTr("Shortcuts"), iconRole: "hotkeys"},
         {id: "updates", name: qsTr("Updates and privacy"), iconRole: "check-updates"}
     ]
     readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
@@ -66,6 +70,12 @@ DialogWindow {
         values = r.values
         resetAllStaged = false
         copyTagButtons()
+        legacyNotFound = ""
+        if (importer && importer.available) {
+            importer.discover()
+            if (importer.roots.length === 0)
+                legacyNotFound = importer.status
+        }
         reloaded()
         hotkeyFilter.currentIndex = 0
         hotkeySearch.text = ""
@@ -144,7 +154,7 @@ DialogWindow {
         ask({
             title: qsTr("Reset all settings"),
             text: qsTr("Reset all settings to their defaults?"),
-            detail: qsTr("Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages."),
+            detail: qsTr("Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages."),
             severity: "warning",
             choices: [
                 { id: "reset", text: qsTr("Reset all"), role: "destructive" },
@@ -231,7 +241,7 @@ DialogWindow {
                 objectName: "settingsResetPage"
                 iconRole: "restore-default"
                 text: qsTr("Reset page")
-                tip: qsTr("The settings of the page shown back to their defaults")
+                tip: qsTr("Resets the settings on this page to their defaults")
                 onClicked: dialog.resetPage()
             }
             IconToolButton {
@@ -582,6 +592,46 @@ DialogWindow {
                             }
                         }
                     }
+                    SettingsSection {
+                        objectName: "settingsLegacyGroup"
+                        title: qsTr("Legacy")
+                        SettingsRow {
+                            iconRole: "import"
+                            text: qsTr("HikariSub 0.0.x")
+                            IconTextButton {
+                                iconRole: "import"
+                                objectName: "settingsImportLegacy"
+                                text: qsTr("Import legacy settings…")
+                                enabled: dialog.importer !== null && dialog.importer.available
+                                onClicked: dialog.legacyImportRequested()
+                            }
+                            IconTextButton {
+                                iconRole: "undo"
+                                objectName: "settingsRollBackImport"
+                                visible: dialog.importer !== null && dialog.importer.canRollBack
+                                text: qsTr("Roll back the last import…")
+                                onClicked: dialog.legacyRollBackRequested()
+                            }
+                        }
+                        SettingNote {
+                            objectName: "settingsLegacyNotFound"
+                            visible: dialog.legacyNotFound.length > 0
+                            text: dialog.legacyNotFound
+                        }
+                        SettingsRow {
+                            iconRole: "hotkeys"
+                            text: qsTr("Script shortcuts")
+                            IconTextButton {
+                                objectName: "hotkeyImportLegacy"
+                                iconRole: "import"
+                                text: qsTr("Import legacy shortcuts…")
+                                enabled: dialog.hotkeys !== null && !dialog.hotkeys.optionsModified
+                                tip: enabled ? qsTr("Adds the script shortcuts of a legacy Hotkeys.txt at once")
+                                             : qsTr("Press Apply or Cancel first: the import is added at once")
+                                onClicked: legacyHotkeysFile.open()
+                            }
+                        }
+                    }
                 }
 
                 AppearancePage { dialog: dialog }
@@ -593,7 +643,7 @@ DialogWindow {
                         ruled: false
                         SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags") }
                         SettingCheck { setting: "editor.timesToFramesSwitch"; text: qsTr("Show video frames instead of times") }
-                        SettingNote { text: qsTr("In the line editor and the subtitle grid.") }
+                        SettingNote { text: qsTr("In the line editor and the grid.") }
                     }
                     SettingsSection {
                         title: qsTr("Editing")
@@ -891,7 +941,7 @@ DialogWindow {
                         ruled: false
                         SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
                         SettingCheck { setting: "video.fullScreenOnStart"; text: qsTr("Open video from the context menu in full screen") }
-                        SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video at the active line's time") }
+                        SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video at the active line’s time") }
                         SettingsRow {
                             iconRole: "video-to-start-time"
                             text: dialog.follow.seekName
@@ -950,7 +1000,7 @@ DialogWindow {
                             readonly property bool libass: dialog.renderers.length < 2
                                 || dialog.renderers[dialog.values["video.subtitleProvider"] ?? -1] === "libass"
                             text: qsTr("Preview subtitles at")
-                            note: libass ? qsTr("Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script's layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.")
+                            note: libass ? qsTr("Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script’s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.")
                                          : qsTr("Video resolution only with this filter.")
                             SettingChoice {
                                 setting: "video.previewSubtitlesAt"
@@ -986,6 +1036,43 @@ DialogWindow {
                     SettingsSection {
                         title: qsTr("View")
                         SettingsRow {
+                            id: zoomModelRow
+                            objectName: "settingsZoomModel"
+                            iconRole: "zoom-reset"
+                            readonly property bool aegisub: (dialog.values["video.zoomModel"] ?? 0) === 0
+                            text: qsTr("Zoom and pan")
+                            note: aegisub ? qsTr("Middle-drag pans. A touchpad pinch zooms around the pointer.")
+                                          : qsTr("The wheel zooms around the pointer. Zoom video shows a frame to drag.")
+                            SettingChoice {
+                                setting: "video.zoomModel"
+                                model: [qsTr("As in Aegisub 3.5"), qsTr("As in HikariSub legacy")]
+                                Accessible.name: qsTr("Zoom and pan")
+                            }
+                        }
+                        Repeater {
+                            model: [
+                                { setting: "video.scrollAction", text: qsTr("Wheel on the video") },
+                                { setting: "video.ctrlScrollAction", text: qsTr("Ctrl+wheel on the video") },
+                                { setting: "video.shiftScrollAction", text: qsTr("Shift+wheel on the video") }
+                            ]
+                            SettingsRow {
+                                required property var modelData
+                                objectName: "settingsScroll_" + modelData.setting
+                                text: modelData.text
+                                enabled: zoomModelRow.aegisub
+                                SettingChoice {
+                                    setting: modelData.setting
+                                    model: [qsTr("Zooms the video"), qsTr("Zooms the video (reversed)"), qsTr("Pans the video"),
+                                            qsTr("Pans the video (X and Y swapped)"), qsTr("Does nothing")]
+                                    Accessible.name: modelData.text
+                                }
+                            }
+                        }
+                        SettingNote {
+                            visible: zoomModelRow.aegisub
+                            text: qsTr("A visual tool that uses the wheel, or drags with the middle button, keeps it.")
+                        }
+                        SettingsRow {
                             iconRole: "zoom"
                             text: qsTr("Start zoom")
                             // MUST KILL: video.zoomPercent is a number edited as text
@@ -1002,7 +1089,7 @@ DialogWindow {
                     SettingsSection {
                         title: qsTr("Script resolution")
                         SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off the visual tools warning") }
-                        SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Don't warn about a resolution mismatch") }
+                        SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Don’t warn about a resolution mismatch") }
                         SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
                     }
                 }
@@ -1063,7 +1150,7 @@ DialogWindow {
                             SettingNumber { setting: "audio.leadOutValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-out") }
                         }
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
-                        SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don't play after changing the line") }
+                        SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
                     }
                     SettingsSection {
@@ -1095,7 +1182,7 @@ DialogWindow {
                     }
                     SettingsSection {
                         title: qsTr("Karaoke")
-                        SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge every \"n\" with the previous syllable") }
+                        SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge every “n” with the previous syllable") }
                         SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move the syllable line after a click") }
                         SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
                         SettingsRow {
@@ -1116,7 +1203,7 @@ DialogWindow {
                             note: qsTr("0 keeps them all.")
                             SettingNumber {
                                 setting: "audio.cacheFilesLimit"; from: 0; to: 10000; unit: qsTr("files"); name: qsTr("Cache files kept")
-                                tip: qsTr("Range from 0 to 10000, where 0 turns off\nremoving audio cache files.")
+                                tip: qsTr("0–10000. At 0, audio cache files are never removed.")
                             }
                         }
                     }
@@ -1289,10 +1376,10 @@ DialogWindow {
                                 id: hotkeyFilter
                                 objectName: "hotkeyFilter"
                                 Layout.preferredWidth: 200
-                                model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Subtitle shortcuts"),
-                                        qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio shortcuts"),
-                                        qsTr("Automation shortcuts")]
-                                ToolTip.text: qsTr("Filtering mode:")
+                                model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Grid shortcuts"),
+                                        qsTr("Line editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio shortcuts"),
+                                        qsTr("Automation shortcuts"), qsTr("Plugin shortcuts")]
+                                ToolTip.text: qsTr("Filtering mode")
                                 ToolTip.visible: hovered
                                 Accessible.name: qsTr("Choose filtering")
                                 onActivated: index => dialog.hotkeys.filter(index)
@@ -1300,10 +1387,10 @@ DialogWindow {
                             TextField {
                                 id: hotkeySearch
                                 objectName: "hotkeySearch"
-                                placeholderText: qsTr("Search hotkeys")
+                                placeholderText: qsTr("Search shortcuts")
                                 leftPadding: 30
                                 Layout.fillWidth: true
-                                Accessible.name: qsTr("Search hotkeys")
+                                Accessible.name: qsTr("Search shortcuts")
                                 onTextChanged: if (dialog.hotkeys) dialog.hotkeys.search(text)
                                 Icon {
                                     iconRole: "search"
@@ -1311,15 +1398,6 @@ DialogWindow {
                                     x: 8
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
-                            }
-                            IconTextButton {
-                                objectName: "hotkeyImportLegacy"
-                                iconRole: "import"
-                                text: qsTr("Import legacy hotkeys…")
-                                enabled: dialog.hotkeys !== null && !dialog.hotkeys.optionsModified
-                                tip: enabled ? qsTr("The script hotkeys of a legacy Hotkeys.txt, added at once")
-                                             : qsTr("Press Apply or Cancel first: the import is added at once")
-                                onClicked: legacyHotkeysFile.open()
                             }
                         }
                         ListView {
@@ -1332,9 +1410,9 @@ DialogWindow {
                             model: dialog.hotkeys ? dialog.hotkeys.rows : []
                             readonly property int selectedRow: dialog.hotkeys ? dialog.hotkeys.selected : -1
                             ScrollBar.vertical: ScrollBar {}
-                            Accessible.name: qsTr("Hotkeys")
+                            Accessible.name: qsTr("Shortcuts")
                             // MUST KILL: contexts is indexed by a magic window int, 5 standing for Automation
-                            readonly property var contexts: [qsTr("Global"), qsTr("Subtitle grid"), qsTr("Line editor"),
+                            readonly property var contexts: [qsTr("Global"), qsTr("Grid"), qsTr("Line editor"),
                                                              qsTr("Video"), qsTr("Audio"), qsTr("Automation")]
                             function contextOf(row) { return row.script !== undefined ? 5 : row.context }
                             readonly property bool gutter: dialog.hotkeys ? dialog.hotkeys.listFiltered && hotkeySearch.text.length === 0
@@ -1375,7 +1453,7 @@ DialogWindow {
                                         Layout.preferredWidth: hotkeyList.gutter ? 13 : 0
                                     }
                                     Label { text: qsTr("Function"); color: Theme.muted; Layout.preferredWidth: hotkeyList.width * 0.65 }
-                                    Label { text: qsTr("Hotkey"); color: Theme.muted; Layout.fillWidth: true }
+                                    Label { text: qsTr("Shortcut"); color: Theme.muted; Layout.fillWidth: true }
                                 }
                                 Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.line }
                             }
@@ -1495,7 +1573,7 @@ DialogWindow {
                                 iconRole: "hotkeys"
                                 id: hotkeyMapButton
                                 objectName: "hotkeyMap"
-                                text: qsTr("Map hotkey…")
+                                text: qsTr("Map shortcut…")
                                 enabled: dialog.hotkeys.mapProblem.length === 0
                                 onClicked: dialog.mapHotkey(hotkeyMapButton)
                             }
@@ -1619,8 +1697,8 @@ DialogWindow {
     FileDialog {
         id: legacyHotkeysFile
         objectName: "legacyHotkeysFile"
-        title: qsTr("Choose a legacy Hotkeys.txt")
-        nameFilters: [qsTr("Hotkeys (Hotkeys.txt)"), qsTr("All files (*)")]
+        title: qsTr("Import legacy shortcuts")
+        nameFilters: [qsTr("Shortcuts (Hotkeys.txt)"), qsTr("All files (*)")]
         onAccepted: dialog.importLegacyHotkeys(dialog.app.localPath(selectedFile))
     }
     function importLegacyHotkeys(path) {
@@ -1628,12 +1706,12 @@ DialogWindow {
         hotkeys.search(hotkeySearch.text)
         if (!notices)
             return r
-        const title = qsTr("Import legacy hotkeys")
+        const title = qsTr("Import legacy shortcuts")
         if (r.read !== true) {
             notices.post("error", title, qsTr("The file could not be read."), { details: path })
             return r
         }
-        const parts = [r.added > 0 ? qsTr("Added %n script hotkey(s).", "", r.added) : qsTr("No script hotkeys were added.")]
+        const parts = [r.added > 0 ? qsTr("Added %n script shortcut(s).", "", r.added) : qsTr("No script shortcuts were added.")]
         if (r.kept > 0)
             parts.push(qsTr("%n kept the keys you gave them.", "", r.kept))
         if (r.skipped > 0)

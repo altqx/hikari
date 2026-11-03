@@ -338,6 +338,70 @@ private slots:
         stop();
     }
 
+    void aLayoutWithTheRemovedFixMinorErrorsPanelRestoresWithoutIt_data()
+    {
+        QTest::addColumn<QByteArray>("file");
+        QTest::addColumn<int>("floatingWindows");
+        QTest::addColumn<QString>("closed");
+        QTest::addColumn<QString>("current");
+        const QByteArray floating = readAll(fixture(QStringLiteral("kddw-2.4.1"), QStringLiteral("layout-floating.json")));
+        const auto swapped = [&](const QByteArray &with) {
+            QByteArray out = floating;
+            return out.replace("\"FixMinorErrors\"", "\"@SWAP@\"").replace("\"" + with + "\"", "\"FixMinorErrors\"")
+                .replace("\"@SWAP@\"", "\"" + with + "\"");
+        };
+        QJsonObject tabbed = QJsonDocument::fromJson(floating).object();
+        QJsonObject payload = tabbed.value(QStringLiteral("payload")).toObject();
+        QJsonArray windows = payload.value(QStringLiteral("floatingWindows")).toArray();
+        QJsonObject window = windows.at(1).toObject();
+        QJsonObject split = window.value(QStringLiteral("multiSplitterLayout")).toObject();
+        QJsonObject frames = split.value(QStringLiteral("frames")).toObject();
+        QJsonObject styles = frames.value(QStringLiteral("7790")).toObject();
+        QJsonArray docks = styles.value(QStringLiteral("dockWidgets")).toArray();
+        QJsonValue removed = docks.at(0);
+        removed = removed.isObject() ? QJsonValue(QJsonObject{{QStringLiteral("uniqueName"), QStringLiteral("FixMinorErrors")}})
+                                     : QJsonValue(QStringLiteral("FixMinorErrors"));
+        docks.append(removed);
+        styles.insert(QStringLiteral("dockWidgets"), docks);
+        styles.insert(QStringLiteral("currentTabIndex"), 2);
+        frames.insert(QStringLiteral("7790"), styles);
+        split.insert(QStringLiteral("frames"), frames);
+        window.insert(QStringLiteral("multiSplitterLayout"), split);
+        windows.replace(1, window);
+        payload.insert(QStringLiteral("floatingWindows"), windows);
+        tabbed.insert(QStringLiteral("payload"), payload);
+        QTest::newRow("a tab beside Styles") << QJsonDocument(tabbed).toJson() << 2 << QString() << QStringLiteral("Styles");
+        QTest::newRow("alone in a floating window") << swapped("Audio") << 1 << QStringLiteral("Audio") << QStringLiteral("Template");
+        QTest::newRow("alone in a docked group") << swapped("Grid") << 2 << QStringLiteral("Grid") << QStringLiteral("Template");
+    }
+    void aLayoutWithTheRemovedFixMinorErrorsPanelRestoresWithoutIt()
+    {
+        QFETCH(QByteArray, file);
+        QFETCH(int, floatingWindows);
+        QFETCH(QString, closed);
+        QFETCH(QString, current);
+        QString problem;
+        const auto payload = ui::WorkspaceLayoutController::payloadOf(file, &problem);
+        QVERIFY2(payload, qPrintable(problem));
+        QVERIFY(!payload->contains("FixMinorErrors"));
+        QVERIFY(writeAll(path(QStringLiteral("layout.json")), file));
+        start();
+        QVERIFY2(layouts().notice().isEmpty(), qPrintable(layouts().notice()));
+        settled();
+        QVERIFY(DockRegistry::self()->isSane());
+        QVERIFY(!DockRegistry::self()->dockByName(QStringLiteral("FixMinorErrors")));
+        for (const auto *group : DockRegistry::self()->groups())
+            QVERIFY(!group->dockWidgets().isEmpty());
+        QCOMPARE(DockRegistry::self()->floatingWindows().size(), floatingWindows);
+        for (const char *name : {"Editor", "Styles", "Template", "Search"})
+            QVERIFY2(panel(name)->isOpen(), name);
+        QVERIFY(panel(qPrintable(current))->isCurrentTab());
+        if (!closed.isEmpty())
+            QVERIFY(!panel(qPrintable(closed))->isOpen());
+        stop();
+        QVERIFY(!readAll(path(QStringLiteral("layout.json"))).contains("FixMinorErrors"));
+    }
+
     void anOlderEnginesSavedLayoutsApply_data()
     {
         QTest::addColumn<QString>("engineDir");

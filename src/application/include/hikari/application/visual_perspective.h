@@ -10,6 +10,8 @@
 #include <optional>
 #include <utility>
 #include <string>
+#include <string_view>
+#include <vector>
 
 namespace hikari::application::visual {
 
@@ -55,6 +57,14 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
 
 // Convex with its corners in order: the diagonals cross inside it.
 bool convex(const Quad &quad);
+
+// arch1t3cht's [Aegisub Extradata] key for the outer quad.
+inline constexpr std::u8string_view kPlaneKey = u8"_aegi_perspective_ambient_plane";
+// The outer quad as arch1t3cht's Aegisub writes it: "x;y|x;y|x;y|x;y" in script coordinates at two
+// decimals. Empty when a corner is not finite.
+std::u8string planeValue(const Quad &quad);
+// nullopt unless four "x;y" pairs of numbers.
+std::optional<Quad> parsePlane(std::u8string_view value);
 // Where the diagonals cross.
 PointF centre(const Quad &quad);
 // Plane coordinates: (0, 0) .. (1, 1) at the corners, through the projective map of the unit square.
@@ -151,8 +161,11 @@ private:
     PointF axisLock(int corner, PointF delta) const;
     bool move(PointF delta, VisualHost &host);
     void rememberPlane(VisualHost &host);
+    // The outer quad kept for `line`, else the one its extradata holds.
+    std::optional<perspective::Quad> savedPlane(const core::LineRecord &line) const;
+    void keepPlane(const core::LineRecord &line) const;
     // The saved outer quad of the active Line, in the inner quad's plane.
-    void restorePlane();
+    void restorePlane(const core::LineRecord &line);
     // MUST KILL: const follow() and fitPlane() rewrite the mutable read state
     // Moves the quad where the video's time puts it (a \move, the stacking).
     void follow(const VisualHost &host) const;
@@ -174,8 +187,9 @@ private:
     std::optional<core::LineId> m_line;
     std::uint64_t m_session = 0; // EditSession::serial of m_line and m_planes
     mutable perspective::StyleCache m_styles;
-    // The outer quads, per Line, in memory only.
-    mutable std::map<core::LineId, perspective::Quad> m_planes;
+    // Outer quads not in their Line's extradata, per Line, with the extradata value they were kept over:
+    // a kept quad holds while its Line's value is still that one.
+    mutable std::map<core::LineId, std::pair<perspective::Quad, std::optional<std::u8string>>> m_planes;
 
     // Script coordinates.
     Drag m_drag = Drag::None;

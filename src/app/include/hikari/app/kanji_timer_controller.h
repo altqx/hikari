@@ -92,6 +92,7 @@ public:
     Q_INVOKABLE int acceptAll();
     Q_INVOKABLE bool skipRomaji();
     Q_INVOKABLE bool skipKanji();
+    Q_INVOKABLE bool pairAgain(int pair);
     Q_INVOKABLE bool previous();
     Q_INVOKABLE bool choose(int pair);
     Q_INVOKABLE bool clickSyllable(int syllable);
