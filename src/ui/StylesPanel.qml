@@ -11,11 +11,13 @@ Item {
     required property var app
     required property var manager
     required property var catalogs
+    required property int shellWindow
     readonly property Item toolbar: tools
     property bool live: false
 
     // A file may hold two Styles of one name, so a row also carries its place.
     property var rows: []
+    property bool available: false
     readonly property var shownRows: {
         const text = filterField.text.trim().toLocaleLowerCase()
         return text.length === 0 ? rows : rows.filter(r => r.name.toLocaleLowerCase().includes(text))
@@ -37,7 +39,7 @@ Item {
     function reload(retargeted) {
         if (!live)
             return
-        const next = styles.panelRows().map((r, i) => Object.assign({row: i}, r))
+        const next = styles.panelRows(shellWindow).map((r, i) => Object.assign({row: i}, r))
         let name = chosen
         let at = chosenAt
         if (!retargeted && !next.some(r => r.name === name) && at >= 0 && at < next.length
@@ -50,6 +52,7 @@ Item {
         if (next[at]?.name !== name)
             at = next.findIndex(r => r.name === name)
         reloading = true
+        available = styles.availableIn(shellWindow)
         rows = next
         chosenAt = at
         chosen = name
@@ -107,7 +110,7 @@ Item {
             color: Theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true
-            text: !panel.styles.available ? qsTr("No styles: the file has no ASS styles")
+            text: !panel.available ? qsTr("No styles: the file has no ASS styles")
                 : panel.rows.length === 0 ? qsTr("No styles") : qsTr("No matching styles")
         }
         ListView {
@@ -346,7 +349,7 @@ Item {
                 iconRole: "add"
                 text: qsTr("New style")
                 focusPolicy: Qt.NoFocus
-                enabled: panel.styles.available && panel.canChange
+                enabled: panel.available && panel.canChange
                 onClicked: panel.manager.newDocumentStyle()
             }
             IconToolButton {
@@ -407,7 +410,7 @@ Item {
         ShellMenuItem {
             iconRole: "add"
             text: qsTr("New style")
-            enabled: panel.styles.available && panel.canChange
+            enabled: panel.available && panel.canChange
             onTriggered: panel.manager.newDocumentStyle()
         }
         ShellMenuItem {

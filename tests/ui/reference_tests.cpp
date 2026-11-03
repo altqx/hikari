@@ -190,7 +190,7 @@ class ReferenceTest : public QObject {
                                     {{QStringLiteral("scope"), QStringLiteral("openDocuments")},
                                      {QStringLiteral("find"), QStringLiteral("r")}});
         bool listed = false;
-        for (const QVariant &row : application->findResults())
+        for (const QVariant &row : application->findResults(0))
             listed = listed || (row.toMap().value(QStringLiteral("header")).toBool() &&
                                 row.toMap().value(QStringLiteral("text")).toString() == QFileInfo(path).fileName());
         QCOMPARE(listed, searched);
