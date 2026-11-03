@@ -141,12 +141,13 @@ ShellMenu {
         }
     }
     Item {
-        visible: outputMenu.audio !== null
+        objectName: "audioOutputHeading"
         width: parent ? parent.width : implicitWidth
         implicitWidth: heading.implicitWidth + 24
-        implicitHeight: visible ? heading.implicitHeight + 10 : 0
+        implicitHeight: heading.implicitHeight + 10
         height: implicitHeight
         Rectangle {
+            visible: outputMenu.audio !== null
             anchors { left: parent.left; right: parent.right; top: parent.top }
             height: 1
             color: Theme.line
@@ -167,14 +168,12 @@ ShellMenu {
     }
     Instantiator {
         model: outputMenu.rows
-        delegate: ShellMenuItem {
+        delegate: MenuRadioItem {
             required property var modelData
             required property int index
             objectName: "audioOutput" + index
             text: modelData.label
-            checkable: true
             checked: modelData.checked
-            keepsMenuOpen: false
             onTriggered: {
                 outputMenu.app.chooseAudioOutput(modelData.id, modelData.name)
                 outputMenu.rows = outputMenu.app.audioOutputMenu()

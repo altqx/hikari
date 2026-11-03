@@ -235,7 +235,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save frame with subtitles as PNG"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Hide tags in the line editor"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Show / hide render cost"),
-    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Full screen bar: Auto / Always / Never"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Full screen bar: when the pointer moves / always / never"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Tap to time"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Slower"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Faster"),

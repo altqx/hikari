@@ -16,6 +16,11 @@ MenuItem {
         return holdsMenu && keepsMenuOpen && !ShellMenus.shiftHeld()
     }
     onMenuChanged: holdsMenu = false
+    visible: !subMenu || subMenu.shown !== false
+    Binding on height {
+        when: control.subMenu !== null && control.subMenu.shown === false
+        value: 0
+    }
     onHighlightedChanged: if (highlighted) holdMenu()
     onPressed: holdMenu()
     property string iconRole

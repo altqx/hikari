@@ -32,11 +32,24 @@ ShellMenu {
     function gesture(symbol) {
         return videoMenu.shell.hotkeyGesture(symbol, 3)
     }
-    function indexOfItem(item) {
-        for (let i = 0; i < videoMenu.count; ++i)
-            if (videoMenu.itemAt(i) === item)
+    function indexIn(menu, item) {
+        for (let i = 0; i < menu.count; ++i)
+            if (menu.itemAt(i) === item)
                 return i
-        return videoMenu.count
+        return menu.count
+    }
+
+    component FullscreenItem: ShellMenuItem {
+        visible: videoMenu.fullscreen
+        height: visible ? implicitHeight : 0
+    }
+    component FullscreenSeparator: MenuSeparator {
+        visible: videoMenu.fullscreen
+        height: visible ? implicitHeight : 0
+    }
+    component SnapshotItem: ShellMenuItem {
+        enabled: videoMenu.shell.videoView.canSnapshot
+        onTriggered: if (!videoMenu.gesture(command)) videoMenu.shell.videoView.snapshot(command)
     }
 
     ShellMenuItem {
@@ -65,109 +78,219 @@ ShellMenu {
         onTriggered: if (!videoMenu.gesture("VIDEO_STOP")) videoMenu.shell.video.stop()
     }
     ShellMenuItem {
-        id: fullScreenItem
+        iconRole: "fullscreen"
         objectName: videoMenu.itemPrefix + "FullScreen"
-        iconRole: videoMenu.fullscreen ? "fullscreen-exit" : "fullscreen"
-        text: videoMenu.fullscreen ? qsTr("Exit full screen") : qsTr("Full screen")
+        text: qsTr("Full screen")
         command: "VIDEO_FULL_SCREEN"
         shortcutText: MenuKeys.text(command, commandWindow) || ShellMenus.keyText(videoMenu.fullscreen ? "Esc" : "F")
+        checkable: true
+        checked: videoMenu.fullscreen
+        keepsMenuOpen: false
         enabled: videoMenu.shell.video.hasVideo
-        onTriggered: if (!videoMenu.gesture("VIDEO_FULL_SCREEN")) videoMenu.shell.videoFullscreen.toggle(0)
-    }
-    Instantiator {
-        model: Math.max(0, videoMenu.monitors - 1)
-        delegate: ShellMenuItem {
-            required property int index
-            iconRole: "monitor"
-            objectName: videoMenu.itemPrefix + "Monitor" + (index + 1)
-            text: videoMenu.fullscreen ? qsTr("Switch full screen to monitor %1").arg(index + 2)
-                                  : qsTr("Open in full screen on monitor %1").arg(index + 2)
-            enabled: videoMenu.shell.video.hasVideo
-            onTriggered: videoMenu.shell.videoFullscreen.showOn(index + 1)
+        onTriggered: {
+            checked = Qt.binding(() => videoMenu.fullscreen)
+            if (!videoMenu.gesture("VIDEO_FULL_SCREEN"))
+                videoMenu.shell.videoFullscreen.toggle(0)
         }
-        onObjectAdded: (index, object) => videoMenu.insertItem(videoMenu.indexOfItem(fullScreenItem) + 1 + index, object)
-        onObjectRemoved: (index, object) => videoMenu.removeItem(object)
     }
-    FullscreenBarMenu {
-        objectName: videoMenu.itemPrefix + "FullscreenBar"
-        iconRole: "show-toolbar"
-        title: qsTr("Full screen bar")
-        shortcutText: videoMenu.fullscreen ? MenuKeys.text("VIDEO_FULLSCREEN_BAR", 3) : ""
-        controller: videoMenu.shell.videoFullscreen
-        itemPrefix: videoMenu.itemPrefix + "FullscreenBar"
+    ShellMenu {
+        id: monitorsMenu
+        objectName: videoMenu.itemPrefix + "FullScreenOn"
+        iconRole: "monitor"
+        title: qsTr("Full screen on")
+        shown: videoMenu.monitors > 1
+        enabled: videoMenu.shell.video.hasVideo
+        Instantiator {
+            model: Math.max(0, videoMenu.monitors - 1)
+            delegate: ShellMenuItem {
+                required property int index
+                iconRole: "monitor"
+                objectName: videoMenu.itemPrefix + "Monitor" + (index + 1)
+                //: A monitor in the Full screen on submenu; %1 is its number
+                text: qsTr("Monitor %1").arg(index + 2)
+                onTriggered: videoMenu.shell.videoFullscreen.showOn(index + 1)
+            }
+            onObjectAdded: (index, object) => monitorsMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => monitorsMenu.removeItem(object)
+        }
     }
-    ShellMenuItem {
+    FullscreenItem {
         objectName: videoMenu.itemPrefix + "OpenEditor"
         iconRole: "editor"
         text: qsTr("Open editor")
-        enabled: videoMenu.fullscreen
         onTriggered: videoMenu.shell.openEditorFromFullScreen()
     }
+    FullscreenSeparator {}
+    FullscreenItem {
+        objectName: videoMenu.itemPrefix + "OpenVideo"
+        iconRole: "open-video"
+        text: qsTr("Open video…")
+        command: "GLOBAL_OPEN_VIDEO"
+        onTriggered: videoMenu.openVideoRequested()
+    }
+    FullscreenItem {
+        objectName: videoMenu.itemPrefix + "OpenSubtitles"
+        iconRole: "open-subtitles"
+        text: qsTr("Open subtitles…")
+        command: "GLOBAL_OPEN_SUBS"
+        onTriggered: videoMenu.openSubtitlesRequested()
+    }
     ShellMenu {
-        id: recentSubtitlesMenu
-        objectName: videoMenu.itemPrefix + "RecentSubtitles"
+        id: recentMenu
+        objectName: videoMenu.itemPrefix + "Recent"
         iconRole: "recent-subtitles"
-        title: qsTr("Recently opened subtitles")
+        title: qsTr("Recently opened")
+        shown: videoMenu.fullscreen
+        MenuHeading {
+            id: recentSubtitlesHeading
+            text: qsTr("Subtitles")
+        }
+        MenuSeparator {}
+        MenuHeading {
+            id: recentVideosHeading
+            text: qsTr("Videos")
+        }
         Instantiator {
             model: videoMenu.recent.subtitles
             delegate: ShellMenuItem {
                 required property var modelData
                 required property int index
                 objectName: videoMenu.itemPrefix + "RecentSubtitles" + index
+                iconRole: "recent-subtitles"
                 text: modelData.label
                 onTriggered: videoMenu.shell.openSubtitles(modelData.path)
             }
-            onObjectAdded: (index, object) => recentSubtitlesMenu.insertItem(index, object)
-            onObjectRemoved: (index, object) => recentSubtitlesMenu.removeItem(object)
+            onObjectAdded: (index, object) => recentMenu.insertItem(videoMenu.indexIn(recentMenu, recentSubtitlesHeading) + 1 + index, object)
+            onObjectRemoved: (index, object) => recentMenu.removeItem(object)
         }
-    }
-    ShellMenu {
-        id: recentVideosMenu
-        objectName: videoMenu.itemPrefix + "RecentVideos"
-        iconRole: "recent-video"
-        title: qsTr("Recently opened videos")
         Instantiator {
             model: videoMenu.recent.videos
             delegate: ShellMenuItem {
                 required property var modelData
                 required property int index
                 objectName: videoMenu.itemPrefix + "RecentVideos" + index
+                iconRole: "recent-video"
                 text: modelData.label
                 onTriggered: videoMenu.shell.video.openVideo(modelData.path)
             }
-            onObjectAdded: (index, object) => recentVideosMenu.insertItem(index, object)
-            onObjectRemoved: (index, object) => recentVideosMenu.removeItem(object)
+            onObjectAdded: (index, object) => recentMenu.insertItem(videoMenu.indexIn(recentMenu, recentVideosHeading) + 1 + index, object)
+            onObjectRemoved: (index, object) => recentMenu.removeItem(object)
         }
     }
-    ShellMenuItem {
-        objectName: videoMenu.itemPrefix + "OpenVideo"
-        iconRole: "open-video"
-        text: qsTr("Open video")
-        command: "GLOBAL_OPEN_VIDEO"
-        onTriggered: videoMenu.openVideoRequested()
+    MenuSeparator {}
+    ShellMenu {
+        objectName: videoMenu.itemPrefix + "ExportFrame"
+        iconRole: "frame-snapshot"
+        title: qsTr("Export frame")
+        SnapshotItem {
+            objectName: videoMenu.itemPrefix + "SaveFrame"
+            iconRole: "frame-snapshot"
+            command: "VIDEO_SAVE_FRAME_TO_PNG"
+            text: qsTr("Save as PNG…")
+        }
+        SnapshotItem {
+            objectName: videoMenu.itemPrefix + "CopyFrame"
+            iconRole: "frame-copy"
+            command: "VIDEO_COPY_FRAME_TO_CLIPBOARD"
+            text: qsTr("Copy")
+        }
+        MenuSeparator {}
+        SnapshotItem {
+            objectName: videoMenu.itemPrefix + "SaveSubbedFrame"
+            iconRole: "frame-snapshot-subtitles"
+            command: "VIDEO_SAVE_SUBBED_FRAME_TO_PNG"
+            text: qsTr("Save with subtitles as PNG…")
+        }
+        SnapshotItem {
+            objectName: videoMenu.itemPrefix + "CopySubbedFrame"
+            iconRole: "frame-copy-subtitles"
+            command: "VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD"
+            text: qsTr("Copy with subtitles")
+        }
     }
-    ShellMenuItem {
-        objectName: videoMenu.itemPrefix + "OpenSubtitles"
-        iconRole: "open-subtitles"
-        text: qsTr("Open subtitles")
-        command: "GLOBAL_OPEN_SUBS"
-        onTriggered: videoMenu.openSubtitlesRequested()
+    ShellMenu {
+        id: streamsMenu
+        objectName: videoMenu.itemPrefix + "AudioTrack"
+        iconRole: "video-streams"
+        title: qsTr("Audio track")
+        shown: videoMenu.streams.length > 0
+        Instantiator {
+            model: videoMenu.streams.length
+            delegate: MenuRadioItem {
+                required property int index
+                readonly property var row: videoMenu.streams[index] ?? ({})
+                objectName: videoMenu.itemPrefix + "Stream" + index
+                text: row.label ?? ""
+                checked: row.checked === true
+                onTriggered: {
+                    videoMenu.shell.video.selectStream(index)
+                    checked = Qt.binding(() => row.checked === true)
+                }
+            }
+            onObjectAdded: (index, object) => streamsMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => streamsMenu.removeItem(object)
+        }
     }
-    ShellMenuItem {
+    ShellMenu {
+        id: chaptersMenu
+        objectName: videoMenu.itemPrefix + "Chapters"
+        iconRole: "chapters"
+        title: qsTr("Chapters")
+        shown: videoMenu.chapters.length > 0
+        Instantiator {
+            model: videoMenu.chapters.length
+            delegate: MenuRadioItem {
+                required property int index
+                readonly property var row: videoMenu.chapters[index] ?? ({})
+                objectName: videoMenu.itemPrefix + "Chapter" + index
+                text: row.label ?? ""
+                detailText: row.time ?? ""
+                checked: row.checked === true
+                onTriggered: {
+                    videoMenu.shell.video.seekChapter(index)
+                    checked = Qt.binding(() => row.checked === true)
+                }
+            }
+            onObjectAdded: (index, object) => chaptersMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => chaptersMenu.removeItem(object)
+        }
+    }
+    MenuSeparator {}
+    FullscreenItem {
         iconRole: "progress-bar"
         objectName: videoMenu.itemPrefix + "ProgressBar"
         command: "VIDEO_HIDE_PROGRESS_BAR"
-        text: qsTr("Show / hide progress bar")
-        enabled: videoMenu.fullscreen
-        onTriggered: if (!videoMenu.gesture("VIDEO_HIDE_PROGRESS_BAR")) videoMenu.shell.videoView.toggleProgressBar()
+        text: qsTr("Progress bar")
+        checkable: true
+        checked: videoMenu.shell.videoView.progressBar
+        onTriggered: {
+            checked = Qt.binding(() => videoMenu.shell.videoView.progressBar)
+            if (!videoMenu.gesture("VIDEO_HIDE_PROGRESS_BAR"))
+                videoMenu.shell.videoView.toggleProgressBar()
+        }
     }
     ShellMenuItem {
         iconRole: "render-cost"
         objectName: videoMenu.itemPrefix + "RenderCost"
-        text: qsTr("Show / hide render cost")
+        text: qsTr("Render cost")
         command: "GLOBAL_VIDEO_RENDER_COST"
+        checkable: true
+        checked: videoMenu.shell.videoView.renderCost
         enabled: videoMenu.shell.video.hasVideo
-        onTriggered: if (!videoMenu.shell.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST", 0)) videoMenu.shell.videoView.toggleRenderCost()
+        onTriggered: {
+            checked = Qt.binding(() => videoMenu.shell.videoView.renderCost)
+            if (!videoMenu.shell.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST", 0))
+                videoMenu.shell.videoView.toggleRenderCost()
+        }
+    }
+    FullscreenBarMenu {
+        objectName: videoMenu.itemPrefix + "FullscreenBar"
+        iconRole: "show-toolbar"
+        title: qsTr("Full screen bar")
+        shown: videoMenu.fullscreen
+        shortcutText: videoMenu.fullscreen ? MenuKeys.text("VIDEO_FULLSCREEN_BAR", 3) : ""
+        controller: videoMenu.shell.videoFullscreen
+        itemPrefix: videoMenu.itemPrefix + "FullscreenBar"
     }
     ShellMenuItem {
         iconRole: "aspect-ratio"
@@ -177,46 +300,13 @@ ShellMenu {
         onTriggered: if (!videoMenu.gesture("VIDEO_ASPECT_RATIO")) videoMenu.aspectRatioRequested()
     }
     ShellMenuItem {
-        objectName: videoMenu.itemPrefix + "SaveSubbedFrame"
-        iconRole: "frame-snapshot-subtitles"
-        command: "VIDEO_SAVE_SUBBED_FRAME_TO_PNG"
-        text: qsTr("Save frame with subtitles as PNG")
-        enabled: videoMenu.shell.videoView.canSnapshot
-        onTriggered: if (!videoMenu.gesture("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")) videoMenu.shell.videoView.snapshot("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
-    }
-    ShellMenuItem {
-        objectName: videoMenu.itemPrefix + "CopySubbedFrame"
-        iconRole: "frame-copy-subtitles"
-        command: "VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD"
-        text: qsTr("Copy frame with subtitles to clipboard")
-        enabled: videoMenu.shell.videoView.canSnapshot
-        onTriggered: if (!videoMenu.gesture("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
-    }
-    ShellMenuItem {
-        objectName: videoMenu.itemPrefix + "SaveFrame"
-        iconRole: "frame-snapshot"
-        command: "VIDEO_SAVE_FRAME_TO_PNG"
-        text: qsTr("Save frame as PNG")
-        enabled: videoMenu.shell.videoView.canSnapshot
-        onTriggered: if (!videoMenu.gesture("VIDEO_SAVE_FRAME_TO_PNG")) videoMenu.shell.videoView.snapshot("VIDEO_SAVE_FRAME_TO_PNG")
-    }
-    ShellMenuItem {
-        objectName: videoMenu.itemPrefix + "CopyFrame"
-        iconRole: "frame-copy"
-        command: "VIDEO_COPY_FRAME_TO_CLIPBOARD"
-        text: qsTr("Copy frame to clipboard")
-        enabled: videoMenu.shell.videoView.canSnapshot
-        onTriggered: if (!videoMenu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")
-    }
-    MenuSeparator {}
-    ShellMenuItem {
-        id: unloadItem
-        objectName: videoMenu.itemPrefix + "UnloadVideo"
-        iconRole: "close-video"
-        command: "VIDEO_DELETE_FILE"
-        text: qsTr("Unload video")
-        enabled: videoMenu.shell.video.loaded
-        onTriggered: if (!videoMenu.gesture("VIDEO_DELETE_FILE")) videoMenu.shell.video.unloadVideo()
+        id: resetZoomItem
+        iconRole: "zoom-reset"
+        objectName: videoMenu.itemPrefix + "ResetZoom"
+        command: "GLOBAL_RESET_VIDEO_ZOOM"
+        text: qsTr("Turn off video zoom")
+        enabled: videoMenu.shell.videoView.zoomed
+        onTriggered: if (!videoMenu.shell.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM", 0)) videoMenu.shell.videoView.resetZoom()
     }
     Instantiator {
         model: videoMenu.filters.length > 0 ? 1 : 0
@@ -245,56 +335,16 @@ ShellMenu {
                 onObjectRemoved: (index, object) => filtersMenu.removeItem(object)
             }
         }
-        onObjectAdded: (index, object) => videoMenu.insertMenu(videoMenu.indexOfItem(unloadItem) + 1, object)
+        onObjectAdded: (index, object) => videoMenu.insertMenu(videoMenu.indexIn(videoMenu, resetZoomItem) + 1, object)
         onObjectRemoved: (index, object) => videoMenu.removeMenu(object)
     }
-    MenuSeparator {
-        id: streamsSeparator
-        objectName: videoMenu.itemPrefix + "StreamsSeparator"
-        visible: videoMenu.streams.length > 0
-        height: visible ? implicitHeight : 0
-    }
-    Instantiator {
-        model: videoMenu.streams.length
-        delegate: ShellMenuItem {
-            required property int index
-            readonly property var row: videoMenu.streams[index] ?? ({})
-            objectName: videoMenu.itemPrefix + "Stream" + index
-            text: row.label ?? ""
-            checkable: true
-            checked: row.checked === true
-            keepsMenuOpen: false
-            onTriggered: {
-                videoMenu.shell.video.selectStream(index)
-                checked = Qt.binding(() => row.checked === true)
-            }
-        }
-        onObjectAdded: (index, object) => videoMenu.insertItem(videoMenu.indexOfItem(streamsSeparator) + 1 + index, object)
-        onObjectRemoved: (index, object) => videoMenu.removeItem(object)
-    }
-    MenuSeparator {
-        id: chaptersSeparator
-        objectName: videoMenu.itemPrefix + "ChaptersSeparator"
-        visible: videoMenu.chapters.length > 0
-        height: visible ? implicitHeight : 0
-    }
-    Instantiator {
-        model: videoMenu.chapters.length
-        delegate: ShellMenuItem {
-            required property int index
-            readonly property var row: videoMenu.chapters[index] ?? ({})
-            objectName: videoMenu.itemPrefix + "Chapter" + index
-            text: row.label ?? ""
-            detailText: row.time ?? ""
-            checkable: true
-            checked: row.checked === true
-            keepsMenuOpen: false
-            onTriggered: {
-                videoMenu.shell.video.seekChapter(index)
-                checked = Qt.binding(() => row.checked === true)
-            }
-        }
-        onObjectAdded: (index, object) => videoMenu.insertItem(videoMenu.indexOfItem(chaptersSeparator) + 1 + index, object)
-        onObjectRemoved: (index, object) => videoMenu.removeItem(object)
+    MenuSeparator {}
+    ShellMenuItem {
+        objectName: videoMenu.itemPrefix + "UnloadVideo"
+        iconRole: "close-video"
+        command: "VIDEO_DELETE_FILE"
+        text: qsTr("Unload video")
+        enabled: videoMenu.shell.video.loaded
+        onTriggered: if (!videoMenu.gesture("VIDEO_DELETE_FILE")) videoMenu.shell.video.unloadVideo()
     }
 }
