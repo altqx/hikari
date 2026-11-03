@@ -12965,6 +12965,19 @@ private slots:
         QTest::qWait(50);
         QVERIFY(filtering->property("visible").toBool());
         QVERIFY(gridMenu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(filtering, "close"));
+        auto *settings = application->settingsStore();
+        const bool bake = settings->boolean("grid.splitFramesBakeAnimations");
+        auto *splitLines = named("splitLinesMenu");
+        QVERIFY(QMetaObject::invokeMethod(splitLines, "open"));
+        auto *bakeItem = qobject_cast<QQuickItem *>(named("splitFramesBakeAnimations"));
+        QTRY_VERIFY(bakeItem->isVisible() && bakeItem->width() > 0);
+        QCOMPARE(bakeItem->property("checked").toBool(), bake);
+        clickWith(bakeItem, Qt::NoModifier);
+        QCOMPARE(settings->boolean("grid.splitFramesBakeAnimations"), !bake);
+        QTest::qWait(50);
+        QVERIFY(splitLines->property("visible").toBool());
+        settings->set("grid.splitFramesBakeAnimations", bake);
         QVERIFY(QMetaObject::invokeMethod(gridMenu, "dismiss"));
         QTRY_VERIFY(!gridMenu->property("visible").toBool());
         application->gridFilter().setInverted(inverted);
@@ -15540,6 +15553,7 @@ private slots:
               {"grid.autoHideColumns", "Hide empty columns"},
               {"grid.calcSpacesAndPunctuationForWraps", "Count spaces and punctuation for wraps"},
               {"grid.calcSpacesAndPunctuationForCps", "Count spaces and punctuation for CPS"},
+              {"grid.splitFramesBakeAnimations", "Bake animations when splitting into frames"},
               {"grid.insertStartOffset", nullptr},
               {"grid.insertEndOffset", nullptr},
               {"grid.tagsSwapCharacter", nullptr}}},

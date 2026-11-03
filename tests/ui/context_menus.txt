@@ -42,6 +42,7 @@ Grid > Make times continuous with the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
 Grid > Split lines >
 Grid > Split lines > Split line at video time [GRID_SPLIT_BY_VIDEO_TIME]
 Grid > Split lines > Split lines into frames [GRID_SPLIT_BY_FRAME]
+Grid > Split lines > Bake animations
 Grid > Split lines > Split lines into characters [GRID_SPLIT_BY_CHARS]
 Grid > Split lines > Split lines into words [GRID_SPLIT_BY_WORDS]
 Grid > Split lines > Split lines by wraps [GRID_SPLIT_BY_WRAPS]

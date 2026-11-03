@@ -4378,6 +4378,10 @@ Failed to copy %2 fonts.</source>
         <translation>แบ่งบรรทัดเป็นเฟรม</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>ตรึงแอนิเมชัน</translation>
+    </message>
+    <message>
         <source>Split lines into characters</source>
         <translation>แบ่งบรรทัดเป็นอักขระ</translation>
     </message>
@@ -8906,6 +8910,14 @@ removing audio cache files.</source>
     <message>
         <source>Count spaces and punctuation for CPS</source>
         <translation>นับช่องว่างและเครื่องหมายวรรคตอนในการคำนวณ CPS</translation>
+    </message>
+    <message>
+        <source>Splitting</source>
+        <translation>การแบ่ง</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>ตรึงแอนิเมชันเมื่อแบ่งเป็นเฟรม</translation>
     </message>
     <message>
         <source>New lines</source>

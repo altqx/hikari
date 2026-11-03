@@ -4450,6 +4450,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Podziel linijki na klatki</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>Utrwal animacje</translation>
+    </message>
+    <message>
         <source>Split lines into characters</source>
         <translation>Podziel linijki na znaki</translation>
     </message>
@@ -9012,6 +9016,14 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     <message>
         <source>Count spaces and punctuation for CPS</source>
         <translation>Licz spacje i interpunkcję w CPS</translation>
+    </message>
+    <message>
+        <source>Splitting</source>
+        <translation>Dzielenie</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>Utrwalaj animacje przy dzieleniu na klatki</translation>
     </message>
     <message>
         <source>New lines</source>

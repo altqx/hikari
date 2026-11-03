@@ -915,6 +915,10 @@ DialogWindow {
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Count spaces and punctuation for CPS") }
                     }
                     SettingsSection {
+                        title: qsTr("Splitting")
+                        SettingCheck { setting: "grid.splitFramesBakeAnimations"; text: qsTr("Bake animations when splitting into frames") }
+                    }
+                    SettingsSection {
                         title: qsTr("New lines")
                         SettingsRow {
                             iconRole: "time-offset-start"

@@ -3604,8 +3604,11 @@ bool Application::splitLines(const QString &kind)
         const std::int64_t tell = start->microseconds() / 1000;
         return runFilter([&](application::EditSession &s) { return application::splitAtVideoTime(s, timebase, tell, shown); });
     }
-    if (kind == QLatin1String("frames"))
-        return runFilter([&](application::EditSession &s) { return application::splitIntoFrames(s, timebase, shown); });
+    if (kind == QLatin1String("frames")) {
+        const auto animations = m_settings->boolean("grid.splitFramesBakeAnimations") ? application::FrameAnimations::Bake
+                                                                                       : application::FrameAnimations::Keep;
+        return runFilter([&](application::EditSession &s) { return application::splitIntoFrames(s, timebase, animations, shown); });
+    }
     const auto text = kind == QLatin1String("chars")   ? application::SplitText::Characters
                       : kind == QLatin1String("words") ? application::SplitText::Words
                       : kind == QLatin1String("wraps") ? application::SplitText::Wraps

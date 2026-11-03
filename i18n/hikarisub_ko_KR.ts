@@ -4378,6 +4378,10 @@ Failed to copy %2 fonts.</source>
         <translation>프레임 단위로 줄 분할</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>애니메이션 베이크</translation>
+    </message>
+    <message>
         <source>Split lines into characters</source>
         <translation>글자 단위로 줄 분할</translation>
     </message>
@@ -8906,6 +8910,14 @@ removing audio cache files.</source>
     <message>
         <source>Count spaces and punctuation for CPS</source>
         <translation>초당 문자 수 계산에 공백과 문장 부호 포함</translation>
+    </message>
+    <message>
+        <source>Splitting</source>
+        <translation>분할</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>프레임 단위로 분할할 때 애니메이션 베이크</translation>
     </message>
     <message>
         <source>New lines</source>

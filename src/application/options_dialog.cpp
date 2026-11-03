@@ -136,6 +136,7 @@ constexpr OptionsBinding kBindings[] = {
     {"privacy.discordPresence", Check, Updates},
     {"privacy.discordFileName", Check, Updates},
     {"privacy.starPrompt", Check, Updates},
+    {"grid.splitFramesBakeAnimations", Check, Grid},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

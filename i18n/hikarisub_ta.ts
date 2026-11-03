@@ -4414,6 +4414,10 @@ Failed to copy %2 fonts.</source>
         <translation>வரிகளைச் சட்டகங்களாகப் பிரிக்கவும்</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>அசைவூட்டங்களை நிலைப்படுத்து</translation>
+    </message>
+    <message>
         <source>Split lines into characters</source>
         <translation>வரிகளை எழுத்துகளாகப் பிரிக்கவும்</translation>
     </message>
@@ -8959,6 +8963,14 @@ removing audio cache files.</source>
     <message>
         <source>Count spaces and punctuation for CPS</source>
         <translation>CPS க்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் எண்ணு</translation>
+    </message>
+    <message>
+        <source>Splitting</source>
+        <translation>பிரித்தல்</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>சட்டகங்களாகப் பிரிக்கும்போது அசைவூட்டங்களை நிலைப்படுத்து</translation>
     </message>
     <message>
         <source>New lines</source>
