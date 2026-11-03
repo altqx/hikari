@@ -276,7 +276,7 @@ Json styleJson(const core::StyleValues &style)
         if (name == "bold" || name == "italic" || name == "underline" || name == "strikeOut")
             out[name] = Json(value != "0");
         else if (name == "borderStyle")
-            out[name] = Json(style.borderStyle ? 3 : 1);
+            out[name] = Json(style.borderStyle);
         else
             out[name] = Json(value);
     }

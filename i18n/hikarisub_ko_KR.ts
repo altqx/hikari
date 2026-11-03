@@ -11940,6 +11940,14 @@ because it was edited.</source>
         <translation>불투명 상자</translation>
     </message>
     <message>
+        <source>Outline</source>
+        <translation>외곽선</translation>
+    </message>
+    <message>
+        <source>Opaque box per line (libass)</source>
+        <translation>줄마다 불투명 상자 (libass)</translation>
+    </message>
+    <message>
         <source>Edit style</source>
         <translation>스타일 편집</translation>
     </message>
@@ -12226,6 +12234,10 @@ because it was edited.</source>
     <message>
         <source>Text encoding</source>
         <translation>글자 인코딩</translation>
+    </message>
+    <message>
+        <source>-1 - Detect text direction (libass)</source>
+        <translation>-1 - 텍스트 방향 자동 감지 (libass)</translation>
     </message>
     <message>
         <source>0 - ANSI</source>
