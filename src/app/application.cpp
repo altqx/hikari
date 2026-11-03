@@ -1596,7 +1596,7 @@ void Application::followVideoInAudio()
             m_audio->setKeyframes({});
             m_audio->setKeyframeSnapTimes({});
         }
-        m_audio->setVideoTime(std::nullopt);
+        m_audio->setVideoFrame(std::nullopt);
         syncAudioWithVideo();
         return;
     }
@@ -1615,11 +1615,11 @@ void Application::followVideoInAudio()
         m_audio->setKeyframeSnapTimes(std::move(snap));
         m_audio->setKeyframes(std::move(ms));
     }
-    std::optional<int> paused;
+    std::optional<application::AudioVideoFrame> paused;
     if (!video.playing() && !video.stopped())
         if (const auto frame = video.reportedFrame())
-            paused = m_audioTimebase->msAt(*frame);
-    m_audio->setVideoTime(paused);
+            paused = application::audioVideoFrame(*m_audioTimebase, *frame);
+    m_audio->setVideoFrame(paused);
     syncAudioWithVideo();
 }
 

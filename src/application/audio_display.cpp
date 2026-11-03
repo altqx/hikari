@@ -617,6 +617,14 @@ void AudioView::makeVisible(int startShow, int endShow, bool force, bool moveToE
     updateSamples();
 }
 
+void AudioView::centreOn(int ms, int scrollbarThickness)
+{
+    if (!m_hasSource || m_samples <= 0)
+        return;
+    updatePosition(sampleAtMs(ms) - std::int64_t{m_w} * m_samples / 2, true, scrollbarThickness);
+    updateSamples();
+}
+
 void AudioView::makeVisibleKaraoke(int startShow, int endShow, int scrollbarThickness)
 {
     if (!m_hasSource || m_samples <= 0)
@@ -660,6 +668,9 @@ std::int64_t AudioView::sampleAtX(int x) const
 }
 
 namespace {
+
+constexpr std::uint32_t kPreviousFrameAlpha = 55;
+constexpr std::uint32_t kCurrentFrameAlpha = 95;
 
 AudioShape fill(float x1, float y1, float x2, float y2, std::uint32_t colour)
 {
@@ -853,6 +864,12 @@ std::string legacyAssTime(int ms)
     return buffer;
 }
 
+AudioVideoFrame audioVideoFrame(const LegacyTimebase &timebase, int frame)
+{
+    return {timebase.msAt(frame - 1), timebase.msAt(frame), timebase.msAt(frame + 1), timebase.startTimeFor(frame),
+            timebase.endTimeFor(frame)};
+}
+
 std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns &columns, const AudioMarks &marks,
                                    const AudioDisplayOptions &options, const AudioTextWidth &textWidth,
                                    std::shared_ptr<const AudioImage> spectrum)
@@ -962,6 +979,22 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
                           options.syllableBoundaries, options.syllableText);
     }
 
+    if (options.drawVideoPosition && marks.videoFrame) {
+        const auto &frame = *marks.videoFrame;
+        const std::uint32_t rgb = options.cursor & 0x00FFFFFFu;
+        const auto shade = [&](int fromMs, int toMs, std::uint32_t alpha) {
+            if (toMs <= fromMs)
+                return;
+            const auto x1 = std::max<std::int64_t>(static_cast<std::int64_t>(view.xAtMs(fromMs + 1)), 0);
+            const auto x2 = std::min<std::int64_t>(static_cast<std::int64_t>(view.xAtMs(toMs)) + 1, w);
+            if (x1 < x2)
+                out.push_back(fill(float(x1), 0, float(x2), float(h), alpha << 24 | rgb));
+        };
+        shade(frame.previousMs, frame.startMs, kPreviousFrameAlpha);
+        shade(frame.startMs, frame.nextMs, kCurrentFrameAlpha);
+        dashedVertical(out, view.xAtMs(frame.startMs), 0, float(h), options.cursor, 2);
+    }
+
     if (options.drawKeyframes && !marks.keyframesMs.empty()) {
         const int mintime = view.msAtX(0);
         const int maxtime = view.msAtX(w);
@@ -992,9 +1025,6 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
                                AudioShape::Font::Label, AudioShape::Align::TopCenter, 0xFFFFFFFF, true));
         }
     }
-
-    if (options.drawVideoPosition && marks.videoMs)
-        dashedVertical(out, view.xAtMs(*marks.videoMs), 0, float(h), options.cursor, 2);
 
     if (marks.focused) {
         const float r = float(w - 1), b = float(h - 1);

@@ -314,6 +314,14 @@
         <translation>Więcej opcji audio</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>Przejdź do początku zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>Przejdź do końca zaznaczenia</translation>
+    </message>
+    <message>
         <source>Zoom</source>
         <translation>Powiększenie</translation>
     </message>
@@ -6016,6 +6024,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Faster</source>
         <translation>Szybciej</translation>
+    </message>
+    <message>
+        <source>Go to selection start</source>
+        <translation>Przejdź do początku zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>Przejdź do końca zaznaczenia</translation>
     </message>
     <message>
         <source>Translation mode</source>
