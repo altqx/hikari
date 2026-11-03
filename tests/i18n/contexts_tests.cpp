@@ -152,7 +152,7 @@ TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
 TEST(CheckedIn, CatalogsHoldTheGridHeadings)
 {
     const QStringList headings{QStringLiteral("L."),     QStringLiteral("Start"), QStringLiteral("End"),
-                               QStringLiteral("Styles"), QStringLiteral("Actor"), QStringLiteral("Left"),
+                               QStringLiteral("Style"),  QStringLiteral("Actor"), QStringLiteral("Left"),
                                QStringLiteral("Right"),  QStringLiteral("Vert."), QStringLiteral("Effect"),
                                QStringLiteral("CPS"),    QStringLiteral("Wraps"), QStringLiteral("Text"),
                                QStringLiteral("Original text"), QStringLiteral("Translation")};

@@ -2051,7 +2051,7 @@ ApplicationWindow {
                 objectName: "resetVideoZoomMenuItem"
                 action: Action {
                     id: resetVideoZoomAction
-                    text: qsTr("Turn off video zoom"); enabled: root.videoView.zoomed
+                    text: qsTr("Reset zoom and pan"); enabled: root.videoView.zoomed
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
                 }
             }
@@ -2882,7 +2882,7 @@ ApplicationWindow {
                     const added = editMenu.grammar ? root.app.addGrammarWord(word) : root.app.addEditorWord(word)
                     if (!added)
                         root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
-                                          qsTranslate("HikariSub.Editor", "Error. Word \"%1\" was not added.").arg(word))
+                                          qsTranslate("HikariSub.Editor", "“%1” was not added to the dictionary.").arg(word))
                 }
             }
             MenuSeparator {
@@ -3232,12 +3232,13 @@ ApplicationWindow {
                     objectName: "videoStage"
                     parent: root.videoStageInFullscreen ? videoFullscreenWindow.stage : videoStageDock
                     anchors.fill: parent
+                    clip: true
                 VideoPresenter {
                     id: presenter
                     objectName: "videoPresenter"
                     visible: root.video.hasVideo
                     anchors.fill: parent
-                    videoRect: root.visualTools.videoRect
+                    videoRect: root.visualTools.frameRect
                     sourceRect: root.visualTools.sourceRect
                     Component.onCompleted: root.video.attachPresenter(presenter)
                 }
@@ -5261,7 +5262,7 @@ ApplicationWindow {
                         objectName: "groupMenu"
                         property var description: 0
                         property point at: Qt.point(0, 0)
-                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select the group's lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select the group’s lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
                         ShellMenuItem {
                             iconRole: "tree-add-lines"
                             objectName: "groupAddLines"

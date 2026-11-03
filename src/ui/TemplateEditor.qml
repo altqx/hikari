@@ -639,7 +639,7 @@ Pane {
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
                             color: Theme.muted
-                            text: qsTr("This file's templates run Lua code with your rights. Preview them if you trust the file.")
+                            text: qsTr("This file’s templates run Lua code with your rights. Preview them if you trust the file.")
                         }
                         Button {
                             objectName: "templatePreviewTrustButton"
@@ -806,7 +806,7 @@ Pane {
                     if (c.changedCount === 0)
                         return ""
                     if (root.narrow)
-                        return qsTr("Changed since Apply")
+                        return qsTr("Changes not applied")
                     return c.changedCount === 1
                            ? qsTr("Line %1 changed since the last Apply; the generated lines are older.").arg(c.changedNumber)
                            : qsTr("%n template lines changed since the last Apply; the generated lines are older.",
@@ -865,7 +865,7 @@ Pane {
             iconRole: "select-lines"
             text: qsTr("Apply to the selected lines")
             help: root.controller.canApplySelected
-                ? qsTr("Only the selected lines are regenerated; the other lines' output stays as it is.")
+                ? qsTr("Only the selected lines are regenerated; the other lines’ output stays as it is.")
                 : qsTr("Select a karaoke line, or a line generated from one since the file was opened.")
             enabled: root.controller.canApplySelected
             onTriggered: root.controller.apply(true)
@@ -932,7 +932,7 @@ Pane {
             wrapMode: Text.Wrap
             color: Theme.muted
             font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
-            text: qsTr("The new line goes above the first karaoke line, with that line's Style.")
+            text: qsTr("The new line goes above the first karaoke line, with that line’s style.")
         }
     }
 
@@ -957,7 +957,7 @@ Pane {
                { word: "all", text: qsTr("Every Style, not only %1").arg(root.controller.style) },
                { word: "loop 2", text: qsTr("Repeat") }]
             : [{ word: "noblank", text: qsTr("Skip blank syllables") },
-               { word: "keeptags", text: qsTr("Keep the line's override tags") },
+               { word: "keeptags", text: qsTr("Keep the line’s override tags") },
                { word: "all", text: qsTr("Every Style, not only %1").arg(root.controller.style) },
                { word: "loop 2", text: qsTr("Repeat") },
                { word: "fx name", text: qsTr("Only syllables marked with an effect") },

@@ -1743,6 +1743,14 @@ private slots:
             QTRY_VERIFY(lineText->isVisible());
             QTRY_VERIFY(visualItem("tagButton0"));
             shoot(visualItem("tagButton0"), QStringLiteral("/menu-tag-button") + suffix, [&] { return named("tagButtonMenu"); });
+            auto *actorBox = item("actorBox");
+            auto *actor = actorBox->property("contentItem").value<QQuickItem *>();
+            actorBox->setProperty("editText", QStringLiteral("Narrator"));
+            QVERIFY(QMetaObject::invokeMethod(actor, "selectAll"));
+            shoot(actor, QStringLiteral("/menu-combo") + suffix, [&] {
+                return actor->findChild<QObject *>(QStringLiteral("textMenu"), Qt::FindDirectChildrenOnly);
+            });
+            actorBox->setProperty("editText", QString());
             application->editor().setShowTags(true);
             lineText->forceActiveFocus();
             lineText->setProperty("cursorPosition", 0);
@@ -2260,7 +2268,7 @@ private slots:
         int style = -1;
         QTRY_VERIFY((style = [&] {
             for (int c = 0; c < grid->columnCount(); ++c)
-                if (grid->columnTitle(c) == QLatin1String("Styles"))
+                if (grid->columnTitle(c) == QLatin1String("Style"))
                     return c;
             return -1;
         }()) >= 0);
@@ -5026,7 +5034,7 @@ private slots:
         QTRY_VERIFY(popover->property("visible").toBool());
         QCOMPARE(popover->property("anchor").value<QQuickItem *>(), visualItem("changeColour3"));
         auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
-        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("Border color"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("Border colour"));
         QCOMPARE(popover->property("red").toInt(), 255);
         QCOMPARE(dialogItem("colourPopover", "hexColour")->property("text").toString(), QStringLiteral("#FFFFFF"));
         QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
@@ -6045,6 +6053,35 @@ private slots:
         QVERIFY(!enabled("textUndo") && !enabled("textRedo") && !enabled("textCut") && !enabled("textPaste")
                 && !enabled("textDelete"));
         QVERIFY(enabled("textCopy") && enabled("textSelectAll"));
+    }
+
+    void editableComboBoxesUseTheTextMenu()
+    {
+        QVERIFY(application->openFile(episode));
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *box = item("actorBox");
+        QVERIFY(box && box->property("editable").toBool());
+        auto *field = box->property("contentItem").value<QQuickItem *>();
+        QVERIFY(field);
+        const auto textMenu = [&] { return field->findChild<QObject *>(QStringLiteral("textMenu"), Qt::FindDirectChildrenOnly); };
+        const auto closed = [&](QObject *menu) {
+            QMetaObject::invokeMethod(menu, "close");
+            return QTest::qWaitFor([&] { return !menu->property("visible").toBool(); });
+        };
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier,
+                          field->mapToScene(QPointF(field->width() / 2, field->height() / 2)).toPoint());
+        QTRY_VERIFY(textMenu() && textMenu()->property("opened").toBool());
+        QVERIFY(closed(textMenu()));
+        field->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Menu);
+        QTRY_VERIFY(textMenu()->property("opened").toBool());
+        QVERIFY(closed(textMenu()));
+
+        box->setProperty("editText", QStringLiteral("Narrator"));
+        QVERIFY(QMetaObject::invokeMethod(field, "selectAll"));
+        QGuiApplication::clipboard()->clear();
+        QVERIFY(QMetaObject::invokeMethod(textMenu()->findChild<QObject *>(QStringLiteral("textCopy")), "triggered"));
+        QCOMPARE(QGuiApplication::clipboard()->text(), QStringLiteral("Narrator"));
     }
 
     void menuKeyColumnFollowsTheBindings()
@@ -12652,7 +12689,7 @@ private slots:
                 out << grid->columnTitle(c);
             return out;
         };
-        const QStringList empty{"#", "Start", "End", "Styles", "CPS", "Wraps", "Text"};
+        const QStringList empty{"#", "Start", "End", "Style", "CPS", "Wraps", "Text"};
         QTRY_COMPARE(titles(), empty);
 
         QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
@@ -15671,6 +15708,10 @@ private slots:
               {"video.ffms2Seeking", nullptr},
               {"video.gpuConversion", "Convert video colours on the GPU"},
               {"video.acceptedAudioStream", nullptr},
+              {"video.zoomModel", nullptr},
+              {"video.scrollAction", nullptr},
+              {"video.ctrlScrollAction", nullptr},
+              {"video.shiftScrollAction", nullptr},
               {"video.zoomPercent", nullptr},
               {"video.visualWarningsOff", "Turn off the visual tools warning"},
               {"video.dontAskForBadResolution", "Don’t warn about a resolution mismatch"},
@@ -19217,7 +19258,7 @@ private slots:
                                                    QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-H")});
         QStringList logged;
         app::HotkeysController h(application->automationHotkeys(), store, [&](const QString &m, bool) { logged << m; });
-        QCOMPARE(logged, QStringList{QStringLiteral("Shortcut \"Bogus\" is invalid")});
+        QCOMPARE(logged, QStringList{QStringLiteral("Shortcut “Bogus” is invalid")});
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-Bogus"));
         QVERIFY(!h.keys().value(QStringLiteral("global")).toMap().contains(QStringLiteral("GLOBAL_SAVE_SUBS")));
     }
@@ -23275,6 +23316,8 @@ private slots:
     void videoPointerIsTheToolsOnlyOverThePicture()
     {
         restartWithoutSound();
+        application->settingsStore()->set("video.zoomModel", 1);
+        const auto aegisub35 = qScopeGuard([this] { application->settingsStore()->set("video.zoomModel", 0); });
         QTemporaryDir folder;
         QVERIFY(folder.isValid());
         QVERIFY(v5Open(folder));
@@ -26714,8 +26757,8 @@ private slots:
         QCOMPARE(item<QObject>("audioLink")->property("text").toString(), QStringLiteral("Link the volume and stretch sliders"));
         for (const Expected &e : {Expected{"tag_b", "tag-bold", "Bold"}, Expected{"tag_s", "tag-strikeout", "Strikeout"},
                                   Expected{"changeFont", "tag-font", "Font selection"},
-                                  Expected{"changeColour1", "colour-primary", "Primary color"},
-                                  Expected{"changeColour4", "colour-shadow", "Shadow color"}}) {
+                                  Expected{"changeColour1", "colour-primary", "Primary colour"},
+                                  Expected{"changeColour4", "colour-shadow", "Shadow colour"}}) {
             auto *button = visualItem(e.object);
             QVERIFY2(button, e.object);
             QCOMPARE(icon(button), QLatin1String(e.role));
@@ -27644,8 +27687,8 @@ private slots:
             QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(o);
             return iface ? iface->text(QAccessible::Name) : QString();
         };
-        QCOMPARE(name(seek), QStringLiteral("Move video to selected line on:"));
-        QCOMPARE(name(play), QStringLiteral("On moving to another line play:"));
+        QCOMPARE(name(seek), QStringLiteral("Seek on"));
+        QCOMPARE(name(play), QStringLiteral("Then play"));
         QVERIFY(QMetaObject::invokeMethod(seek, "activated", Q_ARG(int, 5)));
         QCOMPARE(settings.integer("video.moveToActiveLine"), 3);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
@@ -27912,7 +27955,7 @@ private slots:
         typeInto("layerField", QStringLiteral("2"));
         typeInto("endField", QStringLiteral("0:00:00.50"));
         press(Qt::Key_Return);
-        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
+        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End time is before start time."));
         QCOMPARE(session->document().lines()[0]->layer.value, 0);
         QVERIFY(session->draftLine());
         session->setInvalidCommitPolicy(application::InvalidCommitPolicy::Legacy);
@@ -28148,7 +28191,7 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QTest::mouseMove(window, at + QPoint(10, -8));
         QCOMPARE(text(), QStringLiteral("0:00:12.00"));
-        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
+        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End time is before start time."));
         auto *problem = item("editorProblem");
         QTRY_VERIFY(problem->isVisible() && problem->height() > 0
                     && problem->mapToScene(QPointF(0, problem->height())).y() <= fieldOrigin.y());
@@ -31111,9 +31154,91 @@ private slots:
 
 private slots:
 
+    void videoPansAndZoomsAsAegisub35()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        auto &view = application->videoView();
+        auto &tools = application->visualTools();
+        auto &settings = *application->settingsStore();
+        auto *presenter = item("videoPresenter");
+        QCOMPARE(tools.videoView().zoomModel(), application::visual::ZoomModel::Aegisub35);
+        const QRectF whole = tools.videoRect();
+        QCOMPARE(tools.frameRect(), whole);
+        const QPoint c = videoPoint(whole.center());
+        auto *reset = named("resetVideoZoomMenuItem");
+        QVERIFY(reset);
+        QCOMPARE(reset->property("text").toString(), QStringLiteral("Reset zoom and pan"));
+        QCOMPARE(reset->property("iconRole").toString(), QStringLiteral("zoom-reset"));
+        QVERIFY(!reset->property("enabled").toBool());
+
+        wheelAt(c, 3);
+        QCOMPARE(view.zoomPercent(), 100);
+        wheelAt(c, 2, Qt::ControlModifier);
+        QCOMPARE(view.zoomPercent(), 125);
+        QVERIFY(!view.zoomMode());
+        QCOMPARE(tools.sourceRect(), QRectF(0, 0, 320, 240));
+        QCOMPARE(presenter->property("videoRect").toRectF(), tools.frameRect());
+        QVERIFY(std::abs(tools.frameRect().width() - whole.width() * 1.25) < 0.01);
+        QVERIFY(std::abs(tools.frameRect().center().x() - whole.center().x()) < 1);
+
+        QRectF before = tools.frameRect();
+        wheelAt(c, 1, Qt::ShiftModifier);
+        QCOMPARE(tools.frameRect().topLeft(), before.topLeft() + QPointF(0, 5));
+
+        before = tools.frameRect();
+        QTest::mousePress(window, Qt::MiddleButton, Qt::NoModifier, c);
+        QTest::mouseMove(window, c + QPoint(10, 5));
+        QTest::mouseMove(window, c + QPoint(30, 20));
+        QTest::mouseRelease(window, Qt::MiddleButton, Qt::NoModifier, c + QPoint(30, 20));
+        QCOMPARE(tools.frameRect().topLeft(), before.topLeft() + QPointF(30, 20));
+        QVERIFY(view.zoomed());
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(session);
+        const QString unpositioned = text(session->document().lines()[0]);
+        QVERIFY(unpositioned.startsWith(QStringLiteral("{\\pos(10,10)")));
+        before = tools.frameRect();
+        QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, c);
+        QCOMPARE(tools.frameRect(), before);
+        QTRY_VERIFY2(text(session->document().lines()[0]) != unpositioned, qPrintable(unpositioned));
+        QVERIFY(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\pos(")));
+
+        QVERIFY(reset->property("enabled").toBool());
+        triggerAction("resetVideoZoomMenuItem");
+        QVERIFY(!view.zoomed());
+        QCOMPARE(view.zoomPercent(), 100);
+        QCOMPARE(tools.frameRect(), whole);
+        QCOMPARE(presenter->property("videoRect").toRectF(), whole);
+
+        settings.set("video.ctrlScrollAction", 4);
+        wheelAt(c, 2, Qt::ControlModifier);
+        QCOMPARE(view.zoomPercent(), 100);
+        settings.set("video.scrollAction", 0);
+        wheelAt(c, 2);
+        QCOMPARE(view.zoomPercent(), 125);
+        settings.set("video.scrollAction", 4);
+        settings.set("video.ctrlScrollAction", 0);
+
+        settings.set("video.zoomModel", 1);
+        QCOMPARE(view.zoomPercent(), 100);
+        wheelAt(c, 5);
+        QVERIFY(view.zoomPercent() > 100);
+        QVERIFY(tools.sourceRect() != QRectF(0, 0, 320, 240));
+        QCOMPARE(tools.frameRect(), whole);
+        triggerAction("resetVideoZoomMenuItem");
+        QCOMPARE(tools.sourceRect(), QRectF(0, 0, 320, 240));
+        settings.set("video.zoomModel", 0);
+        QCOMPARE(tools.videoView().zoomModel(), application::visual::ZoomModel::Aegisub35);
+    }
+
     void videoViewZoomAspectAndVolume()
     {
         restartWithoutSound();
+        application->settingsStore()->set("video.zoomModel", 1);
+        const auto aegisub35 = qScopeGuard([this] { application->settingsStore()->set("video.zoomModel", 0); });
         QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
@@ -32113,6 +32238,8 @@ private slots:
     void videoFullscreenBarModesAndAutoHide()
     {
         restartWithoutSound();
+        application->settingsStore()->set("video.zoomModel", 1);
+        const auto aegisub35 = qScopeGuard([this] { application->settingsStore()->set("video.zoomModel", 0); });
         QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         keysNeverRepeat();

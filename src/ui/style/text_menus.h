@@ -21,6 +21,9 @@ public:
     static void setSource(const QString &module, const QString &type);
 
     Q_INVOKABLE QObject *menuFor(QQuickItem *editor);
+    // Clears the menu another style gave field's ContextMenu and returns that ContextMenu,
+    // so the caller can answer its requested(position) with menuFor(field).
+    Q_INVOKABLE QObject *adopt(QQuickItem *field);
 };
 
 }
