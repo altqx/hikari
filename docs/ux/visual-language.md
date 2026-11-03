@@ -223,6 +223,8 @@ Panels are flat, separated by boundaries. The menu popup has a `0 10 30` shadow 
 | Pressed toggle | Accent boundary and 2-unit inset bottom accent; label/state communicate on/off as well as color. |
 | Disabled control | Study opacity 0.46 and no enabled hover. Native semantics must make it unavailable; verify final contrast and discoverability rather than treating opacity as a complete disabled specification. |
 | Editable field | Clear label, boundary and value; multiline text uses the recessed surface. A field's local editing keys remain local. |
+| Time field | A masked clock in the document's form (ASS `0:00:00.00`, SRT `00:00:00,000`, TMPlayer `00:00:00`) up to 99:59:59.99 (SRT 99:59:59,999; FA7 [#564](https://github.com/altqx/hikari/issues/564)). ASS shows one hour digit below 10 h and two from 10 h; a paste, the wheel or a right-drag over the hours reaches them. A Line timed past the cap loads and saves unchanged: the field shows 99:59:59.99 and writes it only when the user edits that field. |
+| Line editor syntax colours | One colour per role from the theme's palette. A drawing (`\p1` and up) and a vector `\clip`/`\iclip` alternate two colours, X then Y, per coordinate, restarting at each command letter, in every theme. A `mixin` Effect is a template, as `template` is. |
 | Invalid value | Danger boundary and explanatory text; associate the explanation with the field and disable an action whose prerequisite is invalid. Do not communicate failure by color alone. |
 | Mixed value | Muted italic “Multiple values” in the gallery. Preserve mixed/indeterminate semantics; do not replace an actual value with this string in the model. |
 | Checkbox / slider | Accent indicates state; label, value and keyboard operation remain available. |

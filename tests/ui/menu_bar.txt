@@ -50,6 +50,8 @@ Edit > Find… [GLOBAL_SEARCH]
 Edit > Replace… [GLOBAL_FIND_REPLACE]
 Edit > Find next [GLOBAL_FIND_NEXT]
 Edit > Find previous [GLOBAL_FIND_PREVIOUS]
+Edit > -
+Edit > Insert hard space [GLOBAL_INSERT_HARD_SPACE]
 Subtitles
 Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]

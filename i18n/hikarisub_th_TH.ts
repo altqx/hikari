@@ -5958,6 +5958,10 @@ Failed to copy %2 fonts.</source>
         <translation>โหมดการแปล</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>วางช่วงที่ 1</translation>
     </message>
@@ -7250,6 +7254,14 @@ Failed to copy %2 fonts.</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
     </message>
     <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด (%1) ที่เคอร์เซอร์ในตัวแก้ไขบรรทัด</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด</translation>
+    </message>
+    <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>ย้ายเวลาเริ่มและสิ้นสุดของบรรทัดที่เลือกไปไว้กลางเฟรม เพื่อให้การเลื่อนตามเวลาในภายหลังยังคงอยู่บนเฟรมเต็ม</translation>
     </message>
@@ -8532,6 +8544,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>อยู่ที่บรรทัดเดิมเมื่อแก้ไขเวลา</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter แทรกตัวแบ่งบรรทัดแบบอ่อน (%1)</translation>
     </message>
     <message>
         <source>Translation mode</source>

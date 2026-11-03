@@ -6044,6 +6044,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Tryb tłumaczenia</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>Wstaw twardą spację</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>Wstaw fragment 1</translation>
     </message>
@@ -7342,6 +7346,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
     </message>
     <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>Wstawia twardą spację (%1) w miejscu kursora w edytorze linijki</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>Wstaw twardą spację</translation>
+    </message>
+    <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>Przesuwa czasy początku i końca zaznaczonych linii na środek ich klatek, aby późniejsze przesunięcie o czas zostawiło je na pełnych klatkach</translation>
     </message>
@@ -8634,6 +8646,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>Pozostawaj na linijce podczas edycji czasów</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter wstawia miękkie łamanie wiersza (%1)</translation>
     </message>
     <message>
         <source>Translation mode</source>

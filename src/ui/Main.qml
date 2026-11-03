@@ -1661,6 +1661,25 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_PREVIOUS")) root.app.findPrevious()
                 }
             }
+            MenuSeparator {}
+            ShellMenuItem {
+                command: "GLOBAL_INSERT_HARD_SPACE"
+                help: qsTr("Inserts a hard space (%1) at the cursor in the line editor").arg("\\h")
+                iconRole: "hard-space"
+                objectName: "insertHardSpaceMenuItem"
+                action: Action {
+                    id: insertHardSpaceAction
+                    text: qsTr("Insert hard space")
+                    enabled: root.editor.editable
+                    onTriggered: {
+                        if (root.hotkeyGesture("GLOBAL_INSERT_HARD_SPACE"))
+                            return
+                        const field = root.editedField()
+                        root.editor.insertHardSpace(field.role, field.selectionStart, field.selectionEnd)
+                        root.focusPanel(field, Qt.ShortcutFocusReason)
+                    }
+                }
+            }
         }
         ShellMenu {
             objectName: "subtitlesMenu"
@@ -7232,6 +7251,7 @@ ApplicationWindow {
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
+        GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }

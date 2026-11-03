@@ -5958,6 +5958,10 @@ Failed to copy %2 fonts.</source>
         <translation>번역 모드</translation>
     </message>
     <message>
+        <source>Insert hard space</source>
+        <translation>고정 공백 삽입</translation>
+    </message>
+    <message>
         <source>Place run 1</source>
         <translation>서식 구간 1 배치</translation>
     </message>
@@ -7250,6 +7254,14 @@ Failed to copy %2 fonts.</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
     </message>
     <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>줄 편집기의 커서 위치에 고정 공백(%1)을 삽입합니다</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>고정 공백 삽입</translation>
+    </message>
+    <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
         <translation>선택한 줄의 시작 및 끝 시간을 프레임의 가운데로 옮겨, 나중에 시간 단위로 이동해도 온전한 프레임에 머무르게 합니다</translation>
     </message>
@@ -8532,6 +8544,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>시간 편집 시 현재 줄에 머무르기</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter로 소프트 줄 바꿈(%1) 삽입</translation>
     </message>
     <message>
         <source>Translation mode</source>
