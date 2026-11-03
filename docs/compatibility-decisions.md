@@ -38,4 +38,4 @@ A failing `include()` reports `Error loading Lua include "<name>":` or `Error ru
 - A later block's `\t` starts from the value an earlier block's `\t` has reached, as the renderer shows it.
 - Tags written by the bake keep FBF's values but not its tag order or number formatting.
 
-With the option off, the split is byte for byte what it was before FA15. [FA15 #572](https://github.com/altqx/hikari/issues/572), coordinator decision 2026-11-03; the default waits on the owner.
+With the option off, the split is byte for byte what it was before FA15. [FA15 #572](https://github.com/altqx/hikari/issues/572), owner decision 2026-11-03 ("yes to all").
