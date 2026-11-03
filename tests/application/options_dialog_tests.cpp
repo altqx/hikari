@@ -260,9 +260,15 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(starPrompt.page, OptionsPage::Updates);
     ASSERT_NE(findSetting("privacy.starPrompt"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("privacy.starPrompt")->defaultValue), true);
+    const auto &mono = all[std::size(kLegacy) + 39];
+    EXPECT_EQ(mono.setting, "audio.playMono");
+    EXPECT_EQ(mono.control, OptionsControl::Check);
+    EXPECT_EQ(mono.page, OptionsPage::Audio);
+    ASSERT_NE(findSetting("audio.playMono"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("audio.playMono")->defaultValue), false);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 41);
-    const auto &hostApi = all[std::size(kLegacy) + 39];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 42);
+    const auto &hostApi = all[std::size(kLegacy) + 40];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -273,7 +279,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 39);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 40);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

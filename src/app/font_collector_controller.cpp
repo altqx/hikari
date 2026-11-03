@@ -642,9 +642,43 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
     setStage(Review);
 }
 
-void FontCollectorController::apply(bool acknowledged)
+QStringList FontCollectorController::existingFiles() const
 {
+    if (m_stage != Review || m_runZip || m_copyPath.isEmpty())
+        return {};
+    QStringList names;
+    if (m_runMkv) {
+        for (const auto &tab : m_mkvTabs)
+            for (const auto &font : tab.fonts)
+                names << qs(font.name);
+    } else if (m_review && m_review->action == CollectorAction::CopyToFolder) {
+        for (const auto &file : m_review->files)
+            names << qs(file.name);
+    }
+    names.removeDuplicates();
+    const QDir folder(m_runMkv ? pathDir(m_copyPath, true) : m_copyPath);
+    QStringList existing;
+    for (const QString &name : std::as_const(names))
+        if (QFileInfo::exists(folder.filePath(name)))
+            existing << name;
+    return existing;
+}
+
+void FontCollectorController::logKept()
+{
+    for (const QString &name : std::as_const(m_kept))
+        send(QCoreApplication::translate("HikariSub.Fonts", "“%1” already exists in the folder and was kept.").arg(name) + u'\n',
+             kNormal);
+    m_kept.clear();
+}
+
+void FontCollectorController::apply(bool acknowledged, bool keepExisting)
+{
+    m_kept = keepExisting ? existingFiles() : QStringList();
+    const auto kept = [this](const std::u16string &name) { return m_kept.contains(qs(name)); };
     if (m_stage == Review && m_runMkv) {
+        for (auto &tab : m_mkvTabs)
+            std::erase_if(tab.fonts, [&](const application::MatroskaFont &font) { return kept(font.name); });
         mkvApply();
         return;
     }
@@ -652,6 +686,7 @@ void FontCollectorController::apply(bool acknowledged)
         return;
     if (!m_review->complete() && !acknowledged)
         return;
+    std::erase_if(m_review->files, [&](const application::CollectedFile &file) { return kept(file.name); });
     if (!m_removeArchive.isEmpty() && QFileInfo::exists(m_removeArchive) && !QFile::remove(m_removeArchive))
         return;
     m_removeArchive.clear();
@@ -696,6 +731,7 @@ void FontCollectorController::applied(CollectorResult result)
         send(QCoreApplication::translate("HikariSub.Fonts", "Path is not available"), kWarning);
     } else {
         logBlocks(result.found, result.notFound);
+        logKept();
         logRenderer(review);
         logSummary(review, result);
     }
@@ -901,6 +937,7 @@ void FontCollectorController::mkvApplied(std::vector<application::MatroskaFontsS
             send(QCoreApplication::translate("HikariSub.Fonts", "Completed successfully and copied %1 fonts.").arg(copied), kSuccess);
     }
     (void)cancelled;
+    logKept();
     m_mkvTabs.clear();
     logFinished();
     m_canSaveFolder = true;

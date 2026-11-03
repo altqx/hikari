@@ -33,3 +33,11 @@ A failing `include()` reports `Error loading Lua include "<name>":` or `Error ru
 ## XD1-karaoke-marks
 
 A templater Apply's save is no longer byte for byte Aegisub 3.2.2's. Each generated Line and its karaoke Line get a `_hikari_kara_from` or `_hikari_kara_source` entry in `[Aegisub Extradata]`, so a reopened file still knows which karaoke Line each Line came from. There's no setting to turn this off. Aegisub 3.5.1 keeps the entries through its own load and save. Apart from them, the output is still 3.2.2's. [XD1 #659](https://github.com/altqx/hikari/issues/659), owner decision 2026-11-03.
+
+## FA19-mono-scope
+
+"Play in mono" (Settings › Audio › Playback, `audio.playMono`) covers HikariSub's own PortAudio output only: the audio panel and indexed editing playback. General video playback keeps the file's channels, because Qt Multimedia owns that sound and its PCM is not routed through PortAudio. Aegisub 3.5.1 has no mono option outside its Avisynth audio provider. [FA19 #576](https://github.com/altqx/hikari/issues/576), coordinator decision 2026-11-03.
+
+## FA19-dummy-fraction
+
+A dummy video's frame rate may be a fraction, such as `24000/1001`, and its path stores it as written (`?dummy:24000/1001:…`), as Aegisub 3.5.1 does. Frame n starts at n × 1000 × den / num ms, truncated, so timing stays exact over long durations. A decimal rate still writes `%f` (`?dummy:23.976000:…`) with the old float timing, byte for byte as before. Aegisub releases before 3.5 can't open a fractional dummy path. [FA19 #576](https://github.com/altqx/hikari/issues/576).

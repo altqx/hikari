@@ -1902,6 +1902,10 @@ Output device: %2</source>
         <translation>아니오</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation>확인</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
@@ -2112,6 +2116,11 @@ Output device: %2</source>
     <message>
         <source>Video from directory: %1</source>
         <translation>폴더에 있는 영상: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>찾을 수 없는 연결된 파일:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -3286,6 +3295,22 @@ Should not exceed 15 characters per second</source>
         <source>Writing the new archive replaces it.</source>
         <translation>새 압축 파일을 쓰면 기존 파일을 대체합니다.</translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>“%1”에 글꼴 파일 %n개가 이미 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>외 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>기존 파일 유지</translation>
+    </message>
     <message>
         <source>Action</source>
         <translation>동작</translation>
@@ -3812,6 +3837,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
         <translation>이 수집은 완전하지 않습니다. 이를 확인한 경우에만 쓰며, 출력은 불완전함으로 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1”(이)가 폴더에 이미 있어 그대로 두었습니다.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -6110,6 +6139,10 @@ Failed to copy %2 fonts.</source>
         <translation>이전 버전 설정 가져오기…</translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>영상 정보…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -7236,6 +7269,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Following lines, end at video</source>
         <translation>뒤따르는 줄, 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>영상 정보…</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -9028,6 +9065,14 @@ removing audio cache files.</source>
     <message>
         <source>Don&apos;t play after changing the line</source>
         <translation>줄 변경 후 재생 안 함</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>모노로 재생</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>소리 패널과 편집 재생의 채널을 하나로 섞습니다. 일반 영상 재생은 파일의 채널을 그대로 유지합니다.</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -15068,6 +15113,69 @@ or codecs or a splitter may be missing</source>
         <translation>프레임 %1/%2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>PC 범위</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>TV 범위</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>더미 영상</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>가변</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 fps (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n프레임 (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>알 수 없음</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1비트</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>회색조, %1비트</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1비트</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2비트</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (태그 없음, 크기로 추정)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>가로 세로 비율: %1</translation>
     </message>
@@ -15101,6 +15209,42 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>열기</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>영상 정보</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>해상도</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>프레임 속도</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>길이</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>색 공간</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>색 매트릭스</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>자막에 사용</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
     </message>
 </context>
 <context>

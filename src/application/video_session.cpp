@@ -132,6 +132,8 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_newIndex = opened->newIndex;
         m_indexHandoff = opened->handoffIndexFile;
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
+        m_nominalFps = {opened->fpsNumerator, opened->fpsDenominator};
+        m_pixelFormat = opened->pixelFormat;
         m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
         m_state = State::Ready;
         m_inputMatrix.reset();
@@ -173,6 +175,8 @@ void VideoSession::close()
     m_audioTrack = -1;
     m_audioOrdinal = -1;
     m_audioTracks.clear();
+    m_nominalFps = {0, 1};
+    m_pixelFormat = {};
     m_progress.reset();
     m_newIndex = true;
     m_indexHandoff.clear();

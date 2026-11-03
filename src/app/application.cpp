@@ -1249,6 +1249,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 return m_audio ? m_audio->box().sharedAudio() : nullptr;
             }));
         m_audio->setPlayer(m_audioPlayer.get());
+        m_audioPlayer->setMono(m_settings->boolean("audio.playMono"));
         m_audio->setPlaybackSettings([this] { return m_settings->integer("audio.markPlayTime"); });
         m_audio->setVideoPlayback([this] { return m_video->playing(); }, [this] { m_video->pause(); });
         m_audioConnections << connect(m_audioPlayer.get(), &backends::AudioBoxPlayer::failed, this,
@@ -5550,6 +5551,8 @@ void Application::settingChanged(const QString &id)
         applyGrammarSettings();
     if (id == QLatin1String("audio.outputHostApi") && m_audioPlayer)
         m_audioPlayer->reopenOutput();
+    if (id == QLatin1String("audio.playMono") && m_audioPlayer)
+        m_audioPlayer->setMono(m_settings->boolean("audio.playMono"));
     if (id == QLatin1String("audio.outputDevice") && m_audioRouting)
         m_audioRouting->refresh();
     if (id == QLatin1String("video.playbackPlayer"))

@@ -83,8 +83,8 @@ const QStringList kDialogs{
     QStringLiteral("selectLines"),    QStringLiteral("setNewFps"),      QStringLiteral("settings"),
     QStringLiteral("settingsImport"), QStringLiteral("shapesEdition"),  QStringLiteral("spellAddedWords"),
     QStringLiteral("styleClashes"),   QStringLiteral("styleManager"),   QStringLiteral("translationShift"),
-    QStringLiteral("unsavedChanges"), QStringLiteral("updateAvailable"), QStringLiteral("whatsNew"),
-    QStringLiteral("automation_script")};
+    QStringLiteral("unsavedChanges"), QStringLiteral("updateAvailable"), QStringLiteral("videoDetails"),
+    QStringLiteral("whatsNew"),       QStringLiteral("automation_script")};
 const QStringList kLanguages{QStringLiteral("en"), QStringLiteral("ko_KR"), QStringLiteral("pl"), QStringLiteral("ta"),
                              QStringLiteral("th_TH")};
 const QStringList kPages{QStringLiteral("language"), QStringLiteral("import"), QStringLiteral("look"),

@@ -1922,6 +1922,10 @@ Output device: %2</source>
         <translation>இல்லை</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation>சரி</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
     </message>
@@ -2132,6 +2136,11 @@ Output device: %2</source>
     <message>
         <source>Video from directory: %1</source>
         <translation>கோப்புறையிலிருந்து வீடியோ: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>இணைக்கப்பட்ட கோப்புகள் கிடைக்கவில்லை:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -3318,6 +3327,24 @@ Should not exceed 15 characters per second</source>
         <source>Writing the new archive replaces it.</source>
         <translation>புதிய காப்பகத்தை எழுதினால் அது மாற்றப்படும்.</translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>“%1” இல் %n எழுத்துரு கோப்பு ஏற்கனவே உள்ளது.</numerusform>
+            <numerusform>“%1” இல் %n எழுத்துரு கோப்புகள் ஏற்கனவே உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>மேலும் %n</numerusform>
+            <numerusform>மேலும் %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>இருப்பதை வைத்திரு</translation>
+    </message>
     <message>
         <source>Action</source>
         <translation>செயல்</translation>
@@ -3846,6 +3873,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
         <translation>இந்தச் சேகரிப்பு முழுமையடையவில்லை. நீங்கள் அதை ஏற்றுக்கொண்டால் மட்டுமே இது எழுதப்படும், அப்போது வெளியீடு முழுமையற்றது எனக் குறிக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1” ஏற்கனவே கோப்புறையில் உள்ளது; அது மாற்றப்படவில்லை.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -6153,6 +6184,10 @@ Failed to copy %2 fonts.</source>
         <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>வீடியோ விவரங்கள்…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -7282,6 +7317,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Following lines, end at video</source>
         <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>வீடியோ விவரங்கள்…</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -9084,6 +9123,14 @@ removing audio cache files.</source>
     <message>
         <source>Don&apos;t play after changing the line</source>
         <translation>வரியை மாற்றிய பின் இயக்காதே</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>மோனோவில் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>ஆடியோ பலகம் மற்றும் திருத்தும்போது இயக்குவதற்கான சேனல்களைக் கலக்கிறது. பொது வீடியோ இயக்கம் கோப்பின் சேனல்களை அப்படியே வைத்திருக்கும்.</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -15156,6 +15203,70 @@ or codecs or a splitter may be missing</source>
         <translation>சட்டகம் %1 / %2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>எதுவுமில்லை</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>PC வரம்பு</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>TV வரம்பு</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>போலி வீடியோ</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>மாறுபடும்</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 fps (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n சட்டகம் (%1)</numerusform>
+            <numerusform>%n சட்டகங்கள் (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>தெரியவில்லை</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1-பிட்</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>சாம்பல் அளவு, %1-பிட்</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1-பிட்</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2-பிட்</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (குறிக்கப்படவில்லை; அளவைக் கொண்டு ஊகிக்கப்பட்டது)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>தோற்ற விகிதம்: %1</translation>
     </message>
@@ -15189,6 +15300,42 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>திற</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>வீடியோ விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>கோப்பு</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>தெளிவுத்திறன்</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>நீளம்</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>வண்ண வெளி</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>வண்ண மேட்ரிக்ச்</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>வசனங்களுக்குப் பயன்படுவது</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
     </message>
 </context>
 <context>

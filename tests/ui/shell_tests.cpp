@@ -9860,6 +9860,43 @@ private slots:
         QCOMPARE(QDir(dir.filePath(QStringLiteral("Fonts"))).entryList(QDir::Files, QDir::Name),
                  (QStringList{QStringLiteral("INCOMPLETE - font collection.txt"), QStringLiteral("arial.ttf"),
                               QStringLiteral("times.ttf")}));
+        {
+            const QString arial = dir.filePath(QStringLiteral("Fonts/arial.ttf"));
+            const auto readArial = [&] {
+                QFile f(arial);
+                return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+            };
+            const QByteArray copied = readArial();
+            {
+                QFile f(arial);
+                QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+                f.write("previous font");
+            }
+            const auto applyAndAnswer = [&](const QString &choice) {
+                QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+                QVERIFY(collector.waitIdle());
+                QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+                QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorAcknowledge"), "click"));
+                QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorApply"), "click"));
+                answerMessage("fontCollectorMessages", QStringLiteral("Font collector"),
+                              QStringLiteral("2 font files already exist in “%1”.").arg(collector.copyPath()), choice);
+                QVERIFY(collector.waitIdle());
+            };
+            applyAndAnswer(QStringLiteral("cancel"));
+            QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+            QCOMPARE(readArial(), QByteArray("previous font"));
+            applyAndAnswer(QStringLiteral("keep"));
+            QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+            QCOMPARE(readArial(), QByteArray("previous font"));
+            const QString kept = collector.logText();
+            QVERIFY2(kept.contains(QStringLiteral("“arial.ttf” already exists in the folder and was kept.\n"
+                                                  "“times.ttf” already exists in the folder and was kept.\n")),
+                     qPrintable(kept));
+            applyAndAnswer(QStringLiteral("replace"));
+            QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+            QCOMPARE(readArial(), copied);
+            QVERIFY(!collector.logText().contains(QStringLiteral("was kept")));
+        }
         QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("Czcionki"))));
         {
             class Polish final : public QTranslator {
@@ -15822,6 +15859,7 @@ private slots:
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
               {"audio.dontPlayWhenLineChanges", "Don't play after changing the line"},
               {"audio.autoFocus", "Focus the panel under the pointer"},
+              {"audio.playMono", "Play in mono"},
               {"audio.drawTimeCursor", "Show the time beside the cursor"},
               {"audio.drawSecondaryLines", "Show seconds markers"},
               {"audio.drawSelectionBackground", "Show the selection background"},
@@ -18662,7 +18700,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 267);
+        QCOMPARE(hotkeyRows().size(), 268);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -30490,6 +30528,59 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!box->isVisible());
         }
+    }
+
+    void dummyVideoTakesAnExactFractionalRate()
+    {
+        auto *details = named("videoDetailsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(details);
+        QVERIFY(!details->property("enabled").toBool());
+        auto *action = named("dummyVideoMenuItem")->property("action").value<QObject *>();
+        QVERIFY(action);
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        auto *dialog = qobject_cast<QQuickWindow *>(named("dummyVideoDialog"));
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        auto *fps = dialogItem("dummyVideoDialog", "dummyFps");
+        QVERIFY(fps->property("model").toStringList().contains(QStringLiteral("24000/1001")));
+        fps->setProperty("editText", QString());
+        auto *editor = fps->property("contentItem").value<QQuickItem *>();
+        QVERIFY(editor);
+        editor->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(dialog->isActive() && editor->hasActiveFocus());
+        for (const char c : std::string_view("24000/1001"))
+            QTest::keyClick(dialog, c);
+        QCOMPARE(fps->property("editText").toString(), QStringLiteral("24000/1001"));
+        dialogItem("dummyVideoDialog", "dummyDuration")->setProperty("text", QStringLiteral("0:01:00.00"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
+                 QStringLiteral("This gives 1438 frames"));
+        dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 320);
+        dialogItem("dummyVideoDialog", "dummyHeight")->setProperty("value", 240);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        auto &video = application->video();
+        QTRY_VERIFY(video.hasVideo());
+        QCOMPARE(QString::fromStdString(video.session().path()), QStringLiteral("?dummy:24000/1001:1438:320:240:47:163:254:"));
+        QCOMPARE(video.frameCount(), 1438);
+        QCOMPARE(video.session().legacyTimebase().msAt(1437), 1437 * 1001 / 24);
+
+        QTRY_VERIFY(details->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(details, "trigger"));
+        auto *detailsWindow = qobject_cast<QQuickWindow *>(named("videoDetailsDialog"));
+        QVERIFY(detailsWindow);
+        QTRY_VERIFY(detailsWindow->isVisible());
+        QCOMPARE(detailsWindow->title(), QStringLiteral("Video details"));
+        const auto field = [&](const char *name) {
+            return dialogItem("videoDetailsDialog", name)->property("text").toString();
+        };
+        QCOMPARE(field("videoDetailsFile"), QStringLiteral("Dummy video"));
+        QCOMPARE(field("videoDetailsResolution"), QStringLiteral("320 × 240 (4:3)"));
+        QCOMPARE(field("videoDetailsFrameRate"), QStringLiteral("23.976 fps (24000/1001)"));
+        QCOMPARE(field("videoDetailsLength"), QStringLiteral("1438 frames (0:00:59.93)"));
+        QCOMPARE(field("videoDetailsColourSpace"), QStringLiteral("RGB, 8-bit"));
+        QCOMPARE(field("videoDetailsMatrix"), QStringLiteral("BT.601, TV range (not tagged; guessed from the size)"));
+        video.unloadVideo();
+        QTRY_VERIFY(!detailsWindow->isVisible());
+        QVERIFY(!details->property("enabled").toBool());
     }
 
     void queuedQuestionOpensOverAShownWindow()

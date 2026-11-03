@@ -270,6 +270,20 @@
             <numerusform>The fonts of every style and every %1 tag in all %n open files.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>%n font file already exists in “%1”.</numerusform>
+            <numerusform>%n font files already exist in “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>and %n more</numerusform>
+            <numerusform>and %n more</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Grid</name>
@@ -674,6 +688,16 @@
         <translation>
             <numerusform>%n template line changed since the last Apply; the generated lines are older.</numerusform>
             <numerusform>%n template lines changed since the last Apply; the generated lines are older.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Video</name>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n frame (%1)</numerusform>
+            <numerusform>%n frames (%1)</numerusform>
         </translation>
     </message>
 </context>

@@ -648,6 +648,48 @@ private slots:
         QVERIFY(!application->video().offering());
     }
 
+    void missingLinkedFilesAreReported()
+    {
+        const QString folder = dir.filePath(QStringLiteral("missing"));
+        QDir().mkpath(folder);
+        QFile::remove(folder + QStringLiteral("/gone.mkv"));
+        {
+            QFile k(folder + QStringLiteral("/gone_keyframes.txt"));
+            QVERIFY(k.open(QIODevice::WriteOnly));
+            k.write("# keyframe format v1\nfps 0\n0\n24\n");
+        }
+        const QString subs = writeAss(folder + QStringLiteral("/gone.ass"),
+                                      "Video File: gone.mkv\nAudio File: audio/gone.flac\nKeyframes File: gone_keyframes.txt\n",
+                                      "gone");
+        QVERIFY(application->openFile(subs));
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(),
+                 QStringLiteral("Associated files:\nKeyframes: %1%2gone_keyframes.txt\n"
+                                "\nLinked files not found:\nVideo: gone.mkv\nAudio: audio/gone.flac")
+                     .arg(QDir::toNativeSeparators(folder), QDir::separator()));
+        QCOMPARE(application->video().offerAssociatedLabel(), QStringLiteral("Yes"));
+        QCOMPARE(visualItem(QStringLiteral("dismissAssociation"))->property("text").toString(), QStringLiteral("No"));
+        application->video().dismissOffer();
+        QVERIFY(!application->video().offering());
+
+        QFile::remove(folder + QStringLiteral("/gone_keyframes.txt"));
+        const QString only = writeAss(folder + QStringLiteral("/only.ass"), "Video File: gone.mkv\n", "only");
+        QVERIFY(application->openFile(only));
+        application->selectTab(1);
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(), QStringLiteral("Linked files not found:\nVideo: gone.mkv"));
+        QQuickItem *ok = visualItem(QStringLiteral("dismissAssociation"));
+        QVERIFY(ok && ok->isVisible());
+        QCOMPARE(ok->property("text").toString(), QStringLiteral("OK"));
+        QVERIFY(!visualItem(QStringLiteral("loadAssociated"))->isVisible());
+        QVERIFY(!visualItem(QStringLiteral("loadFromDirectory"))->isVisible());
+        QVERIFY(!visualItem(QStringLiteral("associationApplyToAll"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(ok, "clicked"));
+        QVERIFY(!application->video().offering());
+        QTest::qWait(200);
+        QVERIFY(!application->video().hasVideo());
+    }
+
     void theFoldersVideoAndApplyToAll()
     {
         const QString folder = dir.filePath(QStringLiteral("dirvideo"));

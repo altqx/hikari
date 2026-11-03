@@ -2046,6 +2046,16 @@ ApplicationWindow {
                 video: root.video
             }
             ShellMenuItem {
+                command: "GLOBAL_VIDEO_DETAILS"
+                iconRole: "video-details"
+                objectName: "videoDetailsMenuItem"
+                action: Action {
+                    id: videoDetailsAction
+                    text: qsTr("Video details…"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_DETAILS")) root.openVideoDetails()
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_VIDEO_ZOOM"
                 iconRole: "zoom"
                 objectName: "videoZoomMenuItem"
@@ -6311,6 +6321,18 @@ ApplicationWindow {
         dummyVideoLoader.active = true
         dummyVideoLoader.item.show()
     }
+    Loader {
+        id: videoDetailsLoader
+        active: false
+        sourceComponent: VideoDetailsDialog {
+            video: root.video
+            settings: root.app.settings
+        }
+    }
+    function openVideoDetails() {
+        videoDetailsLoader.active = true
+        videoDetailsLoader.item.show()
+    }
     VideoFileQuestion {
         id: videoFileQuestion
         app: root.app
@@ -7197,6 +7219,7 @@ ApplicationWindow {
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
         GLOBAL_PLUGINS: pluginsAction,
+        GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,

@@ -158,7 +158,7 @@ DialogWindow {
                 objectName: "dummyFps"
                 editable: true
                 Layout.preferredWidth: 112
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
+                validator: RegularExpressionValidator { regularExpression: /[0-9./]*/ }
                 Accessible.name: qsTr("Frames per second")
                 Accessible.description: dialog.fpsValid ? "" : fpsProblem.text
             }

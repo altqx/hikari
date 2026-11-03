@@ -159,6 +159,40 @@ TEST(AssociationOffer, TheAudioFileAssociationOpensItsOwnAudio)
     EXPECT_EQ(associationLoad(o, AssociationAnswer::LoadAssociated).audio, o.audio);
 }
 
+TEST(AssociationOffer, ReportsLinkedFilesThatAreMissing)
+{
+    const auto doc = parse("[Script Info]\nVideo File: ep1.mkv\nAudio File: audio/ep1.flac\nKeyframes File: kf.txt\n");
+    const std::set<std::string> files{"/subs/kf.txt"};
+    const auto a = resolveMediaAssociations(doc, "/subs/ep1.ass", [&](const std::string &p) { return files.contains(p); }, false);
+    const auto offer = associationOffer(a, "", {});
+    EXPECT_EQ(offer.keyframes, "/subs/kf.txt");
+    EXPECT_EQ(offer.missing, (std::vector<MissingMedia>{{MediaKind::Video, "ep1.mkv"}, {MediaKind::Audio, "audio/ep1.flac"}}));
+    EXPECT_TRUE(offer.loads());
+    EXPECT_EQ(associationLoad(offer, AssociationAnswer::LoadAssociated).keyframes, "/subs/kf.txt");
+
+    const auto none = associationOffer(resolveMediaAssociations(doc, "/subs/ep1.ass", [](const std::string &) { return false; }, false),
+                                       "", {});
+    EXPECT_FALSE(none.loads());
+    EXPECT_TRUE(none.asks());
+    EXPECT_EQ(none.missing.size(), 3u);
+    EXPECT_EQ(associationLoad(none, AssociationAnswer::LoadAssociated).video, "");
+    EXPECT_EQ(associationLoad(none, AssociationAnswer::LoadAssociated).keyframes, "");
+
+    const auto open = associationOffer(resolveMediaAssociations(doc, "/subs/ep1.ass", [](const std::string &) { return false; }, false),
+                                       "", {"/v/other.mkv", "", ""});
+    EXPECT_EQ(open.missing, (std::vector<MissingMedia>{{MediaKind::Audio, "audio/ep1.flac"}, {MediaKind::Keyframes, "kf.txt"}}));
+}
+
+TEST(AssociationOffer, AMissingVideosOwnAudioAndDummyAudioAreNotReportedTwice)
+{
+    const auto same = parse("[Script Info]\nVideo File: ep1.mkv\nAudio File: ep1.mkv\n");
+    const auto a = resolveMediaAssociations(same, "/subs/ep1.ass", [](const std::string &) { return false; }, false);
+    EXPECT_EQ(associationOffer(a, "", {}).missing, (std::vector<MissingMedia>{{MediaKind::Video, "ep1.mkv"}}));
+    const auto dummy = parse("[Script Info]\nAudio File: dummy-audio:silence?sr=44100&bd=16&ch=1&ln=396900000\n");
+    const auto b = resolveMediaAssociations(dummy, "/subs/ep1.ass", [](const std::string &) { return false; }, false);
+    EXPECT_TRUE(associationOffer(b, "", {}).missing.empty());
+}
+
 TEST(AssociationOffer, TheFoldersVideo)
 {
     const auto doc = parse("[Script Info]\nAudio File: ep1.wav\n");

@@ -1942,6 +1942,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nie</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
@@ -2152,6 +2156,11 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Video from directory: %1</source>
         <translation>Wideo z folderu: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>Nie znaleziono powiązanych plików:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -3350,6 +3359,26 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <source>Writing the new archive replaces it.</source>
         <translation>Zapisanie nowego archiwum zastąpi ten plik.</translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>%n plik czcionki już istnieje w “%1”.</numerusform>
+            <numerusform>%n pliki czcionek już istnieją w “%1”.</numerusform>
+            <numerusform>%n plików czcionek już istnieje w “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>i %n inny</numerusform>
+            <numerusform>i %n inne</numerusform>
+            <numerusform>i %n innych</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>Zachowaj istniejące</translation>
+    </message>
     <message>
         <source>Action</source>
         <translation>Akcja</translation>
@@ -3880,6 +3909,10 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
         <translation>Ta kolekcja jest niekompletna. Zostanie zapisana dopiero po potwierdzeniu tego faktu, a wynik zostanie oznaczony jako niekompletny.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1” już istnieje w folderze i został zachowany.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -6196,6 +6229,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Importuj ustawienia starej wersji…</translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>Szczegóły wideo…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -7328,6 +7365,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Following lines, end at video</source>
         <translation>Następne linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>Szczegóły wideo…</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -9140,6 +9181,14 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     <message>
         <source>Don&apos;t play after changing the line</source>
         <translation>Nie odtwarzaj po zmianie linijki</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>Odtwarzaj w mono</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>Miesza kanały dla panelu audio i odtwarzania podczas edycji. Zwykłe odtwarzanie wideo zachowuje kanały pliku.</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -15244,6 +15293,71 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Klatka %1 z %2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>Brak</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>zakres PC</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>zakres TV</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>Atrapa wideo</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>Zmienna</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 kl./s (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 kl./s</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n klatka (%1)</numerusform>
+            <numerusform>%n klatki (%1)</numerusform>
+            <numerusform>%n klatek (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Nieznana</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1 bit</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>Skala szarości, %1 bit</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1 bit</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2 bit</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (brak oznaczenia; ustalona na podstawie rozmiaru)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>Proporcje obrazu: %1</translation>
     </message>
@@ -15277,6 +15391,42 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Open</source>
         <translation>Otwórz</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>Szczegóły wideo</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Plik</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>Rozdzielczość</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>Długość</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>Przestrzeń barw</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>Macierz kolorów</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>Używana dla napisów</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
     </message>
 </context>
 <context>

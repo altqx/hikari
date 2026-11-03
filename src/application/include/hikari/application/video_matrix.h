@@ -59,10 +59,13 @@ public:
     const std::string &source() const { return m_source; }
     int sourceColorSpace() const { return m_colorSpace; }
     int sourceColorRange() const { return m_colorRange; }
+    // The source names its matrix; else source() is the guess from the size.
+    bool sourceTagged() const { return m_tagged; }
 
 private:
     int m_colorSpace = ffms_colour::kUnspecified;
     int m_colorRange = ffms_colour::kRangeUnspecified;
+    bool m_tagged = false;
     std::string m_applied, m_source;
 };
 
