@@ -1,5 +1,7 @@
 #include "plugin_state.h"
 
+#include "document_prelude.h"
+
 #include "hikari/api/api.h"
 
 extern "C" {
@@ -400,6 +402,21 @@ int call(lua_State *L)
     return pushCallResult(L, Access::host(L).call(operation, *params));
 }
 
+int lock(lua_State *L)
+{
+    const auto held = Access::host(L).lock();
+    if (held)
+        return 0;
+    lua_pushlstring(L, held.error().data(), held.error().size());
+    return 1;
+}
+
+int unlock(lua_State *L)
+{
+    Access::host(L).unlock();
+    return 0;
+}
+
 int runCommand(lua_State *L)
 {
     const std::string command = luaL_checkstring(L, 1);
@@ -649,6 +666,8 @@ std::expected<void, std::string> PluginState::open()
     lua_setfield(L, -2, "i18n");
 
     lua_setglobal(L, "hikari");
+    if (auto prelude = runPrelude(); !prelude)
+        return prelude;
 
     lua_pushlightuserdata(L, this);
     lua_pushcclosure(L, print, 1);
@@ -657,6 +676,28 @@ std::expected<void, std::string> PluginState::open()
         lua_pushlightuserdata(L, this);
         lua_pushcclosure(L, require, 1);
         lua_setglobal(L, "require");
+    }
+    return {};
+}
+
+std::expected<void, std::string> PluginState::runPrelude()
+{
+    lua_State *L = m_lua;
+    const std::string_view source = documentPrelude();
+    if (luaL_loadbufferx(L, source.data(), source.size(), "=hikari", "t") != 0) {
+        std::string message = text(L, -1);
+        lua_pop(L, 1);
+        return std::unexpected(std::move(message));
+    }
+    lua_getglobal(L, "hikari");
+    for (const lua_CFunction function : {lock, unlock}) {
+        lua_pushlightuserdata(L, this);
+        lua_pushcclosure(L, function, 1);
+    }
+    if (lua_pcall(L, 3, 0, 0) != 0) {
+        std::string message = text(L, -1);
+        lua_pop(L, 1);
+        return std::unexpected(std::move(message));
     }
     return {};
 }

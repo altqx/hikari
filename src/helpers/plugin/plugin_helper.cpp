@@ -59,6 +59,20 @@ public:
         return refusal(w.take());
     }
 
+    std::expected<void, std::string> lock() override
+    {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(protocol::Service::Lock));
+        return refusal(w.take());
+    }
+
+    void unlock() override
+    {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(protocol::Service::Unlock));
+        (void)m_responder.call(w.take());
+    }
+
 private:
     std::expected<std::string, Outcome> answerText(std::vector<std::byte> payload)
     {

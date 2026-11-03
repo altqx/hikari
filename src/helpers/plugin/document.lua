@@ -1,5 +1,6 @@
 local hikari, lock, unlock = ...
 local call, array, null = hikari.call, hikari.array, hikari.null
+local error, ipairs, pcall, setmetatable, type = error, ipairs, pcall, setmetatable, type
 
 local function target(document)
     return document ~= nil and { document = document } or {}
@@ -159,7 +160,7 @@ hikari.selection = {
     set = function(selected, active, document)
         local params = target(document)
         params.selected = array(selected or {})
-        params.active = active == nil and null or active
+        params.active = active
         return call("selection.set", params)
     end,
 }
