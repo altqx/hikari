@@ -79,5 +79,5 @@ export function notices(packages: string[]): string {
     }
     if (packages.length === 0)
         text += "No npm packages are bundled.\n";
-    return text;
+    return text.replace(/\r\n?/g, "\n");
 }
