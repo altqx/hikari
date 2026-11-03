@@ -31,8 +31,8 @@ Document-level subtitle information, including title, credits, resolutions and A
 _Avoid_: Script configuration when referring to these properties rather than automation.
 
 **Line group**:
-A description followed by contiguous member Lines, with expand/collapse behavior.
-_Avoid_: Tree when naming this feature; arbitrary nested group as an implied capability.
+A description followed by contiguous member Lines, with expand/collapse behavior. Groups nest: a member can be the description of a group inside it ([#696](https://github.com/altqx/hikari/issues/696)).
+_Avoid_: Tree when naming this feature.
 
 **Grid filter**:
 Criteria controlling which Lines are shown or exposed to a scoped operation. Hidden Lines still belong to the Document.

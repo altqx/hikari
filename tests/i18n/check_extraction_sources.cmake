@@ -32,6 +32,7 @@ if(extracted_count EQUAL 0)
 endif()
 
 file(GLOB_RECURSE candidates "${SOURCE_DIR}/src/*.cpp" "${SOURCE_DIR}/src/*.h" "${SOURCE_DIR}/src/*.qml" "${SOURCE_DIR}/src/*.js")
+list(FILTER candidates EXCLUDE REGEX "/src/ai-sidecar/")
 set(calling 0)
 set(missing "")
 foreach(file IN LISTS candidates)

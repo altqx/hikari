@@ -287,7 +287,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Show / hide render cost").accel, "");
-    EXPECT_EQ(rowNamed(list, "Video Full screen bar: Auto / Always / Never").accel, "Tab");
+    EXPECT_EQ(rowNamed(list, "Video Full screen bar: when the pointer moves / always / never").accel, "Tab");
     EXPECT_EQ(rowNamed(list, "Audio Tap to time").accel, "Y");
     for (const auto &tool : kToolCommands)
         EXPECT_EQ(rowNamed(list, std::string("Video ") + tool.name).accel, tool.accel);

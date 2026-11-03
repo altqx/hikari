@@ -141,24 +141,12 @@
         <translation>노래방</translation>
     </message>
     <message>
-        <source>Enable / disable karaoke creation</source>
-        <translation>노래방 만들기 활성화 / 비활성화</translation>
-    </message>
-    <message>
         <source>Auto split</source>
         <translation>자동 분할</translation>
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
         <translation>음절 자동 분할 활성화 / 비활성화</translation>
-    </message>
-    <message>
-        <source>Automatically apply changes</source>
-        <translation>변경 사항 자동 적용</translation>
-    </message>
-    <message>
-        <source>Go to the next line after applying changes</source>
-        <translation>변경 사항 적용 후 다음 줄로 이동</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -262,14 +250,6 @@
         <translation>탭 옵션</translation>
     </message>
     <message>
-        <source>Stop tapping</source>
-        <translation>탭 중지</translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation>탭 시작</translation>
-    </message>
-    <message>
         <source>Each syllable</source>
         <translation>각 음절</translation>
     </message>
@@ -330,16 +310,8 @@
         <translation>음성</translation>
     </message>
     <message>
-        <source>Enhance speech frequencies in the spectrum</source>
-        <translation>스펙트럼 음성 주파수 향상</translation>
-    </message>
-    <message>
         <source>More audio options</source>
         <translation>소리 옵션 더 보기</translation>
-    </message>
-    <message>
-        <source>Speech (non-linear spectrum)</source>
-        <translation>음성 (비선형 스펙트럼)</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -400,6 +372,10 @@ Output device: %2</source>
     <message>
         <source>Go to the next line after commit</source>
         <translation>적용 후 다음 줄로 이동</translation>
+    </message>
+    <message>
+        <source>Speech spectrum</source>
+        <translation>음성 스펙트럼</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -1147,10 +1123,8 @@ Output device: %2</source>
         <translation>%1에 실행할 매크로가 없습니다</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Lua 스크립트를 불러오는 중 오류가 발생했습니다: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>%1을(를) 불러오지 못했습니다. 오류는 세부 정보에 있습니다.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -5730,6 +5704,10 @@ Failed to copy %2 fonts.</source>
         <translation>다시 실행</translation>
     </message>
     <message>
+        <source>Full screen bar: when the pointer moves / always / never</source>
+        <translation>전체 화면 막대: 포인터를 움직일 때 / 항상 / 안 함</translation>
+    </message>
+    <message>
         <source>Delete line</source>
         <translation>줄 삭제</translation>
     </message>
@@ -5940,10 +5918,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Show / hide render cost</source>
         <translation>렌더링 비용 표시 / 숨기기</translation>
-    </message>
-    <message>
-        <source>Full screen bar: Auto / Always / Never</source>
-        <translation>전체 화면 막대: 자동 / 항상 / 안 함</translation>
     </message>
     <message>
         <source>Tap to time</source>
@@ -7250,6 +7224,10 @@ Failed to copy %2 fonts.</source>
         <translation>뒤따르는 줄, 끝을 영상에</translation>
     </message>
     <message>
+        <source>Render cost</source>
+        <translation>렌더링 비용</translation>
+    </message>
+    <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
         <translation>활성 줄에 소리 선택 영역을 적용하고, 이전 줄은 선택 영역이 시작하는 곳에서 끝냅니다</translation>
     </message>
@@ -7314,10 +7292,6 @@ Failed to copy %2 fonts.</source>
         <translation>영상 재생 / 일시정지</translation>
     </message>
     <message>
-        <source>Show / hide render cost</source>
-        <translation>렌더링 비용 표시 / 숨기기</translation>
-    </message>
-    <message>
         <source>Opens audio file</source>
         <translation>소리 파일 열기</translation>
     </message>
@@ -7330,8 +7304,8 @@ Failed to copy %2 fonts.</source>
         <translation>로마자 줄의 노래방 타이밍을 해당 한자 줄에 복사합니다</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>한자 타이머…</translation>
+        <source>Kanji timer</source>
+        <translation>한자 타이머</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -10547,8 +10521,8 @@ because it was edited.</source>
         <translation>포함하지 않음</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>검색 글자:</translation>
+        <source>Search text</source>
+        <translation>검색 글자</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10571,7 +10545,7 @@ because it was edited.</source>
         <translation>글자</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>스타일</translation>
     </message>
     <message>
@@ -14305,6 +14279,14 @@ Styles deleted:
         <source>Save</source>
         <translation>저장</translation>
     </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>프레임 안에서 시간 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Times were not centred within frames: no video is open</source>
+        <translation>열린 영상이 없어 시간을 프레임 안에서 가운데 맞추지 않았습니다</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
@@ -14824,6 +14806,67 @@ Styles deleted:
         <translation>커서 위치 복사</translation>
     </message>
     <message>
+        <source>Full screen on</source>
+        <translation>전체 화면 표시 위치</translation>
+    </message>
+    <message>
+        <source>Monitor %1</source>
+        <extracomment>A monitor in the Full screen on submenu; %1 is its number</extracomment>
+        <translation>모니터 %1</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>영상 열기…</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>자막 열기…</translation>
+    </message>
+    <message>
+        <source>Recently opened</source>
+        <translation>최근에 연 파일</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation>자막</translation>
+    </message>
+    <message>
+        <source>Videos</source>
+        <translation>영상</translation>
+    </message>
+    <message>
+        <source>Export frame</source>
+        <translation>프레임 내보내기</translation>
+    </message>
+    <message>
+        <source>Save as PNG…</source>
+        <translation>PNG로 저장…</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Save with subtitles as PNG…</source>
+        <translation>자막과 함께 PNG로 저장…</translation>
+    </message>
+    <message>
+        <source>Copy with subtitles</source>
+        <translation>자막과 함께 복사</translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation>오디오 트랙</translation>
+    </message>
+    <message>
+        <source>Progress bar</source>
+        <translation>진행 표시줄</translation>
+    </message>
+    <message>
+        <source>Render cost</source>
+        <translation>렌더링 비용</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>전체 화면 종료</translation>
     </message>
@@ -14836,24 +14879,8 @@ Styles deleted:
         <translation>전체 화면</translation>
     </message>
     <message>
-        <source>Switch full screen to monitor %1</source>
-        <translation>모니터 %1(으)로 전체 화면 전환</translation>
-    </message>
-    <message>
-        <source>Open in full screen on monitor %1</source>
-        <translation>모니터 %1에서 전체 화면으로 열기</translation>
-    </message>
-    <message>
         <source>Open editor</source>
         <translation>편집기 열기</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation>열었던 자막</translation>
-    </message>
-    <message>
-        <source>Recently opened videos</source>
-        <translation>열었던 영상</translation>
     </message>
     <message>
         <source>Open video</source>
@@ -14864,32 +14891,12 @@ Styles deleted:
         <translation>자막 파일 열기</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>진행 표시줄 표시 / 숨기기</translation>
-    </message>
-    <message>
-        <source>Show / hide render cost</source>
-        <translation>렌더링 비용 표시 / 숨기기</translation>
-    </message>
-    <message>
         <source>Change aspect ratio</source>
         <translation>가로 세로 비율 변경</translation>
     </message>
     <message>
-        <source>Save frame with subtitles as PNG</source>
-        <translation>PNG 파일로 화면/자막 저장</translation>
-    </message>
-    <message>
-        <source>Copy frame with subtitles to clipboard</source>
-        <translation>현재 화면/자막 복사(클립보드)</translation>
-    </message>
-    <message>
-        <source>Save frame as PNG</source>
-        <translation>PNG 파일로 화면 저장</translation>
-    </message>
-    <message>
-        <source>Copy frame to clipboard</source>
-        <translation>현재 화면 복사(클립보드)</translation>
+        <source>Reset zoom and pan</source>
+        <translation>확대/축소 및 이동 초기화</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -14991,16 +14998,16 @@ Styles deleted:
         <translation>전체 화면 막대: %1</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation>자동</translation>
+        <source>Show when the pointer moves</source>
+        <translation>포인터를 움직일 때 표시</translation>
     </message>
     <message>
-        <source>Always</source>
-        <translation>항상</translation>
+        <source>Always show</source>
+        <translation>항상 표시</translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation>안 함</translation>
+        <source>Never show</source>
+        <translation>표시 안 함</translation>
     </message>
     <message>
         <source>Show on pointer movement, hide when idle</source>
