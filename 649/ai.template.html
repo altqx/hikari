@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings AI mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc circle { fill:var(--accent); }
+
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:880px 880px; gap:18px 24px; align-items:start; width:1832px; }
+.col { display:flex; flex-direction:column; gap:18px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; }
+.cap b { color:var(--text); font-weight:600; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+
+.dlg { width:880px; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.35); display:flex; flex-direction:column; overflow:hidden; }
+.dlg.fixed { height:592px; }
+.title { height:32px; display:flex; align-items:center; padding:0 0 0 12px; font-weight:700; border-bottom:1px solid var(--line); flex:none; }
+.title .sp { flex:1; }
+.title .x { width:40px; height:32px; display:flex; align-items:center; justify-content:center; }
+.main { display:flex; flex:1; min-height:0; }
+.side { width:220px; background:var(--bg); border-right:1px solid var(--line); padding-top:8px; flex:none; }
+.side .it { height:36px; display:flex; align-items:center; gap:12px; padding:0 12px 0 16px; position:relative; white-space:nowrap; }
+.side .it.on { background:var(--select); font-weight:700; }
+.side .it.on::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+.page { flex:1; min-width:0; padding:16px 24px 22px; overflow:hidden; position:relative; }
+.dlg.fixed .page::after { content:""; position:absolute; right:3px; top:8px; width:4px; height:120px; border-radius:2px; background:var(--control); opacity:.5; }
+.dlg.fixed .page.short::after { display:none; }
+.foot { height:52px; display:flex; align-items:center; gap:8px; padding:0 14px; border-top:1px solid var(--line); flex:none; }
+.foot .sp { flex:1; }
+
+.sec { border-top:1px solid var(--line); margin-top:12px; padding-top:12px; }
+.sec.first { border-top:0; margin-top:0; padding-top:0; }
+.sec > h3 { margin:0 0 10px; font-size:13px; display:flex; align-items:center; gap:8px; }
+.sec > h3 .sp { flex:1; }
+.sec > h3 .later { font-weight:400; font-size:11px; color:var(--muted); border:1px dashed var(--line); border-radius:9px; padding:0 7px; }
+.row { display:flex; align-items:center; gap:8px; min-height:28px; }
+.row + .row { margin-top:6px; }
+.row .lab { width:200px; flex:none; }
+.row .ctl { flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
+.note { color:var(--muted); font-size:12px; margin:3px 0 0 24px; max-width:600px; }
+.note.flush { margin-left:0; }
+.note.under { margin-left:208px; }
+.check { display:flex; align-items:center; gap:8px; min-height:24px; }
+.box { width:16px; height:16px; border:1px solid var(--control); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+.box.on { background:var(--accent); border-color:var(--accent); }
+.box.on::after { content:""; width:8px; height:4px; border-left:2px solid var(--onaccent); border-bottom:2px solid var(--onaccent); transform:rotate(-45deg) translate(1px,-1px); }
+.master { font-weight:600; }
+
+.btn { height:28px; padding:0 12px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.btn.dis { color:var(--disabled); border-color:var(--disabled); }
+.btn.ring, .ring { outline:1px solid var(--focus); outline-offset:2px; }
+.ib { width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; flex:none; }
+.lnk { color:var(--accent); display:inline-flex; align-items:center; gap:4px; text-decoration:underline; text-underline-offset:2px; }
+.lnk svg .acc { stroke:var(--accent); }
+
+.field { height:28px; flex:1; min-width:0; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 8px; white-space:nowrap; overflow:hidden; }
+.field.focus { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.field .ph { color:var(--muted); }
+.field.mono, .mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+.field.dis { color:var(--disabled); border-color:var(--disabled); }
+.caret { display:inline-block; width:1px; height:15px; background:var(--text); margin-left:-4px; }
+.combo { height:28px; flex:1; min-width:0; max-width:420px; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 6px 0 8px; white-space:nowrap; }
+.combo .v { flex:1; overflow:hidden; text-overflow:ellipsis; }
+.combo .via { color:var(--muted); }
+.combo.dis { color:var(--disabled); border-color:var(--disabled); }
+.combo.dis svg { opacity:.6; }
+.money { width:110px; flex:none; }
+.seg { display:inline-flex; border:1px solid var(--control); border-radius:2px; overflow:hidden; }
+.seg span { padding:0 12px; height:28px; display:inline-flex; align-items:center; border-right:1px solid var(--control); }
+.seg span:last-child { border-right:0; }
+.seg span.on { background:var(--select); font-weight:600; box-shadow:inset 0 -2px 0 var(--accent); }
+
+.plist { border:1px solid var(--line); border-radius:2px; }
+.prov { display:flex; align-items:center; gap:10px; padding:7px 6px 7px 10px; }
+.prov + .prov { border-top:1px solid var(--line); }
+.prov .who { flex:1; min-width:0; }
+.prov .nm { font-weight:600; }
+.prov .sub { color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prov .st { font-size:12px; white-space:nowrap; text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
+.ok { color:var(--success); }
+.bad { color:var(--danger); }
+.warn { color:var(--warning); }
+.mut { color:var(--muted); }
+.dot { display:inline-block; width:8px; height:8px; border-radius:4px; margin-right:5px; vertical-align:0; }
+.dot.ok { background:var(--success); } .dot.bad { background:var(--danger); } .dot.mut { background:var(--muted); }
+.empty { padding:14px 12px; color:var(--muted); }
+.bar { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.bar .sp { flex:1; }
+
+.form { border:1px solid var(--accent); border-radius:2px; padding:12px 12px 12px; background:var(--panel); }
+.form h4 { margin:0 0 10px; font-size:13px; display:flex; align-items:center; gap:8px; }
+.form .row .lab { width:150px; }
+.form .note.under { margin-left:158px; }
+.notice { display:flex; gap:8px; align-items:flex-start; border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--raised); padding:8px 10px; margin-top:10px; font-size:12px; }
+.notice svg { margin-top:1px; }
+.prog { height:4px; background:var(--raised); border:1px solid var(--line); border-radius:2px; overflow:hidden; width:180px; }
+.prog i { display:block; height:100%; width:38%; background:var(--accent); }
+
+.menu { position:absolute; z-index:3; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:4px 0; width:320px; }
+.menu .mi { white-space:nowrap; }
+.menu .mi { height:30px; display:flex; align-items:center; gap:10px; padding:0 12px; }
+.menu .mi.hot { background:var(--select); }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+
+.kept { margin-top:14px; border:1px solid var(--line); border-radius:2px; padding:10px 12px; }
+.kept h4 { margin:0 0 6px; font-size:12px; color:var(--muted); font-weight:600; }
+.kept ul { margin:0; padding-left:18px; font-size:12px; }
+.kept li + li { margin-top:2px; }
+
+.legend { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; display:flex; gap:22px; flex-wrap:wrap; }
+.legend b { color:var(--text); }
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>Settings › AI</h1><span>#649 design gate · <span id="tn">Dark</span> · Settings at its default size, 880 × 528 page area</span></div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>1 · AI on, four providers.</b> The whole page at full length; in the app it scrolls. Sections marked with a card id arrive with that card.</p>
+      <div class="dlg">
+        <div class="title">Settings<span class="sp"></span><span class="x">{{i:window-close}}</span></div>
+        <div class="main">
+          {{side}}
+          <div class="page">
+            <div class="sec first">
+              <div class="check master"><span class="box"></span>Turn off all AI features</div>
+              <p class="note">Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</p>
+            </div>
+
+            <div class="sec">
+              <h3>Providers</h3>
+              <div class="plist">
+                <div class="prov">
+                  <div class="who"><div class="nm">Anthropic</div><div class="sub">Messages · api.anthropic.com</div></div>
+                  <div class="st"><span class="ok"><span class="dot ok"></span>Connected · 64 models</span><span class="mut">Key in keychain</span></div>
+                  <span class="btn">Test connection</span><span class="ib">{{i:edit}}</span><span class="ib">{{i:delete}}</span>
+                </div>
+                <div class="prov">
+                  <div class="who"><div class="nm">Google Gemini</div><div class="sub">Gemini API · AI Studio key</div></div>
+                  <div class="st"><span class="ok"><span class="dot ok"></span>Connected · 41 models</span><span class="mut">Key in keychain</span></div>
+                  <span class="btn">Test connection</span><span class="ib">{{i:edit}}</span><span class="ib">{{i:delete}}</span>
+                </div>
+                <div class="prov">
+                  <div class="who"><div class="nm">OpenRouter</div><div class="sub">Chat Completions · openrouter.ai</div></div>
+                  <div class="st"><span class="bad"><span class="dot bad"></span>Key rejected (401)</span><span class="mut">Replace the key with Edit</span></div>
+                  <span class="btn">Test connection</span><span class="ib">{{i:edit}}</span><span class="ib">{{i:delete}}</span>
+                </div>
+                <div class="prov">
+                  <div class="who"><div class="nm">Ollama on this computer</div><div class="sub mono">Chat Completions · http://localhost:11434/v1</div></div>
+                  <div class="st"><span class="mut"><span class="dot mut"></span>Not tested · 3 models</span><span class="mut">No key</span></div>
+                  <span class="btn">Test connection</span><span class="ib">{{i:edit}}</span><span class="ib">{{i:delete}}</span>
+                </div>
+              </div>
+              <div class="bar"><span class="btn">{{i:add}}Add provider{{i:chevron-down}}</span><span class="sp"></span><span class="mut" style="font-size:12px">Changes to providers and keys apply at once.</span></div>
+            </div>
+
+            <div class="sec">
+              <h3>Models<span class="sp"></span><span class="btn">{{i:refresh}}Refresh models</span></h3>
+              <div class="row"><span class="lab">Chat</span><span class="ctl"><span class="combo"><span class="v">Claude Sonnet 5.5 <span class="via">· Anthropic</span></span>{{i:chevron-down}}</span></span></div>
+              <div class="row"><span class="lab">Translator</span><span class="ctl"><span class="combo"><span class="v">Gemini 4 Argon <span class="via">· Google Gemini</span></span>{{i:chevron-down}}</span></span></div>
+              <div class="row"><span class="lab">Reviewer</span><span class="ctl"><span class="combo"><span class="v">Same as chat</span>{{i:chevron-down}}</span></span></div>
+              <div class="row"><span class="lab">Vision</span><span class="ctl"><span class="combo"><span class="v">Same as chat</span>{{i:chevron-down}}</span></span></div>
+              <div class="row"><span class="lab">Judge</span><span class="ctl"><span class="combo"><span class="v">Claude Haiku 5.5 <span class="via">· Anthropic</span></span>{{i:chevron-down}}</span></span></div>
+              <p class="note flush">A role without its own model uses the chat model. Vision lists only models that read images.</p>
+            </div>
+
+            <div class="sec">
+              <h3>Agent<span class="later">AI7</span></h3>
+              <div class="row"><span class="lab">Mode for new threads</span><span class="ctl"><span class="seg"><span>Manual</span><span class="on">Auto</span><span>Full access</span></span></span></div>
+              <p class="note under">Auto: the judge model approves each edit. It sees the edit and your messages, never your files.</p>
+              <div class="row"><span class="lab">Cost cap per thread</span><span class="ctl"><span class="field money">$ 2.00</span></span></div>
+              <div class="row"><span class="lab">Cost cap per day</span><span class="ctl"><span class="field money">$ 10.00</span></span></div>
+              <div class="check" style="margin-top:6px"><span class="box on"></span>Show the cost meter</div>
+            </div>
+
+            <div class="sec">
+              <h3>External agents<span class="later">AI15</span></h3>
+              <div class="row"><span class="lab">Claude Code</span><span class="ctl"><span class="field mono">/home/you/.local/bin/claude</span><span class="btn">Choose…</span></span></div>
+              <p class="note under"><span class="ok">Found on PATH · 2.4.1.</span> HikariSub runs your own claude and never sees its sign-in.</p>
+              <div class="row"><span class="lab">Codex</span><span class="ctl"><span class="field"><span class="ph">Not found on PATH</span></span><span class="btn">Choose…</span></span></div>
+            </div>
+
+            <div class="sec">
+              <h3>MCP<span class="later">AI3 · AI13</span></h3>
+              <div class="check"><span class="box"></span>Let agents outside HikariSub edit through MCP</div>
+              <p class="note">Claude Code, Codex and other agents read and edit the open documents. Their edits land in the review, under the mode for new threads.</p>
+              <div class="row" style="margin-top:8px"><span class="lab">MCP servers</span><span class="ctl"><span class="mut">No MCP servers yet. Add one to give the agent its tools.</span><span class="btn">{{i:add}}Add server…</span></span></div>
+            </div>
+
+            <div class="sec">
+              <h3>Privacy</h3>
+              <div class="check"><span class="box on"></span>Use prompt caching</div>
+              <p class="note">The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</p>
+              <div class="row" style="margin-top:8px"><span class="lab">What is sent</span><span class="ctl"><span class="lnk">What is sent to providers{{i:open-link}}</span></span></div>
+              <p class="note under">Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</p>
+            </div>
+          </div>
+        </div>
+        {{foot}}
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>2 · AI on, no provider yet.</b> The first run. Add provider is open on its menu of presets.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x">{{i:window-close}}</span></div>
+        <div class="main">
+          {{side}}
+          <div class="page short">
+            <div class="sec first">
+              <div class="check master"><span class="box"></span>Turn off all AI features</div>
+              <p class="note">Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</p>
+            </div>
+            <div class="sec">
+              <h3>Providers</h3>
+              <div class="plist"><div class="empty">No providers yet. AI sends nothing until you add one.</div></div>
+              <div class="bar"><span class="btn ring">{{i:add}}Add provider{{i:chevron-down}}</span></div>
+              <div class="menu" style="left:24px; top:226px">
+                <div class="mi">OpenAI</div>
+                <div class="mi">Anthropic</div>
+                <div class="mi hot">Google Gemini</div>
+                <div class="mi">OpenRouter</div>
+                <div class="sepr"></div>
+                <div class="mi">Custom endpoint…<span class="k">Ollama, LM Studio…</span></div>
+              </div>
+            </div>
+            <div class="sec">
+              <h3>Models</h3>
+              <div class="row"><span class="lab">Chat</span><span class="ctl"><span class="combo dis"><span class="v">Add a provider first</span>{{i:chevron-down}}</span></span></div>
+            </div>
+            <div class="sec">
+              <h3>Privacy</h3>
+              <div class="check"><span class="box on"></span>Use prompt caching</div>
+            </div>
+          </div>
+        </div>
+        {{foot}}
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>3 · Adding Google Gemini, the first provider.</b> Test connection started the one-time download of the AI component, and tests once it is in.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x">{{i:window-close}}</span></div>
+        <div class="main">
+          {{side}}
+          <div class="page">
+            <div class="sec first">
+              <div class="check master"><span class="box"></span>Turn off all AI features</div>
+            </div>
+            <div class="sec">
+              <h3>Providers</h3>
+              <div class="form">
+                <h4>Add Google Gemini</h4>
+                <div class="row"><span class="lab">Name</span><span class="ctl"><span class="field">Google Gemini</span></span></div>
+                <div class="row"><span class="lab">Gemini API key</span><span class="ctl"><span class="field focus mono">••••••••••••••••••••••••••••••••••••<span class="caret"></span></span><span class="ib">{{i:show}}</span></span></div>
+                <p class="note under"><span class="lnk">Get a key in Google AI Studio{{i:open-link}}</span> A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</p>
+                <div class="notice">{{i:notice-info}}<div><b>Your first provider downloads the AI component once: 55 MB.</b> Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.<div class="row" style="margin-top:6px; min-height:0"><span class="prog"><i></i></span><span class="mut">21 of 55 MB</span></div></div></div>
+                <div class="bar" style="margin-top:12px"><span class="mut"><span class="dot mut"></span>Tests when the download finishes</span><span class="sp"></span><span class="btn dis">Testing…</span><span class="btn">Cancel</span><span class="btn primary">Add</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {{foot}}
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>4 · Turn off all AI features is on.</b> The rest of the page folds away; the AI tab stays as the way back.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x">{{i:window-close}}</span></div>
+        <div class="main">
+          {{side}}
+          <div class="page short">
+            <div class="sec first">
+              <div class="check master"><span class="box on ring"></span>Turn off all AI features</div>
+              <p class="note">Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</p>
+              <div class="kept">
+                <h4>Kept while AI is off</h4>
+                <ul>
+                  <li>4 providers, and their keys in the keychain</li>
+                  <li>Your agent threads</li>
+                  <li>The downloaded AI component (55 MB)</li>
+                </ul>
+              </div>
+              <div class="kept">
+                <h4>Hidden while AI is off</h4>
+                <ul>
+                  <li>The agent panel, inline AI actions and AI rows in every menu</li>
+                  <li>AI commands in command search, their shortcuts and toolbar buttons</li>
+                  <li>AI in Getting started and What’s new</li>
+                  <li>The MCP server, which stops listening</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        {{foot}}
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Icons</b> are the app’s own set: ai-assistant for the tab, add, edit, delete, refresh, show, open-link, notice-info. No new glyph.</span>
+    <span><b>Colours</b> are theme.cpp’s roles for this theme, default accent.</span>
+    <span><b>Model names and numbers</b> are examples.</span>
+  </div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>

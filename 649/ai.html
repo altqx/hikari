@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings AI mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc circle { fill:var(--accent); }
+
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:880px 880px; gap:18px 24px; align-items:start; width:1832px; }
+.col { display:flex; flex-direction:column; gap:18px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; }
+.cap b { color:var(--text); font-weight:600; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+
+.dlg { width:880px; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.35); display:flex; flex-direction:column; overflow:hidden; }
+.dlg.fixed { height:592px; }
+.title { height:32px; display:flex; align-items:center; padding:0 0 0 12px; font-weight:700; border-bottom:1px solid var(--line); flex:none; }
+.title .sp { flex:1; }
+.title .x { width:40px; height:32px; display:flex; align-items:center; justify-content:center; }
+.main { display:flex; flex:1; min-height:0; }
+.side { width:220px; background:var(--bg); border-right:1px solid var(--line); padding-top:8px; flex:none; }
+.side .it { height:36px; display:flex; align-items:center; gap:12px; padding:0 12px 0 16px; position:relative; white-space:nowrap; }
+.side .it.on { background:var(--select); font-weight:700; }
+.side .it.on::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+.page { flex:1; min-width:0; padding:16px 24px 22px; overflow:hidden; position:relative; }
+.dlg.fixed .page::after { content:""; position:absolute; right:3px; top:8px; width:4px; height:120px; border-radius:2px; background:var(--control); opacity:.5; }
+.dlg.fixed .page.short::after { display:none; }
+.foot { height:52px; display:flex; align-items:center; gap:8px; padding:0 14px; border-top:1px solid var(--line); flex:none; }
+.foot .sp { flex:1; }
+
+.sec { border-top:1px solid var(--line); margin-top:12px; padding-top:12px; }
+.sec.first { border-top:0; margin-top:0; padding-top:0; }
+.sec > h3 { margin:0 0 10px; font-size:13px; display:flex; align-items:center; gap:8px; }
+.sec > h3 .sp { flex:1; }
+.sec > h3 .later { font-weight:400; font-size:11px; color:var(--muted); border:1px dashed var(--line); border-radius:9px; padding:0 7px; }
+.row { display:flex; align-items:center; gap:8px; min-height:28px; }
+.row + .row { margin-top:6px; }
+.row .lab { width:200px; flex:none; }
+.row .ctl { flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
+.note { color:var(--muted); font-size:12px; margin:3px 0 0 24px; max-width:600px; }
+.note.flush { margin-left:0; }
+.note.under { margin-left:208px; }
+.check { display:flex; align-items:center; gap:8px; min-height:24px; }
+.box { width:16px; height:16px; border:1px solid var(--control); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+.box.on { background:var(--accent); border-color:var(--accent); }
+.box.on::after { content:""; width:8px; height:4px; border-left:2px solid var(--onaccent); border-bottom:2px solid var(--onaccent); transform:rotate(-45deg) translate(1px,-1px); }
+.master { font-weight:600; }
+
+.btn { height:28px; padding:0 12px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.btn.dis { color:var(--disabled); border-color:var(--disabled); }
+.btn.ring, .ring { outline:1px solid var(--focus); outline-offset:2px; }
+.ib { width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; flex:none; }
+.lnk { color:var(--accent); display:inline-flex; align-items:center; gap:4px; text-decoration:underline; text-underline-offset:2px; }
+.lnk svg .acc { stroke:var(--accent); }
+
+.field { height:28px; flex:1; min-width:0; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 8px; white-space:nowrap; overflow:hidden; }
+.field.focus { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.field .ph { color:var(--muted); }
+.field.mono, .mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+.field.dis { color:var(--disabled); border-color:var(--disabled); }
+.caret { display:inline-block; width:1px; height:15px; background:var(--text); margin-left:-4px; }
+.combo { height:28px; flex:1; min-width:0; max-width:420px; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 6px 0 8px; white-space:nowrap; }
+.combo .v { flex:1; overflow:hidden; text-overflow:ellipsis; }
+.combo .via { color:var(--muted); }
+.combo.dis { color:var(--disabled); border-color:var(--disabled); }
+.combo.dis svg { opacity:.6; }
+.money { width:110px; flex:none; }
+.seg { display:inline-flex; border:1px solid var(--control); border-radius:2px; overflow:hidden; }
+.seg span { padding:0 12px; height:28px; display:inline-flex; align-items:center; border-right:1px solid var(--control); }
+.seg span:last-child { border-right:0; }
+.seg span.on { background:var(--select); font-weight:600; box-shadow:inset 0 -2px 0 var(--accent); }
+
+.plist { border:1px solid var(--line); border-radius:2px; }
+.prov { display:flex; align-items:center; gap:10px; padding:7px 6px 7px 10px; }
+.prov + .prov { border-top:1px solid var(--line); }
+.prov .who { flex:1; min-width:0; }
+.prov .nm { font-weight:600; }
+.prov .sub { color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prov .st { font-size:12px; white-space:nowrap; text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
+.ok { color:var(--success); }
+.bad { color:var(--danger); }
+.warn { color:var(--warning); }
+.mut { color:var(--muted); }
+.dot { display:inline-block; width:8px; height:8px; border-radius:4px; margin-right:5px; vertical-align:0; }
+.dot.ok { background:var(--success); } .dot.bad { background:var(--danger); } .dot.mut { background:var(--muted); }
+.empty { padding:14px 12px; color:var(--muted); }
+.bar { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.bar .sp { flex:1; }
+
+.form { border:1px solid var(--accent); border-radius:2px; padding:12px 12px 12px; background:var(--panel); }
+.form h4 { margin:0 0 10px; font-size:13px; display:flex; align-items:center; gap:8px; }
+.form .row .lab { width:150px; }
+.form .note.under { margin-left:158px; }
+.notice { display:flex; gap:8px; align-items:flex-start; border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--raised); padding:8px 10px; margin-top:10px; font-size:12px; }
+.notice svg { margin-top:1px; }
+.prog { height:4px; background:var(--raised); border:1px solid var(--line); border-radius:2px; overflow:hidden; width:180px; }
+.prog i { display:block; height:100%; width:38%; background:var(--accent); }
+
+.menu { position:absolute; z-index:3; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:4px 0; width:320px; }
+.menu .mi { white-space:nowrap; }
+.menu .mi { height:30px; display:flex; align-items:center; gap:10px; padding:0 12px; }
+.menu .mi.hot { background:var(--select); }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+
+.kept { margin-top:14px; border:1px solid var(--line); border-radius:2px; padding:10px 12px; }
+.kept h4 { margin:0 0 6px; font-size:12px; color:var(--muted); font-weight:600; }
+.kept ul { margin:0; padding-left:18px; font-size:12px; }
+.kept li + li { margin-top:2px; }
+
+.legend { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; display:flex; gap:22px; flex-wrap:wrap; }
+.legend b { color:var(--text); }
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>Settings › AI</h1><span>#649 design gate · <span id="tn">Dark</span> · Settings at its default size, 880 × 528 page area</span></div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>1 · AI on, four providers.</b> The whole page at full length; in the app it scrolls. Sections marked with a card id arrive with that card.</p>
+      <div class="dlg">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page">
+            <div class="sec first">
+              <div class="check master"><span class="box"></span>Turn off all AI features</div>
+              <p class="note">Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</p>
+            </div>
+
+            <div class="sec">
+              <h3>Providers</h3>
+              <div class="plist">
+                <div class="prov">
+                  <div class="who"><div class="nm">Anthropic</div><div class="sub">Messages · api.anthropic.com</div></div>
+                  <div class="st"><span class="ok"><span class="dot ok"></span>Connected · 64 models</span><span class="mut">Key in keychain</span></div>
+                  <span class="btn">Test connection</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></svg></span>
+                </div>
+                <div class="prov">
+                  <div class="who"><div class="nm">Google Gemini</div><div class="sub">Gemini API · AI Studio key</div></div>
+                  <div class="st"><span class="ok"><span class="dot ok"></span>Connected · 41 models</span><span class="mut">Key in keychain</span></div>
+                  <span class="btn">Test connection</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></svg></span>
+                </div>
+                <div class="prov">
+                  <div class="who"><div class="nm">OpenRouter</div><div class="sub">Chat Completions · openrouter.ai</div></div>
+                  <div class="st"><span class="bad"><span class="dot bad"></span>Key rejected (401)</span><span class="mut">Replace the key with Edit</span></div>
+                  <span class="btn">Test connection</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></svg></span>
+                </div>
+                <div class="prov">
+                  <div class="who"><div class="nm">Ollama on this computer</div><div class="sub mono">Chat Completions · http://localhost:11434/v1</div></div>
+                  <div class="st"><span class="mut"><span class="dot mut"></span>Not tested · 3 models</span><span class="mut">No key</span></div>
+                  <span class="btn">Test connection</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></svg></span>
+                </div>
+              </div>
+              <div class="bar"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg>Add provider<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="mut" style="font-size:12px">Changes to providers and keys apply at once.</span></div>
+            </div>
+
+            <div class="sec">
+              <h3>Models<span class="sp"></span><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 0 1 9.75-3.5"/><path d="M12.5 1.5v3h-3"/><path d="M13.5 8a5.5 5.5 0 0 1-9.75 3.5"/><path d="M3.5 14.5v-3h3"/></svg>Refresh models</span></h3>
+              <div class="row"><span class="lab">Chat</span><span class="ctl"><span class="combo"><span class="v">Claude Sonnet 5.5 <span class="via">· Anthropic</span></span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <div class="row"><span class="lab">Translator</span><span class="ctl"><span class="combo"><span class="v">Gemini 4 Argon <span class="via">· Google Gemini</span></span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <div class="row"><span class="lab">Reviewer</span><span class="ctl"><span class="combo"><span class="v">Same as chat</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <div class="row"><span class="lab">Vision</span><span class="ctl"><span class="combo"><span class="v">Same as chat</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <div class="row"><span class="lab">Judge</span><span class="ctl"><span class="combo"><span class="v">Claude Haiku 5.5 <span class="via">· Anthropic</span></span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <p class="note flush">A role without its own model uses the chat model. Vision lists only models that read images.</p>
+            </div>
+
+            <div class="sec">
+              <h3>Agent<span class="later">AI7</span></h3>
+              <div class="row"><span class="lab">Mode for new threads</span><span class="ctl"><span class="seg"><span>Manual</span><span class="on">Auto</span><span>Full access</span></span></span></div>
+              <p class="note under">Auto: the judge model approves each edit. It sees the edit and your messages, never your files.</p>
+              <div class="row"><span class="lab">Cost cap per thread</span><span class="ctl"><span class="field money">$ 2.00</span></span></div>
+              <div class="row"><span class="lab">Cost cap per day</span><span class="ctl"><span class="field money">$ 10.00</span></span></div>
+              <div class="check" style="margin-top:6px"><span class="box on"></span>Show the cost meter</div>
+            </div>
+
+            <div class="sec">
+              <h3>External agents<span class="later">AI15</span></h3>
+              <div class="row"><span class="lab">Claude Code</span><span class="ctl"><span class="field mono">/home/you/.local/bin/claude</span><span class="btn">Choose…</span></span></div>
+              <p class="note under"><span class="ok">Found on PATH · 2.4.1.</span> HikariSub runs your own claude and never sees its sign-in.</p>
+              <div class="row"><span class="lab">Codex</span><span class="ctl"><span class="field"><span class="ph">Not found on PATH</span></span><span class="btn">Choose…</span></span></div>
+            </div>
+
+            <div class="sec">
+              <h3>MCP<span class="later">AI3 · AI13</span></h3>
+              <div class="check"><span class="box"></span>Let agents outside HikariSub edit through MCP</div>
+              <p class="note">Claude Code, Codex and other agents read and edit the open documents. Their edits land in the review, under the mode for new threads.</p>
+              <div class="row" style="margin-top:8px"><span class="lab">MCP servers</span><span class="ctl"><span class="mut">No MCP servers yet. Add one to give the agent its tools.</span><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg>Add server…</span></span></div>
+            </div>
+
+            <div class="sec">
+              <h3>Privacy</h3>
+              <div class="check"><span class="box on"></span>Use prompt caching</div>
+              <p class="note">The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</p>
+              <div class="row" style="margin-top:8px"><span class="lab">What is sent</span><span class="ctl"><span class="lnk">What is sent to providers<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4"/><g class="acc"><path d="M9.5 1.5h5v5M14.5 1.5L8 8"/></g></svg></span></span></div>
+              <p class="note under">Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</p>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>2 · AI on, no provider yet.</b> The first run. Add provider is open on its menu of presets.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page short">
+            <div class="sec first">
+              <div class="check master"><span class="box"></span>Turn off all AI features</div>
+              <p class="note">Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</p>
+            </div>
+            <div class="sec">
+              <h3>Providers</h3>
+              <div class="plist"><div class="empty">No providers yet. AI sends nothing until you add one.</div></div>
+              <div class="bar"><span class="btn ring"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg>Add provider<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></div>
+              <div class="menu" style="left:24px; top:226px">
+                <div class="mi">OpenAI</div>
+                <div class="mi">Anthropic</div>
+                <div class="mi hot">Google Gemini</div>
+                <div class="mi">OpenRouter</div>
+                <div class="sepr"></div>
+                <div class="mi">Custom endpoint…<span class="k">Ollama, LM Studio…</span></div>
+              </div>
+            </div>
+            <div class="sec">
+              <h3>Models</h3>
+              <div class="row"><span class="lab">Chat</span><span class="ctl"><span class="combo dis"><span class="v">Add a provider first</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+            </div>
+            <div class="sec">
+              <h3>Privacy</h3>
+              <div class="check"><span class="box on"></span>Use prompt caching</div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>3 · Adding Google Gemini, the first provider.</b> Test connection started the one-time download of the AI component, and tests once it is in.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page">
+            <div class="sec first">
+              <div class="check master"><span class="box"></span>Turn off all AI features</div>
+            </div>
+            <div class="sec">
+              <h3>Providers</h3>
+              <div class="form">
+                <h4>Add Google Gemini</h4>
+                <div class="row"><span class="lab">Name</span><span class="ctl"><span class="field">Google Gemini</span></span></div>
+                <div class="row"><span class="lab">Gemini API key</span><span class="ctl"><span class="field focus mono">••••••••••••••••••••••••••••••••••••<span class="caret"></span></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8C3 5 5.25 3.5 8 3.5s5 1.5 6.5 4.5c-1.5 3-3.75 4.5-6.5 4.5S3 11 1.5 8z"/><g class="acc"><circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/></g></svg></span></span></div>
+                <p class="note under"><span class="lnk">Get a key in Google AI Studio<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4"/><g class="acc"><path d="M9.5 1.5h5v5M14.5 1.5L8 8"/></g></svg></span> A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</p>
+                <div class="notice"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7l-3 3v-3H2.5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z"/><g class="acc"><path d="M8 6.5v3"/><circle cx="8" cy="4.75" r="0.75" fill="currentColor" stroke="none"/></g></svg><div><b>Your first provider downloads the AI component once: 55 MB.</b> Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.<div class="row" style="margin-top:6px; min-height:0"><span class="prog"><i></i></span><span class="mut">21 of 55 MB</span></div></div></div>
+                <div class="bar" style="margin-top:12px"><span class="mut"><span class="dot mut"></span>Tests when the download finishes</span><span class="sp"></span><span class="btn dis">Testing…</span><span class="btn">Cancel</span><span class="btn primary">Add</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>4 · Turn off all AI features is on.</b> The rest of the page folds away; the AI tab stays as the way back.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page short">
+            <div class="sec first">
+              <div class="check master"><span class="box on ring"></span>Turn off all AI features</div>
+              <p class="note">Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</p>
+              <div class="kept">
+                <h4>Kept while AI is off</h4>
+                <ul>
+                  <li>4 providers, and their keys in the keychain</li>
+                  <li>Your agent threads</li>
+                  <li>The downloaded AI component (55 MB)</li>
+                </ul>
+              </div>
+              <div class="kept">
+                <h4>Hidden while AI is off</h4>
+                <ul>
+                  <li>The agent panel, inline AI actions and AI rows in every menu</li>
+                  <li>AI commands in command search, their shortcuts and toolbar buttons</li>
+                  <li>AI in Getting started and What’s new</li>
+                  <li>The MCP server, which stops listening</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Icons</b> are the app’s own set: ai-assistant for the tab, add, edit, delete, refresh, show, open-link, notice-info. No new glyph.</span>
+    <span><b>Colours</b> are theme.cpp’s roles for this theme, default accent.</span>
+    <span><b>Model names and numbers</b> are examples.</span>
+  </div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>
