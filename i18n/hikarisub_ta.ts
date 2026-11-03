@@ -927,7 +927,7 @@ Output device: %2</source>
         <translation>வடிப்பி</translation>
     </message>
     <message>
-        <source>Filter the run&apos;s log</source>
+        <source>Filter the run’s log</source>
         <translation>இயக்கத்தின் பதிவை வடிகட்டு</translation>
     </message>
     <message>
@@ -967,7 +967,7 @@ Output device: %2</source>
         <translation>%1 min %2 s</translation>
     </message>
     <message>
-        <source>Save the run&apos;s log</source>
+        <source>Save the run’s log</source>
         <translation>இயக்கத்தின் பதிவைச் சேமி</translation>
     </message>
     <message>
@@ -991,7 +991,7 @@ Output device: %2</source>
         <translation>%1 விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
         <translation>ச்கிரிப்டின் செயல்முறை முடிந்தது. மீண்டும் தொடங்க மீண்டும் ஏற்றவும்; அதன் குறுநிரல் மீண்டும் இயக்கப்படாது.</translation>
     </message>
     <message>
@@ -9538,7 +9538,7 @@ because it was edited.</source>
         <translation>உரை மற்றும் சின்னங்கள்</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>எல்லை வண்ணம்</translation>
     </message>
     <message>
@@ -11703,7 +11703,7 @@ because it was edited.</source>
         <translation>புறக்கணிக்கவும்</translation>
     </message>
     <message>
-        <source>Ignore All</source>
+        <source>Ignore all</source>
         <translation>அனைத்தையும் புறக்கணிக்கவும்</translation>
     </message>
     <message>
@@ -12670,11 +12670,11 @@ Styles deleted:
         <translation>வரிகள்: %1</translation>
     </message>
     <message>
-        <source>the current line&apos;s style</source>
+        <source>the current line’s style</source>
         <translation>தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
-        <source>The current line&apos;s style</source>
+        <source>Current line’s style</source>
         <translation>தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
@@ -13244,7 +13244,7 @@ Styles deleted:
         <translation>வேலை செய்த கடைசி இயக்கத்திலிருந்து வைக்கப்பட்டது</translation>
     </message>
     <message>
-        <source>This file&apos;s templates run Lua code with your rights. Preview them if you trust the file.</source>
+        <source>This file’s templates run Lua code with your rights. Preview them if you trust the file.</source>
         <translation>இந்தக் கோப்பின் வார்ப்புருக்கள் உங்கள் உரிமைகளுடன் Lua குறியீட்டை இயக்குகின்றன. இந்தக் கோப்பை நீங்கள் நம்பினால் அவற்றை முன்னோட்டமிடவும்.</translation>
     </message>
     <message>
@@ -13293,8 +13293,8 @@ Styles deleted:
         </translation>
     </message>
     <message>
-        <source>Changed since Apply</source>
-        <translation>பயன்படுத்தியதிலிருந்து மாற்றப்பட்டது</translation>
+        <source>Changes not applied</source>
+        <translation>பயன்படுத்தப்படாத மாற்றங்கள்</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -13433,7 +13433,7 @@ Styles deleted:
         <translation>தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்து</translation>
     </message>
     <message>
-        <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
+        <source>Only the selected lines are regenerated; the other lines’ output stays as it is.</source>
         <translation>தேர்ந்தெடுத்த வரிகள் மட்டுமே மீண்டும் உருவாக்கப்படும்; மற்ற வரிகளின் வெளியீடு அப்படியே இருக்கும்.</translation>
     </message>
     <message>
@@ -13453,7 +13453,7 @@ Styles deleted:
         <translation>ஒவ்வொரு வரிக்குமான குறியீடு</translation>
     </message>
     <message>
-        <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
+        <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>புதிய வரி, முதல் கரோக்கி வரியின் பாணியுடன், அதற்கு மேலே சேர்க்கப்படும்.</translation>
     </message>
     <message>
@@ -13493,7 +13493,7 @@ Styles deleted:
         <translation>மீண்டும் செய்</translation>
     </message>
     <message>
-        <source>Keep the line&apos;s override tags</source>
+        <source>Keep the line’s override tags</source>
         <translation>வரியின் மேலெழுதும் குறிச்சொற்களை வைத்திரு</translation>
     </message>
     <message>
@@ -14964,10 +14964,6 @@ after the end time in milliseconds</source>
         <translation>திருத்துதல்</translation>
     </message>
     <message>
-        <source>Move video to selected line on:</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரிக்கு வீடியோவை நகர்த்தவும்:</translation>
-    </message>
-    <message>
         <source>Then play</source>
         <translation>பிறகு இயக்கு</translation>
     </message>
@@ -14986,10 +14982,6 @@ after the end time in milliseconds</source>
     <message>
         <source>Video and audio to the next line start time</source>
         <translation>வீடியோ மற்றும் ஆடியோ அடுத்த வரி தொடக்க நேரத்திற்கு</translation>
-    </message>
-    <message>
-        <source>On moving to another line play:</source>
-        <translation>மற்றொரு வரிக்குச் செல்லும்போது இயக்கவும்:</translation>
     </message>
     <message>
         <source>Full screen video</source>

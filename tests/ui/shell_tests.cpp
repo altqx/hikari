@@ -27798,8 +27798,8 @@ private slots:
             QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(o);
             return iface ? iface->text(QAccessible::Name) : QString();
         };
-        QCOMPARE(name(seek), QStringLiteral("Move video to selected line on:"));
-        QCOMPARE(name(play), QStringLiteral("On moving to another line play:"));
+        QCOMPARE(name(seek), QStringLiteral("Seek on"));
+        QCOMPARE(name(play), QStringLiteral("Then play"));
         QVERIFY(QMetaObject::invokeMethod(seek, "activated", Q_ARG(int, 5)));
         QCOMPARE(settings.integer("video.moveToActiveLine"), 3);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
