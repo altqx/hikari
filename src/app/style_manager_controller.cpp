@@ -123,7 +123,8 @@ core::StyleValues styleOf(const QVariantMap &m, core::StyleValues s)
     text("scaleY", s.scaleY);
     text("spacing", s.spacing);
     text("angle", s.angle);
-    flag("borderStyle", s.borderStyle);
+    if (m.contains(QLatin1String("borderStyle")))
+        s.borderStyle = m.value(QLatin1String("borderStyle")).toInt();
     text("outlineWidth", s.outlineWidth);
     text("shadow", s.shadow);
     text("alignment", s.alignment);
