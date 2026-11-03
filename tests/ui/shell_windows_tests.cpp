@@ -73,6 +73,13 @@ class ShellWindowsTest : public QObject {
         return controller(window, "statusBar")->property("fields").toStringList();
     }
     static QVariantList overlay(QQuickWindow *window) { return controller(window, "visualTools")->property("overlay").toList(); }
+    QQuickWindow *shellWindow(int window) const { return window == 0 ? first() : second.data(); }
+    void focus(int window)
+    {
+        shellWindow(window)->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), shellWindow(window));
+        QTRY_COMPARE(application->workspace().activeWindow(), window);
+    }
     static QList<QQuickItem *> itemsNamed(QQuickWindow *window, const QString &name)
     {
         QList<QQuickItem *> out;
@@ -207,18 +214,18 @@ private slots:
     {
         const QString dummy = QStringLiteral("?dummy:25.000000:250:1280:720:47:163:254:");
         for (const int window : {0, 1}) {
-            application->activateShellWindow(window);
+            focus(window);
             application->video().openVideo(dummy);
             QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         }
         for (QQuickWindow *window : {first(), second.data()})
             QVERIFY(QMetaObject::invokeMethod(controller(window, "visualTools"), "selectFamily", Q_ARG(int, 1)));
         for (const int active : {1, 0, 1}) {
-            application->activateShellWindow(active);
+            focus(active);
             QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
             QVERIFY(application->video().showFrameAt(37));
-            QQuickWindow *shown = active == 0 ? first() : second.data();
-            QQuickWindow *hidden = active == 0 ? second.data() : first();
+            QQuickWindow *shown = shellWindow(active);
+            QQuickWindow *hidden = shellWindow(1 - active);
             QTRY_VERIFY_WITH_TIMEOUT(!overlay(shown).isEmpty(), 20000);
             QVERIFY(overlay(hidden).isEmpty());
         }
