@@ -125,19 +125,21 @@ class ReferenceTest : public QObject {
         const QPoint at = item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
         QTest::mouseClick(item->window(), button, mods, at);
     }
-    QPoint rowPoint(const char *grid, int row) const
+    int rowTop(const char *grid, int row) const
     {
         QQuickItem *g = item(grid);
-        int found = -1;
         for (int y = 0; g && y < int(g->height()); ++y) {
             int r = -1;
             QMetaObject::invokeMethod(g, "rowAt", Q_RETURN_ARG(int, r), Q_ARG(qreal, qreal(y)));
-            if (r == row) {
-                found = y;
-                break;
-            }
+            if (r == row)
+                return y;
         }
-        return g ? g->mapToScene(QPointF(g->width() / 2, found + 3)).toPoint() : QPoint();
+        return -1;
+    }
+    QPoint rowPoint(const char *grid, int row) const
+    {
+        QQuickItem *g = item(grid);
+        return g ? g->mapToScene(QPointF(g->width() / 2, rowTop(grid, row) + 3)).toPoint() : QPoint();
     }
     void clickRow(const char *grid, int row, Qt::KeyboardModifiers mods = Qt::NoModifier)
     {
@@ -558,6 +560,8 @@ private slots:
         QCOMPARE(texts(application->referenceOccurrences()), (QStringList{"edit.ass, line 1*", "third.ass, line 1"}));
         auto *menu = named("referenceOccurrenceMenu");
         auto shown = [&](const char *name) { return named(name)->property("height").toReal() > 0; };
+        QVERIFY(QMetaObject::invokeMethod(item("referenceGrid"), "scrollToTopRow", Q_ARG(int, 4)));
+        QTRY_VERIFY(rowTop("referenceGrid", 4) >= 0);
         QTest::mouseClick(window, Qt::RightButton, {}, rowPoint("referenceGrid", 4));
         QTRY_VERIFY(menu->property("opened").toBool());
         QCOMPARE(referenceRow(), 4);
@@ -568,6 +572,8 @@ private slots:
         QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral("r4")));
         QMetaObject::invokeMethod(menu, "close");
         QTRY_VERIFY(!menu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("referenceGrid"), "scrollToTopRow", Q_ARG(int, 0)));
+        QTRY_VERIFY(rowTop("referenceGrid", 0) >= 0);
         QTest::mouseClick(window, Qt::RightButton, {}, rowPoint("referenceGrid", 0));
         QTRY_VERIFY(menu->property("opened").toBool());
         QVERIFY(shown("referenceOccurrencesHeading"));
