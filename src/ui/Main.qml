@@ -221,6 +221,8 @@ ApplicationWindow {
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 272))
         dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
         originalDock.close()
+        dockingArea.addDockWidget(postprocessorDock, KDDW.KDDockWidgets.Location_OnRight, audioDock, Qt.size(360, 0))
+        postprocessorDock.close()
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
@@ -259,6 +261,10 @@ ApplicationWindow {
         if (lower !== natural)
             Docking.resizeInLayout("Video", 0, 0, 0, lower - natural)
     }
+    function timingLayout() {
+        videoDock.close()
+        postprocessorDock.open()
+    }
     function karaokeLayout() {
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, gridDock,
                                   Qt.size(0, root.workspaceLayout.panelSize(audioDock).height))
@@ -272,7 +278,9 @@ ApplicationWindow {
     Connections {
         target: root.workspaceLayout
         function onBuildArrangement(name) {
-            if (name === "Typesetting")
+            if (name === "Timing")
+                root.timingLayout()
+            else if (name === "Typesetting")
                 root.typesettingLayout()
             else if (name === "Karaoke")
                 root.karaokeLayout()
@@ -367,10 +375,10 @@ ApplicationWindow {
     }
 
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
-                                          templatePanel]
+                                          timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel, logPanel,
+                                          stylesPanel, templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
+                                     postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
     Instantiator {
         model: root.dockList
         delegate: Connections {
@@ -429,6 +437,10 @@ ApplicationWindow {
             // MUST KILL: deferred because the arrangement swaps in before the editor leaves the old tab
             Qt.callLater(root.placeOriginal)
         }
+        function onPresetApplied(name) {
+            if (name === "Timing" && root.shiftTimes.timingPreset !== "")
+                root.shiftTimes.applyPreset("postprocessor", root.shiftTimes.timingPreset)
+        }
         function onPresetModeChosen(mode) {
             if (mode === "Translation" && root.app.translationQuestionDue())
                 root.openInMainWindow(translationModeQuestion)
@@ -476,34 +488,10 @@ ApplicationWindow {
         searchTool.focusFind()
     }
 
-    function runShiftTimes() {
-        const which = root.shiftTimes.settings.whichTimes
-        const pp = root.shiftTimes.settings.postprocessor
-        // MUST KILL: whichTimes (1 start, else end) and the postprocessor bit test are magic ints
-        if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
-            const start = which === 1
-            const target = root.app.editingTargetId()
-            shiftQuestion.askedFor = target
-            shiftQuestion.askWith({
-                title: qsTranslate("HikariSub.TimeShift", "Shift times"),
-                text: start ? qsTranslate("HikariSub.TimeShift", "Shift only the start times?")
-                            : qsTranslate("HikariSub.TimeShift", "Shift only the end times?"),
-                detail: start ? qsTranslate("HikariSub.TimeShift", "End times stay where they are, so a line shifted past its end ends before it starts.")
-                              : qsTranslate("HikariSub.TimeShift", "Start times stay where they are, so a line shifted before its start ends before it starts."),
-                severity: "warning",
-                choices: [
-                    { id: "shift", text: start ? qsTranslate("HikariSub.TimeShift", "Shift start times")
-                                               : qsTranslate("HikariSub.TimeShift", "Shift end times"),
-                      role: "accept", isDefault: true },
-                    { id: "cancel", text: qsTranslate("HikariSub.TimeShift", "Cancel"), role: "reject" }
-                ]
-            }, id => {
-                if (id === "shift" && root.app.editingTargetId() === target)
-                    shiftTimesPanel.message = root.app.shiftTimes()
-            })
-            return
-        }
-        shiftTimesPanel.message = root.app.shiftTimes()
+    function applyShift(tool) {
+        const panel = tool === "postprocessor" ? postprocessorTool : shiftTimesPanel
+        panel.message = root.app.applyShift(tool)
+        panel.refresh()
     }
 
     function focusedDock() {
@@ -1667,8 +1655,17 @@ ApplicationWindow {
                 id: showShiftTimesItem
                 iconRole: "shift-times"
                 objectName: "showShiftTimes"
-                text: qsTr("Shift &times...")
+                text: qsTr("Shift &times…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SHOW_TIMING_POSTPROCESSOR"
+                help: qsTr("Moves line times by the lead-in, lead-out, gap and keyframe rules")
+                id: showPostprocessorItem
+                iconRole: "shift-times"
+                objectName: "showTimingPostprocessor"
+                text: qsTr("Timing &postprocessor…")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_STYLE_MANAGER"
@@ -5539,11 +5536,55 @@ ApplicationWindow {
                 ShiftTimesPanel {
                     id: shiftTimesPanel
                     anchors.fill: parent
+                    focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    messages: root.messages
                     hasVideo: root.video.hasVideo
                     audioHasMark: root.audio.hasMark
-                    onRun: root.runShiftTimes()
+                    onApply: root.applyShift("shift")
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    onOpenVideo: openVideoAction.trigger()
+                }
+            }
+        }
+
+        PanelDock {
+            id: postprocessorDock
+            objectName: "postprocessorDock"
+            uniqueName: "Postprocessor"
+            title: qsTranslate("HikariSub.TimeShift", "Timing postprocessor")
+            Panel {
+                id: postprocessorPanel
+                objectName: "postprocessorPanel"
+                dockName: "Postprocessor"
+                minimumBodySize: postprocessorTool.minimumBodySize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.TimeShift", "Timing postprocessor")
+                TimingPostprocessorPanel {
+                    id: postprocessorTool
+                    anchors.fill: parent
+                    focus: true
+                    shiftTimes: root.shiftTimes
+                    app: root.app
+                    messages: root.messages
+                    onApply: root.applyShift("postprocessor")
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    onOpenVideo: openVideoAction.trigger()
+                    onOpenKeyframes: openKeyframesAction.trigger()
+                }
+                Connections {
+                    target: root.editor
+                    function onChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                }
+                Connections {
+                    target: root.video
+                    function onChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                    function onTextsChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                }
+                Connections {
+                    target: root.audio
+                    function onMarkChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
                 }
             }
         }
@@ -5726,6 +5767,7 @@ ApplicationWindow {
             panel.reportMinimumSize()
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
+        root.workspaceLayout.buildsArrangement("Timing")
         root.workspaceLayout.buildsArrangement("Typesetting")
         root.workspaceLayout.buildsArrangement("Karaoke")
         root.workspaceLayout.restoreSaved()
@@ -6570,20 +6612,6 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    HidableQuestion {
-        id: shiftQuestion
-        objectName: "shiftQuestion"
-        messages: root.messages
-        questionId: "shiftOneTime"
-        property var askedFor: 0
-        property Connections targetChanges: Connections {
-            target: root.app
-            function onTabsChanged() {
-                if (shiftQuestion.pending.length > 0 && root.app.editingTargetId() !== shiftQuestion.askedFor)
-                    shiftQuestion.withdraw()
-            }
-        }
-    }
     Connections {
         target: root.updates
         function onFinished(outcome, release, interactive) {
@@ -7180,7 +7208,7 @@ ApplicationWindow {
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
-        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem,
+        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
@@ -7332,7 +7360,8 @@ ApplicationWindow {
             if (editing)
                 styleManagerWindow.deleteUnused()
             return true
-        case "GLOBAL_SHIFT_TIMES": if (editing) root.runShiftTimes(); return true
+        case "GLOBAL_SHIFT_TIMES": if (editing) root.applyShift("shift"); return true
+        case "GLOBAL_TIMING_POSTPROCESSOR": if (editing) root.applyShift("postprocessor"); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
