@@ -128,6 +128,7 @@ signals:
     void lineDragged(qulonglong lineId);
     void selectAllRequested();
     void contextMenuRequested(qreal x, qreal y);
+    void headerMenuRequested(qreal x, qreal y);
     void modelChanged();
     void contentYChanged();
     void contentHeightChanged();

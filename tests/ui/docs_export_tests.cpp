@@ -165,7 +165,14 @@ private slots:
                 menus[v.toObject().value(QStringLiteral("symbol")).toString()] << m.toString();
         QCOMPARE(menus.value(QStringLiteral("GLOBAL_SAVE_SUBS")), QStringList{QStringLiteral("File > Save")});
         QVERIFY(menus.value(QStringLiteral("GLOBAL_CONVERT_TO_SRT")).contains(QStringLiteral("Subtitles > Conversion > Convert to SRT")));
-        QVERIFY(menus.value(QStringLiteral("GRID_INSERT_BEFORE")).contains(QStringLiteral("Grid menu > Insert > Insert before")));
+        QVERIFY(menus.value(QStringLiteral("GRID_INSERT_BEFORE")).contains(QStringLiteral("Grid menu > Insert > Before")));
+        QVERIFY(menus.value(QStringLiteral("GRID_DUPLICATE_LINES")).contains(QStringLiteral("Grid menu > Duplicate lines")));
+        QCOMPARE(menus.value(QStringLiteral("GRID_SET_NEW_FPS")), QStringList{QStringLiteral("Subtitles > Set FPS > Set new FPS…")});
+        QCOMPARE(menus.value(QStringLiteral("GRID_SUBS_FROM_MKV")), QStringList{QStringLiteral("File > Import subtitles from MKV…")});
+        QVERIFY(menus.value(QStringLiteral("GRID_FILTER")).contains(QStringLiteral("Grid options > Filtering > Filter")));
+        QVERIFY(menus.value(QStringLiteral("GRID_HIDE_LAYER")).contains(QStringLiteral("Grid header menu > Layer")));
+        QCOMPARE(menus.value(QStringLiteral("GRID_FILTER_IGNORE_IN_ACTIONS")),
+                 QStringList{QStringLiteral("Grid options > Ignore filtering in some actions")});
         for (const QStringList &places : menus)
             for (const QString &place : places) {
                 QVERIFY2(!place.contains(QLatin1Char('\t')) && !place.contains(QLatin1Char('&')), qPrintable(place));

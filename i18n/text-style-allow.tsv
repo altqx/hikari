@@ -22,7 +22,6 @@ HikariSub.Editor	Primary color	spelling	pending #596 Menus
 HikariSub.Editor	Secondary color for karaoke	spelling	pending #596 Menus
 HikariSub.Editor	Border color	spelling	pending #596 Menus
 HikariSub.Editor	Shadow color	spelling	pending #596 Menus
-HikariSub.Editor	Edit...	ellipsis	pending #596 Grid and Line editor
 HikariSub.Editor	Insert Tag at text beginning	title-case	pending #596 Grid and Line editor
 HikariSub.Editor	End is before Start.	title-case	pending #596 Grid and Line editor
 HikariSub.Editor	This document can't be saved here.	quotes	pending #596 Grid and Line editor
@@ -38,8 +37,6 @@ HikariSub.Grid	Cut\tCtrl+X	hard-coded-key	pending #596 Grid and Line editor
 HikariSub.Grid	Cut\tCtrl+X	title-case	pending #596 Grid and Line editor
 HikariSub.Grid	Paste\tCtrl+V	hard-coded-key	pending #596 Grid and Line editor
 HikariSub.Grid	Paste\tCtrl+V	title-case	pending #596 Grid and Line editor
-HikariSub.Grid	Delete lines\tShift+Del	hard-coded-key	pending #596 Grid and Line editor
-HikariSub.Grid	Delete lines\tShift+Del	title-case	pending #596 Grid and Line editor
 HikariSub.Grid	Select the group's lines	quotes	pending #596 Grid and Line editor
 HikariSub.Grid	The starting time	leading-the	pending #596 Grid and Line editor
 HikariSub.Grid	Copy these columns of the selected line:	colon	pending #596 Grid and Line editor

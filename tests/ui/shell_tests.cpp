@@ -1672,16 +1672,30 @@ private slots:
         QQuickItem *filter = stylesFilter();
         QVERIFY(filter);
         filter->setProperty("text", QStringLiteral("Default"));
-        const auto shoot = [&](QQuickItem *focus, const QString &name, const std::function<QObject *()> &menu) {
-            focus->forceActiveFocus();
-            QTest::keyClick(window, Qt::Key_Menu);
-            QObject *open = nullptr;
-            QTRY_VERIFY((open = menu()) && open->property("opened").toBool());
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        QVERIFY(application->tagButtons().add(QStringLiteral("Blur"), QStringLiteral("\\blur2"), 0));
+        const auto grab = [&](const QString &name) {
             QTest::qWait(300);
             const QRect frame = window->frameGeometry();
             QVERIFY(window->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
-            QMetaObject::invokeMethod(open, "close");
-            QTRY_VERIFY(!open->property("visible").toBool());
+        };
+        const auto closeAll = [&](std::initializer_list<QObject *> menus) {
+            for (QObject *open : menus)
+                QMetaObject::invokeMethod(open, "close");
+            for (QObject *open : menus)
+                QTRY_VERIFY(!open->property("visible").toBool());
+        };
+        const auto shoot = [&](QQuickItem *focus, const QString &name, const std::function<QObject *()> &menu) {
+            focus->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY(focus->hasActiveFocus());
+            QTest::keyClick(window, Qt::Key_Menu);
+            QObject *open = nullptr;
+            QTRY_VERIFY((open = menu()) && open->property("opened").toBool());
+            grab(name);
+            closeAll({open});
         };
         for (const char *code : {"light", "dark"}) {
             settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
@@ -1691,7 +1705,24 @@ private slots:
             auto *grid = item("editingGrid");
             grid->forceActiveFocus();
             press(Qt::Key_Home);
+            press(Qt::Key_Down, Qt::ShiftModifier);
             shoot(grid, QStringLiteral("/menu-grid") + suffix, [&] { return named("gridMenu"); });
+            QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 3, 5)).toPoint());
+            QTRY_VERIFY(named("gridHeaderMenu")->property("opened").toBool());
+            grab(QStringLiteral("/menu-grid-header") + suffix);
+            closeAll({named("gridHeaderMenu")});
+            QVERIFY(openPanelMenu(QStringLiteral("Grid")));
+            QVERIFY(QMetaObject::invokeMethod(named("filteringMenu"), "open"));
+            QTRY_VERIFY(named("filteringMenu")->property("opened").toBool());
+            grab(QStringLiteral("/menu-grid-options") + suffix);
+            closeAll({named("filteringMenu"), named("panelOptionsMenu")});
+            auto *subtitles = named("subtitlesMenu");
+            QVERIFY(QMetaObject::invokeMethod(subtitles, "open"));
+            QTRY_VERIFY(subtitles->property("opened").toBool());
+            QVERIFY(QMetaObject::invokeMethod(named("setFpsMenu"), "open"));
+            QTRY_VERIFY(named("setFpsMenu")->property("opened").toBool());
+            grab(QStringLiteral("/menu-bar-set-fps") + suffix);
+            closeAll({named("setFpsMenu"), subtitles});
             auto *lineText = item("lineText");
             QVERIFY(QMetaObject::invokeMethod(named("panelShowEditor"), "triggered"));
             QTRY_VERIFY(lineText->isVisible());
@@ -1702,6 +1733,40 @@ private slots:
             shoot(filter, QStringLiteral("/menu-text-field") + suffix, [&] {
                 return filter->findChild<QObject *>(QStringLiteral("textMenu"), Qt::FindDirectChildrenOnly);
             });
+            QVERIFY(QMetaObject::invokeMethod(named("panelShowEditor"), "triggered"));
+            QTRY_VERIFY(lineText->isVisible());
+            QTRY_VERIFY(visualItem("tagButton0"));
+            shoot(visualItem("tagButton0"), QStringLiteral("/menu-tag-button") + suffix, [&] { return named("tagButtonMenu"); });
+            application->editor().setShowTags(true);
+            lineText->forceActiveFocus();
+            lineText->setProperty("cursorPosition", 0);
+            QTest::keyClick(window, '{');
+            QTest::keyClick(window, '\\');
+            QTRY_VERIFY(application->editor().tagList()->open());
+            QTest::keyClick(window, Qt::Key_Menu);
+            QTRY_VERIFY(named("lineTextTagListOptions")->property("opened").toBool());
+            grab(QStringLiteral("/menu-tag-list") + suffix);
+            closeAll({named("lineTextTagListOptions")});
+            QTest::keyClick(window, Qt::Key_Escape);
+            QTRY_VERIFY(!application->editor().tagList()->open());
+            application->editor().discard();
+        }
+        const QString grouped = writeFile(dir, "shots-group.ass",
+                                          "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Signs\n"
+                                          "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,m1\n"
+                                          "Dialogue: 0,0:00:05.00,0:00:06.00,Default,[tree_opened],0,0,0,,m2\n");
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(application->tabs().isEmpty());
+        QVERIFY(application->openFile(grouped));
+        QTRY_COMPARE(application->tabs().size(), qsizetype(1));
+        for (const char *code : {"light", "dark"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *grid = item("editingGrid");
+            grid->forceActiveFocus();
+            press(Qt::Key_Home);
+            shoot(grid, QStringLiteral("/menu-grid-group-") + QLatin1String(code) + QStringLiteral(".png"),
+                  [&] { return named("groupMenu"); });
         }
     }
 
@@ -1836,6 +1901,23 @@ private slots:
         press(Qt::Key_Right);
         QTest::keyClick(window, '\\');
         QTRY_VERIFY(list->open());
+        press(Qt::Key_Menu);
+        QTRY_VERIFY(options->property("opened").toBool());
+        QVERIFY(list->open());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!options->property("visible").toBool());
+        QTRY_VERIFY(text->hasActiveFocus());
+        QVERIFY(list->open());
+        auto *optionsButton = item("lineTextTagListOptionsButton");
+        QTRY_VERIFY(optionsButton && optionsButton->isVisible());
+        QCOMPARE(optionsButton->property("text").toString(), QStringLiteral("Tag list options"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                          optionsButton->mapToScene(QPointF(optionsButton->width() / 2, optionsButton->height() / 2)).toPoint());
+        QTRY_VERIFY(options->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(options, "close"));
+        QTRY_VERIFY(!options->property("visible").toBool());
+        QTRY_VERIFY(text->hasActiveFocus());
+        QVERIFY(list->open());
         item("editingGrid")->forceActiveFocus();
         QVERIFY(!list->open());
         application->editor().discard();
@@ -5840,7 +5922,7 @@ private slots:
     void contextMenusAreTheListedOnes()
     {
         static const QRegularExpression byData(
-            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|^panelOptions_|Monitor\d+$))"));
+            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$))"));
         QVERIFY(application->openFile(episode));
         QQuickItem *field = stylesFilter();
         QVERIFY(field);
@@ -5853,20 +5935,25 @@ private slots:
         QTRY_VERIFY(named("automationMacroMenu"));
         QVERIFY(application->openReference(original));
         QTRY_VERIFY(named("referenceOccurrenceMenu"));
+        QVERIFY(openPanelMenu(QStringLiteral("Grid")));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
+        QTRY_VERIFY(!named("panelOptionsMenu")->property("visible").toBool());
         const std::vector<std::pair<QString, QObject *>> listed{
             {QStringLiteral("Line editor text"), named("lineTextMenu")},
             {QStringLiteral("Text field"), textMenu},
             {QStringLiteral("Grid"), named("gridMenu")},
+            {QStringLiteral("Grid header"), named("gridHeaderMenu")},
             {QStringLiteral("Grid group row"), named("groupMenu")},
             {QStringLiteral("Video"), named("videoContextMenu")},
             {QStringLiteral("Full-screen video"), named("videoFullscreenMenu")},
-            {QStringLiteral("Panel options"), named("panelOptionsMenu")},
+            {QStringLiteral("Grid panel options"), named("panelOptionsMenu")},
             {QStringLiteral("Document tab"), named("documentTabMenu")},
             {QStringLiteral("Styles row"), named("stylesRowMenu")},
             {QStringLiteral("Automation macro"), named("automationMacroMenu")},
             {QStringLiteral("Home row"), named("homeRowMenu")},
             {QStringLiteral("Reference tray"), named("referenceOccurrenceMenu")},
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
+            {QStringLiteral("Tag list"), named("lineTextTagListOptions")},
         };
         QStringList missing;
         for (const auto &[name, menu] : listed)
@@ -6814,6 +6901,9 @@ private slots:
                                           Q_ARG(QVariant, true)));
         QTRY_VERIFY(gridDock->property("isFloating").toBool());
         QTRY_VERIFY(dockHeader(QStringLiteral("Grid")) && dockHeader(QStringLiteral("Grid"))->window() != window);
+        QWindow *floating = dockHeader(QStringLiteral("Grid"))->window();
+        floating->setHeight(std::max(floating->height(), 420));
+        QTRY_VERIFY(floating->height() >= 420);
         readsAsShown(QStringLiteral("Audio"));
         QVERIFY(!QTest::currentTestFailed());
         readsAsShown(QStringLiteral("Grid"));
@@ -9061,7 +9151,7 @@ private slots:
         const QString subs = writeFile(dir, "mkvtab.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,before\n");
         QVERIFY(application->openFile(subs));
         auto &matroska = application->matroska();
-        auto *item = named("gridSubsFromMkv");
+        auto *item = named("importMkvMenuItem");
         QVERIFY(item);
         QVERIFY(!item->property("enabled").toBool());
         const auto target = [&] { return *application->workspace().editingTarget(); };
@@ -11296,7 +11386,8 @@ private slots:
                     return i;
             return qsizetype(-1);
         };
-        QCOMPARE(at("checkSpellingMenuItem"), at("resampleMenuItem") + 1);
+        QCOMPARE(entries[at("resampleMenuItem") + 1]->property("subMenu").value<QObject *>(), named("setFpsMenu"));
+        QCOMPARE(at("checkSpellingMenuItem"), at("resampleMenuItem") + 2);
 
         QVERIFY(QMetaObject::invokeMethod(check, "triggered"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
@@ -12657,7 +12748,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(hideCps, "triggered"));
         QCOMPARE(application->shell().hiddenColumns(), 512);
         QTRY_COMPARE(table->columnCount(), 12);
-        QVERIFY(hideCps->property("checked").toBool());
+        QVERIFY(!hideCps->property("checked").toBool());
         application->shell().setHiddenColumns(0);
     }
 
@@ -12997,14 +13088,15 @@ private slots:
         auto *grid = item("editingGrid");
         auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
         QCOMPARE(table->columnCount(), 13);
-        auto *gridMenu = named("gridMenu");
-        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint());
+        auto *gridMenu = named("gridHeaderMenu");
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 2, 5)).toPoint());
         QTRY_VERIFY(gridMenu->property("opened").toBool());
-        auto *hideColumns = named("hideColumnsMenu");
-        QVERIFY(QMetaObject::invokeMethod(hideColumns, "open"));
-        auto *hideCps = qobject_cast<QQuickItem *>(named("hideColumn512"));
-        auto *hideWraps = qobject_cast<QQuickItem *>(named("hideColumn8192"));
+        QVERIFY(!named("gridMenu")->property("visible").toBool());
+        auto *hideColumns = gridMenu;
+        auto *hideCps = qobject_cast<QQuickItem *>(named("headerhideColumn512"));
+        auto *hideWraps = qobject_cast<QQuickItem *>(named("headerhideColumn8192"));
         QTRY_VERIFY(hideCps->isVisible() && hideCps->width() > 0);
+        QVERIFY(hideCps->property("checked").toBool());
         clickWith(hideCps, Qt::NoModifier);
         QCOMPARE(shell.hiddenColumns(), 512);
         // Qt turns a second click within the double-click interval into a double click.
@@ -13015,8 +13107,14 @@ private slots:
         QCOMPARE(shell.hiddenColumns(), 512 | 8192);
         QTRY_COMPARE(table->columnCount(), 11);
         QVERIFY(hideColumns->property("visible").toBool());
-        QVERIFY(hideCps->property("checked").toBool() && hideWraps->property("checked").toBool());
+        QVERIFY(!hideCps->property("checked").toBool() && !hideWraps->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(hideColumns, "close"));
+        QTRY_VERIFY(!hideColumns->property("visible").toBool());
+        QVERIFY(openPanelMenu(QStringLiteral("Grid")));
+        QCOMPARE(panelMenuItems().mid(0, 5), (QStringList{QStringLiteral("Filtering"), QStringLiteral("Columns"),
+                                                         QStringLiteral("Ignore filtering in some actions"),
+                                                         QStringLiteral("Fold generated lines"), QStringLiteral("|")}));
+        gridMenu = named("panelOptionsMenu");
         auto *filtering = named("filteringMenu");
         QVERIFY(QMetaObject::invokeMethod(filtering, "open"));
         auto *invert = qobject_cast<QQuickItem *>(named("filterInvert"));
@@ -13054,7 +13152,7 @@ private slots:
         press(Qt::Key_Home);
         press(Qt::Key_Down);
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QVERIFY(application->hideSelectedLines());
         QTRY_COMPARE(table->rowCount(), 2);
         QVERIFY(application->shell().filtered());
         QVERIFY(application->shell().selectionStatus().contains(QStringLiteral("hidden")));
@@ -13065,6 +13163,32 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("turnOffFiltering")), "triggered"));
         QTRY_VERIFY(!application->shell().filtered());
         QCOMPARE(grid->markWidth(), 0.0);
+    }
+
+    void groupRowMenuOpensFromTheKeyboard()
+    {
+        const QString path = writeFile(dir, "g9k.ass",
+                                       "Dialogue: 0,0:00:04.50,0:00:10.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:11.00,0:00:12.00,Default,,0,0,0,,b\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Signs\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,m1\n");
+        QVERIFY(application->openFile(path));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        auto *groupMenu = named("groupMenu");
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down, Qt::ShiftModifier);
+        QTRY_COMPARE(application->shell().selectedCount(), 2);
+        QCOMPARE(named("groupAddLines")->property("text").toString(), QStringLiteral("Add 2 selected line(s)"));
+        press(Qt::Key_Down);
+        QTRY_COMPARE(application->shell().selectedCount(), 1);
+        QCOMPARE(named("groupAddLines")->property("text").toString(), QStringLiteral("Add 1 selected line(s)"));
+        QTest::keyClick(window, Qt::Key_Menu);
+        QTRY_VERIFY(groupMenu->property("opened").toBool());
+        QVERIFY(!named("gridMenu")->property("visible").toBool());
+        QCOMPARE(named("groupDelete")->property("text").toString(), QStringLiteral("Ungroup"));
+        QVERIFY(QMetaObject::invokeMethod(groupMenu, "close"));
+        QTRY_VERIFY(!groupMenu->property("visible").toBool());
     }
 
     void groupDescriptionsOpenCloseAndBreaksAreRefused()
@@ -13486,6 +13610,7 @@ private slots:
         QVERIFY(menu);
         QTRY_VERIFY(menu->property("visible").toBool());
         auto *paste = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("pasteTranslation"));
+        QCOMPARE(paste->property("text").toString(), QStringLiteral("Paste translation from a file…"));
         QVERIFY(paste);
         QVERIFY(!paste->property("enabled").toBool());
         QCOMPARE(paste->property("help").toString(), hint);
@@ -18847,7 +18972,7 @@ private slots:
         auto *duplicate = engine->rootObjects().first()->findChild<QQuickItem *>(QStringLiteral("duplicateLines"));
         QVERIFY(duplicate);
         QTRY_VERIFY(duplicate->isVisible() && duplicate->width() > 0);
-        QCOMPARE(duplicate->property("text").toString(), QStringLiteral("Duplicate lines"));
+        QCOMPARE(duplicate->property("text").toString(), QStringLiteral("Duplicate 1 line(s)"));
         QCOMPARE(duplicate->property("keysText").toString(), QStringLiteral("Ctrl+D"));
         const int lines = application->files().session(*application->workspace().editingTarget())->document().lines().size();
         clickWith(duplicate, Qt::ShiftModifier);
@@ -19155,9 +19280,7 @@ private slots:
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_OPEN_STYLE_MANAGER"), 0), QStringLiteral("Alt-Ctrl-K"));
         QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_OPEN_STYLE_MANAGER G=Alt-Ctrl-K")));
-        auto *grid = item("editingGrid");
-        const QPoint centre = grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint();
-        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centre);
+        QVERIFY(openPanelMenu(QStringLiteral("Grid")));
         auto *filtering = named("filteringMenu");
         QVERIFY(filtering);
         QVERIFY(QMetaObject::invokeMethod(filtering, "open"));
@@ -19166,7 +19289,7 @@ private slots:
         QVERIFY(!application->gridFilter().inverted());
         clickWith(invert, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QTRY_VERIFY(!named("gridMenu")->property("visible").toBool());
+        QTRY_VERIFY(!named("panelOptionsMenu")->property("visible").toBool());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 1);
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_R, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY(!mapping->isVisible());
@@ -25284,7 +25407,7 @@ private slots:
         const core::LineId third = lines[2]->id, fourth = lines[3]->id, filtered = lines[4]->id, grouped = lines[6]->id;
         session->setSelection({filtered, {filtered}, filtered, {}});
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QVERIFY(application->hideSelectedLines());
         QTRY_VERIFY(application->shell().filtered());
         const auto shown = application->shell().displayedLines();
         QVERIFY(std::find(shown.begin(), shown.end(), filtered) == shown.end());
@@ -27521,7 +27644,7 @@ private slots:
         press(Qt::Key_Home);
         QTRY_COMPARE(session->selection().selected, std::set<core::LineId>{lines[0]->id});
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QVERIFY(application->hideSelectedLines());
         QTRY_VERIFY(application->shell().filtered());
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_End);
