@@ -17,6 +17,8 @@ export const ErrorCode = {
     notInitialized: -32002,
     busy: -32003,
     requestCancelled: -32800,
+    /** A provider failed; `data` is the ErrorData with its kind, HTTP status and message. */
+    providerFailed: -32010,
 } as const;
 
 export const Method = {
@@ -40,9 +42,6 @@ export const kDeclaredMethods = [
     Method.sessionNew,
     Method.sessionPrompt,
     Method.sessionCancel,
-    Method.providersSet,
-    Method.modelsList,
-    Method.complete,
 ] as const;
 
 export interface InitializeParams {

@@ -14457,6 +14457,14 @@ Usunięte style:
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>Wyśrodkuj czasy w klatkach</translation>
+    </message>
+    <message>
+        <source>Times were not centred within frames: no video is open</source>
+        <translation>Czasy nie zostały wyśrodkowane w klatkach: nie otwarto wideo</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>

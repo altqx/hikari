@@ -23,6 +23,7 @@ struct ShiftTimesSettings {
     bool moveToVideoTime = false;
     bool moveToAudioTime = false;
     bool tagTimes = false;          // keep \move, \t and \fad times on the frames
+    bool centerTimes = false;
     // 0 all Lines, 1 selected, 2 from the selection on, 3 times at or after
     // the first selected Line's start, 4 at or before it, 5 by styles.
     int whichLines = 0;
@@ -59,6 +60,7 @@ enum class ShiftProblem {
 struct ShiftOutcome {
     // End correction was skipped for lack of an exact timebase.
     bool endCorrectionSkipped = false;
+    bool centeringSkipped = false;
 };
 
 enum ShiftRule : unsigned {

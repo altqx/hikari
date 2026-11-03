@@ -12718,6 +12718,55 @@ private slots:
         setShift("correctEndTimes", 0);
     }
 
+    void shiftTimesCentresTimesWithinFrames()
+    {
+        const QString path = writeFile(dir, "fa16-shift-center.ass",
+                                       "Dialogue: 0,0:00:00.41,0:00:01.20,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:01.53,0:00:01.91,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto ms = [&](int i) {
+            const auto *l = session->document().lines()[static_cast<std::size_t>(i)];
+            return std::pair(l->start.value.microseconds() / 1000, l->end.value.microseconds() / 1000);
+        };
+        using Ms = std::pair<std::int64_t, std::int64_t>;
+        showShiftTimes();
+        auto restore = qScopeGuard([&] {
+            setShift("centerTimes", false);
+            setShift("forward", false);
+            setShift("timeMs", 2000);
+        });
+        setShift("forward", true);
+        setShift("timeMs", 100);
+        auto *center = visualItem("shiftCenterTimes");
+        QCOMPARE(center->property("text").toString(), QStringLiteral("Centre times within frames"));
+        QVERIFY(!center->property("checked").toBool());
+        QVERIFY(!item("shiftCenterNeed")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(center, "click"));
+        QVERIFY(application->shiftTimesSettings().settings().centerTimes);
+        QCOMPARE(application->settingsStore()->integer("shiftTimes.options") & 64, 64);
+        QTRY_VERIFY(item("shiftCenterNeed")->isVisible());
+
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        closeMismatchQuestion();
+        QTRY_VERIFY(application->exactTimebase());
+        QTRY_VERIFY(!item("shiftCenterNeed")->isVisible());
+        const auto timebase = application->video().session().legacyTimebase();
+        const Ms first{application::centeredTime(timebase, 510), application::centeredTime(timebase, 1300)};
+        const Ms second{application::centeredTime(timebase, 1630), application::centeredTime(timebase, 2010)};
+        QVERIFY(first != (Ms{510, 1300}));
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_COMPARE(ms(0), first);
+        QCOMPARE(ms(1), second);
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Shift times"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(ms(0), (Ms{410, 1200}));
+    }
+
     void shiftTimesScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -12727,6 +12776,10 @@ private slots:
         auto &settings = *application->settingsStore();
         auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
         QVERIFY(application->openFile(episode));
         showShiftTimes();
         showPostprocessor();
@@ -12747,6 +12800,7 @@ private slots:
         setShift("leadOut", 300);
         setShift("thresholdStart", 300);
         setShift("thresholdEnd", 300);
+        QTRY_VERIFY(item("shiftApply")->property("text").toString().endsWith(QStringLiteral(" lines")));
         auto *root = engine->rootObjects().first();
         for (const auto code : ui::theme::kCodes) {
             const QString theme = ui::theme::codeName(code);

@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
 #include <string>
 #include <string_view>
@@ -150,6 +151,83 @@ TEST_F(Shift, TagTimesFollowTheFrames)
     c.timebase = &tb;
     ASSERT_TRUE(shiftTimes(tagged, s, c));
     EXPECT_EQ(tagged.document().lines()[0]->text, u8"{\\move(1,2,3,4,125,925)}x");
+}
+
+TEST_F(Shift, CenteringPutsEveryShiftedTimeInTheMiddleOfItsFrame)
+{
+    const auto tb = timebase();
+    ShiftTimesSettings s;
+    s.timeMs = 15;
+    s.centerTimes = true;
+    ShiftContext c;
+    c.timebase = &tb;
+    const auto steps = session.historySize();
+    ASSERT_TRUE(shiftTimes(session, s, c));
+    EXPECT_EQ(times(session), (std::vector<std::pair<int, int>>{{1020, 2020}, {3020, 4020}, {5020, 6020}}));
+    EXPECT_EQ(session.historySize(), steps + 1);
+}
+
+TEST_F(Shift, CenteringAloneMovesNoTimeOffItsFrame)
+{
+    const auto tb = timebase();
+    ShiftTimesSettings s;
+    s.timeMs = 0;
+    s.centerTimes = true;
+    ShiftContext c;
+    c.timebase = &tb;
+    ASSERT_TRUE(shiftTimes(session, s, c));
+    EXPECT_EQ(times(session), (std::vector<std::pair<int, int>>{{980, 1980}, {2980, 3980}, {4980, 5980}}));
+    const std::vector<std::pair<int, int>> before{{1000, 2000}, {3000, 4000}, {5000, 6000}};
+    for (std::size_t i = 0; i < before.size(); ++i) {
+        EXPECT_EQ(tb.frameAt(times(session)[i].first), tb.frameAt(before[i].first));
+        EXPECT_EQ(tb.frameAt(times(session)[i].second), tb.frameAt(before[i].second));
+    }
+    const auto again = planShift(session, s, c, {});
+    ASSERT_TRUE(again);
+    EXPECT_TRUE(std::ranges::none_of(again->lines, &ShiftedLine::changed));
+}
+
+TEST_F(Shift, CenteringFollowsWhichTimes)
+{
+    const auto tb = timebase();
+    ShiftTimesSettings s;
+    s.timeMs = 15;
+    s.centerTimes = true;
+    s.whichTimes = 1;
+    ShiftContext c;
+    c.timebase = &tb;
+    ASSERT_TRUE(shiftTimes(session, s, c));
+    EXPECT_EQ(times(session)[0], (std::pair{1020, 2000}));
+    s.whichTimes = 2;
+    ASSERT_TRUE(shiftTimes(session, s, c));
+    EXPECT_EQ(times(session)[0], (std::pair{1020, 2020}));
+}
+
+TEST_F(Shift, CenteringKeepsTagTimesOnTheirFrames)
+{
+    EditSession tagged{load("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\move(1,2,3,4,100,900)}x\n")};
+    const auto tb = timebase();
+    ShiftTimesSettings s;
+    s.timeMs = 15;
+    s.tagTimes = true;
+    s.centerTimes = true;
+    ShiftContext c;
+    c.timebase = &tb;
+    ASSERT_TRUE(shiftTimes(tagged, s, c));
+    EXPECT_EQ(times(tagged)[0], (std::pair{1020, 2020}));
+    EXPECT_EQ(tagged.document().lines()[0]->text, u8"{\\move(1,2,3,4,120,920)}x");
+}
+
+TEST_F(Shift, CenteringWithoutATimebaseIsSkipped)
+{
+    ShiftTimesSettings s;
+    s.timeMs = 15;
+    s.centerTimes = true;
+    const auto r = shiftTimes(session, s, {});
+    ASSERT_TRUE(r);
+    EXPECT_TRUE(r->centeringSkipped);
+    EXPECT_EQ(times(session)[0], (std::pair{1015, 2015}));
 }
 
 TEST(ShiftEndCorrection, OverlapsAndTextLength)
