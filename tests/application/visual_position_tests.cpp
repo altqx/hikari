@@ -783,6 +783,28 @@ TEST(VisualPositionGesture, DragStagesAndCommitsOnReleaseAndEscCancels)
     EXPECT_EQ(host.s->history().back().name, "Visual positioning tool");
 }
 
+TEST(VisualPositionGesture, ADragWhilePannedAndZoomedMovesByThePointersDistanceInTheScript)
+{
+    TestHost host;
+    standard(host);
+    host.v.setZoomModel(ZoomModel::Aegisub35);
+    host.v.toggleZoom(200);
+    host.v.panBy(300, 200);
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    const PointF handle = host.v.scriptToView({300, 300});
+    const int x = static_cast<int>(std::lround(handle.x)), y = static_cast<int>(std::lround(handle.y));
+    EXPECT_NE(x, 100);
+    tool.pointer(at(Pointer::Kind::Press, x, y, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, x + 10, y + 5, Pointer::Button::None, true), host);
+    ASSERT_TRUE(host.g);
+    EXPECT_EQ(*host.g->staged(ids(*host.s)[0]), u8"{\\pos(315,307.5)}x");
+    tool.pointer(at(Pointer::Kind::Release, x + 10, y + 5, Pointer::Button::Left), host);
+    EXPECT_EQ(text(host, 0), u8"{\\pos(315,307.5)}x");
+}
+
 TEST(VisualPositionGesture, AHeldNudgeIsOneStepCommittedOnRelease)
 {
     TestHost host;

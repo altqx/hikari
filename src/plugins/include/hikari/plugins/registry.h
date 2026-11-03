@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/api/json.h"
 #include "hikari/minisign/minisign.h"
 
 #include <expected>
@@ -20,6 +21,7 @@ struct InstalledPlugin {
     bool enabled = true;
     std::optional<minisign::PublicKey> key; // pinned at first signed install
     std::map<std::string, FileGrant> grants; // by the manifest's file request id
+    api::Json settings = api::Json::object(); // values set, by the manifest's setting id
 };
 
 // plugins.json in the user folder, by plugin id.

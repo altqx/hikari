@@ -232,7 +232,7 @@ private slots:
         QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("label")).toString(),
                  QStringLiteral("Border color (High contrast black)"));
         QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("section")).toString(),
-                 QStringLiteral("UI colors"));
+                 QStringLiteral("UI colours"));
         QVERIFY(!byKey.value(QStringLiteral("appearance.darkAccent")).value(QStringLiteral("values")).toArray().isEmpty());
         const QJsonObject player = byKey.value(QStringLiteral("video.playbackPlayer"));
         QCOMPARE(player.value(QStringLiteral("platform")).toString(), QStringLiteral("windows"));

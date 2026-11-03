@@ -797,7 +797,7 @@ QVariantList Theme::picks(const QString &code) const
     if (!c || !theme::isHighContrast(*c))
         return {};
     const char *names[] = {
-        QT_TRANSLATE_NOOP("HikariSub.Options", "Accent color"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Accent colour"),
         QT_TRANSLATE_NOOP("HikariSub.Options", "Text and icons"),
         QT_TRANSLATE_NOOP("HikariSub.Options", "Border color"),
     };

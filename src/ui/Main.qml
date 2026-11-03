@@ -229,8 +229,6 @@ ApplicationWindow {
         editorDock.setAsCurrentTab()
         stylesDock.close()
         templateDock.close()
-        dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
-        misspellDock.close()
     }
 
     function typesettingLayout() {
@@ -370,9 +368,9 @@ ApplicationWindow {
 
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                           timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
-                                          misspellPanel, templatePanel]
+                                          templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
+                                     searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
     Instantiator {
         model: root.dockList
         delegate: Connections {
@@ -467,14 +465,13 @@ ApplicationWindow {
     onKaraokeTurnedOnChanged: root.keepKaraokeTurnedOn()
     onFoldTurnedOnChanged: root.keepKaraokeTurnedOn()
 
-    // MUST KILL: which is a magic int search tab (0 Search, 1 Find and replace)
-    function openSearch(which) {
-        if (searchDock.isOpen && searchPanel.activeFocus && searchTool.tab === which) {
+    function openFind(withReplace) {
+        if (searchDock.isOpen && searchPanel.activeFocus && (!withReplace || searchTool.replaceShown)) {
             searchDock.close()
             root.focusPanel(editorPanel, Qt.OtherFocusReason)
             return
         }
-        searchTool.showTab(which)
+        searchTool.open(withReplace)
         root.showPanel(searchDock)
         searchTool.focusFind()
     }
@@ -554,12 +551,6 @@ ApplicationWindow {
     function panelAvailable(dock) {
         return dock !== originalDock || root.editor.translationMode
     }
-    function toggleMisspellPanel() {
-        if (misspellDock.isOpen)
-            misspellDock.close()
-        else
-            root.showPanel(misspellDock)
-    }
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
@@ -580,8 +571,6 @@ ApplicationWindow {
             root.addSpellChecker()
         else if (dock === stylesDock && !Docking.hasPlace("Styles"))
             root.addStyles()
-        else if (dock === misspellDock && !Docking.hasPlace("FixMinorErrors"))
-            dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         else if (dock === templateDock && !Docking.hasPlace("Template"))
             root.addTemplate()
         else if (!Docking.hasPlace(dock.uniqueName))
@@ -1609,17 +1598,6 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
-                command: "GLOBAL_MISSPELLS_REPLACER"
-                help: qsTr("Shows or hides the Fix minor errors panel")
-                iconRole: "multireplace"
-                objectName: "misspellMenuItem"
-                action: Action {
-                    id: misspellAction
-                    text: qsTr("Fix minor errors (experimental)")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) root.toggleMisspellPanel()
-                }
-            }
-            ShellMenuItem {
                 command: "GLOBAL_OPEN_SELECT_LINES"
                 help: qsTr("Selects lines by expressions")
                 iconRole: "select-lines"
@@ -1632,39 +1610,51 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
-                command: "GLOBAL_FIND_REPLACE"
-                help: qsTr("Searches for the specified text phrases and replaces them")
-                iconRole: "find-replace"
-                objectName: "findReplaceMenuItem"
-                action: Action {
-                    id: findReplaceAction
-                    text: qsTr("Find and re&place")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openSearch(1)
-                }
-            }
-            ShellMenuItem {
                 command: "GLOBAL_SEARCH"
-                help: qsTr("Searches for the specified text phrase")
+                help: qsTr("Opens the Find panel")
                 iconRole: "search"
                 objectName: "findMenuItem"
                 action: Action {
                     id: findAction
-                    text: qsTr("&Find")
+                    text: qsTr("&Find…")
                     enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openSearch(0)
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openFind(false)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_REPLACE"
+                help: qsTr("Opens the Find panel with the replace row shown")
+                iconRole: "find-replace"
+                objectName: "findReplaceMenuItem"
+                action: Action {
+                    id: findReplaceAction
+                    text: qsTr("Re&place…")
+                    enabled: root.editor.hasLine
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openFind(true)
                 }
             }
             ShellMenuItem {
                 command: "GLOBAL_FIND_NEXT"
-                help: qsTr("Finds the next occurrence of the phrase in the text")
-                iconRole: "search"
+                help: qsTr("Selects the next match")
+                iconRole: "match-next"
                 objectName: "findNextMenuItem"
                 action: Action {
                     id: findNextAction
                     text: qsTr("Find next")
                     enabled: root.editor.hasLine && !root.app.findBusy
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_PREVIOUS"
+                help: qsTr("Selects the previous match")
+                iconRole: "match-previous"
+                objectName: "findPreviousMenuItem"
+                action: Action {
+                    id: findPreviousAction
+                    text: qsTr("Find previous")
+                    enabled: root.editor.hasLine && !root.app.findBusy
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_PREVIOUS")) root.app.findPrevious()
                 }
             }
         }
@@ -2061,7 +2051,7 @@ ApplicationWindow {
                 objectName: "resetVideoZoomMenuItem"
                 action: Action {
                     id: resetVideoZoomAction
-                    text: qsTr("Turn off video zoom"); enabled: root.videoView.zoomed
+                    text: qsTr("Reset zoom and pan"); enabled: root.videoView.zoomed
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
                 }
             }
@@ -2263,6 +2253,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                id: pluginsMenuItem
                 command: "GLOBAL_PLUGINS"
                 help: qsTr("Install, turn on and off, and uninstall plugins")
                 iconRole: "plugins"
@@ -2273,6 +2264,14 @@ ApplicationWindow {
                     enabled: !root.workspaceLayout.modalOpen
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
                 }
+            }
+            MacroMenuEntries {
+                menu: automationMenu
+                after: pluginsMenuItem
+                macros: root.app.pluginRuntime ? root.app.pluginRuntime.commands : []
+                itemPrefix: "pluginCommand_"
+                menuPrefix: "pluginCommandMenu_"
+                onTriggered: command => root.app.pluginRuntime.run(command.id)
             }
             MenuSeparator {
                 id: macrosSeparator
@@ -2803,7 +2802,7 @@ ApplicationWindow {
             const groups = root.app.grammarGroups()
             const rules = group < groups.length ? groups[group].rules : 0
             root.notices.post("info", qsTranslate("HikariSub.Spelling", "%1 turned off").arg(name),
-                              qsTranslate("HikariSub.Spelling", "Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling & grammar.", "", rules),
+                              qsTranslate("HikariSub.Spelling", "Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.", "", rules),
                               {actions: [{text: qsTranslate("HikariSub.Spelling", "Undo"), run: () => root.app.setGrammarGroup(group, true)},
                                          {text: qsTranslate("HikariSub.Spelling", "Grammar settings…"), run: () => root.openSettings("spelling")}]})
         }
@@ -3233,12 +3232,13 @@ ApplicationWindow {
                     objectName: "videoStage"
                     parent: root.videoStageInFullscreen ? videoFullscreenWindow.stage : videoStageDock
                     anchors.fill: parent
+                    clip: true
                 VideoPresenter {
                     id: presenter
                     objectName: "videoPresenter"
                     visible: root.video.hasVideo
                     anchors.fill: parent
-                    videoRect: root.visualTools.videoRect
+                    videoRect: root.visualTools.frameRect
                     sourceRect: root.visualTools.sourceRect
                     Component.onCompleted: root.video.attachPresenter(presenter)
                 }
@@ -5555,7 +5555,7 @@ ApplicationWindow {
             id: searchDock
             objectName: "searchDock"
             uniqueName: "Search"
-            title: qsTranslate("HikariSub.Search", "Search")
+            title: qsTranslate("HikariSub.Search", "Find")
             onIsOpenChanged: if (!isOpen) searchTool.save()
             Panel {
                 id: searchPanel
@@ -5563,12 +5563,14 @@ ApplicationWindow {
                 dockName: "Search"
                 minimumBodySize: searchTool.minimumSize
                 anchors.fill: parent
-                title: qsTranslate("HikariSub.Search", "Find and replace")
+                title: qsTranslate("HikariSub.Search", "Find")
                 onActiveFocusChanged: if (activeFocus) searchTool.activated()
                 SearchTool {
                     id: searchTool
                     anchors.fill: parent
                     app: root.app
+                    editor: root.editor
+                    onEscaped: root.focusPanel(editorPanel, Qt.OtherFocusReason)
                 }
             }
         }
@@ -5702,38 +5704,6 @@ ApplicationWindow {
                     objectName: "logView"
                     anchors.fill: parent
                     log: root.log
-                }
-            }
-        }
-        PanelDock {
-            id: misspellDock
-            objectName: "misspellDock"
-            uniqueName: "FixMinorErrors"
-            title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-            // MUST KILL: deferred because the default arrangement opens the panel and closes it at once
-            onIsOpenChanged: if (isOpen) Qt.callLater(misspellDock.reloadIfOpen)
-            function reloadIfOpen() {
-                if (misspellDock.isOpen)
-                    misspellTool.reloadRules()
-            }
-            Panel {
-                id: misspellPanel
-                objectName: "misspellPanel"
-                dockName: "FixMinorErrors"
-                minimumBodySize: misspellTool.minimumSize
-                anchors.fill: parent
-                title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-                FixMinorErrors {
-                    id: misspellTool
-                    anchors.fill: parent
-                    app: root.app
-                    Connections {
-                        target: root.app
-                        function onMisspellReplacerDestroyed() {
-                            misspellTool.reset()
-                            misspellDock.reloadIfOpen()
-                        }
-                    }
                 }
             }
         }
@@ -6544,7 +6514,7 @@ ApplicationWindow {
         id: audioDialog
         objectName: "audioDialog"
         title: qsTranslate("HikariSub.Audio", "Choose audio file")
-        nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)",
+        nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.opus *.mp3 *.mp4 *.m4a *.mka *.mkv *.webm *.avi)",
                       qsTranslate("HikariSub.Audio", "All files") + " (*)"]
         onAccepted: {
             root.rememberPickerFolder("audio", selectedFile)
@@ -7170,7 +7140,7 @@ ApplicationWindow {
         GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
         GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
         GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,
-        GLOBAL_FIND_NEXT: findNextAction, GLOBAL_MISSPELLS_REPLACER: misspellAction,
+        GLOBAL_FIND_NEXT: findNextAction, GLOBAL_FIND_PREVIOUS: findPreviousAction,
         GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,

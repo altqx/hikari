@@ -69,7 +69,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 291u);
+    ASSERT_EQ(hotkeyActions().size(), 292u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -106,6 +106,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_KANJI_TIMER"), 5174);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_GETTING_STARTED"), 5176);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_EXPORT_SUBS_AS"), 5212);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_FIND_PREVIOUS"), 5213);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"), 5216);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"), 5217);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"), 5218);
@@ -157,7 +158,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"};
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u);
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u);
     EXPECT_EQ(audio.size(), 23u + 3u + 2u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P");
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -340,6 +341,29 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(whole.rowCount(), 267u);
 }
 
+TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    auto live = defaultHotkeys();
+    live[HotkeyId{kFirstScriptHotkey, GlobalHotkey}] = Hotkey{"Script macro.lua-0", "Ctrl-Alt-M"};
+    live[HotkeyId{kFirstScriptHotkey + 1, GlobalHotkey}] = Hotkey{"plugin.com.example.hello.greet", "Ctrl-Alt-H"};
+    live[HotkeyId{kFirstScriptHotkey + 2, GlobalHotkey}] = Hotkey{"plugin.com.example.hello.spin", ""};
+    list.build(live);
+    const auto names = [&](int mode) {
+        list.filter(mode);
+        std::vector<std::string> out;
+        for (const int i : list.shown())
+            out.push_back(list.row(i).name);
+        return out;
+    };
+    EXPECT_EQ(names(7), std::vector<std::string>{"Script macro.lua-0"});
+    EXPECT_EQ(names(8), (std::vector<std::string>{"plugin.com.example.hello.greet", "plugin.com.example.hello.spin"}));
+    EXPECT_FALSE(list.mapOffersWindows(list.shown().front()));
+    EXPECT_TRUE(isPluginCommand("plugin.a.b"));
+    EXPECT_FALSE(isPluginCommand("Script plugin.lua-0"));
+}
+
 TEST(Hotkeys, FilterModesAndSelection)
 {
     HotkeyMap copy;
@@ -350,7 +374,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 110u);
+    EXPECT_EQ(count(1), 111u);
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 28u);
     list.filter(5);
@@ -360,10 +384,10 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 110u);
+    EXPECT_EQ(list.shown().size(), 111u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 109u);
+    EXPECT_EQ(list.shown().size(), 110u);
     list.filter(0);
     EXPECT_EQ(list.shown().size(), 267u);
 }
@@ -850,6 +874,22 @@ TEST(Hotkeys, RetiredIndexingBindingsAreDropped)
     EXPECT_TRUE(dropRetiredHotkeys(map).empty());
     for (const auto &line : hotkeyLines(map, false))
         EXPECT_EQ(line.find("GLOBAL_VIDEO_INDEXING"), std::string::npos);
+}
+
+TEST(Hotkeys, RetiredFixMinorErrorsBindingsAreDroppedAndTheIdStaysTaken)
+{
+    HotkeyMap map;
+    readHotkeyLines(map, {"GLOBAL_MISSPELLS_REPLACER G=Ctrl-Shift-M", "GLOBAL_SAVE_SUBS G=Ctrl-S"});
+    const int removed = ids().at("GLOBAL_MISSPELLS_REPLACER");
+    EXPECT_EQ(removed, 5012);
+    EXPECT_TRUE(isRetiredHotkey(removed));
+    const auto dropped = dropRetiredHotkeys(map);
+    ASSERT_EQ(dropped.size(), 1u);
+    EXPECT_EQ(dropped[0].second.accel, "Ctrl-Shift-M");
+    EXPECT_EQ(map.size(), 1u);
+    EXPECT_EQ(hotkeyName(removed), "");
+    for (const auto &[symbol, id] : ids())
+        EXPECT_TRUE(id != removed || symbol == "GLOBAL_MISSPELLS_REPLACER") << symbol;
 }
 
 TEST(Hotkeys, RetiredAutomationHotkeysWindowBindingsAreDropped)

@@ -4011,7 +4011,7 @@ Failed to copy %2 fonts.</source>
         <translation>แนะนำ</translation>
     </message>
     <message>
-        <source>Hotkeys, fonts, audio and video options and your dictionary words.</source>
+        <source>Shortcuts, fonts, audio and video options and your dictionary words.</source>
         <translation>ปุ่มลัด แบบอักษร ตัวเลือกเสียงและวิดีโอ และคำในพจนานุกรมของคุณ</translation>
     </message>
     <message>
@@ -4059,7 +4059,7 @@ Failed to copy %2 fonts.</source>
         <translation>ของ HikariSub</translation>
     </message>
     <message>
-        <source>The system’s</source>
+        <source>System</source>
         <translation>ของระบบ</translation>
     </message>
     <message>
@@ -4163,7 +4163,7 @@ Failed to copy %2 fonts.</source>
         <translation>แก้ไข</translation>
     </message>
     <message>
-        <source>Later: Settings › General › Saving and Settings › Spelling &amp; grammar</source>
+        <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>ภายหลัง: การตั้งค่า › ทั่วไป › การบันทึก และ การตั้งค่า › การสะกดและไวยากรณ์</translation>
     </message>
     <message>
@@ -4922,27 +4922,27 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Hotkeys</name>
     <message>
-        <source>Keys for &quot;%1&quot;</source>
-        <translation>ปุ่มสำหรับ &quot;%1&quot;</translation>
+        <source>Keys for “%1”</source>
+        <translation>ปุ่มสำหรับ “%1”</translation>
     </message>
     <message>
-        <source>Global hotkey</source>
+        <source>Global shortcut</source>
         <translation>ปุ่มลัดส่วนกลาง</translation>
     </message>
     <message>
-        <source>Subtitle grid hotkey</source>
-        <translation>ปุ่มลัดตารางคำบรรยาย</translation>
+        <source>Grid shortcut</source>
+        <translation>ปุ่มลัดตาราง</translation>
     </message>
     <message>
-        <source>Edit box hotkey</source>
-        <translation>ปุ่มลัดของตัวแก้ไข</translation>
+        <source>Line editor shortcut</source>
+        <translation>ปุ่มลัดของตัวแก้ไขบรรทัด</translation>
     </message>
     <message>
-        <source>Video hotkey</source>
+        <source>Video shortcut</source>
         <translation>ปุ่มลัดของวิดีโอ</translation>
     </message>
     <message>
-        <source>Audio hotkey</source>
+        <source>Audio shortcut</source>
         <translation>ปุ่มลัดของเสียง</translation>
     </message>
     <message>
@@ -5040,6 +5040,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
         <translation>นำปุ่มลัด %1 ของ &quot;เปิดหน้าต่างกำหนดปุ่มลัด&quot; ออกแล้ว เนื่องจากไม่มีหน้าต่างนี้แล้ว และปุ่มลัดของแต่ละแมโครกำหนดได้ในแผงสคริปต์อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>นำปุ่มลัด %1 ของ “แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)” ออกแล้ว เนื่องจากนำคุณลักษณะนี้ออกแล้ว</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
@@ -5658,8 +5662,8 @@ Failed to copy %2 fonts.</source>
         <translation>ซูมวิดีโอ</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>ปิดการซูมวิดีโอ</translation>
+        <source>Reset zoom and pan</source>
+        <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -5674,12 +5678,12 @@ Failed to copy %2 fonts.</source>
         <translation>ล้างสไตล์ในไฟล์ ASS</translation>
     </message>
     <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)</translation>
-    </message>
-    <message>
         <source>Find next</source>
         <translation>ค้นหาถัดไป</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>ค้นหาก่อนหน้า</translation>
     </message>
     <message>
         <source>Load last session</source>
@@ -6688,24 +6692,8 @@ Failed to copy %2 fonts.</source>
         <translation>&amp;ประวัติ</translation>
     </message>
     <message>
-        <source>Shows or hides the Fix minor errors panel</source>
-        <translation>แสดงหรือซ่อนแผงแก้ไขข้อผิดพลาดเล็กน้อย</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)</translation>
-    </message>
-    <message>
         <source>Select &amp;lines</source>
         <translation>เลือก&amp;บรรทัด</translation>
-    </message>
-    <message>
-        <source>Find and re&amp;place</source>
-        <translation>ค้นหาและแ&amp;ทนที่</translation>
-    </message>
-    <message>
-        <source>&amp;Find</source>
-        <translation>&amp;ค้นหา</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -6808,8 +6796,8 @@ Failed to copy %2 fonts.</source>
         <translation>ซูมวิดีโอ</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>ปิดการซูมวิดีโอ</translation>
+        <source>Reset zoom and pan</source>
+        <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -6894,6 +6882,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>&amp;Subtitles</source>
         <translation>&amp;คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Opens the Find panel</source>
+        <translation>เปิดแผงค้นหา</translation>
+    </message>
+    <message>
+        <source>&amp;Find…</source>
+        <translation>&amp;ค้นหา…</translation>
+    </message>
+    <message>
+        <source>Opens the Find panel with the replace row shown</source>
+        <translation>เปิดแผงค้นหาพร้อมแสดงแถวแทนที่</translation>
+    </message>
+    <message>
+        <source>Re&amp;place…</source>
+        <translation>แ&amp;ทนที่…</translation>
+    </message>
+    <message>
+        <source>Selects the next match</source>
+        <translation>เลือกรายการที่ตรงกันถัดไป</translation>
+    </message>
+    <message>
+        <source>Selects the previous match</source>
+        <translation>เลือกรายการที่ตรงกันก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>ค้นหาก่อนหน้า</translation>
     </message>
     <message>
         <source>Shift &amp;times...</source>
@@ -7175,15 +7191,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Searches for the specified text phrases and replaces them</source>
-        <translation>ค้นหาและแทนที่วลีข้อความที่ระบุ</translation>
+        <translation type="vanished">ค้นหาและแทนที่วลีข้อความที่ระบุ</translation>
     </message>
     <message>
         <source>Searches for the specified text phrase</source>
-        <translation>ค้นหาวลีข้อความที่ระบุ</translation>
+        <translation type="vanished">ค้นหาวลีข้อความที่ระบุ</translation>
     </message>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
-        <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
+        <translation type="vanished">ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -7975,6 +7991,10 @@ Failed to copy %2 fonts.</source>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
     </message>
+    <message>
+        <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
+        <translation>นำแก้ไขข้อผิดพลาดเล็กน้อยออกแล้ว กฎของคุณยังอยู่ใน %1 แต่ไม่ได้ใช้งาน</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -8032,266 +8052,6 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message>
-        <source>Fix minor errors</source>
-        <translation>แก้ไขข้อผิดพลาดเล็กน้อย</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when the find results window is open</source>
-        <translation>ไม่สามารถเปลี่ยนกฎ
-ขณะที่หน้าต่างผลลัพธ์การค้นหาเปิดอยู่</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-because it was edited.</source>
-        <translation>ไม่สามารถแทนที่บรรทัด %1 ได้
-เนื่องจากถูกแก้ไข</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
-        <translation>ไม่สามารถแทนที่ &quot;%1&quot; ด้วย &quot;%2&quot; โดยใช้กฎ &quot;%3&quot; ในบรรทัด %4</translation>
-    </message>
-    <message>
-        <source>Rule description</source>
-        <translation>คำอธิบายกฎ</translation>
-    </message>
-    <message>
-        <source>Replace phrase</source>
-        <translation>แทนที่นิพจน์</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation>ตัวพิมพ์</translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation>ตามข้อความที่พบ</translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation>ไม่เปลี่ยน</translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation>ตัวพิมพ์เล็ก</translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation>ตัวพิมพ์ใหญ่</translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation>ตัวพิมพ์ของข้อความแทนที่</translation>
-    </message>
-    <message>
-        <source>Match case</source>
-        <translation>ตรงตามตัวพิมพ์ใหญ่-เล็ก</translation>
-    </message>
-    <message>
-        <source>Rules</source>
-        <translation>กฎ</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>บรรทัดใด</translation>
-    </message>
-    <message>
-        <source>All lines</source>
-        <translation>บรรทัดทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation>บรรทัด</translation>
-    </message>
-    <message>
-        <source>Selected lines</source>
-        <translation>บรรทัดที่เลือก</translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation>บรรทัดที่เลือกเป็นต้นไป</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation>ตามสไตล์ที่เลือก</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>เลือกสไตล์</translation>
-    </message>
-    <message>
-        <source>Update rule</source>
-        <translation>อัปเดตกฎ</translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation>กฎ</translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation>ค้นหา → แทนที่</translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation>(ไม่มี)</translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation>ขยายอยู่</translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation>ยุบอยู่</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation>ชื่อ</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation>ค้นหา</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation>นิพจน์ทั่วไป</translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation>วลีที่ค้นหา (นิพจน์ทั่วไป)</translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation>ใน</translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation>ข้อความและแท็ก</translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation>แท็กเท่านั้น</translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation>ข้อความเท่านั้น</translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation>แทนที่ใน</translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation>แท็บนี้</translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation>ทุกแท็บ</translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation>แท็บที่จะค้นหา</translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation>แทนที่ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation>ผลลัพธ์</translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation>ข้อผิดพลาด 1 รายการ</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>เลือกไว้ %n รายการ</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation>ใน 1 ไฟล์</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>เลือกทั้งหมด</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>ไม่เลือกทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation>ปิดผลลัพธ์</translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation>บรรทัด %1</translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation>แสดงสิ่งที่พบ</translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation>ซ่อนสิ่งที่พบ</translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation>แทนที่รายการที่เลือก</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>สไตล์</translation>
-    </message>
-    <message>
-        <source>Add rule</source>
-        <translation>เพิ่มกฎ</translation>
-    </message>
-    <message>
-        <source>Delete rule</source>
-        <translation>ลบกฎ</translation>
-    </message>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>เปิดกฎอยู่ %1 จาก %n</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>ข้อผิดพลาด %n รายการ</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>ใน %n ไฟล์</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>ผลการค้นหา</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>บรรทัด %1: </translation>
-    </message>
-    <message>
-        <source>Replace</source>
-        <translation>แทนที่</translation>
-    </message>
-    <message>
-        <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation>กฎ &quot;%1&quot; ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -8306,7 +8066,7 @@ because it was edited.</source>
         <translation>ใช้ธีมตามระบบ</translation>
     </message>
     <message>
-        <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
+        <source>Light or Dark as the system’s colour scheme sets it; high contrast stays as chosen</source>
         <translation>สว่างหรือมืดตามชุดสีของระบบ ส่วนคอนทราสต์สูงจะคงตามที่เลือกไว้</translation>
     </message>
     <message>
@@ -8314,7 +8074,7 @@ because it was edited.</source>
         <translation>เลือก…</translation>
     </message>
     <message>
-        <source>Accent color</source>
+        <source>Accent colour</source>
         <translation>สีเน้น</translation>
     </message>
     <message>
@@ -8350,7 +8110,7 @@ because it was edited.</source>
         <translation>ปิดเป็นค่าเริ่มต้นบน Windows, KDE Plasma และ GNOME และเปิดเป็นค่าเริ่มต้นบนตัวจัดการหน้าต่างแบบเรียงต่อ</translation>
     </message>
     <message>
-        <source>UI colors</source>
+        <source>UI colours</source>
         <translation>สีอินเทอร์เฟซ</translation>
     </message>
     <message>
@@ -8394,12 +8154,12 @@ because it was edited.</source>
         <translation>เสียง</translation>
     </message>
     <message>
-        <source>Hotkeys</source>
+        <source>Shortcuts</source>
         <translation>ปุ่มลัด</translation>
     </message>
     <message>
-        <source>Subtitle properties</source>
-        <translation>คุณสมบัติของคำบรรยาย</translation>
+        <source>Script properties</source>
+        <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Language (program restart required)</source>
@@ -8578,10 +8338,8 @@ because it was edited.</source>
         <translation>ความหนาของเส้นขอบ</translation>
     </message>
     <message>
-        <source>Range from 0 to 10000, where 0 turns off
-removing audio cache files.</source>
-        <translation>ป้อน 0 ถึง 10000 โดยที่ 0 จะปิด
-การลบไฟล์แคชเสียง</translation>
+        <source>0–10000. At 0, audio cache files are never removed.</source>
+        <translation>0–10000 ถ้าเป็น 0 จะไม่ลบไฟล์แคชเสียงเลย</translation>
     </message>
     <message>
         <source>None</source>
@@ -8612,8 +8370,8 @@ removing audio cache files.</source>
         <translation>ตัวแก้ไขบรรทัด</translation>
     </message>
     <message>
-        <source>Subtitle grid</source>
-        <translation>ตารางคำบรรยาย</translation>
+        <source>Grid</source>
+        <translation>ตาราง</translation>
     </message>
     <message>
         <source>Automation</source>
@@ -8652,7 +8410,7 @@ removing audio cache files.</source>
         <translation>ต้องการรีเซ็ตการตั้งค่าทั้งหมดเป็นค่าเริ่มต้นหรือไม่?</translation>
     </message>
     <message>
-        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
+        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
         <translation>ทุกหน้าจะกลับเป็นค่าเริ่มต้นเมื่อคุณกด “ตกลง” หรือ “นำไปใช้” ส่วน “ยกเลิก” จะคงการตั้งค่าของคุณไว้ ปุ่มลัดและลักษณะที่ปรากฏจะคงเดิม: รีเซ็ตได้ในหน้าของรายการนั้นเอง</translation>
     </message>
     <message>
@@ -8664,7 +8422,7 @@ removing audio cache files.</source>
         <translation>รีเซ็ตหน้า</translation>
     </message>
     <message>
-        <source>The settings of the page shown back to their defaults</source>
+        <source>Resets the settings on this page to their defaults</source>
         <translation>รีเซ็ตการตั้งค่าของหน้าที่แสดงอยู่กลับเป็นค่าเริ่มต้น</translation>
     </message>
     <message>
@@ -8740,7 +8498,7 @@ removing audio cache files.</source>
         <translation>การแสดงผล</translation>
     </message>
     <message>
-        <source>Spelling &amp; grammar</source>
+        <source>Spelling and grammar</source>
         <translation>การสะกดและไวยากรณ์</translation>
     </message>
     <message>
@@ -8780,8 +8538,8 @@ removing audio cache files.</source>
         <translation>แสดงเฟรมวิดีโอแทนเวลา</translation>
     </message>
     <message>
-        <source>In the line editor and the subtitle grid.</source>
-        <translation>ในตัวแก้ไขบรรทัดและตารางคำบรรยาย</translation>
+        <source>In the line editor and the grid.</source>
+        <translation>ในตัวแก้ไขบรรทัดและตาราง</translation>
     </message>
     <message>
         <source>Stay on the line when editing times</source>
@@ -8922,7 +8680,7 @@ removing audio cache files.</source>
         <translation>เปิดวิดีโอจากเมนูบริบทในโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
-        <source>Open video at the active line&apos;s time</source>
+        <source>Open video at the active line’s time</source>
         <translation>เปิดวิดีโอที่เวลาของบรรทัดปัจจุบัน</translation>
     </message>
     <message>
@@ -8938,7 +8696,7 @@ removing audio cache files.</source>
         <translation>แสดงตัวอย่างคำบรรยายที่</translation>
     </message>
     <message>
-        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script&apos;s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
+        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script’s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
         <translation>“ขนาดหน้าจอ” วาดคำบรรยายตามขนาดที่ภาพแสดงบนหน้าจอ คำบรรยายจึงคมชัดบนหน้าจอขนาดใหญ่และหน้าจอ DPI สูง เค้าโครงของสคริปต์เหมือนเดิมไม่ว่าจะเลือกแบบใด ตัวอย่างในตัวจัดการสไตล์ ตัวเลือกแบบอักษร และตัวแก้ไขเทมเพลตก็ใช้ค่านี้ด้วย</translation>
     </message>
     <message>
@@ -8990,6 +8748,62 @@ removing audio cache files.</source>
         <translation>มุมมอง</translation>
     </message>
     <message>
+        <source>Zoom and pan</source>
+        <translation>ซูมและเลื่อนภาพ</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>ลากด้วยปุ่มกลางเพื่อเลื่อนภาพ การจีบนิ้วบนทัชแพดจะซูมรอบตัวชี้</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>ล้อเมาส์ซูมรอบตัวชี้ ซูมวิดีโอจะแสดงกรอบให้ลาก</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>แบบ Aegisub 3.5</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>แบบ HikariSub รุ่นเดิม</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>Ctrl+ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>Shift+ล้อเมาส์บนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>ซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>ซูมวิดีโอ (กลับทิศ)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>เลื่อนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>เลื่อนวิดีโอ (สลับ X และ Y)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>ไม่ทำอะไร</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>เครื่องมือภาพที่ใช้ล้อเมาส์ หรือลากด้วยปุ่มกลาง จะใช้การป้อนนั้นเอง</translation>
+    </message>
+    <message>
         <source>Start zoom</source>
         <translation>การซูมเริ่มต้น</translation>
     </message>
@@ -9002,7 +8816,7 @@ removing audio cache files.</source>
         <translation>ปิดคำเตือนของเครื่องมือภาพ</translation>
     </message>
     <message>
-        <source>Don&apos;t warn about a resolution mismatch</source>
+        <source>Don’t warn about a resolution mismatch</source>
         <translation>ไม่ต้องเตือนเมื่อความละเอียดไม่ตรงกัน</translation>
     </message>
     <message>
@@ -9026,7 +8840,7 @@ removing audio cache files.</source>
         <translation>ช่วงนำและช่วงต่อท้าย</translation>
     </message>
     <message>
-        <source>Don&apos;t play after changing the line</source>
+        <source>Don’t play after changing the line</source>
         <translation>ไม่ต้องเล่นหลังเปลี่ยนบรรทัด</translation>
     </message>
     <message>
@@ -9058,8 +8872,8 @@ removing audio cache files.</source>
         <translation>คาราโอเกะ</translation>
     </message>
     <message>
-        <source>Merge every &quot;n&quot; with the previous syllable</source>
-        <translation>รวม &quot;n&quot; ทุกตัวเข้ากับพยางค์ก่อนหน้า</translation>
+        <source>Merge every “n” with the previous syllable</source>
+        <translation>รวม “n” ทุกตัวเข้ากับพยางค์ก่อนหน้า</translation>
     </message>
     <message>
         <source>Move the syllable line after a click</source>
@@ -9198,12 +9012,12 @@ removing audio cache files.</source>
         <translation>ปุ่มลัดส่วนกลาง</translation>
     </message>
     <message>
-        <source>Subtitle shortcuts</source>
-        <translation>ปุ่มลัดคำบรรยาย</translation>
+        <source>Grid shortcuts</source>
+        <translation>ปุ่มลัดตาราง</translation>
     </message>
     <message>
-        <source>Editor shortcuts</source>
-        <translation>ปุ่มลัดตัวแก้ไข</translation>
+        <source>Line editor shortcuts</source>
+        <translation>ปุ่มลัดตัวแก้ไขบรรทัด</translation>
     </message>
     <message>
         <source>Video shortcuts</source>
@@ -9214,15 +9028,19 @@ removing audio cache files.</source>
         <translation>ปุ่มลัดสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
-        <source>Filtering mode:</source>
-        <translation>โหมดการกรอง:</translation>
+        <source>Plugin shortcuts</source>
+        <translation>ปุ่มลัดปลั๊กอิน</translation>
     </message>
     <message>
-        <source>Search hotkeys</source>
+        <source>Filtering mode</source>
+        <translation>โหมดการกรอง</translation>
+    </message>
+    <message>
+        <source>Search shortcuts</source>
         <translation>ค้นหาปุ่มลัด</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
+        <source>Import legacy shortcuts…</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม…</translation>
     </message>
     <message>
@@ -9242,12 +9060,12 @@ removing audio cache files.</source>
         <translation>ย้อนการนำเข้าครั้งล่าสุด…</translation>
     </message>
     <message>
-        <source>Script hotkeys</source>
+        <source>Script shortcuts</source>
         <translation>ปุ่มลัดสคริปต์</translation>
     </message>
     <message>
-        <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
-        <translation>ปุ่มลัดสคริปต์จาก Hotkeys.txt ของรุ่นเดิม ซึ่งจะเพิ่มทันที</translation>
+        <source>Adds the script shortcuts of a legacy Hotkeys.txt at once</source>
+        <translation>เพิ่มปุ่มลัดสคริปต์จาก Hotkeys.txt ของรุ่นเดิมทันที</translation>
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
@@ -9270,7 +9088,7 @@ removing audio cache files.</source>
         <translation>ฟังก์ชัน</translation>
     </message>
     <message>
-        <source>Hotkey</source>
+        <source>Shortcut</source>
         <translation>ปุ่มลัด</translation>
     </message>
     <message>
@@ -9278,7 +9096,7 @@ removing audio cache files.</source>
         <translation>แมโครที่หายไป</translation>
     </message>
     <message>
-        <source>Map hotkey…</source>
+        <source>Map shortcut…</source>
         <translation>กำหนดปุ่มลัด…</translation>
     </message>
     <message>
@@ -9362,11 +9180,7 @@ removing audio cache files.</source>
         <translation>แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
     </message>
     <message>
-        <source>Choose a legacy Hotkeys.txt</source>
-        <translation>เลือก Hotkeys.txt ของรุ่นเดิม</translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
+        <source>Shortcuts (Hotkeys.txt)</source>
         <translation>ปุ่มลัด (Hotkeys.txt)</translation>
     </message>
     <message>
@@ -9374,7 +9188,7 @@ removing audio cache files.</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys</source>
+        <source>Import legacy shortcuts</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม</translation>
     </message>
     <message>
@@ -9382,13 +9196,13 @@ removing audio cache files.</source>
         <translation>ไม่สามารถอ่านไฟล์ได้</translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>เพิ่มปุ่มลัดสคริปต์แล้ว %n รายการ</numerusform>
         </translation>
     </message>
     <message>
-        <source>No script hotkeys were added.</source>
+        <source>No script shortcuts were added.</source>
         <translation>ไม่ได้เพิ่มปุ่มลัดสคริปต์ใดๆ</translation>
     </message>
     <message numerus="yes">
@@ -9436,22 +9250,16 @@ removing audio cache files.</source>
         <translation>ชมพู</translation>
     </message>
     <message>
-        <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
-        <translation>วางไฟล์ .dic และ .aff ลงในโฟลเดอร์ &quot;Dictionary&quot;</translation>
+        <source>Put .dic and .aff files in the “Dictionary” folder</source>
+        <translation>วางไฟล์ .dic และ .aff ลงในโฟลเดอร์ “Dictionary”</translation>
     </message>
     <message>
-        <source>The selected %1 for conversion does not exist
-and will be changed to the default</source>
-        <translation>%1 ที่เลือกสำหรับการแปลงไม่มีอยู่
-และจะถูกเปลี่ยนเป็นค่าเริ่มต้น</translation>
+        <source>The style catalogue chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>แคตตาล็อกสไตล์ที่เลือกสำหรับการแปลงไม่มีอยู่แล้ว จึงใช้ค่าเริ่มต้นแทน</translation>
     </message>
     <message>
-        <source>catalogue for style</source>
-        <translation>แคตตาล็อกของสไตล์</translation>
-    </message>
-    <message>
-        <source>style</source>
-        <translation>สไตล์</translation>
+        <source>The style chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>สไตล์ที่เลือกสำหรับการแปลงไม่มีอยู่แล้ว จึงใช้ค่าเริ่มต้นแทน</translation>
     </message>
     <message>
         <source>System default</source>
@@ -9760,6 +9568,44 @@ and will be changed to the default</source>
     <message>
         <source>HikariSub plugins (*.hikariplugin)</source>
         <translation>ปลั๊กอิน HikariSub (*.hikariplugin)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
+        <translation>ปลั๊กอินไม่ได้ติดตั้งไว้ ถูกปิดอยู่ หรือไม่มีคำสั่งนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>Can’t start: %1</source>
+        <translation>เริ่มปลั๊กอินไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>The plugin didn’t start.</source>
+        <translation>ปลั๊กอินไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>“%1” failed.</source>
+        <translation>“%1” ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>Its %1 handler failed: %2</source>
+        <translation>ตัวจัดการ %1 ของปลั๊กอินล้มเหลว: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
+        <translation>
+            <numerusform>ปลั๊กอินทำงานนานกว่า %n วินาที HikariSub จึงหยุดปลั๊กอินไว้ คำสั่งถัดไปจะเริ่มปลั๊กอินอีกครั้ง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
+        <translation>ปลั๊กอินหยุดทำงานโดยไม่คาดคิด คำสั่งถัดไปจะเริ่มปลั๊กอินอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Force stopped.</source>
+        <translation>บังคับหยุดแล้ว</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t running.</source>
+        <translation>ปลั๊กอินไม่ได้ทำงานอยู่</translation>
     </message>
 </context>
 <context>
@@ -10302,22 +10148,6 @@ and will be changed to the default</source>
 <context>
     <name>HikariSub.Search</name>
     <message>
-        <source>Search</source>
-        <translation>ค้นหา</translation>
-    </message>
-    <message>
-        <source>Find and replace</source>
-        <translation>ค้นหาและแทนที่</translation>
-    </message>
-    <message>
-        <source>Reached the end of the subtitles.</source>
-        <translation>ถึงท้ายคำบรรยายแล้ว</translation>
-    </message>
-    <message>
-        <source>Search again from the first line?</source>
-        <translation>ค้นหาอีกครั้งจากบรรทัดแรกหรือไม่?</translation>
-    </message>
-    <message>
         <source>“%1”</source>
         <translation>“%1”</translation>
     </message>
@@ -10346,6 +10176,10 @@ and will be changed to the default</source>
         <translation>การค้นหาเฉพาะสไตล์เหล่านี้จะไม่พบสิ่งใด</translation>
     </message>
     <message>
+        <source>Replace in files</source>
+        <translation>แทนที่ในไฟล์</translation>
+    </message>
+    <message>
         <source>Replace in every matching file in “%1”?</source>
         <translation>แทนที่ในทุกไฟล์ที่ตรงกันใน “%1” หรือไม่?</translation>
     </message>
@@ -10372,68 +10206,24 @@ because it was edited.</source>
 เนื่องจากถูกแก้ไข</translation>
     </message>
     <message>
-        <source>In files</source>
-        <translation>ในไฟล์</translation>
-    </message>
-    <message>
-        <source>Find in subtitles</source>
-        <translation>ค้นหาในคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Search text:</source>
-        <translation>ค้นหาข้อความ:</translation>
-    </message>
-    <message>
-        <source>Replace with:</source>
-        <translation>แทนที่ด้วย:</translation>
-    </message>
-    <message>
-        <source>Filters:</source>
-        <translation>ตัวกรอง:</translation>
-    </message>
-    <message>
-        <source>Windows search filters separated by semicolons, e.g. &quot;*.ass; *.srt&quot;.</source>
-        <translation>ตัวกรองการค้นหาแบบ Windows คั่นด้วยเครื่องหมายอัฒภาค เช่น &quot;*.ass; *.srt&quot;</translation>
-    </message>
-    <message>
-        <source>Catalog:</source>
-        <translation>แคตตาล็อก:</translation>
-    </message>
-    <message>
-        <source>Subtitle search folder:</source>
-        <translation>โฟลเดอร์สำหรับค้นหาคำบรรยาย:</translation>
-    </message>
-    <message>
         <source>Match case</source>
         <translation>ตรงตามตัวพิมพ์ใหญ่-เล็ก</translation>
     </message>
     <message>
+        <source>All styles</source>
+        <translation>สไตล์ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>In text</source>
+        <translation>ในข้อความ</translation>
+    </message>
+    <message>
+        <source>Match at</source>
+        <translation>ตำแหน่งที่ตรงกัน</translation>
+    </message>
+    <message>
         <source>Include comments</source>
         <translation>รวมความคิดเห็น</translation>
-    </message>
-    <message>
-        <source>Regular expressions</source>
-        <translation>นิพจน์ทั่วไป</translation>
-    </message>
-    <message>
-        <source>Skip tags</source>
-        <translation>ข้ามแท็ก</translation>
-    </message>
-    <message>
-        <source>Beginning of text</source>
-        <translation>จุดเริ่มของข้อความ</translation>
-    </message>
-    <message>
-        <source>Skip text</source>
-        <translation>ข้ามข้อความ</translation>
-    </message>
-    <message>
-        <source>End of text</source>
-        <translation>จุดสิ้นสุดของข้อความ</translation>
-    </message>
-    <message>
-        <source>In field</source>
-        <translation>ในช่อง</translation>
     </message>
     <message>
         <source>Text</source>
@@ -10448,16 +10238,206 @@ because it was edited.</source>
         <translation>ผู้พูด</translation>
     </message>
     <message>
+        <source>From the selection</source>
+        <translation>เริ่มจากบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Match at start</source>
+        <translation>ตรงที่จุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Match at end</source>
+        <translation>ตรงที่จุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Comments too</source>
+        <translation>รวมความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Subfolders</source>
+        <translation>โฟลเดอร์ย่อย</translation>
+    </message>
+    <message>
+        <source>Hidden folders</source>
+        <translation>โฟลเดอร์ที่ซ่อนอยู่</translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation>ไม่พบรายการที่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <extracomment>The live match count: the current match, then all matches</extracomment>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>ตรงกัน %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n match(es)</source>
+        <translation>
+            <numerusform>%1 จาก %n รายการที่ตรงกัน</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This document</source>
+        <translation>เอกสารนี้</translation>
+    </message>
+    <message>
+        <source>Open documents</source>
+        <translation>เอกสารที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>โฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>สไตล์</translation>
+    </message>
+    <message>
         <source>Effect</source>
         <translation>เอฟเฟกต์</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Selected</source>
+        <translation>ที่เลือก</translation>
+    </message>
+    <message>
+        <source>All text</source>
+        <translation>ข้อความทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Outside tags</source>
+        <translation>นอกแท็ก</translation>
+    </message>
+    <message>
+        <source>Inside tags</source>
+        <translation>ในแท็ก</translation>
+    </message>
+    <message>
+        <source>Anywhere</source>
+        <translation>ที่ใดก็ได้</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>จุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>จุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Show replace</source>
+        <translation>แสดงการแทนที่</translation>
+    </message>
+    <message>
+        <source>Hide replace</source>
+        <translation>ซ่อนการแทนที่</translation>
+    </message>
+    <message>
+        <source>Regular expression</source>
+        <translation>นิพจน์ทั่วไป</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>ค้นหาก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>ค้นหาถัดไป</translation>
+    </message>
+    <message>
+        <source>Find all</source>
+        <translation>ค้นหาทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>ตัวเลือก</translation>
+    </message>
+    <message>
+        <source>Options that differ from the defaults</source>
+        <translation>ตัวเลือกที่ต่างจากค่าเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation>แทนที่ด้วย</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace in %n file(s)…</source>
+        <translation>
+            <numerusform>แทนที่ใน %n ไฟล์…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace in files…</source>
+        <translation>แทนที่ในไฟล์…</translation>
+    </message>
+    <message>
+        <source>Search in</source>
+        <translation>ค้นหาใน</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>เลือกโฟลเดอร์…</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>ไฟล์</translation>
+    </message>
+    <message>
+        <source>File patterns separated by semicolons, such as *.ass; *.srt</source>
+        <translation>รูปแบบไฟล์ที่คั่นด้วยเครื่องหมายอัฒภาค เช่น *.ass; *.srt</translation>
+    </message>
+    <message>
+        <source>Field</source>
+        <translation>ช่อง</translation>
     </message>
     <message>
         <source>Lines</source>
         <translation>บรรทัด</translation>
     </message>
     <message>
-        <source>All lines</source>
-        <translation>บรรทัดทั้งหมด</translation>
+        <source>Results</source>
+        <translation>ผลลัพธ์</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n file(s)</source>
+        <extracomment>%1 is the number of matches, such as &quot;5 matches&quot;</extracomment>
+        <translation>
+            <numerusform>%1 ใน %n ไฟล์</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n line(s)</source>
+        <translation>
+            <numerusform>%1 ใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Close results</source>
+        <translation>ปิดผลลัพธ์</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace %n checked</source>
+        <translation>
+            <numerusform>แทนที่ %n รายการที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Choose folder</source>
+        <translation>เลือกโฟลเดอร์</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -10466,38 +10446,6 @@ because it was edited.</source>
     <message>
         <source>From selected</source>
         <translation>เริ่มจากบรรทัดที่เลือก</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>เลือกสไตล์</translation>
-    </message>
-    <message>
-        <source>Search in subfolders</source>
-        <translation>ค้นหาในโฟลเดอร์ย่อย</translation>
-    </message>
-    <message>
-        <source>Search in hidden folders</source>
-        <translation>ค้นหาในโฟลเดอร์ที่ซ่อนอยู่</translation>
-    </message>
-    <message>
-        <source>Find in all open subtitles</source>
-        <translation>ค้นหาในคำบรรยายที่เปิดอยู่ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Find all in current subtitles</source>
-        <translation>ค้นหาทั้งหมดในคำบรรยายปัจจุบัน</translation>
-    </message>
-    <message>
-        <source>Replace next</source>
-        <translation>แทนที่ถัดไป</translation>
-    </message>
-    <message>
-        <source>Search from the start</source>
-        <translation>ค้นหาจากจุดเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation>หยุด</translation>
     </message>
     <message>
         <source>Drop the missing styles</source>
@@ -10520,26 +10468,6 @@ because it was edited.</source>
         <translation>แทนที่ทั้งหมด</translation>
     </message>
     <message>
-        <source>Replace in all open subtitles</source>
-        <translation>แทนที่ในคำบรรยายที่เปิดอยู่ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Replace in subtitles</source>
-        <translation>แทนที่ในคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>ผลการค้นหา</translation>
-    </message>
-    <message>
-        <source>No results yet</source>
-        <translation>ยังไม่มีผลลัพธ์</translation>
-    </message>
-    <message>
-        <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
-        <translation>ค้นหาทั้งหมด ค้นหาในคำบรรยายที่เปิดอยู่ทั้งหมด และค้นหาในคำบรรยาย จะแสดงรายการที่ตรงกันไว้ที่นี่ เลือกรายการที่ต้องการเปลี่ยนแล้วแทนที่</translation>
-    </message>
-    <message>
         <source>Check all</source>
         <translation>เลือกทั้งหมด</translation>
     </message>
@@ -10552,20 +10480,12 @@ because it was edited.</source>
         <translation>แทนที่</translation>
     </message>
     <message>
-        <source>Choose subtitle search folder</source>
-        <translation>เลือกโฟลเดอร์สำหรับค้นหาคำบรรยาย</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
         <source>Replaced %1 times.</source>
         <translation>แทนที่แล้ว %1 ครั้ง</translation>
-    </message>
-    <message>
-        <source>Find in files</source>
-        <translation>ค้นหาในไฟล์</translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -10590,10 +10510,6 @@ because it was edited.</source>
     <message>
         <source>%1 could not be restored; its backup is in %2.</source>
         <translation>ไม่สามารถกู้คืน %1 ได้ สำเนาสำรองอยู่ใน %2</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>บรรทัด %1: </translation>
     </message>
 </context>
 <context>
@@ -11009,7 +10925,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation>ไฟล์เสียงและวิดีโอ (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
+        <translation type="vanished">ไฟล์เสียงและวิดีโอ (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -11419,8 +11335,8 @@ because it was edited.</source>
         <translation>ไม่พบการตั้งค่ารุ่นเดิมข้างโปรแกรม เลือกโฟลเดอร์ของการติดตั้งรุ่นเดิม</translation>
     </message>
     <message>
-        <source>%1 holds no legacy settings (Config, Dictionary).</source>
-        <translation>%1 ไม่มีการตั้งค่ารุ่นเดิม (Config, Dictionary)</translation>
+        <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
+        <translation>%1 ไม่มีการตั้งค่ารุ่นเดิม (ไม่มีโฟลเดอร์ “Config” หรือ “Dictionary”)</translation>
     </message>
     <message>
         <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
@@ -11466,7 +11382,7 @@ because it was edited.</source>
         <translation>ปิด %1 แล้ว</translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
             <numerusform>การตรวจไวยากรณ์ไม่ใช้กฎ %n ข้อของกลุ่มนี้แล้ว เปิดกลับได้ที่ การตั้งค่า › การสะกดและไวยากรณ์</numerusform>
         </translation>
@@ -15017,6 +14933,21 @@ after the end time in milliseconds</source>
     <message>
         <source>Cannot convert video to RGBA</source>
         <translation>ไม่สามารถแปลงวิดีโอเป็น RGBA ได้</translation>
+    </message>
+    <message>
+        <source>This video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot open or decode this video; frames still show while paused</extracomment>
+        <translation>ไม่สามารถเล่นวิดีโอนี้บนคอมพิวเตอร์เครื่องนี้ได้ เฟรมยังคงแสดงเมื่อหยุดชั่วคราว และยังเลื่อนตำแหน่งและก้าวทีละเฟรมได้</translation>
+    </message>
+    <message>
+        <source>%1 video can’t be played on this computer. Its frames still show while paused, and seeking and stepping work.</source>
+        <extracomment>Play was pressed, but the player cannot decode this video&apos;s codec; %1 is the codec&apos;s name, for example AV1</extracomment>
+        <translation>ไม่สามารถเล่นวิดีโอ %1 บนคอมพิวเตอร์เครื่องนี้ได้ เฟรมยังคงแสดงเมื่อหยุดชั่วคราว และยังเลื่อนตำแหน่งและก้าวทีละเฟรมได้</translation>
+    </message>
+    <message>
+        <source>Play video</source>
+        <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
+        <translation>เล่นวิดีโอ</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>
