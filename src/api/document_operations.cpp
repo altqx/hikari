@@ -17,9 +17,14 @@ std::string narrow(std::u8string_view s)
     return std::string(s.begin(), s.end());
 }
 
+bool sees(const Caller &caller, std::optional<DocumentId> editingTarget, DocumentId document)
+{
+    return caller.allDocuments || editingTarget == document || std::ranges::contains(caller.attached, document);
+}
+
 bool visible(const Context &context, DocumentId document)
 {
-    return context.caller.allDocuments || context.host.documents->workspace().editingTarget() == document;
+    return sees(context.caller, context.host.documents->workspace().editingTarget(), document);
 }
 
 std::expected<Target, Error> target(const Context &context, const Json &params)
@@ -31,7 +36,8 @@ std::expected<Target, Error> target(const Context &context, const Json &params)
     if (const Json *given = params.find("document")) {
         id = DocumentId{std::uint64_t(given->asInt())};
         if (!visible(context, id))
-            return fail(errors::kNotGranted, "Only the active Document is available without the documents.all grant.",
+            return fail(errors::kNotGranted,
+                        "Only the active Document and the attached ones are available without the documents.all grant.",
                         Json::object({{"document", *given}}));
     } else if (const auto editing = documents.workspace().editingTarget()) {
         id = *editing;
@@ -155,7 +161,7 @@ Result documentsList(const Context &context, const Json &)
         ids.push_back(*reference);
     Json list = Json::array();
     for (const DocumentId id : ids) {
-        if (!context.caller.allDocuments && workspace.editingTarget() != id)
+        if (!visible(context, id))
             continue;
         if (const EditSession *session = documents.session(id))
             list.push(documentSummary(documents, id, *session));
