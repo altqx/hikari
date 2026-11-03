@@ -374,7 +374,7 @@ void LineTableModel::setDocument(const core::Document &document,
     for (std::size_t r = 0; r < n; ++r)
         m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
     m_runs.clear();
-    std::unordered_set<std::uint64_t> unfolded;
+    absl::flat_hash_set<std::uint64_t> unfolded;
     for (const auto &found : application::generatedRuns(lines)) {
         Run run{static_cast<int>(found.first), static_cast<int>(found.count), static_cast<int>(found.first),
                 static_cast<int>(found.first), static_cast<int>(found.first), {}, {}};

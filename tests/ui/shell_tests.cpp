@@ -4416,7 +4416,7 @@ private slots:
         };
         const QList<const char *> columns{"styleOutline", "styleShadow", "styleScaleX", "styleScaleY"};
         const QList<QList<const char *>> below{{"styleAngle", "styleMarginLeft"}, {"styleSpacing", "styleMarginRight"},
-                                               {"styleOpaqueBox", "styleMarginVertical"}, {"styleAlignment"}};
+                                               {"styleBorderStyle", "styleMarginVertical"}, {"styleAlignment"}};
         for (int c = 0; c < 4; ++c) {
             const QRectF top = at(columns[c]);
             QVERIFY2(top.width() > 0, columns[c]);
@@ -4530,6 +4530,41 @@ private slots:
         QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
         choose(choice, 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("All fonts"));
+        QVERIFY(QMetaObject::invokeMethod(editor, "closeManager"));
+    }
+
+    void styleEditorShowsEveryBorderStyleAndEncodingMinusOne()
+    {
+        const QString path = dir.filePath(QStringLiteral("border-styles.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Tahoma,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,4,2,2,2,"
+                "10,10,10,-1\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        auto *editor = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(editor->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QCOMPARE(values.value(QStringLiteral("borderStyle")).toInt(), 4);
+        QVERIFY(QMetaObject::invokeMethod(editor, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *border = findItem(editor->contentItem(), QStringLiteral("styleBorderStyle"));
+        auto *encoding = findItem(editor->contentItem(), QStringLiteral("styleEncoding"));
+        QCOMPARE(border->property("currentIndex").toInt(), 2);
+        QCOMPARE(border->property("displayText").toString(), QStringLiteral("Opaque box per line (libass)"));
+        QCOMPARE(encoding->property("currentIndex").toInt(), 0);
+        QCOMPARE(encoding->property("code").toString(), QStringLiteral("-1"));
+        choose(border, 1);
+        QCOMPARE(border->property("code").toInt(), 3);
+        choose(border, 0);
+        QCOMPARE(border->property("code").toInt(), 1);
         QVERIFY(QMetaObject::invokeMethod(editor, "closeManager"));
     }
 
@@ -4803,11 +4838,14 @@ private slots:
             QVERIFY2(QMetaObject::invokeMethod(f, "textEdited"), field);
             QVERIFY2(styles.previewKey() > key, field);
         }
-        for (const char *box : {"styleBold", "styleOpaqueBox"}) {
-            key = styles.previewKey();
-            QVERIFY2(QMetaObject::invokeMethod(findItem(content, QLatin1String(box)), "toggled"), box);
-            QVERIFY2(styles.previewKey() > key, box);
-        }
+        key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("styleBold")), "toggled"));
+        QVERIFY(styles.previewKey() > key);
+        auto *borderStyle = findItem(content, QStringLiteral("styleBorderStyle"));
+        QVERIFY(borderStyle);
+        key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(borderStyle, "activated", Q_ARG(int, 2)));
+        QVERIFY(styles.previewKey() > key);
         auto *encoding = findItem(content, QStringLiteral("styleEncoding"));
         QVERIFY(encoding);
         key = styles.previewKey();

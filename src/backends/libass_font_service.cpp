@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
-#include <unordered_set>
+#include <absl/container/flat_hash_set.h>
 
 extern "C" {
 #include <ass/ass.h>
@@ -816,7 +816,7 @@ std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
     constexpr long kMaxFaces = 256;
     constexpr std::size_t kMaxNames = 4096, kMaxRecords = 16384, kMaxNameBytes = std::size_t(1) << 20;
     std::vector<std::string> out;
-    std::unordered_set<std::string> seen;
+    absl::flat_hash_set<std::string> seen;
     FT_Library ft = nullptr;
     if (bytes.empty() || FT_Init_FreeType(&ft))
         return out;

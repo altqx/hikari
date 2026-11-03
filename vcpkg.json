@@ -46,6 +46,7 @@
     "uchardet",
     "tomlplusplus",
     "libsodium",
+    "abseil",
     {
       "name": "pkgconf",
       "host": true,
