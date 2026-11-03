@@ -36,3 +36,4 @@ HikariSub.Fonts	 tabs: 	whitespace	font collector log layout; clicking a number 
 HikariSub.Fonts	In lines: 	colon	font collector log layout; clicking a number goes to its style or line
 HikariSub.Fonts	In lines: 	whitespace	font collector log layout; clicking a number goes to its style or line
 HikariSub.Spelling	The grammar checker (harper-ls) stopped: %1	leading-the	a message, not a label; the helper’s error follows the colon
+HikariSub.Plugins	Open Plugins…	title-case	Plugins is the window’s name

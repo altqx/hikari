@@ -21,6 +21,7 @@
 #include <QJsonObject>
 #include <QQuickWindow>
 #include <QSaveFile>
+#include <QHash>
 #include <QSet>
 #include <QScreen>
 #include <QTimer>
@@ -130,6 +131,47 @@ const QStringList &WorkspaceLayoutController::panelIds()
                                  QStringLiteral("Spellchecker"),
                                  QStringLiteral("Postprocessor")};
     return ids;
+}
+
+QString WorkspaceLayoutController::pluginPanelId(const QString &plugin, const QString &panel)
+{
+    return QStringLiteral("plugin:") + plugin + u'/' + panel;
+}
+
+bool WorkspaceLayoutController::isPluginPanel(const QString &name)
+{
+    static const QString prefix = QStringLiteral("plugin:");
+    if (!name.startsWith(prefix) || name.size() > 200)
+        return false;
+    const QStringView rest = QStringView(name).mid(prefix.size());
+    const qsizetype cut = rest.indexOf(u'/');
+    auto fits = [](QStringView part, bool dots) {
+        return !part.isEmpty() && std::all_of(part.begin(), part.end(), [dots](QChar c) {
+            return (c >= u'a' && c <= u'z') || (c >= u'0' && c <= u'9') || c == u'-' || (dots && c == u'.');
+        });
+    };
+    return cut > 0 && fits(rest.left(cut), true) && fits(rest.mid(cut + 1), false);
+}
+
+namespace {
+
+QHash<QString, QVariantMap> &pluginPanels()
+{
+    static QHash<QString, QVariantMap> known;
+    return known;
+}
+
+}
+
+QVariantMap WorkspaceLayoutController::pluginPanelInfo(const QString &dock)
+{
+    return pluginPanels().value(dock);
+}
+
+void WorkspaceLayoutController::rememberPluginPanel(const QString &dock, const QString &title, const QString &pluginName)
+{
+    if (isPluginPanel(dock))
+        pluginPanels().insert(dock, {{QStringLiteral("title"), title}, {QStringLiteral("pluginName"), pluginName}});
 }
 
 namespace {
@@ -273,6 +315,29 @@ void WorkspaceLayoutController::checkModal()
 
 namespace {
 
+QStringList pluginPanelsIn(const QJsonObject &payload)
+{
+    QStringList found;
+    auto take = [&found](const QJsonValue &dock) {
+        const QString name = dock.isObject() ? dock.toObject().value(QStringLiteral("uniqueName")).toString() : dock.toString();
+        if (WorkspaceLayoutController::isPluginPanel(name) && !found.contains(name))
+            found << name;
+    };
+    for (const char *list : {"allDockWidgets", "closedDockWidgets"})
+        for (const auto &dock : payload.value(QLatin1String(list)).toArray())
+            take(dock);
+    for (const char *list : {"mainWindows", "floatingWindows"})
+        for (const auto &window : payload.value(QLatin1String(list)).toArray()) {
+            const QJsonObject frames = window.toObject()
+                                           .value(QStringLiteral("multiSplitterLayout")).toObject()
+                                           .value(QStringLiteral("frames")).toObject();
+            for (const auto &frame : frames)
+                for (const auto &dock : frame.toObject().value(QStringLiteral("dockWidgets")).toArray())
+                    take(dock);
+        }
+    return found;
+}
+
 QJsonObject envelopeObject(const QByteArray &payload, const QString &preset, const QString &layout)
 {
     QJsonObject o;
@@ -283,8 +348,15 @@ QJsonObject envelopeObject(const QByteArray &payload, const QString &preset, con
     if (!layout.isEmpty())
         o.insert(QStringLiteral("layout"), layout);
     o.insert(QStringLiteral("panels"), QJsonArray::fromStringList(WorkspaceLayoutController::panelIds()));
-    if (!payload.isEmpty())
-        o.insert(QStringLiteral("payload"), QJsonDocument::fromJson(payload).object());
+    if (payload.isEmpty())
+        return o;
+    const QJsonObject docks = QJsonDocument::fromJson(payload).object();
+    o.insert(QStringLiteral("payload"), docks);
+    QJsonObject plugins;
+    for (const QString &dock : pluginPanelsIn(docks))
+        plugins.insert(dock, QJsonObject::fromVariantMap(WorkspaceLayoutController::pluginPanelInfo(dock)));
+    if (!plugins.isEmpty())
+        o.insert(QStringLiteral("pluginPanels"), plugins);
     return o;
 }
 
@@ -798,6 +870,8 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     const QJsonObject payload = o.value(QStringLiteral("payload")).toObject();
     if (payload.isEmpty())
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no layout"));
+    const QStringList pluginDocks = pluginPanelsIn(payload);
+    auto known = [](const QString &name) { return panelIds().contains(name) || isPluginPanel(name); };
     const QJsonArray mainWindows = payload.value(QStringLiteral("mainWindows")).toArray();
     bool classic = false;
     for (const auto &w : mainWindows)
@@ -806,10 +880,10 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no “Classic” arrangement"));
     // KDDockWidgets makes a window, group or layout item per entry: cap them at what our panels can fill.
     const QJsonArray floatingWindows = payload.value(QStringLiteral("floatingWindows")).toArray();
-    const qsizetype panels = panelIds().size();
+    const qsizetype panels = panelIds().size() + pluginDocks.size();
     const QString tooMany =
         QCoreApplication::translate("HikariSub.Workspace", "it holds more windows or panels than HikariSub has");
-    if (mainWindows.size() > 1 || floatingWindows.size() > panels)
+    if (mainWindows.size() > 1 || floatingWindows.size() > panels || pluginDocks.size() > kMaxPluginPanels)
         return fail(tooMany);
     qsizetype groups = 0;
     QSet<QString> grouped;
@@ -830,7 +904,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
             for (const auto &dock : frame.toObject().value(QStringLiteral("dockWidgets")).toArray()) {
                 const QString name = dock.isObject() ? dock.toObject().value(QStringLiteral("uniqueName")).toString()
                                                      : dock.toString();
-                if (!panelIds().contains(name))
+                if (!known(name))
                     return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
                 if (grouped.contains(name))
                     return fail(tooMany);
@@ -883,7 +957,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     QSet<QString> docks;
     for (const auto &d : payload.value(QStringLiteral("allDockWidgets")).toArray()) {
         const QString name = d.toObject().value(QStringLiteral("uniqueName")).toString();
-        if (!panelIds().contains(name))
+        if (!known(name))
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
         if (!noAffinities(d.toObject()))
             return fail(unreadable);
@@ -916,11 +990,18 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     QSet<QString> closed;
     for (const auto &d : payload.value(QStringLiteral("closedDockWidgets")).toArray()) {
         const QString name = d.isObject() ? d.toObject().value(QStringLiteral("uniqueName")).toString() : d.toString();
-        if (!panelIds().contains(name))
+        if (!known(name))
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
         if (closed.contains(name))
             return fail(tooMany);
         closed.insert(name);
+    }
+    const QJsonObject kept = o.value(QStringLiteral("pluginPanels")).toObject();
+    for (const QString &dock : pluginDocks) {
+        const QJsonObject info = kept.value(dock).toObject();
+        const QString title = info.value(QStringLiteral("title")).toString().left(100);
+        if (!title.isEmpty() && pluginPanelInfo(dock).isEmpty())
+            rememberPluginPanel(dock, title, info.value(QStringLiteral("pluginName")).toString().left(80));
     }
     if (preset) {
         const QString named = o.value(QStringLiteral("preset")).toString();
@@ -958,6 +1039,8 @@ void WorkspaceLayoutController::buildsArrangement(const QString &name)
 
 bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool inPlace)
 {
+    if (const QStringList docks = pluginPanelsIn(QJsonDocument::fromJson(payload).object()); !docks.isEmpty())
+        emit pluginDocksNeeded(docks);
     m_restoring = true;
     const KDDockWidgets::RestoreOptions options =
         inPlace ? KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_RelativeToMainWindow |
