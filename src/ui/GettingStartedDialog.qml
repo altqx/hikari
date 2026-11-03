@@ -316,7 +316,7 @@ DialogWindow {
                 spacing: 2
                 Layout.preferredHeight: 64
                 Block { label: qsTr("Video"); video: true; Layout.preferredWidth: 74 }
-                Block { label: qsTr("Styles"); Layout.preferredWidth: 26 }
+                Block { label: qsTr("Style"); Layout.preferredWidth: 26 }
             }
             RowLayout {
                 visible: thumb.preset === "Typesetting"

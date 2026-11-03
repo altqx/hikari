@@ -2901,7 +2901,7 @@ ApplicationWindow {
                     const added = editMenu.grammar ? root.app.addGrammarWord(word) : root.app.addEditorWord(word)
                     if (!added)
                         root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
-                                          qsTranslate("HikariSub.Editor", "Error. Word \"%1\" was not added.").arg(word))
+                                          qsTranslate("HikariSub.Editor", "“%1” was not added to the dictionary.").arg(word))
                 }
             }
             MenuSeparator {
@@ -5281,7 +5281,7 @@ ApplicationWindow {
                         objectName: "groupMenu"
                         property var description: 0
                         property point at: Qt.point(0, 0)
-                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select the group's lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select the group’s lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
                         ShellMenuItem {
                             iconRole: "tree-add-lines"
                             objectName: "groupAddLines"

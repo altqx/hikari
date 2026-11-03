@@ -1,11 +1,11 @@
 #include "hikari/backends/portaudio_output.h"
+#include "hikari/regex/regex.h"
 
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <cstdlib>
 #include <functional>
-#include <regex>
 #include <set>
 #include <thread>
 #include <vector>
@@ -227,11 +227,12 @@ TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
     const char *wanted = std::getenv("HIKARI_TEST_AUDIO_HOTPLUG");
     if (!wanted || !*wanted)
         GTEST_SKIP() << "set HIKARI_TEST_AUDIO_HOTPLUG and unplug the device on HOTPLUG-READY";
-    const std::regex pattern(wanted);
+    const auto pattern = hikari::regex::Pattern::compile(wanted, hikari::regex::Syntax::EcmaScript);
+    ASSERT_TRUE(pattern) << pattern.error().message << " at " << pattern.error().offset;
     const char *api = std::getenv("HIKARI_TEST_AUDIO_HOTPLUG_API");
     const auto find = [&](PortAudioOutput &out) {
         for (const auto &device : out.devices())
-            if (std::regex_search(device.name, pattern) && (!api || !*api || device.hostApi == api))
+            if (pattern->search(device.name) && (!api || !*api || device.hostApi == api))
                 return device.id;
         return std::string();
     };

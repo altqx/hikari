@@ -43,6 +43,12 @@ F.ComboBox {
         property: "Accessible.name"
         value: control.Accessible.name
     }
+    Connections {
+        target: TextMenus.adopt(control.contentItem)
+        function onRequested(position) {
+            TextMenus.menuFor(control.contentItem)?.popup(control.contentItem, position)
+        }
+    }
     Binding {
         target: control.popup
         property: "closePolicy"

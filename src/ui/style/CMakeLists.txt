@@ -7,5 +7,6 @@ qt_add_qml_module(hikari_ui_style
         CheckBox.qml RadioButton.qml GroupBox.qml Frame.qml Menu.qml TabBar.qml TabButton.qml Slider.qml
         FocusFrame.qml
     SOURCES style_colours.cpp style_colours.h text_menus.cpp text_menus.h)
-target_link_libraries(hikari_ui_style PRIVATE Qt6::Quick Qt6::QuickControls2)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS QuickTemplates2Private)
+target_link_libraries(hikari_ui_style PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::QuickTemplates2Private)
 hikari_module(hikari_ui_style ALLOW "Qt6::*" "hikari_ui_style*")

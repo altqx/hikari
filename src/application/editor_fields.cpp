@@ -11,7 +11,6 @@
 #include <climits>
 #include <cmath>
 #include <cstdlib>
-#include <regex>
 #include <string>
 
 namespace hikari::application {
@@ -71,20 +70,27 @@ std::optional<std::int64_t> digits(std::u8string_view text)
     return value;
 }
 
+std::optional<std::int64_t> sexagesimal(std::u8string_view two)
+{
+    return two[0] >= u8'0' && two[0] <= u8'5' ? digits(two) : std::nullopt;
+}
+
 // "H...:MM:SS" followed by `tail` digits after `separator` (none when 0).
 std::optional<std::int64_t> clockTime(std::u8string_view text, char8_t separator, std::size_t tail, int scale)
 {
-    const std::string t(text.begin(), text.end());
-    const std::string pattern = tail == 0 ? std::string("^([0-9]{2,}):([0-5][0-9]):([0-5][0-9])$")
-                                          : "^([0-9]{2,}):([0-5][0-9]):([0-5][0-9])\\" + std::string(1, char(separator)) +
-                                                "([0-9]{" + std::to_string(tail) + "})$";
-    std::smatch m;
-    if (!std::regex_match(t, m, std::regex(pattern)) || m[1].length() > 9)
+    const std::size_t colon = text.find(u8':');
+    const std::size_t fraction = tail ? tail + 1 : 0;
+    if (colon < 2 || colon > 9 || text.size() != colon + 6 + fraction || text[colon + 3] != u8':')
         return std::nullopt;
-    std::int64_t ms = std::stoll(m[1]) * 3600000 + std::stoll(m[2]) * 60000 + std::stoll(m[3]) * 1000;
-    if (tail)
-        ms += std::stoll(m[4]) * scale;
-    return ms;
+    const auto hours = digits(text.substr(0, colon));
+    const auto minutes = sexagesimal(text.substr(colon + 1, 2));
+    const auto seconds = sexagesimal(text.substr(colon + 4, 2));
+    const auto rest = !tail                          ? std::optional<std::int64_t>(0)
+                      : text[colon + 6] == separator ? digits(text.substr(colon + 7))
+                                                     : std::nullopt;
+    if (!hours || !minutes || !seconds || !rest)
+        return std::nullopt;
+    return *hours * 3600000 + *minutes * 60000 + *seconds * 1000 + *rest * scale;
 }
 
 }
@@ -593,12 +599,14 @@ std::optional<std::int64_t> layerValue(std::u8string_view text)
 
 int legacyAlignment(const core::LineRecord &line, int styleAlignment)
 {
-    const std::u8string &text = !line.translation.empty() ? line.translation : line.text;
-    const std::string t(text.begin(), text.end());
-    std::smatch m;
-    if (std::regex_search(t, m, std::regex(R"(\\an([0-9]+))"))) {
-        const std::string d = m[1].str();
-        return d.size() > 9 ? INT_MAX : std::stoi(d);
+    const std::u8string_view text = !line.translation.empty() ? line.translation : line.text;
+    for (std::size_t at = text.find(u8"\\an"); at != std::u8string_view::npos; at = text.find(u8"\\an", at + 1)) {
+        const std::u8string_view rest = text.substr(at + 3);
+        const std::size_t length = std::min(rest.find_first_not_of(u8"0123456789"), rest.size());
+        if (length > 9)
+            return INT_MAX;
+        if (length > 0)
+            return static_cast<int>(*digits(rest.substr(0, length)));
     }
     return styleAlignment;
 }

@@ -15,7 +15,8 @@ set_tests_properties(modules.desktop-handoffs-violation-rejected PROPERTIES WILL
 
 set(qml-idioms_rejection "QML text built the pre-6.12 way:.*Violation.qml")
 set(qml-debug_rejection "reaches CI, tests or packages:.*workflowPresets release uses release")
-foreach(check qml-idioms qml-debug)
+set(std-regex_rejection "std::regex is banned.*src/Violation.cpp: #include <regex>.*src/Violation.cpp: return std::regex_search.*tests/Violation.h: using Groups = std::smatch")
+foreach(check qml-idioms qml-debug std-regex)
     string(REPLACE "-" "_" script "check_${check}")
     add_test(NAME modules.${check}
         COMMAND "${CMAKE_COMMAND}" -DROOT=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/${script}.cmake")

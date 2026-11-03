@@ -146,6 +146,21 @@ TEST(EditorTimes, TypedTimesStopAt99Hours)
     EXPECT_EQ(at(u8"123:00:00", core::SubtitleFormat::TMPlayer), kTimeFieldMaxMs);
 }
 
+TEST(EditorTimes, ClockTimesTakeTwoToNineHourDigitsAndExactFractions)
+{
+    const auto at = [](const char8_t *text, core::SubtitleFormat format) {
+        return typedTime(text, TimeFieldRole::Start, format, std::nullopt, nullptr);
+    };
+    EXPECT_EQ(at(u8"123456789:59:59,999", core::SubtitleFormat::Srt)->ms, kTimeFieldMaxMs);
+    EXPECT_EQ(at(u8"10:00:00", core::SubtitleFormat::TMPlayer)->ms, 36000000);
+    for (const char8_t *bad : {u8"1:00:00,000", u8"1234567890:00:00,000", u8"00:00:00,00", u8"00:00:00,0000",
+                               u8"00:00:00.000", u8"00:60:00,000", u8"00:00:60,000", u8"00:0a:00,000", u8"0a:00:00,000",
+                               u8"00:00:00,00a", u8"00-00:00,000", u8"00:00:00", u8""})
+        EXPECT_FALSE(at(bad, core::SubtitleFormat::Srt)) << reinterpret_cast<const char *>(bad);
+    for (const char8_t *bad : {u8"0:00:00", u8"00:00:00,000", u8"00:00:0", u8"00:00:000", u8":00:00"})
+        EXPECT_FALSE(at(bad, core::SubtitleFormat::TMPlayer)) << reinterpret_cast<const char *>(bad);
+}
+
 namespace {
 
 TimeFieldState at(const char16_t *text, std::size_t start, std::size_t end)
@@ -542,4 +557,12 @@ TEST(EditorFields, AlignmentFromTheTextOrTheStyle)
     EXPECT_EQ(legacyAlignment(l, 3), 3);
     l.translation = u8"{\\pos(1,2)\\an9}x{\\an1}";
     EXPECT_EQ(legacyAlignment(l, 3), 9);
+    l.translation = u8"{\\an\\an}{\\an4}";
+    EXPECT_EQ(legacyAlignment(l, 3), 4) << "a bare \\an is skipped";
+    l.translation = u8"{\\an123456789}";
+    EXPECT_EQ(legacyAlignment(l, 3), 123456789);
+    l.translation = u8"{\\an1234567890}";
+    EXPECT_EQ(legacyAlignment(l, 3), INT_MAX);
+    l.translation = u8"{\\an}";
+    EXPECT_EQ(legacyAlignment(l, 3), 3);
 }

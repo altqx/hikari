@@ -69,10 +69,13 @@ if(WIN32)
 endif()
 
 add_library(hikari_ai STATIC ai_wire.cpp include/hikari/backends/ai_wire.h ai_network.cpp
-    include/hikari/backends/ai_network.h ai_keychain.cpp include/hikari/backends/ai_keychain.h)
+    include/hikari/backends/ai_network.h ai_keychain.cpp include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp
+    include/hikari/backends/ai_sidecar_host.h ai_sidecar_download.cpp include/hikari/backends/ai_sidecar_download.h)
+find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
-target_link_libraries(hikari_ai PUBLIC hikari_application Qt6::Core Qt6::Network PRIVATE Qt6Keychain::Qt6Keychain)
+target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api Qt6::Core Qt6::Network
+    PRIVATE Qt6Keychain::Qt6Keychain ZLIB::ZLIB)
 if(NOT WIN32)
     target_link_libraries(hikari_ai PRIVATE Qt6::DBus)
 endif()
-hikari_module(hikari_ai ALLOW hikari_application hikari_core "Qt6::*")
+hikari_module(hikari_ai ALLOW hikari_application hikari_api hikari_core "Qt6::*" ZLIB::ZLIB)

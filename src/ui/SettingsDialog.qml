@@ -949,7 +949,7 @@ DialogWindow {
                             SettingChoice {
                                 setting: "video.moveToActiveLine"
                                 model: dialog.follow.seekChoices
-                                Accessible.name: dialog.follow.seekLabel
+                                Accessible.name: dialog.follow.seekName
                             }
                         }
                         SettingsRow {
@@ -958,7 +958,7 @@ DialogWindow {
                             SettingChoice {
                                 setting: "video.playAfterSelection"
                                 model: dialog.follow.playChoices
-                                Accessible.name: dialog.follow.playLabel
+                                Accessible.name: dialog.follow.playName
                             }
                         }
                         Loader {

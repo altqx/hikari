@@ -424,7 +424,8 @@ TEST_F(LuaHelper, RuntimeErrorCarriesATraceback)
     auto host = load(fixture("host-fixture.lua"));
     ASSERT_TRUE(runToEnd(*host, "Error"));
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
-    EXPECT_TRUE(run.message.contains("script failure")) << run.message.toStdString();
+    EXPECT_TRUE(run.message.contains("\nscript failure\n")) << "the chunk location is stripped: " << run.message.toStdString();
+    EXPECT_FALSE(run.message.contains("[string \"")) << run.message.toStdString();
     EXPECT_TRUE(run.message.contains(QStringLiteral("File \"%1\", line ").arg(fixture("host-fixture.lua"))))
         << run.message.toStdString();
 }

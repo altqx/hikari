@@ -463,7 +463,7 @@ FocusScope {
                 id: ignoreAllButton
                 objectName: "spellIgnoreAll"
                 visible: !panel.grammarMode
-                text: qsTr("Ignore All")
+                text: qsTr("Ignore all")
                 Layout.fillWidth: true
                 onClicked: panel.ignoreAll()
             }
