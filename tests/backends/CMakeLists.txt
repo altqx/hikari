@@ -112,7 +112,7 @@ target_include_directories(hikari_backends_indexed_source_tests PRIVATE "${PROJE
 hikari_add_gtest(hikari_backends_audio_engine_tests SOURCES audio_engine_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 hikari_add_gtest(hikari_backends_portaudio_tests SOURCES portaudio_output_tests.cpp
-    LIBRARIES hikari_backends LABELS backends PROPERTIES RUN_SERIAL TRUE)
+    LIBRARIES hikari_backends hikari_regex LABELS backends PROPERTIES RUN_SERIAL TRUE)
 hikari_add_gtest(hikari_backends_audio_box_player_tests SOURCES audio_box_player_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends PROPERTIES RUN_SERIAL TRUE)
 

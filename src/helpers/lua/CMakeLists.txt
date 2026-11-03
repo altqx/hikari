@@ -16,14 +16,14 @@ add_executable(hikari_lua_helper lua_helper.cpp lua_native.cpp lua_native.h)
 set_target_properties(hikari_lua_helper PROPERTIES OUTPUT_NAME hikari-lua-helper)
 # ICU is linked statically: its headers must not declare dllimport.
 target_compile_definitions(hikari_lua_helper PRIVATE BOOST_ALL_NO_LIB U_STATIC_IMPLEMENTATION)
-target_link_libraries(hikari_lua_helper PRIVATE hikari_lua_protocol hikari_lua_legacy_native Hikari::luajit
+target_link_libraries(hikari_lua_helper PRIVATE hikari_lua_protocol hikari_lua_legacy_native hikari_regex Hikari::luajit
     Boost::regex Boost::locale ICU::i18n ICU::uc ICU::data)
 # LuaJIT errors unwind C++ frames; MSVC's /EHsc assumes extern "C" never throws.
 if(MSVC)
     target_compile_options(hikari_lua_helper PRIVATE /EHc-)
 endif()
 hikari_module(hikari_lua_helper ALLOW hikari_lua_protocol hikari_helper_endpoint hikari_application hikari_core
-    hikari_lua_legacy_native Hikari::luajit "Boost::*" "ICU::*")
+    hikari_lua_legacy_native hikari_regex Hikari::luajit "Boost::*" "ICU::*")
 
 # requireffi looks for these under BM/BadMutex/, PT/PreciseTimer/ and DM/DownloadManager/.
 find_package(CURL CONFIG REQUIRED)
