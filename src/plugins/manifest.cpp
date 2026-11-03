@@ -146,6 +146,11 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     m.description = text(json, "description");
     m.license = text(json, "license");
     m.homepage = text(json, "homepage");
+    m.summary = text(json, "summary");
+    m.icon = text(json, "icon");
+    if (const Json *screenshots = json.find("screenshots"))
+        for (const Json &shot : screenshots->asArray())
+            m.screenshots.push_back({text(shot, "path"), text(shot, "caption")});
     if (const Json *key = json.find("publicKey")) {
         m.publicKey = minisign::parsePublicKey(key->asString());
         if (!m.publicKey)

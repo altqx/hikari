@@ -1,0 +1,5 @@
+{\fad(100,100)}
+{\k50}ka{\k50}ra	_hikari_kara_source=1;abcdefgh
+{\fad(100,100)}ka	_hikari_kara_from=1;abcdefgh
+{\fad(100,100)}ra	_hikari_kara_from=1;abcdefgh
+{\k100}oke

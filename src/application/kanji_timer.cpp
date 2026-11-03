@@ -1,6 +1,8 @@
 #include "hikari/application/kanji_timer.h"
 
 #include "hikari/application/kana.h"
+#include "hikari/core/extradata.h"
+#include "hikari/core/text_projection.h"
 
 #include <algorithm>
 #include <array>
@@ -1093,13 +1095,13 @@ void KanjiTimer::derive()
     std::vector<Item> items;
     std::vector<std::pair<Line, std::size_t>> romaji, kanji;
     for (std::size_t i = 0; i < m_romaji.size(); ++i) {
-        if (m_state.skippedRomaji.contains(m_romaji[i].id))
+        if (isSkipped(m_romaji[i]))
             items.push_back({m_romaji[i], std::nullopt, m_romaji[i].startMs, i * 2});
         else
             romaji.emplace_back(m_romaji[i], i * 2);
     }
     for (std::size_t i = 0; i < m_kanji.size(); ++i) {
-        if (m_state.skippedKanji.contains(m_kanji[i].id))
+        if (isSkipped(m_kanji[i]))
             items.push_back({std::nullopt, m_kanji[i], m_kanji[i].startMs, i * 2 + 1});
         else
             kanji.emplace_back(m_kanji[i], i * 2 + 1);
@@ -1170,8 +1172,10 @@ void KanjiTimer::derive()
     m_pairs.clear();
     for (auto &item : items)
         m_pairs.push_back({std::move(item.romaji), std::move(item.kanji), Status::ToDo});
-    for (auto &pair : m_pairs)
+    for (auto &pair : m_pairs) {
         pair.status = statusOf(pair);
+        pair.skipped = !(pair.romaji && pair.kanji) && isSkipped(pair.romaji ? *pair.romaji : *pair.kanji);
+    }
     m_current = -1;
     for (std::size_t p = 0; p < m_pairs.size(); ++p)
         if (m_state.current && keyOf(m_pairs[p]) == *m_state.current)
@@ -1303,6 +1307,20 @@ std::optional<KanjiTimer::View> KanjiTimer::view() const
     return v;
 }
 
+bool KanjiTimer::isSkipped(const Line &line) const
+{
+    const auto found = m_state.skips.find(line.id);
+    return found != m_state.skips.end() ? found->second : line.skipped;
+}
+
+void KanjiTimer::setSkip(core::LineId line, bool skipped)
+{
+    const auto found = m_state.skips.find(line);
+    if (m_open && !m_open->skips.contains(line))
+        m_open->skips[line].first = found != m_state.skips.end() ? std::optional(found->second) : std::nullopt;
+    m_state.skips[line] = skipped;
+}
+
 void KanjiTimer::begin()
 {
     m_open = Step{};
@@ -1339,6 +1357,12 @@ void KanjiTimer::commit()
                               (*w)->linked.size() * sizeof(KanjiGroup);
         ++it;
     }
+    for (auto it = step.skips.begin(); it != step.skips.end();) {
+        const auto found = m_state.skips.find(it->first);
+        it->second.second = found != m_state.skips.end() ? std::optional(found->second) : std::nullopt;
+        it = it->second.first == it->second.second ? step.skips.erase(it) : std::next(it);
+    }
+    step.bytes += step.skips.size() * (sizeof(core::LineId) + 2 * sizeof(std::optional<bool>));
     for (; m_steps.size() > m_undo; m_steps.pop_back())
         m_stepBytes -= m_steps.back().bytes;
     m_stepBytes += step.bytes;
@@ -1366,10 +1390,12 @@ void KanjiTimer::replay(const Step &step, bool forward)
         else
             m_state.works.erase(key);
     }
-    if (step.skippedRomaji)
-        forward ? (void)m_state.skippedRomaji.insert(*step.skippedRomaji) : (void)m_state.skippedRomaji.erase(*step.skippedRomaji);
-    if (step.skippedKanji)
-        forward ? (void)m_state.skippedKanji.insert(*step.skippedKanji) : (void)m_state.skippedKanji.erase(*step.skippedKanji);
+    for (const auto &[line, change] : step.skips) {
+        if (const auto skipped = forward ? change.second : change.first)
+            m_state.skips[line] = *skipped;
+        else
+            m_state.skips.erase(line);
+    }
     m_state.current = forward ? step.currentAfter : step.currentBefore;
     derive();
 }
@@ -1672,8 +1698,7 @@ bool KanjiTimer::skipRomaji()
         return false;
     const Pair pair = m_pairs[static_cast<std::size_t>(m_current)];
     begin();
-    m_state.skippedRomaji.insert(pair.romaji->id);
-    m_open->skippedRomaji = pair.romaji->id;
+    setSkip(pair.romaji->id, true);
     derive();
     for (const Pair &p : m_pairs)
         if (p.kanji && p.kanji->id == pair.kanji->id && p.romaji)
@@ -1689,12 +1714,23 @@ bool KanjiTimer::skipKanji()
         return false;
     const Pair pair = m_pairs[static_cast<std::size_t>(m_current)];
     begin();
-    m_state.skippedKanji.insert(pair.kanji->id);
-    m_open->skippedKanji = pair.kanji->id;
+    setSkip(pair.kanji->id, true);
     derive();
     for (const Pair &p : m_pairs)
         if (p.romaji && p.romaji->id == pair.romaji->id && p.kanji)
             m_state.current = keyOf(p);
+    commit();
+    derive();
+    return true;
+}
+
+bool KanjiTimer::pairAgain(int pair)
+{
+    if (pair < 0 || static_cast<std::size_t>(pair) >= m_pairs.size() || !m_pairs[static_cast<std::size_t>(pair)].skipped)
+        return false;
+    const Pair &p = m_pairs[static_cast<std::size_t>(pair)];
+    begin();
+    setSkip(p.romaji ? p.romaji->id : p.kanji->id, false);
     commit();
     derive();
     return true;
@@ -1760,8 +1796,24 @@ std::vector<std::pair<core::LineId, std::u16string>> KanjiTimer::pending() const
     return out;
 }
 
+std::vector<std::pair<core::LineId, bool>> KanjiTimer::pendingSkips() const
+{
+    std::vector<std::pair<core::LineId, bool>> out;
+    for (const auto *lines : {&m_romaji, &m_kanji})
+        for (const Line &line : *lines)
+            if (isSkipped(line) != line.skipped)
+                out.emplace_back(line.id, !line.skipped);
+    return out;
+}
+
 void KanjiTimer::applied()
 {
+    for (auto *lines : {&m_romaji, &m_kanji})
+        for (Line &line : *lines)
+            if (const auto found = m_state.skips.find(line.id); found != m_state.skips.end()) {
+                line.skipped = found->second;
+                m_state.skips.erase(found);
+            }
     for (const Pair &pair : m_pairs) {
         if (pair.status != Status::Done)
             continue;
@@ -1777,6 +1829,48 @@ void KanjiTimer::applied()
     m_steps.clear();
     m_stepBytes = 0;
     m_undo = 0;
+}
+
+std::pair<std::vector<KanjiTimer::Line>, std::vector<KanjiTimer::Line>>
+kanjiTimerLines(const core::Document &document, std::u8string_view romajiStyle, std::u8string_view kanjiStyle)
+{
+    std::vector<KanjiTimer::Line> romaji, kanji;
+    for (const auto *line : document.lines()) {
+        if (line->text.empty() || line->effect == u8"fx")
+            continue;
+        const auto text = core::toUtf16(line->text);
+        const int start = static_cast<int>(line->start.value.microseconds() / 1000);
+        const int end = static_cast<int>(line->end.value.microseconds() / 1000);
+        const bool skipped = core::extradataValue(line->extra, kKanjiSkipKey) == u8"1";
+        if (line->style == romajiStyle && hasKaraokeTags(text))
+            romaji.push_back({line->id, text, start, end, skipped});
+        else if (line->style == kanjiStyle)
+            kanji.push_back({line->id, text, start, end, skipped});
+    }
+    return {std::move(romaji), std::move(kanji)};
+}
+
+std::expected<void, CommandRefusal> applyKanjiTimer(const KanjiTimer &timer, EditSession &session)
+{
+    const auto pending = timer.pending();
+    const auto skips = timer.pendingSkips();
+    std::set<core::LineId> touches;
+    for (const auto &[id, skipped] : skips)
+        touches.insert(id);
+    for (const auto &[id, text] : pending)
+        touches.insert(id);
+    return session.run(Command{"Kanji timing", session.revision(), touches, [&](core::Document &d) {
+                                   for (const auto &[id, text] : pending)
+                                       if (!d.editLine(id, [&](core::LineRecord &l) { l.text = core::toUtf8(text); }))
+                                           return false;
+                                   for (const auto &[id, skipped] : skips)
+                                       if (!d.editLine(id, [skipped](core::LineRecord &l) {
+                                               l.extra = skipped ? core::withExtradata(l.extra, kKanjiSkipKey, u8"1")
+                                                                 : core::withoutExtradata(l.extra, kKanjiSkipKey);
+                                           }))
+                                           return false;
+                                   return true;
+                               }});
 }
 
 }

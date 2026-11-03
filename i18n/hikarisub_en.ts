@@ -294,6 +294,27 @@
             <numerusform>%n generated lines</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>Add selected line</numerusform>
+            <numerusform>Add %n selected lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>Duplicate line</numerusform>
+            <numerusform>Duplicate %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>Delete line</numerusform>
+            <numerusform>Delete %n lines</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -409,7 +430,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>Added %n script hotkey.</numerusform>
             <numerusform>Added %n script hotkeys.</numerusform>
@@ -558,7 +579,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
             <numerusform>Grammar check no longer uses its %n rule. Turn it back on in Settings › Spelling &amp; grammar.</numerusform>
             <numerusform>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</numerusform>

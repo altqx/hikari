@@ -1083,6 +1083,7 @@ private:
     std::unique_ptr<ui::StatusBarController> m_statusBar;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
+    std::uint64_t m_playbackFailuresLogged = 0;
     std::uint64_t m_seenGroupBreaks = 0;
     std::unique_ptr<application::RecoveryStore> m_recovery;
     std::unique_ptr<QLockFile> m_sessionLock;
@@ -1260,6 +1261,7 @@ private:
     void followVideoInAudio();
     void trackVideoSources();
     void logVideoFailure();
+    void logPlaybackFailure();
     void rememberRecentVideo(const QString &path);
     void rememberRecentKeyframes(const QString &path);
     QVariantList recentRows(application::RecentFiles &list, const char *setting);

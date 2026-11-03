@@ -1,5 +1,7 @@
 #include "hikari/plugins/package.h"
 
+#include "media.h"
+
 #include <algorithm>
 #include <array>
 #include <set>
@@ -91,6 +93,8 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
         return std::unexpected(PackageProblem{Kind::Manifest, std::string(kManifestName), manifest.error()});
     if (std::none_of(files.begin(), files.end(), [&](const PackageFile &f) { return f.path == manifest->main; }))
         return std::unexpected(PackageProblem{Kind::MissingMain, manifest->main, {}});
+    if (auto problem = mediaProblem(*manifest, files))
+        return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};
 }
 

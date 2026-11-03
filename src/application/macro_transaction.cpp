@@ -276,6 +276,7 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
                 }
                 previous = id;
             }
+            core::markGeneratedLines(doc);
             return true;
         };
         if (auto ran = session.run(command); !ran)

@@ -808,7 +808,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings,
                                                     [this](const QString &message, bool warning) {
                                                         m_log->notice(warning ? ui::LogController::Warning : ui::LogController::Info,
-                                                                      QCoreApplication::translate("HikariSub.Options", "Hotkeys"), message);
+                                                                      QCoreApplication::translate("HikariSub.Options", "Shortcuts"), message);
                                                     });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
@@ -1159,6 +1159,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editor->setVideoTimebase(ready ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
+    connect(m_video.get(), &ui::VideoController::changed, this, &Application::logPlaybackFailure);
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
         if (video.state() != application::VideoSession::State::Ready || !video.lastFrame())
@@ -5791,7 +5792,7 @@ QVariantMap Application::openSettingsDialog()
     {
         if (lists.dictionaryNames.empty())
             lists.dictionaryNames.push_back(QCoreApplication::translate("HikariSub.Options",
-                                                                        "Put files .dic and .aff to \"Dictionary\" folder").toStdString());
+                                                                        "Put .dic and .aff files in the “Dictionary” folder").toStdString());
     }
     lists.catalogs = stdList(m_styleManager->catalogs());
     lists.currentCatalog = m_styleManager->catalog().toStdString();
@@ -5811,16 +5812,12 @@ QVariantMap Application::openSettingsDialog()
     const auto open = application::openOptionsDialog(m_settings->settings(), lists);
     m_hotkeys->beginOptions();
     QStringList warnings;
-    const auto missing = [](const char *what) {
-        return QCoreApplication::translate("HikariSub.Options",
-                                           "The selected %1 for conversion does not exist\n"
-                                           "and will be changed to the default")
-            .arg(QCoreApplication::translate("HikariSub.Options", what));
-    };
     if (open.catalogMissing)
-        warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "catalogue for style"));
+        warnings << QCoreApplication::translate(
+            "HikariSub.Options", "The style catalogue chosen for conversion no longer exists. The default is used instead.");
     if (open.styleMissing)
-        warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "style"));
+        warnings << QCoreApplication::translate(
+            "HikariSub.Options", "The style chosen for conversion no longer exists. The default is used instead.");
     auto values = toVariant(open.state);
     addAppearance(values);
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
