@@ -7,6 +7,7 @@
 #include "hikari/core/style.h"
 #include "text_util.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -243,7 +244,7 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
     Document document = srt ? loadSrt(bytes).document : loadAss(bytes).document;
     // MUST KILL: writes a file, loads it, then patches or replaces its Lines with the parsed ones
     std::vector<LineId> loaded;
-    std::vector<bool> same;
+    boost::dynamic_bitset<> same;
     for (const auto *l : document.lines()) {
         same.push_back(loaded.size() < dialogues.size() && sameLine(*l, dialogues[loaded.size()].line));
         loaded.push_back(l->id);

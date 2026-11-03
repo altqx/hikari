@@ -83,7 +83,7 @@ These limits come from process isolation and the restricted state; they are not 
 
 ### The helper protocol
 
-The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h)) has two requests, `Load` and `Run`, plus events and four services: `Call`, `Notify`, `SetSetting` and `Subscribe`. When several events of one name wait, only the newest is delivered.
+The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h)) has two requests, `Load` and `Run`, plus events and six services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock` and `Unlock`. When several events of one name wait, only the newest is delivered.
 
 ## The `hikari` global
 
@@ -98,10 +98,32 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.i18n.locale`, `hikari.i18n.t(key, ...)` | The UI language (`"pt_BR"`, `"en"`) and the text for `key` from `i18n/<locale>.json`, then `i18n/<language>.json`, then `i18n/en.json`, then the key itself. `%1` to `%9` take the arguments. Each file is a JSON object of strings. |
 | `hikari.plugin.id`, `hikari.plugin.version`, `hikari.api_version` | Who the plugin is, and the Hikari API number. |
 | `hikari.null`, `hikari.array(t)` | JSON `null`, and a table marked as a JSON array (so `{}` can be sent as `[]`). Arrays that come back from HikariSub are marked too. |
+| `hikari.document.list()`, `hikari.document.read(document)`, `hikari.document.edit(name, fn, options)` | The open Documents, a snapshot of one, and one edit applied as one undo step. See [Documents and selections](#documents-and-selections). |
+| `hikari.selection.get(document)`, `hikari.selection.set(selected, active, document)` | The selected Lines and the active Line, as `selection.get` and `selection.set` give and take them. |
 
 Tables go to HikariSub as JSON: a table with keys 1 to n is an array, one with text keys an object. Numbers must be finite, text must be UTF-8, and a table that holds itself is refused.
 
 Errors carry the file and line inside the package (`lua/tools.lua:12: …`) and a traceback, never a path on disk.
+
+## Documents and selections
+
+A plugin sees the active subtitle file. With the `documents.all` permission it also sees the other tabs. Without it, `hikari.document.list()` lists the active Document only, and naming another Document gives the error `not_granted`. Every `document` argument is optional and defaults to the active Document.
+
+`hikari.document.read(document)` returns a snapshot: `{document, revision, title, format, lines, styles, info}`. `lines` are the `lines.list` Lines (`id`, `row` and every field, such as `text` and `start`), `styles` the `styles.list` Styles and `info` the `info.list` properties, all at one revision. When the Document changes during the read, it starts again. After three tries it returns `nil` and the error `busy`.
+
+`hikari.document.edit(name, fn, options)` makes one change:
+
+```lua
+local done, err = hikari.document.edit("Strip line breaks", function(doc, change)
+    for _, line in ipairs(doc.lines) do
+        change:set_line(line.id, {text = line.text:gsub("\\N", " ")})
+    end
+end)
+```
+
+`fn` gets a fresh snapshot (`options.document` picks the Document) and a `change` that stages edits: `set_line(line, fields)`, `insert_line(fields, {after = line} or {before = line})`, `delete_line(line)`, `move_line(line, before)` (to the end when `before` is `nil`), `set_style(name, fields)`, `delete_style(name)` and `set_info(key, value)` (removed when `value` is `nil`). Then HikariSub applies them with `document.apply` as one undo step, named `<plugin name>: <name>`. It returns the `document.apply` result `{revision, inserted, changed}`, or `nil` and the error. When nothing is staged, nothing is applied, and `changed` is `false`. When the Document changed after the snapshot, for example because the user typed, the error is `stale_revision`. An error in `fn` passes through. An edit inside another edit is refused.
+
+Only one plugin edits at a time, app-wide. An edit waits for another plugin's edit to finish. After 5 seconds it gives up and returns the error `busy`. Commands and event handlers of different plugins still run side by side; only their edits take turns. A plugin that stops, crashes or is turned off ends its turn.
 
 ## Commands and shortcuts
 

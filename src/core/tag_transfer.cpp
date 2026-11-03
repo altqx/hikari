@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/dynamic_bitset.hpp>
 #include <charconv>
 #include <cmath>
 #include <cstdint>
@@ -1258,7 +1259,7 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     }
     // MUST KILL: labels hold a run number, 0 for the base, -1 for the translator's own
     std::vector<int> labels(segments.size(), 0);
-    std::vector<bool> used(tags.runs.size(), false);
+    boost::dynamic_bitset<> used(tags.runs.size());
     const auto groups = groupsOf(segments);
     const auto compared = [&](const TagRun &run) { return budget.spend(unitsOf(run.differs) + 1); };
     for (const auto &group : groups) {
@@ -1354,7 +1355,7 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     };
     if (!order.empty()) {
         std::vector<int> hinted(segments.size(), 0);
-        std::vector<bool> taken(tags.runs.size(), false);
+        boost::dynamic_bitset<> taken(tags.runs.size());
         std::size_t next = 0;
         for (const auto &group : groups) {
             const auto &differs = segments[group.first].differs;
@@ -1611,7 +1612,7 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
 std::vector<int> matchRuns(const OriginalTags &before, const OriginalTags &now)
 {
     std::vector<int> out(before.runs.size(), 0);
-    std::vector<bool> taken(now.runs.size(), false);
+    boost::dynamic_bitset<> taken(now.runs.size());
     for (std::size_t i = 0; i < before.runs.size() && i < now.runs.size(); ++i)
         if (now.runs[i].differs == before.runs[i].differs && now.runs[i].text == before.runs[i].text) {
             taken[i] = true;

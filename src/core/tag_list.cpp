@@ -116,15 +116,14 @@ TagList::TagList(int options) : m_options(options), m_shown(kEntryCount)
 
 std::size_t TagList::count() const
 {
-    return static_cast<std::size_t>(std::count(m_shown.begin(), m_shown.end(), true));
+    return m_shown.count();
 }
 
 std::vector<std::size_t> TagList::shownEntries() const
 {
     std::vector<std::size_t> out;
-    for (std::size_t i = 0; i < kEntryCount; ++i)
-        if (m_shown[i])
-            out.push_back(i);
+    for (auto i = m_shown.find_first(); i != m_shown.npos; i = m_shown.find_next(i))
+        out.push_back(i);
     return out;
 }
 
@@ -133,12 +132,9 @@ std::optional<std::size_t> TagList::entryAt(int row) const
     if (row < 0)
         return std::nullopt;
     int seen = 0;
-    for (std::size_t i = 0; i < kEntryCount; ++i)
-        if (m_shown[i]) {
-            if (seen == row)
-                return i;
-            ++seen;
-        }
+    for (auto i = m_shown.find_first(); i != m_shown.npos; i = m_shown.find_next(i), ++seen)
+        if (seen == row)
+            return i;
     return std::nullopt;
 }
 
@@ -153,9 +149,8 @@ void TagList::filterByKeyword(std::u16string_view keyword, bool setKeyword)
     // Only hides, case-sensitively.
     if (setKeyword)
         m_keyword = keyword;
-    for (std::size_t i = 0; i < kEntryCount; ++i)
-        if (m_shown[i])
-            m_shown[i] = kEntries[i].tag.starts_with(keyword);
+    for (auto i = m_shown.find_first(); i != m_shown.npos; i = m_shown.find_next(i))
+        m_shown[i] = kEntries[i].tag.starts_with(keyword);
     if (m_lastItems > count())
         popup(0);
     else if (m_popup)

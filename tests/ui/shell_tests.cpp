@@ -431,10 +431,11 @@ public:
         }
         return out;
     }
-    std::vector<bool> facesCover(const std::vector<application::SystemFace> &faces, const application::FontEnvironment &,
-                                 const std::u32string &characters) override
+    boost::dynamic_bitset<> facesCover(const std::vector<application::SystemFace> &faces,
+                                       const application::FontEnvironment &,
+                                       const std::u32string &characters) override
     {
-        std::vector<bool> out;
+        boost::dynamic_bitset<> out;
         for (const auto &face : faces) {
             std::u32string glyphs;
             for (const auto &f : families)

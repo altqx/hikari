@@ -6,6 +6,7 @@
 #include "text_util.h"
 
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 #include <optional>
 #include <span>
 #include <string>
@@ -221,7 +222,7 @@ struct LrcEntry {
     std::size_t lineNumber = 0;
     std::vector<std::int64_t> times;
     std::vector<LyricWord> words;    // begin set; end set only from a later stamp
-    std::vector<bool> ended;         // per word: its end came from a stamp
+    boost::dynamic_bitset<> ended;   // per word: its end came from a stamp
     std::u8string text;              // lyrics without word stamps
     std::u8string actor;
     bool timedWords = false;
