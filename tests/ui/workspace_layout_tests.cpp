@@ -23,6 +23,16 @@
 
 using namespace hikari;
 
+namespace {
+
+QByteArray readAll(const QString &path)
+{
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
+
+}
+
 class WorkspaceLayoutTest : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -356,18 +366,14 @@ private slots:
         QVERIFY(layouts.locked());
         QVERIFY(ui::layoutLocked());
         stop();
-        QFile f(layoutFile());
-        QVERIFY(f.open(QIODevice::ReadOnly));
-        QVERIFY(QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("locked")).toBool());
+        QVERIFY(QJsonDocument::fromJson(readAll(layoutFile())).object().value(QStringLiteral("locked")).toBool());
 
         start();
         QVERIFY(application->workspaceLayout().locked());
         QVERIFY(ui::layoutLocked());
         QVERIFY(application->workspaceLayout().setLocked(false));
         stop();
-        QFile again(layoutFile());
-        QVERIFY(again.open(QIODevice::ReadOnly));
-        QVERIFY(!QJsonDocument::fromJson(again.readAll()).object().contains(QStringLiteral("locked")));
+        QVERIFY(!QJsonDocument::fromJson(readAll(layoutFile())).object().contains(QStringLiteral("locked")));
     }
 
     void theLockTravelsWithTheArrangement()
