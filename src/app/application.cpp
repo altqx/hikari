@@ -395,7 +395,7 @@ public:
     {
         using K = application::FindLog::Kind;
         switch (line.kind) {
-        case K::InvalidRegex: return QCoreApplication::translate("HikariSub.Search", "Invalid regular expression '%1': %2")
+        case K::InvalidRegex: return QCoreApplication::translate("HikariSub.Search", "Invalid regular expression “%1”: %2")
                                          .arg(qs(line.first), qs(line.second));
         case K::MatchError: return QCoreApplication::translate("HikariSub.Search", "Failed to find match for regular expression: %1")
                                        .arg(qs(line.first));
@@ -3902,7 +3902,7 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
             continue;
         if (result->invalidExpression)
             m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.SelectLines", "Select lines"),
-                          QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
+                          QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression “%1”: %2")
                               .arg(fromUtf16(result->invalidExpression->first), fromUtf16(result->invalidExpression->second)));
         for (const auto &error : result->matchErrors)
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.SelectLines", "Select lines"),

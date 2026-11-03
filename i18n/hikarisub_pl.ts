@@ -5124,24 +5124,24 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usunięto skrót %1 polecenia “Włącz / Wyłącz edytor”: edytor jest zawsze widoczny; zamiast tego ukryj panele lub wybierz układ.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Otwórz okno mapowania skrótów&quot;: tego okna już nie ma, a skrót każdego makra ustawia się w panelu Automatyzacja.</translation>
+        <source>The shortcut %1 of “Open shortcut mapping window” was removed: the window is gone and each macro’s shortcut is set in the Automation panel.</source>
+        <translation>Usunięto skrót %1 polecenia “Otwórz okno mapowania skrótów”: tego okna już nie ma, a skrót każdego makra ustawia się w panelu Automatyzacja.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
         <translation>Usunięto skrót %1 polecenia “Popraw drobne błędy (eksperymentalne)”: ta funkcja została usunięta.</translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation>Usunięto skrót %1 polecenia &quot;Otwórz puste audio na 2:30 godziny&quot;: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
+        <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation>Usunięto skrót %1 polecenia “Otwórz puste audio na 2:30 godziny”: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.</source>
         <translation>Usunięto skrót %1 polecenia “Otwórz wideo przez FFMS2”: polecenie zostało wycofane, a wideo jest zawsze indeksowane.</translation>
     </message>
     <message>
-        <source>Shortcut &quot;%1&quot; is invalid</source>
-        <translation>Skrót &quot;%1&quot; nie jest prawidłowy</translation>
+        <source>Shortcut “%1” is invalid</source>
+        <translation>Skrót “%1” nie jest prawidłowy</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -10616,8 +10616,8 @@ ponieważ została zmieniona.</translation>
         <translation>Liczba zamian: %1.</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>Nieprawidłowe wyrażenie regularne &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>Nieprawidłowe wyrażenie regularne “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
@@ -10783,8 +10783,8 @@ ponieważ została zmieniona.</translation>
         <translation>Zamknij</translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation>Nieprawidłowe wyrażenie regularne &apos;%1&apos;: %2</translation>
+        <source>Invalid regular expression “%1”: %2</source>
+        <translation>Nieprawidłowe wyrażenie regularne “%1”: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>

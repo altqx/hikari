@@ -19221,7 +19221,7 @@ private slots:
                                                    QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-H")});
         QStringList logged;
         app::HotkeysController h(application->automationHotkeys(), store, [&](const QString &m, bool) { logged << m; });
-        QCOMPARE(logged, QStringList{QStringLiteral("Shortcut \"Bogus\" is invalid")});
+        QCOMPARE(logged, QStringList{QStringLiteral("Shortcut “Bogus” is invalid")});
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-Bogus"));
         QVERIFY(!h.keys().value(QStringLiteral("global")).toMap().contains(QStringLiteral("GLOBAL_SAVE_SUBS")));
     }
