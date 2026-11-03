@@ -176,6 +176,23 @@ TEST_F(PluginProcessTest, EventsWaitBehindACommandAndTheNewestOfANameWins)
     EXPECT_EQ(m_notices, std::vector<std::string>{"seen 3"});
 }
 
+TEST_F(PluginProcessTest, DeliveredEventsMergeOnlyUnderTheSameKey)
+{
+    m_slowReplyMs = 300;
+    auto p = process(plugin("keys", "hikari.events.on('document.changed', function(e) hikari.notify(e.n) end) "
+                                    "hikari.commands.register('wait', function() hikari.call('api.version') end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("wait"));
+    ASSERT_TRUE(waitFor([&] { return p->busy() && p->state() == PluginProcess::State::Ready; }));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "click a"})", {}));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "click b"})", {}));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "move 1"})", "move"));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "move 2"})", "move"));
+    ASSERT_TRUE(waitFor([&] { return m_notices.size() == 3; }));
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+    EXPECT_EQ(m_notices, (std::vector<std::string>{"click a", "click b", "move 2"}));
+}
+
 TEST_F(PluginProcessTest, ALoadErrorIsReportedAndStopsFurtherRuns)
 {
     auto p = process(plugin("broken", "this is not lua"));
@@ -185,6 +202,21 @@ TEST_F(PluginProcessTest, ALoadErrorIsReportedAndStopsFurtherRuns)
     EXPECT_TRUE(p->loadError().startsWith(QStringLiteral("main.lua:1:"))) << p->loadError().toStdString();
     EXPECT_EQ(p->state(), PluginProcess::State::LoadFailed);
     EXPECT_FALSE(p->run("greet"));
+}
+
+TEST_F(PluginProcessTest, StartTriesAgainAfterAFailedLoad)
+{
+    const std::string root = plugin("fixed", "this is not lua");
+    auto p = process(root);
+    QSignalSpy failed(p.get(), &PluginProcess::loadFailed);
+    QSignalSpy loaded(p.get(), &PluginProcess::loaded);
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return failed.count() == 1; }));
+    plugin("fixed", "hikari.notify('back')");
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return loaded.count() == 1; }));
+    EXPECT_EQ(p->state(), PluginProcess::State::Ready);
+    EXPECT_EQ(m_notices, std::vector<std::string>{"back"});
 }
 
 TEST_F(PluginProcessTest, AnErrorInACommandIsReportedAndThePluginKeepsRunning)

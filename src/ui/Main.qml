@@ -366,7 +366,7 @@ ApplicationWindow {
             dockingArea.addDockWidget(templateDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
 
-    function addRightOfGrid(dock) {
+    function addRightOfGrid(dock, preferredWidth) {
         const grid = gridDock.isOpen && !gridDock.isFloating
         const left = Docking.placeInLayout(root.engineName("Grid")).x
         const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf(root.engineName("Grid")))
@@ -374,7 +374,7 @@ ApplicationWindow {
             column.addDockWidgetAsTab(dock)
         } else {
             const third = Math.round((grid ? root.workspaceLayout.panelSize(gridDock).width : dockingArea.width) / 3)
-            const width = Math.min(Docking.minimumSize(dock.uniqueName).width, third)
+            const width = Math.min(Math.max(Docking.minimumSize(dock.uniqueName).width, preferredWidth ?? 0), third)
             dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnRight, grid ? gridDock : null, Qt.size(width, 0))
         }
         const moved = Docking.placeInLayout(root.engineName("Grid")).x - left
@@ -389,13 +389,147 @@ ApplicationWindow {
         automationTool.showRun(runId)
     }
 
-    readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel, logPanel,
-                                          stylesPanel, templatePanel]
-    readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
+    readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
+                                                 timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
+                                                 logPanel, stylesPanel, templatePanel]
+    readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
+                                         postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
+                                         templateDock]
+    property var pluginDocks: []
+    readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
+    readonly property var dockList: builtInDocks.concat(pluginDocks)
+    readonly property var pluginUi: root.app.pluginRuntime ? root.app.pluginRuntime.ui : null
+    readonly property var pluginPanelRows: {
+        const rows = root.pluginUi ? root.pluginUi.panels.slice() : []
+        for (const dock of root.pluginDocks)
+            if (!rows.some(r => r.dock === dock.storedName))
+                rows.push({ dock: dock.storedName, title: dock.title, pluginName: dock.pluginName, area: "right" })
+        return rows
+    }
+    function isPluginDock(dock) { return !!dock && dock.isPlugin === true }
+    function pluginDock(name) {
+        const known = root.pluginDocks.find(d => d.storedName === name)
+        if (known || !root.workspaceLayout.isPluginPanel(name))
+            return known ?? null
+        const dock = pluginDockComponent.createObject(dockingArea, { uniqueName: root.engineName(name), storedName: name })
+        dock.openedWithoutPlace.connect(() => root.openAtFirstPlace(dock))
+        dock.isOpenChanged.connect(() => root.app.apiHost.panelChanged(name))
+        dock.isFloatingChanged.connect(() => root.app.apiHost.panelChanged(name))
+        keyRouter.addPanel(dock.panel, null)
+        root.pluginDocks = root.pluginDocks.concat([dock])
+        return dock
+    }
+    function showPluginPanel(name) {
+        const dock = root.pluginDock(name)
+        if (dock)
+            root.showPanel(dock)
+    }
+    function addPluginDock(dock) {
+        const row = root.pluginUi ? root.pluginUi.panels.find(r => r.dock === dock.storedName) : undefined
+        const area = row ? row.area : "right"
+        if (area === "bottom" && logDock.isOpen && !logDock.isFloating)
+            logDock.addDockWidgetAsTab(dock)
+        else if (area === "bottom")
+            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
+        else if (area === "left")
+            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnLeft, null, Qt.size(300, 0))
+        else
+            root.addRightOfGrid(dock, 300)
+    }
+    function forgetPluginDock(dock) {
+        dock.forceClose()
+        root.pluginDocks = root.pluginDocks.filter(d => d !== dock)
+        dock.deleteDockWidgetLater()
+    }
+    Connections {
+        target: root.workspaceLayout
+        function onPluginDocksNeeded(docks) {
+            for (const name of docks)
+                root.pluginDock(name)
+        }
+    }
+    Connections {
+        target: root.pluginUi
+        function onShowRequested(dock) { root.showPluginPanel(dock) }
+        function onDialogOpened(state) {
+            const window = pluginDialogComponent.createObject(root, { dialogState: state })
+            root.pluginDialogs[state.key] = window
+            window.open()
+        }
+        function onDialogClosed(state) {
+            const window = root.pluginDialogs[state.key]
+            delete root.pluginDialogs[state.key]
+            if (!window)
+                return
+            window.finish()
+            window.destroy()
+        }
+    }
+    property var pluginDialogs: ({})
+    Component {
+        id: pluginDialogComponent
+        PluginDialog {
+            ui: root.pluginUi
+            settings: root.app.settings
+            colourPicker: root.colourPicker
+        }
+    }
+    Component {
+        id: pluginDockComponent
+        PanelDock {
+            id: pluginDock
+            objectName: "pluginDock_" + uniqueName
+            affinities: root.dockAffinities
+            readonly property bool isPlugin: true
+            required property string storedName
+            readonly property alias panel: pluginPanel
+            readonly property alias body: pluginBody
+            property string pluginName
+            property string knownTitle
+            title: knownTitle || storedName
+            readonly property string tip: pluginName.length > 0
+                                          ? qsTranslate("HikariSub.Plugins", "%1, from %2").arg(title, pluginName) : ""
+            onTipChanged: Docking.setPanelTip(uniqueName, tip)
+            Component.onCompleted: Docking.setPanelTip(uniqueName, tip)
+            function remember() {
+                if (knownTitle.length > 0)
+                    root.workspaceLayout.rememberPluginPanel(storedName, knownTitle, pluginName)
+            }
+            onKnownTitleChanged: remember()
+            onPluginNameChanged: remember()
+            Panel {
+                id: pluginPanel
+                objectName: "pluginPanel_" + pluginDock.uniqueName
+                dockName: pluginDock.uniqueName
+                minimumBodySize: Qt.size(160, 120)
+                anchors.fill: parent
+                title: pluginDock.title
+                PluginPanelBody {
+                    id: pluginBody
+                    objectName: "pluginPanelBody_" + pluginDock.uniqueName
+                    anchors.fill: parent
+                    ui: root.pluginUi
+                    dock: pluginDock.storedName
+                    saved: root.workspaceLayout.pluginPanelInfo(pluginDock.storedName)
+                    shown: pluginDock.isOpen
+                    colourPicker: root.colourPicker
+                    onOpenPlugins: plugin => pluginManagerDialog.showPlugin(plugin)
+                    onTurnOn: plugin => root.app.pluginManager.setEnabled(plugin, true)
+                    onRestart: plugin => root.app.pluginRuntime.restart(plugin)
+                    onDetails: root.showPanel(logDock)
+                    // KDDW deletes these children inside ~DockWidget; a binding on pluginBody would then call into the dying dock.
+                    onPluginNameChanged: pluginDock.pluginName = pluginName
+                    onTitleChanged: pluginDock.knownTitle = title
+                    Component.onCompleted: {
+                        pluginDock.pluginName = pluginName
+                        pluginDock.knownTitle = title
+                    }
+                }
+            }
+        }
+    }
     Instantiator {
-        model: root.dockList
+        model: root.builtInDocks
         delegate: Connections {
             required property var modelData
             target: modelData
@@ -576,6 +710,8 @@ ApplicationWindow {
             root.addStyles()
         else if (dock === templateDock && !Docking.hasPlace(root.engineName("Template")))
             root.addTemplate()
+        else if (root.isPluginDock(dock) && !Docking.hasPlace(dock.uniqueName))
+            root.addPluginDock(dock)
         else if (!Docking.hasPlace(dock.uniqueName))
             root.addRightOfGrid(dock)
         else
@@ -660,7 +796,20 @@ ApplicationWindow {
                     { name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated lines"), checkable: true,
                       checked: () => root.shell.foldGenerated,
                       run: () => root.shell.foldGenerated = !root.shell.foldGenerated }]
+        if (root.isPluginDock(dock))
+            return root.pluginPanelItems(dock)
         return []
+    }
+    function pluginPanelItems(dock) {
+        const state = dock.body?.panelState
+        if (!state)
+            return []
+        const row = id => state.menu.find(r => r.id === id) ?? {}
+        return state.status === "running" ? state.menu.map(r => ({
+            name: "pluginMenu_" + r.id, text: r.text, checkable: r.checked !== undefined,
+            checked: () => row(r.id).checked === true, enabled: () => row(r.id).disabled !== true,
+            run: () => root.pluginUi.send(dock.storedName, { kind: "menu", widget: r.id })
+        })) : []
     }
     readonly property VideoFollowChoices videoFollow: VideoFollowChoices { settings: root.app.settings }
     function panelOwnMenus(dock) {
@@ -676,6 +825,8 @@ ApplicationWindow {
     function closePanel(dock) {
         if (dock === referenceDock)
             root.app.closeReference()
+        else if (root.isPluginDock(dock) && dock.body.status === "missing")
+            root.forgetPluginDock(dock)
         else
             dock.close()
     }
@@ -807,6 +958,19 @@ ApplicationWindow {
             text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Undock")
             enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
             onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
+        }
+        Instantiator {
+            readonly property var panelState: root.isPluginDock(panelOptionsMenu.dock) ? (panelOptionsMenu.dock.body?.panelState ?? null) : null
+            model: panelState !== null && panelState.status !== "missing" ? [panelState] : []
+            delegate: ShellMenuItem {
+                required property var modelData
+                iconRole: "about"
+                objectName: "panelOptionsAbout"
+                text: qsTranslate("HikariSub.Plugins", "About %1…").arg(panelOptionsMenu.dock?.pluginName ?? "")
+                onTriggered: pluginManagerDialog.showPlugin(modelData.pluginId)
+            }
+            onObjectAdded: (index, object) => panelOptionsMenu.insertItem(panelOptionsMenu.count - 1, object)
+            onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
         ShellMenuItem {
             iconRole: "tab-close"
@@ -2353,7 +2517,7 @@ ApplicationWindow {
                 objectName: "panelsMenu"
                 title: qsTr("&Panels")
                 Instantiator {
-                    model: root.dockList
+                    model: root.builtInDocks
                     delegate: ShellMenu {
                         required property var modelData
                         objectName: "panelMenu" + modelData.uniqueName
@@ -2388,6 +2552,63 @@ ApplicationWindow {
                         }
                     }
                     onObjectAdded: (index, object) => panelsMenu.insertMenu(index, object)
+                    onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
+                }
+                MenuSeparator {
+                    visible: root.pluginPanelRows.length > 0
+                    height: visible ? implicitHeight : 0
+                }
+                Instantiator {
+                    model: root.pluginPanelRows
+                    delegate: ShellMenu {
+                        id: pluginPanelMenu
+                        required property var modelData
+                        readonly property var dock: root.pluginDocks.find(d => d.storedName === modelData.dock) ?? null
+                        readonly property bool kept: !root.pluginUi || !root.pluginUi.panels.some(r => r.dock === modelData.dock)
+                        objectName: "panelMenu" + modelData.dock
+                        iconRole: "plugins"
+                        title: modelData.title
+                        detailText: modelData.pluginName
+                        ShellMenuItem {
+                            iconRole: "show"
+                            objectName: "panelShow" + pluginPanelMenu.modelData.dock
+                            text: qsTr("Show")
+                            enabled: !pluginPanelMenu.kept
+                            onTriggered: root.showPluginPanel(pluginPanelMenu.modelData.dock)
+                        }
+                        ShellMenuItem {
+                            iconRole: "hide"
+                            objectName: "panelHide" + pluginPanelMenu.modelData.dock
+                            text: qsTr("Hide")
+                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
+                            onTriggered: pluginPanelMenu.dock.close()
+                        }
+                        ShellMenuItem {
+                            iconRole: "panel-float"
+                            objectName: "panelFloat" + pluginPanelMenu.modelData.dock
+                            text: qsTr("Float")
+                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
+                                     && !pluginPanelMenu.dock.isFloating
+                            onTriggered: root.setPanelFloating(pluginPanelMenu.dock, true)
+                        }
+                        ShellMenuItem {
+                            iconRole: "panel-dock"
+                            objectName: "panelDock" + pluginPanelMenu.modelData.dock
+                            text: qsTr("Dock")
+                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
+                                     && pluginPanelMenu.dock.isFloating
+                            onTriggered: root.setPanelFloating(pluginPanelMenu.dock, false)
+                        }
+                        ShellMenuItem {
+                            iconRole: "remove"
+                            objectName: "panelForget" + pluginPanelMenu.modelData.dock
+                            text: qsTr("Remove from the layout")
+                            visible: pluginPanelMenu.kept
+                            height: visible ? implicitHeight : 0
+                            onTriggered: root.forgetPluginDock(pluginPanelMenu.dock)
+                        }
+                    }
+                    onObjectAdded: (index, object) => panelsMenu.insertMenu(root.builtInDocks.length + 1 + index, object)
                     onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
                 }
             }
@@ -4482,7 +4703,6 @@ ApplicationWindow {
                         AudioButton {
                             id: audioMoreButton
                             objectName: "audioMore"
-                            visible: audioButtons.togglesFolded
                             iconRole: "menu-more"
                             text: qsTranslate("HikariSub.Audio", "More audio options")
                             tip: text
@@ -4504,6 +4724,15 @@ ApplicationWindow {
                                 }
                                 component FoldedSeparator: MenuSeparator {
                                     visible: audioButtons.folded
+                                    height: visible ? implicitHeight : 0
+                                }
+                                component FoldedToggle: ShellMenuItem {
+                                    checkable: true
+                                    visible: audioButtons.togglesFolded
+                                    height: visible ? implicitHeight : 0
+                                }
+                                component FoldedToggleSeparator: MenuSeparator {
+                                    visible: audioButtons.togglesFolded
                                     height: visible ? implicitHeight : 0
                                 }
                                 component FoldedPlay: ShellMenuItem {
@@ -4655,18 +4884,17 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedToggle {
                                     objectName: "audioMoreSpeechSpectrum"
                                     iconRole: "spectrum-nonlinear"
                                     text: qsTranslate("HikariSub.Audio", "Speech spectrum")
-                                    checkable: true
                                     checked: root.audio.spectrumNonLinear
                                     onToggled: {
                                         root.audio.setSpectrumNonLinear(checked)
                                         checked = Qt.binding(() => root.audio.spectrumNonLinear)
                                     }
                                 }
-                                MenuSeparator {}
+                                FoldedToggleSeparator {}
                                 ShellMenuItem {
                                     objectName: "audioMoreGotoStart"
                                     iconRole: "video-to-start-time"
@@ -4681,22 +4909,21 @@ ApplicationWindow {
                                     command: "AUDIO_GOTO_END"
                                     onTriggered: if (!root.hotkeyGesture("AUDIO_GOTO_END", 4, true, false)) root.audio.goToSelectionEnd()
                                 }
-                                MenuSeparator {}
-                                ShellMenuItem {
+                                FoldedToggleSeparator {}
+                                FoldedToggle {
                                     objectName: "audioMoreAutoScroll"
                                     iconRole: "auto-scroll"
                                     text: qsTranslate("HikariSub.Audio", "Auto-scroll")
-                                    checkable: true
                                     checked: root.audio.autoScroll
                                     onToggled: {
                                         root.audio.setAutoScroll(checked)
                                         checked = Qt.binding(() => root.audio.autoScroll)
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedToggle {
+                                    objectName: "audioMoreSyncVideo"
                                     iconRole: "audio-video-sync"
                                     text: qsTranslate("HikariSub.Audio", "Sync with video")
-                                    checkable: true
                                     checked: root.audio.syncVideo
                                     onToggled: {
                                         root.audio.setSyncVideo(checked)
@@ -6133,7 +6360,9 @@ ApplicationWindow {
     PluginManagerDialog {
         id: pluginManagerDialog
         manager: root.app.pluginManager
+        runtime: root.app.pluginRuntime
         settings: root.app.settings
+        onCopyRequested: text => root.app.copyText(text)
     }
 
     TapCalibrationWindow {

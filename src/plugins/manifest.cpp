@@ -51,6 +51,20 @@ std::vector<Contribution> contributions(const Json *list)
     return out;
 }
 
+std::vector<Panel> panels(const Json *list)
+{
+    std::vector<Panel> out;
+    if (list)
+        for (const Json &item : list->asArray()) {
+            const std::string area = text(item, "area");
+            out.push_back({text(item, "id"), text(item, "title"),
+                           area == "left"     ? PanelArea::Left
+                           : area == "bottom" ? PanelArea::Bottom
+                                              : PanelArea::Right});
+        }
+    return out;
+}
+
 template <typename Items>
 std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
 {
@@ -173,7 +187,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     }
     if (const Json *contributes = json.find("contributes")) {
         m.commands = contributions(contributes->find("commands"));
-        m.panels = contributions(contributes->find("panels"));
+        m.panels = panels(contributes->find("panels"));
         if (const Json *settings = contributes->find("settings"))
             for (const Json &s : settings->asArray())
                 m.settings.push_back({text(s, "id"), text(s, "title"), s});
