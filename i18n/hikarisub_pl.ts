@@ -4368,6 +4368,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Brak otwartego dokumentu</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>Utrwal animacje</translation>
+    </message>
+    <message>
         <source>Show subtitles preview</source>
         <translation>Pokaż podgląd napisów</translation>
     </message>
@@ -8736,6 +8740,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Count spaces and punctuation for CPS</source>
         <translation>Licz spacje i interpunkcję w CPS</translation>
+    </message>
+    <message>
+        <source>Splitting</source>
+        <translation>Dzielenie</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>Utrwalaj animacje przy dzieleniu na klatki</translation>
     </message>
     <message>
         <source>New lines</source>

@@ -40,9 +40,10 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9 | Split lines ▸ | | | split-lines |
 | 9.1 | Split line at video time | GRID_SPLIT_BY_VIDEO_TIME | video loaded | split-at-video |
 | 9.2 | Split lines into frames | GRID_SPLIT_BY_FRAME | video loaded | split-frames |
-| 9.3 | Split lines into characters | GRID_SPLIT_BY_CHARS | | split-characters |
-| 9.4 | Split lines into words | GRID_SPLIT_BY_WORDS | | split-words |
-| 9.5 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
+| 9.3 | [x] Bake animations | | `grid.splitFramesBakeAnimations`, on by default | |
+| 9.4 | Split lines into characters | GRID_SPLIT_BY_CHARS | | split-characters |
+| 9.5 | Split lines into words | GRID_SPLIT_BY_WORDS | | split-words |
+| 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
 | 11 | Make line group | GRID_TREE_MAKE | | make-tree |
 | 12 | Show subtitles preview | GRID_SHOW_PREVIEW | `canShowPreview()`; key bound | reference |

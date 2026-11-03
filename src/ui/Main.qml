@@ -5413,6 +5413,7 @@ ApplicationWindow {
                             objectName: "gridSplitMenu"
                             iconRole: "split-lines"
                             title: qsTranslate("HikariSub.Grid", "Split")
+                            onAboutToShow: bakeAnimationsItem.checked = root.app.settings.value("grid.splitFramesBakeAnimations")
                             ShellMenuItem {
                                 command: "GRID_SPLIT_BY_VIDEO_TIME"
                                 iconRole: "split-at-video"
@@ -5428,6 +5429,13 @@ ApplicationWindow {
                                 text: qsTranslate("HikariSub.Grid", "Into frames")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_FRAME")) root.app.splitLines("frames")
+                            }
+                            ShellMenuItem {
+                                id: bakeAnimationsItem
+                                objectName: "splitFramesBakeAnimations"
+                                text: qsTranslate("HikariSub.Grid", "Bake animations")
+                                checkable: true
+                                onTriggered: root.app.settings.setValue("grid.splitFramesBakeAnimations", checked)
                             }
                             MenuSeparator {}
                             ShellMenuItem {

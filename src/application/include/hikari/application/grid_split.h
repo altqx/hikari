@@ -20,9 +20,11 @@ std::expected<void, CommandRefusal> splitAtVideoTime(EditSession &session, const
 // Each shown selected Line becomes one Line per frame from the frame at its
 // Start to the one before the frame at its End (to centiseconds); a \move
 // becomes the \pos it has at each frame's time. Needs an exact (indexed)
-// timebase.
+// timebase. Bake also gives each frame the \t, \fad and \fade values it has
+// reached (bakeAnimations).
+enum class FrameAnimations { Keep, Bake };
 std::expected<void, CommandRefusal> splitIntoFrames(EditSession &session, const LegacyTimebase &timebase,
-                                                    const LineVisible &visible = {});
+                                                    FrameAnimations animations, const LineVisible &visible = {});
 
 // Each shown selected Line becomes one positioned Line per character, word or
 // wrap (\N), measured with its Style and tags from its \pos or \move, else

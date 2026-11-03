@@ -4332,6 +4332,10 @@ Failed to copy %2 fonts.</source>
         <translation>ஆவணம் எதுவும் திறக்கப்படவில்லை</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>அசைவூட்டங்களை நிலைப்படுத்து</translation>
+    </message>
+    <message>
         <source>Show subtitles preview</source>
         <translation>வசன வரிகள் முன்னோட்டத்தைக் காட்டு</translation>
     </message>
@@ -8684,6 +8688,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Count spaces and punctuation for CPS</source>
         <translation>CPS க்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் எண்ணு</translation>
+    </message>
+    <message>
+        <source>Splitting</source>
+        <translation>பிரித்தல்</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>சட்டகங்களாகப் பிரிக்கும்போது அசைவூட்டங்களை நிலைப்படுத்து</translation>
     </message>
     <message>
         <source>New lines</source>
