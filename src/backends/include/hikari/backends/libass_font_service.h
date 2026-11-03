@@ -3,6 +3,7 @@
 #include "hikari/application/font_service.h"
 
 #include <atomic>
+#include <boost/dynamic_bitset.hpp>
 
 namespace hikari::backends {
 
@@ -19,9 +20,9 @@ public:
     verifyReimport(const std::vector<std::byte> &script, const application::FontCollection &collection,
                    const std::string &defaultFamily = {}) override;
     std::vector<application::SystemFace> pickerFaces(const application::FontEnvironment &environment) override;
-    std::vector<bool> facesCover(const std::vector<application::SystemFace> &faces,
-                                 const application::FontEnvironment &environment,
-                                 const std::u32string &characters) override;
+    boost::dynamic_bitset<> facesCover(const std::vector<application::SystemFace> &faces,
+                                       const application::FontEnvironment &environment,
+                                       const std::u32string &characters) override;
     void refresh() override;
     std::vector<std::string> fontDirectories() override;
 };

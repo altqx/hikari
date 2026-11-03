@@ -9,7 +9,6 @@
 #include <fstream>
 #include <functional>
 #include <map>
-#include <regex>
 #include <set>
 #include <sstream>
 
@@ -113,16 +112,10 @@ std::string padding()
     return out;
 }
 
-std::string convertedRules(std::string_view legacy)
-{
-    return "converted: " + std::string(legacy);
-}
-
 Destination linuxHost()
 {
     Destination d;
     d.windowsHost = false;
-    d.convertRules = convertedRules;
     return d;
 }
 
@@ -333,7 +326,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 282);
+    EXPECT_EQ(bound, 285);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
@@ -862,7 +855,7 @@ TEST(SettingsImport, RepeatedImportIsANoOpAndLaterEditsAreKept)
     auto chosen = proposedRows(plan);
     chosen.erase("setting:grid.fontSize");
     const Profile imported = applyPlan(plan, chosen, start);
-    EXPECT_EQ(imported.files.at("rules.toml"), convertedRules("1\ta\tb\n"));
+    EXPECT_FALSE(imported.files.contains("rules.toml"));
     EXPECT_EQ(imported.files.at("Dictionary/UserDic.udic"), "słowo\n");
     const Receipt receipt = receiptOf(plan, chosen, "default");
     EXPECT_TRUE(receipt.kept.contains("setting:grid.fontSize"));
@@ -873,7 +866,7 @@ TEST(SettingsImport, RepeatedImportIsANoOpAndLaterEditsAreKept)
     const Plan again = buildPlan(sources, after, o);
     EXPECT_FALSE(rowOf(again, "setting:grid.fontSize").proposedImport);
     EXPECT_EQ(rowOf(again, "setting:grid.font").disposition, Disposition::Unchanged);
-    EXPECT_EQ(rowOf(again, "collection:rules.toml").disposition, Disposition::Unchanged);
+    EXPECT_EQ(rowOf(again, "collection:Dictionary/UserDic.udic").disposition, Disposition::Unchanged);
     EXPECT_EQ(applyPlan(again, proposedRows(again), after), imported);
     EXPECT_TRUE(receiptOf(again, proposedRows(again), "default").sameIdentity(receipt));
 
@@ -899,36 +892,38 @@ TEST(SettingsImport, CollectionsAreCarriedOverByteForByte)
     Destination d = linuxHost();
     d.files["rules.toml"] = DestinationFile{"mine", fakeHash("mine")};
     d.bundledDictionaries = {"en_US"};
-    const Plan plan = buildPlan({source(SourceKind::Rules, "Config/Rules.txt", "\xEF\xBB\xBFrules\r\n"),
-                                 source(SourceKind::Dictionary, "Dictionary/en_US.dic", "dic"),
+    const Plan plan = buildPlan({source(SourceKind::Dictionary, "Dictionary/en_US.dic", "dic"),
                                  source(SourceKind::Dictionary, "Dictionary/en_US.aff", "aff"),
                                  source(SourceKind::Dictionary, "Dictionary/pl_PL.dic", "dic")},
                                 d, readBy(ReadBy::Windows));
-    const PlanRow &rules = rowOf(plan, "collection:rules.toml");
-    EXPECT_EQ(rules.disposition, Disposition::Change);
-    EXPECT_FALSE(rules.proposedImport);
-    EXPECT_EQ(rules.files, std::vector<std::string>{"rules.toml"});
-    EXPECT_NE(rules.reason.find("converted to rules.toml"), std::string::npos);
     const PlanRow &en = rowOf(plan, "collection:Dictionary/en_US");
     EXPECT_EQ(en.files, (std::vector<std::string>{"Dictionary/en_US.dic", "Dictionary/en_US.aff"}));
     EXPECT_NE(en.reason.find("would shadow"), std::string::npos);
     EXPECT_FALSE(en.proposedImport);
     EXPECT_EQ(rowOf(plan, "collection:Dictionary/pl_PL").disposition, Disposition::Unresolved);
-    const Profile p = applyPlan(plan, {"collection:rules.toml", "collection:Dictionary/en_US"}, d);
-    EXPECT_EQ(p.files.at("rules.toml"), convertedRules("\xEF\xBB\xBFrules\r\n"));
-    EXPECT_FALSE(p.files.contains("Rules.txt"));
+    const Profile p = applyPlan(plan, {"collection:Dictionary/en_US"}, d);
     EXPECT_EQ(p.files.at("Dictionary/en_US.aff"), "aff");
     EXPECT_FALSE(p.files.contains("Dictionary/pl_PL.dic"));
 }
 
-TEST(SettingsImport, RulesWithoutAConversionAreNotImported)
+TEST(SettingsImport, TheRemovedFixMinorErrorsRulesAreRetired)
 {
     Destination d = linuxHost();
-    d.convertRules = nullptr;
-    const Plan plan = buildPlan({source(SourceKind::Rules, "Config/Rules.txt", "rules\r\n")}, d, readBy(ReadBy::Windows));
-    EXPECT_EQ(rowOf(plan, "file:Config/Rules.txt").disposition, Disposition::Unresolved);
+    d.files["rules.toml"] = DestinationFile{"mine", fakeHash("mine")};
+    const Plan plan = buildPlan({source(SourceKind::Rules, "Config/Rules.txt", "rules\r\n"),
+                                 hotkeys("GLOBAL_MISSPELLS_REPLACER G=Ctrl-Alt-M\r\n")},
+                                d, readBy(ReadBy::Windows));
+    const PlanRow &rules = rowOf(plan, "file:Config/Rules.txt");
+    EXPECT_EQ(rules.disposition, Disposition::Retired);
+    EXPECT_FALSE(rules.selectable);
+    EXPECT_NE(rules.reason.find("Fix minor errors was removed"), std::string::npos) << rules.reason;
     EXPECT_EQ(plan.row("collection:rules.toml"), nullptr);
     EXPECT_TRUE(plan.files.empty());
+    const PlanRow &binding = rowOf(plan, "shortcut:GLOBAL_MISSPELLS_REPLACER:G");
+    EXPECT_EQ(binding.disposition, Disposition::Retired);
+    EXPECT_NE(binding.reason.find("Fix minor errors was removed"), std::string::npos) << binding.reason;
+    const Profile profile = applyPlan(plan, proposedRows(plan), d);
+    EXPECT_EQ(profile, profileOf(d));
 }
 
 TEST(SettingsImport, AmbiguousEncodingNeedsAnExplicitInterpretation)

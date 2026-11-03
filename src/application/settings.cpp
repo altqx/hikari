@@ -276,6 +276,7 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.tapLatency", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"audio.onsetSnap", "", Bool, Profile, Mapped, false, false},
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
+        {"editor.softLineBreak", "", Bool, Profile, Mapped, false, false},
         {"grid.splitFramesBakeAnimations", "", Bool, Profile, Mapped, false, true},
         // usageDataId: random, made at the first send, cleared when usage data is turned off.
         {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
@@ -300,8 +301,13 @@ const std::vector<SettingDefinition> &definitions()
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
         // Without a "v"; empty: none.
         {"updater.skippedVersion", "", String, Profile, Mapped, false, std::string()},
-        // Section ids: "amount", "lines", "videoAudio", "leadInOut", "continuous", "snap".
-        {"shiftTimes.collapsedSections", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        {"shiftTimes.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"shiftTimes.preset", "", String, Profile, Mapped, false, std::string()},
+        {"postprocessor.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"postprocessor.preset", "", String, Profile, Mapped, false, std::string()},
+        {"postprocessor.timingPreset", "", String, Profile, Mapped, false, std::string()},
+        {"postprocessor.whichLines", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -317,6 +323,11 @@ const std::vector<SettingDefinition> &definitions()
         {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
+        // visual::ZoomModel and visual::ScrollAction values.
+        {"video.zoomModel", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.scrollAction", "", Int, Profile, Mapped, false, std::int64_t{4}},
+        {"video.ctrlScrollAction", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.shiftScrollAction", "", Int, Profile, Mapped, false, std::int64_t{2}},
         // 0 video resolution, 1 screen size (libass only).
         {"video.previewSubtitlesAt", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // dialogAnswers: one "<key>\t<JSON>" row per dialog, last used first, at most 200.
@@ -325,6 +336,7 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.closedCompounds", "", Bool, Profile, Mapped, false, true},

@@ -17,6 +17,7 @@
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QTextFragment>
+#include <boost/dynamic_bitset.hpp>
 
 #include <algorithm>
 #include <utility>
@@ -566,7 +567,7 @@ QByteArray WhatsNew::cacheContent(const QString &installed, const QString &since
     const auto share = [&](qsizetype i) {
         return QJsonDocument(entries.at(i).toObject()).toJson(QJsonDocument::Compact).size() + 1;
     };
-    std::vector<bool> shown(releases.size(), false);
+    boost::dynamic_bitset<> shown(releases.size());
     std::size_t stable = 0;
     for (std::size_t i = 0; i < releases.size(); ++i) {
         const bool prerelease = a::isPrerelease(releases[i]);

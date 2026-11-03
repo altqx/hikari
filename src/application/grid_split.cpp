@@ -428,7 +428,7 @@ std::vector<std::string> fieldsOf(const core::StyleValues &v)
     f[ScaleY] = u8s(v.scaleY);
     f[Spacing] = u8s(v.spacing);
     f[Angle] = u8s(v.angle);
-    f[BorderStyle] = v.borderStyle ? "3" : "1";
+    f[BorderStyle] = std::to_string(v.borderStyle);
     f[OutlineWidth] = u8s(v.outlineWidth);
     f[Shadow] = u8s(v.shadow);
     f[Alignment] = u8s(v.alignment);

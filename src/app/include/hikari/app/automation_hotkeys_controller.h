@@ -10,6 +10,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
@@ -61,6 +62,10 @@ public:
     std::vector<std::string> unboundMacros() const;
     // {script, macro, problem}; problem is empty while the binding resolves.
     QVariantMap describe(const std::string &legacyName) const;
+    // Plugin commands bind by their id ("plugin.<plugin id>.<command>") and resolve while listed:
+    // [{id, pluginName, title}].
+    void setPluginCommands(const QVariantList &commands);
+    void setPluginRunner(std::function<bool(const QString &)> run) { m_runPlugin = std::move(run); }
 
 signals:
     void bindingsChanged();
@@ -79,6 +84,9 @@ private:
     ui::SettingsStore &m_settings;
     std::map<std::string, application::MacroBinding> m_committed;
     std::map<std::string, application::MacroBinding> m_installed;
+    std::map<std::string, std::pair<QString, QString>> m_pluginCommands; // id -> plugin name, title
+    std::function<bool(const QString &)> m_runPlugin;
+    bool resolves(const application::MacroBinding &binding) const;
 };
 
 }

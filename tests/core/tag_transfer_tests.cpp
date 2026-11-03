@@ -738,6 +738,44 @@ TEST(TagTransfer, AnOrderAsPlacedDecidesARunUnderOwnFormatting)
     EXPECT_EQ(composeTranslation(tags, read), saved);
 }
 
+TEST(TagTransfer, AnOrderTheTranslationNeedsIsKeptForThatTranslation)
+{
+    const auto tags = readOriginalTags(u"a {\\i1}b{\\i0} c {\\b1}d{\\b0} e");
+    const auto saved = toUtf8(composeTranslation(tags, draft(u"{\\i1}x{\\i0} y", {{5, 6, 2}})));
+    const auto value = runOrderValue(tags, saved, std::vector<int>{2});
+    ASSERT_TRUE(value);
+    EXPECT_EQ(value->size(), 2 + 16 + 2u) << u8(toUtf16(*value));
+    EXPECT_TRUE(value->starts_with(u8"1;"));
+    EXPECT_TRUE(value->ends_with(u8";2"));
+    const auto order = savedRunOrder(*value, saved);
+    ASSERT_TRUE(order);
+    EXPECT_EQ(*order, std::vector<int>{2});
+    const auto read = readTranslationInOrder(tags, toUtf16(saved), *order);
+    ASSERT_EQ(read.placements.size(), 1u);
+    EXPECT_EQ(read.placements[0].run, 2);
+    EXPECT_FALSE(savedRunOrder(*value, saved + u8" "));
+}
+
+TEST(TagTransfer, AnOrderTheTranslationReadsBackWithoutIsNotKept)
+{
+    const auto tags = readOriginalTags(u"a {\\i1}b{\\i0} c {\\b1}d{\\b0} e");
+    const auto saved = toUtf8(composeTranslation(tags, draft(u"x y", {{0, 1, 2}, {2, 3, 1}})));
+    EXPECT_FALSE(runOrderValue(tags, saved, std::vector<int>{2, 1}));
+    EXPECT_FALSE(runOrderValue(tags, saved, std::vector<int>{}));
+}
+
+TEST(TagTransfer, AMalformedKeptOrderIsIgnored)
+{
+    const auto tags = readOriginalTags(u"a {\\i1}b{\\i0} c {\\b1}d{\\b0} e");
+    const auto saved = toUtf8(composeTranslation(tags, draft(u"{\\i1}x{\\i0} y", {{5, 6, 2}})));
+    const std::u8string value = *runOrderValue(tags, saved, std::vector<int>{2});
+    const std::u8string prefix = value.substr(0, value.size() - 1);
+    for (const std::u8string_view list : {u8"", u8"0", u8"-1", u8"x", u8"2,", u8",2", u8"2,,1", u8"99999999999"})
+        EXPECT_FALSE(savedRunOrder(prefix + std::u8string(list), saved)) << u8(toUtf16(list));
+    EXPECT_EQ(savedRunOrder(prefix + u8"2,1", saved), (std::vector<int>{2, 1}));
+    EXPECT_FALSE(savedRunOrder(u8"2" + value.substr(1), saved));
+}
+
 TEST(TagTransfer, TextModeAgainIsNoDrawing)
 {
     const auto tags = readOriginalTags(u"{\\p1\\p0\\an8}Hello");

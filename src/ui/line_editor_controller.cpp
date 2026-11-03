@@ -5,6 +5,7 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/checked.h"
 #include "hikari/core/editor_font_colour.h"
+#include "hikari/core/extradata.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
@@ -195,7 +196,10 @@ core::TranslationDraft LineEditorController::translationDraft(const core::Origin
                                                               const core::LineRecord &line) const
 {
     const auto translation = core::toUtf16(line.translation);
-    auto draft = core::readTranslation(tags, translation);
+    const auto saved = core::extradataValue(line.extra, core::kRunOrderKey);
+    const auto savedOrder = saved ? core::savedRunOrder(*saved, line.translation) : std::nullopt;
+    auto draft = savedOrder ? core::readTranslationInOrder(tags, translation, *savedOrder)
+                            : core::readTranslation(tags, translation);
     const auto it = m_runOrders.find(runOrderKey(line.id));
     if (it == m_runOrders.end())
         return draft;
@@ -203,11 +207,8 @@ core::TranslationDraft LineEditorController::translationDraft(const core::Origin
     for (const auto &entry : it->second) {
         if (entry.translation != line.translation)
             continue;
-        if (sameRuns(*entry.tags, tags)) {
-            auto hinted = core::readTranslation(tags, translation, entry.order);
-            core::relabelRuns(tags, hinted, entry.order);
-            return hinted;
-        }
+        if (sameRuns(*entry.tags, tags))
+            return core::readTranslationInOrder(tags, translation, entry.order);
         if (!composed)
             composed = &entry;
     }
@@ -264,6 +265,26 @@ void LineEditorController::setRunOrder(core::LineId line, std::optional<RunOrder
     }
     if (order)
         noteRunOrder(line, std::move(*order));
+}
+
+void LineEditorController::stageRunOrder(core::LineId line)
+{
+    auto *s = session();
+    const auto r = sessionRecord();
+    if (!s || !r || r->id != line || !m_editable)
+        return;
+    const auto c = carry(*r);
+    const auto order = runOrderOf(line);
+    std::optional<std::u8string> value;
+    if (c && order && order->translation == r->translation && sameRuns(*order->tags, c->tags))
+        value = core::runOrderValue(c->tags, r->translation, order->order);
+    else if (const auto saved = core::extradataValue(r->extra, core::kRunOrderKey);
+             saved && core::savedRunOrder(*saved, r->translation))
+        return;
+    auto extra = value ? core::withExtradata(r->extra, core::kRunOrderKey, std::move(*value))
+                       : core::withoutExtradata(r->extra, core::kRunOrderKey);
+    if (extra != r->extra)
+        s->editDraft(line, application::DraftChange{.extra = std::move(extra)});
 }
 
 void LineEditorController::countRunOrder(RunOrderKey key, const RunOrder &entry)
@@ -738,7 +759,7 @@ QString LineEditorController::problemText() const
     if (!problem || s->invalidCommitPolicy() == application::InvalidCommitPolicy::Legacy)
         return {};
     return *problem == application::DraftProblem::EndBeforeStart
-               ? QCoreApplication::translate("HikariSub.Editor", "End is before Start.")
+               ? QCoreApplication::translate("HikariSub.Editor", "End time is before start time.")
                : QCoreApplication::translate("HikariSub.Editor", "Margins must be between 0 and 9999.");
 }
 
@@ -879,6 +900,7 @@ bool LineEditorController::setRaw(int role, std::u8string raw, const std::option
             m_draftUndo.push_back({real->text, real->translation, translationTyped(), *orderBefore});
             m_draftRedo.clear();
             m_attempted.clear();
+            stageRunOrder(r->id);
             refresh();
         }
         return true;
@@ -913,6 +935,7 @@ bool LineEditorController::setRaw(int role, std::u8string raw, const std::option
     m_draftUndo.push_back({real->text, real->translation, typed, std::move(order)});
     m_draftRedo.clear();
     m_attempted.clear();
+    stageRunOrder(r->id);
     refresh();
     return true;
 }
@@ -1323,6 +1346,7 @@ bool LineEditorController::undo()
                                                      .translation = previous.translation,
                                                      .translationCarried = !previous.translationTyped,
                                                      .restoresProvenance = true});
+        stageRunOrder(r->id);
         dropUnchangedDraft(*s, r->id);
         m_attempted.clear();
         refresh();
@@ -1362,6 +1386,7 @@ bool LineEditorController::redo()
                                                      .translation = next.translation,
                                                      .translationCarried = !next.translationTyped,
                                                      .restoresProvenance = true});
+        stageRunOrder(r->id);
         dropUnchangedDraft(*s, r->id);
         refresh();
         placeCaretAfterChange(before);
@@ -1386,7 +1411,7 @@ bool LineEditorController::save()
     if (!plan) {
         fail(plan.error() == application::SaveRefusal::InvalidDraft
                  ? problemText()
-                 : QCoreApplication::translate("HikariSub.Editor", "This document can't be saved here."));
+                 : QCoreApplication::translate("HikariSub.Editor", "This document can’t be saved here."));
         return false;
     }
     committed();
@@ -1401,7 +1426,7 @@ bool LineEditorController::save()
             fail(QCoreApplication::translate("HikariSub.Editor", "Another open document uses that file."));
             break;
         default:
-            fail(QCoreApplication::translate("HikariSub.Editor", "The document can't be saved right now."));
+            fail(QCoreApplication::translate("HikariSub.Editor", "The document can’t be saved right now."));
             break;
         }
         return false;
@@ -1979,30 +2004,41 @@ void LineEditorController::endDialog(bool accepted)
 
 bool LineEditorController::splitLine(int role, int selectionStart, int selectionEnd)
 {
+    const auto format = session() ? session()->document().format() : core::SubtitleFormat::Ass;
+    const bool slashBreak = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::Srt;
+    const std::u16string_view split = !slashBreak ? u"|" : options().softLineBreak ? u"\\n" : u"\\N";
+    return insertAtSelection(role, split, selectionStart, selectionEnd, true);
+}
+
+bool LineEditorController::insertHardSpace(int role, int selectionStart, int selectionEnd)
+{
+    return insertAtSelection(role, u"\\h", selectionStart, selectionEnd, false);
+}
+
+bool LineEditorController::insertAtSelection(int role, std::u16string_view inserted, int selectionStart,
+                                             int selectionEnd, bool absorbSpaces)
+{
     const auto r = record();
     if (!editable() || !r)
         return false;
-    const auto format = session()->document().format();
-    const std::u16string split = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::Srt
-                                     ? std::u16string(u"\\N")
-                                     : std::u16string(u"|");
     std::u16string raw = core::toUtf16(roleText(*r, role));
-    long start = selectionStart, end = selectionEnd;
+    long start = std::min(selectionStart, selectionEnd), end = std::max(selectionStart, selectionEnd);
     if (!m_showTags) {
         const auto p = core::project(raw);
-        start = static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(selectionStart), true));
-        end = selectionEnd == selectionStart
-                  ? start
-                  : static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(selectionEnd), false));
+        const long shownStart = start;
+        start = static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(shownStart), true));
+        end = end == shownStart ? start : static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(end), false));
     }
-    if (start > 0 && raw[static_cast<std::size_t>(start - 1)] == u' ')
+    start = std::clamp<long>(start, 0, static_cast<long>(raw.size()));
+    end = std::clamp<long>(end, start, static_cast<long>(raw.size()));
+    if (absorbSpaces && start > 0 && raw[static_cast<std::size_t>(start - 1)] == u' ')
         --start;
-    if (end < static_cast<long>(raw.size()) && raw[static_cast<std::size_t>(end)] == u' ')
+    if (absorbSpaces && end < static_cast<long>(raw.size()) && raw[static_cast<std::size_t>(end)] == u' ')
         ++end;
     if (start != end)
         raw.erase(static_cast<std::size_t>(start), static_cast<std::size_t>(end - start));
-    raw.insert(static_cast<std::size_t>(start), split);
-    const long caret = start + static_cast<long>(split.size());
+    raw.insert(static_cast<std::size_t>(start), inserted);
+    const long caret = start + static_cast<long>(inserted.size());
     if (!setRaw(role, core::toUtf8(raw)))
         return false;
     const auto after = core::project(raw);
@@ -2573,7 +2609,7 @@ void LineEditorController::setShowFrames(bool on)
         change.endFrame.reset();
         s->discardDraft();
         if (change.text || change.translation || change.marginLeft || change.marginRight || change.marginVertical ||
-            change.comment || change.layer || change.style || change.actor || change.effect)
+            change.comment || change.layer || change.style || change.actor || change.effect || change.extra)
             s->editDraft(*line, change);
     }
     m_durationEdited = false;
@@ -2609,6 +2645,7 @@ std::optional<core::Document> LineEditorController::draftDocument() const
         line.effect = draft->effect;
         line.startFrame = draft->startFrame;
         line.endFrame = draft->endFrame;
+        line.extra = draft->extra;
     });
     return document;
 }

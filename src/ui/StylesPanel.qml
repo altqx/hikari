@@ -181,7 +181,7 @@ Item {
                 Accessible.role: Accessible.ListItem
                 Accessible.name: modelData.name + ", " + modelData.font + " " + modelData.size + ", "
                                  + qsTr("Lines: %1").arg(modelData.lines)
-                                 + (lineStyle ? ", " + qsTr("the current line's style") : "")
+                                 + (lineStyle ? ", " + qsTr("the current line’s style") : "")
                 Accessible.selected: current
 
                 Rectangle {
@@ -301,7 +301,7 @@ Item {
                         visible: row.lineStyle
                         iconRole: "edit"
                         ToolTip.visible: markHover.hovered
-                        ToolTip.text: qsTr("The current line's style")
+                        ToolTip.text: qsTr("Current line’s style")
                         HoverHandler { id: markHover }
                     }
                     Label {

@@ -1,9 +1,11 @@
 #include "hikari/application/matroska.h"
 #include "hikari/core/ass_save.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <initializer_list>
 #include <limits>
 #include <set>
 
@@ -11,6 +13,14 @@ using namespace hikari;
 using namespace hikari::application;
 
 namespace {
+
+boost::dynamic_bitset<> bits(std::initializer_list<bool> values)
+{
+    boost::dynamic_bitset<> out;
+    for (const bool v : values)
+        out.push_back(v);
+    return out;
+}
 
 std::u8string u8(std::string_view s)
 {
@@ -342,8 +352,8 @@ TEST(MatroskaFontsSave, EveryTabIntoOneOutput)
     const auto saved = saveMatroskaFonts(tabs, output);
     ASSERT_EQ(saved.size(), 5u);
     EXPECT_TRUE(saved[0].saved.empty());
-    EXPECT_EQ(saved[2].saved, (std::vector<bool>{true, false}));
-    EXPECT_EQ(saved[4].saved, (std::vector<bool>{true}));
+    EXPECT_EQ(saved[2].saved, bits({true, false}));
+    EXPECT_EQ(saved[4].saved, bits({true}));
     EXPECT_EQ(output.opens, 1);
     EXPECT_TRUE(output.committed);
     EXPECT_EQ(output.written, (std::vector<std::pair<std::u16string, std::string>>{{u"one.ttf", "1"}, {u"one.ttf", "3"}}));
@@ -385,7 +395,7 @@ TEST(MatroskaFontsSave, CancelDiscardsTheOutput)
         {tab(u"/v/c.mkv", MatroskaFontTab::Status::Fonts, {{6, u"one.ttf", data("1")}, {7, u"two.ttf", data("2")}})},
         output, &cancel);
     EXPECT_TRUE(saved[0].cancelled);
-    EXPECT_EQ(saved[0].saved, (std::vector<bool>{true}));
+    EXPECT_EQ(saved[0].saved, bits({true}));
     EXPECT_TRUE(output.discarded);
     EXPECT_FALSE(output.committed);
 }

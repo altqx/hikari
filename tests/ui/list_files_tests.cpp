@@ -1,4 +1,3 @@
-#include "hikari/app/settings_import_store.h"
 #include "list_files.h"
 #include "toml_file.h"
 
@@ -10,7 +9,6 @@
 
 using namespace hikari;
 using application::FontCatalogs;
-using application::ReplacerRule;
 using application::visual::AllTagsSetting;
 using application::visual::ShapePreset;
 using ui::ListFile;
@@ -41,7 +39,7 @@ QString fixture(const char *name)
     return QStringLiteral(HIKARI_LIST_FIXTURES "/") + QLatin1String(name);
 }
 
-enum class Kind { Rules, Shapes, Tags, FontCatalogs };
+enum class Kind { Shapes, Tags, FontCatalogs };
 
 struct List {
     const char *file;
@@ -54,13 +52,6 @@ struct List {
 List listOf(Kind kind)
 {
     switch (kind) {
-    case Kind::Rules:
-        return {"rules.toml", "Rules.txt", fixture("Rules.txt"), ui::kRulesFormat,
-                [](const fs::path &legacy) -> std::optional<toml::array> {
-                    if (const auto read = app::readLegacyRulesFile(legacy))
-                        return ui::rulesToToml(read->rules);
-                    return std::nullopt;
-                }};
     case Kind::Shapes:
         return {"shapes.toml", "ShapesSettings.txt", fixture("ShapesSettings.txt"), ui::kShapesFormat,
                 [](const fs::path &legacy) -> std::optional<toml::array> {
@@ -119,8 +110,6 @@ bool sameAsLegacy(Kind kind, const QString &legacyFile, const toml::array &items
 {
     const fs::path legacy = pathOf(legacyFile);
     switch (kind) {
-    case Kind::Rules:
-        return valuesOf<ReplacerRule>(items, ui::rulesFromToml) == app::readLegacyRulesFile(legacy)->rules;
     case Kind::Shapes:
         return valuesOf<ShapePreset>(items, ui::shapesFromToml) == *ui::readLegacyShapes(legacy);
     case Kind::Tags:
@@ -138,13 +127,6 @@ bool sameAsLegacy(Kind kind, const QString &legacyFile, const toml::array &items
 toml::array edited(Kind kind, const toml::array &items)
 {
     switch (kind) {
-    case Kind::Rules: {
-        auto rules = valuesOf<ReplacerRule>(items, ui::rulesFromToml);
-        rules[0].checked = !rules[0].checked;
-        rules[0].options = application::kReplacerMatchCase | application::kReplacerOnlyTags;
-        rules.push_back({u8"Nowa reguła", u8"a+", u8"ą", application::kReplacerUpperCase, true});
-        return ui::rulesToToml(rules);
-    }
     case Kind::Shapes: {
         auto shapes = valuesOf<ShapePreset>(items, ui::shapesFromToml);
         shapes[0].mode = ShapePreset::OnlyScaleX;
@@ -179,7 +161,6 @@ private slots:
     void eachList_data()
     {
         QTest::addColumn<int>("kind");
-        QTest::newRow("rules") << int(Kind::Rules);
         QTest::newRow("shapes") << int(Kind::Shapes);
         QTest::newRow("tags") << int(Kind::Tags);
         QTest::newRow("font catalogs") << int(Kind::FontCatalogs);
@@ -258,10 +239,6 @@ private slots:
         QTest::addColumn<int>("kind");
         QTest::addColumn<QByteArray>("text");
         QTest::addColumn<int>("line");
-        QTest::newRow("rules: syntax") << int(Kind::Rules) << QByteArray("version = 1\n[[rule]\n") << 2;
-        QTest::newRow("rules: a flag as text") << int(Kind::Rules)
-                                               << QByteArray("version = 1\n\n[[rule]]\nfind = \"a\"\nmatchCase = \"yes\"\n")
-                                               << 5;
         QTest::newRow("shapes: unknown scaling") << int(Kind::Shapes)
                                                  << QByteArray("version = 1\n[[shape]]\nname = \"a\"\nscaling = \"big\"\n")
                                                  << 4;
@@ -274,7 +251,7 @@ private slots:
         QTest::newRow("catalogs: a font as a number")
             << int(Kind::FontCatalogs) << QByteArray("version = 1\n[[catalog]]\nname = \"A\"\nfonts = [\"Arial\", 3]\n") << 4;
         QTest::newRow("newer version") << int(Kind::Shapes) << QByteArray("version = 2\n") << 0;
-        QTest::newRow("no version") << int(Kind::Rules) << QByteArray("[[rule]]\n") << 0;
+        QTest::newRow("no version") << int(Kind::Shapes) << QByteArray("[[shape]]\n") << 0;
     }
     void brokenFileIsKeptAside()
     {
@@ -357,7 +334,7 @@ private slots:
 #ifdef _WIN32
         QSKIP("no POSIX permissions");
 #else
-        const List list = listOf(Kind::Rules);
+        const List list = listOf(Kind::Shapes);
         QTemporaryDir dir;
         QVERIFY(dir.isValid());
         const QString legacy = dir.filePath(QLatin1String(list.legacy));
@@ -501,14 +478,6 @@ private slots:
         QVERIFY(tagsText.contains("change = \"gradientLinesDown\""));
         QVERIFY(tagsText.contains("placing = \"clipAnimation\""));
         QVERIFY(tagsText.contains("step = 0.1"));
-
-        const List rules = listOf(Kind::Rules);
-        QVERIFY(QFile::copy(rules.fixture, dir.filePath(QLatin1String(rules.legacy))));
-        QVERIFY(open(dir, rules)->read());
-        const QByteArray rulesText = readAll(dir.filePath(QLatin1String(rules.file)));
-        QVERIFY2(rulesText.contains("[[rule]]\ndescription = \"Tags only, lower\"\nenabled = true\nfind = \"\\\\\\\\FS\"\n"
-                                    "lowerCase = true\nonlyInTags = true\nonlyInText = true\nreplace = \"\\\\\\\\fs\"\n"),
-                 rulesText.constData());
     }
 
     void fontCatalogsFromText()

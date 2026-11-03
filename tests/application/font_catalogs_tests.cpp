@@ -95,11 +95,11 @@ public:
         }
         return out;
     }
-    std::vector<bool> facesCover(const std::vector<SystemFace> &list, const FontEnvironment &,
-                                 const std::u32string &characters) override
+    boost::dynamic_bitset<> facesCover(const std::vector<SystemFace> &list, const FontEnvironment &,
+                                       const std::u32string &characters) override
     {
         checked.push_back(characters);
-        std::vector<bool> out;
+        boost::dynamic_bitset<> out;
         for (std::size_t i = 0; i < list.size(); ++i) {
             const auto &glyphs = i < faces.size() ? faces[i].glyphs : std::u32string();
             bool all = true;

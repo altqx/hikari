@@ -296,11 +296,15 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_KANJI_TIMER", 5174},
         {"GLOBAL_GETTING_STARTED", 5176},
         {"GLOBAL_EXPORT_SUBS_AS", 5212},
+        {"GLOBAL_FIND_PREVIOUS", 5213},
+        {"GLOBAL_SHOW_TIMING_POSTPROCESSOR", 5214},
+        {"GLOBAL_TIMING_POSTPROCESSOR", 5215},
         {"GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION", 5216},
         {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_START", 5217},
         {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_END", 5218},
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START", 5219},
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END", 5220},
+        {"GLOBAL_INSERT_HARD_SPACE", 5228},
         {"GLOBAL_PLUGINS", 5231},
         {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
@@ -335,10 +339,10 @@ constexpr NameRow kNames[] = {
         {1022, "Play to the end"},
         {1026, "Add lead-in"},
         {1027, "Add lead-out"},
-        {3008, "Border color"},
-        {3006, "Primary color"},
-        {3007, "Secondary color for karaoke"},
-        {3009, "Shadow color"},
+        {3008, "Border colour"},
+        {3006, "Primary colour"},
+        {3007, "Secondary colour for karaoke"},
+        {3009, "Shadow colour"},
         {3000, "Font selection"},
         {3002, "Strikethrough"},
         {3001, "Underline"},
@@ -415,10 +419,10 @@ constexpr NameRow kNames[] = {
         {4529, "Join lines and keep first"},
         {4530, "Join lines and keep last"},
         {4553, "Paste columns"},
-        {4548, "Paste translation text"},
+        {4548, "Paste translation from a file…"},
         {4550, "Load subtitles from an MKV file"},
         {4526, "Swap lines"},
-        {4549, "Dialogue shifting window"},
+        {4549, "Translation matching…"},
         {4556, "Set new FPS"},
         {4534, "Show subtitles preview"},
         {4521, "Split line at video time"},
@@ -467,18 +471,17 @@ constexpr NameRow kNames[] = {
         {5211, "Sort selected lines by layer"},
         {5226, "Sort selected lines by text"},
         {5227, "Sort selected lines by text without tags"},
-        {5300, "Shift times / run timing postprocessor"},
+        {5300, "Shift times with the last values"},
         {5050, "Go to previous keyframe"},
         {5049, "Go to next keyframe"},
         {5027, "Resample subtitles"},
         {5006, "Undo"},
         {5007, "Undo to last save"},
         {5043, "Zoom video"},
-        {5044, "Turn off video zoom"},
+        {5044, "Reset zoom and pan"},
         {5301, "Open new tab"},
         {5302, "Close current tab"},
         {5168, "Clean styles of ASS file"},
-        {5012, "Fix minor errors (experimental)"},
         {5011, "Find next"},
         {5055, "Load last session"},
         {5042, "Next frame"},
@@ -571,11 +574,15 @@ constexpr NameRow kNames[] = {
         {5174, "Kanji timer"},
         {5176, "Getting started"},
         {5212, "Export as"},
+        {5213, "Find previous"},
+        {5214, "Timing postprocessor panel"},
+        {5215, "Timing postprocessor with the last values"},
         {5216, "Join with previous line using the audio selection"},
         {5217, "Shift selected lines by frames: start at video"},
         {5218, "Shift selected lines by frames: end at video"},
         {5219, "Shift following lines by frames: start at video"},
         {5220, "Shift following lines by frames: end at video"},
+        {5228, "Insert hard space"},
         {5231, "Plugins"},
         {5229, "Centre times within frames"},
         {5223, "Import legacy settings…"},
@@ -617,6 +624,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5150, GlobalHotkey, "Previous line", "Ctrl-Up"},
         {5151, GlobalHotkey, "Next line", "Ctrl-Down"},
         {5011, GlobalHotkey, "Find next", "F3"},
+        {5213, GlobalHotkey, "Find previous", "Shift-F3"},
         {5152, GlobalHotkey, "Merge with previous line", "F4"},
         {5153, GlobalHotkey, "Merge with next line", "F5"},
         {5158, GlobalHotkey, "Change start time to nearest keyframe", "Shift-Left"},
@@ -624,6 +632,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5154, GlobalHotkey, "Next tab", "Ctrl-PgDn"},
         {5155, GlobalHotkey, "Previous tab", "Ctrl-PgUp"},
         {5166, GlobalHotkey, "Select line at current video position", "F2"},
+        {5228, GlobalHotkey, "Insert hard space", "Ctrl-Shift-Space"},
         {5112, GlobalHotkey, "User guide", "F1"},
         {4527, GridHotkey, "Duplicate lines", "Ctrl-D"},
         {4554, GridHotkey, "Copy columns", "Ctrl-Shift-C"},
@@ -865,7 +874,8 @@ bool isRetiredHotkey(int id)
            || id == 5039
            || id == 5104
            || (id >= 5031 && id <= 5035)
-           || id == 5109;
+           || id == 5109
+           || id == 5012;
 }
 
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)
@@ -1277,7 +1287,8 @@ bool shownByFilter(int mode, const HotkeyList::Row &r)
     case 4: return r.key.type == EditorHotkey;
     case 5: return r.key.type == VideoHotkey;
     case 6: return r.key.type == AudioHotkey;
-    case 7: return r.key.id >= kFirstScriptHotkey;
+    case 7: return r.key.id >= kFirstScriptHotkey && !isPluginCommand(r.name);
+    case 8: return r.key.id >= kFirstScriptHotkey && isPluginCommand(r.name);
     default: return true;
     }
 }

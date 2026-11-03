@@ -1,10 +1,13 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/extradata.h"
+#include "hikari/core/tag_transfer.h"
+#include "hikari/core/text_projection.h"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <functional>
 #include <fstream>
 #include <iterator>
 #include <sstream>
@@ -271,9 +274,196 @@ TEST(Extradata, ATranslationPairKeepsItsIdsOnTheTranslation)
     EXPECT_NE(saved.find(",,{=0}changed\n"), std::string::npos) << saved;
 }
 
+TEST(Extradata, SettingAKeyReplacesOnlyItsOwnEntries)
+{
+    const std::vector<Extradata> extra{{u8"_hikari_kanji_skip", u8"0"}, {u8"_aegi_folddata", u8"0;0;1"},
+                                       {u8"_hikari_kanji_skip", u8"old"}};
+    EXPECT_EQ(extradataValue(extra, u8"_hikari_kanji_skip"), u8"old");
+    EXPECT_FALSE(extradataValue(extra, u8"_hikari_kara_from"));
+    const std::vector<Extradata> set{{u8"_aegi_folddata", u8"0;0;1"}, {u8"_hikari_kanji_skip", u8"1"}};
+    EXPECT_EQ(withExtradata(extra, u8"_hikari_kanji_skip", u8"1"), set);
+    EXPECT_EQ(withExtradata(set, u8"_hikari_kanji_skip", u8"1"), set);
+    EXPECT_EQ(withoutExtradata(extra, u8"_hikari_kanji_skip"), (std::vector<Extradata>{{u8"_aegi_folddata", u8"0;0;1"}}));
+}
+
 TEST(Extradata, ClipboardRowsRoundTrip)
 {
     const std::vector<std::vector<Extradata>> rows = {{{u8"a,b", u8"c:d|e#f\n"}, {u8"g", u8""}}, {}, {{u8"h", u8"i"}}};
     EXPECT_EQ(parseExtradataClipboard(extradataClipboard(rows)), rows);
     EXPECT_TRUE(parseExtradataClipboard(u8"no pair\n").empty());
+}
+
+namespace {
+
+const std::string kKaraoke = "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n"
+                             "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl,{\\fad(100,100)}\n"
+                             "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,karaoke,{\\k50}ka{\\k50}ra\n"
+                             "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,fx,{\\fad(100,100)}ka\n"
+                             "Dialogue: 0,0:00:01.50,0:00:02.00,Default,,0,0,0,fx,{\\fad(100,100)}ra\n"
+                             "Comment: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,karaoke,{\\k100}oke\n";
+
+std::function<std::u8string()> tokens(std::vector<std::u8string> given)
+{
+    return [given = std::move(given), next = std::size_t{0}]() mutable { return given.at(next++); };
+}
+
+Document generated(const std::vector<std::pair<std::size_t, std::size_t>> &from, std::string script = kKaraoke)
+{
+    Document document = load(script);
+    const auto lines = document.lines();
+    std::vector<LineId> ids;
+    for (const auto *line : lines)
+        ids.push_back(line->id);
+    for (const auto &[line, source] : from)
+        EXPECT_TRUE(document.editLine(ids[line], [&](LineRecord &l) { l.generatedFrom = ids[source]; }));
+    return document;
+}
+
+std::optional<std::u8string> valueAt(const Document &document, std::size_t row, std::u8string_view key)
+{
+    return extradataValue(document.lines()[row]->extra, key);
+}
+
+}
+
+TEST(KaraokeMarks, AGeneratedLineAndItsKaraokeLineShareAToken)
+{
+    Document document = generated({{2, 1}, {3, 1}});
+    markGeneratedLines(document, tokens({u8"abcdefgh"}));
+    EXPECT_EQ(valueAt(document, 1, kKaraSourceKey), u8"1;abcdefgh");
+    EXPECT_EQ(valueAt(document, 2, kKaraFromKey), u8"1;abcdefgh");
+    EXPECT_EQ(valueAt(document, 3, kKaraFromKey), u8"1;abcdefgh");
+    for (const std::size_t row : {0u, 4u})
+        EXPECT_TRUE(document.lines()[row]->extra.empty()) << row;
+    const std::string file = save(document);
+    const Document reopened = load(file);
+    const auto lines = reopened.lines();
+    EXPECT_EQ(lines[2]->generatedFrom, lines[1]->id);
+    EXPECT_EQ(lines[3]->generatedFrom, lines[1]->id);
+    EXPECT_EQ(lines[1]->generatedFrom.value, 0u);
+    Document again = load(file);
+    markGeneratedLines(again, tokens({}));
+    EXPECT_EQ(save(again), file);
+}
+
+TEST(KaraokeMarks, AGeneratedLineLosesTheKaraokeLinesTokenItWasCopiedWith)
+{
+    Document document = generated({{2, 1}});
+    markGeneratedLines(document, tokens({u8"abcdefgh"}));
+    ASSERT_TRUE(document.editLine(document.lines()[3]->id, [&](LineRecord &l) {
+        l.extra = document.lines()[1]->extra;
+        l.generatedFrom = document.lines()[1]->id;
+    }));
+    markGeneratedLines(document, tokens({}));
+    EXPECT_FALSE(valueAt(document, 3, kKaraSourceKey));
+    EXPECT_EQ(valueAt(document, 3, kKaraFromKey), u8"1;abcdefgh");
+}
+
+TEST(KaraokeMarks, AKaraokeLineCopiedWithItsTokenGetsANewOne)
+{
+    Document document = generated({{2, 1}});
+    markGeneratedLines(document, tokens({u8"abcdefgh"}));
+    ASSERT_TRUE(document.editLine(document.lines()[4]->id, [&](LineRecord &l) { l.extra = document.lines()[1]->extra; }));
+    ASSERT_TRUE(document.editLine(document.lines()[3]->id, [&](LineRecord &l) { l.generatedFrom = document.lines()[4]->id; }));
+    markGeneratedLines(document, tokens({u8"abcdefgh", u8"ijklmnop"}));
+    EXPECT_EQ(valueAt(document, 1, kKaraSourceKey), u8"1;abcdefgh");
+    EXPECT_EQ(valueAt(document, 4, kKaraSourceKey), u8"1;ijklmnop");
+    EXPECT_EQ(valueAt(document, 3, kKaraFromKey), u8"1;ijklmnop");
+    const Document reopened = load(save(document));
+    EXPECT_EQ(reopened.lines()[2]->generatedFrom, reopened.lines()[1]->id);
+    EXPECT_EQ(reopened.lines()[3]->generatedFrom, reopened.lines()[4]->id);
+}
+
+TEST(KaraokeMarks, OnlyWellFormedTokensLink)
+{
+    for (const std::string bad : {"2;abcdefgh", "1;ABCDEFGH", "1;abcdefg", "1;abcdefgh1", "abcdefgh", "1;abcdefg1"}) {
+        std::string script = kKaraoke;
+        script.replace(script.find(",karaoke,{\\k50}"), 9, ",karaoke,{=0}");
+        script.replace(script.find(",fx,{\\fad(100,100)}ka"), 4, ",fx,{=1}");
+        script += "\n[Aegisub Extradata]\nData: 0,_hikari_kara_source,e" + bad + "\nData: 1,_hikari_kara_from,e" + bad + "\n";
+        const Document marked = load(script);
+        ASSERT_EQ(valueAt(marked, 2, kKaraFromKey), std::u8string(bad.begin(), bad.end()));
+        EXPECT_EQ(marked.lines()[2]->generatedFrom.value, 0u) << bad;
+    }
+}
+
+TEST(KaraokeMarks, RandomTokensAreEightBase32Letters)
+{
+    const auto a = randomKaraToken(), b = randomKaraToken();
+    EXPECT_NE(a, b);
+    for (const auto &token : {a, b}) {
+        ASSERT_EQ(token.size(), 8u);
+        for (const char8_t c : token)
+            EXPECT_TRUE((c >= u8'a' && c <= u8'z') || (c >= u8'2' && c <= u8'7')) << str(token);
+    }
+}
+
+TEST(KaraokeMarks, HikarisSaveOfTheMarksIsTheGoldenFile)
+{
+    Document document = generated({{2, 1}, {3, 1}});
+    markGeneratedLines(document, tokens({u8"abcdefgh"}));
+    const std::string file = save(document);
+    if (file != fixture("kara-marks-hikari.ass"))
+        std::ofstream("kara-marks-hikari.actual.ass", std::ios::binary) << file;
+    EXPECT_EQ(file, fixture("kara-marks-hikari.ass"));
+}
+
+TEST(KaraokeMarks, AegisubKeepsHikarisMarks)
+{
+    EXPECT_EQ(fixture("kara-marks-hikari.lua-extra.txt"),
+              "{\\fad(100,100)}\n{\\k50}ka{\\k50}ra\t_hikari_kara_source=1;abcdefgh\n"
+              "{\\fad(100,100)}ka\t_hikari_kara_from=1;abcdefgh\n{\\fad(100,100)}ra\t_hikari_kara_from=1;abcdefgh\n"
+              "{\\k100}oke\n");
+    const Document document = load(fixture("kara-marks-hikari.aegisub.ass"));
+    const auto lines = document.lines();
+    ASSERT_EQ(lines.size(), 5u);
+    EXPECT_EQ(lines[2]->generatedFrom, lines[1]->id);
+    EXPECT_EQ(lines[3]->generatedFrom, lines[1]->id);
+}
+
+namespace {
+
+const std::u16string kAmbiguousOriginal = u"a {\\i1}b{\\i0} c {\\b1}d{\\b0} e";
+
+Document withKeptOrder()
+{
+    Document document = load("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a {\\i1}b{\\i0} c {\\b1}d{\\b0} e\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+    const auto tags = readOriginalTags(kAmbiguousOriginal);
+    const auto translation = toUtf8(composeTranslation(tags, TranslationDraft{u"{\\i1}x{\\i0} y", {{5, 6, 2}}, true}));
+    const auto value = runOrderValue(tags, translation, std::vector<int>{2});
+    EXPECT_TRUE(value);
+    EXPECT_TRUE(document.editLine(document.lines()[0]->id, [&](LineRecord &l) {
+        l.translation = translation;
+        l.extra = withExtradata(l.extra, kRunOrderKey, value.value_or(u8""));
+    }));
+    return document;
+}
+
+}
+
+TEST(TranslationOrder, HikarisSaveOfAnOrderIsTheGoldenFile)
+{
+    const std::string file = save(withKeptOrder());
+    if (file != fixture("tm-order-hikari.ass"))
+        std::ofstream("tm-order-hikari.actual.ass", std::ios::binary) << file;
+    EXPECT_EQ(file, fixture("tm-order-hikari.ass"));
+    const Document reopened = load(file);
+    const auto *line = reopened.lines()[0];
+    EXPECT_EQ(savedRunOrder(extradataValue(line->extra, kRunOrderKey).value_or(u8""), line->translation),
+              std::vector<int>{2});
+}
+
+TEST(TranslationOrder, AegisubKeepsHikarisOrder)
+{
+    const std::string dumped = fixture("tm-order-hikari.lua-extra.txt");
+    EXPECT_NE(dumped.find("\t_hikari_tm_order=1;"), std::string::npos) << dumped;
+    const Document document = load(fixture("tm-order-hikari.aegisub.ass"));
+    ASSERT_EQ(document.lines().size(), 1u);
+    const auto *line = document.lines()[0];
+    EXPECT_EQ(savedRunOrder(extradataValue(line->extra, kRunOrderKey).value_or(u8""), line->translation),
+              std::vector<int>{2});
 }

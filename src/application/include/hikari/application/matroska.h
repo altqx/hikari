@@ -7,6 +7,7 @@
 #include "hikari/core/matroska.h"
 
 #include <atomic>
+#include <boost/dynamic_bitset.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -146,7 +147,7 @@ struct MatroskaFontTab {
 struct MatroskaFontsSaved {
     bool cannotCreateFolder = false;
     bool outputFailed = false; // the folder or the archive could not be opened: the tab stops
-    std::vector<bool> saved;   // per font
+    boost::dynamic_bitset<> saved; // per font
     bool cancelled = false;
 };
 // Writes every tab's fonts into one output, opened at the first tab with fonts; a tab whose

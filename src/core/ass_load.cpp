@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <boost/dynamic_bitset.hpp>
 #include <cstdint>
 #include <limits>
 #include <set>
@@ -49,9 +50,9 @@ std::size_t endOfRecord(const Section &section, std::size_t count)
 
 // The sections libass reads as embedded data: a [Fonts] or [Graphics]
 // section and every section after it up to a header libass knows.
-std::vector<bool> embeddedData(const std::vector<Section> &sections)
+boost::dynamic_bitset<> embeddedData(const std::vector<Section> &sections)
 {
-    std::vector<bool> data;
+    boost::dynamic_bitset<> data;
     bool in = false;
     for (const auto &section : sections) {
         if (section.kind == SectionKind::Fonts || section.kind == SectionKind::Graphics)
@@ -679,10 +680,14 @@ private:
     void resolveExtra()
     {
         const auto &table = m_result.document.extradata();
+        std::vector<LineRecord *> lines;
         for (auto &section : DocumentBuilder::sections(m_result.document))
             for (auto &record : section.records)
-                if (auto *line = std::get_if<LineRecord>(&record); line && !line->extradataIds.empty())
+                if (auto *line = std::get_if<LineRecord>(&record); line && !line->extradataIds.empty()) {
                     line->extra = resolveExtradata(table, line->extradataIds);
+                    lines.push_back(line);
+                }
+        linkGeneratedLines(lines);
     }
 
     void addDiagnostic(Diagnostic::Severity severity, Diagnostic::Kind kind, std::size_t offset, u8sv excerpt)

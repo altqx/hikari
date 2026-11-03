@@ -4,12 +4,15 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <array>
+#include <boost/dynamic_bitset.hpp>
 #include <charconv>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <functional>
 #include <limits>
+#include <system_error>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -1256,7 +1259,7 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     }
     // MUST KILL: labels hold a run number, 0 for the base, -1 for the translator's own
     std::vector<int> labels(segments.size(), 0);
-    std::vector<bool> used(tags.runs.size(), false);
+    boost::dynamic_bitset<> used(tags.runs.size());
     const auto groups = groupsOf(segments);
     const auto compared = [&](const TagRun &run) { return budget.spend(unitsOf(run.differs) + 1); };
     for (const auto &group : groups) {
@@ -1352,7 +1355,7 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     };
     if (!order.empty()) {
         std::vector<int> hinted(segments.size(), 0);
-        std::vector<bool> taken(tags.runs.size(), false);
+        boost::dynamic_bitset<> taken(tags.runs.size());
         std::size_t next = 0;
         for (const auto &group : groups) {
             const auto &differs = segments[group.first].differs;
@@ -1609,7 +1612,7 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
 std::vector<int> matchRuns(const OriginalTags &before, const OriginalTags &now)
 {
     std::vector<int> out(before.runs.size(), 0);
-    std::vector<bool> taken(now.runs.size(), false);
+    boost::dynamic_bitset<> taken(now.runs.size());
     for (std::size_t i = 0; i < before.runs.size() && i < now.runs.size(); ++i)
         if (now.runs[i].differs == before.runs[i].differs && now.runs[i].text == before.runs[i].text) {
             taken[i] = true;
@@ -1706,6 +1709,62 @@ bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation)
         return false;
     const auto draft = readTranslation(tags, translation);
     return draft.carried && nextUnplacedRun(tags, draft.placements) != 0;
+}
+
+TranslationDraft readTranslationInOrder(const OriginalTags &tags, std::u16string_view translation,
+                                        std::span<const int> order)
+{
+    auto draft = readTranslation(tags, translation, order);
+    relabelRuns(tags, draft, order);
+    return draft;
+}
+
+namespace {
+
+std::u8string translationHash(std::u8string_view translation)
+{
+    std::uint64_t hash = 0xcbf29ce484222325;
+    for (const char8_t c : translation)
+        hash = (hash ^ c) * 0x100000001b3;
+    std::array<char, 16> hex{};
+    const auto end = std::to_chars(hex.data(), hex.data() + hex.size(), hash, 16).ptr;
+    return std::u8string(16 - static_cast<std::size_t>(end - hex.data()), u8'0') +
+           std::u8string(reinterpret_cast<const char8_t *>(hex.data()), static_cast<std::size_t>(end - hex.data()));
+}
+
+}
+
+std::optional<std::u8string> runOrderValue(const OriginalTags &tags, std::u8string_view translation,
+                                           std::span<const int> order)
+{
+    const auto text = toUtf16(translation);
+    if (order.empty() || readTranslationInOrder(tags, text, order).placements == readTranslation(tags, text).placements)
+        return std::nullopt;
+    std::u8string value = u8"1;" + translationHash(translation) + u8";";
+    for (std::size_t i = 0; i < order.size(); ++i) {
+        const auto number = std::to_string(order[i]);
+        value += (i ? u8"," : u8"") + std::u8string(number.begin(), number.end());
+    }
+    return value;
+}
+
+std::optional<std::vector<int>> savedRunOrder(std::u8string_view value, std::u8string_view translation)
+{
+    const std::u8string prefix = u8"1;" + translationHash(translation) + u8";";
+    if (!value.starts_with(prefix))
+        return std::nullopt;
+    std::vector<int> order;
+    const std::string_view list(reinterpret_cast<const char *>(value.data()) + prefix.size(), value.size() - prefix.size());
+    for (std::size_t at = 0; at <= list.size();) {
+        const std::size_t comma = std::min(list.find(',', at), list.size());
+        int run = 0;
+        const auto [end, error] = std::from_chars(list.data() + at, list.data() + comma, run);
+        if (error != std::errc{} || end != list.data() + comma || run < 1)
+            return std::nullopt;
+        order.push_back(run);
+        at = comma + 1;
+    }
+    return order;
 }
 
 }

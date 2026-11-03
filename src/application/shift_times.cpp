@@ -119,14 +119,17 @@ struct Shifted {
     bool textChanged = false;
     std::size_t textLength = 0; // UTF-16 units
     bool marked = false;
+    std::size_t row = 0;
+    int startBefore = 0, endBefore = 0;
+    unsigned rules = 0;
 };
 
 }
 
-std::expected<ShiftOutcome, std::variant<ShiftProblem, CommandRefusal>>
-shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext &context, const LineVisible &visible)
+std::expected<ShiftPlan, ShiftFailure> planShift(const EditSession &session, const ShiftTimesSettings &s,
+                                                 const ShiftContext &context, const LineVisible &visible)
 {
-    using Fail = std::variant<ShiftProblem, CommandRefusal>;
+    using Fail = ShiftFailure;
     const auto &doc = session.document();
     const LegacyTimebase empty;
     const LegacyTimebase &timebase = context.timebase ? *context.timebase : empty;
@@ -198,6 +201,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
         whichTimes = 0;
         correctEndTimes = 0;
     }
+    const int amount = s.byFrames ? frame : time;
     if (pp > 16 && !exact)
         return std::unexpected(Fail{ShiftProblem::NoExactTimebase});
     auto startEndDelay = [&](int start, int end) {
@@ -220,6 +224,9 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
         Shifted l{line->id, msOf(line->start.value), msOf(line->end.value),
                   line->translation.empty() ? line->text : line->translation};
         l.textLength = core::toUtf16(line->text).size();
+        l.row = i;
+        l.startBefore = l.start;
+        l.endBefore = l.end;
         std::pair<int, int> before{0, 0};
         int duration = 0;
         if (s.tagTimes)
@@ -308,10 +315,12 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
             if (pp & 1) {
                 cur.start = std::max(0, cur.start - s.leadIn);
                 ++startMods;
+                cur.rules |= LeadIn;
             }
             if (pp & 2) {
                 cur.end = std::max(0, cur.end + s.leadOut);
                 ++endMods;
+                cur.rules |= LeadOut;
             }
             if (pp & 8) {
                 int startRange = cur.start - s.keyframeBeforeStart, startRange1 = oldStart + s.keyframeAfterStart;
@@ -324,6 +333,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                             startResult = INT_MAX;
                             cur.start = oldStart;
                             --startMods;
+                            cur.rules &= ~unsigned(LeadIn);
                         }
                         if (startResult > key &&
                             (startResult == INT_MAX || std::abs(startResult - cur.start) > std::abs(key - cur.start)))
@@ -335,6 +345,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                             endResult = -1;
                             cur.end = oldEnd;
                             --endMods;
+                            cur.rules &= ~unsigned(LeadOut);
                         }
                         if (endResult < key && key > cur.start &&
                             (endResult == -1 || std::abs(endResult - cur.end) > std::abs(key - cur.end)))
@@ -346,6 +357,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                     if (cur.start != startResult && checkEnd - startResult > 600) {
                         cur.start = startResult;
                         ++startMods;
+                        cur.rules = (cur.rules & ~unsigned(LeadIn)) | SnappedStart;
                     }
                     foundStartKeyframe = true;
                 }
@@ -353,11 +365,14 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                     if (cur.end != endResult && endResult - cur.start > 600) {
                         cur.end = endResult;
                         ++endMods;
+                        cur.rules = (cur.rules & ~unsigned(LeadOut)) | SnappedEnd;
                     }
                     foundEndKeyframe = true;
                 }
-                if (cur.start < previousEnd && !isPreviousEndGreater && previousEnd < oldEnd && isPreviousEndEdited)
+                if (cur.start < previousEnd && !isPreviousEndGreater && previousEnd < oldEnd && isPreviousEndEdited) {
                     it->end = cur.start;
+                    it->rules |= SnappedEnd;
+                }
             }
             if (pp & 4) {
                 const int cdiff = s.thresholdEnd + s.thresholdStart;
@@ -369,11 +384,13 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                     it->end = std::max(0, it->end + zeroIt(coeff));
                     newstarttime = it->end;
                     it->marked = true;
+                    it->rules |= GapClosed;
                 }
                 if (!foundStartKeyframe && newstarttime != -1) {
                     cur.start = std::max(0, newstarttime);
                     newstarttime = -1;
                     ++startMods;
+                    cur.rules |= GapClosed;
                 }
             }
             if (startMods > 0 || endMods > 0)
@@ -383,10 +400,29 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
             isPreviousEndEdited = endMods > 0;
         }
     }
+    ShiftPlan plan;
+    plan.amount = amount;
+    plan.outcome = outcome;
+    plan.lines.reserve(shifted.size());
+    for (auto &l : shifted)
+        plan.lines.push_back(ShiftedLine{l.id, l.row, l.startBefore, l.endBefore, l.start, l.end, std::move(l.text),
+                                         l.textChanged, l.marked, l.rules});
+    return plan;
+}
+
+std::expected<ShiftOutcome, ShiftFailure> shiftTimes(EditSession &session, const ShiftTimesSettings &s,
+                                                     const ShiftContext &context, const LineVisible &visible,
+                                                     const std::string &stepName)
+{
+    const auto plan = planShift(session, s, context, visible);
+    if (!plan)
+        return std::unexpected(plan.error());
+    const auto fps = microDvdFps(session.document());
+    const auto &shifted = plan->lines;
     std::set<core::LineId> touched;
     for (const auto &l : shifted)
         touched.insert(l.id);
-    const auto ran = session.run(Command{"Shifting times", session.revision(), touched, [&](core::Document &d) {
+    const auto ran = session.run(Command{stepName, session.revision(), touched, [&](core::Document &d) {
         for (const auto &l : shifted)
             if (!d.editLine(l.id, [&](core::LineRecord &r) {
                     auto set = [&](core::TimeField &field, std::optional<std::int64_t> &frameField, int ms) {
@@ -404,8 +440,8 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
         return true;
     }});
     if (!ran)
-        return std::unexpected(Fail{ran.error()});
-    return outcome;
+        return std::unexpected(ShiftFailure{ran.error()});
+    return plan->outcome;
 }
 
 std::string shiftProfileText(const std::string &name, const ShiftTimesSettings &s)

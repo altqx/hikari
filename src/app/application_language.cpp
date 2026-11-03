@@ -53,14 +53,15 @@ void Application::languageSwitched()
     m_video->retranslate();
     m_audio->retranslate();
     m_statusBar->retranslate();
-    m_workspaceLayout->retranslate();
+    for (auto *layout : layouts())
+        layout->retranslate();
     m_visualTools->retranslate();
     if (m_hotkeys)
         m_hotkeys->retranslate();
     emit tabsChanged();
     if (m_optionsLists.dictionarySymbols.empty() && !m_optionsLists.dictionaryNames.empty()) {
         m_optionsLists.dictionaryNames = {
-            QCoreApplication::translate("HikariSub.Options", "Put files .dic and .aff to \"Dictionary\" folder").toStdString()};
+            QCoreApplication::translate("HikariSub.Options", "Put .dic and .aff files in the “Dictionary” folder").toStdString()};
         emit settingsListsChanged({QString::fromStdString(m_optionsLists.dictionaryNames.front())});
     }
 }

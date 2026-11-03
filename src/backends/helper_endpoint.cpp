@@ -150,6 +150,12 @@ void sendUncheckedFrame(const Frame &frame)
 
 int runHelper(const std::string &name, std::uint32_t protocolVersion, const RequestHandler &handler)
 {
+    return runHelper(name, protocolVersion, handler, {});
+}
+
+int runHelper(const std::string &name, std::uint32_t protocolVersion, const RequestHandler &onRequest,
+              const RequestHandler &onEvent)
+{
     protectProtocolChannel();
     write(Frame{Kind::Hello, static_cast<std::uint16_t>(protocolVersion), 0, 0, 0, bytesOf(name)});
 
@@ -208,10 +214,16 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
     } else {
         session = first->session;
         while (auto frame = take()) {
-            if (frame->kind != Kind::Request || frame->session != session)
+            const bool event = frame->kind == Kind::Event;
+            if ((frame->kind != Kind::Request && !event) || frame->session != session)
                 continue;
             StdResponder responder(*frame, session, inbox);
-            handler(*frame, responder);
+            if (!event)
+                onRequest(*frame, responder);
+            else if (onEvent)
+                onEvent(*frame, responder);
+            else
+                responder.terminal(Outcome::Unsupported, {});
             if (!responder.ended())
                 responder.terminal(Outcome::Failed, bytesOf("handler returned without a result"));
             std::lock_guard lock(inbox.mutex);

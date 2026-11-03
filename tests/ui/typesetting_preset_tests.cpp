@@ -562,9 +562,9 @@ private slots:
         QCOMPARE(firstText->property("text").toString(), first->property("text").toString());
         QVERIFY(QMetaObject::invokeMethod(popup, "close"));
         QTRY_VERIFY(!popup->property("visible").toBool());
-        auto *grid = item("editingGrid");
-        auto *gridMenu = item<QObject>("gridMenu");
-        QTest::mouseClick(window(), Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint());
+        auto *gridMenu = item<QObject>("panelOptionsMenu");
+        QVERIFY(QMetaObject::invokeMethod(gridMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(dock("gridDock"))),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("gridPanel")))));
         QTRY_VERIFY(gridMenu->property("opened").toBool());
         auto *filtering = item<QObject>("filteringMenu");
         QVERIFY(QMetaObject::invokeMethod(filtering, "open"));

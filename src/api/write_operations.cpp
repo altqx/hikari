@@ -136,7 +136,7 @@ void applyStyleFields(core::StyleValues &style, const Json &fields)
         else if (m.key == "angle")
             style.angle = text();
         else if (m.key == "borderStyle")
-            style.borderStyle = v.asInt() == 3;
+            style.borderStyle = static_cast<int>(v.asInt());
         else if (m.key == "outline")
             style.outlineWidth = text();
         else if (m.key == "shadow")

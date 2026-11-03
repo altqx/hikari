@@ -13,7 +13,7 @@
 
 #include <algorithm>
 #include <cstring>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 
 namespace hikari::app {
 
@@ -48,7 +48,7 @@ core::Colour colourOf(const QVariant &v)
 int fieldsOf(const QStringList &keys)
 {
     namespace f = application::style_field;
-    static const std::unordered_map<QString, int> flags{
+    static const absl::flat_hash_map<QString, int> flags{
         {QStringLiteral("fontname"), f::FontName},         {QStringLiteral("fontsize"), f::FontSize},
         {QStringLiteral("bold"), f::Bold},                 {QStringLiteral("italic"), f::Italic},
         {QStringLiteral("underline"), f::Underline},       {QStringLiteral("strikeOut"), f::StrikeOut},
@@ -123,7 +123,8 @@ core::StyleValues styleOf(const QVariantMap &m, core::StyleValues s)
     text("scaleY", s.scaleY);
     text("spacing", s.spacing);
     text("angle", s.angle);
-    flag("borderStyle", s.borderStyle);
+    if (m.contains(QLatin1String("borderStyle")))
+        s.borderStyle = m.value(QLatin1String("borderStyle")).toInt();
     text("outlineWidth", s.outlineWidth);
     text("shadow", s.shadow);
     text("alignment", s.alignment);
@@ -175,13 +176,13 @@ application::ClashChoices choicesOf(const QVariantList &choices)
 QVariantList clashesOf(const StyleList &into, const StyleList &styles)
 {
     QVariantList out;
-    std::unordered_map<std::u8string, const core::StyleValues *> first;
+    absl::flat_hash_map<std::u8string, const core::StyleValues *> first;
     for (auto it = into.rbegin(); it != into.rend(); ++it)
         first[it->name] = &*it;
     application::StyleNames all = application::namesOf(into);
     for (const auto &s : styles)
         all.insert(s.name);
-    std::unordered_map<std::u8string, int> seen, next;
+    absl::flat_hash_map<std::u8string, int> seen, next;
     for (const auto &s : styles) {
         const int occurrence = seen[s.name]++;
         const auto found = first.try_emplace(s.name, &s);
@@ -276,7 +277,7 @@ QVariantList StyleManagerController::panelRows() const
     const auto styles = session ? application::documentStyles(*session) : std::nullopt;
     if (!styles)
         return out;
-    std::unordered_map<std::u8string, int> lines;
+    absl::flat_hash_map<std::u8string, int> lines;
     for (const auto *line : session->document().lines())
         ++lines[line->style];
     const auto colour = [](const core::Colour &c) {
@@ -379,7 +380,7 @@ QVariantList StyleManagerController::styleRows(bool store) const
     const auto *styles = list(store, doc);
     if (!styles)
         return {};
-    std::unordered_map<std::u8string, int> lines;
+    absl::flat_hash_map<std::u8string, int> lines;
     if (!store)
         for (const auto &line : m_hooks.target()->document().lines())
             ++lines[line->style];

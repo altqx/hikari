@@ -126,7 +126,7 @@ FocusScope {
             return
         const groups = app.grammarGroups()
         notices.post("info", qsTr("%1 turned off").arg(next.ignoredGroupName),
-                     qsTr("Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling & grammar.", "",
+                     qsTr("Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.", "",
                           group < groups.length ? groups[group].rules : 0),
                      {actions: [{text: qsTr("Undo"), run: () => panel.app.setGrammarGroup(group, true)},
                                 {text: qsTr("Grammar settings…"), run: () => panel.settingsRequested()}]})
@@ -463,7 +463,7 @@ FocusScope {
                 id: ignoreAllButton
                 objectName: "spellIgnoreAll"
                 visible: !panel.grammarMode
-                text: qsTr("Ignore All")
+                text: qsTr("Ignore all")
                 Layout.fillWidth: true
                 onClicked: panel.ignoreAll()
             }

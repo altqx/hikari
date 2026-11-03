@@ -32,7 +32,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DSTAGE=${HIKARI_PAYLOAD_DIR}"
             "-DAPP=$<TARGET_FILE:hikarisub>"
             "-DAPP_LIBRARY=$<TARGET_FILE:hikarisub_app>"
-            "-DHELPERS=$<TARGET_FILE:hikari_media_helper>|$<TARGET_FILE:hikari_lua_helper>"
+            "-DHELPERS=$<TARGET_FILE:hikari_media_helper>|$<TARGET_FILE:hikari_lua_helper>|$<TARGET_FILE:hikari_plugin_helper>"
             "-DAUTOMATION=${HIKARI_AUTOMATION_STAGE}"
             "-DCRT=${_hikari_crt_arg}"
             "-DWINDEPLOYQT=${_hikari_windeployqt}"
@@ -42,6 +42,8 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DMECAB_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyright"
             "-DUNIDIC_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
             "-DQTKEYCHAIN_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/qtkeychain/copyright"
+            "-DDAV1D_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/dav1d/copyright"
+            "-DABSEIL_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/abseil/copyright"
             "-DDOWNLOADS=${CMAKE_BINARY_DIR}/payload-downloads"
             "-DDICTIONARIES=${HIKARI_BUNDLED_DICTIONARIES}"
             "-DHARPER=${HIKARI_HARPER_LS}"
@@ -49,7 +51,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DHARPER_NOTICES=${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt"
             "-DAEGISUB_LICENSE=${PROJECT_SOURCE_DIR}/packaging/licenses/aegisub/LICENSE"
             -P "${CMAKE_CURRENT_LIST_FILE}"
-        DEPENDS hikarisub hikarisub_app hikari_media_helper hikari_lua_helper hikari_automation_stage
+        DEPENDS hikarisub hikarisub_app hikari_media_helper hikari_lua_helper hikari_plugin_helper hikari_automation_stage
         COMMENT "Staging the Windows payload in ${HIKARI_PAYLOAD_DIR}"
         USES_TERMINAL VERBATIM)
     return()
@@ -57,7 +59,7 @@ endif()
 
 cmake_minimum_required(VERSION 3.28)
 foreach(var STAGE APP APP_LIBRARY HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS DICTIONARIES UNIDIC
-        MECAB_LICENSE UNIDIC_LICENSE AEGISUB_LICENSE)
+        MECAB_LICENSE UNIDIC_LICENSE DAV1D_LICENSE ABSEIL_LICENSE AEGISUB_LICENSE)
     if(NOT DEFINED ${var} OR "${${var}}" STREQUAL "")
         message(FATAL_ERROR "HikariPackageWindows: ${var} is required")
     endif()
@@ -91,10 +93,13 @@ file(COPY "${DICTIONARIES}/Dictionary" "${DICTIONARIES}/licenses" DESTINATION "$
 file(COPY ${CRT} DESTINATION "${STAGE}")
 file(COPY_FILE "${LICENSE}" "${STAGE}/LICENSE")
 file(COPY "${UNIDIC}/" DESTINATION "${STAGE}/Dictionary/unidic-lite")
-file(MAKE_DIRECTORY "${STAGE}/licenses/mecab" "${STAGE}/licenses/unidic" "${STAGE}/licenses/qtkeychain")
+file(MAKE_DIRECTORY "${STAGE}/licenses/mecab" "${STAGE}/licenses/unidic" "${STAGE}/licenses/qtkeychain" "${STAGE}/licenses/dav1d"
+    "${STAGE}/licenses/abseil")
 file(COPY_FILE "${MECAB_LICENSE}" "${STAGE}/licenses/mecab/LICENSE")
 file(COPY_FILE "${UNIDIC_LICENSE}" "${STAGE}/licenses/unidic/LICENSE")
 file(COPY_FILE "${QTKEYCHAIN_LICENSE}" "${STAGE}/licenses/qtkeychain/LICENSE")
+file(COPY_FILE "${DAV1D_LICENSE}" "${STAGE}/licenses/dav1d/LICENSE")
+file(COPY_FILE "${ABSEIL_LICENSE}" "${STAGE}/licenses/abseil/LICENSE")
 file(COPY_FILE "${HARPER}" "${STAGE}/harper-ls.exe")
 file(MAKE_DIRECTORY "${STAGE}/licenses/harper")
 file(COPY_FILE "${HARPER_LICENSE}" "${STAGE}/licenses/harper/LICENSE")
@@ -155,11 +160,11 @@ foreach(entry IN LISTS HIKARI_DICTIONARY_FILES)
     list(GET entry 0 path)
     list(APPEND pinned "${path}")
 endforeach()
-foreach(required HikariSub.exe HikariSubApp.dll hikari-media-helper.exe hikari-lua-helper.exe LICENSE bundled-files.txt ${pinned}
+foreach(required HikariSub.exe HikariSubApp.dll hikari-media-helper.exe hikari-lua-helper.exe hikari-plugin-helper.exe LICENSE bundled-files.txt ${pinned}
         Csri/VSFiltermod.dll Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin
         Dictionary/unidic-lite/char.bin Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc
         Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE licenses/qtkeychain/LICENSE
-        harper-ls.exe licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt licenses/aegisub/LICENSE)
+        licenses/dav1d/LICENSE licenses/abseil/LICENSE harper-ls.exe licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt licenses/aegisub/LICENSE)
     if(NOT required IN_LIST everything)
         message(FATAL_ERROR "HikariPackageWindows: the payload lacks ${required}")
     endif()
