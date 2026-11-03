@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plugin Panels Mockup</title>
+<style>
+:root {
+  --page: #f3f4f6; --page-ink: #1d232b; --page-muted: #56606b; --page-line: #d5dade; --page-card: #ffffff;
+  --mark-new: #23905a; --mark-ren: #c27d00;
+  font-family: "Segoe UI", "Noto Sans", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page: #12161b; --page-ink: #e6ebf0; --page-muted: #9aa6b2; --page-line: #2c343d; --page-card: #1a1f25; }
+}
+:root[data-theme="dark"] { --page: #12161b; --page-ink: #e6ebf0; --page-muted: #9aa6b2; --page-line: #2c343d; --page-card: #1a1f25; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--page-ink); font-size: 14px; line-height: 1.45; }
+header.top { padding: 20px 24px 8px; max-width: 1700px; }
+h1 { font-size: 22px; margin: 0 0 6px; }
+.intro { color: var(--page-muted); max-width: 1100px; margin: 0 0 10px; }
+.controls { display: flex; gap: 16px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+.legend { color: var(--page-muted); font-size: 13px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.dot.new { background: var(--mark-new); }
+section.sec { margin: 18px 24px; padding: 16px 18px 18px; background: var(--page-card); border: 1px solid var(--page-line); border-radius: 8px; max-width: 2860px; }
+section.sec h2 { font-size: 18px; margin: 0 0 4px; }
+.meta { color: var(--page-muted); font-size: 13px; margin: 0 0 12px; max-width: 1200px; }
+.board { display: grid; grid-template-columns: 110px repeat(3, max-content); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.rowlabel { font-size: 12px; font-weight: 600; color: var(--page-muted); align-self: start; padding-top: 18px; }
+.colhead { font-size: 12px; font-weight: 600; color: var(--page-muted); padding-left: 4px; }
+.cell { background: var(--bg); padding: 16px 18px 18px 22px; border-radius: 6px; display: flex; flex-direction: column; align-items: flex-start; min-width: 280px; color: var(--text); font-size: 13px; }
+.cap { font-size: 11px; color: var(--muted); margin: 0 0 3px 2px; font-weight: 600; }
+.details { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px 28px; margin-top: 14px; max-width: 1500px; }
+.details h3 { font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: .04em; color: var(--page-muted); }
+.details ul { margin: 0; padding-left: 20px; } .details li { margin: 2px 0; }
+.recs .num { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: 4px; }
+code { font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace; font-size: 12px; }
+
+.t-light { --bg: #E5E9EC; --panel: #F9FAFB; --raised: #EDF0F3; --field: #FFFFFF; --text: #202832; --muted: #526170; --line: #AAB5BE; --control: #76828D; --accent: #145C4C; --on: #FFFFFF; --select: #D6EBE4; --dis: #74808B; --danger: #A51F31; --warning: #8A5A00; --success: #008000; --shadow: #AAB5BE; }
+.t-dark { --bg: #171B20; --panel: #20262D; --raised: #29313A; --field: #171D24; --text: #E8EDF2; --muted: #A5B1BD; --line: #414B57; --control: #7A8691; --accent: #9CDBC9; --on: #102C24; --select: #304C47; --dis: #75818D; --danger: #FFADAD; --warning: #E0A030; --success: #4DBA4D; --shadow: #000000; }
+.t-hcb { --bg: #000000; --panel: #080808; --raised: #151515; --field: #000000; --text: #FFFFFF; --muted: #EEEEEE; --line: #FFFFFF; --control: #FFFFFF; --accent: #FFFF00; --on: #000000; --select: #253F60; --dis: #8C8C8C; --danger: #FFADAD; --warning: #FFD54A; --success: #7CFC7C; --shadow: #000000; }
+.t-hcw { --bg: #FFFFFF; --panel: #FFFFFF; --raised: #EBEBEB; --field: #FFFFFF; --text: #000000; --muted: #1A1A1A; --line: #000000; --control: #000000; --accent: #0037B3; --on: #FFFFFF; --select: #C9DAF8; --dis: #6E6E6E; --danger: #A00000; --warning: #6B4500; --success: #005A00; --shadow: #000000; }
+
+.ico { display: inline-flex; width: 16px; height: 16px; flex: none; }
+.ico svg { width: 100%; height: 100%; display: block; }
+.ico.s14 { width: 14px; height: 14px; } .ico.s12 { width: 12px; height: 12px; } .ico.s32 { width: 32px; height: 32px; } .ico.s40 { width: 40px; height: 40px; }
+
+/* menus */
+.menu { position: relative; background: var(--field); border: 1px solid var(--line); box-shadow: 1px 1px 0 color-mix(in srgb, var(--shadow) 20%, transparent); padding: 2px 0; min-width: 210px; color: var(--text); font-size: 13px; }
+.menu.sub { margin-left: -4px; }
+.mi { position: relative; display: flex; align-items: center; height: 24px; padding: 0 6px; white-space: nowrap; }
+.mi .chk { width: 14px; height: 14px; flex: none; margin-right: 6px; display: inline-flex; }
+.mi .ic { width: 16px; height: 16px; flex: none; margin-right: 6px; display: inline-flex; }
+.mi .ic svg { width: 16px; height: 16px; display: block; }
+.mi .lbl { flex: 1 1 auto; padding-right: 8px; }
+.mi .suffix { color: var(--muted); padding-left: 18px; }
+.mi .keys { color: var(--muted); padding-left: 24px; }
+.mi .arrow { width: 14px; flex: none; text-align: right; }
+.mi.hl { background: var(--accent); color: var(--on); }
+.mi.hl .keys, .mi.hl .suffix { color: var(--on); }
+.mi.dis { color: var(--dis); }
+.mi.dis .suffix { color: var(--dis); }
+.mi.hint { height: auto; padding: 0 6px 4px 46px; color: var(--dis); font-size: 11px; margin-top: -3px; white-space: normal; max-width: 280px; }
+.sep { height: 1px; background: var(--line); margin: 3px 0; }
+.mbox { width: 14px; height: 14px; border: 1px solid var(--line); background: var(--field); display: inline-flex; align-items: center; justify-content: center; }
+.mbox svg { width: 10px; height: 10px; }
+.mi.hl .mbox { border-color: var(--on); background: transparent; }
+.mark { position: absolute; left: -15px; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--mark-new); }
+.anno { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--mark-new); }
+
+/* DG1 window */
+.win { background: var(--panel); border: 1px solid var(--line); box-shadow: 2px 3px 0 color-mix(in srgb, var(--shadow) 25%, transparent); color: var(--text); display: flex; flex-direction: column; }
+.wtitle { height: 32px; display: flex; align-items: center; padding-left: 12px; font-size: 13px; flex: none; }
+.wtitle .x { margin-left: auto; width: 46px; height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+.t-hcb .wtitle, .t-hcw .wtitle { border-bottom: 1px solid var(--line); }
+.wbody { padding: 12px 24px 0; flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.wfoot { display: flex; gap: 8px; padding: 24px; align-items: center; flex: none; }
+.wfoot .grow { flex: 1; }
+
+/* controls */
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border: 1px solid var(--control); background: var(--raised); color: var(--text); font-size: 13px; white-space: nowrap; border-radius: 2px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on); font-weight: 600; }
+.btn.danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn.dis { color: var(--dis); border-color: var(--line); }
+.btn.ring { outline: 1px solid var(--text); outline-offset: 1px; }
+.ibtn { display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 2px; }
+.ibtn.hov { background: var(--raised); border-color: var(--control); }
+.ibtn.on { background: var(--select); border-color: var(--accent); }
+.fld { display: inline-flex; align-items: center; height: 26px; padding: 0 6px; border: 1px solid var(--control); background: var(--field); color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; }
+.fld.focus { border-color: var(--accent); }
+.fld .ph { color: var(--muted); }
+.fld .unit { color: var(--muted); margin-left: auto; padding-left: 6px; }
+.fld.num { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.area { border: 1px solid var(--control); background: var(--field); padding: 4px 6px; height: 58px; line-height: 1.35; overflow: hidden; }
+.combo { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; height: 26px; padding: 0 6px 0 8px; border: 1px solid var(--control); background: var(--raised); white-space: nowrap; }
+.cb { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.box { width: 15px; height: 15px; border: 1px solid var(--control); background: var(--field); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.box.on { background: var(--accent); border-color: var(--accent); color: var(--on); }
+.box svg { width: 11px; height: 11px; }
+.radio { width: 15px; height: 15px; border: 1px solid var(--control); border-radius: 50%; background: var(--field); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.radio.on::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--control); }
+.seg span { padding: 3px 12px; border-right: 1px solid var(--control); background: var(--raised); }
+.seg span:last-child { border-right: 0; }
+.seg span.on { background: var(--select); box-shadow: inset 0 -2px 0 var(--accent); }
+.swatch { width: 26px; height: 26px; border: 1px solid var(--control); padding: 3px; background: var(--field); display: inline-flex; }
+.swatch i { flex: 1; display: block; }
+.slider { position: relative; height: 18px; display: flex; align-items: center; }
+.slider .groove { height: 4px; width: 100%; background: var(--raised); border: 1px solid var(--control); }
+.slider .fill { position: absolute; left: 0; height: 4px; background: var(--accent); }
+.slider .handle { position: absolute; width: 12px; height: 16px; background: var(--raised); border: 1px solid var(--control); border-radius: 2px; }
+.prog { height: 6px; background: var(--raised); border: 1px solid var(--line); position: relative; }
+.prog i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+.tabs { display: flex; border-bottom: 1px solid var(--line); gap: 2px; }
+.tabs span { padding: 4px 10px 5px; color: var(--muted); }
+.tabs span.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.link { color: var(--accent); text-decoration: underline; }
+.h { font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.mono { font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace; font-size: 12px; }
+.hr { height: 1px; background: var(--line); align-self: stretch; }
+.lst { border: 1px solid var(--line); background: var(--field); }
+.lr { position: relative; display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 0 8px; }
+.lr.sel { background: var(--select); }
+.lr.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.tip { position: absolute; background: var(--field); color: var(--text); border: 1px solid var(--line); padding: 3px 7px; font-size: 12px; white-space: nowrap; box-shadow: 1px 1px 0 color-mix(in srgb, var(--shadow) 25%, transparent); z-index: 3; }
+.row { display: flex; align-items: center; gap: 8px; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.grid2 { display: grid; grid-template-columns: max-content 1fr; gap: 8px 10px; align-items: center; }
+.kind { font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
+
+/* docks */
+.dockarea { position: relative; display: flex; flex-direction: column; }
+.dock { border: 1px solid var(--line); background: var(--panel); position: relative; display: flex; flex-direction: column; }
+.dhead { height: 35px; background: var(--field); border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 6px 0 10px; font-size: 13px; position: relative; flex: none; }
+.dhead.tabs2 { background: var(--raised); padding: 0; }
+.dtab { height: 34px; display: flex; align-items: center; padding: 0 12px; border-right: 1px solid var(--line); gap: 6px; color: var(--muted); }
+.dtab.sel { background: var(--field); color: var(--text); }
+.dhead .menub { margin-left: auto; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.dhead.tabs2 .menub { margin-right: 6px; }
+.focusmark { position: absolute; right: 0; top: 0; width: 0; height: 0; border-top: 8px solid var(--accent); border-left: 8px solid transparent; }
+.dbody { padding: 4px; flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.strip { display: flex; align-items: center; gap: 2px; }
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; color: var(--muted); padding: 16px; }
+.ghost { opacity: .55; }
+
+/* manager */
+.mgr { display: grid; grid-template-columns: 240px 1fr; gap: 0; border: 1px solid var(--line); background: var(--field); min-height: 0; flex: 1; }
+.mgr .side { border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+.mgr .side .search { padding: 6px; border-bottom: 1px solid var(--line); }
+.prow { position: relative; display: grid; grid-template-columns: 32px 1fr auto; gap: 8px; align-items: center; padding: 7px 8px 7px 10px; }
+.prow.sel { background: var(--select); }
+.prow.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.picon { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--raised); border-radius: 4px; }
+.picon.big { width: 48px; height: 48px; }
+.pname { font-size: 13px; }
+.psub { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; }
+.pstate { font-size: 11px; color: var(--muted); }
+.det { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; background: var(--panel); }
+.dsec .dh { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.perm { display: grid; grid-template-columns: 18px 1fr; gap: 2px 6px; }
+.perm .why { grid-column: 2; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.err { border: 1px solid var(--danger); padding: 8px 10px; display: flex; gap: 8px; }
+.err .mono { color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 6px; border: 1px solid var(--line); background: var(--raised); }
+.chip.warn { border-color: var(--warning); color: var(--warning); background: transparent; }
+canvas, .cv { display: block; }
+body.single section.sec { display: none; }
+body.single section.sec.shown { display: block; max-width: none; width: max-content; }
+body.single header.top, body.single #questions { display: none; }
+@media (max-width: 700px) {
+  header.top { padding: 16px; }
+  section.sec { margin: 12px 16px; padding: 12px; }
+  .board { grid-template-columns: repeat(3, max-content); }
+  .rowlabel { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>PL4: Plugin panels and dialogs, plugin docks, the plugin manager (design gate)</h1>
+  <p class="intro">PL4 <a href="https://github.com/altqx/hikari/issues/416">#416</a>. Each section draws one surface in Light, Dark and high contrast, with the app's theme roles and the icons from <code>src/ui/icons</code>. The sample plugin is “Line tools” 1.2.0; its panel “Timing check” and everything inside it are drawn from a plugin's widget tree. Green dots mark what is new. Answer the questions and the numbered recommendations with “yes” or a change.</p>
+  <div class="controls"><label>High contrast <select id="hc"><option value="hcb">Black</option><option value="hcw">White</option></select></label>
+  <span class="legend"><span class="dot new"></span> new</span></div>
+</header>
+<div id="main"></div>
+<script>
+const ICONS = /*ICONS*/;
+/*SPEC*/
+const CHECK_SVG = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 5.2l2.3 2.3 4.7-5"/></svg>';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function icon(role, state, size) {
+  const svg = ICONS[role] || "";
+  const acc = state === "dis" ? "var(--dis)" : state === "hl" ? "var(--on)" : state === "danger" ? "var(--danger)" : state === "warning" ? "var(--warning)" : "var(--accent)";
+  const base = state === "dis" ? "var(--dis)" : state === "hl" ? "var(--on)" : state === "muted" ? "var(--muted)" : state === "danger" ? "var(--danger)" : state === "warning" ? "var(--warning)" : "var(--text)";
+  const body = svg.replace("<svg ", `<svg style="color:${base}" `).replace('<g id="accent">', `<g style="color:${acc}" stroke="currentColor">`);
+  return `<span class="ico${size ? " s" + size : ""}">${body}</span>`;
+}
+
+function mrow(it, depth = 0) {
+  if (it.sep) return '<div class="sep"></div>';
+  const state = it.dis ? "dis" : it.hl ? "hl" : "";
+  const chk = it.chk ? `<span class="mbox">${it.on ? CHECK_SVG : ""}</span>` : "";
+  const mark = it.mark && !depth ? '<span class="mark"></span>' : "";
+  let html = `<div class="mi ${state}">${mark}<span class="chk">${chk}</span><span class="ic">${it.icon ? icon(it.icon, state) : ""}</span>`
+    + `<span class="lbl">${esc(it.t)}</span>${it.suffix ? `<span class="suffix">${esc(it.suffix)}</span>` : ""}${it.k ? `<span class="keys">${esc(it.k)}</span>` : ""}<span class="arrow">${it.sub ? "›" : ""}</span></div>`;
+  if (it.hint) html += `<div class="mi hint">${esc(it.hint)}</div>`;
+  return html;
+}
+
+function menuCascade(items) {
+  let html = '<div style="display:flex;align-items:flex-start">';
+  const chain = [items];
+  let level = items;
+  while (true) {
+    const open = level.findIndex((it) => it.open && Array.isArray(it.sub));
+    if (open < 0) break;
+    level = level[open].sub;
+    chain.push(level);
+  }
+  let top = 0;
+  chain.forEach((list, depth) => {
+    html += `<div class="menu${depth ? " sub" : ""}" style="margin-top:${top}px">${list.map((it) => mrow(it, depth)).join("")}</div>`;
+    let offset = 2;
+    for (const it of list) { if (it.open && Array.isArray(it.sub)) break; offset += it.sep ? 7 : it.hint ? 40 : 24; }
+    top += offset - 2;
+  });
+  return html + "</div>";
+}
+
+function win(title, body, foot, w, h) {
+  return `<div class="win" style="width:${w}px;${h ? `height:${h}px;` : ""}"><div class="wtitle">${esc(title)}<span class="x">${icon("window-close", "")}</span></div>`
+    + `<div class="wbody">${body}</div><div class="wfoot">${foot}</div></div>`;
+}
+const btn = (t, cls = "", ic = "") => `<span class="btn ${cls}">${ic ? icon(ic, cls.includes("primary") ? "hl" : cls.includes("danger") ? "danger" : cls.includes("dis") ? "dis" : "") : ""}${esc(t)}</span>`;
+const box = (on) => `<span class="box${on ? " on" : ""}">${on ? CHECK_SVG : ""}</span>`;
+const check = (t, on) => `<span class="cb">${box(on)}${esc(t)}</span>`;
+const combo = (t, w) => `<span class="combo" style="${w ? `width:${w}px` : ""}">${esc(t)}${icon("chevron-down", "muted", 12)}</span>`;
+const fld = (t, w, cls = "", unit = "") => `<span class="fld ${cls}" style="width:${w}px">${t === "" ? "" : t.startsWith("~") ? `<span class="ph">${esc(t.slice(1))}</span>` : esc(t)}${unit ? `<span class="unit">${esc(unit)}</span>` : ""}</span>`;
+const ibtn = (role, cls = "") => `<span class="ibtn ${cls}">${icon(role, "")}</span>`;
+
+const PLUGINS = [
+  { id: "linetools", name: "Line tools", ver: "1.2.0", sub: "Unverified, signed by key 3F2A9C04D17B6E55", icon: "sort-selected", state: "" },
+  { id: "karaoke", name: "Karaoke helper", ver: "0.4.1", sub: "Unverified, unsigned", icon: "karaoke", state: "Turned off" },
+  { id: "checker", name: "Line checker", ver: "2.0.0", sub: "Unverified, unsigned", icon: "problem", state: "Didn’t start", stateCls: "danger" },
+  { id: "fx", name: "Effects pack", ver: "3.1.0", sub: "Unverified, unsigned", icon: "tool-drawing", state: "Full trust", stateCls: "warning" },
+];
+
+function pluginRow(p, sel) {
+  const off = p.state === "Turned off";
+  const second = p.state
+    ? `<span style="color:var(--${p.stateCls || "muted"})">${esc(p.state)}</span>`
+    : `${icon("plugin-unverified", "muted", 12)}<span>${esc(p.sub.startsWith("Unverified, signed") ? "Signed, unverified" : p.sub)}</span>`;
+  return `<div class="prow${sel ? " sel" : ""}" style="grid-template-columns:32px 1fr"><span class="picon">${icon(p.icon, off ? "dis" : "")}</span>`
+    + `<div style="min-width:0"><div class="pname" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${off ? "color:var(--muted)" : ""}">${esc(p.name)} <span class="muted small">${esc(p.ver)}</span></div>`
+    + `<div class="psub">${second}</div></div></div>`;
+}
+
+function detailsLineTools() {
+  return `<div class="det">
+    <div class="row" style="gap:12px;align-items:flex-start"><span class="picon big">${icon("sort-selected", "", 32)}</span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">Line tools <span class="muted" style="font-weight:400;font-size:13px">1.2.0</span></div>
+      <div class="muted small">by Example Author · <span class="link">Home page</span></div>
+      <div class="psub" style="margin-top:2px">${icon("plugin-unverified", "muted", 12)} Unverified, signed by key 3F2A9C04D17B6E55</div></div>
+      <span class="cb" style="align-self:center">${box(true)}On</span></div>
+    <div>Sorts, joins and tidies lines, and checks their timing in its own panel.</div>
+    <div class="dsec"><div class="dh">Permissions</div>
+      <div class="perm">${icon("open-subtitles", "", 16)}<span>Read and edit every open subtitle file</span><span class="why">“It tidies every tab at once.”</span></div></div>
+    <div class="dsec"><div class="dh">Adds</div>
+      <div class="small">Automation › Line tools: Sort by start time, Join selected lines…, Remove empty lines</div>
+      <div class="small">Panels: Timing check</div></div>
+    <div class="dsec"><div class="dh">Settings</div>
+      <div class="grid2"><span>Join with</span>${combo("A space", 150)}<span>Minimum gap</span>${fld("80", 90, "num", "ms")}<span></span>${check("Keep comments when joining", true)}</div></div>
+    <div class="row" style="margin-top:2px">${btn("Update from file…", "", "plugin-install")}${btn("Open data folder", "", "show-in-folder")}<span style="flex:1"></span>${btn("Uninstall…", "danger")}</div>
+  </div>`;
+}
+
+function detailsBroken() {
+  return `<div class="det">
+    <div class="row" style="gap:12px;align-items:flex-start"><span class="picon big">${icon("problem", "", 32)}</span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">Line checker <span class="muted" style="font-weight:400;font-size:13px">2.0.0</span></div>
+      <div class="muted small">by Ana</div>
+      <div class="psub" style="margin-top:2px">${icon("plugin-unverified", "muted", 12)} Unverified, unsigned</div></div>
+      <span class="cb" style="align-self:center">${box(true)}On</span></div>
+    <div class="err">${icon("notice-error", "danger")}<div style="min-width:0"><div>The plugin didn’t start.</div><div class="mono">main.lua:12: attempt to call a nil value (field 'check')
+stack traceback:
+  main.lua:12: in main chunk</div>
+      <div class="row" style="margin-top:8px">${btn("Start again", "", "restart")}${btn("Copy", "", "edit-copy")}</div></div></div>
+    <div class="dsec"><div class="dh">Permissions</div><div class="small muted">Only the active subtitle file.</div></div>
+    <div class="dsec"><div class="dh">Adds</div><div class="small">Automation › Line checker: Check lines</div></div>
+    <div class="row" style="margin-top:2px">${btn("Update from file…", "", "plugin-install")}<span style="flex:1"></span>${btn("Uninstall…", "danger")}</div>
+  </div>`;
+}
+
+function timingCheckBody(opts = {}) {
+  const rows = [
+    ["notice-error", "danger", "12", "Overlaps line 13 by 120 ms"],
+    ["notice-warning", "warning", "27", "Reading speed 24 CPS (limit 17)"],
+    ["notice-warning", "warning", "28", "Gap of 40 ms; snap to 0 or 80"],
+    ["notice-info", "", "41", "Ends 2 frames after a keyframe"],
+  ];
+  const list = rows.map(([ic, st, n, t], i) => `<div class="lr${i === 1 ? " sel" : ""}">${icon(ic, st)}<span class="muted" style="width:22px;text-align:right;font-variant-numeric:tabular-nums">${n}</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t)}</span></div>`).join("");
+  return `<div class="strip">${ibtn("refresh")}${ibtn("filter", "on")}<span style="flex:1"></span><span class="seg small"><span class="on">All</span><span>Errors</span></span></div>`
+    + `<div class="lst" style="flex:1">${list}</div>`
+    + `<div class="row small"><span class="muted">4 problems in 312 lines</span><span style="flex:1"></span>${btn("Fix overlaps", "primary")}</div>`;
+}
+
+function dock(title, body, opts = {}) {
+  const w = opts.w || 330, h = opts.h || 250;
+  const head = opts.tabs
+    ? `<div class="dhead tabs2">${opts.tabs.map((t, i) => `<div class="dtab${i === opts.sel ? " sel" : ""}">${esc(t)}</div>`).join("")}<span class="menub">${icon("panel-menu", "")}</span></div>`
+    : `<div class="dhead">${esc(title)}<span class="menub">${icon("panel-menu", "")}</span>${opts.focus ? '<span class="focusmark"></span>' : ""}</div>`;
+  return `<div class="dock" style="width:${w}px;height:${h}px">${head}<div class="dbody">${body}</div>${opts.mark ? `<span class="anno" style="left:-14px;top:14px"></span>` : ""}</div>`;
+}
+
+function cpsCanvas(w, h) {
+  const bars = [11, 14, 9, 16, 22, 13, 12, 18, 24, 15, 10, 8, 14, 17, 19, 12, 9, 13, 21, 15, 11, 14, 16, 12];
+  const pad = 26, bw = (w - pad - 8) / bars.length;
+  const y = (v) => h - 18 - (v / 26) * (h - 30);
+  let svg = `<svg class="cv" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-size="10" font-family="inherit">`;
+  svg += `<rect x="0" y="0" width="${w}" height="${h}" fill="var(--field)" stroke="var(--line)"/>`;
+  [0, 10, 20].forEach((v) => { svg += `<line x1="${pad}" x2="${w - 6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${pad - 4}" y="${y(v) + 3}" text-anchor="end" fill="var(--muted)">${v}</text>`; });
+  bars.forEach((v, i) => {
+    const over = v > 17;
+    svg += `<rect x="${pad + 2 + i * bw}" y="${y(v)}" width="${bw - 3}" height="${y(0) - y(v)}" fill="${over ? "var(--warning)" : "var(--accent)"}"${over ? ` stroke="var(--text)" stroke-width="${i === 8 ? 2.5 : 1}"` : ""}/>`;
+  });
+  svg += `<line x1="${pad}" x2="${w - 6}" y1="${y(17)}" y2="${y(17)}" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  svg += `<text x="${w - 8}" y="${y(17) - 4}" text-anchor="end" fill="var(--danger)">17 CPS</text>`;
+  svg += `<text x="${pad}" y="${h - 5}" fill="var(--muted)">Line 1</text><text x="${w - 6}" y="${h - 5}" text-anchor="end" fill="var(--muted)">Line 24</text>`;
+  return svg + "</svg>";
+}
+
+const SCENES = {
+  manager(which) {
+    const sel = which === "broken" ? 2 : 0;
+    const list = PLUGINS.map((p, i) => pluginRow(p, i === sel)).join("");
+    const side = `<div class="side"><div class="search">${fld("~Filter plugins", 226)}</div>${list}</div>`;
+    const det = which === "broken" ? detailsBroken() : detailsLineTools();
+    return win("Plugins", `<div class="mgr" style="height:440px">${side}${det}</div>`,
+      `${btn("Install from file…", "", "plugin-install")}<span class="grow"></span>${btn("Close", "primary")}`, 760);
+  },
+  managerEmpty() {
+    const body = `<div class="mgr" style="height:200px;grid-template-columns:1fr"><div class="empty">${icon("plugins", "muted", 32)}<div>No plugins installed.</div>${btn("Install from file…", "", "plugin-install")}</div></div>`;
+    return win("Plugins", body, `<span class="grow"></span>${btn("Close", "primary")}`, 460);
+  },
+  panelsMenu(withMissing) {
+    const panel = (t, extra = {}) => ({ t, sub: [{ t: "Show", icon: "show" }], ...extra });
+    const items = [
+      panel("Video"), panel("Audio"), panel("Line editor"), panel("Grid"), { t: "…", dis: true },
+      panel("Postprocessor"),
+      { sep: true },
+      { t: "Timing check", suffix: "Line tools", sub: [{ t: "Show", icon: "show", dis: true }, { t: "Hide", icon: "hide" }, { t: "Float", icon: "panel-float" }, { t: "Dock", icon: "panel-dock", dis: true }], open: !withMissing, hl: !withMissing, mark: true },
+    ];
+    if (withMissing)
+      items.push({ t: "Waveform notes", suffix: "Karaoke helper", mark: true, hl: true, open: true, sub: [{ t: "Show", icon: "show", dis: true }, { t: "Remove from the layout", icon: "remove" }] , hint: null });
+    return menuCascade([{ t: "Layout", icon: "layout", sub: [] }, { sep: true }, { t: "Panels", icon: "panels", hl: true, open: true, sub: items }, { t: "Move panel…", icon: "panel-move" }]);
+  },
+  panel() {
+    return `<div class="row" style="align-items:flex-start;gap:28px">${dock("Timing check", timingCheckBody(), { w: 330, h: 270, focus: true, mark: true })}<div>${menuCascade([
+      { t: "Check again", icon: "refresh", k: "F5", mark: true },
+      { t: "Only the selected lines", chk: true, on: false, mark: true },
+      { sep: true },
+      { t: "Move panel…", icon: "panel-move" },
+      { t: "Undock", icon: "panel-float" },
+      { sep: true },
+      { t: "About Line tools…", icon: "plugins", mark: true },
+      { t: "Close", icon: "window-close" },
+    ])}</div></div>`;
+  },
+  tabbed() {
+    return dock("", timingCheckBody(), { tabs: ["Styles", "Timing check", "Search"], sel: 1, w: 360, h: 270 });
+  },
+  floating() {
+    return `<div class="win" style="width:340px"><div class="wtitle">Timing check<span class="x">${icon("window-close", "")}</span></div><div style="padding:4px;display:flex;flex-direction:column;gap:8px;height:240px">${timingCheckBody()}</div></div>`;
+  },
+  widgetsInput() {
+    const r = (kind, ctl) => `<span class="kind">${kind}</span><span>${ctl}</span>`;
+    return `<div class="grid2" style="width:400px;grid-template-columns:96px 1fr">`
+      + r("label", `<span class="h">Heading</span> · body text · <span class="muted">muted note</span>`)
+      + r("button", `<span class="row">${btn("Apply", "primary")}${btn("Preview")}${btn("Delete all", "danger")}</span>`)
+      + r("icon_button", `<span class="row" style="position:relative">${ibtn("refresh", "hov")}${ibtn("filter", "on")}${ibtn("sort")}<span class="tip" style="left:92px;top:2px">Check again</span></span>`)
+      + r("text", fld("~Search the lines", 220, "focus"))
+      + r("text_area", `<div class="area" style="width:260px">Line one of a note<br>that wraps to a second</div>`)
+      + r("number", `<span class="row">${fld("80", 80, "num", "ms")}${fld("1.25", 70, "num")}</span>`)
+      + r("time", fld("0:01:23.45", 100, "num"))
+      + r("check", `<span class="row">${check("Keep comments", true)}${check("Only selected", false)}</span>`)
+      + r("choice", `<span class="row"><span class="seg"><span class="on">All</span><span>Errors</span><span>Warnings</span></span></span>`)
+      + r("radio", `<span class="row"><span class="cb"><span class="radio on"></span>Start</span><span class="cb"><span class="radio"></span>End</span></span>`)
+      + r("dropdown", combo("Default", 160))
+      + r("colour", `<span class="row"><span class="swatch"><i style="background:#E8A33D"></i></span><span class="mono">&amp;H003DA3E8</span></span>`)
+      + r("slider", `<span class="slider" style="width:200px"><span class="groove"></span><span class="fill" style="width:62%"></span><span class="handle" style="left:58%"></span></span>`)
+      + `</div>`;
+  },
+  widgetsShow() {
+    const r = (kind, ctl) => `<span class="kind">${kind}</span><span>${ctl}</span>`;
+    return `<div class="grid2" style="width:400px;grid-template-columns:96px 1fr">`
+      + r("progress", `<div class="col" style="width:240px;gap:4px"><span class="small muted">Checking 120 of 312</span><div class="prog"><i style="width:38%"></i></div></div>`)
+      + r("list", `<div class="lst" style="width:260px">${["First line", "Second line", "Third line"].map((t, i) => `<div class="lr${i === 1 ? " sel" : ""}">${icon(i === 0 ? "comment-original" : "edit", "")}${t}<span class="muted small" style="margin-left:auto">0:0${i}.00</span></div>`).join("")}</div>`)
+      + r("tree", `<div class="lst" style="width:260px"><div class="lr">${icon("chevron-down", "muted", 12)}${icon("styles", "")}Default</div><div class="lr sel" style="padding-left:30px">${icon("edit", "")}Line 12</div><div class="lr">${icon("chevron-right", "muted", 12)}${icon("styles", "")}Signs</div></div>`)
+      + r("tabs", `<div class="tabs" style="width:260px"><span class="on">Problems</span><span>Rules</span><span>About</span></div>`)
+      + r("group", `<div style="width:260px"><div class="small h" style="margin-bottom:4px">Joining</div><div class="hr"></div></div>`)
+      + r("link", `<span class="link">How the checks work</span>`)
+      + r("image", `<span class="row"><span class="picon">${icon("sort-selected", "", 16)}</span><span class="muted small">a PNG or SVG from the package</span></span>`)
+      + r("row / column / grid", `<span class="muted small">lay out children with 8-pixel spacing</span>`)
+      + r("empty", `<span class="muted">No problems found</span>`)
+      + `</div>`;
+  },
+  canvas() {
+    const body = `<div class="strip"><span class="small muted" style="padding-left:4px">Reading speed per line</span><span style="flex:1"></span>${ibtn("zoom")}</div>`
+      + `<div style="position:relative">${cpsCanvas(318, 160)}<span class="tip" style="left:168px;top:6px">Line 9 · 24 CPS</span></div>`
+      + `<div class="row small"><span class="muted" style="padding-left:4px">5 lines over 17 CPS</span><span style="flex:1"></span>${btn("Select them")}</div>`;
+    return dock("Reading speed", body, { w: 330, h: 276 });
+  },
+  placeholder(kind) {
+    const text = {
+      missing: ["Karaoke helper isn’t installed.", "The layout keeps this place for its panel “Waveform notes”.", btn("Open Plugins…", "", "plugins")],
+      off: ["Karaoke helper is turned off.", "", btn("Turn on", "", "show")],
+      stopped: ["Line tools stopped.", "It ran for more than 10 seconds.", `<span class="row">${btn("Start again", "", "restart")}<span class="link small">Details</span></span>`],
+    }[kind];
+    const title = kind === "stopped" ? "Timing check" : "Waveform notes";
+    const body = `<div class="empty">${icon(kind === "stopped" ? "notice-warning" : "plugins", kind === "stopped" ? "warning" : "muted", 32)}<div style="color:var(--text)">${esc(text[0])}</div>${text[1] ? `<div class="small">${esc(text[1])}</div>` : ""}${text[2]}</div>`;
+    return dock(title, body, { w: 300, h: 210 });
+  },
+  dialog() {
+    const body = `<div class="col" style="gap:10px"><div>Join the 3 selected lines into one.</div>`
+      + `<div class="grid2"><span>Join with</span>${combo("A line break (\\N)", 190)}<span>Timing</span><span class="seg"><span class="on">First to last</span><span>Keep first</span></span>`
+      + `<span></span>${check("Keep comments", true)}</div>`
+      + `<div class="small muted">The result is one undo step, “Line tools: Join lines”.</div></div>`;
+    return win("Join selected lines", body, `<span class="grow"></span>${btn("Join", "primary")}${btn("Cancel")}`, 420);
+  },
+  dialogBusy() {
+    const body = `<div class="col" style="gap:10px"><div>Checking the lines…</div><div class="prog" style="width:100%"><i style="width:62%"></i></div><div class="small muted">194 of 312</div></div>`;
+    return win("Check timing", body, `<span class="grow"></span>${btn("Cancel")}`, 360);
+  },
+};
+
+function cell(content) {
+  if (content.scene) return SCENES[content.scene](...(content.args || []));
+  return menuCascade(content.items);
+}
+
+function renderSection(s) {
+  const hc = document.getElementById("hc").value;
+  const themes = [["Light", "t-light"], ["Dark", "t-dark"], ["High contrast", "t-" + hc]];
+  let board = '<div class="board"><div></div>' + themes.map(([n]) => `<div class="colhead">${n}</div>`).join("");
+  for (const r of s.rows) {
+    board += `<div class="rowlabel">${esc(r.label)}</div>`;
+    for (const [, cls] of themes) board += `<div class="cell ${cls}">${cell(r)}</div>`;
+  }
+  board += "</div>";
+  const list = (arr) => "<ul>" + arr.map((x) => `<li>${esc(x)}</li>`).join("") + "</ul>";
+  const details = `<div class="details"><div><h3>How it works</h3>${list(s.notes)}</div>`
+    + `<div class="recs"><h3>For approval</h3><ol style="list-style:none;padding-left:0">${s.recs.map((r, i) => `<li><span class="num">${s.n}.${i + 1}</span>${esc(r)}</li>`).join("")}</ol></div></div>`;
+  return `<section class="sec" id="${s.id}"><h2>${s.n}. ${esc(s.title)}</h2><p class="meta">${esc(s.opens)}</p>${board}${details}</section>`;
+}
+
+function renderQuestions() {
+  return `<section class="sec" id="questions"><h2>Scope questions</h2><div class="details">` + QUESTIONS.map((q) =>
+    `<div><h3>${esc(q.id)}. ${esc(q.title)}</h3><p><b>Recommended:</b> ${esc(q.rec)}</p><p style="color:var(--page-muted)"><b>Alternative:</b> ${esc(q.alt)}</p></div>`).join("") + "</div></section>";
+}
+
+function render() {
+  document.getElementById("main").innerHTML = renderQuestions() + SECTIONS.map(renderSection).join("");
+  const only = new URLSearchParams(location.search).get("only");
+  if (only) { document.body.classList.add("single"); document.getElementById(only)?.classList.add("shown"); }
+}
+const hcParam = new URLSearchParams(location.search).get("hc");
+if (hcParam) document.getElementById("hc").value = hcParam;
+document.getElementById("hc").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
