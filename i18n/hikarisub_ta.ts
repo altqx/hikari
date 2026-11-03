@@ -12033,6 +12033,14 @@ because it was edited.</source>
         <translation>ஒளிபுகா பெட்டி</translation>
     </message>
     <message>
+        <source>Outline</source>
+        <translation>வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Opaque box per line (libass)</source>
+        <translation>ஒவ்வொரு வரிக்கும் ஒளிபுகா பெட்டி (libass)</translation>
+    </message>
+    <message>
         <source>Edit style</source>
         <translation>பாணியைத் திருத்து</translation>
     </message>
@@ -12325,6 +12333,10 @@ because it was edited.</source>
     <message>
         <source>Text encoding</source>
         <translation>உரை குறியாக்கம்</translation>
+    </message>
+    <message>
+        <source>-1 - Detect text direction (libass)</source>
+        <translation>-1 - உரை திசையைக் கண்டறி (libass)</translation>
     </message>
     <message>
         <source>0 - ANSI</source>

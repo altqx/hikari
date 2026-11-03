@@ -660,6 +660,51 @@ TEST(LibassFork, SymbolAndLegacyArabicCmapFontsDraw)
     EXPECT_NE(frames[3], frames[0]);
 }
 
+TEST(LibassRenderer, EncodingMinusOneDetectsTheTextDirection)
+{
+    const std::string style = ",28,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,10,10,10,";
+    const std::string hebrewThenRedBang = "\xD7\x90\xD7\x91\xD7\x92{\\1c&H0000FF&}!";
+    const std::string script =
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 180\n\n"
+        "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+        "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        "Style: Ltr,ForkTest Hebrew" + style + "1\nStyle: Auto,ForkTest Hebrew" + style + "-1\n"
+        "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Dialogue: 0,0:00:00.00,0:00:01.00,Ltr,,0,0,0,," + hebrewThenRedBang + "\n"
+        "Dialogue: 0,0:00:01.00,0:00:02.00,Auto,,0,0,0,," + hebrewThenRedBang + "\n";
+    backends::LibassRenderer renderer;
+    ASSERT_TRUE(renderer
+                    .prepare(RenderSnapshot{bytesOf(script),
+                                            {FontLease{"ForkTest Hebrew", forkFixture("forktest-hebrew.ttf")}},
+                                            "",
+                                            false})
+                    .has_value());
+    const auto bangIsLeftOfTheHebrew = [&](int ms) -> std::optional<bool> {
+        const auto frame = renderer.render(core::DocumentTime(std::int64_t(ms) * 1000), 320, 180);
+        if (!frame || frame->empty)
+            return std::nullopt;
+        const std::uint8_t *px = frame->pixels.data();
+        double redX = 0, whiteX = 0;
+        int red = 0, white = 0;
+        for (int y = 0; y < frame->height; ++y)
+            for (int x = 0; x < frame->width; ++x) {
+                const auto *p = px + std::size_t(y) * frame->stride + std::size_t(x) * 4;
+                if (p[3] < 200)
+                    continue;
+                if (p[0] < 64 && p[2] > 192)
+                    redX += x, ++red;
+                else if (p[0] > 192)
+                    whiteX += x, ++white;
+            }
+        if (red == 0 || white == 0)
+            return std::nullopt;
+        return redX / red < whiteX / white;
+    };
+    EXPECT_EQ(bangIsLeftOfTheHebrew(500), false) << "Encoding 1 keeps a left-to-right paragraph";
+    EXPECT_EQ(bangIsLeftOfTheHebrew(1500), true) << "Encoding -1 finds the right-to-left paragraph";
+}
+
 TEST(LibassRenderer, FramesCarryTheBoundsOfTheirImages)
 {
     backends::LibassRenderer renderer;

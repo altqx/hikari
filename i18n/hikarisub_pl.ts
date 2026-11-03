@@ -12110,6 +12110,14 @@ ponieważ została zmieniona.</translation>
         <translation>Nieprzezroczyste tło</translation>
     </message>
     <message>
+        <source>Outline</source>
+        <translation>Obwódka</translation>
+    </message>
+    <message>
+        <source>Opaque box per line (libass)</source>
+        <translation>Nieprzezroczyste tło dla każdej linijki (libass)</translation>
+    </message>
+    <message>
         <source>Edit style</source>
         <translation>Edytuj styl</translation>
     </message>
@@ -12408,6 +12416,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Text encoding</source>
         <translation>Kodowanie tekstu</translation>
+    </message>
+    <message>
+        <source>-1 - Detect text direction (libass)</source>
+        <translation>-1 - Wykrywanie kierunku tekstu (libass)</translation>
     </message>
     <message>
         <source>0 - ANSI</source>

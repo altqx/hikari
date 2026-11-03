@@ -21,7 +21,7 @@ struct StyleValues {
     Colour primary, secondary, outline, back;
     bool bold = false, italic = false, underline = false, strikeOut = false;
     std::u8string scaleX, scaleY, spacing, angle;
-    bool borderStyle = false; // BorderStyle 3 (opaque box)
+    int borderStyle = 1; // 1 outline, 3 opaque box, 4 (libass) one box per line; any other value reads as 1
     std::u8string outlineWidth, shadow;
     std::u8string alignment;  // ASS numpad numbering; SSA values are renumbered
     std::u8string marginLeft, marginRight, marginVertical, encoding;
