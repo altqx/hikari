@@ -5768,6 +5768,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Znajdź następny</translation>
     </message>
     <message>
+        <source>Find previous</source>
+        <translation>Znajdź poprzedni</translation>
+    </message>
+    <message>
         <source>Load last session</source>
         <translation>Wczytaj ostatnią sesję</translation>
     </message>
@@ -6790,14 +6794,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacz &amp;linijki</translation>
     </message>
     <message>
-        <source>Find and re&amp;place</source>
-        <translation>Znajdź i za&amp;mień</translation>
-    </message>
-    <message>
-        <source>&amp;Find</source>
-        <translation>Z&amp;najdź</translation>
-    </message>
-    <message>
         <source>Find next</source>
         <translation>Znajdź następny</translation>
     </message>
@@ -6984,6 +6980,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>&amp;Subtitles</source>
         <translation>&amp;Napisy</translation>
+    </message>
+    <message>
+        <source>Opens the Find panel</source>
+        <translation>Otwiera panel Znajdź</translation>
+    </message>
+    <message>
+        <source>&amp;Find…</source>
+        <translation>Z&amp;najdź…</translation>
+    </message>
+    <message>
+        <source>Opens the Find panel with the replace row shown</source>
+        <translation>Otwiera panel Znajdź z widocznym wierszem zamiany</translation>
+    </message>
+    <message>
+        <source>Re&amp;place…</source>
+        <translation>Za&amp;mień…</translation>
+    </message>
+    <message>
+        <source>Selects the next match</source>
+        <translation>Zaznacza następne dopasowanie</translation>
+    </message>
+    <message>
+        <source>Selects the previous match</source>
+        <translation>Zaznacza poprzednie dopasowanie</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>Znajdź poprzedni</translation>
     </message>
     <message>
         <source>Shift &amp;times...</source>
@@ -7267,15 +7291,15 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Searches for the specified text phrases and replaces them</source>
-        <translation>Wyszukuje podane frazy tekstu i zamienia je</translation>
+        <translation type="vanished">Wyszukuje podane frazy tekstu i zamienia je</translation>
     </message>
     <message>
         <source>Searches for the specified text phrase</source>
-        <translation>Wyszukuje podaną frazę tekstu</translation>
+        <translation type="vanished">Wyszukuje podaną frazę tekstu</translation>
     </message>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
-        <translation>Znajduje kolejne wystąpienie frazy w tekście</translation>
+        <translation type="vanished">Znajduje kolejne wystąpienie frazy w tekście</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -10412,22 +10436,6 @@ ponieważ została zmieniona.</translation>
 <context>
     <name>HikariSub.Search</name>
     <message>
-        <source>Search</source>
-        <translation>Szukaj</translation>
-    </message>
-    <message>
-        <source>Find and replace</source>
-        <translation>Znajdź i zamień</translation>
-    </message>
-    <message>
-        <source>Reached the end of the subtitles.</source>
-        <translation>Osiągnięto koniec napisów.</translation>
-    </message>
-    <message>
-        <source>Search again from the first line?</source>
-        <translation>Szukać ponownie od pierwszej linijki?</translation>
-    </message>
-    <message>
         <source>“%1”</source>
         <translation>“%1”</translation>
     </message>
@@ -10456,6 +10464,10 @@ ponieważ została zmieniona.</translation>
         <translation>Szukanie tylko w tych stylach nic nie znajdzie.</translation>
     </message>
     <message>
+        <source>Replace in files</source>
+        <translation>Zamień w plikach</translation>
+    </message>
+    <message>
         <source>Replace in every matching file in “%1”?</source>
         <translation>Zamienić we wszystkich pasujących plikach w “%1”?</translation>
     </message>
@@ -10482,68 +10494,24 @@ because it was edited.</source>
 ponieważ została zmieniona.</translation>
     </message>
     <message>
-        <source>In files</source>
-        <translation>W plikach</translation>
-    </message>
-    <message>
-        <source>Find in subtitles</source>
-        <translation>Znajdź w napisach</translation>
-    </message>
-    <message>
-        <source>Search text:</source>
-        <translation>Szukany tekst:</translation>
-    </message>
-    <message>
-        <source>Replace with:</source>
-        <translation>Zamień na:</translation>
-    </message>
-    <message>
-        <source>Filters:</source>
-        <translation>Filtry:</translation>
-    </message>
-    <message>
-        <source>Windows search filters separated by semicolons, e.g. &quot;*.ass; *.srt&quot;.</source>
-        <translation>Filtry wyszukiwania systemu Windows rozdzielone średnikami, np. &quot;*.ass; *.srt&quot;.</translation>
-    </message>
-    <message>
-        <source>Catalog:</source>
-        <translation>Katalog:</translation>
-    </message>
-    <message>
-        <source>Subtitle search folder:</source>
-        <translation>Katalog szukania napisów:</translation>
-    </message>
-    <message>
         <source>Match case</source>
         <translation>Uwzględniaj wielkość liter</translation>
     </message>
     <message>
+        <source>All styles</source>
+        <translation>Wszystkie style</translation>
+    </message>
+    <message>
+        <source>In text</source>
+        <translation>W tekście</translation>
+    </message>
+    <message>
+        <source>Match at</source>
+        <translation>Dopasuj w</translation>
+    </message>
+    <message>
         <source>Include comments</source>
         <translation>Uwzględnij komentarze</translation>
-    </message>
-    <message>
-        <source>Regular expressions</source>
-        <translation>Wyrażenia regularne</translation>
-    </message>
-    <message>
-        <source>Skip tags</source>
-        <translation>Pomiń tagi</translation>
-    </message>
-    <message>
-        <source>Beginning of text</source>
-        <translation>Początek tekstu</translation>
-    </message>
-    <message>
-        <source>Skip text</source>
-        <translation>Pomiń tekst</translation>
-    </message>
-    <message>
-        <source>End of text</source>
-        <translation>Koniec tekstu</translation>
-    </message>
-    <message>
-        <source>In field</source>
-        <translation>W polu</translation>
     </message>
     <message>
         <source>Text</source>
@@ -10558,16 +10526,218 @@ ponieważ została zmieniona.</translation>
         <translation>Aktor</translation>
     </message>
     <message>
+        <source>From the selection</source>
+        <translation>Od zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Match at start</source>
+        <translation>Dopasuj na początku</translation>
+    </message>
+    <message>
+        <source>Match at end</source>
+        <translation>Dopasuj na końcu</translation>
+    </message>
+    <message>
+        <source>Comments too</source>
+        <translation>Także komentarze</translation>
+    </message>
+    <message>
+        <source>Subfolders</source>
+        <translation>Podfoldery</translation>
+    </message>
+    <message>
+        <source>Hidden folders</source>
+        <translation>Ukryte foldery</translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation>Brak dopasowań</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <extracomment>The live match count: the current match, then all matches</extracomment>
+        <translation>%1 z %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n dopasowanie</numerusform>
+            <numerusform>%n dopasowania</numerusform>
+            <numerusform>%n dopasowań</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n match(es)</source>
+        <translation>
+            <numerusform>%1 z %n dopasowania</numerusform>
+            <numerusform>%1 z %n dopasowań</numerusform>
+            <numerusform>%1 z %n dopasowań</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This document</source>
+        <translation>Ten dokument</translation>
+    </message>
+    <message>
+        <source>Open documents</source>
+        <translation>Otwarte dokumenty</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>Folder</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Styl</translation>
+    </message>
+    <message>
         <source>Effect</source>
         <translation>Efekt</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Wszystkie</translation>
+    </message>
+    <message>
+        <source>Selected</source>
+        <translation>Zaznaczone</translation>
+    </message>
+    <message>
+        <source>All text</source>
+        <translation>Cały tekst</translation>
+    </message>
+    <message>
+        <source>Outside tags</source>
+        <translation>Poza tagami</translation>
+    </message>
+    <message>
+        <source>Inside tags</source>
+        <translation>Wewnątrz tagów</translation>
+    </message>
+    <message>
+        <source>Anywhere</source>
+        <translation>Gdziekolwiek</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Początek</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>Koniec</translation>
+    </message>
+    <message>
+        <source>Show replace</source>
+        <translation>Pokaż zamianę</translation>
+    </message>
+    <message>
+        <source>Hide replace</source>
+        <translation>Ukryj zamianę</translation>
+    </message>
+    <message>
+        <source>Regular expression</source>
+        <translation>Wyrażenie regularne</translation>
+    </message>
+    <message>
+        <source>Find previous</source>
+        <translation>Znajdź poprzedni</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>Znajdź następny</translation>
+    </message>
+    <message>
+        <source>Find all</source>
+        <translation>Znajdź wszystko</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>Opcje</translation>
+    </message>
+    <message>
+        <source>Options that differ from the defaults</source>
+        <translation>Opcje różniące się od domyślnych</translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation>Zamień na</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace in %n file(s)…</source>
+        <translation>
+            <numerusform>Zamień w %n pliku…</numerusform>
+            <numerusform>Zamień w %n plikach…</numerusform>
+            <numerusform>Zamień w %n plikach…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace in files…</source>
+        <translation>Zamień w plikach…</translation>
+    </message>
+    <message>
+        <source>Search in</source>
+        <translation>Szukaj w</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>Wybierz folder…</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Pliki</translation>
+    </message>
+    <message>
+        <source>File patterns separated by semicolons, such as *.ass; *.srt</source>
+        <translation>Wzorce plików rozdzielone średnikami, np. *.ass; *.srt</translation>
+    </message>
+    <message>
+        <source>Field</source>
+        <translation>Pole</translation>
     </message>
     <message>
         <source>Lines</source>
         <translation>Linijki</translation>
     </message>
     <message>
-        <source>All lines</source>
-        <translation>Wszystkie linijki</translation>
+        <source>Results</source>
+        <translation>Wyniki</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n file(s)</source>
+        <extracomment>%1 is the number of matches, such as &quot;5 matches&quot;</extracomment>
+        <translation>
+            <numerusform>%1 w %n pliku</numerusform>
+            <numerusform>%1 w %n plikach</numerusform>
+            <numerusform>%1 w %n plikach</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n line(s)</source>
+        <translation>
+            <numerusform>%1 w %n linijce</numerusform>
+            <numerusform>%1 w %n linijkach</numerusform>
+            <numerusform>%1 w %n linijkach</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Close results</source>
+        <translation>Zamknij wyniki</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Linijka %1: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace %n checked</source>
+        <translation>
+            <numerusform>Zamień %n zaznaczone</numerusform>
+            <numerusform>Zamień %n zaznaczone</numerusform>
+            <numerusform>Zamień %n zaznaczonych</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Choose folder</source>
+        <translation>Wybierz folder</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -10576,38 +10746,6 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>From selected</source>
         <translation>Od zaznaczonej</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>Wybierz style</translation>
-    </message>
-    <message>
-        <source>Search in subfolders</source>
-        <translation>Szukaj w podfolderach</translation>
-    </message>
-    <message>
-        <source>Search in hidden folders</source>
-        <translation>Szukaj w ukrytych folderach</translation>
-    </message>
-    <message>
-        <source>Find in all open subtitles</source>
-        <translation>Znajdź we wszystkich otwartych napisach</translation>
-    </message>
-    <message>
-        <source>Find all in current subtitles</source>
-        <translation>Znajdź wszystko w bieżących napisach</translation>
-    </message>
-    <message>
-        <source>Replace next</source>
-        <translation>Zamień następne</translation>
-    </message>
-    <message>
-        <source>Search from the start</source>
-        <translation>Szukaj od początku</translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation>Zatrzymaj</translation>
     </message>
     <message>
         <source>Drop the missing styles</source>
@@ -10630,26 +10768,6 @@ ponieważ została zmieniona.</translation>
         <translation>Zamień wszystko</translation>
     </message>
     <message>
-        <source>Replace in all open subtitles</source>
-        <translation>Zamień we wszystkich otwartych napisach</translation>
-    </message>
-    <message>
-        <source>Replace in subtitles</source>
-        <translation>Zamień w napisach</translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>Wyniki szukania</translation>
-    </message>
-    <message>
-        <source>No results yet</source>
-        <translation>Na razie brak wyników</translation>
-    </message>
-    <message>
-        <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
-        <translation>Znajdź wszystko, Znajdź we wszystkich otwartych napisach i Znajdź w napisach wyświetlają tu dopasowania; zaznacz te do zmiany i zamień je.</translation>
-    </message>
-    <message>
         <source>Check all</source>
         <translation>Zaznacz wszystkie</translation>
     </message>
@@ -10662,20 +10780,12 @@ ponieważ została zmieniona.</translation>
         <translation>Zamień</translation>
     </message>
     <message>
-        <source>Choose subtitle search folder</source>
-        <translation>Wybierz folder do przeszukania napisów</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
     <message>
         <source>Replaced %1 times.</source>
         <translation>Liczba zamian: %1.</translation>
-    </message>
-    <message>
-        <source>Find in files</source>
-        <translation>Znajdź w plikach</translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -10700,10 +10810,6 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>%1 could not be restored; its backup is in %2.</source>
         <translation>Nie można przywrócić %1; kopia zapasowa jest w %2.</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>Linijka %1: </translation>
     </message>
 </context>
 <context>

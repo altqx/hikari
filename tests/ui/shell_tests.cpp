@@ -6568,20 +6568,20 @@ private slots:
         QTRY_VERIFY(timingDock->property("isOpen").toBool());
         top = QAccessible::queryAccessibleInterface(window);
         QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Shift times")));
-        QAccessibleInterface *searchTab = find(top, QAccessible::PageTab, QStringLiteral("Search"));
+        QAccessibleInterface *searchTab = find(top, QAccessible::PageTab, QStringLiteral("Find"));
         QVERIFY(searchTab);
         QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Shift times"));
         QVERIFY(timingTab->state().checked);
         QVERIFY(!searchTab->state().checked);
         QVERIFY(find(top, QAccessible::PageTabList, QStringLiteral("Panels")));
-        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Search")));
+        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Find")));
         QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Shift times")));
         QAccessibleInterface *timingOptions = find(top, QAccessible::Button, QStringLiteral("Shift times options"));
         QVERIFY(timingOptions);
-        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Search options")));
+        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Find options")));
         QVERIFY(searchTab->actionInterface());
         searchTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
-        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Search options")));
+        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Find options")));
         timingTab = find(QAccessible::queryAccessibleInterface(window), QAccessible::PageTab, QStringLiteral("Shift times"));
         timingTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QAccessibleInterface *closeFrom = nullptr;
@@ -11233,7 +11233,7 @@ private slots:
         const QList<std::pair<const char *, QString>> titles{
             {"keyframesDialog", QStringLiteral("Choose keyframes file")},
             {"fontsFolderDialog", QStringLiteral("Choose external font folder")},
-            {"findFolderDialog", QStringLiteral("Choose subtitle search folder")},
+            {"findFolderDialog", QStringLiteral("Choose folder")},
             {"aspectRatioPopover", QStringLiteral("Change aspect ratio")},
         };
         for (const auto &[name, title] : titles) {
@@ -11241,7 +11241,7 @@ private slots:
             QVERIFY2(popup, name);
             QCOMPARE(popup->property("title").toString(), title);
         }
-        QCOMPARE(find("findChooseFolder")->property("text").toString(), QStringLiteral("Choose subtitle search folder"));
+        QCOMPARE(find("findChooseFolder")->property("text").toString(), QStringLiteral("Choose folder…"));
         for (const char *name : {"hotkeyMapping", "settingsHotkeyMapping"}) {
             QObject *capture = find(name);
             QVERIFY2(capture, name);
@@ -11876,7 +11876,7 @@ private slots:
         application->editor().discard();
     }
 
-    void searchToolReplacesFindsAndListsResults()
+    void findPanelFindsReplacesAndListsResults()
     {
         const QString path = writeFile(dir, "find.ass",
                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Alpha beta\n"
@@ -11884,6 +11884,7 @@ private slots:
                                        "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,gamma beta\n");
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
         auto *dock = item<QObject>("searchDock");
         QVERIFY(dock);
         QVERIFY(!dock->property("isOpen").toBool());
@@ -11892,133 +11893,265 @@ private slots:
             questions << text;
             return 2;
         });
-        item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_H, Qt::ControlModifier);
-        QTRY_VERIFY(dock->property("isOpen").toBool());
-        QTRY_VERIFY(item("searchPanel")->hasActiveFocus());
-        auto *tool = item<QObject>("searchTool");
-        QVERIFY(tool);
-        QCOMPARE(tool->property("tab").toInt(), 1);
-        const auto x = [&](const char *name) { return item(name)->mapToScene(QPointF(0, 0)).x(); };
-        QVERIFY(x("findText") < x("findResultsPane"));
-        QVERIFY(x("replaceAllButton") < x("findResultsPane"));
-        QVERIFY(item("findResultsEmpty")->isVisible());
-        QVERIFY(!item("replaceCheckedButton")->isVisible());
-        item("findText")->setProperty("editText", QStringLiteral("BETA"));
-        item("findReplaceText")->setProperty("editText", QStringLiteral("B"));
-        const auto steps = session->historySize();
-        QVERIFY(QMetaObject::invokeMethod(item("replaceAllButton"), "click"));
-        QCOMPARE(session->historySize(), steps + 1);
-        QCOMPARE(session->history().back().name, std::string("Replace all"));
-        QCOMPARE(questions.back(), QStringLiteral("Replaced 3 times."));
         const auto text = [&](std::size_t row) {
             const auto &t = session->document().lines()[row]->text;
             return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
         };
+        const auto count = [&] { return item("findCount")->property("text").toString(); };
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_H, Qt::ControlModifier);
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QTRY_VERIFY(item("findText")->hasActiveFocus());
+        auto *tool = item<QObject>("searchTool");
+        QVERIFY(tool->property("replaceShown").toBool());
+        QVERIFY(item("findReplaceText")->isVisible());
+        QVERIFY(!item("findOptions")->isVisible());
+        QVERIFY(!item("findResultsPane")->isVisible());
+        item("findText")->setProperty("text", QStringLiteral("BETA"));
+        QTRY_COMPARE(count(), QStringLiteral("3 match(es)"));
+        item("findReplaceText")->setProperty("text", QStringLiteral("B"));
+        const auto steps = session->historySize();
+        press(Qt::Key_Return, Qt::ControlModifier | Qt::AltModifier);
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Replace all"));
+        QCOMPARE(questions.back(), QStringLiteral("Replaced 3 times."));
         QCOMPARE(text(0), QStringLiteral("Alpha B"));
         QCOMPARE(text(2), QStringLiteral("gamma B"));
+        QTRY_COMPARE(count(), QStringLiteral("No matches"));
         application->editor().undo();
         QCOMPARE(text(0), QStringLiteral("Alpha beta"));
-        QCOMPARE(application->findReplaceSettings(1).value(QStringLiteral("finds")).toStringList(),
+        QVERIFY(session->canRedo());
+        QTRY_COMPARE(count(), QStringLiteral("3 match(es)"));
+        QCOMPARE(application->findReplaceSettings().value(QStringLiteral("finds")).toStringList(),
                  QStringList{QStringLiteral("BETA")});
+
+        item("findText")->setProperty("text", QStringLiteral("zzz"));
         press(Qt::Key_F, Qt::ControlModifier);
-        QTRY_COMPARE(tool->property("tab").toInt(), 0);
-        QCOMPARE(item("findText")->property("editText").toString(), QStringLiteral("BETA"));
-        item("findText")->setProperty("editText", QStringLiteral("zzz"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
         auto *lineText = item("lineText");
         lineText->forceActiveFocus();
         QTRY_COMPARE(lineText->property("text").toString(), QStringLiteral("Alpha beta"));
         QVERIFY(QMetaObject::invokeMethod(lineText, "select", Q_ARG(int, 6), Q_ARG(int, 10)));
         press(Qt::Key_F, Qt::ControlModifier);
-        QTRY_COMPARE(tool->property("tab").toInt(), 0);
-        QTRY_VERIFY(item("searchPanel")->hasActiveFocus());
-        QCOMPARE(item("findText")->property("editText").toString(), QStringLiteral("beta"));
-        QVERIFY(QMetaObject::invokeMethod(item("findButton"), "click"));
-        const auto lines = session->document().lines();
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QTRY_VERIFY(item("findText")->hasActiveFocus());
+        QVERIFY(tool->property("replaceShown").toBool());
+        QCOMPARE(item("findText")->property("text").toString(), QStringLiteral("beta"));
+        press(Qt::Key_Return);
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
         QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id}));
         QCOMPARE(application->editor().selectionStart(), 6);
         QCOMPARE(application->editor().selectionEnd(), 10);
+        QTRY_COMPARE(count(), QStringLiteral("1 of 3"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(item("findCount"))->text(QAccessible::Name),
+                 QStringLiteral("1 of 3 match(es)"));
         press(Qt::Key_F3);
         QCOMPARE(session->selection().active, std::optional(lines[1]->id));
         press(Qt::Key_F3);
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
-        application->setFindQuestionHandler({});
-        auto *question = item<QObject>("findQuestion");
-        const auto box = [&] { return qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>()); };
-        const auto choice = [&](const char *id) {
-            return findItem(box()->contentItem(), QStringLiteral("messageBoxChoice_%1").arg(QLatin1String(id)));
-        };
+        QTRY_COMPARE(count(), QStringLiteral("3 of 3"));
+        const auto asked = questions.size();
         press(Qt::Key_F3);
-        QTRY_VERIFY(question->property("opened").toBool());
-        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached the end of the subtitles."));
-        QCOMPARE(box()->title(), QStringLiteral("Find and replace"));
-        QCOMPARE(box()->property("detail").toString(), QStringLiteral("Search again from the first line?"));
-        QVERIFY(application->findBusy());
-        press(Qt::Key_F3);
-        application->findNext();
-        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}});
-        QCOMPARE(question->property("queue").toList().size(), 0);
-        QCOMPARE(session->selection().active, std::optional(lines[2]->id));
-        QCOMPARE(box()->property("defaultButton").value<QObject *>(), choice("fromStart"));
-        QVERIFY(QMetaObject::invokeMethod(choice("fromStart"), "click"));
-        QTRY_VERIFY(!question->property("opened").toBool());
-        QVERIFY(!application->findBusy());
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
-        application->setFindQuestionHandler([&](int, const QString &text) {
-            questions << text;
-            return 2;
-        });
-        QVERIFY(QMetaObject::invokeMethod(item("findAllCurrentButton"), "click"));
+        QCOMPARE(questions.size(), asked);
+        QTRY_COMPARE(count(), QStringLiteral("1 of 3"));
+        item("findText")->forceActiveFocus();
+        press(Qt::Key_Return, Qt::ShiftModifier);
+        QCOMPARE(session->selection().active, std::optional(lines[2]->id));
+        press(Qt::Key_F3, Qt::ShiftModifier);
+        QCOMPARE(session->selection().active, std::optional(lines[1]->id));
+        QTRY_COMPARE(count(), QStringLiteral("2 of 3"));
+        QVERIFY(QMetaObject::invokeMethod(item("findPreviousButton"), "click"));
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        QVERIFY(QMetaObject::invokeMethod(item("findButton"), "click"));
+        QCOMPARE(session->selection().active, std::optional(lines[1]->id));
+
+        item("findReplaceText")->forceActiveFocus();
+        press(Qt::Key_Return);
+        QCOMPARE(text(1), QStringLiteral("B"));
+        QCOMPARE(session->history().back().name, std::string("Replace"));
+        QCOMPARE(session->selection().active, std::optional(lines[2]->id));
+        application->editor().undo();
+        QCOMPARE(text(1), QStringLiteral("beta"));
+
+        item("findText")->forceActiveFocus();
+        press(Qt::Key_Return, Qt::AltModifier);
+        QTRY_VERIFY(item("findResultsPane")->isVisible());
         QTRY_VERIFY(item("findResultsList")->isVisible());
         const auto rows = application->findResults();
         QCOMPARE(rows.size(), 4);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("find.ass"));
-        QCOMPARE(rows[2].toMap().value(QStringLiteral("line")).toString(), QStringLiteral("Line 2: "));
+        QCOMPARE(rows[2].toMap().value(QStringLiteral("line")).toInt(), 2);
         QCOMPARE(rows[2].toMap().value(QStringLiteral("match")).toString(), QStringLiteral("beta"));
         QCOMPARE(item("findResultsList")->property("count").toInt(), 4);
+        QCOMPARE(item("findResultsSummary")->property("text").toString(), QStringLiteral("3 match(es) in 3 line(s)"));
         application->showFindResult(3);
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
         QCOMPARE(application->editor().selectionStart(), 6);
         application->toggleFindResult(2);
-        item("findResultsReplace")->setProperty("editText", QStringLiteral("x"));
+        QTRY_COMPARE(item("replaceCheckedButton")->property("text").toString(), QStringLiteral("Replace 2 checked"));
+        item("findReplaceText")->setProperty("text", QStringLiteral("x"));
         QVERIFY(QMetaObject::invokeMethod(item("replaceCheckedButton"), "click"));
         QCOMPARE(text(0), QStringLiteral("Alpha x"));
         QCOMPARE(text(1), QStringLiteral("beta"));
         QCOMPARE(text(2), QStringLiteral("gamma x"));
         QCOMPARE(session->history().back().name, std::string("Replace all"));
-        QVERIFY(!application->canReplaceFindResults());
-        QVERIFY(!item("replaceCheckedButton")->isEnabled());
+        QTRY_VERIFY(!item("replaceCheckedButton")->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(item("findResultsClose"), "click"));
+        QTRY_VERIFY(!item("findResultsPane")->isVisible());
+
         application->setFindQuestionHandler({});
         auto *toasts = item<QObject>("toastStack");
-        const QVariantMap zzz{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}};
         const QString notFound = QStringLiteral("Could not find “zzz”.");
         const int infos = application->log().infoCount();
-        application->runFindReplace(QStringLiteral("find"), zzz);
+        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("find"), QStringLiteral("zzz")}});
         QQuickItem *toast = nullptr;
         QTRY_VERIFY((toast = toastWith(notFound)));
         QCOMPARE(partNamed(toast, "toastTitle")->property("text").toString(), QStringLiteral("Find"));
         QCOMPARE(application->log().infoCount(), infos + 1);
-        QVERIFY(!question->property("opened").toBool());
+        QVERIFY(!item<QObject>("findQuestion")->property("opened").toBool());
         QVERIFY(!application->findBusy());
         QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
-        application->runFindReplace(QStringLiteral("find"), zzz);
-        QTRY_VERIFY(question->property("opened").toBool());
-        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached the end of the subtitles."));
-        QVERIFY(QMetaObject::invokeMethod(choice("fromStart"), "click"));
-        QTRY_COMPARE(application->log().infoCount(), infos + 2);
-        QTRY_VERIFY(toastWith(notFound));
-        QTRY_VERIFY(!question->property("opened").toBool());
-        application->runFindReplace(QStringLiteral("find"), zzz);
-        QTRY_VERIFY(question->property("opened").toBool());
-        QVERIFY(QMetaObject::invokeMethod(box(), "reject"));
-        QTRY_VERIFY(!question->property("opened").toBool());
-        QVERIFY(!application->findBusy());
-        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+
         item("findText")->forceActiveFocus();
-        press(Qt::Key_F, Qt::ControlModifier);
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!item("searchPanel")->hasActiveFocus());
+        QVERIFY(dock->property("isOpen").toBool());
+        item("findText")->forceActiveFocus();
+        press(Qt::Key_H, Qt::ControlModifier);
         QTRY_VERIFY(!dock->property("isOpen").toBool());
         application->editor().discard();
+    }
+
+    void findPanelShowsRegexErrorsUnderTheField()
+    {
+        const QString path = writeFile(dir, "regex.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello hello\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,hello\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->setFindQuestionHandler([](int, const QString &) { return 2; });
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_VERIFY(item("findText")->hasActiveFocus());
+        auto *tool = item<QObject>("searchTool");
+        QVERIFY(!tool->property("replaceShown").toBool());
+        QVERIFY(!item("findReplaceText")->isVisible());
+        press(Qt::Key_R, Qt::AltModifier);
+        QVERIFY(tool->property("regex").toBool());
+        QVERIFY(item("findRegex")->property("checked").toBool());
+        press(Qt::Key_C, Qt::AltModifier);
+        QVERIFY(tool->property("matchCase").toBool());
+        press(Qt::Key_C, Qt::AltModifier);
+        QVERIFY(!tool->property("matchCase").toBool());
+        item("findText")->setProperty("text", QStringLiteral("(hel+o"));
+        auto *error = item("findPatternError");
+        QTRY_VERIFY(error->isVisible());
+        QCOMPARE(item("findPatternErrorText")->property("text").toString(), QStringLiteral("Missing closing parenthesis"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(item("findText"))->text(QAccessible::Description), QStringLiteral("Missing closing parenthesis"));
+        QCOMPARE(item("findCount")->property("text").toString(), QStringLiteral("No matches"));
+        QVERIFY(!item("findButton")->isEnabled());
+        QVERIFY(!item("findAllButton")->isEnabled());
+        const auto active = session->selection().active;
+        const int errors = application->log().errorCount();
+        press(Qt::Key_Return);
+        press(Qt::Key_Return, Qt::AltModifier);
+        QCOMPARE(session->selection().active, active);
+        QCOMPARE(application->log().errorCount(), errors);
+        QVERIFY(!item("findResultsPane")->isVisible());
+        item("findText")->setProperty("text", QStringLiteral("(hel+o)"));
+        QTRY_VERIFY(!error->isVisible());
+        QTRY_COMPARE(item("findCount")->property("text").toString(), QStringLiteral("3 match(es)"));
+        QVERIFY(item("findButton")->isEnabled());
+        press(Qt::Key_R, Qt::AltModifier);
+        QVERIFY(!tool->property("regex").toBool());
+        QTRY_COMPARE(item("findCount")->property("text").toString(), QStringLiteral("No matches"));
+        QVERIFY(!error->isVisible());
+    }
+
+    void findPanelTabOrderFollowsTheSheet()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "order.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_H, Qt::ControlModifier);
+        QTRY_VERIFY(item("findText")->hasActiveFocus());
+        item<QObject>("searchTool")->setProperty("optionsShown", true);
+        item("findText")->setProperty("text", QStringLiteral("a"));
+        QTRY_VERIFY(item("findOptions")->isVisible());
+        QStringList order;
+        QQuickItem *at = item("findReplaceToggle");
+        for (int i = 0; i < 12 && at; ++i) {
+            order << at->objectName();
+            at = at->nextItemInFocusChain(true);
+        }
+        const QString scope = item("searchTool")->property("wide").toBool() ? QStringLiteral("findScopeDocument")
+                                                                            : QStringLiteral("findScopeList");
+        QCOMPARE(order, (QStringList{"findReplaceToggle", "findText", "findMatchCase", "findRegex", "findPreviousButton",
+                                     "findButton", "findAllButton", "findOptionsButton", "findReplaceText",
+                                     "replaceNextButton", "replaceAllButton", scope}));
+        QCOMPARE(QAccessible::queryAccessibleInterface(item("findReplaceToggle"))->text(QAccessible::Name), QStringLiteral("Show replace"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(item("findMatchCase"))->text(QAccessible::Name), QStringLiteral("Match case"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(item("findRegex"))->text(QAccessible::Name), QStringLiteral("Regular expression"));
+    }
+
+    void findPanelFoldsItsOptionsBehindChips()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "chips.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_VERIFY(item("findText")->hasActiveFocus());
+        auto *tool = item<QObject>("searchTool");
+        QVERIFY(!item("findOptions")->isVisible());
+        QVERIFY(!item("findOptionChips")->isVisible());
+        tool->setProperty("field", QStringLiteral("actor"));
+        tool->setProperty("lines", QStringLiteral("selected"));
+        tool->setProperty("includeComments", true);
+        QTRY_VERIFY(item("findOptionChips")->isVisible());
+        QCOMPARE(tool->property("nonDefaults").toStringList(),
+                 (QStringList{"Actor", "Selected lines", "Comments too"}));
+        QCOMPARE(QAccessible::queryAccessibleInterface(item("findOptionsButton"))->text(QAccessible::Description),
+                 QStringLiteral("Actor, Selected lines, Comments too"));
+        QVERIFY(QMetaObject::invokeMethod(item("findOptionsButton"), "click"));
+        QTRY_VERIFY(item("findOptions")->isVisible());
+        QVERIFY(!item("findOptionChips")->isVisible());
+        QVERIFY(item("findLines")->isVisible());
+        QVERIFY(item("findStyles")->isVisible());
+        QVERIFY(!item("findFolder")->isVisible());
+        tool->setProperty("scope", QStringLiteral("folder"));
+        QTRY_VERIFY(item("findFolder")->isVisible());
+        QVERIFY(item("findFilters")->isVisible());
+        QVERIFY(item("findSubfolders")->isVisible());
+        QVERIFY(!item("findLines")->isVisible());
+        QVERIFY(!item("findStyles")->isVisible());
+        QVERIFY(!item("findCount")->isVisible());
+        QVERIFY(!item("findPreviousButton")->isVisible());
+        tool->setProperty("replaceShown", true);
+        QTRY_VERIFY(item("replaceInFilesButton")->isVisible());
+        QVERIFY(!item("replaceNextButton")->isVisible());
+        QCOMPARE(item("replaceInFilesButton")->property("text").toString(), QStringLiteral("Replace in files…"));
+        tool->setProperty("scope", QStringLiteral("document"));
+        tool->setProperty("matchAt", QStringLiteral("end"));
+        tool->setProperty("inText", QStringLiteral("outsideTags"));
+        QVERIFY(QMetaObject::invokeMethod(tool, "save"));
+        const auto saved = application->findReplaceSettings();
+        QCOMPARE(saved.value(QStringLiteral("field")).toString(), QStringLiteral("actor"));
+        QCOMPARE(saved.value(QStringLiteral("lines")).toString(), QStringLiteral("selected"));
+        QCOMPARE(saved.value(QStringLiteral("matchAt")).toString(), QStringLiteral("end"));
+        QCOMPARE(saved.value(QStringLiteral("inText")).toString(), QStringLiteral("outsideTags"));
+        QVERIFY(saved.value(QStringLiteral("includeComments")).toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("findOptionsButton"), "click"));
+        QTRY_VERIFY(!item("findOptions")->isVisible());
+        QCOMPARE(tool->property("nonDefaults").toStringList(),
+                 (QStringList{"Actor", "Selected lines", "Outside tags", "Match at end", "Comments too"}));
+        for (const char *key : {"field", "lines", "matchAt", "inText"})
+            tool->setProperty(key, QVariantMap{{QStringLiteral("field"), QStringLiteral("text")},
+                                               {QStringLiteral("lines"), QStringLiteral("all")},
+                                               {QStringLiteral("matchAt"), QStringLiteral("anywhere")},
+                                               {QStringLiteral("inText"), QStringLiteral("all")}}
+                                      .value(QLatin1String(key)));
+        tool->setProperty("includeComments", false);
+        tool->setProperty("replaceShown", false);
+        QVERIFY(QMetaObject::invokeMethod(tool, "save"));
     }
 
     void switchingDocumentsResetsTheSearch()
@@ -12041,10 +12174,11 @@ private slots:
             questions << text;
             return 2;
         });
-        const QVariantMap find{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("x")}};
+        QVariantMap find{{QStringLiteral("find"), QStringLiteral("x")}};
         application->runFindReplace(QStringLiteral("find"), find);
         application->findNext();
-        application->runFindReplace(QStringLiteral("findAllTabs"), find);
+        find[QStringLiteral("scope")] = QStringLiteral("openDocuments");
+        application->runFindReplace(QStringLiteral("findAll"), find);
         const auto rows = application->findResults();
         QCOMPARE(rows.size(), 6);
         application->showFindResult(5);
@@ -12099,7 +12233,7 @@ private slots:
                 questions << q;
                 return 2;
             });
-            QVariantMap replace{{QStringLiteral("tab"), 1},
+            QVariantMap replace{{QStringLiteral("replaceShown"), true},
                                 {QStringLiteral("find"), QString::fromUtf8("łódź")},
                                 {QStringLiteral("replace"), QStringLiteral("x")}};
             a.runFindReplace(QStringLiteral("replaceAll"), replace);
@@ -12172,8 +12306,9 @@ private slots:
             questions << text;
             return 1;
         });
-        application->runFindReplace(QStringLiteral("replaceInFiles"),
-                                    {{QStringLiteral("tab"), 2},
+        application->runFindReplace(QStringLiteral("replaceAll"),
+                                    {{QStringLiteral("scope"), QStringLiteral("folder")},
+                                     {QStringLiteral("replaceShown"), true},
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("replace"), QStringLiteral("dog")},
                                      {QStringLiteral("folder"), folder.path()},
@@ -12215,8 +12350,8 @@ private slots:
         QVERIFY(application->reviewClose(QStringLiteral("new")).isEmpty());
         application->finishClose();
         QVERIFY(application->targetUntitled());
-        application->runFindReplace(QStringLiteral("findInFiles"),
-                                    {{QStringLiteral("tab"), 2},
+        application->runFindReplace(QStringLiteral("findAll"),
+                                    {{QStringLiteral("scope"), QStringLiteral("folder")},
                                      {QStringLiteral("find"), QStringLiteral("a dog")},
                                      {QStringLiteral("filters"), QStringLiteral("one.ass")},
                                      {QStringLiteral("folder"), folder.path()}});
@@ -12230,8 +12365,8 @@ private slots:
         QVERIFY(application->reviewCloseAll().isEmpty());
         application->finishClose();
         QTRY_VERIFY(item("homePage")->isVisible());
-        application->runFindReplace(QStringLiteral("findInFiles"),
-                                    {{QStringLiteral("tab"), 2},
+        application->runFindReplace(QStringLiteral("findAll"),
+                                    {{QStringLiteral("scope"), QStringLiteral("folder")},
                                      {QStringLiteral("find"), QStringLiteral("a dog")},
                                      {QStringLiteral("filters"), QStringLiteral("one.ass")},
                                      {QStringLiteral("folder"), folder.path()}});
@@ -12239,8 +12374,8 @@ private slots:
         QCOMPARE(application->tabs().size(), qsizetype(1));
         QTRY_VERIFY(!item("homePage")->isVisible());
         QVERIFY(application->editor().hasLine());
-        application->runFindReplace(QStringLiteral("findInFiles"),
-                                    {{QStringLiteral("tab"), 2},
+        application->runFindReplace(QStringLiteral("findAll"),
+                                    {{QStringLiteral("scope"), QStringLiteral("folder")},
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("folder"), folder.filePath(QStringLiteral("missing"))}});
         QCOMPARE(questions.back(), QStringLiteral("The search folder “%1” does not exist.")
@@ -12299,8 +12434,8 @@ private slots:
         QCOMPARE(expected.count(QDir::toNativeSeparators(folder.filePath(QStringLiteral("again/c.ass")))), 1);
         QCOMPARE(expected.size(), 13);
 #endif
-        application->runFindReplace(QStringLiteral("findInFiles"),
-                                    {{QStringLiteral("tab"), 2},
+        application->runFindReplace(QStringLiteral("findAll"),
+                                    {{QStringLiteral("scope"), QStringLiteral("folder")},
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("filters"), QStringLiteral("*.ass")},
                                      {QStringLiteral("folder"), folder.path()},
@@ -12330,8 +12465,8 @@ private slots:
                                                                          [](core::LineRecord &l) { l.text = u8"mine"; });
                                                    }}));
         QVERIFY(untitled->isDirty());
-        application->runFindReplace(QStringLiteral("findInFiles"),
-                                    {{QStringLiteral("tab"), 2},
+        application->runFindReplace(QStringLiteral("findAll"),
+                                    {{QStringLiteral("scope"), QStringLiteral("folder")},
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("folder"), folder.path()}});
         QCOMPARE(application->findResults().size(), 2);
@@ -13009,7 +13144,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("searchDock")))));
         QObject *question = nullptr;
         QTRY_VERIFY((question = item<QObject>("findQuestion")));
-        emit application->findQuestion(0, 2, {{QStringLiteral("title"), QStringLiteral("Find and replace")},
+        emit application->findQuestion(0, QStringLiteral("styles"), {{QStringLiteral("title"), QStringLiteral("Find")},
                                               {QStringLiteral("text"), QStringLiteral("a.ass has no style named “X”.")},
                                               {QStringLiteral("severity"), QStringLiteral("warning")}});
         QTRY_VERIFY(question->property("opened").toBool());
@@ -13914,7 +14049,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("searchDock")))));
         QObject *question = nullptr;
         QTRY_VERIFY((question = item<QObject>("findQuestion")));
-        const auto ask = [&](int kind, const QVariantMap &shown, const QString &file) {
+        const auto ask = [&](const QString &kind, const QVariantMap &shown, const QString &file) {
             themed([&](const QString &theme) {
                 emit application->findQuestion(0, kind, shown);
                 QTRY_VERIFY(question->property("opened").toBool());
@@ -13924,12 +14059,12 @@ private slots:
                 QTRY_VERIFY(!question->property("opened").toBool());
             });
         };
-        ask(2, {{QStringLiteral("title"), QStringLiteral("Find and replace")},
+        ask(QStringLiteral("styles"), {{QStringLiteral("title"), QStringLiteral("Find")},
                 {QStringLiteral("text"), QStringLiteral("pu2-shots.ass has no style named “Sign” or “Caption”.")},
                 {QStringLiteral("detail"), QStringLiteral("The other chosen styles are there. Searching with the missing ones finds fewer lines.")},
                 {QStringLiteral("severity"), QStringLiteral("warning")}},
             QStringLiteral("find-missing-styles"));
-        ask(4, {{QStringLiteral("title"), QStringLiteral("Replace in subtitles")},
+        ask(QStringLiteral("confirmFiles"), {{QStringLiteral("title"), QStringLiteral("Replace in files")},
                 {QStringLiteral("text"), QStringLiteral("Replace in every matching file in “Episodes”?")},
                 {QStringLiteral("detail"), QStringLiteral("The files are changed on disk; Undo cannot bring them back. "
                                                           "A copy of each file goes to the ReplaceBackup folder first.")},
@@ -16909,11 +17044,11 @@ private slots:
         QVERIFY(tool->property("opened").toBool());
         QVERIFY(tool->property("finds").toStringList().isEmpty());
         QVERIFY(!matchCase->property("checked").toBool());
-        QCOMPARE(item("findStyles")->property("text").toString(), QString());
+        QCOMPARE(tool->property("styles").toString(), QString());
 
-        item("findText")->setProperty("editText", QStringLiteral("alpha"));
-        item("findReplaceText")->setProperty("editText", QStringLiteral("ALPHA"));
-        matchCase->setProperty("checked", true);
+        item("findText")->setProperty("text", QStringLiteral("alpha"));
+        item("findReplaceText")->setProperty("text", QStringLiteral("ALPHA"));
+        tool->setProperty("matchCase", true);
         QVERIFY(QMetaObject::invokeMethod(item("replaceAllButton"), "click"));
         QCOMPARE(settings.list("find.recentFinds"), QStringList{QStringLiteral("alpha")});
         QCOMPARE(settings.list("find.recentReplacements"), QStringList{QStringLiteral("ALPHA")});
@@ -16931,13 +17066,13 @@ private slots:
         QVERIFY(!settings.contains("find.options"));
         QVERIFY(!settings.contains("find.recentFinds"));
         QVERIFY(matchCase->property("checked").toBool());
-        press(Qt::Key_F, Qt::ControlModifier);
-        QTRY_COMPARE(tool->property("tab").toInt(), 0);
+        tool->setProperty("replaceShown", false);
+        QVERIFY(QMetaObject::invokeMethod(tool, "save"));
         QCOMPARE(settings.integer("find.options") & 1, 1);
         QVERIFY(matchCase->property("checked").toBool());
         QCOMPARE(tool->property("finds").toStringList(), QStringList{QStringLiteral("alpha")});
         QVERIFY(!settings.contains("find.recentFinds"));
-        item("findText")->setProperty("editText", QStringLiteral("beta"));
+        item("findText")->setProperty("text", QStringLiteral("beta"));
         application->resetFindReplace();
         QVERIFY(QMetaObject::invokeMethod(item("findButton"), "click"));
         QCOMPARE(settings.list("find.recentFinds"), (QStringList{QStringLiteral("beta"), QStringLiteral("alpha")}));
@@ -16958,7 +17093,7 @@ private slots:
         const QString rules = home.filePath(QStringLiteral("rules.toml"));
         QVERIFY(!QFile::exists(rules));
 
-        matchCase->setProperty("checked", false);
+        tool->setProperty("matchCase", false);
         application->applySettings({}, true);
         QSignalSpy findDestroyed(application, &app::Application::findReplaceDestroyed);
         QSignalSpy misspellDestroyed(application, &app::Application::misspellReplacerDestroyed);
@@ -18662,7 +18797,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 267);
+        QCOMPARE(hotkeyRows().size(), 268);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -19133,7 +19268,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_CONVERT_TO_TMP")), QStringLiteral("Ctrl+F12"));
-        QCOMPARE(table().size(), 36);
+        QCOMPARE(table().size(), 37);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
@@ -26917,12 +27052,16 @@ private slots:
         press(Qt::Key_H, Qt::ControlModifier);
         QObject *tool = nullptr;
         QTRY_VERIFY((tool = item<QObject>("searchTool")) != nullptr);
-        auto *findTab = tool->findChild<QObject *>(QStringLiteral("findTab"));
-        auto *replaceTab = tool->findChild<QObject *>(QStringLiteral("replaceTab"));
-        QVERIFY(findTab && replaceTab);
-        QCOMPARE(url(findTab), QStringLiteral("image://hikari-icon/search/%1/%2/0").arg(normal, accent));
-        QCOMPARE(url(replaceTab), QStringLiteral("image://hikari-icon/find-replace/%1/%2/0").arg(normal, accent));
-        QCOMPARE(findTab->property("text").toString(), QStringLiteral("Find"));
+        for (const auto &[name, role] : {std::pair{"findPreviousButton", "match-previous"},
+                                         std::pair{"findButton", "match-next"},
+                                         std::pair{"findAllButton", "find-in-files"},
+                                         std::pair{"findOptionsButton", "filter"}}) {
+            auto *button = tool->findChild<QQuickItem *>(QLatin1String(name));
+            QVERIFY2(button, name);
+            auto *icon = button->property("contentItem").value<QQuickItem *>();
+            QVERIFY2(icon && icon->property("valid").toBool(), name);
+            QCOMPARE(icon->property("iconRole").toString(), QLatin1String(role));
+        }
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("opened").toBool());
@@ -29708,12 +29847,12 @@ private slots:
                                                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,Narrator,0,0,0,,first\n"
                                                   "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,fade-in,second\n")));
         application->setFindQuestionHandler([](int, const QString &) { return 2; });
-        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("rat")},
-                                                             {QStringLiteral("field"), 2}});
+        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("find"), QStringLiteral("rat")},
+                                                             {QStringLiteral("field"), QStringLiteral("actor")}});
         auto *actorText = item("actorBox")->property("contentItem").value<QQuickItem *>();
         QTRY_COMPARE(actorText->property("selectedText").toString(), QStringLiteral("rat"));
-        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("in")},
-                                                             {QStringLiteral("field"), 3}});
+        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("find"), QStringLiteral("in")},
+                                                             {QStringLiteral("field"), QStringLiteral("effect")}});
         auto *effectText = item("effectBox")->property("contentItem").value<QQuickItem *>();
         QTRY_COMPARE(effectText->property("selectedText").toString(), QStringLiteral("in"));
         QCOMPARE(effectText->property("selectionStart").toInt(), 5);
