@@ -39,8 +39,10 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json"
     HIKARI_EN_CATALOG="${CMAKE_BINARY_DIR}/i18n/qm/hikarisub_en.qm"
     HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
+    HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
+    HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
-add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
+add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper hikari_plugin_helper
     hikari_lua_helper hikari_automation_stage hikari_lrelease)
 # MSVC: shell_tests.cpp outgrows an object file's default section count (C1128).
 if(MSVC)
@@ -340,7 +342,8 @@ hikari_add_qttest(hikari_ui_plugin_manager_tests SOURCES plugin_manager_tests.cp
 target_compile_definitions(hikari_ui_plugin_manager_tests PRIVATE
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
 hikari_add_qttest(hikari_ui_plugin_runtime_tests OFFSCREEN_ONLY SOURCES plugin_runtime_tests.cpp LIBRARIES hikari_composition hikari_translations)
-target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>")
+target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
+    HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
 add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper)
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC.

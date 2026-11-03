@@ -7036,6 +7036,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>W&amp;tyczki…</translation>
     </message>
     <message>
+        <source>Remove from the layout</source>
+        <translation>Usuń z układu</translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>Ukryj tagi</translation>
     </message>
@@ -9526,6 +9530,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Prosić Cię o folder do odczytu, %1: %2</translation>
     </message>
     <message>
+        <source>Command: %1</source>
+        <translation>Polecenie: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>Panel: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub nie mógł dokończyć operacji: %1</translation>
     </message>
@@ -9538,12 +9550,28 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>HikariSub nie może odczytać pliku %1.</translation>
     </message>
     <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>Ten pakiet to „%1”, a nie aktualizacja „%2”.</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>Najpierw wybierz pakiet wtyczki.</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>Wyłączona</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>Nie uruchomiła się</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>Zatrzymana</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9646,8 +9674,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie odinstalowano wtyczki</translation>
     </message>
     <message>
+        <source>Filter</source>
+        <translation>Filtr</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>Filtruj wtyczki</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>Brak zainstalowanych wtyczek. Zainstaluj wtyczkę z pliku .hikariplugin.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>Żadna wtyczka nie pasuje do filtru.</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9655,7 +9695,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>Włączona</translation>
+        <translation type="vanished">Włączona</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9668,6 +9708,58 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Full trust</source>
         <translation>Pełne zaufanie</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włączona</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>Nie zmieniono wtyczki</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>Nie uruchomiła się.</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>Zatrzymała się.</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>Uruchom ponownie</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>Uprawnienia</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>Co dodaje</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>Aktualizuj z pliku…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>Otwórz folder danych</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>Odinstaluj…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>Nie zachowano ustawienia</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -9688,6 +9780,22 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>Wtyczka nie jest zainstalowana, jest wyłączona albo nie ma już tego polecenia</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>Działała dłużej niż %n sekundę.</numerusform>
+            <numerusform>Działała dłużej niż %n sekundy.</numerusform>
+            <numerusform>Działała dłużej niż %n sekund.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>Nieoczekiwanie się zatrzymała.</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>Wymuszono jej zatrzymanie.</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9724,6 +9832,50 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>Wtyczka nie działa.</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1, z %2</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>O wtyczce %1…</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>%1 nie jest zainstalowana.</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>Wtyczka panelu</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1 jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1 nie uruchomiła się.</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1 zatrzymała się.</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>Układ zachowuje to miejsce dla jej panelu „%1”.</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>Otwórz wtyczki…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>Włącz</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
     </message>
 </context>
 <context>

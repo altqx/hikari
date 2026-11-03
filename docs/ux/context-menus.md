@@ -236,8 +236,9 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Spellchecker | [x] Ignore comments, [x] Ignore words in capitals, Words added to dictionary… (dictionary) |
 | Grid | [x] Fold generated lines |
 | Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
+| A plugin panel | the rows of its tree's `menu`, while the plugin runs ([plugins.md](../plugins.md), "Panels and dialogs") |
 
-Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), Close (tab-close), or "Close reference" for the Reference panel.
+Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin>… (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
 
 Items: 5 shared + 23 panel-owned = 28 (5–19 shown at a time).
 

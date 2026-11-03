@@ -6946,6 +6946,10 @@ Failed to copy %2 fonts.</source>
         <translation>플러그인…[&amp;U]</translation>
     </message>
     <message>
+        <source>Remove from the layout</source>
+        <translation>레이아웃에서 제거</translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>태그 숨김</translation>
     </message>
@@ -9416,6 +9420,14 @@ Failed to copy %2 fonts.</source>
         <translation>읽을 폴더 요청, %1: %2</translation>
     </message>
     <message>
+        <source>Command: %1</source>
+        <translation>명령: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>패널: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub이 작업을 마치지 못했습니다: %1</translation>
     </message>
@@ -9428,12 +9440,28 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub이 %1(을)를 읽을 수 없습니다.</translation>
     </message>
     <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>이 패키지는 “%1”이며 “%2”의 업데이트가 아닙니다.</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>먼저 플러그인 패키지를 선택하십시오.</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>플러그인</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>꺼짐</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>시작되지 않음</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>중지됨</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9536,8 +9564,20 @@ Failed to copy %2 fonts.</source>
         <translation>플러그인 설치를 제거하지 못함</translation>
     </message>
     <message>
+        <source>Filter</source>
+        <translation>필터</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>플러그인 필터</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>설치된 플러그인이 없습니다. .hikariplugin 파일에서 설치하십시오.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>필터와 일치하는 플러그인이 없습니다.</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9545,7 +9585,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>사용</translation>
+        <translation type="vanished">사용</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9558,6 +9598,58 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>전체 신뢰</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>켜기</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>플러그인을 변경하지 않음</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>시작되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>중지되었습니다.</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>다시 시작</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>권한</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>추가하는 항목</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>설정</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>파일에서 업데이트…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>데이터 폴더 열기</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>설치 제거…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>설정을 저장하지 않음</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -9578,6 +9670,20 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>플러그인이 설치되어 있지 않거나, 꺼져 있거나, 더 이상 이 명령이 없습니다</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>%n초 넘게 실행되었습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>예기치 않게 중지되었습니다.</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>강제 중지되었습니다.</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9612,6 +9718,50 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>플러그인이 실행 중이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1, %2 제공</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>%1 정보…</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>%1이(가) 설치되어 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>해당 플러그인</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1이(가) 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1이(가) 시작되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1이(가) 중지되었습니다.</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>레이아웃이 패널 “%1”의 자리를 유지합니다.</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>플러그인 열기…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>켜기</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>세부 정보</translation>
     </message>
 </context>
 <context>

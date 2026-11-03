@@ -6946,6 +6946,10 @@ Failed to copy %2 fonts.</source>
         <translation>&amp;ปลั๊กอิน…</translation>
     </message>
     <message>
+        <source>Remove from the layout</source>
+        <translation>นำออกจากเค้าโครง</translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>ซ่อนแท็ก</translation>
     </message>
@@ -9416,6 +9420,14 @@ Failed to copy %2 fonts.</source>
         <translation>ขอโฟลเดอร์จากคุณเพื่ออ่าน %1: %2</translation>
     </message>
     <message>
+        <source>Command: %1</source>
+        <translation>คำสั่ง: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>แผง: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub ทำงานไม่เสร็จ: %1</translation>
     </message>
@@ -9428,12 +9440,28 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub อ่าน %1 ไม่ได้</translation>
     </message>
     <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>แพ็กเกจนี้คือ “%1” ไม่ใช่การอัปเดตของ “%2”</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>เลือกแพ็กเกจปลั๊กอินก่อน</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>หยุดแล้ว</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9536,8 +9564,20 @@ Failed to copy %2 fonts.</source>
         <translation>ไม่ได้ถอนการติดตั้งปลั๊กอิน</translation>
     </message>
     <message>
+        <source>Filter</source>
+        <translation>ตัวกรอง</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>กรองปลั๊กอิน</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>ไม่มีปลั๊กอินที่ติดตั้งไว้ ติดตั้งได้จากไฟล์ .hikariplugin</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>ไม่มีปลั๊กอินที่ตรงกับตัวกรอง</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9545,7 +9585,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>เปิดใช้งาน</translation>
+        <translation type="vanished">เปิดใช้งาน</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9558,6 +9598,58 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>เชื่อถือเต็มที่</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>ไม่ได้เปลี่ยนปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>หยุดทำงานแล้ว</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>เริ่มใหม่</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>สิทธิ์</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>สิ่งที่เพิ่ม</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>การตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>อัปเดตจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>เปิดโฟลเดอร์ข้อมูล</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>ถอนการติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>ไม่ได้เก็บการตั้งค่า</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -9578,6 +9670,20 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>ปลั๊กอินไม่ได้ติดตั้งไว้ ถูกปิดอยู่ หรือไม่มีคำสั่งนี้แล้ว</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>ทำงานนานกว่า %n วินาที</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>หยุดทำงานโดยไม่คาดคิด</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>ถูกบังคับหยุด</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9612,6 +9718,50 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>ปลั๊กอินไม่ได้ทำงานอยู่</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>เกี่ยวกับ %1…</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>ไม่ได้ติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>ปลั๊กอินของแผงนี้</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1 ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1 ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1 หยุดทำงานแล้ว</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>เค้าโครงเก็บตำแหน่งนี้ไว้ให้แผง “%1”</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>เปิดปลั๊กอิน…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
     </message>
 </context>
 <context>

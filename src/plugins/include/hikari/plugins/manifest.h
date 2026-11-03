@@ -35,6 +35,14 @@ struct Contribution {
     std::string title;
 };
 
+enum class PanelArea { Left, Right, Bottom };
+
+struct Panel {
+    std::string id;
+    std::string title;
+    PanelArea area = PanelArea::Right;
+};
+
 struct Setting {
     std::string id;
     std::string title;
@@ -63,7 +71,7 @@ struct Manifest {
     std::optional<minisign::PublicKey> publicKey;
     Permissions permissions;
     std::vector<Contribution> commands;
-    std::vector<Contribution> panels;
+    std::vector<Panel> panels;
     std::vector<Setting> settings;
 };
 
