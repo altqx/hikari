@@ -24,6 +24,10 @@ hikari_add_gtest(hikari_core_extradata_tests SOURCES extradata_tests.cpp LIBRARI
 target_compile_definitions(hikari_core_extradata_tests PRIVATE
     HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 
+hikari_add_gtest(hikari_core_aegisub_folds_tests SOURCES aegisub_folds_tests.cpp LIBRARIES hikari_core LABELS core)
+target_compile_definitions(hikari_core_aegisub_folds_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
+
 hikari_add_gtest(hikari_core_srt_tests SOURCES srt_tests.cpp LIBRARIES hikari_core Qt6::Core LABELS core)
 target_compile_definitions(hikari_core_srt_tests PRIVATE
     HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/fixtures/approved-departures"
