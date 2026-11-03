@@ -93,6 +93,15 @@ TEST(AssSave, EditedLinesUseTheLegacySerialization)
               "Comment: 2,1:02:03.45,10:00:00.00,Default,,0,0,0,,keep\n");
 }
 
+TEST(AssSave, EditedLinesKeepTimesPastTheFieldCap)
+{
+    auto loaded = loadAss(bytesOf("[Events]\n"
+                                  "Dialogue: 0,123:00:00.00,124:30:00.50,Default,,0,0,0,,old\n"));
+    loaded.document.setLineText(loaded.document.lines().front()->id, u8"new");
+    EXPECT_EQ(text(encodeAss(loaded.document)), "[Events]\n"
+                                                "Dialogue: 0,123:00:00.00,124:30:00.50,Default,,0,0,0,,new\n");
+}
+
 TEST(AssSave, LegacyTimeText)
 {
     EXPECT_EQ(legacy::assTimeText(0), u8"0:00:00.00");
@@ -121,6 +130,20 @@ TEST(AssSave, EditedLinesRewriteMarkersInLegacyOrder)
               "Dialogue: 0,0:00:01.00,0:00:02.00,D,[bookmark][hidden]Bob,0,0,0,,a\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_closed]G,0,0,0,,b\n"
               "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,Dial: x\n");
+}
+
+TEST(AssSave, EditedNestedGroupLinesWriteStackedMarkers)
+{
+    constexpr std::string_view input = "[Events]\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,D,[tree_description],0,0,0,,S\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,D,[tree_opened][tree_description],0,0,0,,C\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened][tree_closed][bookmark]Ann,0,0,0,,c\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened],0,0,0,,s\n";
+    auto r = loadAss(bytesOf(input));
+    EXPECT_EQ(text(encodeAss(r.document)), input);
+    for (const auto *line : r.document.lines())
+        ASSERT_TRUE(r.document.setLineText(line->id, line->text));
+    EXPECT_EQ(text(encodeAss(r.document)), input);
 }
 
 TEST(AssLoad, TLModePairsReadAsOneLine)

@@ -187,6 +187,33 @@ TEST(AssLoad, ActorMarkersFollowLegacyPrecedence)
     EXPECT_EQ(l[7]->actor, u8"");
 }
 
+TEST(AssLoad, StackedTreeMarkersReadAsNestedGroups)
+{
+    const auto result = loadAss(bytesOf("[Events]\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened][tree_description]Car,0,0,0,,a\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened][tree_closed][bookmark]Ann,0,0,0,,b\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened]Bob[tree_closed],0,0,0,,c\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened][tree_opened] [hidden],0,0,0,,d\n"));
+    const auto l = result.document.lines();
+    ASSERT_EQ(l.size(), 4u);
+    EXPECT_EQ(l[0]->group, GroupMarker::Description);
+    EXPECT_EQ(l[0]->outerGroups, std::vector{GroupMarker::Opened});
+    EXPECT_EQ(l[0]->visibility, LineVisibility::Visible);
+    EXPECT_EQ(l[0]->actor, u8"Car");
+    EXPECT_EQ(l[1]->group, GroupMarker::Closed);
+    EXPECT_EQ(l[1]->outerGroups, std::vector{GroupMarker::Opened});
+    EXPECT_EQ(l[1]->visibility, LineVisibility::Hidden);
+    EXPECT_TRUE(l[1]->bookmark);
+    EXPECT_EQ(l[1]->actor, u8"Ann");
+    EXPECT_EQ(l[2]->group, GroupMarker::Closed);
+    EXPECT_TRUE(l[2]->outerGroups.empty());
+    EXPECT_EQ(l[2]->actor, u8"[tree_opened]Bob");
+    EXPECT_EQ(l[3]->group, GroupMarker::Opened);
+    EXPECT_EQ(l[3]->outerGroups, std::vector{GroupMarker::Opened});
+    EXPECT_EQ(l[3]->visibility, LineVisibility::Visible);
+    EXPECT_EQ(l[3]->actor, u8"[hidden]");
+}
+
 TEST(AssLoad, InvalidUtf8LinesStayAsBytes)
 {
     const auto input = bytesOf("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,ok\n"

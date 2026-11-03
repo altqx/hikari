@@ -8,6 +8,7 @@ Item {
     id: bar
     objectName: "documentTabBar"
     required property var app
+    property int shellWindow: 0
     signal closeRequested(int index)
     signal saveRequested(var id)
     signal saveAllRequested()
@@ -15,7 +16,10 @@ Item {
 
     readonly property int inset: 4
     implicitHeight: row.implicitHeight + inset
-    readonly property bool shown: !bar.app.home
+    readonly property bool shown: {
+        bar.app.home
+        return !bar.app.windowHome(bar.shellWindow)
+    }
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
     Accessible.ignored: !shown
@@ -50,7 +54,7 @@ Item {
                  tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference }
     }
     function syncTabs() {
-        const rows = bar.app.tabs
+        const rows = bar.app.windowTabs(bar.shellWindow)
         let same = rows.length === tabModel.count
         for (let i = 0; same && i < rows.length; ++i) {
             let found = false

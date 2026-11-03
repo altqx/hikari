@@ -16,6 +16,15 @@ ApplicationWindow {
     title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
     color: Theme.background
 
+    property int shellWindow: 0
+    readonly property string engineSuffix: shellWindow === 0 ? "" : "~" + shellWindow
+    readonly property var dockAffinities: ["w" + shellWindow]
+    readonly property bool windowHome: {
+        root.app.home
+        return root.app.windowHome(root.shellWindow)
+    }
+    function engineName(name) { return name + root.engineSuffix }
+    function panelName(dock) { return dock.uniqueName.slice(0, dock.uniqueName.length - root.engineSuffix.length) }
     required property ShellController shell
     required property LineEditorController editor
     required property VideoController video
@@ -151,6 +160,8 @@ ApplicationWindow {
     }
     // KDDW closes every panel before onClosing, so the close is reviewed here first (Docking.guardClose).
     function admitClose() {
+        if (root.shellWindow !== 0)
+            return true
         if (!root.app.quitApproved) {
             const rows = root.app.reviewClose("quit")
             if (rows.length > 0) {
@@ -162,6 +173,10 @@ ApplicationWindow {
         return true
     }
     onClosing: close => {
+        if (root.shellWindow !== 0) {
+            root.app.shellWindowClosed(root.shellWindow)
+            return
+        }
         if (!root.app.quitApproved) {
             const rows = root.app.reviewClose("quit")
             if (rows.length > 0) {
@@ -201,7 +216,7 @@ ApplicationWindow {
     function fitAudioBox() {
         const chrome = audioDock.isOpen ? Math.round(root.workspaceLayout.panelSize(audioDock).height - audioPanel.bodyHeight) : 0
         // KDDW: a separator dragged past the editor's minimum pushes the next one, so the minimum is its rows' height.
-        Docking.setMinimumSize("Editor", Qt.size(editorPanel.minimumSize.width,
+        Docking.setMinimumSize(root.engineName("Editor"), Qt.size(editorPanel.minimumSize.width,
                                                  Math.ceil(editorColumn.implicitHeight) + 8))
         for (let pass = 0; pass < 3; ++pass) {
             const body = root.workspaceLayout.panelSize(audioDock).height - chrome
@@ -209,7 +224,7 @@ ApplicationWindow {
             const deficit = Math.round(170 - body)
             if (deficit === 0 || !audioDock.isOpen)
                 break
-            Docking.resizeInLayout("Audio", 0, 0, 0, deficit)
+            Docking.resizeInLayout(root.engineName("Audio"), 0, 0, 0, deficit)
         }
         editorPanel.reportMinimumSize()
     }
@@ -240,7 +255,7 @@ ApplicationWindow {
         const fieldsShort = Math.ceil(editorInspector.wideMinimum - editorColumn.width)
         const room = Math.round(area * 0.5) - root.workspaceLayout.panelSize(editorDock).width
         if (fieldsShort > 0 && room > 0)
-            Docking.resizeInLayout("Editor", 0, 0, Math.min(fieldsShort, room), 0)
+            Docking.resizeInLayout(root.engineName("Editor"), 0, 0, Math.min(fieldsShort, room), 0)
         const original = originalDock.isOpen
         originalDock.open()
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 200))
@@ -253,13 +268,13 @@ ApplicationWindow {
         const tools = stylesTool.toolbar
         const short = Math.ceil(tools.implicitWidth + 12 - tools.width)
         if (tools.visible && short > 0)
-            Docking.resizeInLayout("Styles", short, 0, 0, 0)
+            Docking.resizeInLayout(root.engineName("Styles"), short, 0, 0, 0)
         // KDDW doesn't move the closed Audio/Original places' edge, so the Video panel's bottom edge moves instead.
         editorColumn.ensurePolished()
         const lower = root.workspaceLayout.panelSize(editorDock).height
         const natural = Math.ceil(editorColumn.implicitHeight) + 8 + lower - editorPanel.height
         if (lower !== natural)
-            Docking.resizeInLayout("Video", 0, 0, 0, lower - natural)
+            Docking.resizeInLayout(root.engineName("Video"), 0, 0, 0, lower - natural)
     }
     function timingLayout() {
         videoDock.close()
@@ -273,7 +288,7 @@ ApplicationWindow {
         const lower = root.workspaceLayout.panelSize(gridDock).height
         const short = Math.ceil(lower - grid.height + grid.rowHeight * 8)
         if (short !== lower)
-            Docking.resizeInLayout("Grid", 0, short - lower, 0, 0)
+            Docking.resizeInLayout(root.engineName("Grid"), 0, short - lower, 0, 0)
     }
     Connections {
         target: root.workspaceLayout
@@ -310,7 +325,7 @@ ApplicationWindow {
         }
     }
     function openOriginal() {
-        if (Docking.hasPlace("Original"))
+        if (Docking.hasPlace(root.engineName("Original")))
             originalDock.open()
         else
             root.addOriginal()
@@ -353,8 +368,8 @@ ApplicationWindow {
 
     function addRightOfGrid(dock, preferredWidth) {
         const grid = gridDock.isOpen && !gridDock.isFloating
-        const left = Docking.placeInLayout("Grid").x
-        const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf("Grid"))
+        const left = Docking.placeInLayout(root.engineName("Grid")).x
+        const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf(root.engineName("Grid")))
         if (column) {
             column.addDockWidgetAsTab(dock)
         } else {
@@ -362,9 +377,9 @@ ApplicationWindow {
             const width = Math.min(Math.max(Docking.minimumSize(dock.uniqueName).width, preferredWidth ?? 0), third)
             dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnRight, grid ? gridDock : null, Qt.size(width, 0))
         }
-        const moved = Docking.placeInLayout("Grid").x - left
+        const moved = Docking.placeInLayout(root.engineName("Grid")).x - left
         if (grid && moved !== 0)
-            Docking.resizeInLayout("Grid", moved, 0, 0, 0)
+            Docking.resizeInLayout(root.engineName("Grid"), moved, 0, 0, 0)
     }
 
     function openAutomationRun(runId) {
@@ -387,16 +402,16 @@ ApplicationWindow {
     readonly property var pluginPanelRows: {
         const rows = root.pluginUi ? root.pluginUi.panels.slice() : []
         for (const dock of root.pluginDocks)
-            if (!rows.some(r => r.dock === dock.uniqueName))
-                rows.push({ dock: dock.uniqueName, title: dock.title, pluginName: dock.pluginName, area: "right" })
+            if (!rows.some(r => r.dock === dock.storedName))
+                rows.push({ dock: dock.storedName, title: dock.title, pluginName: dock.pluginName, area: "right" })
         return rows
     }
     function isPluginDock(dock) { return !!dock && dock.isPlugin === true }
     function pluginDock(name) {
-        const known = root.pluginDocks.find(d => d.uniqueName === name)
+        const known = root.pluginDocks.find(d => d.storedName === name)
         if (known || !root.workspaceLayout.isPluginPanel(name))
             return known ?? null
-        const dock = pluginDockComponent.createObject(dockingArea, { uniqueName: name })
+        const dock = pluginDockComponent.createObject(dockingArea, { uniqueName: root.engineName(name), storedName: name })
         dock.openedWithoutPlace.connect(() => root.openAtFirstPlace(dock))
         dock.isOpenChanged.connect(() => root.app.apiHost.panelChanged(name))
         dock.isFloatingChanged.connect(() => root.app.apiHost.panelChanged(name))
@@ -410,7 +425,7 @@ ApplicationWindow {
             root.showPanel(dock)
     }
     function addPluginDock(dock) {
-        const row = root.pluginUi ? root.pluginUi.panels.find(r => r.dock === dock.uniqueName) : undefined
+        const row = root.pluginUi ? root.pluginUi.panels.find(r => r.dock === dock.storedName) : undefined
         const area = row ? row.area : "right"
         if (area === "bottom" && logDock.isOpen && !logDock.isFloating)
             logDock.addDockWidgetAsTab(dock)
@@ -464,19 +479,21 @@ ApplicationWindow {
         PanelDock {
             id: pluginDock
             objectName: "pluginDock_" + uniqueName
+            affinities: root.dockAffinities
             readonly property bool isPlugin: true
+            required property string storedName
             readonly property alias panel: pluginPanel
             readonly property alias body: pluginBody
             property string pluginName
             property string knownTitle
-            title: knownTitle || uniqueName
+            title: knownTitle || storedName
             readonly property string tip: pluginName.length > 0
                                           ? qsTranslate("HikariSub.Plugins", "%1, from %2").arg(title, pluginName) : ""
             onTipChanged: Docking.setPanelTip(uniqueName, tip)
             Component.onCompleted: Docking.setPanelTip(uniqueName, tip)
             function remember() {
                 if (knownTitle.length > 0)
-                    root.workspaceLayout.rememberPluginPanel(uniqueName, knownTitle, pluginName)
+                    root.workspaceLayout.rememberPluginPanel(storedName, knownTitle, pluginName)
             }
             onKnownTitleChanged: remember()
             onPluginNameChanged: remember()
@@ -492,8 +509,8 @@ ApplicationWindow {
                     objectName: "pluginPanelBody_" + pluginDock.uniqueName
                     anchors.fill: parent
                     ui: root.pluginUi
-                    dock: pluginDock.uniqueName
-                    saved: root.workspaceLayout.pluginPanelInfo(pluginDock.uniqueName)
+                    dock: pluginDock.storedName
+                    saved: root.workspaceLayout.pluginPanelInfo(pluginDock.storedName)
                     shown: pluginDock.isOpen
                     colourPicker: root.colourPicker
                     onOpenPlugins: plugin => pluginManagerDialog.showPlugin(plugin)
@@ -674,7 +691,7 @@ ApplicationWindow {
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
-        root.analytics.panelOpened(dock.uniqueName)
+        root.analytics.panelOpened(root.panelName(dock))
         root.openAtFirstPlace(dock)
         root.workspaceLayout.keepFloatingPanelsOnScreen()
         dock.raise()
@@ -685,13 +702,13 @@ ApplicationWindow {
     function openAtFirstPlace(dock) {
         if (dock === originalDock)
             root.openOriginal()
-        else if (dock === logDock && !Docking.hasPlace("Log"))
+        else if (dock === logDock && !Docking.hasPlace(root.engineName("Log")))
             root.addLog()
-        else if (dock === spellDock && !Docking.hasPlace("Spellchecker"))
+        else if (dock === spellDock && !Docking.hasPlace(root.engineName("Spellchecker")))
             root.addSpellChecker()
-        else if (dock === stylesDock && !Docking.hasPlace("Styles"))
+        else if (dock === stylesDock && !Docking.hasPlace(root.engineName("Styles")))
             root.addStyles()
-        else if (dock === templateDock && !Docking.hasPlace("Template"))
+        else if (dock === templateDock && !Docking.hasPlace(root.engineName("Template")))
             root.addTemplate()
         else if (root.isPluginDock(dock) && !Docking.hasPlace(dock.uniqueName))
             root.addPluginDock(dock)
@@ -724,10 +741,11 @@ ApplicationWindow {
         const hovered = keyRouter.followsPointer() ? keyRouter.hoveredPanel : null
         const panel = hovered || root.panelOf(w ? w.activeFocusItem : root.activeFocusItem)
         const i = panel ? root.panels.indexOf(panel) : -1
-        UserGuide.open(i >= 0 ? "panel" : "", i >= 0 ? (panel.guideId || root.dockList[i].uniqueName) : "")
+        UserGuide.open(i >= 0 ? "panel" : "", i >= 0 ? (panel.guideId || root.panelName(root.dockList[i])) : "")
     }
     Connections {
         target: UserGuide
+        enabled: root.shellWindow === 0
         function onOpenRequested(kind, id) { root.app.openUserGuide(kind, id) }
     }
     Shortcut {
@@ -790,7 +808,7 @@ ApplicationWindow {
         return state.status === "running" ? state.menu.map(r => ({
             name: "pluginMenu_" + r.id, text: r.text, checkable: r.checked !== undefined,
             checked: () => row(r.id).checked === true, enabled: () => row(r.id).disabled !== true,
-            run: () => root.pluginUi.send(dock.uniqueName, { kind: "menu", widget: r.id })
+            run: () => root.pluginUi.send(dock.storedName, { kind: "menu", widget: r.id })
         })) : []
     }
     readonly property VideoFollowChoices videoFollow: VideoFollowChoices { settings: root.app.settings }
@@ -941,14 +959,18 @@ ApplicationWindow {
             enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
             onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
         }
-        ShellMenuItem {
-            iconRole: "about"
-            objectName: "panelOptionsAbout"
+        Instantiator {
             readonly property var panelState: root.isPluginDock(panelOptionsMenu.dock) ? (panelOptionsMenu.dock.body?.panelState ?? null) : null
-            visible: panelState !== null && panelState.status !== "missing"
-            height: visible ? implicitHeight : 0
-            text: qsTranslate("HikariSub.Plugins", "About %1…").arg(visible ? panelOptionsMenu.dock.pluginName : "")
-            onTriggered: pluginManagerDialog.showPlugin(panelState.pluginId)
+            model: panelState !== null && panelState.status !== "missing" ? [panelState] : []
+            delegate: ShellMenuItem {
+                required property var modelData
+                iconRole: "about"
+                objectName: "panelOptionsAbout"
+                text: qsTranslate("HikariSub.Plugins", "About %1…").arg(panelOptionsMenu.dock?.pluginName ?? "")
+                onTriggered: pluginManagerDialog.showPlugin(modelData.pluginId)
+            }
+            onObjectAdded: (index, object) => panelOptionsMenu.insertItem(panelOptionsMenu.count - 1, object)
+            onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
         ShellMenuItem {
             iconRole: "tab-close"
@@ -1803,6 +1825,25 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_PREVIOUS")) root.app.findPrevious()
                 }
             }
+            MenuSeparator {}
+            ShellMenuItem {
+                command: "GLOBAL_INSERT_HARD_SPACE"
+                help: qsTr("Inserts a hard space (%1) at the cursor in the line editor").arg("\\h")
+                iconRole: "hard-space"
+                objectName: "insertHardSpaceMenuItem"
+                action: Action {
+                    id: insertHardSpaceAction
+                    text: qsTr("Insert hard space")
+                    enabled: root.editor.editable
+                    onTriggered: {
+                        if (root.hotkeyGesture("GLOBAL_INSERT_HARD_SPACE"))
+                            return
+                        const field = root.editedField()
+                        root.editor.insertHardSpace(field.role, field.selectionStart, field.selectionEnd)
+                        root.focusPanel(field, Qt.ShortcutFocusReason)
+                    }
+                }
+            }
         }
         ShellMenu {
             objectName: "subtitlesMenu"
@@ -1934,7 +1975,7 @@ ApplicationWindow {
                 id: kanjiTimerItem
                 iconRole: "kanji-timer"
                 objectName: "kanjiTimerMenuItem"
-                text: qsTr("Kanji timer…")
+                text: qsTr("Kanji timer")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
             }
@@ -2211,13 +2252,18 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
-                command: "GLOBAL_VIDEO_RENDER_COST"
                 iconRole: "render-cost"
+                command: "GLOBAL_VIDEO_RENDER_COST"
                 objectName: "renderCostMenuItem"
                 action: Action {
                     id: renderCostAction
-                    text: qsTr("Show / hide render cost"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST")) root.videoView.toggleRenderCost()
+                    text: qsTr("Render cost"); enabled: root.video.hasVideo
+                    checkable: true
+                    checked: root.videoView.renderCost
+                    onTriggered: {
+                        checked = Qt.binding(() => root.videoView.renderCost)
+                        if (!root.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST")) root.videoView.toggleRenderCost()
+                    }
                 }
             }
         }
@@ -2517,9 +2563,10 @@ ApplicationWindow {
                     delegate: ShellMenu {
                         id: pluginPanelMenu
                         required property var modelData
-                        readonly property var dock: root.pluginDocks.find(d => d.uniqueName === modelData.dock) ?? null
+                        readonly property var dock: root.pluginDocks.find(d => d.storedName === modelData.dock) ?? null
                         readonly property bool kept: !root.pluginUi || !root.pluginUi.panels.some(r => r.dock === modelData.dock)
                         objectName: "panelMenu" + modelData.dock
+                        iconRole: "plugins"
                         title: modelData.title
                         detailText: modelData.pluginName
                         ShellMenuItem {
@@ -3333,7 +3380,7 @@ ApplicationWindow {
         app: root.app
         anchors.fill: dockingArea
         z: 1.5
-        visible: root.app.home
+        visible: root.windowHome
         spaceAbove: documentTabBar.height
         onNewRequested: root.app.addPage()
         onOpenRequested: openAction.trigger()
@@ -3366,19 +3413,21 @@ ApplicationWindow {
         id: dockingArea
         objectName: "dockingArea"
         anchors.fill: parent
-        uniqueName: "Classic"
+        uniqueName: root.engineName("Classic")
+        affinities: root.dockAffinities
         enabled: !homePage.visible
 
         PanelDock {
             id: videoDock
             objectName: "videoDock"
-            uniqueName: "Video"
+            uniqueName: root.engineName("Video")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Video", "Video")
             Panel {
                 id: videoPanel
                 anchors.fill: parent
                 objectName: "videoPanel"
-                dockName: "Video"
+                dockName: root.engineName("Video")
                 // MUST KILL: 72 is a magic height for two tool rail buttons
                 minimumBodySize: Qt.size(videoTransport.implicitWidth,
                                          videoControls.implicitHeight + videoToolBar.lineHeight + videoControls.spacing + 72
@@ -3656,13 +3705,14 @@ ApplicationWindow {
         PanelDock {
             id: audioDock
             objectName: "audioDock"
-            uniqueName: "Audio"
+            uniqueName: root.engineName("Audio")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Audio", "Audio")
             Panel {
                 id: audioPanel
                 anchors.fill: parent
                 objectName: "audioPanel"
-                dockName: "Audio"
+                dockName: root.engineName("Audio")
                 minimumBodySize: audioButtons.visible
                                  ? Qt.size(audioButtons.foldedWidth, 64 + audioScroll.implicitHeight + 4 + audioButtons.implicitHeight)
                                  : Qt.size(audioStatus.implicitWidth, audioStatus.implicitHeight)
@@ -4195,39 +4245,93 @@ ApplicationWindow {
                         Layout.rightMargin: 2
                         color: Theme.line
                     }
-                    component AudioRadioItem: ShellMenuItem {
-                        id: radioItem
-                        checkable: true
-                        keepsMenuOpen: false
-                        Accessible.role: Accessible.RadioButton
-                        indicator: Rectangle {
-                            readonly property color ink: radioItem.enabled && (radioItem.down || radioItem.highlighted)
-                                                         ? radioItem.palette.highlightedText : radioItem.palette.text
-                            x: radioItem.mirrored ? radioItem.width - width - radioItem.rightPadding : radioItem.leftPadding
-                            y: radioItem.topPadding + (radioItem.availableHeight - height) / 2
-                            implicitWidth: 14
-                            implicitHeight: 14
-                            radius: 7
-                            color: "transparent"
-                            border.color: ink
-                            Rectangle {
-                                anchors.centerIn: parent
-                                width: 6
-                                height: 6
-                                radius: 3
-                                color: parent.ink
-                                visible: radioItem.checked
+                    component TapOptionsMenu: ShellMenu {
+                        id: tapMenu
+                        property string names: "audio"
+                        property bool tapRow: true
+                        ShellMenuItem {
+                            objectName: tapMenu.names + "TapStart"
+                            visible: tapMenu.tapRow
+                            height: tapMenu.tapRow ? implicitHeight : 0
+                            iconRole: "karaoke-tap"
+                            text: qsTranslate("HikariSub.Audio", "Tap to time")
+                            command: "AUDIO_TAP"
+                            checkable: true
+                            keepsMenuOpen: false
+                            checked: root.audio.tapOn
+                            onTriggered: {
+                                checked = Qt.binding(() => root.audio.tapOn)
+                                if (!root.hotkeyGesture("AUDIO_TAP", 4, true, false)) root.audio.toggleTap()
                             }
                         }
-                    }
-                    component AudioMenuHeading: Label {
-                        leftPadding: 12
-                        rightPadding: 12
-                        topPadding: 4
-                        bottomPadding: 2
-                        color: Theme.muted
-                        font.bold: true
-                        font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
+                        MenuSeparator {
+                            visible: tapMenu.tapRow
+                            height: tapMenu.tapRow ? implicitHeight : 0
+                        }
+                        MenuHeading {
+                            text: qsTranslate("HikariSub.Audio", "Each syllable")
+                        }
+                        MenuRadioItem {
+                            objectName: tapMenu.names + "TapHold"
+                            text: qsTranslate("HikariSub.Audio", "Hold the key: releasing it leaves a gap")
+                            checked: root.audio.tapHold
+                            onTriggered: {
+                                root.audio.setTapHold(true)
+                                checked = Qt.binding(() => root.audio.tapHold)
+                            }
+                        }
+                        MenuRadioItem {
+                            objectName: tapMenu.names + "TapPress"
+                            text: qsTranslate("HikariSub.Audio", "Press the key: no gaps")
+                            checked: !root.audio.tapHold
+                            onTriggered: {
+                                root.audio.setTapHold(false)
+                                checked = Qt.binding(() => !root.audio.tapHold)
+                            }
+                        }
+                        MenuSeparator {}
+                        ShellMenuItem {
+                            objectName: tapMenu.names + "OnsetSnap"
+                            text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
+                            checkable: true
+                            checked: root.audio.onsetSnap
+                            onToggled: {
+                                root.audio.setOnsetSnap(checked)
+                                checked = Qt.binding(() => root.audio.onsetSnap)
+                            }
+                        }
+                        MenuSeparator {}
+                        ShellMenu {
+                            id: speedMenu
+                            objectName: tapMenu.names + "TapSpeedMenu"
+                            iconRole: "playback-speed"
+                            //: The Tap menu's Speed submenu; the current speed follows it
+                            title: qsTranslate("HikariSub.Audio", "Speed")
+                            detailText: qsTranslate("HikariSub.Audio", "%1%").arg(root.audio.speedPercent)
+                            Instantiator {
+                                model: [25, 33, 50, 75, 100]
+                                delegate: MenuRadioItem {
+                                    required property int modelData
+                                    objectName: tapMenu.names + "TapSpeed" + modelData
+                                    text: qsTranslate("HikariSub.Audio", "%1%").arg(modelData)
+                                    checked: root.audio.speedPercent === modelData
+                                    onTriggered: {
+                                        root.audio.setSpeedPercent(modelData)
+                                        checked = Qt.binding(() => root.audio.speedPercent === modelData)
+                                    }
+                                }
+                                onObjectAdded: (index, object) => speedMenu.insertItem(index, object)
+                                onObjectRemoved: (index, object) => speedMenu.removeItem(object)
+                            }
+                        }
+                        ShellMenuItem {
+                            objectName: tapMenu.names + "TapCalibrate"
+                            iconRole: "tap-calibrate"
+                            //: The Tap menu's item; the tap latency follows it
+                            text: qsTranslate("HikariSub.Audio", "Calibrate latency…")
+                            detailText: qsTranslate("HikariSub.Audio", "%1 ms").arg(root.audio.tapLatency)
+                            onTriggered: tapCalibrationWindow.openWindow()
+                        }
                     }
                     component PlayAroundItem: ShellMenuItem {
                         id: playItem
@@ -4402,7 +4506,7 @@ ApplicationWindow {
                                 id: audioAutoCommit
                                 objectName: "audioAutoCommit"
                                 iconRole: "auto-commit"
-                                text: qsTranslate("HikariSub.Audio", "Automatically apply changes")
+                                text: qsTranslate("HikariSub.Audio", "Auto-commit")
                                 checkable: true
                                 checked: audioPanel.autoCommit
                                 onToggled: {
@@ -4414,7 +4518,7 @@ ApplicationWindow {
                                 id: audioNextCommit
                                 objectName: "audioNextCommit"
                                 iconRole: "next-after-commit"
-                                text: qsTranslate("HikariSub.Audio", "Go to the next line after applying changes")
+                                text: qsTranslate("HikariSub.Audio", "Go to the next line after commit")
                                 checkable: true
                                 checked: audioPanel.nextLineOnCommit
                                 onToggled: {
@@ -4428,7 +4532,7 @@ ApplicationWindow {
                             visible: audioButtons.keeps("autoCommit")
                             iconRole: "auto-commit"
                             text: qsTranslate("HikariSub.Audio", "Auto-commit")
-                            tip: qsTranslate("HikariSub.Audio", "Automatically apply changes")
+                            tip: qsTranslate("HikariSub.Audio", "Auto-commit")
                             checkable: true
                             checked: audioPanel.autoCommit
                             onToggled: {
@@ -4441,7 +4545,7 @@ ApplicationWindow {
                             visible: audioButtons.keeps("nextCommit")
                             iconRole: "next-after-commit"
                             text: qsTranslate("HikariSub.Audio", "Next after commit")
-                            tip: qsTranslate("HikariSub.Audio", "Go to the next line after applying changes")
+                            tip: qsTranslate("HikariSub.Audio", "Go to the next line after commit")
                             checkable: true
                             checked: audioPanel.nextLineOnCommit
                             onToggled: {
@@ -4483,7 +4587,7 @@ ApplicationWindow {
                                 iconRole: "karaoke"
                                 divider: true
                                 text: qsTranslate("HikariSub.Audio", "Karaoke")
-                                tip: qsTranslate("HikariSub.Audio", "Enable / disable karaoke creation")
+                                tip: qsTranslate("HikariSub.Audio", "Karaoke")
                                 checked: root.audio.karaoke
                                 onRun: if (!root.audio.karaoke) root.audio.toggleKaraoke()
                             }
@@ -4534,82 +4638,9 @@ ApplicationWindow {
                             checked: root.audio.tapOn
                             onRun: root.audio.toggleTap()
                         }
-                        ShellMenu {
+                        TapOptionsMenu {
                             id: audioTapMenu
                             objectName: "audioTapMenu"
-                            ShellMenuItem {
-                                objectName: "audioTapStart"
-                                iconRole: "karaoke-tap"
-                                text: (root.audio.tapOn ? qsTranslate("HikariSub.Audio", "Stop tapping")
-                                                        : qsTranslate("HikariSub.Audio", "Start tapping"))
-                                command: "AUDIO_TAP"
-                                onTriggered: if (!root.hotkeyGesture("AUDIO_TAP", 4, true, false)) root.audio.toggleTap()
-                            }
-                            MenuSeparator {}
-                            AudioMenuHeading {
-                                text: qsTranslate("HikariSub.Audio", "Each syllable")
-                            }
-                            AudioRadioItem {
-                                objectName: "audioTapHold"
-                                text: qsTranslate("HikariSub.Audio", "Hold the key: releasing it leaves a gap")
-                                checked: root.audio.tapHold
-                                onTriggered: {
-                                    root.audio.setTapHold(true)
-                                    checked = Qt.binding(() => root.audio.tapHold)
-                                }
-                            }
-                            AudioRadioItem {
-                                objectName: "audioTapPress"
-                                text: qsTranslate("HikariSub.Audio", "Press the key: no gaps")
-                                checked: !root.audio.tapHold
-                                onTriggered: {
-                                    root.audio.setTapHold(false)
-                                    checked = Qt.binding(() => !root.audio.tapHold)
-                                }
-                            }
-                            MenuSeparator {}
-                            ShellMenuItem {
-                                objectName: "audioOnsetSnap"
-                                text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
-                                checkable: true
-                                checked: root.audio.onsetSnap
-                                onToggled: {
-                                    root.audio.setOnsetSnap(checked)
-                                    checked = Qt.binding(() => root.audio.onsetSnap)
-                                }
-                            }
-                            MenuSeparator {}
-                            ShellMenu {
-                                id: audioTapSpeedMenu
-                                objectName: "audioTapSpeedMenu"
-                                iconRole: "playback-speed"
-                                //: The Tap menu's Speed submenu; the current speed follows it
-                                title: qsTranslate("HikariSub.Audio", "Speed")
-                                detailText: qsTranslate("HikariSub.Audio", "%1%").arg(root.audio.speedPercent)
-                                Instantiator {
-                                    model: [25, 33, 50, 75, 100]
-                                    delegate: AudioRadioItem {
-                                        required property int modelData
-                                        objectName: "audioTapSpeed" + modelData
-                                        text: qsTranslate("HikariSub.Audio", "%1%").arg(modelData)
-                                        checked: root.audio.speedPercent === modelData
-                                        onTriggered: {
-                                            root.audio.setSpeedPercent(modelData)
-                                            checked = Qt.binding(() => root.audio.speedPercent === modelData)
-                                        }
-                                    }
-                                    onObjectAdded: (index, object) => audioTapSpeedMenu.insertItem(index, object)
-                                    onObjectRemoved: (index, object) => audioTapSpeedMenu.removeItem(object)
-                                }
-                            }
-                            ShellMenuItem {
-                                objectName: "audioTapCalibrate"
-                                iconRole: "tap-calibrate"
-                                //: The Tap menu's item; the tap latency follows it
-                                text: qsTranslate("HikariSub.Audio", "Calibrate latency…")
-                                detailText: qsTranslate("HikariSub.Audio", "%1 ms").arg(root.audio.tapLatency)
-                                onTriggered: tapCalibrationWindow.openWindow()
-                            }
                         }
                         AudioSwitch {
                             AudioSegment {
@@ -4660,7 +4691,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Speech")
                             checkable: true
                             checked: root.audio.spectrumNonLinear
-                            tip: qsTranslate("HikariSub.Audio", "Enhance speech frequencies in the spectrum")
+                            tip: qsTranslate("HikariSub.Audio", "Speech spectrum")
                             onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
                         }
                     }
@@ -4673,7 +4704,7 @@ ApplicationWindow {
                             id: audioMoreButton
                             objectName: "audioMore"
                             visible: audioButtons.togglesFolded
-                            iconRole: "panel-menu"
+                            iconRole: "menu-more"
                             text: qsTranslate("HikariSub.Audio", "More audio options")
                             tip: text
                             down: audioMoreMenu.visible
@@ -4681,10 +4712,16 @@ ApplicationWindow {
                             ShellMenu {
                                 id: audioMoreMenu
                                 objectName: "audioMoreMenu"
+                                readonly property bool playsFold: audioPanel.playExtras.some(id => audioButtons.foldsOut(id))
+                                readonly property bool commitFolds: ["autoCommit", "nextCommit", "goto"].some(id => audioButtons.foldsOut(id))
                                 component FoldedItem: ShellMenuItem {
                                     checkable: true
                                     visible: audioButtons.folded
                                     height: visible ? implicitHeight : 0
+                                }
+                                component FoldedRadio: MenuRadioItem {
+                                    visible: audioButtons.folded
+                                    height: audioButtons.folded ? implicitHeight : 0
                                 }
                                 component FoldedSeparator: MenuSeparator {
                                     visible: audioButtons.folded
@@ -4707,12 +4744,16 @@ ApplicationWindow {
                                 FoldedPlay { play: audioPanel.play("last") }
                                 FoldedPlay { play: audioPanel.play("after") }
                                 FoldedPlay { play: audioPanel.play("toEnd") }
+                                MenuSeparator {
+                                    visible: audioMoreMenu.playsFold && audioMoreMenu.commitFolds
+                                    height: visible ? implicitHeight : 0
+                                }
                                 ShellMenuItem {
                                     objectName: "audioMoreExtraAutoCommit"
                                     visible: audioButtons.foldsOut("autoCommit")
                                     height: visible ? implicitHeight : 0
                                     iconRole: "auto-commit"
-                                    text: qsTranslate("HikariSub.Audio", "Automatically apply changes")
+                                    text: qsTranslate("HikariSub.Audio", "Auto-commit")
                                     checkable: true
                                     checked: audioPanel.autoCommit
                                     onToggled: {
@@ -4725,7 +4766,7 @@ ApplicationWindow {
                                     visible: audioButtons.foldsOut("nextCommit")
                                     height: visible ? implicitHeight : 0
                                     iconRole: "next-after-commit"
-                                    text: qsTranslate("HikariSub.Audio", "Go to the next line after applying changes")
+                                    text: qsTranslate("HikariSub.Audio", "Go to the next line after commit")
                                     checkable: true
                                     checked: audioPanel.nextLineOnCommit
                                     onToggled: {
@@ -4743,26 +4784,21 @@ ApplicationWindow {
                                     onTriggered: if (!root.hotkeyGesture("AUDIO_GOTO", 4, true, false)) root.audio.goToSelection()
                                 }
                                 MenuSeparator {
-                                    visible: audioButtons.kept.length < audioButtons.shownExtras.length
+                                    visible: audioButtons.folded && (audioMoreMenu.playsFold || audioMoreMenu.commitFolds)
                                     height: visible ? implicitHeight : 0
                                 }
-                                FoldedItem {
-                                    iconRole: "audio-line-mode"
+                                FoldedRadio {
+                                    objectName: "audioMoreLineTiming"
                                     text: qsTranslate("HikariSub.Audio", "Line timing")
-                                    checkable: true
-                                    keepsMenuOpen: false
                                     checked: !root.audio.karaoke
                                     onTriggered: {
                                         checked = Qt.binding(() => !root.audio.karaoke)
                                         if (root.audio.karaoke) root.audio.toggleKaraoke()
                                     }
                                 }
-                                FoldedItem {
+                                FoldedRadio {
                                     objectName: "audioMoreKaraoke"
-                                    iconRole: "karaoke"
                                     text: qsTranslate("HikariSub.Audio", "Karaoke")
-                                    checkable: true
-                                    keepsMenuOpen: false
                                     checked: root.audio.karaoke
                                     onTriggered: {
                                         checked = Qt.binding(() => root.audio.karaoke)
@@ -4813,39 +4849,45 @@ ApplicationWindow {
                                         root.audio.toggleTap()
                                     }
                                 }
-                                FoldedItem {
+                                TapOptionsMenu {
                                     objectName: "audioMoreTapOptions"
-                                    visible: audioButtons.folded && root.audio.karaoke
-                                    checkable: false
-                                    keepsMenuOpen: false
-                                    text: qsTranslate("HikariSub.Audio", "Tap options")
-                                    onTriggered: Qt.callLater(() => audioTapMenu.popup(audioMoreButton, 0, audioMoreButton.height))
+                                    names: "audioMore"
+                                    tapRow: false
+                                    iconRole: "karaoke-tap"
+                                    title: qsTranslate("HikariSub.Audio", "Tap options")
+                                    shown: audioButtons.folded && root.audio.karaoke
                                 }
                                 FoldedSeparator {}
-                                FoldedItem {
-                                    iconRole: "audio-waveform"
+                                FoldedRadio {
+                                    objectName: "audioMoreWaveform"
                                     text: qsTranslate("HikariSub.Audio", "Waveform")
-                                    checkable: true
-                                    keepsMenuOpen: false
                                     checked: !root.audio.spectrumOn
                                     onTriggered: {
                                         checked = Qt.binding(() => !root.audio.spectrumOn)
                                         root.audio.setSpectrumOn(false)
                                     }
                                 }
-                                FoldedItem {
+                                FoldedRadio {
                                     objectName: "audioMoreSpectrum"
-                                    iconRole: "spectrum"
                                     text: qsTranslate("HikariSub.Audio", "Spectrum")
-                                    checkable: true
-                                    keepsMenuOpen: false
                                     checked: root.audio.spectrumOn
                                     onTriggered: {
                                         checked = Qt.binding(() => root.audio.spectrumOn)
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                FoldedSeparator {}
+                                ShellMenuItem {
+                                    objectName: "audioMoreSpeechSpectrum"
+                                    iconRole: "spectrum-nonlinear"
+                                    text: qsTranslate("HikariSub.Audio", "Speech spectrum")
+                                    checkable: true
+                                    checked: root.audio.spectrumNonLinear
+                                    onToggled: {
+                                        root.audio.setSpectrumNonLinear(checked)
+                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
+                                    }
+                                }
+                                MenuSeparator {}
                                 ShellMenuItem {
                                     objectName: "audioMoreAutoScroll"
                                     iconRole: "auto-scroll"
@@ -4865,16 +4907,6 @@ ApplicationWindow {
                                     onToggled: {
                                         root.audio.setSyncVideo(checked)
                                         checked = Qt.binding(() => root.audio.syncVideo)
-                                    }
-                                }
-                                ShellMenuItem {
-                                    iconRole: "spectrum-nonlinear"
-                                    text: qsTranslate("HikariSub.Audio", "Speech (non-linear spectrum)")
-                                    checkable: true
-                                    checked: root.audio.spectrumNonLinear
-                                    onToggled: {
-                                        root.audio.setSpectrumNonLinear(checked)
-                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
                                     }
                                 }
                             }
@@ -5141,13 +5173,14 @@ ApplicationWindow {
         PanelDock {
             id: originalDock
             objectName: "originalDock"
-            uniqueName: "Original"
+            uniqueName: root.engineName("Original")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Translation", "Original text")
             Panel {
                 id: originalPanel
                 anchors.fill: parent
                 objectName: "originalPanel"
-                dockName: "Original"
+                dockName: root.engineName("Original")
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Translation", "Original text: %1").arg(shell.editingTitle)
                                               : qsTranslate("HikariSub.Translation", "Original text")
                 accessibleName: qsTranslate("HikariSub.Translation", "Original text")
@@ -5179,13 +5212,14 @@ ApplicationWindow {
         PanelDock {
             id: editorDock
             objectName: "editorDock"
-            uniqueName: "Editor"
+            uniqueName: root.engineName("Editor")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Editor", "Line editor")
             Panel {
                 id: editorPanel
                 anchors.fill: parent
                 objectName: "editorPanel"
-                dockName: "Editor"
+                dockName: root.engineName("Editor")
                 minimumBodySize: Qt.size(Math.max(editorStrip.minimumWidth, editorInspector.minimumWidth)
                                          + 2 * (editorColumn.x - 4),
                                          editorStrip.implicitHeight
@@ -5423,13 +5457,14 @@ ApplicationWindow {
         PanelDock {
             id: gridDock
             objectName: "gridDock"
-            uniqueName: "Grid"
+            uniqueName: root.engineName("Grid")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Grid", "Grid")
             Panel {
                 id: gridPanel
                 anchors.fill: parent
                 objectName: "gridPanel"
-                dockName: "Grid"
+                dockName: root.engineName("Grid")
                 minimumBodySize: Qt.size(240, grid.rowHeight * 3)
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "Editing: %1").arg(shell.editingTitle) : qsTranslate("HikariSub.Grid", "No document open")
                 accessibleName: qsTranslate("HikariSub.Grid", "Grid")
@@ -5711,13 +5746,14 @@ ApplicationWindow {
         PanelDock {
             id: referenceDock
             objectName: "referenceDock"
-            uniqueName: "Reference"
+            uniqueName: root.engineName("Reference")
+            affinities: root.dockAffinities
             title: shell.hasReference ? qsTranslate("HikariSub.Reference", "Reference: %1").arg(shell.referenceTitle) : qsTranslate("HikariSub.Reference", "Reference")
             Panel {
                 id: referencePanel
                 anchors.fill: parent
                 objectName: "referencePanel"
-                dockName: "Reference"
+                dockName: root.engineName("Reference")
                 keyTarget: referenceTray.grid
                 minimumBodySize: Qt.size(240, referenceTray.grid.rowHeight * 3)
                 visible: shell.hasReference
@@ -5738,12 +5774,13 @@ ApplicationWindow {
         PanelDock {
             id: timingDock
             objectName: "timingDock"
-            uniqueName: "Timing"
+            uniqueName: root.engineName("Timing")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.TimeShift", "Shift times")
             Panel {
                 id: timingPanel
                 objectName: "timingPanel"
-                dockName: "Timing"
+                dockName: root.engineName("Timing")
                 minimumBodySize: shiftTimesPanel.minimumBodySize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
@@ -5806,13 +5843,14 @@ ApplicationWindow {
         PanelDock {
             id: searchDock
             objectName: "searchDock"
-            uniqueName: "Search"
+            uniqueName: root.engineName("Search")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Search", "Find")
             onIsOpenChanged: if (!isOpen) searchTool.save()
             Panel {
                 id: searchPanel
                 objectName: "searchPanel"
-                dockName: "Search"
+                dockName: root.engineName("Search")
                 minimumBodySize: searchTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Search", "Find")
@@ -5830,12 +5868,13 @@ ApplicationWindow {
         PanelDock {
             id: automationDock
             objectName: "automationDock"
-            uniqueName: "Automation"
+            uniqueName: root.engineName("Automation")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Automation", "Automation")
             Panel {
                 id: automationPanel
                 objectName: "automationPanel"
-                dockName: "Automation"
+                dockName: root.engineName("Automation")
                 minimumBodySize: automationTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Automation", "Automation")
@@ -5860,13 +5899,14 @@ ApplicationWindow {
         PanelDock {
             id: spellDock
             objectName: "spellDock"
-            uniqueName: "Spellchecker"
+            uniqueName: root.engineName("Spellchecker")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Spelling", "Spellchecker")
             onIsOpenChanged: if (!isOpen) spellTool.stop()
             Panel {
                 id: spellPanel
                 objectName: "spellPanel"
-                dockName: "Spellchecker"
+                dockName: root.engineName("Spellchecker")
                 minimumBodySize: spellTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Spelling", "Spellchecker")
@@ -5887,12 +5927,13 @@ ApplicationWindow {
         PanelDock {
             id: stylesDock
             objectName: "stylesDock"
-            uniqueName: "Styles"
+            uniqueName: root.engineName("Styles")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Styles", "Styles")
             Panel {
                 id: stylesPanel
                 objectName: "stylesPanel"
-                dockName: "Styles"
+                dockName: root.engineName("Styles")
                 minimumBodySize: Qt.size(180, 120)
                 anchors.fill: parent
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Styles", "Styles: %1").arg(shell.editingTitle)
@@ -5915,7 +5956,8 @@ ApplicationWindow {
         PanelDock {
             id: templateDock
             objectName: "templateDock"
-            uniqueName: "Template"
+            uniqueName: root.engineName("Template")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.TemplateEditor", "Template editor")
             Binding {
                 target: root.templateEditor
@@ -5925,7 +5967,7 @@ ApplicationWindow {
             Panel {
                 id: templatePanel
                 objectName: "templatePanel"
-                dockName: "Template"
+                dockName: root.engineName("Template")
                 minimumBodySize: templateTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TemplateEditor", "Template editor")
@@ -5942,12 +5984,13 @@ ApplicationWindow {
         PanelDock {
             id: logDock
             objectName: "logDock"
-            uniqueName: "Log"
+            uniqueName: root.engineName("Log")
+            affinities: root.dockAffinities
             title: qsTr("Log")
             Panel {
                 id: logPanel
                 objectName: "logPanel"
-                dockName: "Log"
+                dockName: root.engineName("Log")
                 minimumBodySize: logView.minimumSize
                 anchors.fill: parent
                 title: qsTr("Log")
@@ -5961,14 +6004,14 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            Docking.setPanelHeader("Grid", true, null)
-            Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
-            Docking.setPanelHeader("Search", true, null)
-            Docking.setPanelHeader("Log", true, null)
-            Docking.setPanelHeader("Spellchecker", true, null)
-            Docking.setPanelHeader("Original", true, originalTools)
-            Docking.setPanelHeader("Styles", true, stylesTool.toolbar)
-            Docking.setPanelHeader("Template", false, templateTool.toolbar)
+            Docking.setPanelHeader(root.engineName("Grid"), true, null)
+            Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
+            Docking.setPanelHeader(root.engineName("Search"), true, null)
+            Docking.setPanelHeader(root.engineName("Log"), true, null)
+            Docking.setPanelHeader(root.engineName("Spellchecker"), true, null)
+            Docking.setPanelHeader(root.engineName("Original"), true, originalTools)
+            Docking.setPanelHeader(root.engineName("Styles"), true, stylesTool.toolbar)
+            Docking.setPanelHeader(root.engineName("Template"), false, templateTool.toolbar)
             root.defaultLayout()
         }
     }
@@ -6008,6 +6051,7 @@ ApplicationWindow {
         DocumentTabBar {
             id: documentTabBar
             app: root.app
+            shellWindow: root.shellWindow
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
             onSaveRequested: id => root.saveSubtitles(id)
@@ -6054,7 +6098,7 @@ ApplicationWindow {
             id: startupBar
             objectName: "startupBar"
             readonly property StartupOffer offer: sessionWindows.offer
-            visible: offer.active && !root.app.home
+            visible: offer.active && !root.windowHome
             severity: offer.kind === "crash" ? "warning" : "info"
             text: offer.barText
             Layout.fillWidth: true
@@ -6078,7 +6122,7 @@ ApplicationWindow {
         InlineBar {
             objectName: "mkvProgress"
             visible: root.matroska.state === 3
-                     && (root.mkvTab === "home" ? root.app.home : !root.app.home && root.currentTab().id === root.mkvTab)
+                     && (root.mkvTab === "home" ? root.windowHome : !root.windowHome && root.currentTab().id === root.mkvTab)
             closable: false
             text: qsTranslate("HikariSub.Matroska", "Loading subtitles from %1").arg(root.matroska.source)
             Layout.fillWidth: true
@@ -7282,9 +7326,9 @@ ApplicationWindow {
     }
     function apiPanels(name, action) {
         if (action === "list")
-            return root.dockList.map(dock => ({ panel: dock.uniqueName, title: dock.title, open: dock.isOpen,
+            return root.dockList.map(dock => ({ panel: root.panelName(dock), title: dock.title, open: dock.isOpen,
                                                 floating: dock.isFloating, focused: dock.isFocused }))
-        const i = root.dockList.findIndex(dock => dock.uniqueName === name)
+        const i = root.dockList.findIndex(dock => root.panelName(dock) === name)
         if (i < 0)
             return false
         const dock = root.dockList[i]
@@ -7306,14 +7350,15 @@ ApplicationWindow {
             for (const symbol in symbols)
                 symbols[symbol].triggered.connect(() => api.commandRan(symbol, true))
         for (const dock of root.dockList) {
-            dock.isOpenChanged.connect(() => api.panelChanged(dock.uniqueName))
-            dock.isFloatingChanged.connect(() => api.panelChanged(dock.uniqueName))
+            dock.isOpenChanged.connect(() => api.panelChanged(root.panelName(dock)))
+            dock.isFloatingChanged.connect(() => api.panelChanged(root.panelName(dock)))
         }
     }
 
     Component.onCompleted: {
         root.applyMenuShortcuts()
-        root.connectApi()
+        if (root.shellWindow === 0)
+            root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
         root.foldTurnedOn = turnedOn.indexOf("grid.foldGenerated") >= 0
@@ -7416,6 +7461,7 @@ ApplicationWindow {
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
+        GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }

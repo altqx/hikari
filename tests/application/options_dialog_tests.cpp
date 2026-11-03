@@ -273,9 +273,15 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(zoom[i].first), nullptr);
         EXPECT_EQ(std::get<std::int64_t>(findSetting(zoom[i].first)->defaultValue), zoom[i].second) << zoom[i].first;
     }
+    const auto &softBreak = all[std::size(kLegacy) + 43];
+    EXPECT_EQ(softBreak.setting, "editor.softLineBreak");
+    EXPECT_EQ(softBreak.control, OptionsControl::Check);
+    EXPECT_EQ(softBreak.page, OptionsPage::LineEditor);
+    ASSERT_NE(findSetting("editor.softLineBreak"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("editor.softLineBreak")->defaultValue), false);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 45);
-    const auto &hostApi = all[std::size(kLegacy) + 43];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 46);
+    const auto &hostApi = all[std::size(kLegacy) + 44];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -286,7 +292,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 43);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 44);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

@@ -147,6 +147,33 @@ private slots:
         QVERIFY2(problem.contains(QStringLiteral("plugin:Bad/x")), qPrintable(problem));
     }
 
+    void anArrangementHasOneMainWindowInAnyShellWindow()
+    {
+        const auto payloadWith = [](const char *mainWindows) {
+            return ui::WorkspaceLayoutController::envelope(
+                QByteArray(R"({"serializationVersion":3,"mainWindows":)") + mainWindows +
+                R"(,"allDockWidgets":[{"uniqueName":"Grid"}]})");
+        };
+        QString problem;
+        QVERIFY(ui::WorkspaceLayoutController::payloadOf(payloadWith(R"([{"uniqueName":"Classic"}])"), &problem));
+        QVERIFY(!ui::WorkspaceLayoutController::payloadOf(
+            payloadWith(R"([{"uniqueName":"Classic"},{"uniqueName":"Classic~1"}])"), &problem));
+        QVERIFY(!ui::WorkspaceLayoutController::payloadOf(
+            payloadWith(R"([{"uniqueName":"Classic"},{"uniqueName":"Classic"}])"), &problem));
+        QVERIFY(!ui::WorkspaceLayoutController::payloadOf(payloadWith(R"([{"uniqueName":"Classic~1"}])"), &problem));
+
+        const ui::ShellWindowNames second{1};
+        const QByteArray stored = R"({"mainWindows":[{"uniqueName":"Classic","affinities":[]}],)"
+                                  R"("allDockWidgets":[{"uniqueName":"Grid"}],"closedDockWidgets":["Grid"]})";
+        const QJsonObject engine = QJsonDocument::fromJson(second.toEngine(stored)).object();
+        const QJsonObject main = engine.value(QStringLiteral("mainWindows")).toArray().first().toObject();
+        QCOMPARE(main.value(QStringLiteral("uniqueName")).toString(), QStringLiteral("Classic~1"));
+        QCOMPARE(main.value(QStringLiteral("affinities")).toArray(), QJsonArray{QStringLiteral("w1")});
+        QCOMPARE(engine.value(QStringLiteral("closedDockWidgets")).toArray(), QJsonArray{QStringLiteral("Grid~1")});
+        QCOMPARE(QJsonDocument::fromJson(second.toStored(second.toEngine(stored))).object(),
+                 QJsonDocument::fromJson(stored).object());
+    }
+
     void theArrangementTheWindowClosedWithIsTheLastSaved()
     {
         start();

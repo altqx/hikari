@@ -42,6 +42,9 @@
 #include "theme.h"
 #include "window_frame.h"
 
+#include <QQmlComponent>
+#include <QQmlEngine>
+#include <QQuickItem>
 #include <QRegularExpression>
 #include <QClipboard>
 #include <QMimeData>
@@ -271,7 +274,7 @@ public:
     {
         m_app.protectReference();
         std::vector<application::FindTab> out;
-        for (const auto id : m_app.m_workspace.tabs())
+        for (const auto id : m_app.m_workspace.allTabs())
             if (auto t = tab(id))
                 out.push_back(*t);
         return out;
@@ -738,6 +741,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
         o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
         o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
+        o.softLineBreak = m_settings->boolean("editor.softLineBreak");
         return o;
     });
     m_editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),
@@ -991,7 +995,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         FontCollectorController::Hooks hooks;
         hooks.tabs = [this] {
             std::vector<FontCollectorController::Tab> out;
-            for (const auto id : m_workspace.tabs()) {
+            for (const auto id : m_workspace.allTabs()) {
                 FontCollectorController::Tab tab;
                 if (auto *session = m_files->session(id))
                     tab.document = std::make_shared<core::Document>(session->document());
@@ -2206,7 +2210,7 @@ QVariantList Application::reviewClose(const QString &then)
     else if (then == QLatin1String("tab"))
         scope = m_closingTab ? std::vector{*m_closingTab} : std::vector<application::DocumentId>{};
     else if (then == QLatin1String("all"))
-        scope = m_workspace.tabs();
+        scope = m_workspace.allTabs();
     else if (const auto target = m_workspace.editingTarget())
         scope = {*target};
     QVariantList rows;
@@ -2586,7 +2590,7 @@ QVariantList Application::saveAll()
 {
     m_templateEditor->commit();
     QVariantList later;
-    for (const auto id : m_workspace.tabs()) {
+    for (const auto id : m_workspace.allTabs()) {
         auto *session = m_files->session(id);
         if (!session || !session->isDirty())
             continue;
@@ -4009,7 +4013,7 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
     std::vector<application::EditSession *> sessions;
     if (allTabs) {
         protectReference();
-        for (const auto id : m_workspace.tabs())
+        for (const auto id : m_workspace.allTabs())
             if (auto *session = m_files->session(id))
                 sessions.push_back(session);
     } else if (auto *session = targetSession()) {
@@ -5450,9 +5454,123 @@ bool Application::makeContinuous(bool withPrevious)
     return done;
 }
 
-QVariantMap Application::qmlProperties()
+QQuickWindow *Application::openShellWindow(QQmlEngine &engine)
 {
-    return {{QStringLiteral("shell"), QVariant::fromValue(m_shell.get())},
+    if (m_shellWindows.empty())
+        qGuiApp->installEventFilter(this);
+    const int id = m_nextShellWindow++;
+    auto layout = std::make_unique<ui::WorkspaceLayoutController>(QString(), m_workspaceLayout->savedLayoutsFile());
+    layout->setShellWindow(id);
+    layout->reservePresetNames(m_workspaceLayout->reservedPresetNames());
+    for (auto *other : layouts()) {
+        connect(other, &ui::WorkspaceLayoutController::savedLayoutsWritten, layout.get(),
+                &ui::WorkspaceLayoutController::reloadSavedLayouts);
+        connect(layout.get(), &ui::WorkspaceLayoutController::savedLayoutsWritten, other,
+                &ui::WorkspaceLayoutController::reloadSavedLayouts);
+    }
+    m_shellWindows[id].layout = std::move(layout);
+    QQmlComponent component(&engine, QStringLiteral("Hikari.Ui"), QStringLiteral("Main"));
+    auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties(qmlProperties(id)));
+    if (!window) {
+        m_shellWindows.erase(id);
+        return nullptr;
+    }
+    m_shellWindows[id].window = window;
+    activateShellWindow(id);
+    return window;
+}
+
+void Application::closeShellWindowDocuments(int shellWindow)
+{
+    const bool wasActive = m_workspace.activeWindow() == shellWindow;
+    if (const auto reference = m_workspace.reference(); reference && m_workspace.window(*reference) == shellWindow)
+        m_comparison.remove();
+    for (const auto id : m_workspace.removeWindow(shellWindow)) {
+        m_comparison.forget(id);
+        discardRecovery(id);
+        m_files->close(id);
+        forgetTab(id);
+    }
+    m_layoutDocuments.erase(shellWindow);
+    if (wasActive)
+        refreshViews();
+    else
+        emit tabsChanged();
+}
+
+std::optional<int> Application::shellWindowOf(const QWindow *window)
+{
+    while (window && window->transientParent())
+        window = window->transientParent();
+    const QVariant id = window ? window->property("shellWindow") : QVariant();
+    return id.isValid() ? std::optional(id.toInt()) : std::nullopt;
+}
+
+bool Application::eventFilter(QObject *watched, QEvent *event)
+{
+    switch (event->type()) {
+    case QEvent::MouseButtonPress:
+    case QEvent::TouchBegin:
+    case QEvent::TabletPress:
+    case QEvent::FocusIn:
+    case QEvent::ShortcutOverride:
+    case QEvent::KeyPress: {
+        const QWindow *window = qobject_cast<QWindow *>(watched);
+        if (!window)
+            if (const auto *item = qobject_cast<QQuickItem *>(watched))
+                window = item->window();
+        if (const auto shellWindow = shellWindowOf(window))
+            activateShellWindow(*shellWindow);
+        break;
+    }
+    default:
+        break;
+    }
+    return QObject::eventFilter(watched, event);
+}
+
+ui::WorkspaceLayoutController &Application::layoutOf(int shellWindow)
+{
+    if (const auto found = m_shellWindows.find(shellWindow); found != m_shellWindows.end() && found->second.layout)
+        return *found->second.layout;
+    return *m_workspaceLayout;
+}
+
+ui::WorkspaceLayoutController &Application::layoutFor(application::DocumentId document)
+{
+    return layoutOf(m_workspace.window(document).value_or(0));
+}
+
+std::vector<ui::WorkspaceLayoutController *> Application::layouts()
+{
+    std::vector<ui::WorkspaceLayoutController *> out{m_workspaceLayout.get()};
+    for (const auto &[id, shell] : m_shellWindows)
+        out.push_back(shell.layout.get());
+    return out;
+}
+
+void Application::shellWindowClosed(int shellWindow)
+{
+    const auto found = m_shellWindows.find(shellWindow);
+    if (found == m_shellWindows.end())
+        return;
+    const QPointer<QQuickWindow> window = found->second.window;
+    if (!window) {
+        m_shellWindows.erase(found);
+        return;
+    }
+    closeShellWindowDocuments(shellWindow);
+    connect(window, &QObject::destroyed, this, [this, shellWindow] { m_shellWindows.erase(shellWindow); });
+    window->deleteLater();
+}
+
+QVariantMap Application::qmlProperties(int shellWindow)
+{
+    auto *layout = m_workspaceLayout.get();
+    if (const auto found = m_shellWindows.find(shellWindow); found != m_shellWindows.end())
+        layout = found->second.layout.get();
+    return {{QStringLiteral("shellWindow"), shellWindow},
+            {QStringLiteral("shell"), QVariant::fromValue(m_shell.get())},
             {QStringLiteral("editor"), QVariant::fromValue(m_editor.get())},
             {QStringLiteral("video"), QVariant::fromValue(m_video.get())},
             {QStringLiteral("audio"), QVariant::fromValue(m_audio.get())},
@@ -5465,7 +5583,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("log"), QVariant::fromValue(m_log.get())},
             {QStringLiteral("tagButtons"), QVariant::fromValue(m_tagButtons.get())},
             {QStringLiteral("colourPicker"), QVariant::fromValue(m_colourPicker.get())},
-            {QStringLiteral("workspaceLayout"), QVariant::fromValue(m_workspaceLayout.get())},
+            {QStringLiteral("workspaceLayout"), QVariant::fromValue(layout)},
             {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},

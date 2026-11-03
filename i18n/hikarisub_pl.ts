@@ -141,24 +141,12 @@
         <translation>Karaoke</translation>
     </message>
     <message>
-        <source>Enable / disable karaoke creation</source>
-        <translation>Włącz / wyłącz tworzenie karaoke</translation>
-    </message>
-    <message>
         <source>Auto split</source>
         <translation>Automatyczny podział</translation>
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
         <translation>Włącz / Wyłącz automatyczne dzielenie sylab</translation>
-    </message>
-    <message>
-        <source>Automatically apply changes</source>
-        <translation>Automatycznie zatwierdzaj zmiany</translation>
-    </message>
-    <message>
-        <source>Go to the next line after applying changes</source>
-        <translation>Przechodź do następnej linijki po zatwierdzeniu zmian</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -262,14 +250,6 @@
         <translation>Opcje timingu stukaniem</translation>
     </message>
     <message>
-        <source>Stop tapping</source>
-        <translation>Zatrzymaj stukanie</translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation>Rozpocznij stukanie</translation>
-    </message>
-    <message>
         <source>Each syllable</source>
         <translation>Każda sylaba</translation>
     </message>
@@ -330,16 +310,8 @@
         <translation>Mowa</translation>
     </message>
     <message>
-        <source>Enhance speech frequencies in the spectrum</source>
-        <translation>Uwydatnienie częstotliwości głosu na spektrum</translation>
-    </message>
-    <message>
         <source>More audio options</source>
         <translation>Więcej opcji audio</translation>
-    </message>
-    <message>
-        <source>Speech (non-linear spectrum)</source>
-        <translation>Mowa (spektrum nieliniowe)</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -400,6 +372,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Go to the next line after commit</source>
         <translation>Przechodź do następnej linijki po zatwierdzeniu</translation>
+    </message>
+    <message>
+        <source>Speech spectrum</source>
+        <translation>Spektrum mowy</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -1161,10 +1137,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>%1 nie ma makr do uruchomienia</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Błąd wczytywania skryptu Lua: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>Nie udało się wczytać %1. Błąd jest w sekcji Szczegóły.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -5812,6 +5786,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ponów</translation>
     </message>
     <message>
+        <source>Full screen bar: when the pointer moves / always / never</source>
+        <translation>Pasek pełnego ekranu: przy ruchu wskaźnika / zawsze / nigdy</translation>
+    </message>
+    <message>
         <source>Delete line</source>
         <translation>Usuń linijkę</translation>
     </message>
@@ -6024,10 +6002,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokaż / ukryj koszt renderowania</translation>
     </message>
     <message>
-        <source>Full screen bar: Auto / Always / Never</source>
-        <translation>Pasek pełnego ekranu: Automatycznie / Zawsze / Nigdy</translation>
-    </message>
-    <message>
         <source>Tap to time</source>
         <translation>Timing stukaniem</translation>
     </message>
@@ -6042,6 +6016,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Translation mode</source>
         <translation>Tryb tłumaczenia</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>Wstaw twardą spację</translation>
     </message>
     <message>
         <source>Place run 1</source>
@@ -7338,12 +7316,24 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Następne linijki, koniec na wideo</translation>
     </message>
     <message>
+        <source>Render cost</source>
+        <translation>Koszt renderowania</translation>
+    </message>
+    <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
         <translation>Nadaje aktywnej linijce zaznaczenie audio i kończy poprzednią linijkę tam, gdzie zaczyna się zaznaczenie</translation>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>Wstawia twardą spację (%1) w miejscu kursora w edytorze linijki</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>Wstaw twardą spację</translation>
     </message>
     <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
@@ -7394,10 +7384,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Odtwarza lub pauzuje wideo</translation>
     </message>
     <message>
-        <source>Show / hide render cost</source>
-        <translation>Pokaż / ukryj koszt renderowania</translation>
-    </message>
-    <message>
         <source>Opens audio file</source>
         <translation>Otwiera plik audio</translation>
     </message>
@@ -7410,8 +7396,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Kopiuje timing karaoke linijek romaji do odpowiadających im linijek kanji</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>Timer kanji…</translation>
+        <source>Kanji timer</source>
+        <translation>Timer kanji</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -8638,6 +8624,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>Pozostawaj na linijce podczas edycji czasów</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter wstawia miękkie łamanie wiersza (%1)</translation>
     </message>
     <message>
         <source>Translation mode</source>
@@ -10799,8 +10789,8 @@ ponieważ została zmieniona.</translation>
         <translation>Nie zawiera</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>Szukany tekst:</translation>
+        <source>Search text</source>
+        <translation>Szukany tekst</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10823,8 +10813,8 @@ ponieważ została zmieniona.</translation>
         <translation>Tekst</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>Style</translation>
+        <source>Style</source>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Actor</source>
@@ -15150,6 +15140,67 @@ Usunięte style:
         <translation>Kopiuj pozycję na wideo</translation>
     </message>
     <message>
+        <source>Full screen on</source>
+        <translation>Pełny ekran na</translation>
+    </message>
+    <message>
+        <source>Monitor %1</source>
+        <extracomment>A monitor in the Full screen on submenu; %1 is its number</extracomment>
+        <translation>Monitor %1</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>Otwórz wideo…</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>Otwórz napisy…</translation>
+    </message>
+    <message>
+        <source>Recently opened</source>
+        <translation>Ostatnio otwarte</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation>Napisy</translation>
+    </message>
+    <message>
+        <source>Videos</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
+        <source>Export frame</source>
+        <translation>Eksportuj klatkę</translation>
+    </message>
+    <message>
+        <source>Save as PNG…</source>
+        <translation>Zapisz jako PNG…</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Save with subtitles as PNG…</source>
+        <translation>Zapisz z napisami jako PNG…</translation>
+    </message>
+    <message>
+        <source>Copy with subtitles</source>
+        <translation>Kopiuj z napisami</translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation>Ścieżka dźwiękowa</translation>
+    </message>
+    <message>
+        <source>Progress bar</source>
+        <translation>Pasek postępu</translation>
+    </message>
+    <message>
+        <source>Render cost</source>
+        <translation>Koszt renderowania</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>Wyłącz pełny ekran</translation>
     </message>
@@ -15162,24 +15213,8 @@ Usunięte style:
         <translation>Pełny ekran</translation>
     </message>
     <message>
-        <source>Switch full screen to monitor %1</source>
-        <translation>Przełącz pełny ekran na monitor %1</translation>
-    </message>
-    <message>
-        <source>Open in full screen on monitor %1</source>
-        <translation>Włącz pełny ekran na monitorze %1</translation>
-    </message>
-    <message>
         <source>Open editor</source>
         <translation>Otwórz edytor</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation>Ostatnio otwarte napisy</translation>
-    </message>
-    <message>
-        <source>Recently opened videos</source>
-        <translation>Ostatnio otwarte wideo</translation>
     </message>
     <message>
         <source>Open video</source>
@@ -15190,32 +15225,12 @@ Usunięte style:
         <translation>Otwórz napisy</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>Pokaż / ukryj pasek postępu</translation>
-    </message>
-    <message>
-        <source>Show / hide render cost</source>
-        <translation>Pokaż / ukryj koszt renderowania</translation>
-    </message>
-    <message>
         <source>Change aspect ratio</source>
         <translation>Zmień proporcje obrazu</translation>
     </message>
     <message>
-        <source>Save frame with subtitles as PNG</source>
-        <translation>Zapisz klatkę z napisami jako PNG</translation>
-    </message>
-    <message>
-        <source>Copy frame with subtitles to clipboard</source>
-        <translation>Kopiuj klatkę z napisami do schowka</translation>
-    </message>
-    <message>
-        <source>Save frame as PNG</source>
-        <translation>Zapisz klatkę jako PNG</translation>
-    </message>
-    <message>
-        <source>Copy frame to clipboard</source>
-        <translation>Kopiuj klatkę do schowka</translation>
+        <source>Reset zoom and pan</source>
+        <translation>Resetuj powiększenie i przesunięcie</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -15317,16 +15332,16 @@ Usunięte style:
         <translation>Pasek pełnego ekranu: %1</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation>Automatycznie</translation>
+        <source>Show when the pointer moves</source>
+        <translation>Pokazuj przy ruchu wskaźnika</translation>
     </message>
     <message>
-        <source>Always</source>
-        <translation>Zawsze</translation>
+        <source>Always show</source>
+        <translation>Zawsze pokazuj</translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation>Nigdy</translation>
+        <source>Never show</source>
+        <translation>Nigdy nie pokazuj</translation>
     </message>
     <message>
         <source>Show on pointer movement, hide when idle</source>
