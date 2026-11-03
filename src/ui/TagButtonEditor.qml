@@ -88,7 +88,7 @@ Popup {
                 id: tagType
                 objectName: "tagType"
                 Layout.fillWidth: true
-                model: [qsTr("Tag inserted in place of cursor"), qsTr("Insert Tag at text beginning"), qsTr("Plain text")]
+                model: [qsTr("Tag inserted in place of cursor"), qsTr("Insert tag at start of text"), qsTr("Plain text")]
                 Accessible.name: qsTr("Insertion")
             }
             Label { text: qsTr("Icon"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 4 }

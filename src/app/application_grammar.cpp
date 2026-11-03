@@ -875,7 +875,7 @@ QVariantMap Application::grammarWalkAddWord()
     };
     const std::u16string word = covered(found);
     if (!addGrammarWord(QString::fromStdU16String(word)))
-        return grammarWalkProblem(QCoreApplication::translate("HikariSub.Spelling", "Error. Word \"%1\" was not added.")
+        return grammarWalkProblem(QCoreApplication::translate("HikariSub.Spelling", "“%1” was not added to the dictionary.")
                                       .arg(QString::fromStdU16String(word)));
     for (auto &other : walk.findings)
         if (other.finding.word && !other.handled && covered(other) == word)
