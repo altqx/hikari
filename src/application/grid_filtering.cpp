@@ -3,6 +3,7 @@
 #include "hikari/core/style.h"
 
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 #include <map>
 #include <set>
 
@@ -72,7 +73,7 @@ std::expected<void, CommandRefusal> applyVisibility(EditSession &session, const 
 
 // MUST KILL: hiddenAreLast: whether newly hidden Lines count as the previous Line
 void keepBlocks(const std::vector<const core::LineRecord *> &lines, std::map<std::uint64_t, LineVisibility> &target,
-                const std::vector<bool> &hideNow, bool hiddenAreLast)
+                const boost::dynamic_bitset<> &hideNow, bool hiddenAreLast)
 {
     std::optional<std::size_t> last;
     for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -145,7 +146,7 @@ std::expected<void, CommandRefusal> filterLines(EditSession &session, const Filt
         return result != 0;
     };
     std::map<std::uint64_t, LineVisibility> target;
-    std::vector<bool> hideNow(lines.size(), false);
+    boost::dynamic_bitset<> hideNow(lines.size());
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const bool hide = hides(*lines[i]);
         if (hide != settings.invert) {
@@ -164,17 +165,15 @@ std::expected<void, CommandRefusal> hideSelectedLines(EditSession &session, cons
 {
     const auto lines = linesOf(session);
     std::map<std::uint64_t, LineVisibility> target;
-    std::vector<bool> hideNow(lines.size(), false);
-    bool any = false;
+    boost::dynamic_bitset<> hideNow(lines.size());
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const auto *l = lines[i];
         if (session.selection().selected.contains(l->id) && shownFlag(l->visibility) && (!shown || shown(l->id))) {
             target[l->id.value] = LineVisibility::Hidden;
             hideNow[i] = true;
-            any = true;
         }
     }
-    if (!any)
+    if (hideNow.none())
         return std::unexpected(CommandRefusal::Invalid);
     keepBlocks(lines, target, hideNow, true);
     return applyVisibility(session, "Filtering", target, core::ChangeMark::Changed);

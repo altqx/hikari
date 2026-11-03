@@ -3,6 +3,7 @@
 #include <QCryptographicHash>
 #include <QFile>
 #include <QFileInfo>
+#include <boost/dynamic_bitset.hpp>
 
 #include <algorithm>
 #include <cctype>
@@ -871,11 +872,11 @@ std::vector<SystemFace> LibassFontService::pickerFaces(const application::FontEn
     return out;
 }
 
-std::vector<bool> LibassFontService::facesCover(const std::vector<SystemFace> &faces,
-                                                const application::FontEnvironment &environment,
-                                                const std::u32string &characters)
+boost::dynamic_bitset<> LibassFontService::facesCover(const std::vector<SystemFace> &faces,
+                                                      const application::FontEnvironment &environment,
+                                                      const std::u32string &characters)
 {
-    std::vector<bool> out(faces.size(), false);
+    boost::dynamic_bitset<> out(faces.size());
     FT_Library ft = nullptr;
     if (FT_Init_FreeType(&ft))
         ft = nullptr;

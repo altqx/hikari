@@ -275,6 +275,16 @@ private slots:
         QCOMPARE(model.index(1, 0).data(LineTableModel::SelectedRole).toBool(), true);
         QCOMPARE(model.index(1, 0).data(LineTableModel::AnchorRole).toBool(), true);
         QCOMPARE(model.index(0, 0).data(LineTableModel::SelectedRole).toBool(), false);
+
+        LineTableModel apart;
+        apart.setDocument(load(kLines));
+        QSignalSpy runs(&apart, &QAbstractItemModel::dataChanged);
+        apart.setSelection({core::LineId{1}, {core::LineId{1}, core::LineId{3}}}, core::LineId{1});
+        QCOMPARE(runs.count(), 2);
+        QCOMPARE(runs.at(0).at(0).toModelIndex().row(), 0);
+        QCOMPARE(runs.at(0).at(1).toModelIndex().row(), 0);
+        QCOMPARE(runs.at(1).at(0).toModelIndex().row(), 2);
+        QCOMPARE(runs.at(1).at(1).toModelIndex().row(), 2);
     }
 
     void marksAndSelectionDoNotRefilter()
