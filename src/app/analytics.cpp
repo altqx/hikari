@@ -71,7 +71,8 @@ const std::map<QString, QString> kPanels{
     {QStringLiteral("Spellchecker"), QStringLiteral("spellchecker")},
 };
 const QStringList kDialogs{
-    QStringLiteral("about"),          QStringLiteral("allTagsEdition"), QStringLiteral("aspectRatio"),
+    QStringLiteral("about"),          QStringLiteral("alignToVideo"),   QStringLiteral("allTagsEdition"),
+    QStringLiteral("aspectRatio"),
     QStringLiteral("autosaves"),      QStringLiteral("columns"),        QStringLiteral("conversion"),
     QStringLiteral("crashReport"),    QStringLiteral("credits"),        QStringLiteral("dummyVideo"),
     QStringLiteral("fontCatalogClashes"),

@@ -40,6 +40,8 @@ IC2 ([#550](https://github.com/altqx/hikari/issues/550)) went past menus: [icon-
 
 CX3 ([#579](https://github.com/altqx/hikari/issues/579)) drew the four roles the approved context-menu design ([#578](https://github.com/altqx/hikari/issues/578)) asked for: paste-special (the clipboard with an accent asterisk, for the Grid's Paste special ▸), and tab-switch, tab-close-others and tab-close-right for the document tab menu. They are `pending` for CX4 ([#580](https://github.com/altqx/hikari/issues/580)) and CX6 ([#582](https://github.com/altqx/hikari/issues/582)), which build those menus.
 
+FA14 ([#571](https://github.com/altqx/hikari/issues/571)) drew align-to-video for "Align to video…" in the Video menu: a video frame over a time bracket, with an accent crosshair on the picked point.
+
 KE1 ([#283](https://github.com/altqx/hikari/issues/283)) drew render-cost for "Show / hide render cost" in the Video menu and the video's context menu: a stopwatch whose accent hand marks the time the frame's subtitles took to draw.
 
 ## Geometry

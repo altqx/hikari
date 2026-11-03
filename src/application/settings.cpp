@@ -294,6 +294,7 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.kanjiTimerFurigana", "", Bool, Profile, Mapped, false, false},
         // Windows only: 0 the built-in player, 1 the DirectShow adapter; never a fallback.
         {"video.playbackPlayer", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.alignTolerance", "", Int, Profile, Mapped, false, std::int64_t{20}},
         // "<ms since the epoch> <path>" per entry of recent.subtitles.
         {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},

@@ -8469,6 +8469,9 @@ private slots:
         QCOMPARE(sourceRows.value(1).toStringList(),
                  (QStringList{QStringLiteral("Aegisub, arch1t3cht's fork"), QStringLiteral("arch1t3cht and Aegisub contributors"),
                               QStringLiteral("BSD 3-Clause")}));
+        QCOMPARE(sourceRows.value(2).toStringList(),
+                 (QStringList{QStringLiteral("Align to video, from arch1t3cht's fork"), QStringLiteral("2019 Charlie Jiang"),
+                              QStringLiteral("BSD 3-Clause")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
         QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
@@ -18662,7 +18665,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 267);
+        QCOMPARE(hotkeyRows().size(), 268);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -27701,6 +27704,73 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Centring times"));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(ms(0), (Ms{410, 1200}));
+    }
+
+    void alignToVideoTimesTheLineToTheKeyPointsFrames()
+    {
+        app::attachAlignToVideoStill(*engine, application->alignToVideo());
+        const QString path = writeFile(dir, "fa14-align.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:00.20,Default,,0,0,0,,sign\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto ms = [&](int i) {
+            const auto *l = session->document().lines()[static_cast<std::size_t>(i)];
+            return std::pair(l->start.value.microseconds() / 1000, l->end.value.microseconds() / 1000);
+        };
+        using Ms = std::pair<std::int64_t, std::int64_t>;
+        auto *align = item<QObject>("alignToVideoMenuItem");
+        QVERIFY(align);
+        QVERIFY(!align->property("enabled").toBool());
+
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("keypoint.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        closeMismatchQuestion();
+        QTRY_VERIFY(align->property("enabled").toBool());
+        QVERIFY(application->video().session().seekFrame(15));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(15), 20000);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+
+        QVERIFY(QMetaObject::invokeMethod(align, "click"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("alignToVideoDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QTRY_VERIFY_WITH_TIMEOUT(controller->property("ready").toBool(), 20000);
+        QCOMPARE(controller->property("frameWidth").toInt(), 320);
+        auto *still = dialogItem("alignToVideoDialog", "alignToVideoStill");
+        QVERIFY(still);
+        QTRY_VERIFY(still->property("zoom").toReal() > 0.5);
+        const auto at = [&](int x, int y) {
+            const qreal zoom = still->property("zoom").toReal();
+            return still->mapToScene(QPointF(still->property("imageLeft").toReal() + (x + 0.5) * zoom,
+                                             still->property("imageTop").toReal() + (y + 0.5) * zoom))
+                .toPoint();
+        };
+        auto *stillWindow = still->window();
+        QTest::mouseClick(stillWindow, Qt::LeftButton, {}, at(40, 30));
+        QTRY_COMPARE(controller->property("pointX").toInt(), 40);
+        QCOMPARE(controller->property("pointY").toInt(), 30);
+        QVERIFY(controller->property("colour").value<QColor>().lightness() < 40);
+
+        auto &settings = *application->settingsStore();
+        controller->setProperty("tolerance", 30);
+        QCOMPARE(settings.integer("video.alignTolerance"), 30);
+        auto restore = qScopeGuard([&] { settings.reset(QStringLiteral("video.alignTolerance")); });
+
+        QTest::mouseDClick(stillWindow, Qt::LeftButton, {}, at(160, 120));
+        QCOMPARE(controller->property("pointX").toInt(), 160);
+        QVERIFY(controller->property("colour").value<QColor>().lightness() > 215);
+        QTRY_VERIFY_WITH_TIMEOUT(!dialog->property("visible").toBool(), 30000);
+        const auto timebase = application->video().session().legacyTimebase();
+        QTRY_COMPARE(ms(0), (Ms{timebase.startTimeFor(10), timebase.endTimeFor(21)}));
+        QCOMPARE(ms(1), (Ms{1000, 2000}));
+        QCOMPARE(session->history().back().name, std::string("Aligning to video"));
+        QCOMPARE(application->video().session().shownFrame(), std::optional<int>(15));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(ms(0), (Ms{0, 200}));
     }
 
     void snapToKeyframeNeedsTheAudioBox()

@@ -33,3 +33,7 @@ A failing `include()` reports `Error loading Lua include "<name>":` or `Error ru
 ## XD1-karaoke-marks
 
 A templater Apply's save is no longer byte for byte Aegisub 3.2.2's. Each generated Line and its karaoke Line get a `_hikari_kara_from` or `_hikari_kara_source` entry in `[Aegisub Extradata]`, so a reopened file still knows which karaoke Line each Line came from. There's no setting to turn this off. Aegisub 3.5.1 keeps the entries through its own load and save. Apart from them, the output is still 3.2.2's. [XD1 #659](https://github.com/altqx/hikari/issues/659), owner decision 2026-11-03.
+
+## FA14-search-step
+
+Align to video checks every frame. Aegisub's Align subtitle to video by key point (wangqr's tool in arch1t3cht's fork) steps two frames at a time, so it can step over a single frame where the point does not hold and time the line across it. Where a run of matching pixels reaches the frame's edge, its side is the edge itself; in Aegisub it was the picked point, so a shape touching the edge in one frame and not the next could still match. [FA14 #571](https://github.com/altqx/hikari/issues/571), coordinator decision 2026-11-03 on the search step.

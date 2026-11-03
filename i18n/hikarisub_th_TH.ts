@@ -6141,6 +6141,10 @@ Failed to copy %2 fonts.</source>
         <source>You cannot use the program exit shortcut.</source>
         <translation>คุณไม่สามารถใช้ปุ่มลัดสำหรับออกจากโปรแกรม</translation>
     </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Karaoke</name>
@@ -7974,6 +7978,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>ตั้งเวลาบรรทัดปัจจุบันให้ตรงกับเฟรมรอบเฟรมของวิดีโอที่จุดที่เลือกยังคงสีเดิม</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>จัดให้ตรงกับวิดีโอ</translation>
     </message>
 </context>
 <context>
@@ -15101,6 +15117,76 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>จัดให้ตรงกับวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>เปิดวิดีโอก่อน</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>เลือกบรรทัดที่จะจัดก่อน</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>อ่านเฟรมของวิดีโอไม่ได้</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>คำบรรยายเป็นแบบอ่านอย่างเดียว</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>คลิกจุดที่ยังคงสีเดิมตลอดช่วงที่บรรทัดควรแสดง บรรทัดจะถูกตั้งเวลาให้ครอบคลุมทุกเฟรมรอบเฟรมนี้ที่จุดนั้นยังคงสีเดิม</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>เฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>ปุ่มลูกศรย้ายจุด กด Enter เพื่อจัด</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation>X</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>จุด X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation>Y</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>จุด Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>สี %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>ค่าความคลาดเคลื่อน</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>สีเปลี่ยนไปได้มากเท่าใดแล้วยังนับว่าเป็นสีเดิม ตั้งแต่ 0 ถึง 255</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>กำลังค้นหา… ตรวจแล้ว %n เฟรม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>จัด</translation>
     </message>
 </context>
 <context>

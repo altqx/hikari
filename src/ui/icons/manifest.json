@@ -3424,6 +3424,17 @@
    ]
   },
   {
+   "role": "align-to-video",
+   "file": "align-to-video.svg",
+   "label": "Align to video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
    "role": "split-characters",
    "file": "split-characters.svg",
    "label": "Split lines into characters",

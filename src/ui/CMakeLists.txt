@@ -51,6 +51,7 @@ qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateInstallingWin
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES KaraokeCheckDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES KanjiTimerDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AlignToVideoDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ExportDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml SettingsImportReview.qml)
 qt_target_qml_sources(hikari_ui QML_FILES GettingStartedDialog.qml)

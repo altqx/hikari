@@ -6227,6 +6227,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>You cannot use the program exit shortcut.</source>
         <translation>Nie można używać skrótu zamykania programu.</translation>
     </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>Dopasuj do wideo…</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Karaoke</name>
@@ -8076,6 +8080,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>Ustawia czasy aktywnej linijki na klatki wokół klatki wideo, w których wybrany punkt zachowuje swój kolor</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>Dopasuj do wideo…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>Dopasuj do wideo</translation>
     </message>
 </context>
 <context>
@@ -15277,6 +15293,78 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Open</source>
         <translation>Otwórz</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>Dopasuj do wideo</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>Najpierw otwórz wideo.</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>Najpierw zaznacz linijkę do dopasowania.</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>Nie udało się odczytać klatki wideo.</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>Napisy są tylko do odczytu.</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>Kliknij punkt, który zachowuje kolor, dopóki linijka ma być widoczna. Linijka obejmie wszystkie klatki wokół tej, w których tak jest.</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>Klatka wideo</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>Strzałki przesuwają punkt; Enter dopasowuje</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation>X</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>Punkt X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation>Y</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>Punkt Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>Kolor %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>Tolerancja</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>Jak bardzo kolor może się zmienić i nadal liczyć się jako ten sam, od 0 do 255</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatkę</numerusform>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatki</numerusform>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>Dopasuj</translation>
     </message>
 </context>
 <context>

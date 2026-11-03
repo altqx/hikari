@@ -41,6 +41,7 @@ ApplicationWindow {
     required property var crashReports
     required property var styleManager
     required property var kanjiTimer
+    required property var alignToVideo
     required property var fontCollector
     required property var fontCatalogs
     required property var matroska
@@ -1883,6 +1884,18 @@ ApplicationWindow {
                     text: qsTr("Centre times within frames")
                     enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CENTER_TIMES_IN_FRAMES")) root.app.centerTimesInFrames()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_ALIGN_TO_VIDEO"
+                help: qsTr("Times the active line to the frames around the video’s frame where a picked point keeps its colour")
+                iconRole: "align-to-video"
+                objectName: "alignToVideoMenuItem"
+                action: Action {
+                    id: alignToVideoAction
+                    text: qsTr("Align to video…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ALIGN_TO_VIDEO")) root.openAlignToVideo()
                 }
             }
             ShellMenuItem {
@@ -6906,6 +6919,20 @@ ApplicationWindow {
         kanjiTimerLoader.active = true
         kanjiTimerLoader.item.openDialog()
     }
+    Loader {
+        id: alignToVideoLoader
+        active: false
+        sourceComponent: AlignToVideoDialog {
+            controller: root.alignToVideo
+            settings: root.app.settings
+        }
+    }
+    function openAlignToVideo() {
+        alignToVideoLoader.active = true
+        const problem = alignToVideoLoader.item.openDialog()
+        if (problem.length > 0)
+            root.notices.post("error", qsTr("Align to video"), problem)
+    }
     ListChooser {
         id: fixSuggestions
         objectName: "fixSuggestions"
@@ -7186,6 +7213,7 @@ ApplicationWindow {
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END: shiftFollowingFramesToVideoEndAction,
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
+        GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
