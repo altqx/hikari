@@ -97,7 +97,7 @@ const std::set<std::string_view> kRoles = {"accent", "text", "muted", "line", "d
 const std::set<std::string_view> kValued = {"text",  "text_area", "number", "time",   "check", "choice",
                                             "radio", "dropdown",  "colour", "slider", "list",  "tree", "tabs"};
 
-std::string quoted(std::string_view s)
+std::string inQuotes(std::string_view s)
 {
     return "\xE2\x80\x9C" + std::string(s) + "\xE2\x80\x9D";
 }
@@ -170,12 +170,12 @@ public:
             return at + ": must be a widget, a table with a kind";
         const Json *kind = value.find("kind");
         if (!kind)
-            return at + ": needs " + quoted("kind");
+            return at + ": needs " + inQuotes("kind");
         if (!kind->isString())
             return at + ".kind: must be text";
         const auto spec = kinds().find(kind->asString());
         if (spec == kinds().end())
-            return at + ": unknown kind " + quoted(kind->asString());
+            return at + ": unknown kind " + inQuotes(kind->asString());
         m_depth = depth;
         Fields fields = commonFields();
         fields.insert(fields.end(), spec->second.begin(), spec->second.end());
@@ -184,7 +184,7 @@ public:
         if (auto problem = object(value, fields, at, withArticle(spec->first)))
             return problem;
         if (const Json *id = value.find("id"); id && !m_ids.insert(id->asString()).second)
-            return at + ".id: " + quoted(id->asString()) + " is used twice";
+            return at + ".id: " + inQuotes(id->asString()) + " is used twice";
         if (spec->first == "choice")
             if (const auto count = value.find("options")->asArray().size(); count < 2 || count > 4)
                 return at + ".options: a choice takes 2 to 4 options";
@@ -198,13 +198,13 @@ public:
         for (const Json::Member &member : value.asObject()) {
             const auto field = std::ranges::find(fields, member.key, &Field::name);
             if (field == fields.end())
-                return at + ": " + quoted(member.key) + " isn't a field of " + what;
+                return at + ": " + inQuotes(member.key) + " isn't a field of " + what;
             if (auto problem = check(member.value, *field, at + "." + member.key))
                 return problem;
         }
         for (const Field &field : fields)
             if (field.required && !value.find(field.name))
-                return at + ": needs " + quoted(field.name);
+                return at + ": needs " + inQuotes(field.name);
         return std::nullopt;
     }
 
@@ -289,7 +289,7 @@ public:
                                           place, "a menu row"))
                     return problem;
                 if (!ids.insert(item.find("id")->asString()).second)
-                    return place + ".id: " + quoted(item.find("id")->asString()) + " is used twice";
+                    return place + ".id: " + inQuotes(item.find("id")->asString()) + " is used twice";
                 return std::nullopt;
             });
         }
@@ -337,7 +337,7 @@ public:
         if (auto problem = object(plain, fields, at, nested ? "a tree row" : "a row"))
             return problem;
         if (!ids.insert(plain.find("id")->asString()).second)
-            return at + ".id: " + quoted(plain.find("id")->asString()) + " is used twice";
+            return at + ".id: " + inQuotes(plain.find("id")->asString()) + " is used twice";
         if (!children)
             return std::nullopt;
         if (!children->isArray())
@@ -355,10 +355,10 @@ public:
             return at + ": must be a drawing operation, a table with an op";
         const Json *name = op.find("op");
         if (!name || !name->isString())
-            return at + ": needs " + quoted("op");
+            return at + ": needs " + inQuotes("op");
         const auto spec = drawOps().find(name->asString());
         if (spec == drawOps().end())
-            return at + ": unknown operation " + quoted(name->asString());
+            return at + ": unknown operation " + inQuotes(name->asString());
         Fields fields = spec->second;
         fields.push_back({"op", T::Line, true});
         return object(op, fields, at, withArticle(spec->first));
@@ -376,7 +376,7 @@ public:
                                       place, "a button"))
                 return refused;
             if (!ids.insert(button.find("id")->asString()).second)
-                return place + ".id: " + quoted(button.find("id")->asString()) + " is used twice";
+                return place + ".id: " + inQuotes(button.find("id")->asString()) + " is used twice";
             const Json *isDefault = button.find("default");
             const Json *isCancel = button.find("cancel");
             defaults += isDefault && isDefault->asBool();

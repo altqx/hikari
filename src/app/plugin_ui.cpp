@@ -43,7 +43,7 @@ std::string refusal(std::string_view code, std::string message)
     return Json::object({{"error", Json::object({{"code", code}, {"message", std::move(message)}})}}).dump();
 }
 
-std::string quoted(std::string_view s)
+std::string inQuotes(std::string_view s)
 {
     return "\xE2\x80\x9C" + std::string(s) + "\xE2\x80\x9D";
 }
@@ -291,7 +291,7 @@ void PluginUi::serve(const std::string &plugin, const std::string &operation, co
         const std::string id = panel && panel->isString() ? panel->asString() : std::string();
         const auto &declared = known->second.plugin.panels;
         if (std::ranges::find(declared, id, &plugins::Panel::id) == declared.end()) {
-            reply(refusal("invalid_params", quoted(id) + " isn't a panel in hikari-plugin.json"));
+            reply(refusal("invalid_params", inQuotes(id) + " isn't a panel in hikari-plugin.json"));
             return;
         }
         const QString dock = ui::WorkspaceLayoutController::pluginPanelId(qs(plugin), qs(id));
@@ -332,7 +332,7 @@ void PluginUi::serve(const std::string &plugin, const std::string &operation, co
         reply(result());
         return;
     }
-    reply(refusal("unknown_operation", "there is no operation " + quoted(operation)));
+    reply(refusal("unknown_operation", "there is no operation " + inQuotes(operation)));
 }
 
 void PluginUi::present(const std::string &plugin, const Json &params, std::optional<Reply> asked, const Reply &reply)
