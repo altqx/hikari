@@ -71,7 +71,7 @@ pkg_check_modules(HIKARI_HUNSPELL REQUIRED IMPORTED_TARGET GLOBAL hunspell=1.7.3
 if(NOT TARGET Hikari::hunspell)
     add_library(Hikari::hunspell ALIAS PkgConfig::HIKARI_HUNSPELL)
 endif()
-find_package(Boost CONFIG REQUIRED COMPONENTS locale)
+find_package(Boost CONFIG REQUIRED COMPONENTS locale dynamic_bitset)
 find_package(ICU REQUIRED COMPONENTS uc i18n data)
 add_library(hikari_portaudio INTERFACE)
 target_link_libraries(hikari_portaudio INTERFACE portaudio_static)

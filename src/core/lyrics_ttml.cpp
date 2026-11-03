@@ -7,6 +7,7 @@
 #include "text_util.h"
 
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -1510,7 +1511,7 @@ private:
         std::vector<LyricWord> words;
         std::vector<std::size_t> lines;           // each word's line in the file
         std::vector<std::optional<std::int64_t>> ends;
-        std::vector<bool> own;                    // each word: whether it is a span's or paragraph's own text
+        boost::dynamic_bitset<> own;              // each word: whether it is a span's or paragraph's own text
         std::u8string leading;                    // text before the first word
         std::u8string plain;                      // all the text, for a Line without words
         const XmlNode *textOf = nullptr;          // the timed span whose own text the last word is
@@ -1865,7 +1866,7 @@ private:
             }
         }
         // Each word that joins the one kept after it, found from the back.
-        std::vector<bool> joins(n);
+        boost::dynamic_bitset<> joins(n);
         for (std::size_t i = n, next = n; i-- > 0;) {
             if (next < n && words.own[i] && words.words[i].begin >= words.words[next].begin)
                 joins[i] = true;
