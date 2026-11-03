@@ -4,6 +4,7 @@
 #include "hikari/application/macro_transaction.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/style.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -574,6 +575,38 @@ TEST_F(LuaHelper, LineExtraIsReadWrittenAndSaved)
     ASSERT_TRUE(runMacro("Not a table", *snapshot));
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
     EXPECT_TRUE(run.message.contains(QStringLiteral("dialogue extradata must be a table"))) << run.message.toStdString();
+}
+
+TEST_F(LuaHelper, BorderStylesRoundTripAsIntegers)
+{
+    using namespace hikari::application;
+    const std::string_view script =
+        "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+        "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+        "MarginR, MarginV, Encoding\n"
+        "Style: Outline,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+        "Style: Box,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,3,2,2,2,10,10,10,1\n"
+        "Style: Lines,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,4,2,2,2,10,10,10,1\n"
+        "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Dialogue: 0,0:00:01.00,0:00:02.00,Outline,,0,0,0,,one\n";
+    std::vector<std::byte> bytes(script.size());
+    std::memcpy(bytes.data(), script.data(), bytes.size());
+    EditSession session(hikari::core::loadAss(bytes).document);
+    auto host = load(fixture("border-style.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Rewrite styles"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Rewrite styles"));
+    const auto styles = hikari::core::decodeStyles(session.document());
+    ASSERT_EQ(styles.size(), 3u);
+    EXPECT_EQ(styles[0].borderStyle, 1);
+    EXPECT_EQ(styles[1].borderStyle, 3);
+    EXPECT_EQ(styles[2].borderStyle, 4);
 }
 
 TEST_F(LuaHelper, GeneratedLineMarksAndTheReportRoundTrip)

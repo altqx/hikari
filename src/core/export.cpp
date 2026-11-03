@@ -776,7 +776,7 @@ std::u8string vttStyleRule(const StyleValues &style, u8sv name)
     if (style.underline || style.strikeOut)
         rule += std::u8string(u8" text-decoration:") + (style.underline ? u8" underline" : u8"") +
                 (style.strikeOut ? u8" line-through" : u8"") + u8";";
-    if (style.borderStyle) {
+    if (style.borderStyle == 3 || style.borderStyle == 4) {
         rule += u8" background-color: " + cssColour(style.outline) + u8";";
     } else {
         rule += u8" background-color: transparent;";
