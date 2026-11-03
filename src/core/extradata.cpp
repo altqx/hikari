@@ -4,6 +4,9 @@
 
 #include <algorithm>
 #include <limits>
+#include <map>
+#include <random>
+#include <ranges>
 #include <set>
 #include <string>
 
@@ -223,6 +226,109 @@ std::vector<Extradata> extradataByKey(const std::vector<Extradata> &extra)
     for (auto &[key, value] : byKey)
         out.push_back({key, value});
     return out;
+}
+
+std::optional<std::u8string> extradataValue(const std::vector<Extradata> &extra, std::u8string_view key)
+{
+    const auto found = std::ranges::find(extra | std::views::reverse, key, &Extradata::key);
+    if (found == std::ranges::end(extra | std::views::reverse))
+        return std::nullopt;
+    return found->value;
+}
+
+std::vector<Extradata> withExtradata(std::vector<Extradata> extra, std::u8string_view key, std::u8string value)
+{
+    if (std::ranges::count(extra, key, &Extradata::key) == 1 && extradataValue(extra, key) == value)
+        return extra;
+    extra = withoutExtradata(std::move(extra), key);
+    extra.push_back({std::u8string(key), std::move(value)});
+    return extra;
+}
+
+std::vector<Extradata> withoutExtradata(std::vector<Extradata> extra, std::u8string_view key)
+{
+    std::erase_if(extra, [&](const Extradata &e) { return e.key == key; });
+    return extra;
+}
+
+namespace {
+
+constexpr std::u8string_view kBase32 = u8"abcdefghijklmnopqrstuvwxyz234567";
+
+std::optional<std::u8string> karaToken(const LineRecord &line, std::u8string_view key)
+{
+    auto value = extradataValue(line.extra, key);
+    if (!value || value->size() != 10 || !value->starts_with(u8"1;") ||
+        !std::ranges::all_of(value->substr(2), [](char8_t c) { return kBase32.find(c) != std::u8string_view::npos; }))
+        return std::nullopt;
+    return value->substr(2);
+}
+
+}
+
+void linkGeneratedLines(const std::vector<LineRecord *> &lines)
+{
+    std::map<std::u8string, LineId> sources;
+    for (const auto *line : lines)
+        if (auto token = karaToken(*line, kKaraSourceKey))
+            sources.emplace(std::move(*token), line->id);
+    for (auto *line : lines)
+        if (const auto token = karaToken(*line, kKaraFromKey))
+            if (const auto found = sources.find(*token); found != sources.end() && found->second != line->id)
+                line->generatedFrom = found->second;
+}
+
+std::u8string randomKaraToken()
+{
+    thread_local std::mt19937_64 random{std::random_device{}()};
+    std::uniform_int_distribution<std::size_t> letter(0, kBase32.size() - 1);
+    std::u8string token(8, u8'a');
+    for (auto &c : token)
+        c = kBase32[letter(random)];
+    return token;
+}
+
+void markGeneratedLines(Document &document, const std::function<std::u8string()> &newToken)
+{
+    const auto lines = document.lines();
+    std::map<LineId, const LineRecord *> byId;
+    std::set<std::u8string> held;
+    std::map<std::u8string, LineId> firstHolder;
+    for (const auto *line : lines) {
+        byId.emplace(line->id, line);
+        if (auto token = karaToken(*line, kKaraFromKey))
+            held.insert(std::move(*token));
+        if (auto token = karaToken(*line, kKaraSourceKey)) {
+            held.insert(*token);
+            firstHolder.emplace(std::move(*token), line->id);
+        }
+    }
+    std::map<LineId, std::u8string> tokens;
+    for (const auto *line : lines) {
+        const auto source = byId.find(line->generatedFrom);
+        if (!line->generatedFrom.value || source == byId.end() || tokens.contains(source->first))
+            continue;
+        auto token = karaToken(*source->second, kKaraSourceKey);
+        if (!token || firstHolder.at(*token) != source->first) {
+            do
+                token = newToken();
+            while (held.contains(*token));
+            held.insert(*token);
+        }
+        tokens.emplace(source->first, std::move(*token));
+    }
+    std::vector<std::pair<LineId, std::vector<Extradata>>> edits;
+    for (const auto *line : lines) {
+        auto extra = line->extra;
+        if (const auto own = tokens.find(line->id); own != tokens.end())
+            extra = withExtradata(std::move(extra), kKaraSourceKey, u8"1;" + own->second);
+        if (const auto from = tokens.find(line->generatedFrom); line->generatedFrom.value && from != tokens.end())
+            extra = withExtradata(withoutExtradata(std::move(extra), kKaraSourceKey), kKaraFromKey, u8"1;" + from->second);
+        if (extra != line->extra)
+            edits.emplace_back(line->id, std::move(extra));
+    }
+    for (auto &[id, extra] : edits)
+        document.editLine(id, [&](LineRecord &line) { line.extra = std::move(extra); });
 }
 
 std::u8string extradataClipboard(const std::vector<std::vector<Extradata>> &rows)

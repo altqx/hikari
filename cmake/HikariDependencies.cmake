@@ -86,6 +86,12 @@ add_library(Hikari::mecab ALIAS hikari_mecab)
 find_path(HIKARI_UNIDIC_DIR sys.dic PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/dicdir"
     NO_DEFAULT_PATH NO_CACHE REQUIRED)
 
+find_package(unofficial-sodium CONFIG REQUIRED)
+add_library(hikari_sodium INTERFACE)
+target_link_libraries(hikari_sodium INTERFACE unofficial-sodium::sodium)
+target_compile_definitions(hikari_sodium INTERFACE SODIUM_STATIC)
+add_library(Hikari::sodium ALIAS hikari_sodium)
+
 find_package(tomlplusplus CONFIG REQUIRED)
 add_library(hikari_tomlplusplus INTERFACE)
 target_link_libraries(hikari_tomlplusplus INTERFACE tomlplusplus::tomlplusplus)

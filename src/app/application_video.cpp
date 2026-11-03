@@ -89,6 +89,27 @@ void Application::logVideoFailure()
     m_videoFailureLogged = failed;
 }
 
+void Application::logPlaybackFailure()
+{
+    const auto &session = m_video->session();
+    if (session.playbackFailures() <= m_playbackFailuresLogged)
+        return;
+    m_playbackFailuresLogged = session.playbackFailures();
+    const QString codec = QString::fromStdString(session.playerVideoCodec());
+    QString text;
+    if (codec.isEmpty())
+        //: Play was pressed, but the player cannot open or decode this video; frames still show while paused
+        text = QCoreApplication::translate("HikariSub.Video", "This video can’t be played on this computer. "
+                                                              "Its frames still show while paused, and seeking and stepping work.");
+    else
+        //: Play was pressed, but the player cannot decode this video's codec; %1 is the codec's name, for example AV1
+        text = QCoreApplication::translate("HikariSub.Video", "%1 video can’t be played on this computer. "
+                                                              "Its frames still show while paused, and seeking and stepping work.")
+                   .arg(codec);
+    //: Title of the notice shown when Play cannot play the video
+    m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Play video"), text);
+}
+
 void Application::rememberRecentVideo(const QString &path)
 {
     m_recentVideo.add(path.toStdString());

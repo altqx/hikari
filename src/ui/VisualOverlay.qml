@@ -80,10 +80,22 @@ Item {
         onReleased: mouse => overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         onDoubleClicked: mouse => overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         onWheel: wheel => {
+            if (overlayItem.view && overlayItem.view.wheel(wheel.x, wheel.y, wheel.angleDelta.x / 120,
+                                                           wheel.angleDelta.y / 120, wheel.modifiers)) {
+                wheel.accepted = true
+                return
+            }
             overlayItem.route(5, wheel.x, wheel.y, Qt.NoButton, wheel.buttons, wheel.modifiers,
                               Math.round(wheel.angleDelta.y / 120))
             wheel.accepted = overlayItem.view !== null
         }
+    }
+
+    PinchHandler {
+        target: null
+        enabled: overlayItem.view !== null
+        onActiveChanged: if (active) overlayItem.view.beginPinch(centroid.position.x, centroid.position.y)
+        onActiveScaleChanged: if (active) overlayItem.view.pinch(activeScale, centroid.position.x, centroid.position.y)
     }
 
     Canvas {

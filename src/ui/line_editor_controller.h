@@ -339,6 +339,8 @@ private:
     std::optional<RunOrder> runOrderOf(core::LineId line) const;
     void setRunOrder(core::LineId line, std::optional<RunOrder> order);
     void noteRunOrder(core::LineId line, RunOrder order);
+    // Puts the Line's run order, or no stale one, on its draft as core::kRunOrderKey.
+    void stageRunOrder(core::LineId line);
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw, const std::optional<RunOrder> *orderBefore = nullptr);

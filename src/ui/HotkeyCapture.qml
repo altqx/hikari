@@ -23,9 +23,9 @@ Item {
     property bool asking: false
     readonly property bool opened: popover.visible || (compactWindow !== null && compactWindow.visible)
     readonly property DialogWindow compactWindow: compactLoader.item
-    readonly property string title: qsTr("Keys for \"%1\"").arg(name)
-    readonly property var windowNames: [qsTr("Global hotkey"), qsTr("Subtitle grid hotkey"), qsTr("Edit box hotkey"),
-                                        qsTr("Video hotkey"), qsTr("Audio hotkey")]
+    readonly property string title: qsTr("Keys for “%1”").arg(name)
+    readonly property var windowNames: [qsTr("Global shortcut"), qsTr("Grid shortcut"), qsTr("Line editor shortcut"),
+                                        qsTr("Video shortcut"), qsTr("Audio shortcut")]
     visible: false
 
     function capture(actionName, win, windows, callback, options) {

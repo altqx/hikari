@@ -21,8 +21,6 @@ KNOWN_TEST_SKIPS = (
     "did not activate the floating panel's window",
     "did not give the new floating window the focus",
     "the screen's scale changes through the offscreen platform's configuration",
-    "the window follows a declined system move only where the platform declines it",
-    "X11 only (the .xvfb run)",
     "screens come and go through the offscreen platform's configuration",
 )
 

@@ -419,11 +419,17 @@ struct FakePlayer : GeneralPlayerPort {
     MediaStatus mediaStatus() const override { return MediaStatus::Loaded; }
     double bufferProgress() const override { return 1; }
     PlayerClock clock() const override { return {}; }
-    MediaDescription description() const override { return {}; }
+    MediaDescription description() const override { return current; }
     std::uint64_t generation() const override { return 1; }
-    void opened(MediaDescription description = {}) { pendingOpen(std::move(description)); }
+    MediaDescription current;
+    void opened(MediaDescription description = {})
+    {
+        current = description;
+        pendingOpen(std::move(description));
+    }
     void failed() { pendingOpen(std::unexpected(PlayerError::FormatError)); }
     void delivered() { pendingSeek(SeekResult{1, soughtUs, soughtUs, {}}); }
+    void noFrame() { pendingSeek(std::unexpected(PlayerError::NoVideoFrame)); }
 };
 
 IndexedFrame playerFrame()
@@ -985,6 +991,69 @@ TEST_F(VideoTest, AFailedPrepareIsNotRetriedUntilTheVideoLoadsAgain)
     EXPECT_EQ(other.calls, (std::vector<std::string>{"open /m/ep1.avi"}));
     other.opened();
     EXPECT_TRUE(video.playerHasVideo());
+}
+
+TEST_F(VideoTest, AVideoThePlayerCannotDecodeFailsPlaybackAndEachPlayAfter)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    video.open("/m/clip.webm");
+    source.finishOpen();
+    source.answer();
+    ASSERT_TRUE(video.play());
+    MediaDescription av1;
+    av1.videoTracks = {PlayerTrack{"", "", "AV1"}};
+    av1.activeVideo = 0;
+    player.opened(av1);
+    EXPECT_EQ(video.playbackFailures(), 0u);
+    player.noFrame();
+    EXPECT_FALSE(video.playing());
+    EXPECT_TRUE(video.playerFailed());
+    EXPECT_EQ(video.playbackFailures(), 1u);
+    EXPECT_EQ(video.playerVideoCodec(), "AV1");
+    EXPECT_FALSE(video.play());
+    EXPECT_EQ(video.playbackFailures(), 2u);
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/clip.webm", "seek 0"}));
+    video.showFrame(1);
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 1);
+}
+
+TEST_F(VideoTest, AFailedOpenAtPlayIsCountedAndNotRetried)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.avi");
+    source.finishOpen();
+    source.answer();
+    ASSERT_TRUE(video.play());
+    player.failed();
+    EXPECT_FALSE(video.playing());
+    EXPECT_TRUE(video.playerFailed());
+    EXPECT_EQ(video.playbackFailures(), 1u);
+    EXPECT_FALSE(video.play());
+    EXPECT_EQ(video.playbackFailures(), 2u);
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.avi"}));
+}
+
+TEST_F(VideoTest, ADummyVideoThePlayerCannotOpenIsNeitherCountedNorRefused)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    const std::string dummy = "?dummy:23.976000:1000:1280:720:28:30:64:";
+    video.open(dummy);
+    source.finishOpen();
+    source.answer();
+    ASSERT_TRUE(video.playLine(0, 1000));
+    player.failed();
+    EXPECT_FALSE(video.playing());
+    EXPECT_FALSE(video.playerFailed());
+    EXPECT_EQ(video.playbackFailures(), 0u);
+    EXPECT_TRUE(video.playLine(0, 1000, true));
+    EXPECT_TRUE(video.playing());
 }
 
 TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)

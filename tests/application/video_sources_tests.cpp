@@ -21,13 +21,13 @@ std::array<int, 4> pixel(const std::vector<std::byte> &bgra, int width, int x, i
 
 }
 
-TEST(NextFile, LegacyVideoExtensions)
+TEST(NextFile, VideoExtensions)
 {
     for (const char *p : {"a.avi", "a.MP4", "a.mkv", "a.ogm", "a.wmv", "a.asf", "a.rmvb", "a.rm", "a.3gp", "a.ts",
-                          "a.M2TS", "a.mpg", "a.mpeg", "dir.v/a.Mkv",
+                          "a.M2TS", "a.mpg", "a.mpeg", "a.WebM", "dir.v/a.Mkv",
                           "mkv"})
         EXPECT_TRUE(isNextFileVideo(p)) << p;
-    for (const char *p : {"a.avs", "a.ass", "a.mov", "a.webm", "a.mkv.txt", "a.", "/v/mkv/notes"})
+    for (const char *p : {"a.avs", "a.ass", "a.mov", "a.mkv.txt", "a.", "/v/mkv/notes"})
         EXPECT_FALSE(isNextFileVideo(p)) << p;
 }
 

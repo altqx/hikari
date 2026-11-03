@@ -10,8 +10,10 @@
       "features": [
         "avcodec",
         "avformat",
+        "dav1d",
         "swresample",
-        "swscale"
+        "swscale",
+        "zlib"
       ]
     },
     "libass",
@@ -42,6 +44,7 @@
     "hunspell",
     "uchardet",
     "tomlplusplus",
+    "libsodium",
     {
       "name": "pkgconf",
       "host": true,

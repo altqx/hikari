@@ -6,6 +6,8 @@
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/extradata.h"
+#include "karaoke_marks.h"
 #include "hikari/core/text_projection.h"
 
 #include <QCoreApplication>
@@ -176,8 +178,9 @@ protected:
         hikari::application::EditSession session(hikari::core::loadAss(bytes).document);
         if (!apply(session, script, "Apply karaoke template"))
             return {};
-        return textOf(hikari::core::encodeAss(session.document()));
+        return textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document())));
     }
+
 
     std::string templated(const QString &document, const QString &script)
     {
@@ -223,7 +226,7 @@ std::vector<std::byte> editedCorpus(const QString &name, const std::vector<std::
 
 std::string saved(const hikari::application::EditSession &session)
 {
-    return textOf(hikari::core::encodeAss(session.document()));
+    return textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document())));
 }
 
 const hikari::core::LineRecord *lineWithText(const hikari::core::Document &document, std::u8string_view text,
@@ -279,6 +282,29 @@ TEST_F(KaraokeTemplater, BundledTemplaterMatchesAegisub322ByteForByte)
     }
 }
 
+
+TEST_F(KaraokeTemplater, AReopenedFileKnowsWhichKaraokeLineEachLineCameFrom)
+{
+    hikari::application::EditSession session(hikari::core::loadAss(readBytes(corpusDir() + "/stock-tutorials.ass")).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto lines = session.document().lines();
+    const auto file = hikari::core::loadAss(hikari::core::encodeAss(session.document())).document;
+    const auto reopened = file.lines();
+    ASSERT_EQ(reopened.size(), lines.size());
+    std::map<hikari::core::LineId, std::size_t> rowOf;
+    for (std::size_t i = 0; i < lines.size(); ++i)
+        rowOf[lines[i]->id] = i;
+    std::size_t generated = 0;
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        if (!lines[i]->generatedFrom.value) {
+            EXPECT_EQ(reopened[i]->generatedFrom.value, 0u) << i;
+            continue;
+        }
+        ++generated;
+        EXPECT_EQ(reopened[i]->generatedFrom, reopened[rowOf.at(lines[i]->generatedFrom)]->id) << i;
+    }
+    EXPECT_GT(generated, 10u);
+}
 
 TEST_F(KaraokeTemplater, MacroIsOfferedWhereverTheTemplateIs)
 {

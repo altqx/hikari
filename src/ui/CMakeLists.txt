@@ -19,7 +19,7 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MacroMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml FixMinorErrors.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MacroMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml)
@@ -51,6 +51,7 @@ qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateInstallingWin
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES KaraokeCheckDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES KanjiTimerDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES ExportDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml SettingsImportReview.qml)
 qt_target_qml_sources(hikari_ui QML_FILES GettingStartedDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.qml FontsFromSubtitlesDialog.qml)
@@ -67,6 +68,7 @@ qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.q
     VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
     ManageLayoutsDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml)
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h menu_key.cpp menu_key.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)
@@ -114,7 +116,7 @@ if(UNIX AND NOT APPLE)
     target_sources(hikari_ui PRIVATE portal_colour_scheme.cpp portal_colour_scheme.h)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_COLOUR_SCHEME_PORTAL)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml DockSystemMoveArea.qml)
+qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml)
 # xdg-decoration names xdg-shell's xdg_toplevel, and Qt keeps its own xdg-shell code private, so both are vendored.
 target_sources(hikari_ui PRIVATE window_decorations.cpp window_decorations.h)
 if(UNIX AND NOT APPLE)
