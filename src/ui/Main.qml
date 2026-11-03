@@ -67,11 +67,11 @@ ApplicationWindow {
         ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP", qsTr("Converts to TMPlayer format (not recommended)")]]
 
     readonly property var sortKeys: [
-        { key: "start", label: qsTr("The starting time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
+        { key: "start", label: qsTr("Start time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
           selected: "GLOBAL_SORT_SELECTED_BY_START_TIMES", help: qsTr("Sort by start time") },
         { key: "end", label: qsTr("End time"), all: "GLOBAL_SORT_ALL_BY_END_TIMES",
           selected: "GLOBAL_SORT_SELECTED_BY_END_TIMES", help: qsTr("Sort by end time") },
-        { key: "style", label: qsTr("Styles"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE",
+        { key: "style", label: qsTr("Style"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE",
           help: qsTr("Sort by styles") },
         { key: "actor", label: qsTr("Actor"), all: "GLOBAL_SORT_ALL_BY_ACTOR", selected: "GLOBAL_SORT_SELECTED_BY_ACTOR",
           help: qsTr("Sort by actor") },
@@ -1419,7 +1419,7 @@ ApplicationWindow {
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
                         id: openAutoSaveAction
-                        text: qsTr("Open auto save")
+                        text: qsTr("Open autosave…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) autosaves.show()
                     }
                 }
@@ -1682,11 +1682,11 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_ASS_PROPERTIES"
-                help: qsTr("ASS subtitle properties")
+                help: qsTr("Opens Script properties")
                 id: assPropertiesItem
                 iconRole: "script-properties"
                 objectName: "assProperties"
-                text: qsTr("ASS file properties")
+                text: qsTr("Script properties")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
             }
@@ -2471,7 +2471,7 @@ ApplicationWindow {
                 objectName: "whatsNewMenuItem"
                 action: Action {
                     id: whatsNewAction
-                    text: qsTr("What's &new")
+                    text: qsTr("What’s &new")
                     onTriggered: whatsNewDialog.open()
                 }
             }
@@ -3349,8 +3349,8 @@ ApplicationWindow {
                         font.features: { "tnum": 1 }
                         color: root.video.keyframeShown ? Theme.warning : palette.windowText
                         Accessible.name: qsTranslate("HikariSub.Video", "Video times")
-                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line's start frame; "
-                                                     + "milliseconds from the line's start and end")
+                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line’s start frame; "
+                                                     + "milliseconds from the line’s start and end")
                         HoverHandler { id: timesHover }
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
@@ -3659,14 +3659,12 @@ ApplicationWindow {
                 }
                 function audioTip(text, symbol, alt) {
                     let key = root.boundKeys(symbol, 4)
-                    if (alt) {
-                        const second = root.boundKeys(alt, 4)
-                        key = key + qsTranslate("HikariSub.Audio", " or ") + second
-                    }
-                    let tip = key.length ? text + " (" + key + ")" : text
-                    tip += "\n" + qsTranslate("HikariSub.Audio", "Shortcut can be set using Shift + Click")
                     if (alt)
-                        tip += "\n" + qsTranslate("HikariSub.Audio", "Second shortcut can be set using Control + Click")
+                        key = root.eitherKey(key, root.boundKeys(alt, 4))
+                    let tip = key.length ? text + " (" + key + ")" : text
+                    tip += "\n" + qsTranslate("HikariSub.Audio", "Shift+click to set a shortcut")
+                    if (alt)
+                        tip += "\n" + qsTranslate("HikariSub.Audio", "Ctrl+click to set a second shortcut")
                     return tip
                 }
                 readonly property var playArounds: [
@@ -4185,8 +4183,7 @@ ApplicationWindow {
                                 objectName: "audioCommitItem"
                                 iconRole: "commit"
                                 text: qsTranslate("HikariSub.Audio", "Commit")
-                                shortcutText: [root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4)]
-                                        .filter(k => k.length).join(qsTranslate("HikariSub.Audio", " or "))
+                                shortcutText: root.eitherKey(root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4))
                                 onTriggered: if (!root.hotkeyGesture("AUDIO_COMMIT", 4, true, true)) root.audio.commit()
                             }
                             MenuSeparator {}
@@ -6099,7 +6096,7 @@ ApplicationWindow {
         id: saveAsDialog
         objectName: "saveAsDialog"
         fileMode: FileDialog.SaveFile
-        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file ") + "(*.ass)"]
+        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file (%1)").arg("*.ass")]
         // MUST KILL: document id 0 means the editing target
         property var document: 0
         onAccepted: {
@@ -6646,8 +6643,8 @@ ApplicationWindow {
         onBrowserFailed: root.issueBrowserFailed()
     }
     function issueBrowserFailed() {
-        root.notices.post("warning", qsTranslate("HikariSub.Reports", "The browser did not open"),
-                          qsTranslate("HikariSub.Reports", "The issue is on the clipboard. Paste it into a new issue on GitHub."))
+        root.notices.post("warning", qsTranslate("HikariSub.Reports", "Open GitHub issue"),
+                          qsTranslate("HikariSub.Reports", "The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub."))
     }
     Connections {
         target: root.crashReports
@@ -6662,15 +6659,17 @@ ApplicationWindow {
                 return
             }
             const note = crashReportWindow.lastNote
-            root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
-                              source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
+            root.notices.post("warning", qsTranslate("HikariSub.Reports", "Send report"),
+                              source === "start" ? qsTranslate("HikariSub.Reports", "The crash report could not be sent. It is kept for the next start.")
+                                                 : qsTranslate("HikariSub.Reports", "The crash report could not be sent."),
                               { actions: source === "" ? [] : [{ text: qsTranslate("HikariSub.Reports", "Try again"), run: () => root.crashReports.send(source, note) },
                                                                { text: qsTranslate("HikariSub.Reports", "Open GitHub issue"), run: () => crashReportWindow.openOnGitHub(source, note) }] })
         }
         function onAutoSent(kind, ok, source) {
             if (!ok) {
-                root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
-                                  source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
+                root.notices.post("warning", qsTranslate("HikariSub.Reports", "Send report"),
+                                  source === "start" ? qsTranslate("HikariSub.Reports", "The crash report could not be sent. It is kept for the next start.")
+                                                     : qsTranslate("HikariSub.Reports", "The crash report could not be sent."),
                                   { actions: source === "" ? [] : [{ text: qsTranslate("HikariSub.Reports", "Show report"), run: () => crashReportWindow.showReport(source) }] })
                 return
             }
@@ -7093,13 +7092,16 @@ ApplicationWindow {
     function boundKeys(symbol, window) {
         return root.hotkeys.keys ? root.hotkeys.accelOf(symbol, window) : ""
     }
+    function eitherKey(first, second) {
+        return first.length && second.length ? qsTranslate("HikariSub.Audio", "%1 or %2").arg(first, second) : first + second
+    }
     function mappedTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
-        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     function bitmapTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
-        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     // MUST KILL: kind is true or a string ("menu", "mapped", "macro", "bitmap"); two maps the second (id - 10) hotkey
     function hotkeyGesture(symbol, window, kind, two) {

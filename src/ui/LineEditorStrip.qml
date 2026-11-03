@@ -101,7 +101,7 @@ RowLayout {
         IconToolButton {
             objectName: "changeFont"
             iconRole: "tag-font"
-            text: qsTr("Font selection")
+            text: qsTr("Choose font…")
             focusPolicy: Qt.NoFocus
             enabled: strip.editor.editable
             tip: strip.shellRoot.mappedTip(text, "EDITBOX_CHANGE_FONT", 2)
@@ -369,7 +369,7 @@ RowLayout {
             objectName: "foldedFont"
             visible: moreMenu.look
             iconRole: "tag-font"
-            text: qsTr("Font selection")
+            text: qsTr("Choose font…")
             shortcutText: strip.shellRoot.boundKeys("EDITBOX_CHANGE_FONT", 2)
             enabled: strip.editor.editable
             onTriggered: strip.chooseFont(moreMenu.field)

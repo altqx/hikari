@@ -3158,7 +3158,7 @@ private slots:
         QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
         QTRY_VERIFY(picker->property("visible").toBool());
-        QCOMPARE(picker->property("title").toString(), QStringLiteral("Font selection"));
+        QCOMPARE(picker->property("title").toString(), QStringLiteral("Choose font"));
         QCOMPARE(picker->property("family").toString(), QStringLiteral("Arial"));
         QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("20"));
         QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
@@ -8626,7 +8626,7 @@ private slots:
         QVERIFY(menuItem);
         QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("whats-new"));
         auto *action = menuItem->property("action").value<QObject *>();
-        QCOMPARE(action->property("text").toString(), QStringLiteral("What's &new"));
+        QCOMPARE(action->property("text").toString(), QStringLiteral("What’s &new"));
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(dialog->isVisible());
         QCOMPARE(dialog->title(), QStringLiteral("What’s new"));
@@ -19230,7 +19230,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         auto *stop = visualItem("stopVideo");
         QVERIFY(stop);
-        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop\nShortcut can be set using Shift + Click"));
+        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop\nShift+click to set a shortcut"));
         QTRY_VERIFY_WITH_TIMEOUT(messageBox("messages") && messageBox("messages")->isVisible(), 20000);
         closeMismatchQuestion();
         QVERIFY(!messageBox("messages")->isVisible());
@@ -19242,7 +19242,7 @@ private slots:
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(h.accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("U"));
-        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (U)\nShortcut can be set using Shift + Click"));
+        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (U)\nShift+click to set a shortcut"));
         QTRY_VERIFY(window->isActive());
         grid->forceActiveFocus();
         const int frame = application->video().frame();
@@ -26717,7 +26717,7 @@ private slots:
             QCOMPARE(QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name), QLatin1String(b.accessibleName));
             QVERIFY(!button->property("tip").toString().isEmpty());
         }
-        QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShortcut can be set using Shift + Click"));
+        QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShift+click to set a shortcut"));
         setTheme("light");
         QCOMPARE(colours(), all(QStringLiteral("#74808b")));
         QVERIFY(shown(QColor(0x74, 0x80, 0x8B)));
@@ -26794,14 +26794,14 @@ private slots:
         QCOMPARE(item<QObject>("audioLink")->property("iconRole").toString(), QStringLiteral("link"));
         QCOMPARE(item<QObject>("audioLink")->property("text").toString(), QStringLiteral("Link the volume and stretch sliders"));
         for (const Expected &e : {Expected{"tag_b", "tag-bold", "Bold"}, Expected{"tag_s", "tag-strikeout", "Strikeout"},
-                                  Expected{"changeFont", "tag-font", "Font selection"},
+                                  Expected{"changeFont", "tag-font", "Choose font…"},
                                   Expected{"changeColour1", "colour-primary", "Primary colour"},
                                   Expected{"changeColour4", "colour-shadow", "Shadow colour"}}) {
             auto *button = visualItem(e.object);
             QVERIFY2(button, e.object);
             QCOMPARE(icon(button), QLatin1String(e.role));
-            QCOMPARE(name(button), QLatin1String(e.name));
-            QVERIFY(button->property("tip").toString().startsWith(QLatin1String(e.name)));
+            QCOMPARE(name(button), QString::fromUtf8(e.name));
+            QVERIFY(button->property("tip").toString().startsWith(QString::fromUtf8(e.name)));
         }
         auto *root = engine->rootObjects().first();
         const QString normal = ui::IconTheme::colours()[0].name().mid(1);

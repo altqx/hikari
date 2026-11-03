@@ -65,16 +65,16 @@
         <translation>Łącz suwaki głośności i rozciągnięcia</translation>
     </message>
     <message>
-        <source> or </source>
-        <translation> lub </translation>
+        <source>%1 or %2</source>
+        <translation>%1 lub %2</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>Skrót można ustawić za pomocą Shift + kliknięcie</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+kliknięcie ustawia skrót</translation>
     </message>
     <message>
-        <source>Second shortcut can be set using Control + Click</source>
-        <translation>Drugi skrót można ustawić za pomocą Control + kliknięcie</translation>
+        <source>Ctrl+click to set a second shortcut</source>
+        <translation>Ctrl+kliknięcie ustawia drugi skrót</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -1946,8 +1946,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Anuluj</translation>
     </message>
     <message>
-        <source>Subtitle file </source>
-        <translation>Plik napisów </translation>
+        <source>Subtitle file (%1)</source>
+        <translation>Plik napisów (%1)</translation>
     </message>
     <message>
         <source>Save</source>
@@ -2497,8 +2497,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Przekreślenie</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>Wybór czcionki</translation>
+        <source>Choose font…</source>
+        <translation>Wybierz czcionkę…</translation>
     </message>
     <message>
         <source>Primary colour</source>
@@ -3447,8 +3447,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Czcionka</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>Wybór czcionki</translation>
+        <source>Choose font</source>
+        <translation>Wybierz czcionkę</translation>
     </message>
     <message>
         <source>Search fonts</source>
@@ -5064,8 +5064,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Anuluj</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>Skrót można ustawić za pomocą Shift + kliknięcie</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+kliknięcie ustawia skrót</translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -6630,7 +6630,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Konwertuj do TMP</translation>
     </message>
     <message>
-        <source>The starting time</source>
+        <source>Start time</source>
         <translation>Czas początkowy</translation>
     </message>
     <message>
@@ -6638,8 +6638,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Czas końcowy</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>Style</translation>
+        <source>Style</source>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Actor</source>
@@ -6698,8 +6698,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zapisuj napisy z nazwą wideo</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>Otwórz autozapis</translation>
+        <source>Open autosave…</source>
+        <translation>Otwórz autozapis…</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
@@ -6994,8 +6994,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Menedżer stylów</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>Właściwości pliku ASS</translation>
+        <source>Script properties</source>
+        <translation>Właściwości skryptu</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -7042,7 +7042,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokazuje informacje o wydaniach od wersji używanej poprzednio</translation>
     </message>
     <message>
-        <source>What&apos;s &amp;new</source>
+        <source>What’s &amp;new</source>
         <translation>&amp;Co nowego</translation>
     </message>
     <message>
@@ -7462,8 +7462,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Służy do zarządzania stylami ASS</translation>
     </message>
     <message>
-        <source>ASS subtitle properties</source>
-        <translation>Właściwości napisów ASS</translation>
+        <source>Opens Script properties</source>
+        <translation>Otwiera właściwości skryptu</translation>
     </message>
     <message>
         <source>Converts from one format to another</source>
@@ -9922,8 +9922,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zawiesił się na 10 sekund lub dłużej. Raport pokazuje, gdzie się zawiesił.</translation>
     </message>
     <message>
-        <source>It is kept for the next start.</source>
-        <translation>Zostanie zachowany do następnego uruchomienia.</translation>
+        <source>The crash report could not be sent. It is kept for the next start.</source>
+        <translation>Nie udało się wysłać raportu o awarii. Zostanie zachowany do następnego uruchomienia.</translation>
     </message>
     <message>
         <source>It works again. A report shows where it was stuck.</source>
@@ -10018,8 +10018,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Formularz „%1” otworzył się w przeglądarce, wypełniony.</translation>
     </message>
     <message>
-        <source>The crash report could not be sent</source>
-        <translation>Nie udało się wysłać raportu o awarii</translation>
+        <source>The crash report could not be sent.</source>
+        <translation>Nie udało się wysłać raportu o awarii.</translation>
     </message>
     <message>
         <source>The report is too long for a link, so it is on the clipboard.</source>
@@ -10030,12 +10030,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Raport jest za długi na link, więc jest w schowku. Wklej go do formularza.</translation>
     </message>
     <message>
-        <source>The browser did not open</source>
-        <translation>Przeglądarka się nie otworzyła</translation>
-    </message>
-    <message>
-        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
-        <translation>Zgłoszenie jest w schowku. Wklej je do nowego zgłoszenia na GitHubie.</translation>
+        <source>The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>Przeglądarka się nie otworzyła. Zgłoszenie jest w schowku. Wklej je do nowego zgłoszenia na GitHubie.</translation>
     </message>
     <message>
         <source>Report text</source>
@@ -10125,8 +10121,8 @@ Nie udało się skopiować czcionek: %2.</translation>
 <context>
     <name>HikariSub.ScriptProperties</name>
     <message>
-        <source>ASS file properties</source>
-        <translation>Właściwości pliku ASS</translation>
+        <source>Script properties</source>
+        <translation>Właściwości skryptu</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -10794,7 +10790,7 @@ ponieważ została zmieniona.</translation>
         <translation>Otwórz</translation>
     </message>
     <message>
-        <source>Open auto save</source>
+        <source>Open autosave</source>
         <translation>Otwórz autozapis</translation>
     </message>
     <message>
@@ -11074,12 +11070,12 @@ ponieważ została zmieniona.</translation>
         <translation>%1 (odzyskany)</translation>
     </message>
     <message>
-        <source>Auto save folder is empty</source>
-        <translation>Folder autozapisu jest pusty</translation>
+        <source>The autosave folder is empty.</source>
+        <translation>Folder autozapisu jest pusty.</translation>
     </message>
     <message>
-        <source>Cannot open auto save folder</source>
-        <translation>Nie można otworzyć folderu autozapisu</translation>
+        <source>The autosave folder cannot be opened.</source>
+        <translation>Nie można otworzyć folderu autozapisu.</translation>
     </message>
     <message>
         <source>Failed to load autosave</source>
@@ -12751,20 +12747,20 @@ Usunięte style:
         <translation>Zamknij wszystkie zakładki</translation>
     </message>
     <message>
-        <source>Open the folder containing the subtitles</source>
-        <translation>Otwórz folder zawierający napisy</translation>
+        <source>Show subtitles in folder</source>
+        <translation>Pokaż napisy w folderze</translation>
     </message>
     <message>
-        <source>Open video containing folder</source>
-        <translation>Otwórz folder zawierający wideo</translation>
+        <source>Show video in folder</source>
+        <translation>Pokaż wideo w folderze</translation>
     </message>
     <message>
-        <source>Open audio containing folder</source>
-        <translation>Otwórz folder zawierający audio</translation>
+        <source>Show audio in folder</source>
+        <translation>Pokaż audio w folderze</translation>
     </message>
     <message>
-        <source>Open keyframes containing folder</source>
-        <translation>Otwórz folder zawierający klatki kluczowe</translation>
+        <source>Show keyframes in folder</source>
+        <translation>Pokaż klatki kluczowe w folderze</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -14802,7 +14798,7 @@ po czasie końcowym w milisekundach</translation>
         <translation>Czasy wideo</translation>
     </message>
     <message>
-        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
         <translation>Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
     </message>
     <message>
