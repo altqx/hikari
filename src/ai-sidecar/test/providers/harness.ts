@@ -28,6 +28,7 @@ export class Harness {
     resolved: string[] = [];
     localAddresses = ["192.168.1.10"];
     idleTimeoutMs?: number;
+    clock = 0;
     private nextStream = 1;
 
     readonly network: Network = {
@@ -45,23 +46,29 @@ export class Harness {
             this.resolved = [];
             this.localAddresses = ["192.168.1.10"];
             this.idleTimeoutMs = undefined;
+            this.clock = 0;
         });
         afterEach(() => this.mock.stop());
         return this;
     }
 
-    service(wire: Wire, baseUrl = this.mock.base): ProviderService {
-        const service = new ProviderService({ network: this.network, idleTimeoutMs: this.idleTimeoutMs });
-        service.set({ providers: [{ id: "mock", preset: kPresetOf[wire], wire, baseUrl }] });
+    service(wire: Wire, baseUrl = this.mock.base, preset = kPresetOf[wire]): ProviderService {
+        const service = new ProviderService({ network: this.network, idleTimeoutMs: this.idleTimeoutMs, now: () => this.clock });
+        service.set({ providers: [{ id: "mock", preset, wire, baseUrl }] });
         return service;
     }
 
     async stream(wire: Wire, request: Request = { model: "m", messages: [{ author: "user", parts: [{ type: "text", text: "Hi" }] }] },
         options: { baseUrl?: string; signal?: AbortSignal; key?: string } = {}): Promise<Run> {
+        return this.turn(this.service(wire, options.baseUrl), request, options);
+    }
+
+    /** One completion on a service that lives across turns. */
+    async turn(service: ProviderService, request: Request, options: { signal?: AbortSignal; key?: string } = {}): Promise<Run> {
         const run: Run = { updates: [], text: () => run.updates.flatMap((u) => (u.kind === "text" ? [u.text] : [])).join("") };
         const stream = this.nextStream++;
         try {
-            run.finished = await this.service(wire, options.baseUrl).complete(
+            run.finished = await service.complete(
                 { stream, providerId: "mock", key: options.key ?? kKey, request },
                 options.signal ?? new AbortController().signal,
                 (s, update) => {

@@ -37,6 +37,8 @@ struct Price {
     double input = 0;
     double output = 0;
     std::optional<double> cachedInput;
+    std::optional<double> cacheWrite;
+    std::optional<double> cacheWriteHour;
     bool operator==(const Price &) const = default;
 };
 
@@ -90,8 +92,12 @@ struct Config {
 struct Usage {
     std::int64_t inputTokens = 0;
     std::int64_t outputTokens = 0;
-    /// Part of inputTokens.
+    /// Part of inputTokens: read from the provider's cache.
     std::int64_t cachedInputTokens = 0;
+    /// Part of inputTokens: written to the provider's cache.
+    std::int64_t cacheWriteTokens = 0;
+    /// Part of cacheWriteTokens: kept for an hour.
+    std::int64_t cacheWriteHourTokens = 0;
     /// What the provider says the request cost, when it says.
     std::optional<double> reportedCost;
     bool operator==(const Usage &) const = default;

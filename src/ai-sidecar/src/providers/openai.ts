@@ -1,11 +1,12 @@
 import OpenAI, { APIError } from "openai";
 
+import { cacheControl, markLast, prefixTexts, sortedTools, usage } from "./cache";
 import { catalogueModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { type Collector, schemaObject } from "./collector";
 import { kNoKey } from "./egress";
 import { ProviderError, streamError, wrapsProviderError } from "./errors";
-import type { Message, Part, Request, StopReason } from "./types";
+import type { Message, Part, ProviderConfig, Request, StopReason } from "./types";
 
 type Json = Record<string, unknown>;
 
@@ -29,10 +30,20 @@ async function models(client: OpenAI, signal: AbortSignal) {
     return catalogueModels(Array.isArray(body?.data) ? body.data : []);
 }
 
-function chatMessages(request: Request): Json[] {
+/** OpenRouter caches these vendors' models only where the request marks the prefix. */
+function takesCacheMarks(config: ProviderConfig, model: string): boolean {
+    return config.preset === "openrouter" && (model.startsWith("anthropic/") || model.startsWith("google/"));
+}
+
+const detail = (value: unknown, key: string) => Number((value as Json | undefined)?.[key] ?? 0);
+
+function chatMessages(request: Request, markCache: boolean): Json[] {
     const out: Json[] = [];
-    if (request.system)
-        out.push({ role: "system", content: request.system });
+    const prefix: Json[] = prefixTexts(request).map((text) => ({ type: "text", text }));
+    if (markCache)
+        markLast(prefix, cacheControl(request.cacheLifetime));
+    for (const block of prefix)
+        out.push({ role: "system", content: block.cache_control ? [block] : block.text });
     for (const message of request.messages) {
         if (message.author === "assistant") {
             const text = message.parts.flatMap((p) => (p.type === "text" ? [p.text] : [])).join("");
@@ -55,6 +66,11 @@ function chatMessages(request: Request): Json[] {
         if (content.length)
             out.push({ role: "user", content });
     }
+    if (markCache) {
+        const lastUser = out.findLast((m) => m.role === "user");
+        if (lastUser)
+            markLast(lastUser.content as Json[], cacheControl(request.cacheLifetime));
+    }
     return out;
 }
 
@@ -69,16 +85,19 @@ function chatClient(options: ClientOptions): Client {
         async complete(request, out, signal) {
             const body: Json = {
                 model: request.model,
-                messages: chatMessages(request),
+                messages: chatMessages(request, takesCacheMarks(options.config, request.model)),
                 stream: true,
                 stream_options: { include_usage: true },
             };
-            if (options.config.preset === "openrouter")
+            if (options.config.preset === "openrouter") {
                 body.usage = { include: true };
+                if (request.cacheKey)
+                    body.prompt_cache_key = request.cacheKey;
+            }
             if (request.maxOutputTokens !== undefined)
                 body.max_tokens = request.maxOutputTokens;
             if (request.tools?.length)
-                body.tools = request.tools.map((t) => ({
+                body.tools = sortedTools(request).map((t) => ({
                     type: "function",
                     function: { name: t.name, description: t.description, parameters: schemaObject(t.parametersJson) },
                 }));
@@ -86,15 +105,14 @@ function chatClient(options: ClientOptions): Client {
             try {
                 const stream = await client.chat.completions.create(body as never, { signal });
                 for await (const chunk of stream as unknown as AsyncIterable<Json>) {
-                    const usage = chunk.usage as Json | null | undefined;
-                    if (usage) {
-                        out.usage = {
-                            inputTokens: Number(usage.prompt_tokens ?? 0),
-                            outputTokens: Number(usage.completion_tokens ?? 0),
-                            cachedInputTokens: Number((usage.prompt_tokens_details as Json | undefined)?.cached_tokens ?? 0),
-                        };
-                        if (typeof usage.cost === "number")
-                            out.usage.reportedCost = usage.cost;
+                    const u = chunk.usage as Json | null | undefined;
+                    if (u) {
+                        out.usage = usage(Number(u.prompt_tokens ?? 0), Number(u.completion_tokens ?? 0), {
+                            cachedInputTokens: detail(u.prompt_tokens_details, "cached_tokens"),
+                            cacheWriteTokens: detail(u.prompt_tokens_details, "cache_write_tokens"),
+                        });
+                        if (typeof u.cost === "number")
+                            out.usage.reportedCost = u.cost;
                     }
                     const choice = ((chunk.choices as Json[] | undefined) ?? [])[0];
                     if (!choice)
@@ -124,8 +142,10 @@ function chatClient(options: ClientOptions): Client {
     };
 }
 
-function responsesInput(messages: Message[]): Json[] {
+function responsesInput(messages: Message[], context: string | undefined): Json[] {
     const input: Json[] = [];
+    if (context)
+        input.push({ role: "developer", content: [{ type: "input_text", text: context }] });
     for (const message of messages) {
         if (message.author === "assistant") {
             for (const p of message.parts) {
@@ -157,13 +177,17 @@ function responsesClient(options: ClientOptions): Client {
     return {
         models: (signal) => models(client, signal),
         async complete(request, out, signal) {
-            const body: Json = { model: request.model, input: responsesInput(request.messages), stream: true, store: false };
+            const body: Json = {
+                model: request.model, input: responsesInput(request.messages, request.context), stream: true, store: false,
+            };
             if (request.system)
                 body.instructions = request.system;
+            if (options.config.preset === "openai" && request.cacheKey)
+                body.prompt_cache_key = request.cacheKey;
             if (request.maxOutputTokens !== undefined)
                 body.max_output_tokens = request.maxOutputTokens;
             if (request.tools?.length)
-                body.tools = request.tools.map((t) => ({
+                body.tools = sortedTools(request).map((t) => ({
                     type: "function", name: t.name, description: t.description,
                     parameters: schemaObject(t.parametersJson), strict: false,
                 }));
@@ -190,11 +214,10 @@ function responsesClient(options: ClientOptions): Client {
                     case "response.incomplete": {
                         const response = (event.response ?? {}) as Json;
                         const u = (response.usage ?? {}) as Json;
-                        out.usage = {
-                            inputTokens: Number(u.input_tokens ?? 0),
-                            outputTokens: Number(u.output_tokens ?? 0),
-                            cachedInputTokens: Number((u.input_tokens_details as Json | undefined)?.cached_tokens ?? 0),
-                        };
+                        out.usage = usage(Number(u.input_tokens ?? 0), Number(u.output_tokens ?? 0), {
+                            cachedInputTokens: detail(u.input_tokens_details, "cached_tokens"),
+                            cacheWriteTokens: detail(u.input_tokens_details, "cache_write_tokens"),
+                        });
                         const incomplete = (response.incomplete_details as Json | undefined)?.reason;
                         if (incomplete === "max_output_tokens")
                             return "maxTokens";

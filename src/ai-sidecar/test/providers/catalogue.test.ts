@@ -13,7 +13,10 @@ test("the catalogue reads capabilities and prices", async () => {
                 {
                     id: "vendor/vision", name: "Vision", context_length: 200000,
                     architecture: { input_modalities: ["text", "image"] }, supported_parameters: ["tools", "temperature"],
-                    pricing: { prompt: "0.000003", completion: "0.000015", input_cache_read: "0.0000003" },
+                    pricing: {
+                        prompt: "0.000003", completion: "0.000015", input_cache_read: "0.0000003",
+                        input_cache_write: "0.00000375", input_cache_write_1h: "0.000006",
+                    },
                 },
                 { id: "vendor/plain", architecture: { input_modalities: ["text"] }, supported_parameters: [] },
                 { id: "claude-x", display_name: "Claude X", type: "model" },
@@ -28,6 +31,9 @@ test("the catalogue reads capabilities and prices", async () => {
     expect(models[0]!.price!.input).toBeCloseTo(3.0, 9);
     expect(models[0]!.price!.output).toBeCloseTo(15.0, 9);
     expect(models[0]!.price!.cachedInput!).toBeCloseTo(0.3, 9);
+    expect(models[0]!.price!.cacheWrite!).toBeCloseTo(3.75, 9);
+    expect(models[0]!.price!.cacheWriteHour!).toBeCloseTo(6.0, 9);
+    expect(models[1]!.price).toBeUndefined();
     expect(models[1]!.capabilities).toEqual({ tools: false, vision: false, video: false });
     expect(models[1]!.name).toBe("vendor/plain");
     expect(models[2]!.name).toBe("Claude X");

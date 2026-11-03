@@ -48,6 +48,7 @@ export class Sidecar {
             });
         this.handle(Method.providersSet, (params) => wire(() => this.providers.set(params)));
         this.handle(Method.modelsList, (params, signal) => wire(() => this.providers.models(params, signal)));
+        this.handle(Method.conversationEnd, (params, signal) => wire(() => this.providers.endConversation(params, signal)));
         this.handle(Method.complete, (params, signal) => wire(() => this.providers.complete(params, signal,
             (stream, update) => peer.notify(Method.sessionUpdate, { stream, update } satisfies UpdateParams))));
     }

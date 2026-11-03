@@ -32,6 +32,9 @@ public:
     void cancel(application::ai::StreamId id);
     /// Replaces the provider's catalogue with the provider's own list.
     void refreshModels(const std::string &providerId, std::function<void(std::optional<application::ai::Error>)> done);
+    /// Deletes the explicit provider cache the sidecar keeps for the conversation (the request's `cacheKey`). Call
+    /// when the thread ends.
+    void endConversation(const std::string &providerId, const std::string &cacheKey);
 
 private:
     struct Pending;

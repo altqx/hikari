@@ -25,7 +25,7 @@ describe("Chat Completions", () => {
         expect(run.text()).toBe("Hello");
         expect(run.finished!.reason).toBe("end");
         expect(run.finished!.text).toBe("Hello");
-        expect(run.finished!.usage).toEqual({ inputTokens: 12, outputTokens: 3, cachedInputTokens: 4, reportedCost: 0.00042 });
+        expect(run.finished!.usage).toEqual({ inputTokens: 12, outputTokens: 3, cachedInputTokens: 4, cacheWriteTokens: 0, cacheWriteHourTokens: 0, reportedCost: 0.00042 });
         expect(run.updates.at(-1)).toEqual({ kind: "usage", usage: run.finished!.usage });
         expect(h.mock.received).toHaveLength(1);
         const r = h.mock.received[0]!;
@@ -85,7 +85,7 @@ describe("Responses", () => {
         expect(run.text()).toBe("Look");
         expect(run.finished!.reason).toBe("toolUse");
         expect(run.finished!.toolCalls).toEqual([call("call_x", "get_line", '{"n":1}')]);
-        expect(run.finished!.usage).toEqual({ inputTokens: 50, outputTokens: 7, cachedInputTokens: 10 });
+        expect(run.finished!.usage).toEqual({ inputTokens: 50, outputTokens: 7, cachedInputTokens: 10, cacheWriteTokens: 0, cacheWriteHourTokens: 0 });
         expect(h.mock.received[0]!.path).toBe("/v1/responses");
     });
 
@@ -127,7 +127,7 @@ describe("Anthropic Messages", () => {
         expect(run.text()).toBe("On it");
         expect(run.finished!.reason).toBe("toolUse");
         expect(run.finished!.toolCalls).toEqual([call("toolu_1", "get_line", '{"n":2}')]);
-        expect(run.finished!.usage).toEqual({ inputTokens: 50, outputTokens: 15, cachedInputTokens: 30 });
+        expect(run.finished!.usage).toEqual({ inputTokens: 50, outputTokens: 15, cachedInputTokens: 30, cacheWriteTokens: 0, cacheWriteHourTokens: 0 });
         const r = h.mock.received[0]!;
         expect(r.path).toBe("/v1/messages");
         expect(r.headers["x-api-key"]).toBe(kKey);
@@ -139,7 +139,7 @@ describe("Anthropic Messages", () => {
         h.mock.replies.push({ chunks: [sse("message_stop", { type: "message_stop" })] });
         await h.stream("anthropic-messages", fullRequest());
         const body = h.mock.received[0]!.json() as any;
-        expect(body.system).toBe("Be brief.");
+        expect(body.system).toEqual([{ type: "text", text: "Be brief.", cache_control: { type: "ephemeral" } }]);
         expect(body.max_tokens).toBe(100);
         expect(body.messages).toHaveLength(3);
         expect(body.messages[0].content[1].source.media_type).toBe("image/png");
@@ -173,7 +173,7 @@ describe("Gemini", () => {
         expect(run.text()).toBe("On it");
         expect(run.finished!.reason).toBe("toolUse");
         expect(run.finished!.toolCalls).toEqual([call("fc-1", "get_line", '{"n":2}', "c2lnLUE="), call("call_1", "seek", "{}")]);
-        expect(run.finished!.usage).toEqual({ inputTokens: 43, outputTokens: 17, cachedInputTokens: 32 });
+        expect(run.finished!.usage).toEqual({ inputTokens: 43, outputTokens: 17, cachedInputTokens: 32, cacheWriteTokens: 0, cacheWriteHourTokens: 0 });
         const r = h.mock.received[0]!;
         expect(r.method).toBe("POST");
         expect(r.path).toBe("/v1/models/the-model:streamGenerateContent?alt=sse");
