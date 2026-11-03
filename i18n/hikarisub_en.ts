@@ -122,10 +122,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) get the conversion style &quot;%1&quot;.</source>
+        <source>%n line(s) get the conversion style “%1”.</source>
         <translation>
-            <numerusform>%n line gets the conversion style &quot;%1&quot;.</numerusform>
-            <numerusform>%n lines get the conversion style &quot;%1&quot;.</numerusform>
+            <numerusform>%n line gets the conversion style “%1”.</numerusform>
+            <numerusform>%n lines get the conversion style “%1”.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -171,6 +171,30 @@
         <translation>
             <numerusform>Save the changes to %n document before loading the session?</numerusform>
             <numerusform>Save the changes to %n documents before loading the session?</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Export</name>
+    <message numerus="yes">
+        <source>Exported %n line(s) to “%1”.</source>
+        <translation>
+            <numerusform>Exported %n line to “%1”.</numerusform>
+            <numerusform>Exported %n lines to “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>%n comment line skipped.</numerusform>
+            <numerusform>%n comment lines skipped.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>%n line with nothing to show skipped.</numerusform>
+            <numerusform>%n lines with nothing to show skipped.</numerusform>
         </translation>
     </message>
 </context>

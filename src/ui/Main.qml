@@ -37,6 +37,7 @@ ApplicationWindow {
     required property var updates
     required property var whatsNew
     required property var analytics
+    required property var starPrompt
     required property var crashReports
     required property var styleManager
     required property var kanjiTimer
@@ -77,7 +78,11 @@ ApplicationWindow {
         { key: "effect", label: qsTr("Effect"), all: "GLOBAL_SORT_ALL_BY_EFFECT", selected: "GLOBAL_SORT_SELECTED_BY_EFFECT",
           help: qsTr("Sort by effect") },
         { key: "layer", label: qsTr("Layer"), all: "GLOBAL_SORT_ALL_BY_LAYER", selected: "GLOBAL_SORT_SELECTED_BY_LAYER",
-          help: qsTr("Sort by layer") }
+          help: qsTr("Sort by layer") },
+        { key: "text", label: qsTr("Text"), all: "GLOBAL_SORT_ALL_BY_TEXT", selected: "GLOBAL_SORT_SELECTED_BY_TEXT",
+          help: qsTr("Sort by text") },
+        { key: "textWithoutTags", label: qsTr("Text without tags"), all: "GLOBAL_SORT_ALL_BY_TEXT_WITHOUT_TAGS",
+          selected: "GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS", help: qsTr("Sort by text without tags") }
     ]
 
     function applyTagButton(index, edited) {
@@ -1185,6 +1190,18 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_EXPORT_SUBS_AS"
+                    help: qsTr("Writes a copy of the document in another format")
+                    iconRole: "export"
+                    objectName: "exportAsMenuItem"
+                    action: Action {
+                        id: exportAsAction
+                        text: qsTr("&Export as…")
+                        enabled: root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXPORT_SUBS_AS")) root.openExportDialog()
+                    }
+                }
+                ShellMenuItem {
                     command: "GLOBAL_SAVE_TRANSLATION"
                     help: qsTr("Save translation")
                     iconRole: "save-translation"
@@ -1302,13 +1319,6 @@ ApplicationWindow {
                         text: qsTr("&Settings")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) root.openSettings()
                     }
-                }
-                ShellMenuItem {
-                    iconRole: "import"
-                    objectName: "importSettingsMenuItem"
-                    text: qsTr("Import legacy settings...")
-                    enabled: root.settingsImport.available
-                    onTriggered: settingsImportDialog.openDialog()
                 }
                 ShellMenuItem {
                     help: qsTr("Exit the program")
@@ -1664,6 +1674,18 @@ ApplicationWindow {
                     id: dummyVideoAction
                     text: qsTr("Open dummy video")
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) root.openDummyVideo()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_CENTER_TIMES_IN_FRAMES"
+                help: qsTr("Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames")
+                iconRole: "split-frames"
+                objectName: "centerTimesInFramesMenuItem"
+                action: Action {
+                    id: centerTimesInFramesAction
+                    text: qsTr("Centre times within frames")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CENTER_TIMES_IN_FRAMES")) root.app.centerTimesInFrames()
                 }
             }
             ShellMenuItem {
@@ -2041,6 +2063,18 @@ ApplicationWindow {
                 action: Action {
                     text: qsTr("Show &panel")
                     onTriggered: root.showPanel(automationDock)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_PLUGINS"
+                help: qsTr("Install, turn on and off, and uninstall plugins")
+                iconRole: "plugins"
+                objectName: "pluginsMenuItem"
+                action: Action {
+                    id: pluginsAction
+                    text: qsTr("Pl&ugins…")
+                    enabled: !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
                 }
             }
             MenuSeparator {
@@ -5908,6 +5942,18 @@ ApplicationWindow {
     }
     readonly property alias notices: notices
     Connections {
+        target: root.starPrompt
+        function onDue() {
+            if (!root.starPrompt.offer(root.video.playing || root.audio.playing, root.videoFullscreen.active,
+                                       root.workspaceLayout.modalOpen))
+                return
+            notices.show(0, 0, qsTr("Enjoying HikariSub?"), qsTr("A star on GitHub helps others find it."), "", [
+                { text: qsTr("Star on GitHub"), run: () => root.starPrompt.star() },
+                { text: qsTr("Not now"), run: () => {} }
+            ])
+        }
+    }
+    Connections {
         target: root.log
         function onRevealRequested() {
             if (root.videoFullscreen.active)
@@ -5929,6 +5975,11 @@ ApplicationWindow {
     ManageLayoutsDialog {
         id: manageLayoutsDialog
         layouts: root.workspaceLayout
+        settings: root.app.settings
+    }
+    PluginManagerDialog {
+        id: pluginManagerDialog
+        manager: root.app.pluginManager
         settings: root.app.settings
     }
 
@@ -6699,7 +6750,10 @@ ApplicationWindow {
                 crashReports: root.crashReports
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
+                importer: root.settingsImport
                 onCreditsRequested: creditsDialog.open()
+                onLegacyImportRequested: root.importLegacySettings()
+                onLegacyRollBackRequested: settingsImportDialog.openRollBack()
             }
         }
     }
@@ -6708,6 +6762,10 @@ ApplicationWindow {
         return settingsLoader.item
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
+    function importLegacySettings() {
+        if (root.settingsImport.available)
+            settingsImportDialog.openDialog()
+    }
     Loader {
         id: fontCollectorLoader
         active: false
@@ -6749,6 +6807,15 @@ ApplicationWindow {
     function openKaraokeCheck() {
         karaokeCheckLoader.active = true
         karaokeCheckLoader.item.openDialog()
+    }
+    Loader {
+        id: exportLoader
+        active: false
+        sourceComponent: ExportDialog { app: root.app }
+    }
+    function openExportDialog() {
+        exportLoader.active = true
+        exportLoader.item.openDialog()
     }
     Loader {
         id: kanjiTimerLoader
@@ -7022,6 +7089,7 @@ ApplicationWindow {
     function globalActions() {
         return {
         GLOBAL_SAVE_SUBS: saveAction, GLOBAL_SAVE_ALL_SUBS: saveAllAction, GLOBAL_SAVE_SUBS_AS: saveAsAction,
+        GLOBAL_EXPORT_SUBS_AS: exportAsAction,
         GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
         GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
         GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,
@@ -7041,6 +7109,7 @@ ApplicationWindow {
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START: shiftFollowingFramesToVideoStartAction,
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END: shiftFollowingFramesToVideoEndAction,
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
+        GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
@@ -7051,6 +7120,7 @@ ApplicationWindow {
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
+        GLOBAL_PLUGINS: pluginsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
@@ -7195,6 +7265,7 @@ ApplicationWindow {
         const editing = root.shell.hasEditingTarget
         switch (symbol) {
         case "GLOBAL_QUIT": root.close(); return true
+        case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
                 root.focusPanel(lineText, Qt.OtherFocusReason)

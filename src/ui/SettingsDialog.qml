@@ -14,6 +14,8 @@ DialogWindow {
     property var updates: null
     property var crashReports: null
     property TagButtonsController tagButtons: null
+    property var importer: null
+    property string legacyNotFound: ""
     title: qsTr("Settings")
     dialogId: "settings"
     settings: app ? app.settings : null
@@ -34,6 +36,8 @@ DialogWindow {
     property bool resetAllStaged: false
     signal reloaded()
     signal creditsRequested()
+    signal legacyImportRequested()
+    signal legacyRollBackRequested()
     readonly property VideoFollowChoices follow: VideoFollowChoices { settings: dialog.app.settings }
 
     // MUST KILL: the page ids must match the C++ OptionsPage ids (and "hotkeys")
@@ -66,6 +70,12 @@ DialogWindow {
         values = r.values
         resetAllStaged = false
         copyTagButtons()
+        legacyNotFound = ""
+        if (importer && importer.available) {
+            importer.discover()
+            if (importer.roots.length === 0)
+                legacyNotFound = importer.status
+        }
         reloaded()
         hotkeyFilter.currentIndex = 0
         hotkeySearch.text = ""
@@ -579,6 +589,46 @@ DialogWindow {
                                 text: qsTr("Choose…")
                                 Accessible.name: qsTr("Choose external font folder")
                                 onClicked: fontsFolderDialog.open()
+                            }
+                        }
+                    }
+                    SettingsSection {
+                        objectName: "settingsLegacyGroup"
+                        title: qsTr("Legacy")
+                        SettingsRow {
+                            iconRole: "import"
+                            text: qsTr("HikariSub 0.0.x")
+                            IconTextButton {
+                                iconRole: "import"
+                                objectName: "settingsImportLegacy"
+                                text: qsTr("Import legacy settings…")
+                                enabled: dialog.importer !== null && dialog.importer.available
+                                onClicked: dialog.legacyImportRequested()
+                            }
+                            IconTextButton {
+                                iconRole: "undo"
+                                objectName: "settingsRollBackImport"
+                                visible: dialog.importer !== null && dialog.importer.canRollBack
+                                text: qsTr("Roll back the last import…")
+                                onClicked: dialog.legacyRollBackRequested()
+                            }
+                        }
+                        SettingNote {
+                            objectName: "settingsLegacyNotFound"
+                            visible: dialog.legacyNotFound.length > 0
+                            text: dialog.legacyNotFound
+                        }
+                        SettingsRow {
+                            iconRole: "hotkeys"
+                            text: qsTr("Script hotkeys")
+                            IconTextButton {
+                                objectName: "hotkeyImportLegacy"
+                                iconRole: "import"
+                                text: qsTr("Import legacy hotkeys…")
+                                enabled: dialog.hotkeys !== null && !dialog.hotkeys.optionsModified
+                                tip: enabled ? qsTr("The script hotkeys of a legacy Hotkeys.txt, added at once")
+                                             : qsTr("Press Apply or Cancel first: the import is added at once")
+                                onClicked: legacyHotkeysFile.open()
                             }
                         }
                     }
@@ -1129,11 +1179,11 @@ DialogWindow {
                         ruled: false
                         SettingsRow {
                             iconRole: "styles"
-                            text: qsTr("Catalog")
+                            text: qsTr("Catalogue")
                             SettingChoice {
                                 setting: "convert.styleCatalog"
                                 model: dialog.catalogs
-                                Accessible.name: qsTr("Catalog")
+                                Accessible.name: qsTr("Catalogue")
                                 onChosen: index => dialog.chooseCatalog(index)
                             }
                         }
@@ -1311,15 +1361,6 @@ DialogWindow {
                                     x: 8
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
-                            }
-                            IconTextButton {
-                                objectName: "hotkeyImportLegacy"
-                                iconRole: "import"
-                                text: qsTr("Import legacy hotkeys…")
-                                enabled: dialog.hotkeys !== null && !dialog.hotkeys.optionsModified
-                                tip: enabled ? qsTr("The script hotkeys of a legacy Hotkeys.txt, added at once")
-                                             : qsTr("Press Apply or Cancel first: the import is added at once")
-                                onClicked: legacyHotkeysFile.open()
                             }
                         }
                         ListView {
@@ -1596,6 +1637,8 @@ DialogWindow {
                             text: qsTr("Include the file name")
                             Layout.leftMargin: 22
                         }
+                        SettingCheck { setting: "privacy.starPrompt"; text: qsTr("Suggest starring HikariSub on GitHub") }
+                        SettingNote { text: qsTr("At most twice, after you have used HikariSub on several days. The counts stay on this computer.") }
                     }
                 }
             }

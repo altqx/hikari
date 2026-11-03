@@ -65,10 +65,11 @@ std::expected<void, CommandRefusal> setFpsFromVideo(EditSession &session, std::i
 std::expected<void, CommandRefusal> setNewFps(EditSession &session, double oldFps, double newFps);
 
 // A stable sort of every Line or of the selected Lines (hidden ones too) among their own rows.
-// Ties go by End for Start, by Start otherwise. The selection stays on the same rows. An order
-// that does not change adds no step.
-enum class SortKey { Start, End, Style, Actor, Effect, Layer };
-// Locale collation for Style, Actor and Effect (<0, 0, >0); bytes when empty.
+// Ties go by End for Start, by Start for Style, Actor, Effect and Layer, and keep their order for
+// the text keys. TextWithoutTags compares the text without its {} blocks. The selection stays on
+// the same rows. An order that does not change adds no step.
+enum class SortKey { Start, End, Style, Actor, Effect, Layer, Text, TextWithoutTags };
+// Locale collation for Style, Actor, Effect and the text keys (<0, 0, >0); bytes when empty.
 using TextCompare = std::function<int(std::u8string_view, std::u8string_view)>;
 std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key, bool selectedOnly,
                                               const TextCompare &compare = {});

@@ -478,7 +478,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     for (const auto &w : mainWindows)
         classic = classic || w.toObject().value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic");
     if (!classic)
-        return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no Classic arrangement"));
+        return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no “Classic” arrangement"));
     // KDDockWidgets makes a window, group or layout item per entry: cap them at what our panels can fill.
     const QJsonArray floatingWindows = payload.value(QStringLiteral("floatingWindows")).toArray();
     const qsizetype panels = panelIds().size();

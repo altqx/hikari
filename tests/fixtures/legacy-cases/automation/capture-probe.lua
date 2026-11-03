@@ -194,7 +194,8 @@ local function dump_document(subs)
         if l.class == "dialogue" then
             events[#events + 1] = { comment = l.comment, layer = l.layer, start_time = l.start_time,
                 end_time = l.end_time, style = l.style, actor = l.actor, margin_l = l.margin_l,
-                margin_r = l.margin_r, margin_t = l.margin_t, effect = l.effect, text = l.text }
+                margin_r = l.margin_r, margin_t = l.margin_t, effect = l.effect, text = l.text,
+                extra = type(l.extra) == "table" and next(l.extra) ~= nil and l.extra or nil }
         elseif l.class == "style" then
             header[#header + 1] = "style " .. tostring(l.name)
         elseif l.class == "info" then
@@ -225,6 +226,8 @@ local function answer_dialog(run, record)
                 if class == "edit" or class == "textbox" then v = c.text or c.value or ""
                 elseif class == "checkbox" then v = c.value and true or false
                 elseif class == "intedit" or class == "floatedit" then v = tonumber(c.value) or 0
+                elseif class == "color" and not c.value then v = "#000000"
+                elseif class == "coloralpha" and not c.value then v = "#00000000"
                 else v = c.value or c.text or "" end
                 values[c.name] = v
             end

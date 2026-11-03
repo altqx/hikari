@@ -1,0 +1,6 @@
+#include "hikari/plugins/manifest.h"
+
+std::string_view hikari::plugins::manifestSchema()
+{
+    return R"hikari-schema(@HIKARI_PLUGIN_SCHEMA@)hikari-schema";
+}

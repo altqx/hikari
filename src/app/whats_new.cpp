@@ -455,6 +455,7 @@ void WhatsNew::start()
     const QJsonObject cache = readCache();
     const QString lastRun = cache.value(QStringLiteral("installed")).toString();
     const QString lastSince = cache.value(QStringLiteral("since")).toString();
+    m_updated = !lastRun.isEmpty() && lastRun != installed;
     m_since = qs(a::whatsNewSince(lastRun.toStdString(), lastSince.toStdString(), installed.toStdString()));
     m_known = loadCache(cache);
     if (lastRun != installed || lastSince != m_since)

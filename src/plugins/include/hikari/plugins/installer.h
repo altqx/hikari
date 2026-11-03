@@ -1,0 +1,65 @@
+#pragma once
+
+#include "hikari/plugins/package.h"
+#include "hikari/plugins/registry.h"
+
+#include <filesystem>
+#include <span>
+
+namespace hikari::plugins {
+
+struct PluginFolders {
+    std::filesystem::path plugins;  // <user folder>/plugins, one folder per id
+    std::filesystem::path data;     // <user folder>/plugin-data, kept across updates
+    std::filesystem::path cache;    // <cache>/plugins, cleared on every install
+    std::filesystem::path registry; // <user folder>/plugins.json
+};
+
+enum class Change { Install, Update, Reinstall, Downgrade };
+
+struct InstallRefusal {
+    enum class Kind { Package, Signature, SignedWithoutKey, Registry };
+    Kind kind = Kind::Package;
+    PackageProblem package;
+    minisign::Refusal signature = minisign::Refusal::Malformed;
+    std::string detail;
+};
+
+struct InstallReview {
+    Package package;
+    Change change = Change::Install;
+    std::string installedVersion;
+    std::optional<minisign::PublicKey> signer;
+    std::optional<minisign::PublicKey> pinned;
+    // Signed by another key than the pinned one, or unsigned over a signed install.
+    bool needsRetrust = false;
+};
+
+class Installer {
+public:
+    Installer(PluginFolders folders, std::int64_t apiVersion);
+
+    const PluginFolders &folders() const { return m_folders; }
+    std::expected<Registry, std::string> registry() const;
+
+    // What installing would do; writes nothing. `packageBytes` is the .hikariplugin file as
+    // signed, `files` its unpacked entries, `signature` the text of the .minisig beside it.
+    // A signature is checked against the pinned key, else the manifest's publicKey; one that
+    // does not verify is refused outright.
+    std::expected<InstallReview, InstallRefusal> review(std::span<const std::byte> packageBytes,
+                                                        std::vector<PackageFile> files,
+                                                        std::optional<std::string_view> signature) const;
+
+    // Stages the files and swaps them in; pins the signer, keeps the enabled state and the
+    // grants the manifest still asks for, keeps plugin data and clears the cache. A review
+    // that needs re-trust is refused unless `retrusted`.
+    std::expected<void, std::string> install(const InstallReview &review, bool retrusted);
+    std::expected<void, std::string> setEnabled(std::string_view id, bool enabled);
+    std::expected<void, std::string> uninstall(std::string_view id, bool removeData);
+
+private:
+    PluginFolders m_folders;
+    std::int64_t m_apiVersion;
+};
+
+}
