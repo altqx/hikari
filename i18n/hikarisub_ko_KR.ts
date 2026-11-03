@@ -14417,6 +14417,14 @@ Styles deleted:
         <source>Save</source>
         <translation>저장</translation>
     </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>프레임 안에서 시간 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Times were not centred within frames: no video is open</source>
+        <translation>열린 영상이 없어 시간을 프레임 안에서 가운데 맞추지 않았습니다</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>

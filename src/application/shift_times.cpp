@@ -1,5 +1,7 @@
 #include "hikari/application/shift_times.h"
 
+#include "hikari/application/center_times.h"
+
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
@@ -124,6 +126,29 @@ struct Shifted {
     unsigned rules = 0;
 };
 
+std::pair<int, int> frameOffsets(const LegacyTimebase &timebase, int start, int end)
+{
+    return {timebase.msAt(timebase.frameAt(start)) - start, timebase.msAt(timebase.frameAt(end)) - end};
+}
+
+void centerShifted(Shifted &l, const LegacyTimebase &timebase, int whichTimes, bool tagTimes)
+{
+    const int start = whichTimes != 2 ? centeredTime(timebase, l.start) : l.start;
+    const int end = whichTimes != 1 ? centeredTime(timebase, l.end) : l.end;
+    if (start == l.start && end == l.end)
+        return;
+    if (tagTimes) {
+        const auto before = frameOffsets(timebase, l.start, l.end);
+        const auto after = frameOffsets(timebase, start, end);
+        const auto text = legacy::changeTagTimes(l.text, after.first - before.first, after.second - before.second);
+        l.textChanged = l.textChanged || text != l.text;
+        l.text = text;
+    }
+    l.start = start;
+    l.end = end;
+    l.marked = true;
+}
+
 }
 
 std::expected<ShiftPlan, ShiftFailure> planShift(const EditSession &session, const ShiftTimesSettings &s,
@@ -207,7 +232,7 @@ std::expected<ShiftPlan, ShiftFailure> planShift(const EditSession &session, con
     auto startEndDelay = [&](int start, int end) {
         if (timebase.empty())
             return std::pair{0, 0};
-        return std::pair{timebase.msAt(timebase.frameAt(start)) - start, timebase.msAt(timebase.frameAt(end)) - end};
+        return frameOffsets(timebase, start, end);
     };
     std::vector<Shifted> shifted;
     for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -286,6 +311,13 @@ std::expected<ShiftPlan, ShiftFailure> planShift(const EditSession &session, con
                 }
             }
         }
+    }
+    if (s.centerTimes && !pp) {
+        if (!exact)
+            outcome.centeringSkipped = true;
+        else
+            for (auto &l : shifted)
+                centerShifted(l, timebase, whichTimes, s.tagTimes);
     }
     if (pp > 16) {
         std::vector<Shifted *> order;
