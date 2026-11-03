@@ -29,14 +29,20 @@ const part: Schema = {
             ["type", "callId", "content"]),
     ],
 };
-const usage = object({ inputTokens: integer, outputTokens: integer, cachedInputTokens: integer, reportedCost: number },
-    ["inputTokens", "outputTokens", "cachedInputTokens"]);
+const usage = object({
+    inputTokens: integer, outputTokens: integer, cachedInputTokens: integer, cacheWriteTokens: integer,
+    cacheWriteHourTokens: integer, reportedCost: number,
+}, ["inputTokens", "outputTokens", "cachedInputTokens", "cacheWriteTokens", "cacheWriteHourTokens"]);
 
 export const kRequestSchema = object({
     model: string,
     system: string,
     messages: { type: "array", items: object({ author: { type: "string", enum: ["user", "assistant"] }, parts: { type: "array", items: part } }) },
     tools: { type: "array", items: object({ name: string, description: string, parametersJson: string }) },
+    context: string,
+    cacheKey: string,
+    cacheLifetime: { type: "string", enum: ["minutes", "hour"] },
+    explicitCache: boolean,
     maxOutputTokens: integer,
 }, ["model", "messages"]);
 
@@ -50,6 +56,7 @@ export const kSchemas = {
     completeParams: object({ stream: integer, providerId: string, key: string, request: kRequestSchema },
         ["stream", "providerId", "request"]),
     modelsListParams: object({ providerId: string, key: string }, ["providerId"]),
+    conversationEndParams: object({ providerId: string, key: string, cacheKey: string }, ["providerId", "cacheKey"]),
     finished: object({
         reason: { type: "string", enum: ["end", "toolUse", "maxTokens", "refused"] },
         text: string,
@@ -75,7 +82,8 @@ export const kSchemas = {
                 id: string,
                 name: string,
                 capabilities: object({ tools: boolean, vision: boolean, video: boolean }),
-                price: object({ input: number, output: number, cachedInput: number }, ["input", "output"]),
+                price: object({ input: number, output: number, cachedInput: number, cacheWrite: number, cacheWriteHour: number },
+                    ["input", "output"]),
                 contextTokens: integer,
             }, ["id", "name"]),
         },

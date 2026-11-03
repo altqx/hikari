@@ -170,7 +170,7 @@ int main(int argc, char **argv)
             received.push(Json::object({{"method", name}, {"params", arg}}));
         if (name == "received") {
             respond(*id, received);
-        } else if (name == "_hikari/providers.set") {
+        } else if (name == "_hikari/providers.set" || name == "_hikari/conversation.end") {
             respond(*id, nullptr);
         } else if (name == "_hikari/complete") {
             const Json *request = arg.find("request");
@@ -191,7 +191,8 @@ int main(int argc, char **argv)
                                                             {"update", Json::object({{"kind", "text"}, {"text", "Hi"}})}})}}));
                 respond(*id, Json::object({{"reason", "end"}, {"text", "Hi"}, {"toolCalls", Json::array()},
                                            {"usage", Json::object({{"inputTokens", 3}, {"outputTokens", 1},
-                                                                   {"cachedInputTokens", 0}})}}));
+                                                                   {"cachedInputTokens", 0}, {"cacheWriteTokens", 2},
+                                                                   {"cacheWriteHourTokens", 1}})}}));
             }
         } else if (name == "_hikari/models.list") {
             respond(*id, Json::object({{"models", Json::array({Json::object({{"id", "b/model"}, {"name", "B"}})})}}));

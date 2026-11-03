@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
+import { prefixTexts, sortedTools, usage } from "./cache";
 import { geminiModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
@@ -91,6 +92,23 @@ function tapped(fetchFn: typeof fetch, seen: (event: Json) => void): typeof fetc
     return wrapped as typeof fetch;
 }
 
+/** The system prompt and context as `systemInstruction`, then the tools by name: Gemini's cacheable prefix. */
+function prefix(request: Request): Json {
+    const texts = prefixTexts(request);
+    const tools = sortedTools(request).map((t) => ({
+        name: t.name, description: t.description, parametersJsonSchema: schemaObject(t.parametersJson),
+    }));
+    return {
+        ...(texts.length ? { systemInstruction: { parts: texts.map((text) => ({ text })) } } : {}),
+        ...(tools.length ? { tools: [{ functionDeclarations: tools }] } : {}),
+    };
+}
+
+function failure(error: unknown): unknown {
+    const status = statusOf(error);
+    return status === undefined ? error : new ProviderError(kindOfStatus(status), messageInside((error as Error).message), status);
+}
+
 export function geminiClient({ config, key, fetch }: ClientOptions): Client {
     let finishMessage = "";
     // @google/genai drops a candidate's finishMessage, so it is read from the raw stream.
@@ -109,14 +127,27 @@ export function geminiClient({ config, key, fetch }: ClientOptions): Client {
             const pager = await ai.models.list({ config: { pageSize: 1000, abortSignal: signal } });
             return geminiModels(pager.page as unknown[]);
         },
-        async complete(request, out, signal) {
-            const tools = request.tools?.length
-                ? [{
-                    functionDeclarations: request.tools.map((t) => ({
-                        name: t.name, description: t.description, parametersJsonSchema: schemaObject(t.parametersJson),
-                    })),
-                }]
-                : undefined;
+        async createCache(request, ttlSeconds, signal) {
+            try {
+                const cache = await ai.caches.create({
+                    model: request.model,
+                    config: { abortSignal: signal, ttl: `${ttlSeconds}s`, ...prefix(request) } as never,
+                });
+                if (!cache.name)
+                    throw new ProviderError("malformed", "the provider made a cache without a name");
+                return cache.name;
+            } catch (error) {
+                throw failure(error);
+            }
+        },
+        async deleteCache(name, signal) {
+            try {
+                await ai.caches.delete({ name, config: { abortSignal: signal } });
+            } catch (error) {
+                throw failure(error);
+            }
+        },
+        async complete(request, out, signal, cache) {
             let stop: StopReason | undefined;
             try {
                 const stream = await ai.models.generateContentStream({
@@ -124,19 +155,17 @@ export function geminiClient({ config, key, fetch }: ClientOptions): Client {
                     contents: contents(request) as never,
                     config: {
                         abortSignal: signal,
-                        ...(request.system ? { systemInstruction: { parts: [{ text: request.system }] } } : {}),
-                        ...(tools ? { tools: tools as never } : {}),
+                        ...(cache ? { cachedContent: cache } : prefix(request) as never),
                         ...(request.maxOutputTokens !== undefined ? { maxOutputTokens: request.maxOutputTokens } : {}),
                     },
                 });
                 for await (const chunk of stream as AsyncIterable<Json>) {
                     const u = chunk.usageMetadata as Json | undefined;
                     if (u && Object.keys(u).length) {
-                        out.usage = {
-                            inputTokens: Number(u.promptTokenCount ?? 0) + Number(u.toolUsePromptTokenCount ?? 0),
-                            outputTokens: Number(u.candidatesTokenCount ?? 0) + Number(u.thoughtsTokenCount ?? 0),
-                            cachedInputTokens: Number(u.cachedContentTokenCount ?? 0),
-                        };
+                        out.usage = usage(
+                            Number(u.promptTokenCount ?? 0) + Number(u.toolUsePromptTokenCount ?? 0),
+                            Number(u.candidatesTokenCount ?? 0) + Number(u.thoughtsTokenCount ?? 0),
+                            { cachedInputTokens: Number(u.cachedContentTokenCount ?? 0) });
                     }
                     if ((chunk.promptFeedback as Json | undefined)?.blockReason)
                         return "refused";
@@ -172,10 +201,7 @@ export function geminiClient({ config, key, fetch }: ClientOptions): Client {
                         stop = out.callCount > 0 ? "toolUse" : "end";
                 }
             } catch (error) {
-                const status = statusOf(error);
-                if (status !== undefined)
-                    throw new ProviderError(kindOfStatus(status), messageInside((error as Error).message));
-                throw error;
+                throw failure(error);
             }
             if (!stop)
                 throw new ProviderError("malformed", "the stream ended before the response finished");

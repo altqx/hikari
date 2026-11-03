@@ -35,6 +35,10 @@ export function catalogueModels(data: unknown[]): Model[] {
             const price: Price = { input: perMillion("prompt"), output: perMillion("completion") };
             if ("input_cache_read" in pricing)
                 price.cachedInput = perMillion("input_cache_read");
+            if ("input_cache_write" in pricing)
+                price.cacheWrite = perMillion("input_cache_write");
+            if ("input_cache_write_1h" in pricing)
+                price.cacheWriteHour = perMillion("input_cache_write_1h");
             model.price = price;
         }
         models.push(model);

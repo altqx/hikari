@@ -215,7 +215,8 @@ TEST_F(AiRequestsTest, RequestsCarryTheRolesModelAndTheKeyAndStreamTheAnswer)
     const auto &finished = std::get<app::Finished>(run.events[1]);
     EXPECT_EQ(finished.reason, app::StopReason::End);
     EXPECT_EQ(finished.text, "Hi");
-    EXPECT_EQ(finished.usage, (app::Usage{.inputTokens = 3, .outputTokens = 1}));
+    EXPECT_EQ(finished.usage,
+              (app::Usage{.inputTokens = 3, .outputTokens = 1, .cacheWriteTokens = 2, .cacheWriteHourTokens = 1}));
 
     const Json sent = received();
     ASSERT_EQ(sent.asArray().size(), 2u);
@@ -297,4 +298,21 @@ TEST_F(AiRequestsTest, RefreshingTheCatalogueKeepsTheUsersCorrections)
     const Json list = received().asArray().back();
     EXPECT_EQ(list, Json::object({{"method", "_hikari/models.list"},
                                   {"params", Json::object({{"providerId", "or"}, {"key", kKey}})}}));
+}
+
+TEST_F(AiRequestsTest, EndingAConversationAsksTheSidecarToDropItsCache)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    requests.endConversation("nobody", "thread-1");
+    requests.endConversation("or", "");
+    EXPECT_EQ(hostsAskedFor, 0);
+    requests.endConversation("or", "thread-1");
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 2u);
+    EXPECT_EQ(sent.asArray()[1], Json::object({{"method", "_hikari/conversation.end"},
+                                               {"params", Json::object({{"providerId", "or"},
+                                                                        {"key", kKey},
+                                                                        {"cacheKey", "thread-1"}})}}));
 }

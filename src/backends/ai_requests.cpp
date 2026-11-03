@@ -52,6 +52,8 @@ app::Usage usageOf(const Json &usage)
     return {.inputTokens = intAt(usage, "inputTokens"),
             .outputTokens = intAt(usage, "outputTokens"),
             .cachedInputTokens = intAt(usage, "cachedInputTokens"),
+            .cacheWriteTokens = intAt(usage, "cacheWriteTokens"),
+            .cacheWriteHourTokens = intAt(usage, "cacheWriteHourTokens"),
             .reportedCost = numberAt(usage, "reportedCost")};
 }
 
@@ -92,7 +94,9 @@ std::vector<app::Model> modelsOf(const Json &result)
         if (const Json *price = m.find("price"); price && price->isObject())
             model.price = app::Price{.input = numberAt(*price, "input").value_or(0),
                                      .output = numberAt(*price, "output").value_or(0),
-                                     .cachedInput = numberAt(*price, "cachedInput")};
+                                     .cachedInput = numberAt(*price, "cachedInput"),
+                                     .cacheWrite = numberAt(*price, "cacheWrite"),
+                                     .cacheWriteHour = numberAt(*price, "cacheWriteHour")};
         if (m.find("contextTokens"))
             model.contextTokens = intAt(m, "contextTokens");
         models.push_back(std::move(model));
@@ -241,6 +245,21 @@ void AiRequests::refreshModels(const std::string &providerId, std::function<void
                           else
                               done(std::nullopt);
                       });
+    });
+}
+
+void AiRequests::endConversation(const std::string &providerId, const std::string &cacheKey)
+{
+    if (!m_providers.config().provider(providerId) || cacheKey.empty())
+        return;
+    m_providers.readKey(providerId, [this, alive = std::weak_ptr(m_alive), providerId,
+                                     cacheKey](std::optional<std::string> key) {
+        if (!alive.lock() || !key)
+            return;
+        if (AiSidecarHost *host = connect())
+            host->request("_hikari/conversation.end",
+                          Json::object({{"providerId", providerId}, {"key", std::move(*key)}, {"cacheKey", cacheKey}}),
+                          [](SidecarResult) {});
     });
 }
 
