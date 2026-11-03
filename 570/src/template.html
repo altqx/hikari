@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perspective Tracking Mockup</title>
+<style>
+:root {
+  --page: #f3f4f6; --page-ink: #1d232b; --page-muted: #56606b; --page-line: #d5dade; --page-card: #ffffff;
+  --mark-new: #23905a; --mark-ren: #c27d00;
+  font-family: "Segoe UI", "Noto Sans", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page: #12161b; --page-ink: #e6ebf0; --page-muted: #9aa6b2; --page-line: #2c343d; --page-card: #1a1f25; }
+}
+:root[data-theme="dark"] { --page: #12161b; --page-ink: #e6ebf0; --page-muted: #9aa6b2; --page-line: #2c343d; --page-card: #1a1f25; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--page-ink); font-size: 14px; line-height: 1.45; }
+header.top { padding: 20px 24px 8px; max-width: 1700px; }
+h1 { font-size: 22px; margin: 0 0 6px; }
+.intro { color: var(--page-muted); max-width: 1100px; margin: 0 0 10px; }
+.controls { display: flex; gap: 16px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+.legend { color: var(--page-muted); font-size: 13px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.dot.new { background: var(--mark-new); }
+section.sec { margin: 18px 24px; padding: 16px 18px 18px; background: var(--page-card); border: 1px solid var(--page-line); border-radius: 8px; max-width: 2860px; }
+section.sec h2 { font-size: 18px; margin: 0 0 4px; }
+.meta { color: var(--page-muted); font-size: 13px; margin: 0 0 12px; max-width: 1200px; }
+.board { display: grid; grid-template-columns: 110px repeat(3, max-content); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.rowlabel { font-size: 12px; font-weight: 600; color: var(--page-muted); align-self: start; padding-top: 18px; }
+.colhead { font-size: 12px; font-weight: 600; color: var(--page-muted); padding-left: 4px; }
+.cell { background: var(--bg); padding: 16px 18px 18px 22px; border-radius: 6px; display: flex; flex-direction: column; align-items: flex-start; min-width: 280px; color: var(--text); font-size: 13px; }
+.cap { font-size: 11px; color: var(--muted); margin: 0 0 3px 2px; font-weight: 600; }
+.details { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px 28px; margin-top: 14px; max-width: 1500px; }
+.details h3 { font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: .04em; color: var(--page-muted); }
+.details ul { margin: 0; padding-left: 20px; } .details li { margin: 2px 0; }
+.recs .num { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: 4px; }
+code { font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace; font-size: 12px; }
+
+.t-light { --bg: #E5E9EC; --panel: #F9FAFB; --raised: #EDF0F3; --field: #FFFFFF; --text: #202832; --muted: #526170; --line: #AAB5BE; --control: #76828D; --accent: #145C4C; --on: #FFFFFF; --select: #D6EBE4; --dis: #74808B; --danger: #A51F31; --warning: #8A5A00; --success: #008000; --shadow: #AAB5BE; }
+.t-dark { --bg: #171B20; --panel: #20262D; --raised: #29313A; --field: #171D24; --text: #E8EDF2; --muted: #A5B1BD; --line: #414B57; --control: #7A8691; --accent: #9CDBC9; --on: #102C24; --select: #304C47; --dis: #75818D; --danger: #FFADAD; --warning: #E0A030; --success: #4DBA4D; --shadow: #000000; }
+.t-hcb { --bg: #000000; --panel: #080808; --raised: #151515; --field: #000000; --text: #FFFFFF; --muted: #EEEEEE; --line: #FFFFFF; --control: #FFFFFF; --accent: #FFFF00; --on: #000000; --select: #253F60; --dis: #8C8C8C; --danger: #FFADAD; --warning: #FFD54A; --success: #7CFC7C; --shadow: #000000; }
+.t-hcw { --bg: #FFFFFF; --panel: #FFFFFF; --raised: #EBEBEB; --field: #FFFFFF; --text: #000000; --muted: #1A1A1A; --line: #000000; --control: #000000; --accent: #0037B3; --on: #FFFFFF; --select: #C9DAF8; --dis: #6E6E6E; --danger: #A00000; --warning: #6B4500; --success: #005A00; --shadow: #000000; }
+
+.ico { display: inline-flex; width: 16px; height: 16px; flex: none; }
+.ico svg { width: 100%; height: 100%; display: block; }
+.ico.s14 { width: 14px; height: 14px; } .ico.s12 { width: 12px; height: 12px; } .ico.s32 { width: 32px; height: 32px; } .ico.s40 { width: 40px; height: 40px; }
+
+/* menus */
+.menu { position: relative; background: var(--field); border: 1px solid var(--line); box-shadow: 1px 1px 0 color-mix(in srgb, var(--shadow) 20%, transparent); padding: 2px 0; min-width: 210px; color: var(--text); font-size: 13px; }
+.menu.sub { margin-left: -4px; }
+.mi { position: relative; display: flex; align-items: center; height: 24px; padding: 0 6px; white-space: nowrap; }
+.mi .chk { width: 14px; height: 14px; flex: none; margin-right: 6px; display: inline-flex; }
+.mi .ic { width: 16px; height: 16px; flex: none; margin-right: 6px; display: inline-flex; }
+.mi .ic svg { width: 16px; height: 16px; display: block; }
+.mi .lbl { flex: 1 1 auto; padding-right: 8px; }
+.mi .suffix { color: var(--muted); padding-left: 18px; }
+.mi .keys { color: var(--muted); padding-left: 24px; }
+.mi .arrow { width: 14px; flex: none; text-align: right; }
+.mi.hl { background: var(--accent); color: var(--on); }
+.mi.hl .keys, .mi.hl .suffix { color: var(--on); }
+.mi.dis { color: var(--dis); }
+.mi.dis .suffix { color: var(--dis); }
+.mi.hint { height: auto; padding: 0 6px 4px 46px; color: var(--dis); font-size: 11px; margin-top: -3px; white-space: normal; max-width: 280px; }
+.sep { height: 1px; background: var(--line); margin: 3px 0; }
+.mbox { width: 14px; height: 14px; border: 1px solid var(--line); background: var(--field); display: inline-flex; align-items: center; justify-content: center; }
+.mbox svg { width: 10px; height: 10px; }
+.mi.hl .mbox { border-color: var(--on); background: transparent; }
+.mark { position: absolute; left: -15px; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--mark-new); }
+.anno { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--mark-new); }
+
+/* DG1 window */
+.win { background: var(--panel); border: 1px solid var(--line); box-shadow: 2px 3px 0 color-mix(in srgb, var(--shadow) 25%, transparent); color: var(--text); display: flex; flex-direction: column; }
+.wtitle { height: 32px; display: flex; align-items: center; padding-left: 12px; font-size: 13px; flex: none; }
+.wtitle .x { margin-left: auto; width: 46px; height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+.t-hcb .wtitle, .t-hcw .wtitle { border-bottom: 1px solid var(--line); }
+.wbody { padding: 12px 24px 0; flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.wfoot { display: flex; gap: 8px; padding: 24px; align-items: center; flex: none; }
+.wfoot .grow { flex: 1; }
+
+/* controls */
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border: 1px solid var(--control); background: var(--raised); color: var(--text); font-size: 13px; white-space: nowrap; border-radius: 2px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on); font-weight: 600; }
+.btn.danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn.dis { color: var(--dis); border-color: var(--line); }
+.btn.ring { outline: 1px solid var(--text); outline-offset: 1px; }
+.ibtn { display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 2px; }
+.ibtn.hov { background: var(--raised); border-color: var(--control); }
+.ibtn.on { background: var(--select); border-color: var(--accent); }
+.fld { display: inline-flex; align-items: center; height: 26px; padding: 0 6px; border: 1px solid var(--control); background: var(--field); color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; }
+.fld.focus { border-color: var(--accent); }
+.fld .ph { color: var(--muted); }
+.fld .unit { color: var(--muted); margin-left: auto; padding-left: 6px; }
+.fld.num { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.area { border: 1px solid var(--control); background: var(--field); padding: 4px 6px; height: 58px; line-height: 1.35; overflow: hidden; }
+.combo { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; height: 26px; padding: 0 6px 0 8px; border: 1px solid var(--control); background: var(--raised); white-space: nowrap; }
+.cb { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.box { width: 15px; height: 15px; border: 1px solid var(--control); background: var(--field); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.box.on { background: var(--accent); border-color: var(--accent); color: var(--on); }
+.box svg { width: 11px; height: 11px; }
+.radio { width: 15px; height: 15px; border: 1px solid var(--control); border-radius: 50%; background: var(--field); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.radio.on::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--control); }
+.seg span { padding: 3px 12px; border-right: 1px solid var(--control); background: var(--raised); }
+.seg span:last-child { border-right: 0; }
+.seg span.on { background: var(--select); box-shadow: inset 0 -2px 0 var(--accent); }
+.swatch { width: 26px; height: 26px; border: 1px solid var(--control); padding: 3px; background: var(--field); display: inline-flex; }
+.swatch i { flex: 1; display: block; }
+.slider { position: relative; height: 18px; display: flex; align-items: center; }
+.slider .groove { height: 4px; width: 100%; background: var(--raised); border: 1px solid var(--control); }
+.slider .fill { position: absolute; left: 0; height: 4px; background: var(--accent); }
+.slider .handle { position: absolute; width: 12px; height: 16px; background: var(--raised); border: 1px solid var(--control); border-radius: 2px; }
+.prog { height: 6px; background: var(--raised); border: 1px solid var(--line); position: relative; }
+.prog i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+.tabs { display: flex; border-bottom: 1px solid var(--line); gap: 2px; }
+.tabs span { padding: 4px 10px 5px; color: var(--muted); }
+.tabs span.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.link { color: var(--accent); text-decoration: underline; }
+.h { font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.mono { font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace; font-size: 12px; }
+.hr { height: 1px; background: var(--line); align-self: stretch; }
+.lst { border: 1px solid var(--line); background: var(--field); }
+.lr { position: relative; display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 0 8px; }
+.lr.sel { background: var(--select); }
+.lr.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.tip { position: absolute; background: var(--field); color: var(--text); border: 1px solid var(--line); padding: 3px 7px; font-size: 12px; white-space: nowrap; box-shadow: 1px 1px 0 color-mix(in srgb, var(--shadow) 25%, transparent); z-index: 3; }
+.row { display: flex; align-items: center; gap: 8px; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.grid2 { display: grid; grid-template-columns: max-content 1fr; gap: 8px 10px; align-items: center; }
+.kind { font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
+
+/* docks */
+.dockarea { position: relative; display: flex; flex-direction: column; }
+.dock { border: 1px solid var(--line); background: var(--panel); position: relative; display: flex; flex-direction: column; }
+.dhead { height: 35px; background: var(--field); border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 6px 0 10px; font-size: 13px; position: relative; flex: none; }
+.dhead.tabs2 { background: var(--raised); padding: 0; }
+.dtab { height: 34px; display: flex; align-items: center; padding: 0 12px; border-right: 1px solid var(--line); gap: 6px; color: var(--muted); }
+.dtab.sel { background: var(--field); color: var(--text); }
+.dhead .menub { margin-left: auto; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.dhead.tabs2 .menub { margin-right: 6px; }
+.focusmark { position: absolute; right: 0; top: 0; width: 0; height: 0; border-top: 8px solid var(--accent); border-left: 8px solid transparent; }
+.dbody { padding: 4px; flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.strip { display: flex; align-items: center; gap: 2px; }
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; color: var(--muted); padding: 16px; }
+.ghost { opacity: .55; }
+
+/* manager */
+.mgr { display: grid; grid-template-columns: 240px 1fr; gap: 0; border: 1px solid var(--line); background: var(--field); min-height: 0; flex: 1; }
+.mgr .side { border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+.mgr .side .search { padding: 6px; border-bottom: 1px solid var(--line); }
+.prow { position: relative; display: grid; grid-template-columns: 32px 1fr auto; gap: 8px; align-items: center; padding: 7px 8px 7px 10px; }
+.prow.sel { background: var(--select); }
+.prow.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.picon { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--raised); border-radius: 4px; }
+.picon.big { width: 48px; height: 48px; }
+.pname { font-size: 13px; }
+.psub { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; }
+.pstate { font-size: 11px; color: var(--muted); }
+.det { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; background: var(--panel); }
+.dsec .dh { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.perm { display: grid; grid-template-columns: 18px 1fr; gap: 2px 6px; }
+.perm .why { grid-column: 2; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.err { border: 1px solid var(--danger); padding: 8px 10px; display: flex; gap: 8px; }
+.err .mono { color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 6px; border: 1px solid var(--line); background: var(--raised); }
+.chip.warn { border-color: var(--warning); color: var(--warning); background: transparent; }
+canvas, .cv { display: block; }
+body.single section.sec { display: none; }
+body.single section.sec.shown { display: block; max-width: none; width: max-content; }
+body.single header.top, body.single #questions { display: none; }
+@media (max-width: 700px) {
+  header.top { padding: 16px; }
+  section.sec { margin: 12px 16px; padding: 12px; }
+  .board { grid-template-columns: repeat(3, max-content); }
+  .rowlabel { display: none; }
+}
+
+.datafld { border: 1px solid var(--control); background: var(--field); padding: 6px 8px; width: 400px; height: 236px; overflow: hidden; white-space: pre; font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace; font-size: 11.5px; line-height: 1.4; color: var(--text); }
+.datafld.focus { border-color: var(--accent); }
+.status { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; width: 400px; min-height: 34px; }
+.status.ok { color: var(--text); } .status.bad { color: var(--danger); } .status.warn { color: var(--warning); } .status.idle { color: var(--muted); }
+.gridtbl { border: 1px solid var(--line); background: var(--field); font-size: 12px; }
+.gridtbl .gr { display: grid; grid-template-columns: 34px 78px 78px 460px; min-height: 24px; align-items: center; border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+.gridtbl .gr > span { padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gridtbl .gh { color: var(--muted); font-weight: 600; background: var(--raised); }
+.gridtbl .gr.sel { background: var(--select); box-shadow: inset 3px 0 0 var(--accent); }
+.num { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>FA13: Perspective tracking from Power-Pin data (design gate)</h1>
+  <p class="intro">FA13 <a href="https://github.com/altqx/hikari/issues/570">#570</a>, the native counterpart of arch1t3cht's Aegisub Perspective-Motion 0.4.1. Each section draws one surface in Light, Dark and high contrast, with the app's theme roles and the icons from <code>src/ui/icons</code>. It adds no new icons. The data and the result lines are the third-party corpus run of the script (<code>tests/fixtures/automation-thirdparty</code>), which the native version must match. Green dots mark what is new. Answer the questions and the numbered recommendations with “yes” or a change.</p>
+  <div class="controls"><label>High contrast <select id="hc"><option value="hcb">Black</option><option value="hcw">White</option></select></label>
+  <span class="legend"><span class="dot new"></span> new</span></div>
+</header>
+<div id="main"></div>
+<script>
+const ICONS = /*ICONS*/;
+/*SPEC*/
+const CHECK_SVG = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 5.2l2.3 2.3 4.7-5"/></svg>';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function icon(role, state, size) {
+  const svg = ICONS[role] || "";
+  const acc = state === "dis" ? "var(--dis)" : state === "hl" ? "var(--on)" : state === "danger" ? "var(--danger)" : state === "warning" ? "var(--warning)" : "var(--accent)";
+  const base = state === "dis" ? "var(--dis)" : state === "hl" ? "var(--on)" : state === "muted" ? "var(--muted)" : state === "danger" ? "var(--danger)" : state === "warning" ? "var(--warning)" : "var(--text)";
+  const body = svg.replace("<svg ", `<svg style="color:${base}" `).replace('<g id="accent">', `<g style="color:${acc}" stroke="currentColor">`);
+  return `<span class="ico${size ? " s" + size : ""}">${body}</span>`;
+}
+
+function mrow(it, depth = 0) {
+  if (it.sep) return '<div class="sep"></div>';
+  const state = it.dis ? "dis" : it.hl ? "hl" : "";
+  const chk = it.chk ? `<span class="mbox">${it.on ? CHECK_SVG : ""}</span>` : "";
+  const mark = it.mark && !depth ? '<span class="mark"></span>' : "";
+  let html = `<div class="mi ${state}">${mark}<span class="chk">${chk}</span><span class="ic">${it.icon ? icon(it.icon, state) : ""}</span>`
+    + `<span class="lbl">${esc(it.t)}</span>${it.suffix ? `<span class="suffix">${esc(it.suffix)}</span>` : ""}${it.k ? `<span class="keys">${esc(it.k)}</span>` : ""}<span class="arrow">${it.sub ? "›" : ""}</span></div>`;
+  if (it.hint) html += `<div class="mi hint">${esc(it.hint)}</div>`;
+  return html;
+}
+
+function menuCascade(items) {
+  let html = '<div style="display:flex;align-items:flex-start">';
+  const chain = [items];
+  let level = items;
+  while (true) {
+    const open = level.findIndex((it) => it.open && Array.isArray(it.sub));
+    if (open < 0) break;
+    level = level[open].sub;
+    chain.push(level);
+  }
+  let top = 0;
+  chain.forEach((list, depth) => {
+    html += `<div class="menu${depth ? " sub" : ""}" style="margin-top:${top}px">${list.map((it) => mrow(it, depth)).join("")}</div>`;
+    let offset = 2;
+    for (const it of list) { if (it.open && Array.isArray(it.sub)) break; offset += it.sep ? 7 : it.hint ? 40 : 24; }
+    top += offset - 2;
+  });
+  return html + "</div>";
+}
+
+function win(title, body, foot, w, h) {
+  return `<div class="win" style="width:${w}px;${h ? `height:${h}px;` : ""}"><div class="wtitle">${esc(title)}<span class="x">${icon("window-close", "")}</span></div>`
+    + `<div class="wbody">${body}</div><div class="wfoot">${foot}</div></div>`;
+}
+const btn = (t, cls = "", ic = "") => `<span class="btn ${cls}">${ic ? icon(ic, cls.includes("primary") ? "hl" : cls.includes("danger") ? "danger" : cls.includes("dis") ? "dis" : "") : ""}${esc(t)}</span>`;
+const box = (on) => `<span class="box${on ? " on" : ""}">${on ? CHECK_SVG : ""}</span>`;
+const check = (t, on) => `<span class="cb">${box(on)}${esc(t)}</span>`;
+const combo = (t, w) => `<span class="combo" style="${w ? `width:${w}px` : ""}">${esc(t)}${icon("chevron-down", "muted", 12)}</span>`;
+const fld = (t, w, cls = "", unit = "") => `<span class="fld ${cls}" style="width:${w}px">${t === "" ? "" : t.startsWith("~") ? `<span class="ph">${esc(t.slice(1))}</span>` : esc(t)}${unit ? `<span class="unit">${esc(unit)}</span>` : ""}</span>`;
+const ibtn = (role, cls = "") => `<span class="ibtn ${cls}">${icon(role, "")}</span>`;
+
+const PIN = (corner, xs, y) => `Effects\tCC Power Pin #1\tCC Power Pin-${corner}\n\tFrame\tX pixels\tY pixels\n` + xs.map((x, i) => `\t${i}\t${x}\t${y}`).join("\n");
+const DATA = ["Adobe After Effects 6.0 Keyframe Data", "", "\tUnits Per Second\t23.976", "\tSource Width\t1920", "\tSource Height\t1080", "",
+  PIN("0002", [600, 610, 620, 630, 640], 300), "", PIN("0003", [1000, 1010, 1020, 1030, 1040], 300), "…"].join("\n");
+const DATA_720 = DATA.replace("Width\t1920", "Width\t1280").replace("Height\t1080", "Height\t720");
+
+const STATUS = {
+  ok: ["ok", "run-applied", "", "5 frames at 23.976 fps, tracked at 1920 × 1080. Covers the selection’s 5 frames, 335–339."],
+  idle: ["idle", "notice-info", "muted", "Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners."],
+  length: ["bad", "notice-error", "danger", "The data has 120 frames, but the selected lines cover 5 (335–339). Select lines that span the tracked frames."],
+  invalid: ["bad", "notice-error", "danger", "This isn’t Power-Pin data: no CC Power Pin corners were found."],
+  size: ["warn", "notice-warning", "warning", "Tracked at 1280 × 720, but the video is 1920 × 1080. The corners are scaled to the video."],
+  overlap: ["bad", "notice-error", "danger", "Lines 9 and 10 overlap, but line 10 isn’t shown at frame 1. Pick a frame both lines show, or apply them one at a time."],
+};
+
+function trackingDialog(kind) {
+  const data = { idle: "", invalid: "Effects\tADBE Corner Pin #1\tADBE Corner Pin-0001\n\tFrame\tX pixels\tY pixels\n\t0\t600\t300\n…", size: DATA_720 }[kind] ?? DATA;
+  const [cls, ic, st, text] = STATUS[kind];
+  const ready = cls === "ok" || cls === "warn";
+  const left = `<div class="col" style="gap:6px"><div class="small h">Power-Pin data</div>`
+    + `<div class="datafld${kind === "idle" ? " focus" : ""}">${data ? esc(data) : ""}</div>`
+    + `<div class="status ${cls}">${icon(ic, st, 14)}<span>${esc(text)}</span></div></div>`;
+  const spin = `${fld("1", 64, "num")}<span class="small muted" style="white-space:nowrap">of 5 · video frame 335</span>`;
+  const right = `<div class="col" style="gap:10px;padding-top:22px;min-width:300px">`
+    + `<div class="grid2"><span>Relative to frame</span><span class="row" style="gap:6px">${spin}</span>`
+    + `<span>Origin</span><span>${combo("Keep", 120)}</span></div>`
+    + `<div class="hr"></div>`
+    + `<div class="col" style="gap:8px">${check("Fit flat lines to the plane first", false)}${check("Move clips with the plane", true)}${check("Scale outline and shadow", true)}</div>`
+    + `<div class="small muted" style="max-width:270px">The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</div></div>`;
+  const body = `<div class="row" style="gap:24px;align-items:flex-start">${left}${right}</div>`;
+  const foot = `<span class="small muted">${kind === "overlap" ? "Lines 9–10" : "Line 8"} · frames 335–339</span><span class="grow"></span>${btn("Apply", ready ? "primary ring" : "dis")}${btn("Cancel")}`;
+  return `<div style="position:relative">${win("Perspective tracking", body, foot, 760)}<span class="anno" style="left:-14px;top:12px"></span></div>`;
+}
+
+const RESULT = [
+  ["14.000", "14.210", "{\\fad(80,0)\\pos(800,400)\\frx10\\fry-5}fbf"],
+];
+const TRACKED = [
+  ["13.993", "14.035", "{\\pos(800,400)\\org(800,400)\\fscx100\\fscy100\\frz0\\fry-5\\frx10\\fax0\\xbord1\\ybord1\\alpha&HD3&}fbf"],
+  ["14.035", "14.076", "{\\pos(810.01,400)\\org(800,400)\\fscx99.443\\fscy99.728\\frz0\\fry-5.014\\frx10.027\\fax-0.005\\xbord0.99\\ybord1\\alpha&H50&}fbf"],
+  ["14.076", "14.118", "{\\pos(819.965,400)\\org(800,400)\\fscx98.888\\fscy99.457\\frz0\\fry-5.028\\frx10.055\\fax-0.011\\xbord0.99\\ybord0.99}fbf"],
+  ["14.118", "14.160", "{\\pos(829.864,400)\\org(800,400)\\fscx98.334\\fscy99.185\\frz0\\fry-5.042\\frx10.082\\fax-0.017\\xbord0.98\\ybord0.99}fbf"],
+  ["14.160", "14.201", "{\\pos(839.707,400)\\org(800,400)\\fscx97.781\\fscy98.914\\frz0\\fry-5.056\\frx10.11\\fax-0.022\\xbord0.98\\ybord0.99}fbf"],
+];
+
+function gridOf(rows, first, sel) {
+  const head = `<div class="gr gh"><span>#</span><span>Start</span><span>End</span><span>Text</span></div>`;
+  return `<div class="gridtbl">${head}${rows.map((r, i) => `<div class="gr${sel ? " sel" : ""}"><span class="num muted">${first + i}</span><span class="num">0:00:${r[0]}</span><span class="num">0:00:${r[1]}</span><span class="mono">${esc(r[2])}</span></div>`).join("")}</div>`;
+}
+
+function historyList() {
+  const rows = [["Perspective tracking", true], ["Visual perspective tool", false], ["Change text", false], ["Open subtitles", false]];
+  return `<div class="col" style="gap:6px"><div class="small h">Edit › History</div><div class="lst" style="width:260px">${rows.map(([t, s]) => `<div class="lr${s ? " sel" : ""}">${icon(s ? "tool-perspective" : "history", "", 14)}${esc(t)}</div>`).join("")}</div></div>`;
+}
+
+const VIDEO_MENU = (hasVideo) => [
+  { t: "Insert start time from video", icon: "set-start-time", dis: !hasVideo },
+  { t: "Insert end time from video", icon: "set-end-time", dis: !hasVideo },
+  { t: "Shift by frames to video", icon: "shift-times", sub: [], dis: !hasVideo },
+  { t: "Perspective tracking…", icon: "tool-perspective", mark: true, hl: hasVideo, dis: !hasVideo, hint: hasVideo ? "" : "Open a video first: tracking data is per frame." },
+  { sep: true },
+  { t: "Previous frame", icon: "frame-previous", k: "Left", dis: !hasVideo },
+  { t: "Next frame", icon: "frame-next", k: "Right", dis: !hasVideo },
+];
+
+const SCENES = {
+  dialog: (kind) => trackingDialog(kind),
+  before: () => `<div class="col" style="gap:6px"><div class="small h">Before: line 8, selected</div>${gridOf(RESULT, 8, true)}</div>`,
+  after: () => `<div class="col" style="gap:14px;align-items:flex-start"><div class="col" style="gap:6px"><div class="small h">After: lines 8–12, selected</div>${gridOf(TRACKED, 8, true)}</div>${historyList()}</div>`,
+  menu: (hasVideo) => menuCascade(VIDEO_MENU(hasVideo)),
+};
+
+function cell(content) {
+  if (content.scene) return SCENES[content.scene](...(content.args || []));
+  return menuCascade(content.items);
+}
+
+function renderSection(s) {
+  const hc = document.getElementById("hc").value;
+  const themes = [["Light", "t-light"], ["Dark", "t-dark"], ["High contrast", "t-" + hc]];
+  let board = '<div class="board"><div></div>' + themes.map(([n]) => `<div class="colhead">${n}</div>`).join("");
+  for (const r of s.rows) {
+    board += `<div class="rowlabel">${esc(r.label)}</div>`;
+    for (const [, cls] of themes) board += `<div class="cell ${cls}">${cell(r)}</div>`;
+  }
+  board += "</div>";
+  const list = (arr) => "<ul>" + arr.map((x) => `<li>${esc(x)}</li>`).join("") + "</ul>";
+  const details = `<div class="details"><div><h3>How it works</h3>${list(s.notes)}</div>`
+    + `<div class="recs"><h3>For approval</h3><ol style="list-style:none;padding-left:0">${s.recs.map((r, i) => `<li><span class="num">${s.n}.${i + 1}</span>${esc(r)}</li>`).join("")}</ol></div></div>`;
+  return `<section class="sec" id="${s.id}"><h2>${s.n}. ${esc(s.title)}</h2><p class="meta">${esc(s.opens)}</p>${board}${details}</section>`;
+}
+
+function renderQuestions() {
+  return `<section class="sec" id="questions"><h2>Scope questions</h2><div class="details">` + QUESTIONS.map((q) =>
+    `<div><h3>${esc(q.id)}. ${esc(q.title)}</h3><p><b>Recommended:</b> ${esc(q.rec)}</p><p style="color:var(--page-muted)"><b>Alternative:</b> ${esc(q.alt)}</p></div>`).join("") + "</div></section>";
+}
+
+function render() {
+  document.getElementById("main").innerHTML = renderQuestions() + SECTIONS.map(renderSection).join("");
+  const only = new URLSearchParams(location.search).get("only");
+  if (only) { document.body.classList.add("single"); document.getElementById(only)?.classList.add("shown"); }
+}
+const hcParam = new URLSearchParams(location.search).get("hc");
+if (hcParam) document.getElementById("hc").value = hcParam;
+document.getElementById("hc").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>

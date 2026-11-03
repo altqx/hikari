@@ -1,0 +1,37 @@
+function cell(content) {
+  if (content.scene) return SCENES[content.scene](...(content.args || []));
+  return menuCascade(content.items);
+}
+
+function renderSection(s) {
+  const hc = document.getElementById("hc").value;
+  const themes = [["Light", "t-light"], ["Dark", "t-dark"], ["High contrast", "t-" + hc]];
+  let board = '<div class="board"><div></div>' + themes.map(([n]) => `<div class="colhead">${n}</div>`).join("");
+  for (const r of s.rows) {
+    board += `<div class="rowlabel">${esc(r.label)}</div>`;
+    for (const [, cls] of themes) board += `<div class="cell ${cls}">${cell(r)}</div>`;
+  }
+  board += "</div>";
+  const list = (arr) => "<ul>" + arr.map((x) => `<li>${esc(x)}</li>`).join("") + "</ul>";
+  const details = `<div class="details"><div><h3>How it works</h3>${list(s.notes)}</div>`
+    + `<div class="recs"><h3>For approval</h3><ol style="list-style:none;padding-left:0">${s.recs.map((r, i) => `<li><span class="num">${s.n}.${i + 1}</span>${esc(r)}</li>`).join("")}</ol></div></div>`;
+  return `<section class="sec" id="${s.id}"><h2>${s.n}. ${esc(s.title)}</h2><p class="meta">${esc(s.opens)}</p>${board}${details}</section>`;
+}
+
+function renderQuestions() {
+  return `<section class="sec" id="questions"><h2>Scope questions</h2><div class="details">` + QUESTIONS.map((q) =>
+    `<div><h3>${esc(q.id)}. ${esc(q.title)}</h3><p><b>Recommended:</b> ${esc(q.rec)}</p><p style="color:var(--page-muted)"><b>Alternative:</b> ${esc(q.alt)}</p></div>`).join("") + "</div></section>";
+}
+
+function render() {
+  document.getElementById("main").innerHTML = renderQuestions() + SECTIONS.map(renderSection).join("");
+  const only = new URLSearchParams(location.search).get("only");
+  if (only) { document.body.classList.add("single"); document.getElementById(only)?.classList.add("shown"); }
+}
+const hcParam = new URLSearchParams(location.search).get("hc");
+if (hcParam) document.getElementById("hc").value = hcParam;
+document.getElementById("hc").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
