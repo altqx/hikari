@@ -15,7 +15,8 @@ set_tests_properties(modules.desktop-handoffs-violation-rejected PROPERTIES WILL
 
 set(qml-idioms_rejection "QML text built the pre-6.12 way:.*Violation.qml")
 set(qml-debug_rejection "reaches CI, tests or packages:.*workflowPresets release uses release")
-foreach(check qml-idioms qml-debug)
+set(std-unordered_rejection "src/Violation.cpp: #include <unordered_map>.*src/Violation.cpp: #include <unordered_set>.*std::unordered_map<int, int> counts;.*std::unordered_multiset<int> seen;")
+foreach(check qml-idioms qml-debug std-unordered)
     string(REPLACE "-" "_" script "check_${check}")
     add_test(NAME modules.${check}
         COMMAND "${CMAKE_COMMAND}" -DROOT=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/${script}.cmake")

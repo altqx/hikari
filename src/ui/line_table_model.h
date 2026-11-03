@@ -14,8 +14,8 @@
 #include <array>
 #include <functional>
 #include <optional>
-#include <unordered_map>
-#include <unordered_set>
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 #include <vector>
 
 namespace hikari::ui {
@@ -194,7 +194,7 @@ private:
     void emitStateChanged(const std::vector<core::LineId> &ids);
 
     std::vector<Row> m_rows;
-    std::unordered_map<std::uint64_t, int> m_rowById;
+    absl::flat_hash_map<std::uint64_t, int> m_rowById;
     std::optional<Row> m_draft;
     int m_draftRow = -1;
     application::Selection m_selection;
@@ -208,7 +208,7 @@ private:
     bool m_filtered = false;
     std::vector<Run> m_runs;
     bool m_foldGenerated = false;
-    std::unordered_set<std::uint64_t> m_unfolded;
+    absl::flat_hash_set<std::uint64_t> m_unfolded;
     int m_headerBlock = 0;
     int m_hidden = 0;
     bool m_autoHide = false;
