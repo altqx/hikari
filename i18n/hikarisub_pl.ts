@@ -5128,6 +5128,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usunięto skrót %1 polecenia &quot;Otwórz okno mapowania skrótów&quot;: tego okna już nie ma, a skrót każdego makra ustawia się w panelu Automatyzacja.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>Usunięto skrót %1 polecenia “Popraw drobne błędy (eksperymentalne)”: ta funkcja została usunięta.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>Usunięto skrót %1 polecenia &quot;Otwórz puste audio na 2:30 godziny&quot;: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
     </message>
@@ -5758,10 +5762,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Clean styles of ASS file</source>
         <translation>Oczyść style pliku ASS</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>Popraw drobne błędy (eksperymentalne)</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -6780,14 +6780,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>&amp;History</source>
         <translation>&amp;Historia</translation>
-    </message>
-    <message>
-        <source>Shows or hides the Fix minor errors panel</source>
-        <translation>Pokazuje lub ukrywa panel poprawiania drobnych błędów</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>Popraw drobne błędy (eksperymentalne)</translation>
     </message>
     <message>
         <source>Select &amp;lines</source>
@@ -8101,6 +8093,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
     </message>
+    <message>
+        <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
+        <translation>Funkcja Popraw drobne błędy została usunięta. Twoje reguły pozostają w %1, nieużywane.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -8155,274 +8151,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Indexing error occurred: %1</source>
         <translation>Wystąpił błąd indeksowania: %1</translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message>
-        <source>Fix minor errors</source>
-        <translation>Popraw drobne błędy</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when the find results window is open</source>
-        <translation>Nie można zmieniać reguł,
-gdy okno wyników szukania jest otwarte</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-because it was edited.</source>
-        <translation>Nie można zamienić linijki %1,
-ponieważ została zmieniona.</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
-        <translation>Nie można zamienić &quot;%1&quot; na &quot;%2&quot; przy użyciu reguły &quot;%3&quot; w linijce %4.</translation>
-    </message>
-    <message>
-        <source>Rule description</source>
-        <translation>Opis reguły</translation>
-    </message>
-    <message>
-        <source>Replace phrase</source>
-        <translation>Zmieniana fraza</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation>Wielkość liter</translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation>Jak w znalezionym tekście</translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation>Bez zmian</translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation>Małe litery</translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation>Wielkie litery</translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation>Wielkość liter zamiennika</translation>
-    </message>
-    <message>
-        <source>Match case</source>
-        <translation>Uwzględniaj wielkość liter</translation>
-    </message>
-    <message>
-        <source>Rules</source>
-        <translation>Reguły</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>Które linijki</translation>
-    </message>
-    <message>
-        <source>All lines</source>
-        <translation>Wszystkie linijki</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation>Linijki</translation>
-    </message>
-    <message>
-        <source>Selected lines</source>
-        <translation>Zaznaczone linijki</translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation>Od zaznaczonej linijki</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation>Według wybranych stylów</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>Wybierz style</translation>
-    </message>
-    <message>
-        <source>Update rule</source>
-        <translation>Zaktualizuj regułę</translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation>Reguła</translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation>Znajdź → zamień</translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation>(nic)</translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation>Rozwinięte</translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation>Zwinięte</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation>Nazwa</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation>Znajdź</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation>Wyrażenie regularne</translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation>Szukana fraza (wyrażenia regularne)</translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation>Zakres</translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation>Tekst i tagi</translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation>Tylko tagi</translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation>Tylko tekst</translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation>Zamieniaj w</translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation>Ta zakładka</translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation>Wszystkie zakładki</translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation>Zakładki do przeszukania</translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation>Zamień wszystko</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation>Wyniki</translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation>1 błąd</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>%n zaznaczony</numerusform>
-            <numerusform>%n zaznaczone</numerusform>
-            <numerusform>%n zaznaczonych</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation>w 1 pliku</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Wszystkie</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>Żadne</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation>Zamknij wyniki</translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation>Linijka %1</translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation>Pokaż znalezione</translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation>Ukryj znalezione</translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation>Zamień zaznaczone</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>Style</translation>
-    </message>
-    <message>
-        <source>Add rule</source>
-        <translation>Dodaj regułę</translation>
-    </message>
-    <message>
-        <source>Delete rule</source>
-        <translation>Usuń regułę</translation>
-    </message>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>Włączone: %1 z %n reguły</numerusform>
-            <numerusform>Włączone: %1 z %n reguł</numerusform>
-            <numerusform>Włączone: %1 z %n reguł</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>%n błąd</numerusform>
-            <numerusform>%n błędy</numerusform>
-            <numerusform>%n błędów</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>w %n pliku</numerusform>
-            <numerusform>w %n plikach</numerusform>
-            <numerusform>w %n plikach</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>Wyniki szukania</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>Linijka %1: </translation>
-    </message>
-    <message>
-        <source>Replace</source>
-        <translation>Zamień</translation>
-    </message>
-    <message>
-        <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation>Reguła &quot;%1&quot; jest nieprawidłowa.</translation>
     </message>
 </context>
 <context>

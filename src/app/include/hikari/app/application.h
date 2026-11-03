@@ -28,7 +28,6 @@
 #include "hikari/application/find_replace.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
-#include "hikari/application/misspell_replacer.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/video_sources.h"
@@ -127,9 +126,8 @@ signals:
     // A file result opens into the Untitled target, which has changes: rows as
     // reviewOpen's.
     void findOpenReview(const QVariantList &rows);
-    // Both fire when a changed program font closes the Search tool / Multireplacer.
+    // Fires when a changed program font closes the Search tool.
     void findReplaceDestroyed();
-    void misspellReplacerDestroyed();
     // The interface language changed while Options is open: the dictionaries' new names.
     void settingsListsChanged(const QStringList &dictionaries);
 
@@ -428,22 +426,6 @@ public:
     Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
     // The chosen styles as an anchored pattern.
     Q_INVOKABLE QString selectStylesPattern(const QStringList &styles) const;
-    // Rows {description, find, replace, options, checked}; read from Rules.txt beside the
-    // INI file (the shipped rules without one), written back at exit unless empty.
-    Q_INVOKABLE QVariantList misspellRules();
-    // Refused while the results window is shown.
-    Q_INVOKABLE bool addMisspellRule(const QVariantMap &rule);
-    Q_INVOKABLE bool editMisspellRule(int index, const QVariantMap &rule);
-    Q_INVOKABLE bool removeMisspellRule(int index);
-    Q_INVOKABLE void checkMisspellRule(int index, bool checked);
-    Q_INVOKABLE void setMisspellResultsShown(bool shown) { m_misspellResultsShown = shown; }
-    // scope: {lines (0-3), styles}. A {header: true, text: path} row before each
-    // Document's finds {header: false, find (its index), line, text, position, length}.
-    Q_INVOKABLE QVariantList findMisspells(const QVariantMap &scope, bool allTabs);
-    // One step per Document.
-    Q_INVOKABLE void replaceMisspells(const QVariantMap &scope, bool allTabs);
-    Q_INVOKABLE void replaceMisspellFinds(const QVariantList &finds);
-    Q_INVOKABLE void showMisspellFind(int find);
     Q_PROPERTY(bool spellingOn READ spellingOn WRITE setSpellingOn NOTIFY spellingChanged)
     Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage NOTIFY spellingChanged)
     Q_PROPERTY(bool suggestionsOnDoubleClick READ suggestionsOnDoubleClick WRITE setSuggestionsOnDoubleClick NOTIFY spellingChanged)
@@ -1011,12 +993,6 @@ private:
     QString m_resolutionCheckedVideo;
     void checkResolution();
     QStringList m_selectRecent;
-    std::optional<std::vector<application::ReplacerRule>> m_misspellRules;
-    std::vector<std::pair<application::DocumentId, application::ReplacerFind>> m_misspellFinds;
-    bool m_misspellResultsShown = false;
-    std::vector<application::ReplacerRule> &misspellRuleList();
-    void saveMisspellRules();
-    std::shared_ptr<ui::ListFile> m_rulesFile;
     void destroyDialogs();
     void resetAllSettings();
     class FindHost;
@@ -1136,7 +1112,7 @@ private:
     QString m_userFolder;
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
     void reportSettingsFiles();
-    void convertRules();
+    void noteRemovedRules();
     void convertListFiles();
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;

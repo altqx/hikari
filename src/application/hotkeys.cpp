@@ -479,7 +479,6 @@ constexpr NameRow kNames[] = {
         {5301, "Open new tab"},
         {5302, "Close current tab"},
         {5168, "Clean styles of ASS file"},
-        {5012, "Fix minor errors (experimental)"},
         {5011, "Find next"},
         {5055, "Load last session"},
         {5042, "Next frame"},
@@ -868,7 +867,8 @@ bool isRetiredHotkey(int id)
            || id == 5039
            || id == 5104
            || (id >= 5031 && id <= 5035)
-           || id == 5109;
+           || id == 5109
+           || id == 5012;
 }
 
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)

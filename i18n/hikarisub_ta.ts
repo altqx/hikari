@@ -5085,6 +5085,10 @@ Failed to copy %2 fonts.</source>
         <translation>&quot;குறுக்குவிசை மேப்பிங் சாளரத்தைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தச் சாளரம் இனி இல்லை; ஒவ்வொரு குறுநிரலின் குறுக்குவிசையும் தானியங்கு பலகத்தில் அமைக்கப்படும்.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
+        <translation>“சிறு பிழைகளைச் சரிசெய் (சோதனை)” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: இந்த அம்சம் அகற்றப்பட்டது.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>&quot;வெற்று 2h30m ஆடியோவைத் திறக்கவும்&quot; கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; போலி வீடியோ தன்னுடைய ஒலியற்ற ஆடியோவைக் கொண்டுவரும்.</translation>
     </message>
@@ -5715,10 +5719,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clean styles of ASS file</source>
         <translation>ASS கோப்பின் பாணிகளைச் சுத்தம் செய்</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>சிறு பிழைகளைச் சரிசெய் (சோதனை)</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -6735,14 +6735,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>&amp;History</source>
         <translation>வரலாறு (&amp;h)</translation>
-    </message>
-    <message>
-        <source>Shows or hides the Fix minor errors panel</source>
-        <translation>சிறு பிழைகளைச் சரிசெய் பலகத்தைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>சிறு பிழைகளைச் சரிசெய் (சோதனை)</translation>
     </message>
     <message>
         <source>Select &amp;lines</source>
@@ -8050,6 +8042,10 @@ Failed to copy %2 fonts.</source>
         <source>hotkeys.toml: %1</source>
         <translation>hotkeys.toml: %1</translation>
     </message>
+    <message>
+        <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
+        <translation>சிறு பிழைகளைச் சரிசெய் அம்சம் அகற்றப்பட்டது. உங்கள் விதிகள் %1 இல் பயன்படுத்தப்படாமல் அப்படியே உள்ளன.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -8104,270 +8100,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Indexing error occurred: %1</source>
         <translation>அட்டவணைப்படுத்தலில் பிழை ஏற்பட்டது: %1</translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.MisspellReplacer</name>
-    <message>
-        <source>Fix minor errors</source>
-        <translation>சிறு பிழைகளைச் சரிசெய்</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when the find results window is open</source>
-        <translation>தேடல் முடிவுகள் சாளரம் திறந்திருக்கும்போது
-விதிகளை மாற்ற முடியாது</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-because it was edited.</source>
-        <translation>வரி %1 ஐ மாற்ற முடியாது,
-ஏனெனில் அது திருத்தப்பட்டுள்ளது.</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
-        <translation>வரி %4 இல், &quot;%3&quot; விதியைக் கொண்டு &quot;%1&quot; ஐ &quot;%2&quot; ஆக மாற்ற முடியாது.</translation>
-    </message>
-    <message>
-        <source>Rule description</source>
-        <translation>விதி விளக்கம்</translation>
-    </message>
-    <message>
-        <source>Replace phrase</source>
-        <translation>சொற்றொடரை மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation>பெரிய/சிறிய எழுத்து</translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation>கண்டறிந்த உரையைப் போல</translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation>மாற்றமில்லை</translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation>சிறிய எழுத்து</translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation>பெரிய எழுத்து</translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation>மாற்று உரையின் பெரிய/சிறிய எழுத்து</translation>
-    </message>
-    <message>
-        <source>Match case</source>
-        <translation>பெரிய/சிறிய எழுத்தைப் பொருத்து</translation>
-    </message>
-    <message>
-        <source>Rules</source>
-        <translation>விதிகள்</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>எந்த வரிகள்</translation>
-    </message>
-    <message>
-        <source>All lines</source>
-        <translation>அனைத்து வரிகளும்</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation>வரிகள்</translation>
-    </message>
-    <message>
-        <source>Selected lines</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரிகள்</translation>
-    </message>
-    <message>
-        <source>From the selected line</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட வரியிலிருந்து</translation>
-    </message>
-    <message>
-        <source>According to the selected styles</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளின்படி</translation>
-    </message>
-    <message>
-        <source>Choose styles</source>
-        <translation>பாணிகளைத் தேர்வுசெய்க</translation>
-    </message>
-    <message>
-        <source>Update rule</source>
-        <translation>விதியைப் புதுப்பி</translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation>விதி</translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation>கண்டுபிடி → மாற்று</translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation>(எதுவுமில்லை)</translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation>விரிக்கப்பட்டது</translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation>சுருக்கப்பட்டது</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation>பெயர்</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation>கண்டுபிடி</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation>ஒரு வழக்கமான வெளிப்பாடு</translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation>தேடல் சொற்றொடர் (வழக்கமான வெளிப்பாடுகள்)</translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation>இதில்</translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation>உரையும் குறிச்சொற்களும்</translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation>குறிச்சொற்கள் மட்டும்</translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation>உரை மட்டும்</translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation>இதில் மாற்று</translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation>இந்தத் தாவல்</translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation>எல்லாத் தாவல்களும்</translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation>தேட வேண்டிய தாவல்கள்</translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation>அனைத்தையும் மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation>முடிவுகள்</translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation>1 பிழை</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n checked</source>
-        <translation>
-            <numerusform>%n தேர்வுசெய்யப்பட்டது</numerusform>
-            <numerusform>%n தேர்வுசெய்யப்பட்டன</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation>1 கோப்பில்</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>அனைத்தும்</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>எதுவுமில்லை</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation>முடிவுகளை மூடு</translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation>வரி %1</translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation>கண்டறிந்தவற்றைக் காட்டு</translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation>கண்டறிந்தவற்றை மறை</translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation>தேர்வுசெய்தவற்றை மாற்று</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
-    </message>
-    <message>
-        <source>Add rule</source>
-        <translation>விதியைச் சேர்க்கவும்</translation>
-    </message>
-    <message>
-        <source>Delete rule</source>
-        <translation>விதியை நீக்கு</translation>
-    </message>
-    <message numerus="yes">
-        <source>%1 of %n rules on</source>
-        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation>
-            <numerusform>%n விதியில் %1 இயக்கத்தில்</numerusform>
-            <numerusform>%n விதிகளில் %1 இயக்கத்தில்</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n errors</source>
-        <translation>
-            <numerusform>%n பிழை</numerusform>
-            <numerusform>%n பிழைகள்</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>in %n files</source>
-        <translation>
-            <numerusform>%n கோப்பில்</numerusform>
-            <numerusform>%n கோப்புகளில்</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Search results</source>
-        <translation>தேடல் முடிவுகள்</translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation>வரி %1: </translation>
-    </message>
-    <message>
-        <source>Replace</source>
-        <translation>மாற்று</translation>
-    </message>
-    <message>
-        <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation>விதி &quot;%1&quot; செல்லாது.</translation>
     </message>
 </context>
 <context>

@@ -168,7 +168,7 @@ struct Destination {
     // Only values that are set.
     std::map<std::string, SettingValue, std::less<>> values;
     // Authored collection files present, by path in the settings folder
-    // ("rules.toml", "Dictionary/UserDic.udic").
+    // ("Dictionary/UserDic.udic").
     std::map<std::string, DestinationFile, std::less<>> files;
     // Dictionaries the program ships (names without extension).
     std::set<std::string, std::less<>> bundledDictionaries;
@@ -181,8 +181,6 @@ struct Destination {
     // A VSFILTER_INSTANCE naming a renderer not installed stays unresolved.
     // Unset: not checked.
     std::function<bool(std::string_view name)> rendererInstalled;
-    // rules.toml's text for Rules.txt's bytes. Unset: the rules are not imported.
-    std::function<std::string(std::string_view legacy)> convertRules;
 };
 
 // Identity: the source hashes, the mapping version and the destination profile.

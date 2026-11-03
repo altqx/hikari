@@ -45,7 +45,6 @@ Edit > Sort selected lines > Text [GLOBAL_SORT_SELECTED_BY_TEXT]
 Edit > Sort selected lines > Text without tags [GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
-Edit > Fix minor errors (experimental) [GLOBAL_MISSPELLS_REPLACER]
 Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
 Edit > Find… [GLOBAL_SEARCH]
 Edit > Replace… [GLOBAL_FIND_REPLACE]
@@ -147,7 +146,6 @@ View > Panels > Automation >
 View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
-View > Panels > Fix minor errors >
 View > Panels > Template editor >
 View > Move panel…
 View > Restore the previous layout
