@@ -13,6 +13,8 @@
 //   Notify: i32 Level, u8 toast, str text.
 //   SetSetting: str id, str JSON value. Ok: str refusal, empty when the value is kept.
 //   Subscribe: str event name. Ok: str refusal, empty when subscribed.
+//   Lock: takes the app-wide edit lock, waiting behind other plugins. Ok: str refusal, empty when held.
+//   Unlock: releases it. Ok, empty.
 
 #include "hikari/backends/helper_protocol.h"
 
@@ -23,11 +25,11 @@
 
 namespace hikari::backends::plugin {
 
-inline constexpr std::uint32_t kProtocolVersion = 1;
+inline constexpr std::uint32_t kProtocolVersion = 2;
 inline constexpr char kHelperName[] = "hikari-plugin-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2 };
-enum class Service : std::int32_t { Call = 1, Notify = 2, SetSetting = 3, Subscribe = 4 };
+enum class Service : std::int32_t { Call = 1, Notify = 2, SetSetting = 3, Subscribe = 4, Lock = 5, Unlock = 6 };
 enum class Level : std::int32_t { Info = 0, Warning = 1, Error = 2 };
 enum class Tier : std::int32_t { Restricted = 0, Unrestricted = 1 };
 

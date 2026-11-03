@@ -38,7 +38,8 @@ public:
         std::string json;                          // Call: params; SetSetting: value
         std::string text;                          // Notify
     };
-    // Call answers the JSON envelope, SetSetting and Subscribe a refusal (empty: done), Notify anything.
+    // Call answers the JSON envelope, SetSetting, Subscribe and Lock a refusal (empty: done), Notify and
+    // Unlock anything.
     using ServiceReply = std::function<void(std::string)>;
     using ServiceHandler = std::function<void(const ServiceRequest &, ServiceReply)>;
     // Asked at each start, so a restart sees the current settings and language.
@@ -72,6 +73,9 @@ signals:
     void commandFailed(const QString &command, const QString &message);
     void eventFailed(const QString &event, const QString &message);
     void finished(const QString &command);
+    // Before the outcome's own signal, whenever the load, a command or an event ends. A stop or a
+    // crash gives stopped or loadFailed instead.
+    void unitEnded();
     void stopped(hikari::backends::PluginProcess::StopReason reason);
 
 private:

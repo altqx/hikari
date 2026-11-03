@@ -218,6 +218,9 @@ void PluginProcess::onService(const helper::Event &event)
     case plugin::Service::Subscribe:
         request.name = in.str();
         break;
+    case plugin::Service::Lock:
+    case plugin::Service::Unlock:
+        break;
     default:
         m_host->answer(m_request, event.call, Outcome::Unsupported);
         return;
@@ -231,7 +234,7 @@ void PluginProcess::onService(const helper::Event &event)
     HelperHost *host = m_host.get();
     const std::uint64_t requestId = m_request;
     const std::uint64_t call = event.call;
-    const bool carriesText = request.service != plugin::Service::Notify;
+    const bool carriesText = request.service != plugin::Service::Notify && request.service != plugin::Service::Unlock;
     ServiceReply reply = [this, host, requestId, call, carriesText](std::string text) {
         if (m_host.get() != host || m_request != requestId)
             return;
@@ -260,6 +263,7 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
         return;
     const Unit unit = std::move(*m_running);
     m_running.reset();
+    emit unitEnded();
     const QString name = QString::fromStdString(unit.name);
     QString message = QString::fromStdString(helper::textOf(payload));
     if (outcome != Outcome::Ok && outcome != Outcome::Failed)
