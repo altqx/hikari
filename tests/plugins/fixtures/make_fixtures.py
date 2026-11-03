@@ -3,6 +3,7 @@ import importlib.util
 import io
 import json
 import pathlib
+import struct
 import zipfile
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -38,6 +39,10 @@ def hello(version, key=None, **extra):
     return package({"hikari-plugin.json": manifest(version, key, **extra), "main.lua": f"return '{version}'\n"})
 
 
+def png(width, height):
+    return b"\x89PNG\r\n\x1a\n" + struct.pack(">I4sII5B", 13, b"IHDR", width, height, 8, 6, 0, 0, 0)
+
+
 def write(name, data, signer=None, signed=None):
     (HERE / name).write_bytes(data)
     if signer:
@@ -54,6 +59,8 @@ def main():
     write("hello-tampered.hikariplugin", hello("1.0.0", "a", description="Changed after signing"), "a", signed=v1)
     write("needs-api-99.hikariplugin", hello("1.0.0", api=99))
     write("bad-schema.hikariplugin", hello("1.0.0", id="Not An Id"))
+    write("bad-icon.hikariplugin", package({"hikari-plugin.json": manifest("1.0.0", icon="icon.png"),
+                                            "main.lua": "return '1.0.0'\n", "icon.png": png(128, 128)}))
     write("not-a-zip.hikariplugin", b"hikari-plugin.json is not inside a zip\n")
 
 

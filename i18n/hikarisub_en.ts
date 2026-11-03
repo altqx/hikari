@@ -175,6 +175,30 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Export</name>
+    <message numerus="yes">
+        <source>Exported %n line(s) to “%1”.</source>
+        <translation>
+            <numerusform>Exported %n line to “%1”.</numerusform>
+            <numerusform>Exported %n lines to “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n comment line(s) skipped.</source>
+        <translation>
+            <numerusform>%n comment line skipped.</numerusform>
+            <numerusform>%n comment lines skipped.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) with nothing to show skipped.</source>
+        <translation>
+            <numerusform>%n line with nothing to show skipped.</numerusform>
+            <numerusform>%n lines with nothing to show skipped.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Fonts</name>
     <message numerus="yes">
         <source>%1 of %n fonts</source>
@@ -268,6 +292,27 @@
         <translation>
             <numerusform>%n generated line</numerusform>
             <numerusform>%n generated lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n selected line(s)</source>
+        <translation>
+            <numerusform>Add selected line</numerusform>
+            <numerusform>Add %n selected lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Duplicate %n line(s)</source>
+        <translation>
+            <numerusform>Duplicate line</numerusform>
+            <numerusform>Duplicate %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n line(s)</source>
+        <translation>
+            <numerusform>Delete line</numerusform>
+            <numerusform>Delete %n lines</numerusform>
         </translation>
     </message>
 </context>
@@ -385,7 +430,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>Added %n script hotkey.</numerusform>
             <numerusform>Added %n script hotkeys.</numerusform>
@@ -430,6 +475,52 @@
         <translation>
             <numerusform>HikariSub stopped responding for %n second %1.</numerusform>
             <numerusform>HikariSub stopped responding for %n seconds %1.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Search</name>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n match</numerusform>
+            <numerusform>%n matches</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n match(es)</source>
+        <translation>
+            <numerusform>%1 of %n match</numerusform>
+            <numerusform>%1 of %n matches</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace in %n file(s)…</source>
+        <translation>
+            <numerusform>Replace in %n file…</numerusform>
+            <numerusform>Replace in %n files…</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n file(s)</source>
+        <extracomment>%1 is the number of matches, such as &quot;5 matches&quot;</extracomment>
+        <translation>
+            <numerusform>%1 in %n file</numerusform>
+            <numerusform>%1 in %n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 in %n line(s)</source>
+        <translation>
+            <numerusform>%1 in %n line</numerusform>
+            <numerusform>%1 in %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Replace %n checked</source>
+        <translation>
+            <numerusform>Replace %n checked</numerusform>
+            <numerusform>Replace %n checked</numerusform>
         </translation>
     </message>
 </context>
@@ -498,7 +589,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
             <numerusform>Grammar check no longer uses its %n rule. Turn it back on in Settings › Spelling &amp; grammar.</numerusform>
             <numerusform>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</numerusform>

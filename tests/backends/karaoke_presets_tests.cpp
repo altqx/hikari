@@ -6,6 +6,7 @@
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "karaoke_marks.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -201,7 +202,7 @@ protected:
         hikari::application::EditSession session(hikari::core::loadAss(bytes).document);
         if (!apply(session, script, kAll))
             return {};
-        return textOf(hikari::core::encodeAss(session.document()));
+        return textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document())));
     }
 
     std::optional<LuaScriptHost::RunOutcome> outcome;
@@ -266,7 +267,7 @@ TEST_F(KaraokePresets, EachPresetGeneratesItsGolden)
 
         hikari::application::EditSession session(hikari::core::loadAss(input).document);
         ASSERT_TRUE(apply(session, bundledScript(), kAll));
-        EXPECT_EQ(textOf(hikari::core::encodeAss(session.document())), reference);
+        EXPECT_EQ(textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document()))), reference);
         EXPECT_EQ(report.value(QStringLiteral("problems")).toInt(-1), 0) << log.join(QString()).toStdString();
         int generated = 0;
         for (const auto *l : session.document().lines()) {
@@ -305,7 +306,7 @@ TEST_F(KaraokePresets, ScaledStylesKeepTheirScale)
         const std::string reference = templated(bytesOf(text), pristineScript());
         hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
         ASSERT_TRUE(apply(session, bundledScript(), kAll));
-        EXPECT_EQ(textOf(hikari::core::encodeAss(session.document())), reference);
+        EXPECT_EQ(textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document()))), reference);
         int scaled = 0;
         for (const auto *l : session.document().lines()) {
             if (l->comment || l->effect != u8"fx" || l->text.find(u8"\\fsc") == std::u8string::npos)
@@ -324,7 +325,7 @@ TEST_F(KaraokePresets, RegeneratingOneLineChangesNothing)
         SCOPED_TRACE(file.toStdString());
         hikari::application::EditSession session(hikari::core::loadAss(fixtureWith(preset)).document);
         ASSERT_TRUE(apply(session, bundledScript(), kAll));
-        const std::string whole = textOf(hikari::core::encodeAss(session.document()));
+        const std::string whole = textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document())));
         std::vector<hikari::core::LineId> karaoke;
         for (const auto *l : session.document().lines())
             if (l->effect == u8"karaoke" && l->style == u8"Romaji")
@@ -334,7 +335,7 @@ TEST_F(KaraokePresets, RegeneratingOneLineChangesNothing)
             session.setSelection(hikari::application::Selection{id, {id}});
             ASSERT_TRUE(apply(session, bundledScript(), kSelected));
             EXPECT_EQ(report.value(QStringLiteral("problems")).toInt(-1), 0);
-            EXPECT_EQ(textOf(hikari::core::encodeAss(session.document())), whole);
+            EXPECT_EQ(textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document()))), whole);
         }
     }
 }

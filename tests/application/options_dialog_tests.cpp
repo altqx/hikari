@@ -511,7 +511,7 @@ TEST(OptionsDialog, SetDefaultKeepsAChoiceWhoseIndexIsPastItsList)
     Settings settings(storage);
     auto l = lists();
     l.dictionarySymbols.clear();
-    l.dictionaryNames = {"Put files .dic and .aff to \"Dictionary\" folder"};
+    l.dictionaryNames = {"Put .dic and .aff files in the “Dictionary” folder"};
     auto state = openOptionsDialog(settings, l).state;
     EXPECT_EQ(intOf(state, "editor.dictionaryLanguage"), -1);
     state["program.language"] = std::int64_t{1};

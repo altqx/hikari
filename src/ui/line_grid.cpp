@@ -571,6 +571,11 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
     }
     if (event->button() == Qt::RightButton) {
         forceActiveFocus(Qt::MouseFocusReason);
+        if (event->position().y() < m_geometry.headerHeight) {
+            emit headerMenuRequested(event->position().x(), event->position().y());
+            event->accept();
+            return;
+        }
         const int row = rowAt(event->position().y());
         if (row >= 0 && m_model->index(row, 0).data(LineTableModel::GroupRole).toInt() == 1) {
             emit groupMenuRequested(lineAtRow(row)->value, event->position().x(), event->position().y());

@@ -15,6 +15,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "hikari/application/visual_perspective.h"
+#include "hikari/core/extradata.h"
 
 #include "hikari/application/automation_services.h"
 #include "hikari/application/visual_script.h"
@@ -28,6 +29,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -387,6 +389,50 @@ bool convex(const Quad &q)
     if (!finite(la1) || !finite(la2))
         return false;
     return la1 > 0 && la1 < 1 && -la2 > 0 && -la2 < 1;
+}
+
+std::u8string planeValue(const Quad &quad)
+{
+    std::string out;
+    for (const PointF &corner : quad) {
+        if (!out.empty())
+            out += '|';
+        for (const double v : {static_cast<double>(corner.x), static_cast<double>(corner.y)}) {
+            if (!std::isfinite(v))
+                return {};
+            char buf[64];
+            out.append(buf, std::to_chars(buf, buf + sizeof buf, v, std::chars_format::fixed, 2).ptr);
+            out += ';';
+        }
+        out.pop_back();
+    }
+    return {out.begin(), out.end()};
+}
+
+std::optional<Quad> parsePlane(std::u8string_view value)
+{
+    const std::string_view text(reinterpret_cast<const char *>(value.data()), value.size());
+    Quad quad{};
+    std::size_t from = 0;
+    for (std::size_t i = 0; i < quad.size(); ++i) {
+        const std::size_t to = i + 1 < quad.size() ? text.find('|', from) : text.size();
+        if (to == std::string_view::npos)
+            return std::nullopt;
+        const std::string_view pair = text.substr(from, to - from);
+        const std::size_t semi = pair.find(';');
+        if (semi == std::string_view::npos || pair.find(';', semi + 1) != std::string_view::npos)
+            return std::nullopt;
+        double xy[2] = {0, 0};
+        for (int k = 0; k < 2; ++k) {
+            const std::string_view part = k == 0 ? pair.substr(0, semi) : pair.substr(semi + 1);
+            const auto [end, ec] = std::from_chars(part.data(), part.data() + part.size(), xy[k]);
+            if (ec != std::errc{} || end != part.data() + part.size() || !std::isfinite(xy[k]))
+                return std::nullopt;
+        }
+        quad[i] = {static_cast<float>(xy[0]), static_cast<float>(xy[1])};
+        from = to + 1;
+    }
+    return quad;
 }
 
 PointF toUV(const Quad &quad, PointF xy)
@@ -1678,20 +1724,38 @@ void PerspectiveTool::reset(VisualHost &host)
         m_read = readAt(host);
     }
     if (newLine || (m_drag == Drag::None && !m_valueEdit && !m_keyEdit && !host.gesture()))
-        restorePlane();
+        restorePlane(*ctx.active);
     if (m_plane && !host.gesture())
         fitPlane();
     host.toolChanged();
 }
 
-void PerspectiveTool::restorePlane()
+namespace {
+
+}
+
+std::optional<Quad> PerspectiveTool::savedPlane(const core::LineRecord &line) const
+{
+    const auto saved = core::extradataValue(line.extra, perspective::kPlaneKey);
+    if (const auto kept = m_planes.find(line.id); kept != m_planes.end() && kept->second.second == saved)
+        return kept->second.first;
+    return saved ? perspective::parsePlane(*saved) : std::nullopt;
+}
+
+void PerspectiveTool::keepPlane(const core::LineRecord &line) const
+{
+    if (m_valid && m_line == line.id)
+        m_planes[line.id] = {outer(), core::extradataValue(line.extra, perspective::kPlaneKey)};
+}
+
+void PerspectiveTool::restorePlane(const core::LineRecord &line)
 {
     if (!m_line || !m_valid)
         return;
-    const auto saved = m_planes.find(*m_line);
-    if (saved == m_planes.end())
+    const auto saved = savedPlane(line);
+    if (!saved)
         return;
-    const PointF c1 = toUV(saved->second, m_inner[0]), c2 = toUV(saved->second, m_inner[2]);
+    const PointF c1 = toUV(*saved, m_inner[0]), c2 = toUV(*saved, m_inner[2]);
     if (planeHolds(m_inner, c1, c2)) {
         m_c1 = c1;
         m_c2 = c2;
@@ -1723,16 +1787,16 @@ void PerspectiveTool::follow(const VisualHost &host) const
     const auto state = readLine(host, *ctx.active, m_styles);
     const Quad inner = state ? textToQuad(state->transform, state->box, m_screenZ) : Quad{};
     if (!state || !convex(inner)) {
-        if (m_plane && m_valid)
-            m_planes[*m_line] = outer();
+        if (m_plane)
+            keepPlane(*ctx.active);
         m_valid = false;
         return;
     }
     std::optional<Quad> plane;
     if (m_plane && m_valid)
         plane = outer();
-    else if (const auto saved = m_planes.find(*m_line); m_plane && saved != m_planes.end())
-        plane = saved->second;
+    else if (m_plane)
+        plane = savedPlane(*ctx.active);
     m_state = *state;
     m_inner = inner;
     m_valid = true;
@@ -1810,11 +1874,16 @@ void PerspectiveTool::stageAll(VisualHost &host)
 
 void PerspectiveTool::rememberPlane(VisualHost &host)
 {
-    if (!m_plane)
+    Gesture *g = host.gesture();
+    if (!m_plane || !g)
         return;
-    if (Gesture *g = host.gesture())
-        for (const core::LineId &id : g->targets())
-            m_planes[id] = outer();
+    const std::u8string value = perspective::planeValue(outer());
+    if (value.empty())
+        return;
+    for (const core::LineId &id : g->targets()) {
+        g->stageExtradata(id, core::withExtradata(g->before(id).extra, perspective::kPlaneKey, value));
+        m_planes.erase(id);
+    }
 }
 
 bool PerspectiveTool::finish(VisualHost &host)
@@ -2393,11 +2462,12 @@ bool PerspectiveTool::setOption(const std::string &name, int value, VisualHost &
     if (name == "plane") {
         if (m_plane == (value != 0))
             return false;
-        if (m_plane && m_line && m_valid)
-            m_planes[*m_line] = outer();
-        if (value != 0 && m_valid) {
+        const auto active = transform::context(host, false).active;
+        if (m_plane && active)
+            keepPlane(*active);
+        if (value != 0 && m_valid && active) {
             const PointF keepC1 = m_c1, keepC2 = m_c2;
-            restorePlane();
+            restorePlane(*active);
             fitPlane();
             if (!planeHolds(m_inner, m_c1, m_c2)) {
                 m_c1 = keepC1;
@@ -2406,8 +2476,8 @@ bool PerspectiveTool::setOption(const std::string &name, int value, VisualHost &
             }
         }
         m_plane = value != 0;
-        if (m_plane && m_line && m_valid)
-            m_planes[*m_line] = outer();
+        if (m_plane && active)
+            keepPlane(*active);
         if (!m_plane && (m_selected >= 4))
             m_selected = -1;
     } else if (name == "lockOuter") {

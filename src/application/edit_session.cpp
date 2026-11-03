@@ -57,6 +57,8 @@ void merge(DraftChange &into, const DraftChange &change)
         into.startFrame = change.startFrame;
     if (change.endFrame)
         into.endFrame = change.endFrame;
+    if (change.extra)
+        into.extra = change.extra;
 }
 
 // Fields `change` gives a new value are no longer kept to the draft's Line.
@@ -90,6 +92,8 @@ void unmark(DraftChange &own, const DraftChange &change, const DraftChange &befo
         own.startFrame.reset();
     if (change.endFrame && change.endFrame != before.endFrame)
         own.endFrame.reset();
+    if (change.extra && change.extra != before.extra)
+        own.extra.reset();
 }
 
 void apply(core::LineRecord &line, const DraftChange &change)
@@ -122,6 +126,8 @@ void apply(core::LineRecord &line, const DraftChange &change)
         line.startFrame = *change.startFrame;
     if (change.endFrame)
         line.endFrame = *change.endFrame;
+    if (change.extra)
+        line.extra = *change.extra;
 }
 
 bool sameFields(const core::LineRecord &a, const core::LineRecord &b)
@@ -130,7 +136,7 @@ bool sameFields(const core::LineRecord &a, const core::LineRecord &b)
            a.marginLeft.value == b.marginLeft.value && a.marginRight.value == b.marginRight.value &&
            a.marginVertical.value == b.marginVertical.value && a.comment == b.comment &&
            a.layer.value == b.layer.value && a.style == b.style && a.actor == b.actor && a.effect == b.effect &&
-           a.startFrame == b.startFrame && a.endFrame == b.endFrame;
+           a.startFrame == b.startFrame && a.endFrame == b.endFrame && a.extra == b.extra;
 }
 
 constexpr std::int64_t kMarginMax = 9999;
@@ -292,6 +298,7 @@ bool EditSession::commit(bool leaving, std::string name, std::optional<ContentId
         line.effect = record->effect;
         line.startFrame = record->startFrame;
         line.endFrame = record->endFrame;
+        line.extra = record->extra;
     });
     pushState(std::move(next), std::move(name), amending);
     return true;
@@ -356,6 +363,8 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Co
             updated.startFrame = record->startFrame;
         if (cells.endFrame && !(other && own.endFrame))
             updated.endFrame = record->endFrame;
+        if (cells.extra && !other)
+            updated.extra = record->extra;
         if (line->id != edited && companion &&
             (cells.translationCarried || (!cells.translation && (cells.text || cells.style))))
             companion(*line, updated);
@@ -380,6 +389,7 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Co
             l.effect = updated.effect;
             l.startFrame = updated.startFrame;
             l.endFrame = updated.endFrame;
+            l.extra = updated.extra;
         });
     }
     if (!changed)

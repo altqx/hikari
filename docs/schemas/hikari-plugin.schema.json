@@ -38,6 +38,37 @@
     "description": {"type": "string", "maxLength": 1000},
     "license": {"description": "An SPDX expression.", "type": "string", "maxLength": 200},
     "homepage": {"type": "string", "maxLength": 500, "pattern": "^https://"},
+    "summary": {
+      "description": "One line for the marketplace's cards and the plugin page.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
+    },
+    "icon": {
+      "description": "A file in the package: a 256 × 256 px PNG or a square SVG.",
+      "$ref": "#/$defs/IconPath"
+    },
+    "screenshots": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["path", "caption"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {"$ref": "#/$defs/ScreenshotPath"},
+          "caption": {
+            "description": "Shown under the image and used as its alt text.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
+          }
+        }
+      }
+    },
     "publicKey": {
       "description": "The author's minisign public key, the base64 line of its .pub file. Pinned at first install.",
       "type": "string",
@@ -121,6 +152,8 @@
       "maxLength": 200,
       "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.lua$"
     },
+    "IconPath": {"type": "string", "maxLength": 200, "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(png|svg)$"},
+    "ScreenshotPath": {"type": "string", "maxLength": 200, "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(png|jpg)$"},
     "Setting": {
       "oneOf": [
         {

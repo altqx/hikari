@@ -12,6 +12,7 @@ HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups,
 HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the recent files and their menu
 HikariSub.Hotkeys	Hotkey mapping and shortcut hints
 HikariSub.Karaoke	The karaoke check: its window, problems and their details
+HikariSub.Export	Export as: its window, the formats and options, and the report of what each format drops
 HikariSub.MainWindow	The main window: title, its title bar (menus, window buttons, the window menu), menu help, About, Credits, updates, the log and history windows
 HikariSub.Matroska	Subtitles from Matroska files
 HikariSub.MisspellReplacer	Fix minor errors (the misspell replacer) and its rules

@@ -93,6 +93,30 @@ TEST_F(Fixture, SubtitleTracksInContainerOrder)
                     "5|Web|fre|\n");
 }
 
+TEST_F(Fixture, ZlibCompressedTracksReadAsTheirUncompressedText)
+{
+    const std::string muxed(HIKARI_MUXED_MKV);
+    const auto t = tracks(muxed + "/zlib.mkv");
+    ASSERT_TRUE(t) << t.error().text;
+    ASSERT_EQ(t->size(), 2u);
+    EXPECT_EQ(t->at(0).codec, "ass");
+    EXPECT_EQ(t->at(1).codec, "srt");
+    for (const auto &[compressed, plain] : {std::pair{t->at(0).track, 1}, std::pair{t->at(1).track, 3}}) {
+        SCOPED_TRACE(compressed);
+        const auto read = subtitles(muxed + "/zlib.mkv", compressed);
+        const auto expected = subtitles(muxed + "/multi.mkv", plain);
+        ASSERT_TRUE(read) << read.error().text;
+        ASSERT_TRUE(expected) << expected.error().text;
+        EXPECT_EQ(read->codecPrivate, expected->codecPrivate);
+        ASSERT_EQ(read->packets.size(), expected->packets.size());
+        ASSERT_FALSE(read->packets.empty());
+        for (std::size_t i = 0; i < read->packets.size(); ++i) {
+            EXPECT_EQ(read->packets[i].start, expected->packets[i].start) << i;
+            EXPECT_EQ(read->packets[i].line, expected->packets[i].line) << i;
+        }
+    }
+}
+
 TEST_F(Fixture, PacketsInFileOrderWithTheirMilliseconds)
 {
     // FFMS2 skips packets under 2 bytes and ends a line at its first NUL.

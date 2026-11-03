@@ -1,0 +1,25 @@
+1
+00:00:01,000 --> 00:00:03,500
+Good morning.
+
+2
+00:00:04,000 --> 00:00:06,200
+You're late <i>again</i>.
+We start at eight.
+
+3
+00:00:07,000 --> 00:00:09,000
+<i>Why does he always say that?</i>
+
+4
+00:00:08,500 --> 00:00:10,000
+<b>Hurry</b> & bring the <notes>!
+
+5
+00:00:11,000 --> 00:00:13,000
+<u>Chapter one</u>
+
+6
+00:00:15,000 --> 00:00:17,250
+Wrong Right, see you tomorrow.
+
