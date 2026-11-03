@@ -303,7 +303,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(rowNamed(list, "Global Centre times within frames").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Import legacy settings…").accel, "");
     EXPECT_EQ(rowNamed(list, "Subtitles Hide line wraps").key.id, 4513);
-    EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Commit alt");
+    EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Apply changes alt");
     EXPECT_EQ(list.find("Global Exit"), -1);
     EXPECT_EQ(list.selection(), 0);
     EXPECT_FALSE(list.modified());
@@ -336,7 +336,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList cut(copy);
     cut.build(fewer);
     EXPECT_EQ(cut.rowCount(), 269u);
-    EXPECT_EQ(cut.find("Audio Commit alt"), -1);
+    EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);

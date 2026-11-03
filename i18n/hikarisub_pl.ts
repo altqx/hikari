@@ -125,10 +125,6 @@
         <translation>Dodaj zakończenie do aktywnej linijki</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>Zatwierdź</translation>
-    </message>
-    <message>
         <source>Apply changes</source>
         <translation>Zatwierdź zmiany</translation>
     </message>
@@ -153,11 +149,11 @@
         <translation>Włącz / Wyłącz automatyczne dzielenie sylab</translation>
     </message>
     <message>
-        <source>Automatically apply changes</source>
+        <source>Apply changes automatically</source>
         <translation>Automatycznie zatwierdzaj zmiany</translation>
     </message>
     <message>
-        <source>Go to the next line after applying changes</source>
+        <source>Go to the next line after applying</source>
         <translation>Przechodź do następnej linijki po zatwierdzeniu zmian</translation>
     </message>
     <message>
@@ -222,16 +218,8 @@
         <translation>Odtwórz po znaczniku</translation>
     </message>
     <message>
-        <source>Commit options</source>
-        <translation>Opcje zatwierdzania</translation>
-    </message>
-    <message>
-        <source>Auto-commit</source>
-        <translation>Automatyczne zatwierdzanie</translation>
-    </message>
-    <message>
-        <source>Next after commit</source>
-        <translation>Dalej po zatwierdzeniu</translation>
+        <source>Options for applying changes</source>
+        <translation>Opcje zatwierdzania zmian</translation>
     </message>
     <message>
         <source>Line</source>
@@ -396,10 +384,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Play around button</source>
         <translation>Przycisk odtwarzania okolic</translation>
-    </message>
-    <message>
-        <source>Go to the next line after commit</source>
-        <translation>Przechodź do następnej linijki po zatwierdzeniu</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -2301,7 +2285,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Lewo-dół</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>Środek-dół</translation>
     </message>
     <message>
@@ -2313,7 +2297,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Lewo-środek</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>Środek</translation>
     </message>
     <message>
@@ -2325,7 +2309,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Lewo-góra</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>Środek-góra</translation>
     </message>
     <message>
@@ -5132,12 +5116,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przejmuje go: %1</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>Zatwierdź</translation>
-    </message>
-    <message>
-        <source>Commit alt</source>
-        <translation>Zatwierdź (drugi skrót)</translation>
+        <source>Apply changes alt</source>
+        <translation>Zatwierdź zmiany (drugi skrót)</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -5224,8 +5204,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Kolor cienia</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>Wybór czcionki</translation>
+        <source>Choose font…</source>
+        <translation>Wybierz czcionkę…</translation>
     </message>
     <message>
         <source>Strikethrough</source>
@@ -5544,8 +5524,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Podziel linijki według łamań wierszy</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>Właściwości pliku ASS</translation>
+        <source>Script properties</source>
+        <translation>Właściwości skryptu</translation>
     </message>
     <message>
         <source>Check for updates</source>
@@ -5636,8 +5616,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz klatki kluczowe</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>Otwórz autozapis</translation>
+        <source>Open autosave…</source>
+        <translation>Otwórz autozapis…</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -15624,7 +15604,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Miejsce tagu w tekście</translation>
     </message>
     <message>
-        <source>How each line&apos;s number changes the value</source>
+        <source>How each line’s number changes the value</source>
         <translation>Jak numer linijki zmienia wartość</translation>
     </message>
     <message>
@@ -16056,7 +16036,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Za-dół</translation>
     </message>
     <message>
-        <source>After-center</source>
+        <source>After-centre</source>
         <translation>Za-środek</translation>
     </message>
     <message>
@@ -16072,7 +16052,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przed-dół</translation>
     </message>
     <message>
-        <source>Before-center</source>
+        <source>Before-centre</source>
         <translation>Przed-środek</translation>
     </message>
     <message>
@@ -16080,7 +16060,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przed-góra</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>Środek-dół</translation>
     </message>
     <message>
@@ -16096,15 +16076,15 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Nie można odczytać wartości wycinka prostokątnego.</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>Środek</translation>
     </message>
     <message>
-        <source>Center-above</source>
+        <source>Centre-above</source>
         <translation>Środek-ponad</translation>
     </message>
     <message>
-        <source>Center-below</source>
+        <source>Centre-below</source>
         <translation>Środek-poniżej</translation>
     </message>
     <message>
@@ -16140,8 +16120,8 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Usuń punkt</translation>
     </message>
     <message>
-        <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
-        <translation>Podwójne &quot;m&quot; zostało zablokowane z powodu błędu w VSFilter</translation>
+        <source>A double “m” was blocked because of a VSFilter bug</source>
+        <translation>Podwójne “m” zostało zablokowane z powodu błędu w VSFilter</translation>
     </message>
     <message>
         <source>List of ASS drawings with an edit option.
@@ -16345,12 +16325,12 @@ przeskalowany w jednej lub dwóch osiach.</translation>
     </message>
     <message>
         <source>Show surrounding plane
-A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
+A rectangle of the text’s plane: match it to one in the shot, then place the text inside it</source>
         <translation>Pokaż otaczającą płaszczyznę
 Prostokąt płaszczyzny tekstu: dopasuj go do prostokąta w kadrze, a potem umieść w nim tekst</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>Środek-góra</translation>
     </message>
     <message>
@@ -16362,7 +16342,7 @@ Prostokąt płaszczyzny tekstu: dopasuj go do prostokąta w kadrze, a potem umie
         <translation>Prawo-góra</translation>
     </message>
     <message>
-        <source>Video must be set at least one frame after the line&apos;s start time</source>
+        <source>Video must be set at least one frame after the line’s start time</source>
         <translation>Wideo musi być ustawione co najmniej jedną klatkę po czasie początkowym linijki</translation>
     </message>
     <message>

@@ -17326,7 +17326,7 @@ private slots:
         auto *autoMark = visualItem("audioAutoCommitMark");
         auto *nextMark = visualItem("audioNextCommitMark");
         QVERIFY(autoMark && nextMark);
-        QCOMPARE(item<QObject>("audioCommitItem")->property("text").toString(), QStringLiteral("Commit"));
+        QCOMPARE(item<QObject>("audioCommitItem")->property("text").toString(), QStringLiteral("Apply changes"));
         QCOMPARE(item<QObject>("audioCommitItem")->property("keysText").toString(), QStringLiteral("Enter or G"));
         QVERIFY(settings.boolean("audio.autoCommit"));
         QVERIFY(settings.boolean("audio.nextLineOnCommit"));
@@ -20999,7 +20999,7 @@ private slots:
         h.optionsMap(QStringLiteral("U"), 4, QStringLiteral("cancel"));
         h.select(hotkeyPosition(QStringLiteral("Audio Play line alt")));
         h.optionsMap(QStringLiteral("I"), 4, QStringLiteral("cancel"));
-        h.select(hotkeyPosition(QStringLiteral("Audio Commit")));
+        h.select(hotkeyPosition(QStringLiteral("Audio Apply changes")));
         h.optionsMap(QStringLiteral("J"), 4, QStringLiteral("cancel"));
         h.commitOptions();
         QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("U"));
@@ -23981,7 +23981,7 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p1);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p2);
         QTRY_COMPARE(application->log().lastMessage(),
-                     QStringLiteral("Video must be set at least one frame after the line's start time"));
+                     QStringLiteral("Video must be set at least one frame after the line’s start time"));
         QCOMPARE(session->historySize(), sameSteps);
     }
 
@@ -24111,7 +24111,7 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p1);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p2);
         QTRY_COMPARE(application->log().lastMessage(),
-                     QStringLiteral("Video must be set at least one frame after the line's start time"));
+                     QStringLiteral("Video must be set at least one frame after the line’s start time"));
         QCOMPARE(session->historySize(), steps);
         QCOMPARE(signText(), QStringLiteral("{\\an5\\pos(160,120)}sign"));
         QVERIFY(application->video().stepFrames(3));
@@ -24844,7 +24844,7 @@ private slots:
         const int warnings = application->log().warningCount();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, b);
         QQuickItem *notice = nullptr;
-        QTRY_VERIFY((notice = toastWith(QStringLiteral("A double \"m\" was blocked because of a VSFilter bug"))));
+        QTRY_VERIFY((notice = toastWith(QStringLiteral("A double “m” was blocked because of a VSFilter bug"))));
         QCOMPARE(partNamed(notice, "toastTitle")->property("text").toString(), tools.toolName());
         QVERIFY(!tools.toolName().isEmpty());
         QCOMPARE(application->log().warningCount(), warnings + 1);
@@ -29406,7 +29406,7 @@ private slots:
         auto *grid = named("alignmentGrid");
         QVERIFY(choice && grid);
         QCOMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-8"));
-        QCOMPARE(choice->property("tip").toString(), QStringLiteral("Text position: Top-center (an8)"));
+        QCOMPARE(choice->property("tip").toString(), QStringLiteral("Text position: Top-centre (an8)"));
         const auto cell = [&](int n) {
             return findItem(grid->property("contentItem").value<QQuickItem *>(), QStringLiteral("alignmentCell%1").arg(n));
         };

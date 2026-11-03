@@ -52,7 +52,7 @@ VT2 ([#270](https://github.com/altqx/hikari/issues/270), owner-approved audit [i
 | --- | --- | --- | --- | --- |
 | Position pointer | VIDEO_TOOL_CROSSHAIR (2022) | X | free | Audio Next line alt |
 | Text positioning | VIDEO_TOOL_POSITION (2023) | P | free | free |
-| Text moving | VIDEO_TOOL_MOVE (2024) | G | free | Audio Commit alt |
+| Text moving | VIDEO_TOOL_MOVE (2024) | G | free | Audio Apply changes alt |
 | Text scaling | VIDEO_TOOL_SCALE (2025) | S | free (the S nudge retired) | Audio Play alt |
 | Text Z rotation | VIDEO_TOOL_ROTATION_Z (2026) | R | free | Audio Play line alt |
 | Text X / Y rotation | VIDEO_TOOL_ROTATION_XY (2027) | T | free | Audio Play to the end |

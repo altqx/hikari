@@ -2427,7 +2427,7 @@ std::vector<ToolOption> PerspectiveTool::options(const VisualHost &host) const
     ToolOption plane;
     plane.name = "plane";
     plane.iconRole = "perspective-plane";
-    plane.tooltip = u"Show surrounding plane\nA rectangle of the text's plane: match it to one in the shot, then place "
+    plane.tooltip = u"Show surrounding plane\nA rectangle of the text’s plane: match it to one in the shot, then place "
                     u"the text inside it";
     plane.checked = m_plane;
     plane.group = u"Plane";
@@ -2449,7 +2449,7 @@ std::vector<ToolOption> PerspectiveTool::options(const VisualHost &host) const
     mode.name = "orgMode";
     mode.kind = ToolOption::Kind::Choice;
     mode.tooltip = u"\\org mode";
-    mode.choices = {u"Center", u"No \\fax", u"Keep"};
+    mode.choices = {u"Centre", u"No \\fax", u"Keep"};
     mode.index = static_cast<int>(m_orgMode);
     mode.group = u"Origin";
     return {plane, lock, grid, mode};

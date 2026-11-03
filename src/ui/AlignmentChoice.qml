@@ -10,10 +10,10 @@ IconToolButton {
     required property LineEditorController editor
     signal chosen()
 
-    readonly property var names: ["", qsTr("Bottom-left") + " (an1)", qsTr("Bottom-center") + " (an2)",
+    readonly property var names: ["", qsTr("Bottom-left") + " (an1)", qsTr("Bottom-centre") + " (an2)",
                                   qsTr("Bottom-right") + " (an3)", qsTr("Middle-left") + " (an4)",
-                                  qsTr("Center") + " (an5)", qsTr("Middle-right") + " (an6)",
-                                  qsTr("Top-left") + " (an7)", qsTr("Top-center") + " (an8)",
+                                  qsTr("Centre") + " (an5)", qsTr("Middle-right") + " (an6)",
+                                  qsTr("Top-left") + " (an7)", qsTr("Top-centre") + " (an8)",
                                   qsTr("Top-right") + " (an9)"]
     readonly property int current: editor.alignmentMixed || editor.alignmentIndex < 0 ? 0 : editor.alignmentIndex + 1
     readonly property alias gridOpen: grid.opened

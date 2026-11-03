@@ -316,8 +316,8 @@ struct NameRow {
 };
 // MUST KILL: raw legacy hotkey ids, no named constants (here and in the defaults)
 constexpr NameRow kNames[] = {
-        {1010, "Commit"},
-        {1000, "Commit alt"},
+        {1010, "Apply changes"},
+        {1000, "Apply changes alt"},
         {1013, "Previous line"},
         {1003, "Previous line alt"},
         {1014, "Next line"},
@@ -343,7 +343,7 @@ constexpr NameRow kNames[] = {
         {3006, "Primary colour"},
         {3007, "Secondary colour for karaoke"},
         {3009, "Shadow colour"},
-        {3000, "Font selection"},
+        {3000, "Choose font…"},
         {3002, "Strikethrough"},
         {3001, "Underline"},
         {3010, "Apply changes"},
@@ -430,7 +430,7 @@ constexpr NameRow kNames[] = {
         {4523, "Split lines into characters"},
         {4524, "Split lines into words"},
         {4525, "Split lines by wraps"},
-        {5025, "ASS file properties"},
+        {5025, "Script properties"},
         {5114, "Check for updates"},
         {5110, "About"},
         {5113, "Report an issue"},
@@ -453,7 +453,7 @@ constexpr NameRow kNames[] = {
         {5152, "Merge with previous line"},
         {5153, "Merge with next line"},
         {5102, "Open keyframes"},
-        {5105, "Open auto save"},
+        {5105, "Open autosave…"},
         {5038, "Run the last loaded script"},
         {5200, "Sort all lines by start time"},
         {5201, "Sort all lines by end time"},
@@ -683,8 +683,8 @@ constexpr DefaultRow kMainDefaults[] = {
         {3011, EditorHotkey, "Apply the changes and go to the next line", "Enter"},
 };
 constexpr DefaultRow kAudioDefaults[] = {
-        {1010, AudioHotkey, "Commit", "Enter"},
-        {1000, AudioHotkey, "Commit alt", "G"},
+        {1010, AudioHotkey, "Apply changes", "Enter"},
+        {1000, AudioHotkey, "Apply changes alt", "G"},
         {1013, AudioHotkey, "Previous line", "Left"},
         {1003, AudioHotkey, "Previous line alt", "Z"},
         {1014, AudioHotkey, "Next line", "Right"},

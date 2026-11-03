@@ -225,7 +225,7 @@ private slots:
                                   "\n[grid]\n"
                                   "GLOBAL_SAVE_SUBS = \"F7\"  # Save\n"
                                   "\n[audio]\n"
-                                  "AUDIO_COMMIT = \"Num+Enter\"  # Commit\n"
+                                  "AUDIO_COMMIT = \"Num+Enter\"  # Apply changes\n"
                                   "\n[automation]\n"
                                   "\"Script Karaoke Templater-Apply\" = { keys = \"Ctrl+Alt+K\", macro = \"Apply\", "
                                   "sha256 = \"abc123\" }\n"
@@ -242,6 +242,45 @@ private slots:
         again.set(kHotkeysSetting.data(), qLines(hotkeyLines(defaultHotkeys(), false)));
         QVERIFY(!again.contains(kHotkeysSetting.data()));
         QVERIFY(again.contains(kAudioHotkeysSetting.data()));
+    }
+
+    void hotkeysFileFromBeforeTheShortcutRenamesKeepsItsBindings()
+    {
+        using namespace application;
+        QTemporaryDir dir;
+        QFile hotkeys(dir.filePath(QStringLiteral("hotkeys.toml")));
+        QVERIFY(hotkeys.open(QIODevice::WriteOnly));
+        hotkeys.write("version = 1\n"
+                      "\n[global]\n"
+                      "GLOBAL_OPEN_ASS_PROPERTIES = \"Ctrl+Alt+F2\"  # ASS file properties\n"
+                      "GLOBAL_OPEN_AUTO_SAVE = \"Ctrl+Alt+F3\"  # Open auto save\n"
+                      "\n[editor]\n"
+                      "EDITBOX_CHANGE_FONT = \"Ctrl+Alt+F4\"  # Font selection\n"
+                      "\n[audio]\n"
+                      "AUDIO_COMMIT = \"Ctrl+Alt+F5\"  # Commit\n"
+                      "AUDIO_COMMIT_ALT = \"Ctrl+Alt+F6\"  # Commit alt\n");
+        hotkeys.close();
+        SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
+        HotkeyMap read;
+        readHotkeyLines(read, store.settings().list(kHotkeysSetting));
+        readHotkeyLines(read, store.settings().list(kAudioHotkeysSetting));
+        const struct {
+            const char *symbol;
+            int window;
+            const char *accel;
+            const char *name;
+        } renamed[] = {{"GLOBAL_OPEN_ASS_PROPERTIES", GlobalHotkey, "Ctrl-Alt-F2", "Script properties"},
+                       {"GLOBAL_OPEN_AUTO_SAVE", GlobalHotkey, "Ctrl-Alt-F3", "Open autosave…"},
+                       {"EDITBOX_CHANGE_FONT", EditorHotkey, "Ctrl-Alt-F4", "Choose font…"},
+                       {"AUDIO_COMMIT", AudioHotkey, "Ctrl-Alt-F5", "Apply changes"},
+                       {"AUDIO_COMMIT_ALT", AudioHotkey, "Ctrl-Alt-F6", "Apply changes alt"}};
+        for (const auto &r : renamed) {
+            const int id = hotkeyIdOf(r.symbol);
+            const auto it = read.find(HotkeyId{id, r.window});
+            QVERIFY2(it != read.end(), r.symbol);
+            QCOMPARE(it->second.accel, std::string(r.accel));
+            QCOMPARE(hotkeyName(id), std::string(r.name));
+        }
     }
 
     void defaultHotkeysRoundTripThroughTheirText()
