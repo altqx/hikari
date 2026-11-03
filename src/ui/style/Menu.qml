@@ -13,6 +13,8 @@ F.Menu {
         }
         return widest
     }
+    // A ListView doesn't lay out again when a row becomes visible while the menu is closed.
+    onAboutToShow: (contentItem as ListView)?.forceLayout()
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             Math.min(480, widestItem) + leftPadding + rightPadding)
     background: Rectangle {

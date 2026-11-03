@@ -70,7 +70,7 @@ Subtitles > Set FPS > Set new FPS… [GRID_SET_NEW_FPS]
 Subtitles > Set FPS > Set FPS from video [GRID_SET_FPS_FROM_VIDEO]
 Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]
 Subtitles > Check karaoke [GLOBAL_CHECK_KARAOKE]
-Subtitles > Kanji timer… [GLOBAL_KANJI_TIMER]
+Subtitles > Kanji timer [GLOBAL_KANJI_TIMER]
 Subtitles > -
 Subtitles > Translation mode [GLOBAL_TRANSLATION_MODE]
 Video
@@ -93,7 +93,7 @@ Video > Previous frame [GLOBAL_PREVIOUS_FRAME]
 Video > Next frame [GLOBAL_NEXT_FRAME]
 Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]
 Video > Go to end time of line [GLOBAL_SET_VIDEO_AT_END_TIME]
-Video > Play / Pause [GLOBAL_PLAY_PAUSE]
+Video > Play or pause [GLOBAL_PLAY_PAUSE]
 Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
 Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
 Video > -
@@ -102,7 +102,7 @@ Video > Streams >
 Video > Chapters >
 Video > Zoom video [GLOBAL_VIDEO_ZOOM]
 Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
-Video > Show / hide render cost [GLOBAL_VIDEO_RENDER_COST]
+Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
 Audio
 Audio > Open audio [GLOBAL_OPEN_AUDIO]
 Audio > Recently opened audio >

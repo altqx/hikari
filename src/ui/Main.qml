@@ -1811,7 +1811,7 @@ ApplicationWindow {
                 id: kanjiTimerItem
                 iconRole: "kanji-timer"
                 objectName: "kanjiTimerMenuItem"
-                text: qsTr("Kanji timer…")
+                text: qsTr("Kanji timer")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
             }
@@ -2025,11 +2025,11 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_PLAY_PAUSE"
-                help: qsTr("Plays / Pauses video")
+                help: qsTr("Plays or pauses the video")
                 iconRole: root.video.playing ? "media-pause" : "media-play"
                 action: Action {
                     id: playPauseAction
-                    text: qsTr("Play / Pause"); enabled: root.video.hasVideo
+                    text: qsTr("Play or pause"); enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
                 }
             }
@@ -2088,13 +2088,18 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
-                command: "GLOBAL_VIDEO_RENDER_COST"
                 iconRole: "render-cost"
+                command: "GLOBAL_VIDEO_RENDER_COST"
                 objectName: "renderCostMenuItem"
                 action: Action {
                     id: renderCostAction
-                    text: qsTr("Show / hide render cost"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST")) root.videoView.toggleRenderCost()
+                    text: qsTr("Render cost"); enabled: root.video.hasVideo
+                    checkable: true
+                    checked: root.videoView.renderCost
+                    onTriggered: {
+                        checked = Qt.binding(() => root.videoView.renderCost)
+                        if (!root.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST")) root.videoView.toggleRenderCost()
+                    }
                 }
             }
         }
@@ -3410,7 +3415,7 @@ ApplicationWindow {
                         text: root.video.playing ? qsTranslate("HikariSub.Video", "Pause") : qsTranslate("HikariSub.Video", "Play")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
+                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play or pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
                     IconToolButton {
@@ -4019,39 +4024,93 @@ ApplicationWindow {
                         Layout.rightMargin: 2
                         color: Theme.line
                     }
-                    component AudioRadioItem: ShellMenuItem {
-                        id: radioItem
-                        checkable: true
-                        keepsMenuOpen: false
-                        Accessible.role: Accessible.RadioButton
-                        indicator: Rectangle {
-                            readonly property color ink: radioItem.enabled && (radioItem.down || radioItem.highlighted)
-                                                         ? radioItem.palette.highlightedText : radioItem.palette.text
-                            x: radioItem.mirrored ? radioItem.width - width - radioItem.rightPadding : radioItem.leftPadding
-                            y: radioItem.topPadding + (radioItem.availableHeight - height) / 2
-                            implicitWidth: 14
-                            implicitHeight: 14
-                            radius: 7
-                            color: "transparent"
-                            border.color: ink
-                            Rectangle {
-                                anchors.centerIn: parent
-                                width: 6
-                                height: 6
-                                radius: 3
-                                color: parent.ink
-                                visible: radioItem.checked
+                    component TapOptionsMenu: ShellMenu {
+                        id: tapMenu
+                        property string names: "audio"
+                        property bool tapRow: true
+                        ShellMenuItem {
+                            objectName: tapMenu.names + "TapStart"
+                            visible: tapMenu.tapRow
+                            height: tapMenu.tapRow ? implicitHeight : 0
+                            iconRole: "karaoke-tap"
+                            text: qsTranslate("HikariSub.Audio", "Tap to time")
+                            command: "AUDIO_TAP"
+                            checkable: true
+                            keepsMenuOpen: false
+                            checked: root.audio.tapOn
+                            onTriggered: {
+                                checked = Qt.binding(() => root.audio.tapOn)
+                                if (!root.hotkeyGesture("AUDIO_TAP", 4, true, false)) root.audio.toggleTap()
                             }
                         }
-                    }
-                    component AudioMenuHeading: Label {
-                        leftPadding: 12
-                        rightPadding: 12
-                        topPadding: 4
-                        bottomPadding: 2
-                        color: Theme.muted
-                        font.bold: true
-                        font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
+                        MenuSeparator {
+                            visible: tapMenu.tapRow
+                            height: tapMenu.tapRow ? implicitHeight : 0
+                        }
+                        MenuHeading {
+                            text: qsTranslate("HikariSub.Audio", "Each syllable")
+                        }
+                        MenuRadioItem {
+                            objectName: tapMenu.names + "TapHold"
+                            text: qsTranslate("HikariSub.Audio", "Hold the key: releasing it leaves a gap")
+                            checked: root.audio.tapHold
+                            onTriggered: {
+                                root.audio.setTapHold(true)
+                                checked = Qt.binding(() => root.audio.tapHold)
+                            }
+                        }
+                        MenuRadioItem {
+                            objectName: tapMenu.names + "TapPress"
+                            text: qsTranslate("HikariSub.Audio", "Press the key: no gaps")
+                            checked: !root.audio.tapHold
+                            onTriggered: {
+                                root.audio.setTapHold(false)
+                                checked = Qt.binding(() => !root.audio.tapHold)
+                            }
+                        }
+                        MenuSeparator {}
+                        ShellMenuItem {
+                            objectName: tapMenu.names + "OnsetSnap"
+                            text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
+                            checkable: true
+                            checked: root.audio.onsetSnap
+                            onToggled: {
+                                root.audio.setOnsetSnap(checked)
+                                checked = Qt.binding(() => root.audio.onsetSnap)
+                            }
+                        }
+                        MenuSeparator {}
+                        ShellMenu {
+                            id: speedMenu
+                            objectName: tapMenu.names + "TapSpeedMenu"
+                            iconRole: "playback-speed"
+                            //: The Tap menu's Speed submenu; the current speed follows it
+                            title: qsTranslate("HikariSub.Audio", "Speed")
+                            detailText: qsTranslate("HikariSub.Audio", "%1%").arg(root.audio.speedPercent)
+                            Instantiator {
+                                model: [25, 33, 50, 75, 100]
+                                delegate: MenuRadioItem {
+                                    required property int modelData
+                                    objectName: tapMenu.names + "TapSpeed" + modelData
+                                    text: qsTranslate("HikariSub.Audio", "%1%").arg(modelData)
+                                    checked: root.audio.speedPercent === modelData
+                                    onTriggered: {
+                                        root.audio.setSpeedPercent(modelData)
+                                        checked = Qt.binding(() => root.audio.speedPercent === modelData)
+                                    }
+                                }
+                                onObjectAdded: (index, object) => speedMenu.insertItem(index, object)
+                                onObjectRemoved: (index, object) => speedMenu.removeItem(object)
+                            }
+                        }
+                        ShellMenuItem {
+                            objectName: tapMenu.names + "TapCalibrate"
+                            iconRole: "tap-calibrate"
+                            //: The Tap menu's item; the tap latency follows it
+                            text: qsTranslate("HikariSub.Audio", "Calibrate latency…")
+                            detailText: qsTranslate("HikariSub.Audio", "%1 ms").arg(root.audio.tapLatency)
+                            onTriggered: tapCalibrationWindow.openWindow()
+                        }
                     }
                     component PlayAroundItem: ShellMenuItem {
                         id: playItem
@@ -4307,7 +4366,7 @@ ApplicationWindow {
                                 iconRole: "karaoke"
                                 divider: true
                                 text: qsTranslate("HikariSub.Audio", "Karaoke")
-                                tip: qsTranslate("HikariSub.Audio", "Enable / disable karaoke creation")
+                                tip: qsTranslate("HikariSub.Audio", "Karaoke")
                                 checked: root.audio.karaoke
                                 onRun: if (!root.audio.karaoke) root.audio.toggleKaraoke()
                             }
@@ -4358,82 +4417,9 @@ ApplicationWindow {
                             checked: root.audio.tapOn
                             onRun: root.audio.toggleTap()
                         }
-                        ShellMenu {
+                        TapOptionsMenu {
                             id: audioTapMenu
                             objectName: "audioTapMenu"
-                            ShellMenuItem {
-                                objectName: "audioTapStart"
-                                iconRole: "karaoke-tap"
-                                text: (root.audio.tapOn ? qsTranslate("HikariSub.Audio", "Stop tapping")
-                                                        : qsTranslate("HikariSub.Audio", "Start tapping"))
-                                command: "AUDIO_TAP"
-                                onTriggered: if (!root.hotkeyGesture("AUDIO_TAP", 4, true, false)) root.audio.toggleTap()
-                            }
-                            MenuSeparator {}
-                            AudioMenuHeading {
-                                text: qsTranslate("HikariSub.Audio", "Each syllable")
-                            }
-                            AudioRadioItem {
-                                objectName: "audioTapHold"
-                                text: qsTranslate("HikariSub.Audio", "Hold the key: releasing it leaves a gap")
-                                checked: root.audio.tapHold
-                                onTriggered: {
-                                    root.audio.setTapHold(true)
-                                    checked = Qt.binding(() => root.audio.tapHold)
-                                }
-                            }
-                            AudioRadioItem {
-                                objectName: "audioTapPress"
-                                text: qsTranslate("HikariSub.Audio", "Press the key: no gaps")
-                                checked: !root.audio.tapHold
-                                onTriggered: {
-                                    root.audio.setTapHold(false)
-                                    checked = Qt.binding(() => !root.audio.tapHold)
-                                }
-                            }
-                            MenuSeparator {}
-                            ShellMenuItem {
-                                objectName: "audioOnsetSnap"
-                                text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
-                                checkable: true
-                                checked: root.audio.onsetSnap
-                                onToggled: {
-                                    root.audio.setOnsetSnap(checked)
-                                    checked = Qt.binding(() => root.audio.onsetSnap)
-                                }
-                            }
-                            MenuSeparator {}
-                            ShellMenu {
-                                id: audioTapSpeedMenu
-                                objectName: "audioTapSpeedMenu"
-                                iconRole: "playback-speed"
-                                //: The Tap menu's Speed submenu; the current speed follows it
-                                title: qsTranslate("HikariSub.Audio", "Speed")
-                                detailText: qsTranslate("HikariSub.Audio", "%1%").arg(root.audio.speedPercent)
-                                Instantiator {
-                                    model: [25, 33, 50, 75, 100]
-                                    delegate: AudioRadioItem {
-                                        required property int modelData
-                                        objectName: "audioTapSpeed" + modelData
-                                        text: qsTranslate("HikariSub.Audio", "%1%").arg(modelData)
-                                        checked: root.audio.speedPercent === modelData
-                                        onTriggered: {
-                                            root.audio.setSpeedPercent(modelData)
-                                            checked = Qt.binding(() => root.audio.speedPercent === modelData)
-                                        }
-                                    }
-                                    onObjectAdded: (index, object) => audioTapSpeedMenu.insertItem(index, object)
-                                    onObjectRemoved: (index, object) => audioTapSpeedMenu.removeItem(object)
-                                }
-                            }
-                            ShellMenuItem {
-                                objectName: "audioTapCalibrate"
-                                iconRole: "tap-calibrate"
-                                //: The Tap menu's item; the tap latency follows it
-                                text: qsTranslate("HikariSub.Audio", "Calibrate latency…")
-                                detailText: qsTranslate("HikariSub.Audio", "%1 ms").arg(root.audio.tapLatency)
-                                onTriggered: tapCalibrationWindow.openWindow()
-                            }
                         }
                         AudioSwitch {
                             AudioSegment {
@@ -4484,7 +4470,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Speech")
                             checkable: true
                             checked: root.audio.spectrumNonLinear
-                            tip: qsTranslate("HikariSub.Audio", "Enhance speech frequencies in the spectrum")
+                            tip: qsTranslate("HikariSub.Audio", "Speech spectrum")
                             onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
                         }
                     }
@@ -4497,7 +4483,7 @@ ApplicationWindow {
                             id: audioMoreButton
                             objectName: "audioMore"
                             visible: audioButtons.togglesFolded
-                            iconRole: "panel-menu"
+                            iconRole: "menu-more"
                             text: qsTranslate("HikariSub.Audio", "More audio options")
                             tip: text
                             down: audioMoreMenu.visible
@@ -4505,10 +4491,16 @@ ApplicationWindow {
                             ShellMenu {
                                 id: audioMoreMenu
                                 objectName: "audioMoreMenu"
+                                readonly property bool playsFold: audioPanel.playExtras.some(id => audioButtons.foldsOut(id))
+                                readonly property bool commitFolds: ["autoCommit", "nextCommit", "goto"].some(id => audioButtons.foldsOut(id))
                                 component FoldedItem: ShellMenuItem {
                                     checkable: true
                                     visible: audioButtons.folded
                                     height: visible ? implicitHeight : 0
+                                }
+                                component FoldedRadio: MenuRadioItem {
+                                    visible: audioButtons.folded
+                                    height: audioButtons.folded ? implicitHeight : 0
                                 }
                                 component FoldedSeparator: MenuSeparator {
                                     visible: audioButtons.folded
@@ -4531,6 +4523,10 @@ ApplicationWindow {
                                 FoldedPlay { play: audioPanel.play("last") }
                                 FoldedPlay { play: audioPanel.play("after") }
                                 FoldedPlay { play: audioPanel.play("toEnd") }
+                                MenuSeparator {
+                                    visible: audioMoreMenu.playsFold && audioMoreMenu.commitFolds
+                                    height: visible ? implicitHeight : 0
+                                }
                                 ShellMenuItem {
                                     objectName: "audioMoreExtraAutoCommit"
                                     visible: audioButtons.foldsOut("autoCommit")
@@ -4567,26 +4563,21 @@ ApplicationWindow {
                                     onTriggered: if (!root.hotkeyGesture("AUDIO_GOTO", 4, true, false)) root.audio.goToSelection()
                                 }
                                 MenuSeparator {
-                                    visible: audioButtons.kept.length < audioButtons.shownExtras.length
+                                    visible: audioButtons.folded && (audioMoreMenu.playsFold || audioMoreMenu.commitFolds)
                                     height: visible ? implicitHeight : 0
                                 }
-                                FoldedItem {
-                                    iconRole: "audio-line-mode"
+                                FoldedRadio {
+                                    objectName: "audioMoreLineTiming"
                                     text: qsTranslate("HikariSub.Audio", "Line timing")
-                                    checkable: true
-                                    keepsMenuOpen: false
                                     checked: !root.audio.karaoke
                                     onTriggered: {
                                         checked = Qt.binding(() => !root.audio.karaoke)
                                         if (root.audio.karaoke) root.audio.toggleKaraoke()
                                     }
                                 }
-                                FoldedItem {
+                                FoldedRadio {
                                     objectName: "audioMoreKaraoke"
-                                    iconRole: "karaoke"
                                     text: qsTranslate("HikariSub.Audio", "Karaoke")
-                                    checkable: true
-                                    keepsMenuOpen: false
                                     checked: root.audio.karaoke
                                     onTriggered: {
                                         checked = Qt.binding(() => root.audio.karaoke)
@@ -4637,39 +4628,45 @@ ApplicationWindow {
                                         root.audio.toggleTap()
                                     }
                                 }
-                                FoldedItem {
+                                TapOptionsMenu {
                                     objectName: "audioMoreTapOptions"
-                                    visible: audioButtons.folded && root.audio.karaoke
-                                    checkable: false
-                                    keepsMenuOpen: false
-                                    text: qsTranslate("HikariSub.Audio", "Tap options")
-                                    onTriggered: Qt.callLater(() => audioTapMenu.popup(audioMoreButton, 0, audioMoreButton.height))
+                                    names: "audioMore"
+                                    tapRow: false
+                                    iconRole: "karaoke-tap"
+                                    title: qsTranslate("HikariSub.Audio", "Tap options")
+                                    shown: audioButtons.folded && root.audio.karaoke
                                 }
                                 FoldedSeparator {}
-                                FoldedItem {
-                                    iconRole: "audio-waveform"
+                                FoldedRadio {
+                                    objectName: "audioMoreWaveform"
                                     text: qsTranslate("HikariSub.Audio", "Waveform")
-                                    checkable: true
-                                    keepsMenuOpen: false
                                     checked: !root.audio.spectrumOn
                                     onTriggered: {
                                         checked = Qt.binding(() => !root.audio.spectrumOn)
                                         root.audio.setSpectrumOn(false)
                                     }
                                 }
-                                FoldedItem {
+                                FoldedRadio {
                                     objectName: "audioMoreSpectrum"
-                                    iconRole: "spectrum"
                                     text: qsTranslate("HikariSub.Audio", "Spectrum")
-                                    checkable: true
-                                    keepsMenuOpen: false
                                     checked: root.audio.spectrumOn
                                     onTriggered: {
                                         checked = Qt.binding(() => root.audio.spectrumOn)
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                FoldedSeparator {}
+                                ShellMenuItem {
+                                    objectName: "audioMoreSpeechSpectrum"
+                                    iconRole: "spectrum-nonlinear"
+                                    text: qsTranslate("HikariSub.Audio", "Speech spectrum")
+                                    checkable: true
+                                    checked: root.audio.spectrumNonLinear
+                                    onToggled: {
+                                        root.audio.setSpectrumNonLinear(checked)
+                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
+                                    }
+                                }
+                                MenuSeparator {}
                                 ShellMenuItem {
                                     objectName: "audioMoreAutoScroll"
                                     iconRole: "auto-scroll"
@@ -4689,16 +4686,6 @@ ApplicationWindow {
                                     onToggled: {
                                         root.audio.setSyncVideo(checked)
                                         checked = Qt.binding(() => root.audio.syncVideo)
-                                    }
-                                }
-                                ShellMenuItem {
-                                    iconRole: "spectrum-nonlinear"
-                                    text: qsTranslate("HikariSub.Audio", "Speech (non-linear spectrum)")
-                                    checkable: true
-                                    checked: root.audio.spectrumNonLinear
-                                    onToggled: {
-                                        root.audio.setSpectrumNonLinear(checked)
-                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
                                     }
                                 }
                             }

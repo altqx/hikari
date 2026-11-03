@@ -137,24 +137,12 @@
         <translation>คาราโอเกะ</translation>
     </message>
     <message>
-        <source>Enable / disable karaoke creation</source>
-        <translation>เปิดหรือปิดการสร้างคาราโอเกะ</translation>
-    </message>
-    <message>
         <source>Auto split</source>
         <translation>แบ่งอัตโนมัติ</translation>
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
         <translation>เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
-    </message>
-    <message>
-        <source>Apply changes automatically</source>
-        <translation>ใช้การเปลี่ยนแปลงโดยอัตโนมัติ</translation>
-    </message>
-    <message>
-        <source>Go to the next line after applying</source>
-        <translation>ไปยังบรรทัดถัดไปหลังใช้การเปลี่ยนแปลง</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -222,6 +210,14 @@
         <translation>ตัวเลือกการใช้การเปลี่ยนแปลง</translation>
     </message>
     <message>
+        <source>Apply changes automatically</source>
+        <translation>ยืนยันการแก้ไขอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Go to the next line after applying</source>
+        <translation>ไปบรรทัดถัดไปหลังยืนยัน</translation>
+    </message>
+    <message>
         <source>Line</source>
         <translation>บรรทัด</translation>
     </message>
@@ -248,14 +244,6 @@
     <message>
         <source>Tap options</source>
         <translation>ตัวเลือกการแตะ</translation>
-    </message>
-    <message>
-        <source>Stop tapping</source>
-        <translation>หยุดแตะ</translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation>เริ่มแตะ</translation>
     </message>
     <message>
         <source>Each syllable</source>
@@ -318,16 +306,8 @@
         <translation>เสียงพูด</translation>
     </message>
     <message>
-        <source>Enhance speech frequencies in the spectrum</source>
-        <translation>เน้นย่านความถี่เสียงพูดในสเปกตรัม</translation>
-    </message>
-    <message>
         <source>More audio options</source>
         <translation>ตัวเลือกเสียงเพิ่มเติม</translation>
-    </message>
-    <message>
-        <source>Speech (non-linear spectrum)</source>
-        <translation>เสียงพูด (สเปกตรัมแบบไม่เชิงเส้น)</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -384,6 +364,10 @@ Output device: %2</source>
     <message>
         <source>Play around button</source>
         <translation>ปุ่มเล่นช่วงรอบ ๆ</translation>
+    </message>
+    <message>
+        <source>Speech spectrum</source>
+        <translation>สเปกตรัมเสียงพูด</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -1131,10 +1115,8 @@ Output device: %2</source>
         <translation>%1 ไม่มีแมโครให้เรียกใช้</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>เกิดข้อผิดพลาดในการโหลดสคริปต์ Lua: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>โหลด %1 ไม่ได้ ข้อผิดพลาดอยู่ในรายละเอียด</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -5686,8 +5668,8 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดวิดีโอ</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>เล่น / หยุดชั่วคราว</translation>
+        <source>Play or pause</source>
+        <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
         <source>Play active line</source>
@@ -5704,6 +5686,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Redo</source>
         <translation>ทำซ้ำ</translation>
+    </message>
+    <message>
+        <source>Full screen bar: when the pointer moves / always / never</source>
+        <translation>แถบเต็มหน้าจอ: เมื่อขยับตัวชี้ / แสดงเสมอ / ไม่แสดง</translation>
     </message>
     <message>
         <source>Delete line</source>
@@ -5858,8 +5844,8 @@ Failed to copy %2 fonts.</source>
         <translation>ย้อนกลับ 1 นาที</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>แสดงหรือซ่อนแถบความคืบหน้า</translation>
+        <source>Progress bar</source>
+        <translation>แถบความคืบหน้า</translation>
     </message>
     <message>
         <source>Next chapter</source>
@@ -5914,12 +5900,8 @@ Failed to copy %2 fonts.</source>
         <translation>ซ่อนแท็กในตัวแก้ไขบรรทัด</translation>
     </message>
     <message>
-        <source>Show / hide render cost</source>
-        <translation>แสดง / ซ่อนต้นทุนการเรนเดอร์</translation>
-    </message>
-    <message>
-        <source>Full screen bar: Auto / Always / Never</source>
-        <translation>แถบเต็มหน้าจอ: อัตโนมัติ / แสดงเสมอ / ไม่แสดง</translation>
+        <source>Render cost</source>
+        <translation>ต้นทุนการเรนเดอร์</translation>
     </message>
     <message>
         <source>Tap to time</source>
@@ -6728,8 +6710,8 @@ Failed to copy %2 fonts.</source>
         <translation>ไปยังเวลาสิ้นสุดของบรรทัด</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>เล่น / หยุดชั่วคราว</translation>
+        <source>Play or pause</source>
+        <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -7226,6 +7208,10 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
     </message>
     <message>
+        <source>Render cost</source>
+        <translation>ต้นทุนการเรนเดอร์</translation>
+    </message>
+    <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
         <translation>ให้บรรทัดปัจจุบันใช้ส่วนที่เลือกของเสียง และให้บรรทัดก่อนหน้าสิ้นสุดตรงจุดเริ่มของส่วนที่เลือก</translation>
     </message>
@@ -7286,12 +7272,8 @@ Failed to copy %2 fonts.</source>
         <translation>ย้ายวิดีโอไปยังเวลาสิ้นสุดของบรรทัด</translation>
     </message>
     <message>
-        <source>Plays / Pauses video</source>
-        <translation>เล่น / หยุดวิดีโอชั่วคราว</translation>
-    </message>
-    <message>
-        <source>Show / hide render cost</source>
-        <translation>แสดง / ซ่อนต้นทุนการเรนเดอร์</translation>
+        <source>Plays or pauses the video</source>
+        <translation>เล่นหรือหยุดวิดีโอชั่วคราว</translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -7306,8 +7288,8 @@ Failed to copy %2 fonts.</source>
         <translation>คัดลอกการจัดเวลาคาราโอเกะของบรรทัดโรมาจิไปยังบรรทัดคันจิที่คู่กัน</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>ตัวจัดเวลาคันจิ…</translation>
+        <source>Kanji timer</source>
+        <translation>ตัวจัดเวลาคันจิ</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -10515,8 +10497,8 @@ because it was edited.</source>
         <translation>โดยไม่มี</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>ค้นหาข้อความ:</translation>
+        <source>Search text</source>
+        <translation>ค้นหาข้อความ</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10539,7 +10521,7 @@ because it was edited.</source>
         <translation>ข้อความ</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>สไตล์</translation>
     </message>
     <message>
@@ -14700,8 +14682,8 @@ Styles deleted:
         <translation>เฟรมถัดไป</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>เล่น / หยุดชั่วคราว</translation>
+        <source>Play or pause</source>
+        <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
         <source>Video</source>
@@ -14792,6 +14774,67 @@ Styles deleted:
         <translation>คัดลอกตำแหน่งวิดีโอ</translation>
     </message>
     <message>
+        <source>Full screen on</source>
+        <translation>เต็มหน้าจอบน</translation>
+    </message>
+    <message>
+        <source>Monitor %1</source>
+        <extracomment>A monitor in the Full screen on submenu; %1 is its number</extracomment>
+        <translation>จอภาพ %1</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>เปิดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>เปิดคำบรรยาย…</translation>
+    </message>
+    <message>
+        <source>Recently opened</source>
+        <translation>ที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation>คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Videos</source>
+        <translation>วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Export frame</source>
+        <translation>ส่งออกเฟรม</translation>
+    </message>
+    <message>
+        <source>Save as PNG…</source>
+        <translation>บันทึกเป็น PNG…</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Save with subtitles as PNG…</source>
+        <translation>บันทึกพร้อมคำบรรยายเป็น PNG…</translation>
+    </message>
+    <message>
+        <source>Copy with subtitles</source>
+        <translation>คัดลอกพร้อมคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation>แทร็กเสียง</translation>
+    </message>
+    <message>
+        <source>Progress bar</source>
+        <translation>แถบความคืบหน้า</translation>
+    </message>
+    <message>
+        <source>Render cost</source>
+        <translation>ต้นทุนการเรนเดอร์</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
@@ -14804,24 +14847,8 @@ Styles deleted:
         <translation>เต็มหน้าจอ</translation>
     </message>
     <message>
-        <source>Switch full screen to monitor %1</source>
-        <translation>ย้ายโหมดเต็มหน้าจอไปยังจอภาพ %1</translation>
-    </message>
-    <message>
-        <source>Open in full screen on monitor %1</source>
-        <translation>เปิดแบบเต็มหน้าจอบนจอภาพ %1</translation>
-    </message>
-    <message>
         <source>Open editor</source>
         <translation>เปิดตัวแก้ไข</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation>คำบรรยายที่เพิ่งเปิด</translation>
-    </message>
-    <message>
-        <source>Recently opened videos</source>
-        <translation>วิดีโอที่เพิ่งเปิด</translation>
     </message>
     <message>
         <source>Open video</source>
@@ -14832,32 +14859,12 @@ Styles deleted:
         <translation>เปิดคำบรรยาย</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>แสดงหรือซ่อนแถบความคืบหน้า</translation>
-    </message>
-    <message>
-        <source>Show / hide render cost</source>
-        <translation>แสดง / ซ่อนต้นทุนการเรนเดอร์</translation>
-    </message>
-    <message>
         <source>Change aspect ratio</source>
         <translation>เปลี่ยนอัตราส่วนภาพ</translation>
     </message>
     <message>
-        <source>Save frame with subtitles as PNG</source>
-        <translation>บันทึกเฟรมพร้อมคำบรรยายเป็น PNG</translation>
-    </message>
-    <message>
-        <source>Copy frame with subtitles to clipboard</source>
-        <translation>คัดลอกเฟรมพร้อมคำบรรยายไปยังคลิปบอร์ด</translation>
-    </message>
-    <message>
-        <source>Save frame as PNG</source>
-        <translation>บันทึกเฟรมเป็น PNG</translation>
-    </message>
-    <message>
-        <source>Copy frame to clipboard</source>
-        <translation>คัดลอกเฟรมไปยังคลิปบอร์ด</translation>
+        <source>Reset zoom and pan</source>
+        <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -14959,15 +14966,15 @@ Styles deleted:
         <translation>แถบเต็มหน้าจอ: %1</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation>อัตโนมัติ</translation>
+        <source>Show when the pointer moves</source>
+        <translation>แสดงเมื่อขยับตัวชี้</translation>
     </message>
     <message>
-        <source>Always</source>
+        <source>Always show</source>
         <translation>แสดงเสมอ</translation>
     </message>
     <message>
-        <source>Never</source>
+        <source>Never show</source>
         <translation>ไม่แสดง</translation>
     </message>
     <message>

@@ -64,7 +64,7 @@ Window {
         target: fs.controller
         property: "menuOpen"
         value: fullscreenMenu.opened || outputMenu.opened || modeMenu.opened || toolsMenu.opened
-               || rail.menuOpen || toolBar.popoverOpen
+               || rail.menuOpen || toolBar.popoverOpen || speaker.activeFocus
     }
     Connections {
         target: fs.controller
@@ -105,6 +105,9 @@ Window {
                 event.accepted = true
             } else if (event.key === Qt.Key_F) {
                 fs.controller.toggle(0)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Backtab && speaker.enabled) {
+                speaker.forceActiveFocus(Qt.BacktabFocusReason)
                 event.accepted = true
             } else if (fs.shell.videoView.key(event.key, event.modifiers)) {
                 event.accepted = true
@@ -328,7 +331,7 @@ Window {
                         text: fs.shell.video.playing ? qsTr("Pause") : qsTr("Play")
                         enabled: fs.shell.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        tip: fs.shell.bitmapTip(qsTr("Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
+                        tip: fs.shell.bitmapTip(qsTr("Play or pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!fs.shell.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) fs.shell.video.togglePlay()
                     }
                     IconButton {
@@ -440,8 +443,12 @@ Window {
                         tip: qsTr("%1 · Wheel: volume · Right-click: output device").arg(text)
                         enabled: fs.shell.video.hasVideo
                         down: outputMenu.visible
-                        focusPolicy: Qt.NoFocus
+                        focusPolicy: Qt.TabFocus
                         onClicked: fs.shell.videoView.toggleMute()
+                        MenuKey.onRequested: fs.popupAbove(outputMenu, speaker)
+                        Keys.onTabPressed: keyScope.forceActiveFocus(Qt.TabFocusReason)
+                        Keys.onBacktabPressed: keyScope.forceActiveFocus(Qt.BacktabFocusReason)
+                        Keys.onEscapePressed: keyScope.forceActiveFocus(Qt.OtherFocusReason)
                         WheelHandler {
                             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                             onWheel: event => fs.shell.videoView.volumeWheel(Math.round(event.angleDelta.y / 120))
@@ -501,7 +508,7 @@ Window {
             objectName: "fullscreenAudioOutputMenu"
             app: fs.shell.app
             onSettingsRequested: fs.audioSettingsRequested()
-            onClosed: keyScope.forceActiveFocus()
+            onClosed: if (!speaker.activeFocus) keyScope.forceActiveFocus()
         }
         FullscreenBarMenu {
             id: modeMenu
