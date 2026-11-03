@@ -4011,7 +4011,7 @@ Failed to copy %2 fonts.</source>
         <translation>권장</translation>
     </message>
     <message>
-        <source>Hotkeys, fonts, audio and video options and your dictionary words.</source>
+        <source>Shortcuts, fonts, audio and video options and your dictionary words.</source>
         <translation>단축키, 글꼴, 소리 및 영상 옵션과 사전에 추가한 단어.</translation>
     </message>
     <message>
@@ -4059,7 +4059,7 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub</translation>
     </message>
     <message>
-        <source>The system’s</source>
+        <source>System</source>
         <translation>시스템</translation>
     </message>
     <message>
@@ -4163,7 +4163,7 @@ Failed to copy %2 fonts.</source>
         <translation>편집</translation>
     </message>
     <message>
-        <source>Later: Settings › General › Saving and Settings › Spelling &amp; grammar</source>
+        <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>나중에: 설정 › 일반 › 저장, 설정 › 철자 및 문법</translation>
     </message>
     <message>
@@ -4922,27 +4922,27 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Hotkeys</name>
     <message>
-        <source>Keys for &quot;%1&quot;</source>
-        <translation>&quot;%1&quot;의 키</translation>
+        <source>Keys for “%1”</source>
+        <translation>“%1”의 키</translation>
     </message>
     <message>
-        <source>Global hotkey</source>
+        <source>Global shortcut</source>
         <translation>전역 단축키</translation>
     </message>
     <message>
-        <source>Subtitle grid hotkey</source>
+        <source>Grid shortcut</source>
         <translation>자막 목록 단축키</translation>
     </message>
     <message>
-        <source>Edit box hotkey</source>
-        <translation>편집 박스 단축키</translation>
+        <source>Line editor shortcut</source>
+        <translation>줄 편집기 단축키</translation>
     </message>
     <message>
-        <source>Video hotkey</source>
+        <source>Video shortcut</source>
         <translation>영상 단축키</translation>
     </message>
     <message>
-        <source>Audio hotkey</source>
+        <source>Audio shortcut</source>
         <translation>소리 단축키</translation>
     </message>
     <message>
@@ -8306,7 +8306,7 @@ because it was edited.</source>
         <translation>시스템 테마 따르기</translation>
     </message>
     <message>
-        <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
+        <source>Light or Dark as the system’s colour scheme sets it; high contrast stays as chosen</source>
         <translation>시스템 색 구성표에 따라 밝게 또는 어둡게 표시합니다. 고대비는 선택한 대로 유지됩니다.</translation>
     </message>
     <message>
@@ -8314,7 +8314,7 @@ because it was edited.</source>
         <translation>선택…</translation>
     </message>
     <message>
-        <source>Accent color</source>
+        <source>Accent colour</source>
         <translation>강조 색</translation>
     </message>
     <message>
@@ -8350,7 +8350,7 @@ because it was edited.</source>
         <translation>Windows, KDE Plasma, GNOME에서는 기본적으로 꺼져 있고, 타일링 창 관리자에서는 기본적으로 켜져 있습니다.</translation>
     </message>
     <message>
-        <source>UI colors</source>
+        <source>UI colours</source>
         <translation>인터페이스 색상</translation>
     </message>
     <message>
@@ -8394,12 +8394,12 @@ because it was edited.</source>
         <translation>소리</translation>
     </message>
     <message>
-        <source>Hotkeys</source>
+        <source>Shortcuts</source>
         <translation>단축키</translation>
     </message>
     <message>
-        <source>Subtitle properties</source>
-        <translation>자막 속성</translation>
+        <source>Script properties</source>
+        <translation>스크립트 속성</translation>
     </message>
     <message>
         <source>Language (program restart required)</source>
@@ -8578,10 +8578,8 @@ because it was edited.</source>
         <translation>줄 경계선 두께</translation>
     </message>
     <message>
-        <source>Range from 0 to 10000, where 0 turns off
-removing audio cache files.</source>
-        <translation>0부터 10000까지이며, 0이면
-소리 캐시 파일을 삭제하지 않습니다.</translation>
+        <source>0–10000. At 0, audio cache files are never removed.</source>
+        <translation>0–10000. 0이면 소리 캐시 파일을 삭제하지 않습니다.</translation>
     </message>
     <message>
         <source>None</source>
@@ -8612,7 +8610,7 @@ removing audio cache files.</source>
         <translation>줄 편집기</translation>
     </message>
     <message>
-        <source>Subtitle grid</source>
+        <source>Grid</source>
         <translation>자막 목록</translation>
     </message>
     <message>
@@ -8652,7 +8650,7 @@ removing audio cache files.</source>
         <translation>모든 설정을 기본값으로 재설정하시겠습니까?</translation>
     </message>
     <message>
-        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
+        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
         <translation>확인 또는 적용을 누르면 모든 페이지가 기본값으로 돌아가며, 취소하면 설정이 유지됩니다. 단축키와 모양은 그대로 유지되므로 해당 페이지에서 따로 재설정하십시오.</translation>
     </message>
     <message>
@@ -8664,7 +8662,7 @@ removing audio cache files.</source>
         <translation>페이지 재설정</translation>
     </message>
     <message>
-        <source>The settings of the page shown back to their defaults</source>
+        <source>Resets the settings on this page to their defaults</source>
         <translation>현재 페이지의 설정을 기본값으로 되돌리기</translation>
     </message>
     <message>
@@ -8740,7 +8738,7 @@ removing audio cache files.</source>
         <translation>표시</translation>
     </message>
     <message>
-        <source>Spelling &amp; grammar</source>
+        <source>Spelling and grammar</source>
         <translation>철자 및 문법</translation>
     </message>
     <message>
@@ -8780,7 +8778,7 @@ removing audio cache files.</source>
         <translation>시간 대신 영상 프레임 표시</translation>
     </message>
     <message>
-        <source>In the line editor and the subtitle grid.</source>
+        <source>In the line editor and the grid.</source>
         <translation>줄 편집기와 자막 목록에 적용됩니다.</translation>
     </message>
     <message>
@@ -8922,7 +8920,7 @@ removing audio cache files.</source>
         <translation>컨텍스트 메뉴에서 영상을 전체 화면으로 열기</translation>
     </message>
     <message>
-        <source>Open video at the active line&apos;s time</source>
+        <source>Open video at the active line’s time</source>
         <translation>활성 줄의 시간에서 영상 열기</translation>
     </message>
     <message>
@@ -8938,7 +8936,7 @@ removing audio cache files.</source>
         <translation>자막 미리 보기 해상도</translation>
     </message>
     <message>
-        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script&apos;s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
+        <source>Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script’s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.</source>
         <translation>화면 크기는 화면에 표시되는 영상 크기로 자막을 그리므로 큰 화면이나 고DPI 화면에서도 선명합니다. 어느 쪽이든 스크립트의 레이아웃은 같습니다. 스타일 관리, 글꼴 선택기, 템플릿 편집기의 미리 보기에도 사용됩니다.</translation>
     </message>
     <message>
@@ -9002,7 +9000,7 @@ removing audio cache files.</source>
         <translation>시각 도구 경고 끄기</translation>
     </message>
     <message>
-        <source>Don&apos;t warn about a resolution mismatch</source>
+        <source>Don’t warn about a resolution mismatch</source>
         <translation>해상도 불일치 경고 안 함</translation>
     </message>
     <message>
@@ -9026,7 +9024,7 @@ removing audio cache files.</source>
         <translation>도입부 및 종결부</translation>
     </message>
     <message>
-        <source>Don&apos;t play after changing the line</source>
+        <source>Don’t play after changing the line</source>
         <translation>줄 변경 후 재생 안 함</translation>
     </message>
     <message>
@@ -9058,8 +9056,8 @@ removing audio cache files.</source>
         <translation>노래방</translation>
     </message>
     <message>
-        <source>Merge every &quot;n&quot; with the previous syllable</source>
-        <translation>모든 &quot;n&quot;을 앞 음절과 병합</translation>
+        <source>Merge every “n” with the previous syllable</source>
+        <translation>모든 “n”을 앞 음절과 병합</translation>
     </message>
     <message>
         <source>Move the syllable line after a click</source>
@@ -9198,12 +9196,12 @@ removing audio cache files.</source>
         <translation>전역 단축키</translation>
     </message>
     <message>
-        <source>Subtitle shortcuts</source>
-        <translation>자막 단축키</translation>
+        <source>Grid shortcuts</source>
+        <translation>자막 목록 단축키</translation>
     </message>
     <message>
-        <source>Editor shortcuts</source>
-        <translation>편집기 단축키</translation>
+        <source>Line editor shortcuts</source>
+        <translation>줄 편집기 단축키</translation>
     </message>
     <message>
         <source>Video shortcuts</source>
@@ -9214,15 +9212,15 @@ removing audio cache files.</source>
         <translation>자동화 단축키</translation>
     </message>
     <message>
-        <source>Filtering mode:</source>
-        <translation>필터 모드:</translation>
+        <source>Filtering mode</source>
+        <translation>필터 모드</translation>
     </message>
     <message>
-        <source>Search hotkeys</source>
+        <source>Search shortcuts</source>
         <translation>단축키 검색</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
+        <source>Import legacy shortcuts…</source>
         <translation>이전 버전 단축키 가져오기…</translation>
     </message>
     <message>
@@ -9242,12 +9240,12 @@ removing audio cache files.</source>
         <translation>마지막 가져오기 되돌리기…</translation>
     </message>
     <message>
-        <source>Script hotkeys</source>
+        <source>Script shortcuts</source>
         <translation>스크립트 단축키</translation>
     </message>
     <message>
-        <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
-        <translation>이전 버전 Hotkeys.txt의 스크립트 단축키를 즉시 추가</translation>
+        <source>Adds the script shortcuts of a legacy Hotkeys.txt at once</source>
+        <translation>이전 버전 Hotkeys.txt의 스크립트 단축키를 즉시 추가합니다</translation>
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
@@ -9270,7 +9268,7 @@ removing audio cache files.</source>
         <translation>항목</translation>
     </message>
     <message>
-        <source>Hotkey</source>
+        <source>Shortcut</source>
         <translation>단축키</translation>
     </message>
     <message>
@@ -9278,7 +9276,7 @@ removing audio cache files.</source>
         <translation>찾을 수 없는 매크로</translation>
     </message>
     <message>
-        <source>Map hotkey…</source>
+        <source>Map shortcut…</source>
         <translation>단축키 지정…</translation>
     </message>
     <message>
@@ -9362,11 +9360,7 @@ removing audio cache files.</source>
         <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
-        <source>Choose a legacy Hotkeys.txt</source>
-        <translation>이전 버전 Hotkeys.txt 선택</translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
+        <source>Shortcuts (Hotkeys.txt)</source>
         <translation>단축키 (Hotkeys.txt)</translation>
     </message>
     <message>
@@ -9374,7 +9368,7 @@ removing audio cache files.</source>
         <translation>모든 파일 (*)</translation>
     </message>
     <message>
-        <source>Import legacy hotkeys</source>
+        <source>Import legacy shortcuts</source>
         <translation>이전 버전 단축키 가져오기</translation>
     </message>
     <message>
@@ -9382,13 +9376,13 @@ removing audio cache files.</source>
         <translation>파일을 읽을 수 없습니다.</translation>
     </message>
     <message numerus="yes">
-        <source>Added %n script hotkey(s).</source>
+        <source>Added %n script shortcut(s).</source>
         <translation>
             <numerusform>스크립트 단축키 %n개를 추가했습니다.</numerusform>
         </translation>
     </message>
     <message>
-        <source>No script hotkeys were added.</source>
+        <source>No script shortcuts were added.</source>
         <translation>추가된 스크립트 단축키가 없습니다.</translation>
     </message>
     <message numerus="yes">
@@ -9436,22 +9430,16 @@ removing audio cache files.</source>
         <translation>분홍색</translation>
     </message>
     <message>
-        <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
-        <translation>.dic 및 .aff 파일을 &quot;Dictionary&quot; 폴더에 넣으십시오</translation>
+        <source>Put .dic and .aff files in the “Dictionary” folder</source>
+        <translation>.dic 및 .aff 파일을 “Dictionary” 폴더에 넣으십시오</translation>
     </message>
     <message>
-        <source>The selected %1 for conversion does not exist
-and will be changed to the default</source>
-        <translation>변환용으로 선택한 %1(이)가 없으므로
-기본값으로 변경됩니다</translation>
+        <source>The style catalogue chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>변환용으로 선택한 스타일 목록이 더 이상 없습니다. 대신 기본값을 사용합니다.</translation>
     </message>
     <message>
-        <source>catalogue for style</source>
-        <translation>스타일 목록</translation>
-    </message>
-    <message>
-        <source>style</source>
-        <translation>스타일</translation>
+        <source>The style chosen for conversion no longer exists. The default is used instead.</source>
+        <translation>변환용으로 선택한 스타일이 더 이상 없습니다. 대신 기본값을 사용합니다.</translation>
     </message>
     <message>
         <source>System default</source>
@@ -11419,8 +11407,8 @@ because it was edited.</source>
         <translation>프로그램 옆에서 이전 버전 설정을 찾지 못했습니다. 이전 버전 설치 폴더를 선택하십시오.</translation>
     </message>
     <message>
-        <source>%1 holds no legacy settings (Config, Dictionary).</source>
-        <translation>%1에 이전 버전 설정(Config, Dictionary)이 없습니다.</translation>
+        <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
+        <translation>%1에 이전 버전 설정이 없습니다(“Config” 또는 “Dictionary” 폴더 없음).</translation>
     </message>
     <message>
         <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
@@ -11466,7 +11454,7 @@ because it was edited.</source>
         <translation>%1 꺼짐</translation>
     </message>
     <message numerus="yes">
-        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.</source>
         <translation>
             <numerusform>문법 검사에서 더 이상 해당 규칙 %n개를 사용하지 않습니다. 설정 › 철자 및 문법에서 다시 켜십시오.</numerusform>
         </translation>

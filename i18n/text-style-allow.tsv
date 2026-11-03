@@ -28,9 +28,7 @@ HikariSub.Editor	This document can't be saved here.	quotes	pending #596 Grid and
 HikariSub.Editor	The document can't be saved right now.	quotes	pending #596 Grid and Line editor
 HikariSub.Fonts	Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.	spelling	the folder on disk is named catalogs
 HikariSub.Fonts	fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.	spelling	the folder on disk is named catalogs
-HikariSub.GettingStarted	The system’s	leading-the	pending #596 Settings
-HikariSub.GettingStarted	Later: Settings › General › Saving and Settings › Spelling & grammar	whitespace	pending #596 Settings
-HikariSub.GettingStarted	I said I’d be there by nine.	title-case	pending #596 Settings
+HikariSub.GettingStarted	I said I’d be there by nine.	title-case	sample subtitle the Getting started preview renders; “I’d” is the pronoun
 HikariSub.Grid	Copy\tCtrl+C	hard-coded-key	pending #596 Grid and Line editor
 HikariSub.Grid	Copy\tCtrl+C	title-case	pending #596 Grid and Line editor
 HikariSub.Grid	Cut\tCtrl+X	hard-coded-key	pending #596 Grid and Line editor
@@ -41,7 +39,6 @@ HikariSub.Grid	Select the group's lines	quotes	pending #596 Grid and Line editor
 HikariSub.Grid	The starting time	leading-the	pending #596 Grid and Line editor
 HikariSub.Grid	Copy these columns of the selected line:	colon	pending #596 Grid and Line editor
 HikariSub.Grid	Copy these columns of the %1 selected lines:	colon	pending #596 Grid and Line editor
-HikariSub.Hotkeys	Keys for "%1"	quotes	pending #596 Settings
 HikariSub.Hotkeys	Shortcut can be set using Shift + Click	title-case	pending #596 Menus
 HikariSub.Hotkeys	Border color	spelling	pending #596 Menus
 HikariSub.Hotkeys	Primary color	spelling	pending #596 Menus
@@ -54,18 +51,6 @@ HikariSub.MainWindow	Shift &times...	ellipsis	pending #596 Menus
 HikariSub.MainWindow	What's &new	quotes	pending #596 Menus
 HikariSub.MisspellReplacer	Line %1: 	colon	pending #596 Panels
 HikariSub.MisspellReplacer	Line %1: 	whitespace	pending #596 Panels
-HikariSub.Options	Light or Dark as the system's colour scheme sets it; high contrast stays as chosen	quotes	pending #596 Settings
-HikariSub.Options	Accent color	spelling	pending #596 Settings
-HikariSub.Options	UI colors	spelling	pending #596 Settings
-HikariSub.Options	Spelling & grammar	whitespace	pending #596 Settings
-HikariSub.Options	Open video at the active line's time	quotes	pending #596 Settings
-HikariSub.Options	Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script's layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.	quotes	pending #596 Settings
-HikariSub.Options	Don't warn about a resolution mismatch	quotes	pending #596 Settings
-HikariSub.Options	Don't play after changing the line	quotes	pending #596 Settings
-HikariSub.Options	Merge every "n" with the previous syllable	quotes	pending #596 Settings
-HikariSub.Options	Filtering mode:	colon	pending #596 Settings
-HikariSub.Options	Choose a legacy Hotkeys.txt	title-case	pending #596 Settings
-HikariSub.Options	Put files .dic and .aff to "Dictionary" folder	quotes	pending #596 Settings
 HikariSub.Options	Border color	spelling	pending #596 Menus
 HikariSub.Reports	Nothing is sent until you press Send report	title-case	names the Send report button
 HikariSub.Reports	The crash report could not be sent	leading-the	pending #596 Menus
@@ -81,7 +66,6 @@ HikariSub.Search	Subtitle search folder:	colon	pending #596 Panels
 HikariSub.Search	Line %1: 	colon	pending #596 Panels
 HikariSub.Search	Line %1: 	whitespace	pending #596 Panels
 HikariSub.SelectLines	Search text:	colon	pending #596 Panels
-HikariSub.SettingsImport	%1 holds no legacy settings (Config, Dictionary).	title-case	pending #596 Settings
 HikariSub.Spelling	Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling & grammar.	whitespace	pending #596 Panels
 HikariSub.Spelling	Ignore All	title-case	pending #596 Panels
 HikariSub.Spelling	Error. Word "%1" was not added.	quotes	pending #596 Menus

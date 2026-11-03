@@ -2803,7 +2803,7 @@ ApplicationWindow {
             const groups = root.app.grammarGroups()
             const rules = group < groups.length ? groups[group].rules : 0
             root.notices.post("info", qsTranslate("HikariSub.Spelling", "%1 turned off").arg(name),
-                              qsTranslate("HikariSub.Spelling", "Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling & grammar.", "", rules),
+                              qsTranslate("HikariSub.Spelling", "Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling and grammar.", "", rules),
                               {actions: [{text: qsTranslate("HikariSub.Spelling", "Undo"), run: () => root.app.setGrammarGroup(group, true)},
                                          {text: qsTranslate("HikariSub.Spelling", "Grammar settings…"), run: () => root.openSettings("spelling")}]})
         }
