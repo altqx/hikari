@@ -221,18 +221,18 @@ void Application::showAssociationOffer()
     QString prompt;
     if (offer.associated()) {
         if (!offer.video.empty())
-            prompt += QCoreApplication::translate("HikariSub.Documents", "Video: ") + qs(offer.video) + u'\n';
+            prompt += QCoreApplication::translate("HikariSub.Documents", "Video: %1").arg(qs(offer.video)) + u'\n';
         if (!offer.audio.empty())
-            prompt += QCoreApplication::translate("HikariSub.Documents", "Audio: ") + qs(offer.audio) + u'\n';
+            prompt += QCoreApplication::translate("HikariSub.Documents", "Audio: %1").arg(qs(offer.audio)) + u'\n';
         if (!offer.keyframes.empty())
-            prompt += QCoreApplication::translate("HikariSub.Documents", "Keyframes: ") + qs(offer.keyframes) + u'\n';
-        prompt.prepend(QCoreApplication::translate("HikariSub.Documents", "Associated files:\n"));
+            prompt += QCoreApplication::translate("HikariSub.Documents", "Keyframes: %1").arg(qs(offer.keyframes)) + u'\n';
+        prompt.prepend(QCoreApplication::translate("HikariSub.Documents", "Associated files:") + u'\n');
     }
     if (!offer.directoryVideo.empty()) {
         if (!prompt.isEmpty())
             prompt += u'\n';
         prompt += QCoreApplication::translate("HikariSub.Documents",
-                                              "Video from directory:\n") + QFileInfo(qs(offer.directoryVideo)).fileName();
+                                              "Video from directory: %1").arg(QFileInfo(qs(offer.directoryVideo)).fileName());
     }
     const bool both = offer.associated() && !offer.directoryVideo.empty();
     const QString yes = QCoreApplication::translate("HikariSub.Documents", "Yes");

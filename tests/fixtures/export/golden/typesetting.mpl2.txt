@@ -1,0 +1,8 @@
+[200][240]SHIBUYA STATION
+[200][240]Exit A3|West gate
+[210][230]Moving sign
+[220][250]Clipped half
+[230][260]Top right note
+[240][280]Ticker news
+[260][280]Centre reset styled
+[290][300]Unclosed {brace|stays

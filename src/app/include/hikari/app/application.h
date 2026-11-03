@@ -7,6 +7,7 @@
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/analytics.h"
 #include "hikari/app/discord_presence.h"
+#include "hikari/app/star_prompt.h"
 #include "hikari/app/crash_reports.h"
 #include "hikari/app/update_checker.h"
 #include "hikari/app/whats_new.h"
@@ -17,6 +18,7 @@
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/app/plugin_manager.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/grammar.h"
@@ -114,9 +116,9 @@ signals:
     void grammarWalkChanged();
     void playbackPlayerChanged();
     void audioOutputChanged();
-    // kind: 0 message, 1 "Reached end", 2 missing styles, 3 no style found, 4 replace in
-    // files; kinds 1-4 wait for answerFindQuestion(id, ...).
-    void findQuestion(int id, int kind, const QVariantMap &question);
+    // kind: "styles" (some chosen styles missing), "noStyles" or "confirmFiles"
+    // (replace in files); each waits for answerFindQuestion(id, ...).
+    void findQuestion(int id, const QString &kind, const QVariantMap &question);
     void findResultsChanged();
     // Also after its questions; settings: the tab as it is now, with the recent lists.
     void findFinished(const QVariantMap &settings);
@@ -196,6 +198,8 @@ public:
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
+        // Empty: no plugins can be installed.
+        PluginManager::Folders plugins;
         // Empty: beside the settings file.
         QString presetsDir;
         // The default has no key: nothing is queued or sent.
@@ -203,6 +207,7 @@ public:
         // Empty paths keep nothing on disk.
         CrashReports::Config crashReports;
         DiscordPresence::Config presence;
+        StarPrompt::Config starPrompt;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -492,22 +497,35 @@ public:
     Q_INVOKABLE QVariantMap checkKaraoke() const;
     // False when the target changed, lacks the Line, or the editor refuses to leave it.
     Q_INVOKABLE bool showKaraokeLine(qulonglong document, qulonglong line);
-    // A tab: {tab (0 Find, 1 Find and replace, 2 Find in subtitles), find, replace,
-    // styles, filters, folder, field, lines, matchCase, regex, startOfText, endOfText,
-    // includeComments, skipTags, skipText, subfolders, hiddenFolders} plus the recent
-    // lists {finds, replacements, filterList, paths}. openFindReplace reads the recent
-    // lists; switchFindReplaceTab saves `settings` and returns tab `tab`.
-    Q_INVOKABLE QVariantMap openFindReplace(int tab);
-    Q_INVOKABLE QVariantMap findReplaceSettings(int tab) const;
-    Q_INVOKABLE QVariantMap switchFindReplaceTab(const QVariantMap &settings, int tab);
+    // {format, options (export flags, lines "all"/"selected"/"shown", fps), extensions (by format),
+    // all, selected, shown (Dialogue counts), videoFps (0 without video), folder, name}: the editing
+    // target's last export choice, else the last export's; empty without an editing target.
+    Q_INVOKABLE QVariantMap exportSetup() const;
+    // Writes a copy of the editing target (its Document is never changed) and remembers the choice.
+    // {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number, losses}]}.
+    Q_INVOKABLE QVariantMap exportTo(const QUrl &file, const QString &format, const QVariantMap &options);
+    // The panel's values: {scope ("document", "openDocuments", "folder"),
+    // replaceShown, find, replace, styles, filters, folder, field ("text", "style",
+    // "actor", "effect"), lines ("all", "selected", "fromSelection"), matchCase, regex,
+    // matchAt ("anywhere", "start", "end"), inText ("all", "outsideTags",
+    // "insideTags"), includeComments, subfolders, hiddenFolders} plus the recent lists
+    // {finds, replacements, filterList, paths}. openFindReplace reads the recent lists.
+    Q_INVOKABLE QVariantMap openFindReplace();
+    Q_INVOKABLE QVariantMap findReplaceSettings() const;
     Q_INVOKABLE void saveFindReplaceSettings(const QVariantMap &settings);
-    // action: "find", "findAllCurrent", "findAllTabs", "replace", "replaceAll",
-    // "replaceAllTabs", "findInFiles" or "replaceInFiles"; findFinished ends it.
-    // Ignored while findBusy.
+    // action: "find", "findPrevious", "findAll", "replace" or "replaceAll"; Find all
+    // and Replace all work in the values' scope. findFinished ends it. Ignored while
+    // findBusy.
     Q_INVOKABLE void runFindReplace(const QString &action, const QVariantMap &settings);
+    // {total, current} in the editing target; current is 0 when the last match is not
+    // one of them.
+    Q_INVOKABLE QVariantMap findCount(const QVariantMap &settings);
+    // Empty unless the values hold an invalid regular expression.
+    Q_INVOKABLE QString findPatternError(const QVariantMap &settings) const;
     Q_INVOKABLE void findNext();
-    // answer: 0 Ok, 1 Yes, 2 No, 3 Cancel.
-    Q_INVOKABLE void answerFindQuestion(int id, int answer);
+    Q_INVOKABLE void findPrevious();
+    // answer: "ok", "yes", "no" or "cancel".
+    Q_INVOKABLE void answerFindQuestion(int id, const QString &answer);
     bool findBusy() const;
     // The text selected in the Line editor, or find as it is.
     Q_INVOKABLE QString findReplaceActivated(const QString &find);
@@ -634,6 +652,7 @@ public:
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
+    Q_INVOKABLE bool centerTimesInFrames();
     Q_INVOKABLE bool commitAndAdvance();
 
     ui::ShellController &shell() { return *m_shell; }
@@ -661,6 +680,7 @@ public:
     UpdateChecker &updates() { return *m_updates; }
     Analytics &analytics() { return *m_analytics; }
     DiscordPresence &presence() { return *m_presence; }
+    StarPrompt &starPrompt() { return *m_starPrompt; }
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
@@ -695,6 +715,8 @@ public:
     application::Workspace &workspace() { return m_workspace; }
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
     ApiHost *apiHost() const { return m_apiHost.get(); }
+    Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
+    PluginManager *pluginManager() const { return m_pluginManager.get(); }
     QVariantMap qmlProperties();
     // Waits for running writes and delivers their results.
     void waitForWrites();
@@ -841,6 +863,7 @@ private:
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
+    QString exportKey(application::DocumentId document) const;
     application::LineVisible actionLines(const application::EditSession &session) const;
     void rememberColumns(bool paste, int columns);
     void protectReference();
@@ -920,10 +943,12 @@ private:
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
+    std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
     std::unique_ptr<DiscordPresence> m_presence;
+    std::unique_ptr<StarPrompt> m_starPrompt;
     application::VideoSession::State m_videoUsageState = application::VideoSession::State::Closed;
     application::AudioBox::State m_audioUsageState = application::AudioBox::State::Closed;
     QElapsedTimer m_videoOpenClock;
@@ -983,7 +1008,7 @@ private:
     std::function<void(bool)> m_findOpenDone;
     int m_findProcessors = 0;
     void endFindOpen(bool opened);
-    void saveFindRecent(application::FindReplaceSettings::Tab tab);
+    void saveFindRecent(const application::FindReplaceSettings &window);
     void findFinished();
     QString m_pendingKeyframes;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
@@ -1034,6 +1059,7 @@ private:
     std::unique_ptr<ui::StatusBarController> m_statusBar;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
+    std::uint64_t m_playbackFailuresLogged = 0;
     std::uint64_t m_seenGroupBreaks = 0;
     std::unique_ptr<application::RecoveryStore> m_recovery;
     std::unique_ptr<QLockFile> m_sessionLock;
@@ -1211,6 +1237,7 @@ private:
     void followVideoInAudio();
     void trackVideoSources();
     void logVideoFailure();
+    void logPlaybackFailure();
     void rememberRecentVideo(const QString &path);
     void rememberRecentKeyframes(const QString &path);
     QVariantList recentRows(application::RecentFiles &list, const char *setting);

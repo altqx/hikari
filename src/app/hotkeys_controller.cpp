@@ -72,11 +72,11 @@ QVariantMap conflictMap(const std::optional<application::HotkeyConflict> &c)
     }
     const QString names = holders.join(QStringLiteral(", "));
     const QString message =
-        c->doubled    ? QCoreApplication::translate("HikariSub.Hotkeys", "This hotkey already exists for \"%1\".\nWhat to do?")
+        c->doubled    ? QCoreApplication::translate("HikariSub.Hotkeys", "This shortcut already exists for “%1”. What to do?")
         : c->count > 1 ? QCoreApplication::translate("HikariSub.Hotkeys",
-                                                     "This shortcut already exists in other windows as a shortcut for \"%1\".\nWhat would you like to do?")
+                                                     "This shortcut already exists in other windows as a shortcut for “%1”. What would you like to do?")
                        : QCoreApplication::translate("HikariSub.Hotkeys",
-                                                     "This shortcut already exists in another window as a shortcut for \"%1\".\nWhat would you like to do?");
+                                                     "This shortcut already exists in another window as a shortcut for “%1”. What would you like to do?");
     return {{QStringLiteral("doubled"), c->doubled},
             {QStringLiteral("message"), message.arg(names)},
             {QStringLiteral("canSwitch"), c->canSwitch},
@@ -216,17 +216,17 @@ QString retiredNotice(int id)
 {
     switch (id) {
     case 5031:
-        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View all\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “View all” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
     case 5032:
-        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View audio and subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “View audio and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
     case 5033:
-        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View video and subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “View video and subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
     case 5034:
-        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View only video\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “View only video” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
     case 5035:
-        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View only subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “View only subtitles” was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
     case 5109:
-        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Enable / Disable editor\" was removed: the editor is always shown; hide panels or choose a layout instead.");
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Enable / Disable editor” was removed: the editor is always shown; hide panels or choose a layout instead.");
     case 5039:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open shortcut mapping window\" was removed: the window is gone and each macro's shortcut is set in the Automation panel.");
     case 5012:
@@ -234,7 +234,7 @@ QString retiredNotice(int id)
     case 5104:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open blank 2h30m audio\" was removed: the command is retired and a dummy video brings its own silent audio.");
     default:
-        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed.");
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Open video with FFMS2” was removed: the command is retired and videos are always indexed.");
     }
 }
 

@@ -18,6 +18,7 @@ DialogWindow {
             ["Qt", "The Qt Company Ltd. and other contributors", "LGPL 3"],
             ["KDDockWidgets", "Klarälvdalens Datakonsult AB (KDAB)", "GPL 2 or 3"],
             ["FFmpeg", "The FFmpeg developers", "LGPL 2.1 or later"],
+            ["dav1d", "VideoLAN and dav1d authors", "BSD 2-Clause"],
             ["FFMS2", "Fredrik Mellbin and contributors", "MIT"],
             ["libass", "libass contributors", "ISC"],
             ["FreeType", "David Turner, Robert Wilhelm, Werner Lemberg and others", "FreeType License"],
@@ -30,6 +31,7 @@ DialogWindow {
             ["PortAudio", "Ross Bencina, Phil Burk and contributors", "MIT"],
             ["SoundTouch", "Olli Parviainen", "LGPL 2.1 or later"],
             ["curl", "Daniel Stenberg and contributors", "curl License"],
+            ["libsodium", "Frank Denis", "ISC"],
             ["PCRE2", "University of Cambridge and others", "BSD 3-Clause"],
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
             ["Harper", "Automattic and Harper contributors", "Apache 2.0"],
@@ -45,7 +47,10 @@ DialogWindow {
             all.push(["VSFilter", "Gabest and contributors", "GPL 2 or later"])
         return all
     }
-    readonly property var sources: [["Aegisub", "Aegisub contributors", "BSD 3-Clause"]]
+    readonly property var sources: [
+        ["Aegisub", "Aegisub contributors", "BSD 3-Clause and ISC"],
+        ["Aegisub, arch1t3cht's fork", "arch1t3cht and Aegisub contributors", "BSD 3-Clause"]
+    ]
 
     component CreditRow: Item {
         id: entry

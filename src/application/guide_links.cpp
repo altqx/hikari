@@ -27,6 +27,7 @@ constexpr std::array kLinks{
     GuideLink{Window, "allTagsEdition", "/en/docs/typesetting/shapes-and-tags-editors"},
     GuideLink{Window, "automation", "/en/docs/automation/running-scripts"},
     GuideLink{Window, "dummyVideo", "/en/docs/basics/video"},
+    GuideLink{Window, "export", "/en/docs/basics/export"},
     GuideLink{Window, "fontCatalogs", "/en/docs/typesetting/fonts"},
     GuideLink{Window, "fontCollector", "/en/docs/typesetting/fonts"},
     GuideLink{Window, "gettingStarted", "/en/docs/get-started/getting-started-window"},

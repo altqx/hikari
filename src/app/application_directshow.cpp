@@ -13,7 +13,7 @@ namespace {
 
 // MUST KILL: repeats every message DirectShowPlayer reports; a test keeps the two in step.
 constexpr const char *kOpenMessages[] = {
-    QT_TRANSLATE_NOOP("HikariSub.Video", "Failed to initialize DirectShow"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Failed to initialise DirectShow"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create filters interface"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create controller"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create search interface"),
@@ -21,10 +21,10 @@ constexpr const char *kOpenMessages[] = {
     QT_TRANSLATE_NOOP("HikariSub.Video", "Source filter not added"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot add video renderer"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create audio renderer instance"),
-    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot add Direct Sound renderer"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot add DirectSound renderer"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate source pins"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate renderer pins"),
-    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate Direct Sound pins"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate DirectSound pins"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot get renderer pin"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot get dsound pin"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "No IMediaTypes"),

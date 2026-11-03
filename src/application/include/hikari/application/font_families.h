@@ -55,7 +55,7 @@ private:
 // SystemFace::listedFamily, else its first family name.
 std::u16string listedFamily(const SystemFace &face);
 
-// MUST KILL: with no catalog, "Without catalog" comes before "All fonts"
+// MUST KILL: with no catalog, "Without catalogue" comes before "All fonts"
 std::vector<std::u16string> catalogChoices(const std::vector<std::u16string> &names, const std::u16string &allFonts,
                                            const std::u16string &withoutCatalog);
 

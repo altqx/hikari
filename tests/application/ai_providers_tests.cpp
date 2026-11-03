@@ -158,9 +158,9 @@ TEST(AiConfig, IdsRoundTrip)
 {
     for (const Role role : kRoles)
         EXPECT_EQ(roleFromId(roleId(role)), role);
-    for (const Wire wire : {Wire::ChatCompletions, Wire::Responses, Wire::AnthropicMessages})
+    for (const Wire wire : {Wire::ChatCompletions, Wire::Responses, Wire::AnthropicMessages, Wire::Gemini})
         EXPECT_EQ(wireFromId(wireId(wire)), wire);
-    for (const Preset preset : {Preset::OpenRouter, Preset::OpenAI, Preset::Anthropic, Preset::Custom})
+    for (const Preset preset : {Preset::OpenRouter, Preset::OpenAI, Preset::Anthropic, Preset::Gemini, Preset::Custom})
         EXPECT_EQ(presetFromId(presetId(preset)), preset);
     EXPECT_EQ(roleFromId("nope"), std::nullopt);
 }
@@ -311,6 +311,32 @@ TEST_F(AiProvidersTest, RefreshingTheCatalogueKeepsTheUsersCorrections)
     providers.refreshModels("or", [&](std::optional<Error> e) { done = e; });
     EXPECT_EQ((*done)->kind, ErrorKind::Unauthorized);
     EXPECT_EQ(providers.config().provider("or")->models.size(), 1u);
+}
+
+TEST_F(AiProvidersTest, AGeminiModelCanFillEveryRole)
+{
+    Providers providers(configs, keys, port);
+    const Provider google = presetProvider(Preset::Gemini, "google", "Google");
+    EXPECT_EQ(google.wire, Wire::Gemini);
+    EXPECT_EQ(google.baseUrl, "https://generativelanguage.googleapis.com/v1beta");
+    EXPECT_TRUE(google.needsKey);
+    ASSERT_EQ(add(providers, google, "AIza-secret"), std::nullopt);
+    port.models = std::vector<Model>{{.id = "gemini-x-flash", .name = "Gemini X Flash"}};
+    std::optional<std::optional<Error>> refreshed;
+    providers.refreshModels("google", [&](std::optional<Error> e) { refreshed = e; });
+    ASSERT_TRUE(refreshed.has_value());
+    EXPECT_EQ(*refreshed, std::nullopt);
+    const Provider &stored = *providers.config().provider("google");
+    EXPECT_EQ(capabilitiesOf(stored, "gemini-x-flash"), (Capabilities{.tools = true, .vision = true, .video = true}));
+
+    for (const Role role : kRoles) {
+        ASSERT_TRUE(providers.assign(role, {"google", "gemini-x-flash"}));
+        providers.stream(role, Request{}, [](const Event &) {});
+        EXPECT_EQ(port.calls.back().provider.wire, Wire::Gemini);
+        EXPECT_EQ(port.calls.back().request.model, "gemini-x-flash");
+        EXPECT_EQ(port.calls.back().key, "AIza-secret");
+    }
+    EXPECT_EQ(port.calls.size(), std::size(kRoles));
 }
 
 TEST_F(AiProvidersTest, AConfigThatCannotBeSavedChangesNothing)

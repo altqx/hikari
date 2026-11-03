@@ -85,7 +85,7 @@ private slots:
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), app::kDocsSchema);
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), 1);
         QCOMPARE(meta.value(QStringLiteral("version")).toString(), QStringLiteral(HIKARI_VERSION));
-        QCOMPARE(meta.value(QStringLiteral("site")).toString(), QStringLiteral("https://hikarisub.altqx.com"));
+        QCOMPARE(meta.value(QStringLiteral("site")).toString(), QStringLiteral("https://hikarisub.org"));
         QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{40}$"))
                     .match(meta.value(QStringLiteral("commit")).toString())
                     .hasMatch());
@@ -165,7 +165,14 @@ private slots:
                 menus[v.toObject().value(QStringLiteral("symbol")).toString()] << m.toString();
         QCOMPARE(menus.value(QStringLiteral("GLOBAL_SAVE_SUBS")), QStringList{QStringLiteral("File > Save")});
         QVERIFY(menus.value(QStringLiteral("GLOBAL_CONVERT_TO_SRT")).contains(QStringLiteral("Subtitles > Conversion > Convert to SRT")));
-        QVERIFY(menus.value(QStringLiteral("GRID_INSERT_BEFORE")).contains(QStringLiteral("Grid menu > Insert > Insert before")));
+        QVERIFY(menus.value(QStringLiteral("GRID_INSERT_BEFORE")).contains(QStringLiteral("Grid menu > Insert > Before")));
+        QVERIFY(menus.value(QStringLiteral("GRID_DUPLICATE_LINES")).contains(QStringLiteral("Grid menu > Duplicate lines")));
+        QCOMPARE(menus.value(QStringLiteral("GRID_SET_NEW_FPS")), QStringList{QStringLiteral("Subtitles > Set FPS > Set new FPS…")});
+        QCOMPARE(menus.value(QStringLiteral("GRID_SUBS_FROM_MKV")), QStringList{QStringLiteral("File > Import subtitles from MKV…")});
+        QVERIFY(menus.value(QStringLiteral("GRID_FILTER")).contains(QStringLiteral("Grid options > Filtering > Filter")));
+        QVERIFY(menus.value(QStringLiteral("GRID_HIDE_LAYER")).contains(QStringLiteral("Grid header menu > Layer")));
+        QCOMPARE(menus.value(QStringLiteral("GRID_FILTER_IGNORE_IN_ACTIONS")),
+                 QStringList{QStringLiteral("Grid options > Ignore filtering in some actions")});
         for (const QStringList &places : menus)
             for (const QString &place : places) {
                 QVERIFY2(!place.contains(QLatin1Char('\t')) && !place.contains(QLatin1Char('&')), qPrintable(place));
@@ -225,7 +232,7 @@ private slots:
         QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("label")).toString(),
                  QStringLiteral("Border color (High contrast black)"));
         QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("section")).toString(),
-                 QStringLiteral("UI colors"));
+                 QStringLiteral("UI colours"));
         QVERIFY(!byKey.value(QStringLiteral("appearance.darkAccent")).value(QStringLiteral("values")).toArray().isEmpty());
         const QJsonObject player = byKey.value(QStringLiteral("video.playbackPlayer"));
         QCOMPARE(player.value(QStringLiteral("platform")).toString(), QStringLiteral("windows"));

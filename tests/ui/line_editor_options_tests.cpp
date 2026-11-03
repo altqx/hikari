@@ -409,6 +409,17 @@ private slots:
         auto *iconOnly = QAccessible::queryAccessibleInterface(item("tagButton1"));
         QVERIFY(iconOnly);
         QCOMPARE(iconOnly->text(QAccessible::Name), QStringLiteral("\\i1"));
+
+        auto *keyMenu = named("tagButtonMenu");
+        QCOMPARE(named("tagButtonEdit")->property("text").toString(), QStringLiteral("Edit…"));
+        item("tagButton1")->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(item("tagButton1")->hasActiveFocus());
+        QTest::keyClick(item("tagButton1")->window(), Qt::Key_Menu);
+        QTRY_VERIFY(keyMenu->property("opened").toBool());
+        QVERIFY(!named("tagButtonMoveRight")->property("enabled").toBool());
+        QVERIFY(named("tagButtonMoveLeft")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(keyMenu, "close"));
+        QTRY_VERIFY(!keyMenu->property("visible").toBool());
     }
 
     void tagButtonMovesFollowTheLayoutDirection_data()

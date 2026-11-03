@@ -615,7 +615,7 @@ private slots:
         shell().setFoldGenerated(true);
         application->clickLine(lineId(4).value, Qt::NoModifier);
         application->runFindReplace(QStringLiteral("find"),
-                                    {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("marigold")}});
+                                    {{QStringLiteral("find"), QStringLiteral("marigold")}});
         QTRY_COMPARE(active(), std::optional(lineId(9)));
         QCOMPARE(fold(5), 2);
         QVERIFY(gridRows().contains(9));
@@ -630,7 +630,7 @@ private slots:
         shell().setFoldGenerated(true);
         application->clickLine(lineId(4).value, Qt::NoModifier);
         application->runFindReplace(QStringLiteral("find"),
-                                    {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("ki")}});
+                                    {{QStringLiteral("find"), QStringLiteral("ki")}});
         QTRY_COMPARE(active(), std::optional(lineId(5)));
         QCOMPARE(selected(), ids({5}));
         QCOMPARE(fold(5), 2);

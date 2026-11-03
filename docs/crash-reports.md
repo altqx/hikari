@@ -44,7 +44,7 @@ Before a Log line goes into a report:
 
 ## What is sent
 
-Send report posts to PostHog's `/batch/` with AN1's client ([analytics.md](analytics.md)):
+Send report posts to PostHog's `/batch/`, through our own proxy at `https://i.hikarisub.org` (no IP addresses or logs kept), with AN1's client ([analytics.md](analytics.md)):
 
 - With usage data on, AN1 already sent the record alone as `$exception` at the start; Send report adds only `crash_report` (the note, the Log lines, the settings summary), linked to it by `report_id`. Turning usage data off drops what it had queued, so Send report then sends the record again.
 - With usage data off (or `DO_NOT_TRACK`), Send report sends both, under a one-off random id: pressing it is consent for that one report. No install id is made or kept.

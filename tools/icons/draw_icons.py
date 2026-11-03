@@ -631,7 +631,7 @@ icon("duplicate", "Copy", [], [LISTS],
 icon("delete", "Delete", [], [LISTS, GRIDMENU, TEXTMENU],
      stroke("M2.5 4h11M6 4V2.5h4V4") + stroke("M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9")
      + stroke("M6.75 7v5M9.25 7v5"))
-icon("import", "Load", [], [LISTS, FILE],
+icon("import", "Load", [], [LISTS, "settings-dialog"],
      stroke("M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3")
      + accent(stroke("M7.5 4.5v10M4.5 11.5l3 3 3-3")))
 icon("clear", "Clear", [], [LISTS, VISUAL, GRIDMENU, AUTOPANEL],
@@ -852,10 +852,10 @@ icon("split-wraps", "Split lines by wraps", [], [GRIDMENU],
 icon("select-visible", "Select all lines visible on video", [], [GRIDMENU],
      rect(1.5, 1.5, 13, 8, 1) + triangle(6.5, 3.5, 3, 4) + stroke("M5.5 12h9M5.5 14.5h6")
      + accent(frect(1.5, 11.25, 2.5, 1.5), frect(1.5, 13.75, 2.5, 1.5)), mirror=True)
-icon("paste-translation", "Paste translation text", [], [GRIDMENU, "original-panel"],
+icon("paste-translation", "Paste translation from a file…", [], [GRIDMENU, "original-panel"],
      stroke("M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h5M10.5 2.5h2a1 1 0 0 1 1 1v5") + rect(5.5, 1.5, 5, 2, 0.5)
      + stroke("M5.5 7.5h5M5.5 10h2.5") + accent(stroke("M10 10.5h4.5M12.25 10.5v4")))
-icon("translation-shift", "Dialogue shifting window", [], [GRIDMENU],
+icon("translation-shift", "Translation matching…", [], [GRIDMENU],
      ROWS3 + accent(stroke("M11.5 3v10M10 4.5l1.5-1.5L13 4.5M10 11.5l1.5 1.5 1.5-1.5")), mirror=True)
 icon("filter-off", "Turn off filtering", [], [GRIDMENU],
      stroke("M9.5 8.5l5-6h-13l5 6v5l1.5-.75") + cross_badge())
@@ -1022,13 +1022,11 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
-    "EX1 #448": ["export"],
     "PL4 #416": ["plugins", "plugin-install"],
     "PL6 #418": ["plugin-unverified"],
     "NE2 #424": ["node-editor"],
     "AI7 #435": ["ai-assistant", "ai-send"],
     "AI2 #430": ["review-keep", "checkpoint"],
-    "CX4 #580": ["paste-special"],
     "CX6 #582": ["tab-switch", "tab-close-others", "tab-close-right"],
 }.items():
     for role in roles:

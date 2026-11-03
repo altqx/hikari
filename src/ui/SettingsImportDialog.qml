@@ -36,6 +36,10 @@ DialogWindow {
         if (importer.roots.length > 0)
             chooseRoot(0)
     }
+    function openRollBack() {
+        openDialog()
+        askRollBack()
+    }
     function addFolder(folder) {
         if (importer.addRoot(folder))
             chooseRoot(importer.roots.length - 1)

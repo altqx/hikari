@@ -12,8 +12,8 @@
 
 namespace hikari::application::ai {
 
-enum class Wire { ChatCompletions, Responses, AnthropicMessages };
-enum class Preset { OpenRouter, OpenAI, Anthropic, Custom };
+enum class Wire { ChatCompletions, Responses, AnthropicMessages, Gemini };
+enum class Preset { OpenRouter, OpenAI, Anthropic, Gemini, Custom };
 enum class Role { Chat, Translator, Reviewer, Vision, Judge };
 
 inline constexpr Role kRoles[] = {Role::Chat, Role::Translator, Role::Reviewer, Role::Vision, Role::Judge};
@@ -28,6 +28,7 @@ std::optional<Role> roleFromId(std::string_view id);
 struct Capabilities {
     bool tools = false;
     bool vision = false;
+    bool video = false;
     bool operator==(const Capabilities &) const = default;
 };
 
@@ -110,6 +111,8 @@ struct ToolCall {
     std::string id;
     std::string name;
     std::string argumentsJson;
+    /// Opaque provider state that must go back with the call in the history (Gemini's thought signature).
+    std::string signature;
     bool operator==(const ToolCall &) const = default;
 };
 struct ToolResult {

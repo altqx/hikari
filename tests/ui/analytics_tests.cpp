@@ -50,6 +50,17 @@ private slots:
         QFile::remove(dir.filePath(QStringLiteral("analytics-queue.json")));
     }
 
+    void sendsThroughTheProxy()
+    {
+        QCOMPARE(Analytics::defaultEndpoint(), QUrl(QStringLiteral("https://i.hikarisub.org/batch/")));
+        QCOMPARE(Analytics::Config().endpoint, Analytics::defaultEndpoint());
+    }
+
+    void whatIsSentIsOnTheSite()
+    {
+        QCOMPARE(Analytics::whatIsSentUrl(), QUrl(QStringLiteral("https://hikarisub.org/en/docs/help/what-is-sent")));
+    }
+
     void sendsAppStarted()
     {
         AnalyticsEndpoint endpoint;

@@ -152,6 +152,15 @@ struct FakeMedia : MacroMediaPort {
     {
         return video ? std::optional<std::int64_t>(f * 40) : std::nullopt;
     }
+    std::optional<std::vector<std::int64_t>> frameStartsMs() const override
+    {
+        if (!video)
+            return std::nullopt;
+        std::vector<std::int64_t> starts;
+        for (std::int64_t i = 0; i < 100; ++i)
+            starts.push_back(i * 40);
+        return starts;
+    }
     std::optional<VideoSize> videoSize() const override
     {
         return video ? std::optional(VideoSize{640, 360, 16, 9}) : std::nullopt;
@@ -228,7 +237,7 @@ TEST_F(RouterTest, GettextAnswersThroughTheTranslation)
     EXPECT_EQ(replies[3].strings, std::vector<std::string>{""});
 }
 
-TEST_F(RouterTest, MediaAnswersInTheirUnits)
+TEST_F(RouterTest, MediaAnswersInTheirUnitsWithAegisubFrameRounding)
 {
     FakeMedia media;
     router.setMedia(&media);
@@ -240,7 +249,7 @@ TEST_F(RouterTest, MediaAnswersInTheirUnits)
     router.handle(request(HostService::Keyframes), collect());
     ASSERT_EQ(replies.size(), 5u);
     EXPECT_EQ(replies[0].integers, std::vector<std::int64_t>{25});
-    EXPECT_EQ(replies[1].integers, std::vector<std::int64_t>{1000});
+    EXPECT_EQ(replies[1].integers, std::vector<std::int64_t>{980});
     EXPECT_EQ(replies[2].integers, (std::vector<std::int64_t>{640, 360, 16, 9}));
     EXPECT_EQ(replies[3].integers, std::vector<std::int64_t>{12});
     EXPECT_EQ(replies[3].strings, (std::vector<std::string>{"a.wav", "v.mkv", ""}));

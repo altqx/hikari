@@ -282,6 +282,14 @@ const std::vector<SettingDefinition> &definitions()
         {"privacy.alwaysSendCrashReports", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordPresence", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordFileName", "", Bool, Profile, Mapped, false, false},
+        {"privacy.starPrompt", "", Bool, Profile, Mapped, false, true},
+        // The star prompt's counters: lastDay is an ISO date, snoozedUntil seconds since the epoch.
+        {"starPrompt.days", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"starPrompt.lastDay", "", String, Profile, Mapped, false, std::string()},
+        {"starPrompt.editingSeconds", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"starPrompt.shown", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"starPrompt.snoozedUntil", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"starPrompt.starred", "", Bool, Profile, Mapped, false, false},
         {"audio.kanjiTimerMulti", "", Bool, Profile, Mapped, false, false},
         {"audio.kanjiTimerFurigana", "", Bool, Profile, Mapped, false, false},
         // Windows only: 0 the built-in player, 1 the DirectShow adapter; never a fallback.
@@ -331,6 +339,8 @@ const std::vector<SettingDefinition> &definitions()
         {"grammar.group.wordChoiceAndUsage", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.regionalismsAndDialect", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.miscellaneous", "", Bool, Profile, Mapped, false, true},
+        // One "<document file>\t<JSON>" row per document, last used first, at most 100; "" holds the last export.
+        {"export.choices", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
     };
     return table;
 }

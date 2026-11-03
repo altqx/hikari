@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <map>
-#include <set>
 
 namespace hikari::app {
 
@@ -22,23 +21,15 @@ constexpr const char *kMulti = "audio.kanjiTimerMulti";
 constexpr const char *kFurigana = "audio.kanjiTimerFurigana";
 
 std::pair<std::vector<application::KanjiTimer::Line>, std::vector<application::KanjiTimer::Line>>
-styleLines(application::EditSession &session, const QString &romajiStyle, const QString &kanjiStyle)
+styleLines(const application::EditSession &session, const QString &romajiStyle, const QString &kanjiStyle)
 {
-    std::vector<application::KanjiTimer::Line> romaji, kanji;
-    const std::u8string romajiName = core::toUtf8(romajiStyle.toStdU16String());
-    const std::u8string kanjiName = core::toUtf8(kanjiStyle.toStdU16String());
-    for (const auto *line : session.document().lines()) {
-        if (line->text.empty() || line->effect == u8"fx")
-            continue;
-        const auto text = core::toUtf16(line->text);
-        const int start = static_cast<int>(line->start.value.microseconds() / 1000);
-        const int end = static_cast<int>(line->end.value.microseconds() / 1000);
-        if (line->style == romajiName && application::hasKaraokeTags(text))
-            romaji.push_back({line->id, text, start, end});
-        else if (line->style == kanjiName)
-            kanji.push_back({line->id, text, start, end});
-    }
-    return {std::move(romaji), std::move(kanji)};
+    return application::kanjiTimerLines(session.document(), core::toUtf8(romajiStyle.toStdU16String()),
+                                        core::toUtf8(kanjiStyle.toStdU16String()));
+}
+
+int pendingLines(const application::KanjiTimer &timer)
+{
+    return static_cast<int>(timer.pending().size() + timer.pendingSkips().size());
 }
 
 QString qs(std::u16string_view s)
@@ -317,7 +308,8 @@ QVariantList KanjiTimerController::pairs() const
         QVariantMap row{{QStringLiteral("number"), ++number},
                         {QStringLiteral("kanji"), p.kanji ? shown(p.kanji->text) : QString()},
                         {QStringLiteral("romaji"), p.romaji ? shown(p.romaji->text) : QString()},
-                        {QStringLiteral("status"), statusKey(p.status)}};
+                        {QStringLiteral("status"), statusKey(p.status)},
+                        {QStringLiteral("skipped"), p.skipped}};
         if (number - 1 == m_timer->current() && view) {
             const bool selection = view->selection.syllables || view->selection.characters;
             row.insert(QStringLiteral("linked"), static_cast<int>(view->linked.size()));
@@ -489,7 +481,7 @@ QVariantMap KanjiTimerController::pair() const
 
 int KanjiTimerController::pending() const
 {
-    return m_timer ? static_cast<int>(m_timer->pending().size()) : 0;
+    return m_timer ? pendingLines(*m_timer) : 0;
 }
 
 bool KanjiTimerController::canUndo() const
@@ -519,6 +511,7 @@ bool KanjiTimerController::enter() { return done(m_timer && m_timer->enter()); }
 bool KanjiTimerController::acceptLine() { return done(m_timer && m_timer->acceptLine()); }
 bool KanjiTimerController::skipRomaji() { return done(m_timer && m_timer->skipRomaji()); }
 bool KanjiTimerController::skipKanji() { return done(m_timer && m_timer->skipKanji()); }
+bool KanjiTimerController::pairAgain(int pair) { return done(m_timer && m_timer->pairAgain(pair)); }
 bool KanjiTimerController::previous() { return done(m_timer && m_timer->previous()); }
 bool KanjiTimerController::choose(int pair) { return done(m_timer && m_timer->choose(pair)); }
 bool KanjiTimerController::undo() { return done(m_timer && m_timer->undo()); }
@@ -548,31 +541,13 @@ int KanjiTimerController::acceptAll()
     return accepted;
 }
 
-namespace {
-
-auto writePending(const application::KanjiTimer &timer, application::EditSession &session)
-{
-    const auto pending = timer.pending();
-    std::set<core::LineId> touches;
-    for (const auto &[id, text] : pending)
-        touches.insert(id);
-    return session.run(application::Command{"Kanji timing", session.revision(), touches, [&](core::Document &d) {
-                                                for (const auto &[id, text] : pending)
-                                                    if (!d.editLine(id, [&](core::LineRecord &l) { l.text = core::toUtf8(text); }))
-                                                        return false;
-                                                return true;
-                                            }});
-}
-
-}
-
 bool KanjiTimerController::apply()
 {
     auto *session = target();
     if (!m_timer || !session || !m_hooks.targetId || m_hooks.targetId() != m_document)
         return false;
-    auto run = [&] { return writePending(*m_timer, *session); };
-    if (m_timer->pending().empty())
+    auto run = [&] { return application::applyKanjiTimer(*m_timer, *session); };
+    if (!m_timer->hasPending())
         return true;
     auto ran = run();
     // MUST KILL: a Line editor draft committed first makes the run stale; the retry rereads.
@@ -580,7 +555,7 @@ bool KanjiTimerController::apply()
         readLines();
         if (!m_timer)
             return false;
-        if (m_timer->pending().empty()) {
+        if (!m_timer->hasPending()) {
             emit changed();
             return true;
         }
@@ -614,14 +589,14 @@ application::KanjiTimer *KanjiTimerController::timerFor(std::uint64_t document) 
 int KanjiTimerController::pendingFor(std::uint64_t document) const
 {
     const auto *timer = timerFor(document);
-    return timer ? static_cast<int>(timer->pending().size()) : 0;
+    return timer ? pendingLines(*timer) : 0;
 }
 
 bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSession &session)
 {
     if (document == m_document && target() == &session && m_hooks.targetId && m_hooks.targetId() == document) {
         readLines();
-        if (!m_timer || m_timer->pending().empty()) {
+        if (!m_timer || !m_timer->hasPending()) {
             emit changed();
             return true;
         }
@@ -636,9 +611,9 @@ bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSess
                                       own ? m_kanjiStyle : kept->second.kanjiStyle);
     timer->setLines(std::move(romaji), std::move(kanji));
     configure(*timer);
-    if (timer->pending().empty())
+    if (!timer->hasPending())
         return true;
-    if (!writePending(*timer, session))
+    if (!application::applyKanjiTimer(*timer, session))
         return false;
     timer->applied();
     emit changed();

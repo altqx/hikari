@@ -10,6 +10,7 @@
 #include <QVideoFrame>
 
 #include <chrono>
+#include <cstdlib>
 
 namespace hikari::backends {
 
@@ -57,11 +58,23 @@ std::vector<PlayerTrack> tracksOf(const QList<QMediaMetaData> &list, bool video)
     return out;
 }
 
+constexpr std::chrono::milliseconds kSeekFallback{3000};
+
+bool nearSeek(const QVideoFrame &frame, std::int64_t requestedUs)
+{
+    const qint64 duration = frame.endTime() > frame.startTime() ? frame.endTime() - frame.startTime() : 100'000;
+    return std::abs(frame.startTime() - requestedUs) <= duration + 1000;
+}
+
 }
 
 QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject(parent), m_useAudioOutput(useAudioOutput)
 {
     m_player.setVideoSink(&m_sink);
+    // Qt's FFmpeg reports no error for a video stream it cannot decode (AV1 without a hardware decoder).
+    m_frameDeadline.setSingleShot(true);
+    m_frameDeadline.setInterval(std::chrono::seconds(5));
+    connect(&m_frameDeadline, &QTimer::timeout, this, &QtGeneralPlayer::missFrameDeadline);
     setOutputDevice({});
     connect(&m_player, &QMediaPlayer::mediaStatusChanged, this, &QtGeneralPlayer::onStatus);
     connect(&m_player, &QMediaPlayer::playbackStateChanged, this, [this] {
@@ -91,6 +104,12 @@ QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject
             QMetaObject::invokeMethod(this, &QtGeneralPlayer::takeFrame, Qt::QueuedConnection);
     }, Qt::DirectConnection);
     connect(&m_sink, &QVideoSink::subtitleTextChanged, this, &QtGeneralPlayer::subtitleTextChanged);
+    m_seekFallback.setSingleShot(true);
+    m_seekFallback.setInterval(kSeekFallback);
+    connect(&m_seekFallback, &QTimer::timeout, this, [this] {
+        if (m_pendingSeek && m_heldBack.isValid())
+            deliver(std::exchange(m_heldBack, QVideoFrame()));
+    });
 }
 
 void QtGeneralPlayer::setOutputDevice(const std::string &id)
@@ -172,10 +191,10 @@ void QtGeneralPlayer::open(const std::string &path, Opened done)
     ++m_generation;
     ++m_epoch;
     m_clock = {};
+    m_mediaFrames = 0;
     if (auto previous = std::exchange(m_pendingOpen, nullptr))
         previous(std::unexpected(PlayerError::Stale));
-    if (auto seek = std::exchange(m_pendingSeek, std::nullopt))
-        seek->done(std::unexpected(PlayerError::Stale));
+    forgetSeek();
     m_pendingOpen = std::move(done);
     dropWaitingFrame();
     m_player.setSource(QUrl::fromLocalFile(QString::fromStdString(path)));
@@ -230,11 +249,13 @@ void QtGeneralPlayer::seek(std::int64_t us, Seeked done)
         return done(std::unexpected(PlayerError::Unsupported));
     if (us < 0)
         return done(std::unexpected(PlayerError::InvalidInput));
-    if (auto previous = std::exchange(m_pendingSeek, std::nullopt))
-        previous->done(std::unexpected(PlayerError::Stale));
+    forgetSeek();
     ++m_epoch;
     m_clock.valid = false;
     m_pendingSeek = PendingSeek{m_generation, us, std::move(done)};
+    m_seekFallback.start();
+    if (m_mediaFrames == 0)
+        m_frameDeadline.start();
     dropWaitingFrame();
     const bool stopped = m_player.playbackState() == QMediaPlayer::StoppedState;
     m_player.setPosition(us / 1000); // QMediaPlayer positions are milliseconds
@@ -243,10 +264,31 @@ void QtGeneralPlayer::seek(std::int64_t us, Seeked done)
         m_player.pause();
 }
 
+void QtGeneralPlayer::missFrameDeadline()
+{
+    if (m_mediaFrames > 0 || !m_player.hasVideo())
+        return;
+    m_seekFallback.stop();
+    if (auto seek = std::exchange(m_pendingSeek, std::nullopt))
+        seek->done(std::unexpected(PlayerError::NoVideoFrame));
+}
+
 void QtGeneralPlayer::onFrame(const QVideoFrame &frame)
 {
     if (!frame.isValid())
         return;
+    ++m_mediaFrames;
+    m_frameDeadline.stop();
+    // Qt still hands over frames decoded before a setPosition.
+    if (m_pendingSeek && frame.startTime() >= 0 && !nearSeek(frame, m_pendingSeek->requestedUs)) {
+        m_heldBack = frame;
+        return;
+    }
+    deliver(frame);
+}
+
+void QtGeneralPlayer::deliver(const QVideoFrame &frame)
+{
     ++m_delivered;
     const qint64 start = frame.startTime();
     const qint64 end = frame.endTime();
@@ -261,6 +303,8 @@ void QtGeneralPlayer::onFrame(const QVideoFrame &frame)
     if (m_pendingSeek && start >= 0) {
         auto pending = std::move(*m_pendingSeek);
         m_pendingSeek.reset();
+        m_heldBack = {};
+        m_seekFallback.stop();
         SeekResult r;
         r.generation = pending.generation;
         r.requestedUs = pending.requestedUs;
@@ -285,6 +329,14 @@ void QtGeneralPlayer::pause()
 void QtGeneralPlayer::stop()
 {
     m_player.stop();
+    forgetSeek();
+}
+
+void QtGeneralPlayer::forgetSeek()
+{
+    m_heldBack = {};
+    m_seekFallback.stop();
+    m_frameDeadline.stop();
     if (auto seek = std::exchange(m_pendingSeek, std::nullopt))
         seek->done(std::unexpected(PlayerError::Stale));
 }
