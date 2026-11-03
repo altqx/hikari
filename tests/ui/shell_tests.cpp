@@ -2268,7 +2268,7 @@ private slots:
         int style = -1;
         QTRY_VERIFY((style = [&] {
             for (int c = 0; c < grid->columnCount(); ++c)
-                if (grid->columnTitle(c) == QLatin1String("Styles"))
+                if (grid->columnTitle(c) == QLatin1String("Style"))
                     return c;
             return -1;
         }()) >= 0);
@@ -4415,7 +4415,7 @@ private slots:
         };
         const QList<const char *> columns{"styleOutline", "styleShadow", "styleScaleX", "styleScaleY"};
         const QList<QList<const char *>> below{{"styleAngle", "styleMarginLeft"}, {"styleSpacing", "styleMarginRight"},
-                                               {"styleOpaqueBox", "styleMarginVertical"}, {"styleAlignment"}};
+                                               {"styleBorderStyle", "styleMarginVertical"}, {"styleAlignment"}};
         for (int c = 0; c < 4; ++c) {
             const QRectF top = at(columns[c]);
             QVERIFY2(top.width() > 0, columns[c]);
@@ -4529,6 +4529,41 @@ private slots:
         QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
         choose(choice, 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("All fonts"));
+        QVERIFY(QMetaObject::invokeMethod(editor, "closeManager"));
+    }
+
+    void styleEditorShowsEveryBorderStyleAndEncodingMinusOne()
+    {
+        const QString path = dir.filePath(QStringLiteral("border-styles.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Tahoma,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,4,2,2,2,"
+                "10,10,10,-1\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        auto *editor = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(editor->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QCOMPARE(values.value(QStringLiteral("borderStyle")).toInt(), 4);
+        QVERIFY(QMetaObject::invokeMethod(editor, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *border = findItem(editor->contentItem(), QStringLiteral("styleBorderStyle"));
+        auto *encoding = findItem(editor->contentItem(), QStringLiteral("styleEncoding"));
+        QCOMPARE(border->property("currentIndex").toInt(), 2);
+        QCOMPARE(border->property("displayText").toString(), QStringLiteral("Opaque box per line (libass)"));
+        QCOMPARE(encoding->property("currentIndex").toInt(), 0);
+        QCOMPARE(encoding->property("code").toString(), QStringLiteral("-1"));
+        choose(border, 1);
+        QCOMPARE(border->property("code").toInt(), 3);
+        choose(border, 0);
+        QCOMPARE(border->property("code").toInt(), 1);
         QVERIFY(QMetaObject::invokeMethod(editor, "closeManager"));
     }
 
@@ -4802,11 +4837,14 @@ private slots:
             QVERIFY2(QMetaObject::invokeMethod(f, "textEdited"), field);
             QVERIFY2(styles.previewKey() > key, field);
         }
-        for (const char *box : {"styleBold", "styleOpaqueBox"}) {
-            key = styles.previewKey();
-            QVERIFY2(QMetaObject::invokeMethod(findItem(content, QLatin1String(box)), "toggled"), box);
-            QVERIFY2(styles.previewKey() > key, box);
-        }
+        key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("styleBold")), "toggled"));
+        QVERIFY(styles.previewKey() > key);
+        auto *borderStyle = findItem(content, QStringLiteral("styleBorderStyle"));
+        QVERIFY(borderStyle);
+        key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(borderStyle, "activated", Q_ARG(int, 2)));
+        QVERIFY(styles.previewKey() > key);
         auto *encoding = findItem(content, QStringLiteral("styleEncoding"));
         QVERIFY(encoding);
         key = styles.previewKey();
@@ -5034,7 +5072,7 @@ private slots:
         QTRY_VERIFY(popover->property("visible").toBool());
         QCOMPARE(popover->property("anchor").value<QQuickItem *>(), visualItem("changeColour3"));
         auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
-        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("Border color"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("Border colour"));
         QCOMPARE(popover->property("red").toInt(), 255);
         QCOMPARE(dialogItem("colourPopover", "hexColour")->property("text").toString(), QStringLiteral("#FFFFFF"));
         QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
@@ -12689,7 +12727,7 @@ private slots:
                 out << grid->columnTitle(c);
             return out;
         };
-        const QStringList empty{"#", "Start", "End", "Styles", "CPS", "Wraps", "Text"};
+        const QStringList empty{"#", "Start", "End", "Style", "CPS", "Wraps", "Text"};
         QTRY_COMPARE(titles(), empty);
 
         QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
@@ -26807,8 +26845,8 @@ private slots:
         QCOMPARE(item<QObject>("audioLink")->property("text").toString(), QStringLiteral("Link the volume and stretch sliders"));
         for (const Expected &e : {Expected{"tag_b", "tag-bold", "Bold"}, Expected{"tag_s", "tag-strikeout", "Strikeout"},
                                   Expected{"changeFont", "tag-font", "Font selection"},
-                                  Expected{"changeColour1", "colour-primary", "Primary color"},
-                                  Expected{"changeColour4", "colour-shadow", "Shadow color"}}) {
+                                  Expected{"changeColour1", "colour-primary", "Primary colour"},
+                                  Expected{"changeColour4", "colour-shadow", "Shadow colour"}}) {
             auto *button = visualItem(e.object);
             QVERIFY2(button, e.object);
             QCOMPARE(icon(button), QLatin1String(e.role));
@@ -28005,7 +28043,7 @@ private slots:
         typeInto("layerField", QStringLiteral("2"));
         typeInto("endField", QStringLiteral("0:00:00.50"));
         press(Qt::Key_Return);
-        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
+        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End time is before start time."));
         QCOMPARE(session->document().lines()[0]->layer.value, 0);
         QVERIFY(session->draftLine());
         session->setInvalidCommitPolicy(application::InvalidCommitPolicy::Legacy);
@@ -28241,7 +28279,7 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QTest::mouseMove(window, at + QPoint(10, -8));
         QCOMPARE(text(), QStringLiteral("0:00:12.00"));
-        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
+        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End time is before start time."));
         auto *problem = item("editorProblem");
         QTRY_VERIFY(problem->isVisible() && problem->height() > 0
                     && problem->mapToScene(QPointF(0, problem->height())).y() <= fieldOrigin.y());

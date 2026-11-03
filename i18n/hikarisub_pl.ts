@@ -2341,16 +2341,12 @@ Urządzenie wyjściowe: %2</translation>
         <translation>różne</translation>
     </message>
     <message>
-        <source>Number of characters in each line.
-No more than 43 characters per line (maximum 2 lines).</source>
-        <translation>Liczba znaków w każdym wierszu.
-Nie więcej niż 43 znaki na wiersz (maksymalnie 2 wiersze).</translation>
+        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
+        <translation>Liczba znaków w każdym wierszu. Nie więcej niż 43 znaki, najwyżej 2 wiersze.</translation>
     </message>
     <message>
-        <source>Characters per second.
-Should not exceed 15 characters per second</source>
-        <translation>Znaki na sekundę.
-Nie powinny przekraczać 15 znaków na sekundę</translation>
+        <source>Characters per second. Keep it at 15 or under.</source>
+        <translation>Znaki na sekundę. Nie więcej niż 15.</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -2413,7 +2409,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Zmieniono, jeszcze nie zastosowano do linijki</translation>
     </message>
     <message>
-        <source>0: the Style&apos;s (%1)</source>
+        <source>0: the style’s (%1)</source>
         <translation>0: wartość ze stylu (%1)</translation>
     </message>
     <message>
@@ -2421,12 +2417,8 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Edytuj styl</translation>
     </message>
     <message>
-        <source>Edit style: allows quick editing of the current line&apos;s style</source>
-        <translation>Edytuj styl: umożliwia szybką edycję stylu bieżącej linijki</translation>
-    </message>
-    <message>
-        <source>Allows quick editing of the current line&apos;s style</source>
-        <translation>Umożliwia szybką edycję stylu linijki</translation>
+        <source>Edits the current line’s style</source>
+        <translation>Edytuje styl bieżącej linijki</translation>
     </message>
     <message>
         <source>Actor</source>
@@ -2477,8 +2469,8 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Dodaj słowo do słownika</translation>
     </message>
     <message>
-        <source>Error. Word &quot;%1&quot; was not added.</source>
-        <translation>Błąd. Słowo &quot;%1&quot; nie zostało dodane.</translation>
+        <source>“%1” was not added to the dictionary.</source>
+        <translation>Słowo “%1” nie zostało dodane do słownika.</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -2509,19 +2501,19 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Wybór czcionki</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>Kolor podstawowy</translation>
     </message>
     <message>
-        <source>Secondary color for karaoke</source>
+        <source>Secondary colour for karaoke</source>
         <translation>Kolor zastępczy do karaoke</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>Kolor obwódki</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>Kolor cienia</translation>
     </message>
     <message>
@@ -2585,7 +2577,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Tag wstawiany w miejsce kursora</translation>
     </message>
     <message>
-        <source>Insert Tag at text beginning</source>
+        <source>Insert tag at start of text</source>
         <translation>Tag wstawiany na początku tekstu</translation>
     </message>
     <message>
@@ -2677,8 +2669,8 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Zapis nie powiódł się; plik na dysku pozostał bez zmian</translation>
     </message>
     <message>
-        <source>End is before Start.</source>
-        <translation>Koniec jest wcześniej niż Początek.</translation>
+        <source>End time is before start time.</source>
+        <translation>Czas końcowy jest wcześniejszy niż czas początkowy.</translation>
     </message>
     <message>
         <source>Margins must be between 0 and 9999.</source>
@@ -2729,7 +2721,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Oznaczanie linijek jako niepewne działa tylko w trybie tłumaczenia.</translation>
     </message>
     <message>
-        <source>This document can&apos;t be saved here.</source>
+        <source>This document can’t be saved here.</source>
         <translation>Tego dokumentu nie można tu zapisać.</translation>
     </message>
     <message>
@@ -2737,7 +2729,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Ten plik jest używany przez inny otwarty dokument.</translation>
     </message>
     <message>
-        <source>The document can&apos;t be saved right now.</source>
+        <source>The document can’t be saved right now.</source>
         <translation>Nie można teraz zapisać dokumentu.</translation>
     </message>
     <message>
@@ -4023,7 +4015,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Audio</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>Style</translation>
     </message>
     <message>
@@ -4678,7 +4670,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Kopiuj grupę linijek</translation>
     </message>
     <message>
-        <source>Select the group&apos;s lines</source>
+        <source>Select the group’s lines</source>
         <translation>Zaznacz linijki grupy</translation>
     </message>
     <message>
@@ -4718,20 +4710,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Warstwa</translation>
     </message>
     <message>
-        <source>The starting time</source>
-        <translation>Czas początkowy</translation>
-    </message>
-    <message>
         <source>End time</source>
         <translation>Czas końcowy</translation>
     </message>
     <message>
         <source>Actor</source>
         <translation>Aktor</translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation>Style</translation>
     </message>
     <message>
         <source>Left margin</source>
@@ -4882,12 +4866,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wklej schowek do tych kolumn zaznaczonych linijek (%1):</translation>
     </message>
     <message>
-        <source>Copy these columns of the selected line:</source>
-        <translation>Kopiuj te kolumny zaznaczonej linijki:</translation>
+        <source>Columns to copy from the selected line</source>
+        <translation>Kolumny do skopiowania z zaznaczonej linijki</translation>
     </message>
     <message>
-        <source>Copy these columns of the %1 selected lines:</source>
-        <translation>Kopiuj te kolumny zaznaczonych linijek (%1):</translation>
+        <source>Columns to copy from the %1 selected lines</source>
+        <translation>Kolumny do skopiowania z zaznaczonych linijek (%1)</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -5260,19 +5244,19 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Dodaj zakończenie</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>Kolor obwódki</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>Kolor podstawowy</translation>
     </message>
     <message>
-        <source>Secondary color for karaoke</source>
+        <source>Secondary colour for karaoke</source>
         <translation>Kolor zastępczy do karaoke</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>Kolor cienia</translation>
     </message>
     <message>
@@ -11944,8 +11928,8 @@ ponieważ została zmieniona.</translation>
         <translation>Nie można zastąpić tekstu w tym miejscu.</translation>
     </message>
     <message>
-        <source>Error. Word &quot;%1&quot; was not added.</source>
-        <translation>Błąd. Słowo &quot;%1&quot; nie zostało dodane.</translation>
+        <source>“%1” was not added to the dictionary.</source>
+        <translation>Słowo “%1” nie zostało dodane do słownika.</translation>
     </message>
 </context>
 <context>
@@ -12148,6 +12132,14 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Opaque box</source>
         <translation>Nieprzezroczyste tło</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>Obwódka</translation>
+    </message>
+    <message>
+        <source>Opaque box per line (libass)</source>
+        <translation>Nieprzezroczyste tło dla każdej linijki (libass)</translation>
     </message>
     <message>
         <source>Edit style</source>
@@ -12448,6 +12440,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Text encoding</source>
         <translation>Kodowanie tekstu</translation>
+    </message>
+    <message>
+        <source>-1 - Detect text direction (libass)</source>
+        <translation>-1 - Wykrywanie kierunku tekstu (libass)</translation>
     </message>
     <message>
         <source>0 - ANSI</source>
@@ -12902,7 +12898,7 @@ Usunięte style:
         <translation>Przezroczystość koloru cienia</translation>
     </message>
     <message>
-        <source>Primary color</source>
+        <source>Primary colour</source>
         <translation>Kolor podstawowy</translation>
     </message>
     <message>
@@ -12910,11 +12906,11 @@ Usunięte style:
         <translation>Kolor zastępczy</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>Kolor obwódki</translation>
     </message>
     <message>
-        <source>Shadow color</source>
+        <source>Shadow colour</source>
         <translation>Kolor cienia</translation>
     </message>
     <message>
@@ -13649,7 +13645,7 @@ Usunięte style:
         <translation>Powiększenie</translation>
     </message>
     <message>
-        <source>Each syllable swells as it is sung and settles back to its Style&apos;s size in the sung colour.</source>
+        <source>Each syllable swells as it is sung and settles back to its style’s size in the sung colour.</source>
         <translation>Każda sylaba powiększa się podczas śpiewania i wraca do rozmiaru ze swojego stylu w kolorze zaśpiewanym.</translation>
     </message>
     <message>
@@ -13697,16 +13693,16 @@ Usunięte style:
         <translation>Kolor dla każdej linijki</translation>
     </message>
     <message>
-        <source>syllable start, from the line&apos;s start (ms)</source>
+        <source>syllable start, from the line’s start (ms)</source>
         <extracomment>Template variables&apos; descriptions in the template editor&apos;s list (karaoke templater docs)</extracomment>
         <translation>początek sylaby, od początku linijki (ms)</translation>
     </message>
     <message>
-        <source>syllable end, from the line&apos;s start (ms)</source>
+        <source>syllable end, from the line’s start (ms)</source>
         <translation>koniec sylaby, od początku linijki (ms)</translation>
     </message>
     <message>
-        <source>middle of the syllable, from the line&apos;s start (ms)</source>
+        <source>middle of the syllable, from the line’s start (ms)</source>
         <translation>środek sylaby, od początku linijki (ms)</translation>
     </message>
     <message>
@@ -13714,19 +13710,19 @@ Usunięte style:
         <translation>numer sylaby w linijce, od 1 (0: tekst przed pierwszym \k)</translation>
     </message>
     <message>
-        <source>the line&apos;s layer</source>
+        <source>the line’s layer</source>
         <translation>warstwa linijki</translation>
     </message>
     <message>
-        <source>middle of the line, from the video&apos;s start (ms)</source>
+        <source>middle of the line, from the video’s start (ms)</source>
         <translation>środek linijki, od początku wideo (ms)</translation>
     </message>
     <message>
-        <source>the line&apos;s Style</source>
+        <source>the line’s style</source>
         <translation>styl linijki</translation>
     </message>
     <message>
-        <source>the line&apos;s actor</source>
+        <source>the line’s actor</source>
         <translation>aktor linijki</translation>
     </message>
     <message>
@@ -13738,15 +13734,15 @@ Usunięte style:
         <translation>indeks linijki w pliku, licząc poprzedzające ją wpisy Script Info i stylów</translation>
     </message>
     <message>
-        <source>x of the line&apos;s left edge (px)</source>
+        <source>x of the line’s left edge (px)</source>
         <translation>x lewej krawędzi linijki (px)</translation>
     </message>
     <message>
-        <source>x of the line&apos;s centre (px)</source>
+        <source>x of the line’s centre (px)</source>
         <translation>x środka linijki (px)</translation>
     </message>
     <message>
-        <source>x of the line&apos;s right edge (px)</source>
+        <source>x of the line’s right edge (px)</source>
         <translation>x prawej krawędzi linijki (px)</translation>
     </message>
     <message>
@@ -13754,15 +13750,15 @@ Usunięte style:
         <translation>szerokość linijki (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s top (px)</source>
+        <source>y of the line’s top (px)</source>
         <translation>y górnej krawędzi linijki (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s middle (px)</source>
+        <source>y of the line’s middle (px)</source>
         <translation>y środka linijki (px)</translation>
     </message>
     <message>
-        <source>y of the line&apos;s bottom (px)</source>
+        <source>y of the line’s bottom (px)</source>
         <translation>y dolnej krawędzi linijki (px)</translation>
     </message>
     <message>
@@ -13770,23 +13766,23 @@ Usunięte style:
         <translation>wysokość linijki (px)</translation>
     </message>
     <message>
-        <source>skdur; the line&apos;s duration in centiseconds in a pre-line template</source>
+        <source>skdur; the line’s duration in centiseconds in a pre-line template</source>
         <translation>skdur; w szablonie pre-line czas trwania linijki w centysekundach</translation>
     </message>
     <message>
-        <source>smid, from the line&apos;s start; lmid, from the video&apos;s start, in a pre-line template (ms)</source>
+        <source>smid, from the line’s start; lmid, from the video’s start, in a pre-line template (ms)</source>
         <translation>smid, od początku linijki; w szablonie pre-line lmid, od początku wideo (ms)</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s time, by mode</source>
+        <source>sets the generated line’s time, by mode</source>
         <translation>ustawia czas wygenerowanej linijki, zależnie od trybu</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s layer</source>
+        <source>sets the generated line’s layer</source>
         <translation>ustawia warstwę wygenerowanej linijki</translation>
     </message>
     <message>
-        <source>sets the generated line&apos;s Style</source>
+        <source>sets the generated line’s style</source>
         <translation>ustawia styl wygenerowanej linijki</translation>
     </message>
     <message>
@@ -13814,15 +13810,15 @@ Usunięte style:
         <translation>czas trwania sylaby w centysekundach</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s left edge (px)</source>
+        <source>x of the syllable’s left edge (px)</source>
         <translation>x lewej krawędzi sylaby (px)</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s centre (px)</source>
+        <source>x of the syllable’s centre (px)</source>
         <translation>x środka sylaby (px)</translation>
     </message>
     <message>
-        <source>x of the syllable&apos;s right edge (px)</source>
+        <source>x of the syllable’s right edge (px)</source>
         <translation>x prawej krawędzi sylaby (px)</translation>
     </message>
     <message>
@@ -13830,15 +13826,15 @@ Usunięte style:
         <translation>szerokość sylaby (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s top (px)</source>
+        <source>y of the syllable’s top (px)</source>
         <translation>y górnej krawędzi sylaby (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s middle (px)</source>
+        <source>y of the syllable’s middle (px)</source>
         <translation>y środka sylaby (px)</translation>
     </message>
     <message>
-        <source>y of the syllable&apos;s bottom (px)</source>
+        <source>y of the syllable’s bottom (px)</source>
         <translation>y dolnej krawędzi sylaby (px)</translation>
     </message>
     <message>
@@ -13850,11 +13846,11 @@ Usunięte style:
         <translation>pozycja sylaby dla \pos, zależnie od wyrównania</translation>
     </message>
     <message>
-        <source>Line start, from the video&apos;s start (ms)</source>
+        <source>Line start, from the video’s start (ms)</source>
         <translation>Początek linijki, od początku wideo (ms)</translation>
     </message>
     <message>
-        <source>Line end, from the video&apos;s start (ms)</source>
+        <source>Line end, from the video’s start (ms)</source>
         <translation>Koniec linijki, od początku wideo (ms)</translation>
     </message>
     <message>
@@ -13946,7 +13942,7 @@ Usunięte style:
         <translation>uruchamia szablon podaną liczbę razy</translation>
     </message>
     <message>
-        <source>sets the loop&apos;s counter and count</source>
+        <source>sets the loop’s counter and count</source>
         <translation>ustawia licznik i liczbę powtórzeń pętli</translation>
     </message>
     <message>
@@ -13962,11 +13958,11 @@ Usunięte style:
         <translation>wartość zapamiętana przez remember</translation>
     </message>
     <message>
-        <source>the loop&apos;s counter, from 1</source>
+        <source>the loop’s counter, from 1</source>
         <translation>licznik pętli, od 1</translation>
     </message>
     <message>
-        <source>the loop&apos;s count</source>
+        <source>the loop’s count</source>
         <translation>liczba powtórzeń pętli</translation>
     </message>
     <message>
@@ -13978,19 +13974,19 @@ Usunięte style:
         <translation>sylaba, nad którą jest część furigany</translation>
     </message>
     <message>
-        <source>the script&apos;s resolution and properties</source>
+        <source>the script’s resolution and properties</source>
         <translation>rozdzielczość i właściwości skryptu</translation>
     </message>
     <message>
-        <source>Lua&apos;s math library</source>
+        <source>Lua’s math library</source>
         <translation>biblioteka math języka Lua</translation>
     </message>
     <message>
-        <source>Lua&apos;s string library</source>
+        <source>Lua’s string library</source>
         <translation>biblioteka string języka Lua</translation>
     </message>
     <message>
-        <source>every global, karaskel&apos;s included</source>
+        <source>every global, karaskel’s included</source>
         <translation>wszystkie zmienne globalne, w tym te z karaskel</translation>
     </message>
     <message>
@@ -14491,11 +14487,11 @@ po czasie końcowym w milisekundach</translation>
         <translation>Usuń linijkę</translation>
     </message>
     <message>
-        <source>Not confirmed</source>
+        <source>Unconfirmed</source>
         <translation>Niepewne</translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected lines for review</source>
+        <source>Unconfirmed: marks the selected lines for review</source>
         <translation>Niepewne: oznacza zaznaczone linijki do sprawdzenia</translation>
     </message>
     <message>
@@ -14503,7 +14499,7 @@ po czasie końcowym w milisekundach</translation>
         <translation>Tagi z oryginału</translation>
     </message>
     <message>
-        <source>Tags from original: the translation gets the Original text&apos;s tags</source>
+        <source>Tags from original: the translation gets the original text’s tags</source>
         <translation>Tagi z oryginału: tłumaczenie otrzymuje tagi tekstu oryginalnego</translation>
     </message>
     <message>

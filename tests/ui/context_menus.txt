@@ -83,7 +83,7 @@ Grid header > -
 Grid header > Hide empty columns
 Grid header > Reset column widths
 Grid group row
-Grid group row > Select the group's lines
+Grid group row > Select the group’s lines
 Grid group row > Add 1 selected line(s)
 Grid group row > Copy line group
 Grid group row > Change description…
