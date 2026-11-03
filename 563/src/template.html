@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recommended Scripts Mockup</title>
+<style>
+:root {
+  --page: #f3f4f6; --page-ink: #1d232b; --page-muted: #56606b; --page-line: #d5dade; --page-card: #ffffff;
+  --mark-new: #23905a; --mark-ren: #c27d00;
+  font-family: "Segoe UI", "Noto Sans", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page: #12161b; --page-ink: #e6ebf0; --page-muted: #9aa6b2; --page-line: #2c343d; --page-card: #1a1f25; }
+}
+:root[data-theme="dark"] { --page: #12161b; --page-ink: #e6ebf0; --page-muted: #9aa6b2; --page-line: #2c343d; --page-card: #1a1f25; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--page-ink); font-size: 14px; line-height: 1.45; }
+header.top { padding: 20px 24px 8px; max-width: 1700px; }
+h1 { font-size: 22px; margin: 0 0 6px; }
+.intro { color: var(--page-muted); max-width: 1100px; margin: 0 0 10px; }
+.controls { display: flex; gap: 16px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+.legend { color: var(--page-muted); font-size: 13px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.dot.new { background: var(--mark-new); }
+section.sec { margin: 18px 24px; padding: 16px 18px 18px; background: var(--page-card); border: 1px solid var(--page-line); border-radius: 8px; max-width: 2860px; }
+section.sec h2 { font-size: 18px; margin: 0 0 4px; }
+.meta { color: var(--page-muted); font-size: 13px; margin: 0 0 12px; max-width: 1200px; }
+.board { display: grid; grid-template-columns: 110px repeat(3, max-content); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.rowlabel { font-size: 12px; font-weight: 600; color: var(--page-muted); align-self: start; padding-top: 18px; }
+.colhead { font-size: 12px; font-weight: 600; color: var(--page-muted); padding-left: 4px; }
+.cell { background: var(--bg); padding: 16px 18px 18px 22px; border-radius: 6px; display: flex; flex-direction: column; align-items: flex-start; min-width: 280px; color: var(--text); font-size: 13px; }
+.cap { font-size: 11px; color: var(--muted); margin: 0 0 3px 2px; font-weight: 600; }
+.details { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px 28px; margin-top: 14px; max-width: 1500px; }
+.details h3 { font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: .04em; color: var(--page-muted); }
+.details ul { margin: 0; padding-left: 20px; } .details li { margin: 2px 0; }
+.recs .num { font-variant-numeric: tabular-nums; font-weight: 700; margin-right: 4px; }
+code { font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace; font-size: 12px; }
+
+.t-light { --bg: #E5E9EC; --panel: #F9FAFB; --raised: #EDF0F3; --field: #FFFFFF; --text: #202832; --muted: #526170; --line: #AAB5BE; --control: #76828D; --accent: #145C4C; --on: #FFFFFF; --select: #D6EBE4; --dis: #74808B; --danger: #A51F31; --warning: #8A5A00; --success: #008000; --shadow: #AAB5BE; }
+.t-dark { --bg: #171B20; --panel: #20262D; --raised: #29313A; --field: #171D24; --text: #E8EDF2; --muted: #A5B1BD; --line: #414B57; --control: #7A8691; --accent: #9CDBC9; --on: #102C24; --select: #304C47; --dis: #75818D; --danger: #FFADAD; --warning: #E0A030; --success: #4DBA4D; --shadow: #000000; }
+.t-hcb { --bg: #000000; --panel: #080808; --raised: #151515; --field: #000000; --text: #FFFFFF; --muted: #EEEEEE; --line: #FFFFFF; --control: #FFFFFF; --accent: #FFFF00; --on: #000000; --select: #253F60; --dis: #8C8C8C; --danger: #FFADAD; --warning: #FFD54A; --success: #7CFC7C; --shadow: #000000; }
+.t-hcw { --bg: #FFFFFF; --panel: #FFFFFF; --raised: #EBEBEB; --field: #FFFFFF; --text: #000000; --muted: #1A1A1A; --line: #000000; --control: #000000; --accent: #0037B3; --on: #FFFFFF; --select: #C9DAF8; --dis: #6E6E6E; --danger: #A00000; --warning: #6B4500; --success: #005A00; --shadow: #000000; }
+
+.ico { display: inline-flex; width: 16px; height: 16px; flex: none; }
+.ico svg { width: 100%; height: 100%; display: block; }
+.ico.s14 { width: 14px; height: 14px; } .ico.s12 { width: 12px; height: 12px; } .ico.s32 { width: 32px; height: 32px; } .ico.s40 { width: 40px; height: 40px; }
+
+/* menus */
+.menu { position: relative; background: var(--field); border: 1px solid var(--line); box-shadow: 1px 1px 0 color-mix(in srgb, var(--shadow) 20%, transparent); padding: 2px 0; min-width: 210px; color: var(--text); font-size: 13px; }
+.menu.sub { margin-left: -4px; }
+.mi { position: relative; display: flex; align-items: center; height: 24px; padding: 0 6px; white-space: nowrap; }
+.mi .chk { width: 14px; height: 14px; flex: none; margin-right: 6px; display: inline-flex; }
+.mi .ic { width: 16px; height: 16px; flex: none; margin-right: 6px; display: inline-flex; }
+.mi .ic svg { width: 16px; height: 16px; display: block; }
+.mi .lbl { flex: 1 1 auto; padding-right: 8px; }
+.mi .suffix { color: var(--muted); padding-left: 18px; }
+.mi .keys { color: var(--muted); padding-left: 24px; }
+.mi .arrow { width: 14px; flex: none; text-align: right; }
+.mi.hl { background: var(--accent); color: var(--on); }
+.mi.hl .keys, .mi.hl .suffix { color: var(--on); }
+.mi.dis { color: var(--dis); }
+.mi.dis .suffix { color: var(--dis); }
+.mi.hint { height: auto; padding: 0 6px 4px 46px; color: var(--dis); font-size: 11px; margin-top: -3px; white-space: normal; max-width: 280px; }
+.sep { height: 1px; background: var(--line); margin: 3px 0; }
+.mbox { width: 14px; height: 14px; border: 1px solid var(--line); background: var(--field); display: inline-flex; align-items: center; justify-content: center; }
+.mbox svg { width: 10px; height: 10px; }
+.mi.hl .mbox { border-color: var(--on); background: transparent; }
+.mark { position: absolute; left: -15px; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--mark-new); }
+.anno { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--mark-new); }
+
+/* DG1 window */
+.win { background: var(--panel); border: 1px solid var(--line); box-shadow: 2px 3px 0 color-mix(in srgb, var(--shadow) 25%, transparent); color: var(--text); display: flex; flex-direction: column; }
+.wtitle { height: 32px; display: flex; align-items: center; padding-left: 12px; font-size: 13px; flex: none; }
+.wtitle .x { margin-left: auto; width: 46px; height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+.t-hcb .wtitle, .t-hcw .wtitle { border-bottom: 1px solid var(--line); }
+.wbody { padding: 12px 24px 0; flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.wfoot { display: flex; gap: 8px; padding: 24px; align-items: center; flex: none; }
+.wfoot .grow { flex: 1; }
+
+/* controls */
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border: 1px solid var(--control); background: var(--raised); color: var(--text); font-size: 13px; white-space: nowrap; border-radius: 2px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on); font-weight: 600; }
+.btn.danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn.dis { color: var(--dis); border-color: var(--line); }
+.btn.ring { outline: 1px solid var(--text); outline-offset: 1px; }
+.ibtn { display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 2px; }
+.ibtn.hov { background: var(--raised); border-color: var(--control); }
+.ibtn.on { background: var(--select); border-color: var(--accent); }
+.fld { display: inline-flex; align-items: center; height: 26px; padding: 0 6px; border: 1px solid var(--control); background: var(--field); color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; }
+.fld.focus { border-color: var(--accent); }
+.fld .ph { color: var(--muted); }
+.fld .unit { color: var(--muted); margin-left: auto; padding-left: 6px; }
+.fld.num { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.area { border: 1px solid var(--control); background: var(--field); padding: 4px 6px; height: 58px; line-height: 1.35; overflow: hidden; }
+.combo { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; height: 26px; padding: 0 6px 0 8px; border: 1px solid var(--control); background: var(--raised); white-space: nowrap; }
+.cb { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.box { width: 15px; height: 15px; border: 1px solid var(--control); background: var(--field); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.box.on { background: var(--accent); border-color: var(--accent); color: var(--on); }
+.box svg { width: 11px; height: 11px; }
+.radio { width: 15px; height: 15px; border: 1px solid var(--control); border-radius: 50%; background: var(--field); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.radio.on::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--control); }
+.seg span { padding: 3px 12px; border-right: 1px solid var(--control); background: var(--raised); }
+.seg span:last-child { border-right: 0; }
+.seg span.on { background: var(--select); box-shadow: inset 0 -2px 0 var(--accent); }
+.swatch { width: 26px; height: 26px; border: 1px solid var(--control); padding: 3px; background: var(--field); display: inline-flex; }
+.swatch i { flex: 1; display: block; }
+.slider { position: relative; height: 18px; display: flex; align-items: center; }
+.slider .groove { height: 4px; width: 100%; background: var(--raised); border: 1px solid var(--control); }
+.slider .fill { position: absolute; left: 0; height: 4px; background: var(--accent); }
+.slider .handle { position: absolute; width: 12px; height: 16px; background: var(--raised); border: 1px solid var(--control); border-radius: 2px; }
+.prog { height: 6px; background: var(--raised); border: 1px solid var(--line); position: relative; }
+.prog i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+.tabs { display: flex; border-bottom: 1px solid var(--line); gap: 2px; }
+.tabs span { padding: 4px 10px 5px; color: var(--muted); }
+.tabs span.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.link { color: var(--accent); text-decoration: underline; }
+.h { font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.mono { font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace; font-size: 12px; }
+.hr { height: 1px; background: var(--line); align-self: stretch; }
+.lst { border: 1px solid var(--line); background: var(--field); }
+.lr { position: relative; display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 0 8px; }
+.lr.sel { background: var(--select); }
+.lr.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.tip { position: absolute; background: var(--field); color: var(--text); border: 1px solid var(--line); padding: 3px 7px; font-size: 12px; white-space: nowrap; box-shadow: 1px 1px 0 color-mix(in srgb, var(--shadow) 25%, transparent); z-index: 3; }
+.row { display: flex; align-items: center; gap: 8px; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.grid2 { display: grid; grid-template-columns: max-content 1fr; gap: 8px 10px; align-items: center; }
+.kind { font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
+
+/* docks */
+.dockarea { position: relative; display: flex; flex-direction: column; }
+.dock { border: 1px solid var(--line); background: var(--panel); position: relative; display: flex; flex-direction: column; }
+.dhead { height: 35px; background: var(--field); border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 6px 0 10px; font-size: 13px; position: relative; flex: none; }
+.dhead.tabs2 { background: var(--raised); padding: 0; }
+.dtab { height: 34px; display: flex; align-items: center; padding: 0 12px; border-right: 1px solid var(--line); gap: 6px; color: var(--muted); }
+.dtab.sel { background: var(--field); color: var(--text); }
+.dhead .menub { margin-left: auto; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.dhead.tabs2 .menub { margin-right: 6px; }
+.focusmark { position: absolute; right: 0; top: 0; width: 0; height: 0; border-top: 8px solid var(--accent); border-left: 8px solid transparent; }
+.dbody { padding: 4px; flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.strip { display: flex; align-items: center; gap: 2px; }
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; color: var(--muted); padding: 16px; }
+.ghost { opacity: .55; }
+
+/* manager */
+.mgr { display: grid; grid-template-columns: 240px 1fr; gap: 0; border: 1px solid var(--line); background: var(--field); min-height: 0; flex: 1; }
+.mgr .side { border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+.mgr .side .search { padding: 6px; border-bottom: 1px solid var(--line); }
+.prow { position: relative; display: grid; grid-template-columns: 32px 1fr auto; gap: 8px; align-items: center; padding: 7px 8px 7px 10px; }
+.prow.sel { background: var(--select); }
+.prow.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.picon { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--raised); border-radius: 4px; }
+.picon.big { width: 48px; height: 48px; }
+.pname { font-size: 13px; }
+.psub { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; }
+.pstate { font-size: 11px; color: var(--muted); }
+.det { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; background: var(--panel); }
+.dsec .dh { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.perm { display: grid; grid-template-columns: 18px 1fr; gap: 2px 6px; }
+.perm .why { grid-column: 2; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.err { border: 1px solid var(--danger); padding: 8px 10px; display: flex; gap: 8px; }
+.err .mono { color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 6px; border: 1px solid var(--line); background: var(--raised); }
+.chip.warn { border-color: var(--warning); color: var(--warning); background: transparent; }
+canvas, .cv { display: block; }
+body.single section.sec { display: none; }
+body.single section.sec.shown { display: block; max-width: none; width: max-content; }
+body.single header.top, body.single #questions { display: none; }
+@media (max-width: 700px) {
+  header.top { padding: 16px; }
+  section.sec { margin: 12px 16px; padding: 12px; }
+  .board { grid-template-columns: repeat(3, max-content); }
+  .rowlabel { display: none; }
+}
+.erow { position: relative; padding: 6px 8px 7px 20px; display: flex; flex-direction: column; gap: 1px; }
+.erow.sel { background: var(--select); }
+.erow.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.btn.small { height: 24px; padding: 0 8px; font-size: 12px; }
+.toast { width: 360px; display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--field); border: 1px solid var(--line); box-shadow: 2px 3px 0 color-mix(in srgb, var(--shadow) 25%, transparent); color: var(--text); }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>FA6: Recommended scripts in the Automation panel (design gate)</h1>
+  <p class="intro">FA6 <a href="https://github.com/altqx/hikari/issues/563">#563</a>. Each section draws one surface in Light, Dark and high contrast, with the app's theme roles and the icons from <code>src/ui/icons</code>. It adds no new icons. The six entries are arch1t3cht's scripts, which the card names, and each has a recorded run in the third-party corpus. Green dots mark what is new. Answer the questions and the numbered recommendations with “yes” or a change.</p>
+  <div class="controls"><label>High contrast <select id="hc"><option value="hcb">Black</option><option value="hcw">White</option></select></label>
+  <span class="legend"><span class="dot new"></span> new</span></div>
+</header>
+<div id="main"></div>
+<script>
+const ICONS = /*ICONS*/;
+/*SPEC*/
+const CHECK_SVG = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 5.2l2.3 2.3 4.7-5"/></svg>';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function icon(role, state, size) {
+  const svg = ICONS[role] || "";
+  const acc = state === "dis" ? "var(--dis)" : state === "hl" ? "var(--on)" : state === "danger" ? "var(--danger)" : state === "warning" ? "var(--warning)" : "var(--accent)";
+  const base = state === "dis" ? "var(--dis)" : state === "hl" ? "var(--on)" : state === "muted" ? "var(--muted)" : state === "danger" ? "var(--danger)" : state === "warning" ? "var(--warning)" : "var(--text)";
+  const body = svg.replace("<svg ", `<svg style="color:${base}" `).replace('<g id="accent">', `<g style="color:${acc}" stroke="currentColor">`);
+  return `<span class="ico${size ? " s" + size : ""}">${body}</span>`;
+}
+
+function mrow(it, depth = 0) {
+  if (it.sep) return '<div class="sep"></div>';
+  const state = it.dis ? "dis" : it.hl ? "hl" : "";
+  const chk = it.chk ? `<span class="mbox">${it.on ? CHECK_SVG : ""}</span>` : "";
+  const mark = it.mark && !depth ? '<span class="mark"></span>' : "";
+  let html = `<div class="mi ${state}">${mark}<span class="chk">${chk}</span><span class="ic">${it.icon ? icon(it.icon, state) : ""}</span>`
+    + `<span class="lbl">${esc(it.t)}</span>${it.suffix ? `<span class="suffix">${esc(it.suffix)}</span>` : ""}${it.k ? `<span class="keys">${esc(it.k)}</span>` : ""}<span class="arrow">${it.sub ? "›" : ""}</span></div>`;
+  if (it.hint) html += `<div class="mi hint">${esc(it.hint)}</div>`;
+  return html;
+}
+
+function menuCascade(items) {
+  let html = '<div style="display:flex;align-items:flex-start">';
+  const chain = [items];
+  let level = items;
+  while (true) {
+    const open = level.findIndex((it) => it.open && Array.isArray(it.sub));
+    if (open < 0) break;
+    level = level[open].sub;
+    chain.push(level);
+  }
+  let top = 0;
+  chain.forEach((list, depth) => {
+    html += `<div class="menu${depth ? " sub" : ""}" style="margin-top:${top}px">${list.map((it) => mrow(it, depth)).join("")}</div>`;
+    let offset = 2;
+    for (const it of list) { if (it.open && Array.isArray(it.sub)) break; offset += it.sep ? 7 : it.hint ? 40 : 24; }
+    top += offset - 2;
+  });
+  return html + "</div>";
+}
+
+function win(title, body, foot, w, h) {
+  return `<div class="win" style="width:${w}px;${h ? `height:${h}px;` : ""}"><div class="wtitle">${esc(title)}<span class="x">${icon("window-close", "")}</span></div>`
+    + `<div class="wbody">${body}</div><div class="wfoot">${foot}</div></div>`;
+}
+const btn = (t, cls = "", ic = "") => `<span class="btn ${cls}">${ic ? icon(ic, cls.includes("primary") ? "hl" : cls.includes("danger") ? "danger" : cls.includes("dis") ? "dis" : "") : ""}${esc(t)}</span>`;
+const box = (on) => `<span class="box${on ? " on" : ""}">${on ? CHECK_SVG : ""}</span>`;
+const check = (t, on) => `<span class="cb">${box(on)}${esc(t)}</span>`;
+const combo = (t, w) => `<span class="combo" style="${w ? `width:${w}px` : ""}">${esc(t)}${icon("chevron-down", "muted", 12)}</span>`;
+const fld = (t, w, cls = "", unit = "") => `<span class="fld ${cls}" style="width:${w}px">${t === "" ? "" : t.startsWith("~") ? `<span class="ph">${esc(t.slice(1))}</span>` : esc(t)}${unit ? `<span class="unit">${esc(unit)}</span>` : ""}</span>`;
+const ibtn = (role, cls = "") => `<span class="ibtn ${cls}">${icon(role, "")}</span>`;
+const ENTRIES = [
+  { group: "Typesetting", name: "Derive Perspective Track", line: "Makes a power-pin track from the lines’ perspective, for Perspective-Motion.", by: "arch1t3cht · MIT" },
+  { group: "Typesetting", name: "Focus Lines", line: "Draws moving focus lines, frame by frame.", by: "arch1t3cht · MIT" },
+  { group: "Typesetting", name: "Split Tag Sections", line: "Splits a line at its tags, one line per section.", by: "arch1t3cht · MIT" },
+  { group: "Editing", name: "Rewriting Tools", line: "Keeps earlier rewrites of a line and switches between them.", by: "arch1t3cht · MIT", installed: true },
+  { group: "QC", name: "Git Signs", line: "Marks the lines changed since a git commit.", by: "arch1t3cht · MIT · Needs Git", installed: true, sel: true },
+  { group: "Karaoke", name: "Fix KFX Boilerplate", line: "Fixes old KFX templates so Aegisub 3.5 runs them too.", by: "arch1t3cht · MIT" },
+];
+
+const chev = (folded) => `<span style="display:inline-flex;width:12px;height:12px;${folded ? "transform:rotate(-90deg)" : ""}"><svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg></span>`;
+const sectionHead = (title, count) => `<div class="row" style="gap:4px;height:28px;padding:6px 12px 0"><span style="color:var(--text)">${chev(false)}</span><span class="h">${esc(title)}</span><span class="muted" style="font-size:11px">${count}</span></div>`;
+const installedMark = () => `<span class="row small" style="gap:4px;color:var(--text)">${icon("run-applied", "", 14)}Installed</span>`;
+const spinner = () => icon("run-busy", "", 14);
+
+function entryRow(e, state, opts = {}) {
+  const st = state || (e.installed ? "installed" : "install");
+  let action = "";
+  if (st === "install") action = btn("Install", "small", "plugin-install");
+  else if (st === "installing") action = `<span class="row small muted" style="gap:4px">${spinner()}Installing…</span>`;
+  else if (st === "failed") action = btn("Try again", "small", "restart");
+  else action = `${installedMark()}${ibtn("panel-menu", opts.menuOpen ? "on" : "")}`;
+  const failed = st === "failed"
+    ? `<div class="small" style="color:var(--danger);padding:2px 0 0">${icon("notice-error", "danger", 12)} Couldn’t read the feed: no network connection. <span class="link">Details</span></div>` : "";
+  return `<div class="erow${opts.sel ? " sel" : ""}">`
+    + `<div class="row" style="gap:6px;min-height:26px"><span class="h" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.name)}</span>${action}</div>`
+    + `<div style="padding-right:8px">${esc(e.line)}</div>`
+    + `<div class="small muted">${esc(e.by)}</div>${failed}</div>`;
+}
+
+function toolbar(view) {
+  const seg = ["Scripts", "Runs 3", "Recommended"].map((t, i) => `<span${i === view ? ' class="on"' : ""}>${t}</span>`).join("");
+  return `<div class="row" style="gap:4px;padding:8px 8px 0"><span class="seg">${seg}</span><span style="flex:1"></span>${ibtn("automation")}${ibtn("refresh")}${ibtn("rerun-macro")}${ibtn("repeat-run")}</div>`;
+}
+
+const panelDock = (body, h) => `<div class="dock" style="width:400px;height:${h}px"><div class="dhead">Automation<span class="menub">${icon("panel-menu", "")}</span><span class="focusmark"></span></div><div style="display:flex;flex-direction:column;flex:1;min-height:0">${body}</div></div>`;
+
+const SCENES = {
+  panel() {
+    const groups = ["Typesetting", "Editing", "QC", "Karaoke"];
+    let list = "";
+    for (const g of groups) {
+      const members = ENTRIES.filter((e) => e.group === g);
+      list += sectionHead(g, members.length) + members.map((e) => entryRow(e, "", { sel: e.sel })).join("");
+    }
+    const body = toolbar(2)
+      + `<div style="padding:8px 8px 0">${fld("~Filter scripts", 382)}</div>`
+      + `<div class="small muted" style="padding:6px 10px 2px">Installs from each author’s feed through DependencyControl. A script runs its code when it loads.</div>`
+      + `<div style="flex:1;overflow:hidden">${list}</div>`;
+    return `<div style="position:relative">${panelDock(body, 760)}<span class="anno" style="left:-14px;top:52px"></span></div>`;
+  },
+  rowState(kind) {
+    const e = kind === "manual"
+      ? { name: "Focus Lines", line: "Draws moving focus lines, frame by frame.", by: "arch1t3cht · MIT" }
+      : { name: "Git Signs", line: "Marks the lines changed since a git commit.", by: "arch1t3cht · MIT · Needs Git" };
+    const state = { install: "install", installing: "installing", failed: "failed", menu: "installed", manual: "installed" }[kind];
+    const row = `<div style="width:400px;background:var(--panel);border:1px solid var(--line)">${entryRow(e, state, { sel: true, menuOpen: kind === "menu" || kind === "manual" })}</div>`;
+    if (kind !== "menu" && kind !== "manual") return row;
+    const items = [
+      { t: "Show in Scripts", icon: "automation" },
+      { t: "Open project page", icon: "open-link" },
+      { sep: true },
+      { t: "Uninstall…", icon: "delete", k: "Delete", dis: kind === "manual", hl: kind === "menu", hint: kind === "manual" ? "Not installed by DependencyControl. Remove the file from your autoload folder." : "" },
+    ];
+    return `<div class="row" style="align-items:flex-start;gap:0">${row}<div style="margin-top:28px;margin-left:-40px">${menuCascade(items)}</div></div>`;
+  },
+  toast() {
+    return `<div class="toast">${icon("notice-info", "", 16)}<div style="flex:1">Git Signs is installed. Its macros are in Automation › Git Signs.</div><span class="link">Show</span>${icon("window-close", "muted", 12)}</div>`;
+  },
+  scripts() {
+    const script = (name, sel, newMark) => `<div style="position:relative"><div class="row" style="gap:4px;padding:4px 8px 0 20px">${box(true)}<span class="h" style="flex:1">${esc(name)}</span>${ibtn("refresh")}${ibtn("panel-menu")}</div>${newMark ? '<span class="anno" style="left:-14px;top:10px"></span>' : ""}</div>`;
+    const macro = (name, sel) => `<div class="lr${sel ? " sel" : ""}" style="padding-left:40px;height:28px">${esc(name)}</div>`;
+    const body = toolbar(0)
+      + `<div style="padding:8px">${fld("~Filter macros", 382)}</div>`
+      + sectionHead("Autoload", 3)
+      + script("DependencyControl Toolbox") + macro("DependencyControl/Install Script")
+      + script("Git Signs", true, true) + macro("Git Signs/Show Diff", true) + macro("Git Signs/Configure") + macro("Git Signs/Clear Markers")
+      + script("Rewriting Tools") + macro("Rewriting Tools/Prepare Rewrite");
+    return panelDock(body, 430);
+  },
+  uninstall() {
+    const body = `<div class="row" style="gap:12px;align-items:flex-start">${icon("notice-warning", "warning", 32)}<div class="col" style="gap:6px"><div class="h">Uninstall Git Signs?</div><div class="muted">DependencyControl deletes its files from your user folder. The modules it brought stay, for other scripts.</div></div></div>`;
+    return win("Uninstall script", body, `<span class="grow"></span>${btn("Uninstall", "")}${btn("Cancel", "primary ring")}`, 440);
+  },
+  emptyScripts() {
+    const body = toolbar(0)
+      + `<div style="padding:8px">${fld("~Filter macros", 382)}</div>`
+      + `<div class="empty"><div>No scripts loaded</div>${btn("Load script…", "", "automation")}<span class="link" style="position:relative">Browse recommended scripts<span class="anno" style="left:-16px;top:5px"></span></span></div>`;
+    return panelDock(body, 330);
+  },
+};
+
+function cell(content) {
+  if (content.scene) return SCENES[content.scene](...(content.args || []));
+  return menuCascade(content.items);
+}
+
+function renderSection(s) {
+  const hc = document.getElementById("hc").value;
+  const themes = [["Light", "t-light"], ["Dark", "t-dark"], ["High contrast", "t-" + hc]];
+  let board = '<div class="board"><div></div>' + themes.map(([n]) => `<div class="colhead">${n}</div>`).join("");
+  for (const r of s.rows) {
+    board += `<div class="rowlabel">${esc(r.label)}</div>`;
+    for (const [, cls] of themes) board += `<div class="cell ${cls}">${cell(r)}</div>`;
+  }
+  board += "</div>";
+  const list = (arr) => "<ul>" + arr.map((x) => `<li>${esc(x)}</li>`).join("") + "</ul>";
+  const details = `<div class="details"><div><h3>How it works</h3>${list(s.notes)}</div>`
+    + `<div class="recs"><h3>For approval</h3><ol style="list-style:none;padding-left:0">${s.recs.map((r, i) => `<li><span class="num">${s.n}.${i + 1}</span>${esc(r)}</li>`).join("")}</ol></div></div>`;
+  return `<section class="sec" id="${s.id}"><h2>${s.n}. ${esc(s.title)}</h2><p class="meta">${esc(s.opens)}</p>${board}${details}</section>`;
+}
+
+function renderQuestions() {
+  return `<section class="sec" id="questions"><h2>Scope questions</h2><div class="details">` + QUESTIONS.map((q) =>
+    `<div><h3>${esc(q.id)}. ${esc(q.title)}</h3><p><b>Recommended:</b> ${esc(q.rec)}</p><p style="color:var(--page-muted)"><b>Alternative:</b> ${esc(q.alt)}</p></div>`).join("") + "</div></section>";
+}
+
+function render() {
+  document.getElementById("main").innerHTML = renderQuestions() + SECTIONS.map(renderSection).join("");
+  const only = new URLSearchParams(location.search).get("only");
+  if (only) { document.body.classList.add("single"); document.getElementById(only)?.classList.add("shown"); }
+}
+const hcParam = new URLSearchParams(location.search).get("hc");
+if (hcParam) document.getElementById("hc").value = hcParam;
+document.getElementById("hc").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
