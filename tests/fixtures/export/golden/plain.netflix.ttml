@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:tts="http://www.w3.org/ns/ttml#styling" xml:lang="en" ttp:profile="http://www.w3.org/ns/ttml/profile/imsc1/text" ttp:frameRate="24" ttp:frameRateMultiplier="1000 1001">
+  <head>
+    <styling>
+      <style xml:id="Thoughts" tts:fontStyle="italic"/>
+    </styling>
+    <layout>
+      <region xml:id="bottom" tts:origin="10% 50%" tts:extent="80% 40%" tts:displayAlign="after"/>
+    </layout>
+  </head>
+  <body>
+    <div>
+      <p begin="24f" end="84f" region="bottom" tts:textAlign="center">Good morning.</p>
+      <p begin="96f" end="149f" region="bottom" tts:textAlign="center">You're late <span tts:fontStyle="italic">again</span>.<br/>We start at eight.</p>
+      <p begin="168f" end="216f" region="bottom" style="Thoughts" tts:textAlign="center">Why does he always say that?</p>
+      <p begin="204f" end="240f" region="bottom" tts:textAlign="center">Hurry &amp; bring the &lt;notes&gt;!</p>
+      <p begin="264f" end="312f" region="bottom" tts:textAlign="center">Chapter one</p>
+      <p begin="360f" end="414f" region="bottom" tts:textAlign="center">Wrong Right, see you tomorrow.</p>
+    </div>
+  </body>
+</tt>
