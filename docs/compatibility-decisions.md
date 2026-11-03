@@ -34,6 +34,10 @@ A failing `include()` reports `Error loading Lua include "<name>":` or `Error ru
 
 A templater Apply's save is no longer byte for byte Aegisub 3.2.2's. Each generated Line and its karaoke Line get a `_hikari_kara_from` or `_hikari_kara_source` entry in `[Aegisub Extradata]`, so a reopened file still knows which karaoke Line each Line came from. There's no setting to turn this off. Aegisub 3.5.1 keeps the entries through its own load and save. Apart from them, the output is still 3.2.2's. [XD1 #659](https://github.com/altqx/hikari/issues/659), owner decision 2026-11-03.
 
+## FA12-wheel-resize
+
+Aegisub 3.5's wheel choice "Resizes the video box" is not offered, because HikariSub's video fills a docked panel whose size the layout sets. The plain wheel on the video therefore does nothing by default, where 3.5 resized the box. Ctrl+wheel zooms and Shift+wheel pans, as in 3.5, and Settings › Video › View › Zoom and pan sets what each wheel does: zoom, zoom reversed, pan, pan with X and Y swapped, or nothing. [FA12 #569](https://github.com/altqx/hikari/issues/569).
+
 ## FA19-mono-scope
 
 "Play in mono" (Settings › Audio › Playback, `audio.playMono`) covers HikariSub's own PortAudio output only: the audio panel and indexed editing playback. General video playback keeps the file's channels, because Qt Multimedia owns that sound and its PCM is not routed through PortAudio. Aegisub 3.5.1 has no mono option outside its Avisynth audio provider. [FA19 #576](https://github.com/altqx/hikari/issues/576), coordinator decision 2026-11-03.

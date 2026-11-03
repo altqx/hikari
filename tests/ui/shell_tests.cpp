@@ -15708,6 +15708,10 @@ private slots:
               {"video.ffms2Seeking", nullptr},
               {"video.gpuConversion", "Convert video colours on the GPU"},
               {"video.acceptedAudioStream", nullptr},
+              {"video.zoomModel", nullptr},
+              {"video.scrollAction", nullptr},
+              {"video.ctrlScrollAction", nullptr},
+              {"video.shiftScrollAction", nullptr},
               {"video.zoomPercent", nullptr},
               {"video.visualWarningsOff", "Turn off the visual tools warning"},
               {"video.dontAskForBadResolution", "Don’t warn about a resolution mismatch"},
@@ -23313,6 +23317,8 @@ private slots:
     void videoPointerIsTheToolsOnlyOverThePicture()
     {
         restartWithoutSound();
+        application->settingsStore()->set("video.zoomModel", 1);
+        const auto aegisub35 = qScopeGuard([this] { application->settingsStore()->set("video.zoomModel", 0); });
         QTemporaryDir folder;
         QVERIFY(folder.isValid());
         QVERIFY(v5Open(folder));
@@ -27682,8 +27688,8 @@ private slots:
             QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(o);
             return iface ? iface->text(QAccessible::Name) : QString();
         };
-        QCOMPARE(name(seek), QStringLiteral("Move video to selected line on:"));
-        QCOMPARE(name(play), QStringLiteral("On moving to another line play:"));
+        QCOMPARE(name(seek), QStringLiteral("Seek on"));
+        QCOMPARE(name(play), QStringLiteral("Then play"));
         QVERIFY(QMetaObject::invokeMethod(seek, "activated", Q_ARG(int, 5)));
         QCOMPARE(settings.integer("video.moveToActiveLine"), 3);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
@@ -31202,9 +31208,91 @@ private slots:
 
 private slots:
 
+    void videoPansAndZoomsAsAegisub35()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        auto &view = application->videoView();
+        auto &tools = application->visualTools();
+        auto &settings = *application->settingsStore();
+        auto *presenter = item("videoPresenter");
+        QCOMPARE(tools.videoView().zoomModel(), application::visual::ZoomModel::Aegisub35);
+        const QRectF whole = tools.videoRect();
+        QCOMPARE(tools.frameRect(), whole);
+        const QPoint c = videoPoint(whole.center());
+        auto *reset = named("resetVideoZoomMenuItem");
+        QVERIFY(reset);
+        QCOMPARE(reset->property("text").toString(), QStringLiteral("Reset zoom and pan"));
+        QCOMPARE(reset->property("iconRole").toString(), QStringLiteral("zoom-reset"));
+        QVERIFY(!reset->property("enabled").toBool());
+
+        wheelAt(c, 3);
+        QCOMPARE(view.zoomPercent(), 100);
+        wheelAt(c, 2, Qt::ControlModifier);
+        QCOMPARE(view.zoomPercent(), 125);
+        QVERIFY(!view.zoomMode());
+        QCOMPARE(tools.sourceRect(), QRectF(0, 0, 320, 240));
+        QCOMPARE(presenter->property("videoRect").toRectF(), tools.frameRect());
+        QVERIFY(std::abs(tools.frameRect().width() - whole.width() * 1.25) < 0.01);
+        QVERIFY(std::abs(tools.frameRect().center().x() - whole.center().x()) < 1);
+
+        QRectF before = tools.frameRect();
+        wheelAt(c, 1, Qt::ShiftModifier);
+        QCOMPARE(tools.frameRect().topLeft(), before.topLeft() + QPointF(0, 5));
+
+        before = tools.frameRect();
+        QTest::mousePress(window, Qt::MiddleButton, Qt::NoModifier, c);
+        QTest::mouseMove(window, c + QPoint(10, 5));
+        QTest::mouseMove(window, c + QPoint(30, 20));
+        QTest::mouseRelease(window, Qt::MiddleButton, Qt::NoModifier, c + QPoint(30, 20));
+        QCOMPARE(tools.frameRect().topLeft(), before.topLeft() + QPointF(30, 20));
+        QVERIFY(view.zoomed());
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(session);
+        const QString unpositioned = text(session->document().lines()[0]);
+        QVERIFY(unpositioned.startsWith(QStringLiteral("{\\pos(10,10)")));
+        before = tools.frameRect();
+        QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, c);
+        QCOMPARE(tools.frameRect(), before);
+        QTRY_VERIFY2(text(session->document().lines()[0]) != unpositioned, qPrintable(unpositioned));
+        QVERIFY(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\pos(")));
+
+        QVERIFY(reset->property("enabled").toBool());
+        triggerAction("resetVideoZoomMenuItem");
+        QVERIFY(!view.zoomed());
+        QCOMPARE(view.zoomPercent(), 100);
+        QCOMPARE(tools.frameRect(), whole);
+        QCOMPARE(presenter->property("videoRect").toRectF(), whole);
+
+        settings.set("video.ctrlScrollAction", 4);
+        wheelAt(c, 2, Qt::ControlModifier);
+        QCOMPARE(view.zoomPercent(), 100);
+        settings.set("video.scrollAction", 0);
+        wheelAt(c, 2);
+        QCOMPARE(view.zoomPercent(), 125);
+        settings.set("video.scrollAction", 4);
+        settings.set("video.ctrlScrollAction", 0);
+
+        settings.set("video.zoomModel", 1);
+        QCOMPARE(view.zoomPercent(), 100);
+        wheelAt(c, 5);
+        QVERIFY(view.zoomPercent() > 100);
+        QVERIFY(tools.sourceRect() != QRectF(0, 0, 320, 240));
+        QCOMPARE(tools.frameRect(), whole);
+        triggerAction("resetVideoZoomMenuItem");
+        QCOMPARE(tools.sourceRect(), QRectF(0, 0, 320, 240));
+        settings.set("video.zoomModel", 0);
+        QCOMPARE(tools.videoView().zoomModel(), application::visual::ZoomModel::Aegisub35);
+    }
+
     void videoViewZoomAspectAndVolume()
     {
         restartWithoutSound();
+        application->settingsStore()->set("video.zoomModel", 1);
+        const auto aegisub35 = qScopeGuard([this] { application->settingsStore()->set("video.zoomModel", 0); });
         QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
@@ -32204,6 +32292,8 @@ private slots:
     void videoFullscreenBarModesAndAutoHide()
     {
         restartWithoutSound();
+        application->settingsStore()->set("video.zoomModel", 1);
+        const auto aegisub35 = qScopeGuard([this] { application->settingsStore()->set("video.zoomModel", 0); });
         QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         keysNeverRepeat();

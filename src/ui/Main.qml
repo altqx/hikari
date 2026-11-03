@@ -2061,7 +2061,7 @@ ApplicationWindow {
                 objectName: "resetVideoZoomMenuItem"
                 action: Action {
                     id: resetVideoZoomAction
-                    text: qsTr("Turn off video zoom"); enabled: root.videoView.zoomed
+                    text: qsTr("Reset zoom and pan"); enabled: root.videoView.zoomed
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
                 }
             }
@@ -3242,12 +3242,13 @@ ApplicationWindow {
                     objectName: "videoStage"
                     parent: root.videoStageInFullscreen ? videoFullscreenWindow.stage : videoStageDock
                     anchors.fill: parent
+                    clip: true
                 VideoPresenter {
                     id: presenter
                     objectName: "videoPresenter"
                     visible: root.video.hasVideo
                     anchors.fill: parent
-                    videoRect: root.visualTools.videoRect
+                    videoRect: root.visualTools.frameRect
                     sourceRect: root.visualTools.sourceRect
                     Component.onCompleted: root.video.attachPresenter(presenter)
                 }

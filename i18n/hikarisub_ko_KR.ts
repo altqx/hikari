@@ -921,7 +921,7 @@ Output device: %2</source>
         <translation>필터</translation>
     </message>
     <message>
-        <source>Filter the run&apos;s log</source>
+        <source>Filter the run’s log</source>
         <translation>실행 로그 필터</translation>
     </message>
     <message>
@@ -961,7 +961,7 @@ Output device: %2</source>
         <translation>%1분 %2초</translation>
     </message>
     <message>
-        <source>Save the run&apos;s log</source>
+        <source>Save the run’s log</source>
         <translation>실행 로그 저장</translation>
     </message>
     <message>
@@ -985,7 +985,7 @@ Output device: %2</source>
         <translation>%1 설정</translation>
     </message>
     <message>
-        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
         <translation>스크립트 프로세스가 종료되었습니다. 다시 시작하려면 다시 불러오십시오. 매크로는 다시 실행되지 않습니다.</translation>
     </message>
     <message>
@@ -5691,8 +5691,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상 확대</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>영상 확대 해제</translation>
+        <source>Reset zoom and pan</source>
+        <translation>확대/축소 및 이동 초기화</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -6829,8 +6829,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상 확대</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>영상 확대 해제</translation>
+        <source>Reset zoom and pan</source>
+        <translation>확대/축소 및 이동 초기화</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -8785,6 +8785,62 @@ Failed to copy %2 fonts.</source>
         <translation>보기</translation>
     </message>
     <message>
+        <source>Zoom and pan</source>
+        <translation>확대/축소 및 이동</translation>
+    </message>
+    <message>
+        <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
+        <translation>가운데 버튼으로 끌면 화면이 이동합니다. 터치패드에서 두 손가락을 오므리거나 벌리면 포인터를 중심으로 확대/축소합니다.</translation>
+    </message>
+    <message>
+        <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
+        <translation>휠로 포인터를 중심으로 확대/축소합니다. 영상 확대는 끌 수 있는 틀을 표시합니다.</translation>
+    </message>
+    <message>
+        <source>As in Aegisub 3.5</source>
+        <translation>Aegisub 3.5 방식</translation>
+    </message>
+    <message>
+        <source>As in HikariSub legacy</source>
+        <translation>HikariSub 이전 버전 방식</translation>
+    </message>
+    <message>
+        <source>Wheel on the video</source>
+        <translation>영상에서 휠</translation>
+    </message>
+    <message>
+        <source>Ctrl+wheel on the video</source>
+        <translation>영상에서 Ctrl+휠</translation>
+    </message>
+    <message>
+        <source>Shift+wheel on the video</source>
+        <translation>영상에서 Shift+휠</translation>
+    </message>
+    <message>
+        <source>Zooms the video</source>
+        <translation>영상 확대/축소</translation>
+    </message>
+    <message>
+        <source>Zooms the video (reversed)</source>
+        <translation>영상 확대/축소 (반대 방향)</translation>
+    </message>
+    <message>
+        <source>Pans the video</source>
+        <translation>영상 이동</translation>
+    </message>
+    <message>
+        <source>Pans the video (X and Y swapped)</source>
+        <translation>영상 이동 (X와 Y 바꿈)</translation>
+    </message>
+    <message>
+        <source>Does nothing</source>
+        <translation>아무 작업도 하지 않음</translation>
+    </message>
+    <message>
+        <source>A visual tool that uses the wheel, or drags with the middle button, keeps it.</source>
+        <translation>휠을 쓰거나 가운데 버튼으로 끄는 시각 도구는 그 입력을 그대로 사용합니다.</translation>
+    </message>
+    <message>
         <source>Start zoom</source>
         <translation>시작 확대 비율</translation>
     </message>
@@ -9288,7 +9344,7 @@ Failed to copy %2 fonts.</source>
         <translation>텍스트 및 아이콘</translation>
     </message>
     <message>
-        <source>Border color</source>
+        <source>Border colour</source>
         <translation>테두리 색상</translation>
     </message>
     <message>
@@ -11549,7 +11605,7 @@ because it was edited.</source>
         <translation>무시</translation>
     </message>
     <message>
-        <source>Ignore All</source>
+        <source>Ignore all</source>
         <translation>모두 무시</translation>
     </message>
     <message>
@@ -12507,11 +12563,11 @@ Styles deleted:
         <translation>줄: %1</translation>
     </message>
     <message>
-        <source>the current line&apos;s style</source>
+        <source>the current line’s style</source>
         <translation>현재 줄의 스타일</translation>
     </message>
     <message>
-        <source>The current line&apos;s style</source>
+        <source>Current line’s style</source>
         <translation>현재 줄의 스타일</translation>
     </message>
     <message>
@@ -13080,7 +13136,7 @@ Styles deleted:
         <translation>마지막으로 성공한 실행의 결과</translation>
     </message>
     <message>
-        <source>This file&apos;s templates run Lua code with your rights. Preview them if you trust the file.</source>
+        <source>This file’s templates run Lua code with your rights. Preview them if you trust the file.</source>
         <translation>이 파일의 템플릿은 사용자 권한으로 Lua 코드를 실행합니다. 파일을 신뢰하는 경우에만 미리 보십시오.</translation>
     </message>
     <message>
@@ -13127,8 +13183,8 @@ Styles deleted:
         </translation>
     </message>
     <message>
-        <source>Changed since Apply</source>
-        <translation>적용 후 변경됨</translation>
+        <source>Changes not applied</source>
+        <translation>적용되지 않은 변경</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -13262,7 +13318,7 @@ Styles deleted:
         <translation>선택한 줄에 적용</translation>
     </message>
     <message>
-        <source>Only the selected lines are regenerated; the other lines&apos; output stays as it is.</source>
+        <source>Only the selected lines are regenerated; the other lines’ output stays as it is.</source>
         <translation>선택한 줄만 다시 생성하며, 다른 줄의 결과는 그대로 유지됩니다.</translation>
     </message>
     <message>
@@ -13282,7 +13338,7 @@ Styles deleted:
         <translation>줄별 코드</translation>
     </message>
     <message>
-        <source>The new line goes above the first karaoke line, with that line&apos;s Style.</source>
+        <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>새 줄은 첫 번째 노래방 줄 위에 그 줄의 스타일로 추가됩니다.</translation>
     </message>
     <message>
@@ -13322,7 +13378,7 @@ Styles deleted:
         <translation>반복</translation>
     </message>
     <message>
-        <source>Keep the line&apos;s override tags</source>
+        <source>Keep the line’s override tags</source>
         <translation>줄의 재정의 태그 유지</translation>
     </message>
     <message>
@@ -14793,10 +14849,6 @@ after the end time in milliseconds</source>
         <translation>편집 시</translation>
     </message>
     <message>
-        <source>Move video to selected line on:</source>
-        <translation>선택한 줄로 영상 이동 시점:</translation>
-    </message>
-    <message>
         <source>Then play</source>
         <translation>이어서 재생</translation>
     </message>
@@ -14815,10 +14867,6 @@ after the end time in milliseconds</source>
     <message>
         <source>Video and audio to the next line start time</source>
         <translation>다음 줄 시작 시간까지 영상과 소리</translation>
-    </message>
-    <message>
-        <source>On moving to another line play:</source>
-        <translation>줄 변경 시 재생 방법:</translation>
     </message>
     <message>
         <source>Full screen video</source>

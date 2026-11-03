@@ -605,7 +605,7 @@ Pane {
                     selectByMouse: true
                     rightPadding: matchCount.visible ? matchCount.implicitWidth + 16 : leftPadding
                     Layout.fillWidth: true
-                    Accessible.name: qsTr("Filter the run's log")
+                    Accessible.name: qsTr("Filter the run’s log")
                     onTextEdited: runLines.filterText = text
                     Keys.onEscapePressed: event => {
                         if (text.length === 0) {
@@ -722,13 +722,13 @@ Pane {
     Dialogs.FileDialog {
         id: saveDialog
         objectName: "runLogSaveDialog"
-        title: qsTr("Save the run's log")
+        title: qsTr("Save the run’s log")
         fileMode: Dialogs.FileDialog.SaveFile
         nameFilters: [qsTr("Log files (*.log *.txt)"), qsTr("All files (*)")]
         onAccepted: {
             const error = runLines.saveShown(selectedFile)
             if (error.length > 0 && root.notices)
-                root.notices.post("error", qsTr("Save the run's log"), error)
+                root.notices.post("error", qsTr("Save the run’s log"), error)
         }
     }
 
@@ -858,7 +858,7 @@ Pane {
                 Layout.leftMargin: 28
                 Layout.rightMargin: 12
                 text: scriptItem.state === "unavailable" && (scriptItem.script.error ?? "") === ""
-                      ? qsTr("The script's process ended. Reload to start it again; its macro is not rerun.")
+                      ? qsTr("The script’s process ended. Reload to start it again; its macro is not rerun.")
                       : root.shownError(scriptItem.script)
                 wrapMode: Text.Wrap
                 maximumLineCount: scriptItem.fullError ? 1000 : 2

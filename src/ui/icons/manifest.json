@@ -2606,7 +2606,7 @@
   {
    "role": "zoom-reset",
    "file": "zoom-reset.svg",
-   "label": "Turn off video zoom",
+   "label": "Reset zoom and pan",
    "accent": true,
    "mirror": false,
    "legacy": [],
