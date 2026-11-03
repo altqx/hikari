@@ -18,7 +18,7 @@ The Timing dock's Shift / Post processor switch becomes two panels, **Shift time
   - **Times:** Both · Start · End. There is no "Shift only the start times?" question any more.
   - **End times:** Leave as they are · Fix overlaps · Recalculate from text length.
   - **Move tag times too (\move, \t, \fad).**
-- [#573](https://github.com/altqx/hikari/issues/573) (Center times within frames) will add its checkbox under Move tag times too.
+  - **Centre times within frames** ([#573](https://github.com/altqx/hikari/issues/573)): after the shift and the end-time fix, each shifted time moves to the centisecond nearest the middle of its frame (`application::centeredTime`, the same as Video › Centre times within frames), so a later shift by time keeps it on whole frames. Times stays respected: Start centres only the starts. With Move tag times too, the tag times move with the line, so they stay on their frames. The postprocessor never centres. The switch is bit 64 of `shiftTimes.options`, and presets keep it as `centerTimes`.
 
 ## Timing postprocessor
 
@@ -43,6 +43,7 @@ Each says why and offers one command:
 
 - Frames without a video: "Frames need a video." Open video….
 - Fix overlaps or Recalculate from text length without a video: "Needs a video." Open video…. Without a video the core shifts and leaves the end times, and logs a warning.
+- Centre times within frames without a video: "Needs a video." Open video…. Without a video the core shifts without centring, and logs "Times were not centred within frames: no video is open".
 - Every postprocessor rule without a video: "The rules need a video." Open video….
 - Snap to keyframes with a video but no keyframes: "Needs keyframes." Open keyframes….
 - Close small gaps with both limits at 0 ms: "Both gap limits are 0 ms. Raise one to close gaps."

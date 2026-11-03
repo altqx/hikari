@@ -1,5 +1,6 @@
 #include "hikari/core/editor_syntax.h"
 
+#include <algorithm>
 #include <array>
 #include <optional>
 #include <string>
@@ -10,7 +11,7 @@ TextState textState(bool comment, std::u16string_view effect)
 {
     if (!comment)
         return TextState::Dialogue;
-    if (effect.starts_with(u"template"))
+    if (effect.starts_with(u"template") || effect.starts_with(u"mixin"))
         return TextState::Template;
     if (effect.starts_with(u"code"))
         return TextState::Code;
@@ -100,6 +101,7 @@ public:
                           : m_hasDrawing     ? Role::SplitAndDrawings
                                              : Role::Text;
         draw(m_part, role);
+        markDrawings();
         std::vector<Run> runs;
         for (std::size_t i = 0; i < m_roles.size(); ++i) {
             if (!m_roles[i])
@@ -113,6 +115,68 @@ public:
     }
 
 private:
+    static bool drawingCommand(char16_t c)
+    {
+        return c == u'm' || c == u'n' || c == u'l' || c == u'b' || c == u's' || c == u'p' || c == u'c';
+    }
+    static bool digit(char16_t c) { return c >= u'0' && c <= u'9'; }
+
+    void markCoordinates(std::size_t from, std::size_t to)
+    {
+        bool y = false;
+        for (std::size_t k = from; k < to;) {
+            const char16_t c = m_text[k];
+            if (drawingCommand(c)) {
+                y = false;
+                ++k;
+            } else if (digit(c) || c == u'-' || c == u'.') {
+                std::size_t end = k + 1;
+                while (end < to && (digit(m_text[end]) || m_text[end] == u'.'))
+                    ++end;
+                for (; k < end; ++k)
+                    m_roles[k] = y ? Role::DrawingY : Role::DrawingX;
+                y = !y;
+            } else {
+                ++k;
+            }
+        }
+    }
+
+    void markClip(std::size_t open, std::size_t blockEnd)
+    {
+        const std::size_t close = std::min(m_text.find(u')', open), blockEnd);
+        const std::u16string_view args = m_text.substr(open + 1, close - open - 1);
+        if (std::ranges::none_of(args, drawingCommand))
+            return;
+        const std::size_t scale = args.find(u',');
+        markCoordinates(scale == std::u16string_view::npos ? open + 1 : open + 2 + scale, close);
+    }
+
+    void markDrawings()
+    {
+        long level = 0;
+        for (std::size_t i = 0; i < m_text.size();) {
+            if (m_text[i] != u'{') {
+                const std::size_t next = std::min(m_text.find(u'{', i), m_text.size());
+                if (level > 0)
+                    markCoordinates(i, next);
+                i = next;
+                continue;
+            }
+            const std::size_t end = std::min(m_text.find(u'}', i), m_text.size());
+            for (std::size_t k = i; k < end; ++k) {
+                if (m_text[k] != u'\\')
+                    continue;
+                const std::u16string_view tag = m_text.substr(k + 1, end - k - 1);
+                if (tag.size() > 1 && tag[0] == u'p' && digit(tag[1]))
+                    level = atoi16(tag.substr(1));
+                else if (tag.starts_with(u"clip(") || tag.starts_with(u"iclip("))
+                    markClip(k + 1 + tag.find(u'('), end);
+            }
+            i = end + 1;
+        }
+    }
+
     void draw(const Part &part, Role role)
     {
         // A code Line's plain text is a template variable.

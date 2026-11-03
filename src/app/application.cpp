@@ -1621,6 +1621,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
         o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
         o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
+        o.softLineBreak = m_settings->boolean("editor.softLineBreak");
         return o;
     });
     v.editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),
@@ -3944,6 +3945,9 @@ QString Application::applyShift(const QString &tool)
     if (result->endCorrectionSkipped)
         m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.TimeShift", "Shift times"),
                       QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2"));
+    if (result->centeringSkipped)
+        m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.TimeShift", "Shift times"),
+                      QCoreApplication::translate("HikariSub.TimeShift", "Times were not centred within frames: no video is open"));
     return {};
 }
 

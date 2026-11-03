@@ -7,15 +7,10 @@ HikariSub.Fonts	Catalogues are saved automatically to fonts.toml in the “catal
 HikariSub.Fonts	fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.	spelling	the folder on disk is named catalogs
 HikariSub.GettingStarted	I said I’d be there by nine.	title-case	sample subtitle the Getting started preview renders; “I’d” is the pronoun
 HikariSub.MainWindow	Opens the Find panel	title-case	Find is the panel’s name
-HikariSub.MainWindow	Shift &times...	ellipsis	pending #596 Menus
 HikariSub.Reports	Nothing is sent until you press Send report	title-case	names the Send report button
 HikariSub.Search	, 	whitespace	list separator between quoted names; each language joins them its own way
-HikariSub.SelectLines	Search text:	colon	pending #596 Panels
 HikariSub.Styles	Create it from Default and edit it?	title-case	Default is the style’s name
 HikariSub.Styles	238 - Central European (Polish)	title-case	the ASS encoding’s name
-HikariSub.TimeShift	The starting time	leading-the	pending #596 Panels
-HikariSub.TimeShift	The choice of lines to move	leading-the	pending #596 Panels
-HikariSub.TimeShift	The choice of times to move	leading-the	pending #596 Panels
 HikariSub.Video	%1 event(s), %2 bitmap(s), %3 Mpx	title-case	Mpx is the megapixel unit symbol in the render-cost readout
 HikariSub.VisualTools	How each line's number changes the value	quotes	pending #596 Menus
 HikariSub.VisualTools	Add B-spline	title-case	pending #596 Menus
@@ -30,6 +25,7 @@ HikariSub.VisualTools	A double "m" was blocked because of a VSFilter bug	quotes	
 HikariSub.VisualTools	Show surrounding plane\nA rectangle of the text's plane: match it to one in the shot, then place the text inside it	quotes	pending #596 Menus
 HikariSub.VisualTools	Top-center	spelling	pending #596 Menus
 HikariSub.VisualTools	Video must be set at least one frame after the line's start time	quotes	pending #596 Menus
+HikariSub.Automation	%1 did not load. Its error is in Details.	title-case	names the toast’s Details button
 HikariSub.Automation	The script has no such macro	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Automation	The script or its macro changed	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Documents	Associated files:	colon	heading line of the association offer; the files are listed under it

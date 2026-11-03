@@ -47,16 +47,18 @@ struct Bit {
     const char *name;
     int bit;
 };
-// MUST KILL: kBits packs the six switches into the shiftTimes.options int
+// MUST KILL: kBits packs the seven switches into the shiftTimes.options int
 constexpr Bit kBits[] = {{"forward", 1},         {"fromStartTime", 2}, {"moveToVideoTime", 4},
-                         {"moveToAudioTime", 8}, {"byFrames", 16},     {"tagTimes", 32}};
-constexpr int kAllBits = 63;
+                         {"moveToAudioTime", 8}, {"byFrames", 16},     {"tagTimes", 32},
+                         {"centerTimes", 64}};
+constexpr int kAllBits = 127;
 
 const QStringList kShiftKeys{
     QStringLiteral("forward"),         QStringLiteral("byFrames"),        QStringLiteral("timeMs"),
     QStringLiteral("frames"),          QStringLiteral("fromStartTime"),   QStringLiteral("moveToVideoTime"),
     QStringLiteral("moveToAudioTime"), QStringLiteral("tagTimes"),        QStringLiteral("whichLines"),
-    QStringLiteral("whichTimes"),      QStringLiteral("correctEndTimes"), QStringLiteral("styles")};
+    QStringLiteral("whichTimes"),      QStringLiteral("correctEndTimes"), QStringLiteral("styles"),
+    QStringLiteral("centerTimes")};
 const QStringList kPostprocessorKeys{
     QStringLiteral("postprocessor"),       QStringLiteral("leadIn"),
     QStringLiteral("leadOut"),             QStringLiteral("thresholdStart"),
@@ -85,6 +87,7 @@ QVariantMap mapOf(const application::ShiftTimesSettings &s, int ppWhichLines, co
             {QStringLiteral("moveToVideoTime"), s.moveToVideoTime},
             {QStringLiteral("moveToAudioTime"), s.moveToAudioTime},
             {QStringLiteral("tagTimes"), s.tagTimes},
+            {QStringLiteral("centerTimes"), s.centerTimes},
             {QStringLiteral("whichLines"), s.whichLines},
             {QStringLiteral("whichTimes"), s.whichTimes},
             {QStringLiteral("correctEndTimes"), s.correctEndTimes},
@@ -172,6 +175,7 @@ application::ShiftTimesSettings ShiftTimesController::runSettings(Tool tool) con
     s.styles = u8(m_ppStyles);
     s.byFrames = false;
     s.tagTimes = false;
+    s.centerTimes = false;
     s.moveToVideoTime = false;
     s.moveToAudioTime = false;
     return s;
@@ -227,6 +231,7 @@ void ShiftTimesController::assign(const QVariantMap &map)
     b("moveToVideoTime", s.moveToVideoTime);
     b("moveToAudioTime", s.moveToAudioTime);
     b("tagTimes", s.tagTimes);
+    b("centerTimes", s.centerTimes);
     i("whichLines", s.whichLines);
     i("whichTimes", s.whichTimes);
     i("correctEndTimes", s.correctEndTimes);
