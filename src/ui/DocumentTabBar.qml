@@ -232,6 +232,8 @@ Item {
                         if (next)
                             next.forceActiveFocus(Qt.TabFocusReason)
                     }
+                    Keys.onShortcutOverride: event => event.accepted = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
+                                                                 && [Qt.Key_Left, Qt.Key_Right, Qt.Key_Space, Qt.Key_Menu].includes(event.key)
                     Keys.onLeftPressed: focusTab(Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1)
                     Keys.onRightPressed: focusTab(Qt.application.layoutDirection === Qt.RightToLeft ? -1 : 1)
                     MenuKey.onRequested: bar.openTabMenu(tab.index, tab, 0, tab.height)

@@ -1209,12 +1209,14 @@ Pane {
         }
         MenuSeparator {}
         ShellMenuItem {
+            objectName: "macroMenuSetShortcut"
             iconRole: "hotkeys"
             text: qsTr("Set shortcut…")
             enabled: root.hotkeys !== null
             onTriggered: root.record(macroMenu.row.legacyName)
         }
         ShellMenuItem {
+            objectName: "macroMenuClearShortcut"
             iconRole: "clear"
             text: qsTr("Clear shortcut")
             enabled: macroMenu.row !== null && root.keysOf(macroMenu.row.legacyName).length > 0

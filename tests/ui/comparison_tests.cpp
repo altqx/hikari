@@ -180,8 +180,8 @@ private slots:
     {
         QObject *menu = openTabMenu(-1);
         QVERIFY(menu);
-        QVERIFY(!menu->property("enabled").toBool());
-        QVERIFY(!entryOf(menu)->isEnabled());
+        QVERIFY(!menu->property("shown").toBool());
+        QCOMPARE(entryOf(menu)->height(), 0.0);
         closeTabMenu();
         openTabMenu(0);
         QVERIFY(!menu->property("enabled").toBool());
@@ -210,7 +210,7 @@ private slots:
         QVERIFY(!enabled("compareByTimes"));
         closeTabMenu();
         openTabMenu(-1);
-        QVERIFY(menu->property("enabled").toBool());
+        QVERIFY(!menu->property("shown").toBool());
     }
 
     void menuShowsTheSavedCriteria()

@@ -766,7 +766,7 @@ ApplicationWindow {
         MenuSeparator {
             id: panelOwnTailSeparator
             visible: panelOptionsMenu.ownTail.length > 0
-            height: visible ? implicitHeight : 0
+            height: panelOptionsMenu.ownTail.length > 0 ? implicitHeight : 0
         }
         Instantiator {
             model: panelOptionsMenu.ownTail

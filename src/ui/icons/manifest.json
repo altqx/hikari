@@ -3197,8 +3197,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "tab-close-others",
@@ -3209,8 +3208,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "tab-close-right",
@@ -3221,8 +3219,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "fonts-from-subtitles",

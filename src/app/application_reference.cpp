@@ -291,6 +291,8 @@ QVariantList Application::referenceOccurrences()
         const std::string *title = m_workspace.title(id);
         const auto lines = other->document().lines();
         for (const auto &occurrence : application::seekOccurrences(other->document(), clicked)) {
+            if (occurrence.length == 0)
+                continue;
             const bool checked = target == id && other->selection().active && occurrence.row < lines.size() &&
                                  lines[occurrence.row]->id == *other->selection().active;
             rows << QVariantMap{{QStringLiteral("text"), QCoreApplication::translate("HikariSub.Reference", "%1, line %2")

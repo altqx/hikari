@@ -257,7 +257,7 @@ DialogWindow {
             }
             MenuSeparator {
                 visible: window.controller.presets.length > 0
-                height: visible ? implicitHeight : 0
+                height: window.controller.presets.length > 0 ? implicitHeight : 0
             }
             ShellMenuItem {
                 objectName: "dialogSavePreset"

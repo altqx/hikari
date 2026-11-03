@@ -184,37 +184,52 @@ Grid panel options > Columns > Reset column widths
 Grid panel options > Ignore filtering in some actions [GRID_FILTER_IGNORE_IN_ACTIONS]
 Grid panel options > Fold generated lines
 Grid panel options > -
+Grid panel options > -
 Grid panel options > Move panel…
 Grid panel options > Move tab left
 Grid panel options > Move tab right
-Grid panel options > Undock
+Grid panel options > Float
+Grid panel options > -
 Grid panel options > Close
 Document tab
-Document tab > -
+Document tab > New tab
 Document tab > Save
 Document tab > Save all
-Document tab > Close all tabs
+Document tab > -
+Document tab > Show in folder
+Document tab > Show in folder >
+Document tab > Copy path
+Document tab > Copy path >
 Document tab > Subtitle comparison >
+Document tab > Subtitle comparison > Compare
+Document tab > Subtitle comparison > Turn off comparison
+Document tab > Subtitle comparison > -
 Document tab > Subtitle comparison > Compare by times
 Document tab > Subtitle comparison > Compare by visible lines
 Document tab > Subtitle comparison > Compare by selections
 Document tab > Subtitle comparison > Compare by styles
 Document tab > Subtitle comparison > Compare by selected styles >
-Document tab > Subtitle comparison > Compare
-Document tab > Subtitle comparison > Turn off comparison
+Document tab > Switch to >
+Document tab > -
+Document tab > Close
+Document tab > Close other tabs
+Document tab > Close tabs to the right
+Document tab > Close all tabs
 Styles row
 Styles row > Apply to the selected lines
-Styles row > -
-Styles row > Edit…
-Styles row > Duplicate
-Styles row > Delete
-Styles row > -
 Styles row > Select lines with this style
+Styles row > -
+Styles row > New style…
+Styles row > Edit style…
+Styles row > Duplicate
 Styles row > Copy to the catalogue…
 Styles row > -
-Styles row > Open in Style manager
+Styles row > Style manager
+Styles row > -
+Styles row > Delete
 Automation macro
 Automation macro > Run
+Automation macro > -
 Automation macro > Set shortcut…
 Automation macro > Clear shortcut
 Home row
@@ -225,6 +240,9 @@ Home row > -
 Home row > Remove from list
 Home row > Remove missing files
 Reference tray
+Reference tray > Copy
+Reference tray > -
+Reference tray > No other occurrences
 Tag button
 Tag button > Edit…
 Tag button > Move left
