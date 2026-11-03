@@ -34,11 +34,11 @@ public:
         plugin::Service service = plugin::Service::Notify;
         plugin::Level level = plugin::Level::Info; // Notify
         bool toast = false;                        // Notify
-        std::string name;                          // Call: operation; SetSetting: id; Subscribe: event
-        std::string json;                          // Call: params; SetSetting: value
+        std::string name;                          // Call, Ui: operation; SetSetting: id; Subscribe: event
+        std::string json;                          // Call, Ui: params; SetSetting: value
         std::string text;                          // Notify
     };
-    // Call answers the JSON envelope, SetSetting, Subscribe and Lock a refusal (empty: done), Notify and
+    // Call and Ui answer the JSON envelope, SetSetting, Subscribe and Lock a refusal (empty: done), Notify and
     // Unlock anything.
     using ServiceReply = std::function<void(std::string)>;
     using ServiceHandler = std::function<void(const ServiceRequest &, ServiceReply)>;
@@ -56,7 +56,9 @@ public:
     // failed to load or the queue is full.
     bool run(const std::string &command);
     // Dropped unless the plugin runs. A queued event of the same name takes the newer data.
-    bool push(const std::string &event, const std::string &json);
+    bool push(const std::string &event, const std::string &json) { return deliver(event, json, event); }
+    // As push, but a queued event takes the newer data only when both carry the same non-empty key.
+    bool deliver(const std::string &event, const std::string &json, const std::string &coalesceKey);
     void forceStop();
 
     State state() const { return m_state; }
@@ -83,6 +85,7 @@ private:
         enum class Kind { Load, Command, Event } kind = Kind::Command;
         std::string name;
         std::string json;
+        std::string key;
     };
     void startHelper();
     void next();

@@ -70,6 +70,15 @@ public:
         return {};
     }
     void unlock() override { sequence.push_back("unlock"); }
+    std::vector<std::pair<std::string, Json>> uiCalls;
+    std::map<std::string, std::function<std::expected<Json, Json>(const Json &)>> uiOperations;
+    std::expected<Json, Json> ui(const std::string &operation, const Json &params) override
+    {
+        uiCalls.emplace_back(operation, params);
+        if (const auto it = uiOperations.find(operation); it != uiOperations.end())
+            return it->second(params);
+        return Json::object();
+    }
     std::vector<Json> paramsOf(const std::string &operation) const
     {
         std::vector<Json> out;
@@ -578,4 +587,59 @@ TEST_F(PluginStateTest, SelectionsGoThroughTheApi)
     EXPECT_EQ(sets[0].dump(), Json::parse(R"({"selected": [101, 102]})")->dump());
     EXPECT_EQ(sets[1].dump(), Json::parse(R"({"active": 103, "document": 9, "selected": []})")->dump());
     EXPECT_EQ(sets[2].dump(), Json::parse(R"({"active": null, "selected": [101]})")->dump());
+}
+
+TEST_F(PluginStateTest, PanelsAndDialogsGoToHikariSubAsTheirOwnService)
+{
+    auto state = load(R"~(
+        hikari.panels.render('board', {kind = 'label', text = 'Hi'})
+        hikari.panels.show('board')
+        hikari.dialogs.show('join', {title = 'Join', body = {kind = 'empty', text = 'Nothing'}})
+        hikari.dialogs.close('join')
+    )~");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_TRUE(m_host.calls.empty());
+    ASSERT_EQ(m_host.uiCalls.size(), 4u);
+    EXPECT_EQ(m_host.uiCalls[0].first, "panels.render");
+    EXPECT_EQ(m_host.uiCalls[0].second.dump(), Json::parse(R"({"panel": "board", "tree": {"kind": "label", "text": "Hi"}})")->dump());
+    EXPECT_EQ(m_host.uiCalls[1].second.dump(), Json::parse(R"({"panel": "board"})")->dump());
+    EXPECT_EQ(m_host.uiCalls[2].first, "dialogs.show");
+    EXPECT_EQ(m_host.uiCalls[3].first, "dialogs.close");
+}
+
+TEST_F(PluginStateTest, AskReturnsTheButtonAndTheValues)
+{
+    m_host.uiOperations["dialogs.ask"] = [](const Json &) {
+        return *Json::parse(R"({"button": "join", "values": {"glue": "space"}})");
+    };
+    auto state = load(R"~(
+        local button, values = hikari.dialogs.ask('join', {title = 'Join'})
+        hikari.notify(button .. ' ' .. values.glue)
+    )~");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_EQ(m_host.texts(), std::vector<std::string>{"join space"});
+}
+
+TEST_F(PluginStateTest, ARefusedRenderRaisesAtTheCallersLine)
+{
+    m_host.uiOperations["panels.render"] = [](const Json &) -> std::expected<Json, Json> {
+        return std::unexpected(Json::object({{"code", "invalid_params"}, {"message", "tree: unknown kind \u201cfoo\u201d"}}));
+    };
+    auto state = load("\nhikari.panels.render('board', {kind = 'foo'})");
+    ASSERT_FALSE(state);
+    EXPECT_NE(state.error().find("main.lua:2: tree: unknown kind"), std::string::npos) << state.error();
+    auto unnamed = load("hikari.panels.show('')");
+    ASSERT_FALSE(unnamed);
+    EXPECT_NE(unnamed.error().find("main.lua:1: hikari.panels.show needs an id"), std::string::npos) << unnamed.error();
+}
+
+TEST_F(PluginStateTest, PanelAndDialogHandlersRunWithoutAnApiSubscription)
+{
+    auto state = load("hikari.panels.on('board', function(e) hikari.notify('panel ' .. e.widget) end) "
+                      "hikari.dialogs.on('join', function(e) hikari.notify('dialog ' .. e.button) end)");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_TRUE(m_host.subscriptions.empty());
+    ASSERT_TRUE((*state)->dispatch("panel:board", Json::object({{"kind", "click"}, {"widget", "refresh"}}), m_host));
+    ASSERT_TRUE((*state)->dispatch("dialog:join", Json::object({{"kind", "button"}, {"button", "cancel"}}), m_host));
+    EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"panel refresh", "dialog cancel"}));
 }

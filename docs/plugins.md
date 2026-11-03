@@ -29,7 +29,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `screenshots` | no | One to six `{path, caption}` objects. `path` is a package `.png` or `.jpg`; `caption`, at most 120 characters, shows under the image and is its alt text. |
 | `publicKey` | no | The author's minisign public key, the base64 line of its `.pub`. |
 | `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`). |
-| `contributes` | no | `commands` and `panels` (`id`, `title`), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
+| `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, and `area`: `left`, `right` or `bottom`, where the panel docks when first shown; `right` by default), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
 
 Beyond the schema, an id repeated within `files`, `commands`, `panels` or `settings` is refused, and so is a setting default outside its `options` or its `minimum`/`maximum`.
 

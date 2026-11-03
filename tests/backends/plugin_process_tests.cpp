@@ -176,6 +176,23 @@ TEST_F(PluginProcessTest, EventsWaitBehindACommandAndTheNewestOfANameWins)
     EXPECT_EQ(m_notices, std::vector<std::string>{"seen 3"});
 }
 
+TEST_F(PluginProcessTest, DeliveredEventsMergeOnlyUnderTheSameKey)
+{
+    m_slowReplyMs = 300;
+    auto p = process(plugin("keys", "hikari.events.on('document.changed', function(e) hikari.notify(e.n) end) "
+                                    "hikari.commands.register('wait', function() hikari.call('api.version') end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("wait"));
+    ASSERT_TRUE(waitFor([&] { return p->busy() && p->state() == PluginProcess::State::Ready; }));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "click a"})", {}));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "click b"})", {}));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "move 1"})", "move"));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "move 2"})", "move"));
+    ASSERT_TRUE(waitFor([&] { return m_notices.size() == 3; }));
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+    EXPECT_EQ(m_notices, (std::vector<std::string>{"click a", "click b", "move 2"}));
+}
+
 TEST_F(PluginProcessTest, ALoadErrorIsReportedAndStopsFurtherRuns)
 {
     auto p = process(plugin("broken", "this is not lua"));
