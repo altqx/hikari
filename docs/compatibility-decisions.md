@@ -36,4 +36,4 @@ A templater Apply's save is no longer byte for byte Aegisub 3.2.2's. Each genera
 
 ## FA12-wheel-resize
 
-Aegisub 3.5's wheel choice "Resizes the video box" is not offered, because HikariSub's video fills a docked panel whose size the layout sets. The plain wheel on the video therefore does nothing by default, where 3.5 resized the box. Ctrl+wheel zooms and Shift+wheel pans, as in 3.5, and Settings › View lets each wheel zoom, pan or do nothing. [FA12 #569](https://github.com/altqx/hikari/issues/569).
+Aegisub 3.5's wheel choice "Resizes the video box" is not offered, because HikariSub's video fills a docked panel whose size the layout sets. The plain wheel on the video therefore does nothing by default, where 3.5 resized the box. Ctrl+wheel zooms and Shift+wheel pans, as in 3.5, and Settings › Video › View › Zoom and pan sets what each wheel does: zoom, pan (either reversed or with X and Y swapped) or nothing. [FA12 #569](https://github.com/altqx/hikari/issues/569).
