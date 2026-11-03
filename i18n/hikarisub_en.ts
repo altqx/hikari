@@ -702,6 +702,79 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.TimeShift</name>
+    <message numerus="yes">
+        <source>Apply to %n line(s)</source>
+        <translation>
+            <numerusform>Apply to %n line</numerusform>
+            <numerusform>Apply to %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift %n line(s)</source>
+        <translation>
+            <numerusform>Shift %n line</numerusform>
+            <numerusform>Shift %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %n line(s)</source>
+        <translation>
+            <numerusform>Changes %n line</numerusform>
+            <numerusform>Changes %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %1 of %n line(s)</source>
+        <translation>
+            <numerusform>Changes %1 of %n line</numerusform>
+            <numerusform>Changes %1 of %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-in</source>
+        <translation>
+            <numerusform>%n lead-in</numerusform>
+            <numerusform>%n lead-in</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-out</source>
+        <translation>
+            <numerusform>%n lead-out</numerusform>
+            <numerusform>%n lead-out</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n gap(s) closed</source>
+        <translation>
+            <numerusform>%n gap closed</numerusform>
+            <numerusform>%n gaps closed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n snapped</source>
+        <translation>
+            <numerusform>%n snapped</numerusform>
+            <numerusform>%n snapped</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s)</source>
+        <translation>
+            <numerusform>%n frame</numerusform>
+            <numerusform>%n frames</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more line(s) change.</source>
+        <translation>
+            <numerusform>%n more line changes.</numerusform>
+            <numerusform>%n more lines change.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.VisualTools</name>
     <message numerus="yes">
         <source>Changes %n lines</source>

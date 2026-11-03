@@ -286,3 +286,118 @@ TEST(KeyframeFiles, LegacyFormats)
     EXPECT_TRUE(parseKeyframes("##map version 1\nI frame\nP frame\n").empty());
     EXPECT_TRUE(parseKeyframes("not a keyframes file\n1\n").empty());
 }
+
+namespace {
+
+std::vector<std::pair<int, int>> planned(const ShiftPlan &plan, std::vector<std::pair<int, int>> all)
+{
+    for (const auto &l : plan.lines)
+        all[l.row] = {l.start, l.end};
+    return all;
+}
+
+}
+
+TEST_F(Shift, PlanIsTheRunWithoutTheStep)
+{
+    select({1}, 1);
+    const auto tb = timebase();
+    ShiftContext c;
+    c.timebase = &tb;
+    std::vector<ShiftTimesSettings> cases(4);
+    cases[0].timeMs = 1500;
+    cases[1].timeMs = 100;
+    cases[1].whichLines = 2;
+    cases[1].whichTimes = 1;
+    cases[2].byFrames = true;
+    cases[2].frames = 2;
+    cases[2].forward = false;
+    cases[3].timeMs = 2500;
+    cases[3].correctEndTimes = 1;
+    for (const auto &s : cases) {
+        const auto before = times(session);
+        const auto steps = session.historySize();
+        const auto plan = planShift(session, s, c);
+        ASSERT_TRUE(plan);
+        EXPECT_EQ(times(session), before);
+        EXPECT_EQ(session.historySize(), steps);
+        for (const auto &l : plan->lines) {
+            EXPECT_EQ(l.startBefore, before[l.row].first);
+            EXPECT_EQ(l.endBefore, before[l.row].second);
+        }
+        ASSERT_TRUE(shiftTimes(session, s, c));
+        EXPECT_EQ(times(session), planned(*plan, before));
+    }
+}
+
+TEST_F(Shift, PlanCountsOnlyLinesThatMoveAndGivesTheAmount)
+{
+    select({0}, 0);
+    ShiftTimesSettings s;
+    s.whichLines = 1;
+    s.timeMs = 0;
+    auto plan = planShift(session, s, {});
+    ASSERT_TRUE(plan);
+    ASSERT_EQ(plan->lines.size(), 1u);
+    EXPECT_FALSE(plan->lines[0].changed());
+    const auto tb = timebase();
+    ShiftContext c;
+    c.timebase = &tb;
+    c.videoFrame = 75;
+    c.videoFrameStartMs = 2985;
+    c.videoFrameEndMs = 3025;
+    s.moveToVideoTime = true;
+    s.fromStartTime = true;
+    plan = planShift(session, s, c);
+    ASSERT_TRUE(plan);
+    EXPECT_EQ(plan->amount, 1980);
+    EXPECT_TRUE(plan->lines[0].changed());
+    s.byFrames = true;
+    plan = planShift(session, s, c);
+    ASSERT_TRUE(plan);
+    EXPECT_EQ(plan->amount, 50);
+    EXPECT_EQ(std::get<ShiftProblem>(planShift(EditSession{load(kLines)}, s, {}).error()), ShiftProblem::NoExactTimebase);
+}
+
+TEST_F(Shift, TheStepTakesThePanelsName)
+{
+    ShiftTimesSettings s;
+    s.timeMs = 10;
+    ASSERT_TRUE(shiftTimes(session, s, {}, {}, "Shift times"));
+    EXPECT_EQ(session.history().back().name, "Shift times");
+}
+
+TEST(Postprocessor, ThePlanNamesTheRuleThatMovedEachTime)
+{
+    const auto tb = timebase();
+    ShiftContext c;
+    c.timebase = &tb;
+    ShiftTimesSettings s;
+    s.postprocessor = 16 | 1 | 2;
+    s.leadIn = 200;
+    s.leadOut = 300;
+    auto session = twoLines("0:00:01.00,0:00:02.00", "0:00:03.00,0:00:04.00");
+    auto plan = planShift(session, s, c);
+    ASSERT_TRUE(plan);
+    EXPECT_EQ(plan->amount, 0);
+    EXPECT_EQ(plan->lines[0].rules, unsigned(LeadIn | LeadOut));
+
+    auto gaps = twoLines("0:00:01.00,0:00:02.00", "0:00:02.30,0:00:03.00");
+    s.postprocessor = 16 | 4;
+    s.thresholdStart = 200;
+    s.thresholdEnd = 300;
+    plan = planShift(gaps, s, c);
+    ASSERT_TRUE(plan);
+    EXPECT_EQ(plan->lines[0].rules, unsigned(GapClosed));
+    EXPECT_EQ(plan->lines[1].rules, unsigned(GapClosed));
+
+    EditSession one{load("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                         "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")};
+    c.keyframes = {25, 50};
+    s.postprocessor = 16 | 8;
+    s.keyframeBeforeStart = s.keyframeAfterStart = s.keyframeBeforeEnd = s.keyframeAfterEnd = 100;
+    plan = planShift(one, s, c);
+    ASSERT_TRUE(plan);
+    EXPECT_EQ(plan->lines[0].start, 980);
+    EXPECT_EQ(plan->lines[0].rules, unsigned(SnappedStart | SnappedEnd));
+}

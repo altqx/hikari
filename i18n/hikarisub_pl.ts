@@ -5706,6 +5706,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Sortuj zaznaczone linijki według tekstu bez tagów</translation>
     </message>
     <message>
+        <source>Shift times with the last values</source>
+        <translation>Przesuń czasy z ostatnimi wartościami</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor panel</source>
+        <translation>Panel postprocesora timingu</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor with the last values</source>
+        <translation>Postprocesor timingu z ostatnimi wartościami</translation>
+    </message>
+    <message>
         <source>Go to previous keyframe</source>
         <translation>Przejdź do poprzedniej klatki kluczowej</translation>
     </message>
@@ -5900,10 +5912,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Translation matching…</source>
         <translation>Dopasowywanie tłumaczenia…</translation>
-    </message>
-    <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>Przesuń czasy / uruchom postprocesor timingu</translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -6772,6 +6780,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Znajdź następny</translation>
     </message>
     <message>
+        <source>Shift &amp;times…</source>
+        <translation>Przesuń &amp;czasy…</translation>
+    </message>
+    <message>
+        <source>Moves line times by the lead-in, lead-out, gap and keyframe rules</source>
+        <translation>Przesuwa czasy linijek według reguł wstępu, zakończenia, przerw i klatek kluczowych</translation>
+    </message>
+    <message>
+        <source>Timing &amp;postprocessor…</source>
+        <translation>&amp;Postprocesor timingu…</translation>
+    </message>
+    <message>
         <source>Go to start time of line</source>
         <translation>Przejdź do czasu początkowego linijki</translation>
     </message>
@@ -6982,10 +7002,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Find previous</source>
         <translation>Znajdź poprzedni</translation>
-    </message>
-    <message>
-        <source>Shift &amp;times...</source>
-        <translation>Przesuń &amp;czasy...</translation>
     </message>
     <message>
         <source>Style &amp;manager</source>
@@ -7262,18 +7278,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Selects lines by expressions</source>
         <translation>Zaznacza linijki według wyrażeń</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrases and replaces them</source>
-        <translation type="vanished">Wyszukuje podane frazy tekstu i zamienia je</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrase</source>
-        <translation type="vanished">Wyszukuje podaną frazę tekstu</translation>
-    </message>
-    <message>
-        <source>Finds the next occurrence of the phrase in the text</source>
-        <translation type="vanished">Znajduje kolejne wystąpienie frazy w tekście</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -11032,10 +11036,6 @@ ponieważ została zmieniona.</translation>
         <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
-        <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation type="vanished">Pliki audio i wideo (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
-    </message>
-    <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>Plik klatek kluczowych (*.txt *.pass *.stats *.log)</translation>
     </message>
@@ -14010,20 +14010,104 @@ Usunięte style:
 <context>
     <name>HikariSub.TimeShift</name>
     <message>
-        <source>The starting time</source>
-        <translation>Czas początkowy</translation>
+        <source>Shift by</source>
+        <translation>Przesuń o</translation>
     </message>
     <message>
-        <source>End time</source>
-        <translation>Czas końcowy</translation>
+        <source>To video</source>
+        <translation>Do wideo</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>Style</translation>
+        <source>Moves the active line to the video’s frame</source>
+        <translation>Przesuwa aktywną linijkę do klatki wideo</translation>
+    </message>
+    <message>
+        <source>To audio mark</source>
+        <translation>Do znacznika audio</translation>
+    </message>
+    <message>
+        <source>Moves the active line to the audio mark</source>
+        <translation>Przesuwa aktywną linijkę do znacznika audio</translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation>Przesuń</translation>
+    </message>
+    <message>
+        <source>Move the active line’s</source>
+        <translation>Przesuń w aktywnej linijce</translation>
     </message>
     <message>
         <source>End</source>
         <translation>Koniec</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Początek</translation>
+    </message>
+    <message>
+        <source>To the video at %1</source>
+        <translation>Do wideo w %1</translation>
+    </message>
+    <message>
+        <source>To the audio mark at %1</source>
+        <translation>Do znacznika audio w %1</translation>
+    </message>
+    <message>
+        <source>Plus</source>
+        <translation>Plus</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>Jednostka</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>Klatki wymagają wideo.</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>Otwórz wideo…</translation>
+    </message>
+    <message>
+        <source>Direction</source>
+        <translation>Kierunek</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>Później</translation>
+    </message>
+    <message>
+        <source>Earlier</source>
+        <translation>Wcześniej</translation>
+    </message>
+    <message>
+        <source>Times</source>
+        <translation>Czasy</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>Oba</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>Czasy końcowe</translation>
+    </message>
+    <message>
+        <source>Leave as they are</source>
+        <translation>Pozostaw bez zmian</translation>
+    </message>
+    <message>
+        <source>Fix overlaps</source>
+        <translation>Popraw nakładanie</translation>
+    </message>
+    <message>
+        <source>Recalculate from text length</source>
+        <translation>Przelicz z długości tekstu</translation>
+    </message>
+    <message>
+        <source>Move tag times too (%1, %2, %3)</source>
+        <translation>Przesuń także czasy tagów (%1, %2, %3)</translation>
     </message>
     <message>
         <source>Shift times</source>
@@ -14038,60 +14122,132 @@ Usunięte style:
         <translation>Czas</translation>
     </message>
     <message>
-        <source>Shift subtitle times</source>
-        <translation>Przesuń czas napisów</translation>
-    </message>
-    <message>
         <source>Shift</source>
         <translation>Przesuń</translation>
     </message>
     <message>
-        <source>Forward</source>
-        <translation>W przód</translation>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n line(s)</source>
+        <translation>
+            <numerusform>Zastosuj do %n linijki</numerusform>
+            <numerusform>Zastosuj do %n linijek</numerusform>
+            <numerusform>Zastosuj do %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift %n line(s)</source>
+        <translation>
+            <numerusform>Przesuń %n linijkę</numerusform>
+            <numerusform>Przesuń %n linijki</numerusform>
+            <numerusform>Przesuń %n linijek</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Backward</source>
-        <translation>W tył</translation>
+        <source>No line changes</source>
+        <translation>Żadna linijka się nie zmienia</translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %n line(s)</source>
+        <translation>
+            <numerusform>Zmienia %n linijkę</numerusform>
+            <numerusform>Zmienia %n linijki</numerusform>
+            <numerusform>Zmienia %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %1 of %n line(s)</source>
+        <translation>
+            <numerusform>Zmienia %1 z %n linijki</numerusform>
+            <numerusform>Zmienia %1 z %n linijek</numerusform>
+            <numerusform>Zmienia %1 z %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-in</source>
+        <translation>
+            <numerusform>%n wstęp</numerusform>
+            <numerusform>%n wstępy</numerusform>
+            <numerusform>%n wstępów</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-out</source>
+        <translation>
+            <numerusform>%n zakończenie</numerusform>
+            <numerusform>%n zakończenia</numerusform>
+            <numerusform>%n zakończeń</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n gap(s) closed</source>
+        <translation>
+            <numerusform>%n przerwa zamknięta</numerusform>
+            <numerusform>%n przerwy zamknięte</numerusform>
+            <numerusform>%n przerw zamkniętych</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n snapped</source>
+        <translation>
+            <numerusform>%n przyklejony</numerusform>
+            <numerusform>%n przyklejone</numerusform>
+            <numerusform>%n przyklejonych</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Tag times</source>
-        <translation>Czasy tagów</translation>
+        <source>lead-in</source>
+        <translation>wstęp</translation>
     </message>
     <message>
-        <source>Move according to the following styles (separated by a comma)</source>
-        <translation>Przesuń według następujących stylów (oddzielonych przecinkiem)</translation>
+        <source>lead-out</source>
+        <translation>zakończenie</translation>
     </message>
     <message>
-        <source>End time correction</source>
-        <translation>Korekcja czasów końcowych</translation>
+        <source>gap closed</source>
+        <translation>przerwa zamknięta</translation>
     </message>
     <message>
-        <source>Corrects end times that are improper or overlap each other</source>
-        <translation>Koryguje czasy końcowe, które są niewłaściwe albo nachodzą na siebie</translation>
+        <source>snapped start</source>
+        <translation>przyklejony początek</translation>
     </message>
     <message>
-        <source>Shift by video / audio</source>
-        <translation>Przesuwanie wg wideo / audio</translation>
+        <source>snapped end</source>
+        <translation>przyklejony koniec</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s)</source>
+        <translation>
+            <numerusform>%n klatka</numerusform>
+            <numerusform>%n klatki</numerusform>
+            <numerusform>%n klatek</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Beginning</source>
-        <translation>Początek</translation>
+        <source>Preview</source>
+        <translation>Podgląd</translation>
     </message>
     <message>
-        <source>Moves the start time to the video/audio time</source>
-        <translation>Przesuwa czas początkowy do czasu wideo / audio</translation>
+        <source>no change</source>
+        <translation>bez zmian</translation>
     </message>
     <message>
-        <source>Move the marker to video time</source>
-        <translation>Przesuń znacznik do czasu wideo</translation>
+        <source>Line %1, start %2 to %3, end %4 to %5, %6</source>
+        <translation>Linijka %1, początek %2 na %3, koniec %4 na %5, %6</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more line(s) change.</source>
+        <translation>
+            <numerusform>Zmienia się jeszcze %n linijka.</numerusform>
+            <numerusform>Zmieniają się jeszcze %n linijki.</numerusform>
+            <numerusform>Zmienia się jeszcze %n linijek.</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Move the marker to audio time</source>
-        <translation>Przesuń znacznik do czasu audio</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>Które linijki</translation>
+        <source>One undo step: “%1”</source>
+        <translation>Jeden krok cofania: “%1”</translation>
     </message>
     <message>
         <source>Timing postprocessor</source>
@@ -14102,36 +14258,8 @@ Usunięte style:
         <translation>Wartość</translation>
     </message>
     <message>
-        <source>Time shifts</source>
-        <translation>Czas przesunięcia</translation>
-    </message>
-    <message>
-        <source>Shift times by time / frames</source>
-        <translation>Przesuwa napisy o ustawiony czas / klatki</translation>
-    </message>
-    <message>
-        <source>Delays subtitles</source>
-        <translation>Opóźnia napisy</translation>
-    </message>
-    <message>
-        <source>Speeds up subtitles</source>
-        <translation>Przyspiesza napisy</translation>
-    </message>
-    <message>
-        <source>Shifts %1, %2, and %3 tag times
-so their positions on video do not change
-(slows down time shifting)</source>
-        <translation>Przesuwa czasy tagów %1, %2 i %3 tak,
-by ich pozycja na wideo się nie zmieniła
-(spowalnia przesuwanie czasów)</translation>
-    </message>
-    <message>
         <source>Lines</source>
         <translation>Linijki</translation>
-    </message>
-    <message>
-        <source>The choice of lines to move</source>
-        <translation>Wybór linijek do przesunięcia</translation>
     </message>
     <message>
         <source>All lines</source>
@@ -14142,168 +14270,108 @@ by ich pozycja na wideo się nie zmieniła
         <translation>Zaznaczone linijki</translation>
     </message>
     <message>
-        <source>From the selected line</source>
-        <translation>Od zaznaczonej linijki</translation>
+        <source>Selected line and below</source>
+        <translation>Zaznaczona linijka i niżej</translation>
     </message>
     <message>
-        <source>All times higher and equal</source>
-        <translation>Czasy wyższe i równe</translation>
+        <source>Starting at or after the selection</source>
+        <translation>Zaczynające się w zaznaczeniu lub po nim</translation>
     </message>
     <message>
-        <source>All times lower and equal</source>
-        <translation>Czasy niższe i równe</translation>
+        <source>Starting at or before the selection</source>
+        <translation>Zaczynające się w zaznaczeniu lub przed nim</translation>
     </message>
     <message>
-        <source>According to the selected styles</source>
-        <translation>Według wybranych stylów</translation>
+        <source>Lines in chosen styles…</source>
+        <translation>Linijki w wybranych stylach…</translation>
     </message>
     <message>
-        <source>Select a style from the list</source>
-        <translation>Wybierz styl z listy</translation>
+        <source>Choose styles…</source>
+        <translation>Wybierz style…</translation>
     </message>
     <message>
-        <source>Styles, separated by commas</source>
-        <translation>Style oddzielone przecinkami</translation>
+        <source>%1 ms</source>
+        <translation>%1 ms</translation>
     </message>
     <message>
-        <source>Run timing postprocessor</source>
-        <translation>Uruchom postprocesor timingu</translation>
-    </message>
-    <message>
-        <source>A method of time shift</source>
-        <translation>Sposób przesuwania czasów</translation>
-    </message>
-    <message>
-        <source>The choice of times to move</source>
-        <translation>Wybór czasów do przesunięcia</translation>
-    </message>
-    <message>
-        <source>Both times</source>
-        <translation>Obydwa czasy</translation>
-    </message>
-    <message>
-        <source>Leave unchanged</source>
-        <translation>Pozostaw bez zmian</translation>
-    </message>
-    <message>
-        <source>Adjust overlapping times</source>
-        <translation>Skoryguj nachodzące czasy</translation>
-    </message>
-    <message>
-        <source>New times</source>
-        <translation>Nowe czasy</translation>
-    </message>
-    <message>
-        <source>Moves the end time to the video/audio time</source>
-        <translation>Przesuwa czas końcowy do czasu wideo / audio</translation>
-    </message>
-    <message>
-        <source>Lead-in/lead-out</source>
-        <translation>Wstęp i zakończenie</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the start time (good when using fad)</source>
-        <translation>Wstawia wstęp do czasu początkowego (dobre przy stosowaniu fad)</translation>
-    </message>
-    <message>
-        <source>Introduction time in milliseconds</source>
-        <translation>Czas wstępu w milisekundach</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the end time (good when using fad)</source>
-        <translation>Wstawia zakończenie do czasu końcowego (dobre przy stosowaniu fad)</translation>
-    </message>
-    <message>
-        <source>Enable</source>
-        <translation>Włącz</translation>
-    </message>
-    <message>
-        <source>Start time extension threshold</source>
-        <translation>Próg wydłużania czasu początkowego</translation>
-    </message>
-    <message>
-        <source>End time extension threshold</source>
-        <translation>Próg wydłużania czasu końcowego</translation>
-    </message>
-    <message>
-        <source>Before the start time</source>
-        <translation>Przed czasem początku</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the start time in milliseconds</source>
-        <translation>Maksymalne przesunięcie do klatki kluczowej 
-przed czasem początkowym w milisekundach</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the start time in milliseconds</source>
-        <translation>Maksymalne przesunięcie do klatki kluczowej 
-po czasie początkowym w milisekundach</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the end time in milliseconds</source>
-        <translation>Maksymalne przesunięcie do klatki kluczowej 
-przed czasem końcowym w milisekundach</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the end time in milliseconds</source>
-        <translation>Maksymalne przesunięcie do klatki kluczowej 
-po czasie końcowym w milisekundach</translation>
+        <source>The rules need a video.</source>
+        <translation>Reguły wymagają wideo.</translation>
     </message>
     <message>
         <source>Lead-in</source>
         <translation>Wstęp</translation>
     </message>
     <message>
+        <source>Start earlier by</source>
+        <translation>Zacznij wcześniej o</translation>
+    </message>
+    <message>
         <source>Lead-out</source>
         <translation>Zakończenie</translation>
     </message>
     <message>
-        <source>Lead-out time in milliseconds</source>
-        <translation>Czas zakończenia w milisekundach</translation>
+        <source>End later by</source>
+        <translation>Zakończ później o</translation>
     </message>
     <message>
-        <source>Set times as continuous</source>
-        <translation>Ustaw czasy jako ciągłe</translation>
+        <source>Close small gaps</source>
+        <translation>Zamykaj małe przerwy</translation>
     </message>
     <message>
-        <source>Start time threshold</source>
-        <translation>Próg czasu początku</translation>
+        <source>Start back to the previous end if within</source>
+        <translation>Cofnij początek do poprzedniego końca, jeśli w granicach</translation>
     </message>
     <message>
-        <source>End time threshold</source>
-        <translation>Próg czasu końca</translation>
+        <source>End on to the next start if within</source>
+        <translation>Przedłuż koniec do następnego początku, jeśli w granicach</translation>
+    </message>
+    <message>
+        <source>Both gap limits are 0 ms. Raise one to close gaps.</source>
+        <translation>Oba limity przerw wynoszą 0 ms. Zwiększ jeden, aby zamykać przerwy.</translation>
+    </message>
+    <message>
+        <source>before</source>
+        <translation>przed</translation>
+    </message>
+    <message>
+        <source>after</source>
+        <translation>po</translation>
+    </message>
+    <message>
+        <source>Start within</source>
+        <translation>Początek w granicach</translation>
+    </message>
+    <message>
+        <source>Start within, before</source>
+        <translation>Początek w granicach, przed</translation>
+    </message>
+    <message>
+        <source>Start within, after</source>
+        <translation>Początek w granicach, po</translation>
+    </message>
+    <message>
+        <source>End within</source>
+        <translation>Koniec w granicach</translation>
+    </message>
+    <message>
+        <source>End within, before</source>
+        <translation>Koniec w granicach, przed</translation>
+    </message>
+    <message>
+        <source>End within, after</source>
+        <translation>Koniec w granicach, po</translation>
+    </message>
+    <message>
+        <source>Needs keyframes.</source>
+        <translation>Wymaga klatek kluczowych.</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>Otwórz klatki kluczowe…</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
         <translation>Przyklejaj do klatek kluczowych</translation>
-    </message>
-    <message>
-        <source>After the start time</source>
-        <translation>Po czasie początku</translation>
-    </message>
-    <message>
-        <source>Before the end time</source>
-        <translation>Przed czasem końca</translation>
-    </message>
-    <message>
-        <source>After the end time</source>
-        <translation>Po czasie końca</translation>
-    </message>
-    <message>
-        <source>Profiles</source>
-        <translation>Profile</translation>
-    </message>
-    <message>
-        <source>Adding and editing profiles</source>
-        <translation>Dodawanie i edycja profilów</translation>
-    </message>
-    <message>
-        <source>Removing profiles</source>
-        <translation>Usuwanie profilów</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -14318,6 +14386,10 @@ po czasie końcowym w milisekundach</translation>
         <translation>Nie zaznaczono linijek do przesunięcia</translation>
     </message>
     <message>
+        <source>Needs a video.</source>
+        <translation>Wymaga wideo.</translation>
+    </message>
+    <message>
         <source>Video was not loaded using FFMS2</source>
         <translation>Wideo nie zostało wczytane przez FFMS2</translation>
     </message>
@@ -14326,32 +14398,84 @@ po czasie końcowym w milisekundach</translation>
         <translation>Nie udało się przesunąć czasów.</translation>
     </message>
     <message>
-        <source>Shift only the start times?</source>
-        <translation>Przesunąć tylko czasy początkowe?</translation>
+        <source>%1 (Timing default)</source>
+        <translation>%1 (domyślny dla Timingu)</translation>
     </message>
     <message>
-        <source>Shift only the end times?</source>
-        <translation>Przesunąć tylko czasy końcowe?</translation>
+        <source>Delete preset</source>
+        <translation>Usuń preset</translation>
     </message>
     <message>
-        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
-        <translation>Czasy końcowe pozostają bez zmian, więc linijka, której początek przesunięto za koniec, kończy się, zanim się zacznie.</translation>
+        <source>Delete the preset “%1”?</source>
+        <translation>Usunąć preset “%1”?</translation>
     </message>
     <message>
-        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
-        <translation>Czasy początkowe pozostają bez zmian, więc linijka, której koniec przesunięto przed początek, kończy się, zanim się zacznie.</translation>
-    </message>
-    <message>
-        <source>Shift start times</source>
-        <translation>Przesuń czasy początkowe</translation>
-    </message>
-    <message>
-        <source>Shift end times</source>
-        <translation>Przesuń czasy końcowe</translation>
+        <source>Delete</source>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation>Preset</translation>
+    </message>
+    <message>
+        <source>Preset: %1</source>
+        <translation>Preset: %1</translation>
+    </message>
+    <message>
+        <source>last used</source>
+        <translation>ostatnio użyte</translation>
+    </message>
+    <message>
+        <source>Preset commands</source>
+        <translation>Polecenia presetów</translation>
+    </message>
+    <message>
+        <source>Save as preset…</source>
+        <translation>Zapisz jako preset…</translation>
+    </message>
+    <message>
+        <source>Rename preset…</source>
+        <translation>Zmień nazwę presetu…</translation>
+    </message>
+    <message>
+        <source>Delete preset…</source>
+        <translation>Usuń preset…</translation>
+    </message>
+    <message>
+        <source>Use in the Timing layout</source>
+        <translation>Używaj w układzie Timing</translation>
+    </message>
+    <message>
+        <source>Rename preset</source>
+        <translation>Zmień nazwę presetu</translation>
+    </message>
+    <message>
+        <source>Save as preset</source>
+        <translation>Zapisz jako preset</translation>
+    </message>
+    <message>
+        <source>Preset name</source>
+        <translation>Nazwa presetu</translation>
+    </message>
+    <message>
+        <source>A preset named “%1” exists. Saving replaces it.</source>
+        <translation>Preset o nazwie “%1” już istnieje. Zapisanie go zastąpi.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Zamień</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Zmień nazwę</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
     </message>
 </context>
 <context>
