@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/app/hotkeys_controller.h"
 
 #include "docking.h"
 #include "workspace_layout.h"
@@ -294,6 +295,21 @@ private slots:
         QVERIFY(!text.contains("\"w1\""));
         QVERIFY(!application->workspaceLayout().savedLayoutNamed(QStringLiteral("From the second")).isEmpty());
         QVERIFY(application->workspaceLayout().applySavedLayout(QStringLiteral("From the second")));
+    }
+
+    void aHotkeyChangeAppliesToBothWindows()
+    {
+        QObject *firstClose = first()->findChild<QObject *>(QStringLiteral("closeMenuItem"));
+        QObject *secondClose = second->findChild<QObject *>(QStringLiteral("closeMenuItem"));
+        QVERIFY(firstClose && secondClose);
+        const QString before = firstClose->property("keysText").toString();
+        QCOMPARE(secondClose->property("keysText").toString(), before);
+        auto &hotkeys = application->hotkeys();
+        const QVariantMap close = hotkeys.gestureTarget(QStringLiteral("GLOBAL_CLOSE_PAGE"));
+        hotkeys.gestureMap(close.value(QStringLiteral("id")).toInt(), close.value(QStringLiteral("name")).toString(),
+                           QStringLiteral("Ctrl-Alt-K"), 0, QStringLiteral("cancel"));
+        QTRY_VERIFY(firstClose->property("keysText").toString() != before);
+        QCOMPARE(secondClose->property("keysText").toString(), firstClose->property("keysText").toString());
     }
 };
 
