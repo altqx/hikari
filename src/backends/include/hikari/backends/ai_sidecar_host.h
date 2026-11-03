@@ -27,6 +27,7 @@ inline constexpr int kSidecarProtocolVersion = 1;
 
 namespace rpc {
 inline constexpr int kHikariApiError = -32000;
+inline constexpr int kProviderFailed = -32010;
 inline constexpr int kBusy = -32003;
 inline constexpr int kMethodNotFound = -32601;
 inline constexpr int kInvalidParams = -32602;
