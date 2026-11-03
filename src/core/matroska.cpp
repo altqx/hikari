@@ -87,8 +87,9 @@ bool sameLine(const LineRecord &a, const LineRecord &b)
 {
     return a.comment == b.comment && a.layer.value == b.layer.value && a.start.value == b.start.value &&
            a.end.value == b.end.value && a.style == b.style && a.actor == b.actor && a.bookmark == b.bookmark &&
-           a.visibility == b.visibility && a.group == b.group && a.marginLeft.value == b.marginLeft.value &&
-           a.marginRight.value == b.marginRight.value && a.marginVertical.value == b.marginVertical.value &&
+           a.visibility == b.visibility && a.group == b.group && a.outerGroups == b.outerGroups &&
+           a.marginLeft.value == b.marginLeft.value && a.marginRight.value == b.marginRight.value &&
+           a.marginVertical.value == b.marginVertical.value &&
            a.effect == b.effect && a.text == b.text && a.translation == b.translation;
 }
 
@@ -103,6 +104,7 @@ void copyFields(LineRecord &to, const LineRecord &from)
     to.bookmark = from.bookmark;
     to.visibility = from.visibility;
     to.group = from.group;
+    to.outerGroups = from.outerGroups;
     to.marginLeft = from.marginLeft;
     to.marginRight = from.marginRight;
     to.marginVertical = from.marginVertical;

@@ -170,6 +170,7 @@ struct Dialogue {
     bool bookmark = false;
     LineVisibility visibility = LineVisibility::Visible;
     GroupMarker group = GroupMarker::None;
+    std::vector<GroupMarker> outerGroups;
     std::int64_t marginLeft = 0, marginRight = 0, marginVertical = 0;
     std::u8string effect;
     std::u8string text;
@@ -186,14 +187,6 @@ std::vector<u8sv> splitCommas(u8sv s)
         out.push_back(s.substr(from, p - from));
     out.push_back(s.substr(from));
     return out;
-}
-
-bool replaceMarker(std::u8string &actor, u8sv marker)
-{
-    bool found = false;
-    for (std::size_t p; (p = actor.find(marker)) != std::u8string::npos; found = true)
-        actor.erase(p, marker.size());
-    return found;
 }
 
 // MicroDVD and MPL2 time fields: [0-9-]+ / [0-9-]*.
@@ -272,24 +265,12 @@ Dialogue setRaw(u8sv ldial)
             setRawTime(d.start, tokens[1], Ass);
             setRawTime(d.end, tokens[2], Ass);
             d.style = str(tokens[3]);
-            std::u8string actor = str(tokens[4]);
-            if (!actor.empty() && actor.front() == u8'[') {
-                if (replaceMarker(actor, u8"[bookmark]")) {
-                    d.bookmark = true;
-                } else if (replaceMarker(actor, u8"[hidden]")) {
-                    d.visibility = LineVisibility::Hidden;
-                } else if (replaceMarker(actor, u8"[visible]")) {
-                    d.visibility = LineVisibility::VisibleBlock;
-                } else if (replaceMarker(actor, u8"[tree_closed]")) {
-                    d.group = GroupMarker::Closed;
-                    d.visibility = LineVisibility::Hidden;
-                } else if (replaceMarker(actor, u8"[tree_opened]")) {
-                    d.group = GroupMarker::Opened;
-                } else if (replaceMarker(actor, u8"[tree_description]")) {
-                    d.group = GroupMarker::Description;
-                }
-            }
-            d.actor = str(trim(actor));
+            LineRecord markers;
+            d.actor = legacy::actorMarkers(tokens[4], markers);
+            d.bookmark = markers.bookmark;
+            d.visibility = markers.visibility;
+            d.group = markers.group;
+            d.outerGroups = std::move(markers.outerGroups);
             d.marginLeft = legacy::atoi(tokens[5]);
             d.marginRight = legacy::atoi(tokens[6]);
             d.marginVertical = legacy::atoi(tokens[7]);
@@ -584,6 +565,7 @@ Dialogue fromLine(const LineRecord &line, SubtitleFormat format)
     d.bookmark = line.bookmark;
     d.visibility = line.visibility;
     d.group = line.group;
+    d.outerGroups = line.outerGroups;
     d.marginLeft = line.marginLeft.value;
     d.marginRight = line.marginRight.value;
     d.marginVertical = line.marginVertical.value;
@@ -609,6 +591,7 @@ LineRecord toLine(const Dialogue &d, SubtitleFormat format)
     line.bookmark = d.bookmark;
     line.visibility = d.visibility;
     line.group = d.group;
+    line.outerGroups = d.outerGroups;
     line.marginLeft.value = d.marginLeft;
     line.marginRight.value = d.marginRight;
     line.marginVertical.value = d.marginVertical;

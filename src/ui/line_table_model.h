@@ -77,6 +77,7 @@ public:
         FoldRole,
         FoldCountRole,
         HiddenBlockRowRole,
+        GroupDepthRole,
     };
     // MUST KILL: labelSlot returns a magic int (0 normal, 1 modified, 2 saved, 3 doubtful)
     static int labelSlot(int state);

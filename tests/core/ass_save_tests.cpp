@@ -123,6 +123,20 @@ TEST(AssSave, EditedLinesRewriteMarkersInLegacyOrder)
               "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,Dial: x\n");
 }
 
+TEST(AssSave, EditedNestedGroupLinesWriteStackedMarkers)
+{
+    constexpr std::string_view input = "[Events]\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,D,[tree_description],0,0,0,,S\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,D,[tree_opened][tree_description],0,0,0,,C\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened][tree_closed][bookmark]Ann,0,0,0,,c\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_opened],0,0,0,,s\n";
+    auto r = loadAss(bytesOf(input));
+    EXPECT_EQ(text(encodeAss(r.document)), input);
+    for (const auto *line : r.document.lines())
+        ASSERT_TRUE(r.document.setLineText(line->id, line->text));
+    EXPECT_EQ(text(encodeAss(r.document)), input);
+}
+
 TEST(AssLoad, TLModePairsReadAsOneLine)
 {
     const auto r = loadAss(fixture("tlmode-pairs.ass"));

@@ -5,6 +5,7 @@
 #include "hikari/application/grid_filtering.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/legacy_regex.h"
+#include "hikari/core/line_groups.h"
 #include "hikari/core/line_formats.h"
 #include "hikari/core/srt.h"
 #include "hikari/core/style.h"
@@ -368,8 +369,11 @@ void LineTableModel::setDocument(const core::Document &document,
     };
     m_headerBlock = markAfter(-1);
     for (std::size_t r = 0; r + 1 < n; ++r)
-        if (lines[r]->group == core::GroupMarker::Description)
-            m_rows[r].groupClosed = lines[r + 1]->group == core::GroupMarker::Closed;
+        if (lines[r]->group == core::GroupMarker::Description) {
+            const auto level = core::groupDepth(*lines[r]);
+            const auto next = core::groupMemberships(*lines[r + 1]);
+            m_rows[r].groupClosed = next.size() > level && next[level] == core::GroupMarker::Closed;
+        }
     for (std::size_t r = 0; r < n; ++r)
         m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
     m_runs.clear();
@@ -599,6 +603,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         }
     case GroupClosedRole:
         return r.groupClosed;
+    case GroupDepthRole:
+        return static_cast<int>(core::groupDepth(line));
     case CpsTooHighRole:
         return measuresOf(r).cpsTooHigh;
     case BadWrapsRole:
