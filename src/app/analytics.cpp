@@ -66,7 +66,6 @@ const std::map<QString, QString> kPanels{
     {QStringLiteral("Original"), QStringLiteral("original")},
     {QStringLiteral("Log"), QStringLiteral("log")},
     {QStringLiteral("Styles"), QStringLiteral("styles")},
-    {QStringLiteral("FixMinorErrors"), QStringLiteral("fix_minor_errors")},
     {QStringLiteral("Template"), QStringLiteral("template")},
     {QStringLiteral("Spellchecker"), QStringLiteral("spellchecker")},
 };

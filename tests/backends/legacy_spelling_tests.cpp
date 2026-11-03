@@ -1,5 +1,4 @@
 #include "hikari/backends/legacy_spelling.h"
-#include "hikari/application/misspell_replacer.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/srt.h"
@@ -223,15 +222,6 @@ TEST(LegacyCaseMapping, FollowsTheInterfaceLanguage)
     EXPECT_EQ(e.toUpper(u'ł'), u'Ł');
     EXPECT_EQ(e.toLower(u'Σ'), u'σ');
     EXPECT_TRUE(e.isUpper(u'Ł'));
-    const auto replacer = [](const core::legacy::CaseMapping &m) {
-        return application::ReplacerCase{m.isUpper, m.toLower, m.toUpper};
-    };
-    EXPECT_EQ(application::moveCase(u"Ąb", u"xy", 0, replacer(c)), u"xy");
-    EXPECT_EQ(application::moveCase(u"Ąb", u"xy", 0, replacer(e)), u"Xy");
-    EXPECT_EQ(application::moveCase(u"x", u"żółw", application::kReplacerUpperCase, replacer(c)), u"żółW");
-    EXPECT_EQ(application::moveCase(u"x", u"żółw", application::kReplacerUpperCase, replacer(e)), u"ŻÓŁW");
-    EXPECT_EQ(application::moveCase(u"Ab", u"źdź", 0, replacer(c)), u"źdź");
-    EXPECT_EQ(application::moveCase(u"Ab", u"źdź", 0, replacer(e)), u"Źdź");
 }
 
 // Compared in code points: the legacy Linux build's wxString counted UTF-32 units.

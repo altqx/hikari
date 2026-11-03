@@ -358,6 +358,8 @@ std::string_view retiredActionReason(int id)
             return "retired: layout presets and saved layouts replace the View arrangements (owner decision, 2026-10-18)";
     if (id == hotkeyIdOf("GLOBAL_EDITOR"))
         return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
+    if (id == hotkeyIdOf("GLOBAL_MISSPELLS_REPLACER"))
+        return "retired: Fix minor errors was removed (owner decision, 2026-11-02)";
     return {};
 }
 
@@ -1378,16 +1380,9 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
     };
     const std::string byteForByte =
         "carried over byte for byte (R6-dictionary-location; nothing in it is rewritten or run)";
-    if (const SourceFile *rules = findSource(sources, SourceKind::Rules)) {
-        if (destination.convertRules) {
-            const std::string converted = destination.convertRules(rules->bytes);
-            plan.files["rules.toml"] = converted;
-            fileRow(*rules, Disposition::Read, {}, "the Fix minor errors rules, read the legacy way");
-            collection(*rules, "rules.toml", converted, "converted to rules.toml (nothing in it is run)");
-        } else {
-            fileRow(*rules, Disposition::Unresolved, {}, "the Fix minor errors rules: no conversion to rules.toml here");
-        }
-    }
+    if (const SourceFile *rules = findSource(sources, SourceKind::Rules))
+        fileRow(*rules, Disposition::Retired, {},
+                "retired: Fix minor errors was removed, so its rules are not imported (owner decision, 2026-11-02)");
     if (const SourceFile *dic = findSource(sources, SourceKind::UserDictionary)) {
         plan.files["Dictionary/UserDic.udic"] = dic->bytes;
         fileRow(*dic, Disposition::Read, {}, "the personal dictionary");

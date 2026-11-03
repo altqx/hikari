@@ -502,7 +502,7 @@ DialogWindow {
                         iconRole: "import"
                         text: qsTr("Import my old settings")
                         badge: qsTr("Recommended")
-                        description: qsTr("Hotkeys, fonts, audio and video options and your dictionary words.")
+                        description: qsTr("Shortcuts, fonts, audio and video options and your dictionary words.")
                         checked: setup.importing
                         onClicked: setup.importing = true
                         Layout.preferredWidth: 300
@@ -677,7 +677,7 @@ DialogWindow {
                     SegmentedButtons {
                         objectName: "gettingStartedTitleBar"
                         choices: [{ text: qsTr("HikariSub’s"), name: "gettingStartedTitleBarOwn" },
-                                  { text: qsTr("The system’s"), name: "gettingStartedTitleBarSystem" }]
+                                  { text: qsTr("System"), name: "gettingStartedTitleBarSystem" }]
                         currentIndex: WindowFrame.usesSystemTitleBar(setup.values["appearance.titleBar"] ?? "auto") ? 1 : 0
                         // MUST KILL: picking the desktop's default stores "auto", not the choice
                         onActivated: index => setup.put("appearance.titleBar",
@@ -787,7 +787,7 @@ DialogWindow {
                 objectName: "gettingStartedEditing"
                 title: qsTr("Editing")
                 explanation: qsTr("Backups while you work, and the checks on the line editor’s text.")
-                later: qsTr("Later: Settings › General › Saving and Settings › Spelling & grammar")
+                later: qsTr("Later: Settings › General › Saving and Settings › Spelling and grammar")
                 GridLayout {
                     columns: 2
                     columnSpacing: 12

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "hikari/application/misspell_replacer.h"
 #include "hikari/application/settings_import.h"
 
 #include <QString>
@@ -18,12 +17,6 @@ class SettingsStore;
 }
 
 namespace hikari::app {
-
-// Bytes that do not decode give the shipped rules.
-application::ReplacerRules readLegacyRules(const QByteArray &bytes);
-// nullopt when the file cannot be read.
-std::optional<application::ReplacerRules> readLegacyRulesFile(const std::filesystem::path &path);
-std::string legacyRulesToml(const QByteArray &bytes);
 
 // An activated import takes effect at the next start (recover()); values edited since staging
 // are kept over it.

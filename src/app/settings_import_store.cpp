@@ -1,10 +1,7 @@
 #include "hikari/app/settings_import_store.h"
 
 #include "hikari/application/hotkeys.h"
-#include "hikari/backends/legacy_text_file.h"
-#include "list_files.h"
 #include "settings_store.h"
-#include "toml_file.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -259,8 +256,6 @@ QStringList keptAgainst(const si::Profile &base, const si::Profile &target, cons
 QStringList collectionPaths(const QString &folder, const QString &dictionaryFolder, const QStringList &bundled = {})
 {
     QStringList out;
-    if (QFileInfo::exists(folder + QStringLiteral("/rules.toml")))
-        out << QStringLiteral("rules.toml");
     const QDir dictionary(dictionaryFolder);
     for (const QString &name : dictionary.entryList(
              {QStringLiteral("UserDic.udic"), QStringLiteral("*.dic"), QStringLiteral("*.aff")}, QDir::Files, QDir::Name))
@@ -288,10 +283,9 @@ QStringList seededCopiesIn(const QString &folder, const QString &bundledFolder)
 
 bool trackedCollection(const QString &path)
 {
-    return path == QLatin1String("rules.toml") ||
-           (path.startsWith(QLatin1String("Dictionary/")) && !path.mid(11).contains(QLatin1Char('/')) &&
-            (path.endsWith(QLatin1String(".dic")) || path.endsWith(QLatin1String(".aff")) ||
-             path == QLatin1String("Dictionary/UserDic.udic")));
+    return path.startsWith(QLatin1String("Dictionary/")) && !path.mid(11).contains(QLatin1Char('/')) &&
+           (path.endsWith(QLatin1String(".dic")) || path.endsWith(QLatin1String(".aff")) ||
+            path == QLatin1String("Dictionary/UserDic.udic"));
 }
 
 QString profileHash(const si::Profile &p)
@@ -306,28 +300,6 @@ QString profileHash(const si::Profile &p)
     return QString::fromLatin1(h.result().toHex());
 }
 
-}
-
-application::ReplacerRules readLegacyRules(const QByteArray &bytes)
-{
-    QByteArray text;
-    if (const auto rules = backends::decodeLegacyText(bytes))
-        text = QString::fromStdU16String(*rules).toUtf8();
-    return application::readReplacerRules(
-        std::u8string_view(reinterpret_cast<const char8_t *>(text.constData()), static_cast<std::size_t>(text.size())));
-}
-
-std::optional<application::ReplacerRules> readLegacyRulesFile(const std::filesystem::path &path)
-{
-    const auto bytes = application::readOwnedFile(path);
-    if (!bytes)
-        return std::nullopt;
-    return readLegacyRules(QByteArray(bytes->data(), static_cast<qsizetype>(bytes->size())));
-}
-
-std::string legacyRulesToml(const QByteArray &bytes)
-{
-    return ui::listFileText(ui::kRulesFormat, ui::rulesToToml(readLegacyRules(bytes).rules));
 }
 
 SettingsImportStore::SettingsImportStore(ui::SettingsStore &settings, QString folder, QString profileName)
@@ -493,9 +465,6 @@ si::Destination SettingsImportStore::destinationOf(const si::Profile &profile) c
     d.pathExists = [](std::string_view path) { return QFileInfo::exists(qs(path)); };
     d.macroProblem = macroProblem;
     d.rendererInstalled = rendererInstalled;
-    d.convertRules = [](std::string_view legacy) {
-        return legacyRulesToml(QByteArray(legacy.data(), static_cast<qsizetype>(legacy.size())));
-    };
     return d;
 }
 
@@ -591,10 +560,9 @@ std::optional<SettingsImportStore::Generation> SettingsImportStore::readGenerati
         return std::nullopt;
     g.profile = std::move(*profile);
     g.base = std::move(*base);
-    // Generations staged before rules.toml existed hold Rules.txt.
     for (si::Profile *p : {&g.profile, &g.base})
-        if (auto rules = p->files.extract("Rules.txt"); !rules.empty() && !p->files.contains("rules.toml"))
-            p->files.emplace("rules.toml", legacyRulesToml(QByteArray::fromStdString(rules.mapped())));
+        for (const char *removed : {"Rules.txt", "rules.toml"})
+            p->files.erase(removed);
     if (o.value(QStringLiteral("receipt")).isObject())
         g.receipt = receiptFrom(o.value(QStringLiteral("receipt")).toObject());
     return g;

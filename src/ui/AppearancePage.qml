@@ -115,7 +115,7 @@ ScrollView {
             }
             Label {
                 id: followHint
-                text: qsTr("Light or Dark as the system's colour scheme sets it; high contrast stays as chosen")
+                text: qsTr("Light or Dark as the system’s colour scheme sets it; high contrast stays as chosen")
                 color: Theme.muted
                 wrapMode: Text.Wrap
                 Layout.leftMargin: 24
@@ -127,7 +127,7 @@ ScrollView {
 
         SettingsSection {
             objectName: "appearanceAccents"
-            title: qsTr("Accent color")
+            title: qsTr("Accent colour")
             visible: !Theme.highContrast
             Layout.leftMargin: 24
             Layout.rightMargin: 24
@@ -175,7 +175,7 @@ ScrollView {
 
         SettingsSection {
             objectName: "appearanceHighContrast"
-            title: qsTr("UI colors")
+            title: qsTr("UI colours")
             visible: Theme.highContrast
             Layout.leftMargin: 24
             Layout.rightMargin: 24

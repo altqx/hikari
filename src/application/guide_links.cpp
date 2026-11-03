@@ -21,7 +21,6 @@ constexpr std::array kLinks{
     GuideLink{Panel, "Original", "/en/docs/translation/translation-mode"},
     GuideLink{Panel, "Log", "/en/docs/help/troubleshooting"},
     GuideLink{Panel, "Styles", "/en/docs/basics/styles"},
-    GuideLink{Panel, "FixMinorErrors", "/en/docs/checking/fix-minor-errors"},
     GuideLink{Panel, "Spellchecker", "/en/docs/checking/spelling"},
     GuideLink{Panel, "Spellchecker.grammar", "/en/docs/checking/grammar"},
     GuideLink{Panel, "Template", "/en/docs/karaoke/template-editor"},

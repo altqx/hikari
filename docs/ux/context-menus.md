@@ -8,7 +8,7 @@ How to read it:
 - `|` marks a separator. `▸` marks a submenu. `[x]` marks a check item, `(•)` a radio-style check item.
 - `{dyn}` marks a list built from data (recent files, streams, suggestions and so on). It counts as one item.
 - Icon roles are in parentheses. IC1's rule (`docs/ux/menu-icon-gaps.md`, "Items left without an icon") exempts check items and entries named by their data, so **no-icon** is only raised for other items.
-- Keys: "bound" means the item shows the key bound in Settings › Hotkeys. "Hard-coded" means the key is written into the translatable string.
+- Keys: "bound" means the item shows the key bound in Settings › Shortcuts. "Hard-coded" means the key is written into the translatable string.
 - Counting: an item is an action, a check item or a submenu entry. Separators, headings, sliders and the grammar message row are not counted. Submenu contents count toward the total.
 
 Finding tags: **legacy-name**, **flat-list**, **destructive-next-to-common**, **inconsistent-name**, **wrong-target**, **toggle-hides-state**, **missing-expected**, **no-icon**.
@@ -234,7 +234,7 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Automation | Load script… (automation), Refresh autoload scripts (refresh), Shortcuts in Settings… (hotkeys), Clear runs (remove) |
 | Spellchecker | [x] Ignore comments, [x] Ignore words in capitals, Words added to dictionary… (dictionary) |
 | Grid | [x] Fold generated lines |
-| Audio, Line editor, Original text, Search, Log, Styles, Fix minor errors, Shift times, Template editor | none |
+| Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
 
 Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), Close (tab-close), or "Close reference" for the Reference panel.
 
@@ -446,7 +446,7 @@ These are menus behind toolbar or field buttons, not right-click or ⋯ menus:
 
 - The colour buttons in the Line editor strip (`LineEditorStrip.qml:131-135`) and the Style manager's colour fields (`StyleManager.qml:981-984`) open the colour picker in dropper mode. Nothing on screen says so. Settings can swap the clicks (`Main.qml:6686`).
 - In the Audio display, a right-click sets the line's end time (`audio_display_item.cpp:423`). Aegisub does the same (`audio_display.cpp:1105-1110`).
-- Log, Search, Spellchecker, Fix minor errors, Shift times, Template editor list, Style manager list and Automation script header: no right-click handler (there is no `RightButton` in `LogPanel.qml`, `SearchTool.qml`, `SpellCheckerPanel.qml`, `FixMinorErrors.qml`, `ShiftTimesPanel.qml` or `TemplateEditor.qml`). **missing-expected**: Copy, Go to line or Replace on result rows.
+- Log, Search, Spellchecker, Shift times, Template editor list, Style manager list and Automation script header: no right-click handler (there is no `RightButton` in `LogPanel.qml`, `SearchTool.qml`, `SpellCheckerPanel.qml`, `FixMinorErrors.qml`, `ShiftTimesPanel.qml` or `TemplateEditor.qml`). **missing-expected**: Copy, Go to line or Replace on result rows.
 - Log entry text is a read-only `TextEdit` (`LogPanel.qml:196-199`). It is not a Control, so it gets no Fusion menu either. You can select text but can't copy it by mouse; the panel has a Copy button for all shown entries (`LogPanel.qml:109-112`).
 
 ---
@@ -576,7 +576,7 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 [#579](https://github.com/altqx/hikari/issues/579) built the pieces every redesigned menu uses:
 
 - **Menu key and Shift+F10.** An application event filter (`src/ui/menu_key.cpp`) turns either key, and Windows' keyboard context-menu event, into a request to the focused item. The nearest `MenuKey.onRequested` at or above the focused item opens its menu at a point in the focused item: below the text cursor in a text field, below the active row in the Grid and the reference tray, below the current row in Home, Styles and the Automation panel, at the video cursor in the video panel and in full screen. Without a `MenuKey` owner the request goes to Qt Quick's own `ContextMenu` at that point, which is how text fields and the Line editor get it. Document tabs, the title bar and the full-screen speaker never take the keyboard focus, so they have no keyboard request; CX4 gave tag buttons and the tag list one.
-- **Key column.** A row with a `command` shows the key bound to it now, and follows Settings › Hotkeys; `standardKey` shows the platform's key, `shortcutText` a fixed one. `detailText` is a value that is not a key (the grammar group, a chapter's time, the tap speed), drawn dimmed and in italics. No label holds a tab or a key.
+- **Key column.** A row with a `command` shows the key bound to it now, and follows Settings › Shortcuts; `standardKey` shows the platform's key, `shortcutText` a fixed one. `detailText` is a value that is not a key (the grammar group, a chapter's time, the tap speed), drawn dimmed and in italics. No label holds a tab or a key.
 - **Text menu.** `src/ui/TextMenu.qml` and `TextMenuItem.qml`, made once per field by the style's `TextMenus` singleton, replace Qt's menu in every TextField and TextArea. Each row sends its own key to the field, so a row does what its key does there: Undo in the Line editor is the document's, Paste in a time field goes through the time mask. Editable combo boxes keep Qt's menu.
 - **Order.** `tests/ui/context_menus.txt` lists every right-click menu, Line editor text first; `contextMenusAreTheListedOnes` fails on any change, the way `menu_bar.txt` pins the menu bar.
 - **The listing is a ledger.** A PR that adds, removes, renames or moves a right-click menu row, or gives one a command, updates `context_menus.txt` in the same PR. Each line is a menu, a row (`Menu > Row [COMMAND]`), a submenu (`Menu > Sub >`) or a separator (`Menu > -`). It lists conditional rows too, even when they are hidden, and leaves out rows built from data (recent files, streams, chapters, macros). Regenerate it rather than edit it by hand: run `hikari_ui_shell_tests contextMenusAreTheListedOnes`, then copy the `context_menus.actual.txt` the failing test writes in its working directory over `tests/ui/context_menus.txt`, and review the diff.
@@ -651,7 +651,7 @@ Changes:
 
 - 29 top rows in one block become 16 rows in four groups: the clicked lines, structure, view and selection, then deletes alone at the end.
 - Cut · Copy · Paste use the order every text menu uses (the decision listed Copy · Cut · Paste; see 1.2).
-- Every row shows its real binding from Settings › Hotkeys; Copy, Cut, Paste and Delete lines no longer carry key text in their labels.
+- Every row shows its real binding from Settings › Shortcuts; Copy, Cut, Paste and Delete lines no longer carry key text in their labels.
 - Duplicate and Delete name the selection's count (“Duplicate line” and “Delete line” for one).
 - Hide selected lines (GRID_HIDE_SELECTED) leaves the menu (round 2).
 

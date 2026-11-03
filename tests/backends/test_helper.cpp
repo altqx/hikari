@@ -1,5 +1,6 @@
 #include "hikari/backends/helper_endpoint.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -14,6 +15,11 @@ int main(int argc, char **argv)
     for (int i = 1; i + 1 < argc; ++i)
         if (std::string(argv[i]) == "--version")
             version = static_cast<std::uint32_t>(std::stoul(argv[i + 1]));
+    const bool events = std::find(argv + 1, argv + argc, std::string("--events")) != argv + argc;
+    const RequestHandler onEvent = [](const Frame &event, Responder &r) {
+        r.reply(bytesOf("event:" + textOf(event.payload)));
+        r.terminal(Outcome::Ok);
+    };
     return runHelper("test-helper", version, [](const Frame &request, Responder &r) {
         const std::string command = textOf(request.payload);
         if (command.starts_with("echo:")) {
@@ -48,5 +54,5 @@ int main(int argc, char **argv)
         } else {
             r.terminal(Outcome::Unsupported);
         }
-    });
+    }, events ? onEvent : RequestHandler{});
 }

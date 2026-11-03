@@ -15,12 +15,14 @@
 namespace hikari::application {
 
 struct FindReplaceSettings {
-    enum class Tab { Find, Replace, FindInFiles };
+    enum class Scope { Document, OpenDocuments, Folder };
     enum class Field { Text, Style, Actor, Effect };
-    // None: no radio button checked; searches like FromSelection.
-    enum class Lines { All, Selected, FromSelection, None };
+    enum class Lines { All, Selected, FromSelection };
+    enum class InText { All, OutsideTags, InsideTags };
+    enum class MatchAt { Anywhere, Start, End };
 
-    Tab tab = Tab::Find;
+    Scope scope = Scope::Document;
+    bool replaceShown = false;
     std::u8string find;
     std::u8string replace;
     std::u8string styles;  // style names separated by commas
@@ -30,24 +32,17 @@ struct FindReplaceSettings {
     Lines lines = Lines::All;
     bool matchCase = false;
     bool regex = false;
-    bool startOfText = false;
-    bool endOfText = false;
+    MatchAt matchAt = MatchAt::Anywhere;
+    InText inText = InText::All;
     bool includeComments = false;
-    bool skipTags = false;
-    bool skipText = false;
     bool subfolders = false;
     bool hiddenFolders = false;
 };
 
-// Of several field or Lines bits the last wins; none gives Text and All.
-// MUST KILL: the hidden-folders bit sets subfolders and hidden folders stays off
+// Of several field, Lines or Match at bits the last wins; none gives Text,
+// All and Anywhere. Outside tags wins over Inside tags.
 FindReplaceSettings findReplaceFromOptions(int options);
-// Each radio button takes its bit, so without a Lines bit none is checked;
-// the folder boxes keep `current`'s values.
-FindReplaceSettings findReplaceSetValues(int options, const FindReplaceSettings &current);
-// The FindInFiles tab keeps the bits from 512 up of `previous`; the other
-// tabs start from nothing.
-int findReplaceOptions(const FindReplaceSettings &settings, int previous);
+int findReplaceOptions(const FindReplaceSettings &settings);
 
 // Must map one UTF-16 unit to one so positions stay put.
 using CaseFold = std::function<std::u16string(std::u16string_view)>;
@@ -69,7 +64,6 @@ struct FindResult {
 struct FindQuestion {
     enum class Kind {
         Message,      // information; nothing waits for it
-        Wrap,         // "Reached end. Search from the beginning?" Yes/No
         Styles,       // some styles missing: Ok (remove nonexistent), Yes (remove styles), No (ignore), Cancel
         NoStyles,     // no style exists: Yes (remove styles), Cancel
         ConfirmFiles, // replace in files: Yes/No
@@ -96,7 +90,7 @@ struct FindLog {
         MatchError,        // "Failed to find match for regular expression: %s" (message)
         LineEdited,        // "Line %i cannot be replaced,\nbecause it was edited." (the line number)
         CannotBackUp,      // "Cannot back up %s." (the path)
-        OutsideReplaceTab,
+        ReplaceHidden,
     };
     Kind kind;
     std::u8string text;
@@ -124,8 +118,8 @@ public:
     virtual void log(const std::u8string &) {}
     // A log line; by default its English text goes to log() above.
     virtual void logLine(const FindLog &line) { log(line.text); }
-    // The recent lists changed for this tab.
-    virtual void recentAdded(FindReplaceSettings::Tab) {}
+    // The recent lists changed for these values.
+    virtual void recentAdded(const FindReplaceSettings &) {}
     // `line` becomes active (and the only selected Line unless
     // `keepSelection`) of `document`, the new editing target; the editor
     // selects [start, end) in `role`: 0 the translation mode original, 1 the
@@ -167,8 +161,11 @@ public:
     const Recent &recent() const { return m_recent; }
 
     // Every call is ignored while busy().
+    // Both directions wrap around the end without asking.
     void find(const FindReplaceSettings &window);
     void findNext();                                       // F3
+    void findPrevious(const FindReplaceSettings &window);
+    void findPrevious();                                   // Shift+F3
     void findAllInCurrent(const FindReplaceSettings &window);
     void findInAllOpened(const FindReplaceSettings &window);
     void replace(const FindReplaceSettings &window);
@@ -177,11 +174,21 @@ public:
     void findInFiles(const FindReplaceSettings &window);
     void replaceInFiles(const FindReplaceSettings &window); // asks first
     bool busy() const { return m_waiting; }
-    // The tab after the last operation; the styles question may change its styles.
+    // The matches Next walks in the editing target, without questions or
+    // log lines; `current` is the last match's 1-based place, 0 when it is
+    // not one of them.
+    struct Count {
+        int total = 0;
+        int current = 0;
+    };
+    Count count(const FindReplaceSettings &window);
+    // PCRE2's message for an invalid regular expression, else empty.
+    std::u16string patternError(const FindReplaceSettings &window) const;
+    // The values of the last operation; the styles question may change its styles.
     const FindReplaceSettings &window() const { return m_window; }
-    // On a Lines radio button, the dialog's Reset or a new editing target.
+    // On a Lines choice or a new editing target.
     void reset();
-    // The dialog activated with a selection in the editor: the next search
+    // The panel activated with a selection in the editor: the next search
     // starts over from row 0 unless it is the last match.
     void selectionAdopted();
     int lastStart() const { return m_findstart; }
@@ -208,15 +215,30 @@ private:
     bool compile(std::u16string_view pattern);
     void checkStyles(DocumentId document, Then then);
     bool keepFinding(std::u16string_view text, int textPos) const;
+    struct Span {
+        int position = 0;
+        int length = 0;
+    };
+    std::optional<Span> nextIn(std::u16string_view text, int from) const;
+    bool eligible(const EditSession &session, const core::LineRecord &line) const;
+    struct Place {
+        int row = 0;
+        Span span;
+    };
+    std::vector<Place> places(const EditSession &session) const;
+    std::optional<Place> currentPlace(DocumentId document, const EditSession &session) const;
+    void select(DocumentId document, const EditSession &session, int row, const std::u16string &text, Span span);
+    void seekBack(DocumentId document, Found done);
     bool search(std::u16string_view text, int &start, int &length) const;
     int regexReplace(std::u16string &text, std::u16string_view replacement, std::size_t maxMatches) const;
     std::u16string element(const core::LineRecord &line, bool translationMode) const;
     std::u16string lower(std::u16string_view s) const;
-    // `withWindow`: the dialog's tab, else the last values (F3).
+    // `withWindow`: the panel's values, else the last values (F3).
     void runFind(bool withWindow, Found done);
     void seekFromStart(DocumentId document, bool withWindow, Found done);
     void seekLines(DocumentId document, bool withWindow, Found done);
     void endFind(bool withWindow, bool found, const Found &done);
+    void notFound();
     bool matchStillThere(const EditSession &session);
     void replaceFound(bool found);
     void findInLine(const std::u16string &text, std::u16string_view lineText, std::optional<DocumentId> document,
@@ -240,8 +262,9 @@ private:
     FindReplaceHost &m_host;
     CaseFold m_fold;
     Recent m_recent;
-    FindReplaceSettings m_window; // the tab of the running (or last) operation
+    FindReplaceSettings m_window; // the values of the running (or last) operation
     bool m_waiting = false;       // a question waits for its answer
+    bool m_quiet = false;
 
     int m_linePosition = 0;
     int m_reprow = 0;
@@ -272,6 +295,7 @@ private:
     std::u16string m_findString;
     std::u16string m_replaceString;
     std::optional<core::LegacyRegex> m_regex;
+    std::u16string m_patternError;
     std::vector<FindResult> m_results;
     bool m_resultsShown = false;
     // MUST KILL: set by a files search, never cleared

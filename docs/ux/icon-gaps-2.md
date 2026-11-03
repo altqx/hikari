@@ -77,8 +77,8 @@ Left without an icon, as IC1 decided: check items, entries named by their data, 
 | Font picker | Manage catalogs… | font-catalogs |
 | Font picker, hotkey capture | Clear | clear |
 | Update available | Skip this version | skip-version (new) |
-| Choose styles, Columns, Fix minor errors, Search results | Select all / All / Check all | select-all (new) |
-| Choose styles, Columns, Fix minor errors, Search results | None / Uncheck all | clear |
+| Choose styles, Columns, Search results | Select all / All / Check all | select-all (new) |
+| Choose styles, Columns, Search results | None / Uncheck all | clear |
 
 ## Settings
 
