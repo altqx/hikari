@@ -100,7 +100,7 @@ struct Content {
     QColor gridComment;
     std::array<QColor, 5> comparison;
     QColor comparisonSelection;
-    std::array<QColor, 11> syntax;
+    std::array<QColor, 13> syntax;
     // MUST KILL: audio is a full AudioDisplayOptions of which only the colour fields are set
     application::AudioDisplayOptions audio;
 };

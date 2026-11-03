@@ -61,6 +61,20 @@ TEST(EditorTimes, EachFormatShowsItsOwnFieldText)
     EXPECT_EQ(t.duration, u8"0:00:00.00");
 }
 
+TEST(EditorTimes, FieldsShowTimesUpTo99Hours)
+{
+    auto t = editorTimeTexts(line(36000000, 359999999), core::SubtitleFormat::Ass, nullptr);
+    EXPECT_EQ(t.start, u8"10:00:00.00");
+    EXPECT_EQ(t.end, u8"99:59:59.99");
+    t = editorTimeTexts(line(360000000, 400000000), core::SubtitleFormat::Ass, nullptr);
+    EXPECT_EQ(t.start, u8"99:59:59.99");
+    EXPECT_EQ(t.end, u8"99:59:59.99");
+    t = editorTimeTexts(line(360000000, 400000000), core::SubtitleFormat::Srt, nullptr);
+    EXPECT_EQ(t.start, u8"99:59:59,999");
+    t = editorTimeTexts(line(360000000, 400000000), core::SubtitleFormat::TMPlayer, nullptr);
+    EXPECT_EQ(t.start, u8"99:59:59");
+}
+
 TEST(EditorTimes, FramesOnACfrTimebase)
 {
     const auto tb = cfr();
@@ -119,12 +133,25 @@ TEST(EditorTimes, TypedTimesInEachFormat)
     EXPECT_EQ(at(u8"", core::SubtitleFormat::MicroDvd)->frame, 0);
 }
 
+TEST(EditorTimes, TypedTimesStopAt99Hours)
+{
+    const auto at = [](const char8_t *text, core::SubtitleFormat format) {
+        return typedTime(text, TimeFieldRole::Start, format, std::nullopt, nullptr)->ms;
+    };
+    EXPECT_EQ(at(u8"12:01:02.34", core::SubtitleFormat::Ass), 43262340);
+    EXPECT_EQ(at(u8"99:59:59.99", core::SubtitleFormat::Ass), 359999990);
+    EXPECT_EQ(at(u8"123:00:00.00", core::SubtitleFormat::Ass), 359999990);
+    EXPECT_EQ(at(u8"99:59:59,999", core::SubtitleFormat::Srt), kTimeFieldMaxMs);
+    EXPECT_EQ(at(u8"123:00:00,000", core::SubtitleFormat::Srt), kTimeFieldMaxMs);
+    EXPECT_EQ(at(u8"123:00:00", core::SubtitleFormat::TMPlayer), kTimeFieldMaxMs);
+}
+
 TEST(EditorTimes, ClockTimesTakeTwoToNineHourDigitsAndExactFractions)
 {
     const auto at = [](const char8_t *text, core::SubtitleFormat format) {
         return typedTime(text, TimeFieldRole::Start, format, std::nullopt, nullptr);
     };
-    EXPECT_EQ(at(u8"123456789:59:59,999", core::SubtitleFormat::Srt)->ms, 444444443999999);
+    EXPECT_EQ(at(u8"123456789:59:59,999", core::SubtitleFormat::Srt)->ms, kTimeFieldMaxMs);
     EXPECT_EQ(at(u8"10:00:00", core::SubtitleFormat::TMPlayer)->ms, 36000000);
     for (const char8_t *bad : {u8"1:00:00,000", u8"1234567890:00:00,000", u8"00:00:00,00", u8"00:00:00,0000",
                                u8"00:00:00.000", u8"00:60:00,000", u8"00:00:60,000", u8"00:0a:00,000", u8"0a:00:00,000",
@@ -246,8 +273,12 @@ TEST(TimeField, PasteTakesOnlyAWholeTimeOfTheForm)
     EXPECT_EQ(pasteIntoTimeField(TimeFieldForm::Srt, at(u"00:00:01,500", 0), u"01:02:03,456").state.text,
               u"01:02:03,456");
     EXPECT_EQ(pasteIntoTimeField(TimeFieldForm::TMPlayer, at(u"00:00:01", 0), u"01:02:03").state.text, u"01:02:03");
-    for (const char16_t *bad : {u"1:02:03,04", u"1:62:03.04", u"1:02:63.04", u"01:02:03.04", u"1:02:03.0", u"12",
-                                u" 1:02:03.04", u""}) {
+    EXPECT_EQ(pasteIntoTimeField(TimeFieldForm::Ass, at(u"0:00:01.50", 0), u"42:02:03.04").state.text,
+              u"42:02:03.04");
+    EXPECT_EQ(pasteIntoTimeField(TimeFieldForm::Ass, at(u"12:00:01.50", 0), u"3:02:03.04").state.text,
+              u"3:02:03.04");
+    for (const char16_t *bad : {u"1:02:03,04", u"1:62:03.04", u"1:02:63.04", u"123:02:03.04", u"1:02:03.0", u"12",
+                                u" 1:02:03.04", u"12:62:03.04", u""}) {
         e = pasteIntoTimeField(TimeFieldForm::Ass, at(u"0:00:01.50", 3), bad);
         EXPECT_TRUE(e.bell);
         EXPECT_FALSE(e.changed);
@@ -286,6 +317,9 @@ TEST(TimeField, TheMouseStepsTheColumnsUnit)
              {2, 3600000}, {3, 60000}, {5, 60000}, {6, 1000}, {8, 1000}, {9, 10}, {12, 10}})
         EXPECT_EQ(timeFieldStep(F::Srt, column), step) << column;
     EXPECT_EQ(timeFieldStep(F::TMPlayer, 8), 1000);
+    for (const auto [column, step] : std::vector<std::pair<std::size_t, std::int64_t>>{
+             {0, 3600000}, {2, 3600000}, {3, 60000}, {6, 1000}, {9, 10}, {11, 10}})
+        EXPECT_EQ(timeFieldStep(F::Ass, column, u"12:34:56.78"), step) << column;
 }
 
 TEST(TimeField, TheWheelStepsWholeNotches)
@@ -302,8 +336,12 @@ TEST(TimeField, TheWheelStepsWholeNotches)
     EXPECT_EQ(wheel(F::Ass, u"0:00:59.99", 9, 1), "0:01:00.00");
     EXPECT_EQ(wheel(F::Ass, u"0:00:00.05", 9, -1), "0:00:00.04");
     EXPECT_EQ(wheel(F::Ass, u"0:00:00.05", 6, -1), "refused");
-    EXPECT_EQ(wheel(F::Ass, u"9:30:00.00", 0, 1), "refused");
-    EXPECT_EQ(wheel(F::Ass, u"9:59:59.99", 9, 1), "refused");
+    EXPECT_EQ(wheel(F::Ass, u"9:30:00.00", 0, 1), "10:30:00.00");
+    EXPECT_EQ(wheel(F::Ass, u"9:59:59.99", 9, 1), "10:00:00.00");
+    EXPECT_EQ(wheel(F::Ass, u"10:30:00.00", 4, -1), "10:29:00.00");
+    EXPECT_EQ(wheel(F::Ass, u"10:30:00.00", 1, -1), "9:30:00.00");
+    EXPECT_EQ(wheel(F::Ass, u"99:30:00.00", 0, 1), "refused");
+    EXPECT_EQ(wheel(F::Ass, u"99:59:59.99", 10, 1), "refused");
     EXPECT_EQ(wheel(F::Ass, u"0:00:01.00", 9, 0), "refused");
     EXPECT_EQ(wheel(F::Srt, u"00:00:01,005", 10, 1), "00:00:01,015");
     EXPECT_EQ(wheel(F::Srt, u"01:00:01,005", 1, -1), "00:00:01,005");
@@ -330,8 +368,8 @@ TEST(TimeField, TheWheelStepsTheNumberShown)
     EXPECT_EQ(wheel({F::Mpl2, false}, u"12", 1, -1), "11");
     EXPECT_EQ(wheel({F::Mpl2, false}, u"12", 1, -12), "0");
     EXPECT_EQ(wheel({F::Mpl2, false}, u"0", 0, -1), "refused");
-    EXPECT_EQ(wheel({F::Mpl2, false}, u"359998", 0, 1), "359999");
-    EXPECT_EQ(wheel({F::Mpl2, false}, u"359999", 0, 1), "refused");
+    EXPECT_EQ(wheel({F::Mpl2, false}, u"3599998", 0, 1), "3599999");
+    EXPECT_EQ(wheel({F::Mpl2, false}, u"3599999", 0, 1), "refused");
     EXPECT_EQ(wheel({F::MicroDvd, true}, u"25", 1, 2), "27");
     EXPECT_EQ(wheel({F::Ass, true}, u"24", 0, 1), "25");
     EXPECT_EQ(wheel({F::Ass, true}, u"0024", 3, -1), "23");
@@ -365,10 +403,10 @@ TEST(TimeField, TheRightButtonDragsTheTime)
     EXPECT_EQ(text(dragTimeField(ass, drag, 110, 30)), "0:01:04.03");
     auto hours = beginTimeFieldDrag(ass, u"0:30:00.00", 0, 0, 0);
     EXPECT_EQ(text(dragTimeField(ass, hours, 0, 8)), "0:00:00.00");
-    for (int i = 1; i <= 11; ++i)
+    for (int i = 1; i <= 101; ++i)
         dragTimeField(ass, hours, 0, 8 - 8 * i);
     EXPECT_EQ(hours.value, kTimeFieldMaxMs);
-    EXPECT_EQ(text(dragTimeField(ass, hours, 0, -100)), "9:59:59.99");
+    EXPECT_EQ(text(dragTimeField(ass, hours, 0, -1000)), "99:59:59.99");
     const TimeFieldMouse srt{F::Srt, false};
     auto s = beginTimeFieldDrag(srt, u"00:00:01,005", 11, 0, 0);
     EXPECT_EQ(text(dragTimeField(srt, s, 0, -8)), "00:00:01,015");
@@ -393,8 +431,8 @@ TEST(TimeField, TheRightButtonDragsTheNumberShown)
     EXPECT_EQ(text(dragTimeField(mpl2, down, -10, 0)), "0");
     EXPECT_EQ(text(dragTimeField(mpl2, down, -10, 8)), "none");
     EXPECT_EQ(down.value, 0);
-    auto top = beginTimeFieldDrag(mpl2, u"359995", 0, 0, 0);
-    EXPECT_EQ(text(dragTimeField(mpl2, top, 10, 0)), "359999");
+    auto top = beginTimeFieldDrag(mpl2, u"3599995", 0, 0, 0);
+    EXPECT_EQ(text(dragTimeField(mpl2, top, 10, 0)), "3599999");
 
     const TimeFieldMouse mdvd{F::MicroDvd, false};
     auto d = beginTimeFieldDrag(mdvd, u"25", 0, 0, 0);

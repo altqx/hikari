@@ -1,6 +1,7 @@
 #include "hikari/application/macro_validation.h"
 
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 #include <filesystem>
 #include <system_error>
 
@@ -36,7 +37,7 @@ std::vector<MacroRef> dependencyValidations(const std::vector<ScriptStatus> &scr
         files.push_back(normalized(s.path));
 
     std::vector<MacroRef> out;
-    std::vector<bool> taken(scripts.size(), false);
+    boost::dynamic_bitset<> taken(scripts.size());
     for (const auto &loaded : self->info.loadedFiles) {
         const std::filesystem::path file = normalized(loaded);
         if (file == selfFile)

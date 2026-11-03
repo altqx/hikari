@@ -16,6 +16,7 @@ using backends::PluginProcess;
 namespace protocol = backends::plugin;
 
 constexpr std::string_view kCommandPrefix = "plugin.";
+const std::string kLockBusy = "another plugin is applying edits; try again when it is done";
 
 QString qs(std::string_view s)
 {
@@ -72,6 +73,7 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
 
 PluginRuntime::~PluginRuntime()
 {
+    m_lockWaiters.clear();
     for (auto &[id, plugin] : m_plugins)
         unsubscribe(*plugin);
 }
@@ -99,6 +101,7 @@ void PluginRuntime::sync()
             continue;
         }
         unsubscribe(*it->second);
+        releaseLock(*it->second);
         PluginProcess *process = it->second->process.get();
         disconnect(process, nullptr, this, nullptr);
         process->forceStop();
@@ -142,8 +145,10 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     });
     const QString name = qs(raw->manifest.name);
     auto log = [this] { return m_wiring.log; };
+    connect(process, &PluginProcess::unitEnded, this, [this, raw] { releaseLock(*raw); });
     connect(process, &PluginProcess::loadFailed, this, [this, raw, name, log](const QString &message) {
         unsubscribe(*raw);
+        releaseLock(*raw);
         if (log())
             log()->notice(ui::LogController::Error, name, QCoreApplication::translate("HikariSub.Plugins", "The plugin didn’t start."), message);
     });
@@ -161,6 +166,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     });
     connect(process, &PluginProcess::stopped, this, [this, raw, name, log](PluginProcess::StopReason reason) {
         unsubscribe(*raw);
+        releaseLock(*raw);
         if (!log())
             return;
         switch (reason) {
@@ -236,8 +242,57 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
         reply({});
         return;
     }
+    case protocol::Service::Lock:
+        lock(plugin, std::move(reply));
+        return;
+    case protocol::Service::Unlock:
+        unlock(plugin);
+        reply({});
+        return;
     }
     reply({});
+}
+
+void PluginRuntime::lock(Running &plugin, PluginProcess::ServiceReply reply)
+{
+    if (!m_lockHolder || m_lockHolder == &plugin) {
+        m_lockHolder = &plugin;
+        reply({});
+        return;
+    }
+    auto timeout = std::make_unique<QTimer>();
+    timeout->setSingleShot(true);
+    QTimer *timer = timeout.get();
+    connect(timer, &QTimer::timeout, this, [this, timer] {
+        const auto it = std::ranges::find_if(m_lockWaiters, [timer](const LockWaiter &w) { return w.timeout.get() == timer; });
+        if (it == m_lockWaiters.end())
+            return;
+        const PluginProcess::ServiceReply refuse = std::move(it->reply);
+        it->timeout.release()->deleteLater();
+        m_lockWaiters.erase(it);
+        refuse(kLockBusy);
+    });
+    timer->start(m_wiring.transactionWaitMs);
+    m_lockWaiters.push_back({&plugin, std::move(reply), std::move(timeout)});
+}
+
+void PluginRuntime::unlock(Running &plugin)
+{
+    if (m_lockHolder != &plugin)
+        return;
+    m_lockHolder = nullptr;
+    if (m_lockWaiters.empty())
+        return;
+    LockWaiter next = std::move(m_lockWaiters.front());
+    m_lockWaiters.pop_front();
+    m_lockHolder = next.plugin;
+    next.reply({});
+}
+
+void PluginRuntime::releaseLock(Running &plugin)
+{
+    std::erase_if(m_lockWaiters, [&plugin](const LockWaiter &w) { return w.plugin == &plugin; });
+    unlock(plugin);
 }
 
 void PluginRuntime::unsubscribe(Running &plugin)

@@ -1515,7 +1515,7 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
         if (worked) {
             m_preview = application::templatePreviewLines(*p.result, source);
             m_previewStyles = application::templatePreviewStyles(snapshot, *p.result);
-            m_own.assign(m_preview->size(), false);
+            m_own = boost::dynamic_bitset<>(m_preview->size());
             m_previewSeconds = report.value(QLatin1String("seconds")).toDouble();
         }
     }
@@ -1554,7 +1554,7 @@ void TemplateEditorController::markOwn(std::uint64_t generation, application::Ka
         std::multiset<std::u8string> others;
         for (const auto &l : application::templatePreviewLines(*without.result, *m_source))
             others.insert(keyOf(l));
-        m_own.assign(m_preview->size(), false);
+        m_own = boost::dynamic_bitset<>(m_preview->size());
         for (std::size_t k = 0; k < m_preview->size(); ++k) {
             const auto it = others.find(keyOf((*m_preview)[k]));
             if (it == others.end())

@@ -1,4 +1,10 @@
-add_library(hikari_plugin_state STATIC plugin_state.cpp plugin_state.h)
+set(prelude "${CMAKE_CURRENT_SOURCE_DIR}/document.lua")
+file(READ "${prelude}" HIKARI_DOCUMENT_LUA)
+configure_file(document_prelude.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/document_prelude.cpp" @ONLY)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${prelude}")
+
+add_library(hikari_plugin_state STATIC plugin_state.cpp plugin_state.h document_prelude.h
+    "${CMAKE_CURRENT_BINARY_DIR}/document_prelude.cpp")
 target_include_directories(hikari_plugin_state PUBLIC .)
 target_link_libraries(hikari_plugin_state PUBLIC hikari_api PRIVATE Hikari::luajit)
 hikari_module(hikari_plugin_state ALLOW hikari_api hikari_application hikari_core Hikari::luajit)

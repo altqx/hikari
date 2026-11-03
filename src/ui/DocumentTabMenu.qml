@@ -72,10 +72,10 @@ ShellMenu {
             required property int index
             objectName: "tabMenuFolder_" + modelData.kind
             iconRole: "show-in-folder"
-            text: modelData.kind === "subtitles" ? qsTr("Open the folder containing the subtitles")
-                : modelData.kind === "video" ? qsTr("Open video containing folder")
-                : modelData.kind === "audio" ? qsTr("Open audio containing folder")
-                : qsTr("Open keyframes containing folder")
+            text: modelData.kind === "subtitles" ? qsTr("Show subtitles in folder")
+                : modelData.kind === "video" ? qsTr("Show video in folder")
+                : modelData.kind === "audio" ? qsTr("Show audio in folder")
+                : qsTr("Show keyframes in folder")
             onTriggered: tabMenu.app.showInFolder(modelData.path)
         }
         // MUST KILL: 4 counts the separator and the three fixed rows before the folder rows

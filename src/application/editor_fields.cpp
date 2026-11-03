@@ -36,13 +36,14 @@ std::int64_t zeroIt(std::int64_t ms)
 
 std::u8string raw(core::SubtitleFormat format, std::int64_t ms, std::int64_t frame)
 {
+    const std::int64_t shown = std::min(ms, kTimeFieldMaxMs);
     switch (format) {
-    case core::SubtitleFormat::Srt: return core::legacy::srtTimeText(ms);
-    case core::SubtitleFormat::TMPlayer: return core::legacy::tmpTimeText(ms);
+    case core::SubtitleFormat::Srt: return core::legacy::srtTimeText(shown);
+    case core::SubtitleFormat::TMPlayer: return core::legacy::tmpTimeText(shown);
     case core::SubtitleFormat::MicroDvd: return number(frame);
     case core::SubtitleFormat::Mpl2:
         return number(static_cast<std::int64_t>(std::ceil(static_cast<float>(ms) * (10.0f / 1000.0f))));
-    default: return core::legacy::assTimeText(ms);
+    default: return core::legacy::assTimeText(shown);
     }
 }
 
@@ -175,14 +176,14 @@ std::optional<TypedTime> typedTime(std::u8string_view text, TimeFieldRole role, 
         const auto ms = clockTime(text, u8',', 3, 1);
         if (!ms)
             return std::nullopt;
-        out.ms = *ms;
+        out.ms = std::min(*ms, kTimeFieldMaxMs);
         return out;
     }
     case core::SubtitleFormat::TMPlayer: {
         const auto ms = clockTime(text, 0, 0, 0);
         if (!ms)
             return std::nullopt;
-        out.ms = *ms;
+        out.ms = std::min(*ms, kTimeFieldMaxMs);
         return out;
     }
     case core::SubtitleFormat::MicroDvd: {
@@ -205,7 +206,7 @@ std::optional<TypedTime> typedTime(std::u8string_view text, TimeFieldRole role, 
     default:
         if (!core::legacy::isCanonicalAssTime(text))
             return std::nullopt;
-        out.ms = core::legacy::assTimeMilliseconds(text);
+        out.ms = std::min(core::legacy::assTimeMilliseconds(text), kTimeFieldMaxMs / 10 * 10);
         return out;
     }
 }
@@ -332,7 +333,8 @@ TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field
         return replaceInNumber(field, pasted, true);
     }
     // MUST KILL: mask chars: '0' any digit, '5' a digit up to 5, else a literal separator
-    const std::u16string_view mask = form == TimeFieldForm::Ass   ? u"0:50:50.00"
+    const bool twoHours = form == TimeFieldForm::Ass && pasted.find(u':') == 2;
+    const std::u16string_view mask = form == TimeFieldForm::Ass   ? (twoHours ? u"00:50:50.00" : u"0:50:50.00")
                                      : form == TimeFieldForm::Srt ? u"00:50:50,000"
                                                                   : u"00:50:50";
     if (pasted.size() != mask.size())
@@ -381,11 +383,12 @@ std::u16string clockText(TimeFieldForm form, std::int64_t ms)
 
 }
 
-std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column)
+std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column, std::u16string_view text)
 {
     if (form == TimeFieldForm::Number)
         return 1;
-    const std::size_t start = form == TimeFieldForm::Ass ? 2 : 3;
+    const std::size_t colon = text.find(u':');
+    const std::size_t start = colon != std::u16string_view::npos ? colon + 1 : form == TimeFieldForm::Ass ? 2 : 3;
     if (column < start)
         return 3600000;
     if (column < start + 3)
@@ -464,11 +467,11 @@ std::u16string mouseText(TimeFieldMouse mouse, std::int64_t value)
 
 }
 
-std::int64_t timeFieldStep(TimeFieldMouse mouse, std::size_t column)
+std::int64_t timeFieldStep(TimeFieldMouse mouse, std::size_t column, std::u16string_view text)
 {
     if (shownAsNumber(mouse))
         return 1;
-    return timeFieldStep(clockForm(mouse.form), column);
+    return timeFieldStep(clockForm(mouse.form), column, text);
 }
 
 std::optional<std::u16string> wheelTimeField(TimeFieldMouse mouse, std::u16string_view text, std::size_t column,
@@ -477,7 +480,7 @@ std::optional<std::u16string> wheelTimeField(TimeFieldMouse mouse, std::u16strin
     if (notches == 0)
         return std::nullopt;
     const std::int64_t value =
-        mouseValue(mouse, text) + static_cast<std::int64_t>(notches) * timeFieldStep(mouse, column);
+        mouseValue(mouse, text) + static_cast<std::int64_t>(notches) * timeFieldStep(mouse, column, text);
     if (value < 0 || value > mouseMax(mouse))
         return std::nullopt;
     return mouseText(mouse, value);
@@ -485,7 +488,7 @@ std::optional<std::u16string> wheelTimeField(TimeFieldMouse mouse, std::u16strin
 
 TimeFieldDrag beginTimeFieldDrag(TimeFieldMouse mouse, std::u16string_view text, std::size_t column, int x, int y)
 {
-    return TimeFieldDrag{mouseValue(mouse, text), timeFieldStep(mouse, column), x, y};
+    return TimeFieldDrag{mouseValue(mouse, text), timeFieldStep(mouse, column, text), x, y};
 }
 
 std::optional<std::u16string> dragTimeField(TimeFieldMouse mouse, TimeFieldDrag &drag, int x, int y)

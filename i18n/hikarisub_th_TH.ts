@@ -65,16 +65,16 @@
         <translation>เชื่อมแถบเลื่อนระดับเสียงกับแถบเลื่อนการยืด</translation>
     </message>
     <message>
-        <source> or </source>
-        <translation> หรือ </translation>
+        <source>%1 or %2</source>
+        <translation>%1 หรือ %2</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>กด Shift พร้อมคลิกเพื่อกำหนดปุ่มลัด</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
-        <source>Second shortcut can be set using Control + Click</source>
-        <translation>ปุ่มลัดที่สองสามารถกำหนดค่าโดยใช้ Control + คลิก</translation>
+        <source>Ctrl+click to set a second shortcut</source>
+        <translation>Ctrl+คลิกเพื่อกำหนดปุ่มลัดที่สอง</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -1906,8 +1906,8 @@ Output device: %2</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
-        <source>Subtitle file </source>
-        <translation>ไฟล์คำบรรยาย </translation>
+        <source>Subtitle file (%1)</source>
+        <translation>ไฟล์คำบรรยาย (%1)</translation>
     </message>
     <message>
         <source>Save</source>
@@ -2451,8 +2451,8 @@ Output device: %2</source>
         <translation>ขีดฆ่า</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>เลือกแบบอักษร</translation>
+        <source>Choose font…</source>
+        <translation>เลือกแบบอักษร…</translation>
     </message>
     <message>
         <source>Primary colour</source>
@@ -3383,7 +3383,7 @@ Output device: %2</source>
         <translation>แบบอักษร</translation>
     </message>
     <message>
-        <source>Font selection</source>
+        <source>Choose font</source>
         <translation>เลือกแบบอักษร</translation>
     </message>
     <message>
@@ -5008,8 +5008,8 @@ Failed to copy %2 fonts.</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>กด Shift พร้อมคลิกเพื่อกำหนดปุ่มลัด</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -5652,6 +5652,18 @@ Failed to copy %2 fonts.</source>
         <translation>จัดเรียงบรรทัดที่เลือกตามข้อความที่ไม่มีแท็ก</translation>
     </message>
     <message>
+        <source>Shift times with the last values</source>
+        <translation>เลื่อนเวลาด้วยค่าล่าสุด</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor panel</source>
+        <translation>แผงโพสต์โปรเซสเซอร์การจัดเวลา</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor with the last values</source>
+        <translation>โพสต์โปรเซสเซอร์การจัดเวลาด้วยค่าล่าสุด</translation>
+    </message>
+    <message>
         <source>Go to previous keyframe</source>
         <translation>ไปยังคีย์เฟรมก่อนหน้า</translation>
     </message>
@@ -5848,10 +5860,6 @@ Failed to copy %2 fonts.</source>
         <translation>การจับคู่การแปล…</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>เลื่อนเวลา / ใช้โพสต์โปรเซสเซอร์การจัดเวลา</translation>
-    </message>
-    <message>
         <source>Save as…</source>
         <translation>บันทึกเป็น…</translation>
     </message>
@@ -5978,6 +5986,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Translation mode</source>
         <translation>โหมดการแปล</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด</translation>
     </message>
     <message>
         <source>Place run 1</source>
@@ -6574,7 +6586,7 @@ Failed to copy %2 fonts.</source>
         <translation>แปลงเป็น TMP</translation>
     </message>
     <message>
-        <source>The starting time</source>
+        <source>Start time</source>
         <translation>เวลาเริ่มต้น</translation>
     </message>
     <message>
@@ -6582,7 +6594,7 @@ Failed to copy %2 fonts.</source>
         <translation>เวลาสิ้นสุด</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>สไตล์</translation>
     </message>
     <message>
@@ -6642,8 +6654,8 @@ Failed to copy %2 fonts.</source>
         <translation>บันทึกคำบรรยายด้วยชื่อวิดีโอ</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>เปิดไฟล์บันทึกอัตโนมัติ</translation>
+        <source>Open autosave…</source>
+        <translation>เปิดไฟล์บันทึกอัตโนมัติ…</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
@@ -6716,6 +6728,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Find next</source>
         <translation>ค้นหาถัดไป</translation>
+    </message>
+    <message>
+        <source>Shift &amp;times…</source>
+        <translation>เลื่อน&amp;เวลา…</translation>
+    </message>
+    <message>
+        <source>Moves line times by the lead-in, lead-out, gap and keyframe rules</source>
+        <translation>เลื่อนเวลาของบรรทัดตามกฎช่วงนำ ช่วงต่อท้าย ช่องว่าง และคีย์เฟรม</translation>
+    </message>
+    <message>
+        <source>Timing &amp;postprocessor…</source>
+        <translation>โพสต์&amp;โปรเซสเซอร์การจัดเวลา…</translation>
     </message>
     <message>
         <source>Go to start time of line</source>
@@ -6930,16 +6954,12 @@ Failed to copy %2 fonts.</source>
         <translation>ค้นหาก่อนหน้า</translation>
     </message>
     <message>
-        <source>Shift &amp;times...</source>
-        <translation>เลื่อน&amp;เวลา...</translation>
-    </message>
-    <message>
         <source>Style &amp;manager</source>
         <translation>&amp;ตัวจัดการสไตล์</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>คุณสมบัติไฟล์ ASS</translation>
+        <source>Script properties</source>
+        <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -6986,7 +7006,7 @@ Failed to copy %2 fonts.</source>
         <translation>แสดงบันทึกประจำรุ่นของเวอร์ชันต่างๆ นับตั้งแต่เวอร์ชันที่คุณใช้ก่อนหน้านี้</translation>
     </message>
     <message>
-        <source>What&apos;s &amp;new</source>
+        <source>What’s &amp;new</source>
         <translation>&amp;มีอะไรใหม่</translation>
     </message>
     <message>
@@ -7208,18 +7228,6 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกบรรทัดตามนิพจน์</translation>
     </message>
     <message>
-        <source>Searches for the specified text phrases and replaces them</source>
-        <translation type="vanished">ค้นหาและแทนที่วลีข้อความที่ระบุ</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrase</source>
-        <translation type="vanished">ค้นหาวลีข้อความที่ระบุ</translation>
-    </message>
-    <message>
-        <source>Finds the next occurrence of the phrase in the text</source>
-        <translation type="vanished">ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
-    </message>
-    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>เปลี่ยนอัตราเฟรมของเวลาคำบรรยาย</translation>
     </message>
@@ -7278,6 +7286,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด (%1) ที่เคอร์เซอร์ในตัวแก้ไขบรรทัด</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>แทรกช่องว่างไม่ตัดบรรทัด</translation>
     </message>
     <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
@@ -7404,8 +7420,8 @@ Failed to copy %2 fonts.</source>
         <translation>ใช้สำหรับจัดการสไตล์ ASS</translation>
     </message>
     <message>
-        <source>ASS subtitle properties</source>
-        <translation>คุณสมบัติของคำบรรยาย ASS</translation>
+        <source>Opens Script properties</source>
+        <translation>เปิดคุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Converts from one format to another</source>
@@ -8562,6 +8578,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>อยู่ที่บรรทัดเดิมเมื่อแก้ไขเวลา</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter แทรกตัวแบ่งบรรทัดแบบอ่อน (%1)</translation>
     </message>
     <message>
         <source>Translation mode</source>
@@ -9840,8 +9860,8 @@ Failed to copy %2 fonts.</source>
         <translation>ค้างนาน 10 วินาทีขึ้นไป รายงานจะแสดงว่าค้างอยู่ที่ใด</translation>
     </message>
     <message>
-        <source>It is kept for the next start.</source>
-        <translation>จะเก็บไว้จนถึงการเริ่มครั้งถัดไป</translation>
+        <source>The crash report could not be sent. It is kept for the next start.</source>
+        <translation>ส่งรายงานการขัดข้องไม่ได้ จะเก็บไว้จนถึงการเริ่มครั้งถัดไป</translation>
     </message>
     <message>
         <source>It works again. A report shows where it was stuck.</source>
@@ -9936,7 +9956,7 @@ Failed to copy %2 fonts.</source>
         <translation>แบบฟอร์ม %1 เปิดในเบราว์เซอร์ของคุณพร้อมกรอกข้อมูลแล้ว</translation>
     </message>
     <message>
-        <source>The crash report could not be sent</source>
+        <source>The crash report could not be sent.</source>
         <translation>ส่งรายงานการขัดข้องไม่ได้</translation>
     </message>
     <message>
@@ -9948,12 +9968,8 @@ Failed to copy %2 fonts.</source>
         <translation>รายงานยาวเกินกว่าจะใส่ในลิงก์ จึงอยู่ในคลิปบอร์ด วางลงในแบบฟอร์ม</translation>
     </message>
     <message>
-        <source>The browser did not open</source>
-        <translation>เบราว์เซอร์ไม่เปิด</translation>
-    </message>
-    <message>
-        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
-        <translation>รายงานปัญหาอยู่ในคลิปบอร์ดแล้ว วางลงในปัญหาใหม่บน GitHub</translation>
+        <source>The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>เบราว์เซอร์ไม่เปิด รายงานปัญหาอยู่ในคลิปบอร์ดแล้ว วางลงในปัญหาใหม่บน GitHub</translation>
     </message>
     <message>
         <source>Report text</source>
@@ -10043,8 +10059,8 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.ScriptProperties</name>
     <message>
-        <source>ASS file properties</source>
-        <translation>คุณสมบัติไฟล์ ASS</translation>
+        <source>Script properties</source>
+        <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -10700,7 +10716,7 @@ because it was edited.</source>
         <translation>เปิด</translation>
     </message>
     <message>
-        <source>Open auto save</source>
+        <source>Open autosave</source>
         <translation>เปิดไฟล์บันทึกอัตโนมัติ</translation>
     </message>
     <message>
@@ -10942,10 +10958,6 @@ because it was edited.</source>
         <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
-        <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation type="vanished">ไฟล์เสียงและวิดีโอ (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
-    </message>
-    <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>ไฟล์คีย์เฟรม (*.txt *.pass *.stats *.log)</translation>
     </message>
@@ -10978,11 +10990,11 @@ because it was edited.</source>
         <translation>%1 (กู้คืน)</translation>
     </message>
     <message>
-        <source>Auto save folder is empty</source>
+        <source>The autosave folder is empty.</source>
         <translation>โฟลเดอร์บันทึกอัตโนมัติว่างเปล่า</translation>
     </message>
     <message>
-        <source>Cannot open auto save folder</source>
+        <source>The autosave folder cannot be opened.</source>
         <translation>ไม่สามารถเปิดโฟลเดอร์บันทึกอัตโนมัติได้</translation>
     </message>
     <message>
@@ -12619,20 +12631,20 @@ Styles deleted:
         <translation>ปิดแท็บทั้งหมด</translation>
     </message>
     <message>
-        <source>Open the folder containing the subtitles</source>
-        <translation>เปิดโฟลเดอร์ของไฟล์คำบรรยาย</translation>
+        <source>Show subtitles in folder</source>
+        <translation>แสดงไฟล์คำบรรยายในโฟลเดอร์</translation>
     </message>
     <message>
-        <source>Open video containing folder</source>
-        <translation>เปิดโฟลเดอร์ของวิดีโอ</translation>
+        <source>Show video in folder</source>
+        <translation>แสดงวิดีโอในโฟลเดอร์</translation>
     </message>
     <message>
-        <source>Open audio containing folder</source>
-        <translation>เปิดโฟลเดอร์ของเสียง</translation>
+        <source>Show audio in folder</source>
+        <translation>แสดงเสียงในโฟลเดอร์</translation>
     </message>
     <message>
-        <source>Open keyframes containing folder</source>
-        <translation>เปิดโฟลเดอร์ของคีย์เฟรม</translation>
+        <source>Show keyframes in folder</source>
+        <translation>แสดงคีย์เฟรมในโฟลเดอร์</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -13868,20 +13880,104 @@ Styles deleted:
 <context>
     <name>HikariSub.TimeShift</name>
     <message>
-        <source>The starting time</source>
-        <translation>เวลาเริ่มต้น</translation>
+        <source>Shift by</source>
+        <translation>เลื่อนตาม</translation>
     </message>
     <message>
-        <source>End time</source>
-        <translation>เวลาสิ้นสุด</translation>
+        <source>To video</source>
+        <translation>ไปที่วิดีโอ</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>สไตล์</translation>
+        <source>Moves the active line to the video’s frame</source>
+        <translation>เลื่อนบรรทัดที่ใช้งานไปที่เฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>To audio mark</source>
+        <translation>ไปที่เครื่องหมายเสียง</translation>
+    </message>
+    <message>
+        <source>Moves the active line to the audio mark</source>
+        <translation>เลื่อนบรรทัดที่ใช้งานไปที่เครื่องหมายเสียง</translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation>เลื่อน</translation>
+    </message>
+    <message>
+        <source>Move the active line’s</source>
+        <translation>เลื่อนของบรรทัดที่ใช้งาน</translation>
     </message>
     <message>
         <source>End</source>
         <translation>สิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>To the video at %1</source>
+        <translation>ไปที่วิดีโอที่ %1</translation>
+    </message>
+    <message>
+        <source>To the audio mark at %1</source>
+        <translation>ไปที่เครื่องหมายเสียงที่ %1</translation>
+    </message>
+    <message>
+        <source>Plus</source>
+        <translation>บวก</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>หน่วย</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>การใช้เฟรมต้องมีวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>เปิดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Direction</source>
+        <translation>ทิศทาง</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>ช้าลง</translation>
+    </message>
+    <message>
+        <source>Earlier</source>
+        <translation>เร็วขึ้น</translation>
+    </message>
+    <message>
+        <source>Times</source>
+        <translation>เวลา</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>ทั้งสอง</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>เวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Leave as they are</source>
+        <translation>คงไว้ตามเดิม</translation>
+    </message>
+    <message>
+        <source>Fix overlaps</source>
+        <translation>แก้ไขเวลาที่ทับซ้อน</translation>
+    </message>
+    <message>
+        <source>Recalculate from text length</source>
+        <translation>คำนวณใหม่จากความยาวข้อความ</translation>
+    </message>
+    <message>
+        <source>Move tag times too (%1, %2, %3)</source>
+        <translation>เลื่อนเวลาในแท็กด้วย (%1, %2, %3)</translation>
     </message>
     <message>
         <source>Shift times</source>
@@ -13896,60 +13992,112 @@ Styles deleted:
         <translation>เวลา</translation>
     </message>
     <message>
-        <source>Shift subtitle times</source>
-        <translation>เลื่อนเวลาคำบรรยาย</translation>
-    </message>
-    <message>
         <source>Shift</source>
         <translation>เลื่อน</translation>
     </message>
     <message>
-        <source>Forward</source>
-        <translation>ไปข้างหน้า</translation>
+        <source>Apply</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n line(s)</source>
+        <translation>
+            <numerusform>นำไปใช้กับ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift %n line(s)</source>
+        <translation>
+            <numerusform>เลื่อน %n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Backward</source>
-        <translation>ย้อนกลับ</translation>
+        <source>No line changes</source>
+        <translation>ไม่มีบรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %n line(s)</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %1 of %n line(s)</source>
+        <translation>
+            <numerusform>เปลี่ยน %1 จาก %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-in</source>
+        <translation>
+            <numerusform>ช่วงนำ %n</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-out</source>
+        <translation>
+            <numerusform>ช่วงต่อท้าย %n</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n gap(s) closed</source>
+        <translation>
+            <numerusform>ปิดช่องว่าง %n ช่อง</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n snapped</source>
+        <translation>
+            <numerusform>ปรับให้ตรง %n</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Tag times</source>
-        <translation>เวลาแท็ก</translation>
+        <source>lead-in</source>
+        <translation>ช่วงนำ</translation>
     </message>
     <message>
-        <source>Move according to the following styles (separated by a comma)</source>
-        <translation>เลื่อนตามสไตล์ต่อไปนี้ (คั่นด้วยจุลภาค)</translation>
+        <source>lead-out</source>
+        <translation>ช่วงต่อท้าย</translation>
     </message>
     <message>
-        <source>End time correction</source>
-        <translation>การแก้ไขเวลาสิ้นสุด</translation>
+        <source>gap closed</source>
+        <translation>ปิดช่องว่าง</translation>
     </message>
     <message>
-        <source>Corrects end times that are improper or overlap each other</source>
-        <translation>แก้ไขเวลาสิ้นสุดที่ไม่ถูกต้องหรือทับซ้อนกัน</translation>
+        <source>snapped start</source>
+        <translation>ปรับเวลาเริ่มให้ตรง</translation>
     </message>
     <message>
-        <source>Shift by video / audio</source>
-        <translation>เลื่อนตามเวลาวิดีโอหรือเสียง</translation>
+        <source>snapped end</source>
+        <translation>ปรับเวลาสิ้นสุดให้ตรง</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s)</source>
+        <translation>
+            <numerusform>%n เฟรม</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Beginning</source>
-        <translation>เริ่มต้น</translation>
+        <source>Preview</source>
+        <translation>ตัวอย่าง</translation>
     </message>
     <message>
-        <source>Moves the start time to the video/audio time</source>
-        <translation>ย้ายเวลาเริ่มต้นไปยังเวลาวิดีโอหรือเสียง</translation>
+        <source>no change</source>
+        <translation>ไม่เปลี่ยน</translation>
     </message>
     <message>
-        <source>Move the marker to video time</source>
-        <translation>ย้ายเครื่องหมายไปยังเวลาวิดีโอ</translation>
+        <source>Line %1, start %2 to %3, end %4 to %5, %6</source>
+        <translation>บรรทัด %1 เริ่ม %2 เป็น %3 สิ้นสุด %4 เป็น %5 %6</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more line(s) change.</source>
+        <translation>
+            <numerusform>มีอีก %n บรรทัดที่เปลี่ยน</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Move the marker to audio time</source>
-        <translation>ย้ายเครื่องหมายไปยังเวลาเสียง</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>บรรทัดใด</translation>
+        <source>One undo step: “%1”</source>
+        <translation>การเลิกทำหนึ่งขั้น: “%1”</translation>
     </message>
     <message>
         <source>Timing postprocessor</source>
@@ -13960,36 +14108,8 @@ Styles deleted:
         <translation>ระยะเลื่อน</translation>
     </message>
     <message>
-        <source>Time shifts</source>
-        <translation>การเลื่อนเวลา</translation>
-    </message>
-    <message>
-        <source>Shift times by time / frames</source>
-        <translation>เลื่อนเวลาตามเวลาหรือเฟรม</translation>
-    </message>
-    <message>
-        <source>Delays subtitles</source>
-        <translation>ทำให้คำบรรยายแสดงช้าลง</translation>
-    </message>
-    <message>
-        <source>Speeds up subtitles</source>
-        <translation>ทำให้คำบรรยายแสดงเร็วขึ้น</translation>
-    </message>
-    <message>
-        <source>Shifts %1, %2, and %3 tag times
-so their positions on video do not change
-(slows down time shifting)</source>
-        <translation>เลื่อนเวลาแท็ก %1, %2 และ %3
-เพื่อให้ตำแหน่งบนวิดีโอไม่เปลี่ยน
-(ทำให้การเลื่อนเวลาช้าลง)</translation>
-    </message>
-    <message>
         <source>Lines</source>
         <translation>บรรทัด</translation>
-    </message>
-    <message>
-        <source>The choice of lines to move</source>
-        <translation>เลือกบรรทัดที่จะเลื่อน</translation>
     </message>
     <message>
         <source>All lines</source>
@@ -14000,168 +14120,108 @@ so their positions on video do not change
         <translation>บรรทัดที่เลือก</translation>
     </message>
     <message>
-        <source>From the selected line</source>
-        <translation>บรรทัดที่เลือกเป็นต้นไป</translation>
+        <source>Selected line and below</source>
+        <translation>บรรทัดที่เลือกและด้านล่าง</translation>
     </message>
     <message>
-        <source>All times higher and equal</source>
-        <translation>เวลาที่มากกว่าหรือเท่ากับ</translation>
+        <source>Starting at or after the selection</source>
+        <translation>เริ่มที่หรือหลังส่วนที่เลือก</translation>
     </message>
     <message>
-        <source>All times lower and equal</source>
-        <translation>เวลาที่น้อยกว่าหรือเท่ากับ</translation>
+        <source>Starting at or before the selection</source>
+        <translation>เริ่มที่หรือก่อนส่วนที่เลือก</translation>
     </message>
     <message>
-        <source>According to the selected styles</source>
-        <translation>ตามสไตล์ที่เลือก</translation>
+        <source>Lines in chosen styles…</source>
+        <translation>บรรทัดในสไตล์ที่เลือก…</translation>
     </message>
     <message>
-        <source>Select a style from the list</source>
-        <translation>เลือกสไตล์จากรายการ</translation>
+        <source>Choose styles…</source>
+        <translation>เลือกสไตล์…</translation>
     </message>
     <message>
-        <source>Styles, separated by commas</source>
-        <translation>สไตล์ คั่นด้วยจุลภาค</translation>
+        <source>%1 ms</source>
+        <translation>%1 มิลลิวินาที</translation>
     </message>
     <message>
-        <source>Run timing postprocessor</source>
-        <translation>เรียกใช้โพสต์โปรเซสเซอร์การจัดเวลา</translation>
-    </message>
-    <message>
-        <source>A method of time shift</source>
-        <translation>วิธีเลื่อนเวลา</translation>
-    </message>
-    <message>
-        <source>The choice of times to move</source>
-        <translation>เลือกเวลาที่จะเลื่อน</translation>
-    </message>
-    <message>
-        <source>Both times</source>
-        <translation>ทั้งสองเวลา</translation>
-    </message>
-    <message>
-        <source>Leave unchanged</source>
-        <translation>ไม่เปลี่ยนแปลง</translation>
-    </message>
-    <message>
-        <source>Adjust overlapping times</source>
-        <translation>ปรับเวลาที่ทับซ้อนกัน</translation>
-    </message>
-    <message>
-        <source>New times</source>
-        <translation>เวลาใหม่</translation>
-    </message>
-    <message>
-        <source>Moves the end time to the video/audio time</source>
-        <translation>ย้ายเวลาสิ้นสุดไปยังเวลาวิดีโอหรือเสียง</translation>
-    </message>
-    <message>
-        <source>Lead-in/lead-out</source>
-        <translation>ช่วงนำ/ช่วงต่อท้าย</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the start time (good when using fad)</source>
-        <translation>เพิ่มช่วงนำก่อนเวลาเริ่มต้น (เหมาะเมื่อใช้ fad)</translation>
-    </message>
-    <message>
-        <source>Introduction time in milliseconds</source>
-        <translation>เวลาช่วงนำเป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the end time (good when using fad)</source>
-        <translation>เพิ่มช่วงต่อท้ายหลังเวลาสิ้นสุด (เหมาะเมื่อใช้ fad)</translation>
-    </message>
-    <message>
-        <source>Enable</source>
-        <translation>เปิดใช้</translation>
-    </message>
-    <message>
-        <source>Start time extension threshold</source>
-        <translation>เกณฑ์การขยายเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>End time extension threshold</source>
-        <translation>เกณฑ์การขยายเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Before the start time</source>
-        <translation>ก่อนเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the start time in milliseconds</source>
-        <translation>ระยะเลื่อนสูงสุดไปยังคีย์เฟรม 
-ก่อนเวลาเริ่มต้น เป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the start time in milliseconds</source>
-        <translation>ระยะเลื่อนสูงสุดไปยังคีย์เฟรม 
-หลังเวลาเริ่มต้น เป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the end time in milliseconds</source>
-        <translation>ระยะเลื่อนสูงสุดไปยังคีย์เฟรม 
-ก่อนเวลาสิ้นสุด เป็นมิลลิวินาที</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the end time in milliseconds</source>
-        <translation>ระยะเลื่อนสูงสุดไปยังคีย์เฟรม 
-หลังเวลาสิ้นสุด เป็นมิลลิวินาที</translation>
+        <source>The rules need a video.</source>
+        <translation>กฎต้องมีวิดีโอ</translation>
     </message>
     <message>
         <source>Lead-in</source>
         <translation>ช่วงนำ</translation>
     </message>
     <message>
+        <source>Start earlier by</source>
+        <translation>เริ่มเร็วขึ้น</translation>
+    </message>
+    <message>
         <source>Lead-out</source>
         <translation>ช่วงต่อท้าย</translation>
     </message>
     <message>
-        <source>Lead-out time in milliseconds</source>
-        <translation>เวลาช่วงต่อท้ายเป็นมิลลิวินาที</translation>
+        <source>End later by</source>
+        <translation>สิ้นสุดช้าลง</translation>
     </message>
     <message>
-        <source>Set times as continuous</source>
-        <translation>กำหนดค่าเวลาเป็นแบบต่อเนื่อง</translation>
+        <source>Close small gaps</source>
+        <translation>ปิดช่องว่างเล็ก ๆ</translation>
     </message>
     <message>
-        <source>Start time threshold</source>
-        <translation>เกณฑ์เวลาเริ่มต้น</translation>
+        <source>Start back to the previous end if within</source>
+        <translation>เลื่อนเวลาเริ่มกลับไปที่จุดสิ้นสุดก่อนหน้าถ้าห่างไม่เกิน</translation>
     </message>
     <message>
-        <source>End time threshold</source>
-        <translation>เกณฑ์เวลาสิ้นสุด</translation>
+        <source>End on to the next start if within</source>
+        <translation>ขยายเวลาสิ้นสุดไปถึงจุดเริ่มถัดไปถ้าห่างไม่เกิน</translation>
+    </message>
+    <message>
+        <source>Both gap limits are 0 ms. Raise one to close gaps.</source>
+        <translation>ขีดจำกัดช่องว่างทั้งสองเป็น 0 มิลลิวินาที เพิ่มค่าใดค่าหนึ่งเพื่อปิดช่องว่าง</translation>
+    </message>
+    <message>
+        <source>before</source>
+        <translation>ก่อน</translation>
+    </message>
+    <message>
+        <source>after</source>
+        <translation>หลัง</translation>
+    </message>
+    <message>
+        <source>Start within</source>
+        <translation>เวลาเริ่มภายใน</translation>
+    </message>
+    <message>
+        <source>Start within, before</source>
+        <translation>เวลาเริ่มภายใน ก่อน</translation>
+    </message>
+    <message>
+        <source>Start within, after</source>
+        <translation>เวลาเริ่มภายใน หลัง</translation>
+    </message>
+    <message>
+        <source>End within</source>
+        <translation>เวลาสิ้นสุดภายใน</translation>
+    </message>
+    <message>
+        <source>End within, before</source>
+        <translation>เวลาสิ้นสุดภายใน ก่อน</translation>
+    </message>
+    <message>
+        <source>End within, after</source>
+        <translation>เวลาสิ้นสุดภายใน หลัง</translation>
+    </message>
+    <message>
+        <source>Needs keyframes.</source>
+        <translation>ต้องมีคีย์เฟรม</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>เปิดคีย์เฟรม…</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
         <translation>ปรับเวลาให้ตรงกับคีย์เฟรม</translation>
-    </message>
-    <message>
-        <source>After the start time</source>
-        <translation>หลังเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Before the end time</source>
-        <translation>ก่อนเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>After the end time</source>
-        <translation>หลังเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Profiles</source>
-        <translation>โปรไฟล์</translation>
-    </message>
-    <message>
-        <source>Adding and editing profiles</source>
-        <translation>เพิ่มและแก้ไขโปรไฟล์</translation>
-    </message>
-    <message>
-        <source>Removing profiles</source>
-        <translation>นำโปรไฟล์ออก</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -14176,6 +14236,10 @@ after the end time in milliseconds</source>
         <translation>ยังไม่ได้เลือกบรรทัดที่จะเลื่อน</translation>
     </message>
     <message>
+        <source>Needs a video.</source>
+        <translation>ต้องมีวิดีโอ</translation>
+    </message>
+    <message>
         <source>Video was not loaded using FFMS2</source>
         <translation>วิดีโอไม่ได้โหลดด้วย FFMS2</translation>
     </message>
@@ -14184,32 +14248,84 @@ after the end time in milliseconds</source>
         <translation>เลื่อนเวลาไม่ได้</translation>
     </message>
     <message>
-        <source>Shift only the start times?</source>
-        <translation>เลื่อนเฉพาะเวลาเริ่มต้นหรือไม่</translation>
+        <source>%1 (Timing default)</source>
+        <translation>%1 (ค่าเริ่มต้นของการจัดเวลา)</translation>
     </message>
     <message>
-        <source>Shift only the end times?</source>
-        <translation>เลื่อนเฉพาะเวลาสิ้นสุดหรือไม่</translation>
+        <source>Delete preset</source>
+        <translation>ลบพรีเซ็ต</translation>
     </message>
     <message>
-        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
-        <translation>เวลาสิ้นสุดจะอยู่ที่เดิม บรรทัดที่เลื่อนเลยเวลาสิ้นสุดจึงจะสิ้นสุดก่อนเริ่มต้น</translation>
+        <source>Delete the preset “%1”?</source>
+        <translation>ลบพรีเซ็ต “%1” หรือไม่?</translation>
     </message>
     <message>
-        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
-        <translation>เวลาเริ่มต้นจะอยู่ที่เดิม บรรทัดที่เลื่อนไปก่อนเวลาเริ่มต้นจึงจะสิ้นสุดก่อนเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Shift start times</source>
-        <translation>เลื่อนเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Shift end times</source>
-        <translation>เลื่อนเวลาสิ้นสุด</translation>
+        <source>Delete</source>
+        <translation>ลบ</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation>พรีเซ็ต</translation>
+    </message>
+    <message>
+        <source>Preset: %1</source>
+        <translation>พรีเซ็ต: %1</translation>
+    </message>
+    <message>
+        <source>last used</source>
+        <translation>ใช้ล่าสุด</translation>
+    </message>
+    <message>
+        <source>Preset commands</source>
+        <translation>คำสั่งพรีเซ็ต</translation>
+    </message>
+    <message>
+        <source>Save as preset…</source>
+        <translation>บันทึกเป็นพรีเซ็ต…</translation>
+    </message>
+    <message>
+        <source>Rename preset…</source>
+        <translation>เปลี่ยนชื่อพรีเซ็ต…</translation>
+    </message>
+    <message>
+        <source>Delete preset…</source>
+        <translation>ลบพรีเซ็ต…</translation>
+    </message>
+    <message>
+        <source>Use in the Timing layout</source>
+        <translation>ใช้ในเลย์เอาต์การจัดเวลา</translation>
+    </message>
+    <message>
+        <source>Rename preset</source>
+        <translation>เปลี่ยนชื่อพรีเซ็ต</translation>
+    </message>
+    <message>
+        <source>Save as preset</source>
+        <translation>บันทึกเป็นพรีเซ็ต</translation>
+    </message>
+    <message>
+        <source>Preset name</source>
+        <translation>ชื่อพรีเซ็ต</translation>
+    </message>
+    <message>
+        <source>A preset named “%1” exists. Saving replaces it.</source>
+        <translation>มีพรีเซ็ตชื่อ “%1” อยู่แล้ว การบันทึกจะแทนที่พรีเซ็ตนั้น</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>แทนที่</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>เปลี่ยนชื่อ</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>บันทึก</translation>
     </message>
 </context>
 <context>
@@ -14654,7 +14770,7 @@ after the end time in milliseconds</source>
         <translation>เวลาของวิดีโอ</translation>
     </message>
     <message>
-        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
         <translation>เวลาของเฟรม; หมายเลขเฟรม; จำนวนเฟรมนับจากเฟรมเริ่มต้นของบรรทัด; มิลลิวินาทีนับจากจุดเริ่มต้นและจุดสิ้นสุดของบรรทัด</translation>
     </message>
     <message>

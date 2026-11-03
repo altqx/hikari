@@ -65,16 +65,16 @@
         <translation>음량 슬라이더와 확대/축소 슬라이더 연결</translation>
     </message>
     <message>
-        <source> or </source>
-        <translation> 또는 </translation>
+        <source>%1 or %2</source>
+        <translation>%1 또는 %2</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>단축키는 Shift + 클릭으로 설정할 수 있습니다</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
     <message>
-        <source>Second shortcut can be set using Control + Click</source>
-        <translation>두 번째 단축키는 Control + 클릭으로 설정할 수 있습니다</translation>
+        <source>Ctrl+click to set a second shortcut</source>
+        <translation>Ctrl+클릭으로 두 번째 단축키를 설정합니다</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -1906,8 +1906,8 @@ Output device: %2</source>
         <translation>취소</translation>
     </message>
     <message>
-        <source>Subtitle file </source>
-        <translation>자막 파일 </translation>
+        <source>Subtitle file (%1)</source>
+        <translation>자막 파일 (%1)</translation>
     </message>
     <message>
         <source>Save</source>
@@ -2451,8 +2451,8 @@ Output device: %2</source>
         <translation>취소선</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>글꼴 선택</translation>
+        <source>Choose font…</source>
+        <translation>글꼴 선택…</translation>
     </message>
     <message>
         <source>Primary colour</source>
@@ -3383,7 +3383,7 @@ Output device: %2</source>
         <translation>글꼴</translation>
     </message>
     <message>
-        <source>Font selection</source>
+        <source>Choose font</source>
         <translation>글꼴 선택</translation>
     </message>
     <message>
@@ -5008,8 +5008,8 @@ Failed to copy %2 fonts.</source>
         <translation>취소</translation>
     </message>
     <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation>단축키는 Shift + 클릭으로 설정할 수 있습니다</translation>
+        <source>Shift+click to set a shortcut</source>
+        <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -5652,6 +5652,18 @@ Failed to copy %2 fonts.</source>
         <translation>선택한 줄 정렬 / 태그가 없는 글자</translation>
     </message>
     <message>
+        <source>Shift times with the last values</source>
+        <translation>마지막 값으로 시간 이동</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor panel</source>
+        <translation>타이밍 후처리기 패널</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor with the last values</source>
+        <translation>마지막 값으로 타이밍 후처리기 실행</translation>
+    </message>
+    <message>
         <source>Go to previous keyframe</source>
         <translation>이전 키 프레임</translation>
     </message>
@@ -5848,10 +5860,6 @@ Failed to copy %2 fonts.</source>
         <translation>번역 맞추기…</translation>
     </message>
     <message>
-        <source>Shift times / run timing postprocessor</source>
-        <translation>시간 이동 / 타이밍 후처리기 실행</translation>
-    </message>
-    <message>
         <source>Save as…</source>
         <translation>다른 이름으로 저장…</translation>
     </message>
@@ -5978,6 +5986,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Translation mode</source>
         <translation>번역 모드</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>고정 공백 삽입</translation>
     </message>
     <message>
         <source>Place run 1</source>
@@ -6574,7 +6586,7 @@ Failed to copy %2 fonts.</source>
         <translation>TMP로 변환</translation>
     </message>
     <message>
-        <source>The starting time</source>
+        <source>Start time</source>
         <translation>시작 시간</translation>
     </message>
     <message>
@@ -6582,7 +6594,7 @@ Failed to copy %2 fonts.</source>
         <translation>종료 시간</translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>Style</source>
         <translation>스타일</translation>
     </message>
     <message>
@@ -6642,8 +6654,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상과 같은 이름으로 자막 저장</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>자동 저장 파일 열기</translation>
+        <source>Open autosave…</source>
+        <translation>자동 저장 파일 열기…</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
@@ -6716,6 +6728,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Find next</source>
         <translation>다음 찾기</translation>
+    </message>
+    <message>
+        <source>Shift &amp;times…</source>
+        <translation>시간 이동…[&amp;T]</translation>
+    </message>
+    <message>
+        <source>Moves line times by the lead-in, lead-out, gap and keyframe rules</source>
+        <translation>도입부, 종결부, 간격, 키 프레임 규칙에 따라 줄 시간을 옮깁니다</translation>
+    </message>
+    <message>
+        <source>Timing &amp;postprocessor…</source>
+        <translation>타이밍 후처리기…[&amp;P]</translation>
     </message>
     <message>
         <source>Go to start time of line</source>
@@ -6930,16 +6954,12 @@ Failed to copy %2 fonts.</source>
         <translation>이전 찾기</translation>
     </message>
     <message>
-        <source>Shift &amp;times...</source>
-        <translation>시간 이동...[&amp;T]</translation>
-    </message>
-    <message>
         <source>Style &amp;manager</source>
         <translation>스타일 관리[&amp;M]</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS 파일 속성</translation>
+        <source>Script properties</source>
+        <translation>스크립트 속성</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -6986,7 +7006,7 @@ Failed to copy %2 fonts.</source>
         <translation>이전에 사용한 버전 이후의 릴리스 노트를 표시합니다</translation>
     </message>
     <message>
-        <source>What&apos;s &amp;new</source>
+        <source>What’s &amp;new</source>
         <translation>새로운 기능[&amp;N]</translation>
     </message>
     <message>
@@ -7208,18 +7228,6 @@ Failed to copy %2 fonts.</source>
         <translation>조건식으로 줄을 선택합니다</translation>
     </message>
     <message>
-        <source>Searches for the specified text phrases and replaces them</source>
-        <translation type="vanished">글자를 검색하고 변경합니다</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrase</source>
-        <translation type="vanished">글자를 검색합니다</translation>
-    </message>
-    <message>
-        <source>Finds the next occurrence of the phrase in the text</source>
-        <translation type="vanished">텍스트에서 다음 문구 위치 찾기</translation>
-    </message>
-    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>자막 시간의 프레임 속도를 바꿉니다</translation>
     </message>
@@ -7278,6 +7286,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Inserts a hard space (%1) at the cursor in the line editor</source>
+        <translation>줄 편집기의 커서 위치에 고정 공백(%1)을 삽입합니다</translation>
+    </message>
+    <message>
+        <source>Insert hard space</source>
+        <translation>고정 공백 삽입</translation>
     </message>
     <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
@@ -7404,8 +7420,8 @@ Failed to copy %2 fonts.</source>
         <translation>ASS 스타일 관리창을 엽니다</translation>
     </message>
     <message>
-        <source>ASS subtitle properties</source>
-        <translation>ASS 파일 정보</translation>
+        <source>Opens Script properties</source>
+        <translation>스크립트 속성을 엽니다</translation>
     </message>
     <message>
         <source>Converts from one format to another</source>
@@ -8562,6 +8578,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Stay on the line when editing times</source>
         <translation>시간 편집 시 현재 줄에 머무르기</translation>
+    </message>
+    <message>
+        <source>Shift+Enter inserts a soft line break (%1)</source>
+        <translation>Shift+Enter로 소프트 줄 바꿈(%1) 삽입</translation>
     </message>
     <message>
         <source>Translation mode</source>
@@ -9840,8 +9860,8 @@ Failed to copy %2 fonts.</source>
         <translation>10초 이상 멈췄습니다. 보고서에 멈춘 위치가 나옵니다.</translation>
     </message>
     <message>
-        <source>It is kept for the next start.</source>
-        <translation>다음 시작 때까지 보관합니다.</translation>
+        <source>The crash report could not be sent. It is kept for the next start.</source>
+        <translation>충돌 보고서를 보내지 못했습니다. 다음 시작 때까지 보관합니다.</translation>
     </message>
     <message>
         <source>It works again. A report shows where it was stuck.</source>
@@ -9936,8 +9956,8 @@ Failed to copy %2 fonts.</source>
         <translation>%1 양식이 채워진 상태로 브라우저에서 열렸습니다.</translation>
     </message>
     <message>
-        <source>The crash report could not be sent</source>
-        <translation>충돌 보고서를 보내지 못했습니다</translation>
+        <source>The crash report could not be sent.</source>
+        <translation>충돌 보고서를 보내지 못했습니다.</translation>
     </message>
     <message>
         <source>The report is too long for a link, so it is on the clipboard.</source>
@@ -9948,12 +9968,8 @@ Failed to copy %2 fonts.</source>
         <translation>보고서가 링크에 담기에는 너무 길어 클립보드에 복사했습니다. 양식에 붙여 넣으십시오.</translation>
     </message>
     <message>
-        <source>The browser did not open</source>
-        <translation>브라우저가 열리지 않았습니다</translation>
-    </message>
-    <message>
-        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
-        <translation>이슈 내용이 클립보드에 있습니다. GitHub의 새 이슈에 붙여 넣으십시오.</translation>
+        <source>The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>브라우저가 열리지 않았습니다. 이슈 내용이 클립보드에 있습니다. GitHub의 새 이슈에 붙여 넣으십시오.</translation>
     </message>
     <message>
         <source>Report text</source>
@@ -10043,8 +10059,8 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.ScriptProperties</name>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS 파일 속성</translation>
+        <source>Script properties</source>
+        <translation>스크립트 속성</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -10700,7 +10716,7 @@ because it was edited.</source>
         <translation>열기</translation>
     </message>
     <message>
-        <source>Open auto save</source>
+        <source>Open autosave</source>
         <translation>자동 저장 파일 열기</translation>
     </message>
     <message>
@@ -10942,10 +10958,6 @@ because it was edited.</source>
         <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
-        <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation type="vanished">소리 및 영상 파일 (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
-    </message>
-    <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>키 프레임 파일 (*.txt *.pass *.stats *.log)</translation>
     </message>
@@ -10978,12 +10990,12 @@ because it was edited.</source>
         <translation>%1 (복구됨)</translation>
     </message>
     <message>
-        <source>Auto save folder is empty</source>
-        <translation>자동 저장 폴더가 비어 있음</translation>
+        <source>The autosave folder is empty.</source>
+        <translation>자동 저장 폴더가 비어 있습니다.</translation>
     </message>
     <message>
-        <source>Cannot open auto save folder</source>
-        <translation>자동 저장 폴더를 열 수 없음</translation>
+        <source>The autosave folder cannot be opened.</source>
+        <translation>자동 저장 폴더를 열 수 없습니다.</translation>
     </message>
     <message>
         <source>Failed to load autosave</source>
@@ -12619,20 +12631,20 @@ Styles deleted:
         <translation>모든 탭 닫기</translation>
     </message>
     <message>
-        <source>Open the folder containing the subtitles</source>
-        <translation>자막 폴더 열기</translation>
+        <source>Show subtitles in folder</source>
+        <translation>폴더에서 자막 보기</translation>
     </message>
     <message>
-        <source>Open video containing folder</source>
-        <translation>영상 폴더 열기</translation>
+        <source>Show video in folder</source>
+        <translation>폴더에서 영상 보기</translation>
     </message>
     <message>
-        <source>Open audio containing folder</source>
-        <translation>소리 폴더 열기</translation>
+        <source>Show audio in folder</source>
+        <translation>폴더에서 소리 보기</translation>
     </message>
     <message>
-        <source>Open keyframes containing folder</source>
-        <translation>키 프레임 폴더 열기</translation>
+        <source>Show keyframes in folder</source>
+        <translation>폴더에서 키 프레임 보기</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -13868,20 +13880,104 @@ Styles deleted:
 <context>
     <name>HikariSub.TimeShift</name>
     <message>
-        <source>The starting time</source>
-        <translation>시작 시간</translation>
+        <source>Shift by</source>
+        <translation>이동 기준</translation>
     </message>
     <message>
-        <source>End time</source>
-        <translation>종료 시간</translation>
+        <source>To video</source>
+        <translation>영상으로</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>스타일</translation>
+        <source>Moves the active line to the video’s frame</source>
+        <translation>활성 줄을 영상의 프레임으로 옮깁니다</translation>
+    </message>
+    <message>
+        <source>To audio mark</source>
+        <translation>오디오 표시로</translation>
+    </message>
+    <message>
+        <source>Moves the active line to the audio mark</source>
+        <translation>활성 줄을 오디오 표시로 옮깁니다</translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation>이동</translation>
+    </message>
+    <message>
+        <source>Move the active line’s</source>
+        <translation>활성 줄에서 옮길 시간</translation>
     </message>
     <message>
         <source>End</source>
         <translation>종료 시간</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>시작</translation>
+    </message>
+    <message>
+        <source>To the video at %1</source>
+        <translation>영상의 %1(으)로</translation>
+    </message>
+    <message>
+        <source>To the audio mark at %1</source>
+        <translation>%1의 오디오 표시로</translation>
+    </message>
+    <message>
+        <source>Plus</source>
+        <translation>추가</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>단위</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>프레임 단위는 영상이 있어야 합니다.</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>영상 열기…</translation>
+    </message>
+    <message>
+        <source>Direction</source>
+        <translation>방향</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>나중으로</translation>
+    </message>
+    <message>
+        <source>Earlier</source>
+        <translation>이전으로</translation>
+    </message>
+    <message>
+        <source>Times</source>
+        <translation>시간</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>둘 다</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>종료 시간</translation>
+    </message>
+    <message>
+        <source>Leave as they are</source>
+        <translation>그대로 두기</translation>
+    </message>
+    <message>
+        <source>Fix overlaps</source>
+        <translation>겹침 바로잡기</translation>
+    </message>
+    <message>
+        <source>Recalculate from text length</source>
+        <translation>글자 길이로 다시 계산</translation>
+    </message>
+    <message>
+        <source>Move tag times too (%1, %2, %3)</source>
+        <translation>태그 시간도 이동 (%1, %2, %3)</translation>
     </message>
     <message>
         <source>Shift times</source>
@@ -13896,60 +13992,112 @@ Styles deleted:
         <translation>시간</translation>
     </message>
     <message>
-        <source>Shift subtitle times</source>
-        <translation>자막 시간 이동</translation>
-    </message>
-    <message>
         <source>Shift</source>
         <translation>이동</translation>
     </message>
     <message>
-        <source>Forward</source>
-        <translation>앞으로</translation>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n line(s)</source>
+        <translation>
+            <numerusform>%n줄에 적용</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift %n line(s)</source>
+        <translation>
+            <numerusform>%n줄 이동</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Backward</source>
-        <translation>뒤로</translation>
+        <source>No line changes</source>
+        <translation>바뀌는 줄 없음</translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %n line(s)</source>
+        <translation>
+            <numerusform>%n줄 변경</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %1 of %n line(s)</source>
+        <translation>
+            <numerusform>%n줄 중 %1줄 변경</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-in</source>
+        <translation>
+            <numerusform>도입부 %n</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lead-out</source>
+        <translation>
+            <numerusform>종결부 %n</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n gap(s) closed</source>
+        <translation>
+            <numerusform>간격 %n개 메움</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n snapped</source>
+        <translation>
+            <numerusform>%n개 맞춤</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Tag times</source>
-        <translation>태그 시간</translation>
+        <source>lead-in</source>
+        <translation>도입부</translation>
     </message>
     <message>
-        <source>Move according to the following styles (separated by a comma)</source>
-        <translation>다음 스타일에 따라 이동(쉼표로 구분)</translation>
+        <source>lead-out</source>
+        <translation>종결부</translation>
     </message>
     <message>
-        <source>End time correction</source>
-        <translation>종료 시간 수정</translation>
+        <source>gap closed</source>
+        <translation>간격 메움</translation>
     </message>
     <message>
-        <source>Corrects end times that are improper or overlap each other</source>
-        <translation>잘못되었거나 서로 겹치는 종료 시간 수정</translation>
+        <source>snapped start</source>
+        <translation>시작 맞춤</translation>
     </message>
     <message>
-        <source>Shift by video / audio</source>
-        <translation>영상 / 소리 기준 이동</translation>
+        <source>snapped end</source>
+        <translation>종료 맞춤</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s)</source>
+        <translation>
+            <numerusform>%n프레임</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Beginning</source>
-        <translation>시작 시간</translation>
+        <source>Preview</source>
+        <translation>미리 보기</translation>
     </message>
     <message>
-        <source>Moves the start time to the video/audio time</source>
-        <translation>시작 시간을 영상 / 소리 시간으로 이동</translation>
+        <source>no change</source>
+        <translation>변경 없음</translation>
     </message>
     <message>
-        <source>Move the marker to video time</source>
-        <translation>표시선을 영상 시간으로 이동</translation>
+        <source>Line %1, start %2 to %3, end %4 to %5, %6</source>
+        <translation>%1번 줄, 시작 %2에서 %3, 종료 %4에서 %5, %6</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more line(s) change.</source>
+        <translation>
+            <numerusform>%n줄이 더 바뀝니다.</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Move the marker to audio time</source>
-        <translation>표시선을 소리 시간으로 이동</translation>
-    </message>
-    <message>
-        <source>Which lines</source>
-        <translation>대상 줄</translation>
+        <source>One undo step: “%1”</source>
+        <translation>실행 취소 한 단계: “%1”</translation>
     </message>
     <message>
         <source>Timing postprocessor</source>
@@ -13960,36 +14108,8 @@ Styles deleted:
         <translation>이동량</translation>
     </message>
     <message>
-        <source>Time shifts</source>
-        <translation>시간 이동</translation>
-    </message>
-    <message>
-        <source>Shift times by time / frames</source>
-        <translation>시간 / 프레임 단위로 시간 이동</translation>
-    </message>
-    <message>
-        <source>Delays subtitles</source>
-        <translation>자막 늦추기</translation>
-    </message>
-    <message>
-        <source>Speeds up subtitles</source>
-        <translation>자막 앞당기기</translation>
-    </message>
-    <message>
-        <source>Shifts %1, %2, and %3 tag times
-so their positions on video do not change
-(slows down time shifting)</source>
-        <translation>%1, %2, %3 태그 시간을 이동하여
-영상에서의 위치가 바뀌지 않게 합니다
-(시간 이동이 느려짐)</translation>
-    </message>
-    <message>
         <source>Lines</source>
         <translation>줄</translation>
-    </message>
-    <message>
-        <source>The choice of lines to move</source>
-        <translation>이동할 줄 선택</translation>
     </message>
     <message>
         <source>All lines</source>
@@ -14000,168 +14120,108 @@ so their positions on video do not change
         <translation>선택한 줄만</translation>
     </message>
     <message>
-        <source>From the selected line</source>
-        <translation>선택한 줄부터</translation>
+        <source>Selected line and below</source>
+        <translation>선택한 줄과 그 아래</translation>
     </message>
     <message>
-        <source>All times higher and equal</source>
-        <translation>크거나 같은 시간</translation>
+        <source>Starting at or after the selection</source>
+        <translation>선택 시점 이후에 시작하는 줄</translation>
     </message>
     <message>
-        <source>All times lower and equal</source>
-        <translation>작거나 같은 시간</translation>
+        <source>Starting at or before the selection</source>
+        <translation>선택 시점 이전에 시작하는 줄</translation>
     </message>
     <message>
-        <source>According to the selected styles</source>
-        <translation>선택한 스타일에 따라</translation>
+        <source>Lines in chosen styles…</source>
+        <translation>선택한 스타일의 줄…</translation>
     </message>
     <message>
-        <source>Select a style from the list</source>
-        <translation>목록에서 스타일을 선택하십시오</translation>
+        <source>Choose styles…</source>
+        <translation>스타일 선택…</translation>
     </message>
     <message>
-        <source>Styles, separated by commas</source>
-        <translation>쉼표로 구분한 스타일</translation>
+        <source>%1 ms</source>
+        <translation>%1ms</translation>
     </message>
     <message>
-        <source>Run timing postprocessor</source>
-        <translation>타이밍 후처리기 실행</translation>
-    </message>
-    <message>
-        <source>A method of time shift</source>
-        <translation>시간 이동 방법</translation>
-    </message>
-    <message>
-        <source>The choice of times to move</source>
-        <translation>이동할 시간 선택</translation>
-    </message>
-    <message>
-        <source>Both times</source>
-        <translation>두 시간 모두</translation>
-    </message>
-    <message>
-        <source>Leave unchanged</source>
-        <translation>변경 안 함</translation>
-    </message>
-    <message>
-        <source>Adjust overlapping times</source>
-        <translation>겹치는 시간 조정</translation>
-    </message>
-    <message>
-        <source>New times</source>
-        <translation>새로운 시간</translation>
-    </message>
-    <message>
-        <source>Moves the end time to the video/audio time</source>
-        <translation>종료 시간을 영상 / 소리 시간으로 이동</translation>
-    </message>
-    <message>
-        <source>Lead-in/lead-out</source>
-        <translation>도입부/종결부</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the start time (good when using fad)</source>
-        <translation>시작 시간 앞에 도입부 추가 (fad 사용 시 유용)</translation>
-    </message>
-    <message>
-        <source>Introduction time in milliseconds</source>
-        <translation>도입부 시간(ms)</translation>
-    </message>
-    <message>
-        <source>Inserts introduction to the end time (good when using fad)</source>
-        <translation>종료 시간 뒤에 종결부 추가 (fad 사용 시 유용)</translation>
-    </message>
-    <message>
-        <source>Enable</source>
-        <translation>사용</translation>
-    </message>
-    <message>
-        <source>Start time extension threshold</source>
-        <translation>시작 시간 확장 임계값</translation>
-    </message>
-    <message>
-        <source>End time extension threshold</source>
-        <translation>종료 시간 확장 임계값</translation>
-    </message>
-    <message>
-        <source>Before the start time</source>
-        <translation>시작 시간 전</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the start time in milliseconds</source>
-        <translation>시작 시간 이전 키 프레임까지의 
-최대 이동 시간(ms)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the start time in milliseconds</source>
-        <translation>시작 시간 이후 키 프레임까지의 
-최대 이동 시간(ms)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-before the end time in milliseconds</source>
-        <translation>종료 시간 이전 키 프레임까지의 
-최대 이동 시간(ms)</translation>
-    </message>
-    <message>
-        <source>The maximum shift to a keyframe 
-after the end time in milliseconds</source>
-        <translation>종료 시간 이후 키 프레임까지의 
-최대 이동 시간(ms)</translation>
+        <source>The rules need a video.</source>
+        <translation>규칙을 쓰려면 영상이 필요합니다.</translation>
     </message>
     <message>
         <source>Lead-in</source>
         <translation>도입부</translation>
     </message>
     <message>
+        <source>Start earlier by</source>
+        <translation>시작을 앞당길 시간</translation>
+    </message>
+    <message>
         <source>Lead-out</source>
         <translation>종결부</translation>
     </message>
     <message>
-        <source>Lead-out time in milliseconds</source>
-        <translation>종결부 시간(ms)</translation>
+        <source>End later by</source>
+        <translation>종료를 늦출 시간</translation>
     </message>
     <message>
-        <source>Set times as continuous</source>
-        <translation>연속으로 시간 설정</translation>
+        <source>Close small gaps</source>
+        <translation>작은 간격 메우기</translation>
     </message>
     <message>
-        <source>Start time threshold</source>
-        <translation>시작 시간 임계값</translation>
+        <source>Start back to the previous end if within</source>
+        <translation>이전 종료까지 이 시간 안이면 시작을 당기기</translation>
     </message>
     <message>
-        <source>End time threshold</source>
-        <translation>종료 시간 임계값</translation>
+        <source>End on to the next start if within</source>
+        <translation>다음 시작까지 이 시간 안이면 종료를 늘리기</translation>
+    </message>
+    <message>
+        <source>Both gap limits are 0 ms. Raise one to close gaps.</source>
+        <translation>두 간격 한도가 모두 0ms입니다. 간격을 메우려면 하나를 늘리세요.</translation>
+    </message>
+    <message>
+        <source>before</source>
+        <translation>이전</translation>
+    </message>
+    <message>
+        <source>after</source>
+        <translation>이후</translation>
+    </message>
+    <message>
+        <source>Start within</source>
+        <translation>시작 범위</translation>
+    </message>
+    <message>
+        <source>Start within, before</source>
+        <translation>시작 범위, 이전</translation>
+    </message>
+    <message>
+        <source>Start within, after</source>
+        <translation>시작 범위, 이후</translation>
+    </message>
+    <message>
+        <source>End within</source>
+        <translation>종료 범위</translation>
+    </message>
+    <message>
+        <source>End within, before</source>
+        <translation>종료 범위, 이전</translation>
+    </message>
+    <message>
+        <source>End within, after</source>
+        <translation>종료 범위, 이후</translation>
+    </message>
+    <message>
+        <source>Needs keyframes.</source>
+        <translation>키 프레임이 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>키 프레임 열기…</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
         <translation>키 프레임에 맞춤</translation>
-    </message>
-    <message>
-        <source>After the start time</source>
-        <translation>시작 시간 후</translation>
-    </message>
-    <message>
-        <source>Before the end time</source>
-        <translation>종료 시간 전</translation>
-    </message>
-    <message>
-        <source>After the end time</source>
-        <translation>종료 시간 후</translation>
-    </message>
-    <message>
-        <source>Profiles</source>
-        <translation>프로필</translation>
-    </message>
-    <message>
-        <source>Adding and editing profiles</source>
-        <translation>프로필 추가 및 편집</translation>
-    </message>
-    <message>
-        <source>Removing profiles</source>
-        <translation>프로필 삭제</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -14176,6 +14236,10 @@ after the end time in milliseconds</source>
         <translation>이동할 줄이 선택되지 않았습니다</translation>
     </message>
     <message>
+        <source>Needs a video.</source>
+        <translation>영상이 필요합니다.</translation>
+    </message>
+    <message>
         <source>Video was not loaded using FFMS2</source>
         <translation>FFMS2를 사용하여 영상을 불러오지 않았습니다</translation>
     </message>
@@ -14184,32 +14248,84 @@ after the end time in milliseconds</source>
         <translation>시간을 이동할 수 없습니다.</translation>
     </message>
     <message>
-        <source>Shift only the start times?</source>
-        <translation>시작 시간만 이동하시겠습니까?</translation>
+        <source>%1 (Timing default)</source>
+        <translation>%1 (타이밍 기본값)</translation>
     </message>
     <message>
-        <source>Shift only the end times?</source>
-        <translation>종료 시간만 이동하시겠습니까?</translation>
+        <source>Delete preset</source>
+        <translation>프리셋 삭제</translation>
     </message>
     <message>
-        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
-        <translation>종료 시간은 그대로이므로, 종료 시간 이후로 이동한 줄은 시작하기 전에 끝나게 됩니다.</translation>
+        <source>Delete the preset “%1”?</source>
+        <translation>“%1” 프리셋을 삭제하시겠습니까?</translation>
     </message>
     <message>
-        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
-        <translation>시작 시간은 그대로이므로, 시작 시간 이전으로 이동한 줄은 시작하기 전에 끝나게 됩니다.</translation>
-    </message>
-    <message>
-        <source>Shift start times</source>
-        <translation>시작 시간 이동</translation>
-    </message>
-    <message>
-        <source>Shift end times</source>
-        <translation>종료 시간 이동</translation>
+        <source>Delete</source>
+        <translation>삭제</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation>프리셋</translation>
+    </message>
+    <message>
+        <source>Preset: %1</source>
+        <translation>프리셋: %1</translation>
+    </message>
+    <message>
+        <source>last used</source>
+        <translation>마지막 사용 값</translation>
+    </message>
+    <message>
+        <source>Preset commands</source>
+        <translation>프리셋 명령</translation>
+    </message>
+    <message>
+        <source>Save as preset…</source>
+        <translation>프리셋으로 저장…</translation>
+    </message>
+    <message>
+        <source>Rename preset…</source>
+        <translation>프리셋 이름 바꾸기…</translation>
+    </message>
+    <message>
+        <source>Delete preset…</source>
+        <translation>프리셋 삭제…</translation>
+    </message>
+    <message>
+        <source>Use in the Timing layout</source>
+        <translation>타이밍 레이아웃에서 사용</translation>
+    </message>
+    <message>
+        <source>Rename preset</source>
+        <translation>프리셋 이름 바꾸기</translation>
+    </message>
+    <message>
+        <source>Save as preset</source>
+        <translation>프리셋으로 저장</translation>
+    </message>
+    <message>
+        <source>Preset name</source>
+        <translation>프리셋 이름</translation>
+    </message>
+    <message>
+        <source>A preset named “%1” exists. Saving replaces it.</source>
+        <translation>“%1” 프리셋이 이미 있습니다. 저장하면 교체됩니다.</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>교체</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>이름 바꾸기</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>저장</translation>
     </message>
 </context>
 <context>
@@ -14654,7 +14770,7 @@ after the end time in milliseconds</source>
         <translation>영상 시간</translation>
     </message>
     <message>
-        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
         <translation>프레임 시간; 프레임 번호; 줄 시작 프레임부터의 프레임 수; 줄 시작과 끝으로부터의 밀리초</translation>
     </message>
     <message>

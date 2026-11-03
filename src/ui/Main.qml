@@ -16,6 +16,15 @@ ApplicationWindow {
     title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
     color: Theme.background
 
+    property int shellWindow: 0
+    readonly property string engineSuffix: shellWindow === 0 ? "" : "~" + shellWindow
+    readonly property var dockAffinities: ["w" + shellWindow]
+    readonly property bool windowHome: {
+        root.app.home
+        return root.app.windowHome(root.shellWindow)
+    }
+    function engineName(name) { return name + root.engineSuffix }
+    function panelName(dock) { return dock.uniqueName.slice(0, dock.uniqueName.length - root.engineSuffix.length) }
     required property ShellController shell
     required property LineEditorController editor
     required property VideoController video
@@ -67,11 +76,11 @@ ApplicationWindow {
         ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP", qsTr("Converts to TMPlayer format (not recommended)")]]
 
     readonly property var sortKeys: [
-        { key: "start", label: qsTr("The starting time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
+        { key: "start", label: qsTr("Start time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
           selected: "GLOBAL_SORT_SELECTED_BY_START_TIMES", help: qsTr("Sort by start time") },
         { key: "end", label: qsTr("End time"), all: "GLOBAL_SORT_ALL_BY_END_TIMES",
           selected: "GLOBAL_SORT_SELECTED_BY_END_TIMES", help: qsTr("Sort by end time") },
-        { key: "style", label: qsTr("Styles"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE",
+        { key: "style", label: qsTr("Style"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE",
           help: qsTr("Sort by styles") },
         { key: "actor", label: qsTr("Actor"), all: "GLOBAL_SORT_ALL_BY_ACTOR", selected: "GLOBAL_SORT_SELECTED_BY_ACTOR",
           help: qsTr("Sort by actor") },
@@ -151,6 +160,8 @@ ApplicationWindow {
     }
     // KDDW closes every panel before onClosing, so the close is reviewed here first (Docking.guardClose).
     function admitClose() {
+        if (root.shellWindow !== 0)
+            return true
         if (!root.app.quitApproved) {
             const rows = root.app.reviewClose("quit")
             if (rows.length > 0) {
@@ -162,6 +173,10 @@ ApplicationWindow {
         return true
     }
     onClosing: close => {
+        if (root.shellWindow !== 0) {
+            root.app.shellWindowClosed(root.shellWindow)
+            return
+        }
         if (!root.app.quitApproved) {
             const rows = root.app.reviewClose("quit")
             if (rows.length > 0) {
@@ -201,7 +216,7 @@ ApplicationWindow {
     function fitAudioBox() {
         const chrome = audioDock.isOpen ? Math.round(root.workspaceLayout.panelSize(audioDock).height - audioPanel.bodyHeight) : 0
         // KDDW: a separator dragged past the editor's minimum pushes the next one, so the minimum is its rows' height.
-        Docking.setMinimumSize("Editor", Qt.size(editorPanel.minimumSize.width,
+        Docking.setMinimumSize(root.engineName("Editor"), Qt.size(editorPanel.minimumSize.width,
                                                  Math.ceil(editorColumn.implicitHeight) + 8))
         for (let pass = 0; pass < 3; ++pass) {
             const body = root.workspaceLayout.panelSize(audioDock).height - chrome
@@ -209,7 +224,7 @@ ApplicationWindow {
             const deficit = Math.round(170 - body)
             if (deficit === 0 || !audioDock.isOpen)
                 break
-            Docking.resizeInLayout("Audio", 0, 0, 0, deficit)
+            Docking.resizeInLayout(root.engineName("Audio"), 0, 0, 0, deficit)
         }
         editorPanel.reportMinimumSize()
     }
@@ -221,6 +236,8 @@ ApplicationWindow {
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 272))
         dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
         originalDock.close()
+        dockingArea.addDockWidget(postprocessorDock, KDDW.KDDockWidgets.Location_OnRight, audioDock, Qt.size(360, 0))
+        postprocessorDock.close()
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
@@ -238,7 +255,7 @@ ApplicationWindow {
         const fieldsShort = Math.ceil(editorInspector.wideMinimum - editorColumn.width)
         const room = Math.round(area * 0.5) - root.workspaceLayout.panelSize(editorDock).width
         if (fieldsShort > 0 && room > 0)
-            Docking.resizeInLayout("Editor", 0, 0, Math.min(fieldsShort, room), 0)
+            Docking.resizeInLayout(root.engineName("Editor"), 0, 0, Math.min(fieldsShort, room), 0)
         const original = originalDock.isOpen
         originalDock.open()
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 200))
@@ -251,13 +268,17 @@ ApplicationWindow {
         const tools = stylesTool.toolbar
         const short = Math.ceil(tools.implicitWidth + 12 - tools.width)
         if (tools.visible && short > 0)
-            Docking.resizeInLayout("Styles", short, 0, 0, 0)
+            Docking.resizeInLayout(root.engineName("Styles"), short, 0, 0, 0)
         // KDDW doesn't move the closed Audio/Original places' edge, so the Video panel's bottom edge moves instead.
         editorColumn.ensurePolished()
         const lower = root.workspaceLayout.panelSize(editorDock).height
         const natural = Math.ceil(editorColumn.implicitHeight) + 8 + lower - editorPanel.height
         if (lower !== natural)
-            Docking.resizeInLayout("Video", 0, 0, 0, lower - natural)
+            Docking.resizeInLayout(root.engineName("Video"), 0, 0, 0, lower - natural)
+    }
+    function timingLayout() {
+        videoDock.close()
+        postprocessorDock.open()
     }
     function karaokeLayout() {
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, gridDock,
@@ -267,12 +288,14 @@ ApplicationWindow {
         const lower = root.workspaceLayout.panelSize(gridDock).height
         const short = Math.ceil(lower - grid.height + grid.rowHeight * 8)
         if (short !== lower)
-            Docking.resizeInLayout("Grid", 0, short - lower, 0, 0)
+            Docking.resizeInLayout(root.engineName("Grid"), 0, short - lower, 0, 0)
     }
     Connections {
         target: root.workspaceLayout
         function onBuildArrangement(name) {
-            if (name === "Typesetting")
+            if (name === "Timing")
+                root.timingLayout()
+            else if (name === "Typesetting")
                 root.typesettingLayout()
             else if (name === "Karaoke")
                 root.karaokeLayout()
@@ -302,7 +325,7 @@ ApplicationWindow {
         }
     }
     function openOriginal() {
-        if (Docking.hasPlace("Original"))
+        if (Docking.hasPlace(root.engineName("Original")))
             originalDock.open()
         else
             root.addOriginal()
@@ -345,8 +368,8 @@ ApplicationWindow {
 
     function addRightOfGrid(dock) {
         const grid = gridDock.isOpen && !gridDock.isFloating
-        const left = Docking.placeInLayout("Grid").x
-        const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf("Grid"))
+        const left = Docking.placeInLayout(root.engineName("Grid")).x
+        const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf(root.engineName("Grid")))
         if (column) {
             column.addDockWidgetAsTab(dock)
         } else {
@@ -354,9 +377,9 @@ ApplicationWindow {
             const width = Math.min(Docking.minimumSize(dock.uniqueName).width, third)
             dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnRight, grid ? gridDock : null, Qt.size(width, 0))
         }
-        const moved = Docking.placeInLayout("Grid").x - left
+        const moved = Docking.placeInLayout(root.engineName("Grid")).x - left
         if (grid && moved !== 0)
-            Docking.resizeInLayout("Grid", moved, 0, 0, 0)
+            Docking.resizeInLayout(root.engineName("Grid"), moved, 0, 0, 0)
     }
 
     function openAutomationRun(runId) {
@@ -367,10 +390,10 @@ ApplicationWindow {
     }
 
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
-                                          templatePanel]
+                                          timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel, logPanel,
+                                          stylesPanel, templatePanel]
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
+                                     postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock, templateDock]
     Instantiator {
         model: root.dockList
         delegate: Connections {
@@ -429,6 +452,10 @@ ApplicationWindow {
             // MUST KILL: deferred because the arrangement swaps in before the editor leaves the old tab
             Qt.callLater(root.placeOriginal)
         }
+        function onPresetApplied(name) {
+            if (name === "Timing" && root.shiftTimes.timingPreset !== "")
+                root.shiftTimes.applyPreset("postprocessor", root.shiftTimes.timingPreset)
+        }
         function onPresetModeChosen(mode) {
             if (mode === "Translation" && root.app.translationQuestionDue())
                 root.openInMainWindow(translationModeQuestion)
@@ -476,34 +503,10 @@ ApplicationWindow {
         searchTool.focusFind()
     }
 
-    function runShiftTimes() {
-        const which = root.shiftTimes.settings.whichTimes
-        const pp = root.shiftTimes.settings.postprocessor
-        // MUST KILL: whichTimes (1 start, else end) and the postprocessor bit test are magic ints
-        if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
-            const start = which === 1
-            const target = root.app.editingTargetId()
-            shiftQuestion.askedFor = target
-            shiftQuestion.askWith({
-                title: qsTranslate("HikariSub.TimeShift", "Shift times"),
-                text: start ? qsTranslate("HikariSub.TimeShift", "Shift only the start times?")
-                            : qsTranslate("HikariSub.TimeShift", "Shift only the end times?"),
-                detail: start ? qsTranslate("HikariSub.TimeShift", "End times stay where they are, so a line shifted past its end ends before it starts.")
-                              : qsTranslate("HikariSub.TimeShift", "Start times stay where they are, so a line shifted before its start ends before it starts."),
-                severity: "warning",
-                choices: [
-                    { id: "shift", text: start ? qsTranslate("HikariSub.TimeShift", "Shift start times")
-                                               : qsTranslate("HikariSub.TimeShift", "Shift end times"),
-                      role: "accept", isDefault: true },
-                    { id: "cancel", text: qsTranslate("HikariSub.TimeShift", "Cancel"), role: "reject" }
-                ]
-            }, id => {
-                if (id === "shift" && root.app.editingTargetId() === target)
-                    shiftTimesPanel.message = root.app.shiftTimes()
-            })
-            return
-        }
-        shiftTimesPanel.message = root.app.shiftTimes()
+    function applyShift(tool) {
+        const panel = tool === "postprocessor" ? postprocessorTool : shiftTimesPanel
+        panel.message = root.app.applyShift(tool)
+        panel.refresh()
     }
 
     function focusedDock() {
@@ -554,7 +557,7 @@ ApplicationWindow {
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
-        root.analytics.panelOpened(dock.uniqueName)
+        root.analytics.panelOpened(root.panelName(dock))
         root.openAtFirstPlace(dock)
         root.workspaceLayout.keepFloatingPanelsOnScreen()
         dock.raise()
@@ -565,13 +568,13 @@ ApplicationWindow {
     function openAtFirstPlace(dock) {
         if (dock === originalDock)
             root.openOriginal()
-        else if (dock === logDock && !Docking.hasPlace("Log"))
+        else if (dock === logDock && !Docking.hasPlace(root.engineName("Log")))
             root.addLog()
-        else if (dock === spellDock && !Docking.hasPlace("Spellchecker"))
+        else if (dock === spellDock && !Docking.hasPlace(root.engineName("Spellchecker")))
             root.addSpellChecker()
-        else if (dock === stylesDock && !Docking.hasPlace("Styles"))
+        else if (dock === stylesDock && !Docking.hasPlace(root.engineName("Styles")))
             root.addStyles()
-        else if (dock === templateDock && !Docking.hasPlace("Template"))
+        else if (dock === templateDock && !Docking.hasPlace(root.engineName("Template")))
             root.addTemplate()
         else if (!Docking.hasPlace(dock.uniqueName))
             root.addRightOfGrid(dock)
@@ -602,10 +605,11 @@ ApplicationWindow {
         const hovered = keyRouter.followsPointer() ? keyRouter.hoveredPanel : null
         const panel = hovered || root.panelOf(w ? w.activeFocusItem : root.activeFocusItem)
         const i = panel ? root.panels.indexOf(panel) : -1
-        UserGuide.open(i >= 0 ? "panel" : "", i >= 0 ? (panel.guideId || root.dockList[i].uniqueName) : "")
+        UserGuide.open(i >= 0 ? "panel" : "", i >= 0 ? (panel.guideId || root.panelName(root.dockList[i])) : "")
     }
     Connections {
         target: UserGuide
+        enabled: root.shellWindow === 0
         function onOpenRequested(kind, id) { root.app.openUserGuide(kind, id) }
     }
     Shortcut {
@@ -1419,7 +1423,7 @@ ApplicationWindow {
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
                         id: openAutoSaveAction
-                        text: qsTr("Open auto save")
+                        text: qsTr("Open autosave…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) autosaves.show()
                     }
                 }
@@ -1657,6 +1661,25 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_PREVIOUS")) root.app.findPrevious()
                 }
             }
+            MenuSeparator {}
+            ShellMenuItem {
+                command: "GLOBAL_INSERT_HARD_SPACE"
+                help: qsTr("Inserts a hard space (%1) at the cursor in the line editor").arg("\\h")
+                iconRole: "hard-space"
+                objectName: "insertHardSpaceMenuItem"
+                action: Action {
+                    id: insertHardSpaceAction
+                    text: qsTr("Insert hard space")
+                    enabled: root.editor.editable
+                    onTriggered: {
+                        if (root.hotkeyGesture("GLOBAL_INSERT_HARD_SPACE"))
+                            return
+                        const field = root.editedField()
+                        root.editor.insertHardSpace(field.role, field.selectionStart, field.selectionEnd)
+                        root.focusPanel(field, Qt.ShortcutFocusReason)
+                    }
+                }
+            }
         }
         ShellMenu {
             objectName: "subtitlesMenu"
@@ -1667,8 +1690,17 @@ ApplicationWindow {
                 id: showShiftTimesItem
                 iconRole: "shift-times"
                 objectName: "showShiftTimes"
-                text: qsTr("Shift &times...")
+                text: qsTr("Shift &times…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SHOW_TIMING_POSTPROCESSOR"
+                help: qsTr("Moves line times by the lead-in, lead-out, gap and keyframe rules")
+                id: showPostprocessorItem
+                iconRole: "shift-times"
+                objectName: "showTimingPostprocessor"
+                text: qsTr("Timing &postprocessor…")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_STYLE_MANAGER"
@@ -1682,11 +1714,11 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_ASS_PROPERTIES"
-                help: qsTr("ASS subtitle properties")
+                help: qsTr("Opens Script properties")
                 id: assPropertiesItem
                 iconRole: "script-properties"
                 objectName: "assProperties"
-                text: qsTr("ASS file properties")
+                text: qsTr("Script properties")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
             }
@@ -2471,7 +2503,7 @@ ApplicationWindow {
                 objectName: "whatsNewMenuItem"
                 action: Action {
                     id: whatsNewAction
-                    text: qsTr("What's &new")
+                    text: qsTr("What’s &new")
                     onTriggered: whatsNewDialog.open()
                 }
             }
@@ -3122,7 +3154,7 @@ ApplicationWindow {
         app: root.app
         anchors.fill: dockingArea
         z: 1.5
-        visible: root.app.home
+        visible: root.windowHome
         spaceAbove: documentTabBar.height
         onNewRequested: root.app.addPage()
         onOpenRequested: openAction.trigger()
@@ -3155,19 +3187,21 @@ ApplicationWindow {
         id: dockingArea
         objectName: "dockingArea"
         anchors.fill: parent
-        uniqueName: "Classic"
+        uniqueName: root.engineName("Classic")
+        affinities: root.dockAffinities
         enabled: !homePage.visible
 
         PanelDock {
             id: videoDock
             objectName: "videoDock"
-            uniqueName: "Video"
+            uniqueName: root.engineName("Video")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Video", "Video")
             Panel {
                 id: videoPanel
                 anchors.fill: parent
                 objectName: "videoPanel"
-                dockName: "Video"
+                dockName: root.engineName("Video")
                 // MUST KILL: 72 is a magic height for two tool rail buttons
                 minimumBodySize: Qt.size(videoTransport.implicitWidth,
                                          videoControls.implicitHeight + videoToolBar.lineHeight + videoControls.spacing + 72
@@ -3349,8 +3383,8 @@ ApplicationWindow {
                         font.features: { "tnum": 1 }
                         color: root.video.keyframeShown ? Theme.warning : palette.windowText
                         Accessible.name: qsTranslate("HikariSub.Video", "Video times")
-                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line's start frame; "
-                                                     + "milliseconds from the line's start and end")
+                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line’s start frame; "
+                                                     + "milliseconds from the line’s start and end")
                         HoverHandler { id: timesHover }
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
@@ -3445,13 +3479,14 @@ ApplicationWindow {
         PanelDock {
             id: audioDock
             objectName: "audioDock"
-            uniqueName: "Audio"
+            uniqueName: root.engineName("Audio")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Audio", "Audio")
             Panel {
                 id: audioPanel
                 anchors.fill: parent
                 objectName: "audioPanel"
-                dockName: "Audio"
+                dockName: root.engineName("Audio")
                 minimumBodySize: audioButtons.visible
                                  ? Qt.size(audioButtons.foldedWidth, 64 + audioScroll.implicitHeight + 4 + audioButtons.implicitHeight)
                                  : Qt.size(audioStatus.implicitWidth, audioStatus.implicitHeight)
@@ -3659,14 +3694,12 @@ ApplicationWindow {
                 }
                 function audioTip(text, symbol, alt) {
                     let key = root.boundKeys(symbol, 4)
-                    if (alt) {
-                        const second = root.boundKeys(alt, 4)
-                        key = key + qsTranslate("HikariSub.Audio", " or ") + second
-                    }
-                    let tip = key.length ? text + " (" + key + ")" : text
-                    tip += "\n" + qsTranslate("HikariSub.Audio", "Shortcut can be set using Shift + Click")
                     if (alt)
-                        tip += "\n" + qsTranslate("HikariSub.Audio", "Second shortcut can be set using Control + Click")
+                        key = root.eitherKey(key, root.boundKeys(alt, 4))
+                    let tip = key.length ? text + " (" + key + ")" : text
+                    tip += "\n" + qsTranslate("HikariSub.Audio", "Shift+click to set a shortcut")
+                    if (alt)
+                        tip += "\n" + qsTranslate("HikariSub.Audio", "Ctrl+click to set a second shortcut")
                     return tip
                 }
                 readonly property var playArounds: [
@@ -4185,8 +4218,7 @@ ApplicationWindow {
                                 objectName: "audioCommitItem"
                                 iconRole: "commit"
                                 text: qsTranslate("HikariSub.Audio", "Commit")
-                                shortcutText: [root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4)]
-                                        .filter(k => k.length).join(qsTranslate("HikariSub.Audio", " or "))
+                                shortcutText: root.eitherKey(root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4))
                                 onTriggered: if (!root.hotkeyGesture("AUDIO_COMMIT", 4, true, true)) root.audio.commit()
                             }
                             MenuSeparator {}
@@ -4933,13 +4965,14 @@ ApplicationWindow {
         PanelDock {
             id: originalDock
             objectName: "originalDock"
-            uniqueName: "Original"
+            uniqueName: root.engineName("Original")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Translation", "Original text")
             Panel {
                 id: originalPanel
                 anchors.fill: parent
                 objectName: "originalPanel"
-                dockName: "Original"
+                dockName: root.engineName("Original")
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Translation", "Original text: %1").arg(shell.editingTitle)
                                               : qsTranslate("HikariSub.Translation", "Original text")
                 accessibleName: qsTranslate("HikariSub.Translation", "Original text")
@@ -4971,13 +5004,14 @@ ApplicationWindow {
         PanelDock {
             id: editorDock
             objectName: "editorDock"
-            uniqueName: "Editor"
+            uniqueName: root.engineName("Editor")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Editor", "Line editor")
             Panel {
                 id: editorPanel
                 anchors.fill: parent
                 objectName: "editorPanel"
-                dockName: "Editor"
+                dockName: root.engineName("Editor")
                 minimumBodySize: Qt.size(Math.max(editorStrip.minimumWidth, editorInspector.minimumWidth)
                                          + 2 * (editorColumn.x - 4),
                                          editorStrip.implicitHeight
@@ -5215,13 +5249,14 @@ ApplicationWindow {
         PanelDock {
             id: gridDock
             objectName: "gridDock"
-            uniqueName: "Grid"
+            uniqueName: root.engineName("Grid")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Grid", "Grid")
             Panel {
                 id: gridPanel
                 anchors.fill: parent
                 objectName: "gridPanel"
-                dockName: "Grid"
+                dockName: root.engineName("Grid")
                 minimumBodySize: Qt.size(240, grid.rowHeight * 3)
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "Editing: %1").arg(shell.editingTitle) : qsTranslate("HikariSub.Grid", "No document open")
                 accessibleName: qsTranslate("HikariSub.Grid", "Grid")
@@ -5519,13 +5554,14 @@ ApplicationWindow {
         PanelDock {
             id: referenceDock
             objectName: "referenceDock"
-            uniqueName: "Reference"
+            uniqueName: root.engineName("Reference")
+            affinities: root.dockAffinities
             title: shell.hasReference ? qsTranslate("HikariSub.Reference", "Reference: %1").arg(shell.referenceTitle) : qsTranslate("HikariSub.Reference", "Reference")
             Panel {
                 id: referencePanel
                 anchors.fill: parent
                 objectName: "referencePanel"
-                dockName: "Reference"
+                dockName: root.engineName("Reference")
                 keyTarget: referenceTray.grid
                 minimumBodySize: Qt.size(240, referenceTray.grid.rowHeight * 3)
                 visible: shell.hasReference
@@ -5546,23 +5582,68 @@ ApplicationWindow {
         PanelDock {
             id: timingDock
             objectName: "timingDock"
-            uniqueName: "Timing"
+            uniqueName: root.engineName("Timing")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.TimeShift", "Shift times")
             Panel {
                 id: timingPanel
                 objectName: "timingPanel"
-                dockName: "Timing"
+                dockName: root.engineName("Timing")
                 minimumBodySize: shiftTimesPanel.minimumBodySize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
                 ShiftTimesPanel {
                     id: shiftTimesPanel
                     anchors.fill: parent
+                    focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    messages: root.messages
                     hasVideo: root.video.hasVideo
                     audioHasMark: root.audio.hasMark
-                    onRun: root.runShiftTimes()
+                    onApply: root.applyShift("shift")
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    onOpenVideo: openVideoAction.trigger()
+                }
+            }
+        }
+
+        PanelDock {
+            id: postprocessorDock
+            objectName: "postprocessorDock"
+            uniqueName: "Postprocessor"
+            title: qsTranslate("HikariSub.TimeShift", "Timing postprocessor")
+            Panel {
+                id: postprocessorPanel
+                objectName: "postprocessorPanel"
+                dockName: "Postprocessor"
+                minimumBodySize: postprocessorTool.minimumBodySize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.TimeShift", "Timing postprocessor")
+                TimingPostprocessorPanel {
+                    id: postprocessorTool
+                    anchors.fill: parent
+                    focus: true
+                    shiftTimes: root.shiftTimes
+                    app: root.app
+                    messages: root.messages
+                    onApply: root.applyShift("postprocessor")
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    onOpenVideo: openVideoAction.trigger()
+                    onOpenKeyframes: openKeyframesAction.trigger()
+                }
+                Connections {
+                    target: root.editor
+                    function onChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                }
+                Connections {
+                    target: root.video
+                    function onChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                    function onTextsChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                }
+                Connections {
+                    target: root.audio
+                    function onMarkChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
                 }
             }
         }
@@ -5570,13 +5651,14 @@ ApplicationWindow {
         PanelDock {
             id: searchDock
             objectName: "searchDock"
-            uniqueName: "Search"
+            uniqueName: root.engineName("Search")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Search", "Find")
             onIsOpenChanged: if (!isOpen) searchTool.save()
             Panel {
                 id: searchPanel
                 objectName: "searchPanel"
-                dockName: "Search"
+                dockName: root.engineName("Search")
                 minimumBodySize: searchTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Search", "Find")
@@ -5594,12 +5676,13 @@ ApplicationWindow {
         PanelDock {
             id: automationDock
             objectName: "automationDock"
-            uniqueName: "Automation"
+            uniqueName: root.engineName("Automation")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Automation", "Automation")
             Panel {
                 id: automationPanel
                 objectName: "automationPanel"
-                dockName: "Automation"
+                dockName: root.engineName("Automation")
                 minimumBodySize: automationTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Automation", "Automation")
@@ -5624,13 +5707,14 @@ ApplicationWindow {
         PanelDock {
             id: spellDock
             objectName: "spellDock"
-            uniqueName: "Spellchecker"
+            uniqueName: root.engineName("Spellchecker")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Spelling", "Spellchecker")
             onIsOpenChanged: if (!isOpen) spellTool.stop()
             Panel {
                 id: spellPanel
                 objectName: "spellPanel"
-                dockName: "Spellchecker"
+                dockName: root.engineName("Spellchecker")
                 minimumBodySize: spellTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Spelling", "Spellchecker")
@@ -5651,12 +5735,13 @@ ApplicationWindow {
         PanelDock {
             id: stylesDock
             objectName: "stylesDock"
-            uniqueName: "Styles"
+            uniqueName: root.engineName("Styles")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.Styles", "Styles")
             Panel {
                 id: stylesPanel
                 objectName: "stylesPanel"
-                dockName: "Styles"
+                dockName: root.engineName("Styles")
                 minimumBodySize: Qt.size(180, 120)
                 anchors.fill: parent
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Styles", "Styles: %1").arg(shell.editingTitle)
@@ -5679,7 +5764,8 @@ ApplicationWindow {
         PanelDock {
             id: templateDock
             objectName: "templateDock"
-            uniqueName: "Template"
+            uniqueName: root.engineName("Template")
+            affinities: root.dockAffinities
             title: qsTranslate("HikariSub.TemplateEditor", "Template editor")
             Binding {
                 target: root.templateEditor
@@ -5689,7 +5775,7 @@ ApplicationWindow {
             Panel {
                 id: templatePanel
                 objectName: "templatePanel"
-                dockName: "Template"
+                dockName: root.engineName("Template")
                 minimumBodySize: templateTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TemplateEditor", "Template editor")
@@ -5706,12 +5792,13 @@ ApplicationWindow {
         PanelDock {
             id: logDock
             objectName: "logDock"
-            uniqueName: "Log"
+            uniqueName: root.engineName("Log")
+            affinities: root.dockAffinities
             title: qsTr("Log")
             Panel {
                 id: logPanel
                 objectName: "logPanel"
-                dockName: "Log"
+                dockName: root.engineName("Log")
                 minimumBodySize: logView.minimumSize
                 anchors.fill: parent
                 title: qsTr("Log")
@@ -5725,14 +5812,14 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            Docking.setPanelHeader("Grid", true, null)
-            Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
-            Docking.setPanelHeader("Search", true, null)
-            Docking.setPanelHeader("Log", true, null)
-            Docking.setPanelHeader("Spellchecker", true, null)
-            Docking.setPanelHeader("Original", true, originalTools)
-            Docking.setPanelHeader("Styles", true, stylesTool.toolbar)
-            Docking.setPanelHeader("Template", false, templateTool.toolbar)
+            Docking.setPanelHeader(root.engineName("Grid"), true, null)
+            Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
+            Docking.setPanelHeader(root.engineName("Search"), true, null)
+            Docking.setPanelHeader(root.engineName("Log"), true, null)
+            Docking.setPanelHeader(root.engineName("Spellchecker"), true, null)
+            Docking.setPanelHeader(root.engineName("Original"), true, originalTools)
+            Docking.setPanelHeader(root.engineName("Styles"), true, stylesTool.toolbar)
+            Docking.setPanelHeader(root.engineName("Template"), false, templateTool.toolbar)
             root.defaultLayout()
         }
     }
@@ -5745,6 +5832,7 @@ ApplicationWindow {
             panel.reportMinimumSize()
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
+        root.workspaceLayout.buildsArrangement("Timing")
         root.workspaceLayout.buildsArrangement("Typesetting")
         root.workspaceLayout.buildsArrangement("Karaoke")
         root.workspaceLayout.restoreSaved()
@@ -5771,6 +5859,7 @@ ApplicationWindow {
         DocumentTabBar {
             id: documentTabBar
             app: root.app
+            shellWindow: root.shellWindow
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
             onSaveRequested: id => root.saveSubtitles(id)
@@ -5817,7 +5906,7 @@ ApplicationWindow {
             id: startupBar
             objectName: "startupBar"
             readonly property StartupOffer offer: sessionWindows.offer
-            visible: offer.active && !root.app.home
+            visible: offer.active && !root.windowHome
             severity: offer.kind === "crash" ? "warning" : "info"
             text: offer.barText
             Layout.fillWidth: true
@@ -5841,7 +5930,7 @@ ApplicationWindow {
         InlineBar {
             objectName: "mkvProgress"
             visible: root.matroska.state === 3
-                     && (root.mkvTab === "home" ? root.app.home : !root.app.home && root.currentTab().id === root.mkvTab)
+                     && (root.mkvTab === "home" ? root.windowHome : !root.windowHome && root.currentTab().id === root.mkvTab)
             closable: false
             text: qsTranslate("HikariSub.Matroska", "Loading subtitles from %1").arg(root.matroska.source)
             Layout.fillWidth: true
@@ -6115,7 +6204,7 @@ ApplicationWindow {
         id: saveAsDialog
         objectName: "saveAsDialog"
         fileMode: FileDialog.SaveFile
-        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file ") + "(*.ass)"]
+        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file (%1)").arg("*.ass")]
         // MUST KILL: document id 0 means the editing target
         property var document: 0
         onAccepted: {
@@ -6589,20 +6678,6 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    HidableQuestion {
-        id: shiftQuestion
-        objectName: "shiftQuestion"
-        messages: root.messages
-        questionId: "shiftOneTime"
-        property var askedFor: 0
-        property Connections targetChanges: Connections {
-            target: root.app
-            function onTabsChanged() {
-                if (shiftQuestion.pending.length > 0 && root.app.editingTargetId() !== shiftQuestion.askedFor)
-                    shiftQuestion.withdraw()
-            }
-        }
-    }
     Connections {
         target: root.updates
         function onFinished(outcome, release, interactive) {
@@ -6662,8 +6737,8 @@ ApplicationWindow {
         onBrowserFailed: root.issueBrowserFailed()
     }
     function issueBrowserFailed() {
-        root.notices.post("warning", qsTranslate("HikariSub.Reports", "The browser did not open"),
-                          qsTranslate("HikariSub.Reports", "The issue is on the clipboard. Paste it into a new issue on GitHub."))
+        root.notices.post("warning", qsTranslate("HikariSub.Reports", "Open GitHub issue"),
+                          qsTranslate("HikariSub.Reports", "The browser did not open. The issue is on the clipboard. Paste it into a new issue on GitHub."))
     }
     Connections {
         target: root.crashReports
@@ -6678,15 +6753,17 @@ ApplicationWindow {
                 return
             }
             const note = crashReportWindow.lastNote
-            root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
-                              source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
+            root.notices.post("warning", qsTranslate("HikariSub.Reports", "Send report"),
+                              source === "start" ? qsTranslate("HikariSub.Reports", "The crash report could not be sent. It is kept for the next start.")
+                                                 : qsTranslate("HikariSub.Reports", "The crash report could not be sent."),
                               { actions: source === "" ? [] : [{ text: qsTranslate("HikariSub.Reports", "Try again"), run: () => root.crashReports.send(source, note) },
                                                                { text: qsTranslate("HikariSub.Reports", "Open GitHub issue"), run: () => crashReportWindow.openOnGitHub(source, note) }] })
         }
         function onAutoSent(kind, ok, source) {
             if (!ok) {
-                root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
-                                  source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
+                root.notices.post("warning", qsTranslate("HikariSub.Reports", "Send report"),
+                                  source === "start" ? qsTranslate("HikariSub.Reports", "The crash report could not be sent. It is kept for the next start.")
+                                                     : qsTranslate("HikariSub.Reports", "The crash report could not be sent."),
                                   { actions: source === "" ? [] : [{ text: qsTranslate("HikariSub.Reports", "Show report"), run: () => crashReportWindow.showReport(source) }] })
                 return
             }
@@ -7071,9 +7148,9 @@ ApplicationWindow {
     }
     function apiPanels(name, action) {
         if (action === "list")
-            return root.dockList.map(dock => ({ panel: dock.uniqueName, title: dock.title, open: dock.isOpen,
+            return root.dockList.map(dock => ({ panel: root.panelName(dock), title: dock.title, open: dock.isOpen,
                                                 floating: dock.isFloating, focused: dock.isFocused }))
-        const i = root.dockList.findIndex(dock => dock.uniqueName === name)
+        const i = root.dockList.findIndex(dock => root.panelName(dock) === name)
         if (i < 0)
             return false
         const dock = root.dockList[i]
@@ -7095,14 +7172,15 @@ ApplicationWindow {
             for (const symbol in symbols)
                 symbols[symbol].triggered.connect(() => api.commandRan(symbol, true))
         for (const dock of root.dockList) {
-            dock.isOpenChanged.connect(() => api.panelChanged(dock.uniqueName))
-            dock.isFloatingChanged.connect(() => api.panelChanged(dock.uniqueName))
+            dock.isOpenChanged.connect(() => api.panelChanged(root.panelName(dock)))
+            dock.isFloatingChanged.connect(() => api.panelChanged(root.panelName(dock)))
         }
     }
 
     Component.onCompleted: {
         root.applyMenuShortcuts()
-        root.connectApi()
+        if (root.shellWindow === 0)
+            root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
         root.foldTurnedOn = turnedOn.indexOf("grid.foldGenerated") >= 0
@@ -7125,13 +7203,16 @@ ApplicationWindow {
     function boundKeys(symbol, window) {
         return root.hotkeys.keys ? root.hotkeys.accelOf(symbol, window) : ""
     }
+    function eitherKey(first, second) {
+        return first.length && second.length ? qsTranslate("HikariSub.Audio", "%1 or %2").arg(first, second) : first + second
+    }
     function mappedTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
-        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     function bitmapTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
-        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     // MUST KILL: kind is true or a string ("menu", "mapped", "macro", "bitmap"); two maps the second (id - 10) hotkey
     function hotkeyGesture(symbol, window, kind, two) {
@@ -7202,6 +7283,7 @@ ApplicationWindow {
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
+        GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }
@@ -7210,7 +7292,7 @@ ApplicationWindow {
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
-        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem,
+        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
@@ -7363,7 +7445,8 @@ ApplicationWindow {
             if (editing)
                 styleManagerWindow.deleteUnused()
             return true
-        case "GLOBAL_SHIFT_TIMES": if (editing) root.runShiftTimes(); return true
+        case "GLOBAL_SHIFT_TIMES": if (editing) root.applyShift("shift"); return true
+        case "GLOBAL_TIMING_POSTPROCESSOR": if (editing) root.applyShift("postprocessor"); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true

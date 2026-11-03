@@ -6,8 +6,10 @@
 #include "hikari/plugins/installer.h"
 
 #include <QObject>
+#include <QTimer>
 #include <QVariantList>
 
+#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
@@ -35,6 +37,8 @@ public:
         std::function<QString()> language; // "" for English
         backends::PluginProcess::Limits limits;
         std::size_t memoryLimit = 256u << 20;
+        // How long a plugin waits for another plugin's edit before it is told HikariSub is busy.
+        int transactionWaitMs = 5000;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
@@ -58,10 +62,21 @@ private:
                backends::PluginProcess::ServiceReply reply);
     void unsubscribe(Running &plugin);
     void relist();
+    void lock(Running &plugin, backends::PluginProcess::ServiceReply reply);
+    void unlock(Running &plugin);
+    void releaseLock(Running &plugin);
+
+    struct LockWaiter {
+        Running *plugin = nullptr;
+        backends::PluginProcess::ServiceReply reply;
+        std::unique_ptr<QTimer> timeout;
+    };
 
     Wiring m_wiring;
     std::optional<plugins::Installer> m_installer;
     std::map<std::string, std::unique_ptr<Running>> m_plugins;
+    Running *m_lockHolder = nullptr;
+    std::deque<LockWaiter> m_lockWaiters;
     QVariantList m_commands;
 };
 
