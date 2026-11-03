@@ -14368,6 +14368,14 @@ Styles deleted:
         <source>Save</source>
         <translation>சேமி</translation>
     </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Times were not centred within frames: no video is open</source>
+        <translation>நேரங்கள் சட்டகங்களுக்குள் மையப்படுத்தப்படவில்லை: வீடியோ எதுவும் திறக்கப்படவில்லை</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
