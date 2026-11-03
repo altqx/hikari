@@ -273,6 +273,20 @@ FocusScope {
                     checked: panel.settings.tagTimes
                     onToggled: panel.set("tagTimes", checked)
                 }
+                CheckBox {
+                    objectName: "shiftCenterTimes"
+                    text: qsTr("Centre times within frames")
+                    checked: panel.settings.centerTimes
+                    onToggled: panel.set("centerTimes", checked)
+                }
+                ShiftNeed {
+                    objectName: "shiftCenterNeed"
+                    visible: panel.settings.centerTimes && !panel.exact
+                    Layout.fillWidth: true
+                    text: qsTr("Needs a video.")
+                    command: qsTr("Open video…")
+                    onRun: panel.openVideo()
+                }
             }
         }
         Rectangle {

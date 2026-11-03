@@ -3830,6 +3830,9 @@ QString Application::applyShift(const QString &tool)
     if (result->endCorrectionSkipped)
         m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.TimeShift", "Shift times"),
                       QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2"));
+    if (result->centeringSkipped)
+        m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.TimeShift", "Shift times"),
+                      QCoreApplication::translate("HikariSub.TimeShift", "Times were not centred within frames: no video is open"));
     return {};
 }
 
