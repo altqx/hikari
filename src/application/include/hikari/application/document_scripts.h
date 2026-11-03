@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 #include <string_view>
-#include <unordered_set>
+#include <absl/container/flat_hash_set.h>
 #include <vector>
 
 namespace hikari::application {
@@ -34,7 +34,7 @@ public:
 
 private:
     std::vector<std::string> m_scripts;
-    std::unordered_set<std::string> m_listed;
+    absl::flat_hash_set<std::string> m_listed;
     std::string m_lastValue;
 };
 

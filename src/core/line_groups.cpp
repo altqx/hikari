@@ -60,9 +60,9 @@ void setGroupMarkers(LineRecord &line, std::vector<GroupMarker> memberships, boo
         line.visibility = LineVisibility::Visible;
 }
 
-std::unordered_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document)
+absl::flat_hash_map<std::uint64_t, std::optional<LineId>> groupOwners(const Document &document)
 {
-    std::unordered_map<std::uint64_t, std::optional<LineId>> owners;
+    absl::flat_hash_map<std::uint64_t, std::optional<LineId>> owners;
     walkGroups(document, [&](const LineRecord &line, Enclosing enclosing) {
         if (!enclosing.empty())
             owners.emplace(line.id.value, enclosing.back());
@@ -74,7 +74,7 @@ std::vector<LineId> groupBreaks(const Document &before, const Document &after)
 {
     const auto was = groupOwners(before);
     const auto now = groupOwners(after);
-    std::unordered_map<std::uint64_t, const LineRecord *> previous;
+    absl::flat_hash_map<std::uint64_t, const LineRecord *> previous;
     for (const auto *line : before.lines())
         previous.emplace(line->id.value, line);
     auto regrouped = [&](const LineRecord &line) {

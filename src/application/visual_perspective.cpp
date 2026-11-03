@@ -30,8 +30,8 @@
 #include <cstdlib>
 #include <string_view>
 #include <system_error>
-#include <unordered_map>
-#include <unordered_set>
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 
 namespace hikari::application::visual {
 
@@ -635,9 +635,9 @@ std::size_t styleBytes(const core::StyleValues &s)
 
 struct StyleCache::Decoded {
     std::vector<core::StyleValues> all;
-    std::unordered_set<const core::StyleValues *> oversized;
+    absl::flat_hash_set<const core::StyleValues *> oversized;
     // The last Style of each name, as libass looks Styles up; a nameless Style is Default.
-    std::unordered_map<std::u8string_view, const core::StyleValues *> last;
+    absl::flat_hash_map<std::u8string_view, const core::StyleValues *> last;
 };
 
 std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const VisualHost &host)
@@ -719,8 +719,8 @@ struct StyleIndex {
         return s;
     }
     const transform::Context &ctx;
-    const std::unordered_map<std::u8string_view, const core::StyleValues *> &last;
-    const std::unordered_set<const core::StyleValues *> &oversized;
+    const absl::flat_hash_map<std::u8string_view, const core::StyleValues *> &last;
+    const absl::flat_hash_set<const core::StyleValues *> &oversized;
 };
 
 // The Style a \r names (a missing Default is libass's own); null for the Line's, as libass's
