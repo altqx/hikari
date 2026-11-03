@@ -548,7 +548,7 @@ private slots:
         app->automation().runLastLoadedScript();
         QTRY_COMPARE_WITH_TIMEOUT(notices.size(), 1, 30'000);
         QCOMPARE(notices.first().at(0).toString(), QStringLiteral("error"));
-        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("Error loading Lua script: broken.lua"));
+        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("broken.lua did not load. Its error is in Details."));
         QVERIFY(!notices.first().at(3).toString().isEmpty());
         QCOMPARE(editor.size(), 1);
         QCOMPARE(editor.first().at(0).toString(), script);
@@ -965,7 +965,7 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
         {QStringLiteral("only-missing"), QStringLiteral("This subtitle file does not have any scripts added")},
         {QStringLiteral("validation-false"), QStringLiteral("Validation Lua script “invalid.lua” failed")},
         {QStringLiteral("validation-error"), QStringLiteral("Validation Lua script “raising.lua” failed")},
-        {QStringLiteral("load-error"), QStringLiteral("Error loading Lua script: broken.lua\n")},
+        {QStringLiteral("load-error"), QStringLiteral("broken.lua did not load. Its error is in Details.\n")},
     };
     const QStringList addedOnLoad{QStringLiteral("YCbCr Matrix"), QStringLiteral("PlayResX"), QStringLiteral("PlayResY")};
 

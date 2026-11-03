@@ -1154,10 +1154,8 @@ Output device: %2</source>
         <translation>%1 இல் இயக்க குறுநிரல்கள் இல்லை</translation>
     </message>
     <message>
-        <source>Error loading Lua script: %1
-%2</source>
-        <translation>Lua ச்கிரிப்டை ஏற்றுவதில் பிழை: %1
-%2</translation>
+        <source>%1 did not load. Its error is in Details.</source>
+        <translation>%1 ஏற்றப்படவில்லை. அதன் பிழை விவரங்களில் உள்ளது.</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -7372,8 +7370,8 @@ Failed to copy %2 fonts.</source>
         <translation>ரோமாஜி வரிகளின் கரோக்கி நேரமிடலை அவற்றின் காஞ்சி வரிகளுக்கு நகலெடுக்கிறது</translation>
     </message>
     <message>
-        <source>Kanji timer…</source>
-        <translation>காஞ்சி நேரமிடுபவர்…</translation>
+        <source>Kanji timer</source>
+        <translation>காஞ்சி நேரமிடுபவர்</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -10599,8 +10597,8 @@ because it was edited.</source>
         <translation>இல்லாமல்</translation>
     </message>
     <message>
-        <source>Search text:</source>
-        <translation>தேடல் உரை:</translation>
+        <source>Search text</source>
+        <translation>தேடல் உரை</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -10623,8 +10621,8 @@ because it was edited.</source>
         <translation>உரை</translation>
     </message>
     <message>
-        <source>Styles</source>
-        <translation>பாணிகள்</translation>
+        <source>Style</source>
+        <translation>பாணி</translation>
     </message>
     <message>
         <source>Actor</source>

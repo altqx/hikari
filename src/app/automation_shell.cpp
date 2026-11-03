@@ -815,10 +815,8 @@ void AutomationShell::continueLastScript()
     if (!host)
         return;
     if (host->state() == State::LoadFailed) {
-        // MUST KILL: an empty %2 only keeps the existing translations of this two-line text
         emit notice(QStringLiteral("error"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
-                    QCoreApplication::translate("HikariSub.Automation", "Error loading Lua script: %1\n%2")
-                        .arg(prettyName(path), QString()).trimmed(),
+                    QCoreApplication::translate("HikariSub.Automation", "%1 did not load. Its error is in Details.").arg(prettyName(path)),
                     host->lastError());
         editScript(QString::fromStdString(path));
         return;

@@ -1811,7 +1811,7 @@ ApplicationWindow {
                 id: kanjiTimerItem
                 iconRole: "kanji-timer"
                 objectName: "kanjiTimerMenuItem"
-                text: qsTr("Kanji timer…")
+                text: qsTr("Kanji timer")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
             }
